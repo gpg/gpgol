@@ -7,6 +7,7 @@
 #define IDD_SYMENC                      103
 #define IDD_DEC                         104
 #define IDD_SIG                         105
+#define IDD_OPT                         106
 #define IDC_ENC_RSET1                   1000
 #define IDC_ENC_RSET2                   1001
 #define IDC_MAIN_ENC                    1002
@@ -30,14 +31,18 @@
 #define IDC_SIG_HIDE                    1022
 #define IDC_DEC_HIDE                    1023
 #define IDC_MAIN_SIGNENC                1024
+#define IDC_OPT_GPGPRG                  1025
+#define IDC_OPT_SELPRG                  1026
+#define IDC_OPT_HOMEDIR                 1027
+#define IDC_OPT_SELHOMEDIR              1028
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        106
+#define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

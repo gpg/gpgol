@@ -33,7 +33,7 @@ get_open_file_name(const char *dir)
     OPENFILENAME ofn;
 
     memset (&ofn, 0, sizeof ofn);
-    memset (fname, 0, 256+1);
+    memset (fname, 0, sizeof fname);
     ofn.hwndOwner = GetDesktopWindow();
     ofn.hInstance = glob_hinst;
     ofn.lpstrTitle = "Select GnuPG binary";
@@ -74,6 +74,7 @@ load_config_value_ext(char **val)
     BOOL ec;
 
     memset (buf, 0, sizeof (buf));
+    /* MSDN: This buffer must be at least MAX_PATH characters in size. */
     ec = SHGetSpecialFolderPath (HWND_DESKTOP, buf, CSIDL_APPDATA, TRUE);
     if (ec != 1)
 	return -1;
@@ -102,6 +103,8 @@ load_config_value(const char *key, char **val)
 	return -1;
     }
     *val = calloc(1, size+1);
+    if (!*val)
+	abort();
     ec = RegQueryValueEx(h, key, NULL, &type, (BYTE*)*val, &size);
     if (ec != ERROR_SUCCESS) {
 	free (*val); *val = NULL;
