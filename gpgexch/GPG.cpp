@@ -1,6 +1,6 @@
 /* GPG.cpp - gpg functions for mapi messages
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004 g10 Code GmbH
+ *	Copyright (C) 2004. 2005 g10 Code GmbH
  * 
  * This file is part of the G DATA Outlook Plugin for GnuPG.
  * 
@@ -52,8 +52,10 @@ CGPG::CGPG()
 
 CGPG::~CGPG ()
 {
-    if (m_LogFile)
+    if (m_LogFile) {
 	delete [] m_LogFile;
+	m_LogFile = NULL;
+    }
 }
 
 
@@ -62,11 +64,14 @@ CGPG::MsgFromFile (LPMESSAGE pMessage, const char *strFile)
 {
     string sBody;
     TCHAR szTemp[1024];
-    FILE* file = fopen(strFile, "rb");
+    FILE *file;
     int nCharsRead;
     SPropValue sProp; 
     HRESULT hr;
 
+    file = fopen(strFile, "rb");
+    if (!file)
+	return FALSE;
     do {
 	nCharsRead = fread(szTemp, sizeof(TCHAR), sizeof(szTemp)-1, file);
 	szTemp[nCharsRead] = '\0';
@@ -90,20 +95,22 @@ BOOL CGPG::DecryptFile (HWND hWndParent,
 			BSTR strFilenameDest, 
 			int &pvReturn)
 {    
-    return m_gdgpg.DecryptFile (hWndParent, strFilenameSource, strFilenameDest, pvReturn);
+    return m_gdgpg.DecryptFile (hWndParent, strFilenameSource, 
+				strFilenameDest, pvReturn);
 }
 
 
 
 void CGPG::SetLogFile (const char * strLogFilename) 
 { 
-    if (m_LogFile)
+    if (m_LogFile) 
     {
 	delete [] m_LogFile;
 	m_LogFile = NULL;
     }
     m_LogFile = new char[strlen (strLogFilename)+1];
-    strcpy (m_LogFile, strLogFilename);
+    if (m_LogFile)
+	strcpy (m_LogFile, strLogFilename);
 }
 
 
@@ -135,10 +142,12 @@ void CGPG::ReadGPGOptions (void)
 	if (RegQueryValueEx(hKey, _T("SaveDecrypted"), NULL, NULL, (LPBYTE) &dwResult, &dwSize) == ERROR_SUCCESS)
 	    m_bSaveDecrypted = (dwResult != 0);
 	dwSize = sizeof (Buf);
+	m_LogFile = NULL;
 	if (RegQueryValueEx (hKey, _T("LogFile"), NULL, NULL, (BYTE*)Buf, &dwSize) == ERROR_SUCCESS)
 	{
 	    m_LogFile = new char [strlen (Buf)+1];
-	    strcpy (m_LogFile, Buf);
+	    if (m_LogFile)
+		strcpy (m_LogFile, Buf);
 	}
 	RegCloseKey(hKey);	
     }
@@ -250,10 +259,13 @@ BOOL CGPG::EncryptAndSignMessage(
     // encrypt and sign	
     if (bIsRootMessage)
 	m_gdgpg.EncryptAndSignFile (hWnd, bEncrypt, bSign,
-					A2OLE(sFilenameSource.c_str()), A2OLE(sFilenameDest.c_str()), A2OLE(sRecipient.c_str()), 
+					A2OLE(sFilenameSource.c_str()), 
+					A2OLE(sFilenameDest.c_str()),
+					A2OLE(sRecipient.c_str()),
 					TRUE, m_bEncryptWithStandardKey, nRet);
     else
-	m_gdgpg.EncryptAndSignNextFile (hWnd, A2OLE(sFilenameSource.c_str()), A2OLE(sFilenameDest.c_str()), TRUE, nRet);
+	m_gdgpg.EncryptAndSignNextFile (hWnd, A2OLE(sFilenameSource.c_str()), 
+					A2OLE(sFilenameDest.c_str()), TRUE, nRet);
     ::DeleteFile (sFilenameSource.c_str ());
     if (nRet != 0)
     {
@@ -301,7 +313,8 @@ BOOL CGPG::EncryptAndSignMessage(
 	    bSuccess = FALSE;
 	if (bSuccess)
 	{
-	    hr = HrQueryAllRows(lpAttTable, (LPSPropTagArray) &PropAttNum, NULL, NULL, 0L, &lpAttRows);
+	    hr = HrQueryAllRows (lpAttTable, (LPSPropTagArray) &PropAttNum, 
+			        NULL, NULL, 0L, &lpAttRows);
 	    if (FAILED(hr))
 		bSuccess = FALSE;
 	}
@@ -311,7 +324,8 @@ BOOL CGPG::EncryptAndSignMessage(
 	    {
 		LPATTACH pAttach = NULL;
 		LPSTREAM pStreamAtt = NULL;
-		hr = lpMessage->OpenAttach(lpAttRows->aRow[j].lpProps[0].Value.ul, NULL, MAPI_BEST_ACCESS, &pAttach);
+		hr = lpMessage->OpenAttach (lpAttRows->aRow[j].lpProps[0].Value.ul, 
+					    NULL, MAPI_BEST_ACCESS, &pAttach);
 		if (SUCCEEDED(hr))
 		{
 		    SPropValue sProp; 
@@ -326,6 +340,8 @@ BOOL CGPG::EncryptAndSignMessage(
 	    lpAttTable->Release ();
 	if (NULL != lpAttRows)
 	    FreeProws (lpAttRows);
+	m_bSign_Clearsign = bSign;
+	m_bEncrypt_Clearsign = bEncrypt;
 	// encrypt and sign attachments
 	bEncryptAttachmentsFailed = !EncryptAndSignAttachments(hWnd, lpMessage);
 
@@ -406,130 +422,132 @@ BOOL CGPG::DecryptMessage(
 	HWND hWnd,            // The handle of the parent window for messages and dialog.
 	LPMESSAGE lpMessage,  // Points to the message.
 	BOOL bIsRootMessage)  // Indicates whether this is the root message (will be FALSE when called for embedded messages).
-{
-	BOOL bSuccess = TRUE;
+{	
+    BOOL bSuccess = TRUE;
+    string sFilenameSource, sFilenameDest, sFilenamePlain;
+    TCHAR szTempPath[MAX_PATH];
 
-	string sFilenameSource, sFilenameDest;
-	TCHAR szTempPath[MAX_PATH];
-	GetTempPath(MAX_PATH, szTempPath);
-	sFilenameSource = szTempPath;
-	sFilenameSource += _T("_gdgpg_");  
-	sFilenameDest = sFilenameSource;
-	sFilenameSource += "DBody.pgp";
-	sFilenameDest += "DBody.txt";
+    GetTempPath(MAX_PATH, szTempPath);
+    sFilenameSource = szTempPath;
+    sFilenameSource += _T("_gdgpg_");  
+    sFilenameDest = sFilenameSource;
+    sFilenamePlain = sFilenameSource;
+    sFilenameSource += "DBody.pgp";
+    sFilenameDest += "DBody.txt";
+    sFilenamePlain += "DBody";
 
-	// write the message body to a temp file
-	BOOL bBodyEmpty = FALSE;
-	LPSPropValue lpspvFEID = NULL;
-	HRESULT hr = HrGetOneProp((LPMAPIPROP) lpMessage, PR_BODY, &lpspvFEID);
-	if (FAILED(hr))
-		bBodyEmpty = TRUE;
+    // write the message body to a temp file
+    BOOL bBodyEmpty = FALSE;
+    LPSPropValue lpspvFEID = NULL;
+    HRESULT hr = HrGetOneProp((LPMAPIPROP) lpMessage, PR_BODY, &lpspvFEID);
+    if (FAILED(hr))
+	bBodyEmpty = TRUE;
 
-	FILE* file = fopen(sFilenameSource.c_str(), "wb");
-	if (!bBodyEmpty)
-		fwrite(lpspvFEID->Value.lpszA, 1, strlen(lpspvFEID->Value.lpszA), file); 
+    FILE* file = fopen(sFilenameSource.c_str(), "wb");
+    if (!bBodyEmpty)
+	fwrite(lpspvFEID->Value.lpszA, 1, strlen(lpspvFEID->Value.lpszA), file); 
+    fclose(file);
+    MAPIFreeBuffer(lpspvFEID);
+    lpspvFEID = NULL;
+
+    // decrypt
+    USES_CONVERSION;
+    int nRet;
+    if (bIsRootMessage)
+	m_gdgpg.DecryptFile(hWnd, A2OLE(sFilenameSource.c_str()), A2OLE(sFilenameDest.c_str()), nRet);
+    else
+	m_gdgpg.DecryptNextFile(hWnd, A2OLE(sFilenameSource.c_str()), A2OLE(sFilenameDest.c_str()), nRet);	
+    ::DeleteFile (sFilenameSource.c_str());
+    ::DeleteFile (sFilenamePlain.c_str ());
+
+    if (nRet != 0)
+	bSuccess = FALSE;
+
+    // check whether file exists
+    file = fopen(sFilenameDest.c_str(), "rb");
+    if (file == NULL)
+	bSuccess = FALSE;
+    else
 	fclose(file);
-	MAPIFreeBuffer(lpspvFEID);
-	lpspvFEID = NULL;
 
-	// decrypt
-	USES_CONVERSION;
-	int nRet;
-	if (bIsRootMessage)
-		m_gdgpg.DecryptFile(hWnd, A2OLE(sFilenameSource.c_str()), A2OLE(sFilenameDest.c_str()), nRet);
-	else
-		m_gdgpg.DecryptNextFile(hWnd, A2OLE(sFilenameSource.c_str()), A2OLE(sFilenameDest.c_str()), nRet);
-	::DeleteFile(sFilenameSource.c_str());
 
-	if (nRet != 0)
-		bSuccess = FALSE;
-
-	// check whether file exists
-	file = fopen(sFilenameDest.c_str(), "rb");
-	if (file == NULL)
-		bSuccess = FALSE;
-	else
-		fclose(file);
-
-	if (bSuccess)
+    if (bSuccess)
+    {
+	// replace body
+	SPropValue sProp; 
+	sProp.ulPropTag = PR_BODY;
+	string sBody;
+	TCHAR szTemp[1024];
+	FILE* file = fopen(sFilenameDest.c_str(), "rb");
+	int nCharsRead;
+	
+	do
 	{
-		// replace body
-		SPropValue sProp; 
-		sProp.ulPropTag = PR_BODY;
-		string sBody;
-		TCHAR szTemp[1024];
-		FILE* file = fopen(sFilenameDest.c_str(), "rb");
-		int nCharsRead;
-		do
-		{
-			nCharsRead = fread(szTemp, sizeof(TCHAR), sizeof(szTemp)-1, file);
-			szTemp[nCharsRead] = '\0';
-			sBody += szTemp;
-		} while (nCharsRead > 0);
-		fclose(file);
-		::DeleteFile(sFilenameDest.c_str());
+	    nCharsRead = fread(szTemp, sizeof(TCHAR), sizeof(szTemp)-1, file);
+	    szTemp[nCharsRead] = '\0';
+	    sBody += szTemp;
+	} while (nCharsRead > 0);
+	fclose(file);
+	::DeleteFile(sFilenameDest.c_str());
 
-		sProp.Value.lpszA = (char*) sBody.c_str();
-		hr = HrSetOneProp(lpMessage, &sProp);
+	sProp.Value.lpszA = (char*) sBody.c_str();
+	hr = HrSetOneProp(lpMessage, &sProp);
+	sProp.ulPropTag = PR_ACCESS;
+	sProp.Value.l = MAPI_ACCESS_MODIFY;
+	HrSetOneProp(lpMessage, &sProp);
 
-		sProp.ulPropTag = PR_ACCESS;
-		sProp.Value.l = MAPI_ACCESS_MODIFY;
-		HrSetOneProp(lpMessage, &sProp);
-
-
-		if (bIsRootMessage && (hWnd != NULL))
-		{
-			HWND wndRTF = FindMessageWindow(hWnd);
-
-			if (wndRTF != NULL)
-				SetWindowText(wndRTF, sBody.c_str());
-			else
-			{
-				TCHAR sCaption[256];
-				LoadString(theApp.m_hInstance, IDS_APP_NAME, sCaption, sizeof(sCaption));
-				TCHAR sMess[512];
-				if (m_bSaveDecrypted)
-				{
-					LoadString(theApp.m_hInstance, IDS_ERR_REPLACE_TEXT, sMess, sizeof(sMess));
-					::MessageBox(hWnd, sMess, sCaption, MB_ICONINFORMATION);
-				}
-				else
-				{
-					LoadString(theApp.m_hInstance, IDS_ERR_REPLACE_TEXT_ASK_SAVE, sMess, sizeof(sMess));
-					int nCmx = ::MessageBox(hWnd, sMess, sCaption, MB_ICONQUESTION | MB_YESNOCANCEL);
-					if (nCmx == IDYES)
-						lpMessage->SaveChanges(FORCE_SAVE);
-				}
-			}
-		}
-
-		// decrypt attachments
-		if (bIsRootMessage)
-		{
-		    m_nDecryptedAttachments = 0;
-		    m_bCancelSavingDecryptedAttachments = FALSE;
-		}
-		DecryptAttachments(hWnd, lpMessage);
+	if (bIsRootMessage && (hWnd != NULL))
+	{
+	    HWND wndRTF = FindMessageWindow(hWnd);
+	    if (wndRTF != NULL)
+		SetWindowText(wndRTF, sBody.c_str());
+	    else
+	    {	
+		TCHAR sCaption[256];
+		LoadString(theApp.m_hInstance, IDS_APP_NAME, sCaption, sizeof(sCaption));
+		TCHAR sMess[512];
 		if (m_bSaveDecrypted)
 		{
-		    lpMessage->SaveChanges(FORCE_SAVE);
-		    if (bIsRootMessage && (m_nDecryptedAttachments > 0))
-		    {
-			TCHAR sCaption[256];
-			LoadString(theApp.m_hInstance, IDS_APP_NAME, sCaption, sizeof(sCaption));
-			TCHAR sMess[256];
-			LoadString(theApp.m_hInstance, IDS_ATT_DECRYPT_AND_SAVE, sMess, sizeof(sMess));
-			::MessageBox(hWnd, sMess, sCaption, MB_ICONINFORMATION);
-		    }
+		    LoadString(theApp.m_hInstance, IDS_ERR_REPLACE_TEXT, sMess, sizeof(sMess));
+		    ::MessageBox(hWnd, sMess, sCaption, MB_ICONINFORMATION);
 		}
+		else
+		{
+		    LoadString(theApp.m_hInstance, IDS_ERR_REPLACE_TEXT_ASK_SAVE, sMess, sizeof(sMess));
+		    int nCmx = ::MessageBox(hWnd, sMess, sCaption, MB_ICONQUESTION | MB_YESNOCANCEL);
+		    if (nCmx == IDYES)
+			lpMessage->SaveChanges(FORCE_SAVE);
+		}
+	    }
 	}
 
-	
-	// erase temporary saved parameter
-	if (bIsRootMessage)
-		m_gdgpg.DecryptNextFile(hWnd, A2OLE(""), A2OLE(""), nRet);
+	// decrypt attachments	
+	if (bIsRootMessage)	
+	{
+	    m_nDecryptedAttachments = 0;
+	    m_bCancelSavingDecryptedAttachments = FALSE;
+	}
 
-	return bSuccess;
+	DecryptAttachments (hWnd, lpMessage);
+	if (m_bSaveDecrypted)
+	{
+	    lpMessage->SaveChanges (FORCE_SAVE);
+	    if (bIsRootMessage && (m_nDecryptedAttachments > 0))
+	    {
+		TCHAR sCaption[256];
+		LoadString(theApp.m_hInstance, IDS_APP_NAME, sCaption, sizeof(sCaption));
+		TCHAR sMess[256];
+		LoadString(theApp.m_hInstance, IDS_ATT_DECRYPT_AND_SAVE, sMess, sizeof(sMess));
+		::MessageBox(hWnd, sMess, sCaption, MB_ICONINFORMATION);	
+	    }
+	}	
+    }
+
+    // erase temporary saved parameter
+    if (bIsRootMessage)
+	m_gdgpg.DecryptNextFile(hWnd, A2OLE(""), A2OLE(""), nRet);
+
+    return bSuccess;
 }
 
 
@@ -884,8 +902,12 @@ CGPG::ProcessAttachments(
 		// replace attachment		
 		if (!bEmbedded && bSaveAttSuccess && (nAction >= PROATT_ENCRYPT_AND_SIGN) &&  (nAction <= PROATT_DECRYPT))
 		{
-		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
-			sAttName += ".pgp";
+		    if (nAction == PROATT_ENCRYPT_AND_SIGN) {
+			if (m_bSign_Clearsign && !m_bEncrypt_Clearsign)
+			    sAttName += ".sig";
+			else
+			    sAttName += ".pgp";
+		    }
 		    if (nAction == PROATT_DECRYPT)
 		    {
 			int nPos = sAttName.rfind('.');
@@ -900,9 +922,14 @@ CGPG::ProcessAttachments(
 			if (!m_bSaveDecrypted && !m_bCancelSavingDecryptedAttachments)
 			{			
 			    // save encrypted attachment
-			    if (!SaveDecryptedAttachment(hWnd, sFilenameDest, sAttName))
+			    if (!SaveDecryptedAttachment (hWnd, sFilenameDest, sAttName))
 				m_bCancelSavingDecryptedAttachments = TRUE;
 			}
+			#if 0
+			/* Dennis Martin 2005-02-10 */
+			if (!(m_bSign_Clearsign && !m_bEncrypt_Clearsign))
+			    pMessage->DeleteAttach(nAttachment, 0, NULL, 0);
+			#endif
 		    }
 
 		    pMessage->DeleteAttach(nAttachment, 0, NULL, 0);

@@ -1,4 +1,4 @@
-    /* GPG.h - gpg functions for mapi messages
+/* GPG.h - gpg functions for mapi messages
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004 g10 Code GmbH
  * 
@@ -45,6 +45,8 @@ protected:
     BOOL m_bSignDefault;              // Indicates whether to sign messages on default.
     BOOL m_bEncryptWithStandardKey;   // Indicates whether to encrypt the messages with the standard key too.
     BOOL m_bSaveDecrypted;            // Indicates whether to save decrypted messages.
+    BOOL m_bSign_Clearsign;
+    BOOL m_bEncrypt_Clearsign;
     CGDGPGWrapper m_gdgpg;            // Wraps the calls to the GDGPG com object.
     BOOL m_bInit;                     // Indicates whether this object was initialized.
     int  m_nDecryptedAttachments;     // The number of decrypted attachments (helper variable for decrypting messages).

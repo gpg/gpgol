@@ -66,7 +66,10 @@ BOOL CALLBACK GPGOptionsDlgProc (
 		hbmp = LoadBitmap (((CWinApp*) &theApp)->m_hInstance, MAKEINTRESOURCE(IDB_BANNER_HI));
 		if (hbmp != NULL)
 		{
-		    HBITMAP hbmpOld = (HBITMAP) SendDlgItemMessage(hDlg, IDC_BITMAP, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hbmp);
+		    HBITMAP hbmpOld;
+		    hbmpOld = (HBITMAP) SendDlgItemMessage (hDlg, IDC_BITMAP, 
+							    STM_SETIMAGE, IMAGE_BITMAP, 
+							    (LPARAM) hbmp);
 		    if (hbmpOld != NULL)
 			DeleteObject (hbmpOld);	
 		}	
@@ -90,20 +93,16 @@ BOOL CALLBACK GPGOptionsDlgProc (
 
 		
     case WM_DESTROY:
-	{
-	    if (hBrush != NULL)
-		DeleteObject (hBrush);
-	    return TRUE;
-	}
+	if (hBrush != NULL)
+	    DeleteObject (hBrush);
+	return TRUE;
   
 		
     case WM_COMMAND:
+	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
 	{
-	    if (LOWORD(wParam) == IDC_GPG_OPTIONS)
-	    {
-		g_gpg.EditExtendedOptions (hDlg);
-		g_gpg.InvalidateKeyLists ();	
-	    }
+	    g_gpg.EditExtendedOptions (hDlg);
+	    g_gpg.InvalidateKeyLists ();
 	}
 	break;
 
@@ -135,7 +134,6 @@ BOOL CALLBACK GPGOptionsDlgProc (
 
 		
     case WM_NOTIFY:
-	{	
 	    pnmhdr = ((LPNMHDR) lParam);			
 	    switch ( pnmhdr->code)
 	    {
@@ -151,33 +149,33 @@ BOOL CALLBACK GPGOptionsDlgProc (
 		    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
 		    f = g_gpg.GetLogFile ();
 		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)f);
-		    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
-		    SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
-			g_gpg.GetEncryptDefault() ? 1 : 0, 0L);
-		    SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
-			g_gpg.GetSignDefault() ? 1 : 0, 0L);
-		    SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_SETCHECK, 
-			g_gpg.GetEncryptWithStandardKey() ? 1 : 0, 0L);
-		    SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
-			g_gpg.GetSaveDecrypted() ? 1 : 0, 0L);
-		    bMsgResult = FALSE;  // accepts activation
+		    hWndPage = pnmhdr->hwndFrom;   /* to be used in WM_COMMAND */
+		    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
+					g_gpg.GetEncryptDefault () ? 1 : 0, 0L);
+		    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
+				        g_gpg.GetSignDefault () ? 1 : 0, 0L);
+		    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_SETCHECK, 
+				        g_gpg.GetEncryptWithStandardKey () ? 1 : 0, 0L);
+		    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
+					g_gpg.GetSaveDecrypted() ? 1 : 0, 0L);
+		    bMsgResult = FALSE;  /* accepts activation */
 		    break;
 		
 		}
 		
 	    case PSN_APPLY:	
-		{		
-		    TCHAR s[200];		
+		{
+		    TCHAR s[200];
 		    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_GETTEXT, 20, (LPARAM) s);		
 		    g_gpg.SetStorePassPhraseTime(atol(s));
 		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT, 200, (LPARAM)s);
 		    g_gpg.SetLogFile (s);
 		
-		    g_gpg.SetEncryptDefault(SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));		
-		    g_gpg.SetSignDefault(SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));		
-		    g_gpg.SetEncryptWithStandardKey(SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
-		    g_gpg.SetSaveDecrypted(SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
-		    g_gpg.WriteGPGOptions();
+		    g_gpg.SetEncryptDefault (SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));		
+		    g_gpg.SetSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));		
+		    g_gpg.SetEncryptWithStandardKey (SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
+		    g_gpg.SetSaveDecrypted (SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
+		    g_gpg.WriteGPGOptions ();
 		    bMsgResult = PSNRET_NOERROR;
 		    break;
 		}
@@ -193,13 +191,13 @@ BOOL CALLBACK GPGOptionsDlgProc (
 	    default:
 		bMsgResult = FALSE;
 		break;
-	    } // switch	
+	    }
 	    SetWindowLong( hDlg, DWL_MSGRESULT, bMsgResult);
 	    break;
-	}   // case WM_NOTIFY
+
     default:
 	bMsgResult = FALSE;
 	break;		
-    }  // switch
+    }
     return bMsgResult;
 }

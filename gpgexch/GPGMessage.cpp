@@ -48,7 +48,7 @@ int CGPGMessage::hasAttach (void)
 int CGPGMessage::isUnset (void)
 {
     HrGetOneProp (pMessage, PR_MESSAGE_FLAGS, &sPropVal);
-    if (sPropVal->Value.l & MSGFLAG_UNSENT)
+    if (SUCCEEDED (hr) && sPropVal->Value.l & MSGFLAG_UNSENT)
 	return -1;
     return 0;
 }

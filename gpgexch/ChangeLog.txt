@@ -1,3 +1,22 @@
+2005-02-14  Timo Schulz  <twoaday@g10code.de>
+
+	* GPGExch.cpp (OnRead): Check return value. Noted by Dennis Martin.
+	Free all buffers and be stricter with return codes.
+	* GPGMessage.cpp (isUnset): Likewise.
+	* GPG.cpp (ProcessAttachments): If we only sign without encryption,
+	add .sig and not .pgp. Also noted by Dennis Martin.
+		
+2005-01-18  Timo Schulz  <twoaday@g10code.de>
+
+	* GPGExch.cpp (ExchLogInfo): New.
+	(OnRead): Log all errors.
+
+2004-11-17  Timo Schulz  <twoaday@g10code.de>
+
+	* GPG.cpp (ReadGPGOptions): Initialize m_LogFile to NULL.
+	(DecryptMessage): Delete temp file left over from a possible
+	cleartext verification. Noted by Achim.
+
 2004-10-27  Timo Schulz  <twoaday@g10code.de>
 
 	* GPG.cpp (ProcessAttachments): Set default extension to

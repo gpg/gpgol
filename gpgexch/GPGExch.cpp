@@ -1,6 +1,6 @@
 /* GPGExch.cpp - exchange extension classes
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004 g10 Code GmbH
+ *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
  * This file is part of the G DATA Outlook Plugin for GnuPG.
  * 
@@ -48,6 +48,29 @@ CGPGExchApp::CGPGExchApp (void)
 }
 
 CGPGExchApp theApp;
+
+
+static void 
+ExchLogInfo (const char * fmt, ...)
+{
+    FILE * f;
+    const char * name;
+    va_list a;
+
+    name = g_gpg.GetLogFile ();
+    if (!name || strlen (name) < 3) {
+	/*name = "c:\\outlgpg_debug.txt";*/
+	return;
+    }
+    f = fopen (name, "wb");
+    if (!f)
+	return;
+    va_start (a, fmt);
+    vfprintf (f, fmt, a);
+    va_end (a);
+    fclose (f);
+}
+
 
 /* ExchEntryPoint -
  The entry point which Exchange calls.
@@ -289,7 +312,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
     ULONG nr=0;
     string sMsg = "", sOutMsg = "";
     SPropValue sProp;
-    LPSPropValue sPropVal=NULL;
+    LPSPropValue sPropVal = NULL;
     int ret = 0, mimeType = 0, nAttach = 0;
     FILE * fp;
     time_t t;
@@ -301,27 +324,41 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
     asct[strlen (asct)-1] = 0;
     
     /* XXX: clean up the mess!!! */
-
     hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
     if (FAILED (hr) || pMessage == NULL) 
     {
+	ExchLogInfo ("%s:%d: GetObject() failed.\n", __FILE__, __LINE__);
 	hr = S_FALSE;
 	goto failed;
     }
 
     /* Do not process outgoing messages */
-    HrGetOneProp (pMessage, PR_MESSAGE_FLAGS, &sPropVal);
-    if (sPropVal->Value.l & MSGFLAG_UNSENT)
+    hr = HrGetOneProp (pMessage, PR_MESSAGE_FLAGS, &sPropVal);
+    if (FAILED (hr) || sPropVal && sPropVal->Value.l & MSGFLAG_UNSENT)
     {
+	ExchLogInfo ("%s:%d: HrGetOneProp() failed.\n", __FILE__, __LINE__);
 	hr = S_OK;
 	goto failed;
     }
+    MAPIFreeBuffer (sPropVal);
+    sPropVal = NULL;
 
     hr = HrGetOneProp (pMessage, PR_HASATTACH, &sPropVal);
-    nAttach = sPropVal->Value.b? 1 : 0;
+    if (FAILED (hr))
+    {
+	ExchLogInfo ("%s:%d: HrGetOneProp() failed.\n", __FILE__, __LINE__);
+	hr = S_OK;
+	goto failed;
+    }
+    if (sPropVal) {
+	nAttach = sPropVal->Value.b? 1 : 0;
+	MAPIFreeBuffer (sPropVal);
+	sPropVal = NULL;
+    }
 
     if (g_gpg.CheckPGPMime (NULL, pMessage, mimeType) == TRUE)
     {
+	ExchLogInfo ("%s:%d: CheckPGPMIME=1.\n", __FILE__, __LINE__);
 	g_gpg.ProcessPGPMime (NULL, pMessage, mimeType);
 	goto failed;
     }
@@ -338,6 +375,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
     }
     if (FAILED (hr))
     {
+	ExchLogInfo ("%s:%d: OpenProperty() failed.\n", __FILE__, __LINE__);
 	hr = S_FALSE;
 	goto failed;
     }
@@ -346,6 +384,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
     hr = pStreamBody->Seek (off, STREAM_SEEK_SET, &off_ret);
     if (FAILED (hr))
     {
+	ExchLogInfo ("%s:%d: Seek() failed.\n", __FILE__, __LINE__);
 	hr = S_FALSE;
 	goto failed;
     }
@@ -394,6 +433,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	fp = fopen (in_tmpname, "wb");
 	if (!fp)
 	{
+	    ExchLogInfo ("%s:%d: fopen(%s) failed.\n", __FILE__, __LINE__, in_tmpname);
 	    hr = S_FALSE;
 	    goto failed;
 	}
@@ -410,7 +450,6 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	sProp.ulPropTag = PR_BODY;
 	sProp.Value.lpszA = (char *)sOutMsg.c_str ();
 	hr = HrSetOneProp (pMessage, &sProp);
-
 	goto failed;
     }
 
@@ -426,6 +465,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	fp = fopen (in_tmpname, "wb");
 	if (!fp)
 	{
+	    ExchLogInfo ("%s:%d: fopen(%s) failed.\n", __FILE__, __LINE__, in_tmpname);
 	    hr = S_FALSE;
 	    goto failed;
 	}
@@ -448,6 +488,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 		hr = HrSetOneProp (pMessage, &sProp);
 		goto failed;
 	    }*/
+	    ExchLogInfo ("%s:%d: DecryptFile() failed.\n", __FILE__, __LINE__);
 	}
 	fp = fopen (out_tmpname, "rb");
 	if (!fp)
@@ -468,8 +509,10 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	sProp.ulPropTag = PR_BODY;
 	sProp.Value.lpszA = (char *)sOutMsg.c_str ();
 	hr = HrSetOneProp (pMessage, &sProp);
-	if (FAILED (hr))
+	if (FAILED (hr)) {
+	    ExchLogInfo ("%s:%d: HrSetOneProp(msg) failed.\n", __FILE__, __LINE__);
 	    goto failed;
+	}
 
 	sProp.ulPropTag = PR_ACCESS;
 	sProp.Value.l = MAPI_ACCESS_MODIFY;
@@ -954,64 +997,63 @@ STDMETHODIMP CGPGExchExtCommands::QueryHelpText(
     LPTSTR pszText,   // A pointer to buffer to be populated with text to display.
 	UINT nCharCnt)    // The count of characters available in psz buffer.
 {
-	if (m_lContext == EECONTEXT_READNOTEMESSAGE)
+	
+    if (m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+	if (nCommandID == m_nCommandID1)
 	{
-		if (nCommandID == m_nCommandID1)
-		{
-			if (lFlags == EECQHT_STATUS)
-				LoadString(theApp.m_hInstance, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
-  			if (lFlags == EECQHT_TOOLTIP)
-				LoadString(theApp.m_hInstance, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
-			return S_OK;
-		}
-		if (nCommandID == m_nCommandID2)
-		{
-			if (lFlags == EECQHT_STATUS)
-				LoadString(theApp.m_hInstance, IDS_ADD_KEYS_STATUSBAR, pszText, nCharCnt);
-  			if (lFlags == EECQHT_TOOLTIP)
-				LoadString(theApp.m_hInstance, IDS_ADD_KEYS_TOOLTIP, pszText, nCharCnt);
-			return S_OK;
-		}
+	    if (lFlags == EECQHT_STATUS)
+		LoadString(theApp.m_hInstance, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
+  	    if (lFlags == EECQHT_TOOLTIP)
+		LoadString(theApp.m_hInstance, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
+	    return S_OK;
 	}
-	if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+	if (nCommandID == m_nCommandID2)
 	{
-		if (nCommandID == m_nCommandID1)
-		{
-			if (lFlags == EECQHT_STATUS)
-				LoadString(theApp.m_hInstance, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
-  			if (lFlags == EECQHT_TOOLTIP)
-				LoadString(theApp.m_hInstance, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
-			return S_OK;
-		}
-		if (nCommandID == m_nCommandID2)
-		{
-			if (lFlags == EECQHT_STATUS)
-				LoadString(theApp.m_hInstance, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
-  			if (lFlags == EECQHT_TOOLTIP)
-				LoadString(theApp.m_hInstance, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
-			return S_OK;
-		}
-		if (nCommandID == m_nCommandID3)
-		{
-			if (lFlags == EECQHT_STATUS)
-				LoadString(theApp.m_hInstance, IDS_ADD_STANDARD_KEY_STATUSBAR, pszText, nCharCnt);
-			return S_OK;
-		}
+	    if (lFlags == EECQHT_STATUS)
+		LoadString(theApp.m_hInstance, IDS_ADD_KEYS_STATUSBAR, pszText, nCharCnt);
+  	    if (lFlags == EECQHT_TOOLTIP)
+		LoadString(theApp.m_hInstance, IDS_ADD_KEYS_TOOLTIP, pszText, nCharCnt);
+	    return S_OK;
 	}
-
-	if (m_lContext == EECONTEXT_VIEWER)
+    }
+    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+    {
+	if (nCommandID == m_nCommandID1)
 	{
-		if (nCommandID == m_nCommandID1)
-		{
-			if (lFlags == EECQHT_STATUS)
-				LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
-  			if (lFlags == EECQHT_TOOLTIP)
-				LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
-			return S_OK;
-		}
+	    if (lFlags == EECQHT_STATUS)
+		LoadString(theApp.m_hInstance, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
+	    if (lFlags == EECQHT_TOOLTIP)
+		LoadString(theApp.m_hInstance, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
+	    return S_OK;
 	}
-
-	return S_FALSE;
+	if (nCommandID == m_nCommandID2)
+	{
+	    if (lFlags == EECQHT_STATUS)
+		LoadString(theApp.m_hInstance, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
+  	    if (lFlags == EECQHT_TOOLTIP)
+	        LoadString(theApp.m_hInstance, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
+	    return S_OK;
+	}
+	if (nCommandID == m_nCommandID3)
+	{
+	    if (lFlags == EECQHT_STATUS)
+		LoadString(theApp.m_hInstance, IDS_ADD_STANDARD_KEY_STATUSBAR, pszText, nCharCnt);
+	    return S_OK;
+	}	
+    }
+    if (m_lContext == EECONTEXT_VIEWER)
+    {
+	if (nCommandID == m_nCommandID1)
+	{
+	    if (lFlags == EECQHT_STATUS)
+		LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
+	    if (lFlags == EECQHT_TOOLTIP)
+		LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
+	    return S_OK;
+	}	
+    }
+    return S_FALSE;
 }
 
 /////////////////////////////////////////////////////////////////////////////
