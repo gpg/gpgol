@@ -1,3 +1,15 @@
+2005-02-14  Timo Schulz  <twoaday@g10code.de>
+
+	* GDGPGO.cpp (EncryptAndSignFile): Do not check empty
+	passphrases. Noted by Dennis Martin.
+	(DecryptNextFile): Do not touch .sig files. By Dennis.
+
+
+2005-01-19  Timo Schulz  <twoaday@g10code.de>
+
+	* OptionsDlg.cpp (OnOk): Make sure gpg.exe really exists in the
+	given directory.
+
 2004-09-08  Timo Schulz  <twoaday@g10code.de>
 
 	* OptionsDlg.cpp (OnSelectKeyManager): Automatically add

@@ -134,7 +134,10 @@ STDMETHODIMP CGDGPG::EncryptAndSignFile(
 		return S_OK;	
 	    }
 	    sPassphrase = dlgPassphrase.GetPassphrase ();
-	    bPassphraseOK = CheckPassphrase (sPassphrase);    
+	    if (sPassphrase != "")
+		bPassphraseOK = CheckPassphrase (sPassphrase);
+	    else
+		bPassphraseOK = TRUE;
 	}
 	if (!bPassphraseOK)
 	{
@@ -813,6 +816,10 @@ STDMETHODIMP CGDGPG::DecryptNextFile(
     }    
 	
     ::DeleteFile(OLE2A(strFilenameDest));
+    if (strstr (OLE2A (strFilenameSource),".sig"))
+	return S_OK;
+
+
     string sCommand = "--output \"";
     sCommand += OLE2A(strFilenameDest);
     sCommand += "\" --yes ";

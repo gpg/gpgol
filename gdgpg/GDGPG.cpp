@@ -1,7 +1,7 @@
 /* GDGPG.cpp - implementation of the dll exports and the GDGPG class
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2003 Timo Schulz
- *	Copyright (C) 2004 g10 Code GmbH
+ *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
  * This file is part of the G DATA Outlook Plugin for GnuPG.
  * 
@@ -125,7 +125,6 @@ int CGDGPG::LogInfo (const char * fmt, ...)
 CGDGPG::CGDGPG (void)
 {
     string sGPGPath;
- 
     /*
     sGPGPath = GetStringFromRegistry(HKEY_LOCAL_MACHINE, 
 		"Software\\Microsoft\\Windows\\CurrentVersion", "ProgramFilesDir", ".\\");
@@ -230,7 +229,7 @@ CGDGPG::CallGPG(
 			      NULL, NULL, &sInfo, &pInfo );
     
     if (!bSuccess)
-	LogInfo ("gpg procession created failed ec=%d\n", (int)GetLastError ());
+	LogInfo ("gpg created process failed ec=%d\n", (int)GetLastError ());
 
     /* send passpharse (if spezified) */
     if (bSuccess && (sPassphrase.size() > 0))
