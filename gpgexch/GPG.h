@@ -25,16 +25,12 @@
 
 #include "..\GDGPG\Wrapper\GDGPGWrapper.h"
 
-/////////////////////////////////////////////////////////////////////////////
-// CGPG  
-//
-// The CGPG class implements the gpg functions for MAPI messages.
-//
+/* The CGPG class implements the gpg functions for MAPI messages. */
 class CGPG  
 {
 public:
-	CGPG();
-	~CGPG ();
+    CGPG();
+    ~CGPG ();
 
 protected:
     // options
@@ -70,21 +66,19 @@ public:
     void WriteGPGOptions();   // Writes the plugin options to the registry.
     void EditExtendedOptions(HWND hWnd);  // Shows the dialog to edit the extended options.
 
-
     // Decrypts the specified message.
-    BOOL DecryptMessage(HWND hWnd, LPMESSAGE lpMessage, BOOL bIsRootMessage); 
+    BOOL DecryptMessage (HWND hWnd, LPMESSAGE lpMessage, BOOL bIsRootMessage); 
 	
     // Encrypts and signs the specified message.
-    BOOL EncryptAndSignMessage(HWND hWnd, LPMESSAGE lpMessage, BOOL bEncrypt, BOOL bSign, BOOL bIsRootMessage);
+    BOOL EncryptAndSignMessage (HWND hWnd, LPMESSAGE lpMessage, BOOL bEncrypt, BOOL bSign, BOOL bIsRootMessage);
 
 	
     // Imports all keys from the specified message.
-    BOOL ImportKeys(HWND hWnd, LPMESSAGE lpMessage);
-
+    BOOL ImportKeys (HWND hWnd, LPMESSAGE lpMessage);
 	
-    void OpenKeyManager();            // Opens the key manager.
-    void InvalidateKeyLists();        // Invalidates the key lists (e.g. when the keys was changed by the key manager).
-    BOOL AddStandardKey(HWND hWnd);   // Adds the standard key to the open message.
+    void OpenKeyManager ();            // Opens the key manager.
+    void InvalidateKeyLists ();        // Invalidates the key lists (e.g. when the keys was changed by the key manager).
+    BOOL AddStandardKey (HWND hWnd);   // Adds the standard key to the open message.
 
 	
     // get parameters
@@ -113,13 +107,15 @@ public:
     BOOL CheckPGPMime (HWND hWnd, LPMESSAGE pMessage, int &mType);
     BOOL ProcessPGPMime (HWND hWnd, LPMESSAGE pMessage, int mType);
 
+public:
+    // Decrypts all attachments.
+    BOOL DecryptAttachments(HWND hWnd, LPMESSAGE pMessage);
+
 protected:
     // Saves all attachments.
     BOOL SaveAttachments(HWND hWnd, LPMESSAGE pMessage, string sPrefix, vector<string>* pFileNameVector);
     // Encrypts and signs all attachments.
     BOOL EncryptAndSignAttachments(HWND hWnd, LPMESSAGE pMessage);
-    // Decrypts all attachments.
-    BOOL DecryptAttachments(HWND hWnd, LPMESSAGE pMessage);	
     // Finds the window which contains the crypted message.
     HWND FindMessageWindow(HWND hWnd);
     // Executes the specified action on all attachments.

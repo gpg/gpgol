@@ -104,6 +104,10 @@ SOURCE=.\GPGExch.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\GPGMessage.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\GPGOptionsDlg.cpp
 # End Source File
 # Begin Source File
@@ -130,6 +134,10 @@ SOURCE=.\GPGExch.h
 # Begin Source File
 
 SOURCE=.\GPGExchange.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\GPGMessage.h
 # End Source File
 # Begin Source File
 

@@ -1,3 +1,10 @@
+2004-10-06  Timo Schulz  <twoaday@g10code.de>
+
+	* GPGExch.cpp (OnRead): Show the original message
+	if the decryption was canceled.
+	
+	Ask if the user also wants to decrypt the attachments.
+
 2004-09-08  Timo Schulz  <twoaday@g10code.de>
 
 	* GPG.cpp (~CGPG): New. Destructor to free

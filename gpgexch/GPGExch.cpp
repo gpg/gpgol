@@ -290,7 +290,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
     string sMsg = "", sOutMsg = "";
     SPropValue sProp;
     LPSPropValue sPropVal=NULL;
-    int ret = 0, mimeType = 0;
+    int ret = 0, mimeType = 0, nAttach = 0;
     FILE * fp;
     time_t t;
     struct tm * tm;    
@@ -317,13 +317,14 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	goto failed;
     }
 
-    /* 
+    hr = HrGetOneProp (pMessage, PR_HASATTACH, &sPropVal);
+    nAttach = sPropVal->Value.b? 1 : 0;
+
     if (g_gpg.CheckPGPMime (NULL, pMessage, mimeType) == TRUE)
     {
 	g_gpg.ProcessPGPMime (NULL, pMessage, mimeType);
 	goto failed;
     }
-    */
 
     hr = pMessage->OpenProperty (PR_BODY, &IID_IStream, STGM_DIRECT|STGM_READ,
 				 0, (LPUNKNOWN *)&pStreamBody);
@@ -449,7 +450,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	}
 	fp = fopen (out_tmpname, "rb");
 	if (!fp)
-	    sOutMsg = "";
+	    sOutMsg = sMsg;
 	else
 	{
 	    while (!feof (fp))
@@ -470,6 +471,12 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	sProp.ulPropTag = PR_ACCESS;
 	sProp.Value.l = MAPI_ACCESS_MODIFY;
 	HrSetOneProp(pMessage, &sProp);	
+
+	if (fp && nAttach > 0)
+	{
+	    if (MessageBox (NULL, "Decrypt attachments?", "G-DATA GPG", MB_YESNO|MB_ICONQUESTION) == IDYES)
+		g_gpg.DecryptAttachments (NULL, pMessage);
+	}
     }
 
 failed:

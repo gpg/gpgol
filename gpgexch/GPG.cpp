@@ -479,25 +479,25 @@ BOOL CGPG::DecryptMessage(
 		// decrypt attachments
 		if (bIsRootMessage)
 		{
-			m_nDecryptedAttachments = 0;
-			m_bCancelSavingDecryptedAttachments = FALSE;
+		    m_nDecryptedAttachments = 0;
+		    m_bCancelSavingDecryptedAttachments = FALSE;
 		}
 		DecryptAttachments(hWnd, lpMessage);
-
 		if (m_bSaveDecrypted)
 		{
-			lpMessage->SaveChanges(FORCE_SAVE);
-			if (bIsRootMessage && (m_nDecryptedAttachments > 0))
-			{
-				TCHAR sCaption[256];
-				LoadString(theApp.m_hInstance, IDS_APP_NAME, sCaption, sizeof(sCaption));
-				TCHAR sMess[256];
-				LoadString(theApp.m_hInstance, IDS_ATT_DECRYPT_AND_SAVE, sMess, sizeof(sMess));
-			    ::MessageBox(hWnd, sMess, sCaption, MB_ICONINFORMATION);
-			}
+		    lpMessage->SaveChanges(FORCE_SAVE);
+		    if (bIsRootMessage && (m_nDecryptedAttachments > 0))
+		    {
+			TCHAR sCaption[256];
+			LoadString(theApp.m_hInstance, IDS_APP_NAME, sCaption, sizeof(sCaption));
+			TCHAR sMess[256];
+			LoadString(theApp.m_hInstance, IDS_ATT_DECRYPT_AND_SAVE, sMess, sizeof(sMess));
+			::MessageBox(hWnd, sMess, sCaption, MB_ICONINFORMATION);
+		    }
 		}
 	}
 
+	
 	// erase temporary saved parameter
 	if (bIsRootMessage)
 		m_gdgpg.DecryptNextFile(hWnd, A2OLE(""), A2OLE(""), nRet);
@@ -522,16 +522,14 @@ CGPG::ProcessPGPMime (HWND hWnd, LPMESSAGE pMessage, int mType)
 BOOL 
 CGPG::CheckPGPMime (HWND hWnd, LPMESSAGE pMessage, int &mType)
 {
-    return TRUE;
+    return FALSE;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// ProcessAttachments
-//
-// Executes the specified action on all attachments.
-//
-// Return value: TRUE if successful.
-//
+
+/* ProcessAttachments - Executes the specified action on all attachments.
+
+   Return value: TRUE if successful.
+*/
 BOOL 
 CGPG::ProcessAttachments(
 	HWND hWnd,               // The handle of the parent window for messages and dialog.
@@ -540,301 +538,293 @@ CGPG::ProcessAttachments(
 	string sPrefix,          // The prefix used for temporary file names.
 	vector<string>* pFileNameVector)  // Points to a string vector to which all saved file names will be added; may be NULL.
 {
-	USES_CONVERSION;
-	BOOL bSuccess = TRUE;
-	TCHAR szTempPath[MAX_PATH];
-	GetTempPath(MAX_PATH, szTempPath);
-	string sFilenameAtt = szTempPath;
-	sFilenameAtt += sPrefix;
+    USES_CONVERSION;
+    BOOL bSuccess = TRUE;
+    TCHAR szTempPath[MAX_PATH];
+    GetTempPath(MAX_PATH, szTempPath);
+    string sFilenameAtt = szTempPath;
+    sFilenameAtt += sPrefix;
 
     static SizedSPropTagArray( 1L, PropAttNum) = { 1L, {PR_ATTACH_NUM}};
 
-	LPMAPITABLE lpAttTable = NULL;
-	LPSRowSet lpAttRows = NULL;
-	BOOL bSaveAttSuccess = TRUE;
-	HRESULT hr = pMessage->GetAttachmentTable(0, &lpAttTable);
+    LPMAPITABLE lpAttTable = NULL;
+    LPSRowSet lpAttRows = NULL;
+    BOOL bSaveAttSuccess = TRUE;
+
+    HRESULT hr = pMessage->GetAttachmentTable (0, &lpAttTable);
+    if (FAILED (hr))
+	bSuccess = FALSE;
+
+    if (bSuccess)
+    {
+	hr = HrQueryAllRows(lpAttTable, (LPSPropTagArray) &PropAttNum,
+			    NULL, NULL, 0L, &lpAttRows);
 	if (FAILED(hr))
-		bSuccess = FALSE;
-
-	if (bSuccess)
+	    bSuccess = FALSE;
+    }
+	
+    if (bSuccess)
+    {
+	for (int j = 0; j < (int) lpAttRows->cRows; j++)
 	{
-		hr = HrQueryAllRows(lpAttTable, (LPSPropTagArray) &PropAttNum,
-			NULL, NULL, 0L, &lpAttRows);
-		if (FAILED(hr))
-			bSuccess = FALSE;
-	}
-
-	if (bSuccess)
-	{
-		for (int j = 0; j < (int) lpAttRows->cRows; j++)
-		{
-			TCHAR sn[20];
-			itoa(j, sn, 10);
-			string sFilename = sFilenameAtt;
-			sFilename += sn;
-			sFilename += ".tmp";
-
-			string sFilenameDest = sFilename + ".gpg";
-
-			string sAttName = "attach";
-			LPATTACH pAttach = NULL;
-			LPSTREAM pStreamAtt = NULL;
-			int nAttachment = lpAttRows->aRow[j].lpProps[0].Value.ul;
-			HRESULT hr = pMessage->OpenAttach(nAttachment, NULL, MAPI_BEST_ACCESS, &pAttach);
+	    TCHAR sn[20];
+	    itoa(j, sn, 10);
+	    string sFilename = sFilenameAtt;
+	    sFilename += sn;
+	    sFilename += ".tmp";
+	    string sFilenameDest = sFilename + ".gpg";
+	    string sAttName = "attach";
+	    LPATTACH pAttach = NULL;
+	    LPSTREAM pStreamAtt = NULL;
+	    int nAttachment = lpAttRows->aRow[j].lpProps[0].Value.ul;
+	    HRESULT hr = pMessage->OpenAttach(nAttachment, NULL, MAPI_BEST_ACCESS, &pAttach);
+	    if (SUCCEEDED(hr))
+	    {
+		BOOL bSaveAttSuccess = TRUE;
+		LPSPropValue lpspv = NULL;
+		hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_METHOD, &lpspv);
+		BOOL bEmbedded = (lpspv->Value.ul == ATTACH_EMBEDDED_MSG);
+		BOOL bEmbeddedOLE = (lpspv->Value.ul == ATTACH_OLE);
+		MAPIFreeBuffer(lpspv);
+		
+		if (SUCCEEDED(hr) && bEmbedded)
+		{		
+		    if ((nAction == PROATT_DECRYPT) || (nAction == PROATT_ENCRYPT_AND_SIGN))
+		    {		
+			LPMESSAGE pMessageEmb = NULL;
+			hr = pAttach->OpenProperty(PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, MAPI_MODIFY, 
+						   (LPUNKNOWN*) &pMessageEmb);
 			if (SUCCEEDED(hr))
 			{
-				BOOL bSaveAttSuccess = TRUE;
-				LPSPropValue lpspv = NULL;
-				hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_METHOD, &lpspv);
-				BOOL bEmbedded = (lpspv->Value.ul == ATTACH_EMBEDDED_MSG);
-				BOOL bEmbeddedOLE = (lpspv->Value.ul == ATTACH_OLE);
-				MAPIFreeBuffer(lpspv);
-
-				if (SUCCEEDED(hr) && bEmbedded)
-				{
-					if ((nAction == PROATT_DECRYPT) || (nAction == PROATT_ENCRYPT_AND_SIGN))
-					{
-						LPMESSAGE pMessageEmb = NULL;
-						hr = pAttach->OpenProperty(PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, MAPI_MODIFY, (LPUNKNOWN*) &pMessageEmb);
-						if (SUCCEEDED(hr))
-						{
-							if (nAction == PROATT_DECRYPT)
-							{
-								if (!DecryptMessage(hWnd, pMessageEmb, FALSE))
-									bSuccess = FALSE;
-							}
-							if (nAction == PROATT_ENCRYPT_AND_SIGN)
-							{
-								if (!EncryptAndSignMessage(hWnd, pMessageEmb, FALSE, FALSE, FALSE))
-									bSuccess = FALSE;
-							}
-							pMessageEmb->SaveChanges(FORCE_SAVE);
-							pAttach->SaveChanges(FORCE_SAVE);
-							pMessageEmb->Release();
-							m_nDecryptedAttachments++;
-						}
-					}
-				}
-
-				BOOL bShortFileName = FALSE;
-				if (!bEmbedded && bSaveAttSuccess)
-				{
-					LPSPropValue lpPropValue;
-					hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_LONG_FILENAME, &lpPropValue);
-					if (FAILED(hr))
-					{
-						bShortFileName = TRUE;
-						hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_FILENAME, &lpPropValue);
-						if (SUCCEEDED(hr))
-						{
-							sAttName = lpPropValue[0].Value.lpszA;
-							MAPIFreeBuffer(lpPropValue);
-						}
-					}
-					else
-					{
-						sAttName = lpPropValue[0].Value.lpszA;
-						MAPIFreeBuffer(lpPropValue);
-					}
-
-					// use correct file extensions for temp files to allow virus checking
-					if (nAction == PROATT_DECRYPT)
-					{
-						sFilename = sFilenameAtt + sAttName;
-						sFilenameDest = sFilename;
-						int nPos = sFilename.rfind('.');
-						if (nPos != -1)
-						{
-							string sExt = sFilename.substr(nPos+1);
-							if ((sExt == "gpg") || (sExt == "GPG") || (sExt == "asc") || (sExt == "ASC"))
-								sFilenameDest = sFilename.substr(0, nPos);
-							else
-								sFilename += ".gpg";
-						}
-						else
-							sFilename += ".gpg";
-					}
-					if (nAction == PROATT_ENCRYPT_AND_SIGN)
-					{
-						sFilename = sFilenameAtt + sAttName;
-						sFilenameDest = sFilename + ".gpg";
-					}
-				}
-
-				if (!bEmbedded && bSaveAttSuccess && bEmbeddedOLE)
-				{
-					// we can crypt embedded OLE objects as attachments, but it is
-					// not possible to open them after decrypting
-					// so show a error message
-					if (nAction == PROATT_ENCRYPT_AND_SIGN)
-					{
-						bSaveAttSuccess = FALSE;
-						m_bContainsEmbeddedOLE = TRUE;
-					}
-					else
-					{
-						// save ole attachment to file
-						hr = pAttach->OpenProperty(PR_ATTACH_DATA_OBJ, &IID_IStream, 0, MAPI_MODIFY, (LPUNKNOWN*) &pStreamAtt);
-						if (SUCCEEDED(hr))
-						{
-							LPSTREAM  pStreamDest;
-							hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
-							   STGM_CREATE | STGM_READWRITE,
-							   (char*) sFilename.c_str(), NULL,  &pStreamDest);
-
-							if (FAILED(hr))
-							{
-								pStreamAtt->Release();
-							}
-							else
-							{
-								STATSTG statInfo;
-								pStreamAtt->Stat(&statInfo, STATFLAG_NONAME);
-
-   								pStreamAtt->CopyTo(pStreamDest, statInfo.cbSize, NULL, NULL);
-								pStreamDest->Commit(0);
-								pStreamDest->Release();
-								pStreamAtt->Release();
-
-								if (pFileNameVector != NULL)
-									pFileNameVector->push_back(sFilename);
-
-								m_nDecryptedAttachments++;
-							}
-						}
-						else
-							bEmbeddedOLE = FALSE;  // use PR_ATTACH_DATA_BIN
-					}
-				}
-
-				if (!bEmbedded && !bEmbeddedOLE && bSaveAttSuccess)
-				{
-					hr = pAttach->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,	0, (LPUNKNOWN*) &pStreamAtt);
-					if (HR_SUCCEEDED(hr))
-					{
-						LPSTREAM  pStreamDest;
-						hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
-						   STGM_CREATE | STGM_READWRITE,
-						   (char*) sFilename.c_str(), NULL,  &pStreamDest);
-
-						if (FAILED(hr))
-						{
-							pStreamAtt->Release();
-						}
-						else
-						{
-							STATSTG statInfo;
-							pStreamAtt->Stat(&statInfo, STATFLAG_NONAME);
-
-   							pStreamAtt->CopyTo(pStreamDest, statInfo.cbSize, NULL, NULL);
-							pStreamDest->Commit(0);
-							pStreamDest->Release();
-							pStreamAtt->Release();
-
-							if (pFileNameVector != NULL)
-								pFileNameVector->push_back(sFilename);
-						}
-					}
-				}
-
-				// encrypt, decrypt, sign
-				if (!bEmbedded && bSaveAttSuccess && (nAction >= PROATT_ENCRYPT_AND_SIGN) &&  (nAction <= PROATT_DECRYPT))
-				{
-					int nRet = 0;
-					if (nAction == PROATT_DECRYPT)
-						m_gdgpg.DecryptNextFile(hWnd, A2OLE(sFilename.c_str()), A2OLE(sFilenameDest.c_str()), nRet);
-					else
-						m_gdgpg.EncryptAndSignNextFile(hWnd, A2OLE(sFilename.c_str()), A2OLE(sFilenameDest.c_str()), FALSE, nRet);
-					::DeleteFile(sFilename.c_str());
-
-					if (nRet == 0)
-					{
-						FILE* file = fopen(sFilenameDest.c_str(), "rb");
-						if (file == NULL)
-							bSaveAttSuccess = FALSE;
-						else
-							fclose(file);
-					}
-					else
-						bSaveAttSuccess = FALSE;
-
-					if (!bSaveAttSuccess)
-						::DeleteFile(sFilenameDest.c_str());
-				}
-
-				// replace attachment
-				if (!bEmbedded && bSaveAttSuccess && (nAction >= PROATT_ENCRYPT_AND_SIGN) &&  (nAction <= PROATT_DECRYPT))
-				{
-					if (nAction == PROATT_ENCRYPT_AND_SIGN)
-						sAttName += ".gpg";
-					if (nAction == PROATT_DECRYPT)
-					{
-						int nPos = sAttName.rfind('.');
-						if (nPos != -1)
-						{
-							string sExt = sAttName.substr(nPos+1);
-							if ((sExt == "gpg") || (sExt == "GPG"))
-								sAttName = sAttName.substr(0, nPos);
-						}
-						m_nDecryptedAttachments++;
-						if (!m_bSaveDecrypted && !m_bCancelSavingDecryptedAttachments)
-						{
-							// save encrypted attachment
-							if (!SaveDecryptedAttachment(hWnd, sFilenameDest, sAttName))
-								m_bCancelSavingDecryptedAttachments = TRUE;
-						}
-					}
-
-					pMessage->DeleteAttach(nAttachment, 0, NULL, 0);
-
-					ULONG ulNewAttNum;
-					LPATTACH lpNewAttach = NULL;
-					hr = pMessage->CreateAttach(NULL, 0, &ulNewAttNum, &lpNewAttach);
-					if (SUCCEEDED(hr))
-					{
-						SPropValue sProp; 
-						sProp.ulPropTag = PR_ATTACH_METHOD;
-						sProp.Value.ul = ATTACH_BY_VALUE;
-						hr = HrSetOneProp(lpNewAttach, &sProp);
-						if (SUCCEEDED(hr))
-						{
-							if (bShortFileName)
-								sProp.ulPropTag = PR_ATTACH_FILENAME;
-							else
-								sProp.ulPropTag = PR_ATTACH_LONG_FILENAME;
-							sProp.Value.lpszA = (char*) sAttName.c_str();
-							hr = HrSetOneProp(lpNewAttach, &sProp);
-
-							LPSTREAM  pNewStream;
-							hr = lpNewAttach->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,	MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*) &pNewStream);
-							if (SUCCEEDED(hr))
-							{
-								LPSTREAM  pStreamFile;
-								hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
-								   STGM_READ, (char*) sFilenameDest.c_str(), NULL,  &pStreamFile);
-
-								if (SUCCEEDED(hr))
-								{
-									STATSTG statInfo;
-									pStreamFile->Stat(&statInfo, STATFLAG_NONAME);
-   									pStreamFile->CopyTo(pNewStream, statInfo.cbSize, NULL, NULL);
-									pNewStream->Commit(0);
-									pNewStream->Release();
-									pStreamFile->Release();
-									lpNewAttach->SaveChanges(FORCE_SAVE);
-								}
-							}
-						}
-					}
-					::DeleteFile(sFilenameDest.c_str());
-				}
-
-				if (!bSaveAttSuccess)
-					bSuccess = FALSE;
-				pAttach->Release();
-			}
+			    if (nAction == PROATT_DECRYPT)
+			    {			
+				if (!DecryptMessage(hWnd, pMessageEmb, FALSE))
+				    bSuccess = FALSE;
+			    }
+			    if (nAction == PROATT_ENCRYPT_AND_SIGN)
+			    {
+				if (!EncryptAndSignMessage(hWnd, pMessageEmb, FALSE, FALSE, FALSE))
+				    bSuccess = FALSE;
+			    }
+			    pMessageEmb->SaveChanges(FORCE_SAVE);
+			    pAttach->SaveChanges(FORCE_SAVE);
+			    pMessageEmb->Release();
+			    m_nDecryptedAttachments++;
+			}	
+		    }
 		}
+		BOOL bShortFileName = FALSE;
+		if (!bEmbedded && bSaveAttSuccess)
+		{
+		    LPSPropValue lpPropValue;
+		    hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_LONG_FILENAME, &lpPropValue);
+		    if (FAILED(hr))
+		    {
+			bShortFileName = TRUE;
+			hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_FILENAME, &lpPropValue);
+			if (SUCCEEDED(hr))
+			{
+			    sAttName = lpPropValue[0].Value.lpszA;
+			    MAPIFreeBuffer(lpPropValue);
+			}	
+		    }
+		    else
+		    {
+			sAttName = lpPropValue[0].Value.lpszA;
+			MAPIFreeBuffer(lpPropValue);	
+		    }
+		
+		    // use correct file extensions for temp files to allow virus checking
+		    if (nAction == PROATT_DECRYPT)
+		    {
+			sFilename = sFilenameAtt + sAttName;
+			sFilenameDest = sFilename;
+			int nPos = sFilename.rfind('.');
+			if (nPos != -1)
+			{
+			    string sExt = sFilename.substr(nPos+1);
+			    if ((sExt == "gpg") || (sExt == "GPG") || (sExt == "asc") || (sExt == "ASC"))
+				sFilenameDest = sFilename.substr(0, nPos);
+			    else
+				sFilename += ".gpg";	
+			}
+			else
+			    sFilename += ".gpg";
+					
+		    }
+		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
+		    {
+			sFilename = sFilenameAtt + sAttName;
+			sFilenameDest = sFilename + ".gpg";	
+		    }
+		}
+
+				
+		if (!bEmbedded && bSaveAttSuccess && bEmbeddedOLE)
+		{
+		    // we can crypt embedded OLE objects as attachments, but it is
+		    // not possible to open them after decrypting
+		    // so show a error message
+		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
+		    {
+			bSaveAttSuccess = FALSE;
+			m_bContainsEmbeddedOLE = TRUE;
+		    }
+		    else
+		    {
+			// save ole attachment to file
+			hr = pAttach->OpenProperty(PR_ATTACH_DATA_OBJ, &IID_IStream, 0, MAPI_MODIFY, (LPUNKNOWN*) &pStreamAtt);
+			if (SUCCEEDED(hr))
+			{
+			    LPSTREAM  pStreamDest;
+			    hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
+				STGM_CREATE | STGM_READWRITE,
+				(char*) sFilename.c_str(), NULL,  &pStreamDest);
+			    if (FAILED(hr))
+			    {
+				pStreamAtt->Release();
+			    }
+			    else
+			    {			
+				STATSTG statInfo;				
+				pStreamAtt->Stat(&statInfo, STATFLAG_NONAME);   				
+				pStreamAtt->CopyTo(pStreamDest, statInfo.cbSize, NULL, NULL);
+				pStreamDest->Commit(0);
+				pStreamDest->Release();
+				pStreamAtt->Release();				
+				if (pFileNameVector != NULL)
+				    pFileNameVector->push_back(sFilename);
+				m_nDecryptedAttachments++;	
+			    }
+			}
+			else
+			    bEmbeddedOLE = FALSE;  // use PR_ATTACH_DATA_BIN
+		    }
+		}
+
+		if (!bEmbedded && !bEmbeddedOLE && bSaveAttSuccess)		
+		{		
+		    hr = pAttach->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,	0, (LPUNKNOWN*) &pStreamAtt);		
+		    if (HR_SUCCEEDED(hr))		
+		    {		
+			LPSTREAM  pStreamDest;
+			
+			hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
+						STGM_CREATE | STGM_READWRITE,
+					     (char*) sFilename.c_str(), NULL,  &pStreamDest);
+			if (FAILED(hr))
+			{
+			    pStreamAtt->Release();
+			}
+			else
+			{			
+			    STATSTG statInfo;
+			    pStreamAtt->Stat(&statInfo, STATFLAG_NONAME);
+			    pStreamAtt->CopyTo(pStreamDest, statInfo.cbSize, NULL, NULL);
+			    pStreamDest->Commit(0);
+			    pStreamDest->Release();
+			    pStreamAtt->Release();
+			    if (pFileNameVector != NULL)
+				pFileNameVector->push_back(sFilename);
+			}
+		    }
+		}
+		// encrypt, decrypt, sign
+		if (!bEmbedded && bSaveAttSuccess && (nAction >= PROATT_ENCRYPT_AND_SIGN) &&  (nAction <= PROATT_DECRYPT))
+		{
+		    int nRet = 0;
+		    if (nAction == PROATT_DECRYPT)
+			m_gdgpg.DecryptNextFile(hWnd, A2OLE(sFilename.c_str()), A2OLE(sFilenameDest.c_str()), nRet);
+		    else
+			m_gdgpg.EncryptAndSignNextFile(hWnd, A2OLE(sFilename.c_str()), A2OLE(sFilenameDest.c_str()), FALSE, nRet);
+		    ::DeleteFile(sFilename.c_str());
+		    if (nRet == 0)
+		    {
+			FILE* file = fopen(sFilenameDest.c_str(), "rb");
+			if (file == NULL)
+			    bSaveAttSuccess = FALSE;
+			else			
+			    fclose(file);
+		    }
+		    else
+			bSaveAttSuccess = FALSE;
+		    if (!bSaveAttSuccess)
+			::DeleteFile(sFilenameDest.c_str());
+		}
+
+		// replace attachment		
+		if (!bEmbedded && bSaveAttSuccess && (nAction >= PROATT_ENCRYPT_AND_SIGN) &&  (nAction <= PROATT_DECRYPT))
+		{
+		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
+			sAttName += ".gpg";
+		    if (nAction == PROATT_DECRYPT)
+		    {
+			int nPos = sAttName.rfind('.');
+			if (nPos != -1)
+			{
+			    string sExt = sAttName.substr(nPos+1);
+			    if ((sExt == "gpg") || (sExt == "GPG"))
+				sAttName = sAttName.substr(0, nPos);
+			}
+			m_nDecryptedAttachments++;
+			if (!m_bSaveDecrypted && !m_bCancelSavingDecryptedAttachments)
+			{			
+			    // save encrypted attachment
+			    if (!SaveDecryptedAttachment(hWnd, sFilenameDest, sAttName))
+				m_bCancelSavingDecryptedAttachments = TRUE;
+			}
+		    }
+
+		    pMessage->DeleteAttach(nAttachment, 0, NULL, 0);
+
+		    ULONG ulNewAttNum;
+		    LPATTACH lpNewAttach = NULL;
+		    hr = pMessage->CreateAttach(NULL, 0, &ulNewAttNum, &lpNewAttach);
+		    if (SUCCEEDED(hr))
+		    {	
+			SPropValue sProp; 
+			sProp.ulPropTag = PR_ATTACH_METHOD;
+			sProp.Value.ul = ATTACH_BY_VALUE;
+			hr = HrSetOneProp(lpNewAttach, &sProp);
+			if (SUCCEEDED(hr))
+			{
+			    if (bShortFileName)
+				sProp.ulPropTag = PR_ATTACH_FILENAME;
+			    else
+				sProp.ulPropTag = PR_ATTACH_LONG_FILENAME;
+			    sProp.Value.lpszA = (char*) sAttName.c_str();
+			    hr = HrSetOneProp(lpNewAttach, &sProp);
+
+			    LPSTREAM  pNewStream;
+			    hr = lpNewAttach->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,	MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*) &pNewStream);
+			    if (SUCCEEDED(hr))
+			    {			
+				LPSTREAM  pStreamFile;
+				hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
+						      STGM_READ, (char*) sFilenameDest.c_str(), 
+						      NULL,  &pStreamFile);
+				
+				if (SUCCEEDED(hr))
+				{
+				    STATSTG statInfo;
+				    pStreamFile->Stat(&statInfo, STATFLAG_NONAME);
+				    pStreamFile->CopyTo(pNewStream, statInfo.cbSize, NULL, NULL);
+				    pNewStream->Commit(0);
+				    pNewStream->Release();
+				    pStreamFile->Release();
+				    lpNewAttach->SaveChanges(FORCE_SAVE);
+				}
+			    }
+			}
+		    }
+		    ::DeleteFile(sFilenameDest.c_str());
+		}
+		if (!bSaveAttSuccess)
+		    bSuccess = FALSE;
+		pAttach->Release();
+	    }
 	}
+    }
 
     if (NULL != lpAttTable)
         lpAttTable->Release();
@@ -842,16 +832,13 @@ CGPG::ProcessAttachments(
     if (NULL != lpAttRows)
         FreeProws(lpAttRows);
 
-	return bSuccess;
+    return bSuccess;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// SaveAttachments
-//
-// Saves all attachments of the message.
-//
-// Return value: TRUE if successful.
-//
+/* SaveAttachments - Saves all attachments of the message.
+
+   Return value: TRUE if successful.
+*/
 BOOL CGPG::SaveAttachments(
 	HWND hWnd,          // The handle of the parent window for messages and dialog.
 	LPMESSAGE pMessage, // Points to the message.
@@ -876,18 +863,16 @@ BOOL CGPG::EncryptAndSignAttachments(
     return ProcessAttachments(hWnd, PROATT_ENCRYPT_AND_SIGN, pMessage, "_gdgpg_", NULL);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// DecryptAttachments
-//
-// Decrypts all attachments.
-//
-// Return value: TRUE if successful.
-//
+
+/* DecryptAttachments - Decrypts all attachments.
+
+   Return value: TRUE if successful.
+*/
 BOOL CGPG::DecryptAttachments(
 	HWND hWnd,           // The handle of the parent window for messages and dialog.
 	LPMESSAGE pMessage)  // Points to the message.
 {
-    return ProcessAttachments(hWnd, PROATT_DECRYPT, pMessage, "_gdgpg_", NULL);
+    return ProcessAttachments (hWnd, PROATT_DECRYPT, pMessage, "_gdgpg_", NULL);
 }
 
 
@@ -1173,13 +1158,12 @@ BOOL CGPG::AddStandardKey(
 	return bSuccess;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// SaveDecryptedAttachment
-//
-// Calls the "save as" dialog to saves an decrypted attachment.
-// 
-// Return value: TRUE if successful.
-//
+
+/* SaveDecryptedAttachment: 
+   Calls the "save as" dialog to saves an decrypted attachment.
+
+  Return value: TRUE if successful.
+*/
 BOOL CGPG::SaveDecryptedAttachment(
 	HWND hWnd,                 // The handle of the parent window.
 	string &sSourceFilename,   // The source file name.
@@ -1194,7 +1178,8 @@ BOOL CGPG::SaveDecryptedAttachment(
 
     int nLength = strlen(szFilter);
 
-    for (int i=0; i<nLength; i++) {
+    for (int i=0; i<nLength; i++) 
+    {
 	if (szFilter[i] == '|')
 	    szFilter[i] = '\0';	
     }
