@@ -108,12 +108,11 @@ load_secbox( HWND dlg )
 }
 
 
-BOOL CALLBACK
+static BOOL CALLBACK
 decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     static struct decrypt_key_s * dec;
     static int hide_state = 1;
-    int xy[2];
     size_t n;
 
     switch( msg ) {
@@ -128,12 +127,9 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	if (dec && !dec->use_as_cb)
 	    load_secbox(dlg);
 	CheckDlgButton( dlg, IDC_DEC_HIDE, BST_CHECKED );
-	xy[0] = GetSystemMetrics( SM_CXSCREEN );
-	xy[1] = GetSystemMetrics( SM_CYSCREEN );	
-	SetWindowPos( dlg, NULL, xy[0]/3, xy[1]/3, 0, 0, 
-		      SWP_NOSIZE|SWP_NOZORDER );
-	SetFocus( GetDlgItem( dlg, IDC_DEC_PASS ) );
-	SetForegroundWindow( dlg );
+	center_window (dlg, NULL);
+	SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
+	SetForegroundWindow (dlg);
 	return FALSE;
 
     case WM_COMMAND:
@@ -176,15 +172,19 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 }
 
 
-int signer_dialog_box(gpgme_key_t *r_key, char **passwd)
+/* Display a signer dialog which contains all secret keys, useable
+   for signing data. The key is returned in r_key. The password in
+   r_passwd. */
+int 
+signer_dialog_box(gpgme_key_t *r_key, char **r_passwd)
 {
     struct decrypt_key_s hd;
     memset(&hd, 0, sizeof hd);
     DialogBoxParam(glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow(),
 		    decrypt_key_dlg_proc, (LPARAM)&hd );
     if (hd.signer) {
-	if (passwd)
-	    *passwd = strdup(hd.pass);
+	if (r_passwd)
+	    *r_passwd = strdup(hd.pass);
 	*r_key = hd.signer;
     }
     memset (&hd, 0, sizeof hd);
@@ -192,6 +192,8 @@ int signer_dialog_box(gpgme_key_t *r_key, char **passwd)
 }
 
 
+/* GPGME passphrase callback function. It starts the decryption dialog
+   to request the passphrase from the user. */
 const char * 
 passphrase_callback_box(void *opaque, const char *uid_hint, const char *pass_info,
 			int prev_was_bad, int fd)
@@ -229,6 +231,7 @@ passphrase_callback_box(void *opaque, const char *uid_hint, const char *pass_inf
 }
 
 
+/* Release the context which was used in the passphrase callback. */
 void
 free_decrypt_key(struct decrypt_key_s * ctx)
 {

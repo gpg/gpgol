@@ -49,16 +49,21 @@ struct decrypt_key_s {
 };
 
 
+/*-- common.c --*/
+void center_window (HWND childwnd, HWND style);
+
+/*-- recipient-dialog.c --*/
 int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);
-int signer_dialog_box(gpgme_key_t *r_key, char **passwd);
 
-
+/*-- passphrase-dialog.c --*/
+int signer_dialog_box(gpgme_key_t *r_key, char **r_passwd);
 const char * passphrase_callback_box(void *opaque, const char *uid_hint, 
 				     const char *pass_info,
 				     int prev_was_bad, int fd);
-void free_decrypt_key( struct decrypt_key_s * ctx );
+void free_decrypt_key (struct decrypt_key_s * ctx);
 
-void cleanup_keycache_objects(void);
-void reset_gpg_seckeys(void **ctx);
+/*-- keycache.c --*/
+void cleanup_keycache_objects (void);
+void reset_gpg_seckeys (void **ctx);
 
 #endif /*_GPGME_DLGS_PRIVATE_H_*/

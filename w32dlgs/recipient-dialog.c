@@ -77,7 +77,8 @@ initialize_rsetbox(HWND hwnd)
 }
 
 
-static void load_rsetbox(HWND hwnd)
+static void 
+load_rsetbox(HWND hwnd)
 {
     
     LVITEM lvi;
@@ -118,10 +119,12 @@ static void load_rsetbox(HWND hwnd)
 	if( (s = gpgme_key_get_string_attr( key, GPGME_ATTR_ALGO, NULL, 1 )) )
 	    sprintf( keybuf+strlen( keybuf ), "/%s", s );
 	strcat( keybuf, " " );
-	val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 0 );
-	sprintf( keybuf+strlen( keybuf ), "%d", val );
 	if( (val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 1 )) )
-	    sprintf( keybuf+strlen( keybuf ), "/%d", val );
+	    sprintf( keybuf+strlen( keybuf ), "%d", val );
+	else {
+	    val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 0 );
+	    sprintf( keybuf+strlen( keybuf ), "%d", val );
+	}
 	s = keybuf;
 	ListView_SetItemText( hwnd, 0, 2, (char *) s );
 
@@ -179,7 +182,7 @@ recipient_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
     NMHDR * notify;
     HWND hrset;
     BOOL flag;    
-    int xy[2], i;
+    int i;
 
     switch( msg ) {
     case WM_INITDIALOG:
@@ -187,10 +190,7 @@ recipient_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	initialize_rsetbox( GetDlgItem( dlg, IDC_ENC_RSET1 ) );
 	load_rsetbox( GetDlgItem( dlg, IDC_ENC_RSET1 ) );
 	initialize_rsetbox( GetDlgItem( dlg, IDC_ENC_RSET2 ) );
-	xy[0] = GetSystemMetrics( SM_CXSCREEN );
-	xy[1] = GetSystemMetrics( SM_CYSCREEN );	
-	SetWindowPos( dlg, NULL, xy[0]/3, xy[0]/3, 0, 0, 
-		      SWP_NOSIZE|SWP_NOZORDER );
+	center_window (dlg, NULL);
 	SetForegroundWindow( dlg );
 	return TRUE;
 
@@ -257,7 +257,8 @@ recipient_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 }
 
 
-static gpgme_key_t* keycache_to_key_array(keycache_t ctx)
+static gpgme_key_t* 
+keycache_to_key_array(keycache_t ctx)
 {
     keycache_t t;
     int n = keycache_size(ctx), i=0;
@@ -270,7 +271,11 @@ static gpgme_key_t* keycache_to_key_array(keycache_t ctx)
 }
 
 
-int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts)
+/* Display a recipient dialog to select keys and return all
+   selected keys in ret_rset. All enabled options are returned
+   in ret_opts. */
+int 
+recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts)
 {
     struct recipient_cb_s cb;
 

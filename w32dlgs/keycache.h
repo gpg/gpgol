@@ -31,11 +31,11 @@ int keycache_new (keycache_t *r_ctx);
 void keycache_release (keycache_t ctx);
 int keycache_add (keycache_t *ctx, gpgme_key_t key);
 int keycache_init (const char *pattern, int seconly, keycache_t *r_ctx);
-int keycache_size(keycache_t ctx);
-void keycache_free(keycache_t ctx);
+int keycache_size (keycache_t ctx);
+void keycache_free (keycache_t ctx);
 
-keycache_t get_gpg_keycache(int sec);
-int enum_gpg_seckeys(gpgme_key_t * ret_key, void **ctx);
+keycache_t get_gpg_keycache (int sec);
+int enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx);
 int enum_gpg_keys (gpgme_key_t * ret_key, void **ctx);
 gpgme_key_t find_gpg_key (const char *keyid);
 

@@ -27,34 +27,40 @@
 #include "keycache.h"
 
 
-//#pragma data_seg(".SHARDAT")
+/*#pragma data_seg(".SHARDAT")*/
 static keycache_t pubring = NULL;
 static keycache_t secring = NULL;
 static time_t last_timest = 0;
-//#pragma data_seg()
+/*#pragma data_seg()*/
 
-
-void cleanup_keycache_objects(void)
+/* Cleanup globl keycache objects */
+void 
+cleanup_keycache_objects (void)
 {
-    keycache_release(pubring);
+    keycache_release (pubring);
     pubring = NULL;
-    keycache_release(secring);
+    keycache_release (secring);
     secring = NULL;
 }
 
 
-int keycache_new (keycache_t *r_ctx)
+/* Create a new keycache object and return it in r_ctx. */
+int 
+keycache_new (keycache_t *r_ctx)
 {
     keycache_t c;
 
-    c = calloc(1, sizeof *c);
+    c = calloc (1, sizeof *c);
     if (!c)
 	return -1;
     *r_ctx = c;
     return 0;
 }
 
-void keycache_release (keycache_t ctx)
+
+/* Release keycache object */
+void 
+keycache_release (keycache_t ctx)
 {
     keycache_t n;
 
@@ -66,7 +72,9 @@ void keycache_release (keycache_t ctx)
     }
 }
 
-void keycache_free(keycache_t ctx)
+/* Free the keycache object but not the keys which are stored in it. */
+void 
+keycache_free(keycache_t ctx)
 {
     keycache_t n;
 
@@ -78,7 +86,9 @@ void keycache_free(keycache_t ctx)
 }
 
 
-int keycache_add (keycache_t *ctx, gpgme_key_t key)
+/* Add a key to the keycache object. */
+int 
+keycache_add (keycache_t *ctx, gpgme_key_t key)
 {
     keycache_t c;
     int rc;
@@ -94,7 +104,10 @@ int keycache_add (keycache_t *ctx, gpgme_key_t key)
 }
 
 
-int keycache_init (const char *pattern, int seconly, keycache_t *r_ctx)
+/* Initialize the keycache object with GPG keys which match the
+   given pattern. */
+int 
+keycache_init (const char *pattern, int seconly, keycache_t *r_ctx)
 {
     gpgme_ctx_t ctx;
     gpgme_key_t key;
@@ -104,19 +117,22 @@ int keycache_init (const char *pattern, int seconly, keycache_t *r_ctx)
     if (rc)
 	return rc;
 
-    rc = gpgme_op_keylist_start(ctx, pattern, seconly);
+    rc = gpgme_op_keylist_start (ctx, pattern, seconly);
     if (rc)
 	goto leave;
-    while (!gpgme_op_keylist_next(ctx, &key))
+    while (!gpgme_op_keylist_next (ctx, &key))
 	keycache_add (r_ctx, key);
-    gpgme_op_keylist_end(ctx);
+    gpgme_op_keylist_end (ctx);
 
 leave:
-    gpgme_release(ctx);
+    gpgme_release (ctx);
     return rc;
 }
 
-int keycache_size(keycache_t ctx)
+
+/* Return the size of the keycache object */
+int 
+keycache_size (keycache_t ctx)
 {
     int i;
     keycache_t n;
@@ -126,7 +142,9 @@ int keycache_size(keycache_t ctx)
 }
 
 
-gpgme_key_t find_gpg_key (const char *keyid)
+/* Find a key in the public keyring cache */
+gpgme_key_t 
+find_gpg_key (const char *keyid)
 {
     keycache_t n;
     gpgme_subkey_t s;
@@ -141,7 +159,9 @@ gpgme_key_t find_gpg_key (const char *keyid)
 }
 
 
-int enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
+/* Enumerate all public keys. If the keycache is not initialized, load it. */
+int 
+enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
 {
     if (!pubring) {
 	keycache_init (NULL, 0, &pubring);
@@ -162,7 +182,9 @@ int enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
 }
 
 
-int enum_gpg_seckeys(gpgme_key_t * ret_key, void **ctx)
+/* Enumerate all secret keys. */
+int 
+enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx)
 {
     if (!secring) {
 	keycache_init(NULL, 1, &secring);
@@ -176,7 +198,9 @@ int enum_gpg_seckeys(gpgme_key_t * ret_key, void **ctx)
 }
 
 
-void reset_gpg_seckeys(void **ctx)
+/* Reset the secret key enumeration. */
+void 
+reset_gpg_seckeys (void **ctx)
 {
     *ctx = secring;
 }
