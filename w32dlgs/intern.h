@@ -45,6 +45,7 @@ struct decrypt_key_s {
     char * pass;
     gpgme_key_t signer;
     int opts;
+    unsigned int hide_pwd:1;
     unsigned int use_as_cb:1;
 };
 
@@ -57,9 +58,9 @@ int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);
 
 /*-- passphrase-dialog.c --*/
 int signer_dialog_box(gpgme_key_t *r_key, char **r_passwd);
-const char * passphrase_callback_box(void *opaque, const char *uid_hint, 
-				     const char *pass_info,
-				     int prev_was_bad, int fd);
+int passphrase_callback_box(void *opaque, const char *uid_hint, 
+			    const char *pass_info,
+			    int prev_was_bad, int fd);
 void free_decrypt_key (struct decrypt_key_s * ctx);
 
 /*-- keycache.c --*/

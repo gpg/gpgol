@@ -128,7 +128,10 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	    load_secbox(dlg);
 	CheckDlgButton( dlg, IDC_DEC_HIDE, BST_CHECKED );
 	center_window (dlg, NULL);
-	SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
+	if (dec->hide_pwd)
+	    EnableWindow (GetDlgItem (dlg, IDC_DEC_PASS), FALSE);
+	else
+	    SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
 	SetForegroundWindow (dlg);
 	return FALSE;
 
@@ -180,11 +183,14 @@ signer_dialog_box(gpgme_key_t *r_key, char **r_passwd)
 {
     struct decrypt_key_s hd;
     memset(&hd, 0, sizeof hd);
+    hd.hide_pwd = 1;
     DialogBoxParam(glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow(),
 		    decrypt_key_dlg_proc, (LPARAM)&hd );
     if (hd.signer) {
 	if (r_passwd)
 	    *r_passwd = strdup(hd.pass);
+	else
+	    free (hd.pass);
 	*r_key = hd.signer;
     }
     memset (&hd, 0, sizeof hd);
@@ -194,11 +200,13 @@ signer_dialog_box(gpgme_key_t *r_key, char **r_passwd)
 
 /* GPGME passphrase callback function. It starts the decryption dialog
    to request the passphrase from the user. */
-const char * 
-passphrase_callback_box(void *opaque, const char *uid_hint, const char *pass_info,
-			int prev_was_bad, int fd)
+int
+passphrase_callback_box (void *opaque, const char *uid_hint, 
+			 const char *pass_info,
+			 int prev_was_bad, int fd)
 {
     struct decrypt_key_s * hd = (struct decrypt_key_s *)opaque;
+    DWORD nwritten = 0;
 
     if (prev_was_bad) {
 	free (hd->pass);
@@ -208,26 +216,34 @@ passphrase_callback_box(void *opaque, const char *uid_hint, const char *pass_inf
     if (hd && uid_hint && !hd->pass) {
 	const char * s = uid_hint;
 	size_t i=0;
-
-
-	while( s && *s != '\n' )
-	    s++;
-	s++;
-	while( s && *s != ' ' )
+	
+	while (s && *s != ' ')
 	    hd->keyid[i++] = *s++;
 	hd->keyid[i] = '\0'; s++;
-	if( hd->user_id )
-	    free( hd->user_id );
-	hd->user_id = (char *)calloc( 1, strlen( s ) + 2 );
-	strcpy( hd->user_id, s );
+	if (hd->user_id) {
+	    free (hd->user_id);
+	    hd->user_id = NULL;
+	}
+	hd->user_id = (char *)calloc (1, strlen (s) + 2);
+	if (!hd->user_id)
+	    abort ();
+	strcpy (hd->user_id, s);
 	
-	if (hd->opts & OPT_FLAG_CANCEL)
-	    return "";
+	if (hd->opts & OPT_FLAG_CANCEL) {
+	    WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
+	    return -1;
+	}
 	hd->use_as_cb = 1;
 	DialogBoxParam( glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow(),
 			decrypt_key_dlg_proc, (LPARAM)hd );
     }
-    return hd? hd->pass : "";
+    if (hd->pass) {
+	WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);
+	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
+    }
+    else
+	WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
+    return 0;
 }
 
 

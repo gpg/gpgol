@@ -1,0 +1,205 @@
+/* engine-gpgme.c - Crypto engine with GPGME
+ *	Copyright (C) 2005 g10 Code GmbH
+ *
+ * This file is part of GPGME Dialogs.
+ *
+ * GPGME Dialogs is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 
+ * of the License, or (at your option) any later version.
+ *  
+ * GPGME Dialogs is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ */
+#include <windows.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include "gpgme.h"
+#include "intern.h"
+#include "engine.h"
+
+static char *debug_file = NULL;
+static int init_done = 0;
+
+static void
+cleanup (void)
+{
+    if (debug_file) {
+	free (debug_file);
+	debug_file = NULL;
+    }
+}
+
+void
+op_set_debug_mode (int val, const char *file)
+{
+    const char *s= "GPGME_DEBUG:";
+
+    cleanup ();
+    if (val > 0) {
+	debug_file = calloc (1, strlen (file) + strlen (s) + 2);
+	if (!debug_file)
+	    abort ();
+	sprintf (debug_file, "%s=%d:%s", s, val, file);
+	putenv (debug_file);
+    }
+    else {
+	putenv ("GPGME_DEBUG=");
+    }
+}
+
+
+int
+op_init (void)
+{
+  gpgme_error_t err;
+
+  if (init_done == 1)
+      return 0;
+  gpgme_check_version (NULL);
+  err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
+  if (err)
+      return -1;
+  init_done = 1;
+  return 0;
+}
+
+int
+op_encrypt_start (const char *inbuf, char **outbuf)
+{
+    gpgme_key_t *keys = NULL;
+    int opts = 0;
+    int err;
+
+    recipient_dialog_box(&keys, &opts);
+    err = op_encrypt ((void *)keys, inbuf, outbuf);
+    free (keys);
+    return err;
+}
+
+int
+op_encrypt (void *rset, const char *inbuf, char **outbuf)
+{
+    gpgme_key_t *keys = (gpgme_key_t *)rset;
+    gpgme_data_t in=NULL, out=NULL;
+    gpgme_error_t err;
+    gpgme_ctx_t ctx;
+    
+    *outbuf = NULL;
+    op_init ();
+    err = gpgme_new (&ctx);
+    if (err)
+	return err;
+    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+    if (err)
+	goto leave;
+    err = gpgme_data_new (&out);
+    if (err)
+	goto leave;
+
+    gpgme_set_armor (ctx, 1);
+    err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+    if (!err) {
+	size_t n = 0;
+	*outbuf = gpgme_data_release_and_get_mem (out, &n);
+	(*outbuf)[n] = 0;
+	out = NULL;
+    }
+
+leave:
+    gpgme_release (ctx);
+    gpgme_data_release (in);
+    gpgme_data_release (out);
+    return 0;
+}
+
+int
+op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
+{
+    op_init ();
+
+    return 0;
+}
+
+int
+op_sign_start (const char *inbuf, char **outbuf)
+{
+    gpgme_key_t locusr = NULL;
+
+    signer_dialog_box (&locusr, NULL);
+    return op_sign ((void*)locusr, inbuf, outbuf);
+}
+
+
+int
+op_sign (void *locusr, const char *inbuf, char **outbuf)
+{
+    gpgme_error_t err;
+    gpgme_data_t in=NULL, out=NULL;
+    gpgme_ctx_t ctx;
+    struct decrypt_key_s *hd;
+
+    op_init ();
+    hd = calloc (1, sizeof *hd);
+    if (!hd)
+	abort ();
+    
+    err = gpgme_new (&ctx);
+    if (err)
+	return err;
+
+    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+    if (err)
+	goto leave;
+    err = gpgme_data_new (&out);
+    if (err)
+	goto leave;
+    
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+    gpgme_signers_add (ctx, (gpgme_key_t)locusr);
+    gpgme_set_textmode (ctx, 1);
+    gpgme_set_armor (ctx, 1);
+    err = gpgme_op_sign (ctx, in, out, GPGME_SIG_MODE_CLEAR);
+    if (!err) {
+	size_t n = 0;
+	*outbuf = gpgme_data_release_and_get_mem (out, &n);
+	(*outbuf)[n] = 0;
+	out = NULL;
+    }
+
+leave:
+    free_decrypt_key (hd);
+    gpgme_release (ctx);
+    gpgme_data_release (in);
+    gpgme_data_release (out);
+    return 0;
+}
+
+
+int
+op_decrypt (const char *inbuf, char **outbuf)
+{
+    gpgme_data_t in=NULL, out=NULL;
+    gpgme_ctx_t ctx;
+    gpgme_error_t err;
+
+    op_init ();
+
+    return err;
+}
+
+const char*
+op_strerror(int err)
+{
+    return gpgme_strerror (err);
+}
