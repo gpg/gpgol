@@ -57,6 +57,34 @@ CGPG::~CGPG ()
 }
 
 
+BOOL
+CGPG::MsgFromFile (LPMESSAGE pMessage, const char *strFile)
+{
+    string sBody;
+    TCHAR szTemp[1024];
+    FILE* file = fopen(strFile, "rb");
+    int nCharsRead;
+    SPropValue sProp; 
+    HRESULT hr;
+
+    do {
+	nCharsRead = fread(szTemp, sizeof(TCHAR), sizeof(szTemp)-1, file);
+	szTemp[nCharsRead] = '\0';
+	sBody += szTemp;
+    } while (nCharsRead > 0);
+
+    fclose(file);
+    ::DeleteFile(strFile);
+
+    sProp.ulPropTag = PR_BODY;
+    sProp.Value.lpszA = (char *)sBody.c_str ();
+    hr = HrSetOneProp (pMessage, &sProp);
+    if (FAILED (hr))
+	return FALSE;
+    return TRUE;
+}
+
+
 BOOL CGPG::DecryptFile (HWND hWndParent, 
 			BSTR strFilenameSource, 
 			BSTR strFilenameDest, 
@@ -115,7 +143,6 @@ void CGPG::ReadGPGOptions (void)
 	RegCloseKey(hKey);	
     }
 }
-
 
 
 /* WriteGPGOptions - Writes the plugin options to the registry. */
@@ -200,7 +227,7 @@ BOOL CGPG::EncryptAndSignMessage(
     sFilenameSource += _T("_gdgpg_");  
     sFilenameDest = sFilenameSource;
     sFilenameSource += "Body.txt";
-    sFilenameDest += "Body.gpg";
+    sFilenameDest += "Body.pgp";
 
     // write the message body to a temp file
     hr = HrGetOneProp((LPMAPIPROP) lpMessage, PR_BODY, &lpspvFEID);
@@ -388,7 +415,7 @@ BOOL CGPG::DecryptMessage(
 	sFilenameSource = szTempPath;
 	sFilenameSource += _T("_gdgpg_");  
 	sFilenameDest = sFilenameSource;
-	sFilenameSource += "DBody.gpg";
+	sFilenameSource += "DBody.pgp";
 	sFilenameDest += "DBody.txt";
 
 	// write the message body to a temp file
@@ -520,9 +547,110 @@ CGPG::ProcessPGPMime (HWND hWnd, LPMESSAGE pMessage, int mType)
 
 
 BOOL 
+CGPG::ConvertOldPGP (HWND hWnd, LPMESSAGE pMessage)
+{
+    HRESULT hr;
+    LPMAPITABLE lpAttTable = NULL;
+    LPATTACH pAttach;
+    LPSTREAM pStreamAtt = NULL;    
+
+    hr = pMessage->GetAttachmentTable (0, &lpAttTable);
+    if (FAILED (hr))
+	return FALSE;
+    hr = pMessage->OpenAttach (0, NULL, MAPI_BEST_ACCESS, &pAttach);
+    if (FAILED (hr))
+	return FALSE;
+
+    hr = pAttach->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0, 0, 
+				(LPUNKNOWN*) &pStreamAtt);
+    if (HR_SUCCEEDED(hr))
+    {		
+	LPSTREAM  pStreamDest;
+	hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,	
+			      STGM_CREATE | STGM_READWRITE,	
+			      "_gdgpg_pgp_inline.tmp", NULL,  &pStreamDest);
+	if (FAILED(hr))
+	{
+	    pStreamAtt->Release();
+	}
+	else
+	{
+	    STATSTG statInfo;
+	    pStreamAtt->Stat(&statInfo, STATFLAG_NONAME);
+	    pStreamAtt->CopyTo(pStreamDest, statInfo.cbSize, NULL, NULL);
+	    pStreamDest->Commit(0);
+	    pStreamDest->Release();
+	    pStreamAtt->Release();
+	}
+    }    
+
+    MsgFromFile (pMessage, "_gdgpg_pgp_inline.tmp");
+    pMessage->DeleteAttach (0, 0, NULL, 0);
+    /*pMessage->DeleteAttach (1, 0, NULL, 0); XXX */
+
+    if (NULL != lpAttTable)
+        lpAttTable->Release();
+    return TRUE;
+}
+
+
+BOOL 
 CGPG::CheckPGPMime (HWND hWnd, LPMESSAGE pMessage, int &mType)
 {
-    return FALSE;
+    static SizedSPropTagArray( 1L, PropAttNum) = { 1L, {PR_ATTACH_NUM}};
+    LPMAPITABLE lpAttTable = NULL;
+    LPSRowSet lpAttRows = NULL;    
+    HRESULT hr;
+    BOOL ret = FALSE, fndMime = FALSE;
+    LPSPropValue lpspv = NULL;				
+    LPATTACH pAttach = NULL;
+
+    hr = pMessage->GetAttachmentTable (0, &lpAttTable);
+    if (FAILED (hr))
+	return FALSE;
+
+    hr = HrQueryAllRows (lpAttTable, (LPSPropTagArray)&PropAttNum, NULL, 
+			 NULL, 0, &lpAttRows);
+    if (FAILED (hr))
+	return FALSE;
+
+    for (int j = 0; j < (int) lpAttRows->cRows; j++)
+    {
+	int nAttachment = lpAttRows->aRow[j].lpProps[0].Value.ul;
+	hr = pMessage->OpenAttach (nAttachment, NULL, MAPI_BEST_ACCESS, &pAttach);
+	if (FAILED (hr))
+	    continue;
+	hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_MIME_TAG, &lpspv);
+	if (SUCCEEDED (hr))
+	{
+	    if (strstr (lpspv->Value.lpszA, "application/pgp"))
+	    {
+		const char * pgp_type = lpspv->Value.lpszA;
+		if (strstr (pgp_type, "pgp-encrypted"))
+		    mType = PGP_MIME_ENCR;
+		if (strstr (pgp_type, "pgp-signature"))
+		    mType = PGP_MIME_SIG;
+		if (strstr (pgp_type, "pgp-keys"))
+		    mType = PGP_MIME_KEY;
+		/* We do not support PGP/MIME yet */
+		fndMime = TRUE;
+		ret = FALSE;
+		goto leave;
+	    }
+	}
+    }
+
+leave:
+    if (fndMime && mType == 0) {
+	/* Some unix mailer generate a "application/pgp action=encrypt"
+	   Content-Type or a similar to indicate that inline-PGP is used. */
+	mType = PGP_MIME_IN;
+    }
+    if (NULL != lpAttTable)
+        lpAttTable->Release();
+    if (NULL != lpAttRows)
+        FreeProws(lpAttRows);    
+    return ret;
 }
 
 
@@ -572,7 +700,7 @@ CGPG::ProcessAttachments(
 	    string sFilename = sFilenameAtt;
 	    sFilename += sn;
 	    sFilename += ".tmp";
-	    string sFilenameDest = sFilename + ".gpg";
+	    string sFilenameDest = sFilename + ".pgp";
 	    string sAttName = "attach";
 	    LPATTACH pAttach = NULL;
 	    LPSTREAM pStreamAtt = NULL;
@@ -643,19 +771,21 @@ CGPG::ProcessAttachments(
 			if (nPos != -1)
 			{
 			    string sExt = sFilename.substr(nPos+1);
-			    if ((sExt == "gpg") || (sExt == "GPG") || (sExt == "asc") || (sExt == "ASC"))
+			    if ((sExt == "gpg") || (sExt == "GPG") || 
+				(sExt == "asc") || (sExt == "ASC") ||
+				(sExt == "pgp") || (sExt == "PGP"))
 				sFilenameDest = sFilename.substr(0, nPos);
 			    else
-				sFilename += ".gpg";	
+				sFilename += ".pgp";
 			}
 			else
-			    sFilename += ".gpg";
+			    sFilename += ".pgp";
 					
 		    }
 		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
 		    {
 			sFilename = sFilenameAtt + sAttName;
-			sFilenameDest = sFilename + ".gpg";	
+			sFilenameDest = sFilename + ".pgp";
 		    }
 		}
 
@@ -704,11 +834,10 @@ CGPG::ProcessAttachments(
 
 		if (!bEmbedded && !bEmbeddedOLE && bSaveAttSuccess)		
 		{		
-		    hr = pAttach->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,	0, (LPUNKNOWN*) &pStreamAtt);		
-		    if (HR_SUCCEEDED(hr))		
+		    hr = pAttach->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0, 0, (LPUNKNOWN*) &pStreamAtt);
+		    if (HR_SUCCEEDED(hr))
 		    {		
 			LPSTREAM  pStreamDest;
-			
 			hr = OpenStreamOnFile(MAPIAllocateBuffer, MAPIFreeBuffer,
 						STGM_CREATE | STGM_READWRITE,
 					     (char*) sFilename.c_str(), NULL,  &pStreamDest);
@@ -756,14 +885,15 @@ CGPG::ProcessAttachments(
 		if (!bEmbedded && bSaveAttSuccess && (nAction >= PROATT_ENCRYPT_AND_SIGN) &&  (nAction <= PROATT_DECRYPT))
 		{
 		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
-			sAttName += ".gpg";
+			sAttName += ".pgp";
 		    if (nAction == PROATT_DECRYPT)
 		    {
 			int nPos = sAttName.rfind('.');
 			if (nPos != -1)
 			{
 			    string sExt = sAttName.substr(nPos+1);
-			    if ((sExt == "gpg") || (sExt == "GPG"))
+			    if ((sExt == "gpg") || (sExt == "GPG") || 
+				(sExt == "pgp") || (sExt == "PGP"))
 				sAttName = sAttName.substr(0, nPos);
 			}
 			m_nDecryptedAttachments++;
@@ -1086,7 +1216,7 @@ BOOL CGPG::AddStandardKey(
 	TCHAR szTempPath[MAX_PATH];
 	GetTempPath(MAX_PATH, szTempPath);
 	sFilenameDest = szTempPath;
-	sFilenameDest += _T("_gdgpg_stdkey.gpg");  
+	sFilenameDest += _T("_gdgpg_stdkey.pgp");
 
 	USES_CONVERSION;
 	int nRet;

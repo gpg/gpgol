@@ -1,4 +1,4 @@
-/* GPG.h - gpg functions for mapi messages
+    /* GPG.h - gpg functions for mapi messages
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004 g10 Code GmbH
  * 
@@ -24,6 +24,12 @@
 #define INC_GPG_H
 
 #include "..\GDGPG\Wrapper\GDGPGWrapper.h"
+
+#define PGP_MIME_NONE 0
+#define PGP_MIME_ENCR 1
+#define PGP_MIME_SIG  2
+#define PGP_MIME_KEY  4
+#define PGP_MIME_IN   8
 
 /* The CGPG class implements the gpg functions for MAPI messages. */
 class CGPG  
@@ -51,13 +57,7 @@ protected:
     char * cont_type;
     char * cont_trans_enc;
 
-public:
-    enum {
-	PGP_MIME_NONE = 0,
-	PGP_MIME_ENCR = 1,
-	PGP_MIME_SIG  = 2,
-	PGP_MIME_KEY  = 4
-    } PGPMimeType;
+public:    
 	
     BOOL Init();              // Initialize this object.
     void UnInit();            // Uninitialize this object.
@@ -106,6 +106,7 @@ public:
 
     BOOL CheckPGPMime (HWND hWnd, LPMESSAGE pMessage, int &mType);
     BOOL ProcessPGPMime (HWND hWnd, LPMESSAGE pMessage, int mType);
+    BOOL ConvertOldPGP (HWND hWnd, LPMESSAGE pMessage);
 
 public:
     // Decrypts all attachments.
@@ -125,7 +126,7 @@ protected:
 
 
 private:
-
+    BOOL MsgFromFile (LPMESSAGE pMessage, const char *strFile);
     void QuotedPrintEncode (char ** enc_buf, char * buf, size_t buflen);
 };
 

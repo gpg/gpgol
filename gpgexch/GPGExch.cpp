@@ -326,9 +326,12 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	goto failed;
     }
 
+    if (mimeType == PGP_MIME_IN) /* convert attachment to a message body */
+	g_gpg.ConvertOldPGP (NULL, pMessage);
+
     hr = pMessage->OpenProperty (PR_BODY, &IID_IStream, STGM_DIRECT|STGM_READ,
 				 0, (LPUNKNOWN *)&pStreamBody);
-    if (GetScode (hr) == MAPI_E_NOT_FOUND) 
+    if (GetScode (hr) == MAPI_E_NOT_FOUND)
     {
 	hr = S_OK;
 	goto failed;
@@ -339,8 +342,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	goto failed;
     }
 
-    off.LowPart = 0;
-    off.HighPart = 0;
+    off.LowPart = off.HighPart = 0;
     hr = pStreamBody->Seek (off, STREAM_SEEK_SET, &off_ret);
     if (FAILED (hr))
     {
@@ -348,14 +350,13 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	goto failed;
     }
 
-    while ((hr = pStreamBody->Read (buf, 512, &nr)) == S_OK
-	    && nr > 0)
+    while ((hr = pStreamBody->Read (buf, 512, &nr)) == S_OK && nr > 0)
     {
 	buf[nr] = 0;
 	sMsg = sMsg + buf;
     }
 
-    if (strstr (sMsg.c_str (), "-----BEGIN PGP SIGNED MESSAGE-----") && 
+    if (strstr (sMsg.c_str (), "-----BEGIN PGP SIGNED MESSAGE-----") &&
 	strstr (sMsg.c_str (), "-----END PGP SIGNATURE-----"))
     {
 	GetTempPath (sizeof in_tmpname-1, in_tmpname);
@@ -378,7 +379,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	sOutMsg += sMsg;
 
 	sProp.ulPropTag = PR_BODY;
-	sProp.Value.lpszA = (char *)sOutMsg.c_str ();
+	sProp.Value.lpszA = (char *)sOutMsg.c_str ();	
 	hr = HrSetOneProp (pMessage, &sProp);
 
 	goto failed;
@@ -434,7 +435,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	g_gpg.DecryptFile (NULL, A2OLE (in_tmpname), A2OLE (out_tmpname), ret);
 	if (ret)
 	{
-	    if (ret == 4 || ret == 8)
+	    /*if (ret == 4 || ret == 8)
 	    {
 		sOutMsg = "[-- Begin GPG Output (";
 		sOutMsg += asct;
@@ -446,7 +447,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 		sProp.Value.lpszA = (char *)sOutMsg.c_str ();
 		hr = HrSetOneProp (pMessage, &sProp);
 		goto failed;
-	    }
+	    }*/
 	}
 	fp = fopen (out_tmpname, "rb");
 	if (!fp)
@@ -467,12 +468,14 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	sProp.ulPropTag = PR_BODY;
 	sProp.Value.lpszA = (char *)sOutMsg.c_str ();
 	hr = HrSetOneProp (pMessage, &sProp);
+	if (FAILED (hr))
+	    goto failed;
 
 	sProp.ulPropTag = PR_ACCESS;
 	sProp.Value.l = MAPI_ACCESS_MODIFY;
 	HrSetOneProp(pMessage, &sProp);	
 
-	if (fp && nAttach > 0)
+	if (fp && nAttach > 0 && mimeType != PGP_MIME_IN)
 	{
 	    if (MessageBox (NULL, "Decrypt attachments?", "G-DATA GPG", MB_YESNO|MB_ICONQUESTION) == IDYES)
 		g_gpg.DecryptAttachments (NULL, pMessage);

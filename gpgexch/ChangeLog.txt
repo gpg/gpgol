@@ -1,3 +1,20 @@
+2004-10-27  Timo Schulz  <twoaday@g10code.de>
+
+	* GPG.cpp (ProcessAttachments): Set default extension to
+	PGP since this will enhance the PGP compatibility.
+	* GPGExch.cpp (OnRead): Supress the question if we the
+	mail is application/pgp.
+
+2004-10-25  Timo Schulz  <twoaday@g10code.de>
+
+	* GPG.cpp (CheckPGPMime): Generic function to figure out the
+	MIME type and to provide an interface for upcoming PGP/MIME
+	support.
+	(ConvertOldPGP): Convert application/pgp message to
+	inline-PGP messages readable by Outlook.
+	(MsgFromFile): New. Factored out some common code.
+	* GPGExch.cpp (OnRead): Use the new code.
+
 2004-10-06  Timo Schulz  <twoaday@g10code.de>
 
 	* GPGExch.cpp (OnRead): Show the original message
