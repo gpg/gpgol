@@ -1,0 +1,186 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,0,0,0
+ PRODUCTVERSION 0,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "g10 Code GmbH\0"
+            VALUE "FileDescription", "Common GPGME Dialogs\0"
+            VALUE "FileVersion", "0.0.0\0"
+            VALUE "InternalName", "WinFP\0"
+            VALUE "LegalCopyright", "Copyright © 2003 Timo Schulz,  2005 g10 Code GmbH\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "WinFP.exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "WinFP\0"
+            VALUE "ProductVersion", "0.0.0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Englisch (USA) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ENC DIALOG DISCARDABLE  0, 0, 332, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Recipeint Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "List1",IDC_ENC_RSET1,"SysListView32",LVS_REPORT | 
+                    WS_BORDER | WS_TABSTOP,8,4,314,92
+    CONTROL         "List2",IDC_ENC_RSET2,"SysListView32",LVS_REPORT | 
+                    WS_BORDER | WS_TABSTOP,8,98,313,49
+    GROUPBOX        "Options",IDC_STATIC,8,156,108,24
+    CONTROL         "&Text Output",IDC_ENC_OPTARMOR,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,20,166,53,10
+    DEFPUSHBUTTON   "OK",IDOK,221,165,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,272,165,50,14
+END
+
+IDD_DEC DIALOG DISCARDABLE  0, 0, 225, 84
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Secret Key Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    COMBOBOX        IDC_DEC_KEYLIST,9,7,209,58,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Enter passphrase for your secret key",IDC_STATIC,9,31,
+                    116,8
+    CONTROL         "&Hide Typing",IDC_DEC_HIDE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,162,31,54,10
+    EDITTEXT        IDC_DEC_PASS,9,45,207,12,ES_PASSWORD | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,115,66,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,167,66,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ENC, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 326
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 182
+    END
+
+    IDD_DEC, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 218
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 80
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Englisch (USA) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
