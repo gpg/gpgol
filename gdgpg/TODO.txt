@@ -1,0 +1,20 @@
+TODO list for version 1.2.0. This should be the first stable version.
+
+	* GetDefaultKey: Do not get the first, but the first valid key.
+	This is a little tricky due to the fact that --list-secret-keys
+	does not output any key status information.
+
+	* Check indent level to make the code more readable.
+
+	* Support for the OpenPGP smart card.
+
+	* Collect all bug report and provide bug fixes for them.	
+
+	* Check for buffer overflow. In some cases strings are copied
+	without any bound checking.
+
+	* Implement PGP/MIME (RFC3156).
+
+	* Find a better way for the translation issues.
+
+	* Make a public release and search for a new maintainer.

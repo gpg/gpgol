@@ -1,0 +1,25 @@
+HKCR
+{
+	GDGPG.GDGPG.1 = s 'GDGPG Class'
+	{
+		CLSID = s '{321F09FC-E2FD-409B-B8D1-60FA7DCDA531}'
+	}
+	GDGPG.GDGPG = s 'GDGPG Class'
+	{
+		CLSID = s '{321F09FC-E2FD-409B-B8D1-60FA7DCDA531}'
+		CurVer = s 'GDGPG.GDGPG.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {321F09FC-E2FD-409B-B8D1-60FA7DCDA531} = s 'GDGPG Class'
+		{
+			ProgID = s 'GDGPG.GDGPG.1'
+			VersionIndependentProgID = s 'GDGPG.GDGPG'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+			}
+			'TypeLib' = s '{25EC75AD-5EB9-4E20-A4B4-E71C36370F62}'
+		}
+	}
+}

@@ -1,0 +1,26 @@
+Noteworthy changes for version 1.3.0.0 (unreleased)
+===================================================
+
+- Logging support to make it easier to track down errors
+  and to allow remote debugging.
+
+Noteworthy changes for version 1.2.0.0 (2004-08-23)
+===================================================
+
+- Keylisting now supports keys which only consist of one
+  primary key (RSA Sign-Encrypt, old v3 Keys, ElGamal).
+
+- The users email address is used to identify the recipient.
+  This way GPG automatically decides what subkey to use.
+
+- The plaintext is used for replying mails.
+
+- Show some information about the GPG data as part of the message.
+  For example the a 'gpg -k' like output if the message contain
+  one or more public keys.
+  Or if there was a problem with decryption use the GPG output message.
+
+- New GPG I/O subsystem to fix some hanging processes.
+
+- Store all user ID's to improve the searching system.
+

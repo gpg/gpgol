@@ -1,0 +1,69 @@
+/* GDGPG.idl - IDL source for GDGPG.dll
+ *		Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+ *		Copyright (C) 2004 g10 Code GmbH
+ * 
+ * This file is part of the G DATA Outlook Plugin for GnuPG.
+ * 
+ * This plugin is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this plugin; if not, write to the 
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
+ * Boston, MA 02111-1307, USA.
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(83C42CA3-5D35-4120-8DF6-09D835166594),
+		dual,
+		helpstring("IGDGPG Interface"),
+		pointer_default(unique)
+	]
+	interface IGDGPG : IDispatch
+	{
+		[id(1), helpstring("method OpenKeyManager")] HRESULT OpenKeyManager([out, retval] int* pvReturn);
+		[id(2), helpstring("method EncryptAndSignFile")] HRESULT EncryptAndSignFile([in] ULONG hWndParent, [in] BOOL bEncrypt, [in] BOOL bSign, [in] BSTR strFilenameSource, [in] BSTR strFilenameDest, [in] BSTR strRecipient, [in] BOOL bArmor, [in] BOOL bEncryptWithStandardKey, [out, retval] int* pvReturn);
+		[id(3), helpstring("method DecryptFile")] HRESULT DecryptFile([in] ULONG hWndParent, [in] BSTR strFilenameSource, [in] BSTR strFilenameDest, [out, retval] int* pvReturn);
+		[id(4), helpstring("method ExportStandardKey")] HRESULT ExportStandardKey([in] ULONG hWndParent, [in] BSTR strExportFileName, [out, retval] int* pvReturn);
+		[id(5), helpstring("method ImportKeys")] HRESULT ImportKeys([in] ULONG hWndParent, [in] BSTR strImportFilename, [in] BOOL bShowMessage, [out] int* pvEditCount, [out] int* pvImportCount, [out] int* pvUnchangeCnt, [out, retval] int* pvReturn);
+		[id(6), helpstring("method SetStorePassphraseTime")] HRESULT SetStorePassphraseTime([in] int nSeconds);
+		[id(7), helpstring("method InvalidateKeyLists")] HRESULT InvalidateKeyLists();
+		[id(8), helpstring("method Options")] HRESULT Options([in] ULONG hWndParent);
+		[id(9), helpstring("method EncryptAndSignNextFile")] HRESULT EncryptAndSignNextFile([in] ULONG hWndParent, [in] BSTR strFilenameSource, [in] BSTR strFilenameDest, [in] BOOL bArmor, [out, retval] int* pvReturn);
+		[id(10), helpstring("method DecryptNextFile")] HRESULT DecryptNextFile([in] ULONG hWndParent, [in] BSTR strFilenameSource, [in] BSTR strFilenameDest, [out, retval] int* pvReturn);
+		[id(11), helpstring ("method GetGPGOutput")]HRESULT GetGPGOutput([out]BSTR *hStdErr);
+		[id(12), helpstring ("method GetGPGInfo")]HRESULT GetGPGInfo ([in]BSTR strFilename, [out]BSTR *hInfo);
+		[id(13), helpstring ("method VerifyDetachedSignature")]HRESULT VerifyDetachedSignature ([in]ULONG hWndParent, [in]BSTR strFilenameText, [in]BSTR strFilenameSig, [out, retval]int *pvReturn);		
+		[id(14), helpstring ("method SetLogLevel")]HRESULT SetLogLevel ([in]ULONG nLevel);
+		[id(15), helpstring ("method SetLogFile")]HRESULT SetLogFile([in]BSTR strLogFilename, [out, retval] int* pvReturn);
+	};
+
+[
+	uuid(25EC75AD-5EB9-4E20-A4B4-E71C36370F62),
+	version(1.0),
+	helpstring("GDGPG 1.0 Type Library")
+]
+library GDGPGLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(321F09FC-E2FD-409B-B8D1-60FA7DCDA531),
+		helpstring("GDGPG Class")
+	]
+	coclass GDGPG
+	{
+		[default] interface IGDGPG;
+	};
+};
