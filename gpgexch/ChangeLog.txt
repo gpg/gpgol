@@ -1,0 +1,55 @@
+2004-09-06  Timo Schulz  <twoaday@g10code.de>
+
+	* GDGPGWrapper.cpp (SetLogLevel): New.
+	(SetLogFile): New.
+	* GPGOptionsDlg.cpp (GPGOptionsDlgProc): Implement logging field.
+	* GPG.cpp (ReadGPGOptions): Likewise.
+	(WriteGPGOptions): Likewise.
+
+2004-08-23  Timo Schulz  <twoaday@freakmail.de>
+
+	* GPG.cpp (EncryptAndSignMessage): Kludge to
+	set the message. After the new GPG I/O subsystem,
+	the old code does not work any longer.
+
+	* GPGExch.cpp (OnRead): Support for PGP keys. Do
+	not process unsent messages.
+
+2004-08-01  Timo Schulz  <twoaday@freakmail.de>
+
+	* GPG.cpp (QuotedPrintEncode): New.
+
+2004-07-31  Timo Schulz  <twoaday@freakmail.de>
+
+	* GDGPGWrapper.cpp (VerifyDetachedSignature): New.
+	* GPG.cpp (VerifyDetachedSignature): New.
+
+2004-07-27  Timo Schulz  <twoaday@freakmail.de>
+
+	* GPG.cpp (CheckPGPMime): New.
+	(ProcessPGPMime): New.
+
+2004-07-24  Timo Schulz  <twoaday@freakmail.de>
+
+	* GPGExch.cpp (OnRead): Use the internal GPG object to
+	use passphrase caching. Do not modify the message in
+	case of an error.
+
+	Output GPG messages as the message body.
+
+	* GPG.cpp (DecryptFile): New. Internal function.
+	(CGPG): Initialize m_gpgStderr and m_gpgInfo to zero.
+	(GetGPGOutput): New.
+	(GetGPGInfo): New.
+
+	* GDGPGWrapper.cpp (GetGPGOutput): New.
+
+
+2004-07-20  Timo Schulz  <twoaday@freakmail.de>
+
+	* GPGExch.cpp (OnRead): Implemented the decryption of
+	messages to answer the plaintext.
+
+	* GPGOptionsDlg.cpp (GPGOptionsDlgProc): Added all involved
+	parties in the 'About Info'.
+
