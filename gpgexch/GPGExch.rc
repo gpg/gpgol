@@ -123,34 +123,35 @@ IDB_BANNER_HI           BITMAP  DISCARDABLE     "Banner_08.BMP"
 // Dialog
 //
 
-IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 291, 214
+IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 291, 222
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Encryption"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Options",IDC_STATIC,21,4,242,75
+    GROUPBOX        "Options",IDC_STATIC,21,17,242,75
     CONTROL         "&Encrypt new messages by default",IDC_ENCRYPT_DEFAULT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,34,16,121,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,34,29,121,10
     CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,34,31,111,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,34,44,111,10
     CONTROL         "Also encrypt message with the &default key",
                     IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,34,46,148,10
+                    WS_TABSTOP,34,59,148,10
     CONTROL         "Save decrypted message &automatically",
                     IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    34,61,139,10
-    GROUPBOX        "Passphrase",IDC_STATIC,22,82,242,31
-    LTEXT           "Cache &passphrase for",IDC_STATIC,34,96,70,8
-    EDITTEXT        IDC_TIME_PHRASES,117,95,39,14,ES_AUTOHSCROLL
-    LTEXT           "seconds",IDC_STATIC,161,97,28,8
-    GROUPBOX        "Debug (advanced users only)",IDC_STATIC,21,118,242,28
-    LTEXT           "Logfile",IDC_STATIC,28,131,22,8
-    EDITTEXT        IDC_DEBUG_LOGFILE,58,129,138,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,212,149,50,14
-    LTEXT           "Maintainer of the modified version: g10 Code GmbH (http://g10code.com)",
-                    IDC_STATIC,1,172,233,8
+                    34,74,139,10
+    GROUPBOX        "Passphrase",IDC_STATIC,22,95,242,31
+    LTEXT           "Cache &passphrase for",IDC_STATIC,34,109,70,8
+    EDITTEXT        IDC_TIME_PHRASES,117,108,39,14,ES_AUTOHSCROLL
+    LTEXT           "seconds",IDC_STATIC,161,110,28,8
+    GROUPBOX        "Debug (advanced users only)",IDC_STATIC,21,131,242,28
+    LTEXT           "Logfile",IDC_STATIC,28,144,22,8
+    EDITTEXT        IDC_DEBUG_LOGFILE,58,142,138,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,212,162,50,14
+    LTEXT           "Maintainer of the this version: g10 Code GmbH",
+                    IDC_STATIC,1,179,148,8
     CONTROL         4009,IDC_BITMAP,"Static",SS_BITMAP | SS_REALSIZEIMAGE,0,
-                    183,293,30
+                    190,293,30
+    LTEXT           "Version 1.0",IDC_VERSION_INFO,176,179,108,9
 END
 
 
@@ -167,7 +168,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 284
         TOPMARGIN, 4
-        BOTTOMMARGIN, 207
+        BOTTOMMARGIN, 215
     END
 END
 #endif    // APSTUDIO_INVOKED

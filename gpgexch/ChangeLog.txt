@@ -1,3 +1,12 @@
+2004-09-08  Timo Schulz  <twoaday@g10code.de>
+
+	* GPG.cpp (~CGPG): New. Destructor to free
+	memory which was internally used.
+	(SetLogFile): Use char* instead of BSTR.
+	(GetLogFile): Likewise.
+	(GPGOptionsDlgProc): Changed all callers.
+	(Init): Enable logginf if requested.
+
 2004-09-06  Timo Schulz  <twoaday@g10code.de>
 
 	* GDGPGWrapper.cpp (SetLogLevel): New.

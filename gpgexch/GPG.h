@@ -34,6 +34,7 @@ class CGPG
 {
 public:
 	CGPG();
+	~CGPG ();
 
 protected:
     // options
@@ -49,8 +50,8 @@ protected:
     BOOL m_bContainsEmbeddedOLE;      // Indicates whether there was an embedded ole object.
     BSTR m_gpgStderr;
     BSTR m_gpgInfo;
-    BSTR m_LogFile;
 
+    char * m_LogFile;
     char * cont_type;
     char * cont_trans_enc;
 
@@ -87,7 +88,7 @@ public:
 
 	
     // get parameters
-    BSTR GetLogFile (void) { return m_LogFile; }
+    const char * GetLogFile (void) { return m_LogFile; }
     int GetStorePassPhraseTime() { return m_nStorePassPhraseTime; };
     BOOL GetEncryptDefault() { return m_bEncryptDefault; };
     BOOL GetSignDefault() { return m_bSignDefault; };
@@ -98,7 +99,7 @@ public:
     BSTR GetGPGInfo (BSTR strFilename);
 	
     // set parameters
-    void SetLogFile (BSTR strLogFilename) { m_LogFile = strLogFilename; }
+    void SetLogFile (const char * strLogFilename);
     void SetStorePassPhraseTime(int nTime) { m_nStorePassPhraseTime = nTime; };
     void SetEncryptDefault(BOOL b) { m_bEncryptDefault = b; };
     void SetSignDefault(BOOL b) { m_bSignDefault = b; };

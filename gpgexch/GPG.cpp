@@ -50,6 +50,12 @@ CGPG::CGPG()
 }
 
 
+CGPG::~CGPG ()
+{
+    if (m_LogFile)
+	delete [] m_LogFile;
+}
+
 
 BOOL CGPG::DecryptFile (HWND hWndParent, 
 			BSTR strFilenameSource, 
@@ -57,6 +63,19 @@ BOOL CGPG::DecryptFile (HWND hWndParent,
 			int &pvReturn)
 {    
     return m_gdgpg.DecryptFile (hWndParent, strFilenameSource, strFilenameDest, pvReturn);
+}
+
+
+
+void CGPG::SetLogFile (const char * strLogFilename) 
+{ 
+    if (m_LogFile)
+    {
+	delete [] m_LogFile;
+	m_LogFile = NULL;
+    }
+    m_LogFile = new char[strlen (strLogFilename)+1];
+    strcpy (m_LogFile, strLogFilename);
 }
 
 
@@ -87,8 +106,12 @@ void CGPG::ReadGPGOptions (void)
 	dwSize	= sizeof(dwResult);
 	if (RegQueryValueEx(hKey, _T("SaveDecrypted"), NULL, NULL, (LPBYTE) &dwResult, &dwSize) == ERROR_SUCCESS)
 	    m_bSaveDecrypted = (dwResult != 0);
+	dwSize = sizeof (Buf);
 	if (RegQueryValueEx (hKey, _T("LogFile"), NULL, NULL, (BYTE*)Buf, &dwSize) == ERROR_SUCCESS)
-	    m_LogFile = A2OLE (Buf);
+	{
+	    m_LogFile = new char [strlen (Buf)+1];
+	    strcpy (m_LogFile, Buf);
+	}
 	RegCloseKey(hKey);	
     }
 }
@@ -117,11 +140,7 @@ void CGPG::WriteGPGOptions (void)
 	dw = m_bSaveDecrypted ? 1 : 0;
 	RegSetValueEx(hKey, _T("SaveDecrypted"), 0, REG_DWORD, (CONST BYTE *) &dw, sizeof(DWORD));
 	if (m_LogFile != NULL)
-	{
-	    char Buf[200];
-	    strcpy (Buf, OLE2A (m_LogFile));
-	    RegSetValueEx (hKey, _T("LogFile"), NULL, REG_SZ, (BYTE*)Buf, strlen (Buf));
-	}
+	    RegSetValueEx (hKey, _T("LogFile"), NULL, REG_SZ, (BYTE*)m_LogFile, strlen (m_LogFile));
 	RegCloseKey(hKey);	
     }
 }
@@ -1004,7 +1023,7 @@ BOOL CGPG::ImportKeys(
 //
 // Return value: TRUE if successful.
 //
-BOOL CGPG::Init()
+BOOL CGPG::Init(void)
 {
     if (m_bInit)
 	return TRUE;
@@ -1013,7 +1032,8 @@ BOOL CGPG::Init()
     {
 	m_gdgpg.SetStorePassphraseTime (m_nStorePassPhraseTime);
 	USES_CONVERSION;
-	m_gdgpg.SetLogFile (A2OLE ("c:\\logfile.txt"));
+	if (m_LogFile != NULL)
+	    m_gdgpg.SetLogFile (A2OLE (m_LogFile));
 	m_bInit = TRUE;
 	return TRUE;	
     }
@@ -1025,7 +1045,7 @@ BOOL CGPG::Init()
 //
 // Uninitialize this object. Frees the GDGPG object.
 //
-void CGPG::UnInit()
+void CGPG::UnInit(void)
 {
     if (!m_bInit)
 	return;

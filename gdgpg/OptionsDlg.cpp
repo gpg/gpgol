@@ -77,24 +77,31 @@ COptionsDlg::OnSelectGPG(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL&
     TCHAR szTitle[256] = "";
     TCHAR szFilter[256] = "";
 
-    LoadString(_Module.m_hInstResource, IDS_SELECT_PROGRAM, szTitle, sizeof(szTitle));
-    LoadString(_Module.m_hInstResource, IDS_SELECT_PROGRAM_FILTER, szFilter, sizeof(szFilter));
-    if (SelectFile(m_sGPG, szTitle, szFilter))
-	m_ctlGPG.SetWindowText(m_sGPG.c_str());	
+    LoadString (_Module.m_hInstResource, IDS_SELECT_PROGRAM, szTitle, sizeof(szTitle));
+    LoadString (_Module.m_hInstResource, IDS_SELECT_PROGRAM_FILTER, szFilter, sizeof(szFilter));
+    if (SelectFile (m_sGPG, szTitle, szFilter))
+	m_ctlGPG.SetWindowText (m_sGPG.c_str());
     return 0;
 }
 
 
 LRESULT
-COptionsDlg::OnSelectKeyManager(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+COptionsDlg::OnSelectKeyManager (WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     TCHAR szTitle[256] = "";
     TCHAR szFilter[256] = "";
+    const char * s;
 
-    LoadString(_Module.m_hInstResource, IDS_SELECT_PROGRAM, szTitle, sizeof(szTitle));
-    LoadString(_Module.m_hInstResource, IDS_SELECT_PROGRAM_FILTER, szFilter, sizeof(szFilter));
+    LoadString (_Module.m_hInstResource, IDS_SELECT_PROGRAM, szTitle, sizeof(szTitle));
+    LoadString (_Module.m_hInstResource, IDS_SELECT_PROGRAM_FILTER, szFilter, sizeof(szFilter));
     if (SelectFile(m_sKeyManager, szTitle, szFilter))
-	m_ctlKeyManager.SetWindowText(m_sKeyManager.c_str());	
+    {
+	s = m_sKeyManager.c_str ();
+	if ((strstr (s, "winpt.exe") || strstr (s, "WinPT.exe") || strstr (s, "WINPT.EXE"))
+	    && !strstr (s, "--keymanager"))
+	    m_sKeyManager += " --keymanager";
+	m_ctlKeyManager.SetWindowText(m_sKeyManager.c_str());
+    }
     return 0;
 }
 

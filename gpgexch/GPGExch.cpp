@@ -43,7 +43,7 @@ CGPG g_gpg;
 BEGIN_MESSAGE_MAP(CGPGExchApp, CWinApp)
 END_MESSAGE_MAP()
 
-CGPGExchApp::CGPGExchApp ()
+CGPGExchApp::CGPGExchApp (void)
 {
 }
 
@@ -149,7 +149,7 @@ CGPGExchExt::CGPGExchExt (void)
 
 
 /* constructor of CGPGExchExt - Uninitializes the dll in the dession context. */
-CGPGExchExt::~CGPGExchExt () 
+CGPGExchExt::~CGPGExchExt (void) 
 {
     if (m_lContext == EECONTEXT_SESSION)
     {

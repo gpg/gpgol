@@ -70,7 +70,8 @@ BOOL CALLBACK GPGOptionsDlgProc (
 		    if (hbmpOld != NULL)
 			DeleteObject (hbmpOld);	
 		}	
-	    }		
+	    }
+	    SetDlgItemText (hDlg, IDC_VERSION_INFO, "Version "VERSION " ("__DATE__")");
 	    return TRUE;
 	
 	}
@@ -145,11 +146,11 @@ BOOL CALLBACK GPGOptionsDlgProc (
 	    case PSN_SETACTIVE:
 		{
 		    TCHAR s[20];
-		    BSTR f;
+		    const char * f;
 		    wsprintf(s, "%d", g_gpg.GetStorePassPhraseTime());
 		    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
 		    f = g_gpg.GetLogFile ();
-		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)OLE2A (f));
+		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)f);
 		    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
 		    SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
 			g_gpg.GetEncryptDefault() ? 1 : 0, 0L);
@@ -170,7 +171,7 @@ BOOL CALLBACK GPGOptionsDlgProc (
 		    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_GETTEXT, 20, (LPARAM) s);		
 		    g_gpg.SetStorePassPhraseTime(atol(s));
 		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT, 200, (LPARAM)s);
-		    g_gpg.SetLogFile (A2OLE (s));
+		    g_gpg.SetLogFile (s);
 		
 		    g_gpg.SetEncryptDefault(SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));		
 		    g_gpg.SetSignDefault(SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));		

@@ -22,6 +22,8 @@
 #ifndef INC_GPGEXCHANGE_H
 #define INC_GPGEXCHANGE_H
 
+#define VERSION "1.1.0.0"
+
 class CGPGExchExtMessageEvents;
 class CGPGExchExtCommands;
 class CGPGExchExtPropertySheets;

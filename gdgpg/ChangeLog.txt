@@ -1,5 +1,7 @@
-2004-09-06  Timo Schulz  <twoaday@g10code.de>
+2004-09-08  Timo Schulz  <twoaday@g10code.de>
 
+	* OptionsDlg.cpp (OnSelectKeyManager): Automatically add
+	--keymanager if WinPT is used as the key manager.
 
 2004-09-03  Timo Schulz  <twoaday@g10code.de>
 
