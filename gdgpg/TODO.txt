@@ -1,4 +1,6 @@
-TODO list for version 1.2.0. This should be the first stable version.
+TODO list for version 1.3.0. This should be the first stable version.
+
+GDGPG interface:
 
 	* GetDefaultKey: Do not get the first, but the first valid key.
 	This is a little tricky due to the fact that --list-secret-keys
@@ -17,4 +19,12 @@ TODO list for version 1.2.0. This should be the first stable version.
 
 	* Find a better way for the translation issues.
 
-	* Make a public release and search for a new maintainer.
+g10Code interface:
+	
+	* Add some regression tests to check if the code works with
+ 	all combinations of options.
+
+	* Replace the generic string handling which a more advanced
+	data type.
+
+	* Add the rest of the core GPG functions.

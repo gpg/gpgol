@@ -31,6 +31,7 @@
 #define IDS_TRUST_REVOKED               125
 #define IDS_TRUST_EXPIRED               126
 #define IDS_TRUST_DISABLED              127
+#define IDR_G10CODE                     128
 #define IDD_SELECT_KEY                  201
 #define IDC_KEY_LIST                    201
 #define IDD_PASSPHRASE                  202
@@ -55,6 +56,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        205
 #define _APS_NEXT_COMMAND_VALUE         32768
 #define _APS_NEXT_CONTROL_VALUE         211
-#define _APS_NEXT_SYMED_VALUE           102
+#define _APS_NEXT_SYMED_VALUE           129
 #endif
 #endif

@@ -4,6 +4,9 @@ Noteworthy changes for version 1.3.0.0 (unreleased)
 - Logging support to make it easier to track down errors
   and to allow remote debugging.
 
+- New interface which is more generic and tries to be a
+  complete wrapper around the GPG binary.
+
 Noteworthy changes for version 1.2.0.0 (2004-08-23)
 ===================================================
 

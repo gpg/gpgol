@@ -100,6 +100,7 @@ END
 //
 
 IDR_GDGPG               REGISTRY DISCARDABLE    "GDGPG.rgs"
+IDR_G10CODE             REGISTRY DISCARDABLE    "g10Code.rgs"
 
 /////////////////////////////////////////////////////////////////////////////
 //

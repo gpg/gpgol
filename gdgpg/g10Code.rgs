@@ -1,0 +1,26 @@
+HKCR
+{
+	GDGPG.g10Code.1 = s 'g10Code Class'
+	{
+		CLSID = s '{658BFF7C-83DD-41F8-A712-93728A349A7F}'
+	}
+	GDGPG.g10Code = s 'g10Code Class'
+	{
+		CLSID = s '{658BFF7C-83DD-41F8-A712-93728A349A7F}'
+		CurVer = s 'GDGPG.g10Code.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {658BFF7C-83DD-41F8-A712-93728A349A7F} = s 'g10Code Class'
+		{
+			ProgID = s 'GDGPG.g10Code.1'
+			VersionIndependentProgID = s 'GDGPG.g10Code'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{25EC75AD-5EB9-4E20-A4B4-E71C36370F62}'
+		}
+	}
+}

@@ -2,9 +2,9 @@
 
 
 /* File created by MIDL compiler version 5.01.0164 */
-/* at Mon Sep 06 12:34:18 2004
+/* at Thu Sep 30 12:18:45 2004
  */
-/* Compiler settings for C:\Source\GData\Gdgpg\GDGPG.idl:
+/* Compiler settings for C:\Source_OSS\GData\Gdgpg\GDGPG.idl:
     Oicf (OptLev=i2), W1, Zp8, env=Win32, ms_ext, c_ext
     error checks: allocation ref bounds_check enum stub_data 
 */
@@ -43,6 +43,12 @@ typedef interface IGDGPG IGDGPG;
 #endif 	/* __IGDGPG_FWD_DEFINED__ */
 
 
+#ifndef __Ig10Code_FWD_DEFINED__
+#define __Ig10Code_FWD_DEFINED__
+typedef interface Ig10Code Ig10Code;
+#endif 	/* __Ig10Code_FWD_DEFINED__ */
+
+
 #ifndef __GDGPG_FWD_DEFINED__
 #define __GDGPG_FWD_DEFINED__
 
@@ -55,12 +61,51 @@ typedef struct GDGPG GDGPG;
 #endif 	/* __GDGPG_FWD_DEFINED__ */
 
 
+#ifndef ___Ig10CodeEvents_FWD_DEFINED__
+#define ___Ig10CodeEvents_FWD_DEFINED__
+typedef interface _Ig10CodeEvents _Ig10CodeEvents;
+#endif 	/* ___Ig10CodeEvents_FWD_DEFINED__ */
+
+
+#ifndef __g10Code_FWD_DEFINED__
+#define __g10Code_FWD_DEFINED__
+
+#ifdef __cplusplus
+typedef class g10Code g10Code;
+#else
+typedef struct g10Code g10Code;
+#endif /* __cplusplus */
+
+#endif 	/* __g10Code_FWD_DEFINED__ */
+
+
 /* header files for imported files */
 #include "oaidl.h"
 #include "ocidl.h"
 
 void __RPC_FAR * __RPC_USER MIDL_user_allocate(size_t);
 void __RPC_USER MIDL_user_free( void __RPC_FAR * ); 
+
+/* interface __MIDL_itf_GDGPG_0000 */
+/* [local] */ 
+
+typedef /* [public] */ 
+enum __MIDL___MIDL_itf_GDGPG_0000_0001
+    {	g10code_err_Success	= 0,
+	g10code_err_InvRecipients	= 1,
+	g10code_err_NoRecipients	= 2,
+	g10code_err_NoPlaintext	= 3,
+	g10code_err_NoCiphertext	= 4,
+	g10code_err_NoBinary	= 5,
+	g10code_err_NoPassphrase	= 6,
+	g10code_err_BadPassphrase	= 7,
+	g10code_err_KeyNotFound	= 8
+    }	g10code_err_t;
+
+
+
+extern RPC_IF_HANDLE __MIDL_itf_GDGPG_0000_v0_0_c_ifspec;
+extern RPC_IF_HANDLE __MIDL_itf_GDGPG_0000_v0_0_s_ifspec;
 
 #ifndef __IGDGPG_INTERFACE_DEFINED__
 #define __IGDGPG_INTERFACE_DEFINED__
@@ -592,6 +637,1140 @@ void __RPC_STUB IGDGPG_SetLogFile_Stub(
 #endif 	/* __IGDGPG_INTERFACE_DEFINED__ */
 
 
+#ifndef __Ig10Code_INTERFACE_DEFINED__
+#define __Ig10Code_INTERFACE_DEFINED__
+
+/* interface Ig10Code */
+/* [unique][helpstring][dual][uuid][object] */ 
+
+
+EXTERN_C const IID IID_Ig10Code;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("4514D7BD-4BBE-47C1-9552-78E189620636")
+    Ig10Code : public IDispatch
+    {
+    public:
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Plaintext( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Plaintext( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Ciphertext( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Ciphertext( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Armor( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Armor( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_LocalUser( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_LocalUser( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_CompressLevel( 
+            /* [retval][out] */ long __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_CompressLevel( 
+            /* [in] */ long newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_TextMode( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_TextMode( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Expert( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Expert( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_PGPMode( 
+            /* [retval][out] */ long __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_PGPMode( 
+            /* [in] */ long newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_AlwaysTrust( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_AlwaysTrust( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE SetLogLevel( 
+            long logLevel) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE SetLogFile( 
+            BSTR logFile,
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Binary( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Binary( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE AddRecipient( 
+            BSTR name,
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Encrypt( 
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE ClearRecipient( void) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Output( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Output( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_NoVersion( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_NoVersion( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Comment( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Comment( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Passphrase( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Decrypt( 
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Export( 
+            BSTR keyNames,
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_EncryptoTo( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_EncryptoTo( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_ForceMDC( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_ForceMDC( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_ForceV3Sig( 
+            /* [retval][out] */ BOOL __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_ForceV3Sig( 
+            /* [in] */ BOOL newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_Keyserver( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_Keyserver( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE get_HomeDir( 
+            /* [retval][out] */ BSTR __RPC_FAR *pVal) = 0;
+        
+        virtual /* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE put_HomeDir( 
+            /* [in] */ BSTR newVal) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE EncryptFile( 
+            /* [in] */ BSTR inFile,
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+        virtual /* [helpstring][id] */ HRESULT STDMETHODCALLTYPE DecryptFile( 
+            /* [in] */ BSTR inFile,
+            /* [retval][out] */ long __RPC_FAR *pvReturn) = 0;
+        
+    };
+    
+#else 	/* C style interface */
+
+    typedef struct Ig10CodeVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *QueryInterface )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ REFIID riid,
+            /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE __RPC_FAR *AddRef )( 
+            Ig10Code __RPC_FAR * This);
+        
+        ULONG ( STDMETHODCALLTYPE __RPC_FAR *Release )( 
+            Ig10Code __RPC_FAR * This);
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetTypeInfoCount )( 
+            Ig10Code __RPC_FAR * This,
+            /* [out] */ UINT __RPC_FAR *pctinfo);
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetTypeInfo )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ UINT iTInfo,
+            /* [in] */ LCID lcid,
+            /* [out] */ ITypeInfo __RPC_FAR *__RPC_FAR *ppTInfo);
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetIDsOfNames )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ REFIID riid,
+            /* [size_is][in] */ LPOLESTR __RPC_FAR *rgszNames,
+            /* [in] */ UINT cNames,
+            /* [in] */ LCID lcid,
+            /* [size_is][out] */ DISPID __RPC_FAR *rgDispId);
+        
+        /* [local] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Invoke )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ DISPID dispIdMember,
+            /* [in] */ REFIID riid,
+            /* [in] */ LCID lcid,
+            /* [in] */ WORD wFlags,
+            /* [out][in] */ DISPPARAMS __RPC_FAR *pDispParams,
+            /* [out] */ VARIANT __RPC_FAR *pVarResult,
+            /* [out] */ EXCEPINFO __RPC_FAR *pExcepInfo,
+            /* [out] */ UINT __RPC_FAR *puArgErr);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Plaintext )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Plaintext )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Ciphertext )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Ciphertext )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Armor )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Armor )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_LocalUser )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_LocalUser )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_CompressLevel )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ long __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_CompressLevel )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ long newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_TextMode )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_TextMode )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Expert )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Expert )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_PGPMode )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ long __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_PGPMode )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ long newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_AlwaysTrust )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_AlwaysTrust )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *SetLogLevel )( 
+            Ig10Code __RPC_FAR * This,
+            long logLevel);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *SetLogFile )( 
+            Ig10Code __RPC_FAR * This,
+            BSTR logFile,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Binary )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Binary )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *AddRecipient )( 
+            Ig10Code __RPC_FAR * This,
+            BSTR name,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Encrypt )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *ClearRecipient )( 
+            Ig10Code __RPC_FAR * This);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Output )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Output )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_NoVersion )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_NoVersion )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Comment )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Comment )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Passphrase )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Decrypt )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Export )( 
+            Ig10Code __RPC_FAR * This,
+            BSTR keyNames,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_EncryptoTo )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_EncryptoTo )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_ForceMDC )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_ForceMDC )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_ForceV3Sig )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BOOL __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_ForceV3Sig )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BOOL newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_Keyserver )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_Keyserver )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id][propget] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *get_HomeDir )( 
+            Ig10Code __RPC_FAR * This,
+            /* [retval][out] */ BSTR __RPC_FAR *pVal);
+        
+        /* [helpstring][id][propput] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *put_HomeDir )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR newVal);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *EncryptFile )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR inFile,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        /* [helpstring][id] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *DecryptFile )( 
+            Ig10Code __RPC_FAR * This,
+            /* [in] */ BSTR inFile,
+            /* [retval][out] */ long __RPC_FAR *pvReturn);
+        
+        END_INTERFACE
+    } Ig10CodeVtbl;
+
+    interface Ig10Code
+    {
+        CONST_VTBL struct Ig10CodeVtbl __RPC_FAR *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define Ig10Code_QueryInterface(This,riid,ppvObject)	\
+    (This)->lpVtbl -> QueryInterface(This,riid,ppvObject)
+
+#define Ig10Code_AddRef(This)	\
+    (This)->lpVtbl -> AddRef(This)
+
+#define Ig10Code_Release(This)	\
+    (This)->lpVtbl -> Release(This)
+
+
+#define Ig10Code_GetTypeInfoCount(This,pctinfo)	\
+    (This)->lpVtbl -> GetTypeInfoCount(This,pctinfo)
+
+#define Ig10Code_GetTypeInfo(This,iTInfo,lcid,ppTInfo)	\
+    (This)->lpVtbl -> GetTypeInfo(This,iTInfo,lcid,ppTInfo)
+
+#define Ig10Code_GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)	\
+    (This)->lpVtbl -> GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)
+
+#define Ig10Code_Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)	\
+    (This)->lpVtbl -> Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)
+
+
+#define Ig10Code_get_Plaintext(This,pVal)	\
+    (This)->lpVtbl -> get_Plaintext(This,pVal)
+
+#define Ig10Code_put_Plaintext(This,newVal)	\
+    (This)->lpVtbl -> put_Plaintext(This,newVal)
+
+#define Ig10Code_get_Ciphertext(This,pVal)	\
+    (This)->lpVtbl -> get_Ciphertext(This,pVal)
+
+#define Ig10Code_put_Ciphertext(This,newVal)	\
+    (This)->lpVtbl -> put_Ciphertext(This,newVal)
+
+#define Ig10Code_get_Armor(This,pVal)	\
+    (This)->lpVtbl -> get_Armor(This,pVal)
+
+#define Ig10Code_put_Armor(This,newVal)	\
+    (This)->lpVtbl -> put_Armor(This,newVal)
+
+#define Ig10Code_get_LocalUser(This,pVal)	\
+    (This)->lpVtbl -> get_LocalUser(This,pVal)
+
+#define Ig10Code_put_LocalUser(This,newVal)	\
+    (This)->lpVtbl -> put_LocalUser(This,newVal)
+
+#define Ig10Code_get_CompressLevel(This,pVal)	\
+    (This)->lpVtbl -> get_CompressLevel(This,pVal)
+
+#define Ig10Code_put_CompressLevel(This,newVal)	\
+    (This)->lpVtbl -> put_CompressLevel(This,newVal)
+
+#define Ig10Code_get_TextMode(This,pVal)	\
+    (This)->lpVtbl -> get_TextMode(This,pVal)
+
+#define Ig10Code_put_TextMode(This,newVal)	\
+    (This)->lpVtbl -> put_TextMode(This,newVal)
+
+#define Ig10Code_get_Expert(This,pVal)	\
+    (This)->lpVtbl -> get_Expert(This,pVal)
+
+#define Ig10Code_put_Expert(This,newVal)	\
+    (This)->lpVtbl -> put_Expert(This,newVal)
+
+#define Ig10Code_get_PGPMode(This,pVal)	\
+    (This)->lpVtbl -> get_PGPMode(This,pVal)
+
+#define Ig10Code_put_PGPMode(This,newVal)	\
+    (This)->lpVtbl -> put_PGPMode(This,newVal)
+
+#define Ig10Code_get_AlwaysTrust(This,pVal)	\
+    (This)->lpVtbl -> get_AlwaysTrust(This,pVal)
+
+#define Ig10Code_put_AlwaysTrust(This,newVal)	\
+    (This)->lpVtbl -> put_AlwaysTrust(This,newVal)
+
+#define Ig10Code_SetLogLevel(This,logLevel)	\
+    (This)->lpVtbl -> SetLogLevel(This,logLevel)
+
+#define Ig10Code_SetLogFile(This,logFile,pvReturn)	\
+    (This)->lpVtbl -> SetLogFile(This,logFile,pvReturn)
+
+#define Ig10Code_get_Binary(This,pVal)	\
+    (This)->lpVtbl -> get_Binary(This,pVal)
+
+#define Ig10Code_put_Binary(This,newVal)	\
+    (This)->lpVtbl -> put_Binary(This,newVal)
+
+#define Ig10Code_AddRecipient(This,name,pvReturn)	\
+    (This)->lpVtbl -> AddRecipient(This,name,pvReturn)
+
+#define Ig10Code_Encrypt(This,pvReturn)	\
+    (This)->lpVtbl -> Encrypt(This,pvReturn)
+
+#define Ig10Code_ClearRecipient(This)	\
+    (This)->lpVtbl -> ClearRecipient(This)
+
+#define Ig10Code_get_Output(This,pVal)	\
+    (This)->lpVtbl -> get_Output(This,pVal)
+
+#define Ig10Code_put_Output(This,newVal)	\
+    (This)->lpVtbl -> put_Output(This,newVal)
+
+#define Ig10Code_get_NoVersion(This,pVal)	\
+    (This)->lpVtbl -> get_NoVersion(This,pVal)
+
+#define Ig10Code_put_NoVersion(This,newVal)	\
+    (This)->lpVtbl -> put_NoVersion(This,newVal)
+
+#define Ig10Code_get_Comment(This,pVal)	\
+    (This)->lpVtbl -> get_Comment(This,pVal)
+
+#define Ig10Code_put_Comment(This,newVal)	\
+    (This)->lpVtbl -> put_Comment(This,newVal)
+
+#define Ig10Code_put_Passphrase(This,newVal)	\
+    (This)->lpVtbl -> put_Passphrase(This,newVal)
+
+#define Ig10Code_Decrypt(This,pvReturn)	\
+    (This)->lpVtbl -> Decrypt(This,pvReturn)
+
+#define Ig10Code_Export(This,keyNames,pvReturn)	\
+    (This)->lpVtbl -> Export(This,keyNames,pvReturn)
+
+#define Ig10Code_get_EncryptoTo(This,pVal)	\
+    (This)->lpVtbl -> get_EncryptoTo(This,pVal)
+
+#define Ig10Code_put_EncryptoTo(This,newVal)	\
+    (This)->lpVtbl -> put_EncryptoTo(This,newVal)
+
+#define Ig10Code_get_ForceMDC(This,pVal)	\
+    (This)->lpVtbl -> get_ForceMDC(This,pVal)
+
+#define Ig10Code_put_ForceMDC(This,newVal)	\
+    (This)->lpVtbl -> put_ForceMDC(This,newVal)
+
+#define Ig10Code_get_ForceV3Sig(This,pVal)	\
+    (This)->lpVtbl -> get_ForceV3Sig(This,pVal)
+
+#define Ig10Code_put_ForceV3Sig(This,newVal)	\
+    (This)->lpVtbl -> put_ForceV3Sig(This,newVal)
+
+#define Ig10Code_get_Keyserver(This,pVal)	\
+    (This)->lpVtbl -> get_Keyserver(This,pVal)
+
+#define Ig10Code_put_Keyserver(This,newVal)	\
+    (This)->lpVtbl -> put_Keyserver(This,newVal)
+
+#define Ig10Code_get_HomeDir(This,pVal)	\
+    (This)->lpVtbl -> get_HomeDir(This,pVal)
+
+#define Ig10Code_put_HomeDir(This,newVal)	\
+    (This)->lpVtbl -> put_HomeDir(This,newVal)
+
+#define Ig10Code_EncryptFile(This,inFile,pvReturn)	\
+    (This)->lpVtbl -> EncryptFile(This,inFile,pvReturn)
+
+#define Ig10Code_DecryptFile(This,inFile,pvReturn)	\
+    (This)->lpVtbl -> DecryptFile(This,inFile,pvReturn)
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Plaintext_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Plaintext_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Plaintext_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Plaintext_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Ciphertext_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Ciphertext_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Ciphertext_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Ciphertext_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Armor_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Armor_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Armor_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_Armor_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_LocalUser_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_LocalUser_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_LocalUser_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_LocalUser_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_CompressLevel_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ long __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_CompressLevel_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_CompressLevel_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ long newVal);
+
+
+void __RPC_STUB Ig10Code_put_CompressLevel_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_TextMode_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_TextMode_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_TextMode_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_TextMode_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Expert_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Expert_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Expert_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_Expert_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_PGPMode_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ long __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_PGPMode_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_PGPMode_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ long newVal);
+
+
+void __RPC_STUB Ig10Code_put_PGPMode_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_AlwaysTrust_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_AlwaysTrust_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_AlwaysTrust_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_AlwaysTrust_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_SetLogLevel_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    long logLevel);
+
+
+void __RPC_STUB Ig10Code_SetLogLevel_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_SetLogFile_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    BSTR logFile,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_SetLogFile_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Binary_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Binary_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Binary_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Binary_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_AddRecipient_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    BSTR name,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_AddRecipient_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_Encrypt_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_Encrypt_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_ClearRecipient_Proxy( 
+    Ig10Code __RPC_FAR * This);
+
+
+void __RPC_STUB Ig10Code_ClearRecipient_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Output_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Output_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Output_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Output_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_NoVersion_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_NoVersion_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_NoVersion_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_NoVersion_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Comment_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Comment_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Comment_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Comment_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Passphrase_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Passphrase_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_Decrypt_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_Decrypt_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_Export_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    BSTR keyNames,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_Export_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_EncryptoTo_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_EncryptoTo_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_EncryptoTo_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_EncryptoTo_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_ForceMDC_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_ForceMDC_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_ForceMDC_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_ForceMDC_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_ForceV3Sig_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BOOL __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_ForceV3Sig_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_ForceV3Sig_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BOOL newVal);
+
+
+void __RPC_STUB Ig10Code_put_ForceV3Sig_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_Keyserver_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_Keyserver_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_Keyserver_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_Keyserver_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propget] */ HRESULT STDMETHODCALLTYPE Ig10Code_get_HomeDir_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [retval][out] */ BSTR __RPC_FAR *pVal);
+
+
+void __RPC_STUB Ig10Code_get_HomeDir_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id][propput] */ HRESULT STDMETHODCALLTYPE Ig10Code_put_HomeDir_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR newVal);
+
+
+void __RPC_STUB Ig10Code_put_HomeDir_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_EncryptFile_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR inFile,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_EncryptFile_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][id] */ HRESULT STDMETHODCALLTYPE Ig10Code_DecryptFile_Proxy( 
+    Ig10Code __RPC_FAR * This,
+    /* [in] */ BSTR inFile,
+    /* [retval][out] */ long __RPC_FAR *pvReturn);
+
+
+void __RPC_STUB Ig10Code_DecryptFile_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+
+#endif 	/* __Ig10Code_INTERFACE_DEFINED__ */
+
+
 
 #ifndef __GDGPGLib_LIBRARY_DEFINED__
 #define __GDGPGLib_LIBRARY_DEFINED__
@@ -608,6 +1787,120 @@ EXTERN_C const CLSID CLSID_GDGPG;
 
 class DECLSPEC_UUID("321F09FC-E2FD-409B-B8D1-60FA7DCDA531")
 GDGPG;
+#endif
+
+#ifndef ___Ig10CodeEvents_DISPINTERFACE_DEFINED__
+#define ___Ig10CodeEvents_DISPINTERFACE_DEFINED__
+
+/* dispinterface _Ig10CodeEvents */
+/* [helpstring][uuid] */ 
+
+
+EXTERN_C const IID DIID__Ig10CodeEvents;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+
+    MIDL_INTERFACE("69D0503E-250B-4994-B388-975A604EADDD")
+    _Ig10CodeEvents : public IDispatch
+    {
+    };
+    
+#else 	/* C style interface */
+
+    typedef struct _Ig10CodeEventsVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *QueryInterface )( 
+            _Ig10CodeEvents __RPC_FAR * This,
+            /* [in] */ REFIID riid,
+            /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE __RPC_FAR *AddRef )( 
+            _Ig10CodeEvents __RPC_FAR * This);
+        
+        ULONG ( STDMETHODCALLTYPE __RPC_FAR *Release )( 
+            _Ig10CodeEvents __RPC_FAR * This);
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetTypeInfoCount )( 
+            _Ig10CodeEvents __RPC_FAR * This,
+            /* [out] */ UINT __RPC_FAR *pctinfo);
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetTypeInfo )( 
+            _Ig10CodeEvents __RPC_FAR * This,
+            /* [in] */ UINT iTInfo,
+            /* [in] */ LCID lcid,
+            /* [out] */ ITypeInfo __RPC_FAR *__RPC_FAR *ppTInfo);
+        
+        HRESULT ( STDMETHODCALLTYPE __RPC_FAR *GetIDsOfNames )( 
+            _Ig10CodeEvents __RPC_FAR * This,
+            /* [in] */ REFIID riid,
+            /* [size_is][in] */ LPOLESTR __RPC_FAR *rgszNames,
+            /* [in] */ UINT cNames,
+            /* [in] */ LCID lcid,
+            /* [size_is][out] */ DISPID __RPC_FAR *rgDispId);
+        
+        /* [local] */ HRESULT ( STDMETHODCALLTYPE __RPC_FAR *Invoke )( 
+            _Ig10CodeEvents __RPC_FAR * This,
+            /* [in] */ DISPID dispIdMember,
+            /* [in] */ REFIID riid,
+            /* [in] */ LCID lcid,
+            /* [in] */ WORD wFlags,
+            /* [out][in] */ DISPPARAMS __RPC_FAR *pDispParams,
+            /* [out] */ VARIANT __RPC_FAR *pVarResult,
+            /* [out] */ EXCEPINFO __RPC_FAR *pExcepInfo,
+            /* [out] */ UINT __RPC_FAR *puArgErr);
+        
+        END_INTERFACE
+    } _Ig10CodeEventsVtbl;
+
+    interface _Ig10CodeEvents
+    {
+        CONST_VTBL struct _Ig10CodeEventsVtbl __RPC_FAR *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define _Ig10CodeEvents_QueryInterface(This,riid,ppvObject)	\
+    (This)->lpVtbl -> QueryInterface(This,riid,ppvObject)
+
+#define _Ig10CodeEvents_AddRef(This)	\
+    (This)->lpVtbl -> AddRef(This)
+
+#define _Ig10CodeEvents_Release(This)	\
+    (This)->lpVtbl -> Release(This)
+
+
+#define _Ig10CodeEvents_GetTypeInfoCount(This,pctinfo)	\
+    (This)->lpVtbl -> GetTypeInfoCount(This,pctinfo)
+
+#define _Ig10CodeEvents_GetTypeInfo(This,iTInfo,lcid,ppTInfo)	\
+    (This)->lpVtbl -> GetTypeInfo(This,iTInfo,lcid,ppTInfo)
+
+#define _Ig10CodeEvents_GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)	\
+    (This)->lpVtbl -> GetIDsOfNames(This,riid,rgszNames,cNames,lcid,rgDispId)
+
+#define _Ig10CodeEvents_Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)	\
+    (This)->lpVtbl -> Invoke(This,dispIdMember,riid,lcid,wFlags,pDispParams,pVarResult,pExcepInfo,puArgErr)
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+#endif 	/* ___Ig10CodeEvents_DISPINTERFACE_DEFINED__ */
+
+
+EXTERN_C const CLSID CLSID_g10Code;
+
+#ifdef __cplusplus
+
+class DECLSPEC_UUID("658BFF7C-83DD-41F8-A712-93728A349A7F")
+g10Code;
 #endif
 #endif /* __GDGPGLib_LIBRARY_DEFINED__ */
 

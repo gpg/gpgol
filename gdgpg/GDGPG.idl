@@ -22,6 +22,20 @@
 
 import "oaidl.idl";
 import "ocidl.idl";
+
+typedef enum {
+	g10code_err_Success		  = 0,
+	g10code_err_InvRecipients = 1,
+	g10code_err_NoRecipients  = 2,
+	g10code_err_NoPlaintext   = 3,
+	g10code_err_NoCiphertext  = 4,
+	g10code_err_NoBinary	  = 5,
+	g10code_err_NoPassphrase  = 6,
+	g10code_err_BadPassphrase = 7,
+	g10code_err_KeyNotFound   = 8,
+} g10code_err_t;
+
+
 	[
 		object,
 		uuid(83C42CA3-5D35-4120-8DF6-09D835166594),
@@ -43,9 +57,65 @@ import "ocidl.idl";
 		[id(10), helpstring("method DecryptNextFile")] HRESULT DecryptNextFile([in] ULONG hWndParent, [in] BSTR strFilenameSource, [in] BSTR strFilenameDest, [out, retval] int* pvReturn);
 		[id(11), helpstring ("method GetGPGOutput")]HRESULT GetGPGOutput([out]BSTR *hStdErr);
 		[id(12), helpstring ("method GetGPGInfo")]HRESULT GetGPGInfo ([in]BSTR strFilename, [out]BSTR *hInfo);
-		[id(13), helpstring ("method VerifyDetachedSignature")]HRESULT VerifyDetachedSignature ([in]ULONG hWndParent, [in]BSTR strFilenameText, [in]BSTR strFilenameSig, [out, retval]int *pvReturn);		
+		[id(13), helpstring ("method VerifyDetachedSignature")]HRESULT VerifyDetachedSignature ([in]ULONG hWndParent, [in]BSTR strFilenameText, [in]BSTR strFilenameSig, [out, retval]int *pvReturn);
 		[id(14), helpstring ("method SetLogLevel")]HRESULT SetLogLevel ([in]ULONG nLevel);
 		[id(15), helpstring ("method SetLogFile")]HRESULT SetLogFile([in]BSTR strLogFilename, [out, retval] int* pvReturn);
+	};
+	[
+		object,
+		uuid(4514D7BD-4BBE-47C1-9552-78E189620636),
+		dual,
+		helpstring("Ig10Code-Schnittstelle"),
+		pointer_default(unique)
+	]
+	interface Ig10Code : IDispatch
+	{
+		[propget, id(1), helpstring("Eigenschaft Plaintext")] HRESULT Plaintext([out, retval] BSTR *pVal);
+		[propput, id(1), helpstring("Eigenschaft Plaintext")] HRESULT Plaintext([in] BSTR newVal);
+		[propget, id(2), helpstring("Eigenschaft Ciphertext")] HRESULT Ciphertext([out, retval] BSTR *pVal);
+		[propput, id(2), helpstring("Eigenschaft Ciphertext")] HRESULT Ciphertext([in] BSTR newVal);
+		[propget, id(3), helpstring("Eigenschaft Armor")] HRESULT Armor([out, retval] BOOL *pVal);
+		[propput, id(3), helpstring("Eigenschaft Armor")] HRESULT Armor([in] BOOL newVal);
+		[propget, id(4), helpstring("Eigenschaft LocalUser")] HRESULT LocalUser([out, retval] BSTR *pVal);
+		[propput, id(4), helpstring("Eigenschaft LocalUser")] HRESULT LocalUser([in] BSTR newVal);
+		[propget, id(5), helpstring("Eigenschaft CompressLevel")] HRESULT CompressLevel([out, retval] long *pVal);
+		[propput, id(5), helpstring("Eigenschaft CompressLevel")] HRESULT CompressLevel([in] long newVal);
+		[propget, id(6), helpstring("Eigenschaft TextMode")] HRESULT TextMode([out, retval] BOOL *pVal);
+		[propput, id(6), helpstring("Eigenschaft TextMode")] HRESULT TextMode([in] BOOL newVal);
+		[propget, id(7), helpstring("Eigenschaft Expert")] HRESULT Expert([out, retval] BOOL *pVal);
+		[propput, id(7), helpstring("Eigenschaft Expert")] HRESULT Expert([in] BOOL newVal);
+		[propget, id(8), helpstring("Eigenschaft PGPMode")] HRESULT PGPMode([out, retval] long *pVal);
+		[propput, id(8), helpstring("Eigenschaft PGPMode")] HRESULT PGPMode([in] long newVal);
+		[propget, id(9), helpstring("Eigenschaft AlwaysTrust")] HRESULT AlwaysTrust([out, retval] BOOL *pVal);
+		[propput, id(9), helpstring("Eigenschaft AlwaysTrust")] HRESULT AlwaysTrust([in] BOOL newVal);
+		[id(10), helpstring("Methode SetLogLevel")] HRESULT SetLogLevel(long logLevel);
+		[id(11), helpstring("Methode SetLogFile")] HRESULT SetLogFile(BSTR logFile, [out, retval]long *pvReturn);
+		[propget, id(12), helpstring("Eigenschaft Binary")] HRESULT Binary([out, retval] BSTR *pVal);
+		[propput, id(12), helpstring("Eigenschaft Binary")] HRESULT Binary([in] BSTR newVal);
+		[id(13), helpstring("Methode AddRecipient")] HRESULT AddRecipient(BSTR name, [out, retval]long *pvReturn);
+		[id(14), helpstring("Methode Encrypt")] HRESULT Encrypt([out, retval]long *pvReturn);
+		[id(15), helpstring("Methode ClearRecipient")] HRESULT ClearRecipient();
+		[propget, id(16), helpstring("Eigenschaft Output")] HRESULT Output([out, retval] BSTR *pVal);
+		[propput, id(16), helpstring("Eigenschaft Output")] HRESULT Output([in] BSTR newVal);
+		[propget, id(17), helpstring("Eigenschaft NoVersion")] HRESULT NoVersion([out, retval] BOOL *pVal);
+		[propput, id(17), helpstring("Eigenschaft NoVersion")] HRESULT NoVersion([in] BOOL newVal);
+		[propget, id(18), helpstring("Eigenschaft Comment")] HRESULT Comment([out, retval] BSTR *pVal);
+		[propput, id(18), helpstring("Eigenschaft Comment")] HRESULT Comment([in] BSTR newVal);
+		[propput, id(19), helpstring("Eigenschaft Passphrase")] HRESULT Passphrase([in] BSTR newVal);
+		[id(20), helpstring("Methode Decrypt")] HRESULT Decrypt([out, retval]long *pvReturn);
+		[id(21), helpstring("Methode Export")] HRESULT Export(BSTR keyNames, [out, retval]long *pvReturn);
+		[propget, id(22), helpstring("Eigenschaft EncryptoTo")] HRESULT EncryptoTo([out, retval] BSTR *pVal);
+		[propput, id(22), helpstring("Eigenschaft EncryptoTo")] HRESULT EncryptoTo([in] BSTR newVal);
+		[propget, id(23), helpstring("Eigenschaft ForceMDC")] HRESULT ForceMDC([out, retval] BOOL *pVal);
+		[propput, id(23), helpstring("Eigenschaft ForceMDC")] HRESULT ForceMDC([in] BOOL newVal);
+		[propget, id(24), helpstring("Eigenschaft ForceV3Sig")] HRESULT ForceV3Sig([out, retval] BOOL *pVal);
+		[propput, id(24), helpstring("Eigenschaft ForceV3Sig")] HRESULT ForceV3Sig([in] BOOL newVal);
+		[propget, id(25), helpstring("Eigenschaft Keyserver")] HRESULT Keyserver([out, retval] BSTR *pVal);
+		[propput, id(25), helpstring("Eigenschaft Keyserver")] HRESULT Keyserver([in] BSTR newVal);
+		[propget, id(26), helpstring("Eigenschaft HomeDir")] HRESULT HomeDir([out, retval] BSTR *pVal);
+		[propput, id(26), helpstring("Eigenschaft HomeDir")] HRESULT HomeDir([in] BSTR newVal);
+		[id(27), helpstring("Methode EncryptFile")] HRESULT EncryptFile([in]BSTR inFile, [out, retval]long *pvReturn);
+		[id(28), helpstring("Methode DecryptFile")] HRESULT DecryptFile([in]BSTR inFile, [out, retval]long *pvReturn);
 	};
 
 [
@@ -65,5 +135,24 @@ library GDGPGLib
 	coclass GDGPG
 	{
 		[default] interface IGDGPG;
+	};
+	[
+		uuid(69D0503E-250B-4994-B388-975A604EADDD),
+		helpstring("_Ig10CodeEreignisschnittstelle")
+	]
+	dispinterface _Ig10CodeEvents
+	{
+		properties:
+		methods:
+	};
+
+	[
+		uuid(658BFF7C-83DD-41F8-A712-93728A349A7F),
+		helpstring("g10Code Class")
+	]
+	coclass g10Code
+	{
+		[default] interface Ig10Code;
+		[default, source] dispinterface _Ig10CodeEvents;
 	};
 };

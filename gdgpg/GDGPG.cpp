@@ -28,11 +28,13 @@
 
 #include "GDGPG_i.c"
 #include "GDGPGO.h"
+#include "g10Code.h"
 
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
 OBJECT_ENTRY(CLSID_GDGPG, CGDGPG)
+OBJECT_ENTRY(CLSID_g10Code, Cg10Code)
 END_OBJECT_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -221,7 +223,7 @@ CGDGPG::CallGPG(
     
     ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
 
-    LogInfo ("commandline:\n%s", sCommand.c_str ());
+    LogInfo ("commandline:\n%s\n", sCommand.c_str ());
 
     bSuccess = CreateProcess( NULL, (char*) sCommand.c_str(),
 			      NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
