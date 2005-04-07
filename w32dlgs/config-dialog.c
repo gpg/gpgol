@@ -27,9 +27,9 @@
 #include "intern.h"
 
 static char*
-get_open_file_name(const char *dir)
+get_open_file_name (const char *dir)
 {
-    static char fname[256+1];
+    static char fname[MAX_PATH+1];
     OPENFILENAME ofn;
 
     memset (&ofn, 0, sizeof ofn);
@@ -50,12 +50,12 @@ get_open_file_name(const char *dir)
 static char*
 get_folder(void)
 {
-    static char fname[256+1];
+    static char fname[MAX_PATH+1];
     BROWSEINFO bi;
     ITEMIDLIST * il;
 
     memset (&bi, 0, sizeof (bi));
-    memset (fname, 0, 256+1);
+    memset (fname, 0, sizeof (fname));
     bi.hwndOwner = GetDesktopWindow();
     bi.lpszTitle = "Select GnuPG home directory";
     il = SHBrowseForFolder (&bi);
@@ -70,7 +70,7 @@ get_folder(void)
 static int
 load_config_value_ext(char **val)
 {
-    static char buf[256+64];
+    static char buf[MAX_PATH+64];
     BOOL ec;
 
     memset (buf, 0, sizeof (buf));
@@ -93,9 +93,9 @@ load_config_value(const char *key, char **val)
     DWORD size=0, type;
     int ec;
 
-    ec = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\GNU\\GnuPG", 0, KEY_READ, &h);
+    ec = RegOpenKeyEx (HKEY_CURRENT_USER, "Software\\GNU\\GnuPG", 0, KEY_READ, &h);
     if (ec != ERROR_SUCCESS)
-	return load_config_value_ext(val);
+	return load_config_value_ext (val);
 
     ec = RegQueryValueEx(h, key, NULL, &type, NULL, &size);
     if (ec != ERROR_SUCCESS) {
@@ -104,11 +104,11 @@ load_config_value(const char *key, char **val)
     }
     *val = calloc(1, size+1);
     if (!*val)
-	abort();
-    ec = RegQueryValueEx(h, key, NULL, &type, (BYTE*)*val, &size);
+	abort ();
+    ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
     if (ec != ERROR_SUCCESS) {
 	free (*val); *val = NULL;
-	RegCloseKey(h);
+	RegCloseKey (h);
 	return -1;
     }
     return 0;
@@ -124,7 +124,7 @@ store_config_value(const char *key, const char *val)
     ec = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\GNU\\GnuPG", 0, KEY_ALL_ACCESS, &h);
     if (ec != ERROR_SUCCESS)
 	return -1;
-    ec = RegSetValueEx(h, key, 0, REG_SZ, (const BYTE*)val, strlen(val));
+    ec = RegSetValueEx (h, key, 0, REG_SZ, (const BYTE*)val, strlen(val));
     if (ec != ERROR_SUCCESS) {
 	RegCloseKey(h);
 	return -1;
@@ -138,7 +138,7 @@ static BOOL CALLBACK
 config_dlg_proc(HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     char *buf;
-    char name[256];
+    char name[MAX_PATH];
     int n;
 
     switch (msg) {
@@ -169,10 +169,10 @@ config_dlg_proc(HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	    break;
 
 	case IDOK:
-	    n = GetDlgItemText(dlg, IDC_OPT_GPGPRG, name, 255);
+	    n = GetDlgItemText(dlg, IDC_OPT_GPGPRG, name, MAX_PATH-1);
 	    if (n > 0)
 		store_config_value("gpgProgram", name);
-	    n = GetDlgItemText(dlg, IDC_OPT_HOMEDIR, name, 255);
+	    n = GetDlgItemText(dlg, IDC_OPT_HOMEDIR, name, MAX_PATH-1);
 	    if (n > 0)
 		store_config_value("HomeDir", name);
 	    EndDialog(dlg, TRUE);

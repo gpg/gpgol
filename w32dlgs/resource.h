@@ -8,6 +8,7 @@
 #define IDD_DEC                         104
 #define IDD_SIG                         105
 #define IDD_OPT                         106
+#define IDD_VRY                         107
 #define IDC_ENC_RSET1                   1000
 #define IDC_ENC_RSET2                   1001
 #define IDC_MAIN_ENC                    1002
@@ -35,14 +36,18 @@
 #define IDC_OPT_SELPRG                  1026
 #define IDC_OPT_HOMEDIR                 1027
 #define IDC_OPT_SELHOMEDIR              1028
+#define IDC_VRY_TIME                    1029
+#define IDC_VRY_KEYID                   1030
+#define IDC_VRY_STATUS                  1031
+#define IDC_VRY_ISSUER                  1032
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        107
+#define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

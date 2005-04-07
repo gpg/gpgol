@@ -43,7 +43,7 @@ cleanup (void)
 void
 op_set_debug_mode (int val, const char *file)
 {
-    const char *s= "GPGME_DEBUG:";
+    const char *s= "GPGME_DEBUG";
 
     cleanup ();
     if (val > 0) {
@@ -51,6 +51,7 @@ op_set_debug_mode (int val, const char *file)
 	if (!debug_file)
 	    abort ();
 	sprintf (debug_file, "%s=%d:%s", s, val, file);
+	printf ("%s\n", debug_file);
 	putenv (debug_file);
     }
     else {
@@ -69,7 +70,7 @@ op_init (void)
   gpgme_check_version (NULL);
   err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
   if (err)
-      return -1;
+      return err;
   init_done = 1;
   return 0;
 }
@@ -123,12 +124,68 @@ leave:
     return 0;
 }
 
+
+int
+op_sign_encrypt_start (const char *inbuf, char **outbuf)
+{
+    gpgme_key_t *keys = NULL;
+    gpgme_key_t locusr=NULL;
+    int opts = 0;
+    int err;
+
+    recipient_dialog_box (&keys, &opts);
+    signer_dialog_box (&locusr, NULL);
+    
+    err = op_sign_encrypt ((void*)keys, (void*)locusr, inbuf, outbuf);
+    free (keys);
+
+    return err;
+}
+
 int
 op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
 {
-    op_init ();
+    gpgme_ctx_t ctx;
+    gpgme_key_t *keys = (gpgme_key_t*)rset;
+    gpgme_data_t in=NULL, out=NULL;
+    gpgme_error_t err;
+    struct decrypt_key_s *hd;
 
-    return 0;
+    op_init ();
+    *outbuf = NULL;
+
+    err = gpgme_new (&ctx);
+    if (err)
+	return err;
+
+    hd = calloc (1, sizeof *hd);
+    if (!hd)
+	abort ();
+
+    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+    if (err)
+	goto leave;
+    err = gpgme_data_new (&out);
+    if (err)
+	goto leave;
+
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+    gpgme_set_armor (ctx, 1);
+    gpgme_signers_add (ctx, (gpgme_key_t)locusr);
+    err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+    if (!err) {
+	size_t n =0 ;
+	*outbuf = gpgme_data_release_and_get_mem (out, &n);
+	(*outbuf)[n] = 0;
+	out = NULL;
+    }
+
+leave:
+    free_decrypt_key (hd);
+    gpgme_release (ctx);
+    gpgme_data_release (out);
+    gpgme_data_release (in);
+    return err;
 }
 
 int
@@ -149,14 +206,15 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
     gpgme_ctx_t ctx;
     struct decrypt_key_s *hd;
 
+    *outbuf = NULL;
     op_init ();
-    hd = calloc (1, sizeof *hd);
-    if (!hd)
-	abort ();
-    
     err = gpgme_new (&ctx);
     if (err)
 	return err;
+
+    hd = calloc (1, sizeof *hd);
+    if (!hd)
+	abort ();
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -192,14 +250,87 @@ op_decrypt (const char *inbuf, char **outbuf)
     gpgme_data_t in=NULL, out=NULL;
     gpgme_ctx_t ctx;
     gpgme_error_t err;
+    struct decrypt_key_s *hd;
 
+    *outbuf = NULL;
     op_init ();
+    err = gpgme_new (&ctx);
+    if (err)
+	return err;
 
+    hd = calloc (1, sizeof *hd);
+    if (!hd)
+	abort ();
+
+    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+    if (err)
+	goto leave;
+    err = gpgme_data_new (&out);
+    if (err)
+	goto leave;
+
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+    err = gpgme_op_decrypt (ctx, in, out);
+    if (!err) {
+	size_t n =0;
+	*outbuf = gpgme_data_release_and_get_mem (out, &n);
+	(*outbuf)[n] = 0;
+	out = NULL;
+    }
+
+leave:
+    free_decrypt_key (hd);
+    gpgme_release (ctx);
+    gpgme_data_release (in);
+    gpgme_data_release (out);
     return err;
 }
 
+
+int
+op_verify (const char *inbuf, char **outbuf)
+{
+    gpgme_data_t in=NULL, out=NULL;
+    gpgme_ctx_t ctx;
+    gpgme_error_t err;
+    gpgme_verify_result_t res=NULL;
+
+    op_init ();
+    *outbuf = NULL;
+
+    err = gpgme_new (&ctx);
+    if (err)
+	return err;
+
+    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+    if (err)
+	goto leave;
+    err = gpgme_data_new (&out);
+    if (err)
+	goto leave;
+
+    err = gpgme_op_verify (ctx, in, NULL, out);
+    if (!err) {
+	size_t n=0;
+	*outbuf = gpgme_data_release_and_get_mem (out, &n);
+	(*outbuf)[n] = 0;
+	out = NULL;
+
+	res = gpgme_op_verify_result (ctx);
+    }
+    if (res != NULL) 
+	verify_dialog_box (res);
+
+leave:
+    gpgme_data_release (out);
+    gpgme_data_release (in);
+    gpgme_release (ctx);
+    return err;
+}
+
+
 const char*
-op_strerror(int err)
+op_strerror (int err)
 {
     return gpgme_strerror (err);
 }

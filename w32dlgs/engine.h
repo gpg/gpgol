@@ -22,7 +22,7 @@
 #define _ENGINE_H 1
 
 int op_init (void);
-const char* op_strerror(int err);
+const char* op_strerror (int err);
 
 #define op_debug_enable(file) op_set_debug_mode(5, (file))
 #define op_debug_disable() op_set_debug_mode(0, NULL)
@@ -31,14 +31,15 @@ void op_set_debug_mode (int val, const char *file);
 int op_encrypt_start (const char *inbuf, char **outbuf);
 int op_encrypt (void *rset, const char *inbuf, char **outbuf);
 
+int op_sign_encrypt_start (const char *inbuf, char **outbuf);
 int op_sign_encrypt (void *rset, void *locusr, const char *inbuf, 
 		     char **outbuf);
+
+int op_verify (const char *inbuf, char **outbuf);
 
 int op_sign_start (const char *inbuf, char **outbuf);
 int op_sign (void *locusr, const char *inbuf, char **outbuf);
 
 int op_decrypt (const char *inbuf, char **outbuf);
-
-
 
 #endif /*_ENGINE_H*/

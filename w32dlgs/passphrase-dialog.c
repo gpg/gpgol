@@ -189,8 +189,10 @@ signer_dialog_box(gpgme_key_t *r_key, char **r_passwd)
     if (hd.signer) {
 	if (r_passwd)
 	    *r_passwd = strdup(hd.pass);
-	else
+	else {	    
 	    free (hd.pass);
+	    hd.pass = NULL;
+	}
 	*r_key = hd.signer;
     }
     memset (&hd, 0, sizeof hd);

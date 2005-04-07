@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 0,2,0,0
+ PRODUCTVERSION 0,2,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -73,14 +73,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "g10 Code GmbH\0"
             VALUE "FileDescription", "Common GPGME Dialogs\0"
-            VALUE "FileVersion", "0.1.0\0"
+            VALUE "FileVersion", "0.2.0\0"
             VALUE "InternalName", "GPGMEDLGS\0"
             VALUE "LegalCopyright", "Copyright © 2004 Timo Schulz,  2005 g10 Code GmbH\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "gpgmedlgs.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGME Dialogs\0"
-            VALUE "ProductVersion", "0.1.0\0"
+            VALUE "ProductVersion", "0.2.0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -142,6 +142,35 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,167,66,50,14
 END
 
+IDD_OPT DIALOG DISCARDABLE  0, 0, 167, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Configuration Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Path to GnuPG binary",IDC_STATIC,2,10,70,8
+    EDITTEXT        IDC_OPT_GPGPRG,2,22,145,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_OPT_SELPRG,149,21,11,14
+    LTEXT           "GnuPG home directory",IDC_STATIC,2,43,72,8
+    EDITTEXT        IDC_OPT_HOMEDIR,2,55,145,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_OPT_SELHOMEDIR,149,53,11,14
+    DEFPUSHBUTTON   "OK",IDOK,112,76,50,14
+END
+
+IDD_VRY DIALOG DISCARDABLE  0, 0, 224, 98
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Verify Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,167,75,50,14
+    LTEXT           "Signature made",IDC_STATIC,7,7,50,8
+    EDITTEXT        IDC_VRY_TIME,65,7,68,12,ES_AUTOHSCROLL
+    LTEXT           "using key ID",IDC_STATIC,139,7,40,8
+    EDITTEXT        IDC_VRY_KEYID,185,7,32,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_VRY_STATUS,7,30,84,12,ES_AUTOHSCROLL
+    LTEXT           "from",IDC_STATIC,99,32,14,8
+    EDITTEXT        IDC_VRY_ISSUER,119,29,90,13,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -165,6 +194,22 @@ BEGIN
         RIGHTMARGIN, 218
         TOPMARGIN, 3
         BOTTOMMARGIN, 80
+    END
+
+    IDD_OPT, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 162
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 91
+    END
+
+    IDD_VRY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 217
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 91
     END
 END
 #endif    // APSTUDIO_INVOKED

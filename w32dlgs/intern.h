@@ -63,6 +63,9 @@ int passphrase_callback_box(void *opaque, const char *uid_hint,
 			    int prev_was_bad, int fd);
 void free_decrypt_key (struct decrypt_key_s * ctx);
 
+/*-- verify-dialog.c --*/
+int verify_dialog_box (gpgme_verify_result_t res);
+
 /*-- keycache.c --*/
 void cleanup_keycache_objects (void);
 void reset_gpg_seckeys (void **ctx);
