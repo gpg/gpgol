@@ -67,20 +67,23 @@ set_key_hint( struct decrypt_key_s * dec, HWND dlg, int ctrlid )
 
 
 static void
-load_secbox( HWND dlg )
+load_secbox (HWND dlg)
 {
     gpgme_key_t sk;
-    size_t n=0;
+    size_t n=0, doloop=1;
     void *ctx=NULL;
 
-    enum_gpg_seckeys( NULL, &ctx);
-    while( !enum_gpg_seckeys( &sk, &ctx ) ) {
+    enum_gpg_seckeys (NULL, &ctx);
+    while (doloop) {
 	const char * name, * email, * keyid, * algo;
 	char * p;
 
-	if( gpgme_key_get_ulong_attr( sk, GPGME_ATTR_KEY_REVOKED, NULL, 0 )
-	  ||gpgme_key_get_ulong_attr( sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0 )
-	  ||gpgme_key_get_ulong_attr( sk, GPGME_ATTR_KEY_INVALID, NULL, 0 ) )
+	if (enum_gpg_seckeys (&sk, &ctx))
+	    doloop = 0;
+
+	if (gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_REVOKED, NULL, 0)
+	 || gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0)
+	 || gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_INVALID, NULL, 0))
 	    continue;
 	
 	name = gpgme_key_get_string_attr( sk, GPGME_ATTR_NAME, NULL, 0 );
@@ -91,7 +94,7 @@ load_secbox( HWND dlg )
 	    email = "";
 	p = (char *)calloc( 1, strlen( name ) + strlen( email ) + 17 + 32 );
 	if( email && strlen( email ) )
-	    sprintf( p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo );
+	    sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
 	else
 	    sprintf( p, "%s (0x%s, %s)", name, keyid+8, algo );
 	SendDlgItemMessage( dlg, IDC_DEC_KEYLIST, CB_ADDSTRING, 0, (LPARAM)(const char *) p );
@@ -99,12 +102,15 @@ load_secbox( HWND dlg )
     }
     
     ctx=NULL;
-    reset_gpg_seckeys(&ctx);    
-    while( !enum_gpg_seckeys( &sk, &ctx ) ) {
-	SendDlgItemMessage( dlg, IDC_DEC_KEYLIST, CB_SETITEMDATA, n, (LPARAM)(DWORD)sk );
+    reset_gpg_seckeys (&ctx);
+    doloop = 1;
+    while (doloop) {
+	if (enum_gpg_seckeys (&sk, &ctx))
+	    doloop = 0;
+	SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, CB_SETITEMDATA, n, (LPARAM)(DWORD)sk);
 	n++;
     }
-    SendDlgItemMessage( dlg, IDC_DEC_KEYLIST, CB_SETCURSEL, 0, 0 );
+    SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, CB_SETCURSEL, 0, 0);
 }
 
 
@@ -128,8 +134,10 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	    load_secbox(dlg);
 	CheckDlgButton( dlg, IDC_DEC_HIDE, BST_CHECKED );
 	center_window (dlg, NULL);
-	if (dec->hide_pwd)
+	if (dec->hide_pwd) {
+	    EnableWindow (GetDlgItem (dlg, IDC_DEC_HIDE), FALSE);
 	    EnableWindow (GetDlgItem (dlg, IDC_DEC_PASS), FALSE);
+	}
 	else
 	    SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
 	SetForegroundWindow (dlg);

@@ -48,7 +48,7 @@ get_open_file_name (const char *dir)
 }
 
 static char*
-get_folder(void)
+get_folder (void)
 {
     static char fname[MAX_PATH+1];
     BROWSEINFO bi;
@@ -68,7 +68,7 @@ get_folder(void)
 
 
 static int
-load_config_value_ext(char **val)
+load_config_value_ext (char **val)
 {
     static char buf[MAX_PATH+64];
     BOOL ec;
@@ -87,7 +87,7 @@ load_config_value_ext(char **val)
 
 
 static int
-load_config_value(const char *key, char **val)
+load_config_value (const char *key, char **val)
 {
     HKEY h;
     DWORD size=0, type;

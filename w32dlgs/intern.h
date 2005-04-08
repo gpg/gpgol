@@ -67,6 +67,7 @@ void free_decrypt_key (struct decrypt_key_s * ctx);
 int verify_dialog_box (gpgme_verify_result_t res);
 
 /*-- keycache.c --*/
+void init_keycache_objects (void);
 void cleanup_keycache_objects (void);
 void reset_gpg_seckeys (void **ctx);
 

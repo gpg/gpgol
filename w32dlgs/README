@@ -1,0 +1,8 @@
+
+                GPGME Dialogs
+                =============
+
+This project is a framework around GPGME to provide uniform dialogs
+for common GPG operations and a uniform interface to access the core
+functions.
+

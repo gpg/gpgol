@@ -51,7 +51,7 @@ op_set_debug_mode (int val, const char *file)
 	if (!debug_file)
 	    abort ();
 	sprintf (debug_file, "%s=%d:%s", s, val, file);
-	printf ("%s\n", debug_file);
+	/*printf ("%s\n", debug_file);*/
 	putenv (debug_file);
     }
     else {

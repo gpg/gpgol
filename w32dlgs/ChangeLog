@@ -1,0 +1,11 @@
+2005-04-07  Timo Schulz  <ts@g10code.com>
+
+	* verify-dialog.c (load_akalist): New.
+	(load_sigbox): Handle bad signatures.
+	* keycache.c (enum_gpg_keys): Allow to reset the
+	enum context.
+	* config-dialog.c (get_open_file_name): Use MAX_PATH.
+	(get_folder): Likewise.
+	* recipient-dialog.c (load_rsetbox): Modify code to
+	add the last keycache item.
+	* passphrase-dialog.c (load_secbox): Likewise.

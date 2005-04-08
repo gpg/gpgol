@@ -25,13 +25,25 @@
 
 #include "gpgme.h"
 #include "keycache.h"
-
+#include "intern.h"
 
 /*#pragma data_seg(".SHARDAT")*/
 static keycache_t pubring = NULL;
 static keycache_t secring = NULL;
 static time_t last_timest = 0;
 /*#pragma data_seg()*/
+
+
+/* Initialize global keycache objects */
+void
+init_keycache_objects (void)
+{
+    if (pubring || secring)
+	cleanup_keycache_objects ();
+    keycache_init (NULL, 0, &pubring);
+    keycache_init (NULL, 1, &secring);
+}
+
 
 /* Cleanup globl keycache objects */
 void 
@@ -171,11 +183,11 @@ enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
 	if (time(NULL) > last_timest+1750) { /* refresh after 30 minutes */
 	    last_timest = time(NULL);
 	    cleanup_keycache_objects();
-	    keycache_init(NULL, 0, &pubring);
-	    *ctx = pubring;
-	}	
+	    keycache_init(NULL, 0, &pubring);	    
+	}
+	*ctx = pubring;
 	return 0;
-    }    
+    }
     *ret_key = ((keycache_t)(*ctx))->key;
     *ctx = ((keycache_t)(*ctx))->next;
     return *ctx != NULL? 0 : -1;
@@ -187,7 +199,7 @@ int
 enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx)
 {
     if (!secring) {
-	keycache_init(NULL, 1, &secring);
+	keycache_init (NULL, 1, &secring);
 	*ctx = secring;
     }
     if (!ret_key)

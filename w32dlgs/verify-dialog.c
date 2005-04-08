@@ -40,25 +40,45 @@ get_timestamp (time_t l)
 }
 
 
+static void
+load_akalist (HWND dlg, gpgme_key_t key)
+{
+    gpgme_user_id_t u;
+
+    u=key->uids;
+    if (!u->next)
+	return;
+    for (u=u->next; u; u=u->next) {
+	SendDlgItemMessage (dlg, IDC_VRY_AKALIST, LB_ADDSTRING,
+			    0, (LPARAM)(const char*)u->uid);
+    }
+}
+
 static void 
 load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 {
     gpgme_key_t key;
-    char *s, buf[16+1];
+    char *s, buf[2+16+1];
     int stat;
 
     s = get_timestamp (ctx->signatures->timestamp);
     SetDlgItemText (dlg, IDC_VRY_TIME, s);
 
     s = ctx->signatures->fpr;
-    strncpy (buf, s, 16); buf[16] = 0;
+    if (strlen (s) == 40)
+	strncpy (buf+2, s+40-8, 8);
+    else
+	strncpy (buf+2, s+8, 8);
+    buf[10] = 0;
+    buf[0] = '0'; buf[1] = 'x';
     SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
+    key = find_gpg_key (buf+2);
 
     stat = ctx->signatures->summary;
     if (stat & GPGME_SIGSUM_GREEN)
 	s = "Good signature";
     else if (stat & GPGME_SIGSUM_RED)
-	s = "BAD signature";
+	s = "BAD signature!";
     else if (stat & GPGME_SIGSUM_KEY_REVOKED)
 	s = "Good signature from revoked key";
     else if (stat & GPGME_SIGSUM_KEY_EXPIRED)
@@ -68,11 +88,15 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
     else if (stat & GPGME_SIGSUM_KEY_MISSING)
 	s = "Could not check signature: missing key";
     SetDlgItemText (dlg, IDC_VRY_STATUS, s);
-
-    key = find_gpg_key (s+32);
+    
     if (key) {
 	s = (char*)gpgme_key_get_string_attr (key, GPGME_ATTR_USERID, NULL, 0);
 	SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
+
+	s = (char*)gpgme_key_get_string_attr (key, GPGME_ATTR_ALGO, NULL, 0);
+	SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
+
+	load_akalist (dlg, key);
     }
 }
 

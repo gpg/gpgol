@@ -78,7 +78,7 @@ initialize_rsetbox(HWND hwnd)
 
 
 static void 
-load_rsetbox(HWND hwnd)
+load_rsetbox (HWND hwnd)
 {
     
     LVITEM lvi;
@@ -94,12 +94,15 @@ load_rsetbox(HWND hwnd)
 	"ULTIMATE"
     };
     void *ctx=NULL;
+    size_t doloop=1;
     gpgme_key_t key=NULL;
 
-    memset(&lvi, 0, sizeof (lvi));
-    enum_gpg_keys(NULL, &ctx);
-    while (!enum_gpg_keys(&key, &ctx)) {
-	if( !gpgme_key_get_ulong_attr( key, GPGME_ATTR_CAN_ENCRYPT, NULL, 0 ) )
+    memset (&lvi, 0, sizeof (lvi));
+    enum_gpg_keys (NULL, &ctx);
+    while (doloop) {
+	if (enum_gpg_keys(&key, &ctx))
+	    doloop = 0;
+	if (!gpgme_key_get_ulong_attr( key, GPGME_ATTR_CAN_ENCRYPT, NULL, 0))
 	    continue;
 	/* check that the primary key is *not* revoked, expired or invalid */
 	if( gpgme_key_get_ulong_attr( key, GPGME_ATTR_KEY_REVOKED, NULL, 0 )

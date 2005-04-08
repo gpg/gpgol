@@ -31,12 +31,12 @@ int main(int argc, char **argv)
 	printf ("%s\n", keys[i]->uids->name);	
     
     free(keys);
-
+    */
+    
     signer_dialog_box(&signer, NULL);
     if (signer)
 	printf ("%s\n", signer->uids->name);
-
-    */
+    
     /*
     enum_gpg_seckeys (NULL, &ctx);
     s = 
@@ -61,12 +61,32 @@ int main(int argc, char **argv)
     printf ("%s\n", encmsg);
     free (encmsg);
     */
+    /*
     //op_set_debug_mode (5, "gpgme.dbg");
     op_sign_encrypt_start ("test", &encmsg);
     //op_sign_start("test", &encmsg);
     printf ("%s\n", encmsg);
     free (encmsg);
+    */
+    /*
+    init_keycache_objects ();
+    s =
+    "-----BEGIN PGP SIGNED MESSAGE-----\r\n"
+    "Hash: SHA1\r\n"
+    "\r\n"
+    "12345678901234567890\r\n"
+    "\r\n"
+    "-----BEGIN PGP SIGNATURE-----\r\n"
+    "\r\n"
+    "iEYEARECAAYFAkJVX78ACgkQ0pkwxcTOkYOd0gCaAr7vkyUXqbGhGcAiIDppcanM\r\n"
+    "CywAnjDfzfZUoapLsXQIs0rkN9ahKU5I\r\n"
+    "=MO2m\r\n"
+    "-----END PGP SIGNATURE-----\r\n";
+    op_verify (s, &encmsg);
+    printf ("%s\n", encmsg);
+    free (encmsg);
+    */
 
-    cleanup_keycache_objects();
+    cleanup_keycache_objects ();
     return 0;
 }
