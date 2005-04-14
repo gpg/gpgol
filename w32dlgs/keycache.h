@@ -37,6 +37,7 @@ void keycache_free (keycache_t ctx);
 keycache_t get_gpg_keycache (int sec);
 int enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx);
 int enum_gpg_keys (gpgme_key_t * ret_key, void **ctx);
-gpgme_key_t find_gpg_key (const char *keyid);
+gpgme_key_t find_gpg_key (const char *str, int type);
+gpgme_key_t find_gpg_email (const char *str);
 
 #endif /*_GPGME_DLGS_KEYCACHE_H_*/

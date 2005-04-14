@@ -27,6 +27,7 @@
 #include "gpgme.h"
 #include "intern.h"
 #include "engine.h"
+#include "keycache.h"
 
 static char *debug_file = NULL;
 static int init_done = 0;
@@ -60,6 +61,14 @@ op_set_debug_mode (int val, const char *file)
 }
 
 
+void
+op_deinit (void)
+{
+    cleanup ();
+    cleanup_keycache_objects ();
+}
+
+
 int
 op_init (void)
 {
@@ -71,6 +80,7 @@ op_init (void)
   err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
   if (err)
       return err;
+  init_keycache_objects ();
   init_done = 1;
   return 0;
 }
@@ -245,7 +255,7 @@ leave:
 
 
 int
-op_decrypt (const char *inbuf, char **outbuf)
+op_decrypt_start (const char *inbuf, char **outbuf)
 {
     gpgme_data_t in=NULL, out=NULL;
     gpgme_ctx_t ctx;
@@ -288,7 +298,7 @@ leave:
 
 
 int
-op_verify (const char *inbuf, char **outbuf)
+op_verify_start (const char *inbuf, char **outbuf)
 {
     gpgme_data_t in=NULL, out=NULL;
     gpgme_ctx_t ctx;
@@ -312,10 +322,11 @@ op_verify (const char *inbuf, char **outbuf)
     err = gpgme_op_verify (ctx, in, NULL, out);
     if (!err) {
 	size_t n=0;
-	*outbuf = gpgme_data_release_and_get_mem (out, &n);
-	(*outbuf)[n] = 0;
-	out = NULL;
-
+	if (outbuf != NULL) {
+	    *outbuf = gpgme_data_release_and_get_mem (out, &n);
+	    (*outbuf)[n] = 0;
+	    out = NULL;
+	}
 	res = gpgme_op_verify_result (ctx);
     }
     if (res != NULL) 
@@ -326,6 +337,25 @@ leave:
     gpgme_data_release (in);
     gpgme_release (ctx);
     return err;
+}
+
+
+int 
+op_lookup_keys (char **id, void **keys)
+{
+    int i;
+    gpgme_key_t *k;
+
+    for (i=0; id[i] != NULL; i++)
+	;
+    k = calloc (i+1, sizeof **k);
+    if (!k)
+	abort ();
+    for (i=0; id[i] != NULL; i++)
+	k[i] = find_gpg_email(id[i]);
+
+    *keys = k;
+    return i;
 }
 
 

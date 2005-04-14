@@ -240,7 +240,7 @@ recipient_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 		gpgme_key_t key;
 		ListView_GetItemText( hrset, i, 3, keyid, sizeof keyid-1 );
 		ListView_GetItemText( hrset, i, 4, valid, sizeof valid-1 );
-		key = find_gpg_key(keyid);
+		key = find_gpg_key(keyid, 0);
 		keycache_add(&rset_cb->rset, key);
 		if( strcmp( valid, "FULL" ) && strcmp( valid, "ULTIMATE" ) )
 		    rset_cb->opts |= OPT_FLAG_FORCE;

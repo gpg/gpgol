@@ -1,3 +1,11 @@
+2005-04-13  Timo Schulz  <ts@g10code.com>
+
+	* engine-gpgme.c (do_init): Alloc keycache objects.
+	(do_deinit): Cleanup the mess.
+	(op_lookup_keys): New. Allow to find keys via the email.
+
+	* GPGME.cpp (MapiGPGME): New. MAPI interface.
+
 2005-04-07  Timo Schulz  <ts@g10code.com>
 
 	* verify-dialog.c (load_akalist): New.

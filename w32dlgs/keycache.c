@@ -154,16 +154,35 @@ keycache_size (keycache_t ctx)
 }
 
 
+/* Find a key specified by an email address */
+gpgme_key_t
+find_gpg_email (const char *str)
+{
+    keycache_t n;
+    gpgme_user_id_t u;
+
+    for (n=pubring; n; n = n->next) {
+	for (u = n->key->uids; u; u = u->next) {
+	    if (strstr (u->uid, str))
+		return n->key;
+	}
+    }
+    return NULL;
+}
+
 /* Find a key in the public keyring cache */
 gpgme_key_t 
-find_gpg_key (const char *keyid)
+find_gpg_key (const char *str, int type)
 {
     keycache_t n;
     gpgme_subkey_t s;
 
+    if (type == 1)
+	return find_gpg_email (str);
+
     for (n=pubring; n; n = n->next) {
 	for (s=n->key->subkeys; s; s = s->next) {
-	    if (!strncmp(keyid, s->keyid+8, 8))
+	    if (!strncmp(str, s->keyid+8, 8))
 		return n->key;
 	}
     }

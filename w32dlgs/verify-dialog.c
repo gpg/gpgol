@@ -72,7 +72,7 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
     buf[10] = 0;
     buf[0] = '0'; buf[1] = 'x';
     SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
-    key = find_gpg_key (buf+2);
+    key = find_gpg_key (buf+2, 0);
 
     stat = ctx->signatures->summary;
     if (stat & GPGME_SIGSUM_GREEN)

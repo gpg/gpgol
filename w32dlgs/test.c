@@ -20,6 +20,7 @@ int main(int argc, char **argv)
     void *ctx=NULL;
     const char *s;
     char *encmsg=NULL;
+    char **id = NULL;
 
     InitCommonControls();
     glob_hinst = GetModuleHandle(NULL);
@@ -33,9 +34,27 @@ int main(int argc, char **argv)
     free(keys);
     */
     
+    /*
     signer_dialog_box(&signer, NULL);
     if (signer)
 	printf ("%s\n", signer->uids->name);
+    */
+
+    op_init();
+
+    id = calloc (3, sizeof (char*));
+    id[0] = strdup ("johnfrakes");
+    id[1] = strdup ("ts@g10code");
+    id[2] = NULL;
+    op_lookup_keys (id, (void **)&keys);
+    for (i=0; i < 2; i++)
+	if (keys[i] != NULL)
+	    printf ("%s\n", keys[i]->uids->name);
+
+    free (id[0]);
+    free (id[1]);
+    free (id);
+    free (keys);
     
     /*
     enum_gpg_seckeys (NULL, &ctx);
@@ -57,7 +76,7 @@ int main(int argc, char **argv)
     "Lg+hVQ==\r\n"
     "=O05/\r\n"
     "-----END PGP MESSAGE-----\r\n";
-    op_decrypt (s, &encmsg);
+    op_decrypt_start (s, &encmsg);
     printf ("%s\n", encmsg);
     free (encmsg);
     */
@@ -82,11 +101,11 @@ int main(int argc, char **argv)
     "CywAnjDfzfZUoapLsXQIs0rkN9ahKU5I\r\n"
     "=MO2m\r\n"
     "-----END PGP SIGNATURE-----\r\n";
-    op_verify (s, &encmsg);
+    op_verify_start (s, &encmsg);
     printf ("%s\n", encmsg);
     free (encmsg);
     */
-
-    cleanup_keycache_objects ();
+    
+    op_deinit ();
     return 0;
 }

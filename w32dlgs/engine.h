@@ -21,7 +21,12 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int op_init (void);
+void op_deinit (void);
 const char* op_strerror (int err);
 
 #define op_debug_enable(file) op_set_debug_mode(5, (file))
@@ -35,11 +40,18 @@ int op_sign_encrypt_start (const char *inbuf, char **outbuf);
 int op_sign_encrypt (void *rset, void *locusr, const char *inbuf, 
 		     char **outbuf);
 
-int op_verify (const char *inbuf, char **outbuf);
+int op_verify_start (const char *inbuf, char **outbuf);
 
 int op_sign_start (const char *inbuf, char **outbuf);
 int op_sign (void *locusr, const char *inbuf, char **outbuf);
 
-int op_decrypt (const char *inbuf, char **outbuf);
+int op_decrypt_start (const char *inbuf, char **outbuf);
+
+int op_lookup_keys(char **id, void **keys);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /*_ENGINE_H*/
