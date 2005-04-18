@@ -28,7 +28,10 @@
 #include "intern.h"
 
 struct recipient_cb_s {
-    keycache_t rset;    
+    char **unknown_keys;    
+    char **fnd_keys;
+    keycache_t rset;
+    size_t n;
     int opts;
 };
 
@@ -42,16 +45,16 @@ struct key_item_s {
 
 
 static void
-initialize_rsetbox(HWND hwnd)
+initialize_rsetbox (HWND hwnd)
 {
     LVCOLUMN col;
 
-    memset(&col, 0, sizeof col);
+    memset (&col, 0, sizeof (col));
     col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;;
     col.pszText = "Name";
     col.cx = 100;
     col.iSubItem = 0;
-    ListView_InsertColumn( hwnd, 0, &col );
+    ListView_InsertColumn (hwnd, 0, &col);
 
     col.pszText = "E-Mail";
     col.cx = 100;
@@ -143,72 +146,120 @@ load_rsetbox (HWND hwnd)
 
 
 static void
-copy_item( HWND dlg, int id_from )
+copy_item (HWND dlg, int id_from, int pos)
 {
     HWND src, dst;
     LVITEM lvi;
     struct key_item_s from;
-    int idx;
+    int idx = pos;
 
-    src = GetDlgItem( dlg, id_from );	
-    dst = GetDlgItem( dlg, id_from==IDC_ENC_RSET1 ?
-		      IDC_ENC_RSET2 : IDC_ENC_RSET1 );
+    src = GetDlgItem (dlg, id_from);
+    dst = GetDlgItem (dlg, id_from==IDC_ENC_RSET1 ?
+		      IDC_ENC_RSET2 : IDC_ENC_RSET1);
 
-    idx = ListView_GetNextItem( src, -1, LVNI_SELECTED );
-    if( idx == -1 )
-	return;
+    if (idx == -1) {
+	idx = ListView_GetNextItem (src, -1, LVNI_SELECTED);
+	if (idx == -1)
+	    return;
+    }
 
-    memset( &from, 0, sizeof from );
-    ListView_GetItemText( src, idx, 0, from.name, sizeof from.name-1 );
-    ListView_GetItemText( src, idx, 1, from.e_mail, sizeof from.e_mail-1 );
-    ListView_GetItemText( src, idx, 2, from.key_info, sizeof from.key_info-1 );
-    ListView_GetItemText( src, idx, 3, from.key_id, sizeof from.key_id-1 );
-    ListView_GetItemText( src, idx, 4, from.validity, sizeof from.validity-1 );
+    memset (&from, 0, sizeof (from));
+    ListView_GetItemText (src, idx, 0, from.name, sizeof from.name-1);
+    ListView_GetItemText (src, idx, 1, from.e_mail, sizeof from.e_mail-1);
+    ListView_GetItemText (src, idx, 2, from.key_info, sizeof from.key_info-1);
+    ListView_GetItemText (src, idx, 3, from.key_id, sizeof from.key_id-1);
+    ListView_GetItemText (src, idx, 4, from.validity, sizeof from.validity-1);
 
-    ListView_DeleteItem( src, idx );
+    ListView_DeleteItem (src, idx);
 
-    memset( &lvi, 0, sizeof lvi );
-    ListView_InsertItem( dst, &lvi );
-    ListView_SetItemText( dst, 0, 0, from.name );
-    ListView_SetItemText( dst, 0, 1, from.e_mail );
-    ListView_SetItemText( dst, 0, 2, from.key_info );
-    ListView_SetItemText( dst, 0, 3, from.key_id );
-    ListView_SetItemText( dst, 0, 4, from.validity );
+    memset (&lvi, 0, sizeof (lvi));
+    ListView_InsertItem (dst, &lvi);
+    ListView_SetItemText (dst, 0, 0, from.name);
+    ListView_SetItemText (dst, 0, 1, from.e_mail);
+    ListView_SetItemText (dst, 0, 2, from.key_info);
+    ListView_SetItemText (dst, 0, 3, from.key_id);
+    ListView_SetItemText (dst, 0, 4, from.validity);
+}
+
+static int
+find_item (HWND hwnd, const char *str)
+{
+    LVFINDINFO fnd;
+    int pos;
+
+    memset (&fnd, 0, sizeof (fnd));
+    fnd.flags = LVFI_STRING;
+    fnd.psz = str;
+    pos = ListView_FindItem (hwnd, -1, &fnd);
+    if (pos != -1)
+	return pos;
+    return -1;
+}
+
+
+static void
+initialize_keybox (HWND dlg, struct recipient_cb_s *cb)
+{
+    size_t i;
+    HWND box = GetDlgItem (dlg, IDC_ENC_NOTFOUND);
+    HWND rset = GetDlgItem (dlg, IDC_ENC_RSET1);
+
+    for (i=0; cb->unknown_keys[i] != NULL; i++)
+	SendMessage (box, LB_ADDSTRING, 0, (LPARAM)(const char *)cb->unknown_keys[i]);
+
+    for (i=0; i < cb->n; i++) {
+	int n;
+	if (cb->fnd_keys[i] == NULL) {
+	    printf ("%d: null\n", i);
+	    continue;
+	}
+
+	n = find_item (rset, cb->fnd_keys[i]);
+	if (n != -1)
+	    copy_item (dlg, IDC_ENC_RSET1, n);
+    }
+
 }
 
 
 BOOL CALLBACK
-recipient_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
+recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static struct recipient_cb_s * rset_cb;
-    static int rset_state=1;
+    static int rset_state = 1;
     NMHDR * notify;
     HWND hrset;
     BOOL flag;    
     int i;
 
-    switch( msg ) {
+    switch (msg) {
     case WM_INITDIALOG:
 	rset_cb = (struct recipient_cb_s *)lparam;
-	initialize_rsetbox( GetDlgItem( dlg, IDC_ENC_RSET1 ) );
-	load_rsetbox( GetDlgItem( dlg, IDC_ENC_RSET1 ) );
-	initialize_rsetbox( GetDlgItem( dlg, IDC_ENC_RSET2 ) );
+	initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1));
+	load_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1));
+	initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET2));
+	if (!rset_cb->unknown_keys) {
+	    ShowWindow (GetDlgItem (dlg, IDC_ENC_INFO), SW_HIDE);
+	    ShowWindow (GetDlgItem (dlg, IDC_ENC_NOTFOUND), SW_HIDE);
+	}
+	else
+	    initialize_keybox (dlg, rset_cb);
 	center_window (dlg, NULL);
-	SetForegroundWindow( dlg );
+	SetForegroundWindow (dlg);
 	return TRUE;
 
     case WM_SYSCOMMAND:
-	if( wparam == SC_CLOSE )
-	    EndDialog( dlg, TRUE );
+	if (wparam == SC_CLOSE)
+	    EndDialog (dlg, TRUE);
 	break;
 
     case WM_NOTIFY:
 	notify = (LPNMHDR)lparam;
-	if( notify 
+	if (notify
 	    && (notify->idFrom == IDC_ENC_RSET1
 	    ||  notify->idFrom == IDC_ENC_RSET2)
-	    && notify->code ==  NM_DBLCLK )
-	    copy_item( dlg, notify->idFrom );
+	    && notify->code ==  NM_DBLCLK)
+	    copy_item (dlg, notify->idFrom, -1);
 	break;
 
     case WM_COMMAND:
@@ -261,11 +312,11 @@ recipient_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 
 
 static gpgme_key_t* 
-keycache_to_key_array(keycache_t ctx)
+keycache_to_key_array (keycache_t ctx)
 {
     keycache_t t;
     int n = keycache_size(ctx), i=0;
-    gpgme_key_t *keys = calloc(n+1, sizeof (gpgme_key_t));
+    gpgme_key_t *keys = xcalloc(n+1, sizeof (gpgme_key_t));
     
     for (t=ctx; t; t = t->next)
 	keys[i++] = t->key;
@@ -278,7 +329,7 @@ keycache_to_key_array(keycache_t ctx)
    selected keys in ret_rset. All enabled options are returned
    in ret_opts. */
 int 
-recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts)
+recipient_dialog_box (gpgme_key_t **ret_rset, int *ret_opts)
 {
     struct recipient_cb_s cb;
 
@@ -290,9 +341,42 @@ recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts)
 	*ret_opts = OPT_FLAG_CANCEL;
     }
     else {
-	*ret_rset = keycache_to_key_array(cb.rset);
+	*ret_rset = keycache_to_key_array (cb.rset);
 	*ret_opts = cb.opts;
-	keycache_free(cb.rset);
+	keycache_free (cb.rset);
     }
+    return 0;
+}
+
+/* Exactly like recipient_dialog_box with the difference, that this
+   dialog is used when some recipients were not found due to automatic
+   selection. In such a case, the dialog displays the found recipients
+   and the listbox contains the items which were _not_ found. */
+int
+recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
+		       gpgme_key_t **ret_rset, int *ret_opts)
+{
+    struct recipient_cb_s *cb;
+    int i;
+    
+    cb = xcalloc (1, sizeof (struct recipient_cb_s));
+    cb->n = n;
+    cb->fnd_keys = xcalloc (n+1, sizeof (char*));
+    for (i = 0; i < (int)n; i++)
+	cb->fnd_keys[i] = xstrdup (gpgme_key_get_string_attr (fnd[i], GPGME_ATTR_NAME, NULL, 0));
+    cb->unknown_keys = unknown;
+    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
+		    recipient_dlg_proc, (LPARAM)cb);
+    if (cb->opts & OPT_FLAG_CANCEL) {
+	*ret_rset = NULL;
+    }
+    else {
+	*ret_rset = keycache_to_key_array (cb->rset);
+	keycache_free (cb->rset);
+    }
+    for (i = 0; i < (int)n; i++)
+	free (cb->fnd_keys[i]);
+    free (cb->fnd_keys);
+    free (cb);
     return 0;
 }

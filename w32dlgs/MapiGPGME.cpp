@@ -26,9 +26,10 @@
 #include "gpgme.h"
 #include "engine.h"
 #include "keycache.h"
+#include "intern.h"
 
 
-MapiGPGME::MapiGPGME(LPMESSAGE mpsg)
+MapiGPGME::MapiGPGME(LPMESSAGE msg)
 {
      this->msg = msg;
      op_init ();
@@ -72,7 +73,6 @@ MapiGPGME::getBody (void)
     hr = HrGetOneProp((LPMAPIPROP) msg, PR_BODY, &lpspvFEID);
     if (FAILED(hr))
 	return NULL;
-
     
     body = new char[strlen (lpspvFEID->Value.lpszA)+1];
     if (!body)
@@ -107,18 +107,21 @@ MapiGPGME::getRecipients (bool isRootMsg)
 	return NULL;
         
     static SizedSPropTagArray (1L, PropRecipientNum) = {1L, {PR_EMAIL_ADDRESS}};
-    
 
     hr = msg->GetRecipientTable(0, &lpRecipientTable);
     if (SUCCEEDED(hr)) {
 	size_t j = 0;
         hr = HrQueryAllRows (lpRecipientTable, 
-		         (LPSPropTagArray) &PropRecipientNum,
-			 NULL, NULL, 0L, &lpRecipientRows);
+			     (LPSPropTagArray) &PropRecipientNum,
+			     NULL, NULL, 0L, &lpRecipientRows);
 	rset = new char*[lpRecipientRows->cRows+1];
+	if (!rset)
+	    abort ();
         for (j = 0L; j < lpRecipientRows->cRows; j++) {
 	    const char *s = lpRecipientRows->aRow[j].lpProps[0].Value.lpszA;
 	    rset[j] = new char[strlen (s)+1];
+	    if (!rset[j])
+		abort ();
 	    strcpy (rset[j], s);
 	}
 	rset[j] = NULL;
@@ -131,6 +134,16 @@ MapiGPGME::getRecipients (bool isRootMsg)
     return rset;
 }
 
+
+void
+MapiGPGME::freeUnknownKeys (char **unknown, int n)
+{
+    for (int i=0; i < n; i++) {
+	if (unknown[i] != NULL)
+	    free (unknown[i]);
+    }
+    free (unknown);
+}
 
 void 
 MapiGPGME::freeRecipients(char **recipients)
@@ -147,22 +160,28 @@ MapiGPGME::encrypt (void)
     char *body = getBody();
     char *newBody = NULL;
     char **recipients = getRecipients (true);
-    gpgme_key_t *keys=NULL;
-    
-    int n = op_lookup_keys (recipients, (void **)&keys);
-    if (n != countRecipients (recipients))
-	0; // XXX: start recipient dialog because some keys were not found
+    char **unknown = NULL;
+    gpgme_key_t *keys=NULL, *keys2=NULL;    
+    size_t all=0;
 
-    int err = op_encrypt((void*)keys, body, &newBody);
+    int n = op_lookup_keys (recipients, &keys, &unknown, &all);
+    if (n != countRecipients (recipients)) {
+	recipient_dialog_box2 (keys, unknown, all, &keys2, NULL);
+	free (keys);
+	keys = keys2;
+    }
+
+    int err = op_encrypt((void*)keys2, body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Encryption", MB_ICONERROR|MB_OK);
     else
 	setBody (newBody);
 
     delete [] body;
-    free (keys);
+    free (keys2);
     free (newBody);
     freeRecipients (recipients);
+    freeUnknownKeys (unknown, n);
     return 0;
 }
 
@@ -209,15 +228,30 @@ MapiGPGME::signEncrypt ()
     char *body = getBody();
     char *newBody = NULL;
     char **recipients = getRecipients (TRUE);
-    gpgme_key_t locusr, *keys = NULL;
+    char **unknown = NULL;
+    gpgme_key_t locusr, *keys = NULL, *keys2 =NULL;
     
     locusr = find_gpg_key (defaultKey, 0);
     if (!locusr)
 	locusr = find_gpg_key (defaultKey, 1);
+    if (!locusr) {
+	const char *s;
+	signer_dialog_box (&locusr, NULL);
+	s = gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0);
+	defaultKey = new char[strlen (s)+1];
+	if (!defaultKey)
+	    abort ();
+	strcpy (defaultKey, s);
+    }
 
-    int n = op_lookup_keys (recipients, (void **)&keys);
-    if (n != countRecipients (recipients))
-	0; // XXX: start recipient dialog because some keys were not found
+
+    size_t all;
+    int n = op_lookup_keys (recipients, &keys, &unknown, &all);
+    if (n != countRecipients (recipients)) {
+	recipient_dialog_box2 (keys, unknown, all, &keys2, NULL);
+	free (keys);
+	keys = keys2;
+    }
 
     int err = op_sign_encrypt ((void *)keys, (void*)locusr, body, &newBody);
     if (err)
@@ -227,6 +261,7 @@ MapiGPGME::signEncrypt ()
 
     delete []body;
     free (newBody);
+    freeUnknownKeys (unknown, n);
     return 0;
 }
 

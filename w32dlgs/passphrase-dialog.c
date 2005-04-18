@@ -48,7 +48,7 @@ set_key_hint( struct decrypt_key_s * dec, HWND dlg, int ctrlid )
     size_t i=0;
 
     if( dec->user_id ) {
-	key_hint = (char *)malloc( 17 + strlen( dec->user_id ) + 32 );
+	key_hint = (char *)xmalloc( 17 + strlen( dec->user_id ) + 32 );
 	if( strchr( s, '<' ) && strchr( s, '>' ) )
 	    stop_char = '<';
 	else if( strchr( s, '(' ) && strchr( s, ')' ) )
@@ -56,10 +56,10 @@ set_key_hint( struct decrypt_key_s * dec, HWND dlg, int ctrlid )
 	while( s && *s != stop_char )
 	    key_hint[i++] = *s++;
 	key_hint[i++] = ' ';
-	sprintf( key_hint+i, "(0x%s)", dec->keyid+8 );	
+	sprintf (key_hint+i, "(0x%s)", dec->keyid+8);
     }
     else
-	key_hint = strdup( "Symmetrical Decryption" );
+	key_hint = xstrdup ("Symmetrical Decryption");
     SendDlgItemMessage( dlg, ctrlid, CB_ADDSTRING, 0, (LPARAM)(const char *)key_hint );	    
     SendDlgItemMessage( dlg, ctrlid, CB_SETCURSEL, 0, 0 );
     free( key_hint );
@@ -92,7 +92,7 @@ load_secbox (HWND dlg)
 	algo = gpgme_key_get_string_attr( sk, GPGME_ATTR_ALGO, NULL, 0 );
 	if( !email )
 	    email = "";
-	p = (char *)calloc( 1, strlen( name ) + strlen( email ) + 17 + 32 );
+	p = (char *)xcalloc( 1, strlen( name ) + strlen( email ) + 17 + 32 );
 	if( email && strlen( email ) )
 	    sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
 	else
@@ -160,7 +160,7 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	case IDOK:
 	    n = SendDlgItemMessage( dlg, IDC_DEC_PASS, WM_GETTEXTLENGTH, 0, 0 );
 	    if (n) {
-		dec->pass = (char *)calloc( 1, n+2 );
+		dec->pass = (char *)xcalloc( 1, n+2 );
 		GetDlgItemText( dlg, IDC_DEC_PASS, dec->pass, n+1 );
 	    }
 	    if (!dec->use_as_cb) {
@@ -174,7 +174,7 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	case IDCANCEL:
 	    dec->opts = OPT_FLAG_CANCEL;
 	    dec->pass = NULL;
-	    EndDialog( dlg, FALSE );
+	    EndDialog (dlg, FALSE);
 	    break;
 	}
 	break;
@@ -187,23 +187,24 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
    for signing data. The key is returned in r_key. The password in
    r_passwd. */
 int 
-signer_dialog_box(gpgme_key_t *r_key, char **r_passwd)
+signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
 {
     struct decrypt_key_s hd;
-    memset(&hd, 0, sizeof hd);
+
+    memset(&hd, 0, sizeof (hd));
     hd.hide_pwd = 1;
-    DialogBoxParam(glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow(),
-		    decrypt_key_dlg_proc, (LPARAM)&hd );
+    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
+		    decrypt_key_dlg_proc, (LPARAM)&hd);
     if (hd.signer) {
 	if (r_passwd)
-	    *r_passwd = strdup(hd.pass);
+	    *r_passwd = xstrdup(hd.pass);
 	else {	    
 	    free (hd.pass);
 	    hd.pass = NULL;
 	}
 	*r_key = hd.signer;
     }
-    memset (&hd, 0, sizeof hd);
+    memset (&hd, 0, sizeof (hd));
     return 0;
 }
 
@@ -234,9 +235,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 	    free (hd->user_id);
 	    hd->user_id = NULL;
 	}
-	hd->user_id = (char *)calloc (1, strlen (s) + 2);
-	if (!hd->user_id)
-	    abort ();
+	hd->user_id = (char *)xcalloc (1, strlen (s) + 2);
 	strcpy (hd->user_id, s);
 	
 	if (hd->opts & OPT_FLAG_CANCEL) {
@@ -259,16 +258,16 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 
 /* Release the context which was used in the passphrase callback. */
 void
-free_decrypt_key(struct decrypt_key_s * ctx)
+free_decrypt_key (struct decrypt_key_s * ctx)
 {
     if (!ctx)
 	return;
     if (ctx->pass) {
-	free(ctx->pass);
+	free (ctx->pass);
 	ctx->pass = NULL;
     }
     if (ctx->user_id) {
-	free(ctx->user_id);
+	free (ctx->user_id);
 	ctx->user_id = NULL;
     }
     free(ctx);

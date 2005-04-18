@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2,0,0
- PRODUCTVERSION 0,2,0,0
+ FILEVERSION 0,3,0,0
+ PRODUCTVERSION 0,3,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -73,14 +73,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "g10 Code GmbH\0"
             VALUE "FileDescription", "Common GPGME Dialogs\0"
-            VALUE "FileVersion", "0.2.0\0"
+            VALUE "FileVersion", "0.3.0\0"
             VALUE "InternalName", "GPGMEDLGS\0"
             VALUE "LegalCopyright", "Copyright © 2004 Timo Schulz,  2005 g10 Code GmbH\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "gpgmedlgs.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGME Dialogs\0"
-            VALUE "ProductVersion", "0.2.0\0"
+            VALUE "ProductVersion", "0.3.0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -110,7 +110,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_ENC DIALOG DISCARDABLE  0, 0, 332, 186
+IDD_ENC DIALOG DISCARDABLE  0, 0, 332, 215
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Recipeint Dialog"
 FONT 8, "MS Sans Serif"
@@ -119,11 +119,15 @@ BEGIN
                     WS_BORDER | WS_TABSTOP,8,4,314,92
     CONTROL         "List2",IDC_ENC_RSET2,"SysListView32",LVS_REPORT | 
                     WS_BORDER | WS_TABSTOP,8,98,313,49
-    GROUPBOX        "Options",IDC_STATIC,8,156,108,24
+    LTEXT           "Recipient which were NOT found",IDC_ENC_INFO,8,149,106,
+                    8
+    LISTBOX         IDC_ENC_NOTFOUND,8,158,313,22,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Options",IDC_STATIC,8,185,108,24
     CONTROL         "&Text Output",IDC_ENC_OPTARMOR,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,20,166,53,10
-    DEFPUSHBUTTON   "OK",IDOK,221,165,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,272,165,50,14
+                    WS_TABSTOP,20,195,53,10
+    DEFPUSHBUTTON   "OK",IDOK,221,196,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,272,196,50,14
 END
 
 IDD_DEC DIALOG DISCARDABLE  0, 0, 225, 84
@@ -191,7 +195,7 @@ BEGIN
         LEFTMARGIN, 4
         RIGHTMARGIN, 326
         TOPMARGIN, 3
-        BOTTOMMARGIN, 182
+        BOTTOMMARGIN, 211
     END
 
     IDD_DEC, DIALOG

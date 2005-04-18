@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-#ifndef _ENGINE_H
-#define _ENGINE_H 1
+#ifndef _GPGMEDLGS_ENGINE_H
+#define _GPGMEDLGS_ENGINE_H 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,11 +47,11 @@ int op_sign (void *locusr, const char *inbuf, char **outbuf);
 
 int op_decrypt_start (const char *inbuf, char **outbuf);
 
-int op_lookup_keys(char **id, void **keys);
+int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif /*_ENGINE_H*/
+#endif /*_GPGMEDLGS_ENGINE_H*/

@@ -17,12 +17,12 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
-
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
 #include <time.h>
 #include <gpgme.h>
+
 #include "resource.h"
 #include "intern.h"
 
@@ -32,8 +32,8 @@ get_open_file_name (const char *dir)
     static char fname[MAX_PATH+1];
     OPENFILENAME ofn;
 
-    memset (&ofn, 0, sizeof ofn);
-    memset (fname, 0, sizeof fname);
+    memset (&ofn, 0, sizeof (ofn));
+    memset (fname, 0, sizeof (fname));
     ofn.hwndOwner = GetDesktopWindow();
     ofn.hInstance = glob_hinst;
     ofn.lpstrTitle = "Select GnuPG binary";
@@ -102,9 +102,7 @@ load_config_value (const char *key, char **val)
 	RegCloseKey(h);
 	return -1;
     }
-    *val = calloc(1, size+1);
-    if (!*val)
-	abort ();
+    *val = xcalloc(1, size+1);
     ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
     if (ec != ERROR_SUCCESS) {
 	free (*val); *val = NULL;
@@ -185,11 +183,12 @@ config_dlg_proc(HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 
+/* display GPG configuration dialog. */
 void
-config_dialog_box(HWND parent)
+config_dialog_box (HWND parent)
 {
     if (parent == NULL)
-	parent = GetDesktopWindow();
-    DialogBoxParam(glob_hinst, (LPCTSTR)IDD_OPT, parent,
+	parent = GetDesktopWindow ();
+    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_OPT, parent,
 		    config_dlg_proc, 0);
 }

@@ -19,7 +19,6 @@
  */
 #include <windows.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -41,6 +40,8 @@ cleanup (void)
     }
 }
 
+
+/* enable or disable GPGME debug mode. */
 void
 op_set_debug_mode (int val, const char *file)
 {
@@ -48,9 +49,7 @@ op_set_debug_mode (int val, const char *file)
 
     cleanup ();
     if (val > 0) {
-	debug_file = calloc (1, strlen (file) + strlen (s) + 2);
-	if (!debug_file)
-	    abort ();
+	debug_file = xcalloc (1, strlen (file) + strlen (s) + 2);
 	sprintf (debug_file, "%s=%d:%s", s, val, file);
 	/*printf ("%s\n", debug_file);*/
 	putenv (debug_file);
@@ -60,7 +59,7 @@ op_set_debug_mode (int val, const char *file)
     }
 }
 
-
+/* Cleanup static resources. */
 void
 op_deinit (void)
 {
@@ -69,6 +68,7 @@ op_deinit (void)
 }
 
 
+/* Initialize the operation system. */
 int
 op_init (void)
 {
@@ -85,6 +85,7 @@ op_init (void)
   return 0;
 }
 
+
 int
 op_encrypt_start (const char *inbuf, char **outbuf)
 {
@@ -92,7 +93,7 @@ op_encrypt_start (const char *inbuf, char **outbuf)
     int opts = 0;
     int err;
 
-    recipient_dialog_box(&keys, &opts);
+    recipient_dialog_box (&keys, &opts);
     err = op_encrypt ((void *)keys, inbuf, outbuf);
     free (keys);
     return err;
@@ -168,9 +169,7 @@ op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
     if (err)
 	return err;
 
-    hd = calloc (1, sizeof *hd);
-    if (!hd)
-	abort ();
+    hd = xcalloc (1, sizeof *hd);
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -222,9 +221,7 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
     if (err)
 	return err;
 
-    hd = calloc (1, sizeof *hd);
-    if (!hd)
-	abort ();
+    hd = xcalloc (1, sizeof *hd);
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -268,9 +265,7 @@ op_decrypt_start (const char *inbuf, char **outbuf)
     if (err)
 	return err;
 
-    hd = calloc (1, sizeof *hd);
-    if (!hd)
-	abort ();
+    hd = xcalloc (1, sizeof *hd);
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -340,21 +335,28 @@ leave:
 }
 
 
+/* Try to find a key for each item in @id. If one ore more items were
+   not found, it is added to @unknown at the same position.
+   @n is the total amount of items to find. */
 int 
-op_lookup_keys (char **id, void **keys)
+op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
 {
-    int i;
-    gpgme_key_t *k;
+    int i, pos=0;
+    gpgme_key_t k;
 
     for (i=0; id[i] != NULL; i++)
 	;
-    k = calloc (i+1, sizeof **k);
-    if (!k)
-	abort ();
-    for (i=0; id[i] != NULL; i++)
-	k[i] = find_gpg_email(id[i]);
-
-    *keys = k;
+    if (n)
+	*n = i+1;
+    *unknown = xcalloc (i+1, sizeof (char*));
+    *keys = xcalloc (i+1, sizeof (gpgme_key_t));
+    for (i=0; id[i] != NULL; i++) {
+	k = find_gpg_email(id[i]);
+	if (!k)	    
+	    (*unknown)[pos++] = xstrdup (id[i]);
+	else
+	    (*keys)[i] = k;
+    }
     return i;
 }
 

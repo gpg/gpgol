@@ -1,3 +1,25 @@
+2005-04-18  Timo Schulz  <ts@g10code.com>
+
+	* recipient-dialog.c (recipient_dialog_box2): New
+	way to show pre-selected keys.
+	(copy_item): New paramenter for the pos.
+	(find_item): Do not select the item.
+
+	* gpgmedlgs.rc (IDD_ENC): New label to describe
+	the listbox.
+
+2005-04-15  Timo Schulz  <ts@g10code.com>
+
+	* common.c (xmalloc, xcalloc, xstrdup): New.
+	(out_of_core): New.
+	* recipient-dialog.c (initialize_keybox): New.
+	(find_item): New.
+	* MapiGPGME.cpp (freeUnknownKeys): New.
+	(signEncrypt): Show dialog to select a key if no
+	default key was set.
+
+	* Replace all std-c alloc functions with x equivalents.
+
 2005-04-13  Timo Schulz  <ts@g10code.com>
 
 	* engine-gpgme.c (do_init): Alloc keycache objects.

@@ -14,25 +14,29 @@ HINSTANCE glob_hinst;
 
 int main(int argc, char **argv)
 {    
-    gpgme_key_t *keys=NULL, signer = NULL;
+    gpgme_key_t *keys=NULL, *keys2=NULL;
+    gpgme_key_t signer = NULL;
     int opts = 0;
-    int i;
+    int i, n=0;
     void *ctx=NULL;
     const char *s;
     char *encmsg=NULL;
     char **id = NULL;
+    char **un=NULL;
 
     InitCommonControls();
     glob_hinst = GetModuleHandle(NULL);
 
-    /*
+    op_init();
+
+#if 0
     recipient_dialog_box(&keys, &opts);
 
     for (i=0; keys && keys[i] != NULL; i++)
 	printf ("%s\n", keys[i]->uids->name);	
     
     free(keys);
-    */
+#endif
     
     /*
     signer_dialog_box(&signer, NULL);
@@ -40,22 +44,40 @@ int main(int argc, char **argv)
 	printf ("%s\n", signer->uids->name);
     */
 
-    op_init();
-
-    id = calloc (3, sizeof (char*));
-    id[0] = strdup ("johnfrakes");
-    id[1] = strdup ("ts@g10code");
-    id[2] = NULL;
-    op_lookup_keys (id, (void **)&keys);
-    for (i=0; i < 2; i++)
+    /*
+    id = xcalloc (4, sizeof (char*));
+    id[0] = xstrdup ("john.frakes");
+    id[1] = xstrdup ("ts@g10code");
+    id[2] = xstrdup ("foo@bar");
+    id[3] = NULL;
+    op_lookup_keys (id, (void **)&keys, &un, &n);
+    for (i=0; i < 4; i++) {
 	if (keys[i] != NULL)
-	    printf ("%s\n", keys[i]->uids->name);
-
-    free (id[0]);
-    free (id[1]);
-    free (id);
-    free (keys);
+	    printf ("%p %s\n", keys[i], keys[i]->uids->name);
+    }
+    */
     
+    un = xcalloc (2, sizeof (char*));
+    un[0] = xstrdup ("twoaday@freakmail.de");
+    un[1] = NULL;
+    keys = xcalloc (2, sizeof (gpgme_key_t));
+    keys[0] = find_gpg_key("9A1C182E", 0);
+    keys[1] = NULL;
+    n=1;
+    printf ("---------------%d\n", n);
+    recipient_dialog_box2 (keys, un, n, &keys2, &i);
+    for (i =0; keys2 != NULL && keys2[i] != NULL; i++)
+	printf ("%s\n", keys2[i]->uids->name);
+
+    /*free (id[0]);
+    free (id[1]);
+    free (id[2]);
+    free (id);*/
+    free (keys);
+    free (un[0]);
+    free (un);
+    free (keys2);
+
     /*
     enum_gpg_seckeys (NULL, &ctx);
     s = 
