@@ -6,9 +6,9 @@
 #include "intern.h"
 #include "engine.h"
 
-struct _gpgme_engine_info  _gpgme_engine_ops_gpgsm;
-
 int enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx);
+
+void set_global_hinstance(HINSTANCE hinst);
 
 HINSTANCE glob_hinst;
 
@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 {    
     gpgme_key_t *keys=NULL, *keys2=NULL;
     gpgme_key_t signer = NULL;
+    gpgme_error_t err;
     int opts = 0;
     int i, n=0;
     void *ctx=NULL;
@@ -25,19 +26,25 @@ int main(int argc, char **argv)
     char **un=NULL;
 
     InitCommonControls();
-    glob_hinst = GetModuleHandle(NULL);
+    //set_global_hinstance (GetModuleHandle(NULL));
+    
+    
 
+#if 1
     op_init();
 
-#if 0
     recipient_dialog_box(&keys, &opts);
 
     for (i=0; keys && keys[i] != NULL; i++)
-	printf ("%s\n", keys[i]->uids->name);	
-    
+	printf ("%s\n", keys[i]->uids->name);
+
+    err = op_encrypt_file (keys, "c:\\foo.txt", "c:\\foo.txt.asc");
+    if (err)
+	printf ("enc_file: %s\n", op_strerror (err)); 
     free(keys);
 #endif
     
+#if 1
     /*
     signer_dialog_box(&signer, NULL);
     if (signer)
@@ -57,10 +64,10 @@ int main(int argc, char **argv)
     }
     */
     
-    un = xcalloc (2, sizeof (char*));
-    un[0] = xstrdup ("twoaday@freakmail.de");
+    un = /*x*/calloc (2, sizeof (char*));
+    un[0] = /*x*/strdup ("twoaday@freakmail.de");
     un[1] = NULL;
-    keys = xcalloc (2, sizeof (gpgme_key_t));
+    keys = /*x*/calloc (2, sizeof (gpgme_key_t));
     keys[0] = find_gpg_key("9A1C182E", 0);
     keys[1] = NULL;
     n=1;
@@ -127,6 +134,7 @@ int main(int argc, char **argv)
     printf ("%s\n", encmsg);
     free (encmsg);
     */
+#endif
     
     op_deinit ();
     return 0;

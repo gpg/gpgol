@@ -39,7 +39,7 @@ struct key_item_s {
     char name [150];
     char e_mail[100];
     char key_info[64];
-    char key_id[32];
+    char keyid[32];
     char validity[32];
 };
 
@@ -137,10 +137,10 @@ load_rsetbox (HWND hwnd)
 	s = gpgme_key_get_string_attr( key, GPGME_ATTR_KEYID, NULL, 0 ) + 8;
 	ListView_SetItemText( hwnd, 0, 3, (char *)s );
 
-	val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_VALIDITY, NULL, 0 );
-	if( val < 0 || val > 5 ) val = 0;
+	val = gpgme_key_get_ulong_attr (key, GPGME_ATTR_VALIDITY, NULL, 0);
+	if (val < 0 || val > 5) val = 0;
 	s = (char *)trust_items[val];
-	ListView_SetItemText( hwnd, 0, 4, (char *)s );
+	ListView_SetItemText (hwnd, 0, 4, (char *)s);
     }
 }
 
@@ -164,11 +164,11 @@ copy_item (HWND dlg, int id_from, int pos)
     }
 
     memset (&from, 0, sizeof (from));
-    ListView_GetItemText (src, idx, 0, from.name, sizeof from.name-1);
-    ListView_GetItemText (src, idx, 1, from.e_mail, sizeof from.e_mail-1);
-    ListView_GetItemText (src, idx, 2, from.key_info, sizeof from.key_info-1);
-    ListView_GetItemText (src, idx, 3, from.key_id, sizeof from.key_id-1);
-    ListView_GetItemText (src, idx, 4, from.validity, sizeof from.validity-1);
+    ListView_GetItemText (src, idx, 0, from.name, sizeof (from.name)-1);
+    ListView_GetItemText (src, idx, 1, from.e_mail, sizeof (from.e_mail)-1);
+    ListView_GetItemText (src, idx, 2, from.key_info, sizeof (from.key_info)-1);
+    ListView_GetItemText (src, idx, 3, from.keyid, sizeof (from.keyid)-1);
+    ListView_GetItemText (src, idx, 4, from.validity, sizeof (from.validity)-1);
 
     ListView_DeleteItem (src, idx);
 
@@ -177,7 +177,7 @@ copy_item (HWND dlg, int id_from, int pos)
     ListView_SetItemText (dst, 0, 0, from.name);
     ListView_SetItemText (dst, 0, 1, from.e_mail);
     ListView_SetItemText (dst, 0, 2, from.key_info);
-    ListView_SetItemText (dst, 0, 3, from.key_id);
+    ListView_SetItemText (dst, 0, 3, from.keyid);
     ListView_SetItemText (dst, 0, 4, from.validity);
 }
 
@@ -302,7 +302,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	case IDCANCEL:
 	    rset_cb->opts = OPT_FLAG_CANCEL;
 	    rset_cb->rset = NULL;
-	    EndDialog( dlg, FALSE );
+	    EndDialog (dlg, FALSE);
 	    break;
 	}
 	break;
@@ -362,8 +362,13 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
     cb = xcalloc (1, sizeof (struct recipient_cb_s));
     cb->n = n;
     cb->fnd_keys = xcalloc (n+1, sizeof (char*));
-    for (i = 0; i < (int)n; i++)
+    for (i = 0; i < (int)n; i++) {
+	if (fnd[i] == NULL) {
+	    cb->fnd_keys[i] = xstrdup ("User-ID not found");
+	    continue;
+	}
 	cb->fnd_keys[i] = xstrdup (gpgme_key_get_string_attr (fnd[i], GPGME_ATTR_NAME, NULL, 0));
+    }
     cb->unknown_keys = unknown;
     DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
 		    recipient_dlg_proc, (LPARAM)cb);

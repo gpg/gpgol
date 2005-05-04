@@ -21,10 +21,13 @@
 #include <shellapi.h>
 #include <shlobj.h>
 #include <time.h>
+#include <sys/stat.h>
 #include <gpgme.h>
 
 #include "resource.h"
 #include "intern.h"
+
+#define REGPATH "Software\\GNU\\GnuPG"
 
 static char*
 get_open_file_name (const char *dir)
@@ -87,13 +90,15 @@ load_config_value_ext (char **val)
 
 
 static int
-load_config_value (const char *key, char **val)
+load_config_value (HKEY hk, const char *path, const char *key, char **val)
 {
     HKEY h;
     DWORD size=0, type;
     int ec;
 
-    ec = RegOpenKeyEx (HKEY_CURRENT_USER, "Software\\GNU\\GnuPG", 0, KEY_READ, &h);
+    if (hk == NULL)
+	hk = HKEY_CURRENT_USER;
+    ec = RegOpenKeyEx (hk, path, 0, KEY_READ, &h);
     if (ec != ERROR_SUCCESS)
 	return load_config_value_ext (val);
 
@@ -113,13 +118,16 @@ load_config_value (const char *key, char **val)
 }
 
 
+
 static int
-store_config_value(const char *key, const char *val)
+store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 {
     HKEY h;
     int ec;
 
-    ec = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\GNU\\GnuPG", 0, KEY_ALL_ACCESS, &h);
+    if (hk == NULL)
+	hk = HKEY_CURRENT_USER;
+    ec = RegOpenKeyEx (hk, path, 0, KEY_ALL_ACCESS, &h);
     if (ec != ERROR_SUCCESS)
 	return -1;
     ec = RegSetValueEx (h, key, 0, REG_SZ, (const BYTE*)val, strlen(val));
@@ -132,8 +140,35 @@ store_config_value(const char *key, const char *val)
 }
 
 
+static int
+does_file_exist (const char *name, int is_file)
+{
+    struct stat st;
+    const char *s;
+    char *p;
+
+    if (stat (name, &st) == -1) {
+	s = "\"%s\" does not exist.";
+	p = xmalloc (strlen (s) + strlen (s) + 2);
+	sprintf (p, s, name);
+	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
+	free (p);
+	return -1;
+    }
+    if (is_file && !(st.st_mode & _S_IFREG)) {
+	s = "\"%s\" is not a regular file.";
+	p = xmalloc (strlen (s) + strlen (s) +2);
+	sprintf (p, s, name);
+	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
+	free (p);
+	return -1;
+    }
+    return 0;
+}
+
+
 static BOOL CALLBACK
-config_dlg_proc(HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
+config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     char *buf;
     char name[MAX_PATH];
@@ -141,13 +176,17 @@ config_dlg_proc(HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
     switch (msg) {
     case WM_INITDIALOG:
-	center_window(dlg, 0);
-	if (!load_config_value("gpgProgram", &buf)) {
-	    SetDlgItemText(dlg, IDC_OPT_GPGPRG, buf);
+	center_window (dlg, 0);
+	if (!load_config_value (NULL, REGPATH, "gpgProgram", &buf)) {
+	    SetDlgItemText (dlg, IDC_OPT_GPGPRG, buf);
 	    free (buf);
 	}
-	if (!load_config_value("HomeDir", &buf)) {
-	    SetDlgItemText(dlg, IDC_OPT_HOMEDIR, buf);
+	if (!load_config_value (NULL, REGPATH, "HomeDir", &buf)) {
+	    SetDlgItemText (dlg, IDC_OPT_HOMEDIR, buf);
+	    free (buf);
+	}
+	if (!load_config_value (NULL, REGPATH, "keyManager", &buf)) {
+	    SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
 	    free (buf);
 	}
 	break;
@@ -155,25 +194,40 @@ config_dlg_proc(HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_COMMAND:
 	switch (LOWORD(wparam)) {
 	case IDC_OPT_SELPRG:
-	    buf = get_open_file_name(NULL);
+	    buf = get_open_file_name (NULL);
 	    if (buf && *buf)
 		SetDlgItemText(dlg, IDC_OPT_GPGPRG, buf);
 	    break;
 
 	case IDC_OPT_SELHOMEDIR:
-	    buf = get_folder();
+	    buf = get_folder ();
 	    if (buf && *buf)
 		SetDlgItemText(dlg, IDC_OPT_HOMEDIR, buf);
 	    break;
 
+	case IDC_OPT_SELKEYMAN:
+	    buf = get_open_file_name (NULL);
+	    if (buf && *buf)
+		SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
+	    break;
+
 	case IDOK:
 	    n = GetDlgItemText(dlg, IDC_OPT_GPGPRG, name, MAX_PATH-1);
-	    if (n > 0)
-		store_config_value("gpgProgram", name);
+	    if (n > 0) {
+		if (does_file_exist (name, 1))
+		    return FALSE;
+		store_config_value(NULL, REGPATH, "gpgProgram", name);
+	    }
+	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN, name, MAX_PATH-1);
+	    if (n > 0) {
+		if (does_file_exist (name, 1))
+		    return FALSE;
+		store_config_value (NULL, REGPATH, "keyManager", name);
+	    }
 	    n = GetDlgItemText(dlg, IDC_OPT_HOMEDIR, name, MAX_PATH-1);
 	    if (n > 0)
-		store_config_value("HomeDir", name);
-	    EndDialog(dlg, TRUE);
+		store_config_value(NULL, REGPATH, "HomeDir", name);
+	    EndDialog (dlg, TRUE);
 	    break;
 	}
 	break;
@@ -191,4 +245,42 @@ config_dialog_box (HWND parent)
 	parent = GetDesktopWindow ();
     DialogBoxParam (glob_hinst, (LPCTSTR)IDD_OPT, parent,
 		    config_dlg_proc, 0);
+}
+
+
+int
+start_key_manager (void)
+{
+    PROCESS_INFORMATION pInfo;
+    STARTUPINFO sInfo;
+    char *keyman = NULL;
+    
+    if (load_config_value (NULL, REGPATH, "keyManager", &keyman))
+	return -1;
+
+    /* create startup info for the gpg process */
+    memset(&sInfo, 0, sizeof (sInfo));
+    sInfo.cb = sizeof (STARTUPINFO);
+    sInfo.dwFlags = STARTF_USESHOWWINDOW;
+    sInfo.wShowWindow = SW_SHOW;    
+
+    if (CreateProcess (NULL, keyman,
+			NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
+			NULL, NULL, &sInfo, &pInfo) == TRUE) {
+	CloseHandle(pInfo.hProcess);
+	CloseHandle(pInfo.hThread);	
+    }
+    return 0;
+}
+
+int
+store_extension_value (const char *key, const char *val)
+{
+    return store_config_value (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Exchange\\Client\\Extensions\\GPG Exchange", key, val);
+}
+
+int
+load_extension_value (const char *key, char **val)
+{
+    return load_config_value (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Exchange\\Client\\Extensions\\GPG Exchange", key, val);
 }

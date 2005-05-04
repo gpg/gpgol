@@ -18,8 +18,12 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
-#ifndef _GPGME_DLGS_KEYCACHE_H_
-#define _GPGME_DLGS_KEYCACHE_H_
+#ifndef _GPGMEDLGS_KEYCACHE_H_
+#define _GPGMEDLGS_KEYCACHE_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct keycache_s {
     struct keycache_s *next;
@@ -39,5 +43,10 @@ int enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx);
 int enum_gpg_keys (gpgme_key_t * ret_key, void **ctx);
 gpgme_key_t find_gpg_key (const char *str, int type);
 gpgme_key_t find_gpg_email (const char *str);
+gpgme_key_t get_gpg_key (const char *str);
 
-#endif /*_GPGME_DLGS_KEYCACHE_H_*/
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*_GPGMEDLGS_KEYCACHE_H_*/

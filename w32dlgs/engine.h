@@ -35,6 +35,7 @@ void op_set_debug_mode (int val, const char *file);
 
 int op_encrypt_start (const char *inbuf, char **outbuf);
 int op_encrypt (void *rset, const char *inbuf, char **outbuf);
+int op_encrypt_file (void *rset, const char *infile, const char *outfile);
 
 int op_sign_encrypt_start (const char *inbuf, char **outbuf);
 int op_sign_encrypt (void *rset, void *locusr, const char *inbuf, 

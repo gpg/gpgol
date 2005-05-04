@@ -19,6 +19,15 @@
  */
 #include <windows.h>
 
+
+HINSTANCE glob_hinst = NULL;
+
+void
+set_global_hinstance (HINSTANCE hinst)
+{
+    glob_hinst = hinst;
+}
+
 /* Center the given window with the desktop window as the
    parent window. */
 void
@@ -58,3 +67,44 @@ center_window (HWND childwnd, HWND style)
 	flags = SWP_NOMOVE | SWP_NOSIZE;
     SetWindowPos (childwnd, style? style : NULL, xnew, ynew, 0, 0, flags);
 }
+
+
+static void
+out_of_core (void)
+{
+    MessageBox (NULL, "Out of core!", "Fatal Error", MB_OK);
+}
+
+void*
+xmalloc (size_t n)
+{
+    void *p = malloc (n);
+    if (!p)
+	out_of_core ();
+    return p;
+}
+
+void*
+xcalloc (size_t m, size_t n)
+{
+    void *p = calloc (m, n);
+    if (!p)
+	out_of_core ();
+    return p;
+}
+
+char*
+xstrdup (const char *s)
+{
+    char *p = xmalloc (strlen (s)+1);
+    strcpy (p, s);
+    return p;
+}
+
+void
+xfree (void *p)
+{
+    if (p)
+	free (p);
+}
+

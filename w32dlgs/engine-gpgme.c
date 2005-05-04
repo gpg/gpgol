@@ -31,6 +31,9 @@
 static char *debug_file = NULL;
 static int init_done = 0;
 
+/* dummy */
+struct _gpgme_engine_info  _gpgme_engine_ops_gpgsm;
+
 static void
 cleanup (void)
 {
@@ -80,7 +83,7 @@ op_init (void)
   err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
   if (err)
       return err;
-  init_keycache_objects ();
+  /*init_keycache_objects ();*/
   init_done = 1;
   return 0;
 }
@@ -96,6 +99,119 @@ op_encrypt_start (const char *inbuf, char **outbuf)
     recipient_dialog_box (&keys, &opts);
     err = op_encrypt ((void *)keys, inbuf, outbuf);
     free (keys);
+    return err;
+}
+
+long ftello(FILE *f)
+{
+    printf ("fd %d pos %d\n", fileno(f), ftell(f));
+    return ftell (f);
+}
+
+
+gpgme_error_t
+data_to_file (gpgme_data_t *dat, const char *outfile)
+{
+    FILE *out;
+    char *buf;
+    size_t n=0;
+
+    out = fopen (outfile, "wb");
+    if (!out)
+	return GPG_ERR_UNKNOWN_ERRNO;
+    buf = gpgme_data_release_and_get_mem (*dat, &n);
+    *dat = NULL;
+    if (n == 0) {
+	fclose (out);
+	return GPG_ERR_EOF;
+    }
+    fwrite (buf, 1, n, out);
+    fclose (out);
+    xfree (buf);
+    return 0;
+}
+
+
+int
+op_encrypt_file (void *rset, const char *infile, const char *outfile)
+{
+    gpgme_data_t in=NULL;
+    gpgme_data_t out=NULL;
+    gpgme_error_t err;
+    gpgme_ctx_t ctx=NULL;
+
+    err = gpgme_data_new_from_file (&in, infile, 1);
+    if (err)
+	return err;
+
+    err = gpgme_new (&ctx);
+    if (err)
+	goto fail;
+
+    err = gpgme_data_new (&out);
+    if (err)
+	goto fail;
+
+    gpgme_set_armor (ctx, 1);
+    err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+    if (!err)
+	err = data_to_file (&out, outfile);
+
+fail:
+    if (ctx != NULL)
+	gpgme_release (ctx);
+    if (in != NULL)
+	gpgme_data_release (in);
+    if (out != NULL)
+	gpgme_data_release (out);
+    return err;
+}
+
+
+int
+op_encrypt_file_io (void *rset, const char *infile, const char *outfile)
+{
+    FILE *fin = NULL, *fout=NULL;
+    gpgme_data_t in = NULL;
+    gpgme_data_t out = NULL;
+    gpgme_error_t err;
+    gpgme_ctx_t ctx = NULL;
+
+    fin = fopen (infile, "rb");
+    if (fin == NULL)
+	return GPG_ERR_UNKNOWN_ERRNO;
+    err = gpgme_data_new_from_stream (&in, fin);
+    if (err)
+	goto fail;
+
+    fout = fopen (outfile, "wb");
+    if (fout == NULL) {
+	err = GPG_ERR_UNKNOWN_ERRNO;
+	goto fail;
+    }
+    err = gpgme_data_new_from_stream (&out, fout);
+    if (err)
+	goto fail;
+
+    err = gpgme_new (&ctx);
+    if (err)
+	goto fail;
+
+    gpgme_set_armor (ctx, 1);
+
+    err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+
+fail:
+    if (fin != NULL)
+	fclose (fin);
+    if (fout != NULL)
+	fclose (fout);
+    if (out != NULL)
+	gpgme_data_release (out);
+    if (in != NULL)
+	gpgme_data_release (in);
+    if (ctx != NULL)
+	gpgme_release (ctx);
     return err;
 }
 
@@ -347,17 +463,19 @@ op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
     for (i=0; id[i] != NULL; i++)
 	;
     if (n)
-	*n = i+1;
+	*n = i;
     *unknown = xcalloc (i+1, sizeof (char*));
     *keys = xcalloc (i+1, sizeof (gpgme_key_t));
     for (i=0; id[i] != NULL; i++) {
-	k = find_gpg_email(id[i]);
+	/*k = find_gpg_email(id[i]);*/
+	k = get_gpg_key (id[i]);
+	log_debug ("c:\\mapigpgme.log", "%s: %p\r\n", id[i], k);
 	if (!k)	    
 	    (*unknown)[pos++] = xstrdup (id[i]);
 	else
 	    (*keys)[i] = k;
     }
-    return i;
+    return (i-pos);
 }
 
 

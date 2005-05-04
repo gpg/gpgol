@@ -1,3 +1,44 @@
+2005-05-02  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (fail_if_null, delete_buf): New
+	(doCmd): New.
+	(setBody): If the body to set is empty, do nothing.
+	(freeKeyArray): New.
+	(readOptions): New.
+	(writeOptions): New.
+	Implement all getters and setters for the config code.
+
+	* keycache.c: Now that we use a DLL, we create a
+	shared data segment for static data.
+	(load_keycache_objects): New.
+
+2005-05-01  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (rtfSync): New.
+	* logging.c (log_debug): New.
+	* common.c (xfree): New.
+	* engine-gpgme.c (op_lookup_keys): Corrected offsets.
+
+2005-04-29  Timo Schulz  <ts@g10code.com>
+
+	* engine-gpgme.c (op_encrypt_file): New.
+
+2005-04-27  Timo Schulz  <ts@g10code.com>
+
+	* config-dialog.c (config_dialog_box): Add dialog
+	item to select a GUI key manager.
+	Check that the entered files really exist.
+	(config_dlg_proc): Likewise.
+	(does_file_exist): New.
+
+2005-04-24  Timo Schulz  <ts@g10code.com>
+
+	* main.c (DllMain): New. With a static library it was not
+	possible to have a separate resource file. Thus we use a
+	DLL now which contains all needed dialogs.
+	* common.c (set_global_hinstance): New.
+	* libgpgmedlgs.def: New.
+
 2005-04-18  Timo Schulz  <ts@g10code.com>
 
 	* recipient-dialog.c (recipient_dialog_box2): New

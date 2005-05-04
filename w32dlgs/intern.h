@@ -22,6 +22,10 @@
 #ifndef _GPGMEDLGS_INTERN_H_
 #define _GPGMEDLGS_INTERN_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef STRICT
 #define STRICT
 #endif
@@ -49,13 +53,20 @@ struct decrypt_key_s {
     unsigned int use_as_cb:1;
 };
 
+struct keycache_s;
+typedef struct keycache_s *keycache_t;
 
 /*-- common.c --*/
+void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
 
 void* xmalloc (size_t n);
 void* xcalloc (size_t m, size_t n);
 char* xstrdup (const char *s);
+void  xfree (void *p);
+
+/*-- logging.c --*/
+void log_debug (const char *fname, const char *fmt, ...);
 
 /*-- recipient-dialog.c --*/
 int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);
@@ -69,12 +80,23 @@ int passphrase_callback_box (void *opaque, const char *uid_hint,
 			     int prev_was_bad, int fd);
 void free_decrypt_key (struct decrypt_key_s * ctx);
 
+/*-- config-dialog.c --*/
+void config_dialog_box (HWND parent);
+int start_key_manager (void);
+int store_extension_value (const char *key, const char *val);
+int load_extension_value (const char *key, char **val);
+
 /*-- verify-dialog.c --*/
 int verify_dialog_box (gpgme_verify_result_t res);
 
 /*-- keycache.c --*/
+void load_keycache_objects (keycache_t ring[2]);
 void init_keycache_objects (void);
 void cleanup_keycache_objects (void);
 void reset_gpg_seckeys (void **ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_GPGMEDLGS_INTERN_H_*/

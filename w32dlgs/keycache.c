@@ -18,20 +18,18 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
-
 #include <windows.h>
 #include <time.h>
-#include <malloc.h>
 
 #include "gpgme.h"
 #include "keycache.h"
 #include "intern.h"
 
-/*#pragma data_seg(".SHARDAT")*/
+#pragma data_seg(".SHARDAT")
 static keycache_t pubring = NULL;
 static keycache_t secring = NULL;
 static time_t last_timest = 0;
-/*#pragma data_seg()*/
+#pragma data_seg()
 
 
 /* Initialize global keycache objects */
@@ -45,7 +43,7 @@ init_keycache_objects (void)
 }
 
 
-/* Cleanup globl keycache objects */
+/* Cleanup global keycache objects */
 void 
 cleanup_keycache_objects (void)
 {
@@ -56,15 +54,21 @@ cleanup_keycache_objects (void)
 }
 
 
+/* Initialize global keycache from external objects */
+void
+load_keycache_objects (keycache_t ring[2])
+{
+    pubring = ring[0];
+    secring = ring[1];
+}
+
 /* Create a new keycache object and return it in r_ctx. */
 int 
 keycache_new (keycache_t *r_ctx)
 {
     keycache_t c;
 
-    c = calloc (1, sizeof *c);
-    if (!c)
-	return -1;
+    c = xcalloc (1, sizeof *c);
     *r_ctx = c;
     return 0;
 }
@@ -190,6 +194,25 @@ find_gpg_key (const char *str, int type)
 }
 
 
+/* this function works directly with GPG. caller has to free the key. */
+gpgme_key_t
+get_gpg_key (const char *str)
+{
+    gpgme_error_t rc;
+    gpgme_ctx_t ctx;
+    gpgme_key_t key;
+
+    rc = gpgme_new (&ctx);
+    if (rc)
+	return NULL;
+    rc = gpgme_op_keylist_start (ctx, str, 0);
+    if (!rc)
+	rc = gpgme_op_keylist_next (ctx, &key);
+    gpgme_release (ctx);
+    return key;
+}
+
+
 /* Enumerate all public keys. If the keycache is not initialized, load it. */
 int 
 enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
@@ -235,4 +258,3 @@ reset_gpg_seckeys (void **ctx)
 {
     *ctx = secring;
 }
-
