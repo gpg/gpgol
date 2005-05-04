@@ -1,0 +1,249 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\GPGExch.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""l.deu\\afxres.rc""          // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,10,0,0
+ PRODUCTVERSION 0,10,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "GPGExch DLL\0"
+            VALUE "FileVersion", "0.10.0\0"
+            VALUE "InternalName", "GPGExch\0"
+            VALUE "LegalCopyright", "Copyright (C) 2000, 2001 G-DATA, 2003 Timo Schulz, 2004, 2005 g10 Code GmbH\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "GPGExch.DLL\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "GPGExch Dynamic Link Library\0"
+            VALUE "ProductVersion", "0.10.0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
+IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
+IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
+IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
+IDB_BANNER              BITMAP  DISCARDABLE     "bitmap1.bmp"
+IDB_BANNER_HI           BITMAP  DISCARDABLE     "Banner_08.BMP"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 291, 222
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Encryption"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Options",IDC_STATIC,21,17,242,75
+    CONTROL         "&Encrypt new messages by default",IDC_ENCRYPT_DEFAULT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,34,29,121,10
+    CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,34,44,111,10
+    CONTROL         "Also encrypt message with the &default key",
+                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,34,59,148,10
+    CONTROL         "Save decrypted message &automatically",
+                    IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    34,74,139,10
+    GROUPBOX        "Passphrase",IDC_STATIC,22,95,242,31
+    LTEXT           "Cache &passphrase for",IDC_STATIC,34,109,70,8
+    EDITTEXT        IDC_TIME_PHRASES,117,108,39,14,ES_AUTOHSCROLL
+    LTEXT           "seconds",IDC_STATIC,161,110,28,8
+    GROUPBOX        "Debug (advanced users only)",IDC_STATIC,21,131,242,28
+    LTEXT           "Logfile",IDC_STATIC,28,144,22,8
+    EDITTEXT        IDC_DEBUG_LOGFILE,58,142,138,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,212,162,50,14
+    LTEXT           "Maintainer of the this version: g10 Code GmbH",
+                    IDC_STATIC,1,179,148,8
+    CONTROL         4009,IDC_BITMAP,"Static",SS_BITMAP | SS_REALSIZEIMAGE,0,
+                    190,293,30
+    LTEXT           "Version 1.1.1",IDC_VERSION_INFO,176,179,108,9
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_GPG_OPTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 284
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 215
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DECRYPT_MENU_ITEM   "&Decrypt and verify signature"
+    IDS_DECRYPT_HELP        "Decrypt and verify the message."
+    IDS_APP_NAME            "GnuPG"
+    IDS_DECRYPT_STATUSBAR   "."
+    IDS_DECRYPT_TOOLTIP     "Decrypt message and verify signature"
+    IDS_ENCRYPT_MENU_ITEM   "GPG &encrypt message"
+    IDS_SIGN_MENU_ITEM      "GPG &sign message"
+    IDS_ENCRYPT_HELP        "Select this option to encrypt the message."
+    IDS_SIGN_HELP           "Select this option to sign the message."
+    IDS_SIGN_STATUSBAR      "."
+    IDS_SIGN_TOOLTIP        "Sign message with GPG"
+    IDS_ENCRYPT_STATUSBAR   "."
+    IDS_ENCRYPT_TOOLTIP     "Encrypt message with GPG"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_KEY_MANAGER         "GnuPG Key &Manager"
+    IDS_KEY_MANAGER_HELP    "Open GnuPG Key Manager"
+    IDS_KEY_MANAGER_STATUSBAR "."
+    IDS_KEY_MANAGER_TOOLTIP "Open GnuPG Key Manager"
+    IDS_ERR_REPLACE_TEXT    "The message text could not be refreshed.\nPlease close the message and open it again."
+    IDS_ATT_DECRYPT_AND_SAVE 
+                            "Please close the message and open it again, to open the encrypted attachments or to save them."
+    IDS_SAVE_ATT_TITLE      "Save decrypted attachment"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_SAVE_ATT_FILTER     "All Files (*.*)|*.*||"
+    IDS_ERR_REPLACE_TEXT_ASK_SAVE 
+                            "The message text could not be refreshed. You can only read the message, when you save the decrypted message. Then you need to close it and open it again.\n\nShould the decrypted message be saved?"
+    IDS_ERR_ENCRYPT_ATTACHMENTS 
+                            "An error occured during the encryption of the attachments. The message cannot be sent."
+    IDS_COPY_KEY_TO_CLIPBOARD 
+                            "The key was written to the clipboard. Please add it to the message."
+    IDS_ERR_ENCRYPT_EMBEDDED_OLE 
+                            "Messaged with embedded OLE-objects cannot be encrypted."
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+//#include "res\GPGExch.rc2"  // non-Microsoft Visual C++ edited resources
+#include "l.deu\afxres.rc"          // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
