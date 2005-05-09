@@ -28,7 +28,7 @@
 
 
 static void
-add_string_list( HWND hbox, const char ** list, int start_idx )
+add_string_list (HWND hbox, const char ** list, int start_idx)
 {
     const char * s;
     int i;
@@ -40,15 +40,15 @@ add_string_list( HWND hbox, const char ** list, int start_idx )
 
 
 static void
-set_key_hint( struct decrypt_key_s * dec, HWND dlg, int ctrlid )
+set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
 {
     const char * s = dec->user_id;
     char * key_hint;
     char stop_char=0;
     size_t i=0;
 
-    if( dec->user_id ) {
-	key_hint = (char *)xmalloc( 17 + strlen( dec->user_id ) + 32 );
+    if (dec->user_id) {
+	key_hint = (char *)xmalloc (17 + strlen (dec->user_id) + 32);
 	if( strchr( s, '<' ) && strchr( s, '>' ) )
 	    stop_char = '<';
 	else if( strchr( s, '(' ) && strchr( s, ')' ) )

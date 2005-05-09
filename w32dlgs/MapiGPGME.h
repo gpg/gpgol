@@ -28,7 +28,9 @@ private:
     HWND hwnd;
     LPMESSAGE msg;
     char* defaultKey;
+    char* passPhrase;
 
+    /* Options */
     char *logfile;
     int nstorePasswd;
     bool doEncrypt;
@@ -92,7 +94,18 @@ public:
 public:
     DLL_EXPORT int startKeyManager ();
     DLL_EXPORT void startConfigDialog (HWND parent);
+
 private:
+    bool setAttachMethod (LPATTACH obj, int mode);
+    int getAttachMethod (LPATTACH obj);
+    char* getAttachFilename (LPATTACH obj);
+    bool setAttachFilename (LPATTACH obj, const char *name, bool islong);
+    int getMessageFlags ();
+    int getMessageHasAttachments ();
+    bool setMessageAccess (int access);    
+
+private:    
+    int streamOnFile (const char *file, LPSTREAM to);
     int processAttachments (HWND hwnd, int action, const char **pFileNameVector);
 
 public:
@@ -102,7 +115,23 @@ public:
 public:
     DLL_EXPORT void setMessage (LPMESSAGE msg);
     DLL_EXPORT void setWindow (HWND hwnd);
-};
 
+public:
+    const char *getPassphrase () { return passPhrase; }
+    DLL_EXPORT void storePassphrase (const char *passPhrase)
+    {
+	if (this->passPhrase)
+	    delete []this->passPhrase;
+	this->passPhrase = new char[strlen (passPhrase)+1];
+	strcpy (this->passPhrase, passPhrase);
+    }
+    DLL_EXPORT void clearPassphrase () 
+    { 
+	if (this->passPhrase) {
+	    delete []this->passPhrase;
+	    passPhrase = NULL;
+	}
+    }
+};
 
 #endif /*MAPI_GPGME_H*/

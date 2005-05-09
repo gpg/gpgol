@@ -52,7 +52,7 @@ op_set_debug_mode (int val, const char *file)
 
     cleanup ();
     if (val > 0) {
-	debug_file = xcalloc (1, strlen (file) + strlen (s) + 2);
+	debug_file = (char *)xcalloc (1, strlen (file) + strlen (s) + 2);
 	sprintf (debug_file, "%s=%d:%s", s, val, file);
 	/*printf ("%s\n", debug_file);*/
 	putenv (debug_file);
@@ -87,6 +87,7 @@ op_init (void)
   init_done = 1;
   return 0;
 }
+
 
 
 int
@@ -128,6 +129,13 @@ data_to_file (gpgme_data_t *dat, const char *outfile)
     fwrite (buf, 1, n, out);
     fclose (out);
     xfree (buf);
+    return 0;
+}
+
+
+int
+op_decrypt_file (const char *infile, const char *outfile)
+{
     return 0;
 }
 
@@ -285,7 +293,7 @@ op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
     if (err)
 	return err;
 
-    hd = xcalloc (1, sizeof *hd);
+    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -337,7 +345,7 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
     if (err)
 	return err;
 
-    hd = xcalloc (1, sizeof *hd);
+    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -368,12 +376,14 @@ leave:
 
 
 int
-op_decrypt_start (const char *inbuf, char **outbuf)
+op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
+	    void *pass_cb_value,
+	    const char *inbuf, char **outbuf)
 {
     gpgme_data_t in=NULL, out=NULL;
     gpgme_ctx_t ctx;
     gpgme_error_t err;
-    struct decrypt_key_s *hd;
+    
 
     *outbuf = NULL;
     op_init ();
@@ -381,7 +391,7 @@ op_decrypt_start (const char *inbuf, char **outbuf)
     if (err)
 	return err;
 
-    hd = xcalloc (1, sizeof *hd);
+    
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -390,7 +400,7 @@ op_decrypt_start (const char *inbuf, char **outbuf)
     if (err)
 	goto leave;
 
-    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+    gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
     err = gpgme_op_decrypt (ctx, in, out);
     if (!err) {
 	size_t n =0;
@@ -399,12 +409,50 @@ op_decrypt_start (const char *inbuf, char **outbuf)
 	out = NULL;
     }
 
-leave:
-    free_decrypt_key (hd);
+leave:    
     gpgme_release (ctx);
     gpgme_data_release (in);
     gpgme_data_release (out);
     return err;
+}
+
+
+int
+op_decrypt_start_ext (const char *inbuf, char **outbuf, char **ret_pass)
+{
+    struct decrypt_key_s *hd;
+    int err;
+
+    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
+    err = op_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
+
+    if (ret_pass) {
+	*ret_pass = hd->pass;
+	hd->pass = NULL;
+    }
+    free_decrypt_key (hd);
+    return err;
+}
+
+int
+op_decrypt_start (const char *inbuf, char **outbuf)
+{
+    struct decrypt_key_s *hd;
+    int err;
+
+    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
+    err = op_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
+
+    free_decrypt_key (hd);
+    return err;
+}
+
+int
+op_decrypt_next (int (*pass_cb)(void *, const char*, const char*, int, int),
+		 void *pass_cb_value,
+		 const char *inbuf, char **outbuf)
+{
+    return op_decrypt (pass_cb, pass_cb_value, inbuf, outbuf);
 }
 
 
@@ -464,8 +512,8 @@ op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
 	;
     if (n)
 	*n = i;
-    *unknown = xcalloc (i+1, sizeof (char*));
-    *keys = xcalloc (i+1, sizeof (gpgme_key_t));
+    *unknown = (char**)xcalloc (i+1, sizeof (char*));
+    *keys = (gpgme_key_t*)xcalloc (i+1, sizeof (gpgme_key_t));
     for (i=0; id[i] != NULL; i++) {
 	/*k = find_gpg_email(id[i]);*/
 	k = get_gpg_key (id[i]);

@@ -55,6 +55,12 @@ MapiGPGME::~MapiGPGME ()
 {
     log_debug (LOGFILE, "destructor %p\r\n", msg);
     op_deinit ();
+    if (defaultKey)
+	delete_buf (defaultKey);
+    if (logfile)
+	delete_buf (logfile);
+    if (passPhrase)
+	delete_buf (passPhrase);
 }
 
 
@@ -106,7 +112,7 @@ MapiGPGME::getBody (void)
     char *body;
 
     hr = HrGetOneProp ((LPMAPIPROP) msg, PR_BODY, &lpspvFEID);
-    if (FAILED(hr))
+    if (FAILED (hr))
 	return NULL;
     
     body = new char[strlen (lpspvFEID->Value.lpszA)+1];
@@ -237,13 +243,42 @@ MapiGPGME::encrypt (void)
 }
 
 
+/* XXX: I would prefer to use MapiGPGME::passphraseCallback, but member 
+        functions have an incompatible calling convention. */
+static int 
+passphraseCallback (void *opaque, const char *uid_hint, 
+		    const char *passphrase_info,
+		    int last_was_bad, int fd)
+{
+    MapiGPGME *ctx = (MapiGPGME*)opaque;
+    const char *passwd = ctx->getPassphrase ();
+
+    DWORD nwritten = 0;
+    WriteFile ((HANDLE)fd, passwd, strlen (passwd), &nwritten, NULL);
+
+    return 0;
+}
+
 int 
 MapiGPGME::decrypt (void)
 {
     char *body = getBody();
     char *newBody = NULL;
+    int err;
 
-    int err = op_decrypt_start (body, &newBody);
+    if (!passPhrase) {
+	if (nstorePasswd == 0)
+	    err = op_decrypt_start (body, &newBody);
+	else {
+	    char *pCache = NULL;
+	    err = op_decrypt_start_ext (body, &newBody, &pCache);
+	    if (!err)
+		storePassphrase (pCache);
+	    xfree (pCache);
+	}
+    }
+    else
+	err = op_decrypt_next (passphraseCallback, this, body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Decryption", MB_ICONERROR|MB_OK);
     else
@@ -391,6 +426,137 @@ MapiGPGME::setWindow(HWND hwnd)
 
 
 int
+MapiGPGME::streamOnFile (const char *file, LPSTREAM to)
+{
+    HRESULT hr;
+    LPSTREAM from;
+
+    hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
+   		           STGM_READ, (char*) file, 
+			   NULL, &from);
+    if (SUCCEEDED (hr)) {
+	STATSTG statInfo;
+	from->Stat (&statInfo, STATFLAG_NONAME);
+	from->CopyTo (to, statInfo.cbSize, NULL, NULL);
+	to->Commit (0);
+	to->Release ();
+	from->Release ();
+    }
+    return SUCCEEDED (hr);
+}
+
+
+int
+MapiGPGME::getMessageFlags ()
+{
+    HRESULT hr;
+    LPSPropValue propval = NULL;
+    int flags = 0;
+
+    hr = HrGetOneProp (msg, PR_MESSAGE_FLAGS, &propval);
+    if (FAILED (hr))
+	return 0;
+    flags = propval->Value.l;
+    MAPIFreeBuffer (propval);
+    return flags;
+}
+
+int
+MapiGPGME::getMessageHasAttachments ()
+{
+    HRESULT hr;
+    LPSPropValue propval = NULL;
+    int nattach = 0;
+
+    hr = HrGetOneProp (msg, PR_HASATTACH, &propval);
+    if (FAILED (hr))
+	return 0;
+    nattach = propval->Value.b? 1 : 0;
+    MAPIFreeBuffer (propval);
+    return nattach;   
+}
+
+
+bool
+MapiGPGME::setMessageAccess (int access)
+{
+    HRESULT hr;
+    SPropValue prop;
+    prop.ulPropTag = PR_ACCESS;
+    prop.Value.l = access;
+    hr = HrSetOneProp (msg, &prop);
+    return FAILED (hr)? false: true;
+}
+
+
+bool
+MapiGPGME::setAttachMethod (LPATTACH obj, int mode)
+{
+    SPropValue prop;
+    HRESULT hr;
+    prop.ulPropTag = PR_ATTACH_METHOD;
+    prop.Value.ul = mode;
+    hr = HrSetOneProp (obj, &prop);
+    return FAILED (hr)? true : false;
+}
+
+int
+MapiGPGME::getAttachMethod (LPATTACH obj)
+{
+    HRESULT hr;
+    LPSPropValue propval = NULL;
+    int method = 0;
+
+    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_METHOD, &propval);
+    if (FAILED (hr))
+	return 0;
+    method = propval->Value.ul;
+    MAPIFreeBuffer (propval);
+    return method;
+}
+
+bool
+MapiGPGME::setAttachFilename (LPATTACH obj, const char *name, bool islong)
+{
+    HRESULT hr;
+    SPropValue prop;
+
+    if (!islong)
+	prop.ulPropTag = PR_ATTACH_FILENAME;
+    else
+	prop.ulPropTag = PR_ATTACH_LONG_FILENAME;
+    prop.Value.lpszA = (char*) name;   
+    hr = HrSetOneProp (obj, &prop);
+    return FAILED (hr)? false: true;
+}
+
+
+char*
+MapiGPGME::getAttachFilename (LPATTACH obj)
+{
+    LPSPropValue propval;
+    HRESULT hr;
+    char *name;
+
+    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_LONG_FILENAME, &propval);
+    if (FAILED(hr)) {
+	hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
+	if (SUCCEEDED(hr)) {
+	    name = xstrdup (propval[0].Value.lpszA);
+	    MAPIFreeBuffer (propval);
+	}
+	else
+	    return NULL;
+    }
+    else {
+	name = xstrdup (propval[0].Value.lpszA);
+	MAPIFreeBuffer (propval);	
+    }
+    return name;
+}
+
+
+int
 MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVector)
 {
 #if 0
@@ -420,68 +586,51 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 	return FALSE;
     }
 
-
-    for (int j = 0; j < (int) lpAttRows->cRows; j++)
-    {
+    for (int j = 0; j < (int) lpAttRows->cRows; j++) {
 	TCHAR sn[20];
 	itoa(j, sn, 10);
 	string sFilename = sFilenameAtt;
 	sFilename += sn;
 	sFilename += ".tmp";
 	string sFilenameDest = sFilename + ".pgp";
-	string sAttName = "attach";
+	tring sAttName = "attach";
 	LPATTACH pAttach = NULL;
 	LPSTREAM pStreamAtt = NULL;
         int nAttachment = lpAttRows->aRow[j].lpProps[0].Value.ul;
+
         HRESULT hr = pMessage->OpenAttach (nAttachment, NULL, MAPI_BEST_ACCESS, &pAttach);
 	if (SUCCEEDED(hr)) {
 	    BOOL bSaveAttSuccess = TRUE;
-	    LPSPropValue lpspv = NULL;
-	    hr = HrGetOneProp ((LPMAPIPROP) pAttach, PR_ATTACH_METHOD, &lpspv);
-	    BOOL bEmbedded = (lpspv->Value.ul == ATTACH_EMBEDDED_MSG);
-	    BOOL bEmbeddedOLE = (lpspv->Value.ul == ATTACH_OLE);
-	    MAPIFreeBuffer (lpspv);
+	    int method = getAttachMethod (pAttach);	    
+	    BOOL bEmbedded = (method == ATTACH_EMBEDDED_MSG);
+	    BOOL bEmbeddedOLE = (method == ATTACH_OLE);
 		
-		if (SUCCEEDED(hr) && bEmbedded) {
+	    if (SUCCEEDED(hr) && bEmbedded) {
 		    if ((nAction == PROATT_DECRYPT) || (nAction == PROATT_ENCRYPT_AND_SIGN)) {
 			LPMESSAGE pMessageEmb = NULL;
 			hr = pAttach->OpenProperty(PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, MAPI_MODIFY, 
 						   (LPUNKNOWN*) &pMessageEmb);
 			if (SUCCEEDED(hr)) {
+			    setWindow(hWnd);
+			    setMessage (pMessageEmb);
 			    if (nAction == PROATT_DECRYPT) {
-				if (!DecryptMessage(hWnd, pMessageEmb, FALSE))
+				if (decrypt ())
 				    bSuccess = FALSE;
 			    }
 			    if (nAction == PROATT_ENCRYPT_AND_SIGN) {
-				if (!EncryptAndSignMessage(hWnd, pMessageEmb, FALSE, FALSE, FALSE))
+				if (signEncrypt ())
 				    bSuccess = FALSE;
 			    }
-			    pMessageEmb->SaveChanges(FORCE_SAVE);
-			    pAttach->SaveChanges(FORCE_SAVE);
-			    pMessageEmb->Release();
+			    pMessageEmb->SaveChanges (FORCE_SAVE);
+			    pAttach->SaveChanges (FORCE_SAVE);
+			    pMessageEmb->Release ();
 			    m_nDecryptedAttachments++;
 			}
 		    }
 		}
 		BOOL bShortFileName = FALSE;
 		if (!bEmbedded && bSaveAttSuccess) {
-		    LPSPropValue lpPropValue;
-		    hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_LONG_FILENAME, &lpPropValue);
-		    if (FAILED(hr))
-		    {
-			bShortFileName = TRUE;
-			hr = HrGetOneProp((LPMAPIPROP) pAttach, PR_ATTACH_FILENAME, &lpPropValue);
-			if (SUCCEEDED(hr))
-			{
-			    sAttName = lpPropValue[0].Value.lpszA;
-			    MAPIFreeBuffer(lpPropValue);
-			}	
-		    }
-		    else
-		    {
-			sAttName = lpPropValue[0].Value.lpszA;
-			MAPIFreeBuffer(lpPropValue);	
-		    }
+		    sAttName = getAttachFilename(pAttach);
 		
 		    // use correct file extensions for temp files to allow virus checking
 		    if (nAction == PROATT_DECRYPT)
@@ -510,71 +659,16 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 		    }
 		}
 
-				
-		if (!bEmbedded && bSaveAttSuccess && bEmbeddedOLE)
-		{
-		    // we can crypt embedded OLE objects as attachments, but it is
-		    // not possible to open them after decrypting
-		    // so show a error message
-		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
-		    {
-			bSaveAttSuccess = FALSE;
-			m_bContainsEmbeddedOLE = TRUE;
-		    }
-		    else
-		    {
-			// save ole attachment to file
-			hr = pAttach->OpenProperty (PR_ATTACH_DATA_OBJ, &IID_IStream, 
-						   0, MAPI_MODIFY, (LPUNKNOWN*) &pStreamAtt);
-			if (SUCCEEDED(hr))
-			{
-			    LPSTREAM  pStreamDest;
-			    hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-						   STGM_CREATE | STGM_READWRITE,
-						   (char*) sFilename.c_str(), NULL,  &pStreamDest);
-			    if (FAILED(hr))
-			    {
-				pStreamAtt->Release();
-			    }
-			    else
-			    {			
-				STATSTG statInfo;				
-				pStreamAtt->Stat (&statInfo, STATFLAG_NONAME);   				
-				pStreamAtt->CopyTo (pStreamDest, statInfo.cbSize, NULL, NULL);
-				pStreamDest->Commit (0);
-				pStreamDest->Release ();
-				pStreamAtt->Release ();				
-				if (pFileNameVector != NULL)
-				    pFileNameVector->push_back (sFilename);
-				m_nDecryptedAttachments++;	
-			    }
-			}
-			else
-			    bEmbeddedOLE = FALSE;  // use PR_ATTACH_DATA_BIN
-		    }
-		}
-
+		// XXX: ignore bEmbeddedOLE
 		if (!bEmbedded && !bEmbeddedOLE && bSaveAttSuccess)		
 		{		
 		    hr = pAttach->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0, 0, (LPUNKNOWN*) &pStreamAtt);
 		    if (HR_SUCCEEDED(hr))
-		    {		
-			LPSTREAM  pStreamDest;
-			hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-					       STGM_CREATE | STGM_READWRITE,
-					       (char*) sFilename.c_str(), NULL,  &pStreamDest);
-			if (FAILED (hr))
-			{
+		    {	
+			int err = streamOnFile (sFilename.c_str(), pStreamAtt);
+			if (err)
 			    pStreamAtt->Release ();
-			}
-			else
-			{			
-			    STATSTG statInfo;
-			    pStreamAtt->Stat (&statInfo, STATFLAG_NONAME);
-			    pStreamAtt->CopyTo (pStreamDest, statInfo.cbSize, NULL, NULL);
-			    pStreamDest->Commit (0);
-			    pStreamDest->Release ();
-			    pStreamAtt->Release ();
+			else {
 			    if (pFileNameVector != NULL)
 				pFileNameVector->push_back(sFilename);
 			}
@@ -586,8 +680,10 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 		    (nAction <= PROATT_DECRYPT))
 		{
 		    int nRet = 0;
-		    if (nAction == PROATT_DECRYPT)
-			m_gdgpg.DecryptNextFile(hWnd, A2OLE(sFilename.c_str()), A2OLE(sFilenameDest.c_str()), nRet);
+		    if (nAction == PROATT_DECRYPT) {
+			setWindow(hWnd);
+			op_decrypt_file (A2OLE(sFilename.c_str()), A2OLE(sFilenameDest.c_str());
+		    }
 		    else
 			m_gdgpg.EncryptAndSignNextFile (hWnd, A2OLE(sFilename.c_str()),
 							A2OLE(sFilenameDest.c_str()), 
@@ -649,39 +745,17 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 		    hr = pMessage->CreateAttach (NULL, 0, &ulNewAttNum, &lpNewAttach);
 		    if (SUCCEEDED(hr))
 		    {	
-			SPropValue sProp; 
-			sProp.ulPropTag = PR_ATTACH_METHOD;
-			sProp.Value.ul = ATTACH_BY_VALUE;
-			hr = HrSetOneProp(lpNewAttach, &sProp);
-			if (SUCCEEDED(hr))
-			{
-			    if (bShortFileName)
-				sProp.ulPropTag = PR_ATTACH_FILENAME;
-			    else
-				sProp.ulPropTag = PR_ATTACH_LONG_FILENAME;
-			    sProp.Value.lpszA = (char*) sAttName.c_str();
-			    hr = HrSetOneProp(lpNewAttach, &sProp);
+			if (setAttachMethod (lpNewAttach, ATTACH_BY_VALUE)) {
+			    setAttachFilename (lpNewAttach, sAttName.c_str(), false);
 
 			    LPSTREAM  pNewStream;
 			    hr = lpNewAttach->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,	
 							   MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*) &pNewStream);
 			    if (SUCCEEDED (hr))
-			    {			
-				LPSTREAM  pStreamFile;
-				hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-						       STGM_READ, (char*) sFilenameDest.c_str(), 
-						       NULL,  &pStreamFile);
-				
-				if (SUCCEEDED (hr))
-				{
-				    STATSTG statInfo;
-				    pStreamFile->Stat (&statInfo, STATFLAG_NONAME);
-				    pStreamFile->CopyTo (pNewStream, statInfo.cbSize, NULL, NULL);
-				    pNewStream->Commit (0);
-				    pNewStream->Release ();
-				    pStreamFile->Release ();
+			    {	
+				err = streamOnFile (sFilenameDest.c_str(), pNewStream);
+				if (!err)
 				    lpNewAttach->SaveChanges (FORCE_SAVE);
-				}
 			    }
 			}
 		    }
@@ -736,6 +810,13 @@ MapiGPGME::readOptions (void)
     nstorePasswd = val == NULL || *val == '0'? 0 : atol (val);
     xfree (val); val = NULL;
 
+    load_extension_value ("logFile", &val);
+    if (val == NULL ||*val == '"')
+	logfile = NULL;
+    else
+	setLogFile (val);
+    xfree (val); val=NULL;
+
     return 0;
 }
 
@@ -745,6 +826,8 @@ MapiGPGME::writeOptions (void)
     store_extension_value ("encryptDefault", doEncrypt? "1" : "0");
     store_extension_value ("signDefault", doSign? "1" : "0");
     store_extension_value ("addDefaultKey", encryptDefault? "1" : "0");
+    if (logfile != NULL)
+	store_extension_value ("logFile", logfile);
 
     char buf[32];
     sprintf (buf, "%d", nstorePasswd);

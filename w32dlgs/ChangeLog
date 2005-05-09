@@ -1,3 +1,27 @@
+2005-05-08  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (readOptions): Handle logfile.
+	(writeOptions): Likewise.
+	(storePassphrase): New.
+	(clearPassphrase): New.
+	(passphraseCallback): New. Needs to be static...
+	(decrypt): Store passphrase if requested.
+	(~MapiGPGME): Free memory.
+	(streamOnFile): New.
+	(getAttachMethod): New.
+	(getAttachFilename): New.
+	(setAttachMethod): New.
+	(getAttachFilename): New.
+	(getMessageHasAttachments): New.
+	(getMessageFlags): New.
+
+	* engine-gpgme.c (op_decrypt): New. Factoured out
+	code from...
+	(op_decrypt_start): ..here. Now call op_decrypt
+	with standard parameters.
+	(op_decrypt_next): Allow to use a pre-defined 
+	passphrase callback. Needed for caching.
+
 2005-05-02  Timo Schulz  <ts@g10code.com>
 
 	* MapiGPGME.cpp (fail_if_null, delete_buf): New

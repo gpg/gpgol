@@ -21,6 +21,7 @@
 #ifndef _GPGMEDLGS_ENGINE_H
 #define _GPGMEDLGS_ENGINE_H 1
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,8 +30,8 @@ int op_init (void);
 void op_deinit (void);
 const char* op_strerror (int err);
 
-#define op_debug_enable(file) op_set_debug_mode(5, (file))
-#define op_debug_disable() op_set_debug_mode(0, NULL)
+#define op_debug_enable(file) op_set_debug_mode (5, (file))
+#define op_debug_disable() op_set_debug_mode (0, NULL)
 void op_set_debug_mode (int val, const char *file);
 
 int op_encrypt_start (const char *inbuf, char **outbuf);
@@ -46,9 +47,15 @@ int op_verify_start (const char *inbuf, char **outbuf);
 int op_sign_start (const char *inbuf, char **outbuf);
 int op_sign (void *locusr, const char *inbuf, char **outbuf);
 
+int op_decrypt_file (const char *infile, const char *outfile);
+int op_decrypt_next (int (*pass_cb)(void *, const char*, const char*, int, int),
+		     void *pass_cb_value,
+		     const char *inbuf, char **outbuf);
 int op_decrypt_start (const char *inbuf, char **outbuf);
+int op_decrypt_start_ext (const char *inbuf, char **outbuf, char **ret_pass);
 
 int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);
+
 
 #ifdef __cplusplus
 }
