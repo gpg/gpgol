@@ -129,10 +129,6 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=.\Banner_08.BMP
-# End Source File
-# Begin Source File
-
 SOURCE=.\bitmap1.bmp
 # End Source File
 # Begin Source File

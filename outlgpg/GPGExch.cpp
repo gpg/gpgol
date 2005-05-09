@@ -44,11 +44,15 @@ ExchLogInfo (const char * fmt, ...)
     const char * name = NULL;
     va_list a;
 
-    /*name = g_gpg.GetLogFile ();*/
+    if (!m_gpg)
+	return;
+    name = m_gpg->getLogFile ();
+    /*
     if (!name || strlen (name) < 3) {
 	name = "c:\\outlgpg_debug.txt";
 	return;
     }
+    */
     f = fopen (name, "wb");
     if (!f)
 	return;

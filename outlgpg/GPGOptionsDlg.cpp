@@ -31,159 +31,76 @@
 BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     USES_CONVERSION;
-    BOOL bMsgResult;
-    static HBRUSH hBrush;
-    static COLORREF GrayColor;
+    BOOL bMsgResult;    
     static LPNMHDR pnmhdr;
     static HWND hWndPage;
     
     switch (uMsg) {
     case WM_INITDIALOG:
-	{
-	    LOGBRUSH lb;
-	    GrayColor = (COLORREF)GetSysColor (COLOR_BTNFACE);
-	    memset(&lb, 0, sizeof (LOGBRUSH));
-	    lb.lbStyle = BS_SOLID;
-	    lb.lbColor = GrayColor;
-	    hBrush = CreateBrushIndirect (&lb);
-
-	    int nBitsPerPixel = 0;
-	    HDC hdc = GetDC (hDlg);
-	    if (hdc != NULL)
-	    {
-		nBitsPerPixel = GetDeviceCaps (hdc, BITSPIXEL);
-		ReleaseDC (hDlg, hdc);	
-	    }
-	    
-	    if (nBitsPerPixel > 15)
-	    {
-		HBITMAP hbmp;
-		hbmp = LoadBitmap (((CWinApp*) &theApp)->m_hInstance, MAKEINTRESOURCE(IDB_BANNER_HI));
-		if (hbmp != NULL)
-		{
-		    HBITMAP hbmpOld;
-		    hbmpOld = (HBITMAP) SendDlgItemMessage (hDlg, IDC_BITMAP, 
-							    STM_SETIMAGE, IMAGE_BITMAP, 
-							    (LPARAM) hbmp);
-		    if (hbmpOld != NULL)
-			DeleteObject (hbmpOld);	
-		}	
-	    }
-	    SetDlgItemText (hDlg, IDC_VERSION_INFO, "Version "VERSION " ("__DATE__")");
-	    return TRUE;
-	
-	}
-	break;
-
-	
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORSTATIC:
-	if (hBrush != NULL)
-	{
-	    SetBkColor ((HDC)wParam, GrayColor);
-	    return (BOOL)hBrush;
-	}
-	break;
-
-		
-    case WM_DESTROY:
-	if (hBrush != NULL)
-	    DeleteObject (hBrush);
+	SetDlgItemText (hDlg, IDC_VERSION_INFO, "Version "VERSION " ("__DATE__")");
 	return TRUE;
-  
 		
     case WM_COMMAND:
 	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
 	    m_gpg->startConfigDialog (hDlg);
 	break;
-
-		
-    case WM_LBUTTONDOWN:
-	{
-	    int xClick = LOWORD (lParam);
-	    int yClick = HIWORD (lParam);
-	    RECT rectBanner = {0,0,0,0};
-	    RECT rectDlg = {0,0,0,0};
-	    GetWindowRect (hDlg, &rectDlg);
-	    HWND hwndBitmap = GetDlgItem (hDlg, IDC_BITMAP);
-	    if (hwndBitmap != NULL)
-		GetWindowRect (hwndBitmap, &rectBanner);
-
-	    rectBanner.left -= rectDlg.left;
-	    rectBanner.right -= rectDlg.left;
-	    rectBanner.top -= rectDlg.top;
-	    rectBanner.bottom -= rectDlg.top;
-
-	    if ((xClick >= rectBanner.left) && (xClick <= rectBanner.right) &&
-		(yClick >= rectBanner.top) && (yClick <= rectBanner.bottom))
-		ShellExecute(NULL,"open","http://www.gdata.de/gpg",NULL,NULL,SW_SHOWNORMAL);
-	}
-	break;
-
-		
+	
     case WM_NOTIFY:
-	    pnmhdr = ((LPNMHDR) lParam);			
-	    switch (pnmhdr->code)
-	    {
-	    case PSN_KILLACTIVE:
-		bMsgResult = FALSE;  /* allow this page to receive PSN_APPLY */
-		break;
-
-	    case PSN_SETACTIVE:
-		{
-		    TCHAR s[20];
-		    const char * f;
-
-		    wsprintf(s, "%d", m_gpg->getStorePasswdTime ());
-		    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
-		    f = m_gpg->getLogFile ();
-		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)f);
-		    hWndPage = pnmhdr->hwndFrom;   /* to be used in WM_COMMAND */
-		    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
-					m_gpg->getEncryptDefault () ? 1 : 0, 0L);
-		    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
-				        m_gpg->getSignDefault () ? 1 : 0, 0L);
-		    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_SETCHECK, 
-				        m_gpg->getEncryptWithDefaultKey () ? 1 : 0, 0L);
-		    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
-					m_gpg->getSaveDecryptedAttachments () ? 1 : 0, 0L);
-		    bMsgResult = FALSE;  /* accepts activation */
-		    break;
-		
-		}
-		
-	    case PSN_APPLY:	
-		{
-		    TCHAR s[200];
-		    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT, 20, (LPARAM) s);		
-		    m_gpg->setStorePasswdTime (atol(s));
-		    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT, 200, (LPARAM)s);
-		    m_gpg->setLogFile (s);
-		
-		    m_gpg->setEncryptDefault (SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));
-		    m_gpg->setSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));		
-		    m_gpg->setEncryptWithDefaultKey (SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
-		    m_gpg->setSaveDecryptedAttachments (SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
-		    m_gpg->readOptions ();
-		    bMsgResult = PSNRET_NOERROR;
-		    break;
-		}
-		
-	    case PSN_HELP:                                              		
-		MessageBox(pnmhdr->hwndFrom,
-		    "For more information, please visit: http://www.gdata.de/gpg\n"
-		    "Later versions of the plugin were created by g10 Code GmbH (http://www.g10code.com)\n",
-		    "Outlook GnuPG-Plugin", MB_OK);
-		bMsgResult = TRUE;
-		break;
-
-	    default:
-		bMsgResult = FALSE;
-		break;
-	    }
-	    SetWindowLong (hDlg, DWL_MSGRESULT, bMsgResult);
+	pnmhdr = ((LPNMHDR) lParam);
+	switch (pnmhdr->code) {
+	case PSN_KILLACTIVE:
+	    bMsgResult = FALSE;  /* allow this page to receive PSN_APPLY */
 	    break;
+
+	case PSN_SETACTIVE: {
+	    TCHAR s[20];
+	    const char * f;
+
+	    wsprintf(s, "%d", m_gpg->getStorePasswdTime ());
+	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
+	    f = m_gpg->getLogFile ();
+	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)f);
+	    hWndPage = pnmhdr->hwndFrom;   /* to be used in WM_COMMAND */
+	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
+				m_gpg->getEncryptDefault () ? 1 : 0, 0L);
+	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
+			        m_gpg->getSignDefault () ? 1 : 0, 0L);
+	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_SETCHECK, 
+			        m_gpg->getEncryptWithDefaultKey () ? 1 : 0, 0L);
+	    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
+				m_gpg->getSaveDecryptedAttachments () ? 1 : 0, 0L);
+	    bMsgResult = FALSE;  /* accepts activation */
+	    break; }
+		
+	case PSN_APPLY:	{
+	    TCHAR s[200];
+	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT, 20, (LPARAM) s);		
+	    m_gpg->setStorePasswdTime (atol (s));
+	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT, 200, (LPARAM)s);
+	    m_gpg->setLogFile (s);
+		
+	    m_gpg->setEncryptDefault (SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));
+	    m_gpg->setSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));		
+	    m_gpg->setEncryptWithDefaultKey (SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
+	    m_gpg->setSaveDecryptedAttachments (SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
+	    m_gpg->writeOptions ();
+	    bMsgResult = PSNRET_NOERROR;
+	    break; }
+		
+	case PSN_HELP:
+	    MessageBox (pnmhdr->hwndFrom,
+			"This plugin was orginally created by G-DATA and called \"GPGExch\" http://www.gdata.de/gpg\n\n"
+			"Later versions of the plugin were created by g10 Code GmbH (http://www.g10code.com)\n",
+			"Outlook GnuPG-Plugin", MB_OK);
+	    bMsgResult = TRUE;
+	    break;
+
+	default:
+	    bMsgResult = FALSE;
+	    break;	    
+	}
+	SetWindowLong (hDlg, DWL_MSGRESULT, bMsgResult);
+	break;
 
     default:
 	bMsgResult = FALSE;
