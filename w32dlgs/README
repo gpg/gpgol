@@ -6,3 +6,7 @@ This project is a framework around GPGME to provide uniform dialogs
 for common GPG operations and a uniform interface to access the core
 functions.
 
+
+Furthermore it contains a class for wrapping MAPI objects. It can be
+used to make the encryption/decryption of mails easier.
+

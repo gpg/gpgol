@@ -1,0 +1,19 @@
+
+* provide a general passphrase caching system to allow to store
+  more than one passphrase. This can be done with a hash table and
+  the key-ID is used as the index to access the passphrase.
+
+* process attachments and encrypt them. find a way to offer decryption
+  of the attachments and to save them somewhere.
+  it would be better to add a new item to the context menu
+  'decrypt and save as...'.
+
+* handle unicode messages and find out why UTF-8 messages cannot be
+  manipulated.
+
+* find out why sometimes the new body cannot set to a MAPI object. In
+  this case the body is empty but the W32 API said it was correctly set.
+
+* implement a static shared section inside the DLL to provide the key cache
+  objects. right now we load all keys on demand.
+

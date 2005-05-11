@@ -51,6 +51,7 @@ struct decrypt_key_s {
     int opts;
     unsigned int hide_pwd:1;
     unsigned int use_as_cb:1;
+    unsigned int last_was_bad:1;
 };
 
 struct keycache_s;

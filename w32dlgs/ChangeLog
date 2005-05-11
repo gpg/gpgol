@@ -1,3 +1,22 @@
+2005-05-10  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Reset 'hide state'.
+	Show some text when the user entered a wrong passphrase.
+	* MapiGPGME.cpp (findMessageWindow): New.
+	(setRTFBody): New.
+	(decrypt): Just change the window text, not the MAPI object.
+	Call verify() if this is a clearsigned message.
+	(getMessageType): New.
+	(getAttachmentExtension): New.
+	(verify): Extract text and set it.
+	* engine-gpgme.c (op_decrypt): Spawn verify dialog if the text
+	was also signed.
+	(op_decrypt_file): New.
+	* verify-dialog.c (load_sigbox): Avoid key cache and give more
+	information.	
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Handle 'x' clicks.
+	* logging.c (log_debug): Disable it for release versions.
+
 2005-05-08  Timo Schulz  <ts@g10code.com>
 
 	* MapiGPGME.cpp (readOptions): Handle logfile.

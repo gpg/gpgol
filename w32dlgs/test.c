@@ -28,10 +28,10 @@ int main(int argc, char **argv)
     InitCommonControls();
     //set_global_hinstance (GetModuleHandle(NULL));
     
-    
-
-#if 1
     op_init();
+
+#if 0
+    
 
     recipient_dialog_box(&keys, &opts);
 
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     free(keys);
 #endif
     
-#if 1
+#if 0
     /*
     signer_dialog_box(&signer, NULL);
     if (signer)
@@ -116,24 +116,52 @@ int main(int argc, char **argv)
     printf ("%s\n", encmsg);
     free (encmsg);
     */
-    /*
+#endif
+
+#if 0
     init_keycache_objects ();
     s =
     "-----BEGIN PGP SIGNED MESSAGE-----\r\n"
     "Hash: SHA1\r\n"
     "\r\n"
-    "12345678901234567890\r\n"
+    "simply OpenPGP test file\r\n"
     "\r\n"
     "-----BEGIN PGP SIGNATURE-----\r\n"
+    "Version: GnuPG v1.4.2-cvs (MingW32)\r\n"
     "\r\n"
-    "iEYEARECAAYFAkJVX78ACgkQ0pkwxcTOkYOd0gCaAr7vkyUXqbGhGcAiIDppcanM\r\n"
-    "CywAnjDfzfZUoapLsXQIs0rkN9ahKU5I\r\n"
-    "=MO2m\r\n"
+    "iQEVAwUBQoDAPVUNGuWgkqh9AQIacgf9ENxW7zrFLQijI8ghrOf64TUUtIpxALtq\r\n"
+    "AqslH9vaHtsub3ofOR9wtw9aGy0hn44TN374eOZ/c7QTnGqCmd/TGqeVbHZukYsc\r\n"
+    "GVeyNJdp1zNA9oJSpj3jYwUHRcMzGAMTX2fZhkdiV38cmkfjBFx/z/lvvN2AA+La\r\n"
+    "9ndfVvccmxW9RF+dcihopEpTCnbr7msfl5di9W9THKZUs8NvFRFyoXZRhifif/BG\r\n"
+    "dvWvG4uGuAwXLUgSwyDnK2RlumlrHKVo29zWl/2VidzmET5UeBLzi/wh4se+whpx\r\n"
+    "XKCXNBqqsUsYKThdiRxRnGAF3iTSHULSW96vloO2mUsYSJcjNB++wQ==\r\n"
+    "=/+XI\r\n"
     "-----END PGP SIGNATURE-----\r\n";
     op_verify_start (s, &encmsg);
     printf ("%s\n", encmsg);
     free (encmsg);
-    */
+#endif
+
+#if 1   
+    s =
+    "-----BEGIN PGP MESSAGE-----\r\n"
+    "Version: GnuPG v1.4.2-cvs (MingW32)\r\n"
+    "\r\n"
+    "hQEMA1UNGuWgkqh9AQf9EiH2b7aMsKPryhHqhn90s03BQw3Eh/KAgPe45mAYhTgL\r\n"
+    "kjdqwyuLQzWLOLdt4ZpBRrW4/J61ElBACjKsWhyYtuJXvpAxtfbnfsVpDJ/6ljaT\r\n"
+    "nMlHDodvd6zRpDRLnWA9EH7l+fnNLE+Ekln7xDJqSsJstSTfY+nv+FSy3lwGrSBA\r\n"
+    "iuVVZheOMRLgl4ClrMzDENjWgVZiZiP/KXaea3q3PdLHvKCPXqd5ZaJ0d/CJOP3r\r\n"
+    "m7E0L/HoPAIDaz4zFk/yiUwN/p+E/y+7tk+YvpHT9mNinE4vH4ychHt/SjIv/ocb\r\n"
+    "qWQT9VDTR+80nxh4SVeT97ewI16igHmwm6490zWyR9JdAYY63Yh7QScDZxSLCYGD\r\n"
+    "H8liUR3bw55uaMsLLwRJ/x9quhIS8ofvgxSOHBtZpEvUdWTAGM0WhkPloLp8WCZ6\r\n"
+    "OnHM9sgg807GticXwhyx7fP1eNjdo+Nb+Aabgy2h\r\n"
+    "=nUq/\r\n"
+    "-----END PGP MESSAGE-----\r\n";
+    op_decrypt_start (s, &encmsg);
+    if (encmsg != NULL) {
+	printf ("%s\n", encmsg);
+	free (encmsg);
+    }
 #endif
     
     op_deinit ();

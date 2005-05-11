@@ -54,7 +54,6 @@ op_set_debug_mode (int val, const char *file)
     if (val > 0) {
 	debug_file = (char *)xcalloc (1, strlen (file) + strlen (s) + 2);
 	sprintf (debug_file, "%s=%d:%s", s, val, file);
-	/*printf ("%s\n", debug_file);*/
 	putenv (debug_file);
     }
     else {
@@ -103,8 +102,10 @@ op_encrypt_start (const char *inbuf, char **outbuf)
     return err;
 }
 
-long ftello(FILE *f)
+long 
+ftello (FILE *f)
 {
+    /* XXX: find out if this is really needed */
     printf ("fd %d pos %d\n", fileno(f), ftell(f));
     return ftell (f);
 }
@@ -136,7 +137,39 @@ data_to_file (gpgme_data_t *dat, const char *outfile)
 int
 op_decrypt_file (const char *infile, const char *outfile)
 {
-    return 0;
+    gpgme_data_t in = NULL;
+    gpgme_data_t out = NULL;
+    gpgme_error_t err;
+    gpgme_ctx_t ctx = NULL;
+    struct decrypt_key_s *hd;
+
+    err = gpgme_data_new_from_file (&in, infile, 1);
+    if (err)
+	return err;
+
+    hd = xcalloc (1, sizeof *hd);
+    err = gpgme_new (&ctx);
+    if (err)
+	goto fail;
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+
+    err = gpgme_data_new (&out);
+    if (err)
+	goto fail;
+
+    err = gpgme_op_decrypt (ctx, in, out);
+    if (!err)
+	err = data_to_file (&out, outfile);
+
+fail:
+    if (in != NULL)
+	gpgme_data_release (in);
+    if (out != NULL)
+	gpgme_data_release (out);
+    if (ctx != NULL)
+	gpgme_release (ctx);
+    xfree (hd);
+    return err;
 }
 
 
@@ -383,7 +416,6 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
     gpgme_data_t in=NULL, out=NULL;
     gpgme_ctx_t ctx;
     gpgme_error_t err;
-    
 
     *outbuf = NULL;
     op_init ();
@@ -391,7 +423,6 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
     if (err)
 	return err;
 
-    
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -401,12 +432,20 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
 	goto leave;
 
     gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
-    err = gpgme_op_decrypt (ctx, in, out);
+    err = gpgme_op_decrypt_verify (ctx, in, out);
     if (!err) {
-	size_t n =0;
+	size_t n = 0;
 	*outbuf = gpgme_data_release_and_get_mem (out, &n);
 	(*outbuf)[n] = 0;
 	out = NULL;
+    }
+
+    /* XXX: automatically spawn verify_start in case the text was signed? */
+    {
+	gpgme_verify_result_t res;
+	res = gpgme_op_verify_result (ctx);
+	if (res != NULL && res->signatures != NULL)
+	    verify_dialog_box (res);
     }
 
 leave:    

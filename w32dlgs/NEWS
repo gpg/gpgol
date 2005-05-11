@@ -1,0 +1,21 @@
+
+Noteworthy changes for version 0.4.0 (2005-05-10)
+=================================================
+
+* Verify dialog is automatically shown whenever needed. Plus it
+  contains a hint-label whenever the signature is special. For
+  example the signature has expire or it was issued by a key which
+  is not trustworthy.
+
+* Offer a GPG configuration dialog to set the path to GPG, the home
+  directory and an optional field to specify a key manager.
+
+* Common dialogs for the following procedures:
+  - verify a clearsign signature
+  - decrypt a message (and verify a signature)
+  - encrypt a message (and sign the plaintext)
+  - clearsign a message
+
+* Provide a class to encapsulate MAPI messages and high-level functions
+  for all crypto operations.
+  

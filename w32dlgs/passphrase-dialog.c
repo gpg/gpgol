@@ -62,7 +62,7 @@ set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
 	key_hint = xstrdup ("Symmetrical Decryption");
     SendDlgItemMessage( dlg, ctrlid, CB_ADDSTRING, 0, (LPARAM)(const char *)key_hint );	    
     SendDlgItemMessage( dlg, ctrlid, CB_SETCURSEL, 0, 0 );
-    free( key_hint );
+    xfree (key_hint);
 }
 
 
@@ -93,7 +93,7 @@ load_secbox (HWND dlg)
 	if( !email )
 	    email = "";
 	p = (char *)xcalloc( 1, strlen( name ) + strlen( email ) + 17 + 32 );
-	if( email && strlen( email ) )
+	if (email && strlen (email))
 	    sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
 	else
 	    sprintf( p, "%s (0x%s, %s)", name, keyid+8, algo );
@@ -115,24 +115,28 @@ load_secbox (HWND dlg)
 
 
 static BOOL CALLBACK
-decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
+decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static struct decrypt_key_s * dec;
     static int hide_state = 1;
     size_t n;
 
-    switch( msg ) {
+    switch (msg) {
     case WM_INITDIALOG:
 	dec = (struct decrypt_key_s *)lparam;
 	if (dec && dec->use_as_cb) {
 	    dec->opts = 0;
 	    dec->pass = NULL;
 	    set_key_hint (dec, dlg, IDC_DEC_KEYLIST);
-	    EnableWindow( GetDlgItem( dlg, IDC_DEC_KEYLIST ), FALSE );
+	    EnableWindow (GetDlgItem (dlg, IDC_DEC_KEYLIST), FALSE);
 	}
+	if (dec && dec->last_was_bad)
+	    SetDlgItemText (dlg, IDC_DEC_HINT, "Invalid passphrase; please try again...");
+	else
+	    SetDlgItemText (dlg, IDC_DEC_HINT, "");
 	if (dec && !dec->use_as_cb)
-	    load_secbox(dlg);
-	CheckDlgButton( dlg, IDC_DEC_HIDE, BST_CHECKED );
+	    load_secbox (dlg);
+	CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
 	center_window (dlg, NULL);
 	if (dec->hide_pwd) {
 	    EnableWindow (GetDlgItem (dlg, IDC_DEC_HIDE), FALSE);
@@ -143,6 +147,15 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 	SetForegroundWindow (dlg);
 	return FALSE;
 
+    case WM_DESTROY:
+	hide_state = 1;
+	break;
+
+    case WM_SYSCOMMAND:
+	if (wparam == SC_CLOSE)
+	    EndDialog (dlg, TRUE);
+	break;
+
     case WM_COMMAND:
 	switch( HIWORD( wparam ) ) {
 	case BN_CLICKED:
@@ -150,9 +163,9 @@ decrypt_key_dlg_proc( HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam )
 		HWND hwnd;
 
 		hide_state ^= 1;
-		hwnd = GetDlgItem( dlg, IDC_DEC_PASS );
-		SendMessage( hwnd, EM_SETPASSWORDCHAR, hide_state? '*' : 0, 0 );
-		SetFocus( hwnd );
+		hwnd = GetDlgItem (dlg, IDC_DEC_PASS);
+		SendMessage (hwnd, EM_SETPASSWORDCHAR, hide_state? '*' : 0, 0);
+		SetFocus (hwnd);
 	    }
 	    break;
 	}
@@ -242,9 +255,10 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 	    WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
 	    return -1;
 	}
+	hd->last_was_bad = prev_was_bad? 1 : 0;
 	hd->use_as_cb = 1;
-	DialogBoxParam( glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow(),
-			decrypt_key_dlg_proc, (LPARAM)hd );
+	DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
+			decrypt_key_dlg_proc, (LPARAM)hd);
     }
     if (hd->pass) {
 	WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);

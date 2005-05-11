@@ -32,6 +32,11 @@ get_timestamp (time_t l)
     static char buf[64];
     struct tm * tm;
 
+    if (l == 0) {
+	sprintf (buf, "????-??-?? ??:??:??");
+	return buf;
+    }
+	
     tm = localtime (&l);
     sprintf (buf, "%04d-%02d-%02d %02d:%02d:%02d",
 	     tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
@@ -54,12 +59,15 @@ load_akalist (HWND dlg, gpgme_key_t key)
     }
 }
 
+
 static void 
 load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 {
     gpgme_key_t key;
     char *s, buf[2+16+1];
+    char *p;
     int stat;
+    int valid;
 
     s = get_timestamp (ctx->signatures->timestamp);
     SetDlgItemText (dlg, IDC_VRY_TIME, s);
@@ -72,8 +80,9 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
     buf[10] = 0;
     buf[0] = '0'; buf[1] = 'x';
     SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
-    key = find_gpg_key (buf+2, 0);
-
+    /*key = find_gpg_key (buf+2, 0);*/
+    key = get_gpg_key (buf+2);
+    
     stat = ctx->signatures->summary;
     if (stat & GPGME_SIGSUM_GREEN)
 	s = "Good signature";
@@ -87,6 +96,9 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 	s = "Good expired signature";
     else if (stat & GPGME_SIGSUM_KEY_MISSING)
 	s = "Could not check signature: missing key";
+    else
+	s = "Verification error";
+    /* XXX: if we have a key we do _NOT_ trust, stat is 'wrong' */
     SetDlgItemText (dlg, IDC_VRY_STATUS, s);
     
     if (key) {
@@ -97,6 +109,31 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 	SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
 
 	load_akalist (dlg, key);
+	gpgme_key_release (key);
+    }
+
+    valid = ctx->signatures->validity;
+    if (stat & GPGME_SIGSUM_SIG_EXPIRED) {
+	char *fmt;
+
+	fmt = "Signature expired on %d";
+	s = get_timestamp (ctx->signatures->exp_timestamp);
+	p = xmalloc (strlen (s)+1+strlen (fmt)+2);
+	sprintf (p, fmt, s);
+	SetDlgItemText (dlg, IDC_VRY_HINT, s);
+	xfree (p);
+    }
+    else if (valid < GPGME_VALIDITY_MARGINAL) {
+	switch (valid) {
+	case GPGME_VALIDITY_NEVER:
+	    s = "Signature issued by a key we do NOT trust.";
+	    break;
+
+	default:
+	    s = "Signature issued by a non-valid key.";
+	    break;
+	}
+	SetDlgItemText (dlg, IDC_VRY_HINT, s);
     }
 }
 

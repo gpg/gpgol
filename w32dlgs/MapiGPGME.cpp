@@ -28,9 +28,14 @@
 #include "keycache.h"
 #include "intern.h"
 
+/* default file for logging */
 #define LOGFILE "c:\\mapigpgme.log"
 
+/* default extension for attachments */
+#define EXT_MSG ".pgp"
+#define EXT_SIG ".sig"
 
+/* memory macros */
 #define delete_buf(buf) delete [] (buf)
 
 #define fail_if_null(p) do { if (!(p)) abort (); } while (0)
@@ -61,6 +66,19 @@ MapiGPGME::~MapiGPGME ()
 	delete_buf (logfile);
     if (passPhrase)
 	delete_buf (passPhrase);
+}
+
+
+int
+MapiGPGME::setRTFBody (char *body)
+{
+    setMessageAccess (MAPI_ACCESS_MODIFY);
+    HWND rtf = findMessageWindow (parent);
+    if (rtf != NULL) {
+	SetWindowText (rtf, body);
+	return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -235,7 +253,7 @@ MapiGPGME::encrypt (void)
 	setBody (newBody);
 
     delete_buf (body);
-    free (newBody);
+    xfree (newBody);
     freeRecipients (recipients);
     freeUnknownKeys (unknown, n);
     freeKeyArray ((void **)keys);
@@ -260,11 +278,16 @@ passphraseCallback (void *opaque, const char *uid_hint,
 }
 
 int 
-MapiGPGME::decrypt (void)
+MapiGPGME::decrypt ()
 {
+    gpg_type_t id;
     char *body = getBody();
     char *newBody = NULL;
     int err;
+
+    id = getMessageType (body);
+    if (id == GPG_TYPE_CLEARSIG)
+	return verify ();
 
     if (!passPhrase) {
 	if (nstorePasswd == 0)
@@ -282,7 +305,7 @@ MapiGPGME::decrypt (void)
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Decryption", MB_ICONERROR|MB_OK);
     else
-	setBody (newBody);
+	setRTFBody (newBody);
 
     delete_buf (body);
     free (newBody);
@@ -305,6 +328,20 @@ MapiGPGME::sign (void)
     delete_buf (body);
     free (newBody);
     return err;
+}
+
+
+gpg_type_t
+MapiGPGME::getMessageType (const char *body)
+{
+    if (strstr (body, "BEGIN PGP MESSAGE"))
+	return GPG_TYPE_MSG;
+    if (strstr (body, "BEGIN PGP SIGNED MESSAGE"))
+	return GPG_TYPE_CLEARSIG;
+    if (strstr (body, "BEGIN PGP SIGNATURE"))
+	return GPG_TYPE_SIG;
+    /* XXX: pubkey, seckey */
+    return GPG_TYPE_NONE;
 }
 
 
@@ -369,12 +406,16 @@ int
 MapiGPGME::verify ()
 {
     char *body = getBody();
+    char *newBody = NULL;
     
-    int err = op_verify_start (body, NULL);
+    int err = op_verify_start (body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
+    else
+	setRTFBody (newBody);
 
     delete_buf (body);
+    xfree (newBody);
     return err;
 }
 
@@ -421,7 +462,35 @@ MapiGPGME::setMessage (LPMESSAGE msg)
 void
 MapiGPGME::setWindow(HWND hwnd)
 {
-    this->hwnd = hwnd;
+    this->parent = hwnd;
+}
+
+
+/* We need this to find the mailer window because we directly change the text
+   of the window instead of the MAPI object itself. */
+HWND
+MapiGPGME::findMessageWindow (HWND parent)
+{
+    HWND child;
+
+    if (parent == NULL)
+	return NULL;
+
+    child = GetWindow (parent, GW_CHILD);
+    while (child != NULL) {
+	char buf[1025];
+	HWND rtf;
+
+	memset (buf, 0, sizeof (buf));
+	GetWindowText (child, buf, sizeof (buf)-1);
+	if (getMessageType (buf) != GPG_TYPE_NONE)
+	    return child;
+	rtf = findMessageWindow (child);
+	if (rtf != NULL)
+	    return rtf;
+	child = GetNextWindow (child, GW_HWNDNEXT);	
+    }
+    return NULL;
 }
 
 
@@ -556,6 +625,26 @@ MapiGPGME::getAttachFilename (LPATTACH obj)
 }
 
 
+const char*
+MapiGPGME::getAttachmentExtension (const char *fname)
+{
+    static char ext[4];
+    char *p;
+
+    p = strchr (fname, '.');
+    if (p != NULL) {
+	int pos = (p-fname);
+	
+	strncpy (ext, fname+pos, 4);
+	if (stricmp (ext+1, "gpg") == 0 ||
+	    stricmp (ext+1, "pgp") == 0 ||
+	    stricmp (ext+1, "asc") == 0)
+	    return ext;
+    }
+    return EXT_MSG;
+}
+
+
 int
 MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVector)
 {
@@ -592,7 +681,7 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 	string sFilename = sFilenameAtt;
 	sFilename += sn;
 	sFilename += ".tmp";
-	string sFilenameDest = sFilename + ".pgp";
+	string sFilenameDest = sFilename + EXT_MSG;
 	tring sAttName = "attach";
 	LPATTACH pAttach = NULL;
 	LPSTREAM pStreamAtt = NULL;
@@ -637,25 +726,12 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 		    {
 			sFilename = sFilenameAtt + sAttName;
 			sFilenameDest = sFilename;
-			int nPos = sFilename.rfind('.');
-			if (nPos != -1)
-			{
-			    string sExt = sFilename.substr(nPos+1);
-			    if ((sExt == "gpg") || (sExt == "GPG") || 
-				(sExt == "asc") || (sExt == "ASC") ||
-				(sExt == "pgp") || (sExt == "PGP"))
-				sFilenameDest = sFilename.substr (0, nPos);
-			    else
-				sFilename += ".pgp";
-			}
-			else
-			    sFilename += ".pgp";
-					
+			sFilename + = getAttachmentExtension (sFilename);					
 		    }
 		    if (nAction == PROATT_ENCRYPT_AND_SIGN)
 		    {
 			sFilename = sFilenameAtt + sAttName;
-			sFilenameDest = sFilename + ".pgp";
+			sFilenameDest = sFilename + EXT_MSG;
 		    }
 		}
 
@@ -710,9 +786,9 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 		{
 		    if (nAction == PROATT_ENCRYPT_AND_SIGN) {
 			if (m_bSign_Clearsign && !m_bEncrypt_Clearsign)
-			    sAttName += ".sig";
+			    sAttName += EXT_SIG;
 			else
-			    sAttName += ".pgp";
+			    sAttName += EXT_MSG;
 		    }
 		    if (nAction == PROATT_DECRYPT)
 		    {

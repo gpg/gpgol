@@ -22,10 +22,19 @@
 
 #define DLL_EXPORT __declspec(dllexport)
 
+typedef enum {
+    GPG_TYPE_NONE = 0,
+    GPG_TYPE_MSG,
+    GPG_TYPE_SIG,
+    GPG_TYPE_CLEARSIG,
+    GPG_TYPE_PUBKEY,
+    GPG_TYPE_SECKEY
+} gpg_type_t;
+
 class MapiGPGME
 {
 private:
-    HWND hwnd;
+    HWND parent;
     LPMESSAGE msg;
     char* defaultKey;
     char* passPhrase;
@@ -44,8 +53,10 @@ public:
     DLL_EXPORT ~MapiGPGME ();
 
 private:
+    HWND findMessageWindow (HWND parent);
     void rtfSync (char *body);
     int setBody (char *body);
+    int setRTFBody (char *body);
     char *getBody ();
 
 private:
@@ -88,8 +99,9 @@ public:
     DLL_EXPORT int writeOptions ();
 
 public:
-    DLL_EXPORT int decryptAttachments();
-    DLL_EXPORT int encryptAttachments();
+    const char* getAttachmentExtension (const char *fname);
+    DLL_EXPORT int decryptAttachments ();
+    DLL_EXPORT int encryptAttachments ();
 
 public:
     DLL_EXPORT int startKeyManager ();
@@ -117,6 +129,7 @@ public:
     DLL_EXPORT void setWindow (HWND hwnd);
 
 public:
+    gpg_type_t getMessageType (const char *body);
     const char *getPassphrase () { return passPhrase; }
     DLL_EXPORT void storePassphrase (const char *passPhrase)
     {
