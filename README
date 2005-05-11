@@ -6,9 +6,14 @@ been no development on this tool for a couple of years and thus we started
 to revamp it a bit.
 
 - the gdgpg subfolder contains the source of the G-DATA
-  COM object.
+  COM object. (The program is now obsolete!)
 
 - the gpgexch subfolder contains the source of the G-DATA
-  Outlook plugin.
+  Outlook plugin. (The program is now obsolete!)
+
+- the outlgpg subfolder contains the source of the new Outlook
+  plugin.
+  
+- the w32dlgs subfolder contains the framework for all mail plugins.  
 
   Timo Schulz, Werner Koch at  g10 Code GmbH.
