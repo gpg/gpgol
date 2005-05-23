@@ -135,6 +135,22 @@ data_to_file (gpgme_data_t *dat, const char *outfile)
 
 
 int
+op_sign_encrypt_file (void *rset, const char *infile, const char *outfile)
+{
+    /* XXX: fill it with life */
+    return 0;
+}
+
+
+int
+op_sign_file (int mode, const char *infile, const char *outfile)
+{
+    /* XXX: fill it with life */
+    return 0;
+}
+
+
+int
 op_decrypt_file (const char *infile, const char *outfile)
 {
     gpgme_data_t in = NULL;
@@ -457,17 +473,21 @@ leave:
 
 
 int
-op_decrypt_start_ext (const char *inbuf, char **outbuf, char **ret_pass)
+op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm)
 {
     struct decrypt_key_s *hd;
+    cache_item_t itm;
     int err;
 
     hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
     err = op_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
 
-    if (ret_pass) {
-	*ret_pass = hd->pass;
+    if (ret_itm != NULL) {
+	itm = cache_item_new ();
+	itm->pass = hd->pass; 
 	hd->pass = NULL;
+	memcpy (itm->keyid, hd->keyid, sizeof (hd->keyid));
+	*ret_itm = itm;
     }
     free_decrypt_key (hd);
     return err;

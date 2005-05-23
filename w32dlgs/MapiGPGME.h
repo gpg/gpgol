@@ -31,13 +31,30 @@ typedef enum {
     GPG_TYPE_SECKEY
 } gpg_type_t;
 
+typedef enum {
+    GPG_ATTACH_NONE = 0,
+    GPG_ATTACH_DECRYPT = 1,
+    GPG_ATTACH_ENCRYPT = 2,
+    GPG_ATTACH_SIGN = 4,
+    GPG_ATTACH_SIGNENCRYPT = GPG_ATTACH_SIGN|GPG_ATTACH_ENCRYPT,
+} gpg_attachment_action_t;
+
+typedef enum {
+    GPG_FMT_NONE = 0,	    /* do not encrypt attachments */
+    GPG_FMT_CLASSIC = 1,    /* encrypt attachments without any encoding */
+    GPG_FMT_PGP_PEF = 2	    /* use the PGP partioned encoding format */
+} gpg_format_t;
+
 class MapiGPGME
 {
 private:
     HWND parent;
-    LPMESSAGE msg;
     char* defaultKey;
-    char* passPhrase;
+    HashTable *passCache;
+    LPMESSAGE msg;
+    LPMAPITABLE attachTable;
+    LPSRowSet attachRows;
+    void *recipSet;
 
     /* Options */
     char *logfile;
@@ -46,6 +63,7 @@ private:
     bool doSign;
     bool encryptDefault;
     bool saveDecrAttr;
+    int  encFormat;
 
 public:
     DLL_EXPORT MapiGPGME ();
@@ -73,6 +91,8 @@ public:
     DLL_EXPORT int verify ();
     DLL_EXPORT int signEncrypt ();
     DLL_EXPORT int doCmd(int doEncrypt, int doSign);
+    DLL_EXPORT int doCmdAttach(int action);
+    DLL_EXPORT int doCmdFile(int action, const char *in, const char *out);
 
 public:
     DLL_EXPORT const char* getLogFile (void) { return logfile; }
@@ -94,14 +114,42 @@ public:
     DLL_EXPORT void setEncryptWithDefaultKey (bool encryptDefault) { this->encryptDefault = encryptDefault; }
     DLL_EXPORT bool getSaveDecryptedAttachments (void) { return saveDecrAttr; }
     DLL_EXPORT void setSaveDecryptedAttachments (bool saveDecrAttr) { this->saveDecrAttr = saveDecrAttr; }
+    DLL_EXPORT void setEncodingFormat(int fmt) { encFormat = fmt; }
+    DLL_EXPORT int  getEncodingFormat() { return encFormat; }
 
     DLL_EXPORT int readOptions ();
     DLL_EXPORT int writeOptions ();
 
-public:
+public:    
     const char* getAttachmentExtension (const char *fname);
-    DLL_EXPORT int decryptAttachments ();
-    DLL_EXPORT int encryptAttachments ();
+    DLL_EXPORT void freeAttachments ();
+    DLL_EXPORT int getAttachments ();
+    DLL_EXPORT int countAttachments () { return (int) attachRows->cRows; }
+    DLL_EXPORT bool hasAttachments ()
+    {
+	if (attachRows == NULL)
+	    getAttachments ();
+	bool has = attachRows->cRows > 0? true : false;
+	freeAttachments ();
+	return has;
+    }
+    DLL_EXPORT bool deleteAttachment (int pos)
+    {
+	if (msg->DeleteAttach (pos, 0, NULL, 0) == S_OK)
+	    return true;
+	return false;
+    }
+    DLL_EXPORT LPATTACH createAttachment (unsigned &pos)
+    {
+	ULONG attnum;	
+	LPATTACH newatt = NULL;
+
+	if (msg->CreateAttach (NULL, 0, &attnum, &newatt) == S_OK) {
+	    pos = attnum;
+	    return newatt;
+	}
+	return NULL;
+    }
 
 public:
     DLL_EXPORT int startKeyManager ();
@@ -116,9 +164,15 @@ private:
     int getMessageHasAttachments ();
     bool setMessageAccess (int access);    
 
-private:    
+private:
+    const char* getPGPExtension (int action);
     int streamOnFile (const char *file, LPSTREAM to);
     int processAttachments (HWND hwnd, int action, const char **pFileNameVector);
+    int encryptAttachments (HWND hwnd);
+    int decryptAttachments (HWND hwnd);
+    LPATTACH openAttachment (int pos);
+    void closeAttachment (LPATTACH att);
+    int processAttachment (LPATTACH att, HWND hwnd, int action);
 
 public:
     DLL_EXPORT void setDefaultKey (const char *key);
@@ -129,21 +183,13 @@ public:
     DLL_EXPORT void setWindow (HWND hwnd);
 
 public:
+    const char *getPassphrase (const char *keyid);
+    void storePassphrase (void *itm);
     gpg_type_t getMessageType (const char *body);
-    const char *getPassphrase () { return passPhrase; }
-    DLL_EXPORT void storePassphrase (const char *passPhrase)
-    {
-	if (this->passPhrase)
-	    delete []this->passPhrase;
-	this->passPhrase = new char[strlen (passPhrase)+1];
-	strcpy (this->passPhrase, passPhrase);
-    }
+    
     DLL_EXPORT void clearPassphrase () 
     { 
-	if (this->passPhrase) {
-	    delete []this->passPhrase;
-	    passPhrase = NULL;
-	}
+	passCache->clear ();
     }
 };
 

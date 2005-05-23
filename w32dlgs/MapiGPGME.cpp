@@ -21,12 +21,19 @@
 #include <mapidefs.h>
 #include <mapiutil.h>
 #include <time.h>
+#include <initguid.h>
+#include <mapiguid.h>
 
-#include "MapiGPGME.h"
 #include "gpgme.h"
+#include "intern.h"
+#include "HashTable.h"
+#include "MapiGPGME.h"
 #include "engine.h"
 #include "keycache.h"
-#include "intern.h"
+
+/* attachment information */
+#define ATTR_SIGN(action) ((action) & GPG_ATTACH_SIGN)
+#define ATTR_ENCR(action) ((action) & GPG_ATTACH_ENCRYPT)
 
 /* default file for logging */
 #define LOGFILE "c:\\mapigpgme.log"
@@ -43,6 +50,8 @@
 
 MapiGPGME::MapiGPGME (LPMESSAGE msg)
 {
+    this->encFormat = GPG_FMT_CLASSIC;
+    this->passCache = new HashTable();
     this->msg = msg;
     op_init ();
     log_debug (LOGFILE, "constructor %p\r\n", msg);
@@ -51,21 +60,33 @@ MapiGPGME::MapiGPGME (LPMESSAGE msg)
 
 MapiGPGME::MapiGPGME ()
 {
-    log_debug (LOGFILE, "constructor null\r\n");
+    this->encFormat = GPG_FMT_CLASSIC;
+    this->passCache = new HashTable();
     op_init ();
+    log_debug (LOGFILE, "constructor null\r\n");
 }
 
 
 MapiGPGME::~MapiGPGME ()
 {
+    unsigned i=0;
+
     log_debug (LOGFILE, "destructor %p\r\n", msg);
     op_deinit ();
     if (defaultKey)
 	delete_buf (defaultKey);
     if (logfile)
 	delete_buf (logfile);
-    if (passPhrase)
-	delete_buf (passPhrase);
+    
+    log_debug (LOGFILE, "hash entries %d\r\n", passCache->size ());
+    for (i = 0; i < passCache->size (); i++) {
+	cache_item_t t = (cache_item_t)passCache->get (i);
+	if (t != NULL)
+	    cache_item_free (t);
+    }
+    
+    freeAttachments ();
+    delete passCache;
 }
 
 
@@ -75,6 +96,7 @@ MapiGPGME::setRTFBody (char *body)
     setMessageAccess (MAPI_ACCESS_MODIFY);
     HWND rtf = findMessageWindow (parent);
     if (rtf != NULL) {
+	log_debug (LOGFILE, "setRTFBody: window handle %p", rtf);
 	SetWindowText (rtf, body);
 	return TRUE;
     }
@@ -225,6 +247,29 @@ MapiGPGME::freeRecipients(char **recipients)
 }
 
 
+const char*
+MapiGPGME::getPassphrase (const char *keyid)
+{
+    cache_item_t item = (cache_item_t)passCache->get(keyid);
+    if (item != NULL)
+	return item->pass;
+    return NULL;
+}
+
+
+void
+MapiGPGME::storePassphrase (void *itm)
+{
+    cache_item_t item = (cache_item_t)itm;
+    cache_item_t old;
+    old = (cache_item_t)passCache->get(item->keyid);
+    if (old != NULL)
+	cache_item_free (old);
+    passCache->put (item->keyid+8, item);
+    log_debug (LOGFILE, "put keyid %s = '%s'\r\n", item->keyid+8, item->pass);
+}
+
+
 int 
 MapiGPGME::encrypt (void)
 {
@@ -256,6 +301,11 @@ MapiGPGME::encrypt (void)
     xfree (newBody);
     freeRecipients (recipients);
     freeUnknownKeys (unknown, n);
+    if (hasAttachments ()) {
+	log_debug (LOGFILE, "encrypt attachments\r\n");
+	recipSet = (void *)keys;
+	encryptAttachments (parent);
+    }
     freeKeyArray ((void **)keys);
     return err;
 }
@@ -263,25 +313,36 @@ MapiGPGME::encrypt (void)
 
 /* XXX: I would prefer to use MapiGPGME::passphraseCallback, but member 
         functions have an incompatible calling convention. */
-static int 
+int 
 passphraseCallback (void *opaque, const char *uid_hint, 
 		    const char *passphrase_info,
 		    int last_was_bad, int fd)
 {
     MapiGPGME *ctx = (MapiGPGME*)opaque;
-    const char *passwd = ctx->getPassphrase ();
-
+    const char *passwd;
+    char keyid[16+1];
     DWORD nwritten = 0;
-    WriteFile ((HANDLE)fd, passwd, strlen (passwd), &nwritten, NULL);
+    int i=0;
+
+    while (uid_hint && *uid_hint != ' ')
+	keyid[i++] = *uid_hint++;
+    keyid[i] = '\0';
+    
+    passwd = ctx->getPassphrase (keyid+8);
+    log_debug (LOGFILE, "get keyid %s = '%s'\r\n", keyid+8, passwd);
+    if (passwd != NULL) {
+	WriteFile ((HANDLE)fd, passwd, strlen (passwd), &nwritten, NULL);
+	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
+    }
 
     return 0;
 }
 
 int 
-MapiGPGME::decrypt ()
+MapiGPGME::decrypt (void)
 {
     gpg_type_t id;
-    char *body = getBody();
+    char *body = getBody ();
     char *newBody = NULL;
     int err;
 
@@ -289,16 +350,15 @@ MapiGPGME::decrypt ()
     if (id == GPG_TYPE_CLEARSIG)
 	return verify ();
 
-    if (!passPhrase) {
-	if (nstorePasswd == 0)
-	    err = op_decrypt_start (body, &newBody);
-	else {
-	    char *pCache = NULL;
-	    err = op_decrypt_start_ext (body, &newBody, &pCache);
-	    if (!err)
-		storePassphrase (pCache);
-	    xfree (pCache);
-	}
+    if (nstorePasswd == 0)
+	err = op_decrypt_start (body, &newBody);
+    else if (passCache->size () == 0) {
+	/* XXX: use the callback to see if a cached passphrase is available. If not
+	        call the real passphrase callback and store the passphrase. */
+	cache_item_t itm = NULL;
+	err = op_decrypt_start_ext (body, &newBody, &itm);
+	if (!err)
+	    storePassphrase (itm);
     }
     else
 	err = op_decrypt_next (passphraseCallback, this, body, &newBody);
@@ -307,6 +367,10 @@ MapiGPGME::decrypt ()
     else
 	setRTFBody (newBody);
 
+    if (hasAttachments ()) {
+	log_debug (LOGFILE, "decrypt attachments\r\n");
+	decryptAttachments (parent);
+    }
     delete_buf (body);
     free (newBody);
     return err;
@@ -342,6 +406,33 @@ MapiGPGME::getMessageType (const char *body)
 	return GPG_TYPE_SIG;
     /* XXX: pubkey, seckey */
     return GPG_TYPE_NONE;
+}
+
+
+
+int
+MapiGPGME::doCmdFile(int action, const char *in, const char *out)
+{
+    if (ATTR_SIGN (action) && ATTR_ENCR (action))
+	return op_sign_encrypt_file (recipSet, in, out);
+    if (ATTR_SIGN (action) && !ATTR_ENCR (action))
+	return op_sign_file (OP_SIG_NORMAL, in, out);
+    if (!ATTR_SIGN (action) && ATTR_ENCR (action))
+	return op_encrypt_file (recipSet, in, out);
+    return !op_decrypt_file (in, out);
+}
+
+
+int
+MapiGPGME::doCmdAttach(int action)
+{
+    if (ATTR_SIGN (action) && ATTR_ENCR (action))
+	return signEncrypt ();
+    if (ATTR_SIGN (action) && !ATTR_ENCR (action))
+	return sign ();
+    if (!ATTR_SIGN (action) && ATTR_ENCR (action))
+	return encrypt ();
+    return decrypt ();
 }
 
 
@@ -397,7 +488,13 @@ MapiGPGME::signEncrypt ()
     delete_buf (body);
     free (newBody);
     freeUnknownKeys (unknown, n);
+    if (hasAttachments ()) {
+	log_debug (LOGFILE, "encrypt attachments");
+	recipSet = (void *)keys;
+	encryptAttachments (parent);
+    }
     freeKeyArray ((void **)keys);
+    gpgme_key_release (locusr);
     return err;
 }
 
@@ -420,7 +517,7 @@ MapiGPGME::verify ()
 }
 
 
-void MapiGPGME::setDefaultKey(const char *key)
+void MapiGPGME::setDefaultKey (const char *key)
 {
     if (defaultKey) {
 	delete_buf (defaultKey);
@@ -490,6 +587,7 @@ MapiGPGME::findMessageWindow (HWND parent)
 	    return rtf;
 	child = GetNextWindow (child, GW_HWNDNEXT);	
     }
+    log_debug (LOGFILE, "no message window found.\r\n");
     return NULL;
 }
 
@@ -644,6 +742,159 @@ MapiGPGME::getAttachmentExtension (const char *fname)
     return EXT_MSG;
 }
 
+const char*
+MapiGPGME::getPGPExtension (int action)
+{
+    if (ATTR_SIGN (action))
+	return EXT_SIG;
+    return EXT_MSG;
+}
+
+
+void
+MapiGPGME::freeAttachments (void)
+{
+    if (attachTable != NULL) {
+        attachTable->Release ();
+	attachTable = NULL;
+    }
+    if (attachRows != NULL) {
+        FreeProws (attachRows);
+	attachRows = NULL;
+    }
+}
+
+
+int
+MapiGPGME::getAttachments (void)
+{
+    static SizedSPropTagArray (1L, PropAttNum) = {1L, {PR_ATTACH_NUM}};
+    HRESULT hr;    
+   
+    hr = msg->GetAttachmentTable (0, &attachTable);
+    if (FAILED (hr))
+	return FALSE;
+
+    hr = HrQueryAllRows (attachTable, (LPSPropTagArray) &PropAttNum,
+			 NULL, NULL, 0L, &attachRows);
+    if (FAILED (hr)) {
+	freeAttachments ();
+	return FALSE;
+    }
+    return TRUE;
+}
+
+
+LPATTACH
+MapiGPGME::openAttachment (int pos)
+{
+    HRESULT hr;
+    LPATTACH att = NULL;
+    
+    hr = msg->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+    if (SUCCEEDED(hr))
+	return att;
+    return NULL;
+}
+
+
+void
+MapiGPGME::closeAttachment (LPATTACH att)
+{
+    att->Release ();
+}
+
+
+int
+MapiGPGME::processAttachment (LPATTACH att, HWND hwnd, int action)
+{    
+    int method = getAttachMethod (att);
+    BOOL success = TRUE;
+    HRESULT hr;
+
+    if (action == GPG_ATTACH_NONE)
+	return FALSE;
+
+    switch (method) {
+    case ATTACH_EMBEDDED_MSG:
+	LPMESSAGE emb;
+
+	hr = att->OpenProperty (PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, 
+			        MAPI_MODIFY, (LPUNKNOWN*) &emb);
+	if (FAILED (hr))
+	    return FALSE;
+	setWindow (hwnd);
+	setMessage (emb);
+	if (doCmdAttach (action))
+	    success = FALSE;
+	emb->SaveChanges (FORCE_SAVE);
+	att->SaveChanges (FORCE_SAVE);
+	emb->Release ();
+	break;
+
+    case ATTACH_BY_VALUE:
+	LPSTREAM stream;
+	char *inname;
+	char *outname;
+	
+	inname = getAttachFilename (att);
+	if (action != GPG_ATTACH_DECRYPT) {
+	    outname = (char *)xcalloc (1, strlen (inname) + 16 + 4);
+	    sprintf (outname, "%s%s", inname, getPGPExtension (action));
+	    log_debug (LOGFILE, "enc outname: '%s'\r\n", outname);
+	}
+	else {
+	    outname = (char*)xcalloc (1, strlen (inname) + 4);
+	    strcpy (outname, inname);
+	    outname[strlen (outname)-4] = '\0';
+	    log_debug (LOGFILE, "dec outname: '%s'\r\n", outname);
+	}
+	success = FALSE;
+	hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+			        0, 0, (LPUNKNOWN*) &stream);
+	if (!FAILED (hr) && streamOnFile (inname, stream)) {
+	    if (doCmdFile (action, inname, outname))
+		success = TRUE;
+	}
+	stream->Release ();
+	xfree (inname);
+	xfree (outname);
+	break;
+
+    case ATTACH_BY_REF_ONLY:
+	break;
+
+    }
+    return success;
+}
+
+
+int 
+MapiGPGME::decryptAttachments (HWND hwnd)
+{
+    return 0;
+}
+
+int
+MapiGPGME::encryptAttachments (HWND hwnd)
+{
+    int n = countAttachments ();
+    if (!n)
+	return TRUE;
+    if (!getAttachments ())
+	return FALSE;
+
+    for (int i=0; i < n; i++) {
+	LPATTACH amsg = openAttachment (i);
+	if (msg == NULL)
+	    continue;
+	processAttachment (amsg, hwnd, GPG_ATTACH_ENCRYPT);
+	closeAttachment (amsg);	
+    }
+    freeAttachments ();
+    return 0;
+}
+
 
 int
 MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVector)
@@ -652,30 +903,17 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
     USES_CONVERSION;
     BOOL bSuccess = TRUE;
     TCHAR szTempPath[MAX_PATH];
-    HRESULT hr;
-    LPMAPITABLE lpAttTable = NULL;
-    LPSRowSet lpAttRows = NULL;
+    HRESULT hr;       
     BOOL bSaveAttSuccess = TRUE;
-
-    static SizedSPropTagArray (1L, PropAttNum) = {1L, {PR_ATTACH_NUM}};
 
     GetTempPath (MAX_PATH, szTempPath);
     string sFilenameAtt = szTempPath;
     sFilenameAtt += sPrefix;
    
-    hr = pMessage->GetAttachmentTable (0, &lpAttTable);
-    if (FAILED (hr))
+    if (!getAttachments ())
 	return FALSE;
 
-    hr = HrQueryAllRows (lpAttTable, (LPSPropTagArray) &PropAttNum,
-			 NULL, NULL, 0L, &lpAttRows);
-    if (FAILED(hr)) {
-	if (NULL != lpAttTable)
-	    lpAttTable->Release ();
-	return FALSE;
-    }
-
-    for (int j = 0; j < (int) lpAttRows->cRows; j++) {
+    for (int j = 0; j < countAttachments(); j++) {
 	TCHAR sn[20];
 	itoa(j, sn, 10);
 	string sFilename = sFilenameAtt;
@@ -687,36 +925,16 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 	LPSTREAM pStreamAtt = NULL;
         int nAttachment = lpAttRows->aRow[j].lpProps[0].Value.ul;
 
-        HRESULT hr = pMessage->OpenAttach (nAttachment, NULL, MAPI_BEST_ACCESS, &pAttach);
-	if (SUCCEEDED(hr)) {
+	pAttach = openAttachment (nAttachment);
+	if (pAttach) {
 	    BOOL bSaveAttSuccess = TRUE;
 	    int method = getAttachMethod (pAttach);	    
 	    BOOL bEmbedded = (method == ATTACH_EMBEDDED_MSG);
 	    BOOL bEmbeddedOLE = (method == ATTACH_OLE);
 		
 	    if (SUCCEEDED(hr) && bEmbedded) {
-		    if ((nAction == PROATT_DECRYPT) || (nAction == PROATT_ENCRYPT_AND_SIGN)) {
-			LPMESSAGE pMessageEmb = NULL;
-			hr = pAttach->OpenProperty(PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, MAPI_MODIFY, 
-						   (LPUNKNOWN*) &pMessageEmb);
-			if (SUCCEEDED(hr)) {
-			    setWindow(hWnd);
-			    setMessage (pMessageEmb);
-			    if (nAction == PROATT_DECRYPT) {
-				if (decrypt ())
-				    bSuccess = FALSE;
-			    }
-			    if (nAction == PROATT_ENCRYPT_AND_SIGN) {
-				if (signEncrypt ())
-				    bSuccess = FALSE;
-			    }
-			    pMessageEmb->SaveChanges (FORCE_SAVE);
-			    pAttach->SaveChanges (FORCE_SAVE);
-			    pMessageEmb->Release ();
-			    m_nDecryptedAttachments++;
-			}
-		    }
-		}
+		bSuccess = processAttachment (att, hwnd, nAction);		
+	    }
 		BOOL bShortFileName = FALSE;
 		if (!bEmbedded && bSaveAttSuccess) {
 		    sAttName = getAttachFilename(pAttach);
@@ -810,17 +1028,16 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 			#if 0
 			/* Dennis Martin 2005-02-10 */
 			if (!(m_bSign_Clearsign && !m_bEncrypt_Clearsign))
-			    pMessage->DeleteAttach(nAttachment, 0, NULL, 0);
+			    deleteAttachment (nAttachment);
 			#endif
 		    }
 
-		    pMessage->DeleteAttach (nAttachment, 0, NULL, 0);
+		    deleteAttachmment (nAttachment);
 
 		    ULONG ulNewAttNum;
 		    LPATTACH lpNewAttach = NULL;
-		    hr = pMessage->CreateAttach (NULL, 0, &ulNewAttNum, &lpNewAttach);
-		    if (SUCCEEDED(hr))
-		    {	
+		    lpNewAttach = createAttachment (ulNewAttNum);
+		    if (lpNewAttach) {
 			if (setAttachMethod (lpNewAttach, ATTACH_BY_VALUE)) {
 			    setAttachFilename (lpNewAttach, sAttName.c_str(), false);
 
@@ -839,15 +1056,13 @@ MapiGPGME::processAttachments (HWND hwnd, int action, const char **pFileNameVect
 		}
 		if (!bSaveAttSuccess)
 		    bSuccess = FALSE;
-		pAttach->Release ();
+		closeAttachment (pAttach);
 	    }
 	}
     }
-    if (NULL != lpAttTable)
-        lpAttTable->Release ();
-    if (NULL != lpAttRows)
-        FreeProws (lpAttRows);
 
+    freeAttachments ();
+    freeKeyArray (recipSet);
     return bSuccess;
 #endif
     return FALSE;
@@ -885,6 +1100,9 @@ MapiGPGME::readOptions (void)
     load_extension_value ("storePasswdTime", &val);
     nstorePasswd = val == NULL || *val == '0'? 0 : atol (val);
     xfree (val); val = NULL;
+    load_extension_value ("encodingFormat", &val);
+    encFormat = val == NULL? GPG_FMT_CLASSIC  : atol (val);
+    xfree (val); val = NULL;
 
     load_extension_value ("logFile", &val);
     if (val == NULL ||*val == '"')
@@ -908,6 +1126,9 @@ MapiGPGME::writeOptions (void)
     char buf[32];
     sprintf (buf, "%d", nstorePasswd);
     store_extension_value ("storePasswdTime", buf);
+    
+    sprintf (buf, "%d", encFormat);
+    store_extension_value ("encodingFormat", buf);
 
     return 0;
 }

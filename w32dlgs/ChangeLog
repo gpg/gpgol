@@ -1,3 +1,43 @@
+2005-05-22  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (createAttachment): New.
+	(deleteAttachment): New.
+	(encryptAttachments): New.
+	(encrypt): Also encrypt the attachments if possible.
+	(signEncrypt): Likewise.
+	(setEncodingFormat): New.
+	(getEncodingFormat): New.
+	(readOptions, writeOptions): Store encoding format.
+	(MapiGPGME): The default encoding is 'CLASSIC'.
+
+2005-05-21  Timo Schulz  <ts@g10code.com>
+
+	* HashTable.h: Export functions.
+	* MapiGPGME.cpp (freeAttachments): New.
+	(getAttachments): New.
+	(openAttachment): New.
+	(closeAttachment): New.
+	(processAttachment): New.
+	(hasAttachments): New.
+	(countAttachments): New.
+	(doCmdFile): New. Can handle files.
+	(doCmdAttach): New. Can handle attachment action types.
+	(signEncrypt): Release locusr key.
+	* engine-gpgme.c (op_sign_file): New. Dummy.
+	(op_sign_encrypt_file): New. Dummy.
+
+2005-05-11  Timo Schulz  <ts@g10code.com>
+
+	* common.c (cache_item_new): New.
+	(cache_item_free): New.
+	* engine-gpgme.c (op_decrypt_start_ext): Return an cache item and
+	not just the passphrase. Changed all caller.
+	* MapiGPGME.cpp (passphraseCallback): Support caching.
+	(decrypt): Likewise.
+	(storePassphrase): Likewise.
+	(getPassphrase): Likewise.
+	* HashTable.cpp: New.
+
 2005-05-10  Timo Schulz  <ts@g10code.com>
 
 	* passphrase-dialog.c (decrypt_key_dlg_proc): Reset 'hide state'.

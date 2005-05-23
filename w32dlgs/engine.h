@@ -26,6 +26,13 @@
 extern "C" {
 #endif
 
+typedef enum {
+    OP_SIG_NORMAL = 1,
+    OP_SIG_ATTACH = 2,
+    OP_SIG_CLEAR  = 3
+};
+
+
 int op_init (void);
 void op_deinit (void);
 const char* op_strerror (int err);
@@ -41,18 +48,20 @@ int op_encrypt_file (void *rset, const char *infile, const char *outfile);
 int op_sign_encrypt_start (const char *inbuf, char **outbuf);
 int op_sign_encrypt (void *rset, void *locusr, const char *inbuf, 
 		     char **outbuf);
+int op_sign_encrypt_file (void *rset, const char *infile, const char *outfile);
 
 int op_verify_start (const char *inbuf, char **outbuf);
 
 int op_sign_start (const char *inbuf, char **outbuf);
 int op_sign (void *locusr, const char *inbuf, char **outbuf);
+int op_sign_file (int mode, const char *infile, const char *outfile);
 
 int op_decrypt_file (const char *infile, const char *outfile);
 int op_decrypt_next (int (*pass_cb)(void *, const char*, const char*, int, int),
 		     void *pass_cb_value,
 		     const char *inbuf, char **outbuf);
 int op_decrypt_start (const char *inbuf, char **outbuf);
-int op_decrypt_start_ext (const char *inbuf, char **outbuf, char **ret_pass);
+int op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm);
 
 int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);
 
