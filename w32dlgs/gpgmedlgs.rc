@@ -54,13 +54,13 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,0,0
- PRODUCTVERSION 0,5,0,0
+ FILEVERSION 0,5,1,0
+ PRODUCTVERSION 0,5,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
- FILEFLAGS 0x1L
+ FILEFLAGS 0x21L
 #else
- FILEFLAGS 0x0L
+ FILEFLAGS 0x20L
 #endif
  FILEOS 0x40004L
  FILETYPE 0x1L
@@ -73,15 +73,15 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "g10 Code GmbH\0"
             VALUE "FileDescription", "Common GPGME Dialogs\0"
-            VALUE "FileVersion", "0.5.0\0"
+            VALUE "FileVersion", "0.5.1\0"
             VALUE "InternalName", "GPGMEDLGS\0"
             VALUE "LegalCopyright", "Copyright © 2004 Timo Schulz,  2005 g10 Code GmbH\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "gpgmedlgs.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGME Dialogs\0"
-            VALUE "ProductVersion", "0.5.0\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "ProductVersion", "0.5.1\0"
+            VALUE "SpecialBuild", "CVS\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -138,8 +138,8 @@ BEGIN
     COMBOBOX        IDC_DEC_KEYLIST,9,7,209,58,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "",IDC_DEC_HINT,9,25,201,10
-    LTEXT           "Enter passphrase for your secret key",IDC_STATIC,9,37,
-                    116,8
+    LTEXT           "Enter passphrase for your secret key",IDC_DEC_PASSINF,9,
+                    37,116,8
     CONTROL         "&Hide Typing",IDC_DEC_HIDE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,162,37,54,10
     EDITTEXT        IDC_DEC_PASS,9,51,207,12,ES_PASSWORD | ES_AUTOHSCROLL

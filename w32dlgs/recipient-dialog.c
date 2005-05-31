@@ -229,7 +229,8 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     static int rset_state = 1;
     NMHDR * notify;
     HWND hrset;
-    BOOL flag;    
+    BOOL flag;
+    const char *warn;
     int i;
 
     switch (msg) {
@@ -287,19 +288,25 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	    
 	    hrset = GetDlgItem( dlg, IDC_ENC_RSET2 );
 	    for( i=0; i < ListView_GetItemCount( hrset ); i++ ) {
-		char keyid[32], valid[32];
 		gpgme_key_t key;
-		ListView_GetItemText( hrset, i, 3, keyid, sizeof keyid-1 );
-		ListView_GetItemText( hrset, i, 4, valid, sizeof valid-1 );
+		char keyid[32], valid[32];
+
+		ListView_GetItemText (hrset, i, 3, keyid, sizeof keyid-1);
+		ListView_GetItemText (hrset, i, 4, valid, sizeof valid-1);
 		key = find_gpg_key(keyid, 0);
 		keycache_add(&rset_cb->rset, key);
-		if( strcmp( valid, "FULL" ) && strcmp( valid, "ULTIMATE" ) )
+		if (strcmp (valid, "FULL") && strcmp (valid, "ULTIMATE"))
 		    rset_cb->opts |= OPT_FLAG_FORCE;
 	    }
-	    EndDialog( dlg, TRUE );
+	    EndDialog (dlg, TRUE);
 	    break;
 
 	case IDCANCEL:
+	    warn = "If you cancel this dialog, the message will be sent in cleartext.\n"
+		   "Do you really want to cancel?";
+	    i = MessageBox (dlg, warn, "Recipient Dialog", MB_ICONWARNING|MB_YESNO);		
+	    if (i == IDNO)
+		return FALSE;
 	    rset_cb->opts = OPT_FLAG_CANCEL;
 	    rset_cb->rset = NULL;
 	    EndDialog (dlg, FALSE);

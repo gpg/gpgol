@@ -21,16 +21,15 @@
 #ifndef _GPGMEDLGS_ENGINE_H
 #define _GPGMEDLGS_ENGINE_H 1
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef enum {
-    OP_SIG_NORMAL = 1,
-    OP_SIG_ATTACH = 2,
-    OP_SIG_CLEAR  = 3
-};
+    OP_SIG_NORMAL = 0,
+    OP_SIG_DETACH = 1,
+    OP_SIG_CLEAR  = 2
+} op_sigtype_t;
 
 
 int op_init (void);

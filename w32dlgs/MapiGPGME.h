@@ -162,7 +162,9 @@ private:
     bool setAttachFilename (LPATTACH obj, const char *name, bool islong);
     int getMessageFlags ();
     int getMessageHasAttachments ();
-    bool setMessageAccess (int access);    
+    bool setMessageAccess (int access);
+    bool setXHeader (const char *name, const char *val);
+    char* getXHeader (const char *name);
 
 private:
     const char* getPGPExtension (int action);

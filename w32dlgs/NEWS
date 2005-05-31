@@ -1,7 +1,19 @@
-Noteworthy changes for version 0.5.0 (2005-05-21)
+Noteworthy changes for version 0.5.x (unreleased)
 =================================================
 
 * Support for processing attachments.
+
+
+Noteworthy changes for version 0.5.1 (2005-05-29)
+=================================================
+
+* Issue a warning if the user cancels the sign or
+  encryption procedure.
+
+* Support to read and write X- headers for messages.
+
+* Fixed a problem which crashes Outlook if the keyManager
+  exe did not exist but was set in the registry.
 
 
 Noteworthy changes for version 0.4.0 (2005-05-10)

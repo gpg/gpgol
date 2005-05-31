@@ -23,6 +23,7 @@
 #include <time.h>
 #include <initguid.h>
 #include <mapiguid.h>
+#include <atlbase.h>
 
 #include "gpgme.h"
 #include "intern.h"
@@ -301,7 +302,7 @@ MapiGPGME::encrypt (void)
     xfree (newBody);
     freeRecipients (recipients);
     freeUnknownKeys (unknown, n);
-    if (hasAttachments ()) {
+    if (0 && hasAttachments ()) { /*x:test*/
 	log_debug (LOGFILE, "encrypt attachments\r\n");
 	recipSet = (void *)keys;
 	encryptAttachments (parent);
@@ -488,7 +489,7 @@ MapiGPGME::signEncrypt ()
     delete_buf (body);
     free (newBody);
     freeUnknownKeys (unknown, n);
-    if (hasAttachments ()) {
+    if (0 && hasAttachments ()) { /*x:test*/
 	log_debug (LOGFILE, "encrypt attachments");
 	recipSet = (void *)keys;
 	encryptAttachments (parent);
@@ -748,6 +749,45 @@ MapiGPGME::getPGPExtension (int action)
     if (ATTR_SIGN (action))
 	return EXT_SIG;
     return EXT_MSG;
+}
+
+
+bool 
+MapiGPGME::setXHeader (const char *name, const char *val)
+{  
+    USES_CONVERSION;
+    LPMDB lpMdb = NULL;
+    HRESULT hr = NULL;  
+    LPSPropTagArray pProps = NULL;
+    SPropValue pv;
+    MAPINAMEID mnid[1];	
+    // {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers	
+    GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
+		 0x00, 0x00, 0x00, 0x46} };
+
+    mnid[0].lpguid = &guid;
+    mnid[0].ulKind = MNID_STRING;
+    mnid[0].Kind.lpwstrName = A2W (name);
+
+    hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
+    if (FAILED (hr))
+	return false;
+    
+    pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
+    pv.Value.lpszA = (char *)val;
+    hr = HrSetOneProp(msg, &pv);	
+    if (!SUCCEEDED (hr))
+	return false;
+
+    return true;
+}
+
+
+char*
+MapiGPGME::getXHeader (const char *name)
+{
+    /* XXX: PR_TRANSPORT_HEADERS is not available in my MSDN. */
+    return NULL;
 }
 
 

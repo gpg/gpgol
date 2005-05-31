@@ -145,8 +145,40 @@ op_sign_encrypt_file (void *rset, const char *infile, const char *outfile)
 int
 op_sign_file (int mode, const char *infile, const char *outfile)
 {
-    /* XXX: fill it with life */
-    return 0;
+    gpgme_data_t in=NULL;
+    gpgme_data_t out=NULL;
+    gpgme_ctx_t ctx=NULL;
+    gpgme_error_t err;
+    struct decrypt_key_s *hd;
+
+    err = gpgme_data_new_from_file (&in, infile, 1);
+    if (err)
+	return err;
+
+    hd = xcalloc (1, sizeof *hd);
+    err = gpgme_new (&ctx);
+    if (err)
+	goto fail;
+
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+
+    err = gpgme_data_new (&out);
+    if (err)
+	goto fail;
+
+    err = gpgme_op_sign (ctx, in, out, mode);
+    if (!err)
+	err = data_to_file (&out, outfile);
+
+fail:
+    if (in != NULL)
+	gpgme_data_release (in);
+    if (out != NULL)
+	gpgme_data_release (out);
+    if (ctx != NULL)
+	gpgme_release (ctx);
+    xfree (hd);
+    return err;
 }
 
 
@@ -395,6 +427,7 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
 	return err;
 
     hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
+    hd->flags = 0x01;
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)

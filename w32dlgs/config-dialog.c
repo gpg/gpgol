@@ -149,7 +149,7 @@ does_file_exist (const char *name, int is_file)
 
     if (stat (name, &st) == -1) {
 	s = "\"%s\" does not exist.";
-	p = xmalloc (strlen (s) + strlen (s) + 2);
+	p = xmalloc (strlen (s) + strlen (name) + 2);
 	sprintf (p, s, name);
 	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
 	free (p);
@@ -157,7 +157,7 @@ does_file_exist (const char *name, int is_file)
     }
     if (is_file && !(st.st_mode & _S_IFREG)) {
 	s = "\"%s\" is not a regular file.";
-	p = xmalloc (strlen (s) + strlen (s) +2);
+	p = xmalloc (strlen (s) + strlen (name) + 2);
 	sprintf (p, s, name);
 	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
 	free (p);
@@ -212,11 +212,11 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	    break;
 
 	case IDOK:
-	    n = GetDlgItemText(dlg, IDC_OPT_GPGPRG, name, MAX_PATH-1);
+	    n = GetDlgItemText (dlg, IDC_OPT_GPGPRG, name, MAX_PATH-1);
 	    if (n > 0) {
 		if (does_file_exist (name, 1))
 		    return FALSE;
-		store_config_value(NULL, REGPATH, "gpgProgram", name);
+		store_config_value (NULL, REGPATH, "gpgProgram", name);
 	    }
 	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN, name, MAX_PATH-1);
 	    if (n > 0) {
@@ -224,9 +224,9 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		    return FALSE;
 		store_config_value (NULL, REGPATH, "keyManager", name);
 	    }
-	    n = GetDlgItemText(dlg, IDC_OPT_HOMEDIR, name, MAX_PATH-1);
+	    n = GetDlgItemText (dlg, IDC_OPT_HOMEDIR, name, MAX_PATH-1);
 	    if (n > 0)
-		store_config_value(NULL, REGPATH, "HomeDir", name);
+		store_config_value (NULL, REGPATH, "HomeDir", name);
 	    EndDialog (dlg, TRUE);
 	    break;
 	}

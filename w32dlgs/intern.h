@@ -45,17 +45,25 @@ enum {
 
 struct decrypt_key_s {
     char keyid[16+1];
-    char * user_id;
-    char * pass;
+    char *user_id;
+    char *pass;
     gpgme_key_t signer;
     int opts;
     unsigned int hide_pwd:1;
     unsigned int use_as_cb:1;
     unsigned int last_was_bad:1;
+    unsigned flags;
 };
 
 struct keycache_s;
 typedef struct keycache_s *keycache_t;
+
+struct cache_item_s {
+    char keyid[16+1];
+    char *pass;
+    unsigned ttl;
+};
+typedef struct cache_item_s *cache_item_t;
 
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);
@@ -65,6 +73,9 @@ void* xmalloc (size_t n);
 void* xcalloc (size_t m, size_t n);
 char* xstrdup (const char *s);
 void  xfree (void *p);
+
+cache_item_t cache_item_new (void);
+void cache_item_free (cache_item_t itm);
 
 /*-- logging.c --*/
 void log_debug (const char *fname, const char *fmt, ...);

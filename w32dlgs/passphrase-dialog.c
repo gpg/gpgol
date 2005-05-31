@@ -33,9 +33,9 @@ add_string_list (HWND hbox, const char ** list, int start_idx)
     const char * s;
     int i;
 
-    for( i=0; (s=list[i]); i++ )
-	SendMessage( hbox, CB_ADDSTRING, 0, (LPARAM)(const char *)s );
-    SendMessage( hbox, CB_SETCURSEL, (WPARAM) start_idx, 0 );
+    for (i=0; (s=list[i]); i++)
+	SendMessage (hbox, CB_ADDSTRING, 0, (LPARAM)(const char *)s);
+    SendMessage (hbox, CB_SETCURSEL, (WPARAM) start_idx, 0);
 }
 
 
@@ -60,8 +60,8 @@ set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
     }
     else
 	key_hint = xstrdup ("Symmetrical Decryption");
-    SendDlgItemMessage( dlg, ctrlid, CB_ADDSTRING, 0, (LPARAM)(const char *)key_hint );	    
-    SendDlgItemMessage( dlg, ctrlid, CB_SETCURSEL, 0, 0 );
+    SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, (LPARAM)(const char *)key_hint);
+    SendDlgItemMessage (dlg, ctrlid, CB_SETCURSEL, 0, 0);
     xfree (key_hint);
 }
 
@@ -101,7 +101,7 @@ load_secbox (HWND dlg)
 	free(p);
     }
     
-    ctx=NULL;
+    ctx = NULL;
     reset_gpg_seckeys (&ctx);
     doloop = 1;
     while (doloop) {
@@ -139,8 +139,12 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
 	center_window (dlg, NULL);
 	if (dec->hide_pwd) {
-	    EnableWindow (GetDlgItem (dlg, IDC_DEC_HIDE), FALSE);
-	    EnableWindow (GetDlgItem (dlg, IDC_DEC_PASS), FALSE);
+	    /*EnableWindow (GetDlgItem (dlg, IDC_DEC_HIDE), FALSE);
+	    EnableWindow (GetDlgItem (dlg, IDC_DEC_PASS), FALSE);*/
+	    ShowWindow (GetDlgItem (dlg, IDC_DEC_HIDE), SW_HIDE);
+	    ShowWindow (GetDlgItem (dlg, IDC_DEC_PASS), SW_HIDE);
+	    ShowWindow (GetDlgItem (dlg, IDC_DEC_PASSINF), SW_HIDE);
+	    /* XXX: make the dialog window smaller */
 	}
 	else
 	    SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
@@ -177,14 +181,21 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		GetDlgItemText( dlg, IDC_DEC_PASS, dec->pass, n+1 );
 	    }
 	    if (!dec->use_as_cb) {
-		int idx = SendDlgItemMessage(dlg, IDC_DEC_KEYLIST, CB_GETCURSEL, 0, 0);
-		dec->signer = (gpgme_key_t)SendDlgItemMessage(dlg, IDC_DEC_KEYLIST, 
-							      CB_GETITEMDATA, idx, 0);
+		int idx = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, CB_GETCURSEL, 0, 0);
+		dec->signer = (gpgme_key_t)SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, 
+							       CB_GETITEMDATA, idx, 0);
 	    }
-	    EndDialog( dlg, TRUE );
+	    EndDialog (dlg, TRUE);
 	    break;
 
 	case IDCANCEL:
+	    if (dec->use_as_cb && (dec->flags & 0x01)) {
+		const char *warn = "If you cancel this dialog, the message will be sent without signing.\n"
+				   "Do you really want to cancel?";
+		n = MessageBox (dlg, warn, "Secret Key Dialog", MB_ICONWARNING|MB_YESNO);
+		if (n == IDNO)
+		    return FALSE;
+	    }
 	    dec->opts = OPT_FLAG_CANCEL;
 	    dec->pass = NULL;
 	    EndDialog (dlg, FALSE);
@@ -210,14 +221,16 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
 		    decrypt_key_dlg_proc, (LPARAM)&hd);
     if (hd.signer) {
 	if (r_passwd)
-	    *r_passwd = xstrdup(hd.pass);
+	    *r_passwd = xstrdup (hd.pass);
 	else {	    
 	    free (hd.pass);
 	    hd.pass = NULL;
 	}
 	*r_key = hd.signer;
-    }
+    }    
     memset (&hd, 0, sizeof (hd));
+    if (hd.opts & OPT_FLAG_CANCEL)
+	return -1;
     return 0;
 }
 
@@ -232,6 +245,11 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
     struct decrypt_key_s * hd = (struct decrypt_key_s *)opaque;
     DWORD nwritten = 0;
 
+    /* XXX: cancel for the decrypt dialog does not work */
+    if (hd->opts & OPT_FLAG_CANCEL) {
+	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
+	return -1;
+    }
     if (prev_was_bad) {
 	free (hd->pass);
 	hd->pass = NULL;
@@ -252,10 +270,10 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 	strcpy (hd->user_id, s);
 	
 	if (hd->opts & OPT_FLAG_CANCEL) {
-	    WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
+	    WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
 	    return -1;
 	}
-	hd->last_was_bad = prev_was_bad? 1 : 0;
+	hd->last_was_bad = prev_was_bad? 1: 0;
 	hd->use_as_cb = 1;
 	DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
 			decrypt_key_dlg_proc, (LPARAM)hd);

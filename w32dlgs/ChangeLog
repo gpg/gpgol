@@ -1,3 +1,23 @@
+2005-05-29  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Warning
+	if the user cancels the signing process.
+	Make the passphrase field invisible if the key is used
+	in selection mode.
+	(recipient_dlg_proc): Likewise.
+	(signer_dialog_box): Return -1 if the user cancelled the
+	dialog.
+	* engine-gpgme.c (op_sign): Set flags to '1' to indicate
+	signing process.
+	* config-dialog.c (does_file_exist): Use appropriate
+	length for xmalloc. Noted by Sebastian.
+
+2005-05-24  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (setXHeader): New.
+	(getXHeader): New.
+	* engine-gpgme.c (op_sign_file): Implemented.
+
 2005-05-22  Timo Schulz  <ts@g10code.com>
 
 	* MapiGPGME.cpp (createAttachment): New.
