@@ -218,13 +218,14 @@ int
 enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
 {
     if (!pubring) {
+	keycache_release (pubring); pubring=NULL;
 	keycache_init (NULL, 0, &pubring);
 	*ctx = pubring;
     }
     if (!ret_key) {
-	if (time(NULL) > last_timest+1750) { /* refresh after 30 minutes */
-	    last_timest = time(NULL);
-	    cleanup_keycache_objects();
+	if (time (NULL) > last_timest+1750) { /* refresh after 30 minutes */
+	    last_timest = time (NULL);
+	    cleanup_keycache_objects ();
 	    keycache_init(NULL, 0, &pubring);	    
 	}
 	*ctx = pubring;
@@ -240,7 +241,8 @@ enum_gpg_keys (gpgme_key_t * ret_key, void **ctx)
 int 
 enum_gpg_seckeys (gpgme_key_t * ret_key, void **ctx)
 {
-    if (!secring) {
+    if (!secring ||*ctx == NULL) {
+	keycache_release (secring); secring=NULL;
 	keycache_init (NULL, 1, &secring);
 	*ctx = secring;
     }

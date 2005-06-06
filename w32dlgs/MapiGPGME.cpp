@@ -267,7 +267,7 @@ MapiGPGME::storePassphrase (void *itm)
     if (old != NULL)
 	cache_item_free (old);
     passCache->put (item->keyid+8, item);
-    log_debug (LOGFILE, "put keyid %s = '%s'\r\n", item->keyid+8, item->pass);
+    /*log_debug (LOGFILE, "put keyid %s = '%s'\r\n", item->keyid+8, item->pass);*/
 }
 
 
@@ -464,7 +464,8 @@ MapiGPGME::signEncrypt ()
 	locusr = find_gpg_key (defaultKey, 1);
     if (!locusr) {
 	const char *s;
-	signer_dialog_box (&locusr, NULL);
+	if (signer_dialog_box (&locusr, NULL) == -1)
+	    return 0;  
 	s = gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0);
 	defaultKey = new char[strlen (s)+1];
 	fail_if_null (defaultKey);

@@ -9,6 +9,7 @@
 #define IDD_SIG                         105
 #define IDD_OPT                         106
 #define IDD_VRY                         107
+#define IDD_DEC_EXT                     108
 #define IDC_ENC_RSET1                   1000
 #define IDC_ENC_RSET2                   1001
 #define IDC_MAIN_ENC                    1002
@@ -49,14 +50,20 @@
 #define IDC_DEC_HINT                    1039
 #define IDC_VRY_HINT                    1040
 #define IDC_DEC_PASSINF                 1041
+#define IDC_DECEXT_RSET                 1042
+#define IDC_DECEXT_KEYLIST              1043
+#define IDC_DECEXT_HIDE                 1044
+#define IDC_DECEXT_PASS                 1045
+#define IDC_DECEXT_HINT                 1046
+#define IDC_DECEXT_PASSINF              1047
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        108
+#define _APS_NEXT_RESOURCE_VALUE        109
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1042
+#define _APS_NEXT_CONTROL_VALUE         1048
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -48,6 +48,7 @@ struct decrypt_key_s {
     char *user_id;
     char *pass;
     gpgme_key_t signer;
+    void *ctx;
     int opts;
     unsigned int hide_pwd:1;
     unsigned int use_as_cb:1;

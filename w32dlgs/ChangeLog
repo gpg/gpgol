@@ -1,3 +1,49 @@
+2005-06-05  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (load_recipbox): Check ctx if null.
+	(passphrase_callback_box): Different dialogs for sign
+	and decrypt.
+	(signer_dialog_box): Do not zero the context too early.
+	* keycache.c (enum_gpg_seckeys): Also reload if ctx
+	is NULL.
+	* MapiGPGME.cpp (signEncrypt): Return if the user
+	cancelled the signer selection dialog.	 
+	* recipient-dialog.c (recipient_dlg_proc): Check 'Text Mode'
+	button.
+	* keycache.c (enum_gpg_keys, enum_gpg_seckeys): Fully
+	reset the keycache initializing it again. Thanks to Ralf.
+
+2005-06-04  Timo Schulz  <ts@g10code.com>
+
+	* verify-dialog.c (load_sigbox): Only issue a warning
+	if the key exists but is not valid.
+	Get pkalgo from the signature.
+	Fixed format string problem s/%d/%s.	
+	* config-dialog.c (load_config_value): Close reg handle.
+	(config_dlg_proc): Show error if the values could not
+	be written to the registry.
+
+2005-06-03  Timo Schulz  <ts@g10code.com>
+
+	* mapuser.c (new_usermap): New.
+	(free_usermap): New.
+	* engine-gpgme.c (op_decrypt): Return 'No_Seckey' if
+	appropriate and not just 'Decrypt_Failed'.
+	Set the gpgme_ctx_t object in the callback to allow
+	to list the 'encrypt_to' entries.
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Make sure
+	we only warn when there is a valid callback context.
+	(load_secbox): New parameter 'ctlid'. Changed all callers.
+	(load_recipbox): New. Use usermap to lookup user-id's.
+	(decrypt_key_ext_dlg_proc): New dialog procedure for
+	the callback mode.
+	* HashTable.cpp (HashTable_new): New. C-interface.
+	(HashTable_free): Likewise.
+	(HashTable_get): Likewise.
+	(HashTable_put): Likewise.
+	(HashTable_get_i): Likewise.
+	(HashTable_size): Likewise.
+
 2005-05-29  Timo Schulz  <ts@g10code.com>
 
 	* passphrase-dialog.c (decrypt_key_dlg_proc): Warning

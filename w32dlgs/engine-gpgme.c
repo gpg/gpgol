@@ -472,13 +472,18 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
     if (err)
 	return err;
 
-
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
 	goto leave;
     err = gpgme_data_new (&out);
     if (err)
 	goto leave;
+
+    /* XXX: violates the information hiding principle */
+    {
+	struct decrypt_key_s *cb = (struct decrypt_key_s *)pass_cb_value;
+	cb->ctx = (void *)ctx;
+    }
 
     gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
     err = gpgme_op_decrypt_verify (ctx, in, out);
@@ -487,6 +492,15 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
 	*outbuf = gpgme_data_release_and_get_mem (out, &n);
 	(*outbuf)[n] = 0;
 	out = NULL;
+    }
+
+    if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED) {
+	gpgme_decrypt_result_t res;
+	res = gpgme_op_decrypt_result (ctx);
+	if (res != NULL && res->recipients != NULL &&
+	    gpgme_err_code (res->recipients->status) == GPG_ERR_NO_SECKEY)
+	    err = GPG_ERR_NO_SECKEY;
+	/* XXX: return the keyids */
     }
 
     /* XXX: automatically spawn verify_start in case the text was signed? */

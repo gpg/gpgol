@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,1,0
- PRODUCTVERSION 0,5,1,0
+ FILEVERSION 0,5,3,0
+ PRODUCTVERSION 0,5,3,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -73,15 +73,15 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "g10 Code GmbH\0"
             VALUE "FileDescription", "Common GPGME Dialogs\0"
-            VALUE "FileVersion", "0.5.1\0"
+            VALUE "FileVersion", "0.5.3\0"
             VALUE "InternalName", "GPGMEDLGS\0"
-            VALUE "LegalCopyright", "Copyright © 2004 Timo Schulz,  2005 g10 Code GmbH\0"
+            VALUE "LegalCopyright", "Copyright © 2005 g10 Code GmbH, 2004 Timo Schulz\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "gpgmedlgs.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGME Dialogs\0"
-            VALUE "ProductVersion", "0.5.1\0"
-            VALUE "SpecialBuild", "CVS\0"
+            VALUE "ProductVersion", "0.5.3\0"
+            VALUE "SpecialBuild", "2005-06-06-07-07-20\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -126,8 +126,8 @@ BEGIN
     GROUPBOX        "Options",IDC_STATIC,8,185,108,24
     CONTROL         "&Text Output",IDC_ENC_OPTARMOR,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,20,195,53,10
-    DEFPUSHBUTTON   "OK",IDOK,221,196,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,272,196,50,14
+    DEFPUSHBUTTON   "&OK",IDOK,221,196,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,273,196,50,14
 END
 
 IDD_DEC DIALOG DISCARDABLE  0, 0, 225, 87
@@ -143,8 +143,8 @@ BEGIN
     CONTROL         "&Hide Typing",IDC_DEC_HIDE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,162,37,54,10
     EDITTEXT        IDC_DEC_PASS,9,51,207,12,ES_PASSWORD | ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,115,69,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,167,69,50,14
+    DEFPUSHBUTTON   "&OK",IDOK,115,69,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,167,69,50,14
 END
 
 IDD_OPT DIALOG DISCARDABLE  0, 0, 167, 119
@@ -161,7 +161,7 @@ BEGIN
     LTEXT           "Path to key-manager binary",IDC_STATIC,2,72,87,8
     EDITTEXT        IDC_OPT_KEYMAN,2,81,144,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_OPT_SELKEYMAN,148,80,11,14
-    DEFPUSHBUTTON   "OK",IDOK,112,101,50,14
+    DEFPUSHBUTTON   "&OK",IDOK,112,101,50,14
 END
 
 IDD_VRY DIALOG DISCARDABLE  0, 0, 253, 116
@@ -183,7 +183,28 @@ BEGIN
     LISTBOX         IDC_VRY_AKALIST,3,56,245,25,LBS_SORT | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "",IDC_VRY_HINT,3,83,245,10
-    DEFPUSHBUTTON   "OK",IDOK,198,96,50,14
+    DEFPUSHBUTTON   "&OK",IDOK,198,96,50,14
+END
+
+IDD_DEC_EXT DIALOG DISCARDABLE  0, 0, 205, 134
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Secret Key Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Encrypted with the following public-keys:",IDC_STATIC,7,
+                    4,128,8
+    LISTBOX         IDC_DECEXT_RSET,7,16,193,25,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_DECEXT_KEYLIST,8,54,191,14,CBS_DROPDOWN | CBS_SORT | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_DECEXT_HINT,7,73,193,8
+    LTEXT           "Enter passphrase for your secret key",
+                    IDC_DECEXT_PASSINF,7,83,116,8
+    CONTROL         "&Hide Typing",IDC_DECEXT_HIDE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,144,82,54,10
+    EDITTEXT        IDC_DECEXT_PASS,7,95,192,12,ES_PASSWORD | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,98,116,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,150,116,50,14
 END
 
 
@@ -225,6 +246,14 @@ BEGIN
         RIGHTMARGIN, 248
         TOPMARGIN, 4
         BOTTOMMARGIN, 110
+    END
+
+    IDD_DEC_EXT, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 200
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 130
     END
 END
 #endif    // APSTUDIO_INVOKED

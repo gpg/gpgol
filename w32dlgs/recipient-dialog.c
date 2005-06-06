@@ -245,6 +245,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 	else
 	    initialize_keybox (dlg, rset_cb);
+	CheckDlgButton (dlg, IDC_ENC_OPTARMOR, BST_CHECKED);
 	center_window (dlg, NULL);
 	SetForegroundWindow (dlg);
 	return TRUE;
@@ -304,7 +305,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	case IDCANCEL:
 	    warn = "If you cancel this dialog, the message will be sent in cleartext.\n"
 		   "Do you really want to cancel?";
-	    i = MessageBox (dlg, warn, "Recipient Dialog", MB_ICONWARNING|MB_YESNO);		
+	    i = MessageBox (dlg, warn, "Recipient Dialog", MB_ICONWARNING|MB_YESNO);
 	    if (i == IDNO)
 		return FALSE;
 	    rset_cb->opts = OPT_FLAG_CANCEL;

@@ -104,7 +104,7 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
 
     ec = RegQueryValueEx(h, key, NULL, &type, NULL, &size);
     if (ec != ERROR_SUCCESS) {
-	RegCloseKey(h);
+	RegCloseKey (h);
 	return -1;
     }
     *val = xcalloc(1, size+1);
@@ -114,6 +114,7 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
 	RegCloseKey (h);
 	return -1;
     }
+    RegCloseKey (h);
     return 0;
 }
 
@@ -167,6 +168,20 @@ does_file_exist (const char *name, int is_file)
 }
 
 
+static void
+error_box (const char *title)
+{	
+    TCHAR buf[500];
+    DWORD last_err;
+
+    last_err = GetLastError ();
+    FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, last_err, 
+		   MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
+		   buf, sizeof (buf)-1, NULL);
+    MessageBox (NULL, buf, title, MB_OK);
+}
+
+
 static BOOL CALLBACK
 config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -216,17 +231,21 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	    if (n > 0) {
 		if (does_file_exist (name, 1))
 		    return FALSE;
-		store_config_value (NULL, REGPATH, "gpgProgram", name);
+		if (store_config_value (NULL, REGPATH, "gpgProgram", name))
+		    error_box ("GPG Config");
 	    }
 	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN, name, MAX_PATH-1);
 	    if (n > 0) {
 		if (does_file_exist (name, 1))
 		    return FALSE;
-		store_config_value (NULL, REGPATH, "keyManager", name);
+		if (store_config_value (NULL, REGPATH, "keyManager", name))
+		    error_box ("GPG Config");
 	    }
 	    n = GetDlgItemText (dlg, IDC_OPT_HOMEDIR, name, MAX_PATH-1);
-	    if (n > 0)
-		store_config_value (NULL, REGPATH, "HomeDir", name);
+	    if (n > 0) {
+		if (store_config_value (NULL, REGPATH, "HomeDir", name))
+		    error_box ("GPG Config");
+	    }
 	    EndDialog (dlg, TRUE);
 	    break;
 	}

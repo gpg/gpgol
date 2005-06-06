@@ -18,7 +18,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 #include <windows.h>
+#include <time.h>
 
+#include "gpgme.h"
+#include "intern.h"
 
 HINSTANCE glob_hinst = NULL;
 
@@ -108,3 +111,18 @@ xfree (void *p)
 	free (p);
 }
 
+
+cache_item_t
+cache_item_new (void)
+{
+    return xcalloc (1, sizeof (struct cache_item_s));
+}
+
+void
+cache_item_free (cache_item_t itm)
+{
+    if (itm == NULL)
+	return;
+    xfree (itm->pass);
+    xfree (itm);
+}
