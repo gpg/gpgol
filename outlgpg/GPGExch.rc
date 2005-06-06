@@ -66,8 +66,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,99,0,0
- PRODUCTVERSION 0,99,0,0
+ FILEVERSION 0,99,1,0
+ PRODUCTVERSION 0,99,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -85,14 +85,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "GPGExch DLL\0"
-            VALUE "FileVersion", "0.99\0"
+            VALUE "FileVersion", "0.99.1\0"
             VALUE "InternalName", "GPGExch\0"
-            VALUE "LegalCopyright", "Copyright (C) 2000-1 G-DATA, 2003 Timo Schulz, 2004-5 g10 Code GmbH\0"
+            VALUE "LegalCopyright", "Copyright (C) 2004-5 g10 Code GmbH, 2003 Timo Schulz, 2000-1 G-DATA\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "GPGExch.DLL\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGExch Dynamic Link Library\0"
-            VALUE "ProductVersion", "0.99\0"
+            VALUE "ProductVersion", "0.99.1\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -176,7 +176,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_DECRYPT_MENU_ITEM   "&Decrypt and verify signature"
+    IDS_DECRYPT_MENU_ITEM   "&Decrypt and verify message"
     IDS_DECRYPT_HELP        "Decrypt and verify the message."
     IDS_APP_NAME            "GnuPG"
     IDS_DECRYPT_STATUSBAR   "."
