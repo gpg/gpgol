@@ -200,13 +200,14 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	case IDOK:
 	    n = SendDlgItemMessage (dlg, IDC_DEC_PASS, WM_GETTEXTLENGTH, 0, 0);
 	    if (n) {
-		dec->pass = (char *)xcalloc( 1, n+2 );
-		GetDlgItemText( dlg, IDC_DEC_PASS, dec->pass, n+1 );
+		dec->pass = (char *)xcalloc (1, n+2);
+		GetDlgItemText (dlg, IDC_DEC_PASS, dec->pass, n+1);
 	    }
 	    if (!dec->use_as_cb) {
 		int idx = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, CB_GETCURSEL, 0, 0);
 		dec->signer = (gpgme_key_t)SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, 
 							       CB_GETITEMDATA, idx, 0);
+		gpgme_key_ref (dec->signer);
 	    }
 	    EndDialog (dlg, TRUE);
 	    break;
@@ -325,7 +326,7 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
 	if (r_passwd)
 	    *r_passwd = xstrdup (hd.pass);
 	else {	    
-	    free (hd.pass);
+	    xfree (hd.pass);
 	    hd.pass = NULL;
 	}
 	*r_key = hd.signer;

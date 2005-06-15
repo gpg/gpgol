@@ -101,18 +101,19 @@ load_rsetbox (HWND hwnd)
     gpgme_key_t key=NULL;
 
     memset (&lvi, 0, sizeof (lvi));
+    cleanup_keycache_objects (); /*XXX: rewrite the entire key cache! */
     enum_gpg_keys (NULL, &ctx);
     while (doloop) {
 	if (enum_gpg_keys(&key, &ctx))
 	    doloop = 0;
-	if (!gpgme_key_get_ulong_attr( key, GPGME_ATTR_CAN_ENCRYPT, NULL, 0))
+	if (!gpgme_key_get_ulong_attr (key, GPGME_ATTR_CAN_ENCRYPT, NULL, 0))
 	    continue;
 	/* check that the primary key is *not* revoked, expired or invalid */
-	if( gpgme_key_get_ulong_attr( key, GPGME_ATTR_KEY_REVOKED, NULL, 0 )
-         || gpgme_key_get_ulong_attr( key, GPGME_ATTR_KEY_EXPIRED, NULL, 0 )
-	 || gpgme_key_get_ulong_attr( key, GPGME_ATTR_KEY_INVALID, NULL, 0 ) )
+	if (gpgme_key_get_ulong_attr (key, GPGME_ATTR_KEY_REVOKED, NULL, 0)
+         || gpgme_key_get_ulong_attr (key, GPGME_ATTR_KEY_EXPIRED, NULL, 0)
+	 || gpgme_key_get_ulong_attr (key, GPGME_ATTR_KEY_INVALID, NULL, 0))
 	    continue;
-	ListView_InsertItem( hwnd, &lvi );
+	ListView_InsertItem (hwnd, &lvi);
 
 	s = gpgme_key_get_string_attr( key, GPGME_ATTR_NAME, NULL, 0 );
 	ListView_SetItemText( hwnd, 0, 0, (char *)s );
@@ -209,10 +210,8 @@ initialize_keybox (HWND dlg, struct recipient_cb_s *cb)
 
     for (i=0; i < cb->n; i++) {
 	int n;
-	if (cb->fnd_keys[i] == NULL) {
-	    printf ("%d: null\n", i);
+	if (cb->fnd_keys[i] == NULL)
 	    continue;
-	}
 
 	n = find_item (rset, cb->fnd_keys[i]);
 	if (n != -1)
@@ -265,13 +264,13 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	break;
 
     case WM_COMMAND:
-	switch( HIWORD(wparam) ) {
+	switch (HIWORD (wparam)) {
 	case BN_CLICKED:
-	    if( (int)LOWORD( wparam ) == IDC_ENC_OPTSYM ) {
+	    if ((int)LOWORD (wparam) == IDC_ENC_OPTSYM) {
 		rset_state ^= 1;
-		EnableWindow( GetDlgItem( dlg, IDC_ENC_RSET1 ), rset_state );
-		EnableWindow( GetDlgItem( dlg, IDC_ENC_RSET2 ), rset_state );
-		ListView_DeleteAllItems( GetDlgItem( dlg, IDC_ENC_RSET2 ) );
+		EnableWindow (GetDlgItem (dlg, IDC_ENC_RSET1), rset_state);
+		EnableWindow (GetDlgItem (dlg, IDC_ENC_RSET2), rset_state);
+		ListView_DeleteAllItems (GetDlgItem (dlg, IDC_ENC_RSET2));
 	    }
 	    break;
 	}
@@ -292,8 +291,8 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		gpgme_key_t key;
 		char keyid[32], valid[32];
 
-		ListView_GetItemText (hrset, i, 3, keyid, sizeof keyid-1);
-		ListView_GetItemText (hrset, i, 4, valid, sizeof valid-1);
+		ListView_GetItemText (hrset, i, 3, keyid, sizeof (keyid)-1);
+		ListView_GetItemText (hrset, i, 4, valid, sizeof (valid)-1);
 		key = find_gpg_key(keyid, 0);
 		keycache_add(&rset_cb->rset, key);
 		if (strcmp (valid, "FULL") && strcmp (valid, "ULTIMATE"))
@@ -371,11 +370,15 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
     cb->n = n;
     cb->fnd_keys = xcalloc (n+1, sizeof (char*));
     for (i = 0; i < (int)n; i++) {
+	const char *name;
 	if (fnd[i] == NULL) {
 	    cb->fnd_keys[i] = xstrdup ("User-ID not found");
 	    continue;
 	}
-	cb->fnd_keys[i] = xstrdup (gpgme_key_get_string_attr (fnd[i], GPGME_ATTR_NAME, NULL, 0));
+	name = gpgme_key_get_string_attr (fnd[i], GPGME_ATTR_NAME, NULL, 0);
+	if (!name)
+	    name = "User-ID not found";
+	cb->fnd_keys[i] = xstrdup (name);
     }
     cb->unknown_keys = unknown;
     DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
@@ -388,8 +391,8 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
 	keycache_free (cb->rset);
     }
     for (i = 0; i < (int)n; i++)
-	free (cb->fnd_keys[i]);
-    free (cb->fnd_keys);
-    free (cb);
+	xfree (cb->fnd_keys[i]);
+    xfree (cb->fnd_keys);
+    xfree (cb);
     return 0;
 }

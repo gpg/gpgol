@@ -1,3 +1,20 @@
+2005-06-13  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (writeOptions): New Option 'defaultKey'.
+	(readOptions): Likewise. Force overwrite 'addDefaultKey'.	
+
+2005-06-07  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Add a
+	reference to the key object so it will be still valid
+	after the dialog is destroyed.
+	* MapiGPGME.cpp (freeUnknownKeys): Do not try to free
+	the context if no keys are available. Fixed a segv.
+	(signEncrypt): The new code now gets a persistent pointer
+	to the key.
+	* engine-gpgme.c (op_sign_encrypt): Load the right
+	dialog to request the passphrase.
+
 2005-06-05  Timo Schulz  <ts@g10code.com>
 
 	* passphrase-dialog.c (load_recipbox): Check ctx if null.

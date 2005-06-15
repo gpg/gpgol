@@ -28,6 +28,8 @@
 #include "engine.h"
 #include "keycache.h"
 
+#define LOGFILE "c:\\mapigpgme.log"
+
 static char *debug_file = NULL;
 static int init_done = 0;
 
@@ -375,6 +377,7 @@ op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
 	return err;
 
     hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
+    hd->flags = 0x01;
 
     err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
     if (err)
@@ -618,13 +621,13 @@ op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
 	;
     if (n)
 	*n = i;
-    *unknown = (char**)xcalloc (i+1, sizeof (char*));
-    *keys = (gpgme_key_t*)xcalloc (i+1, sizeof (gpgme_key_t));
+    *unknown = (char **)xcalloc (i+1, sizeof (char*));
+    *keys = (gpgme_key_t *)xcalloc (i+1, sizeof (gpgme_key_t));
     for (i=0; id[i] != NULL; i++) {
 	/*k = find_gpg_email(id[i]);*/
 	k = get_gpg_key (id[i]);
-	log_debug ("c:\\mapigpgme.log", "%s: %p\r\n", id[i], k);
-	if (!k)	    
+	log_debug (LOGFILE, "%s: %p\r\n", id[i], k);
+	if (!k)
 	    (*unknown)[pos++] = xstrdup (id[i]);
 	else
 	    (*keys)[i] = k;

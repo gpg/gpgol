@@ -81,7 +81,7 @@ BEGIN
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGME Dialogs\0"
             VALUE "ProductVersion", "0.5.3\0"
-            VALUE "SpecialBuild", "2005-06-06-07-07-20\0"
+            VALUE "SpecialBuild", "2005-06-07-15-41-27\0"
         END
     END
     BLOCK "VarFileInfo"

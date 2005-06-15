@@ -54,6 +54,7 @@ MapiGPGME::MapiGPGME (LPMESSAGE msg)
     this->encFormat = GPG_FMT_CLASSIC;
     this->passCache = new HashTable();
     this->msg = msg;
+    this->defaultKey = NULL;
     op_init ();
     log_debug (LOGFILE, "constructor %p\r\n", msg);
 }
@@ -175,8 +176,10 @@ MapiGPGME::freeKeyArray (void **key)
 
     if (buf == NULL)
 	return;
-    for (i = 0; buf[i] != NULL; i++)
+    for (i = 0; buf[i] != NULL; i++) {
 	gpgme_key_release (buf[i]);
+	buf[i] = NULL;
+    }
     xfree (buf);
 }
 
@@ -231,12 +234,13 @@ MapiGPGME::getRecipients (bool isRootMsg)
 
 void
 MapiGPGME::freeUnknownKeys (char **unknown, int n)
-{
+{    
     for (int i=0; i < n; i++) {
 	if (unknown[i] != NULL)
-	    free (unknown[i]);
+	    xfree (unknown[i]);
     }
-    free (unknown);
+    if (n > 0)
+	xfree (unknown);
 }
 
 void 
@@ -274,7 +278,7 @@ MapiGPGME::storePassphrase (void *itm)
 int 
 MapiGPGME::encrypt (void)
 {
-    char *body = getBody();
+    char *body = getBody ();
     char *newBody = NULL;
     char **recipients = getRecipients (true);
     char **unknown = NULL;
@@ -450,28 +454,41 @@ MapiGPGME::doCmd(int doEncrypt, int doSign)
 }
 
 
-int
-MapiGPGME::signEncrypt ()
+static void log_key_info (gpgme_key_t *keys, gpgme_key_t locusr)
 {
-    char *body = getBody();
+    if (locusr != NULL)
+	log_debug (LOGFILE, "locusr:%s:%s\r\n", 
+		   gpgme_key_get_string_attr (locusr, GPGME_ATTR_USERID, NULL, 0),
+		   gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0));
+    else
+	log_debug (LOGFILE, "locusr:null\r\n");
+    gpgme_key_t n;
+    int i;
+
+    if (keys == NULL)
+	return;
+    i=0;
+    for (n=keys[0]; keys[i] != NULL; i++)
+	log_debug (LOGFILE, "recp:%d:%s:%s\r\n", i,
+		   gpgme_key_get_string_attr (keys[i], GPGME_ATTR_USERID, NULL, 0),
+		   gpgme_key_get_string_attr (keys[i], GPGME_ATTR_KEYID, NULL, 0));
+}
+	    
+
+int
+MapiGPGME::signEncrypt (void)
+{
+    char *body = getBody ();
     char *newBody = NULL;
     char **recipients = getRecipients (TRUE);
     char **unknown = NULL;
-    gpgme_key_t locusr, *keys = NULL, *keys2 =NULL;
-    
-    locusr = find_gpg_key (defaultKey, 0);
-    if (!locusr)
-	locusr = find_gpg_key (defaultKey, 1);
-    if (!locusr) {
-	const char *s;
-	if (signer_dialog_box (&locusr, NULL) == -1)
-	    return 0;  
-	s = gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0);
-	defaultKey = new char[strlen (s)+1];
-	fail_if_null (defaultKey);
-	strcpy (defaultKey, s);
-    }
-
+    gpgme_key_t locusr=NULL, *keys = NULL, *keys2 =NULL;	
+    const char *s;
+	
+    if (signer_dialog_box (&locusr, NULL) == -1)
+	return 0;	
+    s = gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0);
+    log_debug (LOGFILE, "locusr keyid:%s\r\n", s);
 
     size_t all;
     int n = op_lookup_keys (recipients, &keys, &unknown, &all);
@@ -481,6 +498,7 @@ MapiGPGME::signEncrypt ()
 	keys = keys2;
     }
 
+    log_key_info (keys, locusr);
     int err = op_sign_encrypt ((void *)keys, (void*)locusr, body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Sign Encrypt", MB_ICONERROR|MB_OK);
@@ -533,6 +551,7 @@ void MapiGPGME::setDefaultKey (const char *key)
 
 char* MapiGPGME::getDefaultKey (void)
 {
+    /*
     if (defaultKey == NULL) {
 	void *ctx=NULL;
 	gpgme_key_t sk=NULL;
@@ -545,7 +564,7 @@ char* MapiGPGME::getDefaultKey (void)
 	const char *s = gpgme_key_get_string_attr (sk, GPGME_ATTR_KEYID, NULL, 0);
 	strcpy (defaultKey, s);
     }
-
+    */
     return defaultKey;
 }
 
@@ -1152,6 +1171,18 @@ MapiGPGME::readOptions (void)
 	setLogFile (val);
     xfree (val); val=NULL;
 
+    load_extension_value ("defaultKey", &val);
+    if (val == NULL || *val == '"') {
+	encryptDefault = 0;
+	defaultKey = NULL;
+    }
+    else {
+	setDefaultKey (val);
+	encryptDefault = 1;
+    }
+
+    xfree (val); val=NULL;
+
     return 0;
 }
 
@@ -1163,6 +1194,8 @@ MapiGPGME::writeOptions (void)
     store_extension_value ("addDefaultKey", encryptDefault? "1" : "0");
     if (logfile != NULL)
 	store_extension_value ("logFile", logfile);
+    if (defaultKey != NULL)
+	store_extension_value ("defaultKey", defaultKey);
 
     char buf[32];
     sprintf (buf, "%d", nstorePasswd);
