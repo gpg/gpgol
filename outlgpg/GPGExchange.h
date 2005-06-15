@@ -1,5 +1,6 @@
 /* GPGExchange.h - global declarations
- * Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+ *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+ *	Copyright (C) 2005 g10 Code GmbH
  * 
  * This file is part of the G DATA Outlook Plugin for GnuPG.
  * 
@@ -22,20 +23,22 @@
 #ifndef INC_GPGEXCHANGE_H
 #define INC_GPGEXCHANGE_H
 
-#define VERSION "0.99.1"
+#define VERSION "0.99.2"
 
 class CGPGExchExtMessageEvents;
 class CGPGExchExtCommands;
 class CGPGExchExtPropertySheets;
 class CGPGExchApp;
 
-class MapiGPGME;
-
+/* GPGExch.cpp */
 extern CGPGExchApp theApp;
 
+class MapiGPGME;
+/* GPGExch.cpp */
 extern MapiGPGME *m_gpg;
+
 
 BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
 				 WPARAM wParam, LPARAM lParam);
 
-#endif // INC_GPGEXCHANGE_H
+#endif /* INC_GPGEXCHANGE_H */

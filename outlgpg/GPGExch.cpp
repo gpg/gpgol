@@ -31,10 +31,10 @@
 
 #include "GPGExchange.h"
 #include "GPGExch.h"
+#include "HashTable.h"
 #include "MapiGPGME.h"
 
 BOOL g_bInitDll = FALSE;
-BOOL g_bInitCom = FALSE;
 MapiGPGME *m_gpg = NULL;
 
 static void 
@@ -47,12 +47,8 @@ ExchLogInfo (const char * fmt, ...)
     if (!m_gpg)
 	return;
     name = m_gpg->getLogFile ();
-    /*
-    if (!name || strlen (name) < 3) {
-	name = "c:\\outlgpg_debug.txt";
+    if (!name || strlen (name) < 3)	
 	return;
-    }
-    */
     f = fopen (name, "wb");
     if (!f)
 	return;
@@ -68,7 +64,7 @@ END_MESSAGE_MAP()
 
 CGPGExchApp::CGPGExchApp (void)
 {
-    ExchLogInfo("GPGExch\n");
+    ExchLogInfo("GPGExch\r\n");
 }
 
 CGPGExchApp theApp;
@@ -94,19 +90,21 @@ ExchEntryPoint (void)
  implemented by this object. */
 STDAPI 
 DllRegisterServer (void)
-{
-    /* get server location */
-    TCHAR szModuleFileName[MAX_PATH];
-    DWORD dwResult = ::GetModuleFileName(theApp.m_hInstance, szModuleFileName, MAX_PATH);
-    if(dwResult == 0)	return E_FAIL;
+{    
     HKEY hKey;
     CHAR szKeyBuf[1024];
     CHAR szEntry[512];
+    TCHAR szModuleFileName[MAX_PATH];
+
+    /* get server location */
+    DWORD dwResult = ::GetModuleFileName(theApp.m_hInstance, szModuleFileName, MAX_PATH);
+    if (dwResult == 0)	
+	return E_FAIL;
 
     lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
     lstrcpy (szEntry, "4.0;");
     lstrcat (szEntry, szModuleFileName);
-    lstrcat (szEntry, ";1;11000111111100");  // context information
+    lstrcat (szEntry, ";1;11000111111100");  /* context information */
     long lResult = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
 				   REG_OPTION_NON_VOLATILE,
 				   KEY_ALL_ACCESS, NULL, &hKey, NULL);
@@ -141,8 +139,10 @@ DllUnregisterServer (void)
     long lResult = RegCreateKeyEx(HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
 				    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
 				    NULL, &hKey, NULL);
-    if (lResult != ERROR_SUCCESS) 
+    if (lResult != ERROR_SUCCESS) {
+	ExchLogInfo ("DllUnregisterServer: access denied.\r\n");
 	return E_ACCESSDENIED;
+    }
     RegDeleteValue (hKey, "GPG Exchange");
     /* set outlook update flag */
     CHAR szEntry[512];
@@ -169,8 +169,6 @@ CGPGExchExt::CGPGExchExt (void)
     m_pExchExtCommands = new CGPGExchExtCommands (this);
     m_pExchExtPropertySheets = new CGPGExchExtPropertySheets (this);
     if (!g_bInitDll) {
-	if (CoInitialize(NULL) == S_OK)
-	    g_bInitCom = TRUE;
 	if (m_gpg == NULL) {
 	    m_gpg = new MapiGPGME ();
 	    m_gpg->readOptions ();
@@ -188,10 +186,6 @@ CGPGExchExt::~CGPGExchExt (void)
 {
     if (m_lContext == EECONTEXT_SESSION) {
 	if (g_bInitDll) {
-	    if (g_bInitCom) {
-		CoUninitialize();
-		g_bInitCom = FALSE;	
-	    }
 	    m_gpg->writeOptions ();
 	    delete m_gpg;
 	    m_gpg = NULL;
@@ -214,21 +208,17 @@ CGPGExchExt::QueryInterface(
 
     *ppvObj = NULL;
 
-    if ((riid == IID_IUnknown) || (riid == IID_IExchExt))
-    {
+    if ((riid == IID_IUnknown) || (riid == IID_IExchExt)) {
         *ppvObj = (LPUNKNOWN) this;
     }
-    else if (riid == IID_IExchExtMessageEvents)
-    {
+    else if (riid == IID_IExchExtMessageEvents) {
         *ppvObj = (LPUNKNOWN) m_pExchExtMessageEvents;
     }
-    else if (riid == IID_IExchExtCommands)
-    {
+    else if (riid == IID_IExchExtCommands) {
         *ppvObj = (LPUNKNOWN)m_pExchExtCommands;
         m_pExchExtCommands->SetContext(m_lContext);
     }
-    else if (riid == IID_IExchExtPropertySheets)
-    {
+    else if (riid == IID_IExchExtPropertySheets) {
 	if (m_lContext != EECONTEXT_PROPERTYSHEETS)
 	    return E_NOINTERFACE;
         *ppvObj = (LPUNKNOWN) m_pExchExtPropertySheets;
@@ -261,7 +251,7 @@ STDMETHODIMP CGPGExchExt::Install(
 
     ExchLogInfo("Install %d\r\n", __LINE__);
     // check the version 
-    pEECB->GetVersion(&lBuildVersion, EECBGV_GETBUILDVERSION);
+    pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
     if (EECBGV_BUILDVERSION_MAJOR != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
         return S_FALSE;
 
@@ -279,7 +269,7 @@ STDMETHODIMP CGPGExchExt::Install(
 }
 
 
-CGPGExchExtMessageEvents::CGPGExchExtMessageEvents (CGPGExchExt* pParentInterface) 
+CGPGExchExtMessageEvents::CGPGExchExtMessageEvents (CGPGExchExt *pParentInterface)
 { 
     m_pExchExt = pParentInterface;
     m_lRef = 0; 
@@ -288,17 +278,15 @@ CGPGExchExtMessageEvents::CGPGExchExtMessageEvents (CGPGExchExt* pParentInterfac
 
 
 STDMETHODIMP 
-CGPGExchExtMessageEvents::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
+CGPGExchExtMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 {   
     *ppvObj = NULL;
-    if (riid == IID_IExchExtMessageEvents)
-    {
+    if (riid == IID_IExchExtMessageEvents) {
         *ppvObj = (LPVOID)this;
         AddRef();
         return S_OK;
     }
-    if (riid == IID_IUnknown)
-    {
+    if (riid == IID_IUnknown) {
         *ppvObj = (LPVOID)m_pExchExt;  
         m_pExchExt->AddRef();
         return S_OK;
@@ -323,7 +311,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 STDMETHODIMP CGPGExchExtMessageEvents::OnReadComplete(
 	LPEXCHEXTCALLBACK pEECB, // A pointer to IExchExtCallback interface.
 	ULONG lFlags)
-{	
+{
     return S_FALSE;
 }
 
@@ -352,7 +340,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnWriteComplete (
     LPMDB pMDB = NULL;
     HWND hWnd = NULL;
 
-    if (FAILED(pEECB->GetWindow(&hWnd)))
+    if (FAILED(pEECB->GetWindow (&hWnd)))
 	hWnd = NULL;
 
     if (!m_bOnSubmitCalled) /* the user is just saving the message */
@@ -361,9 +349,8 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnWriteComplete (
     if (m_bWriteFailed)     /* operation failed already */
 	return S_FALSE;
 
-    HRESULT hr = pEECB->GetObject(&pMDB, (LPMAPIPROP *)&pMessage);
-    if (SUCCEEDED(hr)) {
-	USES_CONVERSION;
+    HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+    if (SUCCEEDED (hr)) {
 	if (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign) {
 	    m_gpg->setMessage (pMessage);
 	    if (m_gpg->doCmd (m_pExchExt->m_gpgEncrypt,
@@ -461,15 +448,17 @@ STDMETHODIMP
 CGPGExchExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 {
     *ppvObj = NULL;
-    if ((riid == IID_IExchExtCommands) || (riid == IID_IUnknown))
-    {
+    if ((riid == IID_IExchExtCommands) || (riid == IID_IUnknown)) {
         *ppvObj = (LPVOID)this;
-        AddRef();
+        AddRef ();
         return S_OK;
     }
     return E_NOINTERFACE;
 }
 
+
+// XXX IExchExtSessionEvents::OnDelivery: could be used to automatically decrypt new mails
+// when they arrive
 
 /* CGPGExchExtCommands::InstallCommands
 
@@ -489,24 +478,23 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
     HMENU hMenuTools;
     m_hWnd = hWnd;
 
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-        pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
-        AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
-
+    /* XXX: factor out common code */
+    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
+	int nTBIndex;
+	HWND hwndToolbar = NULL;
 	CHAR szBuffer[128];
-	LoadString(theApp.m_hInstance, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
-        AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
+
+        pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
+        AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
+	
+	LoadString (theApp.m_hInstance, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
+        AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
 
         m_nCmdEncrypt = *pnCommandIDBase;
         (*pnCommandIDBase)++;
-
-	int nTBIndex;
-	HWND hwndToolbar = NULL;
-	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
-	{	
-	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
-	    {	
+	
+	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {	
+	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
 		hwndToolbar = pTBEArray[nTBIndex].hwnd;		
 		m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
 		pTBEArray[nTBIndex].itbbBase++;
@@ -514,24 +502,24 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
 	    }	
 	}
 
-	
-	if (hwndToolbar)
-	{
+	if (hwndToolbar) {
 	    TBADDBITMAP tbab;
 	    tbab.hInst = theApp.m_hInstance;
 	    tbab.nID = IDB_DECRYPT;
 	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
 	    m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
 	    pTBEArray[nTBIndex].itbbBase++;
-	}	
+	}
     }
 
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)	
-    {
+    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
+	CHAR szBuffer[128];
+	int nTBIndex;
+	HWND hwndToolbar = NULL;
+
         pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
         AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
-
-	CHAR szBuffer[128];
+	
 	LoadString(theApp.m_hInstance, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
         AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
 
@@ -544,9 +532,6 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
         m_nCmdSign = *pnCommandIDBase;
         (*pnCommandIDBase)++;
 
-	int nTBIndex;
-	HWND hwndToolbar = NULL;
-
 	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
 	{
 	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
@@ -558,8 +543,7 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
 	    }
 	}
 
-	if (hwndToolbar)
-	{
+	if (hwndToolbar) {
 	    TBADDBITMAP tbab;
 	    tbab.hInst = theApp.m_hInstance;
 	    tbab.nID = IDB_ENCRYPT;
@@ -573,33 +557,29 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
 	m_pExchExt->m_gpgSign = m_gpg->getSignDefault ();
     }
 
-    if (EECONTEXT_VIEWER == m_lContext)	
-    {
-        pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
-        AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
-
+    if (m_lContext == EECONTEXT_VIEWER) {
 	CHAR szBuffer[128];
-	LoadString(theApp.m_hInstance, IDS_KEY_MANAGER, szBuffer, 128);
-        AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
-
-        m_nCmdEncrypt = *pnCommandIDBase;
-        (*pnCommandIDBase)++;
-
 	int nTBIndex;
 	HWND hwndToolbar = NULL;
 
-	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
-	{
-	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
-	    {
+        pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
+        AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
+	
+	LoadString (theApp.m_hInstance, IDS_KEY_MANAGER, szBuffer, 128);
+        AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
+
+        m_nCmdEncrypt = *pnCommandIDBase;
+        (*pnCommandIDBase)++;	
+
+	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {
+	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
 		hwndToolbar = pTBEArray[nTBIndex].hwnd;
 		m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
 		pTBEArray[nTBIndex].itbbBase++;
 		break;	
 	    }
 	}
-	if (hwndToolbar)
-	{
+	if (hwndToolbar) {
 	    TBADDBITMAP tbab;
 	    tbab.hInst = theApp.m_hInstance;
 	    tbab.nID = IDB_KEY_MANAGER;
@@ -618,24 +598,22 @@ STDMETHODIMP CGPGExchExtCommands::DoCommand(
 	LPEXCHEXTCALLBACK pEECB, // The Exchange Callback Interface.
 	UINT nCommandID)         // The command id.
 {
-	 
+
     if ((nCommandID != m_nCmdEncrypt) && 
 	(nCommandID != m_nCmdSign))
 	return S_FALSE; 
 
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
+    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
 	LPMESSAGE pMessage = NULL;
 	LPMDB pMDB = NULL;
 	HWND hWnd = NULL;
 
-	if (FAILED(pEECB->GetWindow(&hWnd)))
+	if (FAILED (pEECB->GetWindow (&hWnd)))
 	    hWnd = NULL;
-	HRESULT hr = pEECB->GetObject(&pMDB, (LPMAPIPROP *)&pMessage);
-	if (SUCCEEDED(hr))
-	{
+	HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+	if (SUCCEEDED (hr)) {
 	    if (nCommandID == m_nCmdEncrypt) {
-		m_gpg->setWindow(hWnd);
+		m_gpg->setWindow (hWnd);
 		m_gpg->setMessage (pMessage);
 		m_gpg->decrypt ();
 	    }
@@ -643,12 +621,11 @@ STDMETHODIMP CGPGExchExtCommands::DoCommand(
 	if (pMessage != NULL)
 	    UlRelease(pMessage);
 	if (pMDB != NULL)
-	    UlRelease(pMDB);	 
+	    UlRelease(pMDB);
     }
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
-    {
+    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
 	HWND hWnd = NULL;
-	if (FAILED(pEECB->GetWindow(&hWnd)))
+	if (FAILED(pEECB->GetWindow (&hWnd)))
 	    hWnd = NULL;
 	if (nCommandID == m_nCmdEncrypt)
 	    m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
@@ -656,7 +633,7 @@ STDMETHODIMP CGPGExchExtCommands::DoCommand(
 	    m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
     }
     if (m_lContext == EECONTEXT_VIEWER) {
-	if (m_gpg->startKeyManager())
+	if (m_gpg->startKeyManager ())
 	    MessageBox (NULL, "Could not start Key-Manager", "GPGExch", MB_ICONERROR|MB_OK);
     }
     return S_OK; 
@@ -674,68 +651,61 @@ STDMETHODIMP_(VOID) CGPGExchExtCommands::InitMenu(
  Return value: S_OK when it is a menu item of this plugin and the help was shown;
                otherwise S_FALSE
 */
-STDMETHODIMP CGPGExchExtCommands::Help(
+STDMETHODIMP CGPGExchExtCommands::Help (
 	LPEXCHEXTCALLBACK pEECB, // The pointer to Exchange Callback Interface.
 	UINT nCommandID)         // The command id.
 {
-	if (m_lContext == EECONTEXT_READNOTEMESSAGE)
-	{
-		if (nCommandID == m_nCmdEncrypt)
-		{
-			CHAR szBuffer[512];
-			CHAR szAppName[128];
-			LoadString(theApp.m_hInstance, IDS_DECRYPT_HELP, szBuffer, 512);
-			LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 512);
-			MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
-			return S_OK;
-		}
-	}
-	if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
-	{
-		if (nCommandID == m_nCmdEncrypt)
-		{
-			CHAR szBuffer[512];
-			CHAR szAppName[128];
-			LoadString(theApp.m_hInstance, IDS_ENCRYPT_HELP, szBuffer, 512);
-			LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 512);
-			MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
-			return S_OK;
-		} 
-		if (nCommandID == m_nCmdSign)
-		{
-			CHAR szBuffer[512];
-			CHAR szAppName[128];
-			LoadString(theApp.m_hInstance, IDS_SIGN_HELP, szBuffer, 512);
-			LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 512);
-			MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
-			return S_OK;
-		} 
-	}
+    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
+    	if (nCommandID == m_nCmdEncrypt) {
+	    CHAR szBuffer[512];
+	    CHAR szAppName[128];
 
-	if (m_lContext == EECONTEXT_VIEWER)
-	{
-		if (nCommandID == m_nCmdEncrypt)
-		{
-			CHAR szBuffer[512];
-			CHAR szAppName[128];
-			LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_HELP, szBuffer, 512);
-			LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 512);
-			MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
-			return S_OK;
-		} 
+	    LoadString (theApp.m_hInstance, IDS_DECRYPT_HELP, szBuffer, 511);
+	    LoadString (theApp.m_hInstance, IDS_APP_NAME, szAppName, 127);
+	    MessageBox (m_hWnd, szBuffer, szAppName, MB_OK);
+	    return S_OK;
 	}
+    }
+    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
+	if (nCommandID == m_nCmdEncrypt) {
+	    CHAR szBuffer[512];
+	    CHAR szAppName[128];
+	    LoadString(theApp.m_hInstance, IDS_ENCRYPT_HELP, szBuffer, 511);
+	    LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 127);
+	    MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);	
+	    return S_OK;
+	} 
+	if (nCommandID == m_nCmdSign) {
+	    CHAR szBuffer[512];	
+	    CHAR szAppName[128];	
+	    LoadString(theApp.m_hInstance, IDS_SIGN_HELP, szBuffer, 511);	
+	    LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 127);	
+	    MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);	
+	    return S_OK;
+	} 
+    }
 
-	return S_FALSE;
+    if (m_lContext == EECONTEXT_VIEWER) {
+    	if (nCommandID == m_nCmdEncrypt) {
+		CHAR szBuffer[512];
+		CHAR szAppName[128];
+		LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_HELP, szBuffer, 511);
+		LoadString(theApp.m_hInstance, IDS_APP_NAME, szAppName, 127);
+		MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
+		return S_OK;
+	} 
+    }
+
+    return S_FALSE;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// CGPGExchExtCommands::QueryHelpText
-//
-// Called by Exhange to get the status bar text or the tooltip of a menu item.
-//
-// @rdesc S_OK when it is a menu item of this plugin and the text was set;
-//        otherwise S_FALSE
-//
+/* CGPGExchExtCommands::QueryHelpText
+
+ Called by Exhange to get the status bar text or the tooltip of a menu item.
+
+ @rdesc S_OK when it is a menu item of this plugin and the text was set;
+        otherwise S_FALSE.
+*/
 STDMETHODIMP CGPGExchExtCommands::QueryHelpText(
 	UINT nCommandID,  // The command id corresponding to menu item activated.
 	ULONG lFlags,     // Identifies either EECQHT_STATUS or EECQHT_TOOLTIP.
@@ -743,44 +713,37 @@ STDMETHODIMP CGPGExchExtCommands::QueryHelpText(
 	UINT nCharCnt)    // The count of characters available in psz buffer.
 {
 	
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-	if (nCommandID == m_nCmdEncrypt)
-	{
+    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
+	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString(theApp.m_hInstance, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString(theApp.m_hInstance, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}
     }
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
-    {
-	if (nCommandID == m_nCmdEncrypt)
-	{
+    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
+	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString(theApp.m_hInstance, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString(theApp.m_hInstance, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}
-	if (nCommandID == m_nCmdSign)
-	{
+	if (nCommandID == m_nCmdSign) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString(theApp.m_hInstance, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-	        LoadString(theApp.m_hInstance, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
+	        LoadString (theApp.m_hInstance, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}
     }
-    if (m_lContext == EECONTEXT_VIEWER)
-    {
-	if (nCommandID == m_nCmdEncrypt)
-	{
+    if (m_lContext == EECONTEXT_VIEWER) {
+	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString(theApp.m_hInstance, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
+		LoadString (theApp.m_hInstance, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}	
     }
@@ -883,14 +846,12 @@ STDMETHODIMP
 CGPGExchExtPropertySheets::QueryInterface(REFIID riid, LPVOID FAR * ppvObj)
 {   
     *ppvObj = NULL;
-    if (riid == IID_IExchExtPropertySheets)
-    {
+    if (riid == IID_IExchExtPropertySheets) {
         *ppvObj = (LPVOID)this;
         AddRef();
         return S_OK;
     }
-    if (riid == IID_IUnknown)
-    {
+    if (riid == IID_IUnknown) {
         *ppvObj = (LPVOID)m_pExchExt;
         m_pExchExt->AddRef();
         return S_OK;

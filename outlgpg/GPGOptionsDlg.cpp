@@ -23,24 +23,39 @@
 #include "stdafx.h"
 #include "GPGExchange.h"
 #include "resource.h"
+#include "HashTable.h"
 #include "MapiGPGME.h"
 
 
 /* GPGOptionsDlgProc -
    Handles the notifications sent for managing the options property page. */
-BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg, 
+				 WPARAM wParam, LPARAM lParam)
 {
     USES_CONVERSION;
     BOOL bMsgResult;    
     static LPNMHDR pnmhdr;
     static HWND hWndPage;
+    static int enable = 1;
     
     switch (uMsg) {
     case WM_INITDIALOG:
-	SetDlgItemText (hDlg, IDC_VERSION_INFO, "Version "VERSION " ("__DATE__")");
+	const char *s;
+	s = m_gpg->getDefaultKey ();
+	enable = s && *s? 1 : 0;	    
+	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
+	CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, 
+			enable==0? BST_UNCHECKED : BST_CHECKED);
+	SetDlgItemText (hDlg, IDC_VERSION_INFO, 
+		        "Version "VERSION " ("__DATE__")");
 	return TRUE;
 		
     case WM_COMMAND:
+	if (HIWORD (wParam) == BN_CLICKED &&
+	    LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) {
+	    enable ^= 1;
+	    EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
+	}
 	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
 	    m_gpg->startConfigDialog (hDlg);
 	break;
@@ -56,6 +71,8 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	    TCHAR s[20];
 	    const char * f;
 
+	    if (m_gpg->getDefaultKey () != NULL)		
+		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, m_gpg->getDefaultKey ());
 	    wsprintf(s, "%d", m_gpg->getStorePasswdTime ());
 	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
 	    f = m_gpg->getLogFile ();
@@ -73,15 +90,28 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	    break; }
 		
 	case PSN_APPLY:	{
-	    TCHAR s[200];
+	    TCHAR s[201];
+
+	    GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
+	    if (strlen (s) > 0 && strchr (s, ' ')) {
+		MessageBox (hDlg, "The default key cannot contain any spaces.",
+			    "Outlook GnuPG-Plugin", MB_ICONERROR|MB_OK);
+		bMsgResult = PSNRET_INVALID_NOCHANGEPAGE ;
+		break;
+	    }
+	    if (strlen (s) == 0)
+		m_gpg->setEncryptWithDefaultKey (false);
+	    else
+		m_gpg->setEncryptWithDefaultKey (SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
 	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT, 20, (LPARAM) s);		
 	    m_gpg->setStorePasswdTime (atol (s));
 	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT, 200, (LPARAM)s);
 	    m_gpg->setLogFile (s);
+	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_TO, WM_GETTEXT, 200, (LPARAM)s);
+	    m_gpg->setDefaultKey (s);
 		
 	    m_gpg->setEncryptDefault (SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));
-	    m_gpg->setSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));		
-	    m_gpg->setEncryptWithDefaultKey (SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
+	    m_gpg->setSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));
 	    m_gpg->setSaveDecryptedAttachments (SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
 	    m_gpg->writeOptions ();
 	    bMsgResult = PSNRET_NOERROR;

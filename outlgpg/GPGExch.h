@@ -1,5 +1,6 @@
 /* GPGExch.h - exchange extension classes
- * Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+ *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+ *	Copyright (C) 2005 g10 Code GmbH
  * 
  * This file is part of the G DATA Outlook Plugin for GnuPG.
  * 

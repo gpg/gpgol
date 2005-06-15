@@ -1,3 +1,13 @@
+2005-06-14  Timo Schulz  <twoaday@g10code.de>
+
+	* GPGExch.cpp (Help): Use appropriate array boundaries.
+	(OnWriteComplete): Removed unused code.
+	(CGPGExchExt): There is no need to initialize the COM
+	library any longer.
+	(~CGPGExchExt): Likewise, but we don't need to unload it.
+	* GPGOptionsDlg.cpp (GPGOptionsDlgProc): Support to
+	store also the default 'encrypt-to' ID.
+
 2005-05-03  Timo Schulz  <twoaday@g10code.de>
 
 	* GPGExch.cpp: Remove 'Add standard key' items.

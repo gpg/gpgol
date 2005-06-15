@@ -66,8 +66,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,99,1,0
- PRODUCTVERSION 0,99,1,0
+ FILEVERSION 0,99,2,0
+ PRODUCTVERSION 0,99,2,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -85,14 +85,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "GPGExch DLL\0"
-            VALUE "FileVersion", "0.99.1\0"
+            VALUE "FileVersion", "0.99.2\0"
             VALUE "InternalName", "GPGExch\0"
             VALUE "LegalCopyright", "Copyright (C) 2004-5 g10 Code GmbH, 2003 Timo Schulz, 2000-1 G-DATA\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "GPGExch.DLL\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "GPGExch Dynamic Link Library\0"
-            VALUE "ProductVersion", "0.99.1\0"
+            VALUE "ProductVersion", "0.99.2\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -120,33 +120,34 @@ IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
 // Dialog
 //
 
-IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 266, 196
+IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 266, 193
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "GnuPG"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Options",IDC_STATIC,9,16,242,75
+    GROUPBOX        "Options",IDC_STATIC,9,9,242,75
     CONTROL         "&Encrypt new messages by default",IDC_ENCRYPT_DEFAULT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,26,121,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,19,121,10
     CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,24,41,111,10
-    CONTROL         "Also encrypt message with the &default key",
-                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,24,56,148,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,24,30,111,10
     CONTROL         "Save decrypted message &automatically",
                     IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,71,139,10
-    GROUPBOX        "Passphrase",IDC_STATIC,9,94,242,31
-    LTEXT           "Cache &passphrase for",IDC_STATIC,24,108,70,8
-    EDITTEXT        IDC_TIME_PHRASES,107,107,39,14,ES_AUTOHSCROLL
-    LTEXT           "seconds",IDC_STATIC,151,109,28,8
-    GROUPBOX        "Debug (advanced users only)",IDC_STATIC,9,128,242,28
+                    24,42,139,10
+    CONTROL         "Also encrypt message with the &default key",
+                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,24,55,148,10
+    EDITTEXT        IDC_ENCRYPT_TO,36,68,133,12,ES_AUTOHSCROLL
+    GROUPBOX        "Passphrase",IDC_STATIC,9,92,242,31
+    LTEXT           "Cache &passphrase for",IDC_STATIC,24,106,70,8
+    EDITTEXT        IDC_TIME_PHRASES,107,105,39,14,ES_AUTOHSCROLL
+    LTEXT           "seconds",IDC_STATIC,151,107,28,8
+    GROUPBOX        "Debug (advanced users only)",IDC_STATIC,9,129,242,28
     LTEXT           "Logfile",IDC_STATIC,18,141,22,8
-    EDITTEXT        IDC_DEBUG_LOGFILE,48,139,138,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_DEBUG_LOGFILE,48,140,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,160,50,14
     LTEXT           "Maintainer of the this version: g10 Code GmbH",
-                    IDC_STATIC,8,179,148,8
-    LTEXT           "Version 1.1.1",IDC_VERSION_INFO,161,179,98,9
+                    IDC_STATIC,8,177,148,8
+    LTEXT           "Version 0.99",IDC_VERSION_INFO,161,177,98,9
 END
 
 
@@ -163,7 +164,7 @@ BEGIN
         LEFTMARGIN, 4
         RIGHTMARGIN, 259
         TOPMARGIN, 4
-        BOTTOMMARGIN, 189
+        BOTTOMMARGIN, 186
     END
 END
 #endif    // APSTUDIO_INVOKED
