@@ -40,7 +40,7 @@ static void
 cleanup (void)
 {
     if (debug_file) {
-	free (debug_file);
+	xfree (debug_file);
 	debug_file = NULL;
     }
 }
@@ -100,7 +100,7 @@ op_encrypt_start (const char *inbuf, char **outbuf)
 
     recipient_dialog_box (&keys, &opts);
     err = op_encrypt ((void *)keys, inbuf, outbuf);
-    free (keys);
+    xfree (keys);
     return err;
 }
 
@@ -139,8 +139,41 @@ data_to_file (gpgme_data_t *dat, const char *outfile)
 int
 op_sign_encrypt_file (void *rset, const char *infile, const char *outfile)
 {
-    /* XXX: fill it with life */
-    return 0;
+    gpgme_data_t in = NULL;
+    gpgme_data_t out = NULL;
+    gpgme_ctx_t ctx=NULL;
+    gpgme_error_t err;
+    gpgme_key_t *keys = (gpgme_key_t*)rset;
+    struct decrypt_key_s *hd;
+
+    err = gpgme_data_new_from_file (&in, infile, 1);
+    if (err)
+	return err;
+    
+    hd = xcalloc (1, sizeof *hd);
+    err = gpgme_new (&ctx);
+    if (err)
+	goto fail;
+        
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+
+    err = gpgme_data_new (&out);
+    if (err)
+	goto fail;
+
+    err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+    if (!err)
+	err = data_to_file (&out, outfile);
+    
+fail:
+    if (ctx != NULL)
+	gpgme_release (ctx);
+    if (in != NULL)
+	gpgme_data_release (in);
+    if (out != NULL)
+	gpgme_data_release (out);
+    xfree (hd);
+    return err;
 }
 
 
@@ -187,9 +220,9 @@ fail:
 int
 op_decrypt_file (const char *infile, const char *outfile)
 {
-    gpgme_data_t in = NULL;
-    gpgme_data_t out = NULL;
     gpgme_error_t err;
+    gpgme_data_t in = NULL;
+    gpgme_data_t out = NULL;    
     gpgme_ctx_t ctx = NULL;
     struct decrypt_key_s *hd;
 
@@ -201,6 +234,12 @@ op_decrypt_file (const char *infile, const char *outfile)
     err = gpgme_new (&ctx);
     if (err)
 	goto fail;
+
+    /* XXX: violates the information hiding principle */
+    {
+	struct decrypt_key_s *cb = (struct decrypt_key_s *)hd;
+	cb->ctx = (void *)ctx;
+    }
     gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
 
     err = gpgme_data_new (&out);
@@ -219,6 +258,22 @@ fail:
     if (ctx != NULL)
 	gpgme_release (ctx);
     xfree (hd);
+    return err;
+}
+
+
+static gpgme_error_t
+check_encrypt_result (gpgme_ctx_t ctx, gpgme_error_t err)
+{
+    gpgme_encrypt_result_t res;
+    res = gpgme_op_encrypt_result (ctx);
+    log_debug (LOGFILE, "check_encrypt_result\r\n");
+    if (!res)
+	return err;
+    log_debug (LOGFILE, "inv_recips=%p\r\n", res->invalid_recipients);
+    if (res->invalid_recipients != NULL)
+	return gpg_error (GPG_ERR_UNUSABLE_PUBKEY);
+    /* XXX: we need to do more here! */
     return err;
 }
 
@@ -247,6 +302,8 @@ op_encrypt_file (void *rset, const char *infile, const char *outfile)
     err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
     if (!err)
 	err = data_to_file (&out, outfile);
+    else
+	err = check_encrypt_result (ctx, err);
 
 fail:
     if (ctx != NULL)
@@ -289,7 +346,6 @@ op_encrypt_file_io (void *rset, const char *infile, const char *outfile)
 	goto fail;
 
     gpgme_set_armor (ctx, 1);
-
     err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
 
 fail:
@@ -329,17 +385,22 @@ op_encrypt (void *rset, const char *inbuf, char **outbuf)
     gpgme_set_armor (ctx, 1);
     err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
     if (!err) {
-	size_t n = 0;
+	size_t n = 0;	
 	*outbuf = gpgme_data_release_and_get_mem (out, &n);
 	(*outbuf)[n] = 0;
 	out = NULL;
     }
+    else
+	err = check_encrypt_result (ctx, err);
 
 leave:
-    gpgme_release (ctx);
-    gpgme_data_release (in);
-    gpgme_data_release (out);
-    return 0;
+    if (ctx != NULL)
+	gpgme_release (ctx);
+    if (in != NULL)
+	gpgme_data_release (in);
+    if (out != NULL)
+	gpgme_data_release (out);
+    return err;
 }
 
 
@@ -355,7 +416,7 @@ op_sign_encrypt_start (const char *inbuf, char **outbuf)
     signer_dialog_box (&locusr, NULL);
     
     err = op_sign_encrypt ((void*)keys, (void*)locusr, inbuf, outbuf);
-    free (keys);
+    xfree (keys);
 
     return err;
 }
@@ -391,11 +452,13 @@ op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
     gpgme_signers_add (ctx, (gpgme_key_t)locusr);
     err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
     if (!err) {
-	size_t n =0 ;
+	size_t n = 0;
 	*outbuf = gpgme_data_release_and_get_mem (out, &n);
 	(*outbuf)[n] = 0;
 	out = NULL;
     }
+    else
+	err = check_encrypt_result (ctx, err);
 
 leave:
     free_decrypt_key (hd);

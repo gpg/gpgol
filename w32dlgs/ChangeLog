@@ -1,3 +1,76 @@
+2005-07-03  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Implement
+	the decryption part and only use it if the 'save
+	decrypted attachment' flag is set.
+	(saveDecryptedAttachment): New.
+	(writeOptions): Save 'decrypt attachment' flag.
+	(readOptions): Load it here.
+	(cleanupTempFiles): Check handle.
+	(encrypt): If the message has no body skip the
+	procedure.
+	(op_decrypt_file): Set recipient callback.
+	(decryptAttachments): We do not alter the attachment
+	so there is no need to release it again.
+
+	Replace all 'free' with 'xfree'.
+
+2005-07-01  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Check that
+	the file has a valid PGP extension before we try
+	to decrypt the attachment.
+	(checkAttachmentExtension): Check if the file
+	extension is a vliad PGP extension.
+
+
+2005-06-30  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Use a unique
+	temp name to make a cleanup at the end easier.
+	(cleanupTempFiles): Delete possible left over
+	temp files.
+	(~MapiGPGME): Use it here.
+
+2005-06-22  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Close attachment
+	before we delete it.
+	(streamOnFile): Directly use the attachment.
+	(streamFromFile): Likewise.
+	(closeAttachment): Renamed to..
+	(releaseAttachment): ..this.
+
+2005-06-21  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (getMessageType): Support all types.
+	(streamOnFile): More straight forward now.
+	(encryptAttachments): Get the attachment table first.
+	(getAttachPathname): New.
+	(processAttachment): Add new parameter for the position
+	of the attachment.
+	(streamFromFile): New.
+	(generateTempname): New.
+	* engine-gpgme.c (op_sign_encrypt_file): New.
+
+2005-06-17  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (MapiGPGME): Initialize all attachment
+	components to zero. Thanks to Sebstian for pointing this out.
+
+2005-06-16  Timo Schulz  <ts@g10code.com>
+
+	* engine-gpgme.c (check_encrypt_result): New. Check if
+	the encrypt procedure returned some invalid recipients.
+	(op_encrypt): Use it here.
+	(op_encrypt_file): Likewise.
+	(op_sign_encrypt): Likewise.
+	* missing.h: Removed unused constants.
+	* verify-dialog.c (load_sigbox): Handle v3 RSA keys.
+	* passphrase-dialog.c (load_secbox): Make sure the index 
+	from the first loop matche the second. Which means skip
+	all invalid keys also.
+
 2005-06-13  Timo Schulz  <ts@g10code.com>
 
 	* MapiGPGME.cpp (writeOptions): New Option 'defaultKey'.

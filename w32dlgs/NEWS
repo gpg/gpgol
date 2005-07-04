@@ -1,7 +1,26 @@
-Noteworthy changes for version 0.5.x (unreleased)
+Noteworthy changes for version 0.5.4 (2005-07-03)
 =================================================
 
-* Support for processing attachments.
+* Support for securing attachments.
+  This means the all attachments will be encrypted
+  if encryption has been selected for the message.
+
+* A new option to allow to save decrypted attachments
+  to the disk.
+
+* Several bug fixes all over the place.
+
+
+Noteworthy changes for version 0.5.3 (2005-06-16)
+=================================================
+
+* Allow to set a default key which is used automatically
+  for encryption.
+
+* Handle old V3 keys in the signature verification dialog.
+
+* Issue and error if the encrypt process returned invalid
+  recipients.
 
 
 Noteworthy changes for version 0.5.2 (2005-06-05)
