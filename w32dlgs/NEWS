@@ -1,3 +1,17 @@
+Noteworthy changes for version 0.6.0 (unreleased)
+=================================================
+
+
+Noteworthy changes for version 0.5.5 (2005-07-12)
+=================================================
+
+* Support to sign all outgoing attachments.
+
+* Support for logging.
+
+* Fixed some memory leaks.
+
+
 Noteworthy changes for version 0.5.4 (2005-07-03)
 =================================================
 

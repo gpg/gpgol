@@ -56,6 +56,7 @@ private:
     LPMAPITABLE attachTable;
     LPSRowSet	attachRows;
     void	*recipSet;
+    bool        enableLogging;
 
     /* Options */
     char    *logfile;
@@ -63,22 +64,37 @@ private:
     bool    doEncrypt;
     bool    doSign;
     bool    encryptDefault;
-    bool    saveDecryptedAttr;	/* save decrypted Attachments */
+    bool    saveDecryptedAtt;	/* save decrypted attachments */
+    bool    autoSignAtt;	/* sign all outgoing attachments */
     int	    encFormat;
 
-public:
+public:    
     DLL_EXPORT MapiGPGME ();
     DLL_EXPORT MapiGPGME (LPMESSAGE msg);
     DLL_EXPORT ~MapiGPGME ();
 
 private:
+    void displayError (HWND root, const char *title);
+    void prepareLogging (void);
+    void clearObject (void);
+    void clearConfig (void)
+    {
+	nstorePasswd = 0;
+	doEncrypt = false;
+	doSign = false;
+	encryptDefault = false;
+	saveDecryptedAtt = false;
+	autoSignAtt = false;
+	encFormat = DEFAULT_ATTACHMENT_FORMAT;
+	enableLogging = false;
+    }
+
     HWND findMessageWindow (HWND parent);
     void rtfSync (char *body);
     int  setBody (char *body);
     int  setRTFBody (char *body);
     char *getBody (void);
-
-private:
+    
     void cleanupTempFiles ();
     int countRecipients (char **recipients);
     char **getRecipients (bool isRootMsg);
@@ -96,7 +112,6 @@ public:
     DLL_EXPORT int doCmdAttach(int action);
     DLL_EXPORT int doCmdFile(int action, const char *in, const char *out);
 
-public:
     DLL_EXPORT const char* getLogFile (void) { return logfile; }
     DLL_EXPORT void setLogFile (const char *logfile) 
     { 
@@ -114,15 +129,20 @@ public:
     DLL_EXPORT void setSignDefault (bool doSign) { this->doSign = doSign; }
     DLL_EXPORT bool getEncryptWithDefaultKey (void) { return encryptDefault; }
     DLL_EXPORT void setEncryptWithDefaultKey (bool encryptDefault) { this->encryptDefault = encryptDefault; }
-    DLL_EXPORT bool getSaveDecryptedAttachments (void) { return saveDecryptedAttr; }
-    DLL_EXPORT void setSaveDecryptedAttachments (bool saveDecrAttr) { this->saveDecryptedAttr = saveDecrAttr; }
+    DLL_EXPORT bool getSaveDecryptedAttachments (void) { return saveDecryptedAtt; }
+    DLL_EXPORT void setSaveDecryptedAttachments (bool saveDecrAtt) { this->saveDecryptedAtt = saveDecrAtt; }
     DLL_EXPORT void setEncodingFormat (int fmt) { encFormat = fmt; }
     DLL_EXPORT int  getEncodingFormat (void) { return encFormat; }
+    DLL_EXPORT void setSignAttachments (bool signAtt) { this->autoSignAtt = signAtt; }
+    DLL_EXPORT bool getSignAttachments (void) { return autoSignAtt; }
+
+    DLL_EXPORT void setEnableLogging (bool val) { this->enableLogging = val; }
+    DLL_EXPORT bool getEnableLogging (void) { return this->enableLogging; }
 
     DLL_EXPORT int readOptions (void);
     DLL_EXPORT int writeOptions (void);
 
-public:    
+public:
     const char* getAttachmentExtension (const char *fname);
     DLL_EXPORT void freeAttachments (void);
     DLL_EXPORT int getAttachments (void);
@@ -177,13 +197,16 @@ private:
     int streamFromFile (const char *file, LPATTACH att);
     int encryptAttachments (HWND hwnd);
     int decryptAttachments (HWND hwnd);
+    int signAttachments (HWND hwnd);
     LPATTACH openAttachment (int pos);
     void releaseAttachment (LPATTACH att);
     int processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
     bool saveDecryptedAttachment (HWND root, const char *srcname);
-
+    bool signAttachment (const char *datfile);
 
 public:
+    DLL_EXPORT int attachPublicKey (const char *keyid);
+
     DLL_EXPORT void setDefaultKey (const char *key);
     DLL_EXPORT char *getDefaultKey (void);
 
@@ -193,6 +216,8 @@ public:
     const char *getPassphrase (const char *keyid);
     void storePassphrase (void *itm);
     outlgpg_type_t getMessageType (const char *body);
+
+    void logDebug (const char *fmt, ...);
     
     DLL_EXPORT void clearPassphrase (void) 
     { 

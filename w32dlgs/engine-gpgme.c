@@ -113,7 +113,7 @@ ftello (FILE *f)
 }
 
 
-gpgme_error_t
+static gpgme_error_t
 data_to_file (gpgme_data_t *dat, const char *outfile)
 {
     FILE *out;
@@ -133,6 +133,34 @@ data_to_file (gpgme_data_t *dat, const char *outfile)
     fclose (out);
     xfree (buf);
     return 0;
+}
+
+
+int
+op_export_keys (const char *pattern[], const char *outfile)
+{      
+    /* @untested@ */
+    gpgme_ctx_t ctx=NULL;
+    gpgme_data_t  out=NULL;    
+    gpgme_error_t err;
+
+    err = gpgme_new (&ctx);
+    if (err)
+	return err;
+    err = gpgme_data_new (&out);
+    if (err) {
+	gpgme_release (ctx);
+	return err;
+    }
+
+    gpgme_set_armor (ctx, 1);
+    err = gpgme_op_export_ext (ctx, pattern, 0, out);
+    if (!err)
+	data_to_file (&out, outfile);
+
+    gpgme_data_release (out);  
+    gpgme_release (ctx);  
+    return err;
 }
 
 
@@ -178,24 +206,25 @@ fail:
 
 
 int
-op_sign_file (int mode, const char *infile, const char *outfile)
+op_sign_file_next (int (*pass_cb)(void *, const char*, const char*, int, int),
+	           void *pass_cb_value,
+	           int mode, const char *infile, const char *outfile)
 {
     gpgme_data_t in=NULL;
     gpgme_data_t out=NULL;
     gpgme_ctx_t ctx=NULL;
     gpgme_error_t err;
-    struct decrypt_key_s *hd;
 
     err = gpgme_data_new_from_file (&in, infile, 1);
     if (err)
-	return err;
+	return err;    
 
-    hd = xcalloc (1, sizeof *hd);
     err = gpgme_new (&ctx);
     if (err)
 	goto fail;
 
-    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+    gpgme_set_armor (ctx, 1);
+    gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
 
     err = gpgme_data_new (&out);
     if (err)
@@ -211,8 +240,48 @@ fail:
     if (out != NULL)
 	gpgme_data_release (out);
     if (ctx != NULL)
-	gpgme_release (ctx);
+	gpgme_release (ctx);    
+    return err;
+}
+
+
+int
+op_sign_file (int mode, const char *infile, const char *outfile)
+{
+    struct decrypt_key_s *hd;
+    gpgme_error_t err;
+
+    hd = xcalloc (1, sizeof *hd);
+    hd->flags = 0x01;
+
+    err = op_sign_file_next (passphrase_callback_box, hd, mode, infile, outfile);
+
     xfree (hd);
+    return err;
+}
+
+
+int
+op_sign_file_ext (int mode, const char *infile, const char *outfile,
+		  cache_item_t *ret_itm)
+{
+    struct decrypt_key_s *hd;
+    cache_item_t itm;
+    int err;
+
+    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
+    hd->flags = 0x01;
+    err = op_sign_file_next (passphrase_callback_box, hd, mode, infile, outfile);
+
+    if (ret_itm != NULL) {
+	itm = cache_item_new ();
+	itm->pass = hd->pass; 
+	hd->pass = NULL;
+	memcpy (itm->keyid, hd->keyid, sizeof (hd->keyid));
+	*ret_itm = itm;
+    }
+
+    free_decrypt_key (hd);
     return err;
 }
 
@@ -267,10 +336,9 @@ check_encrypt_result (gpgme_ctx_t ctx, gpgme_error_t err)
 {
     gpgme_encrypt_result_t res;
     res = gpgme_op_encrypt_result (ctx);
-    log_debug (LOGFILE, "check_encrypt_result\r\n");
     if (!res)
 	return err;
-    log_debug (LOGFILE, "inv_recips=%p\r\n", res->invalid_recipients);
+    /*log_debug (LOGFILE, "inv_recips=%p\r\n", res->invalid_recipients);*/
     if (res->invalid_recipients != NULL)
 	return gpg_error (GPG_ERR_UNUSABLE_PUBKEY);
     /* XXX: we need to do more here! */
@@ -689,7 +757,7 @@ op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
     for (i=0; id[i] != NULL; i++) {
 	/*k = find_gpg_email(id[i]);*/
 	k = get_gpg_key (id[i]);
-	log_debug (LOGFILE, "%s: %p\r\n", id[i], k);
+	/*log_debug (LOGFILE, "%s: %p\r\n", id[i], k);*/
 	if (!k)
 	    (*unknown)[pos++] = xstrdup (id[i]);
 	else

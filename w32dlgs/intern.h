@@ -36,10 +36,8 @@ extern UINT      this_dll;
 enum {
     OPT_FLAG_ARMOR    =  1,
     OPT_FLAG_TEXT     =  2,
-    OPT_FLAG_DETACHED =  4,
-    OPT_FLAG_SYMETRIC =  8,
-    OPT_FLAG_FORCE    = 16,
-    OPT_FLAG_CANCEL   = 32,
+    OPT_FLAG_FORCE    =  4,
+    OPT_FLAG_CANCEL   =  8,
 };
 
 
@@ -77,9 +75,6 @@ void  xfree (void *p);
 
 cache_item_t cache_item_new (void);
 void cache_item_free (cache_item_t itm);
-
-/*-- logging.c --*/
-void log_debug (const char *fname, const char *fmt, ...);
 
 /*-- recipient-dialog.c --*/
 int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);

@@ -8,5 +8,7 @@ functions.
 
 
 Furthermore it contains a class for wrapping MAPI objects. It can be
-used to make the encryption/decryption of mails easier.
+used to make the encryption/decryption of mails easier. Since version
+0.5.5 it is possible to secure attachments also.
+
 

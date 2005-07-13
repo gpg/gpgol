@@ -49,11 +49,11 @@ set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
 
     if (dec->user_id) {
 	key_hint = (char *)xmalloc (17 + strlen (dec->user_id) + 32);
-	if( strchr( s, '<' ) && strchr( s, '>' ) )
+	if( strchr (s, '<') && strchr (s, '>'))
 	    stop_char = '<';
-	else if( strchr( s, '(' ) && strchr( s, ')' ) )
+	else if (strchr (s, '(') && strchr (s, ')'))
 	    stop_char = '(';
-	while( s && *s != stop_char )
+	while (s && *s != stop_char)
 	    key_hint[i++] = *s++;
 	key_hint[i++] = ' ';
 	sprintf (key_hint+i, "(0x%s)", dec->keyid+8);
@@ -105,18 +105,18 @@ load_secbox (HWND dlg, int ctlid)
 	if (enum_gpg_seckeys (&sk, &ctx))
 	    doloop = 0;
 
-	if (gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_REVOKED, NULL, 0)
-	 || gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0)
-	 || gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_INVALID, NULL, 0))
+	if (gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_REVOKED, NULL, 0) ||
+	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0) ||
+	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_INVALID, NULL, 0))
 	    continue;
 	
-	name = gpgme_key_get_string_attr( sk, GPGME_ATTR_NAME, NULL, 0 );
-	email = gpgme_key_get_string_attr( sk, GPGME_ATTR_EMAIL, NULL, 0 );
-	keyid = gpgme_key_get_string_attr( sk, GPGME_ATTR_KEYID, NULL, 0 );
-	algo = gpgme_key_get_string_attr( sk, GPGME_ATTR_ALGO, NULL, 0 );
+	name = gpgme_key_get_string_attr (sk, GPGME_ATTR_NAME, NULL, 0);
+	email = gpgme_key_get_string_attr (sk, GPGME_ATTR_EMAIL, NULL, 0);
+	keyid = gpgme_key_get_string_attr (sk, GPGME_ATTR_KEYID, NULL, 0);
+	algo = gpgme_key_get_string_attr (sk, GPGME_ATTR_ALGO, NULL, 0);
 	if (!email)
 	    email = "";
-	p = (char *)xcalloc( 1, strlen (name) + strlen (email) + 17 + 32 );
+	p = (char *)xcalloc (1, strlen (name) + strlen (email) + 17 + 32);
 	if (email && strlen (email))
 	    sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
 	else
@@ -131,6 +131,10 @@ load_secbox (HWND dlg, int ctlid)
     while (doloop) {
 	if (enum_gpg_seckeys (&sk, &ctx))
 	    doloop = 0;
+	if (gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_REVOKED, NULL, 0) ||
+	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0) ||
+	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_INVALID, NULL, 0))
+	    continue;
 	SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, n, (LPARAM)(DWORD)sk);
 	n++;
     }
@@ -404,12 +408,12 @@ free_decrypt_key (struct decrypt_key_s * ctx)
     if (!ctx)
 	return;
     if (ctx->pass) {
-	free (ctx->pass);
+	xfree (ctx->pass);
 	ctx->pass = NULL;
     }
     if (ctx->user_id) {
-	free (ctx->user_id);
+	xfree (ctx->user_id);
 	ctx->user_id = NULL;
     }
-    free(ctx);
+    xfree(ctx);
 }

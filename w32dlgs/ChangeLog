@@ -1,3 +1,61 @@
+2005-07-13  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (sign): Ignore empty bodies.
+	(signEncrypt): Likewise. Free recipient memory.
+	(encrypt): Modify code so it really works.
+	(attachPublicKey): New.
+	* engine-gpgme.c (op_export_keys): New.
+
+2005-07-12  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (displayError): New.
+	(writeOptions): Use it here. Simplify the code.
+	(signAttachments): New.
+	(sign): Sign attachments. Noted by Ralf.
+	(processAttachment): Support for sign-only.
+
+2005-07-08  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (setEnableLogging): New.
+	(getEnableLogging): New.
+	(logDebug): Move all logging code to this function.
+	(readOptions): Automatically enable logging if the
+	'LogFile' registry entry is valid.
+	(prepareLogging): New.
+	(readOptions): Properly handle ""-strings.
+	* config-dialog.c (does_file_exist): Allow to have
+	parameters like '--keymanager' and cut them off before
+	checking the existence.
+	(start_key_manager): Free memory.
+	(config_dlg_proc): Initialize pointer to 'NULL'.
+	(SHFree): New. Special function to handle shell memory.
+	(get_folder): Free memory.
+	(does_folder_exist): New.
+
+2005-07-06  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp: s/ATTR_/ATT_.
+	(saveDecryptedAttachment): Cut off the prefix.
+	(clearConfig): New.
+	(clearObject): New.
+	(MapiGPGME): Use it here.
+
+	Use ATT_PREFIX instead of a hardcoded string.
+
+	* engine-gpgme.c
+	(op_sign_file_next): New.
+	(op_sign_file): Call op_sign_file2.
+	(op_sign_file_ext): New.	
+
+2005-07-05  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (readOptions, writeOptions):
+	Support for the new 'auto sign attachment' flag.
+	(signAttachment): New.
+	(setSignAttachments): New.
+	(getSignAttachments): New.
+	* engine-gpgme.c (op_sign_file): Enable armor.
+
 2005-07-03  Timo Schulz  <ts@g10code.com>
 
 	* MapiGPGME.cpp (processAttachment): Implement
