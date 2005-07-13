@@ -1,3 +1,13 @@
+2005-07-05  Timo Schulz  <twoaday@g10code.de>
+
+	* GPGOptionsDlg.cpp (GPGOptionsDlgProc): Support
+	for 'sign attachment' flag.
+
+2005-06-16  Timo Schulz  <twoaday@g10code.de>
+
+	* GPGOptionsDlg.cpp (GPGOptionsDlgProc#PSN_ACTIVE):
+	Reset the bool value if no default key value was set.
+
 2005-06-14  Timo Schulz  <twoaday@g10code.de>
 
 	* GPGExch.cpp (Help): Use appropriate array boundaries.

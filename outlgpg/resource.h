@@ -56,6 +56,7 @@
 #define IDC_VERSION_INFO                4009
 #define IDB_BANNER_HI                   4010
 #define IDC_ENCRYPT_TO                  4010
+#define IDC_SIGN_ATTACHMENTS            4011
 
 // Next default values for new objects
 // 
@@ -63,7 +64,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        4012
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         4011
+#define _APS_NEXT_CONTROL_VALUE         4012
 #define _APS_NEXT_SYMED_VALUE           4000
 #endif
 #endif

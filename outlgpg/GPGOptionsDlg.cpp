@@ -42,10 +42,10 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
     case WM_INITDIALOG:
 	const char *s;
 	s = m_gpg->getDefaultKey ();
-	enable = s && *s? 1 : 0;	    
+	enable = s && *s? 1 : 0;
 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
-	CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, 
-			enable==0? BST_UNCHECKED : BST_CHECKED);
+	if (enable == 1)
+	    CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
 	SetDlgItemText (hDlg, IDC_VERSION_INFO, 
 		        "Version "VERSION " ("__DATE__")");
 	return TRUE;
@@ -83,9 +83,11 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
 	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
 			        m_gpg->getSignDefault () ? 1 : 0, 0L);
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_SETCHECK, 
-			        m_gpg->getEncryptWithDefaultKey () ? 1 : 0, 0L);
+			        m_gpg->getEncryptWithDefaultKey () && enable? 1 : 0, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
 				m_gpg->getSaveDecryptedAttachments () ? 1 : 0, 0L);
+	    SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS, BM_SETCHECK,
+				m_gpg->getSignAttachments() ? 1 : 0, 0L);
 	    bMsgResult = FALSE;  /* accepts activation */
 	    break; }
 		
@@ -113,6 +115,7 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
 	    m_gpg->setEncryptDefault (SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));
 	    m_gpg->setSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));
 	    m_gpg->setSaveDecryptedAttachments (SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
+	    m_gpg->setSignAttachments (SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS,  BM_GETCHECK, 0, 0L));
 	    m_gpg->writeOptions ();
 	    bMsgResult = PSNRET_NOERROR;
 	    break; }

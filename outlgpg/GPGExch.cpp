@@ -49,7 +49,7 @@ ExchLogInfo (const char * fmt, ...)
     name = m_gpg->getLogFile ();
     if (!name || strlen (name) < 3)	
 	return;
-    f = fopen (name, "wb");
+    f = fopen (name, "a+b");
     if (!f)
 	return;
     va_start (a, fmt);
@@ -186,9 +186,11 @@ CGPGExchExt::~CGPGExchExt (void)
 {
     if (m_lContext == EECONTEXT_SESSION) {
 	if (g_bInitDll) {
-	    m_gpg->writeOptions ();
-	    delete m_gpg;
-	    m_gpg = NULL;
+	    if (m_gpg != NULL) {
+		m_gpg->writeOptions ();
+		delete m_gpg;
+		m_gpg = NULL;
+	    }
 	    g_bInitDll = FALSE;
 	}	
     }
@@ -229,7 +231,7 @@ CGPGExchExt::QueryInterface(
     if (*ppvObj != NULL)
         ((LPUNKNOWN)*ppvObj)->AddRef();
 
-    ExchLogInfo("QueryInterface %d\r\n", __LINE__);
+    /*ExchLogInfo("QueryInterface %d\r\n", __LINE__);*/
     return hr;
 }
 
@@ -249,7 +251,7 @@ STDMETHODIMP CGPGExchExt::Install(
 
     m_lContext = lContext;
 
-    ExchLogInfo("Install %d\r\n", __LINE__);
+    /*ExchLogInfo("Install %d\r\n", __LINE__);*/
     // check the version 
     pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
     if (EECBGV_BUILDVERSION_MAJOR != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
