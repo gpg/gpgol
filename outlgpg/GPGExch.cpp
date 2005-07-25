@@ -302,6 +302,7 @@ CGPGExchExtMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	LPEXCHEXTCALLBACK pEECB) // A pointer to IExchExtCallback interface.
 {
+    ExchLogInfo ("OnRead\r\n");
     return S_FALSE;
 }
 
@@ -314,6 +315,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnReadComplete(
 	LPEXCHEXTCALLBACK pEECB, // A pointer to IExchExtCallback interface.
 	ULONG lFlags)
 {
+    ExchLogInfo ("OnReadComplete\r\n");
     return S_FALSE;
 }
 
@@ -323,6 +325,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnReadComplete(
 STDMETHODIMP CGPGExchExtMessageEvents::OnWrite(
 	LPEXCHEXTCALLBACK pEECB) // A pointer to IExchExtCallback interface.
 {
+    ExchLogInfo ("OnWrite\r\n");
     return S_FALSE;
 }
 
@@ -896,10 +899,17 @@ CGPGExchExtPropertySheets::GetPages(
 	LPPROPSHEETPAGE pPSP,    // The output parm pointing to pointer to list of property sheets.
 	ULONG FAR * plPSP)       // The output parm pointing to buffer contaiing number of property sheets actually used.
 {
+    int resid = 0;
+
+    switch (GetUserDefaultLangID ()) {
+    case 0x0407:    resid = IDD_GPG_OPTIONS_DE;break;
+    default:	    resid = IDD_GPG_OPTIONS; break;
+    }
+
     pPSP[0].dwSize = sizeof (PROPSHEETPAGE);
     pPSP[0].dwFlags = PSP_DEFAULT | PSP_HASHELP;
     pPSP[0].hInstance = theApp.m_hInstance;
-    pPSP[0].pszTemplate = MAKEINTRESOURCE(IDD_GPG_OPTIONS);
+    pPSP[0].pszTemplate = MAKEINTRESOURCE (resid);
     pPSP[0].hIcon = NULL;     
     pPSP[0].pszTitle = NULL;  
     pPSP[0].pfnDlgProc = (DLGPROC) GPGOptionsDlgProc;
