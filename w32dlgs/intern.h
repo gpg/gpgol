@@ -18,7 +18,6 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
-
 #ifndef _GPGMEDLGS_INTERN_H_
 #define _GPGMEDLGS_INTERN_H_
 
@@ -42,20 +41,17 @@ enum {
 
 
 struct decrypt_key_s {
+    gpgme_key_t signer;
     char keyid[16+1];
     char *user_id;
-    char *pass;
-    gpgme_key_t signer;
+    char *pass;    
     void *ctx;
     int opts;
+    unsigned flags;
     unsigned int hide_pwd:1;
     unsigned int use_as_cb:1;
     unsigned int last_was_bad:1;
-    unsigned flags;
 };
-
-struct keycache_s;
-typedef struct keycache_s *keycache_t;
 
 struct cache_item_s {
     char keyid[16+1];

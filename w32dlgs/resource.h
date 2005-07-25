@@ -10,6 +10,11 @@
 #define IDD_OPT                         106
 #define IDD_VRY                         107
 #define IDD_DEC_EXT                     108
+#define IDD_OPT_DE                      110
+#define IDD_VRY_DE                      111
+#define IDD_DEC_DE                      113
+#define IDD_DEC_EXT_DE                  114
+#define IDD_ENC_DE                      115
 #define IDC_ENC_RSET1                   1000
 #define IDC_ENC_RSET2                   1001
 #define IDC_MAIN_ENC                    1002
@@ -61,7 +66,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        109
+#define _APS_NEXT_RESOURCE_VALUE        116
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1048
 #define _APS_NEXT_SYMED_VALUE           101

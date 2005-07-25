@@ -23,12 +23,12 @@
 
 #include "resource.h"
 #include "gpgme.h"
-#include "intern.h"
 #include "keycache.h"
+#include "intern.h"
 #include "usermap.h"
 
 static void
-add_string_list (HWND hbox, const char ** list, int start_idx)
+add_string_list (HWND hbox, const char **list, int start_idx)
 {
     const char * s;
     int i;
@@ -42,14 +42,14 @@ add_string_list (HWND hbox, const char ** list, int start_idx)
 static void
 set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
 {
-    const char * s = dec->user_id;
-    char * key_hint;
+    const char *s = dec->user_id;
+    char *key_hint;
     char stop_char=0;
     size_t i=0;
 
-    if (dec->user_id) {
+    if (dec->user_id != NULL) {
 	key_hint = (char *)xmalloc (17 + strlen (dec->user_id) + 32);
-	if( strchr (s, '<') && strchr (s, '>'))
+	if (strchr (s, '<') && strchr (s, '>'))
 	    stop_char = '<';
 	else if (strchr (s, '(') && strchr (s, ')'))
 	    stop_char = '(';
@@ -59,8 +59,9 @@ set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
 	sprintf (key_hint+i, "(0x%s)", dec->keyid+8);
     }
     else
-	key_hint = xstrdup ("Symmetrical Decryption");
-    SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, (LPARAM)(const char *)key_hint);
+	key_hint = xstrdup ("No key hint given.");
+    SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, 
+			(LPARAM)(const char *)key_hint);
     SendDlgItemMessage (dlg, ctrlid, CB_SETCURSEL, 0, 0);
     xfree (key_hint);
 }
@@ -81,8 +82,6 @@ load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
     usermap = new_usermap (res->recipients);
     for (r = res->recipients; r; r = r->next) {
 	char *userid = HashTable_get (usermap, r->keyid);
-	/*SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0, 
-			      (LPARAM)(const char*)r->keyid);*/
 	SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0, 
 			    (LPARAM)(const char*)userid);
     }
@@ -99,8 +98,8 @@ load_secbox (HWND dlg, int ctlid)
 
     enum_gpg_seckeys (NULL, &ctx);
     while (doloop) {
-	const char * name, * email, * keyid, * algo;
-	char * p;
+	const char *name, *email, *keyid, *algo;
+	char *p;
 
 	if (enum_gpg_seckeys (&sk, &ctx))
 	    doloop = 0;
@@ -121,13 +120,15 @@ load_secbox (HWND dlg, int ctlid)
 	    sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
 	else
 	    sprintf (p, "%s (0x%s, %s)", name, keyid+8, algo);
-	SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, (LPARAM)(const char *) p);
+	SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
+			    (LPARAM)(const char *) p);
 	xfree (p);
     }
     
     ctx = NULL;
     reset_gpg_seckeys (&ctx);
     doloop = 1;
+    n = 0;
     while (doloop) {
 	if (enum_gpg_seckeys (&sk, &ctx))
 	    doloop = 0;
@@ -208,8 +209,9 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		GetDlgItemText (dlg, IDC_DEC_PASS, dec->pass, n+1);
 	    }
 	    if (!dec->use_as_cb) {
-		int idx = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, CB_GETCURSEL, 0, 0);
-		dec->signer = (gpgme_key_t)SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, 
+		int idx = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, 
+					      CB_GETCURSEL, 0, 0);
+		dec->signer = (gpgme_key_t)SendDlgItemMessage (dlg, IDC_DEC_KEYLIST,
 							       CB_GETITEMDATA, idx, 0);
 		gpgme_key_ref (dec->signer);
 	    }
@@ -218,7 +220,7 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
 	case IDCANCEL:
 	    if (dec && dec->use_as_cb && (dec->flags & 0x01)) {
-		const char *warn = "If you cancel this dialog, the message will be sent without signing.\n"
+		const char *warn = "If you cancel this dialog, the message will be sent without signing.\n\n"
 				   "Do you really want to cancel?";
 		n = MessageBox (dlg, warn, "Secret Key Dialog", MB_ICONWARNING|MB_YESNO);
 		if (n == IDNO)
@@ -349,16 +351,16 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 			 const char *pass_info,
 			 int prev_was_bad, int fd)
 {
-    struct decrypt_key_s * hd = (struct decrypt_key_s *)opaque;
+    struct decrypt_key_s *hd = (struct decrypt_key_s *)opaque;
     DWORD nwritten = 0;
 
-    /* XXX: cancel for the decrypt dialog does not work */
     if (hd->opts & OPT_FLAG_CANCEL) {
 	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
+	CloseHandle ((HANDLE)fd);
 	return -1;
     }
     if (prev_was_bad) {
-	free (hd->pass);
+	xfree (hd->pass);
 	hd->pass = NULL;
     }
 
@@ -370,16 +372,11 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 	    hd->keyid[i++] = *s++;
 	hd->keyid[i] = '\0'; s++;
 	if (hd->user_id) {
-	    free (hd->user_id);
+	    xfree (hd->user_id);
 	    hd->user_id = NULL;
 	}
 	hd->user_id = (char *)xcalloc (1, strlen (s) + 2);
 	strcpy (hd->user_id, s);
-	
-	if (hd->opts & OPT_FLAG_CANCEL) {
-	    WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
-	    return -1;
-	}
 
 	hd->last_was_bad = prev_was_bad? 1: 0;
 	hd->use_as_cb = 1;
@@ -391,7 +388,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 			    decrypt_key_ext_dlg_proc, 
 			    (LPARAM)hd);
     }
-    if (hd->pass) {
+    if (hd->pass != NULL) {
 	WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);
 	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
     }

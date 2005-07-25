@@ -1,5 +1,6 @@
 /* config-dialog.c
  *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2003 Timo Schulz
  *
  * This file is part of GPGME Dialogs.
  *
@@ -25,6 +26,7 @@
 #include <gpgme.h>
 
 #include "resource.h"
+#include "keycache.h"
 #include "intern.h"
 
 #define REGPATH "Software\\GNU\\GnuPG"
@@ -91,9 +93,9 @@ load_config_value_ext (char **val)
 {
     static char buf[MAX_PATH+64];
     BOOL ec;
-
-    memset (buf, 0, sizeof (buf));
+    
     /* MSDN: This buffer must be at least MAX_PATH characters in size. */
+    memset (buf, 0, sizeof (buf));
     ec = SHGetSpecialFolderPath (HWND_DESKTOP, buf, CSIDL_APPDATA, TRUE);
     if (ec != 1)
 	return -1;
@@ -104,6 +106,27 @@ load_config_value_ext (char **val)
     return 0;
 }
 
+
+static char*
+expand_path (const char *path)
+{
+    DWORD len;
+    char *p;
+
+    len = ExpandEnvironmentStrings (path, NULL, 0);
+    if (!len)
+	return NULL;
+    len += 1;
+    p = xcalloc (1, len+1);
+    if (!p)
+	return NULL;
+    len = ExpandEnvironmentStrings (path, p, len);
+    if (!len) {
+	xfree (p);
+	return NULL;
+    }
+    return p; 
+}
 
 static int
 load_config_value (HKEY hk, const char *path, const char *key, char **val)
@@ -123,12 +146,20 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
 	RegCloseKey (h);
 	return -1;
     }
-    *val = xcalloc(1, size+1);
-    ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
-    if (ec != ERROR_SUCCESS) {
-	xfree (*val); *val = NULL;
-	RegCloseKey (h);
-	return -1;
+    if (type == REG_EXPAND_SZ) {
+	char tmp[256]; /* XXX: do not use a static buf */
+	RegQueryValueEx (h, key, NULL, NULL, (BYTE*)tmp, &size);
+	*val = expand_path (tmp);
+    }
+    else {
+	*val = xcalloc(1, size+1);
+	ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
+	if (ec != ERROR_SUCCESS) {
+	    xfree (*val);
+	    *val = NULL;
+	    RegCloseKey (h);
+	    return -1;
+	}
     }
     RegCloseKey (h);
     return 0;
@@ -140,6 +171,7 @@ static int
 store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 {
     HKEY h;
+    int type = REG_SZ;
     int ec;
 
     if (hk == NULL)
@@ -147,7 +179,9 @@ store_config_value (HKEY hk, const char *path, const char *key, const char *val)
     ec = RegOpenKeyEx (hk, path, 0, KEY_ALL_ACCESS, &h);
     if (ec != ERROR_SUCCESS)
 	return -1;
-    ec = RegSetValueEx (h, key, 0, REG_SZ, (const BYTE*)val, strlen(val));
+    if (strchr (val, '%'))
+	type = REG_EXPAND_SZ;
+    ec = RegSetValueEx (h, key, 0, type, (const BYTE*)val, strlen(val));
     if (ec != ERROR_SUCCESS) {
 	RegCloseKey(h);
 	return -1;
@@ -240,15 +274,18 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	center_window (dlg, 0);
 	if (!load_config_value (NULL, REGPATH, "gpgProgram", &buf)) {
 	    SetDlgItemText (dlg, IDC_OPT_GPGPRG, buf);
-	    xfree (buf); buf=NULL;
+	    xfree (buf); 
+	    buf=NULL;
 	}
 	if (!load_config_value (NULL, REGPATH, "HomeDir", &buf)) {
 	    SetDlgItemText (dlg, IDC_OPT_HOMEDIR, buf);
-	    xfree (buf); buf=NULL;
+	    xfree (buf); 
+	    buf=NULL;
 	}
 	if (!load_config_value (NULL, REGPATH, "keyManager", &buf)) {
 	    SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
 	    xfree (buf);
+	    buf=NULL;
 	}
 	break;
 
@@ -309,9 +346,16 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 void
 config_dialog_box (HWND parent)
 {
+    int resid=0;
+
+    switch (GetUserDefaultLangID ()) {
+    case 0x0407:    resid = IDD_OPT_DE;break;
+    default:	    resid = IDD_OPT; break;
+    }
+
     if (parent == NULL)
 	parent = GetDesktopWindow ();
-    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_OPT, parent,
+    DialogBoxParam (glob_hinst, (LPCTSTR)resid, parent,
 		    config_dlg_proc, 0);
 }
 

@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "gpgme.h"
+#include "keycache.h"
 #include "intern.h"
 
 HINSTANCE glob_hinst = NULL;
@@ -56,12 +57,12 @@ center_window (HWND childwnd, HWND style)
     wscreen = GetDeviceCaps (hdc, HORZRES);     
     hscreen = GetDeviceCaps (hdc, VERTRES);     
     ReleaseDC (childwnd, hdc);      
-    xnew = rparent.left + ((wparent - wchild) /2);     
+    xnew = rparent.left + ((wparent - wchild) / 2);     
     if (xnew < 0)
 	xnew = 0;
     else if ((xnew+wchild) > wscreen) 
 	xnew = wscreen - wchild;
-    ynew = rparent.top  + ((hparent - hchild) /2);
+    ynew = rparent.top  + ((hparent - hchild) / 2);
     if (ynew < 0)
 	ynew = 0;
     else if ((ynew+hchild) > hscreen)
@@ -123,6 +124,7 @@ cache_item_free (cache_item_t itm)
 {
     if (itm == NULL)
 	return;
-    xfree (itm->pass);
+    xfree (itm->pass); 
+    itm->pass = NULL;
     xfree (itm);
 }

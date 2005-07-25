@@ -1,3 +1,79 @@
+2005-07-21  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (decrypt): Only return if no valid PGP
+	data was found and the message has no attachments.
+	* engine-gpgme.c (op_encrypt): Use --textmode to fix 
+	problems when the recipient OS has different line endings.
+	For example Win32->Linux.
+
+2005-07-20  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (addHtmlLineEndings): New.
+	(encrypt):Use it here.
+	(signEncrypt): Likewise. Free memory in case of errors.
+	(decrypt): Free memory in case of the verify procedure.
+	Issue a warning when the text of the mail could not be
+	updated.
+	(isMessageEncrypted): New.
+	(countAttachments): Check for null pointers.
+	(clearPassphrase): Likewise.
+	* config-dialog.c (store_config_value): Support '%val%' input.
+	* verify-dialog.c (load_akalist): Return the number of user-ids
+	which were added.
+	* passphrase-dialog.c (load_secbox): Make sure we really start
+	to add the item data at the begin.
+	* intern.h: Fixed GCC compiler problem.
+
+2005-07-19  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (encrypt): Handle cancel.
+	(encryptAttachments): If no attachments exist, close the table.
+	(decryptAttachments): Likewise.
+	(signAttachments): Likewise.
+	(isHtmlBody): New.
+	(isHtmlMessage): New.
+	(setBody): Html support.
+	(encrypt): Figure out if message is html and encode the right body.
+	(signEncrypt): Likewise.
+	(verify): Always use the non-html body for GPG input.
+	(decrypt): Likewise.
+
+	* engine-gpgme.c (recipient_dialog_box2): Set cancel flag.
+	(op_sign_start): Handle cancel.
+	(recipient_dlg_proc): Make sure there is at least one selected
+	key. Disable armor checkbox.
+
+2005-07-19  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (~MapiGPGME): After releasing the
+	memory, set all pointers to NULL. It seems that NT5
+	bases operating systems are more pedantic with such
+	issues than 9X based systems.
+	(freeUnknownKeys): Likewise.
+	(freeRecipients): Likewise.
+	(encrypt): Outlook 2003 returns a body string which
+	is not NULL but \0 with a length of 0. Handle it.
+	(sign): Likewise.
+	(signEncrypt): Likewise.
+
+	* engine-gpgme.c (free_recipients): New.
+	(op_encrypt_start): Handle cancel and free memory.
+
+
+2005-07-18  Timo Schulz  <ts@g10code.com>
+
+	* gpgmedlgs.rc: Native language support for German.
+
+2005-07-14  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp: Add some missing MAPI constants.
+	(passphrase_callback_box): Repair cancel button.
+	(decrypt): If the user cancels the operation, do not
+	alter the message text.
+	* config-dialog.c (expand_path): New. From WinPT.
+	(load_config_value): Support for REG_EXPAND_SZ.
+	Suggested by Sebastian.
+
 2005-07-13  Timo Schulz  <ts@g10code.de>
 
 	* MapiGPGME.cpp (sign): Ignore empty bodies.

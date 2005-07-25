@@ -1,5 +1,18 @@
-Noteworthy changes for version 0.6.0 (unreleased)
+Noteworthy changes for version 0.6.1 (unreleased)
 =================================================
+
+* Fix the problem that the user can just reply with
+  the encrypted text.
+
+* Fixes for a lot of minor problems with NT5 based
+  systems and for Outlook version 2003.
+
+* Support for handling HTML mails.
+  This includes the encryption of the contents and
+  the proper decryption without losing the special
+  (html) text attributes like colors.
+
+* Support for '%ENV%' strings for the log file.
 
 
 Noteworthy changes for version 0.5.5 (2005-07-12)

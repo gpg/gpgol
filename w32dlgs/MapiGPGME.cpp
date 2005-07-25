@@ -26,11 +26,16 @@
 #include <atlbase.h>
 
 #include "gpgme.h"
+#include "keycache.h"
 #include "intern.h"
 #include "HashTable.h"
 #include "MapiGPGME.h"
 #include "engine.h"
-#include "keycache.h"
+
+/* These were omitted from the standard headers */
+#ifndef PR_BODY_HTML
+#define PR_BODY_HTML (PROP_TAG(PT_TSTRING, 0x1013))
+#endif
 
 /* attachment information */
 #define ATT_SIGN(action) ((action) & GPG_ATTACH_SIGN)
@@ -82,11 +87,12 @@ MapiGPGME::clearObject (void)
 void
 MapiGPGME::prepareLogging (void)
 {
-    char *val=NULL;
+    char *val = NULL;
+
     load_extension_value ("logFile", &val);
     if (val != NULL && *val != '"' && *val != 0) {
 	setLogFile (val);
-	setEnableLogging (true);	
+	setEnableLogging (true);
 	xfree (val);	
     }
 }
@@ -122,7 +128,7 @@ MapiGPGME::cleanupTempFiles (void)
     WIN32_FIND_DATA fnd;
     char path[MAX_PATH+32], tmp[MAX_PATH+4];
 
-    GetTempPath (sizeof (path), path);
+    GetTempPath (sizeof (path)-4, path);
     if (path[strlen (path)-1] != '\\')
 	strcat (path, "\\");
     strcpy (tmp, path);
@@ -140,24 +146,29 @@ MapiGPGME::cleanupTempFiles (void)
     FindClose (hd);
 }
 
+
 MapiGPGME::~MapiGPGME ()
 {
     unsigned i=0;
 
     logDebug ("destructor %p\r\n", msg);
     op_deinit ();
-    if (defaultKey)
+    if (defaultKey) {
 	delete_buf (defaultKey);
-    if (logfile)
+	defaultKey = NULL;
+    }
+    if (logfile) {
 	delete_buf (logfile);
-    
+	logfile = NULL;
+    }
     logDebug ("hash entries %d\r\n", passCache->size ());
     for (i = 0; i < passCache->size (); i++) {
 	cache_item_t t = (cache_item_t)passCache->get (i);
 	if (t != NULL)
 	    cache_item_free (t);
     }
-    delete passCache;
+    delete passCache; 
+    passCache = NULL;
     freeAttachments ();
     cleanupTempFiles ();
 }
@@ -169,7 +180,7 @@ MapiGPGME::setRTFBody (char *body)
     setMessageAccess (MAPI_ACCESS_MODIFY);
     HWND rtf = findMessageWindow (parent);
     if (rtf != NULL) {
-	logDebug ("setRTFBody: window handle %p", rtf);
+	logDebug ("setRTFBody: window handle %p\r\n", rtf);
 	SetWindowText (rtf, body);
 	return TRUE;
     }
@@ -178,7 +189,7 @@ MapiGPGME::setRTFBody (char *body)
 
 
 int 
-MapiGPGME::setBody (char *body)
+MapiGPGME::setBody (char *body, bool isHtml)
 {
     /* XXX: handle richtext/html */
     SPropValue sProp; 
@@ -186,16 +197,16 @@ MapiGPGME::setBody (char *body)
     int rc = TRUE;
     
     if (body == NULL) {
-	logDebug ( "setBody with empty buffer\r\n");
+	logDebug ("setBody with empty buffer\r\n");
 	return FALSE;
     }
     rtfSync (body);
-    sProp.ulPropTag = PR_BODY;
+    sProp.ulPropTag = isHtml? PR_BODY_HTML : PR_BODY;
     sProp.Value.lpszA = body;
     hr = HrSetOneProp (msg, &sProp);
     if (FAILED (hr))
 	rc = FALSE;
-    logDebug ( "setBody rc=%d '%s'\r\n", rc, body);
+    logDebug ("setBody (html=%d) rc=%d '%s'\r\n", rc, isHtml, body);
     return rc;
 }
 
@@ -218,14 +229,49 @@ MapiGPGME::rtfSync (char *body)
 }
 
 
+bool 
+MapiGPGME::isHtmlBody (const char *body)
+{
+    char *p1, *p2;
+
+    /* XXX: it is possible but unlikely that the message text
+            contains the used keywords. */
+    p1 = strstr (body, "<HTML>");
+    p2 = strstr (body, "</HTML>");
+    if (p1 && p2)
+	return true;
+    p1 = strstr (body, "<html>");
+    p2 = strstr (body, "</html>");
+    if (p1 && p2)
+	return true;
+    /* XXX: use case insentensive strstr version. */
+    return false;
+}
+
+
+bool
+MapiGPGME::isHtmlMessage (void)
+{
+    char *body = getBody (true);
+    if (body != NULL && strlen (body) > 1) {
+	delete_buf (body);
+	return true;
+    }
+    if (body != NULL)
+	delete_buf (body);
+    return false;
+}
+
+
 char* 
-MapiGPGME::getBody (void)
+MapiGPGME::getBody (bool isHtml)
 {
     HRESULT hr;
     LPSPropValue lpspvFEID = NULL;
     char *body;
+    int type = isHtml? PR_BODY_HTML: PR_BODY;
 
-    hr = HrGetOneProp ((LPMAPIPROP) msg, PR_BODY, &lpspvFEID);
+    hr = HrGetOneProp ((LPMAPIPROP) msg, type, &lpspvFEID);
     if (FAILED (hr))
 	return NULL;
     
@@ -272,6 +318,7 @@ MapiGPGME::getRecipients (bool isRootMsg)
     LPMAPITABLE lpRecipientTable = NULL;
     LPSRowSet lpRecipientRows = NULL;
     char **rset = NULL;
+    size_t j=0;
 
     if (!isRootMsg)
 	return NULL;
@@ -279,8 +326,7 @@ MapiGPGME::getRecipients (bool isRootMsg)
     static SizedSPropTagArray (1L, PropRecipientNum) = {1L, {PR_EMAIL_ADDRESS}};
 
     hr = msg->GetRecipientTable (0, &lpRecipientTable);
-    if (SUCCEEDED(hr)) {
-	size_t j = 0;
+    if (SUCCEEDED (hr)) {
         hr = HrQueryAllRows (lpRecipientTable, 
 			     (LPSPropTagArray) &PropRecipientNum,
 			     NULL, NULL, 0L, &lpRecipientRows);
@@ -308,8 +354,10 @@ void
 MapiGPGME::freeUnknownKeys (char **unknown, int n)
 {    
     for (int i=0; i < n; i++) {
-	if (unknown[i] != NULL)
+	if (unknown[i] != NULL) {
 	    xfree (unknown[i]);
+	    unknown[i] = NULL;
+	}
     }
     if (n > 0)
 	xfree (unknown);
@@ -318,8 +366,10 @@ MapiGPGME::freeUnknownKeys (char **unknown, int n)
 void 
 MapiGPGME::freeRecipients (char **recipients)
 {
-    for (int i=0; recipients[i] != NULL; i++)
+    for (int i=0; recipients[i] != NULL; i++) {
 	delete_buf (recipients[i]);	
+	recipients[i] = NULL;
+    }
     delete recipients;
 }
 
@@ -347,11 +397,29 @@ MapiGPGME::storePassphrase (void *itm)
 }
 
 
+char*
+MapiGPGME::addHtmlLineEndings (char *newBody)
+{
+    char *p;
+    char *snew = (char*)xcalloc (1, 2*strlen (newBody));
+
+    p = strtok ((char *)newBody, "\n");
+    while (p != NULL) {
+	strcat (snew, p);
+	strcat (snew, "\r\n");
+	strcat (snew, "&nbsp;<br>");
+	p = strtok (NULL, "\n");
+    }
+    
+    return snew;
+}
+
 int 
 MapiGPGME::encrypt (void)
 {
     gpgme_key_t *keys=NULL, *keys2=NULL;
-    char *body = getBody ();
+    bool isHtml = isHtmlMessage ();
+    char *body = getBody (isHtml);
     char *newBody = NULL;
     char **recipients = getRecipients (true);
     char **unknown = NULL;
@@ -359,33 +427,46 @@ MapiGPGME::encrypt (void)
     int err = 0;
     size_t all=0;
 
-    /* XXX: if the body is empty, there is a 'access violation' */
-    if (body == NULL) {
+    if (body == NULL || strlen (body) == 0) {
 	freeRecipients (recipients);
+	if (body != NULL)
+	    delete_buf (body);
 	return 0;
     }
 
-    logDebug ( "encrypt\r\n");
+    logDebug ("encrypt\r\n");
     int n = op_lookup_keys (recipients, &keys, &unknown, &all);
-    logDebug ( "fnd %d need %d (%p)\r\n", n, all, unknown);
+    logDebug ("fnd %d need %d (%p)\r\n", n, all, unknown);
     if (n != countRecipients (recipients)) {
-	logDebug ( "recipient_dialog_box2\r\n");
+	logDebug ("recipient_dialog_box2\r\n");
 	recipient_dialog_box2 (keys, unknown, all, &keys2, &opts);
-	free (keys);
+	xfree (keys);
 	keys = keys2;
+	if (opts & OPT_FLAG_CANCEL) {
+	    freeRecipients (recipients);
+	    delete_buf (body);
+	    return 0;
+	}
     }
 
     err = op_encrypt ((void*)keys, body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Encryption", MB_ICONERROR|MB_OK);
-    else
-	setBody (newBody);
+    else {
+	if (isHtml) {
+	    char *p = addHtmlLineEndings (newBody);
+	    setBody (p, true);
+	    xfree (p);
+	}
+	else
+	    setBody (newBody, false);
+    }
     delete_buf (body);
     xfree (newBody);
     freeRecipients (recipients);
     freeUnknownKeys (unknown, n);
     if (!err && hasAttachments ()) {
-	logDebug ( "encrypt attachments\r\n");
+	logDebug ("encrypt attachments\r\n");
 	recipSet = (void *)keys;
 	encryptAttachments (parent);
     }
@@ -426,14 +507,22 @@ int
 MapiGPGME::decrypt (void)
 {
     outlgpg_type_t id;
-    char *body = getBody ();
-    char *newBody = NULL;
+    char *body = getBody (false);
+    char *newBody = NULL;    
+    bool hasAttach = hasAttachments ();
+    bool isHtml = isHtmlMessage ();
     int err;
-    int hasAttach = hasAttachments ();
 
     id = getMessageType (body);
-    if (id == GPG_TYPE_CLEARSIG)
+    if (id == GPG_TYPE_CLEARSIG) {
+	delete_buf (body);
 	return verify ();
+    }
+    else if (id == GPG_TYPE_NONE && !hasAttach) {
+	MessageBox (NULL, "No valid OpenPGP data found.", "GPG Decryption", MB_ICONERROR|MB_OK);
+	delete_buf (body);
+	return 0;
+    }
 
     if (nstorePasswd == 0)
 	err = op_decrypt_start (body, &newBody);
@@ -453,11 +542,31 @@ MapiGPGME::decrypt (void)
 	else
 	    MessageBox (NULL, op_strerror (err), "GPG Decryption", MB_ICONERROR|MB_OK);
     }
-    else
+    else if (newBody != NULL && *newBody) {	
+	/* Also set PR_BODY but do not use 'SaveChanges' to make it permanently.
+	   This way the user can reply with the plaintext but the ciphertext is
+	   still stored. */
+	logDebug ("decrypt isHtml=%d\r\n", isHtmlBody (newBody));
 	setRTFBody (newBody);
+	/* XXX: find a way to handle text/html message in a better way! */
+	if (isHtmlBody (newBody)) {
+	    const char *s = "The message text cannot be displayed.\n"
+		            "You have to save the decrypted message to view it.\n"
+			    "Then you need to re-open the message.\n\n"
+			    "Do you want to save the decrypted message?";
+	    int id = MessageBox (NULL, s, "GPG Decryption", MB_YESNO|MB_ICONWARNING);
+	    if (id == IDYES) {
+		logDebug ("decrypt: save plaintext message.\r\n");
+		setBody (newBody, true);
+		msg->SaveChanges (FORCE_SAVE);
+	    }
+	}
+	else
+	    setBody (newBody, false);
+    }
 
     if (hasAttach) {
-	logDebug ( "decrypt attachments\r\n");
+	logDebug ("decrypt attachments\r\n");
 	decryptAttachments (parent);
     }
     delete_buf (body);
@@ -469,18 +578,21 @@ MapiGPGME::decrypt (void)
 int
 MapiGPGME::sign (void)
 {
-    char *body = getBody ();
+    char *body = getBody (false);
     char *newBody = NULL;
     int hasAttach = hasAttachments ();
     int err = 0;
 
-    if (body == NULL)
+    if (body == NULL || strlen (body) == 0) {
+	if (body != NULL)
+	    delete_buf (body);
 	return 0;
+    }
     err = op_sign_start (body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Sign", MB_ICONERROR|MB_OK);
     else
-	setBody (newBody);
+	setBody (newBody, isHtmlBody (newBody));
 
     if (hasAttach && autoSignAtt)
 	signAttachments (parent);
@@ -488,6 +600,17 @@ MapiGPGME::sign (void)
     delete_buf (body);
     xfree (newBody);
     return err;
+}
+
+
+bool
+MapiGPGME::isMessageEncrypted (void)
+{
+    char *body = getBody (false);
+    bool enc = getMessageType (body) == GPG_TYPE_MSG;
+    if (body != NULL)
+	delete_buf (body);
+    return enc;
 }
 
 
@@ -526,7 +649,7 @@ MapiGPGME::doCmdFile(int action, const char *in, const char *out)
 int
 MapiGPGME::doCmdAttach (int action)
 {
-    logDebug ( "doCmdAttach action=%d\n", action);
+    logDebug ("doCmdAttach action=%d\n", action);
     if (ATT_SIGN (action) && ATT_ENCR (action))
 	return signEncrypt ();
     if (ATT_SIGN (action) && !ATT_ENCR (action))
@@ -576,19 +699,25 @@ log_key_info (MapiGPGME *g, gpgme_key_t *keys, gpgme_key_t locusr)
 int
 MapiGPGME::signEncrypt (void)
 {
-    char *body = getBody ();
+    bool isHtml = isHtmlMessage ();
+    char *body = getBody (isHtml);
     char *newBody = NULL;
     char **recipients = getRecipients (TRUE);
     char **unknown = NULL;
     gpgme_key_t locusr=NULL, *keys = NULL, *keys2 =NULL;	
     const char *s;
 
-    if (body == NULL) {
+    if (body == NULL || strlen (body) == 0) {
 	freeRecipients (recipients);
+	if (body != NULL)
+	    delete_buf (body);
 	return 0;
     }
-    if (signer_dialog_box (&locusr, NULL) == -1)
-	return 0;	
+    if (signer_dialog_box (&locusr, NULL) == -1) {
+	freeRecipients (recipients);
+	delete_buf (body);
+	return 0;
+    }
     s = gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0);
     logDebug ( "locusr keyid:%s\r\n", s);
 
@@ -604,8 +733,15 @@ MapiGPGME::signEncrypt (void)
     int err = op_sign_encrypt ((void *)keys, (void*)locusr, body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Sign Encrypt", MB_ICONERROR|MB_OK);
-    else
-	setBody (newBody);
+    else {
+	if (isHtml) {
+	    char *p = addHtmlLineEndings (newBody);
+	    setBody (p, true);
+	    xfree (p);
+	}
+	else
+	    setBody (newBody, false);
+    }
 
     delete_buf (body);
     xfree (newBody);
@@ -625,7 +761,7 @@ MapiGPGME::signEncrypt (void)
 int 
 MapiGPGME::verify (void)
 {
-    char *body = getBody ();
+    char *body = getBody (false);
     char *newBody = NULL;
     
     int err = op_verify_start (body, &newBody);
@@ -697,7 +833,7 @@ MapiGPGME::findMessageWindow (HWND parent)
 	    return rtf;
 	child = GetNextWindow (child, GW_HWNDNEXT);	
     }
-    /*logDebug ( "no message window found.\r\n");*/
+    /*logDebug ("no message window found.\r\n");*/
     return NULL;
 }
 
@@ -946,7 +1082,7 @@ MapiGPGME::setXHeader (const char *name, const char *val)
 {  
     USES_CONVERSION;
     LPMDB lpMdb = NULL;
-    HRESULT hr = NULL;  
+    HRESULT hr = NULL;
     LPSPropTagArray pProps = NULL;
     SPropValue pv;
     MAPINAMEID mnid[1];	
@@ -954,20 +1090,25 @@ MapiGPGME::setXHeader (const char *name, const char *val)
     GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x46} };
 
+    memset (&mnid[0], 0, sizeof (MAPINAMEID));
     mnid[0].lpguid = &guid;
     mnid[0].ulKind = MNID_STRING;
     mnid[0].Kind.lpwstrName = A2W (name);
-
     hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
-    if (FAILED (hr))
+    if (FAILED (hr)) {
+	logDebug ("set X-Header failed.\r\n");
 	return false;
+    }
     
     pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
     pv.Value.lpszA = (char *)val;
     hr = HrSetOneProp(msg, &pv);	
-    if (!SUCCEEDED (hr))
+    if (!SUCCEEDED (hr)) {
+	logDebug ("set X-Header failed.\r\n");
 	return false;
+    }
 
+    logDebug ("set X-Header succeeded.\r\n");
     return true;
 }
 
@@ -1130,7 +1271,7 @@ MapiGPGME::processAttachment (LPATTACH *attm, HWND hwnd, int pos, int action)
 
 	tmp = getAttachFilename (att);
 	inname =  generateTempname (tmp);
-	logDebug ( "enc inname: '%s'\r\n", inname);
+	logDebug ("enc inname: '%s'\r\n", inname);
 	if (action != GPG_ATTACH_DECRYPT) {
 	    char *tmp2 = (char *)xcalloc (1, strlen (inname) 
 					     + strlen (ATT_PREFIX) + 4 + 1);
@@ -1215,8 +1356,10 @@ MapiGPGME::decryptAttachments (HWND hwnd)
 	return FALSE;
     n = countAttachments ();
     logDebug ( "dec: mail has %d attachments\r\n", n);
-    if (!n)
+    if (!n) {
+	freeAttachments ();
 	return TRUE;
+    }
     for (int i=0; i < n; i++) {
 	LPATTACH amsg = openAttachment (i);
 	if (!amsg)
@@ -1235,8 +1378,10 @@ MapiGPGME::signAttachments (HWND hwnd)
 	return FALSE;
     int n = countAttachments ();
     logDebug ("sig: mail has %d attachments\r\n", n);
-    if (!n)
+    if (!n) {
+	freeAttachments ();
 	return TRUE;
+    }
     for (int i=0; i < n; i++) {
 	LPATTACH amsg = openAttachment (i);
 	if (!amsg)
@@ -1258,8 +1403,10 @@ MapiGPGME::encryptAttachments (HWND hwnd)
 	return FALSE;
     n = countAttachments ();
     logDebug ("enc: mail has %d attachments\r\n", n);
-    if (!n)
+    if (!n) {
+	freeAttachments ();
 	return TRUE;
+    }
     for (int i=0; i < n; i++) {
 	LPATTACH amsg = openAttachment (i);
 	if (amsg == NULL)

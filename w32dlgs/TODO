@@ -1,12 +1,16 @@
+* Show more details in case of some errors.
+  For example 'No Secret Key' should contain the key-ID
+  and if possible the primary user-ID.
+
+* much better HTML support.
+
+* factor out more common code in encrypt, signEncrypt.
+
+* grep all XXX in the code and provide fixes.
 
 * provide a general passphrase caching system to allow to store
   more than one passphrase. This can be done with a hash table and
   the key-ID is used as the index to access the passphrase.
-
-* process attachments and encrypt them. find a way to offer decryption
-  of the attachments and to save them somewhere.
-  it would be better to add a new item to the context menu
-  'decrypt and save as...'.
 
 * handle unicode messages and find out why UTF-8 messages cannot be
   manipulated.

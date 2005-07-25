@@ -24,11 +24,9 @@
 #include <time.h>
 
 #include "gpgme.h"
+#include "keycache.h"
 #include "intern.h"
 #include "engine.h"
-#include "keycache.h"
-
-#define LOGFILE "c:\\mapigpgme.log"
 
 static char *debug_file = NULL;
 static int init_done = 0;
@@ -43,6 +41,14 @@ cleanup (void)
 	xfree (debug_file);
 	debug_file = NULL;
     }
+}
+
+
+static void
+clear_error_if_cancel (struct decrypt_key_s *hd, gpgme_error_t *err)
+{
+    if (hd->opts & OPT_FLAG_CANCEL)
+	*err = 0;
 }
 
 
@@ -90,6 +96,20 @@ op_init (void)
 }
 
 
+static void
+free_recipients (gpgme_key_t *keys)
+{
+    int i;
+
+    if (keys == NULL)
+	return;
+    for (i=0; keys[i] != NULL; i++) {
+	xfree (keys[i]);
+	keys[i] = NULL;
+    }
+    xfree (keys);
+}
+
 
 int
 op_encrypt_start (const char *inbuf, char **outbuf)
@@ -99,10 +119,13 @@ op_encrypt_start (const char *inbuf, char **outbuf)
     int err;
 
     recipient_dialog_box (&keys, &opts);
+    if (opts & OPT_FLAG_CANCEL)
+	return 0;
     err = op_encrypt ((void *)keys, inbuf, outbuf);
-    xfree (keys);
+    free_recipients (keys);
     return err;
 }
+
 
 long 
 ftello (FILE *f)
@@ -288,11 +311,11 @@ op_sign_file_ext (int mode, const char *infile, const char *outfile,
 
 int
 op_decrypt_file (const char *infile, const char *outfile)
-{
-    gpgme_error_t err;
+{    
     gpgme_data_t in = NULL;
     gpgme_data_t out = NULL;    
     gpgme_ctx_t ctx = NULL;
+    gpgme_error_t err;
     struct decrypt_key_s *hd;
 
     err = gpgme_data_new_from_file (&in, infile, 1);
@@ -338,7 +361,6 @@ check_encrypt_result (gpgme_ctx_t ctx, gpgme_error_t err)
     res = gpgme_op_encrypt_result (ctx);
     if (!res)
 	return err;
-    /*log_debug (LOGFILE, "inv_recips=%p\r\n", res->invalid_recipients);*/
     if (res->invalid_recipients != NULL)
 	return gpg_error (GPG_ERR_UNUSABLE_PUBKEY);
     /* XXX: we need to do more here! */
@@ -450,6 +472,7 @@ op_encrypt (void *rset, const char *inbuf, char **outbuf)
     if (err)
 	goto leave;
 
+    gpgme_set_textmode (ctx, 1);
     gpgme_set_armor (ctx, 1);
     err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
     if (!err) {
@@ -481,10 +504,16 @@ op_sign_encrypt_start (const char *inbuf, char **outbuf)
     int err;
 
     recipient_dialog_box (&keys, &opts);
-    signer_dialog_box (&locusr, NULL);
+    if (opts & OPT_FLAG_CANCEL)
+	return 0;
+    err = signer_dialog_box (&locusr, NULL);
+    if (err == -1) { /* Cancel */
+	free_recipients (keys);
+	return 0;
+    }
     
     err = op_sign_encrypt ((void*)keys, (void*)locusr, inbuf, outbuf);
-    xfree (keys);
+    free_recipients (keys);
 
     return err;
 }
@@ -540,8 +569,11 @@ int
 op_sign_start (const char *inbuf, char **outbuf)
 {
     gpgme_key_t locusr = NULL;
+    int err;
 
-    signer_dialog_box (&locusr, NULL);
+    err = signer_dialog_box (&locusr, NULL);
+    if (err == -1) /* Cancel */
+	return 0;
     return op_sign ((void*)locusr, inbuf, outbuf);
 }
 
@@ -596,6 +628,8 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
 	    void *pass_cb_value,
 	    const char *inbuf, char **outbuf)
 {
+    /* XXX: violates the information hiding principle */
+    struct decrypt_key_s *cb = (struct decrypt_key_s *)pass_cb_value;
     gpgme_data_t in=NULL, out=NULL;
     gpgme_ctx_t ctx;
     gpgme_error_t err;
@@ -613,11 +647,8 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
     if (err)
 	goto leave;
 
-    /* XXX: violates the information hiding principle */
-    {
-	struct decrypt_key_s *cb = (struct decrypt_key_s *)pass_cb_value;
-	cb->ctx = (void *)ctx;
-    }
+    /* Needed to parse ENC_TO */
+    cb->ctx = (void *)ctx;    
 
     gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
     err = gpgme_op_decrypt_verify (ctx, in, out);
@@ -644,6 +675,8 @@ op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
 	if (res != NULL && res->signatures != NULL)
 	    verify_dialog_box (res);
     }
+
+    clear_error_if_cancel (cb, &err);
 
 leave:    
     gpgme_release (ctx);
@@ -757,7 +790,6 @@ op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
     for (i=0; id[i] != NULL; i++) {
 	/*k = find_gpg_email(id[i]);*/
 	k = get_gpg_key (id[i]);
-	/*log_debug (LOGFILE, "%s: %p\r\n", id[i], k);*/
 	if (!k)
 	    (*unknown)[pos++] = xstrdup (id[i]);
 	else

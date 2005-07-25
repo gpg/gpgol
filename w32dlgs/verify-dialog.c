@@ -23,8 +23,8 @@
 
 #include "resource.h"
 #include "gpgme.h"
-#include "intern.h"
 #include "keycache.h"
+#include "intern.h"
 
 static char*
 get_timestamp (time_t l)
@@ -45,18 +45,21 @@ get_timestamp (time_t l)
 }
 
 
-static void
+static int
 load_akalist (HWND dlg, gpgme_key_t key)
 {
     gpgme_user_id_t u;
+    int n = 0;
 
-    u=key->uids;
+    u = key->uids;
     if (!u->next)
-	return;
+	return n;
     for (u=u->next; u; u=u->next) {
 	SendDlgItemMessage (dlg, IDC_VRY_AKALIST, LB_ADDSTRING,
 			    0, (LPARAM)(const char*)u->uid);
+	n++;
     }
+    return n;
 }
 
 
@@ -67,7 +70,7 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
     char *s, buf[2+16+1];
     char *p;
     int stat;
-    int valid, no_key = 0;
+    int valid, no_key = 0, n = 0;
 
     s = get_timestamp (ctx->signatures->timestamp);
     SetDlgItemText (dlg, IDC_VRY_TIME, s);
@@ -75,10 +78,13 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
     s = ctx->signatures->fpr;
     if (strlen (s) == 40)
 	strncpy (buf+2, s+40-8, 8);
+    else if (strlen (s) == 32) /* MD5:RSAv3 */
+	strncpy (buf+2, s+32-8, 8);
     else
 	strncpy (buf+2, s+8, 8);
     buf[10] = 0;
-    buf[0] = '0'; buf[1] = 'x';
+    buf[0] = '0'; 
+    buf[1] = 'x';
     SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
     /*key = find_gpg_key (buf+2, 0);*/
     key = get_gpg_key (buf+2);
@@ -107,8 +113,10 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 	s = (char*)gpgme_key_get_string_attr (key, GPGME_ATTR_USERID, NULL, 0);
 	SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
 
-	load_akalist (dlg, key);
+	n = load_akalist (dlg, key);
 	gpgme_key_release (key);
+	if (n == 0)
+	    EnableWindow (GetDlgItem (dlg, IDC_VRY_AKALIST), FALSE);
     }
     else {
 	s = "User-ID not found";
@@ -176,6 +184,7 @@ verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 
+/* Display the verify dialog based on the gpgme result in @res. */
 int
 verify_dialog_box (gpgme_verify_result_t res)
 {

@@ -245,6 +245,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	else
 	    initialize_keybox (dlg, rset_cb);
 	CheckDlgButton (dlg, IDC_ENC_OPTARMOR, BST_CHECKED);
+	EnableWindow (GetDlgItem (dlg, IDC_ENC_OPTARMOR), FALSE);
 	center_window (dlg, NULL);
 	SetForegroundWindow (dlg);
 	return TRUE;
@@ -276,18 +277,18 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 	switch( LOWORD( wparam ) ) {
 	case IDOK:
-	    flag = IsDlgButtonChecked( dlg, IDC_ENC_OPTARMOR );
-	    if( flag )
-		rset_cb->opts |= OPT_FLAG_ARMOR;
-	    flag = IsDlgButtonChecked( dlg, IDC_ENC_OPTSYM );
-	    if( flag ) {
-		rset_cb->opts |= OPT_FLAG_SYMETRIC;
-		EndDialog( dlg, TRUE );
+	    hrset = GetDlgItem (dlg, IDC_ENC_RSET2);
+	    if (ListView_GetItemCount (hrset) == 0) {
+		MessageBox (dlg, "Please select at least one recipient key.",
+			    "Recipient Dialog", MB_ICONINFORMATION|MB_OK);
+		return FALSE;
 	    }
+	    flag = IsDlgButtonChecked (dlg, IDC_ENC_OPTARMOR);
+	    if (flag)
+		rset_cb->opts |= OPT_FLAG_ARMOR;
 	    keycache_new (&rset_cb->rset);
-	    
-	    hrset = GetDlgItem( dlg, IDC_ENC_RSET2 );
-	    for( i=0; i < ListView_GetItemCount( hrset ); i++ ) {
+
+	    for (i=0; i < ListView_GetItemCount (hrset); i++) {
 		gpgme_key_t key;
 		char keyid[32], valid[32];
 
@@ -302,7 +303,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	    break;
 
 	case IDCANCEL:
-	    warn = "If you cancel this dialog, the message will be sent in cleartext.\n"
+	    warn = "If you cancel this dialog, the message will be sent in cleartext.\n\n"
 		   "Do you really want to cancel?";
 	    i = MessageBox (dlg, warn, "Recipient Dialog", MB_ICONWARNING|MB_YESNO);
 	    if (i == IDNO)
@@ -384,14 +385,17 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
     DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
 		    recipient_dlg_proc, (LPARAM)cb);
     if (cb->opts & OPT_FLAG_CANCEL) {
+	*ret_opts = cb->opts;
 	*ret_rset = NULL;
     }
     else {
 	*ret_rset = keycache_to_key_array (cb->rset);
 	keycache_free (cb->rset);
     }
-    for (i = 0; i < (int)n; i++)
+    for (i = 0; i < (int)n; i++) {
 	xfree (cb->fnd_keys[i]);
+	cb->fnd_keys[i] = NULL;
+    }
     xfree (cb->fnd_keys);
     xfree (cb);
     return 0;

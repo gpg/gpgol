@@ -42,7 +42,7 @@ typedef enum {
 typedef enum {
     GPG_FMT_NONE = 0,	    /* do not encrypt attachments */
     GPG_FMT_CLASSIC = 1,    /* encrypt attachments without any encoding */
-    GPG_FMT_PGP_PEF = 2	    /* use the PGP partioned encoding format */
+    GPG_FMT_PGP_PEF = 2	    /* use the PGP partioned encoding format (PEF) */
 } outlgpg_format_t;
 #define DEFAULT_ATTACHMENT_FORMAT GPG_FMT_CLASSIC
 
@@ -60,13 +60,13 @@ private:
 
     /* Options */
     char    *logfile;
-    int	    nstorePasswd;
+    int	    nstorePasswd;	/* time in seconds the passphrase is stored. */
     bool    doEncrypt;
     bool    doSign;
     bool    encryptDefault;
     bool    saveDecryptedAtt;	/* save decrypted attachments */
     bool    autoSignAtt;	/* sign all outgoing attachments */
-    int	    encFormat;
+    int	    encFormat;		/* encryption format for attachments. */
 
 public:    
     DLL_EXPORT MapiGPGME ();
@@ -91,9 +91,13 @@ private:
 
     HWND findMessageWindow (HWND parent);
     void rtfSync (char *body);
-    int  setBody (char *body);
+    int  setBody (char *body, bool isHtml);
     int  setRTFBody (char *body);
-    char *getBody (void);
+    bool isMessageEncrypted (void);
+    bool isHtmlBody (const char *body);
+    bool isHtmlMessage (void);
+    char *getBody (bool isHtml);
+    char *addHtmlLineEndings (char *newBody);
     
     void cleanupTempFiles ();
     int countRecipients (char **recipients);
@@ -108,17 +112,21 @@ public:
     DLL_EXPORT int sign (void);
     DLL_EXPORT int verify (void);
     DLL_EXPORT int signEncrypt (void);
+
     DLL_EXPORT int doCmd(int doEncrypt, int doSign);
     DLL_EXPORT int doCmdAttach(int action);
     DLL_EXPORT int doCmdFile(int action, const char *in, const char *out);
 
     DLL_EXPORT const char* getLogFile (void) { return logfile; }
-    DLL_EXPORT void setLogFile (const char *logfile) 
+    DLL_EXPORT void setLogFile (const char *logfile)
     { 
-	if (this->logfile)
+	if (this->logfile) {
 	    delete []this->logfile;
+	    this->logfile = NULL;
+	}
 	this->logfile = new char [strlen (logfile)+1];
-	strcpy (this->logfile, logfile);
+	if (this->logfile != NULL)
+	    strcpy (this->logfile, logfile);
     }
 
     DLL_EXPORT int  getStorePasswdTime (void) { return nstorePasswd; }
@@ -135,7 +143,6 @@ public:
     DLL_EXPORT int  getEncodingFormat (void) { return encFormat; }
     DLL_EXPORT void setSignAttachments (bool signAtt) { this->autoSignAtt = signAtt; }
     DLL_EXPORT bool getSignAttachments (void) { return autoSignAtt; }
-
     DLL_EXPORT void setEnableLogging (bool val) { this->enableLogging = val; }
     DLL_EXPORT bool getEnableLogging (void) { return this->enableLogging; }
 
@@ -146,7 +153,13 @@ public:
     const char* getAttachmentExtension (const char *fname);
     DLL_EXPORT void freeAttachments (void);
     DLL_EXPORT int getAttachments (void);
-    DLL_EXPORT int countAttachments (void) { return (int) attachRows->cRows; }
+    DLL_EXPORT int countAttachments (void) 
+    { 
+	if (attachRows == NULL)
+	    return -1;
+	return (int) attachRows->cRows; 
+    }
+
     DLL_EXPORT bool hasAttachments (void)
     {
 	if (attachRows == NULL)
@@ -175,53 +188,53 @@ public:
 	return NULL;
     }
 
-public:
     DLL_EXPORT int startKeyManager ();
     DLL_EXPORT void startConfigDialog (HWND parent);
 
 private:
-    bool setAttachMethod (LPATTACH obj, int mode);
-    int getAttachMethod (LPATTACH obj);
+    bool  setAttachMethod (LPATTACH obj, int mode);
+    int   getAttachMethod (LPATTACH obj);
     char* getAttachFilename (LPATTACH obj);
     char* getAttachPathname (LPATTACH obj);
-    bool setAttachFilename (LPATTACH obj, const char *name, bool islong);
-    int getMessageFlags ();
-    int getMessageHasAttachments ();
-    bool setMessageAccess (int access);
-    bool setXHeader (const char *name, const char *val);
+    bool  setAttachFilename (LPATTACH obj, const char *name, bool islong);
+    int   getMessageFlags ();
+    int   getMessageHasAttachments ();
+    bool  setMessageAccess (int access);
+    bool  setXHeader (const char *name, const char *val);
     char* getXHeader (const char *name);
-    bool checkAttachmentExtension (const char *ext);
+    bool  checkAttachmentExtension (const char *ext);
     const char* getPGPExtension (int action);
-    char *generateTempname (const char *name);
-    int streamOnFile (const char *file, LPATTACH att);
-    int streamFromFile (const char *file, LPATTACH att);
-    int encryptAttachments (HWND hwnd);
-    int decryptAttachments (HWND hwnd);
-    int signAttachments (HWND hwnd);
+    char* generateTempname (const char *name);
+    int   streamOnFile (const char *file, LPATTACH att);
+    int   streamFromFile (const char *file, LPATTACH att);
+    int   encryptAttachments (HWND hwnd);
+    int   decryptAttachments (HWND hwnd);
+    int   signAttachments (HWND hwnd);
     LPATTACH openAttachment (int pos);
-    void releaseAttachment (LPATTACH att);
-    int processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
-    bool saveDecryptedAttachment (HWND root, const char *srcname);
-    bool signAttachment (const char *datfile);
+    void  releaseAttachment (LPATTACH att);
+    int   processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
+    bool  saveDecryptedAttachment (HWND root, const char *srcname);
+    bool  signAttachment (const char *datfile);
 
 public:
     DLL_EXPORT int attachPublicKey (const char *keyid);
 
     DLL_EXPORT void setDefaultKey (const char *key);
-    DLL_EXPORT char *getDefaultKey (void);
+    DLL_EXPORT char* getDefaultKey (void);
 
     DLL_EXPORT void setMessage (LPMESSAGE msg);
     DLL_EXPORT void setWindow (HWND hwnd);
 
-    const char *getPassphrase (const char *keyid);
+    const char* getPassphrase (const char *keyid);
     void storePassphrase (void *itm);
     outlgpg_type_t getMessageType (const char *body);
 
     void logDebug (const char *fmt, ...);
     
     DLL_EXPORT void clearPassphrase (void) 
-    { 
-	passCache->clear ();
+    {
+	if (passCache != NULL)
+	    passCache->clear ();
     }
 };
 
