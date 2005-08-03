@@ -1,0 +1,100 @@
+Noteworthy changes for version 0.6.1 (unreleased)
+=================================================
+
+* Fix the problem that the user can just reply with
+  the encrypted text.
+
+* Fixes for a lot of minor problems with NT5 based
+  systems and for Outlook version 2003.
+
+* Support for handling HTML mails.
+  This includes the encryption of the contents and
+  the proper decryption without losing the special
+  (html) text attributes like colors.
+
+* Support for '%ENV%' strings for the log file.
+
+
+Noteworthy changes for version 0.5.5 (2005-07-12)
+=================================================
+
+* Support to sign all outgoing attachments.
+
+* Support for logging.
+
+* Fixed some memory leaks.
+
+
+Noteworthy changes for version 0.5.4 (2005-07-03)
+=================================================
+
+* Support for securing attachments.
+  This means the all attachments will be encrypted
+  if encryption has been selected for the message.
+
+* A new option to allow to save decrypted attachments
+  to the disk.
+
+* Several bug fixes all over the place.
+
+
+Noteworthy changes for version 0.5.3 (2005-06-16)
+=================================================
+
+* Allow to set a default key which is used automatically
+  for encryption.
+
+* Handle old V3 keys in the signature verification dialog.
+
+* Issue and error if the encrypt process returned invalid
+  recipients.
+
+
+Noteworthy changes for version 0.5.2 (2005-06-05)
+=================================================
+
+* Differ between possible decryption failures.
+  - General errors.
+  - No secret key available.
+
+* Add a 'encrypt-to' listbox to the decryption dialog
+  to know the recipients the message was encrypted for.
+
+* Add some checks to report problems with permissions
+  related to the Registry.
+
+* Fixed a format string problem which was possible for
+  crashes when the signature has been expired.
+
+Noteworthy changes for version 0.5.1 (2005-05-29)
+=================================================
+
+* Issue a warning if the user cancels the sign or
+  encryption procedure.
+
+* Support to read and write X- headers for messages.
+
+* Fixed a problem which crashes Outlook if the keyManager
+  exe did not exist but was set in the registry.
+
+
+Noteworthy changes for version 0.4.0 (2005-05-10)
+=================================================
+
+* Verify dialog is automatically shown whenever needed. Plus it
+  contains a hint-label whenever the signature is special. For
+  example the signature has expire or it was issued by a key which
+  is not trustworthy.
+
+* Offer a GPG configuration dialog to set the path to GPG, the home
+  directory and an optional field to specify a key manager.
+
+* Common dialogs for the following procedures:
+  - verify a clearsign signature
+  - decrypt a message (and verify a signature)
+  - encrypt a message (and sign the plaintext)
+  - clearsign a message
+
+* Provide a class to encapsulate MAPI messages and high-level functions
+  for all crypto operations.
+  

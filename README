@@ -10,6 +10,7 @@ thus we started to rewrite it from scratch.
 
 src/       The actual code of this plugin.
 
+
 olflange/  Code to build "gpgolfla.dll".  This DLL used to connect the
            actual plugin to Outlook.  This is expected not to change
            too often.  Special tools (read: a native MS Windows
