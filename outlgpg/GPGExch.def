@@ -1,9 +1,0 @@
-; GPGExch.def : Declares the module parameters for the DLL.
-
-LIBRARY      "GPGExch"
-DESCRIPTION  'GPGExch Windows Dynamic Link Library'
-
-EXPORTS
-    ExchEntryPoint  @1
-    DllRegisterServer   @2	PRIVATE
-    DllUnregisterServer @3	PRIVATE

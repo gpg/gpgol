@@ -1,19 +1,18 @@
 Package: outlgpg
 Contact: outl@g10code.com
 
-This is a plugin for MS Outlook, also known as the G-DATA plugin.  There has
-been no development on this tool for a couple of years and thus we started
-to revamp it a bit.
+This is a plugin for MS Outlook, formerly known as the G-DATA plugin.
+There has been no development on this tool for a couple of years and
+thus we started to rewrite it from scratch.
 
-- the gdgpg subfolder contains the source of the G-DATA
-  COM object. (The program is now obsolete!)
 
-- the gpgexch subfolder contains the source of the G-DATA
-  Outlook plugin. (The program is now obsolete!)
+.          Top directory with build scripts and information files.
 
-- the outlgpg subfolder contains the source of the new Outlook
-  plugin.
-  
-- the w32dlgs subfolder contains the framework for all mail plugins.  
+src/       The actual code of this plugin.
 
-  Timo Schulz, Werner Koch at  g10 Code GmbH.
+olflange/  Code to build "gpgolfla.dll".  This DLL used to connect the
+           actual plugin to Outlook.  This is expected not to change
+           too often.  Special tools (read: a native MS Windows
+           compiler) is required to build it.
+
+bin/       Precompiled binaries.
