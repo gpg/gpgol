@@ -83,12 +83,7 @@ if test "$1" = "--build-w32"; then
     ./configure --enable-maintainer-mode --prefix=${w32root}  \
              --host=i586-mingw32msvc --build=${build} \
              --with-gpg-error-prefix=${w32root} \
-	     --with-ksba-prefix=${w32root} \
-	     --with-libgcrypt-prefix=${w32root} \
-	     --with-libassuan-prefix=${w32root} \
-	     --with-zlib=${w32root} \
-             --with-pth-prefix=${w32root} \
-             --disable-gpg
+	     --with-gpgme-prefix=${w32root} 
     rc=$?
 
     exit $rc
@@ -137,8 +132,8 @@ EOF
 fi
 
 
-echo "Running aclocal ${ACLOCAL_FLAGS:+$ACLOCAL_FLAGS }..."
-$ACLOCAL $ACLOCAL_FLAGS
+echo "Running aclocal -I m4 ${ACLOCAL_FLAGS:+$ACLOCAL_FLAGS }..."
+$ACLOCAL -I m4 $ACLOCAL_FLAGS
 echo "Running autoheader..."
 $AUTOHEADER
 echo "Running automake --gnu ..."
