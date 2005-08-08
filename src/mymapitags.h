@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef OUTLGPG_MAPITAGS_H
-#define OUTLGPG_MAPITAGS_H 1
+#ifndef MAPITAGS_H
+#define MAPITAGS_H 1
 
 
 #define PT_UNSPECIFIED  0
@@ -1059,4 +1059,4 @@
 
 #define PR_MESSAGE_SIZE_EXTENDED   PROP_TAG(PT_I8, PROP_ID(PR_MESSAGE_SIZE))
 
-#endif /*OUTLGPG_MAPITAGS_H*/
+#endif /*MAPITAGS_H*/

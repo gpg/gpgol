@@ -76,7 +76,7 @@ initialize_rsetbox (HWND hwnd)
     col.iSubItem = 4;
     ListView_InsertColumn( hwnd, 4, &col );
 
-    ListView_SetExtendedListViewStyleEx( hwnd, 0, LVS_EX_FULLROWSELECT );
+/*     ListView_SetExtendedListViewStyleEx( hwnd, 0, LVS_EX_FULLROWSELECT ); */
 }
 
 

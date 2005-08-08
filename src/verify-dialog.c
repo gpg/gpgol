@@ -33,7 +33,7 @@ get_timestamp (time_t l)
     struct tm * tm;
 
     if (l == 0) {
-	sprintf (buf, "????-??-?? ??:??:??");
+	sprintf (buf, "????" "-??" "-?? ??" ":??" ":??");
 	return buf;
     }
 	
@@ -123,10 +123,10 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 	SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
     }
 
-    s = "???";
     switch (ctx->signatures->pubkey_algo) {
-    case 1: s = "RSA"; break;
-    case 17:s = "DSA"; break;
+    case GPGME_PK_RSA: s = "RSA"; break;
+    case GPGME_PK_DSA: s = "DSA"; break;
+    default:           s = "???"; break;
     }
     SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
 

@@ -11,11 +11,16 @@
 
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = libgpgmedlgs
+bin_PROGRAMS = outlgpg
 
-libgpgmedlgs_SOURCES = \
-              MapiGPGME.cpp        \ 
+AM_CFLAGS = $(GPGME_CFLAGS)
+AM_CXXFLAGS = $(GPGME_CFLAGS)
+
+outlgpg_SOURCES = \
+              MapiGPGME.cpp        \
               MapiGPGME.h	   \
+	      mymapi.h             \
+              mymapitags.h         \
               gpgmedlgs.rc	   \
               libgpgmedlgs.def	   \
               common.c		   \
@@ -25,13 +30,17 @@ libgpgmedlgs_SOURCES = \
               intern.h		   \
               keycache.c	   \
               keycache.h	   \
-              keylist.c		   \
-              logging.c		   \
+	      usermap.c            \
+	      usermap.h            \
               main.c		   \
               passphrase-dialog.c  \
               recipient-dialog.c   \
               resource.h           \
               verify-dialog.c
+
+outlgpg_LDADD = $(GPGME_LIBS)
+
+
 
 
 

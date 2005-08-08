@@ -17,17 +17,24 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <windows.h>
 #include <time.h>
 #include <initguid.h>
+
 #ifdef __MINGW32__
-#include "mapitags.h"
-#else
-#include <mapidefs.h>
-#include <mapiutil.h>
-#include <mapiguid.h>
-#include <atlbase.h>
-#endif
+# include "mymapi.h"
+# include "mymapitags.h"
+#else /* !__MINGW32__ */
+# include <mapidefs.h>
+# include <mapiutil.h>
+# include <mapiguid.h>
+# include <atlbase.h>
+#endif /* !__MINGW32__ */
 
 #include "gpgme.h"
 #include "keycache.h"
@@ -36,12 +43,13 @@
 #include "MapiGPGME.h"
 #include "engine.h"
 
+
 /* These were omitted from the standard headers */
 #ifndef PR_BODY_HTML
 #define PR_BODY_HTML (PROP_TAG(PT_TSTRING, 0x1013))
 #endif
 
-/* attachment information */
+/* Attachment information. */
 #define ATT_SIGN(action) ((action) & GPG_ATTACH_SIGN)
 #define ATT_ENCR(action) ((action) & GPG_ATTACH_ENCRYPT)
 #define ATT_PREFIX ".pgpenc"
@@ -223,6 +231,7 @@ MapiGPGME::rtfSync (char *body)
     HRESULT hr;
 
     /* Make sure that the Plaintext and the Richtext are in sync */
+#ifndef __MINGW32__  /* FIXME */
     sProp.ulPropTag = PR_BODY;
     sProp.Value.lpszA = "";
     hr = HrSetOneProp(msg, &sProp);
@@ -230,6 +239,7 @@ MapiGPGME::rtfSync (char *body)
     sProp.Value.lpszA = body;
     hr = HrSetOneProp(msg, &sProp);
     RTFSync(msg, RTF_SYNC_BODY_CHANGED, &bChanged);
+#endif
 }
 
 
@@ -309,9 +319,11 @@ MapiGPGME::freeKeyArray (void **key)
 int 
 MapiGPGME::countRecipients (char **recipients)
 {
-    for (int i=0; recipients[i] != NULL; i++)
-	;
-    return i;
+  int i;
+  
+  for (i=0; recipients[i] != NULL; i++)
+    ;
+  return i;
 }
 
 
@@ -1084,9 +1096,11 @@ MapiGPGME::getPGPExtension (int action)
 bool 
 MapiGPGME::setXHeader (const char *name, const char *val)
 {  
+#ifndef __MINGW32__
     USES_CONVERSION;
+#endif
     LPMDB lpMdb = NULL;
-    HRESULT hr = NULL;
+    HRESULT hr = 0;
     LPSPropTagArray pProps = NULL;
     SPropValue pv;
     MAPINAMEID mnid[1];	
@@ -1097,7 +1111,7 @@ MapiGPGME::setXHeader (const char *name, const char *val)
     memset (&mnid[0], 0, sizeof (MAPINAMEID));
     mnid[0].lpguid = &guid;
     mnid[0].ulKind = MNID_STRING;
-    mnid[0].Kind.lpwstrName = A2W (name);
+//     mnid[0].Kind.lpwstrName = A2W (name);
     hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
     if (FAILED (hr)) {
 	logDebug ("set X-Header failed.\r\n");

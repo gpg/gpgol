@@ -131,7 +131,7 @@ long
 ftello (FILE *f)
 {
     /* XXX: find out if this is really needed */
-    printf ("fd %d pos %d\n", fileno(f), ftell(f));
+    printf ("fd %d pos %ld\n", fileno(f), (long)ftell(f));
     return ftell (f);
 }
 
