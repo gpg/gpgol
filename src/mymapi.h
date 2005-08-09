@@ -34,7 +34,6 @@
 extern "C" {
 #endif
 
-
 /* Some types */
 
 #ifndef __LHANDLE

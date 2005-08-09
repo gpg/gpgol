@@ -20,8 +20,6 @@
 #ifndef MAPI_GPGME_H
 #define MAPI_GPGME_H
 
-#define DLL_EXPORT __declspec(dllexport)
-
 typedef enum {
     GPG_TYPE_NONE = 0,
     GPG_TYPE_MSG,
@@ -121,8 +119,7 @@ public:
 
 extern "C" {
 
-DLL_EXPORT MapiGPGME * _stdcall CreateMapiGPGME (LPMESSAGE msg);
-
+MapiGPGME * __stdcall CreateMapiGPGME (LPMESSAGE msg);
 }
 
 #endif /*MAPI_GPGME_H*/

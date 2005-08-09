@@ -26,14 +26,15 @@
 #include <time.h>
 
 #ifdef __MINGW32__
+# include <initguid.h>
 # include "mymapi.h"
 # include "mymapitags.h"
 #else /* !__MINGW32__ */
-#include <atlbase.h>
-#include <mapidefs.h>
-#include <mapiutil.h>
-#include <initguid.h>
-#include <mapiguid.h>
+# include <atlbase.h>
+# include <mapidefs.h>
+# include <mapiutil.h>
+# include <initguid.h>
+# include <mapiguid.h>
 #endif /* !__MINGW32__ */
 
 #include "gpgme.h"
@@ -43,16 +44,14 @@
 #include "MapiGPGME.h"
 #include "engine.h"
 
-#ifdef __MINGW32__
-#define  FreeProws(a)               do { ; } while(0)
-#define  HrGetOneProp(a,b,c)        0
-#define  HrSetOneProp(a,b)          0
-#define  FPropExists(a,b)           0
-#define  FreePadrlist(a)            0
-#define  HrQueryAllRows(a,b,c,d,e,f)  0
-#define  PpropFindProp(a,b,c)       0
-#define  RTFSync(a,b,c)             0
-#endif
+// #define  FreeProws(a)               do { ; } while(0)
+// #define  HrGetOneProp(a,b,c)        0
+// #define  HrSetOneProp(a,b)          0
+// #define  FPropExists(a,b)           0
+// #define  FreePadrlist(a)            0
+// #define  HrQueryAllRows(a,b,c,d,e,f)  0
+// #define  PpropFindProp(a,b,c)       0
+// #define  RTFSync(a,b,c)             0
 
 /* These were omitted from the standard headers */
 #ifndef PR_BODY_HTML
@@ -392,11 +391,17 @@ private:
 
 
 /* Create an instance of the MapiGPGME class. MSG may be NULL. */
-MapiGPGME * _stdcall
+MapiGPGME *
+_CreateMapiGPGME (LPMESSAGE msg)
+{
+  return new MapiGPGMEImpl (msg);
+}
+MapiGPGME *
 CreateMapiGPGME (LPMESSAGE msg)
 {
   return new MapiGPGMEImpl (msg);
 }
+
 
 
 void 

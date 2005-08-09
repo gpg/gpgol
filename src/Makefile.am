@@ -12,6 +12,7 @@
 ## Process this file with automake to produce Makefile.in
 
 bin_PROGRAMS = libgpgmedlgs 
+EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) -shared
 AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
@@ -38,9 +39,10 @@ libgpgmedlgs_SOURCES = \
               recipient-dialog.c   \
               resource.h           \
               verify-dialog.c      \
-	vasprintf.c 
+	vasprintf.c
 
-libgpgmedlgs_LDADD = $(GPGME_LIBS) -lmapi32 -lshell32 -lgdi32 -lcomdlg32
+libgpgmedlgs_LDADD = libgpgmedlgs.def mapi32.dll $(GPGME_LIBS)  \
+                      -lshell32 -lgdi32 -lcomdlg32
 
 
 
