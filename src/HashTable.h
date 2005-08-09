@@ -20,25 +20,24 @@
 #ifndef MAPI_HASHTABLE_H
 #define MAPI_HASHTABLE_H
 
-#define DLL_EXPORT __declspec(dllexport)
-
 class HashTable
 {
 private:
     void **table;
-    unsigned n;
-    unsigned pos;
+    unsigned int n;
+    unsigned int pos;
 
 public:
-    DLL_EXPORT HashTable ();
-    DLL_EXPORT HashTable (unsigned n);
-    DLL_EXPORT ~HashTable ();
+    HashTable ();
+    HashTable (unsigned int n);
+    ~HashTable ();
 
 public:
-    DLL_EXPORT unsigned size ();
-    DLL_EXPORT void put(const char *key, void* val);
-    DLL_EXPORT void* get(const char *key);
-    DLL_EXPORT void* get(int index);
-    DLL_EXPORT void clear ();
+    unsigned size ();
+    void put(const char *key, void* val);
+    void* get(const char *key);
+    void* get(int index);
+    void clear ();
 };
-#endif
+
+#endif /*MAPI_HASHTABLE_H*/

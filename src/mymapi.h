@@ -30,6 +30,10 @@
 #ifndef MAPI_H
 #define MAPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Some types */
 
@@ -128,11 +132,12 @@ typedef struct MapiMessage_s *lpMapiMessage;
 
 #define FORCE_SAVE                    0x00000004U
 
+#define RTF_SYNC_BODY_CHANGED         1 /* FIXME FIXME */
+
 
 #ifndef MAPI_DIM
 # define MAPI_DIM 1 /* Default to one dimension for variable length arrays */
 #endif
-
 
 DEFINE_OLEGUID(IID_IABContainer,0x2030D,0,0);
 DEFINE_OLEGUID(IID_IABLogon,0x20314,0,0);
@@ -177,6 +182,7 @@ DEFINE_OLEGUID(IID_IProfAdmin,0x2031C,0,0);
 DEFINE_OLEGUID(IID_IProfSect,0x20304,0,0);
 DEFINE_OLEGUID(IID_IProviderAdmin,0x20325,0,0);
 DEFINE_OLEGUID(IID_ISpoolerHook,0x20320,0,0);
+DEFINE_OLEGUID(IID_IStream, 0x0000c, 0, 0);
 DEFINE_OLEGUID(IID_IStreamDocfile,0x2032C,0,0);
 DEFINE_OLEGUID(IID_IStreamTnef,0x20330,0,0);
 DEFINE_OLEGUID(IID_ITNEF,0x20319,0,0);
@@ -645,7 +651,9 @@ void    WINAPI FreePadrlist(LPADRLIST);
 void    WINAPI FreeProws(LPSRowSet);
 HRESULT WINAPI HrQueryAllRows(LPMAPITABLE,LPSPropTagArray,LPSRestriction,
                               LPSSortOrderSet,LONG,LPSRowSet*);
-/* LPSPropValue WINAPI PpropFindProp(LPSPropValue,ULONG,ULONG); */
+LPSPropValue WINAPI PpropFindProp(LPSPropValue,ULONG,ULONG);
+
+HRESULT WINAPI RTFSync (LPMESSAGE, ULONG, BOOL FAR*);
 
 
 /* Memory allocation routines */
@@ -668,7 +676,7 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER,LPFREEBUFFER,
                                 ULONG,LPSTR,LPSTR,LPSTREAM*);
 #endif
 
-
-
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* MAPI_H */

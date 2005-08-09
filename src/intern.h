@@ -23,7 +23,11 @@
 
 #ifdef __cplusplus
 extern "C" {
+#if 0
+}
 #endif
+#endif
+
 
 #ifndef STRICT
 #define STRICT
@@ -71,6 +75,8 @@ void  xfree (void *p);
 
 cache_item_t cache_item_new (void);
 void cache_item_free (cache_item_t itm);
+
+HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 
 /*-- recipient-dialog.c --*/
 int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);

@@ -11,12 +11,12 @@
 
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = outlgpg
+bin_PROGRAMS = libgpgmedlgs 
 
-AM_CFLAGS = $(GPGME_CFLAGS)
-AM_CXXFLAGS = $(GPGME_CFLAGS)
+AM_CFLAGS = $(GPGME_CFLAGS) -shared
+AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
 
-outlgpg_SOURCES = \
+libgpgmedlgs_SOURCES = \
               MapiGPGME.cpp        \
               MapiGPGME.h	   \
 	      mymapi.h             \
@@ -28,6 +28,7 @@ outlgpg_SOURCES = \
               engine-gpgme.c	   \
               engine.h		   \
               intern.h		   \
+	HashTable.h HashTable.cpp  \
               keycache.c	   \
               keycache.h	   \
 	      usermap.c            \
@@ -36,9 +37,10 @@ outlgpg_SOURCES = \
               passphrase-dialog.c  \
               recipient-dialog.c   \
               resource.h           \
-              verify-dialog.c
+              verify-dialog.c      \
+	vasprintf.c 
 
-outlgpg_LDADD = $(GPGME_LIBS)
+libgpgmedlgs_LDADD = $(GPGME_LIBS) -lmapi32 -lshell32 -lgdi32 -lcomdlg32
 
 
 

@@ -55,7 +55,7 @@ HashTable::HashTable (void)
     memset (table, 0, sizeof (void*)*n);
 }
 
-HashTable::HashTable (unsigned n)
+HashTable::HashTable (unsigned int n)
 {
     pos = 0;
     this->n = n;

@@ -128,3 +128,41 @@ cache_item_free (cache_item_t itm)
     itm->pass = NULL;
     xfree (itm);
 }
+
+/* This is a helper function to load a Windows function from either of
+   one DLLs. */
+HRESULT
+w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e)
+{
+  static int initialized;
+  static HRESULT (WINAPI * func)(HWND,int,HANDLE,DWORD,LPSTR);
+
+  if (!initialized)
+    {
+      static char *dllnames[] = { "shell32.dll", "shfolder.dll", NULL };
+      void *handle;
+      int i;
+
+      initialized = 1;
+
+      for (i=0, handle = NULL; !handle && dllnames[i]; i++)
+        {
+          handle = LoadLibrary (dllnames[i]);
+          if (handle)
+            {
+              func = (HRESULT (WINAPI *)(HWND,int,HANDLE,DWORD,LPSTR))
+                     GetProcAddress (handle, "SHGetFolderPathA");
+              if (!func)
+                {
+                  FreeLibrary (handle);
+                  handle = NULL;
+                }
+            }
+        }
+    }
+
+  if (func)
+    return func (a,b,c,d,e);
+  else
+    return -1;
+}

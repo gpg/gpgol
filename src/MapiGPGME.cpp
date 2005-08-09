@@ -44,6 +44,16 @@
 #include "engine.h"
 
 
+#define  FreeProws(a)               do { ; } while(0)
+#define  HrGetOneProp(a,b,c)        0
+#define  HrSetOneProp(a,b)          0
+#define  FPropExists(a,b)           0
+#define  FreePadrlist(a)            0
+#define  HrQueryAllRows(a,b,c,d,e,f)  0
+#define  PpropFindProp(a,b,c)       0
+#define  RTFSync(a,b,c)             0
+
+
 /* These were omitted from the standard headers */
 #ifndef PR_BODY_HTML
 #define PR_BODY_HTML (PROP_TAG(PT_TSTRING, 0x1013))
@@ -53,6 +63,9 @@
 #define ATT_SIGN(action) ((action) & GPG_ATTACH_SIGN)
 #define ATT_ENCR(action) ((action) & GPG_ATTACH_ENCRYPT)
 #define ATT_PREFIX ".pgpenc"
+
+#define DEFAULT_ATTACHMENT_FORMAT GPG_FMT_CLASSIC
+
 
 /* default extension for attachments */
 #define EXT_MSG "pgp"
@@ -64,8 +77,330 @@
 #define fail_if_null(p) do { if (!(p)) abort (); } while (0)
 
 
+class MapiGPGMEImpl : public MapiGPGME
+{
+public:    
+  MapiGPGMEImpl () 
+  {
+    clearConfig ();
+    clearObject ();
+    this->passCache = new HashTable ();
+    op_init ();
+    prepareLogging ();
+    logDebug ("constructor null\r\n");
+  }
+
+  MapiGPGMEImpl (LPMESSAGE msg)
+  {
+    clearConfig ();
+    clearObject ();
+    this->msg = msg;
+    this->passCache = new HashTable ();
+    op_init ();
+    prepareLogging ();
+    logDebug ("constructor %p\r\n", msg);
+  }
+  
+  ~MapiGPGMEImpl ()
+  {
+    unsigned int i=0;
+
+    logDebug ("destructor %p\r\n", msg);
+    op_deinit ();
+    if (defaultKey)
+      {
+	delete_buf (defaultKey);
+	defaultKey = NULL;
+      }
+    if (logfile) 
+      {
+	delete_buf (logfile);
+	logfile = NULL;
+      }
+    logDebug ("hash entries %d\r\n", passCache->size ());
+    for (i = 0; i < passCache->size (); i++) 
+      {
+	cache_item_t t = (cache_item_t)passCache->get (i);
+	if (t != NULL)
+          cache_item_free (t);
+      }
+    delete passCache; 
+    passCache = NULL;
+    freeAttachments ();
+    cleanupTempFiles ();
+  }
+
+  void __stdcall destroy ()
+  {
+    delete this;
+  }
+
+  void operator delete (void *p) 
+  {
+    ::operator delete (p);
+  }  
+
+  
+public:
+  int encrypt (void);
+  int decrypt (void);
+  int sign (void);
+  int verify (void);
+  int signEncrypt (void);
+
+  int doCmd(int doEncrypt, int doSign);
+  int doCmdAttach(int action);
+  int doCmdFile(int action, const char *in, const char *out);
+
+  const char* getLogFile (void) { return logfile; }
+  void setLogFile (const char *logfile)
+  { 
+    if (this->logfile) 
+      {
+        delete []this->logfile;
+        this->logfile = NULL;
+      }
+    this->logfile = new char [strlen (logfile)+1];
+    if (this->logfile != NULL)
+      strcpy (this->logfile, logfile);
+  }
+
+  int getStorePasswdTime (void)
+  {
+    return nstorePasswd;
+  }
+
+  void setStorePasswdTime (int nCacheTime)
+  {
+    this->nstorePasswd = nCacheTime; 
+  }
+
+  bool getEncryptDefault (void)
+  {
+    return doEncrypt;
+  }
+
+  void setEncryptDefault (bool doEncrypt)
+  {
+    this->doEncrypt = doEncrypt; 
+  }
+
+  bool getSignDefault (void)
+  { 
+    return doSign; 
+  }
+
+  void setSignDefault (bool doSign)
+  {
+    this->doSign = doSign;
+  }
+
+  bool getEncryptWithDefaultKey (void)
+  {
+    return encryptDefault;
+  }
+  
+  void setEncryptWithDefaultKey (bool encryptDefault)
+  {
+    this->encryptDefault = encryptDefault;
+  }
+
+  bool getSaveDecryptedAttachments (void) 
+  { 
+    return saveDecryptedAtt;
+  }
+
+  void setSaveDecryptedAttachments (bool saveDecrAtt)
+  {
+    this->saveDecryptedAtt = saveDecrAtt;
+  }
+
+  void setEncodingFormat (int fmt)
+  {
+    encFormat = fmt; 
+  }
+
+  int getEncodingFormat (void) 
+  {
+    return encFormat;
+  }
+
+  void setSignAttachments (bool signAtt)
+  {
+    this->autoSignAtt = signAtt; 
+  }
+
+  bool getSignAttachments (void)
+  {
+    return autoSignAtt;
+  }
+
+  void setEnableLogging (bool val)
+  {
+    this->enableLogging = val;
+  }
+
+  bool getEnableLogging (void)
+  {
+    return this->enableLogging;
+  }
+
+  int readOptions (void);
+  int writeOptions (void);
+
+  const char* getAttachmentExtension (const char *fname);
+  void freeAttachments (void);
+  int getAttachments (void);
+  
+  int countAttachments (void) 
+  { 
+    if (attachRows == NULL)
+      return -1;
+    return (int) attachRows->cRows; 
+  }
+
+  bool hasAttachments (void)
+  {
+    if (attachRows == NULL)
+      getAttachments ();
+    bool has = attachRows->cRows > 0? true : false;
+    freeAttachments ();
+    return has;
+  }
+
+  bool deleteAttachment (int pos)
+  {
+    if (msg->DeleteAttach (pos, 0, NULL, 0) == S_OK)
+      return true;
+    return false;
+  }
+
+  LPATTACH createAttachment (int &pos)
+  {
+    ULONG attnum;	
+    LPATTACH newatt = NULL;
+    
+    if (msg->CreateAttach (NULL, 0, &attnum, &newatt) == S_OK)
+      {
+        pos = attnum;
+        return newatt;
+      }
+    return NULL;
+  }
+
+  int startKeyManager ();
+  void startConfigDialog (HWND parent);
+
+  int attachPublicKey (const char *keyid);
+
+  void setDefaultKey (const char *key);
+  char* getDefaultKey (void);
+
+  void setMessage (LPMESSAGE msg);
+  void setWindow (HWND hwnd);
+
+  const char* getPassphrase (const char *keyid);
+  void storePassphrase (void *itm);
+  outlgpg_type_t getMessageType (const char *body);
+
+  void logDebug (const char *fmt, ...);
+    
+  void clearPassphrase (void) 
+  {
+    if (passCache != NULL)
+      passCache->clear ();
+  }
+
+
+private:
+  HWND	      parent;
+  char	      *defaultKey;
+  HashTable   *passCache;
+  LPMESSAGE   msg;
+  LPMAPITABLE attachTable;
+  LPSRowSet   attachRows;
+  void	      *recipSet;
+  bool        enableLogging;
+
+  /* Options */
+  char    *logfile;
+  int	  nstorePasswd;  /* Time in seconds the passphrase is stored. */
+  bool    doEncrypt;
+  bool    doSign;
+  bool    encryptDefault;
+  bool    saveDecryptedAtt; /* Save decrypted attachments. */
+  bool    autoSignAtt;	    /* Sign all outgoing attachments. */
+  int	    encFormat;      /* Encryption format for attachments. */
+
+  void displayError (HWND root, const char *title);
+  void prepareLogging (void);
+  void clearObject (void);
+  void clearConfig (void)
+  {
+    nstorePasswd = 0;
+    doEncrypt = false;
+    doSign = false;
+    encryptDefault = false;
+    saveDecryptedAtt = false;
+    autoSignAtt = false;
+    encFormat = DEFAULT_ATTACHMENT_FORMAT;
+    enableLogging = false;
+  }
+
+  HWND findMessageWindow (HWND parent);
+  void rtfSync (char *body);
+  int  setBody (char *body, bool isHtml);
+  int  setRTFBody (char *body);
+  bool isMessageEncrypted (void);
+  bool isHtmlBody (const char *body);
+  bool isHtmlMessage (void);
+  char *getBody (bool isHtml);
+  char *addHtmlLineEndings (char *newBody);
+    
+  void cleanupTempFiles ();
+  int countRecipients (char **recipients);
+  char **getRecipients (bool isRootMsg);
+  void freeRecipients (char **recipients);
+  void freeUnknownKeys (char **unknown, int n);
+  void freeKeyArray (void **key);
+
+  bool  setAttachMethod (LPATTACH obj, int mode);
+  int   getAttachMethod (LPATTACH obj);
+  char* getAttachFilename (LPATTACH obj);
+  char* getAttachPathname (LPATTACH obj);
+  bool  setAttachFilename (LPATTACH obj, const char *name, bool islong);
+  int   getMessageFlags ();
+  int   getMessageHasAttachments ();
+  bool  setMessageAccess (int access);
+  bool  setXHeader (const char *name, const char *val);
+  char* getXHeader (const char *name);
+  bool  checkAttachmentExtension (const char *ext);
+  const char* getPGPExtension (int action);
+  char* generateTempname (const char *name);
+  int   streamOnFile (const char *file, LPATTACH att);
+  int   streamFromFile (const char *file, LPATTACH att);
+  int   encryptAttachments (HWND hwnd);
+  int   decryptAttachments (HWND hwnd);
+  int   signAttachments (HWND hwnd);
+  LPATTACH openAttachment (int pos);
+  void  releaseAttachment (LPATTACH att);
+  int   processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
+  bool  saveDecryptedAttachment (HWND root, const char *srcname);
+  bool  signAttachment (const char *datfile);
+
+};
+
+
+/* Create an instance of the MapiGPGME class. MSG may be NULL. */
+MapiGPGME * _stdcall
+CreateMapiGPGME (LPMESSAGE msg)
+{
+  return new MapiGPGMEImpl (msg);
+}
+
+
 void 
-MapiGPGME::logDebug (const char *fmt, ...)
+MapiGPGMEImpl::logDebug (const char *fmt, ...)
 {
     FILE * logfp;
     va_list a;
@@ -84,7 +419,7 @@ MapiGPGME::logDebug (const char *fmt, ...)
 
 
 void
-MapiGPGME::clearObject (void)
+MapiGPGMEImpl::clearObject (void)
 {
     this->attachRows = NULL;
     this->attachTable = NULL;
@@ -97,7 +432,7 @@ MapiGPGME::clearObject (void)
 
 
 void
-MapiGPGME::prepareLogging (void)
+MapiGPGMEImpl::prepareLogging (void)
 {
     char *val = NULL;
 
@@ -110,31 +445,8 @@ MapiGPGME::prepareLogging (void)
 }
 
 
-MapiGPGME::MapiGPGME (LPMESSAGE msg)
-{
-    clearConfig ();
-    clearObject ();
-    this->msg = msg;
-    this->passCache = new HashTable ();
-    op_init ();
-    prepareLogging ();
-    logDebug ("constructor %p\r\n", msg);
-}
-
-
-MapiGPGME::MapiGPGME (void)
-{    
-    clearConfig ();
-    clearObject ();
-    this->passCache = new HashTable ();
-    op_init ();
-    prepareLogging ();
-    logDebug ("constructor null\r\n");
-}
-
-
 void 
-MapiGPGME::cleanupTempFiles (void)
+MapiGPGMEImpl::cleanupTempFiles (void)
 {
     HANDLE hd;
     WIN32_FIND_DATA fnd;
@@ -159,35 +471,8 @@ MapiGPGME::cleanupTempFiles (void)
 }
 
 
-MapiGPGME::~MapiGPGME ()
-{
-    unsigned i=0;
-
-    logDebug ("destructor %p\r\n", msg);
-    op_deinit ();
-    if (defaultKey) {
-	delete_buf (defaultKey);
-	defaultKey = NULL;
-    }
-    if (logfile) {
-	delete_buf (logfile);
-	logfile = NULL;
-    }
-    logDebug ("hash entries %d\r\n", passCache->size ());
-    for (i = 0; i < passCache->size (); i++) {
-	cache_item_t t = (cache_item_t)passCache->get (i);
-	if (t != NULL)
-	    cache_item_free (t);
-    }
-    delete passCache; 
-    passCache = NULL;
-    freeAttachments ();
-    cleanupTempFiles ();
-}
-
-
 int
-MapiGPGME::setRTFBody (char *body)
+MapiGPGMEImpl::setRTFBody (char *body)
 {
     setMessageAccess (MAPI_ACCESS_MODIFY);
     HWND rtf = findMessageWindow (parent);
@@ -201,7 +486,7 @@ MapiGPGME::setRTFBody (char *body)
 
 
 int 
-MapiGPGME::setBody (char *body, bool isHtml)
+MapiGPGMEImpl::setBody (char *body, bool isHtml)
 {
     /* XXX: handle richtext/html */
     SPropValue sProp; 
@@ -224,14 +509,13 @@ MapiGPGME::setBody (char *body, bool isHtml)
 
 
 void
-MapiGPGME::rtfSync (char *body)
+MapiGPGMEImpl::rtfSync (char *body)
 {
     BOOL bChanged = FALSE;
     SPropValue sProp; 
     HRESULT hr;
 
     /* Make sure that the Plaintext and the Richtext are in sync */
-#ifndef __MINGW32__  /* FIXME */
     sProp.ulPropTag = PR_BODY;
     sProp.Value.lpszA = "";
     hr = HrSetOneProp(msg, &sProp);
@@ -239,12 +523,11 @@ MapiGPGME::rtfSync (char *body)
     sProp.Value.lpszA = body;
     hr = HrSetOneProp(msg, &sProp);
     RTFSync(msg, RTF_SYNC_BODY_CHANGED, &bChanged);
-#endif
 }
 
 
 bool 
-MapiGPGME::isHtmlBody (const char *body)
+MapiGPGMEImpl::isHtmlBody (const char *body)
 {
     char *p1, *p2;
 
@@ -264,7 +547,7 @@ MapiGPGME::isHtmlBody (const char *body)
 
 
 bool
-MapiGPGME::isHtmlMessage (void)
+MapiGPGMEImpl::isHtmlMessage (void)
 {
     char *body = getBody (true);
     if (body != NULL && strlen (body) > 1) {
@@ -278,7 +561,7 @@ MapiGPGME::isHtmlMessage (void)
 
 
 char* 
-MapiGPGME::getBody (bool isHtml)
+MapiGPGMEImpl::getBody (bool isHtml)
 {
     HRESULT hr;
     LPSPropValue lpspvFEID = NULL;
@@ -301,7 +584,7 @@ MapiGPGME::getBody (bool isHtml)
 
 
 void 
-MapiGPGME::freeKeyArray (void **key)
+MapiGPGMEImpl::freeKeyArray (void **key)
 {
     gpgme_key_t *buf = (gpgme_key_t *)key;
     int i=0;
@@ -317,7 +600,7 @@ MapiGPGME::freeKeyArray (void **key)
 
 
 int 
-MapiGPGME::countRecipients (char **recipients)
+MapiGPGMEImpl::countRecipients (char **recipients)
 {
   int i;
   
@@ -328,7 +611,7 @@ MapiGPGME::countRecipients (char **recipients)
 
 
 char** 
-MapiGPGME::getRecipients (bool isRootMsg)
+MapiGPGMEImpl::getRecipients (bool isRootMsg)
 {
     HRESULT hr;
     LPMAPITABLE lpRecipientTable = NULL;
@@ -367,7 +650,7 @@ MapiGPGME::getRecipients (bool isRootMsg)
 
 
 void
-MapiGPGME::freeUnknownKeys (char **unknown, int n)
+MapiGPGMEImpl::freeUnknownKeys (char **unknown, int n)
 {    
     for (int i=0; i < n; i++) {
 	if (unknown[i] != NULL) {
@@ -380,7 +663,7 @@ MapiGPGME::freeUnknownKeys (char **unknown, int n)
 }
 
 void 
-MapiGPGME::freeRecipients (char **recipients)
+MapiGPGMEImpl::freeRecipients (char **recipients)
 {
     for (int i=0; recipients[i] != NULL; i++) {
 	delete_buf (recipients[i]);	
@@ -391,7 +674,7 @@ MapiGPGME::freeRecipients (char **recipients)
 
 
 const char*
-MapiGPGME::getPassphrase (const char *keyid)
+MapiGPGMEImpl::getPassphrase (const char *keyid)
 {
     cache_item_t item = (cache_item_t)passCache->get(keyid);
     if (item != NULL)
@@ -401,7 +684,7 @@ MapiGPGME::getPassphrase (const char *keyid)
 
 
 void
-MapiGPGME::storePassphrase (void *itm)
+MapiGPGMEImpl::storePassphrase (void *itm)
 {
     cache_item_t item = (cache_item_t)itm;
     cache_item_t old;
@@ -414,7 +697,7 @@ MapiGPGME::storePassphrase (void *itm)
 
 
 char*
-MapiGPGME::addHtmlLineEndings (char *newBody)
+MapiGPGMEImpl::addHtmlLineEndings (char *newBody)
 {
     char *p;
     char *snew = (char*)xcalloc (1, 2*strlen (newBody));
@@ -431,7 +714,7 @@ MapiGPGME::addHtmlLineEndings (char *newBody)
 }
 
 int 
-MapiGPGME::encrypt (void)
+MapiGPGMEImpl::encrypt (void)
 {
     gpgme_key_t *keys=NULL, *keys2=NULL;
     bool isHtml = isHtmlMessage ();
@@ -520,7 +803,7 @@ passphraseCallback (void *opaque, const char *uid_hint,
 
 
 int 
-MapiGPGME::decrypt (void)
+MapiGPGMEImpl::decrypt (void)
 {
     outlgpg_type_t id;
     char *body = getBody (false);
@@ -592,7 +875,7 @@ MapiGPGME::decrypt (void)
 
 
 int
-MapiGPGME::sign (void)
+MapiGPGMEImpl::sign (void)
 {
     char *body = getBody (false);
     char *newBody = NULL;
@@ -620,7 +903,7 @@ MapiGPGME::sign (void)
 
 
 bool
-MapiGPGME::isMessageEncrypted (void)
+MapiGPGMEImpl::isMessageEncrypted (void)
 {
     char *body = getBody (false);
     bool enc = getMessageType (body) == GPG_TYPE_MSG;
@@ -631,7 +914,7 @@ MapiGPGME::isMessageEncrypted (void)
 
 
 outlgpg_type_t
-MapiGPGME::getMessageType (const char *body)
+MapiGPGMEImpl::getMessageType (const char *body)
 {
     if (strstr (body, "BEGIN PGP MESSAGE"))
 	return GPG_TYPE_MSG;
@@ -649,7 +932,7 @@ MapiGPGME::getMessageType (const char *body)
 
 
 int
-MapiGPGME::doCmdFile(int action, const char *in, const char *out)
+MapiGPGMEImpl::doCmdFile(int action, const char *in, const char *out)
 {
     logDebug ( "doCmdFile action=%d in=%s out=%s\r\n", action, in, out);
     if (ATT_SIGN (action) && ATT_ENCR (action))
@@ -663,7 +946,7 @@ MapiGPGME::doCmdFile(int action, const char *in, const char *out)
 
 
 int
-MapiGPGME::doCmdAttach (int action)
+MapiGPGMEImpl::doCmdAttach (int action)
 {
     logDebug ("doCmdAttach action=%d\n", action);
     if (ATT_SIGN (action) && ATT_ENCR (action))
@@ -677,7 +960,7 @@ MapiGPGME::doCmdAttach (int action)
 
 
 int
-MapiGPGME::doCmd (int doEncrypt, int doSign)
+MapiGPGMEImpl::doCmd (int doEncrypt, int doSign)
 {
     logDebug ( "doCmd doEncrypt=%d doSign=%d\r\n", doEncrypt, doSign);
     if (doEncrypt && doSign)
@@ -690,13 +973,32 @@ MapiGPGME::doCmd (int doEncrypt, int doSign)
 }
 
 
+static const char *
+userid_from_key (gpgme_key_t k)
+{
+  if (k && k->uids && k->uids->uid)
+    return k->uids->uid;
+  else
+    return "?";
+}
+
+static const char *
+keyid_from_key (gpgme_key_t k)
+{
+  
+  if (k && k->subkeys && k->subkeys->keyid)
+    return k->subkeys->keyid;
+  else
+    return "????????";
+}
+
+
 static void 
 log_key_info (MapiGPGME *g, gpgme_key_t *keys, gpgme_key_t locusr)
 {
-    if (locusr != NULL)
-	g->logDebug ( "locusr:%s:%s\r\n", 
-		   gpgme_key_get_string_attr (locusr, GPGME_ATTR_USERID, NULL, 0),
-		   gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0));
+    if (locusr)
+	g->logDebug ("locusr:%s:%s\r\n", 
+		     userid_from_key (locusr), keyid_from_key (locusr));
     else
 	g->logDebug ( "locusr:null\r\n");
     gpgme_key_t n;
@@ -706,14 +1008,13 @@ log_key_info (MapiGPGME *g, gpgme_key_t *keys, gpgme_key_t locusr)
 	return;
     i=0;
     for (n=keys[0]; keys[i] != NULL; i++)
-	g->logDebug ( "recp:%d:%s:%s\r\n", i,
-		   gpgme_key_get_string_attr (keys[i], GPGME_ATTR_USERID, NULL, 0),
-		   gpgme_key_get_string_attr (keys[i], GPGME_ATTR_KEYID, NULL, 0));
+	g->logDebug ("recp:%d:%s:%s\r\n", 
+                     i, userid_from_key (keys[i]), keyid_from_key (keys[i]));
 }
 	    
 
 int
-MapiGPGME::signEncrypt (void)
+MapiGPGMEImpl::signEncrypt (void)
 {
     bool isHtml = isHtmlMessage ();
     char *body = getBody (isHtml);
@@ -734,8 +1035,7 @@ MapiGPGME::signEncrypt (void)
 	delete_buf (body);
 	return 0;
     }
-    s = gpgme_key_get_string_attr (locusr, GPGME_ATTR_KEYID, NULL, 0);
-    logDebug ( "locusr keyid:%s\r\n", s);
+    logDebug ( "locusr keyid:%s\r\n", keyid_from_key (locusr));
 
     size_t all;
     int n = op_lookup_keys (recipients, &keys, &unknown, &all);
@@ -775,7 +1075,7 @@ MapiGPGME::signEncrypt (void)
 
 
 int 
-MapiGPGME::verify (void)
+MapiGPGMEImpl::verify (void)
 {
     char *body = getBody (false);
     char *newBody = NULL;
@@ -792,7 +1092,8 @@ MapiGPGME::verify (void)
 }
 
 
-void MapiGPGME::setDefaultKey (const char *key)
+void 
+MapiGPGMEImpl::setDefaultKey (const char *key)
 {
     if (defaultKey) {
 	delete_buf (defaultKey);
@@ -804,14 +1105,15 @@ void MapiGPGME::setDefaultKey (const char *key)
 }
 
 
-char* MapiGPGME::getDefaultKey (void)
+char* 
+MapiGPGMEImpl::getDefaultKey (void)
 {
-    return defaultKey;
+  return defaultKey;
 }
 
 
 void 
-MapiGPGME::setMessage (LPMESSAGE msg)
+MapiGPGMEImpl::setMessage (LPMESSAGE msg)
 {
     this->msg = msg;
     logDebug ( "setMessage %p\r\n", msg);
@@ -819,7 +1121,7 @@ MapiGPGME::setMessage (LPMESSAGE msg)
 
 
 void
-MapiGPGME::setWindow(HWND hwnd)
+MapiGPGMEImpl::setWindow(HWND hwnd)
 {
     this->parent = hwnd;
 }
@@ -828,7 +1130,7 @@ MapiGPGME::setWindow(HWND hwnd)
 /* We need this to find the mailer window because we directly change the text
    of the window instead of the MAPI object itself. */
 HWND
-MapiGPGME::findMessageWindow (HWND parent)
+MapiGPGMEImpl::findMessageWindow (HWND parent)
 {
     HWND child;
 
@@ -855,7 +1157,7 @@ MapiGPGME::findMessageWindow (HWND parent)
 
 
 int
-MapiGPGME::streamFromFile (const char *file, LPATTACH att)
+MapiGPGMEImpl::streamFromFile (const char *file, LPATTACH att)
 {
     HRESULT hr;
     LPSTREAM to = NULL, from = NULL;
@@ -884,7 +1186,7 @@ MapiGPGME::streamFromFile (const char *file, LPATTACH att)
 
 
 int
-MapiGPGME::streamOnFile (const char *file, LPATTACH att)
+MapiGPGMEImpl::streamOnFile (const char *file, LPATTACH att)
 {
     HRESULT hr;
     LPSTREAM from = NULL, to = NULL;
@@ -916,7 +1218,7 @@ MapiGPGME::streamOnFile (const char *file, LPATTACH att)
 
 
 int
-MapiGPGME::getMessageFlags (void)
+MapiGPGMEImpl::getMessageFlags (void)
 {
     HRESULT hr;
     LPSPropValue propval = NULL;
@@ -932,7 +1234,7 @@ MapiGPGME::getMessageFlags (void)
 
 
 int
-MapiGPGME::getMessageHasAttachments (void)
+MapiGPGMEImpl::getMessageHasAttachments (void)
 {
     HRESULT hr;
     LPSPropValue propval = NULL;
@@ -948,7 +1250,7 @@ MapiGPGME::getMessageHasAttachments (void)
 
 
 bool
-MapiGPGME::setMessageAccess (int access)
+MapiGPGMEImpl::setMessageAccess (int access)
 {
     HRESULT hr;
     SPropValue prop;
@@ -960,7 +1262,7 @@ MapiGPGME::setMessageAccess (int access)
 
 
 bool
-MapiGPGME::setAttachMethod (LPATTACH obj, int mode)
+MapiGPGMEImpl::setAttachMethod (LPATTACH obj, int mode)
 {
     SPropValue prop;
     HRESULT hr;
@@ -972,7 +1274,7 @@ MapiGPGME::setAttachMethod (LPATTACH obj, int mode)
 
 
 int
-MapiGPGME::getAttachMethod (LPATTACH obj)
+MapiGPGMEImpl::getAttachMethod (LPATTACH obj)
 {
     HRESULT hr;
     LPSPropValue propval = NULL;
@@ -987,7 +1289,7 @@ MapiGPGME::getAttachMethod (LPATTACH obj)
 }
 
 bool
-MapiGPGME::setAttachFilename (LPATTACH obj, const char *name, bool islong)
+MapiGPGMEImpl::setAttachFilename (LPATTACH obj, const char *name, bool islong)
 {
     HRESULT hr;
     SPropValue prop;
@@ -1002,7 +1304,7 @@ MapiGPGME::setAttachFilename (LPATTACH obj, const char *name, bool islong)
 
 
 char*
-MapiGPGME::getAttachPathname (LPATTACH obj)
+MapiGPGMEImpl::getAttachPathname (LPATTACH obj)
 {
     LPSPropValue propval;
     HRESULT hr;
@@ -1027,7 +1329,7 @@ MapiGPGME::getAttachPathname (LPATTACH obj)
 
 
 char*
-MapiGPGME::getAttachFilename (LPATTACH obj)
+MapiGPGMEImpl::getAttachFilename (LPATTACH obj)
 {
     LPSPropValue propval;
     HRESULT hr;
@@ -1052,7 +1354,7 @@ MapiGPGME::getAttachFilename (LPATTACH obj)
 
 
 bool
-MapiGPGME::checkAttachmentExtension (const char *ext)
+MapiGPGMEImpl::checkAttachmentExtension (const char *ext)
 {
     if (ext == NULL)
 	return false;
@@ -1068,7 +1370,7 @@ MapiGPGME::checkAttachmentExtension (const char *ext)
 
 
 const char*
-MapiGPGME::getAttachmentExtension (const char *fname)
+MapiGPGMEImpl::getAttachmentExtension (const char *fname)
 {
     static char ext[4];
     char *p;
@@ -1085,7 +1387,7 @@ MapiGPGME::getAttachmentExtension (const char *fname)
 
 
 const char*
-MapiGPGME::getPGPExtension (int action)
+MapiGPGMEImpl::getPGPExtension (int action)
 {
     if (ATT_SIGN (action))
 	return EXT_SIG;
@@ -1094,7 +1396,7 @@ MapiGPGME::getPGPExtension (int action)
 
 
 bool 
-MapiGPGME::setXHeader (const char *name, const char *val)
+MapiGPGMEImpl::setXHeader (const char *name, const char *val)
 {  
 #ifndef __MINGW32__
     USES_CONVERSION;
@@ -1132,7 +1434,7 @@ MapiGPGME::setXHeader (const char *name, const char *val)
 
 
 char*
-MapiGPGME::getXHeader (const char *name)
+MapiGPGMEImpl::getXHeader (const char *name)
 {
     /* XXX: PR_TRANSPORT_HEADERS is not available in my MSDN. */
     return NULL;
@@ -1140,7 +1442,7 @@ MapiGPGME::getXHeader (const char *name)
 
 
 void
-MapiGPGME::freeAttachments (void)
+MapiGPGMEImpl::freeAttachments (void)
 {
     if (attachTable != NULL) {
         attachTable->Release ();
@@ -1154,7 +1456,7 @@ MapiGPGME::freeAttachments (void)
 
 
 int
-MapiGPGME::getAttachments (void)
+MapiGPGMEImpl::getAttachments (void)
 {
     static SizedSPropTagArray (1L, PropAttNum) = {1L, {PR_ATTACH_NUM}};
     HRESULT hr;    
@@ -1174,7 +1476,7 @@ MapiGPGME::getAttachments (void)
 
 
 LPATTACH
-MapiGPGME::openAttachment (int pos)
+MapiGPGMEImpl::openAttachment (int pos)
 {
     HRESULT hr;
     LPATTACH att = NULL;
@@ -1187,7 +1489,7 @@ MapiGPGME::openAttachment (int pos)
 
 
 void
-MapiGPGME::releaseAttachment (LPATTACH att)
+MapiGPGMEImpl::releaseAttachment (LPATTACH att)
 {
     att->Release ();
 }
@@ -1195,7 +1497,7 @@ MapiGPGME::releaseAttachment (LPATTACH att)
 
 
 char*
-MapiGPGME::generateTempname (const char *name)
+MapiGPGMEImpl::generateTempname (const char *name)
 {
     char temp[MAX_PATH+2];
     char *p;
@@ -1210,7 +1512,7 @@ MapiGPGME::generateTempname (const char *name)
 
 
 bool
-MapiGPGME::signAttachment (const char *datfile)
+MapiGPGMEImpl::signAttachment (const char *datfile)
 {
     char *sigfile;
     LPATTACH newatt;
@@ -1248,7 +1550,8 @@ MapiGPGME::signAttachment (const char *datfile)
 /* XXX: find a way to see if the attachment is already secured. This could be
         done by watching at the extension or checking the first lines. */
 int
-MapiGPGME::processAttachment (LPATTACH *attm, HWND hwnd, int pos, int action)
+MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
+                                  int pos, int action)
 {    
     LPATTACH att = *attm;
     int method = getAttachMethod (att);
@@ -1366,7 +1669,7 @@ MapiGPGME::processAttachment (LPATTACH *attm, HWND hwnd, int pos, int action)
 
 
 int 
-MapiGPGME::decryptAttachments (HWND hwnd)
+MapiGPGMEImpl::decryptAttachments (HWND hwnd)
 {
     int n;
 
@@ -1390,7 +1693,7 @@ MapiGPGME::decryptAttachments (HWND hwnd)
 
 
 int
-MapiGPGME::signAttachments (HWND hwnd)
+MapiGPGMEImpl::signAttachments (HWND hwnd)
 {
     if (!getAttachments ())
 	return FALSE;
@@ -1413,7 +1716,7 @@ MapiGPGME::signAttachments (HWND hwnd)
 
 
 int
-MapiGPGME::encryptAttachments (HWND hwnd)
+MapiGPGMEImpl::encryptAttachments (HWND hwnd)
 {    
     int n;
 
@@ -1438,7 +1741,7 @@ MapiGPGME::encryptAttachments (HWND hwnd)
 
 
 bool 
-MapiGPGME::saveDecryptedAttachment (HWND root, const char *srcname)
+MapiGPGMEImpl::saveDecryptedAttachment (HWND root, const char *srcname)
 				     
 {
     char filter[] = "All Files (*.*)|*.*||";
@@ -1480,21 +1783,21 @@ MapiGPGME::saveDecryptedAttachment (HWND root, const char *srcname)
 
 
 int
-MapiGPGME::startKeyManager (void)
+MapiGPGMEImpl::startKeyManager (void)
 {
     return start_key_manager ();
 }
 
 
 void
-MapiGPGME::startConfigDialog (HWND parent)
+MapiGPGMEImpl::startConfigDialog (HWND parent)
 {
     config_dialog_box (parent);
 }
 
 
 int
-MapiGPGME::readOptions (void)
+MapiGPGMEImpl::readOptions (void)
 {
     char *val=NULL;
 
@@ -1552,7 +1855,7 @@ MapiGPGME::readOptions (void)
 
 
 void
-MapiGPGME::displayError (HWND root, const char *title)
+MapiGPGMEImpl::displayError (HWND root, const char *title)
 {	
     char buf[256];
     
@@ -1564,7 +1867,7 @@ MapiGPGME::displayError (HWND root, const char *title)
 
 
 int
-MapiGPGME::writeOptions (void)
+MapiGPGMEImpl::writeOptions (void)
 {
     struct conf {
 	const char *name;
@@ -1603,7 +1906,7 @@ MapiGPGME::writeOptions (void)
 
 
 int 
-MapiGPGME::attachPublicKey (const char *keyid)
+MapiGPGMEImpl::attachPublicKey (const char *keyid)
 {
     /* @untested@ */
     const char *patt[1];
@@ -1629,11 +1932,3 @@ MapiGPGME::attachPublicKey (const char *keyid)
     xfree ((void *)patt[0]);
     return err;
 }
-
-
-    
-
-
-
-    
-    

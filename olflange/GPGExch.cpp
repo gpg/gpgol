@@ -31,8 +31,7 @@
 
 #include "GPGExchange.h"
 #include "GPGExch.h"
-#include "HashTable.h"
-#include "MapiGPGME.h"
+#include "../src/MapiGPGME.h"
 
 BOOL g_bInitDll = FALSE;
 MapiGPGME *m_gpg = NULL;
@@ -170,7 +169,7 @@ CGPGExchExt::CGPGExchExt (void)
     m_pExchExtPropertySheets = new CGPGExchExtPropertySheets (this);
     if (!g_bInitDll) {
 	if (m_gpg == NULL) {
-	    m_gpg = new MapiGPGME ();
+	    m_gpg = CreateMapiGPGME (NULL);
 	    m_gpg->readOptions ();
 	}
 	g_bInitDll = TRUE;

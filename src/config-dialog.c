@@ -91,19 +91,18 @@ get_folder (void)
 static int
 load_config_value_ext (char **val)
 {
-    static char buf[MAX_PATH+64];
-    BOOL ec;
-    
-    /* MSDN: This buffer must be at least MAX_PATH characters in size. */
-    memset (buf, 0, sizeof (buf));
-    ec = SHGetSpecialFolderPath (HWND_DESKTOP, buf, CSIDL_APPDATA, TRUE);
-    if (ec != 1)
-	return -1;
-    strcat (buf, "\\gnupg");
-    if (GetFileAttributes (buf) == 0xFFFFFFFF)
-	return -1;
-    *val = buf;
-    return 0;
+  static char buf[MAX_PATH+64];
+  
+  /* MSDN: This buffer must be at least MAX_PATH characters in size. */
+  memset (buf, 0, sizeof (buf));
+  if (w32_shgetfolderpath (NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE, 
+                           NULL, 0, buf) < 0)
+    return -1;
+  strcat (buf, "\\gnupg");
+  if (GetFileAttributes (buf) == 0xFFFFFFFF)
+    return -1;
+  *val = buf;
+  return 0;
 }
 
 
