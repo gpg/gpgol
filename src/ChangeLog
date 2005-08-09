@@ -1,3 +1,10 @@
+2005-08-09  Timo Schulz  <ts@g10code.com>
+
+	* missing/stpcpy.c: New.
+	* missing/vasprintf.c: New.
+	* libgpgmedlgs/libgpgmedlgs.{dsw, dsp}: Updated.
+	* MapiGPGME.cpp (_WIN32): Changed sequence of include files.
+
 2005-08-09  Werner Koch  <wk@g10code.com>
 
 	* MapiGPGME.cpp (userid_from_key, keyid_from_key): New. Changed

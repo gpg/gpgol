@@ -24,16 +24,16 @@
 
 #include <windows.h>
 #include <time.h>
-#include <initguid.h>
 
 #ifdef __MINGW32__
 # include "mymapi.h"
 # include "mymapitags.h"
 #else /* !__MINGW32__ */
-# include <mapidefs.h>
-# include <mapiutil.h>
-# include <mapiguid.h>
-# include <atlbase.h>
+#include <atlbase.h>
+#include <mapidefs.h>
+#include <mapiutil.h>
+#include <initguid.h>
+#include <mapiguid.h>
 #endif /* !__MINGW32__ */
 
 #include "gpgme.h"
@@ -43,7 +43,7 @@
 #include "MapiGPGME.h"
 #include "engine.h"
 
-
+#ifdef __MINGW32__
 #define  FreeProws(a)               do { ; } while(0)
 #define  HrGetOneProp(a,b,c)        0
 #define  HrSetOneProp(a,b)          0
@@ -52,7 +52,7 @@
 #define  HrQueryAllRows(a,b,c,d,e,f)  0
 #define  PpropFindProp(a,b,c)       0
 #define  RTFSync(a,b,c)             0
-
+#endif
 
 /* These were omitted from the standard headers */
 #ifndef PR_BODY_HTML
@@ -142,18 +142,18 @@ public:
 
   
 public:
-  int encrypt (void);
-  int decrypt (void);
-  int sign (void);
-  int verify (void);
-  int signEncrypt (void);
+  int __stdcall encrypt (void);
+  int __stdcall decrypt (void);
+  int __stdcall sign (void);
+  int __stdcall verify (void);
+  int __stdcall signEncrypt (void);
 
-  int doCmd(int doEncrypt, int doSign);
-  int doCmdAttach(int action);
-  int doCmdFile(int action, const char *in, const char *out);
+  int __stdcall doCmd(int doEncrypt, int doSign);
+  int __stdcall doCmdAttach(int action);
+  int __stdcall doCmdFile(int action, const char *in, const char *out);
 
-  const char* getLogFile (void) { return logfile; }
-  void setLogFile (const char *logfile)
+  const char* __stdcall getLogFile (void) { return logfile; }
+  void __stdcall setLogFile (const char *logfile)
   { 
     if (this->logfile) 
       {
@@ -165,101 +165,101 @@ public:
       strcpy (this->logfile, logfile);
   }
 
-  int getStorePasswdTime (void)
+  int __stdcall getStorePasswdTime (void)
   {
     return nstorePasswd;
   }
 
-  void setStorePasswdTime (int nCacheTime)
+  void __stdcall setStorePasswdTime (int nCacheTime)
   {
     this->nstorePasswd = nCacheTime; 
   }
 
-  bool getEncryptDefault (void)
+  bool __stdcall getEncryptDefault (void)
   {
     return doEncrypt;
   }
 
-  void setEncryptDefault (bool doEncrypt)
+  void __stdcall setEncryptDefault (bool doEncrypt)
   {
     this->doEncrypt = doEncrypt; 
   }
 
-  bool getSignDefault (void)
+  bool __stdcall getSignDefault (void)
   { 
     return doSign; 
   }
 
-  void setSignDefault (bool doSign)
+  void __stdcall setSignDefault (bool doSign)
   {
     this->doSign = doSign;
   }
 
-  bool getEncryptWithDefaultKey (void)
+  bool __stdcall getEncryptWithDefaultKey (void)
   {
     return encryptDefault;
   }
   
-  void setEncryptWithDefaultKey (bool encryptDefault)
+  void __stdcall setEncryptWithDefaultKey (bool encryptDefault)
   {
     this->encryptDefault = encryptDefault;
   }
 
-  bool getSaveDecryptedAttachments (void) 
+  bool __stdcall getSaveDecryptedAttachments (void) 
   { 
     return saveDecryptedAtt;
   }
 
-  void setSaveDecryptedAttachments (bool saveDecrAtt)
+  void __stdcall setSaveDecryptedAttachments (bool saveDecrAtt)
   {
     this->saveDecryptedAtt = saveDecrAtt;
   }
 
-  void setEncodingFormat (int fmt)
+  void __stdcall setEncodingFormat (int fmt)
   {
     encFormat = fmt; 
   }
 
-  int getEncodingFormat (void) 
+  int __stdcall getEncodingFormat (void) 
   {
     return encFormat;
   }
 
-  void setSignAttachments (bool signAtt)
+  void __stdcall setSignAttachments (bool signAtt)
   {
     this->autoSignAtt = signAtt; 
   }
 
-  bool getSignAttachments (void)
+  bool __stdcall getSignAttachments (void)
   {
     return autoSignAtt;
   }
 
-  void setEnableLogging (bool val)
+  void __stdcall setEnableLogging (bool val)
   {
     this->enableLogging = val;
   }
 
-  bool getEnableLogging (void)
+  bool __stdcall getEnableLogging (void)
   {
     return this->enableLogging;
   }
 
-  int readOptions (void);
-  int writeOptions (void);
+  int __stdcall readOptions (void);
+  int __stdcall writeOptions (void);
 
-  const char* getAttachmentExtension (const char *fname);
-  void freeAttachments (void);
-  int getAttachments (void);
+  const char* __stdcall getAttachmentExtension (const char *fname);
+  void __stdcall freeAttachments (void);
+  int __stdcall getAttachments (void);
   
-  int countAttachments (void) 
+  int __stdcall countAttachments (void) 
   { 
     if (attachRows == NULL)
       return -1;
     return (int) attachRows->cRows; 
   }
 
-  bool hasAttachments (void)
+  bool __stdcall hasAttachments (void)
   {
     if (attachRows == NULL)
       getAttachments ();
@@ -268,14 +268,14 @@ public:
     return has;
   }
 
-  bool deleteAttachment (int pos)
+  bool __stdcall deleteAttachment (int pos)
   {
     if (msg->DeleteAttach (pos, 0, NULL, 0) == S_OK)
       return true;
     return false;
   }
 
-  LPATTACH createAttachment (int &pos)
+  LPATTACH __stdcall createAttachment (int &pos)
   {
     ULONG attnum;	
     LPATTACH newatt = NULL;
@@ -288,24 +288,24 @@ public:
     return NULL;
   }
 
-  int startKeyManager ();
-  void startConfigDialog (HWND parent);
+  int __stdcall startKeyManager ();
+  void __stdcall startConfigDialog (HWND parent);
 
-  int attachPublicKey (const char *keyid);
+  int __stdcall attachPublicKey (const char *keyid);
 
-  void setDefaultKey (const char *key);
-  char* getDefaultKey (void);
+  void __stdcall setDefaultKey (const char *key);
+  char* __stdcall getDefaultKey (void);
 
-  void setMessage (LPMESSAGE msg);
-  void setWindow (HWND hwnd);
+  void __stdcall setMessage (LPMESSAGE msg);
+  void __stdcall setWindow (HWND hwnd);
 
-  const char* getPassphrase (const char *keyid);
-  void storePassphrase (void *itm);
-  outlgpg_type_t getMessageType (const char *body);
+  const char* __stdcall getPassphrase (const char *keyid);
+  void __stdcall storePassphrase (void *itm);
+  outlgpg_type_t __stdcall getMessageType (const char *body);
 
-  void logDebug (const char *fmt, ...);
+  void __stdcall logDebug (const char *fmt, ...);
     
-  void clearPassphrase (void) 
+  void __stdcall clearPassphrase (void) 
   {
     if (passCache != NULL)
       passCache->clear ();
@@ -1021,8 +1021,7 @@ MapiGPGMEImpl::signEncrypt (void)
     char *newBody = NULL;
     char **recipients = getRecipients (TRUE);
     char **unknown = NULL;
-    gpgme_key_t locusr=NULL, *keys = NULL, *keys2 =NULL;	
-    const char *s;
+    gpgme_key_t locusr=NULL, *keys = NULL, *keys2 =NULL;
 
     if (body == NULL || strlen (body) == 0) {
 	freeRecipients (recipients);
@@ -1035,7 +1034,7 @@ MapiGPGMEImpl::signEncrypt (void)
 	delete_buf (body);
 	return 0;
     }
-    logDebug ( "locusr keyid:%s\r\n", keyid_from_key (locusr));
+    logDebug ("locusr keyid:%s\r\n", keyid_from_key (locusr));
 
     size_t all;
     int n = op_lookup_keys (recipients, &keys, &unknown, &all);

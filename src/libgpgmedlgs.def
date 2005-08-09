@@ -1,0 +1,25 @@
+SECTIONS
+	.SHARDAT READ WRITE SHARED
+
+EXPORTS
+	recipient_dialog_box
+	recipient_dialog_box2
+	signer_dialog_box
+	config_dialog_box
+	passphrase_callback_box
+	free_decrypt_key
+	verify_dialog_box 
+	start_key_manager
+
+	init_keycache_objects
+	cleanup_keycache_objects 
+	find_gpg_key
+
+	op_init
+	op_deinit
+	op_strerror
+	op_decrypt_start
+
+	HashTable_free
+
+	CreateMapiGPGME

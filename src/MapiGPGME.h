@@ -63,7 +63,7 @@ public:
   virtual int __stdcall doCmdFile (int action,
                                    const char *in, const char *out) = 0;
 
-  virtual const __stdcall char* getAttachmentExtension (const char *fname) = 0;
+  virtual const char* __stdcall getAttachmentExtension (const char *fname) = 0;
   virtual void __stdcall freeAttachments (void) = 0;
   virtual int __stdcall getAttachments (void) = 0;
   virtual int __stdcall countAttachments (void) = 0;
