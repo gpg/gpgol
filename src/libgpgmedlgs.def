@@ -20,6 +20,8 @@ EXPORTS
 	op_strerror
 	op_decrypt_start
 
+	outlook_gpg_get_version
+
 	HashTable_free
 
 	CreateMapiGPGME

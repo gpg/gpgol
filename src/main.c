@@ -34,3 +34,8 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+const char*
+outlook_gpg_get_version (void)
+{
+    return "0.99.4";
+}

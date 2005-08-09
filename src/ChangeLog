@@ -1,9 +1,7 @@
 2005-08-09  Timo Schulz  <ts@g10code.com>
 
-	* missing/stpcpy.c: New.
-	* missing/vasprintf.c: New.
-	* libgpgmedlgs/libgpgmedlgs.{dsw, dsp}: Updated.
-	* MapiGPGME.cpp (_WIN32): Changed sequence of include files.
+	* main.c (outlook_gpg_get_version): New.
+	Use same version as the Outlook GPG plugin.
 
 2005-08-09  Werner Koch  <wk@g10code.com>
 
