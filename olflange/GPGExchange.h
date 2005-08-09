@@ -23,7 +23,7 @@
 #ifndef INC_GPGEXCHANGE_H
 #define INC_GPGEXCHANGE_H
 
-#define VERSION "0.99.3"
+#define VERSION "0.99.4"
 
 class CGPGExchExtMessageEvents;
 class CGPGExchExtCommands;

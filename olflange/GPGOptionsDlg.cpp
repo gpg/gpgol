@@ -23,8 +23,8 @@
 #include "stdafx.h"
 #include "GPGExchange.h"
 #include "resource.h"
-#include "HashTable.h"
-#include "MapiGPGME.h"
+#include "../src/HashTable.h"
+#include "../src/MapiGPGME.h"
 
 
 /* GPGOptionsDlgProc -
@@ -41,6 +41,7 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
     switch (uMsg) {
     case WM_INITDIALOG:
 	const char *s;
+	s = NULL;
 	s = m_gpg->getDefaultKey ();
 	enable = s && *s? 1 : 0;
 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
@@ -70,14 +71,14 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
 	case PSN_SETACTIVE: {
 	    TCHAR s[20];
 	    const char * f;
-
+	    
 	    if (m_gpg->getDefaultKey () != NULL)		
 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, m_gpg->getDefaultKey ());
 	    wsprintf(s, "%d", m_gpg->getStorePasswdTime ());
 	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
 	    f = m_gpg->getLogFile ();
 	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)f);
-	    hWndPage = pnmhdr->hwndFrom;   /* to be used in WM_COMMAND */
+	    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
 				m_gpg->getEncryptDefault () ? 1 : 0, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
