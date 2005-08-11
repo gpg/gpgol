@@ -78,6 +78,10 @@ void cache_item_free (cache_item_t itm);
 
 HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 
+/*-- MapiGPGME.cpp --*/
+void log_debug (const char *fmt, ...);
+
+
 /*-- recipient-dialog.c --*/
 int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);
 int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
@@ -85,7 +89,7 @@ int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
 
 /*-- passphrase-dialog.c --*/
 int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd);
-int passphrase_callback_box (void *opaque, const char *uid_hint, 
+gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint, 
 			     const char *pass_info,
 			     int prev_was_bad, int fd);
 void free_decrypt_key (struct decrypt_key_s * ctx);

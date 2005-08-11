@@ -1,3 +1,26 @@
+2005-08-11  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (log_debug): New.  Rewrote the whole log stuff.
+	It is not anymore per instance.
+	(logDebug): New version with va_list arg.
+
+	* MapiGPGME.cpp (passphraseCallback): Use gpgme_error_t becuase
+	C++ enforces enum types.
+
+	* engine-gpgme.c (op_lookup_keys): s/id/names/.  id is a reved
+	word Obj-C and it is good style not to use it in plain C code.
+	(op_sign_file_next): Use gpgme_passphrase_cb_t in declaration.
+	(op_decrypt_next): Ditto.
+
+	* MapiGPGME.cpp (count_recipients): Renamed from countRecipients
+	method, made local and changed both callers.
+	(log_key_info): Changed output format.  New arg PREFIX. Changed
+	callers.
+	(add_html_line_endings): Renamed from addHtmlLineEndings method
+	and made local.
+	(logDebug): Open in text mode.  Removed all superfluous "\r" from
+	callers.
+
 2005-08-09  Timo Schulz  <ts@g10code.com>
 
 	* main.c (outlook_gpg_get_version): New.

@@ -5,7 +5,7 @@ LIBRARY libgpgmedlgs.dll
 
 
 EXPORTS
-	CreateMapiGPGME@4
+	CreateMapiGPGME = CreateMapiGPGME@4
 
 
 

@@ -39,22 +39,13 @@ MapiGPGME *m_gpg = NULL;
 static void 
 ExchLogInfo (const char * fmt, ...)
 {
-    FILE * f;
-    const char * name = NULL;
-    va_list a;
-
-    if (!m_gpg)
-	return;
-    name = m_gpg->getLogFile ();
-    if (!name || strlen (name) < 3)	
-	return;
-    f = fopen (name, "a+b");
-    if (!f)
-	return;
-    va_start (a, fmt);
-    vfprintf (f, fmt, a);
-    va_end (a);
-    fclose (f);
+    if (m_gpg) {
+        va_list a;
+  
+        va_start (a, fmt);
+        m_gpg->logDebug (fmt, a);
+        va_end (a);
+    }
 }
 
 /* The one and only CGPGExchApp object */
@@ -63,7 +54,7 @@ END_MESSAGE_MAP()
 
 CGPGExchApp::CGPGExchApp (void)
 {
-    ExchLogInfo("GPGExch\r\n");
+    ExchLogInfo("GPGExch\n");
 }
 
 CGPGExchApp theApp;
@@ -79,7 +70,7 @@ CGPGExchApp theApp;
 LPEXCHEXT CALLBACK 
 ExchEntryPoint (void)
 {
-    ExchLogInfo ("extension entry point...\r\n");
+    ExchLogInfo ("extension entry point...\n");
     return new CGPGExchExt;
 }
 
@@ -108,7 +99,7 @@ DllRegisterServer (void)
 				   REG_OPTION_NON_VOLATILE,
 				   KEY_ALL_ACCESS, NULL, &hKey, NULL);
     if (lResult != ERROR_SUCCESS) {
-	ExchLogInfo ("DllRegisterServer failed\r\n");
+	ExchLogInfo ("DllRegisterServer failed\n");
 	return E_ACCESSDENIED;
     }
     DWORD dwTemp = 0;
@@ -121,7 +112,7 @@ DllRegisterServer (void)
     RegSetValueEx (hKey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
     RegCloseKey (hKey);
     
-    ExchLogInfo ("DllRegisterServer succeeded\r\n");
+    ExchLogInfo ("DllRegisterServer succeeded\n");
     return S_OK;
 }
 
@@ -139,7 +130,7 @@ DllUnregisterServer (void)
 				    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
 				    NULL, &hKey, NULL);
     if (lResult != ERROR_SUCCESS) {
-	ExchLogInfo ("DllUnregisterServer: access denied.\r\n");
+	ExchLogInfo ("DllUnregisterServer: access denied.\n");
 	return E_ACCESSDENIED;
     }
     RegDeleteValue (hKey, "GPG Exchange");
@@ -173,10 +164,10 @@ CGPGExchExt::CGPGExchExt (void)
 	    m_gpg->readOptions ();
 	}
 	g_bInitDll = TRUE;
-	ExchLogInfo("CGPGExchExt load\r\n");
+	ExchLogInfo("CGPGExchExt load\n");
     }
     else
-	ExchLogInfo("CGPGExchExt exists\r\n");
+	ExchLogInfo("CGPGExchExt exists\n");
 }
 
 
@@ -230,7 +221,7 @@ CGPGExchExt::QueryInterface(
     if (*ppvObj != NULL)
         ((LPUNKNOWN)*ppvObj)->AddRef();
 
-    /*ExchLogInfo("QueryInterface %d\r\n", __LINE__);*/
+    /*ExchLogInfo("QueryInterface %d\n", __LINE__);*/
     return hr;
 }
 
@@ -250,7 +241,7 @@ STDMETHODIMP CGPGExchExt::Install(
 
     m_lContext = lContext;
 
-    /*ExchLogInfo("Install %d\r\n", __LINE__);*/
+    /*ExchLogInfo("Install %d\n", __LINE__);*/
     // check the version 
     pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
     if (EECBGV_BUILDVERSION_MAJOR != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
@@ -301,7 +292,7 @@ CGPGExchExtMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
 	LPEXCHEXTCALLBACK pEECB) // A pointer to IExchExtCallback interface.
 {
-    ExchLogInfo ("OnRead\r\n");
+    ExchLogInfo ("OnRead\n");
     return S_FALSE;
 }
 
@@ -314,7 +305,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnReadComplete(
 	LPEXCHEXTCALLBACK pEECB, // A pointer to IExchExtCallback interface.
 	ULONG lFlags)
 {
-    ExchLogInfo ("OnReadComplete\r\n");
+    ExchLogInfo ("OnReadComplete\n");
     return S_FALSE;
 }
 
@@ -324,7 +315,7 @@ STDMETHODIMP CGPGExchExtMessageEvents::OnReadComplete(
 STDMETHODIMP CGPGExchExtMessageEvents::OnWrite(
 	LPEXCHEXTCALLBACK pEECB) // A pointer to IExchExtCallback interface.
 {
-    ExchLogInfo ("OnWrite\r\n");
+    ExchLogInfo ("OnWrite\n");
     return S_FALSE;
 }
 

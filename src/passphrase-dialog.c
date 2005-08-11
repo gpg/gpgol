@@ -153,6 +153,7 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
     switch (msg) {
     case WM_INITDIALOG:
+        log_debug ("decrypt_key_dlg_proc: WM_INITDIALOG\n");
 	dec = (struct decrypt_key_s *)lparam;
 	if (dec && dec->use_as_cb) {
 	    dec->opts = 0;
@@ -180,15 +181,18 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	return FALSE;
 
     case WM_DESTROY:
+        log_debug ("decrypt_key_dlg_proc: WM_DESTROY\n");
 	hide_state = 1;
 	break;
 
     case WM_SYSCOMMAND:
+        log_debug ("decrypt_key_dlg_proc: WM_SYSCOMMAND\n");
 	if (wparam == SC_CLOSE)
 	    EndDialog (dlg, TRUE);
 	break;
 
     case WM_COMMAND:
+        log_debug ("decrypt_key_dlg_proc: WM_COMMAND\n");
 	switch (HIWORD (wparam)) {
 	case BN_CLICKED:
 	    if ((int)LOWORD (wparam) == IDC_DEC_HIDE) {
@@ -346,7 +350,7 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
 
 /* GPGME passphrase callback function. It starts the decryption dialog
    to request the passphrase from the user. */
-int
+gpgme_error_t
 passphrase_callback_box (void *opaque, const char *uid_hint, 
 			 const char *pass_info,
 			 int prev_was_bad, int fd)
@@ -354,12 +358,16 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
     struct decrypt_key_s *hd = (struct decrypt_key_s *)opaque;
     DWORD nwritten = 0;
 
+    log_debug ("passphrase_callback_box: enter (uh=`%s',pi=`%s')\n", 
+               uid_hint?uid_hint:"(null)", pass_info?pass_info:"(null)");
     if (hd->opts & OPT_FLAG_CANCEL) {
 	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
 	CloseHandle ((HANDLE)fd);
+        log_debug ("passphrase_callback_box: leave (due to cancel flag)\n");
 	return -1;
     }
     if (prev_was_bad) {
+        log_debug ("passphrase_callback_box: last passphrase was bad\n");
 	xfree (hd->pass);
 	hd->pass = NULL;
     }
@@ -367,6 +375,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
     if (hd && uid_hint && !hd->pass) {
 	const char * s = uid_hint;
 	size_t i=0;
+        int rc;
 	
 	while (s && *s != ' ')
 	    hd->keyid[i++] = *s++;
@@ -381,19 +390,35 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 	hd->last_was_bad = prev_was_bad? 1: 0;
 	hd->use_as_cb = 1;
 	if (hd->flags & 0x01)
-	    DialogBoxParam (glob_hinst, (LPCSTR)IDD_DEC, GetDesktopWindow (),
+	    rc = DialogBoxParam (glob_hinst, (LPCSTR)IDD_DEC, GetDesktopWindow (),
 			    decrypt_key_dlg_proc, (LPARAM)hd);
 	else
-	    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC_EXT, GetDesktopWindow (),
+	    rc = DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC_EXT, GetDesktopWindow (),
 			    decrypt_key_ext_dlg_proc, 
 			    (LPARAM)hd);
+        if (rc <= 0) {
+            char buf[256];
+    
+            FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError (), 
+                           MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                           buf, sizeof (buf)-1, NULL);
+            
+            log_debug ("passphrase_callback_box: dialog failed rc=%d (%s)\n",
+                       rc, buf);
+        }
     }
+    else 
+        log_debug ("passphrase_callback_box: hd=%p hd->pass=`%s'\n",
+                   hd, hd && hd->pass? hd->pass: "(null)");
+        
     if (hd->pass != NULL) {
+        log_debug ("passphrase_callback_box: sending passphrase ...\n");
 	WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);
 	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
     }
     else
 	WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
+    log_debug ("passphrase_callback_box: leave\n");
     return 0;
 }
 

@@ -44,15 +44,6 @@
 #include "MapiGPGME.h"
 #include "engine.h"
 
-// #define  FreeProws(a)               do { ; } while(0)
-// #define  HrGetOneProp(a,b,c)        0
-// #define  HrSetOneProp(a,b)          0
-// #define  FPropExists(a,b)           0
-// #define  FreePadrlist(a)            0
-// #define  HrQueryAllRows(a,b,c,d,e,f)  0
-// #define  PpropFindProp(a,b,c)       0
-// #define  RTFSync(a,b,c)             0
-
 /* These were omitted from the standard headers */
 #ifndef PR_BODY_HTML
 #define PR_BODY_HTML (PROP_TAG(PT_TSTRING, 0x1013))
@@ -74,6 +65,18 @@
 #define delete_buf(buf) delete [] (buf)
 
 #define fail_if_null(p) do { if (!(p)) abort (); } while (0)
+#define lock_log()    do { /*FIXME*/; } while (0) 
+#define unlock_log()  do { /*FIXME*/; } while (0)
+
+
+/* Given that we are only able to configure one log file, it does not
+   make much sense t bind a log file to a specific instance of this
+   class. We use a global variable instead which will be set by any
+   instance.  The same goes for the respecive file pointer and the
+   enable_logging state. */
+static char *logfile;
+static FILE *logfp;
+static bool enable_logging;
 
 
 class MapiGPGMEImpl : public MapiGPGME
@@ -86,7 +89,7 @@ public:
     this->passCache = new HashTable ();
     op_init ();
     prepareLogging ();
-    logDebug ("constructor null\r\n");
+    logDebug ("MapiGPGME.constructor: ready\n");
   }
 
   MapiGPGMEImpl (LPMESSAGE msg)
@@ -97,26 +100,21 @@ public:
     this->passCache = new HashTable ();
     op_init ();
     prepareLogging ();
-    logDebug ("constructor %p\r\n", msg);
+    logDebug ("MapiGPGME.constructor: ready (msg=%p)\n", msg);
   }
   
   ~MapiGPGMEImpl ()
   {
     unsigned int i=0;
 
-    logDebug ("destructor %p\r\n", msg);
+    logDebug ("MapiGPGME.destructor: called\n");
     op_deinit ();
     if (defaultKey)
       {
 	delete_buf (defaultKey);
 	defaultKey = NULL;
       }
-    if (logfile) 
-      {
-	delete_buf (logfile);
-	logfile = NULL;
-      }
-    logDebug ("hash entries %d\r\n", passCache->size ());
+    logDebug ("hash entries %d\n", passCache->size ());
     for (i = 0; i < passCache->size (); i++) 
       {
 	cache_item_t t = (cache_item_t)passCache->get (i);
@@ -152,16 +150,18 @@ public:
   int __stdcall doCmdFile(int action, const char *in, const char *out);
 
   const char* __stdcall getLogFile (void) { return logfile; }
-  void __stdcall setLogFile (const char *logfile)
+  void __stdcall setLogFile (const char *name)
   { 
-    if (this->logfile) 
+    lock_log ();
+    if (logfp)
       {
-        delete []this->logfile;
-        this->logfile = NULL;
+        fclose (logfp);
+        logfp = NULL;
       }
-    this->logfile = new char [strlen (logfile)+1];
-    if (this->logfile != NULL)
-      strcpy (this->logfile, logfile);
+    
+    xfree (logfile);
+    logfile = name? xstrdup (name) : NULL;
+    unlock_log ();
   }
 
   int __stdcall getStorePasswdTime (void)
@@ -236,12 +236,12 @@ public:
 
   void __stdcall setEnableLogging (bool val)
   {
-    this->enableLogging = val;
+    enable_logging = val;
   }
 
   bool __stdcall getEnableLogging (void)
   {
-    return this->enableLogging;
+    return enable_logging;
   }
 
   int __stdcall readOptions (void);
@@ -303,6 +303,7 @@ public:
   outlgpg_type_t __stdcall getMessageType (const char *body);
 
   void __stdcall logDebug (const char *fmt, ...);
+  void __stdcall logDebug (const char *fmt, va_list a);
     
   void __stdcall clearPassphrase (void) 
   {
@@ -315,25 +316,46 @@ private:
   HWND	      parent;
   char	      *defaultKey;
   HashTable   *passCache;
-  LPMESSAGE   msg;
+  LPMESSAGE   msg;    /* The message we are working on.  Note, that
+                         this is a shallow copy <-- FIXME: What are
+                         the exact semantics of owenership. */
   LPMAPITABLE attachTable;
   LPSRowSet   attachRows;
   void	      *recipSet;
-  bool        enableLogging;
 
   /* Options */
-  char    *logfile;
   int	  nstorePasswd;  /* Time in seconds the passphrase is stored. */
   bool    doEncrypt;
   bool    doSign;
   bool    encryptDefault;
   bool    saveDecryptedAtt; /* Save decrypted attachments. */
   bool    autoSignAtt;	    /* Sign all outgoing attachments. */
-  int	    encFormat;      /* Encryption format for attachments. */
+  int	  encFormat;        /* Encryption format for attachments. */
 
   void displayError (HWND root, const char *title);
-  void prepareLogging (void);
-  void clearObject (void);
+  void prepareLogging (void)
+  {
+    char *val = NULL;
+    
+    load_extension_value ("logFile", &val);
+    if (val && *val != '\"' && *val)
+      {
+        setLogFile (val);
+        setEnableLogging (true);
+      }
+    xfree (val);	
+  }
+
+  void clearObject (void)
+  {
+    this->attachRows = NULL;
+    this->attachTable = NULL;
+    this->defaultKey = NULL;
+    this->recipSet = NULL;
+    this->parent = NULL;
+    this->msg = NULL;
+  }
+
   void clearConfig (void)
   {
     nstorePasswd = 0;
@@ -343,7 +365,6 @@ private:
     saveDecryptedAtt = false;
     autoSignAtt = false;
     encFormat = DEFAULT_ATTACHMENT_FORMAT;
-    enableLogging = false;
   }
 
   HWND findMessageWindow (HWND parent);
@@ -354,10 +375,8 @@ private:
   bool isHtmlBody (const char *body);
   bool isHtmlMessage (void);
   char *getBody (bool isHtml);
-  char *addHtmlLineEndings (char *newBody);
     
   void cleanupTempFiles ();
-  int countRecipients (char **recipients);
   char **getRecipients (bool isRootMsg);
   void freeRecipients (char **recipients);
   void freeUnknownKeys (char **unknown, int n);
@@ -392,62 +411,61 @@ private:
 
 /* Create an instance of the MapiGPGME class. MSG may be NULL. */
 MapiGPGME *
-_CreateMapiGPGME (LPMESSAGE msg)
-{
-  return new MapiGPGMEImpl (msg);
-}
-MapiGPGME *
 CreateMapiGPGME (LPMESSAGE msg)
 {
   return new MapiGPGMEImpl (msg);
 }
 
 
+static void
+do_log (const char *fmt, va_list a)
+{
+  if (enable_logging == false || !logfile)
+    return;
+
+  if (!logfp)
+    {
+      lock_log ();
+      if (!logfp)
+        logfp = fopen (logfile, "a+");
+      unlock_log ();
+    }
+  if (!logfp)
+    return;
+  fprintf (logfp, "%lu/", (unsigned long)GetCurrentThreadId ());
+  vfprintf (logfp, fmt, a);
+  fflush (logfp);
+}
+
+
+void 
+log_debug (const char *fmt, ...)
+{
+  va_list a;
+  
+  va_start (a, fmt);
+  do_log (fmt, a);
+  va_end (a);
+}
+
 
 void 
 MapiGPGMEImpl::logDebug (const char *fmt, ...)
 {
-    FILE * logfp;
-    va_list a;
-
-    if (enableLogging == false || this->logfile == NULL)
-	return;
-
-    logfp = fopen (this->logfile, "a+b");
-    if (logfp == NULL)
-	return;
-    va_start (a, fmt);
-    vfprintf (logfp, fmt, a);
-    va_end (a);
-    fclose (logfp);
+  va_list a;
+  
+  va_start (a, fmt);
+  do_log (fmt, a);
+  va_end (a);
 }
 
 
-void
-MapiGPGMEImpl::clearObject (void)
+void 
+MapiGPGMEImpl::logDebug (const char *fmt, va_list a)
 {
-    this->attachRows = NULL;
-    this->attachTable = NULL;
-    this->defaultKey = NULL;
-    this->logfile = NULL;
-    this->recipSet = NULL;
-    this->parent = NULL;
-    this->msg = NULL;
+  do_log (fmt, a);
 }
 
-
-void
-MapiGPGMEImpl::prepareLogging (void)
-{
-    char *val = NULL;
-
-    load_extension_value ("logFile", &val);
-    if (val != NULL && *val != '"' && *val != 0) {
-	setLogFile (val);
-	setEnableLogging (true);
-	xfree (val);	
-    }
-}
 
 
 void 
@@ -468,7 +486,7 @@ MapiGPGMEImpl::cleanupTempFiles (void)
     do {
 	char *p = (char *)xcalloc (1, strlen (tmp) + strlen (fnd.cFileName) +2);
 	sprintf (p, "%s%s", tmp, fnd.cFileName);
-	logDebug ("delete tmp %s\r\n", p);
+	logDebug ("delete tmp %s\n", p);
 	DeleteFile (p);
 	xfree (p);
     } while (FindNextFile (hd, &fnd) == TRUE);
@@ -482,7 +500,7 @@ MapiGPGMEImpl::setRTFBody (char *body)
     setMessageAccess (MAPI_ACCESS_MODIFY);
     HWND rtf = findMessageWindow (parent);
     if (rtf != NULL) {
-	logDebug ("setRTFBody: window handle %p\r\n", rtf);
+	logDebug ("setRTFBody: window handle %p\n", rtf);
 	SetWindowText (rtf, body);
 	return TRUE;
     }
@@ -499,16 +517,17 @@ MapiGPGMEImpl::setBody (char *body, bool isHtml)
     int rc = TRUE;
     
     if (body == NULL) {
-	logDebug ("setBody with empty buffer\r\n");
+	logDebug ("MapiGPGME.setBody: called with empty buffer\n");
 	return FALSE;
     }
+    logDebug ("MapiGPGME.setBody: body is `%s'\n", body);
     rtfSync (body);
     sProp.ulPropTag = isHtml? PR_BODY_HTML : PR_BODY;
     sProp.Value.lpszA = body;
     hr = HrSetOneProp (msg, &sProp);
     if (FAILED (hr))
 	rc = FALSE;
-    logDebug ("setBody (html=%d) rc=%d '%s'\r\n", rc, isHtml, body);
+    logDebug ("MapiGPGME.setBody: (html=%d) rc=%d\n", isHtml, rc);
     return rc;
 }
 
@@ -551,10 +570,15 @@ MapiGPGMEImpl::isHtmlBody (const char *body)
 }
 
 
+/* Check whether a message is a HTMl message. */
 bool
 MapiGPGMEImpl::isHtmlMessage (void)
 {
     char *body = getBody (true);
+
+    /* We assume that getBody won't return a non-empry string if it is
+       a HTML message.  FIXME: This is a pretty ineffective test as it
+       needless allocates memory. */
     if (body != NULL && strlen (body) > 1) {
 	delete_buf (body);
 	return true;
@@ -565,6 +589,10 @@ MapiGPGMEImpl::isHtmlMessage (void)
 }
 
 
+/* Return a copy of the body content of current message.  PR_BODY_HTML
+   is used internally when called with ISHTML as true; PR_BODY
+   otherwise.  On success a new char object is retruned and the caller
+   is responsible for deleting it. On failure NULL is returned. */
 char* 
 MapiGPGMEImpl::getBody (bool isHtml)
 {
@@ -604,8 +632,9 @@ MapiGPGMEImpl::freeKeyArray (void **key)
 }
 
 
-int 
-MapiGPGMEImpl::countRecipients (char **recipients)
+/* Return the number of recipients in the array RECIPIENTS. */
+static int 
+count_recipients (char **recipients)
 {
   int i;
   
@@ -615,6 +644,11 @@ MapiGPGMEImpl::countRecipients (char **recipients)
 }
 
 
+/* Return an array of strings with the recipients of the message. On
+   success a new array is returned containing allocated strings for
+   each recipients.  Teh end of the array is marked by NULL.  Caller
+   is responsible for releasing the array.  On failure NULL is
+   returned.  */
 char** 
 MapiGPGMEImpl::getRecipients (bool isRootMsg)
 {
@@ -641,12 +675,12 @@ MapiGPGMEImpl::getRecipients (bool isRootMsg)
 	    rset[j] = new char[strlen (s)+1];
 	    fail_if_null (rset[j]);
 	    strcpy (rset[j], s);
-	    logDebug ( "rset %d: %s\r\n", j, rset[j]);
+	    logDebug ( "rset %d: %s\n", j, rset[j]);
 	}
 	rset[j] = NULL;
-	if (NULL != lpRecipientTable)
+	if (lpRecipientTable)
 	    lpRecipientTable->Release();
-	if (NULL != lpRecipientRows)
+	if (lpRecipientRows)
 	    FreeProws(lpRecipientRows);	
     }
 
@@ -681,7 +715,11 @@ MapiGPGMEImpl::freeRecipients (char **recipients)
 const char*
 MapiGPGMEImpl::getPassphrase (const char *keyid)
 {
-    cache_item_t item = (cache_item_t)passCache->get(keyid);
+    cache_item_t item;
+
+    logDebug ("MapiGPGME.getPassphrase: enter\n");
+    item = (cache_item_t)passCache->get(keyid);
+    logDebug ("MapiGPGME.getPassphrase: leave (result=%p)\n", item);
     if (item != NULL)
 	return item->pass;
     return NULL;
@@ -691,18 +729,24 @@ MapiGPGMEImpl::getPassphrase (const char *keyid)
 void
 MapiGPGMEImpl::storePassphrase (void *itm)
 {
-    cache_item_t item = (cache_item_t)itm;
-    cache_item_t old;
+    cache_item_t item, old;
+
+    logDebug ("MapiGPGME.storePassphrase: enter\n");
+    item = (cache_item_t)itm;
     old = (cache_item_t)passCache->get(item->keyid);
     if (old != NULL)
 	cache_item_free (old);
     passCache->put (item->keyid+8, item);
-    logDebug ( "put keyid %s = '%s'\r\n", item->keyid+8, "***");
+    logDebug ("MapiGPGME.storePassphrase: keyid 0x%s\n",
+              item->keyid+8); /* FIXME: is the +8 save? */
+    logDebug ("MapiGPGME.storePassphrase: leave \n");
 }
 
 
-char*
-MapiGPGMEImpl::addHtmlLineEndings (char *newBody)
+/* FIXME: This is an ineffective implementation which wastes way too
+   much memory. */
+static char *
+add_html_line_endings (char *newBody)
 {
     char *p;
     char *snew = (char*)xcalloc (1, 2*strlen (newBody));
@@ -710,7 +754,7 @@ MapiGPGMEImpl::addHtmlLineEndings (char *newBody)
     p = strtok ((char *)newBody, "\n");
     while (p != NULL) {
 	strcat (snew, p);
-	strcat (snew, "\r\n");
+	strcat (snew, "\n");
 	strcat (snew, "&nbsp;<br>");
 	p = strtok (NULL, "\n");
     }
@@ -738,11 +782,11 @@ MapiGPGMEImpl::encrypt (void)
 	return 0;
     }
 
-    logDebug ("encrypt\r\n");
+    logDebug ("encrypt\n");
     int n = op_lookup_keys (recipients, &keys, &unknown, &all);
-    logDebug ("fnd %d need %d (%p)\r\n", n, all, unknown);
-    if (n != countRecipients (recipients)) {
-	logDebug ("recipient_dialog_box2\r\n");
+    logDebug ("fnd %d need %d (%p)\n", n, all, unknown);
+    if (n != count_recipients (recipients)) {
+	logDebug ("recipient_dialog_box2\n");
 	recipient_dialog_box2 (keys, unknown, all, &keys2, &opts);
 	xfree (keys);
 	keys = keys2;
@@ -758,7 +802,7 @@ MapiGPGMEImpl::encrypt (void)
 	MessageBox (NULL, op_strerror (err), "GPG Encryption", MB_ICONERROR|MB_OK);
     else {
 	if (isHtml) {
-	    char *p = addHtmlLineEndings (newBody);
+	    char *p = add_html_line_endings (newBody);
 	    setBody (p, true);
 	    xfree (p);
 	}
@@ -770,7 +814,7 @@ MapiGPGMEImpl::encrypt (void)
     freeRecipients (recipients);
     freeUnknownKeys (unknown, n);
     if (!err && hasAttachments ()) {
-	logDebug ("encrypt attachments\r\n");
+	logDebug ("encrypt attachments\n");
 	recipSet = (void *)keys;
 	encryptAttachments (parent);
     }
@@ -780,8 +824,13 @@ MapiGPGMEImpl::encrypt (void)
 
 
 /* XXX: I would prefer to use MapiGPGME::passphraseCallback, but member 
-        functions have an incompatible calling convention. */
-int 
+        functions have an incompatible calling convention. -ts
+    
+        Obviously they need to pass the THIS pointer.  Mixing this
+        with the gpgme convention (where OPAQUE may be viewed as the
+        THIS) is not possible. -wk
+*/
+gpgme_error_t 
 passphraseCallback (void *opaque, const char *uid_hint, 
 		    const char *passphrase_info,
 		    int last_was_bad, int fd)
@@ -792,17 +841,19 @@ passphraseCallback (void *opaque, const char *uid_hint,
     DWORD nwritten = 0;
     int i=0;
 
+    log_debug ("MapiGPGME.passphraseCallback: enter\n");
     while (uid_hint && *uid_hint != ' ')
 	keyid[i++] = *uid_hint++;
     keyid[i] = '\0';
     
     passwd = ctx->getPassphrase (keyid+8);
-    /*logDebug ( "get keyid %s = '%s'\r\n", keyid+8, "***");*/
+    /*logDebug ( "get keyid %s = '%s'\n", keyid+8, "***");*/
     if (passwd != NULL) {
 	WriteFile ((HANDLE)fd, passwd, strlen (passwd), &nwritten, NULL);
 	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
     }
 
+    log_debug ("MapiGPGME.passphraseCallback: leave\n");
     return 0;
 }
 
@@ -817,14 +868,19 @@ MapiGPGMEImpl::decrypt (void)
     bool isHtml = isHtmlMessage ();
     int err;
 
+    logDebug ("MapiGPGME.decrypt: enter\n");
+
     id = getMessageType (body);
     if (id == GPG_TYPE_CLEARSIG) {
 	delete_buf (body);
+        logDebug ("MapiGPGME.decrypt: leave (passing on to verify)\n");
 	return verify ();
     }
     else if (id == GPG_TYPE_NONE && !hasAttach) {
-	MessageBox (NULL, "No valid OpenPGP data found.", "GPG Decryption", MB_ICONERROR|MB_OK);
+	MessageBox (NULL, "No valid OpenPGP data found.",
+                    "GPG Decryption", MB_ICONERROR|MB_OK);
 	delete_buf (body);
+        logDebug ("MapiGPGME.decrypt: leave (no OpenPGP data)\n");
 	return 0;
     }
 
@@ -850,7 +906,7 @@ MapiGPGMEImpl::decrypt (void)
 	/* Also set PR_BODY but do not use 'SaveChanges' to make it permanently.
 	   This way the user can reply with the plaintext but the ciphertext is
 	   still stored. */
-	logDebug ("decrypt isHtml=%d\r\n", isHtmlBody (newBody));
+	logDebug ("decrypt isHtml=%d\n", isHtmlBody (newBody));
 	setRTFBody (newBody);
 	/* XXX: find a way to handle text/html message in a better way! */
 	if (isHtmlBody (newBody)) {
@@ -860,7 +916,7 @@ MapiGPGMEImpl::decrypt (void)
 			    "Do you want to save the decrypted message?";
 	    int id = MessageBox (NULL, s, "GPG Decryption", MB_YESNO|MB_ICONWARNING);
 	    if (id == IDYES) {
-		logDebug ("decrypt: save plaintext message.\r\n");
+		logDebug ("decrypt: save plaintext message.\n");
 		setBody (newBody, true);
 		msg->SaveChanges (FORCE_SAVE);
 	    }
@@ -870,15 +926,17 @@ MapiGPGMEImpl::decrypt (void)
     }
 
     if (hasAttach) {
-	logDebug ("decrypt attachments\r\n");
+	logDebug ("decrypt attachments\n");
 	decryptAttachments (parent);
     }
     delete_buf (body);
     xfree (newBody);
+    logDebug ("MapiGPGME.decrypt: leave (rc=%d)\n", err);
     return err;
 }
 
 
+/* Sign the current message. Returns 0 on success. */
 int
 MapiGPGMEImpl::sign (void)
 {
@@ -887,11 +945,17 @@ MapiGPGMEImpl::sign (void)
     int hasAttach = hasAttachments ();
     int err = 0;
 
+    logDebug ("MapiGPGME.sign: enter\n");
+
+    /* We don't sign an empty body - a signature on a zero length
+       string is pretty much useless. */
     if (body == NULL || strlen (body) == 0) {
-	if (body != NULL)
+	if (body)
 	    delete_buf (body);
+        logDebug ("MapiGPGME.sign: leave (empty message)\n");
 	return 0;
     }
+
     err = op_sign_start (body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Sign", MB_ICONERROR|MB_OK);
@@ -903,6 +967,7 @@ MapiGPGMEImpl::sign (void)
 
     delete_buf (body);
     xfree (newBody);
+    logDebug ("MapiGPGME.sign: leave (rc=%d)\n", err);
     return err;
 }
 
@@ -939,7 +1004,7 @@ MapiGPGMEImpl::getMessageType (const char *body)
 int
 MapiGPGMEImpl::doCmdFile(int action, const char *in, const char *out)
 {
-    logDebug ( "doCmdFile action=%d in=%s out=%s\r\n", action, in, out);
+    logDebug ( "doCmdFile action=%d in=%s out=%s\n", action, in, out);
     if (ATT_SIGN (action) && ATT_ENCR (action))
 	return !op_sign_encrypt_file (recipSet, in, out);
     if (ATT_SIGN (action) && !ATT_ENCR (action))
@@ -964,10 +1029,14 @@ MapiGPGMEImpl::doCmdAttach (int action)
 }
 
 
+/* Man processing entry point.  Perform encryption or/and signing
+   depending on the flags DOENCRYPT and DOSIGN.  It works on the
+   message already set into the instance variable MSG.  Returns 0 on
+   success or an error code. */
 int
 MapiGPGMEImpl::doCmd (int doEncrypt, int doSign)
 {
-    logDebug ( "doCmd doEncrypt=%d doSign=%d\r\n", doEncrypt, doSign);
+    logDebug ("MapiGPGME.doCmd doEncrypt=%d doSign=%d\n", doEncrypt, doSign);
     if (doEncrypt && doSign)
 	return signEncrypt ();
     if (doEncrypt && !doSign)
@@ -997,15 +1066,18 @@ keyid_from_key (gpgme_key_t k)
     return "????????";
 }
 
-
+/* Print information on the keys in KEYS and LOCUSR. */
 static void 
-log_key_info (MapiGPGME *g, gpgme_key_t *keys, gpgme_key_t locusr)
+log_key_info (MapiGPGME *g, const char *prefix,
+              gpgme_key_t *keys, gpgme_key_t locusr)
 {
     if (locusr)
-	g->logDebug ("locusr:%s:%s\r\n", 
-		     userid_from_key (locusr), keyid_from_key (locusr));
+      g->logDebug ("MapiGPGME.%s: signer: 0x%s %s\n", prefix,
+                   keyid_from_key (locusr), userid_from_key (locusr));
+    
     else
-	g->logDebug ( "locusr:null\r\n");
+      g->logDebug ("MapiGPGME.%s: no signer\n", prefix);
+    
     gpgme_key_t n;
     int i;
 
@@ -1013,11 +1085,13 @@ log_key_info (MapiGPGME *g, gpgme_key_t *keys, gpgme_key_t locusr)
 	return;
     i=0;
     for (n=keys[0]; keys[i] != NULL; i++)
-	g->logDebug ("recp:%d:%s:%s\r\n", 
-                     i, userid_from_key (keys[i]), keyid_from_key (keys[i]));
+      g->logDebug ("MapiGPGME.%s: recp.%d 0x%s %s\n", prefix,
+                   i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
 }
 	    
 
+/* Perform a sign+encrypt operation using the data already store in
+   the instance variables. Return 0 on success. */
 int
 MapiGPGMEImpl::signEncrypt (void)
 {
@@ -1028,34 +1102,50 @@ MapiGPGMEImpl::signEncrypt (void)
     char **unknown = NULL;
     gpgme_key_t locusr=NULL, *keys = NULL, *keys2 =NULL;
 
+    logDebug ("MapiGPGME.signEncrypt: enter\n");
+    
+    /* Check for trivial case: We don't encrypt or sign an empty
+       message. */
     if (body == NULL || strlen (body) == 0) {
 	freeRecipients (recipients);
-	if (body != NULL)
+	if (body)
 	    delete_buf (body);
+        logDebug ("MapiGPGME.signEncrypt: leave (empty message)\n");
 	return 0;
     }
+
+    /* Pop up a dialog box to ask for the signer of the message. */
     if (signer_dialog_box (&locusr, NULL) == -1) {
 	freeRecipients (recipients);
 	delete_buf (body);
+        logDebug ("MapiGPGME.signEncrypt: leave (dialog failed)\n");
 	return 0;
     }
-    logDebug ("locusr keyid:%s\r\n", keyid_from_key (locusr));
+    logDebug ("MapiGPGME.signEncrypt: using signer's keyid %s\n",
+              keyid_from_key (locusr));
 
+    /* Now lookup the keys of all recipients. */
     size_t all;
     int n = op_lookup_keys (recipients, &keys, &unknown, &all);
-    if (n != countRecipients (recipients)) {
+    if (n != count_recipients (recipients)) {
+      /* FIXME: The implementation is not correct: op_lookup_keys
+         returns the number of missing keys but we compare against the
+         total number of keys; thus the box would pop up even when all
+         have been found. */
 	recipient_dialog_box2 (keys, unknown, all, &keys2, NULL);
 	xfree (keys);
 	keys = keys2;
     }
 
-    log_key_info (this, keys, locusr);
+    log_key_info (this, "signEncrypt", keys, locusr);
+    /* FIXME: Remove the cast and use proper types. */
     int err = op_sign_encrypt ((void *)keys, (void*)locusr, body, &newBody);
     if (err)
-	MessageBox (NULL, op_strerror (err), "GPG Sign Encrypt", MB_ICONERROR|MB_OK);
+	MessageBox (NULL, op_strerror (err),
+                    "GPG Sign Encrypt", MB_ICONERROR|MB_OK);
     else {
 	if (isHtml) {
-	    char *p = addHtmlLineEndings (newBody);
+	    char *p = add_html_line_endings (newBody);
 	    setBody (p, true);
 	    xfree (p);
 	}
@@ -1067,13 +1157,16 @@ MapiGPGMEImpl::signEncrypt (void)
     xfree (newBody);
     freeUnknownKeys (unknown, n);
     if (!err && hasAttachments ()) {
-	logDebug ( "encrypt attachments");
+	logDebug ("MapiGPGME.signEncrypt: have attachments\n");
+
+        /** WORK(wk) **/
 	recipSet = (void *)keys;
 	encryptAttachments (parent);
     }
     freeKeyArray ((void **)keys);
     gpgme_key_release (locusr);
     freeRecipients (recipients);
+    logDebug ("MapiGPGME.signEncrypt: leave (rc=%d)\n", err);
     return err;
 }
 
@@ -1084,6 +1177,8 @@ MapiGPGMEImpl::verify (void)
     char *body = getBody (false);
     char *newBody = NULL;
     
+    logDebug ("MapiGPGME.verify: enter\n");
+
     int err = op_verify_start (body, &newBody);
     if (err)
 	MessageBox (NULL, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
@@ -1092,6 +1187,7 @@ MapiGPGMEImpl::verify (void)
 
     delete_buf (body);
     xfree (newBody);
+    logDebug ("MapiGPGME.verify: leave (rc=%d)\n", err);
     return err;
 }
 
@@ -1116,11 +1212,12 @@ MapiGPGMEImpl::getDefaultKey (void)
 }
 
 
+/* Store the message MSG we want to work on in our object. */
 void 
 MapiGPGMEImpl::setMessage (LPMESSAGE msg)
 {
     this->msg = msg;
-    logDebug ( "setMessage %p\r\n", msg);
+    logDebug ("MapiGPGME.setMessage %p\n", msg);
 }
 
 
@@ -1155,7 +1252,7 @@ MapiGPGMEImpl::findMessageWindow (HWND parent)
 	    return rtf;
 	child = GetNextWindow (child, GW_HWNDNEXT);	
     }
-    /*logDebug ("no message window found.\r\n");*/
+    /*logDebug ("no message window found.\n");*/
     return NULL;
 }
 
@@ -1176,7 +1273,7 @@ MapiGPGMEImpl::streamFromFile (const char *file, LPATTACH att)
 			   STGM_READ, (char*)file, NULL, &from);
     if (!SUCCEEDED (hr)) {
 	to->Release ();
-	logDebug ( "streamFromFile %s failed.\r\n", file);
+	logDebug ( "streamFromFile %s failed.\n", file);
 	return FALSE;
     }
     from->Stat (&statInfo, STATFLAG_NONAME);
@@ -1184,7 +1281,7 @@ MapiGPGMEImpl::streamFromFile (const char *file, LPATTACH att)
     to->Commit (0);
     to->Release ();
     from->Release ();
-    logDebug ( "streamFromFile %s succeeded\r\n", file);
+    logDebug ( "streamFromFile %s succeeded\n", file);
     return TRUE;
 }
 
@@ -1206,7 +1303,7 @@ MapiGPGMEImpl::streamOnFile (const char *file, LPATTACH att)
 			   NULL, &to);
     if (!SUCCEEDED (hr)) {
 	from->Release ();
-	logDebug ( "streamOnFile %s failed with %s\r\n", file, 
+	logDebug ( "streamOnFile %s failed with %s\n", file, 
 		    hr == MAPI_E_NO_ACCESS? 
 		    "no access" : hr == MAPI_E_NOT_FOUND? "not found" : "unknown");
 	return FALSE;
@@ -1216,7 +1313,7 @@ MapiGPGMEImpl::streamOnFile (const char *file, LPATTACH att)
     to->Commit (0);
     to->Release ();
     from->Release ();
-    logDebug ( "streamOnFile %s succeeded\r\n", file);
+    logDebug ( "streamOnFile %s succeeded\n", file);
     return TRUE;
 }
 
@@ -1364,7 +1461,7 @@ MapiGPGMEImpl::checkAttachmentExtension (const char *ext)
 	return false;
     if (*ext == '.')
 	ext++;
-    logDebug ( "checkAttachmentExtension: %s\r\n", ext);
+    logDebug ( "checkAttachmentExtension: %s\n", ext);
     if (stricmp (ext, "gpg") == 0 ||
 	stricmp (ext, "pgp") == 0 ||
 	stricmp (ext, "asc") == 0)
@@ -1420,7 +1517,7 @@ MapiGPGMEImpl::setXHeader (const char *name, const char *val)
 //     mnid[0].Kind.lpwstrName = A2W (name);
     hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
     if (FAILED (hr)) {
-	logDebug ("set X-Header failed.\r\n");
+	logDebug ("set X-Header failed.\n");
 	return false;
     }
     
@@ -1428,11 +1525,11 @@ MapiGPGMEImpl::setXHeader (const char *name, const char *val)
     pv.Value.lpszA = (char *)val;
     hr = HrSetOneProp(msg, &pv);	
     if (!SUCCEEDED (hr)) {
-	logDebug ("set X-Header failed.\r\n");
+	logDebug ("set X-Header failed.\n");
 	return false;
     }
 
-    logDebug ("set X-Header succeeded.\r\n");
+    logDebug ("set X-Header succeeded.\n");
     return true;
 }
 
@@ -1542,7 +1639,7 @@ MapiGPGMEImpl::signAttachment (const char *datfile)
 	err = op_sign_file_next (passphraseCallback, this, OP_SIG_DETACH, datfile, sigfile);
 
     if (streamFromFile (sigfile, newatt)) {
-	logDebug ("signAttachment: commit changes.\r\n");
+	logDebug ("signAttachment: commit changes.\n");
 	newatt->SaveChanges (FORCE_SAVE);
     }
     releaseAttachment (newatt);
@@ -1596,18 +1693,18 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 
 	tmp = getAttachFilename (att);
 	inname =  generateTempname (tmp);
-	logDebug ("enc inname: '%s'\r\n", inname);
+	logDebug ("enc inname: '%s'\n", inname);
 	if (action != GPG_ATTACH_DECRYPT) {
 	    char *tmp2 = (char *)xcalloc (1, strlen (inname) 
 					     + strlen (ATT_PREFIX) + 4 + 1);
 	    sprintf (tmp2, "%s"ATT_PREFIX".%s", tmp, getPGPExtension (action));
 	    outname = generateTempname (tmp2);
 	    xfree (tmp2);
-	    logDebug ( "enc outname: '%s'\r\n", outname);
+	    logDebug ( "enc outname: '%s'\n", outname);
 	}
 	else {
 	    if (checkAttachmentExtension (strrchr (tmp, '.')) == false) {
-		logDebug ( "%s: no pgp extension found.\r\n", tmp);
+		logDebug ( "%s: no pgp extension found.\n", tmp);
 		xfree (tmp);
 		xfree (inname);
 		return TRUE;
@@ -1617,7 +1714,7 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 	    tmp2[strlen (tmp2) - 4] = '\0';
 	    outname = generateTempname (tmp2);
 	    xfree (tmp2);
-	    logDebug ("dec outname: '%s'\r\n", outname);
+	    logDebug ("dec outname: '%s'\n", outname);
 	}
 	success = FALSE;
 	/* if we are in sign-only mode, just create a detached signature
@@ -1626,7 +1723,7 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 	    if (doCmdFile (action, inname, outname))
 		success = TRUE;
 	    else
-		logDebug ( "doCmdFile failed\r\n");
+		logDebug ( "doCmdFile failed\n");
 	}
 	if ((action == GPG_ATTACH_ENCRYPT || action == GPG_ATTACH_SIGN) 
 	    && autoSignAtt)
@@ -1647,13 +1744,13 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 	    setAttachFilename (newatt, outname, false);
 
 	    if (streamFromFile (outname, newatt)) {
-		logDebug ( "commit changes.\r\n");	    
+		logDebug ( "commit changes.\n");	    
 		newatt->SaveChanges (FORCE_SAVE);
 	    }
 	}
 	else if (success && action == GPG_ATTACH_DECRYPT) {
 	    success = saveDecryptedAttachment (NULL, outname);
-	    logDebug ("saveDecryptedAttachment ec=%d\r\n", success);
+	    logDebug ("saveDecryptedAttachment ec=%d\n", success);
 	}
 	DeleteFile (outname);
 	xfree (outname);
@@ -1680,16 +1777,15 @@ MapiGPGMEImpl::decryptAttachments (HWND hwnd)
     if (!getAttachments ())
 	return FALSE;
     n = countAttachments ();
-    logDebug ( "dec: mail has %d attachments\r\n", n);
+    logDebug ( "dec: mail has %d attachments\n", n);
     if (!n) {
 	freeAttachments ();
 	return TRUE;
     }
     for (int i=0; i < n; i++) {
 	LPATTACH amsg = openAttachment (i);
-	if (!amsg)
-	    continue;
-	processAttachment (&amsg, hwnd, i, GPG_ATTACH_DECRYPT);
+	if (amsg)
+          processAttachment (&amsg, hwnd, i, GPG_ATTACH_DECRYPT);
     }
     freeAttachments ();
     return 0;
@@ -1699,10 +1795,13 @@ MapiGPGMEImpl::decryptAttachments (HWND hwnd)
 int
 MapiGPGMEImpl::signAttachments (HWND hwnd)
 {
-    if (!getAttachments ())
+    if (!getAttachments ()) {
+        logDebug ("MapiGPGME.signAttachments: getAttachments failed\n");
 	return FALSE;
+    }
+    
     int n = countAttachments ();
-    logDebug ("sig: mail has %d attachments\r\n", n);
+    logDebug ("MapiGPGME.signAttachments: mail has %d attachments\n", n);
     if (!n) {
 	freeAttachments ();
 	return TRUE;
@@ -1727,7 +1826,7 @@ MapiGPGMEImpl::encryptAttachments (HWND hwnd)
     if (!getAttachments ())
 	return FALSE;
     n = countAttachments ();
-    logDebug ("enc: mail has %d attachments\r\n", n);
+    logDebug ("enc: mail has %d attachments\n", n);
     if (!n) {
 	freeAttachments ();
 	return TRUE;
@@ -1779,7 +1878,7 @@ MapiGPGMEImpl::saveDecryptedAttachment (HWND root, const char *srcname)
     ofn.lpstrFilter = filter;
 
     if (GetSaveFileName (&ofn)) {
-	logDebug ("copy %s -> %s\r\n", srcname, fname);
+	logDebug ("copy %s -> %s\n", srcname, fname);
 	return CopyFile (srcname, fname, FALSE) == 0? false : true;
     }
     return true;
@@ -1834,8 +1933,9 @@ MapiGPGMEImpl::readOptions (void)
     xfree (val); val = NULL;
 
     load_extension_value ("logFile", &val);
-    if (val == NULL ||*val == '"' || *val == 0)
-	logfile = NULL;
+    if (val == NULL ||*val == '"' || *val == 0) {
+        setLogFile (NULL);
+    }
     else {
 	setLogFile (val);
 	setEnableLogging (true);
@@ -1928,7 +2028,7 @@ MapiGPGMEImpl::attachPublicKey (const char *keyid)
     /* XXX: set proper RFC3156 MIME types. */
 
     if (streamFromFile (keyfile, newatt)) {
-	logDebug ("attachPublicKey: commit changes.\r\n");
+	logDebug ("attachPublicKey: commit changes.\n");
 	newatt->SaveChanges (FORCE_SAVE);
     }
     releaseAttachment (newatt);

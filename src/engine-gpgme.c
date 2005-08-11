@@ -229,8 +229,7 @@ fail:
 
 
 int
-op_sign_file_next (int (*pass_cb)(void *, const char*, const char*, int, int),
-	           void *pass_cb_value,
+op_sign_file_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
 	           int mode, const char *infile, const char *outfile)
 {
     gpgme_data_t in=NULL;
@@ -565,16 +564,23 @@ leave:
     return err;
 }
 
+
 int
 op_sign_start (const char *inbuf, char **outbuf)
 {
     gpgme_key_t locusr = NULL;
     int err;
 
+    log_debug ("engine-gpgme.op_sign_start: enter\n");
     err = signer_dialog_box (&locusr, NULL);
-    if (err == -1) /* Cancel */
+    if (err == -1) { /* Cancel */
+        log_debug ("engine-gpgme.op_sign_start: leave (canceled)\n");
 	return 0;
-    return op_sign ((void*)locusr, inbuf, outbuf);
+    }
+    err = op_sign ((void*)locusr, inbuf, outbuf);
+    log_debug ("engine-gpgme.op_sign_start: leave (rc=%d (%s))\n",
+               err, gpg_strerror (err));
+    return err;
 }
 
 
@@ -586,11 +592,12 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
     gpgme_ctx_t ctx;
     struct decrypt_key_s *hd;
 
+    log_debug ("engine-gpgme.op_sign: enter\n");
     *outbuf = NULL;
     op_init ();
     err = gpgme_new (&ctx);
-    if (err)
-	return err;
+    if (err) 
+        goto really_leave;
 
     hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
     hd->flags = 0x01;
@@ -614,18 +621,21 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
 	out = NULL;
     }
 
-leave:
+  leave:
+    err = 0; /* fixme: the orginal code didn't returned an error.  Correct?*/
     free_decrypt_key (hd);
     gpgme_release (ctx);
     gpgme_data_release (in);
     gpgme_data_release (out);
-    return 0;
+  really_leave:
+    log_debug ("engine-gpgme.op_sign: leave (rc=%d (%s))\n",
+               err, gpg_strerror (err));
+    return err;
 }
 
 
 int
-op_decrypt (int (*pass_cb)(void *, const char*, const char*, int, int),
-	    void *pass_cb_value,
+op_decrypt (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
 	    const char *inbuf, char **outbuf)
 {
     /* XXX: violates the information hiding principle */
@@ -721,8 +731,7 @@ op_decrypt_start (const char *inbuf, char **outbuf)
 }
 
 int
-op_decrypt_next (int (*pass_cb)(void *, const char*, const char*, int, int),
-		 void *pass_cb_value,
+op_decrypt_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
 		 const char *inbuf, char **outbuf)
 {
     return op_decrypt (pass_cb, pass_cb_value, inbuf, outbuf);
@@ -772,26 +781,35 @@ leave:
 }
 
 
-/* Try to find a key for each item in @id. If one ore more items were
-   not found, it is added to @unknown at the same position.
-   @n is the total amount of items to find. */
+/* Try to find a key for each item in array NAMES. If one ore more
+   items were not found, they are stored as malloced strings to the
+   newly allocated array UNKNOWN at the corresponding position.  Found
+   keys are stored in the newly allocated array KEYS. If N is not NULL
+   the total number of items will be stored at that address.  Note,
+   that both UNKNOWN may have NULL entries inbetween. The fucntion
+   returns the nuber of keys not found. Caller needs to releade KEYS
+   and UNKNOWN. 
+
+   FIXME: The calling convetion is far to complicated.  Needs to be revised.
+
+*/
 int 
-op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n)
+op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown, size_t *n)
 {
     int i, pos=0;
     gpgme_key_t k;
 
-    for (i=0; id[i] != NULL; i++)
+    for (i=0; names[i]; i++)
 	;
     if (n)
 	*n = i;
     *unknown = (char **)xcalloc (i+1, sizeof (char*));
     *keys = (gpgme_key_t *)xcalloc (i+1, sizeof (gpgme_key_t));
-    for (i=0; id[i] != NULL; i++) {
+    for (i=0; names[i]; i++) {
 	/*k = find_gpg_email(id[i]);*/
-	k = get_gpg_key (id[i]);
+	k = get_gpg_key (names[i]);
 	if (!k)
-	    (*unknown)[pos++] = xstrdup (id[i]);
+	    (*unknown)[pos++] = xstrdup (names[i]);
 	else
 	    (*keys)[i] = k;
     }

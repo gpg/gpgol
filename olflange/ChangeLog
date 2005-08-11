@@ -1,3 +1,8 @@
+2005-08-11  Werner Koch  <wk@g10code.com>
+
+	* GPGExch.cpp (ExchLogInfo): Changed to make use of
+	MapiGPGME->logDebug.
+
 2005-08-09  Timo Schulz  <ts@g10code.com>
 
 	* GPGOptionsDlg.cpp: Include MapiGPGME.h and

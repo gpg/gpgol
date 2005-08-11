@@ -23,6 +23,9 @@
 
 #ifdef __cplusplus
 extern "C" {
+#if 0
+}
+#endif
 #endif
 
 typedef enum {
@@ -56,14 +59,12 @@ int op_sign (void *locusr, const char *inbuf, char **outbuf);
 int op_sign_file (int mode, const char *infile, const char *outfile);
 int op_sign_file_ext (int mode, const char *infile, const char *outfile,
 		      cache_item_t *ret_itm);
-int op_sign_file_next (int (*pass_cb)(void *, const char*, const char*, int, int),
-	               void *pass_cb_value,
+int op_sign_file_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
 	               int mode, const char *infile, const char *outfile);
 
 int op_decrypt_file (const char *infile, const char *outfile);
-int op_decrypt_next (int (*pass_cb)(void *, const char*, const char*, int, int),
-		     void *pass_cb_value,
-		     const char *inbuf, char **outbuf);
+int op_decrypt_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
+                     const char *inbuf, char **outbuf);
 int op_decrypt_start (const char *inbuf, char **outbuf);
 int op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm);
 

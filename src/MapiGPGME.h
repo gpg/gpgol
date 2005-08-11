@@ -114,12 +114,16 @@ public:
           m->destroy();
         }
     }
+
+  /* Fixme: Move this. */
+  virtual void __stdcall logDebug (const char *fmt, va_list a) = 0;
 };
 
 
 extern "C" {
 
 MapiGPGME * __stdcall CreateMapiGPGME (LPMESSAGE msg);
+
 }
 
 #endif /*MAPI_GPGME_H*/
