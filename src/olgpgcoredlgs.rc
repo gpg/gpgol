@@ -1,6 +1,6 @@
 //Microsoft Developer Studio generated resource script.
 //
-#include "resource.h"
+#include "olgpgcoredlgs.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -77,9 +77,9 @@ BEGIN
             VALUE "InternalName", "GPGMEDLGS\0"
             VALUE "LegalCopyright", "Copyright © 2005 g10 Code GmbH, 2004 Timo Schulz\0"
             VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "gpgmedlgs.dll\0"
+            VALUE "OriginalFilename", "olgpgcore.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "GPGME Dialogs\0"
+            VALUE "ProductName", "Outlgpg Core\0"
             VALUE "ProductVersion", "0.99.4\0"
             VALUE "SpecialBuild", "2005-07-20-15-49-10\0"
         END

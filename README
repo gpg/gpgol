@@ -8,12 +8,24 @@ thus we started to rewrite it from scratch.
 
 .          Top directory with build scripts and information files.
 
-src/       The actual code of this plugin.
+src/       Code to build the actual core of the plugin.  The resulting
+           DLL will be named "olgpgcore.dll".  It is to build using
+           the Mingw toolchain.
 
-
-olflange/  Code to build "gpgolfla.dll".  This DLL used to connect the
-           actual plugin to Outlook.  This is expected not to change
+olflange/  Code to build "olgpgmain.dll".  This DLL is used to connect
+           the actual plugin to Outlook.  It is expected not to change
            too often.  Special tools (read: a native MS Windows
            compiler) is required to build it.
 
 bin/       Precompiled binaries.
+
+
+
+Note: For building in src/ you need to throw an orginal mapi32.dll
+into this directory.  This is due to a bug in the binutiuls: ld is not
+able to properly read an DEF file but will happily use the same
+information from an actual DLL.  The problem is that symbols like
+HrSetOneProp@8 are actually written without the "@8" into the import
+table when used with a DEF file and generated import lib.  Needs more
+debugging - any BFD cracks who can lend me a helping hand?  (wk).
+

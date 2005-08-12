@@ -139,6 +139,11 @@ public:
 
   
 public:
+  const char * __stdcall versionString (void)
+  {
+    return PACKAGE_VERSION;
+  }
+    
   int __stdcall encrypt (void);
   int __stdcall decrypt (void);
   int __stdcall sign (void);
@@ -286,6 +291,8 @@ public:
       }
     return NULL;
   }
+
+  void  __stdcall showVersion (void);
 
   int __stdcall startKeyManager ();
   void __stdcall startConfigDialog (HWND parent);
@@ -1882,6 +1889,13 @@ MapiGPGMEImpl::saveDecryptedAttachment (HWND root, const char *srcname)
 	return CopyFile (srcname, fname, FALSE) == 0? false : true;
     }
     return true;
+}
+
+
+void  
+MapiGPGMEImpl::showVersion (void)
+{
+  /* Not yet available. */
 }
 
 

@@ -104,7 +104,7 @@ DllRegisterServer (void)
     }
     DWORD dwTemp = 0;
     dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hKey, "GPG Exchange", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+    RegSetValueEx (hKey, "OutlGPG", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
 
     /* set outlook update flag */
     strcpy(szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
@@ -133,7 +133,7 @@ DllUnregisterServer (void)
 	ExchLogInfo ("DllUnregisterServer: access denied.\n");
 	return E_ACCESSDENIED;
     }
-    RegDeleteValue (hKey, "GPG Exchange");
+    RegDeleteValue (hKey, "OutlGPG");
     /* set outlook update flag */
     CHAR szEntry[512];
     strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");

@@ -49,6 +49,8 @@ class MapiGPGME
 public:    
   virtual void __stdcall destroy () = 0;
 
+  virtual const char * __stdcall versionString (void) = 0;
+
   virtual int __stdcall encrypt (void) = 0;
   virtual int __stdcall decrypt (void) = 0;
   virtual int __stdcall sign (void) = 0;
@@ -78,6 +80,7 @@ public:
   virtual void __stdcall clearPassphrase (void) = 0;
 
   virtual void __stdcall logDebug (const char *fmt, ...) = 0;
+  virtual void __stdcall logDebug (const char *fmt, va_list a) = 0;
 
   virtual int __stdcall readOptions (void) = 0;
   virtual int __stdcall writeOptions (void) = 0;
@@ -103,8 +106,11 @@ public:
   virtual void __stdcall setDefaultKey (const char *key) = 0;
   virtual char * __stdcall getDefaultKey (void) = 0;
 
+  virtual void  __stdcall showVersion (void) = 0;
+
   virtual int __stdcall startKeyManager () = 0;
   virtual void __stdcall startConfigDialog (HWND parent) = 0;
+
 
   void operator delete (void *p)
     {
@@ -115,8 +121,6 @@ public:
         }
     }
 
-  /* Fixme: Move this. */
-  virtual void __stdcall logDebug (const char *fmt, va_list a) = 0;
 };
 
 

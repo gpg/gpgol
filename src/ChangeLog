@@ -1,3 +1,20 @@
+2005-08-12  Werner Koch  <wk@g10code.com>
+
+	* config-dialog.c (store_extension_value, load_extension_value):
+	Changed key to "OutlGPG".
+
+	* MapiGPGME.h (class MapiGPGME): New methods versionString and
+	showVersion.  Breaks ABI but it doesn't matter as we are also
+	going to change the name of the project.
+
+	* Makefile.am: Renamed target to olgpgcore.
+	* resource.h: Renamed to ...
+	* olgpgcoredlgs.h: .. and removed cruft from generator.
+	* gpgmedlgs.rc: Renamed to ..
+	* olgpgcoredlgs.rc: ... and removed cruft.
+	* libgpgmedlgs.def: Renamed to ..
+	* olgpgcore.def: .. this.
+	
 2005-08-11  Werner Koch  <wk@g10code.com>
 
 	* MapiGPGME.cpp (log_debug): New.  Rewrote the whole log stuff.

@@ -21,7 +21,7 @@
 #include <windows.h>
 #include <time.h>
 
-#include "resource.h"
+#include "olgpgcoredlgs.h"
 #include "gpgme.h"
 #include "keycache.h"
 #include "intern.h"

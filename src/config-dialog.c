@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <gpgme.h>
 
-#include "resource.h"
+#include "olgpgcoredlgs.h"
 #include "keycache.h"
 #include "intern.h"
 
@@ -394,7 +394,7 @@ int
 store_extension_value (const char *key, const char *val)
 {
     return store_config_value (HKEY_LOCAL_MACHINE, 
-	"Software\\Microsoft\\Exchange\\Client\\Extensions\\GPG Exchange", 
+	"Software\\Microsoft\\Exchange\\Client\\Extensions\\OutlGPG", 
 	key, val);
 }
 
@@ -404,6 +404,6 @@ int
 load_extension_value (const char *key, char **val)
 {
     return load_config_value (HKEY_LOCAL_MACHINE, 
-	"Software\\Microsoft\\Exchange\\Client\\Extensions\\GPG Exchange", 
+	"Software\\Microsoft\\Exchange\\Client\\Extensions\\OutlGPG", 
 	key, val);
 }

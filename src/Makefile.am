@@ -11,38 +11,36 @@
 
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = libgpgmedlgs 
+bin_PROGRAMS = olgpgcore 
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) -shared
 AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
 
-libgpgmedlgs_SOURCES = \
-              MapiGPGME.cpp        \
-              MapiGPGME.h	   \
-	      mymapi.h             \
-              mymapitags.h         \
-              gpgmedlgs.rc	   \
-              libgpgmedlgs.def	   \
-              common.c		   \
-              config-dialog.c	   \
-              engine-gpgme.c	   \
-              engine.h		   \
-              intern.h		   \
-	HashTable.h HashTable.cpp  \
-              keycache.c	   \
-              keycache.h	   \
-	      usermap.c            \
-	      usermap.h            \
-              main.c		   \
-              passphrase-dialog.c  \
-              recipient-dialog.c   \
-              resource.h           \
-              verify-dialog.c      \
-	vasprintf.c
+olgpgcore_SOURCES = \
+         main.c  olgpgcore.def	      \
+	 MapiGPGME.cpp  MapiGPGME.h   \
+         engine-gpgme.c	engine.h      \
+         common.c intern.h	      \
+         HashTable.cpp HashTable.h    \
+         keycache.c keycache.h	      \
+	 usermap.c  usermap.h         \
+         olgpgcoredlgs.rc             \
+         olgpgcoredlgs.h              \
+         config-dialog.c	      \
+         passphrase-dialog.c          \
+         recipient-dialog.c           \
+         verify-dialog.c              \
+	 mymapi.h  mymapitags.h       \
+         vasprintf.c          
 
-libgpgmedlgs_LDADD = libgpgmedlgs.def mapi32.dll $(GPGME_LIBS)  \
-                      -lshell32 -lgdi32 -lcomdlg32
+olgpgcore_LDADD = olgpgcore.def olgpgcoredlgs.o mapi32.dll $(GPGME_LIBS) \
+                  -lshell32 -lgdi32 -lcomdlg32
+
+
+.rc.o:
+	$(WINDRES) `test -f '$<' || echo '$(srcdir)/'`$< $@
+
 
 
 

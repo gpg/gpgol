@@ -1,4 +1,4 @@
-LIBRARY libgpgmedlgs.dll
+LIBRARY olgpgcore.dll
 
 ;SECTIONS
 ;	.SHARDAT READ WRITE SHARED

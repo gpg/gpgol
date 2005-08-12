@@ -84,14 +84,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "Outlook GPG Exchange DLL\0"
+            VALUE "FileDescription", "Outlook GPG Main DLL\0"
             VALUE "FileVersion", "0.99.4\0"
-            VALUE "InternalName", "GPGExch\0"
+            VALUE "InternalName", "olgpgmain\0"
             VALUE "LegalCopyright", "Copyright (C) 2004-5 g10 Code GmbH, 2003 Timo Schulz, 2000-1 G-DATA\0"
             VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "GPGExch.DLL\0"
+            VALUE "OriginalFilename", "olgpgmain.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Outlook GPG Dynamic Link Library\0"
+            VALUE "ProductName", "Outlook GPG plugin\0"
             VALUE "ProductVersion", "0.99.4\0"
             VALUE "SpecialBuild", "\0"
         END
@@ -150,7 +150,7 @@ BEGIN
     LTEXT           "Logdatei",IDC_STATIC,18,146,28,8
     EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "Maintainer of the this version: g10 Code GmbH",
+    LTEXT           "By g10 Code GmbH; available under the LGPL",
                     IDC_STATIC,8,185,148,8
     LTEXT           "Version 0.99",IDC_VERSION_INFO,161,185,98,9
 END
@@ -267,7 +267,7 @@ BEGIN
     LTEXT           "Logfile",IDC_STATIC,18,146,22,8
     EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "Maintainer of the this version: g10 Code GmbH",
+    LTEXT           "By g10 Code GmbH; available under the LGPL",
                     IDC_STATIC,8,185,148,8
     LTEXT           "Version 0.99",IDC_VERSION_INFO,161,185,98,9
 END
