@@ -29,7 +29,11 @@
 #include "keycache.h"
 #include "intern.h"
 
+/* Registry path to GnuPG */
 #define REGPATH "Software\\GNU\\GnuPG"
+
+/* Registry path to store plugin settings */
+#define OUTLGPG_REGPATH "Software\\GNU\\OutlGPG"
 
 static char*
 get_open_file_name (const char *dir)
@@ -95,7 +99,7 @@ load_config_value_ext (char **val)
   
   /* MSDN: This buffer must be at least MAX_PATH characters in size. */
   memset (buf, 0, sizeof (buf));
-  if (w32_shgetfolderpath (NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE, 
+  if (w32_shgetfolderpath (NULL, CSIDL_APPDATA/*|CSIDL_FLAG_CREATE*/, 
                            NULL, 0, buf) < 0)
     return -1;
   strcat (buf, "\\gnupg");
@@ -165,7 +169,6 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
 }
 
 
-
 static int
 store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 {
@@ -180,7 +183,7 @@ store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 	return -1;
     if (strchr (val, '%'))
 	type = REG_EXPAND_SZ;
-    ec = RegSetValueEx (h, key, 0, type, (const BYTE*)val, strlen(val));
+    ec = RegSetValueEx (h, key, 0, type, (const BYTE*)val, strlen (val));
     if (ec != ERROR_SUCCESS) {
 	RegCloseKey(h);
 	return -1;
@@ -374,13 +377,13 @@ start_key_manager (void)
     memset (&si, 0, sizeof (si));
     si.cb = sizeof (STARTUPINFO);
     si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;    
+    si.wShowWindow = SW_SHOW;
 
     if (CreateProcess (NULL, keyman,
 			NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
 			NULL, NULL, &si, &pi) == TRUE) {
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);	
+	CloseHandle (pi.hProcess);
+	CloseHandle (pi.hThread);
     }
 
     xfree (keyman);
@@ -393,9 +396,7 @@ start_key_manager (void)
 int
 store_extension_value (const char *key, const char *val)
 {
-    return store_config_value (HKEY_LOCAL_MACHINE, 
-	"Software\\Microsoft\\Exchange\\Client\\Extensions\\OutlGPG", 
-	key, val);
+    return store_config_value (HKEY_CURRENT_USER, OUTLGPG_REGPATH, key, val);
 }
 
 /* Load a key from the registry with the key given by @key. The value is
@@ -403,7 +404,5 @@ store_extension_value (const char *key, const char *val)
 int
 load_extension_value (const char *key, char **val)
 {
-    return load_config_value (HKEY_LOCAL_MACHINE, 
-	"Software\\Microsoft\\Exchange\\Client\\Extensions\\OutlGPG", 
-	key, val);
+    return load_config_value (HKEY_CURRENT_USER, OUTLGPG_REGPATH, key, val);
 }

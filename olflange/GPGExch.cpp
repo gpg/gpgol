@@ -115,8 +115,8 @@ DllRegisterServer (void)
     RegCloseKey (hkey);
     
     hkey = NULL;
-    lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions\\OutlGPG");
-    RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL,
+    lstrcpy (szKeyBuf, "Software\\GNU\\OutlGPG");
+    RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
 		    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
     if (hkey != NULL)
 	RegCloseKey (hkey);

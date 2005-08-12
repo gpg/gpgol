@@ -1,3 +1,8 @@
+2005-08-12  Timo Schulz  <ts@g10code.com>
+
+	* config-dialog.c (sotre_extension_value, load_extension_value):
+	Adjust registry key.
+
 2005-08-12  Werner Koch  <wk@g10code.com>
 
 	* config-dialog.c (store_extension_value, load_extension_value):
