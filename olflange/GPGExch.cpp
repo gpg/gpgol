@@ -81,10 +81,12 @@ ExchEntryPoint (void)
 STDAPI 
 DllRegisterServer (void)
 {    
-    HKEY hKey;
+    HKEY hkey;
     CHAR szKeyBuf[1024];
     CHAR szEntry[512];
     TCHAR szModuleFileName[MAX_PATH];
+    DWORD dwTemp = 0;
+    long ec;
 
     /* get server location */
     DWORD dwResult = ::GetModuleFileName(theApp.m_hInstance, szModuleFileName, MAX_PATH);
@@ -95,23 +97,30 @@ DllRegisterServer (void)
     lstrcpy (szEntry, "4.0;");
     lstrcat (szEntry, szModuleFileName);
     lstrcat (szEntry, ";1;11000111111100");  /* context information */
-    long lResult = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
+    ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
 				   REG_OPTION_NON_VOLATILE,
-				   KEY_ALL_ACCESS, NULL, &hKey, NULL);
-    if (lResult != ERROR_SUCCESS) {
+				   KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    if (ec != ERROR_SUCCESS) {
 	ExchLogInfo ("DllRegisterServer failed\n");
 	return E_ACCESSDENIED;
     }
-    DWORD dwTemp = 0;
+    
     dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hKey, "OutlGPG", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+    RegSetValueEx (hkey, "OutlGPG", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
 
     /* set outlook update flag */
-    strcpy(szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
+    strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
     dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hKey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
-    RegCloseKey (hKey);
+    RegSetValueEx (hkey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+    RegCloseKey (hkey);
     
+    hkey = NULL;
+    lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions\\OutlGPG");
+    RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL,
+		    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    if (hkey != NULL)
+	RegCloseKey (hkey);
+
     ExchLogInfo ("DllRegisterServer succeeded\n");
     return S_OK;
 }
@@ -121,25 +130,25 @@ DllRegisterServer (void)
 STDAPI 
 DllUnregisterServer (void)
 {
-    HKEY hKey;
+    HKEY hkey;
     CHAR szKeyBuf[1024];
 
     lstrcpy(szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
     /* create and open key and subkey */
     long lResult = RegCreateKeyEx(HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
 				    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
-				    NULL, &hKey, NULL);
+				    NULL, &hkey, NULL);
     if (lResult != ERROR_SUCCESS) {
 	ExchLogInfo ("DllUnregisterServer: access denied.\n");
 	return E_ACCESSDENIED;
     }
-    RegDeleteValue (hKey, "OutlGPG");
+    RegDeleteValue (hkey, "OutlGPG");
     /* set outlook update flag */
     CHAR szEntry[512];
     strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
     DWORD dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hKey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
-    RegCloseKey (hKey);
+    RegSetValueEx (hkey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+    RegCloseKey (hkey);
 
     return S_OK;
 }

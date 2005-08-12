@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 mapi32.lib c:\oss\w32root\lib\libgpgmedlgs.lib /nologo /subsystem:windows /dll /machine:I386
+# ADD LINK32 mapi32.lib c:\oss\w32root\lib\olgpgcore.lib /nologo /subsystem:windows /dll /machine:I386 /out:"Release/olgpgmain.dll"
 
 !ELSEIF  "$(CFG)" == "GPGExch - Win32 Debug"
 
@@ -79,7 +79,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 mapi32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 mapi32.lib c:\oss\w32root\lib\olgpgcore.lib /nologo /subsystem:windows /dll /debug /machine:I386 /out:"Debug/olgpgmain.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -87,43 +87,6 @@ LINK32=link.exe
 
 # Name "GPGExch - Win32 Release"
 # Name "GPGExch - Win32 Debug"
-# Begin Group "Source Files"
-
-# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Source File
-
-SOURCE=.\GPGExch.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\GPGOptionsDlg.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\StdAfx.cpp
-# ADD CPP /Yc"stdafx.h"
-# End Source File
-# End Group
-# Begin Group "Header Files"
-
-# PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=.\GPGExch.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\GPGExchange.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Resource.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\StdAfx.h
-# End Source File
-# End Group
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
@@ -158,7 +121,36 @@ SOURCE=.\sign.bmp
 # End Group
 # Begin Source File
 
-SOURCE=.\ChangeLog.txt
+SOURCE=.\ChangeLog
+# End Source File
+# Begin Source File
+
+SOURCE=.\GPGExch.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\GPGExch.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\GPGExchange.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\GPGOptionsDlg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\StdAfx.cpp
+# ADD CPP /Yc"stdafx.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\StdAfx.h
 # End Source File
 # End Target
 # End Project

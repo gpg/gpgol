@@ -1,7 +1,7 @@
 ; GPGExch.def : Declares the module parameters for the DLL.
 
-LIBRARY      "GPGExch"
-DESCRIPTION  'GPGExch Windows Dynamic Link Library'
+LIBRARY      "OLGPGMAIN"
+DESCRIPTION  'Outlook GPG Main DLL'
 
 EXPORTS
     ExchEntryPoint  @1
