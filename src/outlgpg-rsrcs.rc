@@ -1,16 +1,29 @@
-//Microsoft Developer Studio generated resource script.
-//
-#include "olgpgcoredlgs.h"
+/* outlgpg-rsrcs.rc - Main resources for this DLL
+ *	Copyright (C) 2004, 2005 g10 Code GmbH
+ * 
+ * This file is part of OutlGPG.
+ * 
+ * OutlGPG is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * OutlGPG is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ */
 
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
+
+#include "outlgpg-ids.h"
+
 #include "afxres.h"
 
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
 // Deutsch (Deutschland) resources
@@ -20,77 +33,6 @@
 LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 #pragma code_page(1252)
 #endif //_WIN32
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
-#ifndef _MAC
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,99,4,0
- PRODUCTVERSION 0,99,4,0
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x21L
-#else
- FILEFLAGS 0x20L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904b0"
-        BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "g10 Code GmbH\0"
-            VALUE "FileDescription", "Common GPGME Dialogs\0"
-            VALUE "FileVersion", "0.99.4\0"
-            VALUE "InternalName", "GPGMEDLGS\0"
-            VALUE "LegalCopyright", "Copyright © 2005 g10 Code GmbH, 2004 Timo Schulz\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "olgpgcore.dll\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Outlgpg Core\0"
-            VALUE "ProductVersion", "0.99.4\0"
-            VALUE "SpecialBuild", "2005-07-20-15-49-10\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
-END
-
-#endif    // !_MAC
 
 
 /////////////////////////////////////////////////////////////////////////////

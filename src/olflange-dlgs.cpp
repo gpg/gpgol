@@ -1,23 +1,23 @@
-/* GPGOptionsDlg.cpp - gpg options dialog procedure
+/* olflange-dlgs.cpp - New dialogs for Outlook.
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
- * This file is part of the G DATA Outlook Plugin for GnuPG.
+ * This file is part of OutlGPG.
  * 
- * This plugin is free software; you can redistribute it and/or
+ * OutlGPG is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * This plugin is distributed in the hope that it will be useful,
+ * OutlGPG is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General
- * Public License along with this plugin; if not, write to the 
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
- * Boston, MA 02111-1307, USA.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,17 +27,17 @@
 #include <windows.h>
 #include <prsht.h>
 
-#include "GPGExchange.h"
-#include "resource.h"
-#include "../src/mymapi.h"
-#include "../src/mymapitags.h"
-#include "../src/MapiGPGME.h"
+#include "mymapi.h"
+#include "mymapitags.h"
+#include "MapiGPGME.h"
+
+#include "olflange-def.h"
+#include "olflange-ids.h"
 
 
 /* GPGOptionsDlgProc -
    Handles the notifications sent for managing the options property page. */
-BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg, 
-				 WPARAM wParam, LPARAM lParam)
+bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     BOOL bMsgResult;    
     static LPNMHDR pnmhdr;
@@ -129,9 +129,28 @@ BOOL CALLBACK GPGOptionsDlgProc (HWND hDlg, UINT uMsg,
 		
 	case PSN_HELP:
 	    MessageBox (pnmhdr->hwndFrom,
-			"This plugin was orginally created by G-DATA and called \"GPGExch\" http://www.gdata.de/gpg\n\n"
-			"Later versions of the plugin were created by g10 Code GmbH (http://www.g10code.com)\n",
-			"Outlook GnuPG-Plugin", MB_OK);
+    "This is OutlGPG version " PACKAGE_VERSION "\n"
+    "Copyright (C) 2005 g10 Code GmbH\n"
+    "\n"
+    "OutlGPG is a plugin for Outlook to allow encryption and\n"
+    "signing of messages using the OpenPGP standard. It makes\n"
+    "use of the GnuPG software (http://www.gnupg.org).\n"
+    "\n"
+    "OutlGPG is free software; you can redistribute it and/or\n"
+    "modify it under the terms of the GNU Lesser General Public\n"
+    "License as published by the Free Software Foundation; either\n"
+    "version 2.1 of the License, or (at your option) any later version.\n"
+    "\n"
+    "OutlGPG is distributed in the hope that it will be useful,\n"
+    "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n"
+    "Lesser General Public License for more details.\n"
+    "\n"
+    "You should have received a copy of the GNU Lesser General Public\n"
+    "License along with this library; if not, write to the Free Software\n"
+    "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA\n"
+    "02110-1301, USA.\n",
+                  "GnuPG Plugin", MB_OK);
 	    bMsgResult = TRUE;
 	    break;
 

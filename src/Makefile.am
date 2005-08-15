@@ -11,32 +11,40 @@
 
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = olgpgcore 
+bin_PROGRAMS = outlgpg 
+EXTRA_DIST = versioninfo.rc.in outlgpg-rsrcs.rc olflange-rsrcs.rc       
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) -shared
 AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
 
-olgpgcore_SOURCES = \
-         main.c  olgpgcore.def	      \
-	 MapiGPGME.cpp  MapiGPGME.h   \
-         engine-gpgme.c	engine.h      \
-         common.c intern.h	      \
-         HashTable.cpp HashTable.h    \
-         keycache.c keycache.h	      \
-	 usermap.c  usermap.h         \
-         olgpgcoredlgs.rc             \
-         olgpgcoredlgs.h              \
-         config-dialog.c	      \
-         passphrase-dialog.c          \
-         recipient-dialog.c           \
-         verify-dialog.c              \
-	 mymapi.h  mymapitags.h       \
-         vasprintf.c          
+outlgpg_SOURCES = \
+	main.c  outlgpg.def         \
+	resource.rc	            \
+        outlgpg-ids.h               \
+	olflange.cpp olflange.h     \
+	olflange-def.h              \
+	olflange-dlgs.cpp           \
+	olflange-ids.h              \
+	myexchext.h                 \
+	MapiGPGME.cpp MapiGPGME.h   \
+        engine-gpgme.c	engine.h    \
+        common.c intern.h	    \
+	passcache.c passcache.h     \
+        HashTable.cpp HashTable.h   \
+        keycache.c keycache.h	    \
+	usermap.c  usermap.h        \
+        config-dialog.c	            \
+        passphrase-dialog.c         \
+        recipient-dialog.c          \
+        verify-dialog.c             \
+	mymapi.h  mymapitags.h      \
+        vasprintf.c          
 
-olgpgcore_LDADD = olgpgcore.def olgpgcoredlgs.o mapi32.dll $(GPGME_LIBS) \
-                  -lshell32 -lgdi32 -lcomdlg32
+outlgpg_LDADD = outlgpg.def  \
+		$(GPGME_LIBS) mapi32.dll -lshell32 -lgdi32 -lcomdlg32
 
+resource.o: resource.rc versioninfo.rc outlgpg-rsrcs.rc olflange-rsrcs.rc
 
 .rc.o:
 	$(WINDRES) `test -f '$<' || echo '$(srcdir)/'`$< $@

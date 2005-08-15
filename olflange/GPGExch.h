@@ -25,12 +25,6 @@
 
 #include "resource.h"		// main symbols
 
-class CGPGExchApp : public CWinApp
-{
-public:
-    CGPGExchApp();
-    DECLARE_MESSAGE_MAP()
-};
 
 /*
  CGPGExchExt 

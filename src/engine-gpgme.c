@@ -17,6 +17,13 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
+
+/* Please note that we assume UTF-8 strings everywhere except when
+   noted. */
+   
+
+#include <config.h>
+
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +33,7 @@
 #include "gpgme.h"
 #include "keycache.h"
 #include "intern.h"
+#include "passcache.h"
 #include "engine.h"
 
 static char *debug_file = NULL;
@@ -41,14 +49,6 @@ cleanup (void)
 	xfree (debug_file);
 	debug_file = NULL;
     }
-}
-
-
-static void
-clear_error_if_cancel (struct decrypt_key_s *hd, gpgme_error_t *err)
-{
-    if (hd->opts & OPT_FLAG_CANCEL)
-	*err = 0;
 }
 
 
@@ -86,10 +86,20 @@ op_init (void)
 
   if (init_done == 1)
       return 0;
-  gpgme_check_version (NULL);
+
+  if (!gpgme_check_version (NEED_GPGME_VERSION)) {
+      log_debug ("gpgme is too old (need %s, have %s)\n",
+                 NEED_GPGME_VERSION, gpgme_check_version (NULL) );
+      return -1;
+  }
+
   err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
-  if (err)
+  if (err) {
+      log_debug ("gpgme can't find a suitable OpenPGP backend: %s\n",
+                 gpgme_strerror (err));
       return err;
+  }
+
   /*init_keycache_objects ();*/
   init_done = 1;
   return 0;
@@ -634,68 +644,117 @@ op_sign (void *locusr, const char *inbuf, char **outbuf)
 }
 
 
-int
-op_decrypt (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
+/* Worker fucntion for the decryption.  PASS_CB is the passphrase
+   callback and PASS_CB_VALUE is passed as opaque argument to the
+   callback.  INBUF is the string with ciphertext.  On success a newly
+   allocated string with the plaintext will be stored at the address
+   of OUTBUF and 0 returned.  On failure, NULL will be stored at
+   OUTBUF and a gpgme error code is returned. */
+static int
+do_decrypt (gpgme_passphrase_cb_t pass_cb,
+            struct decrypt_key_s *pass_cb_value,
 	    const char *inbuf, char **outbuf)
 {
-    /* XXX: violates the information hiding principle */
-    struct decrypt_key_s *cb = (struct decrypt_key_s *)pass_cb_value;
-    gpgme_data_t in=NULL, out=NULL;
-    gpgme_ctx_t ctx;
-    gpgme_error_t err;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_ctx_t ctx;
+  gpgme_error_t err;
+  
+  *outbuf = NULL;
+  op_init ();
 
-    *outbuf = NULL;
-    op_init ();
-    err = gpgme_new (&ctx);
-    if (err)
-	return err;
+  err = gpgme_new (&ctx);
+  if (err)
+    return err;
 
-    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
-    if (err)
-	goto leave;
-    err = gpgme_data_new (&out);
-    if (err)
-	goto leave;
+  err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+  if (err)
+    goto leave;
+  err = gpgme_data_new (&out);
+  if (err)
+    goto leave;
 
-    /* Needed to parse ENC_TO */
-    cb->ctx = (void *)ctx;    
+  /* Set the callback and run the actual decryption routine.  We need
+     to access the gpgme context in the callback, thus store it in the
+     arg for the time of the call. */
+  gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
+  pass_cb_value->ctx = ctx;    
+  err = gpgme_op_decrypt_verify (ctx, in, out);
+  pass_cb_value->ctx = NULL;    
 
-    gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
-    err = gpgme_op_decrypt_verify (ctx, in, out);
-    if (!err) {
-	size_t n = 0;
-	*outbuf = gpgme_data_release_and_get_mem (out, &n);
-	(*outbuf)[n] = 0;
-	out = NULL;
-    }
-
-    if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED) {
-	gpgme_decrypt_result_t res;
-	res = gpgme_op_decrypt_result (ctx);
-	if (res != NULL && res->recipients != NULL &&
-	    gpgme_err_code (res->recipients->status) == GPG_ERR_NO_SECKEY)
-	    err = GPG_ERR_NO_SECKEY;
-	/* XXX: return the keyids */
-    }
-
-    /* XXX: automatically spawn verify_start in case the text was signed? */
+  /* Do passphrase cache update immediately after the operation.  On
+     any error we flush a possible passphrase for the used keyID from
+     the cache.  On success we store the passphrase into the cache.
+     The cache will take care of the supplied TTL and for example
+     actually delete it if the TTL is 0 or an empty value is used. We
+     also wipe the passphrase from the context here. */
+  if (*pass_cb_value->keyid)
     {
-	gpgme_verify_result_t res;
-	res = gpgme_op_verify_result (ctx);
-	if (res != NULL && res->signatures != NULL)
-	    verify_dialog_box (res);
+      if (err)
+        passcache_flush (pass_cb_value->keyid);
+      else
+        passcache_put (pass_cb_value->keyid, pass_cb_value->pass,
+                       pass_cb_value->ttl);
+    }
+  if (pass_cb_value->pass)
+    {
+      wipestring (pass_cb_value->pass);
+      xfree (pass_cb_value->pass);
+      pass_cb_value->pass = NULL;
     }
 
-    clear_error_if_cancel (cb, &err);
+  /* Act upon the result of the decryption operation. */
+  if (!err) 
+    {
+      /* Decryption succeeded.  Store the result at OUTBUF. */
+      size_t n = 0;
+      gpgme_verify_result_t res;
+
+      *outbuf = gpgme_data_release_and_get_mem (out, &n);
+      (*outbuf)[n] = 0; /* Make sure it is really a string. */
+      out = NULL; /* (That GPGME object is no any longer valid.) */
+
+      /* Now check the state of any signature. */
+      res = gpgme_op_verify_result (ctx);
+      if (res && res->signatures)
+        verify_dialog_box (res);
+    }
+  else if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED)
+    {
+      /* The decryption failed.  See whether we can determine the real
+         problem. */
+      gpgme_decrypt_result_t res;
+      res = gpgme_op_decrypt_result (ctx);
+      if (res != NULL && res->recipients != NULL &&
+          gpgme_err_code (res->recipients->status) == GPG_ERR_NO_SECKEY)
+        err = GPG_ERR_NO_SECKEY;
+      /* XXX: return the keyids */
+    }
+  else
+    {
+      /* Decryption failed for other reasons. */
+
+      /* XXX: automatically spawn verify_start in case the text was signed? */
+    }
+
+
+  
+  /* If the callback indicated a cancel operation, clear the error. */
+  if (pass_cb_value->opts & OPT_FLAG_CANCEL)
+    err = 0;
+  
 
 leave:    
-    gpgme_release (ctx);
-    gpgme_data_release (in);
-    gpgme_data_release (out);
-    return err;
+  gpgme_release (ctx);
+  gpgme_data_release (in);
+  gpgme_data_release (out);
+  return err;
 }
 
 
+
+/* FIXME: Do we still needs this one? */
+#if 0
 int
 op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm)
 {
@@ -703,7 +762,7 @@ op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm)
     cache_item_t itm;
     int err;
 
-    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
+    hd = xcalloc (1, sizeof *hd);
     err = op_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
 
     if (ret_itm != NULL) {
@@ -716,27 +775,35 @@ op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm)
     free_decrypt_key (hd);
     return err;
 }
+#endif
 
+/* Run the decryption.  Decrypts INBUF to OUTBUF, caller must xfree
+   the result at OUTBUF.  TTL is the time in seconds to cache a
+   passphrase. */
 int
-op_decrypt_start (const char *inbuf, char **outbuf)
+op_decrypt_start (const char *inbuf, char **outbuf, int ttl)
 {
-    struct decrypt_key_s *hd;
-    int err;
+  int err;
+  struct decrypt_key_s *hd;
+    
+  hd = xcalloc (1, sizeof *hd);
+  hd->ttl = ttl;
+  err = do_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
 
-    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
-    err = op_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
-
-    free_decrypt_key (hd);
-    return err;
+  free_decrypt_key (hd);
+  return err;
 }
 
+
+/* FIXME: Do we still needs this one? */
+#if 0
 int
 op_decrypt_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
 		 const char *inbuf, char **outbuf)
 {
     return op_decrypt (pass_cb, pass_cb_value, inbuf, outbuf);
 }
-
+#endif
 
 int
 op_verify_start (const char *inbuf, char **outbuf)

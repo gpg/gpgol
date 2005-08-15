@@ -1,4 +1,4 @@
-/* mapitags.h - MAPI definitions
+/* mymapitags.h - MAPI definitions
  *
  * This file defines constants as used by MAPI.  This interface
  * definition has been compiled from similar Python code by g10 Code

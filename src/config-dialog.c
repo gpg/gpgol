@@ -2,22 +2,26 @@
  *	Copyright (C) 2005 g10 Code GmbH
  *	Copyright (C) 2003 Timo Schulz
  *
- * This file is part of GPGME Dialogs.
- *
- * GPGME Dialogs is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 
- * of the License, or (at your option) any later version.
- *  
- * GPGME Dialogs is distributed in the hope that it will be useful,
+ * This file is part of OutlGPG.
+ * 
+ * OutlGPG is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * OutlGPG is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
+
+#include <config.h>
+
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -25,7 +29,7 @@
 #include <sys/stat.h>
 #include <gpgme.h>
 
-#include "olgpgcoredlgs.h"
+#include "outlgpg-ids.h"
 #include "keycache.h"
 #include "intern.h"
 

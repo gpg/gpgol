@@ -1,19 +1,9 @@
-LIBRARY olgpgcore.dll
 
-;SECTIONS
-;	.SHARDAT READ WRITE SHARED
-
-
-EXPORTS
-	CreateMapiGPGME@4
-LIBRARY      "OLGPGMAIN"
-DESCRIPTION  'Outlook GPG Main DLL'
+LIBRARY      "OutlGPG"
+DESCRIPTION  'OutlGPG Plugin for Outlook'
 
 EXPORTS
     ExchEntryPoint = ExchEntryPoint@0            @1
     DllRegisterServer = DllRegisterServer@0      @2	PRIVATE
     DllUnregisterServer = DllUnregisterServer@0  @3	PRIVATE
-
-
-
-
+    CreateMapiGPGME@4                            @4

@@ -1,3 +1,7 @@
+2005-08-14  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Build src/versioninfo.rc.
+
 2005-08-10  Werner Koch  <wk@g10code.com>
 
 	* configure.ac: Check for and define DLLTOOL.

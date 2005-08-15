@@ -18,6 +18,25 @@ EXTRA_DIST = \
              key_mana.bmp sign.bmp
 
 
+bin_PROGRAMS = olgpgmain
+EXEEXT = .dll
+
+AM_CFLAGS = $(GPGME_CFLAGS) -shared
+AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
+
+olgpgmain_SOURCES = \
+        GPGExch.cpp  \
+	GPGOptionsDlg.cpp \
+	olgpgmaindlgs.rc
+
+
+olgpgmain_LDADD = GPGExch.def olgpgmaindlgs.o \
+	mapi32.dll ../src/olgpgcore.dll $(GPGME_LIBS) \
+        -lshell32 -lgdi32 -lcomdlg32
+
+
+.rc.o:
+	$(WINDRES) `test -f '$<' || echo '$(srcdir)/'`$< $@
 
 
 

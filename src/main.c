@@ -19,23 +19,32 @@
  */
 #include <windows.h>
 
-void set_global_hinstance (HINSTANCE hinst);
+#include <gpgme.h>
+
+#include "intern.h"
+#include "passcache.h"
 
 
 int WINAPI
 DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 {
-    switch (reason) {
-    case DLL_PROCESS_ATTACH:
-	set_global_hinstance (hinst);
-	break;
+  if (reason == DLL_PROCESS_ATTACH )
+    {
+      set_global_hinstance (hinst);
+      /* The next call initializes subsystems of gpgme and should be
+         done as early as possible.  The actual return value is (the
+         version string) is not used here.  It may be called at anty
+         time later for this. */
+      gpgme_check_version (NULL);
+
+      /* Early initializations of our subsystems. */
+      if (initialize_passcache ())
+        return FALSE;
+      if (initialize_mapi_gpgme ())
+        return FALSE;
     }
 
-    return TRUE;
+  return TRUE;
 }
 
-const char*
-outlook_gpg_get_version (void)
-{
-    return "0.99.4";
-}
+

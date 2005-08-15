@@ -1,70 +1,50 @@
-/* GPGExch.cpp - exchange extension classes
+/* olflange.cpp - Flange between Outlook and the MapiGPGME class
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
- * This file is part of the G DATA Outlook Plugin for GnuPG.
+ * This file is part of OutlGPG.
  * 
- * This plugin is free software; you can redistribute it and/or
+ * OutlGPG is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * This plugin is distributed in the hope that it will be useful,
+ * OutlGPG is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General
- * Public License along with this plugin; if not, write to the 
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
- * Boston, MA 02111-1307, USA.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include <stdio.h>
 #include <windows.h>
-
 
 #ifndef INITGUID
 #define INITGUID
 #endif
+
 #include <initguid.h>
-// #include <mapiguid.h>
-#include "../src/mymapi.h"
-#include "../src/mymapitags.h"
+#include "mymapi.h"
+#include "mymapitags.h"
 #include "myexchext.h"
+#include "MapiGPGME.h"
+#include "intern.h"
 
-#include "GPGExchange.h"
-#include "GPGExch.h"
-#include "../src/MapiGPGME.h"
+#include "olflange-ids.h"
+#include "olflange-def.h"
+#include "olflange.h"
 
+bool g_bInitDll = FALSE;
 
-/* The instance of this module. */
-static HINSTANCE m_hInstance;
-
-
-BOOL g_bInitDll = FALSE;
 MapiGPGME *m_gpg = NULL;
 
-
-/* DLL entry point. */
-EXTERN_C int WINAPI
-DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
-{
-  fprintf (stderr, "entering dllmain.  reason=%d\n", reason);
-  
-  if (reason == DLL_PROCESS_ATTACH )
-    {
-      m_hInstance = hinst;
-      fprintf (stderr, "hinst = %p\n", hinst);
-      
-    }
-
-  return TRUE;
-}
 
 static void 
 ExchLogInfo (const char * fmt, ...)
@@ -94,8 +74,8 @@ DllRegisterServer (void)
     DWORD dwTemp = 0;
     long ec;
 
-    /* get server location */
-    if (!GetModuleFileName(m_hInstance, szModuleFileName, MAX_PATH))
+    /* Get server location. */
+    if (!GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH))
         return E_FAIL;
 
     lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
@@ -113,7 +93,11 @@ DllRegisterServer (void)
     dwTemp = lstrlen (szEntry) + 1;
     RegSetValueEx (hkey, "OutlGPG", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
 
-    /* set outlook update flag */
+    /* To avoid conflicts with the old G-DATA plugin and older vesions
+       of this Plugin, we remove the key used by these versions. */
+    RegDeleteValue (hkey, "GPG Exchange");
+
+    /* Set outlook update flag. */
     strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
     dwTemp = lstrlen (szEntry) + 1;
     RegSetValueEx (hkey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
@@ -513,7 +497,7 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
         pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
         AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-	LoadString (m_hInstance, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
+	LoadString (glob_hinst, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
         AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
 
         m_nCmdEncrypt = *pnCommandIDBase;
@@ -530,7 +514,7 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
 
 	if (hwndToolbar) {
 	    TBADDBITMAP tbab;
-	    tbab.hInst = m_hInstance;
+	    tbab.hInst = glob_hinst;
 	    tbab.nID = IDB_DECRYPT;
 	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
 	    m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
@@ -546,13 +530,13 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
         pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
         AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-	LoadString(m_hInstance, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
+	LoadString(glob_hinst, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
         AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
 
         m_nCmdEncrypt = *pnCommandIDBase;
         (*pnCommandIDBase)++;
 
-	LoadString(m_hInstance, IDS_SIGN_MENU_ITEM, szBuffer, 128);
+	LoadString(glob_hinst, IDS_SIGN_MENU_ITEM, szBuffer, 128);
         AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
 
         m_nCmdSign = *pnCommandIDBase;
@@ -571,7 +555,7 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
 
 	if (hwndToolbar) {
 	    TBADDBITMAP tbab;
-	    tbab.hInst = m_hInstance;
+	    tbab.hInst = glob_hinst;
 	    tbab.nID = IDB_ENCRYPT;
 	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
 	    m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
@@ -591,7 +575,7 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
         pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
         AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-	LoadString (m_hInstance, IDS_KEY_MANAGER, szBuffer, 128);
+	LoadString (glob_hinst, IDS_KEY_MANAGER, szBuffer, 128);
         AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
 
         m_nCmdEncrypt = *pnCommandIDBase;
@@ -607,7 +591,7 @@ STDMETHODIMP CGPGExchExtCommands::InstallCommands(
 	}
 	if (hwndToolbar) {
 	    TBADDBITMAP tbab;
-	    tbab.hInst = m_hInstance;
+	    tbab.hInst = glob_hinst;
 	    tbab.nID = IDB_KEY_MANAGER;
 	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
 	}	
@@ -686,8 +670,8 @@ STDMETHODIMP CGPGExchExtCommands::Help (
 	    CHAR szBuffer[512];
 	    CHAR szAppName[128];
 
-	    LoadString (m_hInstance, IDS_DECRYPT_HELP, szBuffer, 511);
-	    LoadString (m_hInstance, IDS_APP_NAME, szAppName, 127);
+	    LoadString (glob_hinst, IDS_DECRYPT_HELP, szBuffer, 511);
+	    LoadString (glob_hinst, IDS_APP_NAME, szAppName, 127);
 	    MessageBox (m_hWnd, szBuffer, szAppName, MB_OK);
 	    return S_OK;
 	}
@@ -696,16 +680,16 @@ STDMETHODIMP CGPGExchExtCommands::Help (
 	if (nCommandID == m_nCmdEncrypt) {
 	    CHAR szBuffer[512];
 	    CHAR szAppName[128];
-	    LoadString(m_hInstance, IDS_ENCRYPT_HELP, szBuffer, 511);
-	    LoadString(m_hInstance, IDS_APP_NAME, szAppName, 127);
+	    LoadString(glob_hinst, IDS_ENCRYPT_HELP, szBuffer, 511);
+	    LoadString(glob_hinst, IDS_APP_NAME, szAppName, 127);
 	    MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);	
 	    return S_OK;
 	} 
 	if (nCommandID == m_nCmdSign) {
 	    CHAR szBuffer[512];	
 	    CHAR szAppName[128];	
-	    LoadString(m_hInstance, IDS_SIGN_HELP, szBuffer, 511);	
-	    LoadString(m_hInstance, IDS_APP_NAME, szAppName, 127);	
+	    LoadString(glob_hinst, IDS_SIGN_HELP, szBuffer, 511);	
+	    LoadString(glob_hinst, IDS_APP_NAME, szAppName, 127);	
 	    MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);	
 	    return S_OK;
 	} 
@@ -715,8 +699,8 @@ STDMETHODIMP CGPGExchExtCommands::Help (
     	if (nCommandID == m_nCmdEncrypt) {
 		CHAR szBuffer[512];
 		CHAR szAppName[128];
-		LoadString(m_hInstance, IDS_KEY_MANAGER_HELP, szBuffer, 511);
-		LoadString(m_hInstance, IDS_APP_NAME, szAppName, 127);
+		LoadString(glob_hinst, IDS_KEY_MANAGER_HELP, szBuffer, 511);
+		LoadString(glob_hinst, IDS_APP_NAME, szAppName, 127);
 		MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
 		return S_OK;
 	} 
@@ -742,34 +726,34 @@ STDMETHODIMP CGPGExchExtCommands::QueryHelpText(
     if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (m_hInstance, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (m_hInstance, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}
     }
     if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (m_hInstance, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (m_hInstance, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}
 	if (nCommandID == m_nCmdSign) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (m_hInstance, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-	        LoadString (m_hInstance, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
+	        LoadString (glob_hinst, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}
     }
     if (m_lContext == EECONTEXT_VIEWER) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (m_hInstance, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (m_hInstance, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
 	    return S_OK;
 	}	
     }
@@ -802,7 +786,7 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(m_hInstance, IDS_DECRYPT_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_DECRYPT_TOOLTIP, lpszDescription, nCharCnt);
 			return S_OK;
 		}
 	}
@@ -818,7 +802,7 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(m_hInstance, IDS_ENCRYPT_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_ENCRYPT_TOOLTIP, lpszDescription, nCharCnt);
 			return S_OK;
 		}
 		if (nToolbarButtonID == m_nToolbarButtonID2)
@@ -831,7 +815,7 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(m_hInstance, IDS_SIGN_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_SIGN_TOOLTIP, lpszDescription, nCharCnt);
 			return S_OK;
 		}
 	}
@@ -845,7 +829,7 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(m_hInstance, IDS_KEY_MANAGER_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_KEY_MANAGER_TOOLTIP, lpszDescription, nCharCnt);
 			return S_OK;
 		}
 	}
@@ -926,7 +910,7 @@ CGPGExchExtPropertySheets::GetPages(
 
     pPSP[0].dwSize = sizeof (PROPSHEETPAGE);
     pPSP[0].dwFlags = PSP_DEFAULT | PSP_HASHELP;
-    pPSP[0].hInstance = m_hInstance;
+    pPSP[0].hInstance = glob_hinst;
     pPSP[0].pszTemplate = MAKEINTRESOURCE (resid);
     pPSP[0].hIcon = NULL;     
     pPSP[0].pszTitle = NULL;  

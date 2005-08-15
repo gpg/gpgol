@@ -1,9 +1,58 @@
+2005-08-14  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (log_debug_w32): New.
+	(do_log): New arg W32ERR.  Make sure to print a trailing LF.
+
+	* passphrase-dialog.c (passphrase_callback_box): Revamped.
+	(free_decrypt_key): Wipe out a passphrase.  Remove superfluous
+	variable clearing.
+	* util.h (wipememory2, wipememory): New.
+	(wipestring): New.
+	* engine-gpgme.c (op_decrypt): Renamed to ..
+	(do_decrypt): .. this and made local.
+	(clear_error_if_cancel): Removed as we inlined the code.
+	(do_decrypt): Cleaned up.
+	* main.c (DllMain): Initialize passcaching subsystem.
+	* passcache.c, passcache.h: New.
+	* intern.h: Include it here.
+	* util.h: New.
+
+	* olflange.cpp (DllRegisterServer): Remove key for the old
+	versions of this plugin.
+
+	Merged olgpgmain.dll and olgpgcore.dll into outlgpg.dll.
+	
+	* Makefile.am: Renamed target to outlgpg. Added required files.
+	* olflange.cpp, olflange.h: Renamed from GPGExch.cpp and
+	GPGExch.h.  Removed all the MFC cruft as it is not required - it
+	was only used to get hands on the hInstance of the DLL; chnaged
+	that to use the glob_hinst which gets set by DllMain.
+	* outlgpg.def: New.
+	* olflange-def.h: New.
+	* olflange-dlgs.cpp: Renamed from GPGOptionsDlgs.cpp.
+	* olflange-ids.h: Renamed from ../olflange/resource.h
+	* olflange-rsrcs.rc: Renamed from ..olflange/olgpgmaindlgs.rc and
+	stripped off unneedded stuff.
+	* olgpgcoredlgs.rc: Renamed to ..
+	* outlgpg-rsrcs.rc: .. this and stripped of cruft.
+	* olgpgcoredlgs.h: Renamed to ..
+	* outlgpg-ids.h: .. this.
+	* versioninfo.rc.in: New.
+	
 2005-08-12  Timo Schulz  <ts@g10code.com>
 
 	* config-dialog.c (sotre_extension_value, load_extension_value):
 	Adjust registry key.
 
 2005-08-12  Werner Koch  <wk@g10code.com>
+
+	* intern.h: Moved keycache prototypes to keycache.h.
+	* MapiGPGME.cpp (lock_log, unlock_log): New.
+	* engine-gpgme.c (op_init): Check GPGME version.
+	* main.c (outlook_gpg_get_version): Removed as it is now derived
+	from config.h.
+	(DllMain): Initializes gpgme and mapigpgme.
+	* MapiGPGME.cpp (initialize_mapi_gpgme): New.
 
 	* config-dialog.c (store_extension_value, load_extension_value):
 	Changed key to "OutlGPG".

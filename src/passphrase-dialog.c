@@ -2,30 +2,41 @@
  *	Copyright (C) 2004 Timo Schulz
  *	Copyright (C) 2005 g10 Code GmbH
  *
- * This file is part of GPGME Dialogs.
- *
- * GPGME Dialogs is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 
- * of the License, or (at your option) any later version.
- *  
- * GPGME Dialogs is distributed in the hope that it will be useful,
+ * This file is part of OutlGPG.
+ * 
+ * OutlGPG is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * OutlGPG is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
+
+#include <config.h>
+
 #include <windows.h>
 #include <time.h>
+#include <assert.h>
+#include <gpgme.h>
 
-#include "olgpgcoredlgs.h"
-#include "gpgme.h"
+#include "outlgpg-ids.h"
 #include "keycache.h"
+#include "passcache.h"
 #include "intern.h"
 #include "usermap.h"
+
+
+static char const allhexdigits[] = "1234567890ABCDEFabcdef";
+
+
 
 static void
 add_string_list (HWND hbox, const char **list, int start_idx)
@@ -349,77 +360,158 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
 
 
 /* GPGME passphrase callback function. It starts the decryption dialog
-   to request the passphrase from the user. */
+   to request the passphrase from the user.  See the GPGME manual for
+   a description of the arguments. */
 gpgme_error_t
 passphrase_callback_box (void *opaque, const char *uid_hint, 
 			 const char *pass_info,
 			 int prev_was_bad, int fd)
 {
-    struct decrypt_key_s *hd = (struct decrypt_key_s *)opaque;
-    DWORD nwritten = 0;
+  struct decrypt_key_s *hd = opaque;
+  DWORD nwritten = 0;
+  char keyidstr[16+1];
 
-    log_debug ("passphrase_callback_box: enter (uh=`%s',pi=`%s')\n", 
-               uid_hint?uid_hint:"(null)", pass_info?pass_info:"(null)");
-    if (hd->opts & OPT_FLAG_CANCEL) {
-	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
-	CloseHandle ((HANDLE)fd);
-        log_debug ("passphrase_callback_box: leave (due to cancel flag)\n");
-	return -1;
+  log_debug ("passphrase_callback_box: enter (uh=`%s',pi=`%s')\n", 
+             uid_hint?uid_hint:"(null)", pass_info?pass_info:"(null)");
+
+  *keyidstr = 0; 
+
+  /* First remove a possible passphrase from the return structure. */
+  if (hd->pass)
+    wipestring (hd->pass);
+  xfree (hd->pass);
+  hd->pass = NULL;
+
+  /* For some reasons the cancel flag has been set - write an empty
+     passphrase and close the handle to indicate the cancel state to
+     the backend. */
+  if (hd->opts & OPT_FLAG_CANCEL)
+    {
+      /* FIXME: Casting an FD to a handles is very questionable.  We
+         need to check this. */
+      WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
+      CloseHandle ((HANDLE)fd);
+      log_debug ("passphrase_callback_box: leave (due to cancel flag)\n");
+      return -1;
     }
-    if (prev_was_bad) {
-        log_debug ("passphrase_callback_box: last passphrase was bad\n");
-	xfree (hd->pass);
-	hd->pass = NULL;
-    }
 
-    if (hd && uid_hint && !hd->pass) {
-	const char * s = uid_hint;
-	size_t i=0;
-        int rc;
-	
-	while (s && *s != ' ')
-	    hd->keyid[i++] = *s++;
-	hd->keyid[i] = '\0'; s++;
-	if (hd->user_id) {
-	    xfree (hd->user_id);
-	    hd->user_id = NULL;
-	}
-	hd->user_id = (char *)xcalloc (1, strlen (s) + 2);
-	strcpy (hd->user_id, s);
+  /* Parse the information to get the keyid we use for caching of the
+     passphrase. If we got suitable information, we will have a proper
+     16 character string in KEYIDSTR; if not KEYIDSTR has been set to
+     empty. */
+  if (pass_info)
+    {
+      /* As of now (gpg 1.4.2) these information are possible:
 
-	hd->last_was_bad = prev_was_bad? 1: 0;
-	hd->use_as_cb = 1;
-	if (hd->flags & 0x01)
-	    rc = DialogBoxParam (glob_hinst, (LPCSTR)IDD_DEC, GetDesktopWindow (),
-			    decrypt_key_dlg_proc, (LPARAM)hd);
-	else
-	    rc = DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC_EXT, GetDesktopWindow (),
-			    decrypt_key_ext_dlg_proc, 
-			    (LPARAM)hd);
-        if (rc <= 0) {
-            char buf[256];
-    
-            FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError (), 
-                           MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
-                           buf, sizeof (buf)-1, NULL);
-            
-            log_debug ("passphrase_callback_box: dialog failed rc=%d (%s)\n",
-                       rc, buf);
+         1. Standard passphrase requested:
+            "<long main keyid> <long keyid> <keytype> <keylength>"
+         2. Passphrase for symmetric key requested:
+            "<cipher_algo> <s2k_mode> <s2k_hash>"
+         3. PIN for a card requested.
+            "<card_type> <chvno>"
+      
+       For caching we need to use the long keyid from case 1; the main
+       keyid can't be used because a key may have different
+       passphrases on the subkeys.  Caching for symmetrical keys is
+       not possible becuase there is no information on what
+       key(i.e. passphrase) to use.  Caching of of PINs is not yet
+       possible because we don't have information on the card's serial
+       number yet; that must be solved by gpgme. 
+
+       To detect case 1 we simply check whether the first token
+       consists in its entire of 16 hex digits.
+      */
+      const char *s;
+      int i;
+
+      for (s=pass_info, i=0; *s && strchr (allhexdigits, *s) ; s++, i++)
+        ;
+      if (i == 16)
+        {
+          while (*s == ' ')
+            s++;
+          for (i=0; *s && strchr (allhexdigits, *s) && i < 16; s++, i++)
+            keyidstr[i] = *s;
+          keyidstr[i] = 0;
+          if (*s)
+            s++;
+          if (i != 16 || !strchr (allhexdigits, *s))
+            {
+              log_debug ("%s: oops: does not look like pass_info\n", __func__);
+              *keyidstr = 0;
+            }
         }
+    } 
+  
+  log_debug ("%s: using keyid 0x%s\n", __func__, keyidstr);
+
+  /* Now check how to proceed. */
+  if (prev_was_bad) 
+    {
+      log_debug ("%s: last passphrase was bad\n", __func__);
+      /* Flush a possible cache entry for that keyID. */
+      if (*keyidstr)
+        passcache_flush (keyidstr);
     }
-    else 
-        log_debug ("passphrase_callback_box: hd=%p hd->pass=`%s'\n",
-                   hd, hd && hd->pass? hd->pass: "(null)");
-        
-    if (hd->pass != NULL) {
-        log_debug ("passphrase_callback_box: sending passphrase ...\n");
-	WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);
-	WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
+  else if (*keyidstr)
+    {
+      hd->pass = passcache_get (keyidstr);
+      log_debug ("%s: getting passphrase for 0x%s from cache: %s\n",
+                 __func__, keyidstr, hd->pass? "hit":"miss");
     }
-    else
-	WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
-    log_debug ("passphrase_callback_box: leave\n");
-    return 0;
+
+  /* Copy the keyID into the context. */
+  assert (strlen (keyidstr) < sizeof hd->keyid);
+  strcpy (hd->keyid, keyidstr);
+
+  /* If we have no cached pssphrase, popup tyhe passphrase dialog. */
+  if (!hd->pass)
+    {
+      int rc;
+      const char *s;
+
+      /* Construct the user ID. */
+      if (uid_hint)
+        {
+          /* Skip the first token (keyID). */
+          for (s=uid_hint; *s && *s != ' '; s++)
+             ;
+          while (*s == ' ')
+            s++;
+        }
+      else
+        s = "[no user Id]";
+      xfree (hd->user_id);
+      hd->user_id = xstrdup (s);
+          
+      hd->last_was_bad = prev_was_bad;
+      hd->use_as_cb = 1; /* FIXME: For what is this used? */
+      if (hd->flags & 0x01)
+        rc = DialogBoxParam (glob_hinst, (LPCSTR)IDD_DEC,
+                             GetDesktopWindow (),
+                             decrypt_key_dlg_proc, (LPARAM)hd);
+      else
+        rc = DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC_EXT,
+                             GetDesktopWindow (),
+                             decrypt_key_ext_dlg_proc, (LPARAM)hd);
+      if (rc <= 0) 
+        log_debug_w32 (-1, "%s: dialog failed (rc=%d)", __func__, rc);
+    }
+  else /* FIXME: Don't write tha passphrase to the log file. */
+    log_debug ("%s: hd=%p hd->pass=`%s'\n",
+               hd, hd && hd->pass? hd->pass: "(null)");
+
+  /* If we got a passphrase, send it to the FD. */
+  if (hd->pass) 
+    {
+      log_debug ("passphrase_callback_box: sending passphrase ...\n");
+      WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);
+    }
+
+  WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);
+
+  log_debug ("passphrase_callback_box: leave\n");
+  return 0;
 }
 
 
@@ -430,12 +522,9 @@ free_decrypt_key (struct decrypt_key_s * ctx)
     if (!ctx)
 	return;
     if (ctx->pass) {
+        wipestring (ctx->pass);
 	xfree (ctx->pass);
-	ctx->pass = NULL;
     }
-    if (ctx->user_id) {
-	xfree (ctx->user_id);
-	ctx->user_id = NULL;
-    }
+    xfree (ctx->user_id);
     xfree(ctx);
 }

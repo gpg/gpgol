@@ -21,6 +21,10 @@
 #ifndef _GPGMEDLGS_INTERN_H_
 #define _GPGMEDLGS_INTERN_H_
 
+#include <gpgme.h>
+
+#include "util.h"
+
 #ifdef __cplusplus
 extern "C" {
 #if 0
@@ -45,16 +49,17 @@ enum {
 
 
 struct decrypt_key_s {
-    gpgme_key_t signer;
-    char keyid[16+1];
-    char *user_id;
-    char *pass;    
-    void *ctx;
-    int opts;
-    unsigned flags;
-    unsigned int hide_pwd:1;
-    unsigned int use_as_cb:1;
-    unsigned int last_was_bad:1;
+  gpgme_key_t signer;
+  char keyid[16+1];
+  char *user_id;
+  char *pass;    
+  void *ctx;
+  int opts;
+  int ttl;  /* TTL of the passphrase. */
+  unsigned int flags;
+  unsigned int hide_pwd:1;
+  unsigned int use_as_cb:1;
+  unsigned int last_was_bad:1;
 };
 
 struct cache_item_s {
@@ -68,18 +73,18 @@ typedef struct cache_item_s *cache_item_t;
 void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
 
-void* xmalloc (size_t n);
-void* xcalloc (size_t m, size_t n);
-char* xstrdup (const char *s);
-void  xfree (void *p);
-
 cache_item_t cache_item_new (void);
 void cache_item_free (cache_item_t itm);
 
 HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 
+/*-- olflange.cpp --*/
+
+
 /*-- MapiGPGME.cpp --*/
+int initialize_mapi_gpgme (void);
 void log_debug (const char *fmt, ...);
+void log_debug_w32 (int w32err, const char *fmt, ...);
 
 
 /*-- recipient-dialog.c --*/
@@ -102,12 +107,6 @@ int load_extension_value (const char *key, char **val);
 
 /*-- verify-dialog.c --*/
 int verify_dialog_box (gpgme_verify_result_t res);
-
-/*-- keycache.c --*/
-void load_keycache_objects (keycache_t ring[2]);
-void init_keycache_objects (void);
-void cleanup_keycache_objects (void);
-void reset_gpg_seckeys (void **ctx);
 
 #ifdef __cplusplus
 }

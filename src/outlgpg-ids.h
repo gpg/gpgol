@@ -1,5 +1,10 @@
-/* olgpgcoredlgs.h - constants used with the dialogs. */
+/* outlgpg-ids.h
 
+  Resource IDs  used by outlgpg-rsrcs.rc. 
+*/
+
+#ifndef OUTLGPG_IDS_H
+#define OUTLGPG_IDS_H
 
 #define IDD_ENC                         101
 #define IDD_MAIN                        102
@@ -60,4 +65,6 @@
 #define IDC_DECEXT_PASS                 1045
 #define IDC_DECEXT_HINT                 1046
 #define IDC_DECEXT_PASSINF              1047
+
+#endif /*OUTLGPG_IDS_H*/
 

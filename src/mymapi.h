@@ -1,4 +1,4 @@
-/* mymapi.h - MAPI definitions required for Outlgpg and Mingw32
+/* mymapi.h - MAPI definitions required for OutlGPG and Mingw32
  * Copyright (C) 1998 Justin Bradford
  * Copyright (C) 2000 François Gouget
  * Copyright (C) 2005 g10 Code GmbH
@@ -14,17 +14,19 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 
 /* This header has been put together from the mingw32 and Wine
    headers.  The first were missing the MAPI definitions and the
-   second are not compatible to the first one.  We only declare stuff
-   we really need for this project. 
+   latter one is not compatible to the first one.  We only declare
+   stuff we really need for this project.
 
    Revisions:
    2005-07-26  Initial version (wk at g10code).
+   2005-08-14  Tweaked for use with myexchext.h.
 */
 
 #ifndef MAPI_H
@@ -195,6 +197,15 @@ DEFINE_OLEGUID(PS_ROUTING_DISPLAY_NAME,0x20382,0,0);
 DEFINE_OLEGUID(PS_ROUTING_EMAIL_ADDRESSES,0x20380,0,0);
 DEFINE_OLEGUID(PS_ROUTING_ENTRYID,0x20383,0,0);
 DEFINE_OLEGUID(PS_ROUTING_SEARCH_KEY,0x20384,0,0);
+
+
+struct _ENTRYID
+{
+    BYTE abFlags[4];
+    BYTE ab[MAPI_DIM];
+};
+typedef struct _ENTRYID ENTRYID;
+typedef struct _ENTRYID *LPENTRYID;
 
 
 /* The property tag structure. This describes a list of columns */
@@ -643,6 +654,8 @@ DECLARE_INTERFACE_(IMAPITable,IUnknown)
 
 /****  Function prototypes. *****/
 
+ULONG   WINAPI UlAddRef(void*);
+ULONG   WINAPI UlRelease(void*);
 HRESULT WINAPI HrGetOneProp(LPMAPIPROP,ULONG,LPSPropValue*);
 HRESULT WINAPI HrSetOneProp(LPMAPIPROP,LPSPropValue);
 BOOL    WINAPI FPropExists(LPMAPIPROP,ULONG);

@@ -9,13 +9,8 @@ thus we started to rewrite it from scratch.
 .          Top directory with build scripts and information files.
 
 src/       Code to build the actual core of the plugin.  The resulting
-           DLL will be named "olgpgcore.dll".  It is to build using
+           DLL will be named "outlgpg.dll".  It is to build using
            the Mingw toolchain.
-
-olflange/  Code to build "olgpgmain.dll".  This DLL is used to connect
-           the actual plugin to Outlook.  It is expected not to change
-           too often.  Special tools (read: a native MS Windows
-           compiler) is required to build it.
 
 bin/       Precompiled binaries.
 

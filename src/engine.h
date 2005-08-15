@@ -65,7 +65,7 @@ int op_sign_file_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
 int op_decrypt_file (const char *infile, const char *outfile);
 int op_decrypt_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
                      const char *inbuf, char **outbuf);
-int op_decrypt_start (const char *inbuf, char **outbuf);
+int op_decrypt_start (const char *inbuf, char **outbuf, int ttl);
 int op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm);
 
 int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);

@@ -31,6 +31,11 @@ struct keycache_s {
 };
 typedef struct keycache_s *keycache_t;
 
+void load_keycache_objects (keycache_t ring[2]);
+void init_keycache_objects (void);
+void cleanup_keycache_objects (void);
+void reset_gpg_seckeys (void **ctx);
+
 int keycache_new (keycache_t *r_ctx);
 void keycache_release (keycache_t ctx);
 int keycache_add (keycache_t *ctx, gpgme_key_t key);

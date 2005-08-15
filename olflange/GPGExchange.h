@@ -23,15 +23,12 @@
 #ifndef INC_GPGEXCHANGE_H
 #define INC_GPGEXCHANGE_H
 
-#define VERSION "0.99.4"
 
 class CGPGExchExtMessageEvents;
 class CGPGExchExtCommands;
 class CGPGExchExtPropertySheets;
 class CGPGExchApp;
 
-/* GPGExch.cpp */
-extern CGPGExchApp theApp;
 
 class MapiGPGME;
 /* GPGExch.cpp */
