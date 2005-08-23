@@ -79,7 +79,8 @@ public:
   /* attributes */
 private:
   ULONG   m_lRef;
-  BOOL    m_bOnSubmitCalled;
+  ULONG   m_lContext;
+  BOOL    m_bOnSubmitActive;
   CGPGExchExt* m_pExchExt;
   BOOL    m_bWriteFailed;
   
@@ -106,6 +107,11 @@ public:
   STDMETHODIMP OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags);
   STDMETHODIMP OnSubmit (LPEXCHEXTCALLBACK pEECB);
   STDMETHODIMP_ (VOID)OnSubmitComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags);
+
+  inline void SetContext (ULONG lContext)
+  { 
+    m_lContext = lContext;
+  };
 };
 
 /*

@@ -45,14 +45,15 @@ struct _gpgme_engine_info  _gpgme_engine_ops_gpgsm;
 static void
 cleanup (void)
 {
-    if (debug_file) {
-	xfree (debug_file);
-	debug_file = NULL;
+  if (debug_file)
+    {
+      xfree (debug_file);
+      debug_file = NULL;
     }
 }
 
 
-/* enable or disable GPGME debug mode. */
+/* Enable or disable GPGME debug mode. */
 void
 op_set_debug_mode (int val, const char *file)
 {
@@ -106,18 +107,47 @@ op_init (void)
 }
 
 
+/* Release a GPGME key array KEYS. */
 static void
 free_recipients (gpgme_key_t *keys)
 {
-    int i;
+  int i;
+  
+  if (!keys)
+    return;
+  for (i=0; keys[i]; i++)
+    gpgme_key_release (keys[i]);
+  xfree (keys);
+}
 
-    if (keys == NULL)
-	return;
-    for (i=0; keys[i] != NULL; i++) {
-	xfree (keys[i]);
-	keys[i] = NULL;
+
+/* This routine should be called immediately after an operation to
+   make sure that the passphrase cache gets updated. ERR is expected
+   to be the error code from the gpgme operation and PASS_CB_VALUE the
+   context used by the passphrase callback.  
+
+   On any error we flush a possible passphrase for the used keyID from
+   the cache.  On success we store the passphrase into the cache.  The
+   cache will take care of the supplied TTL and for example actually
+   delete it if the TTL is 0 or an empty value is used. We also wipe
+   the passphrase from the context here. */
+static void
+update_passphrase_cache (int err, struct decrypt_key_s *pass_cb_value)
+{
+  if (*pass_cb_value->keyid)
+    {
+      if (err)
+        passcache_flush (pass_cb_value->keyid);
+      else
+        passcache_put (pass_cb_value->keyid, pass_cb_value->pass,
+                       pass_cb_value->ttl);
     }
-    xfree (keys);
+  if (pass_cb_value->pass)
+    {
+      wipestring (pass_cb_value->pass);
+      xfree (pass_cb_value->pass);
+      pass_cb_value->pass = NULL;
+    }
 }
 
 
@@ -146,26 +176,33 @@ ftello (FILE *f)
 }
 
 
+/* Copy the data from the GPGME object DAT to a newly created file
+   with name OUTFILE.  Returns 0 on success. */
 static gpgme_error_t
 data_to_file (gpgme_data_t *dat, const char *outfile)
 {
-    FILE *out;
-    char *buf;
-    size_t n=0;
+  FILE *out;
+  char *buf;
+  size_t n=0;
 
-    out = fopen (outfile, "wb");
-    if (!out)
-	return GPG_ERR_UNKNOWN_ERRNO;
-    buf = gpgme_data_release_and_get_mem (*dat, &n);
-    *dat = NULL;
-    if (n == 0) {
-	fclose (out);
-	return GPG_ERR_EOF;
+  out = fopen (outfile, "wb");
+  if (!out)
+    return GPG_ERR_UNKNOWN_ERRNO; /* FIXME: We need to check why we
+                                     can't use errno here. */
+  /* FIXME: Why at all are we using an in memory object wqhen we are
+     later going to write to a file anyway. */
+  buf = gpgme_data_release_and_get_mem (*dat, &n);
+  *dat = NULL;
+  if (!n)
+    {
+      fclose (out);
+      return GPG_ERR_EOF; /* FIXME:  wrap this into a gpgme_error() */
     }
-    fwrite (buf, 1, n, out);
-    fclose (out);
-    xfree (buf);
-    return 0;
+  fwrite (buf, 1, n, out);
+  fclose (out);
+  /* FIXME: We have no error checking above. */
+  xfree (buf);
+  return 0;
 }
 
 
@@ -197,454 +234,468 @@ op_export_keys (const char *pattern[], const char *outfile)
 }
 
 
+/* FIXME: Why is RSET a void* ???*/
 int
 op_sign_encrypt_file (void *rset, const char *infile, const char *outfile)
 {
-    gpgme_data_t in = NULL;
-    gpgme_data_t out = NULL;
-    gpgme_ctx_t ctx=NULL;
-    gpgme_error_t err;
-    gpgme_key_t *keys = (gpgme_key_t*)rset;
-    struct decrypt_key_s *hd;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  gpgme_key_t *keys = (gpgme_key_t*)rset;
+  struct decrypt_key_s *hd;
+  
+  hd = xcalloc (1, sizeof *hd);
 
-    err = gpgme_data_new_from_file (&in, infile, 1);
-    if (err)
-	return err;
+  err = gpgme_data_new_from_file (&in, infile, 1);
+  if (err)
+    goto fail;
     
-    hd = xcalloc (1, sizeof *hd);
-    err = gpgme_new (&ctx);
-    if (err)
-	goto fail;
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
         
-    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+  err = gpgme_data_new (&out);
+  if (err)
+    goto fail;
 
-    err = gpgme_data_new (&out);
-    if (err)
-	goto fail;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+  hd->ctx = ctx;    
+  err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+  hd->ctx = NULL;    
+  update_passphrase_cache (err, hd);
 
-    err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
-    if (!err)
-	err = data_to_file (&out, outfile);
+  if (!err)
+    err = data_to_file (&out, outfile);
     
-fail:
-    if (ctx != NULL)
-	gpgme_release (ctx);
-    if (in != NULL)
-	gpgme_data_release (in);
-    if (out != NULL)
-	gpgme_data_release (out);
-    xfree (hd);
-    return err;
+ fail:
+  if (ctx)
+    gpgme_release (ctx);
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  xfree (hd);
+  return err;
+}
+
+
+/* Sign the file with name INFILE and write the output to a new file
+   OUTFILE. PASSCB is the passphrase callback to use and DK the value
+   we will pass to it.  MODE is one of the GPGME signing modes. */
+static int
+do_sign_file (gpgme_passphrase_cb_t pass_cb,
+              struct decrypt_key_s *dk,
+              int mode, const char *infile, const char *outfile)
+{
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+
+  err = gpgme_data_new_from_file (&in, infile, 1);
+  if (err)
+    goto fail;    
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
+  
+  gpgme_set_armor (ctx, 1);
+  
+  err = gpgme_data_new (&out);
+  if (err)
+    goto fail;
+
+  gpgme_set_passphrase_cb (ctx, pass_cb, dk);
+  dk->ctx = ctx;
+  err = gpgme_op_sign (ctx, in, out, mode);
+  dk->ctx = NULL;
+  update_passphrase_cache (err, dk);
+  
+  if (!err)
+    err = data_to_file (&out, outfile);
+
+ fail:
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  if (ctx)
+    gpgme_release (ctx);    
+  return err;
 }
 
 
 int
-op_sign_file_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
-	           int mode, const char *infile, const char *outfile)
+op_sign_file (int mode, const char *infile, const char *outfile, int ttl)
 {
-    gpgme_data_t in=NULL;
-    gpgme_data_t out=NULL;
-    gpgme_ctx_t ctx=NULL;
-    gpgme_error_t err;
+  struct decrypt_key_s *hd;
+  gpgme_error_t err;
+  
+  hd = xcalloc (1, sizeof *hd);
+  hd->ttl = ttl;
+  hd->flags = 0x01;
 
-    err = gpgme_data_new_from_file (&in, infile, 1);
-    if (err)
-	return err;    
+  err = do_sign_file (passphrase_callback_box, hd, mode, infile, outfile);
 
-    err = gpgme_new (&ctx);
-    if (err)
-	goto fail;
-
-    gpgme_set_armor (ctx, 1);
-    gpgme_set_passphrase_cb (ctx, pass_cb, pass_cb_value);
-
-    err = gpgme_data_new (&out);
-    if (err)
-	goto fail;
-
-    err = gpgme_op_sign (ctx, in, out, mode);
-    if (!err)
-	err = data_to_file (&out, outfile);
-
-fail:
-    if (in != NULL)
-	gpgme_data_release (in);
-    if (out != NULL)
-	gpgme_data_release (out);
-    if (ctx != NULL)
-	gpgme_release (ctx);    
-    return err;
+  xfree (hd);
+  return err;
 }
 
 
-int
-op_sign_file (int mode, const char *infile, const char *outfile)
-{
-    struct decrypt_key_s *hd;
-    gpgme_error_t err;
-
-    hd = xcalloc (1, sizeof *hd);
-    hd->flags = 0x01;
-
-    err = op_sign_file_next (passphrase_callback_box, hd, mode, infile, outfile);
-
-    xfree (hd);
-    return err;
-}
-
-
-int
-op_sign_file_ext (int mode, const char *infile, const char *outfile,
-		  cache_item_t *ret_itm)
-{
-    struct decrypt_key_s *hd;
-    cache_item_t itm;
-    int err;
-
-    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
-    hd->flags = 0x01;
-    err = op_sign_file_next (passphrase_callback_box, hd, mode, infile, outfile);
-
-    if (ret_itm != NULL) {
-	itm = cache_item_new ();
-	itm->pass = hd->pass; 
-	hd->pass = NULL;
-	memcpy (itm->keyid, hd->keyid, sizeof (hd->keyid));
-	*ret_itm = itm;
-    }
-
-    free_decrypt_key (hd);
-    return err;
-}
-
-
+/* Decrypt file INFILE into file OUTFILE. */
 int
 op_decrypt_file (const char *infile, const char *outfile)
 {    
-    gpgme_data_t in = NULL;
-    gpgme_data_t out = NULL;    
-    gpgme_ctx_t ctx = NULL;
-    gpgme_error_t err;
-    struct decrypt_key_s *hd;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;    
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  struct decrypt_key_s *dk;
+  
+  dk = xcalloc (1, sizeof *dk);
 
-    err = gpgme_data_new_from_file (&in, infile, 1);
-    if (err)
-	return err;
+  err = gpgme_data_new_from_file (&in, infile, 1);
+  if (err)
+    goto fail;
 
-    hd = xcalloc (1, sizeof *hd);
-    err = gpgme_new (&ctx);
-    if (err)
-	goto fail;
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
 
-    /* XXX: violates the information hiding principle */
-    {
-	struct decrypt_key_s *cb = (struct decrypt_key_s *)hd;
-	cb->ctx = (void *)ctx;
-    }
-    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
+  err = gpgme_data_new (&out);
+  if (err)
+    goto fail;
 
-    err = gpgme_data_new (&out);
-    if (err)
-	goto fail;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, dk);
+  dk->ctx = ctx;
+  err = gpgme_op_decrypt (ctx, in, out);
+  dk->ctx = NULL;
+  update_passphrase_cache (err, dk);
 
-    err = gpgme_op_decrypt (ctx, in, out);
-    if (!err)
-	err = data_to_file (&out, outfile);
+  if (!err)
+    err = data_to_file (&out, outfile);
 
-fail:
-    if (in != NULL)
-	gpgme_data_release (in);
-    if (out != NULL)
-	gpgme_data_release (out);
-    if (ctx != NULL)
-	gpgme_release (ctx);
-    xfree (hd);
-    return err;
+ fail:
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  if (ctx)
+    gpgme_release (ctx);
+  xfree (dk);
+  return err;
 }
 
 
+/* Try to figure out why the encryption failed and provide a suitable
+   error code. */
 static gpgme_error_t
 check_encrypt_result (gpgme_ctx_t ctx, gpgme_error_t err)
 {
-    gpgme_encrypt_result_t res;
-    res = gpgme_op_encrypt_result (ctx);
-    if (!res)
-	return err;
-    if (res->invalid_recipients != NULL)
-	return gpg_error (GPG_ERR_UNUSABLE_PUBKEY);
-    /* XXX: we need to do more here! */
+  gpgme_encrypt_result_t res;
+
+  res = gpgme_op_encrypt_result (ctx);
+  if (!res)
     return err;
+  if (res->invalid_recipients != NULL)
+    return gpg_error (GPG_ERR_UNUSABLE_PUBKEY);
+  /* XXX: we need to do more here! */
+  return err;
 }
 
 
+
+/* Decrypt the data in file INFILE and write the ciphertext to the new
+   file OUTFILE. */
+/*FIXME: Why is RSET a void*???.  Why do we have this fucntion when
+  there is already a version yusing streams? */
 int
 op_encrypt_file (void *rset, const char *infile, const char *outfile)
 {
-    gpgme_data_t in=NULL;
-    gpgme_data_t out=NULL;
-    gpgme_error_t err;
-    gpgme_ctx_t ctx=NULL;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_error_t err;
+  gpgme_ctx_t ctx = NULL;
 
-    err = gpgme_data_new_from_file (&in, infile, 1);
-    if (err)
-	return err;
+  err = gpgme_data_new_from_file (&in, infile, 1);
+  if (err)
+    goto fail;
 
-    err = gpgme_new (&ctx);
-    if (err)
-	goto fail;
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
 
-    err = gpgme_data_new (&out);
-    if (err)
-	goto fail;
+  err = gpgme_data_new (&out);
+  if (err)
+    goto fail;
 
-    gpgme_set_armor (ctx, 1);
-    err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
-    if (!err)
-	err = data_to_file (&out, outfile);
-    else
-	err = check_encrypt_result (ctx, err);
+  gpgme_set_armor (ctx, 1);
+  err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset,
+                          GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+  if (!err)
+    err = data_to_file (&out, outfile);
+  else
+    err = check_encrypt_result (ctx, err);
 
-fail:
-    if (ctx != NULL)
-	gpgme_release (ctx);
-    if (in != NULL)
-	gpgme_data_release (in);
-    if (out != NULL)
-	gpgme_data_release (out);
-    return err;
+ fail:
+  if (ctx)
+    gpgme_release (ctx);
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  return err;
 }
 
-
+/* Encrypt data from INFILE into the newly created file OUTFILE.  This
+   version of the function internally works on streams to avoid
+   copying data into memory buffers. */
+/*FIXME: Why is RSET a void*??? */
 int
 op_encrypt_file_io (void *rset, const char *infile, const char *outfile)
 {
-    FILE *fin = NULL, *fout=NULL;
-    gpgme_data_t in = NULL;
-    gpgme_data_t out = NULL;
-    gpgme_error_t err;
-    gpgme_ctx_t ctx = NULL;
+  FILE *fin = NULL;
+  FILE *fout = NULL;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_error_t err;
+  gpgme_ctx_t ctx = NULL;
 
-    fin = fopen (infile, "rb");
-    if (fin == NULL)
-	return GPG_ERR_UNKNOWN_ERRNO;
-    err = gpgme_data_new_from_stream (&in, fin);
-    if (err)
-	goto fail;
-
-    fout = fopen (outfile, "wb");
-    if (fout == NULL) {
-	err = GPG_ERR_UNKNOWN_ERRNO;
-	goto fail;
+  fin = fopen (infile, "rb");
+  if (!fin)
+    {
+      err = GPG_ERR_UNKNOWN_ERRNO; /* FIXME: use errno */
+      goto fail;
     }
-    err = gpgme_data_new_from_stream (&out, fout);
-    if (err)
-	goto fail;
 
-    err = gpgme_new (&ctx);
-    if (err)
-	goto fail;
+  err = gpgme_data_new_from_stream (&in, fin);
+  if (err)
+    goto fail;
 
-    gpgme_set_armor (ctx, 1);
-    err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+  fout = fopen (outfile, "wb");
+  if (!fout)
+    {
+      err = GPG_ERR_UNKNOWN_ERRNO;
+      goto fail;
+    }
 
-fail:
-    if (fin != NULL)
-	fclose (fin);
-    if (fout != NULL)
-	fclose (fout);
-    if (out != NULL)
-	gpgme_data_release (out);
-    if (in != NULL)
-	gpgme_data_release (in);
-    if (ctx != NULL)
-	gpgme_release (ctx);
-    return err;
+  err = gpgme_data_new_from_stream (&out, fout);
+  if (err)
+    goto fail;
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
+  
+  gpgme_set_armor (ctx, 1);
+  err = gpgme_op_encrypt (ctx, (gpgme_key_t*)rset,
+                          GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+
+ fail:
+  if (fin)
+    fclose (fin);
+  /* FIXME: Shouldn't we remove the file on error here? */
+  if (fout)
+    fclose (fout);
+  if (out)
+    gpgme_data_release (out);
+  if (in)
+    gpgme_data_release (in);
+  if (ctx)
+    gpgme_release (ctx);
+  return err;
 }
 
+/* Yet another encrypt versions; this time frommone memory buffer to a
+   newly allocated one. */
+/*FIXME: Why is RSET a void*??? */
 int
 op_encrypt (void *rset, const char *inbuf, char **outbuf)
 {
-    gpgme_key_t *keys = (gpgme_key_t *)rset;
-    gpgme_data_t in=NULL, out=NULL;
-    gpgme_error_t err;
-    gpgme_ctx_t ctx;
+  gpgme_key_t *keys = (gpgme_key_t *)rset;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_error_t err;
+  gpgme_ctx_t ctx = NULL;
     
-    *outbuf = NULL;
-    op_init ();
-    err = gpgme_new (&ctx);
-    if (err)
-	return err;
-    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
-    if (err)
-	goto leave;
-    err = gpgme_data_new (&out);
-    if (err)
-	goto leave;
+  *outbuf = NULL;
 
-    gpgme_set_textmode (ctx, 1);
-    gpgme_set_armor (ctx, 1);
-    err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
-    if (!err) {
-	size_t n = 0;	
-	*outbuf = gpgme_data_release_and_get_mem (out, &n);
-	(*outbuf)[n] = 0;
-	out = NULL;
+  op_init ();
+  err = gpgme_new (&ctx);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new (&out);
+  if (err)
+    goto leave;
+
+  gpgme_set_textmode (ctx, 1);
+  gpgme_set_armor (ctx, 1);
+  err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+  if (!err)
+    {
+      size_t n = 0;	
+      *outbuf = gpgme_data_release_and_get_mem (out, &n);
+      (*outbuf)[n] = 0;
+      out = NULL;
     }
-    else
-	err = check_encrypt_result (ctx, err);
+  else
+    err = check_encrypt_result (ctx, err);
 
-leave:
-    if (ctx != NULL)
-	gpgme_release (ctx);
-    if (in != NULL)
-	gpgme_data_release (in);
-    if (out != NULL)
-	gpgme_data_release (out);
-    return err;
+ leave:
+  if (ctx)
+    gpgme_release (ctx);
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  return err;
 }
 
 
-int
-op_sign_encrypt_start (const char *inbuf, char **outbuf)
-{
-    gpgme_key_t *keys = NULL;
-    gpgme_key_t locusr=NULL;
-    int opts = 0;
-    int err;
-
-    recipient_dialog_box (&keys, &opts);
-    if (opts & OPT_FLAG_CANCEL)
-	return 0;
-    err = signer_dialog_box (&locusr, NULL);
-    if (err == -1) { /* Cancel */
-	free_recipients (keys);
-	return 0;
-    }
-    
-    err = op_sign_encrypt ((void*)keys, (void*)locusr, inbuf, outbuf);
-    free_recipients (keys);
-
-    return err;
-}
-
+/* Sign and encrypt the data in INBUF into a newly allocated buffer at
+   OUTBUF. */
+/*FIXME: Why is RSET a void*??? */
 int
 op_sign_encrypt (void *rset, void *locusr, const char *inbuf, char **outbuf)
 {
-    gpgme_ctx_t ctx;
-    gpgme_key_t *keys = (gpgme_key_t*)rset;
-    gpgme_data_t in=NULL, out=NULL;
-    gpgme_error_t err;
-    struct decrypt_key_s *hd;
+  gpgme_key_t *keys = (gpgme_key_t*)rset;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_error_t err;
+  struct decrypt_key_s *dk = NULL;
 
-    op_init ();
-    *outbuf = NULL;
+  op_init ();
+  
+  *outbuf = NULL;
 
-    err = gpgme_new (&ctx);
-    if (err)
-	return err;
+  err = gpgme_new (&ctx);
+  if (err)
+    goto leave;
 
-    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
-    hd->flags = 0x01;
+  dk = (struct decrypt_key_s *)xcalloc (1, sizeof *dk);
+  dk->flags = 0x01;
+  
+  err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+  if (err)
+    goto leave;
 
-    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
-    if (err)
-	goto leave;
-    err = gpgme_data_new (&out);
-    if (err)
-	goto leave;
-
-    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
-    gpgme_set_armor (ctx, 1);
-    gpgme_signers_add (ctx, (gpgme_key_t)locusr);
-    err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
-    if (!err) {
-	size_t n = 0;
-	*outbuf = gpgme_data_release_and_get_mem (out, &n);
-	(*outbuf)[n] = 0;
-	out = NULL;
+  err = gpgme_data_new (&out);
+  if (err)
+    goto leave;
+  
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, dk);
+  gpgme_set_armor (ctx, 1);
+  gpgme_signers_add (ctx, (gpgme_key_t)locusr);
+  err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+  if (!err) 
+    {
+      size_t n = 0;
+      *outbuf = gpgme_data_release_and_get_mem (out, &n);
+      (*outbuf)[n] = 0;
+      out = NULL;
     }
-    else
-	err = check_encrypt_result (ctx, err);
+  else
+    err = check_encrypt_result (ctx, err);
 
-leave:
-    free_decrypt_key (hd);
+ leave:
+  free_decrypt_key (dk);
+  if (ctx)
     gpgme_release (ctx);
+  if (out)
     gpgme_data_release (out);
+  if (in)
     gpgme_data_release (in);
-    return err;
+  return err;
 }
+
+
+static int
+do_sign (gpgme_key_t locusr, const char *inbuf, char **outbuf)
+{
+  gpgme_error_t err;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_ctx_t ctx = NULL;
+  struct decrypt_key_s *dk = NULL;
+
+  log_debug ("engine-gpgme.do_sign: enter\n");
+
+  *outbuf = NULL;
+  op_init ();
+  
+  err = gpgme_new (&ctx);
+  if (err) 
+    goto leave;
+
+  dk = (struct decrypt_key_s *)xcalloc (1, sizeof *dk);
+  dk->flags = 0x01;
+
+  err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new (&out);
+  if (err)
+    goto leave;
+    
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, dk);
+  gpgme_signers_add (ctx, locusr);
+  gpgme_set_textmode (ctx, 1);
+  gpgme_set_armor (ctx, 1);
+  err = gpgme_op_sign (ctx, in, out, GPGME_SIG_MODE_CLEAR);
+  if (!err)
+    {
+      size_t n = 0;
+      *outbuf = gpgme_data_release_and_get_mem (out, &n);
+      (*outbuf)[n] = 0;
+      out = NULL;
+    }
+
+ leave:
+  free_decrypt_key (dk);
+  if (ctx)
+    gpgme_release (ctx);
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  log_debug ("engine-gpgme.do_sign: leave (rc=%d (%s))\n",
+             err, gpgme_strerror (err));
+  return err;
+}
+
 
 
 int
 op_sign_start (const char *inbuf, char **outbuf)
 {
-    gpgme_key_t locusr = NULL;
-    int err;
+  gpgme_key_t locusr = NULL;
+  int err;
 
-    log_debug ("engine-gpgme.op_sign_start: enter\n");
-    err = signer_dialog_box (&locusr, NULL);
-    if (err == -1) { /* Cancel */
-        log_debug ("engine-gpgme.op_sign_start: leave (canceled)\n");
-	return 0;
+  log_debug ("engine-gpgme.op_sign_start: enter\n");
+  err = signer_dialog_box (&locusr, NULL);
+  if (err == -1)
+    { /* Cancel */
+      log_debug ("engine-gpgme.op_sign_start: leave (canceled)\n");
+      return 0;
     }
-    err = op_sign ((void*)locusr, inbuf, outbuf);
-    log_debug ("engine-gpgme.op_sign_start: leave (rc=%d (%s))\n",
-               err, gpg_strerror (err));
-    return err;
+  err = do_sign (locusr, inbuf, outbuf);
+  log_debug ("engine-gpgme.op_sign_start: leave (rc=%d (%s))\n",
+             err, gpg_strerror (err));
+  return err;
 }
 
 
-int
-op_sign (void *locusr, const char *inbuf, char **outbuf)
-{
-    gpgme_error_t err;
-    gpgme_data_t in=NULL, out=NULL;
-    gpgme_ctx_t ctx;
-    struct decrypt_key_s *hd;
 
-    log_debug ("engine-gpgme.op_sign: enter\n");
-    *outbuf = NULL;
-    op_init ();
-    err = gpgme_new (&ctx);
-    if (err) 
-        goto really_leave;
-
-    hd = (struct decrypt_key_s *)xcalloc (1, sizeof *hd);
-    hd->flags = 0x01;
-
-    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
-    if (err)
-	goto leave;
-    err = gpgme_data_new (&out);
-    if (err)
-	goto leave;
-    
-    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, hd);
-    gpgme_signers_add (ctx, (gpgme_key_t)locusr);
-    gpgme_set_textmode (ctx, 1);
-    gpgme_set_armor (ctx, 1);
-    err = gpgme_op_sign (ctx, in, out, GPGME_SIG_MODE_CLEAR);
-    if (!err) {
-	size_t n = 0;
-	*outbuf = gpgme_data_release_and_get_mem (out, &n);
-	(*outbuf)[n] = 0;
-	out = NULL;
-    }
-
-  leave:
-    err = 0; /* fixme: the orginal code didn't returned an error.  Correct?*/
-    free_decrypt_key (hd);
-    gpgme_release (ctx);
-    gpgme_data_release (in);
-    gpgme_data_release (out);
-  really_leave:
-    log_debug ("engine-gpgme.op_sign: leave (rc=%d (%s))\n",
-               err, gpg_strerror (err));
-    return err;
-}
-
-
-/* Worker fucntion for the decryption.  PASS_CB is the passphrase
+/* Worker function for the decryption.  PASS_CB is the passphrase
    callback and PASS_CB_VALUE is passed as opaque argument to the
    callback.  INBUF is the string with ciphertext.  On success a newly
    allocated string with the plaintext will be stored at the address
@@ -681,27 +732,7 @@ do_decrypt (gpgme_passphrase_cb_t pass_cb,
   pass_cb_value->ctx = ctx;    
   err = gpgme_op_decrypt_verify (ctx, in, out);
   pass_cb_value->ctx = NULL;    
-
-  /* Do passphrase cache update immediately after the operation.  On
-     any error we flush a possible passphrase for the used keyID from
-     the cache.  On success we store the passphrase into the cache.
-     The cache will take care of the supplied TTL and for example
-     actually delete it if the TTL is 0 or an empty value is used. We
-     also wipe the passphrase from the context here. */
-  if (*pass_cb_value->keyid)
-    {
-      if (err)
-        passcache_flush (pass_cb_value->keyid);
-      else
-        passcache_put (pass_cb_value->keyid, pass_cb_value->pass,
-                       pass_cb_value->ttl);
-    }
-  if (pass_cb_value->pass)
-    {
-      wipestring (pass_cb_value->pass);
-      xfree (pass_cb_value->pass);
-      pass_cb_value->pass = NULL;
-    }
+  update_passphrase_cache (err, pass_cb_value);
 
   /* Act upon the result of the decryption operation. */
   if (!err) 
@@ -738,8 +769,7 @@ do_decrypt (gpgme_passphrase_cb_t pass_cb,
     }
 
 
-  
-  /* If the callback indicated a cancel operation, clear the error. */
+    /* If the callback indicated a cancel operation, clear the error. */
   if (pass_cb_value->opts & OPT_FLAG_CANCEL)
     err = 0;
   
@@ -751,31 +781,6 @@ leave:
   return err;
 }
 
-
-
-/* FIXME: Do we still needs this one? */
-#if 0
-int
-op_decrypt_start_ext (const char *inbuf, char **outbuf, cache_item_t *ret_itm)
-{
-    struct decrypt_key_s *hd;
-    cache_item_t itm;
-    int err;
-
-    hd = xcalloc (1, sizeof *hd);
-    err = op_decrypt (passphrase_callback_box, hd, inbuf, outbuf);
-
-    if (ret_itm != NULL) {
-	itm = cache_item_new ();
-	itm->pass = hd->pass; 
-	hd->pass = NULL;
-	memcpy (itm->keyid, hd->keyid, sizeof (hd->keyid));
-	*ret_itm = itm;
-    }
-    free_decrypt_key (hd);
-    return err;
-}
-#endif
 
 /* Run the decryption.  Decrypts INBUF to OUTBUF, caller must xfree
    the result at OUTBUF.  TTL is the time in seconds to cache a
@@ -795,56 +800,59 @@ op_decrypt_start (const char *inbuf, char **outbuf, int ttl)
 }
 
 
-/* FIXME: Do we still needs this one? */
-#if 0
-int
-op_decrypt_next (gpgme_passphrase_cb_t pass_cb, void *pass_cb_value,
-		 const char *inbuf, char **outbuf)
-{
-    return op_decrypt (pass_cb, pass_cb_value, inbuf, outbuf);
-}
-#endif
-
+/* Verify a message in INBUF and return the new message (i.e. the one
+   with stripped off dash escaping) in a newly allocated buffer
+   OUTBUF. IF OUTBUF is NULL only the verification result will be
+   displayed (this is suitable for PGP/MIME messages).  A dialog box
+   will show the result of the verification. */
 int
 op_verify_start (const char *inbuf, char **outbuf)
 {
-    gpgme_data_t in=NULL, out=NULL;
-    gpgme_ctx_t ctx;
-    gpgme_error_t err;
-    gpgme_verify_result_t res=NULL;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  gpgme_verify_result_t res = NULL;
 
-    op_init ();
-    *outbuf = NULL;
+  *outbuf = NULL;
 
-    err = gpgme_new (&ctx);
-    if (err)
-	return err;
+  op_init ();
 
-    err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
-    if (err)
-	goto leave;
-    err = gpgme_data_new (&out);
-    if (err)
-	goto leave;
+  err = gpgme_new (&ctx);
+  if (err)
+    goto leave;
 
-    err = gpgme_op_verify (ctx, in, NULL, out);
-    if (!err) {
-	size_t n=0;
-	if (outbuf != NULL) {
-	    *outbuf = gpgme_data_release_and_get_mem (out, &n);
-	    (*outbuf)[n] = 0;
-	    out = NULL;
+  err = gpgme_data_new_from_mem (&in, inbuf, strlen (inbuf), 1);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new (&out);
+  if (err)
+    goto leave;
+
+  err = gpgme_op_verify (ctx, in, NULL, out);
+  if (!err)
+    {
+      size_t n=0;
+      if (outbuf) 
+        {
+          *outbuf = gpgme_data_release_and_get_mem (out, &n);
+          (*outbuf)[n] = 0;
+          out = NULL;
 	}
-	res = gpgme_op_verify_result (ctx);
+      res = gpgme_op_verify_result (ctx);
     }
-    if (res != NULL) 
-	verify_dialog_box (res);
+  if (res) 
+    verify_dialog_box (res);
 
-leave:
+ leave:
+  if (out)
     gpgme_data_release (out);
+  if (in)
     gpgme_data_release (in);
+  if (ctx)
     gpgme_release (ctx);
-    return err;
+  return err;
 }
 
 

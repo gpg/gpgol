@@ -1,3 +1,72 @@
+2005-08-23  Werner Koch  <wk@g10code.com>
+
+	* msgcache.c, msgcache.h: New.
+
+2005-08-22  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp: Major cleanups and partly rewrites.
+
+2005-08-18  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp, gpgmsg.hh: New.
+	
+2005-08-17  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (setMessageAccess): Removed as it was only used at
+	one place.
+	(setRTFBody): Use the above code here directly..
+	(setWindow, setMessage): Removed.  We can't use that because there
+	is only one instance of this class.
+	(decrypt): Add args HWND and MSG.  Changed caller.
+	(getBody): Changed to ..
+	(get_body): .. plain function and add new arg MSG.  Changed all
+	callers.
+	(isHtmlMessage): Likewise changed to ..
+	(is_html_message): .. plain function and add new arg MSG.
+	(doCmd): Removed.
+
+	* common.c (utf8_to_wchar): New.
+
+	* MapiGPGME.cpp (passphraseCallback): Removed.
+	(getPassphrase, clearPassphrase, storePassphrase): Removed.
+	(add_html_line_endings): Rewritten.
+
+	* engine-gpgme.c (op_sign_encrypt_start): Removed because it is
+	not used anywhere.
+	(op_sign): Renamed to ..
+	(do_sign): .. this and made local.
+
+2005-08-16  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (signAttachment): Simplified.
+	* engine-gpgme.c (op_sign_file): Add arg TTL.
+	(op_sign_file_ext): Removed.
+	(op_sign_file_next): Renamed to ..
+	(do_sign_file): .. this and made local.
+	(do_sign_file): Updated to use new passphrase callback
+	semantics.
+	(op_decrypt_file): Ditto.
+	(free_recipients): Need to use gpgme_key_release and not just
+	free.
+
+	* engine-gpgme.c (do_decrypt): Factored some code out to ..
+	(update_passphrase_cache): .. new.
+	(op_sign_encrypt_file): Updated to use new passphrase callback
+	semantics.
+
+	* MapiGPGME.cpp (getBody): Properly distinguish property types.
+	(delete_buf): Removed macro.  We now use malloc for the body
+	string.  Changed other places to use delete directly for clarity.
+	(fail_if_null): Removed.  Replaced by direct tests and a call to
+	out_of_core.
+	(setDefaultKey): Now use malloc/free instead of new/delete.
+	Changed at other places too.
+	(getDefaultKey): Changed to return a const char *.
+
+	* common.c (wchar_to_utf8): New.
+	(out_of_core): Made global and call abort after displaying the
+	message box.
+
 2005-08-14  Werner Koch  <wk@g10code.com>
 
 	* MapiGPGME.cpp (log_debug_w32): New.

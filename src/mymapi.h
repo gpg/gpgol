@@ -131,9 +131,14 @@ typedef struct MapiMessage_s *lpMapiMessage;
 #define ATTACH_OLE            6  
 
 
-#define FORCE_SAVE                    0x00000004U
+#define KEEP_OPEN_READONLY            0x00000001
+#define KEEP_OPEN_READWRITE           0x00000002
+#define FORCE_SAVE                    0x00000004
+#define MAPI_DEFERRED_ERRORS          0x00000008
 
-#define RTF_SYNC_BODY_CHANGED         1 /* FIXME FIXME */
+
+#define RTF_SYNC_RTF_CHANGED          1
+#define RTF_SYNC_BODY_CHANGED         2
 
 
 #ifndef MAPI_DIM
@@ -480,26 +485,26 @@ typedef struct _ADRLIST
 typedef const IID *LPCIID;
 
 
-typedef struct IAttach IAttach;
-typedef IAttach *LPATTACH;
+struct IAttach;
+typedef struct IAttach *LPATTACH;
 
-typedef struct IMAPIAdviseSink IMAPIAdviseSink;
-typedef IMAPIAdviseSink *LPMAPIADVISESINK;
+struct IMAPIAdviseSink;
+typedef struct IMAPIAdviseSink *LPMAPIADVISESINK;
 
-typedef struct IMAPIProgress IMAPIProgress;
-typedef IMAPIProgress *LPMAPIPROGRESS;
+struct IMAPIProgress;
+typedef struct IMAPIProgress *LPMAPIPROGRESS;
 
-typedef struct IMAPITable IMAPITable;
-typedef IMAPITable *LPMAPITABLE;
+struct IMAPITable;
+typedef struct IMAPITable *LPMAPITABLE;
 
-typedef struct IMAPIProp IMAPIProp;
-typedef IMAPIProp *LPMAPIPROP;
+struct IMAPIProp;
+typedef struct IMAPIProp *LPMAPIPROP;
 
-typedef struct IMessage IMessage;
-typedef IMessage *LPMESSAGE;
+struct IMessage;
+typedef struct IMessage *LPMESSAGE;
 
-typedef struct IMsgStore IMsgStore;
-typedef IMsgStore *LPMDB;
+struct IMsgStore;
+typedef struct IMsgStore *LPMDB;
 
 
 

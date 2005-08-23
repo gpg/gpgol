@@ -83,8 +83,6 @@ HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 
 /*-- MapiGPGME.cpp --*/
 int initialize_mapi_gpgme (void);
-void log_debug (const char *fmt, ...);
-void log_debug_w32 (int w32err, const char *fmt, ...);
 
 
 /*-- recipient-dialog.c --*/

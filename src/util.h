@@ -49,7 +49,33 @@ void* xmalloc (size_t n);
 void* xcalloc (size_t m, size_t n);
 char* xstrdup (const char *s);
 void  xfree (void *p);
+void out_of_core (void);
 
+char *wchar_to_utf8 (const wchar_t *string);
+wchar_t *utf8_to_wchar (const char *string);
+wchar_t *utf8_to_wchar2 (const char *string, size_t len);
+
+
+/*-- MapiGPGME.cpp --*/
+void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+void log_vdebug (const char *fmt, va_list a);
+void log_debug_w32 (int w32err, const char *fmt,
+                    ...) __attribute__ ((format (printf,2,3)));
+
+
+/*****  Missing functions.  ****/
+
+#ifndef HAVE_STPCPY
+static inline char *
+_outlgpg_stpcpy (char *a, const char *b)
+{
+  while (*b)
+    *a++ = *b++;
+  *a = 0;
+  return a;
+}
+#define stpcpy(a,b) _outlgpg_stpcpy ((a), (b))
+#endif /*!HAVE_STPCPY*/
 
 
 

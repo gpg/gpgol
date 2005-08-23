@@ -73,10 +73,11 @@ center_window (HWND childwnd, HWND style)
 }
 
 
-static void
+void
 out_of_core (void)
 {
     MessageBox (NULL, "Out of core!", "Fatal Error", MB_OK);
+    abort ();
 }
 
 void*
@@ -166,3 +167,81 @@ w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e)
   else
     return -1;
 }
+
+
+/* Return a malloced string encoded in UTF-8 from the wide char input
+   string STRING.  Caller must xfree this value. On failure returns
+   NULL; caller may use GetLastError to get the actual error number.
+   The result of calling this function with STRING set to NULL is not
+   defined. */
+char *
+wchar_to_utf8 (const wchar_t *string)
+{
+  int n;
+  char *result;
+
+  /* Note, that CP_UTF8 is not defined in Windows versions earlier
+     than NT.*/
+  n = WideCharToMultiByte (CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
+  if (n < 0)
+    return NULL;
+
+  result = xmalloc (n+1);
+  n = WideCharToMultiByte (CP_UTF8, 0, string, -1, result, n, NULL, NULL);
+  if (n < 0)
+    {
+      xfree (result);
+      return NULL;
+    }
+  return result;
+}
+
+/* Return a malloced wide char string from an UTF-8 encoded input
+   string STRING.  Caller must xfree this value. On failure returns
+   NULL; caller may use GetLastError to get the actual error number.
+   The result of calling this function with STRING set to NULL is not
+   defined. */
+wchar_t *
+utf8_to_wchar (const char *string)
+{
+  int n;
+  wchar_t *result;
+
+  n = MultiByteToWideChar (CP_UTF8, 0, string, -1, NULL, 0);
+  if (n < 0)
+    return NULL;
+
+  result = xmalloc ((n+1) * sizeof *result);
+  n = MultiByteToWideChar (CP_UTF8, 0, string, -1, result, n);
+  if (n < 0)
+    {
+      xfree (result);
+      return NULL;
+    }
+  return result;
+}
+
+
+/* Same as above but convert only the first LEN characters.  STRING
+   must be at least LEN characters long. */
+wchar_t *
+utf8_to_wchar2 (const char *string, size_t len)
+{
+  int n;
+  wchar_t *result;
+
+  n = MultiByteToWideChar (CP_UTF8, 0, string, len, NULL, 0);
+  if (n < 0)
+    return NULL;
+
+  result = xmalloc ((n+1) * sizeof *result);
+  n = MultiByteToWideChar (CP_UTF8, 0, string, len, result, n);
+  if (n < 0)
+    {
+      xfree (result);
+      return NULL;
+    }
+  result[n] = 0;
+  return result;
+}
+

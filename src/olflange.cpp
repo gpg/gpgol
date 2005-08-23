@@ -36,34 +36,43 @@
 #include "myexchext.h"
 #include "MapiGPGME.h"
 #include "intern.h"
+#include "gpgmsg.hh"
+#include "msgcache.h"
 
 #include "olflange-ids.h"
 #include "olflange-def.h"
 #include "olflange.h"
 
+
+#define TRACEPOINT() do { ExchLogInfo ("%s:%s:%d: tracepoint\n", \
+                                       __FILE__, __func__, __LINE__); \
+                        } while (0)
+
+
 bool g_bInitDll = FALSE;
 
+
+/* FIXME!!!! Huh?  We only have one m_gpg object??? This is strange,
+   AFAICS, Exchange may create several contexts and thus we may be
+   required to run several instances of mapiGPGME concurrently. */
 MapiGPGME *m_gpg = NULL;
 
 
 static void 
 ExchLogInfo (const char * fmt, ...)
 {
-    if (m_gpg) {
-        va_list a;
+  va_list a;
   
-        va_start (a, fmt);
-        m_gpg->logDebug (fmt, a);
-        va_end (a);
-    }
+  va_start (a, fmt);
+  log_vdebug (fmt, a);
+  va_end (a);
 }
 
 
 
 
-/* DllRegisterServer
- Registers this object as exchange extension. Sets the contextes which are 
- implemented by this object. */
+/* Registers this module as an Exchange extension. This basically updates
+   some Registry entries. */
 STDAPI 
 DllRegisterServer (void)
 {    
@@ -81,7 +90,25 @@ DllRegisterServer (void)
     lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
     lstrcpy (szEntry, "4.0;");
     lstrcat (szEntry, szModuleFileName);
-    lstrcat (szEntry, ";1;11000111111100");  /* context information */
+    lstrcat (szEntry, ";1"); /* Entry point ordinal. */
+    /* Context information string:
+      pos       context
+      1 	EECONTEXT_SESSION
+      2 	EECONTEXT_VIEWER
+      3 	EECONTEXT_REMOTEVIEWER
+      4 	EECONTEXT_SEARCHVIEWER
+      5 	EECONTEXT_ADDRBOOK
+      6 	EECONTEXT_SENDNOTEMESSAGE
+      7 	EECONTEXT_READNOTEMESSAGE
+      8 	EECONTEXT_SENDPOSTMESSAGE
+      9 	EECONTEXT_READPOSTMESSAGE
+      10 	EECONTEXT_READREPORTMESSAGE
+      11 	EECONTEXT_SENDRESENDMESSAGE
+      12 	EECONTEXT_PROPERTYSHEETS
+      13 	EECONTEXT_ADVANCEDCRITERIA
+      14 	EECONTEXT_TASK
+    */
+    lstrcat (szEntry, ";11000111111100"); 
     ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
 				   REG_OPTION_NON_VOLATILE,
 				   KEY_ALL_ACCESS, NULL, &hkey, NULL);
@@ -115,7 +142,7 @@ DllRegisterServer (void)
 }
 
 
-/* DllUnregisterServer - Unregisters this object in the exchange extension list. */
+/* Unregisters this module as an Exchange extension. */
 STDAPI 
 DllUnregisterServer (void)
 {
@@ -145,50 +172,200 @@ DllUnregisterServer (void)
 
 
 
+/* Locate a property using the current callback LPEECB and traverse
+   down to the last element in the dot delimited NAME.  Returns the
+   Dispatch object and if R_DISPID is not NULL, the dispatch-id of the
+   last part.  Returns NULL on error.  The traversal implictly starts
+   at the object returned by the outlook application callback. */
+static LPDISPATCH
+find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
+                       const char *name, DISPID *r_dispid)
+{
+  HRESULT hr;
+  LPOUTLOOKEXTCALLBACK pCb;
+  LPUNKNOWN pObj;
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  wchar_t *wname;
+  const char *s;
 
-/* ExchEntryPoint -
- The entry point which Exchange calls.
- This is called for each context entry. Creates a new CAvkExchExt object
- every time so each context will get its own CAvkExchExt interface.
- 
- Return value: Pointer to Exchange Extension Object */
+  ExchLogInfo ("%s:%s: looking for `%s'\n", __FILE__, __func__, name);
+
+  pCb = NULL;
+  pObj = NULL;
+  lpeecb->QueryInterface (IID_IOutlookExtCallback, (LPVOID*)&pCb);
+  if (pCb)
+    pCb->GetObject (&pObj);
+  for (; pObj && (s = strchr (name, '.')) && s != name; name = s + 1)
+    {
+      DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+      VARIANT vtResult;
+
+      /* Our loop expects that all objects except for the last one are
+         of class IDispatch.  This is pretty reasonable. */
+      pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
+      if (!pDisp)
+        return NULL;
+      
+      wname = utf8_to_wchar2 (name, s-name);
+      if (!wname)
+        return NULL;
+
+      hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
+                                LOCALE_SYSTEM_DEFAULT, &dispid);
+      xfree (wname);
+      ExchLogInfo ("   dispid(%.*s)=%d  (hr=0x%x)\n",
+                   (int)(s-name), name, dispid, hr);
+      vtResult.pdispVal = NULL;
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                          DISPATCH_METHOD, &dispparamsNoArgs,
+                          &vtResult, NULL, NULL);
+      pObj = vtResult.pdispVal;
+      /* FIXME: Check that the class of the returned object is as
+         expected.  To do this we better let GetIdsOfNames also return
+         the ID of "Class". */
+      ExchLogInfo ("%s:%s: %.*s=%p  (hr=0x%x)\n",
+                   __FILE__, __func__, (int)(s-name), name, pObj, hr);
+      pDisp->Release ();
+      pDisp = NULL;
+      /* Fixme: Do we need to release pObj? */
+    }
+  if (!pObj || !*name)
+    return NULL;
+
+  pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
+  if (!pDisp)
+    return NULL;
+  wname = utf8_to_wchar (name);
+  if (!wname)
+    {
+      pDisp->Release ();
+      return NULL;
+    }
+      
+  hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
+                            LOCALE_SYSTEM_DEFAULT, &dispid);
+  xfree (wname);
+  ExchLogInfo ("   dispid(%s)=%d  (hr=0x%x)\n", name, dispid, hr);
+  if (r_dispid)
+    *r_dispid = dispid;
+
+  ExchLogInfo ("%s:%s:    got IDispatch=%p dispid=%d\n",
+               __FILE__, __func__, pDisp, dispid);
+  return pDisp;
+}
+
+
+/* Return Outlook's Application object. */
+/* FIXME: We should be able to fold most of the code into
+   find_outlook_property. */
+static LPUNKNOWN
+get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
+{
+  LPOUTLOOKEXTCALLBACK pCb = NULL;
+  LPDISPATCH pDisp = NULL;
+  LPUNKNOWN pUnk = NULL;
+
+  lpeecb->QueryInterface (IID_IOutlookExtCallback, (LPVOID*)&pCb);
+  if (pCb)
+    pCb->GetObject (&pUnk);
+  if (pUnk)
+    {
+      pUnk->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
+      pUnk->Release();
+      pUnk = NULL;
+    }
+
+  if (pDisp)
+    {
+      WCHAR *name = L"Class";
+      DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+      DISPID dispid;
+      VARIANT vtResult;
+
+      pDisp->GetIDsOfNames(IID_NULL, &name, 1,
+                           LOCALE_SYSTEM_DEFAULT, &dispid);
+      vtResult.pdispVal = NULL;
+      pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                    DISPATCH_PROPERTYGET, &dispparamsNoArgs,
+                    &vtResult, NULL, NULL);
+      ExchLogInfo ("%s:%s: Outlookcallback returned object of class=%d\n",
+                   __FILE__, __func__, vtResult.intVal);
+    }
+  if (pDisp)
+    {
+      WCHAR *name = L"Application";
+      DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+      DISPID dispid;
+      VARIANT vtResult;
+      
+      pDisp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_SYSTEM_DEFAULT, &dispid);
+      //ExchLogInfo ("   dispid(Application)=%d\n", dispid);
+      vtResult.pdispVal = NULL;
+      pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                     DISPATCH_METHOD, &dispparamsNoArgs,
+                     &vtResult, NULL, NULL);
+      pUnk = vtResult.pdispVal;
+      //ExchLogInfo ("%s:%s: Outlook.Application=%p\n",
+      //             __FILE__, __func__, pUnk);
+      pDisp->Release();
+      pDisp = NULL;
+    }
+  return pUnk;
+}
+
+
+
+/* The entry point which Exchange calls.  This is called for each
+   context entry. Creates a new CGPGExchExt object every time so each
+   context will get its own CGPGExchExt interface. */
 EXTERN_C LPEXCHEXT __stdcall
 ExchEntryPoint (void)
 {
-    ExchLogInfo ("extension entry point...\n");
-    return new CGPGExchExt;
+  ExchLogInfo ("%s:%s: creating new CGPGExchExt object\n", __FILE__, __func__);
+  return new CGPGExchExt;
 }
 
 
-/* constructor of CGPGExchExt
- Initializes members and creates the interface objects for the new context.
- Does the dll initialization if it was not done before. */
+/* Constructor of CGPGExchExt
+
+   Initializes members and creates the interface objects for the new
+   context.  Does the DLL initialization if it has not been done
+   before. */
 CGPGExchExt::CGPGExchExt (void)
 { 
-    m_lRef = 1;
-    m_lContext = 0;
-    m_hWndExchange = 0;
-    m_gpgEncrypt = FALSE;
-    m_gpgSign = FALSE;
-    m_pExchExtMessageEvents = new CGPGExchExtMessageEvents (this);
-    m_pExchExtCommands = new CGPGExchExtCommands (this);
-    m_pExchExtPropertySheets = new CGPGExchExtPropertySheets (this);
-    if (!g_bInitDll) {
-	if (m_gpg == NULL) {
-	    m_gpg = CreateMapiGPGME (NULL);
-	    m_gpg->readOptions ();
-	}
-	g_bInitDll = TRUE;
-	ExchLogInfo("CGPGExchExt load\n");
+  m_lRef = 1;
+  m_lContext = 0;
+  m_hWndExchange = 0;
+  m_gpgEncrypt = FALSE;
+  m_gpgSign = FALSE;
+  m_pExchExtMessageEvents = new CGPGExchExtMessageEvents (this);
+  m_pExchExtCommands = new CGPGExchExtCommands (this);
+  m_pExchExtPropertySheets = new CGPGExchExtPropertySheets (this);
+  if (!m_pExchExtMessageEvents || !m_pExchExtCommands
+      || !m_pExchExtPropertySheets)
+    out_of_core ();
+  
+  if (!g_bInitDll)
+    {
+      if (!m_gpg)
+        {
+          m_gpg = CreateMapiGPGME ();
+          m_gpg->readOptions ();
+        }
+      g_bInitDll = TRUE;
+      ExchLogInfo ("%s:%s: one time init done\n", __FILE__, __func__);
     }
-    else
-	ExchLogInfo("CGPGExchExt exists\n");
 }
 
 
-/* constructor of CGPGExchExt - Uninitializes the dll in the dession context. */
+/*  Uninitializes the dll in the session context. 
+   FIXME:  One instance only????  For what the hell do we use g_bInitDll then?
+*/
 CGPGExchExt::~CGPGExchExt (void) 
 {
+  ExchLogInfo ("%s:%s: cleaning up CGPGExchExt object\n", __FILE__, __func__);
+
     if (m_lContext == EECONTEXT_SESSION) {
 	if (g_bInitDll) {
 	    if (m_gpg != NULL) {
@@ -197,19 +374,19 @@ CGPGExchExt::~CGPGExchExt (void)
 		m_gpg = NULL;
 	    }
 	    g_bInitDll = FALSE;
+            ExchLogInfo ("%s:%s: one time deinit done\n", __FILE__, __func__);
 	}	
     }
 }
 
 
-/* CGPGExchExt::QueryInterface
- Called by Exchage to request for interfaces.
-
- Return value: S_OK if the interface is supported, otherwise E_NOINTERFACE: */
+/* Called by Exchange to retrieve an object pointer for a named
+   interface.  This is a standard COM method.  REFIID is the ID of the
+   interface and PPVOBJ will get the address of the object pointer if
+   this class defines the requested interface.  Return value: S_OK if
+   the interface is supported, otherwise E_NOINTERFACE. */
 STDMETHODIMP 
-CGPGExchExt::QueryInterface(
-	REFIID riid,      // The interface ID.
-	LPVOID * ppvObj)  // The address of interface object pointer.
+CGPGExchExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
     HRESULT hr = S_OK;
 
@@ -220,10 +397,11 @@ CGPGExchExt::QueryInterface(
     }
     else if (riid == IID_IExchExtMessageEvents) {
         *ppvObj = (LPUNKNOWN) m_pExchExtMessageEvents;
+        m_pExchExtMessageEvents->SetContext (m_lContext);
     }
     else if (riid == IID_IExchExtCommands) {
         *ppvObj = (LPUNKNOWN)m_pExchExtCommands;
-        m_pExchExtCommands->SetContext(m_lContext);
+        m_pExchExtCommands->SetContext (m_lContext);
     }
     else if (riid == IID_IExchExtPropertySheets) {
 	if (m_lContext != EECONTEXT_PROPERTYSHEETS)
@@ -233,7 +411,9 @@ CGPGExchExt::QueryInterface(
     else
         hr = E_NOINTERFACE;
 
-    if (*ppvObj != NULL)
+    /* On success we need to bump up the reference counter for the
+       requested object. */
+    if (*ppvObj)
         ((LPUNKNOWN)*ppvObj)->AddRef();
 
     /*ExchLogInfo("QueryInterface %d\n", __LINE__);*/
@@ -241,46 +421,78 @@ CGPGExchExt::QueryInterface(
 }
 
 
-/* CGPGExchExt::Install
- Called once for each new context. Checks the exchange extension version 
- number and the context.
- 
- Return value: S_OK if the extension should used in the requested context, 
-               otherwise S_FALSE. */
-STDMETHODIMP CGPGExchExt::Install(
-	LPEXCHEXTCALLBACK pEECB, // The pointer to Exchange Extension callback function.
-	ULONG lContext,          // The context code at time of being called.
-	ULONG lFlags)            // The flag to say if install is for modal or not.
+/* Called once for each new context. Checks the Exchange extension
+   version number and the context.  Returns: S_OK if the extension
+   should used in the requested context, otherwise S_FALSE.  PEECB is
+   a pointer to Exchange extension callback function.  LCONTEXT is the
+   context code at time of being called. LFLAGS carries flags to
+   indicate whether the extension should be installed modal.
+*/
+STDMETHODIMP 
+CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 {
-    ULONG lBuildVersion;
+  ULONG lBuildVersion;
 
-    m_lContext = lContext;
+  /* Save the context in an instance variable. */
+  m_lContext = lContext;
 
-    /*ExchLogInfo("Install %d\n", __LINE__);*/
-    // check the version 
-    pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
-    if (EECBGV_BUILDVERSION_MAJOR != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
-        return S_FALSE;
+  ExchLogInfo ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
+               lContext,
+               (lContext == EECONTEXT_SESSION?           "Session":
+                lContext == EECONTEXT_VIEWER?            "Viewer":
+                lContext == EECONTEXT_REMOTEVIEWER?      "RemoteViewer":
+                lContext == EECONTEXT_SEARCHVIEWER?      "SearchViewer":
+                lContext == EECONTEXT_ADDRBOOK?          "AddrBook" :
+                lContext == EECONTEXT_SENDNOTEMESSAGE?   "SendNoteMessage" :
+                lContext == EECONTEXT_READNOTEMESSAGE?   "ReadNoteMessage" :
+                lContext == EECONTEXT_SENDPOSTMESSAGE?   "SendPostMessage" :
+                lContext == EECONTEXT_READPOSTMESSAGE?   "ReadPostMessage" :
+                lContext == EECONTEXT_READREPORTMESSAGE? "ReadReportMessage" :
+                lContext == EECONTEXT_SENDRESENDMESSAGE? "SendResendMessage" :
+                lContext == EECONTEXT_PROPERTYSHEETS?    "PropertySheets" :
+                lContext == EECONTEXT_ADVANCEDCRITERIA?  "AdvancedCriteria" :
+                lContext == EECONTEXT_TASK?              "Task" : ""),
+               lFlags);
+  
+  /* Check version. */
+  pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
+  if (EECBGV_BUILDVERSION_MAJOR
+      != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
+    {
+      ExchLogInfo ("%s:%s: invalid version 0x%lx\n",
+                   __FILE__, __func__, lBuildVersion);
+      return S_FALSE;
+    }
+  
 
-    // and the context
-    if ((lContext == EECONTEXT_PROPERTYSHEETS) ||
-	(lContext == EECONTEXT_SENDNOTEMESSAGE) ||
-	(lContext == EECONTEXT_SENDPOSTMESSAGE) ||
-	(lContext == EECONTEXT_SENDRESENDMESSAGE) ||
-	(lContext == EECONTEXT_READNOTEMESSAGE) ||
-	(lContext == EECONTEXT_READPOSTMESSAGE) ||
-	(lContext == EECONTEXT_READREPORTMESSAGE) ||
-	(lContext == EECONTEXT_VIEWER))
-	return S_OK;
-    return S_FALSE;
+  /* Check context. */
+  if (   lContext == EECONTEXT_PROPERTYSHEETS
+      || lContext == EECONTEXT_SENDNOTEMESSAGE
+      || lContext == EECONTEXT_SENDPOSTMESSAGE
+      || lContext == EECONTEXT_SENDRESENDMESSAGE
+      || lContext == EECONTEXT_READNOTEMESSAGE
+      || lContext == EECONTEXT_READPOSTMESSAGE
+      || lContext == EECONTEXT_READREPORTMESSAGE
+      || lContext == EECONTEXT_VIEWER)
+    {
+      LPUNKNOWN pApplication = get_outlook_application_object (pEECB);
+      ExchLogInfo ("%s:%s: pApplication=%p\n",
+                   __FILE__, __func__, pApplication);
+      return S_OK;
+    }
+  
+  ExchLogInfo ("%s:%s: can't handle this context\n", __FILE__, __func__);
+  return S_FALSE;
 }
 
 
-CGPGExchExtMessageEvents::CGPGExchExtMessageEvents (CGPGExchExt *pParentInterface)
+
+CGPGExchExtMessageEvents::CGPGExchExtMessageEvents 
+                                              (CGPGExchExt *pParentInterface)
 { 
-    m_pExchExt = pParentInterface;
-    m_lRef = 0; 
-    m_bOnSubmitCalled = FALSE;
+  m_pExchExt = pParentInterface;
+  m_lRef = 0; 
+  m_bOnSubmitActive = FALSE;
 };
 
 
@@ -302,154 +514,160 @@ CGPGExchExtMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 }
 
 
-/* CGPGExchExtMessageEvents::OnRead - Called from Exchange on reading a message.
- Return value: S_FALSE to signal Exchange to continue calling extensions. */
-STDMETHODIMP CGPGExchExtMessageEvents::OnRead(
-	LPEXCHEXTCALLBACK pEECB) // A pointer to IExchExtCallback interface.
+/* Called from Exchange on reading a message.  Returns: S_FALSE to
+   signal Exchange to continue calling extensions.  PEECB is a pointer
+   to the IExchExtCallback interface. */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB) 
 {
-    ExchLogInfo ("OnRead\n");
+  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  return S_FALSE;
+}
+
+
+/* Called by Exchange after a message has been read.  Returns: S_FALSE
+   to signal Exchange to continue calling extensions.  PEECB is a
+   pointer to the IExchExtCallback interface. LFLAGS are some flags. */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
+                                          ULONG lFlags)
+{
+    ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
     return S_FALSE;
 }
 
 
-/* CGPGExchExtMessageEvents::OnReadComplete
- Called by Exchange after a message has been read.
-
- Return value: S_FALSE to signal Exchange to continue calling extensions. */
-STDMETHODIMP CGPGExchExtMessageEvents::OnReadComplete(
-	LPEXCHEXTCALLBACK pEECB, // A pointer to IExchExtCallback interface.
-	ULONG lFlags)
+/* Called by Exchange when a message will be written. Returns: S_FALSE
+   to signal Exchange to continue calling extensions.  PEECB is a
+   pointer to the IExchExtCallback interface. */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 {
-    ExchLogInfo ("OnReadComplete\n");
+    ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
     return S_FALSE;
 }
 
 
-/* CGPGExchExtMessageEvents::OnWrite - Called by Exchange when a message will be written.
- @rdesc S_FALSE to signal Exchange to continue calling extensions. */
-STDMETHODIMP CGPGExchExtMessageEvents::OnWrite(
-	LPEXCHEXTCALLBACK pEECB) // A pointer to IExchExtCallback interface.
+/* Called by Exchange when the data has been written to the message.
+   Encrypts and signs the message if the options are set.  PEECB is a
+   pointer to the IExchExtCallback interface.  Returns: S_FALSE to
+   signal Exchange to continue calling extensions.  E_FAIL to signals
+   Exchange an error; the message will not be sent */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
+                                           ULONG lFlags)
 {
-    ExchLogInfo ("OnWrite\n");
+  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+
+  HRESULT hrReturn = S_FALSE;
+  LPMESSAGE msg = NULL;
+  LPMDB pMDB = NULL;
+  HWND hWnd = NULL;
+  int rc;
+          
+  if (FAILED(pEECB->GetWindow (&hWnd)))
+    hWnd = NULL;
+
+  if (!m_bOnSubmitActive) /* the user is just saving the message */
     return S_FALSE;
-}
-
-
-/* CGPGExchExtMessageEvents::OnWriteComplete
- Called by Exchange when the data has been written to the message.
- Encrypts and signs the message if the options are set.
- @pEECB - A pointer to IExchExtCallback interface.
-
- Return value: S_FALSE: signals Exchange to continue calling extensions
-               E_FAIL:  signals Exchange an error; the message will not be sent */
-STDMETHODIMP CGPGExchExtMessageEvents::OnWriteComplete (
-		  LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
-{
-    HRESULT hrReturn = S_FALSE;
-    LPMESSAGE pMessage = NULL;
-    LPMDB pMDB = NULL;
-    HWND hWnd = NULL;
-
-    if (FAILED(pEECB->GetWindow (&hWnd)))
-	hWnd = NULL;
-
-    if (!m_bOnSubmitCalled) /* the user is just saving the message */
-	return S_FALSE;
-
-    if (m_bWriteFailed)     /* operation failed already */
-	return S_FALSE;
-
-    HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-    if (SUCCEEDED (hr)) {
-	if (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign) {
-	    m_gpg->setMessage (pMessage);
-	    if (m_gpg->doCmd (m_pExchExt->m_gpgEncrypt,
-			      m_pExchExt->m_gpgSign)) {
-		hrReturn = E_FAIL;
-		m_bWriteFailed = TRUE;	
-	    }
-	}
+  
+  if (m_bWriteFailed)     /* operation failed already */
+    return S_FALSE;
+  
+  HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
+  if (SUCCEEDED (hr))
+    {
+      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
+      
+      GpgMsg *m = CreateGpgMsg (msg);
+      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
+      if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
+        rc = m_gpg->signEncrypt (hWnd, m);
+      if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
+        rc = m_gpg->encrypt (hWnd, m);
+      if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
+        rc = m_gpg->sign (hWnd, m);
+      else
+        rc = 0;
+      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
+      delete m;
+      
+      if (rc)
+        {
+          hrReturn = E_FAIL;
+          m_bWriteFailed = TRUE;	
+        }
     }
-    if (pMessage != NULL)
-	UlRelease(pMessage);
-    if (pMDB != NULL)
-	UlRelease(pMDB);
 
-    return hrReturn;
+  if (msg)
+    UlRelease(msg);
+  if (pMDB) 
+    UlRelease(pMDB);
+
+  return hrReturn;
 }
 
-/* CGPGExchExtMessageEvents::OnCheckNames
-
- Called by Exchange when the user selects the "check names" command.
-
- @pEECB - A pointer to IExchExtCallback interface.
-
- Return value: S_FALSE to signal Exchange to continue calling extensions.
-*/
-STDMETHODIMP CGPGExchExtMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK pEECB)
+/* Called by Exchange when the user selects the "check names" command.
+   PEECB is a pointer to the IExchExtCallback interface.  Returns
+   S_FALSE to signal Exchange to continue calling extensions. */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK pEECB)
 {
-    return S_FALSE;
+  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  return S_FALSE;
 }
 
 
-/* CGPGExchExtMessageEvents::OnCheckNamesComplete
-
- Called by Exchange when "check names" command is complete.
-
-  @pEECB - A pointer to IExchExtCallback interface.
-
- Return value: S_FALSE to signal Exchange to continue calling extensions.
-*/
-STDMETHODIMP CGPGExchExtMessageEvents::OnCheckNamesComplete(
-			LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
+/* Called by Exchange when "check names" command is complete.
+   PEECB is a pointer to the IExchExtCallback interface.  Returns
+   S_FALSE to signal Exchange to continue calling extensions. */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,
+                                                ULONG lFlags)
 {
-    return S_FALSE;
+  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  return S_FALSE;
 }
 
 
-/* CGPGExchExtMessageEvents::OnSubmit
-
- Called by Exchange before the message data will be written and submitted.
- to MAPI.
-
- @pEECB - A pointer to IExchExtCallback interface.
-
- Return value: S_FALSE to signal Exchange to continue calling extensions.
-*/
-STDMETHODIMP CGPGExchExtMessageEvents::OnSubmit(
-			    LPEXCHEXTCALLBACK pEECB)
+/* Called by Exchange before the message data will be written and
+   submitted to MAPI.  PEECB is a pointer to the IExchExtCallback
+   interface.  Returns S_FALSE to signal Exchange to continue calling
+   extensions. */
+STDMETHODIMP 
+CGPGExchExtMessageEvents::OnSubmit (LPEXCHEXTCALLBACK pEECB)
 {
-    m_bOnSubmitCalled = TRUE;
-    m_bWriteFailed = FALSE;
-    return S_FALSE;
+  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  m_bOnSubmitActive = TRUE;
+  m_bWriteFailed = FALSE;
+  return S_FALSE;
 }
 
 
-/* CGPGExchExtMessageEvents::OnSubmitComplete
-
-  @pEECB - A pointer to IExchExtCallback interface.
-
- Called by Echange after the message has been submitted to MAPI.
-*/
-STDMETHODIMP_ (VOID) CGPGExchExtMessageEvents::OnSubmitComplete (
-			    LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
+/* Called by Echange after the message has been submitted to MAPI.
+   PEECB is a pointer to the IExchExtCallback interface. */
+STDMETHODIMP_ (VOID) 
+CGPGExchExtMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK pEECB,
+                                            ULONG lFlags)
 {
-    m_bOnSubmitCalled = FALSE; 
+  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  m_bOnSubmitActive = FALSE; 
 }
+
 
 
 CGPGExchExtCommands::CGPGExchExtCommands (CGPGExchExt* pParentInterface)
 { 
-    m_pExchExt = pParentInterface; 
-    m_lRef = 0; 
-    m_lContext = 0; 
-    m_nCmdEncrypt = 0;  
-    m_nCmdSign = 0; 
-    m_nToolbarButtonID1 = 0; 
-    m_nToolbarButtonID2 = 0; 
-    m_nToolbarBitmap1 = 0;
-    m_nToolbarBitmap2 = 0; 
-    m_hWnd = NULL; 
+  m_pExchExt = pParentInterface; 
+  m_lRef = 0; 
+  m_lContext = 0; 
+  m_nCmdEncrypt = 0;  
+  m_nCmdSign = 0; 
+  m_nToolbarButtonID1 = 0; 
+  m_nToolbarButtonID2 = 0; 
+  m_nToolbarBitmap1 = 0;
+  m_nToolbarBitmap2 = 0; 
+  m_hWnd = NULL; 
 };
 
 
@@ -467,201 +685,314 @@ CGPGExchExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 }
 
 
+
+// We can't read the Body object because it would fire up the
+// security pop-up.  Writing is okay.
+//       vtResult.pdispVal = NULL;
+//       pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+//                     DISPATCH_PROPERTYGET, &dispparamsNoArgs,
+//                     &vtResult, NULL, NULL);
+
+//       ExchLogInfo ("%s:%s: Body=%p (%s)\n", __FILE__, __func__, 
+//                    vtResult.pbVal,
+//                    (tmp = wchar_to_utf8 ((wchar_t*)vtResult.pbVal)));
+
+
+
 // XXX IExchExtSessionEvents::OnDelivery: could be used to automatically decrypt new mails
 // when they arrive
 
-/* CGPGExchExtCommands::InstallCommands
-
- Called by Echange to install commands and toolbar buttons.
-
- Return value: S_FALSE to signal Exchange to continue calling extensions.
-*/
-STDMETHODIMP CGPGExchExtCommands::InstallCommands(
+/* Called by Echange to install commands and toolbar buttons.  Returns
+    S_FALSE to signal Exchange to continue calling extensions. */
+STDMETHODIMP 
+CGPGExchExtCommands::InstallCommands (
 	LPEXCHEXTCALLBACK pEECB, // The Exchange Callback Interface.
-	HWND hWnd,               // The window handle to main window of context.
+	HWND hWnd,               // The window handle to the main window
+                                 // of context.
 	HMENU hMenu,             // The menu handle to main menu of context.
 	UINT FAR * pnCommandIDBase,  // The base conmmand id.
 	LPTBENTRY pTBEArray,     // The array of toolbar button entries.
 	UINT nTBECnt,            // The count of button entries in array.
 	ULONG lFlags)            // reserved
 {
-    HMENU hMenuTools;
-    m_hWnd = hWnd;
+  HRESULT hr;
+  HMENU hMenuTools;
+  m_hWnd = hWnd;
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  DISPID dispid_put = DISPID_PROPERTYPUT;
+  DISPPARAMS dispparams;
+  VARIANT aVariant;
+  int force_encrypt = 0;
+  
+  ExchLogInfo ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
+               m_lContext,
+               (m_lContext == EECONTEXT_SESSION?           "Session"          :
+                m_lContext == EECONTEXT_VIEWER?            "Viewer"           :
+                m_lContext == EECONTEXT_REMOTEVIEWER?      "RemoteViewer"     :
+                m_lContext == EECONTEXT_SEARCHVIEWER?      "SearchViewer"     :
+                m_lContext == EECONTEXT_ADDRBOOK?          "AddrBook"         :
+                m_lContext == EECONTEXT_SENDNOTEMESSAGE?   "SendNoteMessage"  :
+                m_lContext == EECONTEXT_READNOTEMESSAGE?   "ReadNoteMessage"  :
+                m_lContext == EECONTEXT_SENDPOSTMESSAGE?   "SendPostMessage"  :
+                m_lContext == EECONTEXT_READPOSTMESSAGE?   "ReadPostMessage"  :
+                m_lContext == EECONTEXT_READREPORTMESSAGE? "ReadReportMessage":
+                m_lContext == EECONTEXT_SENDRESENDMESSAGE? "SendResendMessage":
+                m_lContext == EECONTEXT_PROPERTYSHEETS?    "PropertySheets"   :
+                m_lContext == EECONTEXT_ADVANCEDCRITERIA?  "AdvancedCriteria" :
+                m_lContext == EECONTEXT_TASK?              "Task" : ""),
+               lFlags);
 
-    /* XXX: factor out common code */
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
-	int nTBIndex;
-	HWND hwndToolbar = NULL;
-	CHAR szBuffer[128];
 
-        pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
-        AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
-	
-	LoadString (glob_hinst, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
-        AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
+  /* Outlook 2003 sometimes displays the plaintext sometimes the
+     orginal undecrypted text when doing a Reply.  This seems to
+     depend on the sieze of the message; my guess it that only short
+     messages are locally saved in the process and larger ones are
+     fetyched again from the backend - or the other way around.
+     Anyway, we can't rely on that and thus me make sure to update the
+     Body object right here with our own copy of the plaintext.  To
+     match the text we use the Storage ID Property of MAPI.  
 
-        m_nCmdEncrypt = *pnCommandIDBase;
-        (*pnCommandIDBase)++;
-	
-	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {	
-	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
-		hwndToolbar = pTBEArray[nTBIndex].hwnd;		
-		m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
-		pTBEArray[nTBIndex].itbbBase++;
-		break;		
-	    }	
-	}
+     Unfortunately there seems to be no way of resetting the Saved
+     property after updating the body, thus even without entering a
+     single byte the user will be asked when cancelling a reply
+     whether he really wants to do that.  
 
-	if (hwndToolbar) {
-	    TBADDBITMAP tbab;
-	    tbab.hInst = glob_hinst;
-	    tbab.nID = IDB_DECRYPT;
-	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
-	    m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
-	    pTBEArray[nTBIndex].itbbBase++;
-	}
+     Note, that we can't optimize the code here by first reading the
+     body becuase this would pop up the securiy window, telling tghe
+     user that someone is trying to read these data.
+  */
+  if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+    {
+      LPMDB pMDB = NULL;
+      LPMESSAGE pMessage = NULL;
+      const char *body;
+      
+      /*  Note that for read and send the object returned by the
+          outlook extension callback is of class 43 (MailItem) so we
+          only need to ask for Body then. */
+        hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      if (FAILED(hr))
+        ExchLogInfo ("%s:%s: getObject failed: hr=%#x\n", hr);
+      else if ( (body = msgcache_get (pMessage)) 
+                && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
+        {
+          dispparams.cNamedArgs = 1;
+          dispparams.rgdispidNamedArgs = &dispid_put;
+          dispparams.cArgs = 1;
+          dispparams.rgvarg = &aVariant;
+          dispparams.rgvarg[0].vt = VT_LPWSTR;
+          dispparams.rgvarg[0].bstrVal = utf8_to_wchar (body);
+          hr = pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                             DISPATCH_PROPERTYPUT, &dispparams,
+                             NULL, NULL, NULL);
+          xfree (dispparams.rgvarg[0].bstrVal);
+          ExchLogInfo ("%s:%s: PROPERTYPUT(body) result -> %d\n",
+                       __FILE__, __func__, hr);
+
+          pDisp->Release();
+          pDisp = NULL;
+
+          /* Because we found the plaintext in the cache we can assume
+             that the orginal message has been encrypted and thus we
+             now set a flag to make sure that by default the reply
+             gets encrypted too. */
+          force_encrypt = 1;
+        }
     }
 
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
-	CHAR szBuffer[128];
-	int nTBIndex;
-	HWND hwndToolbar = NULL;
 
-        pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
-        AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
+
+  /* XXX: factor out common code */
+  if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
+    int nTBIndex;
+    HWND hwndToolbar = NULL;
+    CHAR szBuffer[128];
+
+    pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
+                       NULL, NULL, 0);
+    AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-	LoadString(glob_hinst, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
-        AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
+    LoadString (glob_hinst, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
+    AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
+                *pnCommandIDBase, szBuffer);
 
-        m_nCmdEncrypt = *pnCommandIDBase;
-        (*pnCommandIDBase)++;
-
-	LoadString(glob_hinst, IDS_SIGN_MENU_ITEM, szBuffer, 128);
-        AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
-
-        m_nCmdSign = *pnCommandIDBase;
-        (*pnCommandIDBase)++;
-
-	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
-	{
-	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
-	    {
-		hwndToolbar = pTBEArray[nTBIndex].hwnd;
-		m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
-		pTBEArray[nTBIndex].itbbBase++;
-		break;	
-	    }
-	}
-
-	if (hwndToolbar) {
-	    TBADDBITMAP tbab;
-	    tbab.hInst = glob_hinst;
-	    tbab.nID = IDB_ENCRYPT;
-	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
-	    m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
-	    pTBEArray[nTBIndex].itbbBase++;
-	    tbab.nID = IDB_SIGN;
-	    m_nToolbarBitmap2 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
-	}
-	m_pExchExt->m_gpgEncrypt = m_gpg->getEncryptDefault ();
-	m_pExchExt->m_gpgSign = m_gpg->getSignDefault ();
+    m_nCmdEncrypt = *pnCommandIDBase;
+    (*pnCommandIDBase)++;
+	
+    for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {	
+      if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
+        hwndToolbar = pTBEArray[nTBIndex].hwnd;		
+        m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
+        pTBEArray[nTBIndex].itbbBase++;
+        break;		
+      }	
     }
 
-    if (m_lContext == EECONTEXT_VIEWER) {
-	CHAR szBuffer[128];
-	int nTBIndex;
-	HWND hwndToolbar = NULL;
-
-        pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools, NULL, NULL, 0);
-        AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
-	
-	LoadString (glob_hinst, IDS_KEY_MANAGER, szBuffer, 128);
-        AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING, *pnCommandIDBase, szBuffer);
-
-        m_nCmdEncrypt = *pnCommandIDBase;
-        (*pnCommandIDBase)++;	
-
-	for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {
-	    if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
-		hwndToolbar = pTBEArray[nTBIndex].hwnd;
-		m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
-		pTBEArray[nTBIndex].itbbBase++;
-		break;	
-	    }
-	}
-	if (hwndToolbar) {
-	    TBADDBITMAP tbab;
-	    tbab.hInst = glob_hinst;
-	    tbab.nID = IDB_KEY_MANAGER;
-	    m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP, 1, (LPARAM)&tbab);
-	}	
+    if (hwndToolbar) {
+      TBADDBITMAP tbab;
+      tbab.hInst = glob_hinst;
+      tbab.nID = IDB_DECRYPT;
+      m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
+                                      1, (LPARAM)&tbab);
+      m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
+      pTBEArray[nTBIndex].itbbBase++;
     }
-    return S_FALSE;
+  }
+
+  if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
+    CHAR szBuffer[128];
+    int nTBIndex;
+    HWND hwndToolbar = NULL;
+
+    pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools,
+                      NULL, NULL, 0);
+    AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
+	
+    LoadString(glob_hinst, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
+    AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING,
+               *pnCommandIDBase, szBuffer);
+
+    m_nCmdEncrypt = *pnCommandIDBase;
+    (*pnCommandIDBase)++;
+
+    LoadString(glob_hinst, IDS_SIGN_MENU_ITEM, szBuffer, 128);
+    AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING,
+               *pnCommandIDBase, szBuffer);
+
+    m_nCmdSign = *pnCommandIDBase;
+    (*pnCommandIDBase)++;
+
+    for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
+      {
+        if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
+          {
+            hwndToolbar = pTBEArray[nTBIndex].hwnd;
+            m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
+            pTBEArray[nTBIndex].itbbBase++;
+            break;	
+          }
+      }
+
+    if (hwndToolbar) {
+      TBADDBITMAP tbab;
+      tbab.hInst = glob_hinst;
+      tbab.nID = IDB_ENCRYPT;
+      m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
+                                      1, (LPARAM)&tbab);
+      m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
+      pTBEArray[nTBIndex].itbbBase++;
+      tbab.nID = IDB_SIGN;
+      m_nToolbarBitmap2 = SendMessage(hwndToolbar, TB_ADDBITMAP,
+                                      1, (LPARAM)&tbab);
+    }
+    m_pExchExt->m_gpgEncrypt = m_gpg->getEncryptDefault ();
+    m_pExchExt->m_gpgSign = m_gpg->getSignDefault ();
+    if (force_encrypt)
+      m_pExchExt->m_gpgEncrypt = true;
+  }
+
+  if (m_lContext == EECONTEXT_VIEWER) {
+    CHAR szBuffer[128];
+    int nTBIndex;
+    HWND hwndToolbar = NULL;
+
+    pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
+                       NULL, NULL, 0);
+    AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
+	
+    LoadString (glob_hinst, IDS_KEY_MANAGER, szBuffer, 128);
+    AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
+                *pnCommandIDBase, szBuffer);
+
+    m_nCmdEncrypt = *pnCommandIDBase;
+    (*pnCommandIDBase)++;	
+
+    for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {
+      if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
+        hwndToolbar = pTBEArray[nTBIndex].hwnd;
+        m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
+        pTBEArray[nTBIndex].itbbBase++;
+        break;	
+      }
+    }
+    if (hwndToolbar) {
+      TBADDBITMAP tbab;
+      tbab.hInst = glob_hinst;
+      tbab.nID = IDB_KEY_MANAGER;
+      m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
+                                      1, (LPARAM)&tbab);
+    }	
+  }
+  return S_FALSE;
 }
 
 
-/* CGPGExchExtCommands::DoCommand - Called by Exchange when a user selects a command. 
-
- Return value: S_OK if command is handled, otherwise S_FALSE.
-*/
-STDMETHODIMP CGPGExchExtCommands::DoCommand(
-	LPEXCHEXTCALLBACK pEECB, // The Exchange Callback Interface.
-	UINT nCommandID)         // The command id.
+/* Called by Exchange when a user selects a command.  Return value:
+   S_OK if command is handled, otherwise S_FALSE. */
+STDMETHODIMP 
+CGPGExchExtCommands::DoCommand (
+                  LPEXCHEXTCALLBACK pEECB, // The Exchange Callback Interface.
+                  UINT nCommandID)         // The command id.
 {
+  HRESULT hr;
 
-    if ((nCommandID != m_nCmdEncrypt) && 
-	(nCommandID != m_nCmdSign))
-	return S_FALSE; 
+  if ((nCommandID != m_nCmdEncrypt) 
+      && (nCommandID != m_nCmdSign))
+    return S_FALSE; 
 
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
-	LPMESSAGE pMessage = NULL;
-	LPMDB pMDB = NULL;
-	HWND hWnd = NULL;
+  if (m_lContext == EECONTEXT_READNOTEMESSAGE) 
+    {
+      HWND hWnd = NULL;
+      LPMESSAGE pMessage = NULL;
+      LPMDB pMDB = NULL;
 
-	if (FAILED (pEECB->GetWindow (&hWnd)))
-	    hWnd = NULL;
-	HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-	if (SUCCEEDED (hr)) {
-	    if (nCommandID == m_nCmdEncrypt) {
-		m_gpg->setWindow (hWnd);
-		m_gpg->setMessage (pMessage);
-		m_gpg->decrypt ();
+      if (FAILED (pEECB->GetWindow (&hWnd)))
+        hWnd = NULL;
+      hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      if (SUCCEEDED (hr))
+        {
+          if (nCommandID == m_nCmdEncrypt)
+            {
+              GpgMsg *m = CreateGpgMsg (pMessage);
+              m_gpg->decrypt (hWnd, m);
+              delete m;
 	    }
 	}
-	if (pMessage != NULL)
-	    UlRelease(pMessage);
-	if (pMDB != NULL)
-	    UlRelease(pMDB);
+      if (pMessage)
+        UlRelease(pMessage);
+      if (pMDB)
+        UlRelease(pMDB);
     }
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
-	HWND hWnd = NULL;
-	if (FAILED(pEECB->GetWindow (&hWnd)))
-	    hWnd = NULL;
-	if (nCommandID == m_nCmdEncrypt)
-	    m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
-	if (nCommandID == m_nCmdSign)
-	    m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
+  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      if (nCommandID == m_nCmdEncrypt)
+        m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
+      if (nCommandID == m_nCmdSign)
+        m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
     }
-    if (m_lContext == EECONTEXT_VIEWER) {
-	if (m_gpg->startKeyManager ())
-	    MessageBox (NULL, "Could not start Key-Manager", "GPGExch", MB_ICONERROR|MB_OK);
+  else if (m_lContext == EECONTEXT_VIEWER)
+    {
+      if (m_gpg->startKeyManager ())
+        MessageBox (NULL, "Could not start Key-Manager",
+                    "OutlGPG", MB_ICONERROR|MB_OK);
     }
-    return S_OK; 
+
+  return S_OK; 
 }
 
-STDMETHODIMP_(VOID) CGPGExchExtCommands::InitMenu(
-	LPEXCHEXTCALLBACK pEECB) // The pointer to Exchange Callback Interface.
+
+STDMETHODIMP_(VOID) 
+CGPGExchExtCommands::InitMenu(LPEXCHEXTCALLBACK pEECB) 
 {
 }
 
-/* CGPGExchExtCommands::Help
 
- Called by Exhange when the user requests help for a menu item.
-
- Return value: S_OK when it is a menu item of this plugin and the help was shown;
-               otherwise S_FALSE
-*/
-STDMETHODIMP CGPGExchExtCommands::Help (
+/* Called by Exhange when the user requests help for a menu item.
+   Return value: S_OK when it is a menu item of this plugin and the
+   help was shown; otherwise S_FALSE.  */
+STDMETHODIMP 
+CGPGExchExtCommands::Help (
 	LPEXCHEXTCALLBACK pEECB, // The pointer to Exchange Callback Interface.
 	UINT nCommandID)         // The command id.
 {
@@ -709,35 +1040,40 @@ STDMETHODIMP CGPGExchExtCommands::Help (
     return S_FALSE;
 }
 
-/* CGPGExchExtCommands::QueryHelpText
 
- Called by Exhange to get the status bar text or the tooltip of a menu item.
-
- @rdesc S_OK when it is a menu item of this plugin and the text was set;
-        otherwise S_FALSE.
-*/
-STDMETHODIMP CGPGExchExtCommands::QueryHelpText(
-	UINT nCommandID,  // The command id corresponding to menu item activated.
-	ULONG lFlags,     // Identifies either EECQHT_STATUS or EECQHT_TOOLTIP.
-    LPTSTR pszText,   // A pointer to buffer to be populated with text to display.
-	UINT nCharCnt)    // The count of characters available in psz buffer.
+/* Called by Exhange to get the status bar text or the tooltip of a
+   menu item.  Returns S_OK when it is a menu item of this plugin and
+   the text was set; otherwise S_FALSE. */
+STDMETHODIMP 
+CGPGExchExtCommands::QueryHelpText(
+          UINT nCommandID,  // The command id corresponding to the
+                            //  menu item activated.
+	  ULONG lFlags,     // Identifies either EECQHT_STATUS
+                            //  or EECQHT_TOOLTIP.
+          LPTSTR pszText,   // A pointer to buffer to be populated 
+                            //  with text to display.
+	  UINT nCharCnt)    // The count of characters available in psz buffer.
 {
 	
     if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_DECRYPT_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_DECRYPT_STATUSBAR,
+                            pszText, nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (glob_hinst, IDS_DECRYPT_TOOLTIP, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_DECRYPT_TOOLTIP,
+                            pszText, nCharCnt);
 	    return S_OK;
 	}
     }
     if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_ENCRYPT_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_ENCRYPT_STATUSBAR,
+                            pszText, nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (glob_hinst, IDS_ENCRYPT_TOOLTIP, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_ENCRYPT_TOOLTIP,
+                            pszText, nCharCnt);
 	    return S_OK;
 	}
 	if (nCommandID == m_nCmdSign) {
@@ -751,30 +1087,30 @@ STDMETHODIMP CGPGExchExtCommands::QueryHelpText(
     if (m_lContext == EECONTEXT_VIEWER) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_KEY_MANAGER_STATUSBAR, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_KEY_MANAGER_STATUSBAR,
+                            pszText, nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (glob_hinst, IDS_KEY_MANAGER_TOOLTIP, pszText, nCharCnt);
+		LoadString (glob_hinst, IDS_KEY_MANAGER_TOOLTIP,
+                            pszText, nCharCnt);
 	    return S_OK;
 	}	
     }
     return S_FALSE;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// CGPGExchExtCommands::QueryButtonInfo 
-//
-// Called by Exchange to get toolbar button infos,
-//
-// @rdesc S_OK when it is a button of this plugin and the requested info was delivered;
-//        otherwise S_FALSE
-//
-STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
+
+/* Called by Exchange to get toolbar button infos.  Returns S_OK when
+   it is a button of this plugin and the requested info was delivered;
+   otherwise S_FALSE. */
+STDMETHODIMP 
+CGPGExchExtCommands::QueryButtonInfo (
 	ULONG lToolbarID,       // The toolbar identifier.
 	UINT nToolbarButtonID,  // The toolbar button index.
-    LPTBBUTTON pTBB,        // A pointer to toolbar button structure (see TBBUTTON structure).
+        LPTBBUTTON pTBB,        // A pointer to toolbar button structure
+                                //  (see TBBUTTON structure).
 	LPTSTR lpszDescription, // A pointer to string describing button.
 	UINT nCharCnt,          // The maximum size of lpsz buffer.
-    ULONG lFlags)           // EXCHEXT_UNICODE may be specified
+        ULONG lFlags)           // EXCHEXT_UNICODE may be specified
 {
 	if (m_lContext == EECONTEXT_READNOTEMESSAGE)
 	{
@@ -786,7 +1122,8 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_DECRYPT_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_DECRYPT_TOOLTIP,
+                                   lpszDescription, nCharCnt);
 			return S_OK;
 		}
 	}
@@ -802,7 +1139,8 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_ENCRYPT_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_ENCRYPT_TOOLTIP,
+                                   lpszDescription, nCharCnt);
 			return S_OK;
 		}
 		if (nToolbarButtonID == m_nToolbarButtonID2)
@@ -815,7 +1153,8 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_SIGN_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_SIGN_TOOLTIP,
+                                   lpszDescription, nCharCnt);
 			return S_OK;
 		}
 	}
@@ -829,13 +1168,15 @@ STDMETHODIMP CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_KEY_MANAGER_TOOLTIP, lpszDescription, nCharCnt);
+			LoadString(glob_hinst, IDS_KEY_MANAGER_TOOLTIP,
+                                   lpszDescription, nCharCnt);
 			return S_OK;
 		}
 	}
 
 	return S_FALSE;
 }
+
 
 
 STDMETHODIMP 
@@ -845,7 +1186,8 @@ CGPGExchExtCommands::ResetToolbar (ULONG lToolbarID, ULONG lFlags)
 }
 
 
-CGPGExchExtPropertySheets::CGPGExchExtPropertySheets(CGPGExchExt* pParentInterface)
+CGPGExchExtPropertySheets::CGPGExchExtPropertySheets (
+                                    CGPGExchExt* pParentInterface)
 { 
     m_pExchExt = pParentInterface;
     m_lRef = 0; 
@@ -871,16 +1213,12 @@ CGPGExchExtPropertySheets::QueryInterface(REFIID riid, LPVOID FAR * ppvObj)
 }
 
 
-/* CGPGExchExtPropertySheets::GetMaxPageCount
-
- Called by Echange to get the maximum number of property pages which are
- to be added.
-
- Return value: The maximum number of custom pages for the property sheet.
-*/
+/* Called by Echange to get the maximum number of property pages which
+   are to be added. LFLAGS is a bitmask indicating what type of
+   property sheet is being displayed. Return value: The maximum number
+   of custom pages for the property sheet.  */
 STDMETHODIMP_ (ULONG) 
-CGPGExchExtPropertySheets::GetMaxPageCount(
-	ULONG lFlags) // A bitmask indicating what type of property sheet is being displayed.
+CGPGExchExtPropertySheets::GetMaxPageCount(ULONG lFlags)
 {
     if (lFlags == EEPS_TOOLSOPTIONS)
 	return 1;	
@@ -888,18 +1226,19 @@ CGPGExchExtPropertySheets::GetMaxPageCount(
 }
 
 
-/* CGPGExchExtPropertySheets::GetPages
-
- Called by Exchange to request information about the property page.
-
- Return value: S_OK to signal Echange to use the pPSP information.
-*/
+/* Called by Exchange to request information about the property page.
+   Return value: S_OK to signal Echange to use the pPSP
+   information. */
 STDMETHODIMP 
 CGPGExchExtPropertySheets::GetPages(
 	LPEXCHEXTCALLBACK pEECB, // A pointer to Exchange callback interface.
-	ULONG lFlags,            // A  bitmask indicating what type of property sheet is being displayed.
-	LPPROPSHEETPAGE pPSP,    // The output parm pointing to pointer to list of property sheets.
-	ULONG FAR * plPSP)       // The output parm pointing to buffer contaiing number of property sheets actually used.
+	ULONG lFlags,            // A  bitmask indicating what type of
+                                 //  property sheet is being displayed.
+	LPPROPSHEETPAGE pPSP,    // The output parm pointing to pointer
+                                 //  to list of property sheets.
+	ULONG FAR * plPSP)       // The output parm pointing to buffer 
+                                 //  containing the number of property 
+                                 //  sheets actually used.
 {
     int resid = 0;
 
@@ -924,7 +1263,13 @@ CGPGExchExtPropertySheets::GetPages(
     return S_OK;
 }
 
+
 STDMETHODIMP_ (VOID) 
-CGPGExchExtPropertySheets::FreePages (LPPROPSHEETPAGE pPSP, ULONG lFlags, ULONG lPSP)
+CGPGExchExtPropertySheets::FreePages (LPPROPSHEETPAGE pPSP,
+                                      ULONG lFlags, ULONG lPSP)
 {
 }
+
+
+
+

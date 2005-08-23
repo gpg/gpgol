@@ -28,6 +28,8 @@ outlgpg_SOURCES = \
 	olflange-ids.h              \
 	myexchext.h                 \
 	MapiGPGME.cpp MapiGPGME.h   \
+	gpgmsg.cpp gpgmsg.hh        \
+	msgcache.c msgcache.h       \
         engine-gpgme.c	engine.h    \
         common.c intern.h	    \
 	passcache.c passcache.h     \

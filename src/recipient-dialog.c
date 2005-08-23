@@ -128,10 +128,10 @@ load_rsetbox (HWND hwnd)
 	    sprintf( keybuf+strlen( keybuf ), "/%s", s );
 	strcat( keybuf, " " );
 	if( (val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 1 )) )
-	    sprintf( keybuf+strlen( keybuf ), "%d", val );
+	    sprintf( keybuf+strlen( keybuf ), "%ld", val );
 	else {
 	    val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 0 );
-	    sprintf( keybuf+strlen( keybuf ), "%d", val );
+	    sprintf( keybuf+strlen( keybuf ), "%ld", val );
 	}
 	s = keybuf;
 	ListView_SetItemText( hwnd, 0, 2, (char *) s );

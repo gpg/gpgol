@@ -17,12 +17,21 @@
  * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
+
+#include <config.h>
+
 #include <windows.h>
 
 #include <gpgme.h>
 
+#include "mymapi.h"
+#include "mymapitags.h"
+
+
 #include "intern.h"
 #include "passcache.h"
+#include "msgcache.h"
+#include "mymapi.h"
 
 
 int WINAPI
@@ -39,6 +48,8 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 
       /* Early initializations of our subsystems. */
       if (initialize_passcache ())
+        return FALSE;
+      if (initialize_msgcache ())
         return FALSE;
       if (initialize_mapi_gpgme ())
         return FALSE;

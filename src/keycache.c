@@ -25,11 +25,9 @@
 #include "keycache.h"
 #include "intern.h"
 
-#pragma data_seg(".SHARDAT")
 static keycache_t pubring = NULL;
 static keycache_t secring = NULL;
 static time_t last_timest = 0;
-#pragma data_seg()
 
 
 /* Initialize global keycache objects */
