@@ -58,17 +58,6 @@ bool g_bInitDll = FALSE;
 MapiGPGME *m_gpg = NULL;
 
 
-static void 
-ExchLogInfo (const char * fmt, ...)
-{
-  va_list a;
-  
-  va_start (a, fmt);
-  log_vdebug (fmt, a);
-  va_end (a);
-}
-
-
 
 
 /* Registers this module as an Exchange extension. This basically updates
@@ -113,7 +102,7 @@ DllRegisterServer (void)
 				   REG_OPTION_NON_VOLATILE,
 				   KEY_ALL_ACCESS, NULL, &hkey, NULL);
     if (ec != ERROR_SUCCESS) {
-	ExchLogInfo ("DllRegisterServer failed\n");
+	log_debug ("DllRegisterServer failed\n");
 	return E_ACCESSDENIED;
     }
     
@@ -137,7 +126,7 @@ DllRegisterServer (void)
     if (hkey != NULL)
 	RegCloseKey (hkey);
 
-    ExchLogInfo ("DllRegisterServer succeeded\n");
+    log_debug ("DllRegisterServer succeeded\n");
     return S_OK;
 }
 
@@ -155,7 +144,7 @@ DllUnregisterServer (void)
 				    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
 				    NULL, &hkey, NULL);
     if (lResult != ERROR_SUCCESS) {
-	ExchLogInfo ("DllUnregisterServer: access denied.\n");
+	log_debug ("DllUnregisterServer: access denied.\n");
 	return E_ACCESSDENIED;
     }
     RegDeleteValue (hkey, "OutlGPG");
@@ -169,6 +158,40 @@ DllUnregisterServer (void)
     return S_OK;
 }
 
+
+/* DISPLAY a MAPI property. */
+static void
+show_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
+{
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
+  cache_item_t item;
+  size_t keylen;
+  void *key;
+
+  if (!message)
+    return; /* No message: Nop. */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, prop, &lpspvFEID);
+  if (FAILED (hr))
+    {
+      log_debug ("%s: HrGetOneProp(%s) failed: hr=%#lx\n",
+                 __func__, propname, hr);
+      return;
+    }
+    
+  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
+    {
+      log_debug ("%s: HrGetOneProp(%s) returned unexpected property type\n",
+                 __func__, propname);
+      MAPIFreeBuffer (lpspvFEID);
+      return;
+    }
+  keylen = lpspvFEID->Value.bin.cb;
+  key = lpspvFEID->Value.bin.lpb;
+  log_hexdump (key, keylen, "%s: %20s=", __func__, propname);
+  MAPIFreeBuffer (lpspvFEID);
+}
 
 
 
@@ -189,7 +212,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   wchar_t *wname;
   const char *s;
 
-  ExchLogInfo ("%s:%s: looking for `%s'\n", __FILE__, __func__, name);
+  log_debug ("%s:%s: looking for `%s'\n", __FILE__, __func__, name);
 
   pCb = NULL;
   pObj = NULL;
@@ -214,7 +237,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
       hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
                                 LOCALE_SYSTEM_DEFAULT, &dispid);
       xfree (wname);
-      ExchLogInfo ("   dispid(%.*s)=%d  (hr=0x%x)\n",
+      log_debug ("   dispid(%.*s)=%d  (hr=0x%x)\n",
                    (int)(s-name), name, dispid, hr);
       vtResult.pdispVal = NULL;
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
@@ -224,7 +247,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
       /* FIXME: Check that the class of the returned object is as
          expected.  To do this we better let GetIdsOfNames also return
          the ID of "Class". */
-      ExchLogInfo ("%s:%s: %.*s=%p  (hr=0x%x)\n",
+      log_debug ("%s:%s: %.*s=%p  (hr=0x%x)\n",
                    __FILE__, __func__, (int)(s-name), name, pObj, hr);
       pDisp->Release ();
       pDisp = NULL;
@@ -246,11 +269,11 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
                             LOCALE_SYSTEM_DEFAULT, &dispid);
   xfree (wname);
-  ExchLogInfo ("   dispid(%s)=%d  (hr=0x%x)\n", name, dispid, hr);
+  log_debug ("   dispid(%s)=%d  (hr=0x%x)\n", name, dispid, hr);
   if (r_dispid)
     *r_dispid = dispid;
 
-  ExchLogInfo ("%s:%s:    got IDispatch=%p dispid=%d\n",
+  log_debug ("%s:%s:    got IDispatch=%p dispid=%d\n",
                __FILE__, __func__, pDisp, dispid);
   return pDisp;
 }
@@ -289,7 +312,7 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
       pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                     DISPATCH_PROPERTYGET, &dispparamsNoArgs,
                     &vtResult, NULL, NULL);
-      ExchLogInfo ("%s:%s: Outlookcallback returned object of class=%d\n",
+      log_debug ("%s:%s: Outlookcallback returned object of class=%d\n",
                    __FILE__, __func__, vtResult.intVal);
     }
   if (pDisp)
@@ -300,13 +323,13 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
       VARIANT vtResult;
       
       pDisp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_SYSTEM_DEFAULT, &dispid);
-      //ExchLogInfo ("   dispid(Application)=%d\n", dispid);
+      //log_debug ("   dispid(Application)=%d\n", dispid);
       vtResult.pdispVal = NULL;
       pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                      DISPATCH_METHOD, &dispparamsNoArgs,
                      &vtResult, NULL, NULL);
       pUnk = vtResult.pdispVal;
-      //ExchLogInfo ("%s:%s: Outlook.Application=%p\n",
+      //log_debug ("%s:%s: Outlook.Application=%p\n",
       //             __FILE__, __func__, pUnk);
       pDisp->Release();
       pDisp = NULL;
@@ -322,7 +345,7 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
 EXTERN_C LPEXCHEXT __stdcall
 ExchEntryPoint (void)
 {
-  ExchLogInfo ("%s:%s: creating new CGPGExchExt object\n", __FILE__, __func__);
+  log_debug ("%s:%s: creating new CGPGExchExt object\n", __FILE__, __func__);
   return new CGPGExchExt;
 }
 
@@ -354,7 +377,7 @@ CGPGExchExt::CGPGExchExt (void)
           m_gpg->readOptions ();
         }
       g_bInitDll = TRUE;
-      ExchLogInfo ("%s:%s: one time init done\n", __FILE__, __func__);
+      log_debug ("%s:%s: one time init done\n", __FILE__, __func__);
     }
 }
 
@@ -364,7 +387,7 @@ CGPGExchExt::CGPGExchExt (void)
 */
 CGPGExchExt::~CGPGExchExt (void) 
 {
-  ExchLogInfo ("%s:%s: cleaning up CGPGExchExt object\n", __FILE__, __func__);
+  log_debug ("%s:%s: cleaning up CGPGExchExt object\n", __FILE__, __func__);
 
     if (m_lContext == EECONTEXT_SESSION) {
 	if (g_bInitDll) {
@@ -374,7 +397,7 @@ CGPGExchExt::~CGPGExchExt (void)
 		m_gpg = NULL;
 	    }
 	    g_bInitDll = FALSE;
-            ExchLogInfo ("%s:%s: one time deinit done\n", __FILE__, __func__);
+            log_debug ("%s:%s: one time deinit done\n", __FILE__, __func__);
 	}	
     }
 }
@@ -416,7 +439,7 @@ CGPGExchExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
     if (*ppvObj)
         ((LPUNKNOWN)*ppvObj)->AddRef();
 
-    /*ExchLogInfo("QueryInterface %d\n", __LINE__);*/
+    /*log_debug("QueryInterface %d\n", __LINE__);*/
     return hr;
 }
 
@@ -436,7 +459,7 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   /* Save the context in an instance variable. */
   m_lContext = lContext;
 
-  ExchLogInfo ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
+  log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
                lContext,
                (lContext == EECONTEXT_SESSION?           "Session":
                 lContext == EECONTEXT_VIEWER?            "Viewer":
@@ -459,7 +482,7 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   if (EECBGV_BUILDVERSION_MAJOR
       != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
     {
-      ExchLogInfo ("%s:%s: invalid version 0x%lx\n",
+      log_debug ("%s:%s: invalid version 0x%lx\n",
                    __FILE__, __func__, lBuildVersion);
       return S_FALSE;
     }
@@ -475,13 +498,13 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
       || lContext == EECONTEXT_READREPORTMESSAGE
       || lContext == EECONTEXT_VIEWER)
     {
-      LPUNKNOWN pApplication = get_outlook_application_object (pEECB);
-      ExchLogInfo ("%s:%s: pApplication=%p\n",
-                   __FILE__, __func__, pApplication);
+//       LPUNKNOWN pApplication = get_outlook_application_object (pEECB);
+//       log_debug ("%s:%s: pApplication=%p\n",
+//                    __FILE__, __func__, pApplication);
       return S_OK;
     }
   
-  ExchLogInfo ("%s:%s: can't handle this context\n", __FILE__, __func__);
+  log_debug ("%s:%s: can't handle this context\n", __FILE__, __func__);
   return S_FALSE;
 }
 
@@ -520,7 +543,19 @@ CGPGExchExtMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB) 
 {
-  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  LPMDB pMDB = NULL;
+  LPMESSAGE pMessage = NULL;
+
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
+
+  pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+  show_mapi_property (pMessage, PR_ENTRYID, "ENTRYID");
+  show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
+  msgcache_set_active (pMessage);
+  if (pMessage)
+    UlRelease(pMessage);
+  if (pMDB)
+    UlRelease(pMDB);
   return S_FALSE;
 }
 
@@ -532,7 +567,7 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
                                           ULONG lFlags)
 {
-    ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+    log_debug ("%s:%s: received\n", __FILE__, __func__);
     return S_FALSE;
 }
 
@@ -543,7 +578,7 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 {
-    ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+    log_debug ("%s:%s: received\n", __FILE__, __func__);
     return S_FALSE;
 }
 
@@ -557,7 +592,7 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
                                            ULONG lFlags)
 {
-  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
 
   HRESULT hrReturn = S_FALSE;
   LPMESSAGE msg = NULL;
@@ -613,7 +648,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK pEECB)
 {
-  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
   return S_FALSE;
 }
 
@@ -625,7 +660,7 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,
                                                 ULONG lFlags)
 {
-  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
   return S_FALSE;
 }
 
@@ -637,7 +672,7 @@ CGPGExchExtMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnSubmit (LPEXCHEXTCALLBACK pEECB)
 {
-  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
   m_bOnSubmitActive = TRUE;
   m_bWriteFailed = FALSE;
   return S_FALSE;
@@ -650,7 +685,7 @@ STDMETHODIMP_ (VOID)
 CGPGExchExtMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK pEECB,
                                             ULONG lFlags)
 {
-  ExchLogInfo ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
   m_bOnSubmitActive = FALSE; 
 }
 
@@ -693,7 +728,7 @@ CGPGExchExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 //                     DISPATCH_PROPERTYGET, &dispparamsNoArgs,
 //                     &vtResult, NULL, NULL);
 
-//       ExchLogInfo ("%s:%s: Body=%p (%s)\n", __FILE__, __func__, 
+//       log_debug ("%s:%s: Body=%p (%s)\n", __FILE__, __func__, 
 //                    vtResult.pbVal,
 //                    (tmp = wchar_to_utf8 ((wchar_t*)vtResult.pbVal)));
 
@@ -725,7 +760,7 @@ CGPGExchExtCommands::InstallCommands (
   VARIANT aVariant;
   int force_encrypt = 0;
   
-  ExchLogInfo ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
+  log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
                m_lContext,
                (m_lContext == EECONTEXT_SESSION?           "Session"          :
                 m_lContext == EECONTEXT_VIEWER?            "Viewer"           :
@@ -743,6 +778,21 @@ CGPGExchExtCommands::InstallCommands (
                 m_lContext == EECONTEXT_TASK?              "Task" : ""),
                lFlags);
 
+
+  if (m_lContext == EECONTEXT_READNOTEMESSAGE
+      || m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+    {
+      LPMDB pMDB = NULL;
+      LPMESSAGE pMessage = NULL;
+
+      pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      show_mapi_property (pMessage, PR_ENTRYID, "ENTRYID");
+      show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
+      if (pMessage)
+        UlRelease(pMessage);
+      if (pMDB)
+        UlRelease(pMDB);
+    }
 
   /* Outlook 2003 sometimes displays the plaintext sometimes the
      orginal undecrypted text when doing a Reply.  This seems to
@@ -767,14 +817,15 @@ CGPGExchExtCommands::InstallCommands (
       LPMDB pMDB = NULL;
       LPMESSAGE pMessage = NULL;
       const char *body;
+      void *refhandle = NULL;
       
       /*  Note that for read and send the object returned by the
           outlook extension callback is of class 43 (MailItem) so we
           only need to ask for Body then. */
-        hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (FAILED(hr))
-        ExchLogInfo ("%s:%s: getObject failed: hr=%#x\n", hr);
-      else if ( (body = msgcache_get (pMessage)) 
+        log_debug ("%s:%s: getObject failed: hr=%#x\n", hr);
+      else if ( (body = msgcache_get (pMessage, &refhandle)) 
                 && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
         {
           dispparams.cNamedArgs = 1;
@@ -787,7 +838,7 @@ CGPGExchExtCommands::InstallCommands (
                              DISPATCH_PROPERTYPUT, &dispparams,
                              NULL, NULL, NULL);
           xfree (dispparams.rgvarg[0].bstrVal);
-          ExchLogInfo ("%s:%s: PROPERTYPUT(body) result -> %d\n",
+          log_debug ("%s:%s: PROPERTYPUT(body) result -> %d\n",
                        __FILE__, __func__, hr);
 
           pDisp->Release();
@@ -799,6 +850,11 @@ CGPGExchExtCommands::InstallCommands (
              gets encrypted too. */
           force_encrypt = 1;
         }
+      msgcache_unref (refhandle);
+      if (pMessage)
+        UlRelease(pMessage);
+      if (pMDB)
+        UlRelease(pMDB);
     }
 
 
@@ -952,6 +1008,8 @@ CGPGExchExtCommands::DoCommand (
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (SUCCEEDED (hr))
         {
+          show_mapi_property (pMessage, PR_ENTRYID, "ENTRYID");
+          show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
           if (nCommandID == m_nCmdEncrypt)
             {
               GpgMsg *m = CreateGpgMsg (pMessage);

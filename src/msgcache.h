@@ -35,9 +35,15 @@ int initialize_msgcache (void);
    controls whether the cache will snatch ownership of body. */
 void msgcache_put (char *body, int transfer, LPMESSAGE message);
 
+void msgcache_set_active (LPMESSAGE message);
+
 /* Return the plaintext stored under a key derived from MESSAGE or
    NULL if none was found. */
-const char *msgcache_get (LPMESSAGE message);
+const char *msgcache_get (LPMESSAGE message, void **refhandle);
+
+/* Release access to a value returned by msgcache_get.  REFHANDLE is
+   the value as stored in the pointer variable by msgcache_get. */
+void msgcache_unref (void *refhandle);
 
 
 #ifdef __cplusplus

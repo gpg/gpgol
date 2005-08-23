@@ -58,10 +58,14 @@ wchar_t *utf8_to_wchar2 (const char *string, size_t len);
 
 /*-- MapiGPGME.cpp --*/
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+void log_error (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_vdebug (const char *fmt, va_list a);
 void log_debug_w32 (int w32err, const char *fmt,
                     ...) __attribute__ ((format (printf,2,3)));
-
+void log_error_w32 (int w32err, const char *fmt,
+                    ...) __attribute__ ((format (printf,2,3)));
+void log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
+     __attribute__ ((format (printf,3,4)));
 
 /*****  Missing functions.  ****/
 

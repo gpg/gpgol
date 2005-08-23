@@ -41,6 +41,16 @@
    so that the oldest messages are flushed from the cache first.  I
    don't think that it makes much sense to take the sieze of a message
    into account here.
+
+   FUBOH: This damned Outlook think is fucked up beyond all hacking.
+   After implementing this cace module here I realized that none of
+   the properties are taken from the message to the reply template:
+   Neither STORE_ENTRYID (which BTW is anyway constant within a
+   folder), nor ENTRYID, nor SEARCHID nor RECORD_KEY.  The only way to
+   solve this is by assuming that the last mail read will be the one
+   which gets replied to.  To implement this, we mark a message as the
+   active one through msgcache_set_active() called from the OnRead
+   hook.  msgcache_get will then simply return the active message.
 */
    
 
@@ -69,6 +79,12 @@ struct cache_item
                        encoded. */
   size_t length;    /* The length of that plaintext used to compute
                        the total size of the cache. */
+
+  int ref;          /* Reference counter, indicating how many callers
+                       are currently accessing the plaintext of this
+                       object. */
+
+  int is_active;    /* Flag, see comment at top. */
 
   /* The length of the key and the key itself.  The cache item is
      dynamically allocated to fit the size of the key.  Note, that
@@ -104,6 +120,28 @@ initialize_msgcache (void)
 }
 
 
+/* Acquire the mutex.  Returns 0 on success. */
+static int 
+lock_cache (void)
+{
+  int code = WaitForSingleObject (cache_mutex, INFINITE);
+  if (code != WAIT_OBJECT_0)
+    log_error ("%s:%s: waiting on mutex failed: code=%#x\n",
+               __FILE__, __func__, code);
+  return code != WAIT_OBJECT_0;
+}
+
+/* Release the mutex.  No error is returned because this is a fatal
+   error anyway and there is no way to clean up. */
+static void
+unlock_cache (void)
+{
+  if (!ReleaseMutex (cache_mutex))
+    log_error_w32 (-1, "%s:%s: ReleaseMutex failed", __FILE__, __func__);
+}
+
+
+
 /* Put the BODY of a message into the cache.  BODY should be a
    malloced string, UTF8 encoded.  If TRANSFER is given as true, the
    ownership of the malloced memory for BODY is transferred to this
@@ -112,28 +150,243 @@ initialize_msgcache (void)
 void
 msgcache_put (char *body, int transfer, LPMESSAGE message)
 {
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
   cache_item_t item;
+  size_t keylen;
+  void *key;
 
-  item = xcalloc (1, sizeof *item);
-  item->plaintext = xstrdup (body);
+  if (!message)
+    return; /* No message: Nop. */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SEARCH_KEY, &lpspvFEID);
+  if (FAILED (hr))
+    {
+      log_error ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
+      return;
+    }
+    
+  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
+    {
+      log_error ("%s: HrGetOneProp returned unexpected property type\n",
+                 __func__);
+      MAPIFreeBuffer (lpspvFEID);
+      return;
+    }
+  keylen = lpspvFEID->Value.bin.cb;
+  key = lpspvFEID->Value.bin.lpb;
+
+  if (!keylen || !key || keylen > 10000)
+    {
+      log_error ("%s: malformed PR_SEARCH_KEY\n", __func__);
+      MAPIFreeBuffer (lpspvFEID);
+      return;
+    }
+
+  item = xmalloc (sizeof *item + keylen - 1);
+  item->next = NULL;
+  item->ref = 0;
+  item->is_active = 0;
+  item->plaintext = transfer? body : xstrdup (body);
   item->length = strlen (body);
+  item->keylen = keylen;
+  memcpy (item->key, key, keylen);
 
-  the_cache = item;
+  MAPIFreeBuffer (lpspvFEID);
+
+  if (!lock_cache ())
+    {
+      /* FIXME: Decide whether to kick out some entries. */
+      item->next = the_cache;
+      the_cache = item;
+      unlock_cache ();
+    }
+  msgcache_set_active (message);
+}
+
+
+/* If MESSAGE is in our cse set it's active flag and reset the active
+   flag of all others.  */
+void
+msgcache_set_active (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
+  cache_item_t item;
+  size_t keylen = 0;
+  void *key = NULL;
+  int okay = 0;
+
+  if (!message)
+    return; /* No message: Nop. */
+  if (!the_cache)
+    return; /* No cache: avoid needless work. */
+  
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SEARCH_KEY, &lpspvFEID);
+  if (FAILED (hr))
+    {
+      log_error ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
+      goto leave;
+    }
+    
+  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
+    {
+      log_error ("%s: HrGetOneProp returned unexpected property type\n",
+                 __func__);
+      goto leave;
+    }
+  keylen = lpspvFEID->Value.bin.cb;
+  key = lpspvFEID->Value.bin.lpb;
+
+  if (!keylen || !key || keylen > 10000)
+    {
+      log_error ("%s: malformed PR_SEARCH_KEY\n", __func__);
+      goto leave;
+    }
+  okay = 1;
+
+
+ leave:
+  if (!lock_cache ())
+    {
+      for (item = the_cache; item; item = item->next)
+        item->is_active = 0;
+      if (okay)
+        {
+          for (item = the_cache; item; item = item->next)
+            {
+              if (item->keylen == keylen 
+                  && !memcmp (item->key, key, keylen))
+                {
+                  item->is_active = 1;
+                  break;
+                }
+            }
+        }
+      unlock_cache ();
+    }
+
+  MAPIFreeBuffer (lpspvFEID);
 }
 
 
 /* Locate a plaintext stored under a key derived from the MAPI object
-   MESSAGE and return it.  Returns NULL if no plaintext is available.
-   FIXME: We need to make sure that the cache object is locked until
-   it has been processed by the caller - required a
-   msgcache_get_unlock fucntion or similar. */
+   MESSAGE and return it.  The user must provide the address of a void
+   pointer variable which he later needs to pass to the
+   msgcache_unref. Returns NULL if no plaintext is available;
+   msgcache_unref is then not required but won't harm either. */
 const char *
-msgcache_get (LPMESSAGE message)
+msgcache_get (LPMESSAGE message, void **refhandle)
 {
-  if (the_cache && the_cache->plaintext)
+  cache_item_t item;
+  const char *result = NULL;
+
+  *refhandle = NULL;
+
+  if (!message)
+    return NULL; /* No message: Nop. */
+  if (!the_cache)
+    return NULL; /* No cache: avoid needless work. */
+  
+#if 0 /* Old code, see comment at top of file. */
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
+  size_t keylen;
+  void *key;
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SEARCH_KEY, &lpspvFEID);
+  if (FAILED (hr))
     {
-      return the_cache->plaintext;
+      log_error ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
+      return NULL;
     }
-  return NULL;
+    
+  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
+    {
+      log_error ("%s: HrGetOneProp returned unexpected property type\n",
+                 __func__);
+      MAPIFreeBuffer (lpspvFEID);
+      return NULL;
+    }
+  keylen = lpspvFEID->Value.bin.cb;
+  key = lpspvFEID->Value.bin.lpb;
+
+  if (!keylen || !key || keylen > 10000)
+    {
+      log_error ("%s: malformed PR_SEARCH_KEY\n", __func__);
+      MAPIFreeBuffer (lpspvFEID);
+      return NULL;
+    }
+
+
+  if (!lock_cache ())
+    {
+      for (item = the_cache; item; item = item->next)
+        {
+          if (item->keylen == keylen 
+              && !memcmp (item->key, key, keylen))
+            {
+              item->ref++;
+              result = item->plaintext; 
+              *refhandle = item;
+              break;
+            }
+        }
+      unlock_cache ();
+    }
+
+  MAPIFreeBuffer (lpspvFEID);
+#else /* New code. */
+  if (!lock_cache ())
+    {
+      for (item = the_cache; item; item = item->next)
+        {
+          if (item->is_active)
+            {
+              item->ref++;
+              result = item->plaintext; 
+              *refhandle = item;
+              break;
+            }
+        }
+      unlock_cache ();
+    }
+
+#endif /* New code. */
+
+  return result;
 }
 
+
+/* Release access to a value returned by msgcache_get.  REFHANDLE is
+   the value as stored in the pointer variable by msgcache_get. */
+void
+msgcache_unref (void *refhandle)
+{
+  cache_item_t item;
+
+  if (!refhandle)
+    return;
+
+  if (!lock_cache ())
+    {
+      for (item = the_cache; item; item = item->next)
+        {
+          if (item == refhandle)
+            {
+              if (item->ref < 1)
+                log_error ("%s: zero reference count for item %p\n",
+                           __func__, item);
+              else
+                item->ref--;
+              /* Fixme: check whether this one has been scheduled for
+                 removal. */
+              break;
+            }
+        }
+      unlock_cache ();
+      if (!item)
+        log_error ("%s: invalid reference handle %p detected\n",
+                   __func__, refhandle);
+    }
+}

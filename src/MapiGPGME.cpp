@@ -263,11 +263,12 @@ public:
 
   bool __stdcall hasAttachments (void)
   {
-    if (attachRows == NULL)
-      getAttachments ();
-    bool has = attachRows->cRows > 0? true : false;
-    freeAttachments ();
-    return has;
+//     if (attachRows == NULL)
+//       getAttachments ();
+//     bool has = attachRows->cRows > 0? true : false;
+//     freeAttachments ();
+//    return has;
+    return false;    
   }
 
   bool __stdcall deleteAttachment (GpgMsg * msg, int pos)
@@ -429,7 +430,8 @@ unlock_log (void)
 
 
 static void
-do_log (const char *fmt, va_list a, int w32err)
+do_log (const char *fmt, va_list a, int w32err, int err,
+        const void *buf, size_t buflen)
 {
   if (enable_logging == false || !logfile)
     return;
@@ -446,6 +448,8 @@ do_log (const char *fmt, va_list a, int w32err)
   if (!logfp)
     return;
   fprintf (logfp, "%lu/", (unsigned long)GetCurrentThreadId ());
+  if (err == 1)
+    fputs ("ERROR/", logfp);
   vfprintf (logfp, fmt, a);
   if (w32err) 
     {
@@ -457,7 +461,15 @@ do_log (const char *fmt, va_list a, int w32err)
       fputs (": ", logfp);
       fputs (buf, logfp);
     }
-  if (*fmt && fmt[strlen (fmt) - 1] != '\n')
+  if (buf)
+    {
+      const unsigned char *p = (const unsigned char*)buf;
+
+      for ( ; buflen; buflen--, p++)
+        fprintf (logfp, "%02X", *p);
+      putc ('\n', logfp);
+    }
+  else if ( *fmt && fmt[strlen (fmt) - 1] != '\n')
     putc ('\n', logfp);
 
   fflush (logfp);
@@ -470,14 +482,24 @@ log_debug (const char *fmt, ...)
   va_list a;
   
   va_start (a, fmt);
-  do_log (fmt, a, 0);
+  do_log (fmt, a, 0, 0, NULL, 0);
+  va_end (a);
+}
+
+void 
+log_error (const char *fmt, ...)
+{
+  va_list a;
+  
+  va_start (a, fmt);
+  do_log (fmt, a, 0, 1, NULL, 0);
   va_end (a);
 }
 
 void 
 log_vdebug (const char *fmt, va_list a)
 {
-  do_log (fmt, a, 0);
+  do_log (fmt, a, 0, 0, NULL, 0);
 }
 
 
@@ -490,9 +512,35 @@ log_debug_w32 (int w32err, const char *fmt, ...)
       w32err = GetLastError ();
   
   va_start (a, fmt);
-  do_log (fmt, a, w32err);
+  do_log (fmt, a, w32err, 0, NULL, 0);
   va_end (a);
 }
+
+void 
+log_error_w32 (int w32err, const char *fmt, ...)
+{
+  va_list a;
+
+  if (w32err == -1)
+      w32err = GetLastError ();
+  
+  va_start (a, fmt);
+  do_log (fmt, a, w32err, 1, NULL, 0);
+  va_end (a);
+}
+
+
+void 
+log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
+{
+  va_list a;
+
+  va_start (a, fmt);
+  do_log (fmt, a, 0, 2, buf, buflen);
+  va_end (a);
+}
+
+
 
 
 

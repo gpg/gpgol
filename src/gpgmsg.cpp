@@ -336,7 +336,8 @@ GpgMsgImpl::saveChanges (bool permanent)
   if (!body_plain)
     return; /* Nothing to save. */
 
-  return;
+  if (!permanent)
+    return;
   
   /* Make sure that the Plaintext and the Richtext are in sync. */
 //   if (message)
