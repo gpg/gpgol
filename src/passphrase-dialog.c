@@ -451,7 +451,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       log_debug ("%s: last passphrase was bad\n", __func__);
       /* Flush a possible cache entry for that keyID. */
       if (*keyidstr)
-        passcache_flush (keyidstr);
+        passcache_put (keyidstr, NULL, 0);
     }
   else if (*keyidstr)
     {

@@ -237,8 +237,8 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
       hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
                                 LOCALE_SYSTEM_DEFAULT, &dispid);
       xfree (wname);
-      log_debug ("   dispid(%.*s)=%d  (hr=0x%x)\n",
-                   (int)(s-name), name, dispid, hr);
+      //log_debug ("   dispid(%.*s)=%d  (hr=0x%x)\n",
+      //           (int)(s-name), name, dispid, hr);
       vtResult.pdispVal = NULL;
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                           DISPATCH_METHOD, &dispparamsNoArgs,
@@ -247,8 +247,8 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
       /* FIXME: Check that the class of the returned object is as
          expected.  To do this we better let GetIdsOfNames also return
          the ID of "Class". */
-      log_debug ("%s:%s: %.*s=%p  (hr=0x%x)\n",
-                   __FILE__, __func__, (int)(s-name), name, pObj, hr);
+      //log_debug ("%s:%s: %.*s=%p  (hr=0x%x)\n",
+      //           __FILE__, __func__, (int)(s-name), name, pObj, hr);
       pDisp->Release ();
       pDisp = NULL;
       /* Fixme: Do we need to release pObj? */
@@ -269,7 +269,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
                             LOCALE_SYSTEM_DEFAULT, &dispid);
   xfree (wname);
-  log_debug ("   dispid(%s)=%d  (hr=0x%x)\n", name, dispid, hr);
+  //log_debug ("   dispid(%s)=%d  (hr=0x%x)\n", name, dispid, hr);
   if (r_dispid)
     *r_dispid = dispid;
 
@@ -549,7 +549,6 @@ CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
   log_debug ("%s:%s: received\n", __FILE__, __func__);
 
   pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-  show_mapi_property (pMessage, PR_ENTRYID, "ENTRYID");
   show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
   msgcache_set_active (pMessage);
   if (pMessage)
@@ -567,8 +566,8 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
                                           ULONG lFlags)
 {
-    log_debug ("%s:%s: received\n", __FILE__, __func__);
-    return S_FALSE;
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  return S_FALSE;
 }
 
 
@@ -1008,7 +1007,6 @@ CGPGExchExtCommands::DoCommand (
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (SUCCEEDED (hr))
         {
-          show_mapi_property (pMessage, PR_ENTRYID, "ENTRYID");
           show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
           if (nCommandID == m_nCmdEncrypt)
             {

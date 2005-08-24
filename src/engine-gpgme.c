@@ -137,7 +137,7 @@ update_passphrase_cache (int err, struct decrypt_key_s *pass_cb_value)
   if (*pass_cb_value->keyid)
     {
       if (err)
-        passcache_flush (pass_cb_value->keyid);
+        passcache_put (pass_cb_value->keyid, NULL, 0);
       else
         passcache_put (pass_cb_value->keyid, pass_cb_value->pass,
                        pass_cb_value->ttl);

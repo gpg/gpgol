@@ -30,7 +30,6 @@ int initialize_passcache (void);
 void passcache_flushall (void);
 
 /* Store and retrieve a cached passphrase. */
-void passcache_flush (const char *key);
 void passcache_put (const char *key, const char *value, int ttl);
 char *passcache_get (const char *key);
 

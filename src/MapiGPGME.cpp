@@ -797,7 +797,9 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
       return verify (hwnd, msg);
     }
 
+  /* Check whether the possible encrpted message as attachments. */
   has_attach = msg->hasAttachments ();
+
   if (mtype == OPENPGP_NONE && !has_attach ) 
     {
       MessageBox (NULL, "No valid OpenPGP data found.",
