@@ -99,6 +99,14 @@ public:
      the strings.  On failure NULL is returned.  */
   virtual char **getRecipients (void);
 
+  /* Return the number of attachments. */
+  virtual unsigned int getAttachments (void);
+
+  /* Decrypt the attachment with the internal number POS.
+     SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
+     attachemnt is not yet supported. */
+  virtual void decryptAttachment (HWND hwnd, int pos, bool save_plaintext);
+
 };
 
 

@@ -30,9 +30,16 @@
 #include "mymapi.h"
 #include "mymapitags.h"
 
+
 #include "gpgmsg.hh"
 #include "util.h"
 #include "msgcache.h"
+#include "engine.h"
+
+/* The string used as the standard XXXXX of decrypted attachments. */
+#define ATT_FILE_PREFIX ".pgpenc"
+
+
 
 /*
    The implementation class of MapiGPGME.  
@@ -42,12 +49,15 @@ class GpgMsgImpl : public GpgMsg
 public:    
   GpgMsgImpl () 
   {
-    this->message = NULL;
-    this->body = NULL;
-    this->body_plain = NULL;
-    this->body_cipher = NULL;
-    this->body_signed = NULL;
-    this->body_cipher_is_html = false;
+    message = NULL;
+    body = NULL;
+    body_plain = NULL;
+    body_cipher = NULL;
+    body_signed = NULL;
+    body_cipher_is_html = false;
+
+    attach.table = NULL;
+    attach.rows = NULL;
   }
 
   ~GpgMsgImpl ()
@@ -58,6 +68,17 @@ public:
     xfree (body_plain);
     xfree (body_cipher);
     xfree (body_signed);
+
+    if (attach.table)
+      {
+        attach.table->Release ();
+        attach.table = NULL;
+      }
+    if (attach.rows)
+      {
+        FreeProws (attach.rows);
+        attach.rows = NULL;
+      }
   }
 
   void destroy ()
@@ -97,6 +118,8 @@ public:
   void saveChanges (bool permanent);
   bool matchesString (const char *string);
   char **getRecipients (void);
+  unsigned int getAttachments (void);
+  void decryptAttachment (HWND hwnd, int pos, bool save_plaintext);
 
 
 private:
@@ -106,10 +129,15 @@ private:
   char *body_cipher;  /* Enciphered version of BODY or NULL. */
   char *body_signed;  /* Signed version of BODY or NULL. */
   bool body_cipher_is_html; /* Indicating that BODY_CIPHER holds HTML. */
+
+  /* This structure collects the information about attachments. */
+  struct 
+  {
+    LPMAPITABLE table;/* The loaded attachment table or NULL. */
+    LPSRowSet   rows; /* The retrieved set of rows from the table. */
+  } attach;
   
   void loadBody (void);
-  
-  
 };
 
 
@@ -490,16 +518,314 @@ GpgMsgImpl::getRecipients ()
 
 /* Returns whether the message has any attachments. */
 bool
-GpgMsgImpl::hasAttachments ()
+GpgMsgImpl::hasAttachments (void)
 {
-//   if (!attachRows)
-//     getAttachments ();
+  return !!getAttachments ();
+}
 
-//   bool has = attachRows->cRows > 0? true : false;
-//     freeAttachments ();
-//     return has;
-  return false;
+
+/* Reads the attachment information and returns the number of
+   attachments. */
+unsigned int
+GpgMsgImpl::getAttachments (void)
+{
+  SizedSPropTagArray (1L, propAttNum) = {
+    1L, {PR_ATTACH_NUM}
+  };
+  HRESULT hr;    
+  LPMAPITABLE table;
+  LPSRowSet   rows;
+
+  if (!message)
+    return 0;
+
+  if (!attach.table)
+    {
+      hr = message->GetAttachmentTable (0, &table);
+      if (FAILED (hr))
+        {
+          log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
+                     __FILE__, __func__, hr);
+          return 0;
+        }
+      
+      hr = HrQueryAllRows (table, (LPSPropTagArray)&propAttNum,
+                           NULL, NULL, 0, &rows);
+      if (FAILED (hr))
+        {
+          table->Release ();
+          return 0;
+        }
+      attach.table = table;
+      attach.rows = rows;
+    }
+
+  return rows->cRows > 0? rows->cRows : 0;
+}
+
+/* Return the attachemnt method for attachmet OBJ. In case of error we
+   return 0 which happens to be not defined. */
+static int
+get_attach_method (LPATTACH obj)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  int method ;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_METHOD, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: error getting attachment method: hr=%#lx",
+                 __FILE__, __func__, hr);
+      return 0; 
+    }
+  /* We don't bother checking whether we really get a PT_LONG ulong
+     back; if not the system is seriously damaged and we can't do
+     further harm by returning a possible random value. */
+  method = propval->Value.l;
+  MAPIFreeBuffer (propval);
+  return method;
+}
+
+
+/* Return the filename from the attachment as a malloced string.  The
+   encoding we return will be utf8, however the MAPI docs declare that
+   MAPI does only handle plain ANSI and thus we don't really care
+   later on.  In fact we would need to convert the filename back to
+   wchar and use the Unicode versions of the file API.  Returns NULL
+   on error or if no filename is available. */
+static char *
+get_attach_filename (LPATTACH obj)
+{
+  HRESULT hr;
+  LPSPropValue propval;
+  char *name = NULL;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_LONG_FILENAME, &propval);
+  if (FAILED(hr)) 
+    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
+  if (FAILED(hr))
+    {
+      log_debug ("%s:%s: no filename property found", __FILE__, __func__);
+      return NULL;
+    }
+
+  switch ( PROP_TYPE (propval->ulPropTag) )
+    {
+    case PT_UNICODE:
+      name = wchar_to_utf8 (propval->Value.lpszW);
+      if (!name)
+        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+      break;
+      
+    case PT_STRING8:
+      name = xstrdup (propval->Value.lpszA);
+      break;
+      
+    default:
+      log_debug ("%s:%s: proptag=%xlx not supported\n",
+                 __FILE__, __func__, propval->ulPropTag);
+      break;
+    }
+  MAPIFreeBuffer (propval);
+  return name;
 }
 
 
 
+
+/* Return a filename to be used for saving an attachment. Returns an
+   malloced string on success. HWND is the current Window and SRCNAME
+   the filename to be used as suggestion.  On error; i.e. cancel NULL
+   is returned. */
+static char *
+get_save_filename (HWND root, const char *srcname)
+				     
+{
+  char filter[] = "All Files (*.*)\0*.*\0\0";
+  char fname[MAX_PATH+1];
+  const char *s;
+  OPENFILENAME ofn;
+
+  memset (fname, 0, sizeof (fname));
+
+#if 0
+  /* FIXME: What the heck does this code? Looking for a prefix in a
+     string an removing it.  Why?.  Also: possible buffer overflow
+     with possible user supplied data.  --- My guess is that we don't
+     need it anymore, now that we are wrinting directly to the
+     outfile. */
+  s = strstr (srcname, ATT_FILE_PREFIX);
+  if (!s)
+    strncpy (fname, srcname, MAX_PATH);
+  else 
+    {
+      strncpy (fname, srcname, (p-srcname));
+      strcat (fname, srcname+(p-srcname)+strlen (ATT_FILE_PREFIX));	
+    }
+#endif
+
+  memset (&ofn, 0, sizeof (ofn));
+  ofn.lStructSize = sizeof (ofn);
+  ofn.hwndOwner = root;
+  ofn.lpstrFile = fname;
+  ofn.nMaxFile = MAX_PATH;
+  ofn.lpstrFileTitle = NULL;
+  ofn.nMaxFileTitle = 0;
+  ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+  ofn.lpstrTitle = "GPG - Save decrypted attachments";
+  ofn.lpstrFilter = filter;
+
+  if (GetSaveFileName (&ofn))
+    return xstrdup (fname);
+  return NULL;
+}
+
+
+
+/* Decrypt the attachment with the internal number POS.
+   SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
+   attachment is not yet supported. */
+void
+GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
+{    
+  HRESULT hr;
+  LPATTACH att;
+  int method, err;
+  BOOL success = TRUE;
+
+  /* Make sure that we can access the attachment table. */
+  if (!message || !getAttachments ())
+    {
+      log_debug ("%s:%s: no attachemnts at all", __FILE__, __func__);
+      return;
+    }
+
+  if (!save_plaintext)
+    {
+      log_error ("%s:%s: save_plaintext not requested", __FILE__, __func__);
+      return;
+    }
+
+  hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: can't open attachment %d: hr=%#lx",
+                 __FILE__, __func__, pos, hr);
+      return;
+    }
+
+  method = get_attach_method (att);
+  if ( method == ATTACH_EMBEDDED_MSG)
+    {
+      /* This is an embedded message.  The orginal G-DATA plugin
+         decrypted the message and then updated the attachemnt;
+         i.e. stored the plaintext.  This seemed to ensure that the
+         attachemnt message was properly displayed.  I am not sure
+         what we should do - it might be necessary to have a callback
+         to allow displaying the attachment.  Needs further
+         experiments. */
+      LPMESSAGE emb;
+      
+      hr = att->OpenProperty (PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, 
+                              MAPI_MODIFY, (LPUNKNOWN*)&emb);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open data obj of attachment %d: hr=%#lx",
+                     __FILE__, __func__, pos, hr);
+          goto leave;
+        }
+
+      //FIXME  Not sure what to do here.  Did it ever work?
+      // 	setWindow (hwnd);
+      // 	setMessage (emb);
+      //if (doCmdAttach (action))
+      //  success = FALSE;
+      //XXX;
+      //emb->SaveChanges (FORCE_SAVE);
+      //att->SaveChanges (FORCE_SAVE);
+      emb->Release ();
+    }
+  else if (method == ATTACH_BY_VALUE)
+    {
+      char *outname;
+      char *suggested_name;
+      LPSTREAM from, to;
+
+      suggested_name = get_attach_filename (att);
+      /* FIXME: WHY do we need this check?
+        if (checkAttachmentExtension (strrchr (tmp, '.')) == false)
+          {
+             log_debug ( "%s: no pgp extension found.\n", tmp);
+             xfree (tmp);
+             xfree (inname);
+             r eturn TRUE;
+             } */
+      outname = get_save_filename (hwnd, suggested_name);
+      xfree (suggested_name);
+
+      hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                              0, 0, (LPUNKNOWN*) &from);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
+                     __FILE__, __func__, pos, hr);
+          xfree (outname);
+          goto leave;
+        }
+
+      /* If we would want to write to a temporary file, we would use:
+         hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
+                                (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
+                                 |STGM_CREATE | STGM_READWRITE),
+                                 NULL, "gpg", &to);    */
+      hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
+                             (STGM_CREATE | STGM_READWRITE),
+                             outname, NULL, &to); 
+      if (FAILED (hr)) 
+        {
+          log_error ("%s:%s: can't create stream for `%s': hr=%#lx\n",
+                     __FILE__, __func__, outname, hr); 
+          from->Release ();
+          xfree (outname);
+          goto leave;
+        }
+      
+      err = op_decrypt_stream (from, to);
+      if (err)
+        {
+          log_debug ("%s:%s: decrypt stream failed: %s",
+                     __FILE__, __func__, op_strerror (err)); 
+          to->Revert ();
+          to->Release ();
+          from->Release ();
+          MessageBox (NULL, op_strerror (err),
+                      "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
+          /* FIXME: We might need to delete outname now.  However a
+             sensible implementation of the stream object should have
+             done it trhough the Revert call. */
+          xfree (outname);
+          goto leave;
+        }
+        
+      to->Commit (0);
+      to->Release ();
+      from->Release ();
+
+      /*  Hmmm: Why are we deleting the attachment now????? 
+          Disabled until clarified.   FIXME */
+      //if (message->DeleteAttach (pos, 0, NULL, 0) == S_OK)
+      //   show error;
+
+      xfree (outname);
+    }
+  else
+    {
+      log_error ("%s:%s: attachment %d: method %d not supported",
+                 __FILE__, __func__, pos, method);
+    }
+
+ leave:
+  /* Close this attachment. */
+  att->Release ();
+}

@@ -24,11 +24,15 @@
 
 #include <config.h>
 
-#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+
+#define COBJMACROS
+#include <windows.h>
+#include <objidl.h> /* For IStream. */
 
 #include "gpgme.h"
 #include "keycache.h"
@@ -376,6 +380,99 @@ op_decrypt_file (const char *infile, const char *outfile)
 
   if (!err)
     err = data_to_file (&out, outfile);
+
+ fail:
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  if (ctx)
+    gpgme_release (ctx);
+  xfree (dk);
+  return err;
+}
+
+
+/* The read callback used by GPGME to read data from an IStream object. */
+static ssize_t
+stream_read_cb (void *handle, void *buffer, size_t size)
+{
+  LPSTREAM stream = handle;
+  HRESULT hr;
+  ULONG nread;
+
+  /* For EOF detection we assume that Read returns no error and thus
+     nread will be 0.  The specs say that "Depending on the
+     implementation, either S_FALSE or an error code could be returned
+     when reading past the end of the stream"; thus we are not really
+     sure whether our assumption is correct.  OTOH, at another place
+     the docuemntation says that the implementation used by
+     ISequentialStream exhibits the same EOF behaviour has found on
+     the MSDOS FAT file system.  So we seem to have good karma. */
+  hr = IStream_Read (stream, buffer, size, &nread);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+      errno = EIO;
+      return -1;
+    }
+  return nread;
+}
+
+/* The write callback used by GPGME to write data to an IStream object. */
+static ssize_t
+stream_write_cb (void *handle, const void *buffer, size_t size)
+{
+  LPSTREAM stream = handle;
+  HRESULT hr;
+  ULONG nwritten;
+
+  hr = IStream_Write (stream, buffer, size, &nwritten);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
+      errno = EIO;
+      return -1;
+    }
+  return nwritten;
+}
+
+
+/* Decrypt the stream INSTREAM directly to the stream OUTSTREAM.
+   Returns 0 on success or an gpgme error code on failure. */
+int
+op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream)
+{    
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;    
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  struct decrypt_key_s *dk;
+  struct gpgme_data_cbs cbs;
+  
+  memset (&cbs, 0, sizeof cbs);
+  cbs.read = stream_read_cb;
+  cbs.write = stream_write_cb;
+
+  dk = xcalloc (1, sizeof *dk);
+
+  err = gpgme_data_new_from_cbs (&in, &cbs, instream);
+  if (err)
+    goto fail;
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
+
+  err = gpgme_data_new_from_cbs (&out, &cbs, outstream);
+  if (err)
+    goto fail;
+
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, dk);
+  dk->ctx = ctx;
+  err = gpgme_op_decrypt (ctx, in, out);
+  dk->ctx = NULL;
+  update_passphrase_cache (err, dk);
 
  fail:
   if (in)

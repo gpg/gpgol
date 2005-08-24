@@ -28,6 +28,8 @@ extern "C" {
 #endif
 #endif
 
+#include <gpgme.h>
+
 typedef enum {
     OP_SIG_NORMAL = 0,
     OP_SIG_DETACH = 1,
@@ -57,6 +59,7 @@ int op_sign_start (const char *inbuf, char **outbuf);
 int op_sign_file (int mode, const char *infile, const char *outfile, int ttl);
 
 int op_decrypt_file (const char *infile, const char *outfile);
+int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream);
 int op_decrypt_start (const char *inbuf, char **outbuf, int ttl);
 
 int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);

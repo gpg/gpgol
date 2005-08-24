@@ -252,24 +252,7 @@ public:
 
   const char* __stdcall getAttachmentExtension (const char *fname);
   void __stdcall freeAttachments (void);
-  int __stdcall getAttachments (void);
   
-  int __stdcall countAttachments (void) 
-  { 
-    if (attachRows == NULL)
-      return -1;
-    return (int) attachRows->cRows; 
-  }
-
-  bool __stdcall hasAttachments (void)
-  {
-//     if (attachRows == NULL)
-//       getAttachments ();
-//     bool has = attachRows->cRows > 0? true : false;
-//     freeAttachments ();
-//    return has;
-    return false;    
-  }
 
   bool __stdcall deleteAttachment (GpgMsg * msg, int pos)
   {
@@ -374,12 +357,11 @@ private:
   int   streamOnFile (const char *file, LPATTACH att);
   int   streamFromFile (const char *file, LPATTACH att);
   int   encryptAttachments (HWND hwnd);
-  int   decryptAttachments (HWND hwnd);
+  void  decryptAttachments (HWND hwnd, GpgMsg *msg);
   int   signAttachments (HWND hwnd);
   LPATTACH openAttachment (GpgMsg *msg, int pos);
   void  releaseAttachment (LPATTACH att);
   int   processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
-  bool  saveDecryptedAttachment (HWND root, const char *srcname);
   bool  signAttachment (const char *datfile);
 
 };
@@ -797,7 +779,12 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
       return verify (hwnd, msg);
     }
 
-  /* Check whether the possible encrpted message as attachments. */
+  /* Check whether this possibly encrypted message as attachments.  We
+     check right now because we need to get into the decryptio code
+     even if the body is not encrypted but attachments are
+     available. FIXME: I am not sure whether this is the best
+     solution, we might want to skip the decryption step later and
+     also test for encrypted attachments right now.*/
   has_attach = msg->hasAttachments ();
 
   if (mtype == OPENPGP_NONE && !has_attach ) 
@@ -855,7 +842,7 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
   if (has_attach)
     {
       log_debug ("decrypt attachments\n");
-      decryptAttachments (hwnd);
+      decryptAttachments (hwnd, msg);
     }
 
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
@@ -1414,38 +1401,6 @@ MapiGPGMEImpl::freeAttachments (void)
 }
 
 
-int
-MapiGPGMEImpl::getAttachments (void)
-{
-  // FIXME
-//     static SizedSPropTagArray (1L, PropAttNum) = {1L, {PR_ATTACH_NUM}};
-//     HRESULT hr;    
-   
-//     hr = msg->GetAttachmentTable (0, &attachTable);
-//     if (FAILED (hr))
-// 	return FALSE;
-
-//     hr = HrQueryAllRows (attachTable, (LPSPropTagArray) &PropAttNum,
-// 			 NULL, NULL, 0L, &attachRows);
-//     if (FAILED (hr)) {
-// 	freeAttachments ();
-// 	return FALSE;
-//     }
-    return TRUE;
-}
-
-
-LPATTACH
-MapiGPGMEImpl::openAttachment (GpgMsg * msg, int pos)
-{
-    HRESULT hr;
-    LPATTACH att = NULL;
-    
-    //    hr = msg->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
-    if (SUCCEEDED (hr))
-	return att;
-    return NULL;
-}
 
 
 void
@@ -1603,7 +1558,7 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 	    }
 	}
 	else if (success && action == GPG_ATTACH_DECRYPT) {
-	    success = saveDecryptedAttachment (NULL, outname);
+          //	    success = saveDecryptedAttachment (NULL, outname);
 	    log_debug ("saveDecryptedAttachment ec=%d\n", success);
 	}
 	DeleteFile (outname);
@@ -1623,38 +1578,41 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 }
 
 
-int 
-MapiGPGMEImpl::decryptAttachments (HWND hwnd)
+/* Decrypt all attachemnts of message MSG.  HWND is the usual window
+   handle. */
+void 
+MapiGPGMEImpl::decryptAttachments (HWND hwnd, GpgMsg *msg)
 {
-    int n;
+  unsigned int n;
+  LPATTACH amsg;
+  
 
-    if (!getAttachments ())
-	return FALSE;
-    n = countAttachments ();
-    log_debug ( "dec: mail has %d attachments\n", n);
-    if (!n) {
-	freeAttachments ();
-	return TRUE;
+  n = msg->getAttachments ();
+  log_debug ("%s:%s: message has %u attachments\n",
+             __FILE__, __func__, n);
+  if (!n)
+    return;
+  
+  for (int i=0; i < n; i++) 
+    {
+      //amsg = openAttachment (NULL/*FIXME*/,i);
+      if (amsg)
+        processAttachment (&amsg, hwnd, i, GPG_ATTACH_DECRYPT);
     }
-    for (int i=0; i < n; i++) {
-      LPATTACH amsg = openAttachment (NULL/*FIXME*/,i);
-	if (amsg)
-          processAttachment (&amsg, hwnd, i, GPG_ATTACH_DECRYPT);
-    }
-    freeAttachments ();
-    return 0;
+  return;
 }
+
 
 
 int
 MapiGPGMEImpl::signAttachments (HWND hwnd)
 {
-    if (!getAttachments ()) {
-        log_debug ("MapiGPGME.signAttachments: getAttachments failed\n");
-	return FALSE;
-    }
+//FIXME     if (!getAttachments ()) {
+//         log_debug ("MapiGPGME.signAttachments: getAttachments failed\n");
+// 	return FALSE;
+//     }
     
-    int n = countAttachments ();
+    int n = 0/*FIXME countAttachments ()*/;
     log_debug ("MapiGPGME.signAttachments: mail has %d attachments\n", n);
     if (!n) {
 	freeAttachments ();
@@ -1675,11 +1633,11 @@ MapiGPGMEImpl::signAttachments (HWND hwnd)
 int
 MapiGPGMEImpl::encryptAttachments (HWND hwnd)
 {    
-    int n;
+    unsigned int n;
 
-    if (!getAttachments ())
-	return FALSE;
-    n = countAttachments ();
+//     n = if (!getAttachments ())
+// 	return FALSE;
+    n = 0 /*FIXMEcountAttachments ()*/;
     log_debug ("enc: mail has %d attachments\n", n);
     if (!n) {
 	freeAttachments ();
@@ -1696,47 +1654,6 @@ MapiGPGMEImpl::encryptAttachments (HWND hwnd)
     return 0;
 }
 
-
-bool 
-MapiGPGMEImpl::saveDecryptedAttachment (HWND root, const char *srcname)
-				     
-{
-    char filter[] = "All Files (*.*)|*.*||";
-    char fname[MAX_PATH+1];
-    char *p;
-    OPENFILENAME ofn;
-
-    for (size_t i=0; i< strlen (filter); i++)  {
-	if (filter[i] == '|')
-	    filter[i] = '\0';
-    }
-
-    memset (fname, 0, sizeof (fname));
-    p = strstr (srcname, ATT_PREFIX);
-    if (!p)
-	strncpy (fname, srcname, MAX_PATH);
-    else {
-	strncpy (fname, srcname, (p-srcname));
-	strcat (fname, srcname+(p-srcname)+strlen (ATT_PREFIX));	
-    }
-
-    memset (&ofn, 0, sizeof (ofn));
-    ofn.lStructSize = sizeof (ofn);
-    ofn.hwndOwner = root;
-    ofn.lpstrFile = fname;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-    ofn.lpstrTitle = "GPG - Save decrypted attachments";
-    ofn.lpstrFilter = filter;
-
-    if (GetSaveFileName (&ofn)) {
-	log_debug ("copy %s -> %s\n", srcname, fname);
-	return CopyFile (srcname, fname, FALSE) == 0? false : true;
-    }
-    return true;
-}
 
 
 void  
