@@ -111,6 +111,51 @@ op_init (void)
 }
 
 
+/* The read callback used by GPGME to read data from an IStream object. */
+static ssize_t
+stream_read_cb (void *handle, void *buffer, size_t size)
+{
+  LPSTREAM stream = handle;
+  HRESULT hr;
+  ULONG nread;
+
+  /* For EOF detection we assume that Read returns no error and thus
+     nread will be 0.  The specs say that "Depending on the
+     implementation, either S_FALSE or an error code could be returned
+     when reading past the end of the stream"; thus we are not really
+     sure whether our assumption is correct.  OTOH, at another place
+     the docuemntation says that the implementation used by
+     ISequentialStream exhibits the same EOF behaviour has found on
+     the MSDOS FAT file system.  So we seem to have good karma. */
+  hr = IStream_Read (stream, buffer, size, &nread);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+      errno = EIO;
+      return -1;
+    }
+  return nread;
+}
+
+/* The write callback used by GPGME to write data to an IStream object. */
+static ssize_t
+stream_write_cb (void *handle, const void *buffer, size_t size)
+{
+  LPSTREAM stream = handle;
+  HRESULT hr;
+  ULONG nwritten;
+
+  hr = IStream_Write (stream, buffer, size, &nwritten);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
+      errno = EIO;
+      return -1;
+    }
+  return nwritten;
+}
+
+
 /* Release a GPGME key array KEYS. */
 static void
 free_recipients (gpgme_key_t *keys)
@@ -348,6 +393,57 @@ op_sign_file (int mode, const char *infile, const char *outfile, int ttl)
 }
 
 
+/* Create a signature from INSTREAM and write it to OUTSTREAM.  Use
+   signature mode MODE and a passphrase caching time of TTL. */
+int
+op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode, int ttl)
+{
+  struct gpgme_data_cbs cbs;
+  struct decrypt_key_s dk;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  
+  memset (&cbs, 0, sizeof cbs);
+  cbs.read = stream_read_cb;
+  cbs.write = stream_write_cb;
+
+  memset (&dk, 0, sizeof dk);
+  dk.ttl = ttl;
+  dk.flags = 0x01; /* fixme: Use a more macro for documentation reasons. */
+
+  err = gpgme_data_new_from_cbs (&in, &cbs, instream);
+  if (err)
+    goto fail;
+
+  err = gpgme_data_new_from_cbs (&out, &cbs, outstream);
+  if (err)
+    goto fail;
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto fail;
+  
+  gpgme_set_armor (ctx, 1);
+
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
+  dk.ctx = ctx;
+  err = gpgme_op_sign (ctx, in, out, mode);
+  dk.ctx = NULL;
+  update_passphrase_cache (err, &dk);
+  
+ fail:
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  if (ctx)
+    gpgme_release (ctx);    
+  return err;
+}
+
+
 /* Decrypt file INFILE into file OUTFILE. */
 int
 op_decrypt_file (const char *infile, const char *outfile)
@@ -393,68 +489,24 @@ op_decrypt_file (const char *infile, const char *outfile)
 }
 
 
-/* The read callback used by GPGME to read data from an IStream object. */
-static ssize_t
-stream_read_cb (void *handle, void *buffer, size_t size)
-{
-  LPSTREAM stream = handle;
-  HRESULT hr;
-  ULONG nread;
-
-  /* For EOF detection we assume that Read returns no error and thus
-     nread will be 0.  The specs say that "Depending on the
-     implementation, either S_FALSE or an error code could be returned
-     when reading past the end of the stream"; thus we are not really
-     sure whether our assumption is correct.  OTOH, at another place
-     the docuemntation says that the implementation used by
-     ISequentialStream exhibits the same EOF behaviour has found on
-     the MSDOS FAT file system.  So we seem to have good karma. */
-  hr = IStream_Read (stream, buffer, size, &nread);
-  if (hr != S_OK)
-    {
-      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
-      errno = EIO;
-      return -1;
-    }
-  return nread;
-}
-
-/* The write callback used by GPGME to write data to an IStream object. */
-static ssize_t
-stream_write_cb (void *handle, const void *buffer, size_t size)
-{
-  LPSTREAM stream = handle;
-  HRESULT hr;
-  ULONG nwritten;
-
-  hr = IStream_Write (stream, buffer, size, &nwritten);
-  if (hr != S_OK)
-    {
-      log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
-      errno = EIO;
-      return -1;
-    }
-  return nwritten;
-}
-
 
 /* Decrypt the stream INSTREAM directly to the stream OUTSTREAM.
    Returns 0 on success or an gpgme error code on failure. */
 int
 op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream)
 {    
+  struct decrypt_key_s dk;
+  struct gpgme_data_cbs cbs;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;    
   gpgme_ctx_t ctx = NULL;
   gpgme_error_t err;
-  struct decrypt_key_s *dk;
-  struct gpgme_data_cbs cbs;
   
   memset (&cbs, 0, sizeof cbs);
   cbs.read = stream_read_cb;
   cbs.write = stream_write_cb;
 
-  dk = xcalloc (1, sizeof *dk);
+  memset (&dk, 0, sizeof dk);
 
   err = gpgme_data_new_from_cbs (&in, &cbs, instream);
   if (err)
@@ -468,11 +520,11 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream)
   if (err)
     goto fail;
 
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, dk);
-  dk->ctx = ctx;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
+  dk.ctx = ctx;
   err = gpgme_op_decrypt (ctx, in, out);
-  dk->ctx = NULL;
-  update_passphrase_cache (err, dk);
+  dk.ctx = NULL;
+  update_passphrase_cache (err, &dk);
 
  fail:
   if (in)
@@ -481,7 +533,6 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream)
     gpgme_data_release (out);
   if (ctx)
     gpgme_release (ctx);
-  xfree (dk);
   return err;
 }
 
@@ -764,8 +815,8 @@ do_sign (gpgme_key_t locusr, const char *inbuf, char **outbuf)
     gpgme_data_release (in);
   if (out)
     gpgme_data_release (out);
-  log_debug ("engine-gpgme.do_sign: leave (rc=%d (%s))\n",
-             err, gpgme_strerror (err));
+  log_debug ("%s:%s: leave (rc=%d (%s))\n",
+             __FILE__, __func__, err, gpgme_strerror (err));
   return err;
 }
 

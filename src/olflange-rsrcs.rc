@@ -1,0 +1,229 @@
+/* olflange-rsrcs.rc - Olflange specific resource.
+ *	Copyright (C) 2004, 2005 g10 Code GmbH
+ * 
+ * This file is part of OutlGPG.
+ * 
+ * OutlGPG is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * OutlGPG is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ */
+
+
+#include "olflange-ids.h"
+
+#include "afxres.h"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
+IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
+IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
+IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_GPG_OPTIONS_DE DIALOG DISCARDABLE  0, 0, 266, 201
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "GnuPG"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Optionen",IDC_STATIC,9,9,242,87
+    CONTROL         "Neue Nachrichten per Voreinstellung verschlüsseln",
+                    IDC_ENCRYPT_DEFAULT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,24,19,177,10
+    CONTROL         "Neue Nachrichten per Voreinstellung signieren",
+                    IDC_SIGN_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24,30,162,10
+    CONTROL         "Entschlüsselte Attachments automatisch speichern",
+                    IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24,42,175,10
+    CONTROL         "Automatisch Attachments signieren",IDC_SIGN_ATTACHMENTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,54,126,10
+    CONTROL         "Nachricht ebenfalls mit voreingestellten Schlüssel verschlüsseln",
+                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,24,67,215,10
+    EDITTEXT        IDC_ENCRYPT_TO,36,79,133,12,ES_AUTOHSCROLL
+    GROUPBOX        "Passphrase",IDC_STATIC,9,100,242,31
+    LTEXT           "Passphrase speichern für",IDC_STATIC,24,114,80,8
+    EDITTEXT        IDC_TIME_PHRASES,107,113,39,14,ES_AUTOHSCROLL
+    LTEXT           "Sekunden",IDC_STATIC,151,115,34,8
+    GROUPBOX        "Debug (nur für erfahrene Benutzer)",IDC_STATIC,9,134,
+                    242,28
+    LTEXT           "Logdatei",IDC_STATIC,18,146,28,8
+    EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
+    LTEXT           "By g10 Code GmbH; available under the LGPL",
+                    IDC_STATIC,8,185,148,8
+    LTEXT           "Version 0.99",IDC_VERSION_INFO,161,185,98,9
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_GPG_OPTIONS_DE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 259
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 194
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DECRYPT_MENU_ITEM   "&Decrypt and verify message"
+    IDS_DECRYPT_HELP        "Decrypt and verify the message."
+    IDS_APP_NAME            "GnuPG"
+    IDS_DECRYPT_STATUSBAR   "."
+    IDS_DECRYPT_TOOLTIP     "Decrypt message and verify signature"
+    IDS_ENCRYPT_MENU_ITEM   "GPG &encrypt message"
+    IDS_SIGN_MENU_ITEM      "GPG &sign message"
+    IDS_ENCRYPT_HELP        "Select this option to encrypt the message."
+    IDS_SIGN_HELP           "Select this option to sign the message."
+    IDS_SIGN_STATUSBAR      "."
+    IDS_SIGN_TOOLTIP        "Sign message with GPG"
+    IDS_ENCRYPT_STATUSBAR   "."
+    IDS_ENCRYPT_TOOLTIP     "Encrypt message with GPG"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_KEY_MANAGER         "GnuPG Key &Manager"
+    IDS_KEY_MANAGER_HELP    "Open GnuPG Key Manager"
+    IDS_KEY_MANAGER_STATUSBAR "."
+    IDS_KEY_MANAGER_TOOLTIP "Open GnuPG Key Manager"
+    IDS_ERR_REPLACE_TEXT    "The message text could not be refreshed.\nPlease close the message and open it again."
+    IDS_ATT_DECRYPT_AND_SAVE 
+                            "Please close the message and open it again, to open the encrypted attachments or to save them."
+    IDS_SAVE_ATT_TITLE      "Save decrypted attachment"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_SAVE_ATT_FILTER     "All Files (*.*)|*.*||"
+    IDS_ERR_REPLACE_TEXT_ASK_SAVE 
+                            "The message text could not be refreshed. You can only read the message, when you save the decrypted message. Then you need to close it and open it again.\n\nShould the decrypted message be saved?"
+    IDS_ERR_ENCRYPT_ATTACHMENTS 
+                            "An error occured during the encryption of the attachments. The message cannot be sent."
+    IDS_COPY_KEY_TO_CLIPBOARD 
+                            "The key was written to the clipboard. Please add it to the message."
+    IDS_ERR_ENCRYPT_EMBEDDED_OLE 
+                            "Messaged with embedded OLE-objects cannot be encrypted."
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Englisch (USA) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 266, 201
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "GnuPG"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Options",IDC_STATIC,9,9,242,87
+    CONTROL         "&Encrypt new messages by default",IDC_ENCRYPT_DEFAULT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,19,121,10
+    CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,24,30,111,10
+    CONTROL         "Save decrypted message &automatically",
+                    IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24,42,139,10
+    CONTROL         "Automatically sign attachments",IDC_SIGN_ATTACHMENTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,54,113,10
+    CONTROL         "Also encrypt message with the &default key",
+                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,24,67,148,10
+    EDITTEXT        IDC_ENCRYPT_TO,36,79,133,12,ES_AUTOHSCROLL
+    GROUPBOX        "Passphrase",IDC_STATIC,9,100,242,31
+    LTEXT           "Cache &passphrase for",IDC_STATIC,24,114,70,8
+    EDITTEXT        IDC_TIME_PHRASES,107,113,39,14,ES_AUTOHSCROLL
+    LTEXT           "seconds",IDC_STATIC,151,115,28,8
+    GROUPBOX        "Debug (advanced users only)",IDC_STATIC,9,134,242,28
+    LTEXT           "Logfile",IDC_STATIC,18,146,22,8
+    EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
+    LTEXT           "By g10 Code GmbH; available under the LGPL",
+                    IDC_STATIC,8,185,148,8
+    LTEXT           "Version 0.99",IDC_VERSION_INFO,161,185,98,9
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_GPG_OPTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 259
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 194
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Englisch (USA) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+

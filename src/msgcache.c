@@ -112,7 +112,7 @@ initialize_msgcache (void)
   SECURITY_ATTRIBUTES sa;
   
   memset (&sa, 0, sizeof sa);
-  sa.bInheritHandle = TRUE;
+  sa.bInheritHandle = FALSE;
   sa.lpSecurityDescriptor = NULL;
   sa.nLength = sizeof sa;
   cache_mutex = CreateMutex (&sa, FALSE, NULL);

@@ -57,6 +57,7 @@ int op_verify_start (const char *inbuf, char **outbuf);
 
 int op_sign_start (const char *inbuf, char **outbuf);
 int op_sign_file (int mode, const char *infile, const char *outfile, int ttl);
+int op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode, int ttl);
 
 int op_decrypt_file (const char *infile, const char *outfile);
 int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream);

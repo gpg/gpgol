@@ -136,6 +136,7 @@ typedef struct MapiMessage_s *lpMapiMessage;
 #define FORCE_SAVE                    0x00000004
 #define MAPI_DEFERRED_ERRORS          0x00000008
 
+#define SOF_UNIQUEFILENAME            0x80000000
 
 #define RTF_SYNC_RTF_CHANGED          1
 #define RTF_SYNC_BODY_CHANGED         2

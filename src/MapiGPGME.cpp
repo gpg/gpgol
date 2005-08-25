@@ -357,8 +357,6 @@ private:
   int   streamOnFile (const char *file, LPATTACH att);
   int   streamFromFile (const char *file, LPATTACH att);
   int   encryptAttachments (HWND hwnd);
-  void  decryptAttachments (HWND hwnd, GpgMsg *msg);
-  int   signAttachments (HWND hwnd);
   LPATTACH openAttachment (GpgMsg *msg, int pos);
   void  releaseAttachment (LPATTACH att);
   int   processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
@@ -384,7 +382,7 @@ initialize_mapi_gpgme (void)
   SECURITY_ATTRIBUTES sa;
   
   memset (&sa, 0, sizeof sa);
-  sa.bInheritHandle = TRUE;
+  sa.bInheritHandle = FALSE;
   sa.lpSecurityDescriptor = NULL;
   sa.nLength = sizeof sa;
   log_mutex = CreateMutex (&sa, FALSE, NULL);
@@ -841,8 +839,12 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
 
   if (has_attach)
     {
-      log_debug ("decrypt attachments\n");
-      decryptAttachments (hwnd, msg);
+      unsigned int n;
+      
+      n = msg->getAttachments ();
+      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      for (int i=0; i < n; i++) 
+        msg->decryptAttachment (hwnd, i, true);
     }
 
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
@@ -874,10 +876,20 @@ MapiGPGMEImpl::sign (HWND hwnd, GpgMsg * msg)
       msg->setSignedText (signedtext);
     }
   
-  if (msg->hasAttachments () && autoSignAtt)
-    signAttachments (hwnd);
+  if (autoSignAtt && msg->hasAttachments ())
+    {
+      unsigned int n;
+      
+      n = msg->getAttachments ();
+      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      for (int i=0; i < n; i++) 
+        msg->signAttachment (hwnd, i, true);
+      /* FIXME: we should throw an error if signing of any attachment
+         failed. */
+    }
 
-  log_debug ("%s:%s: leave (rc=%d)\n", err);
+
+  log_debug ("%s:%s: leave (err=%d)\n", __FILE__, __func__, err);
   return err;
 }
 
@@ -1578,56 +1590,7 @@ MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
 }
 
 
-/* Decrypt all attachemnts of message MSG.  HWND is the usual window
-   handle. */
-void 
-MapiGPGMEImpl::decryptAttachments (HWND hwnd, GpgMsg *msg)
-{
-  unsigned int n;
-  LPATTACH amsg;
-  
 
-  n = msg->getAttachments ();
-  log_debug ("%s:%s: message has %u attachments\n",
-             __FILE__, __func__, n);
-  if (!n)
-    return;
-  
-  for (int i=0; i < n; i++) 
-    {
-      //amsg = openAttachment (NULL/*FIXME*/,i);
-      if (amsg)
-        processAttachment (&amsg, hwnd, i, GPG_ATTACH_DECRYPT);
-    }
-  return;
-}
-
-
-
-int
-MapiGPGMEImpl::signAttachments (HWND hwnd)
-{
-//FIXME     if (!getAttachments ()) {
-//         log_debug ("MapiGPGME.signAttachments: getAttachments failed\n");
-// 	return FALSE;
-//     }
-    
-    int n = 0/*FIXME countAttachments ()*/;
-    log_debug ("MapiGPGME.signAttachments: mail has %d attachments\n", n);
-    if (!n) {
-	freeAttachments ();
-	return TRUE;
-    }
-    for (int i=0; i < n; i++) {
-        LPATTACH amsg = openAttachment (NULL/*FIXME*/,i);
-	if (!amsg)
-	    continue;
-	processAttachment (&amsg, hwnd, i, GPG_ATTACH_SIGN);
-	releaseAttachment (amsg);
-    }
-    freeAttachments ();
-    return 0;
-}
 
 
 int

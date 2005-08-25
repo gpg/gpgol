@@ -107,6 +107,8 @@ public:
      attachemnt is not yet supported. */
   virtual void decryptAttachment (HWND hwnd, int pos, bool save_plaintext);
 
+  virtual void signAttachment (HWND hwnd, int pos, int ttl);
+
 };
 
 

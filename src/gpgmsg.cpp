@@ -39,6 +39,10 @@
 /* The string used as the standard XXXXX of decrypted attachments. */
 #define ATT_FILE_PREFIX ".pgpenc"
 
+#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
+                                       __FILE__, __func__, __LINE__); \
+                        } while (0)
+
 
 
 /*
@@ -120,6 +124,7 @@ public:
   char **getRecipients (void);
   unsigned int getAttachments (void);
   void decryptAttachment (HWND hwnd, int pos, bool save_plaintext);
+  void signAttachment (HWND hwnd, int pos, int ttl);
 
 
 private:
@@ -553,6 +558,8 @@ GpgMsgImpl::getAttachments (void)
                            NULL, NULL, 0, &rows);
       if (FAILED (hr))
         {
+          log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
+                     __FILE__, __func__, hr);
           table->Release ();
           return 0;
         }
@@ -560,10 +567,10 @@ GpgMsgImpl::getAttachments (void)
       attach.rows = rows;
     }
 
-  return rows->cRows > 0? rows->cRows : 0;
+  return attach.rows->cRows > 0? attach.rows->cRows : 0;
 }
 
-/* Return the attachemnt method for attachmet OBJ. In case of error we
+/* Return the attachment method for attachment OBJ. In case of error we
    return 0 which happens to be not defined. */
 static int
 get_attach_method (LPATTACH obj)
@@ -648,23 +655,6 @@ get_save_filename (HWND root, const char *srcname)
   OPENFILENAME ofn;
 
   memset (fname, 0, sizeof (fname));
-
-#if 0
-  /* FIXME: What the heck does this code? Looking for a prefix in a
-     string an removing it.  Why?.  Also: possible buffer overflow
-     with possible user supplied data.  --- My guess is that we don't
-     need it anymore, now that we are wrinting directly to the
-     outfile. */
-  s = strstr (srcname, ATT_FILE_PREFIX);
-  if (!s)
-    strncpy (fname, srcname, MAX_PATH);
-  else 
-    {
-      strncpy (fname, srcname, (p-srcname));
-      strcat (fname, srcname+(p-srcname)+strlen (ATT_FILE_PREFIX));	
-    }
-#endif
-
   memset (&ofn, 0, sizeof (ofn));
   ofn.lStructSize = sizeof (ofn);
   ofn.hwndOwner = root;
@@ -692,7 +682,6 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
   HRESULT hr;
   LPATTACH att;
   int method, err;
-  BOOL success = TRUE;
 
   /* Make sure that we can access the attachment table. */
   if (!message || !getAttachments ())
@@ -827,5 +816,152 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
 
  leave:
   /* Close this attachment. */
+  att->Release ();
+}
+
+
+/* Sign the attachment with the internal number POS.  TTL is caching
+   time for a required passphrase. */
+void
+GpgMsgImpl::signAttachment (HWND hwnd, int pos, int ttl)
+{    
+  HRESULT hr;
+  LPATTACH att;
+  int method, err;
+  LPSTREAM from = NULL;
+  LPSTREAM to = NULL;
+  char *signame = NULL;
+  LPATTACH newatt = NULL;
+
+  /* Make sure that we can access the attachment table. */
+  if (!message || !getAttachments ())
+    {
+      log_debug ("%s:%s: no attachemnts at all", __FILE__, __func__);
+      return;
+    }
+
+  hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: can't open attachment %d: hr=%#lx",
+                 __FILE__, __func__, pos, hr);
+      return;
+    }
+
+  /* Construct a filename for the new attachment. */
+  {
+    char *tmpname = get_attach_filename (att);
+    if (!tmpname)
+      {
+        signame = (char*)xmalloc (70);
+        snprintf (signame, 70, "gpg-signature-%d.asc", pos);
+      }
+    else
+      {
+        signame = (char*)xmalloc (strlen (tmpname) + 4 + 1);
+        strcpy (stpcpy (signame, tmpname), ".asc");
+        xfree (tmpname);
+      }
+  }
+
+  method = get_attach_method (att);
+  if (method == ATTACH_EMBEDDED_MSG)
+    {
+      log_debug ("%s:%s: signing embedded attachments is not supported",
+                 __FILE__, __func__);
+    }
+  else if (method == ATTACH_BY_VALUE)
+    {
+      ULONG newpos;
+      SPropValue prop;
+
+      hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                              0, 0, (LPUNKNOWN*)&from);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
+                     __FILE__, __func__, pos, hr);
+          goto leave;
+        }
+
+      hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't create attachment: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+
+      prop.ulPropTag = PR_ATTACH_METHOD;
+      prop.Value.ul = ATTACH_BY_VALUE;
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach method: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+      
+      prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+      prop.Value.lpszA = signame;   
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+      log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
+                 __FILE__, __func__, pos, newpos, signame);
+
+      hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                                 MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*)&to);
+      if (FAILED (hr)) 
+        {
+          log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+      
+      err = op_sign_stream (from, to, OP_SIG_DETACH, ttl);
+      if (err)
+        {
+          log_debug ("%s:%s: sign stream failed: %s",
+                     __FILE__, __func__, op_strerror (err)); 
+          to->Revert ();
+          MessageBox (NULL, op_strerror (err),
+                      "GPG Attachment Signing", MB_ICONERROR|MB_OK);
+          goto leave;
+        }
+      from->Release ();
+      from = NULL;
+      to->Commit (0);
+      to->Release ();
+      to = NULL;
+
+      hr = newatt->SaveChanges (0);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: SaveChanges failed: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+
+    }
+  else
+    {
+      log_error ("%s:%s: attachment %d: method %d not supported",
+                 __FILE__, __func__, pos, method);
+    }
+
+ leave:
+  if (from)
+    from->Release ();
+  if (to)
+    to->Release ();
+  xfree (signame);
+  if (newatt)
+    newatt->Release ();
+
   att->Release ();
 }
