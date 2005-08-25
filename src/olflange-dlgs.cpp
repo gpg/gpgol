@@ -27,6 +27,7 @@
 #include <windows.h>
 #include <prsht.h>
 
+#include "intern.h"
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "MapiGPGME.h"
@@ -37,26 +38,79 @@
 
 /* GPGOptionsDlgProc -
    Handles the notifications sent for managing the options property page. */
-bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool 
+GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    BOOL bMsgResult;    
-    static LPNMHDR pnmhdr;
-    static HWND hWndPage;
-    static int enable = 1;
+  BOOL bMsgResult;    
+  static LPNMHDR pnmhdr;
+  static HWND hWndPage;
+  static int enable = 1;
     
-    switch (uMsg) {
+  switch (uMsg) 
+    {
     case WM_INITDIALOG:
+      {
+        HDC hdc = GetDC (hDlg);
+        if (hdc)
+          {
+            int bits_per_pixel = GetDeviceCaps (hdc, BITSPIXEL);
+            HBITMAP bitmap;
+                
+            ReleaseDC (hDlg, hdc);	
+            if (bits_per_pixel > 15)
+              {
+                bitmap = LoadBitmap (glob_hinst, MAKEINTRESOURCE(IDB_BANNER));
+                if (bitmap)
+                  {
+                    HBITMAP old = (HBITMAP) SendDlgItemMessage
+                      (hDlg, IDC_BITMAP, STM_SETIMAGE,
+                       IMAGE_BITMAP, (LPARAM)bitmap);
+                    if (old)
+                      DeleteObject (old);	
+                  }	
+              }		
+          }
+        
 	const char *s;
 	s = NULL;
 	s = m_gpg->getDefaultKey ();
 	enable = s && *s? 1 : 0;
-	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
+	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable? TRUE:FALSE);
 	if (enable == 1)
-	    CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
+          CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
 	SetDlgItemText (hDlg, IDC_VERSION_INFO, 
 		        "Version "VERSION " ("__DATE__")");
-	return TRUE;
-		
+      }
+      return TRUE;
+
+    case WM_LBUTTONDOWN:
+      {
+        int x = LOWORD (lParam);
+        int y = HIWORD (lParam);
+        RECT rect_banner = {0,0,0,0};
+        RECT rect_dlg = {0,0,0,0};
+        HWND bitmap;
+        
+        GetWindowRect (hDlg, &rect_dlg);
+        bitmap = GetDlgItem (hDlg, IDC_BITMAP);
+        if (bitmap)
+          GetWindowRect (bitmap, &rect_banner);
+
+        rect_banner.left   -= rect_dlg.left;
+        rect_banner.right  -= rect_dlg.left;
+        rect_banner.top    -= rect_dlg.top;
+        rect_banner.bottom -= rect_dlg.top;
+        
+        if (x >= rect_banner.left && x <= rect_banner.right
+            && y >= rect_banner.top && y <= rect_banner.bottom)
+          {
+            ShellExecute (NULL, "open",
+                          "http://www.g10code.com/p-outlgpg.html",
+                          NULL, NULL, SW_SHOWNORMAL);	
+          }
+      }
+      break;
+
     case WM_COMMAND:
 	if (HIWORD (wParam) == BN_CLICKED &&
 	    LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) {

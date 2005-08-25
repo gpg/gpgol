@@ -12,7 +12,8 @@
 ## Process this file with automake to produce Makefile.in
 
 bin_PROGRAMS = outlgpg 
-EXTRA_DIST = versioninfo.rc.in outlgpg-rsrcs.rc olflange-rsrcs.rc       
+EXTRA_DIST = versioninfo.rc.in outlgpg-rsrcs.rc olflange-rsrcs.rc \
+	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp    
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) -shared

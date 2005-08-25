@@ -45,9 +45,7 @@ public:
 
   virtual const char * __stdcall versionString (void) = 0;
 
-  virtual int __stdcall encrypt (HWND hwnd, GpgMsg *msg) = 0;
   virtual int __stdcall decrypt (HWND hwnd, GpgMsg *msg) = 0;
-  virtual int __stdcall sign (HWND hwnd, GpgMsg *msg) = 0;
   virtual int __stdcall signEncrypt (HWND hwnd, GpgMsg *msg) = 0;
   virtual int __stdcall verify (HWND hwnd, GpgMsg *msg) = 0;
   virtual int __stdcall attachPublicKey (const char *keyid) = 0;

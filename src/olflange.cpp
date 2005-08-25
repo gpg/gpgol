@@ -44,8 +44,8 @@
 #include "olflange.h"
 
 
-#define TRACEPOINT() do { ExchLogInfo ("%s:%s:%d: tracepoint\n", \
-                                       __FILE__, __func__, __LINE__); \
+#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
+                                     __FILE__, __func__, __LINE__); \
                         } while (0)
 
 
@@ -611,19 +611,15 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
   HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
-      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
-      
       GpgMsg *m = CreateGpgMsg (msg);
-      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = m_gpg->signEncrypt (hWnd, m);
       if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
-        rc = m_gpg->encrypt (hWnd, m);
+        rc = m->encrypt (hWnd);
       if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = m_gpg->sign (hWnd, m);
+        rc = m->sign (hWnd);
       else
         rc = 0;
-      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
       delete m;
       
       if (rc)

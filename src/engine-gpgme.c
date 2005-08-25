@@ -43,10 +43,6 @@
 static char *debug_file = NULL;
 static int init_done = 0;
 
-/* dummy */
-//struct _gpgme_engine_info  _gpgme_engine_ops_gpgsm;
-
-
 static void
 cleanup (void)
 {
@@ -756,15 +752,4 @@ op_strerror (int err)
     return gpgme_strerror (err);
 }
 
-
-
-#if 0
-long 
-ftello (FILE *f)
-{
-    /* XXX: find out if this is really needed */
-    printf ("fd %d pos %ld\n", fileno(f), (long)ftell(f));
-    return ftell (f);
-}
-#endif
 

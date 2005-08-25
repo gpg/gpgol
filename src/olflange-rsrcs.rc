@@ -44,6 +44,7 @@ IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
 IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
 IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
 IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
+IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -80,9 +81,10 @@ BEGIN
     LTEXT           "Logdatei",IDC_STATIC,18,146,28,8
     EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "By g10 Code GmbH; available under the LGPL",
-                    IDC_STATIC,8,185,148,8
-    LTEXT           "Version 0.99",IDC_VERSION_INFO,161,185,98,9
+    LTEXT           "OutlGPG by g10 Code GmbH", IDC_STATIC,8,185,100,8
+    LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9
+    CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
+                    SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
 END
 
 
@@ -197,9 +199,10 @@ BEGIN
     LTEXT           "Logfile",IDC_STATIC,18,146,22,8
     EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "By g10 Code GmbH; available under the LGPL",
-                    IDC_STATIC,8,185,148,8
-    LTEXT           "Version 0.99",IDC_VERSION_INFO,161,185,98,9
+    LTEXT           "OutlGPG by g10 Code GmbH", IDC_STATIC,8,185,100,8
+    LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9
+    CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
+                    SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
 END
 
 

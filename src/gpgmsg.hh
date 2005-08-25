@@ -100,6 +100,14 @@ public:
      the strings.  On failure NULL is returned.  */
   virtual char **getRecipients (void);
 
+
+  /* Encrypt the entire message including any attachments. Return 0 on
+     success. */
+  virtual int encrypt (HWND hwnd);
+
+  virtual int sign (HWND hwnd);
+
+
   /* Return the number of attachments. */
   virtual unsigned int getAttachments (void);
 

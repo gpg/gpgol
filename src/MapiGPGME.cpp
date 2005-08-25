@@ -138,9 +138,7 @@ public:
     return PACKAGE_VERSION;
   }
     
-  int __stdcall encrypt (HWND hwnd, GpgMsg *msg);
   int __stdcall decrypt (HWND hwnd, GpgMsg *msg);
-  int __stdcall sign (HWND hwnd, GpgMsg *msg);
   int __stdcall signEncrypt (HWND hwnd, GpgMsg *msg);
   int __stdcall verify (HWND hwnd, GpgMsg *msg);
   int __stdcall attachPublicKey (const char *keyid);
@@ -558,17 +556,6 @@ MapiGPGMEImpl::freeKeyArray (void **key)
 }
 
 
-/* Return the number of recipients in the array RECIPIENTS. */
-static int 
-count_recipients (char **recipients)
-{
-  int i;
-  
-  for (i=0; recipients[i] != NULL; i++)
-    ;
-  return i;
-}
-
 
 
 void
@@ -627,81 +614,6 @@ add_html_line_endings (const char *body)
   
 }
 
-
-/* Encrypt the message MSG. */
-int 
-MapiGPGMEImpl::encrypt (HWND hwnd, GpgMsg *msg)
-{
-  log_debug ("%s:%s: enter\n", __FILE__, __func__);
-  gpgme_key_t *keys = NULL;
-  gpgme_key_t *keys2 = NULL;
-  bool is_html;
-  const char *plaintext;
-  char *ciphertext;
-  char **recipients = msg->getRecipients ();
-  char **unknown = NULL;
-  int opts = 0;
-  int err = 0;
-  size_t all = 0;
-  int n;
-  
-
-  if (!msg || !*(plaintext = msg->getOrigText ())) 
-    {
-      free_recipient_array (recipients);
-      return 0;  /* Empty message - Nothing to encrypt.  FIXME: What
-                    about attachments without a body - is that possible?  */
-    }
-
-  n = op_lookup_keys (recipients, &keys, &unknown, &all);
-  log_debug ("%s: found %d need %d (%p)\n", __func__, n, all, unknown);
-
-  if (n != count_recipients (recipients))
-    {
-      log_debug ("recipient_dialog_box2\n");
-      recipient_dialog_box2 (keys, unknown, all, &keys2, &opts);
-      xfree (keys);
-      keys = keys2;
-      if (opts & OPT_FLAG_CANCEL) 
-        {
-          free_recipient_array (recipients);
-          return 0;
-	}
-    }
-
-  err = op_encrypt (plaintext, &ciphertext, keys, NULL, 0);
-  if (err)
-    MessageBox (NULL, op_strerror (err),
-                "GPG Encryption", MB_ICONERROR|MB_OK);
-  else 
-    {
-      if (is_html) 
-        {
-          msg->setCipherText (add_html_line_endings (ciphertext), true);
-          ciphertext = NULL;
-        }
-      else
-        msg->setCipherText (ciphertext, false);
-      xfree (ciphertext);
-  }
-
-  free_recipient_array (recipients);
-  freeUnknownKeys (unknown, n);
-  if (!err && msg->hasAttachments ())
-    {
-      unsigned int n;
-      
-      n = msg->getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
-      for (int i=0; !err && i < n; i++) 
-        err = msg->encryptAttachment (hwnd, i, keys, NULL, 0);
-      if (err)
-        MessageBox (NULL, op_strerror (err),
-                    "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
-    }
-  freeKeyArray ((void **)keys);
-  return err;
-}
 
 
 /* Decrypt the message MSG and update the window.  HWND identifies the
@@ -797,63 +709,13 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
 }
 
 
-/* Sign the current message. Returns 0 on success. */
-int
-MapiGPGMEImpl::sign (HWND hwnd, GpgMsg * msg)
-{
-  char *signedtext;
-  int err = 0;
-  gpgme_key_t sign_key;
-
-  log_debug ("%s.%s: enter\n", __FILE__, __func__);
-  
-  /* We don't sign an empty body - a signature on a zero length string
-     is pretty much useless. */
-  if (!msg || !*msg->getOrigText ()) 
-    {
-      log_debug ("MapiGPGME.sign: leave (empty message)\n");
-      return 0;
-    }
-
-  /* Pop up a dialog box to ask for the signer of the message. */
-  if (signer_dialog_box (&sign_key, NULL) == -1)
-    {
-      log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
-      return gpg_error (GPG_ERR_CANCELED);  
-    }
-
-  err = op_sign (msg->getOrigText (), &signedtext, 
-                 OP_SIG_CLEAR, sign_key, nstorePasswd);
-  if (err)
-    MessageBox (NULL, op_strerror (err), "GPG Sign", MB_ICONERROR|MB_OK);
-  else
-    {
-      msg->setSignedText (signedtext);
-    }
-  
-  if (autoSignAtt && msg->hasAttachments ())
-    {
-      unsigned int n;
-      
-      n = msg->getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
-      for (int i=0; i < n; i++) 
-        msg->signAttachment (hwnd, i, sign_key, nstorePasswd);
-      /* FIXME: we should throw an error if signing of any attachment
-         failed. */
-    }
-
-  gpgme_key_release (sign_key);
-  log_debug ("%s:%s: leave (err=%d)\n", __FILE__, __func__, err);
-  return err;
-}
-
 
 /* Perform a sign+encrypt operation using the data already store in
    the instance variables. Return 0 on success. */
 int
 MapiGPGMEImpl::signEncrypt (HWND hwnd, GpgMsg *msg)
 {
+#if 0
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
   char **recipients = msg->getRecipients ();
   char **unknown = NULL;
@@ -932,6 +794,7 @@ MapiGPGMEImpl::signEncrypt (HWND hwnd, GpgMsg *msg)
   free_recipient_array (recipients);
   log_debug ("%s:%s: leave (rc=%d)\n", err);
   return err;
+#endif
 }
 
 
