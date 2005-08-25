@@ -21,6 +21,7 @@
 #ifndef GPGMSG_HH
 #define GPGMSG_HH
 
+#include <gpgme.h>
 
 /* Type of a message. */
 typedef enum 
@@ -105,9 +106,14 @@ public:
   /* Decrypt the attachment with the internal number POS.
      SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
      attachemnt is not yet supported. */
-  virtual void decryptAttachment (HWND hwnd, int pos, bool save_plaintext);
+  virtual void decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
+                                  int ttl);
 
-  virtual void signAttachment (HWND hwnd, int pos, int ttl);
+  virtual void signAttachment (HWND hwnd, int pos,
+                               gpgme_key_t sign_key, int ttl);
+
+  virtual int encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
+                                 gpgme_key_t sign_key, int ttl);
 
 };
 

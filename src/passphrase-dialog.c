@@ -464,7 +464,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
   assert (strlen (keyidstr) < sizeof hd->keyid);
   strcpy (hd->keyid, keyidstr);
 
-  /* If we have no cached pssphrase, popup tyhe passphrase dialog. */
+  /* If we have no cached pssphrase, popup the passphrase dialog. */
   if (!hd->pass)
     {
       int rc;
@@ -497,9 +497,9 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       if (rc <= 0) 
         log_debug_w32 (-1, "%s: dialog failed (rc=%d)", __func__, rc);
     }
-  else /* FIXME: Don't write tha passphrase to the log file. */
-    log_debug ("%s: hd=%p hd->pass=`%s'\n",
-               hd, hd && hd->pass? hd->pass: "(null)");
+  else /* FIXME: Don't write the passphrase to the log file. */
+    log_debug ("%s:%s: hd=%p hd->pass=`%s'\n",
+               __FILE__, __func__, hd, hd && hd->pass? hd->pass: "(null)");
 
   /* If we got a passphrase, send it to the FD. */
   if (hd->pass) 

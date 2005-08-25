@@ -119,8 +119,6 @@ public:
       }
     delete passCache; 
     passCache = NULL;
-    freeAttachments ();
-    cleanupTempFiles ();
   }
 
   void __stdcall destroy ()
@@ -148,7 +146,6 @@ public:
   int __stdcall attachPublicKey (const char *keyid);
 
   int __stdcall doCmdAttach(int action);
-  int __stdcall doCmdFile(int action, const char *in, const char *out);
 
   const char* __stdcall getLogFile (void) { return logfile; }
   void __stdcall setLogFile (const char *name)
@@ -251,7 +248,6 @@ public:
   int __stdcall writeOptions (void);
 
   const char* __stdcall getAttachmentExtension (const char *fname);
-  void __stdcall freeAttachments (void);
   
 
   bool __stdcall deleteAttachment (GpgMsg * msg, int pos)
@@ -338,30 +334,8 @@ private:
     encFormat = DEFAULT_ATTACHMENT_FORMAT;
   }
 
-  void cleanupTempFiles ();
   void freeUnknownKeys (char **unknown, int n);
   void freeKeyArray (void **key);
-
-  bool  setAttachMethod (LPATTACH obj, int mode);
-  int   getAttachMethod (LPATTACH obj);
-  char* getAttachFilename (LPATTACH obj);
-  char* getAttachPathname (LPATTACH obj);
-  bool  setAttachFilename (LPATTACH obj, const char *name, bool islong);
-  int   getMessageFlags (GpgMsg *msg);
-  int   getMessageHasAttachments (GpgMsg *msg);
-  bool  setXHeader (GpgMsg *msg, const char *name, const char *val);
-  char* getXHeader (GpgMsg *msg, const char *name);
-  bool  checkAttachmentExtension (const char *ext);
-  const char* getPGPExtension (int action);
-  char* generateTempname (const char *name);
-  int   streamOnFile (const char *file, LPATTACH att);
-  int   streamFromFile (const char *file, LPATTACH att);
-  int   encryptAttachments (HWND hwnd);
-  LPATTACH openAttachment (GpgMsg *msg, int pos);
-  void  releaseAttachment (LPATTACH att);
-  int   processAttachment (LPATTACH *att, HWND hwnd, int pos, int action);
-  bool  signAttachment (const char *datfile);
-
 };
 
 
@@ -522,42 +496,6 @@ log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
 
 
 
-
-
-
-
-void 
-MapiGPGMEImpl::cleanupTempFiles (void)
-{
-  HANDLE hd;
-  WIN32_FIND_DATA fnd;
-  char path[MAX_PATH+32], tmp[MAX_PATH+32];
-  
-  assert (strlen (ATT_PREFIX) + 2 < 16 /* just a reasonable value*/ );
-  
-  *path = 0;
-  GetTempPath (sizeof (path)-4, path);
-  if (*path && path[strlen (path)-1] != '\\')
-    strcat (path, "\\");
-  strcpy (tmp, path);
-  strcat (path, "*"ATT_PREFIX"*");
-  hd = FindFirstFile (path, &fnd);
-  if (hd == INVALID_HANDLE_VALUE)
-    return;
-
-  do
-    {
-      char *p = (char *)xmalloc (strlen (tmp) + strlen (fnd.cFileName) + 2);
-      strcpy (stpcpy (p, tmp), fnd.cFileName);
-      log_debug ("deleting temp file `%s'\n", p);
-      DeleteFile (p);
-      xfree (p);
-    } 
-  while (FindNextFile (hd, &fnd) == TRUE);
-  FindClose (hd);
-}
-
-
 /* Update the display using the message MSG.  Return 0 on success. */
 static int
 update_display (HWND hwnd, GpgMsg *msg)
@@ -690,7 +628,7 @@ add_html_line_endings (const char *body)
 }
 
 
-
+/* Encrypt the message MSG. */
 int 
 MapiGPGMEImpl::encrypt (HWND hwnd, GpgMsg *msg)
 {
@@ -711,7 +649,8 @@ MapiGPGMEImpl::encrypt (HWND hwnd, GpgMsg *msg)
   if (!msg || !*(plaintext = msg->getOrigText ())) 
     {
       free_recipient_array (recipients);
-      return 0;  /* Empty message - Nothing to encrypt. */
+      return 0;  /* Empty message - Nothing to encrypt.  FIXME: What
+                    about attachments without a body - is that possible?  */
     }
 
   n = op_lookup_keys (recipients, &keys, &unknown, &all);
@@ -730,7 +669,7 @@ MapiGPGMEImpl::encrypt (HWND hwnd, GpgMsg *msg)
 	}
     }
 
-  err = op_encrypt ((void*)keys, plaintext, &ciphertext);
+  err = op_encrypt (plaintext, &ciphertext, keys, NULL, 0);
   if (err)
     MessageBox (NULL, op_strerror (err),
                 "GPG Encryption", MB_ICONERROR|MB_OK);
@@ -750,9 +689,15 @@ MapiGPGMEImpl::encrypt (HWND hwnd, GpgMsg *msg)
   freeUnknownKeys (unknown, n);
   if (!err && msg->hasAttachments ())
     {
-      log_debug ("encrypt attachments\n");
-      recipSet = (void *)keys;
-      encryptAttachments (hwnd);
+      unsigned int n;
+      
+      n = msg->getAttachments ();
+      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      for (int i=0; !err && i < n; i++) 
+        err = msg->encryptAttachment (hwnd, i, keys, NULL, 0);
+      if (err)
+        MessageBox (NULL, op_strerror (err),
+                    "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
     }
   freeKeyArray ((void **)keys);
   return err;
@@ -793,7 +738,7 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
       return 0;
     }
 
-  err = op_decrypt_start (msg->getOrigText (), &plaintext, nstorePasswd);
+  err = op_decrypt (msg->getOrigText (), &plaintext, nstorePasswd);
 
   if (err)
     {
@@ -844,7 +789,7 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
       n = msg->getAttachments ();
       log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
       for (int i=0; i < n; i++) 
-        msg->decryptAttachment (hwnd, i, true);
+        msg->decryptAttachment (hwnd, i, true, nstorePasswd);
     }
 
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
@@ -856,10 +801,12 @@ MapiGPGMEImpl::decrypt (HWND hwnd, GpgMsg * msg)
 int
 MapiGPGMEImpl::sign (HWND hwnd, GpgMsg * msg)
 {
-  log_debug ("%s.%s: enter\n", __FILE__, __func__);
   char *signedtext;
   int err = 0;
+  gpgme_key_t sign_key;
 
+  log_debug ("%s.%s: enter\n", __FILE__, __func__);
+  
   /* We don't sign an empty body - a signature on a zero length string
      is pretty much useless. */
   if (!msg || !*msg->getOrigText ()) 
@@ -868,7 +815,15 @@ MapiGPGMEImpl::sign (HWND hwnd, GpgMsg * msg)
       return 0;
     }
 
-  err = op_sign_start (msg->getOrigText (), &signedtext);
+  /* Pop up a dialog box to ask for the signer of the message. */
+  if (signer_dialog_box (&sign_key, NULL) == -1)
+    {
+      log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
+      return gpg_error (GPG_ERR_CANCELED);  
+    }
+
+  err = op_sign (msg->getOrigText (), &signedtext, 
+                 OP_SIG_CLEAR, sign_key, nstorePasswd);
   if (err)
     MessageBox (NULL, op_strerror (err), "GPG Sign", MB_ICONERROR|MB_OK);
   else
@@ -883,12 +838,12 @@ MapiGPGMEImpl::sign (HWND hwnd, GpgMsg * msg)
       n = msg->getAttachments ();
       log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
       for (int i=0; i < n; i++) 
-        msg->signAttachment (hwnd, i, true);
+        msg->signAttachment (hwnd, i, sign_key, nstorePasswd);
       /* FIXME: we should throw an error if signing of any attachment
          failed. */
     }
 
-
+  gpgme_key_release (sign_key);
   log_debug ("%s:%s: leave (err=%d)\n", __FILE__, __func__, err);
   return err;
 }
@@ -912,7 +867,8 @@ MapiGPGMEImpl::signEncrypt (HWND hwnd, GpgMsg *msg)
     {
       free_recipient_array (recipients);
       log_debug ("%s.%s: leave (empty message)\n", __FILE__, __func__);
-      return 0;  /* Empty message - Nothing to encrypt. */
+      return 0;  /* Empty message - Nothing to encrypt.  FIXME: What
+                    about attachments without a body - is that possible?  */
     }
 
   /* Pop up a dialog box to ask for the signer of the message. */
@@ -920,7 +876,7 @@ MapiGPGMEImpl::signEncrypt (HWND hwnd, GpgMsg *msg)
     {
       free_recipient_array (recipients);
       log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
-      return 0;
+      return gpg_error (GPG_ERR_CANCELED);  
     }
 
   /* Now lookup the keys of all recipients. */
@@ -941,9 +897,8 @@ MapiGPGMEImpl::signEncrypt (HWND hwnd, GpgMsg *msg)
 
   is_html = is_html_body (msg->getOrigText ());
 
-    /* FIXME: Remove the cast and use proper types. */
-  int err = op_sign_encrypt ((void *)keys, (void*)locusr,
-                             msg->getOrigText (), &ciphertext);
+  int err = op_encrypt (msg->getOrigText (), &ciphertext,
+                        keys, locusr, nstorePasswd);
   if (err)
     MessageBox (NULL, op_strerror (err),
                 "GPG Sign Encrypt", MB_ICONERROR|MB_OK);
@@ -962,9 +917,15 @@ MapiGPGMEImpl::signEncrypt (HWND hwnd, GpgMsg *msg)
   freeUnknownKeys (unknown, n);
   if (!err && msg->hasAttachments ())
     {
-      log_debug ("%s:%s: have attachments\n", __FILE__, __func__);
-      recipSet = (void *)keys;
-      encryptAttachments (hwnd);
+      unsigned int n;
+      
+      n = msg->getAttachments ();
+      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      for (int i=0; !err && i < n; i++) 
+        err = msg->encryptAttachment (hwnd, i, keys, locusr, nstorePasswd);
+      if (err)
+        MessageBox (NULL, op_strerror (err),
+                    "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
     }
   freeKeyArray ((void **)keys);
   gpgme_key_release (locusr);
@@ -989,7 +950,7 @@ MapiGPGMEImpl::verify (HWND hwnd, GpgMsg *msg)
       return 0;
     }
 
-  int err = op_verify_start (msg->getOrigText (), NULL);
+  int err = op_verify (msg->getOrigText (), NULL);
   if (err)
     MessageBox (NULL, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
   else
@@ -1000,35 +961,6 @@ MapiGPGMEImpl::verify (HWND hwnd, GpgMsg *msg)
 }
 
 
-
-
-int
-MapiGPGMEImpl::doCmdFile(int action, const char *in, const char *out)
-{
-    log_debug ( "doCmdFile action=%d in=%s out=%s\n", action, in, out);
-    if (ATT_SIGN (action) && ATT_ENCR (action))
-	return !op_sign_encrypt_file (recipSet, in, out);
-    if (ATT_SIGN (action) && !ATT_ENCR (action))
-	return !op_sign_file (OP_SIG_NORMAL, in, out, nstorePasswd);
-    if (!ATT_SIGN (action) && ATT_ENCR (action))
-	return !op_encrypt_file (recipSet, in, out);
-    return !op_decrypt_file (in, out);    
-}
-
-
-int
-MapiGPGMEImpl::doCmdAttach (int action)
-{
-//     log_debug ("doCmdAttach action=%d\n", action);
-//     if (ATT_SIGN (action) && ATT_ENCR (action))
-// 	return signEncrypt ();
-//     if (ATT_SIGN (action) && !ATT_ENCR (action))
-// 	return sign ();
-//     if (!ATT_SIGN (action) && ATT_ENCR (action))
-// 	return encrypt ();
-// FIXME!!!
-  return 0; /*decrypt ();*/
-}
 
 
 
@@ -1122,500 +1054,7 @@ find_message_window (HWND parent, GpgMsg *msg)
 }
 
 
-int
-MapiGPGMEImpl::streamFromFile (const char *file, LPATTACH att)
-{
-    HRESULT hr;
-    LPSTREAM to = NULL, from = NULL;
-    STATSTG statInfo;
 
-    hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
-	 		      MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*) &to);
-    if (FAILED (hr))
-	return FALSE;
-
-    hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-			   STGM_READ, (char*)file, NULL, &from);
-    if (!SUCCEEDED (hr)) {
-	to->Release ();
-	log_debug ( "streamFromFile %s failed.\n", file);
-	return FALSE;
-    }
-    from->Stat (&statInfo, STATFLAG_NONAME);
-    from->CopyTo (to, statInfo.cbSize, NULL, NULL);
-    to->Commit (0);
-    to->Release ();
-    from->Release ();
-    log_debug ( "streamFromFile %s succeeded\n", file);
-    return TRUE;
-}
-
-
-int
-MapiGPGMEImpl::streamOnFile (const char *file, LPATTACH att)
-{
-    HRESULT hr;
-    LPSTREAM from = NULL, to = NULL;
-    STATSTG statInfo;
-
-    hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
-			    0, 0, (LPUNKNOWN*) &from);
-    if (FAILED (hr))
-	return FALSE;
-
-    hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-   		           STGM_CREATE | STGM_READWRITE, (char*) file,
-			   NULL, &to);
-    if (!SUCCEEDED (hr)) {
-	from->Release ();
-	log_debug ( "streamOnFile %s failed with %s\n", file, 
-		    hr == MAPI_E_NO_ACCESS? 
-		    "no access" : hr == MAPI_E_NOT_FOUND? "not found" : "unknown");
-	return FALSE;
-    }
-    from->Stat (&statInfo, STATFLAG_NONAME);
-    from->CopyTo (to, statInfo.cbSize, NULL, NULL);
-    to->Commit (0);
-    to->Release ();
-    from->Release ();
-    log_debug ( "streamOnFile %s succeeded\n", file);
-    return TRUE;
-}
-
-
-int
-MapiGPGMEImpl::getMessageFlags (GpgMsg * msg)
-{
-    HRESULT hr;
-    LPSPropValue propval = NULL;
-    int flags = 0;
-
-    // FIXME
-//     hr = HrGetOneProp (msg, PR_MESSAGE_FLAGS, &propval);
-    if (FAILED (hr))
-	return 0;
-    flags = propval->Value.l;
-    MAPIFreeBuffer (propval);
-    return flags;
-}
-
-
-int
-MapiGPGMEImpl::getMessageHasAttachments (GpgMsg * msg)
-{
-    HRESULT hr;
-    LPSPropValue propval = NULL;
-    int nattach = 0;
-
-    // FIXME
-//     hr = HrGetOneProp (msg, PR_HASATTACH, &propval);
-    if (FAILED (hr))
-	return 0;
-    nattach = propval->Value.b? 1 : 0;
-    MAPIFreeBuffer (propval);
-    return nattach;   
-}
-
-
-
-bool
-MapiGPGMEImpl::setAttachMethod (LPATTACH obj, int mode)
-{
-    SPropValue prop;
-    HRESULT hr;
-    prop.ulPropTag = PR_ATTACH_METHOD;
-    prop.Value.ul = mode;
-    hr = HrSetOneProp (obj, &prop);
-    return FAILED (hr)? true : false;
-}
-
-
-int
-MapiGPGMEImpl::getAttachMethod (LPATTACH obj)
-{
-    HRESULT hr;
-    LPSPropValue propval = NULL;
-    int method = 0;
-
-    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_METHOD, &propval);
-    if (FAILED (hr))
-	return 0;
-    method = propval->Value.ul;
-    MAPIFreeBuffer (propval);
-    return method;
-}
-
-bool
-MapiGPGMEImpl::setAttachFilename (LPATTACH obj, const char *name, bool islong)
-{
-    HRESULT hr;
-    SPropValue prop;
-    prop.ulPropTag = PR_ATTACH_LONG_FILENAME;
-
-    if (!islong)
-	prop.ulPropTag = PR_ATTACH_FILENAME;
-    prop.Value.lpszA = (char*) name;   
-    hr = HrSetOneProp (obj, &prop);
-    return FAILED (hr)? false: true;
-}
-
-
-char*
-MapiGPGMEImpl::getAttachPathname (LPATTACH obj)
-{
-    LPSPropValue propval;
-    HRESULT hr;
-    char *path;
-
-    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_LONG_PATHNAME, &propval);
-    if (FAILED (hr)) {
-	hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_PATHNAME, &propval);
-	if (SUCCEEDED (hr)) {
-	    path = xstrdup (propval[0].Value.lpszA);
-	    MAPIFreeBuffer (propval);
-	}
-	else
-	    return NULL;
-    }
-    else {
-	path = xstrdup (propval[0].Value.lpszA);
-	MAPIFreeBuffer (propval);
-    }
-    return path;
-}
-
-
-char*
-MapiGPGMEImpl::getAttachFilename (LPATTACH obj)
-{
-    LPSPropValue propval;
-    HRESULT hr;
-    char *name;
-
-    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_LONG_FILENAME, &propval);
-    if (FAILED(hr)) {
-	hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
-	if (SUCCEEDED (hr)) {
-	    name = xstrdup (propval[0].Value.lpszA);
-	    MAPIFreeBuffer (propval);
-	}
-	else
-	    return NULL;
-    }
-    else {
-	name = xstrdup (propval[0].Value.lpszA);
-	MAPIFreeBuffer (propval);
-    }
-    return name;
-}
-
-
-bool
-MapiGPGMEImpl::checkAttachmentExtension (const char *ext)
-{
-    if (ext == NULL)
-	return false;
-    if (*ext == '.')
-	ext++;
-    log_debug ( "checkAttachmentExtension: %s\n", ext);
-    if (stricmp (ext, "gpg") == 0 ||
-	stricmp (ext, "pgp") == 0 ||
-	stricmp (ext, "asc") == 0)
-	return true;
-    return false;
-}
-
-
-const char*
-MapiGPGMEImpl::getAttachmentExtension (const char *fname)
-{
-    static char ext[4];
-    char *p;
-
-    p = strrchr (fname, '.');
-    if (p != NULL) {
-	/* XXX: what if the extension is < 3 chars */
-	strncpy (ext, p, 4);
-	if (checkAttachmentExtension (ext))
-	    return ext;
-    }
-    return EXT_MSG;
-}
-
-
-const char*
-MapiGPGMEImpl::getPGPExtension (int action)
-{
-    if (ATT_SIGN (action))
-	return EXT_SIG;
-    return EXT_MSG;
-}
-
-
-bool 
-MapiGPGMEImpl::setXHeader (GpgMsg * msg, const char *name, const char *val)
-{  
-#ifndef __MINGW32__
-    USES_CONVERSION;
-#endif
-    LPMDB lpMdb = NULL;
-    HRESULT hr = 0;
-    LPSPropTagArray pProps = NULL;
-    SPropValue pv;
-    MAPINAMEID mnid[1];	
-    // {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers	
-    GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
-		 0x00, 0x00, 0x00, 0x46} };
-
-    memset (&mnid[0], 0, sizeof (MAPINAMEID));
-    mnid[0].lpguid = &guid;
-    mnid[0].ulKind = MNID_STRING;
-//     mnid[0].Kind.lpwstrName = A2W (name);
-// FIXME
-//    hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
-    if (FAILED (hr)) {
-	log_debug ("set X-Header failed.\n");
-	return false;
-    }
-    
-    pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
-    pv.Value.lpszA = (char *)val;
-//FIXME     hr = HrSetOneProp(msg, &pv);	
-    if (!SUCCEEDED (hr)) {
-	log_debug ("set X-Header failed.\n");
-	return false;
-    }
-
-    log_debug ("set X-Header succeeded.\n");
-    return true;
-}
-
-
-char*
-MapiGPGMEImpl::getXHeader (GpgMsg *msg, const char *name)
-{
-    /* XXX: PR_TRANSPORT_HEADERS is not available in my MSDN. */
-    return NULL;
-}
-
-
-void
-MapiGPGMEImpl::freeAttachments (void)
-{
-    if (attachTable != NULL) {
-        attachTable->Release ();
-	attachTable = NULL;
-    }
-    if (attachRows != NULL) {
-        FreeProws (attachRows);
-	attachRows = NULL;
-    }
-}
-
-
-
-
-void
-MapiGPGMEImpl::releaseAttachment (LPATTACH att)
-{
-    att->Release ();
-}
-
-
-
-char*
-MapiGPGMEImpl::generateTempname (const char *name)
-{
-    char temp[MAX_PATH+2];
-    char *p;
-
-    GetTempPath (sizeof (temp)-1, temp);
-    if (temp[strlen (temp)-1] != '\\')
-	strcat (temp, "\\");
-    p = (char *)xcalloc (1, strlen (temp) + strlen (name) + 16);
-    sprintf (p, "%s%s", temp, name);
-    return p;
-}
-
-
-bool
-MapiGPGMEImpl::signAttachment (const char *datfile)
-{
-    char *sigfile;
-    LPATTACH newatt;
-    int pos=0, err=0;
-
-    log_debug ("MapiGPGME.%s:%d: enter\n", __func__, __LINE__);
-
-    sigfile = (char *)xcalloc (1,strlen (datfile)+5);
-    strcpy (sigfile, datfile);
-    strcat (sigfile, ".asc");
-
-    newatt = createAttachment (NULL/*FIXME*/, pos);
-    setAttachMethod (newatt, ATTACH_BY_VALUE);
-    setAttachFilename (newatt, sigfile, false);
-
-    err = op_sign_file (OP_SIG_DETACH, datfile, sigfile, nstorePasswd);
-
-    if (streamFromFile (sigfile, newatt)) {
-	log_debug ("signAttachment: commit changes.\n");
-	newatt->SaveChanges (FORCE_SAVE);
-    }
-    releaseAttachment (newatt);
-    xfree (sigfile);
-
-    log_debug ("MapiGPGME.%s: leave (rc=%d)\n", __func__, err);
-
-    return (!err)? true : false;
-}
-
-/* XXX: find a way to see if the attachment is already secured. This could be
-        done by watching at the extension or checking the first lines. */
-int
-MapiGPGMEImpl::processAttachment (LPATTACH *attm, HWND hwnd,
-                                  int pos, int action)
-{    
-    LPATTACH att = *attm;
-    int method = getAttachMethod (att);
-    BOOL success = TRUE;
-    HRESULT hr;
-
-    /* XXX: sign-only code is still not very intuitive. */
-
-    if (action == GPG_ATTACH_NONE)
-	return FALSE;
-    if (action == GPG_ATTACH_DECRYPT && !saveDecryptedAtt)
-	return TRUE;
-
-    switch (method) {
-    case ATTACH_EMBEDDED_MSG:
-	LPMESSAGE emb;
-
-	/* we do not support to sign these kind of attachments. */
-	if (action == GPG_ATTACH_SIGN)
-	    return TRUE;
-	hr = att->OpenProperty (PR_ATTACH_DATA_OBJ, &IID_IMessage, 0, 
-			        MAPI_MODIFY, (LPUNKNOWN*) &emb);
-	if (FAILED (hr))
-	    return FALSE;
-//FIXME 	setWindow (hwnd);
-// 	setMessage (emb);
-	if (doCmdAttach (action))
-	    success = FALSE;
-	emb->SaveChanges (FORCE_SAVE);
-	att->SaveChanges (FORCE_SAVE);
-	emb->Release ();
-	break;
-
-    case ATTACH_BY_VALUE:
-	char *inname;
-	char *outname;
-	char *tmp;
-
-	tmp = getAttachFilename (att);
-	inname =  generateTempname (tmp);
-	log_debug ("enc inname: '%s'\n", inname);
-	if (action != GPG_ATTACH_DECRYPT) {
-	    char *tmp2 = (char *)xcalloc (1, strlen (inname) 
-					     + strlen (ATT_PREFIX) + 4 + 1);
-	    sprintf (tmp2, "%s"ATT_PREFIX".%s", tmp, getPGPExtension (action));
-	    outname = generateTempname (tmp2);
-	    xfree (tmp2);
-	    log_debug ( "enc outname: '%s'\n", outname);
-	}
-	else {
-	    if (checkAttachmentExtension (strrchr (tmp, '.')) == false) {
-		log_debug ( "%s: no pgp extension found.\n", tmp);
-		xfree (tmp);
-		xfree (inname);
-		return TRUE;
-	    }
-	    char *tmp2 = (char*)xcalloc (1, strlen (tmp) + 4);
-	    strcpy (tmp2, tmp);
-	    tmp2[strlen (tmp2) - 4] = '\0';
-	    outname = generateTempname (tmp2);
-	    xfree (tmp2);
-	    log_debug ("dec outname: '%s'\n", outname);
-	}
-	success = FALSE;
-	/* if we are in sign-only mode, just create a detached signature
-	   for each attachment but do not alter the attachment data itself. */
-	if (action != GPG_ATTACH_SIGN && streamOnFile (inname, att)) {
-	    if (doCmdFile (action, inname, outname))
-		success = TRUE;
-	    else
-		log_debug ( "doCmdFile failed\n");
-	}
-	if ((action == GPG_ATTACH_ENCRYPT || action == GPG_ATTACH_SIGN) 
-	    && autoSignAtt)
-	    signAttachment (inname);
-
-	/*DeleteFile (inname);*/
-	/* XXX: the file does not seemed to be closed. */
-	xfree (inname);
-	xfree (tmp);
-	
-	if (action != GPG_ATTACH_SIGN)
-	    deleteAttachment (NULL/*FIXME*/,pos);
-
-	if (action == GPG_ATTACH_ENCRYPT) {
-	    LPATTACH newatt;
-	    *attm = newatt = createAttachment (NULL/*FIXME*/,pos);
-	    setAttachMethod (newatt, ATTACH_BY_VALUE);
-	    setAttachFilename (newatt, outname, false);
-
-	    if (streamFromFile (outname, newatt)) {
-		log_debug ( "commit changes.\n");	    
-		newatt->SaveChanges (FORCE_SAVE);
-	    }
-	}
-	else if (success && action == GPG_ATTACH_DECRYPT) {
-          //	    success = saveDecryptedAttachment (NULL, outname);
-	    log_debug ("saveDecryptedAttachment ec=%d\n", success);
-	}
-	DeleteFile (outname);
-	xfree (outname);
-	releaseAttachment (att);
-	break;
-
-    case ATTACH_BY_REF_ONLY:
-	break;
-
-    case ATTACH_OLE:
-	break;
-
-    }
-
-    return success;
-}
-
-
-
-
-
-int
-MapiGPGMEImpl::encryptAttachments (HWND hwnd)
-{    
-    unsigned int n;
-
-//     n = if (!getAttachments ())
-// 	return FALSE;
-    n = 0 /*FIXMEcountAttachments ()*/;
-    log_debug ("enc: mail has %d attachments\n", n);
-    if (!n) {
-	freeAttachments ();
-	return TRUE;
-    }
-    for (int i=0; i < n; i++) {
-      LPATTACH amsg = openAttachment (NULL/*FIXME*/,i);
-	if (amsg == NULL)
-	    continue;
-	processAttachment (&amsg, hwnd, i, GPG_ATTACH_ENCRYPT);
-	releaseAttachment (amsg);	
-    }
-    freeAttachments ();
-    return 0;
-}
 
 
 
@@ -1755,6 +1194,7 @@ int
 MapiGPGMEImpl::attachPublicKey (const char *keyid)
 {
     /* @untested@ */
+#if 0
     const char *patt[1];
     char *keyfile;
     int err, pos = 0;
@@ -1777,4 +1217,7 @@ MapiGPGMEImpl::attachPublicKey (const char *keyid)
     xfree (keyfile);
     xfree ((void *)patt[0]);
     return err;
+#endif
+    return -1;
+    
 }

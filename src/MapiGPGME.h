@@ -52,9 +52,6 @@ public:
   virtual int __stdcall verify (HWND hwnd, GpgMsg *msg) = 0;
   virtual int __stdcall attachPublicKey (const char *keyid) = 0;
 
-  virtual int __stdcall doCmdFile (int action,
-                                   const char *in, const char *out) = 0;
-
   virtual int __stdcall readOptions (void) = 0;
   virtual int __stdcall writeOptions (void) = 0;
 

@@ -30,42 +30,43 @@ extern "C" {
 
 #include <gpgme.h>
 
-typedef enum {
+typedef enum 
+  {
     OP_SIG_NORMAL = 0,
     OP_SIG_DETACH = 1,
     OP_SIG_CLEAR  = 2
-} op_sigtype_t;
+  } 
+op_sigtype_t;
 
 
 int op_init (void);
 void op_deinit (void);
-const char* op_strerror (int err);
 
 #define op_debug_enable(file) op_set_debug_mode (5, (file))
 #define op_debug_disable() op_set_debug_mode (0, NULL)
 void op_set_debug_mode (int val, const char *file);
 
-int op_encrypt_start (const char *inbuf, char **outbuf);
-int op_encrypt (void *rset, const char *inbuf, char **outbuf);
-int op_encrypt_file (void *rset, const char *infile, const char *outfile);
+int op_encrypt (const char *inbuf, char **outbuf,
+                gpgme_key_t *keys, gpgme_key_t sign_key, int ttl);
+int op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream,
+                       gpgme_key_t *keys, gpgme_key_t sign_key, int ttl);
 
-int op_sign_encrypt (void *rset, void *locusr, const char *inbuf, 
-		     char **outbuf);
-int op_sign_encrypt_file (void *rset, const char *infile, const char *outfile);
+int op_sign (const char *inbuf, char **outbuf, int mode,
+             gpgme_key_t sign_key, int ttl);
+int op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
+                    gpgme_key_t sign_key, int ttl);
 
-int op_verify_start (const char *inbuf, char **outbuf);
+int op_decrypt (const char *inbuf, char **outbuf, int ttl);
+int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl);
 
-int op_sign_start (const char *inbuf, char **outbuf);
-int op_sign_file (int mode, const char *infile, const char *outfile, int ttl);
-int op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode, int ttl);
+int op_verify (const char *inbuf, char **outbuf);
 
-int op_decrypt_file (const char *infile, const char *outfile);
-int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream);
-int op_decrypt_start (const char *inbuf, char **outbuf, int ttl);
+
+int op_export_keys (const char *pattern[], const char *outfile);
 
 int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);
 
-int op_export_keys (const char *pattern[], const char *outfile);
+const char* op_strerror (int err);
 
 
 #ifdef __cplusplus

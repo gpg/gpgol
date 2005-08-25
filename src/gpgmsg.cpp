@@ -36,6 +36,10 @@
 #include "msgcache.h"
 #include "engine.h"
 
+static const char oid_mimetag[] =
+  {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
+
+
 /* The string used as the standard XXXXX of decrypted attachments. */
 #define ATT_FILE_PREFIX ".pgpenc"
 
@@ -123,8 +127,10 @@ public:
   bool matchesString (const char *string);
   char **getRecipients (void);
   unsigned int getAttachments (void);
-  void decryptAttachment (HWND hwnd, int pos, bool save_plaintext);
-  void signAttachment (HWND hwnd, int pos, int ttl);
+  void decryptAttachment (HWND hwnd, int pos, bool save_plaintext, int ttl);
+  void signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl);
+  int encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
+                         gpgme_key_t sign_key, int ttl);
 
 
 private:
@@ -595,6 +601,49 @@ get_attach_method (LPATTACH obj)
 }
 
 
+
+/* Example Code. */
+static bool 
+set_x_header (GpgMsg * msg, const char *name, const char *val)
+{  
+#ifndef __MINGW32__
+    USES_CONVERSION;
+#endif
+    LPMDB lpMdb = NULL;
+    HRESULT hr = 0;
+    LPSPropTagArray pProps = NULL;
+    SPropValue pv;
+    MAPINAMEID mnid[1];	
+    // {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers	
+    GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
+		 0x00, 0x00, 0x00, 0x46} };
+
+    memset (&mnid[0], 0, sizeof (MAPINAMEID));
+    mnid[0].lpguid = &guid;
+    mnid[0].ulKind = MNID_STRING;
+//     mnid[0].Kind.lpwstrName = A2W (name);
+// FIXME
+//    hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
+    if (FAILED (hr)) {
+	log_debug ("set X-Header failed.\n");
+	return false;
+    }
+    
+    pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
+    pv.Value.lpszA = (char *)val;
+//FIXME     hr = HrSetOneProp(msg, &pv);	
+    if (!SUCCEEDED (hr)) {
+	log_debug ("set X-Header failed.\n");
+	return false;
+    }
+
+    log_debug ("set X-Header succeeded.\n");
+    return true;
+}
+
+
+
+
 /* Return the filename from the attachment as a malloced string.  The
    encoding we return will be utf8, however the MAPI docs declare that
    MAPI does only handle plain ANSI and thus we don't really care
@@ -672,12 +721,12 @@ get_save_filename (HWND root, const char *srcname)
 }
 
 
-
 /* Decrypt the attachment with the internal number POS.
    SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
    attachment is not yet supported. */
 void
-GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
+GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
+                               int ttl)
 {    
   HRESULT hr;
   LPATTACH att;
@@ -737,19 +786,24 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
     }
   else if (method == ATTACH_BY_VALUE)
     {
+      const char *s;
       char *outname;
       char *suggested_name;
       LPSTREAM from, to;
 
       suggested_name = get_attach_filename (att);
-      /* FIXME: WHY do we need this check?
-        if (checkAttachmentExtension (strrchr (tmp, '.')) == false)
-          {
-             log_debug ( "%s: no pgp extension found.\n", tmp);
-             xfree (tmp);
-             xfree (inname);
-             r eturn TRUE;
-             } */
+      /* We only want to automatically decrypt attachmenst with
+         certain extensions.  FIXME: Also look for content-types. */
+      if (!suggested_name 
+          || !(s = strrchr (suggested_name, '.'))
+          || (stricmp (s, ".pgp") 
+              && stricmp (s, ".gpg") 
+              && stricmp (s, ".asc")))
+        {
+          log_debug ( "%s:%s: attachment %d has no pgp extension\n", 
+                      __FILE__, __func__);
+          goto leave;
+        }
       outname = get_save_filename (hwnd, suggested_name);
       xfree (suggested_name);
 
@@ -763,11 +817,6 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
           goto leave;
         }
 
-      /* If we would want to write to a temporary file, we would use:
-         hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-                                (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
-                                 |STGM_CREATE | STGM_READWRITE),
-                                 NULL, "gpg", &to);    */
       hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                              (STGM_CREATE | STGM_READWRITE),
                              outname, NULL, &to); 
@@ -780,7 +829,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
           goto leave;
         }
       
-      err = op_decrypt_stream (from, to);
+      err = op_decrypt_stream (from, to, ttl);
       if (err)
         {
           log_debug ("%s:%s: decrypt stream failed: %s",
@@ -823,7 +872,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext)
 /* Sign the attachment with the internal number POS.  TTL is caching
    time for a required passphrase. */
 void
-GpgMsgImpl::signAttachment (HWND hwnd, int pos, int ttl)
+GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
 {    
   HRESULT hr;
   LPATTACH att;
@@ -914,6 +963,37 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, int ttl)
       log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
                  __FILE__, __func__, pos, newpos, signame);
 
+      prop.ulPropTag = PR_ATTACH_EXTENSION_A;
+      prop.Value.lpszA = ".pgpsig";   
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach extension: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+
+      prop.ulPropTag = PR_ATTACH_TAG;
+      prop.Value.bin.cb  = sizeof oid_mimetag;
+      prop.Value.bin.lpb = (LPBYTE)oid_mimetag;
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach tag: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+
+      prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
+      prop.Value.lpszA = "application/pgp-signature";
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          goto leave;
+        }
+
       hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
                                  MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*)&to);
       if (FAILED (hr)) 
@@ -923,7 +1003,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, int ttl)
           goto leave;
         }
       
-      err = op_sign_stream (from, to, OP_SIG_DETACH, ttl);
+      err = op_sign_stream (from, to, OP_SIG_DETACH, sign_key, ttl);
       if (err)
         {
           log_debug ("%s:%s: sign stream failed: %s",
@@ -964,4 +1044,207 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, int ttl)
     newatt->Release ();
 
   att->Release ();
+}
+
+/* Encrypt the attachment with the internal number POS.  KEYS is a
+   NULL terminates array with recipients to whom the message should be
+   encrypted.  If SIGN_KEY is not NULL the attachment will also get
+   signed. TTL is the passphrase caching time and only used if
+   SIGN_KEY is not NULL. Returns 0 on success. */
+int
+GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
+                               gpgme_key_t sign_key, int ttl)
+{    
+  HRESULT hr;
+  LPATTACH att;
+  int method, err;
+  LPSTREAM from = NULL;
+  LPSTREAM to = NULL;
+  char *filename = NULL;
+  LPATTACH newatt = NULL;
+
+  /* Make sure that we can access the attachment table. */
+  if (!message || !getAttachments ())
+    {
+      log_debug ("%s:%s: no attachemnts at all", __FILE__, __func__);
+      return 0;
+    }
+
+  hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: can't open attachment %d: hr=%#lx",
+                 __FILE__, __func__, pos, hr);
+      err = gpg_error (GPG_ERR_GENERAL);
+      return err;
+    }
+
+  /* Construct a filename for the new attachment. */
+  {
+    char *tmpname = get_attach_filename (att);
+    if (!tmpname)
+      {
+        filename = (char*)xmalloc (70);
+        snprintf (filename, 70, "gpg-encrypted-%d.pgp", pos);
+      }
+    else
+      {
+        filename = (char*)xmalloc (strlen (tmpname) + 4 + 1);
+        strcpy (stpcpy (filename, tmpname), ".pgp");
+        xfree (tmpname);
+      }
+  }
+
+  method = get_attach_method (att);
+  if (method == ATTACH_EMBEDDED_MSG)
+    {
+      log_debug ("%s:%s: encrypting embedded attachments is not supported",
+                 __FILE__, __func__);
+      err = gpg_error (GPG_ERR_NOT_SUPPORTED);
+    }
+  else if (method == ATTACH_BY_VALUE)
+    {
+      ULONG newpos;
+      SPropValue prop;
+
+      hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                              0, 0, (LPUNKNOWN*)&from);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
+                     __FILE__, __func__, pos, hr);
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+      hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't create attachment: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+      prop.ulPropTag = PR_ATTACH_METHOD;
+      prop.Value.ul = ATTACH_BY_VALUE;
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach method: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+      
+      prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+      prop.Value.lpszA = filename;   
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+      log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
+                 __FILE__, __func__, pos, newpos, filename);
+
+      prop.ulPropTag = PR_ATTACH_EXTENSION_A;
+      prop.Value.lpszA = ".pgpenc";   
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach extension: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+      prop.ulPropTag = PR_ATTACH_TAG;
+      prop.Value.bin.cb  = sizeof oid_mimetag;
+      prop.Value.bin.lpb = (LPBYTE)oid_mimetag;
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach tag: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+      prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
+      prop.Value.lpszA = "application/pgp-encrypted;foomode=baz";
+      hr = HrSetOneProp (newatt, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+      hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                                 MAPI_CREATE | MAPI_MODIFY, (LPUNKNOWN*)&to);
+      if (FAILED (hr)) 
+        {
+          log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+      
+      err = op_encrypt_stream (from, to, keys, sign_key, ttl);
+      if (err)
+        {
+          log_debug ("%s:%s: encrypt stream failed: %s",
+                     __FILE__, __func__, op_strerror (err)); 
+          to->Revert ();
+          MessageBox (NULL, op_strerror (err),
+                      "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
+          goto leave;
+        }
+      from->Release ();
+      from = NULL;
+      to->Commit (0);
+      to->Release ();
+      to = NULL;
+
+      hr = newatt->SaveChanges (0);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: SaveChanges failed: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+      hr = message->DeleteAttach (pos, 0, NULL, 0);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: DeleteAtatch failed: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
+
+    }
+  else
+    {
+      log_error ("%s:%s: attachment %d: method %d not supported",
+                 __FILE__, __func__, pos, method);
+      err = gpg_error (GPG_ERR_NOT_SUPPORTED);
+    }
+
+ leave:
+  if (from)
+    from->Release ();
+  if (to)
+    to->Release ();
+  xfree (filename);
+  if (newatt)
+    newatt->Release ();
+
+  att->Release ();
+  return err;
 }
