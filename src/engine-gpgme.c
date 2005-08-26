@@ -746,6 +746,26 @@ op_export_keys (const char *pattern[], const char *outfile)
 }
 
 
+const char *
+userid_from_key (gpgme_key_t k)
+{
+  if (k && k->uids && k->uids->uid)
+    return k->uids->uid;
+  else
+    return "?";
+}
+
+const char *
+keyid_from_key (gpgme_key_t k)
+{
+  
+  if (k && k->subkeys && k->subkeys->keyid)
+    return k->subkeys->keyid;
+  else
+    return "????????";
+}
+
+
 const char*
 op_strerror (int err)
 {

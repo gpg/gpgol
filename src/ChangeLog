@@ -1,3 +1,8 @@
+2005-08-26  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp, MapiGPGME.h: Removed.
+	* display.cpp, display.h: New. 
+
 2005-08-23  Werner Koch  <wk@g10code.com>
 
 	* msgcache.c, msgcache.h: New.

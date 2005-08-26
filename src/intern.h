@@ -24,6 +24,7 @@
 #include <gpgme.h>
 
 #include "util.h"
+ 
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,23 +33,58 @@ extern "C" {
 #endif
 #endif
 
-
 #ifndef STRICT
 #define STRICT
 #endif
 
-extern HINSTANCE glob_hinst;
-extern UINT      this_dll;
 
-enum {
+enum
+  {
     OPT_FLAG_ARMOR    =  1,
     OPT_FLAG_TEXT     =  2,
     OPT_FLAG_FORCE    =  4,
     OPT_FLAG_CANCEL   =  8,
-};
+  };
 
 
-struct decrypt_key_s {
+typedef enum 
+  {
+    GPG_ATTACH_NONE = 0,
+    GPG_ATTACH_DECRYPT = 1,
+    GPG_ATTACH_ENCRYPT = 2,
+    GPG_ATTACH_SIGN = 4,
+    GPG_ATTACH_SIGNENCRYPT = GPG_ATTACH_SIGN|GPG_ATTACH_ENCRYPT
+  }
+outlgpg_attachment_action_t;
+
+
+typedef enum
+  {
+    GPG_FMT_NONE = 0,       /* do not encrypt attachments */
+    GPG_FMT_CLASSIC = 1,    /* encrypt attachments without any encoding */
+    GPG_FMT_PGP_PEF = 2     /* use the PGP partioned encoding format (PEF) */
+  } 
+outlgpg_format_t;
+
+/* Type of a message. */
+typedef enum 
+  {
+    OPENPGP_NONE = 0,
+    OPENPGP_MSG,
+    OPENPGP_SIG,
+    OPENPGP_CLEARSIG,
+    OPENPGP_PUBKEY,   /* Note, that this type is only partly supported */
+    OPENPGP_SECKEY    /* Note, that this type is only partly supported */
+  }
+openpgp_t;
+
+
+extern HINSTANCE glob_hinst;
+extern UINT      this_dll;
+
+
+struct decrypt_key_s 
+{
   gpgme_key_t signer;
   char keyid[16+1];
   char *user_id;
@@ -62,12 +98,32 @@ struct decrypt_key_s {
   unsigned int last_was_bad:1;
 };
 
-struct cache_item_s {
-    char keyid[16+1];
-    char *pass;
-    unsigned ttl;
+struct cache_item_s 
+{
+  char keyid[16+1];
+  char *pass;
+  unsigned ttl;
 };
 typedef struct cache_item_s *cache_item_t;
+
+/* Global options - initialized to default by main.c. */
+#ifdef __cplusplus
+extern
+#endif
+struct 
+{
+  int passwd_ttl;            /* Time in seconds the passphrase is stored. */
+  int encrypt_default;       /* Encrypt by default. */
+  int sign_default;          /* Sign by default. */
+  int save_decrypted_attach; /* Save decrypted attachments. */
+  int auto_sign_attach;	     /* Sign all outgoing attachments. */
+  int enc_format;            /* Encryption format for attachments. */
+  char *default_key;         /* Malloced default key or NULL. */
+  int add_default_key;       /* Always also encrypt to the default key. */
+} opt;
+
+
+
 
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);

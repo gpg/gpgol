@@ -23,19 +23,7 @@
 
 #include <gpgme.h>
 
-/* Type of a message. */
-typedef enum 
-  {
-    OPENPGP_NONE = 0,
-    OPENPGP_MSG,
-    OPENPGP_SIG,
-    OPENPGP_CLEARSIG,
-    OPENPGP_PUBKEY,   /* Note, that this type is only partly supported */
-    OPENPGP_SECKEY    /* Note, that this type is only partly supported */
-  }
-openpgp_t;
-
-
+#include "intern.h"
 
 /* To manage a message we use our own class to keep track about all
    the information we known on the content of a message.  This is
@@ -100,13 +88,25 @@ public:
      the strings.  On failure NULL is returned.  */
   virtual char **getRecipients (void);
 
+  /* Decrypt the message and all attachments.  */
+  virtual int decrypt (HWND hwnd);
 
-  /* Encrypt the entire message including any attachments. Return 0 on
-     success. */
-  virtual int encrypt (HWND hwnd);
+  /* Verify the message. */
+  virtual int verify (HWND hwnd);
 
+  /* Sign the message and optionally the attachments. */
   virtual int sign (HWND hwnd);
 
+  /* Encrypt the entire message including any attachments. Returns 0
+     on success. */
+  virtual int encrypt (HWND hwnd);
+
+  /* Encrypt and sign the entire message including any
+     attachments. Return 0 on success. */
+  virtual int signEncrypt (HWND hwnd);
+
+  /* Attach the key identified by KEYID to the message. */
+  virtual int attachPublicKey (const char *keyid);
 
   /* Return the number of attachments. */
   virtual unsigned int getAttachments (void);

@@ -30,7 +30,7 @@
 #include "intern.h"
 #include "mymapi.h"
 #include "mymapitags.h"
-#include "MapiGPGME.h"
+#include "display.h"
 
 #include "olflange-def.h"
 #include "olflange-ids.h"
@@ -71,10 +71,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               }		
           }
         
-	const char *s;
-	s = NULL;
-	s = m_gpg->getDefaultKey ();
-	enable = s && *s? 1 : 0;
+	enable = !!(opt.default_key && *opt.default_key);
 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable? TRUE:FALSE);
 	if (enable == 1)
           CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
@@ -118,7 +115,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
 	}
 	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
-	    m_gpg->startConfigDialog (hDlg);
+	    config_dialog_box (hDlg);
 	break;
 	
     case WM_NOTIFY:
@@ -129,26 +126,29 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    break;
 
 	case PSN_SETACTIVE: {
-	    TCHAR s[20];
-	    const char * f;
+	    TCHAR s[30];
+	    const char *f;
 	    
-	    if (m_gpg->getDefaultKey () != NULL)		
-		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, m_gpg->getDefaultKey ());
-	    wsprintf(s, "%d", m_gpg->getStorePasswdTime ());
-	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT, 0, (LPARAM) s);
-	    f = m_gpg->getLogFile ();
-	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT, 0, (LPARAM)f);
+	    if (opt.default_key)		
+		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
+	    wsprintf(s, "%d", opt.passwd_ttl);
+	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
+                               0, (LPARAM) s);
+	    f = get_log_file ();
+	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT,
+                                0, (LPARAM)f);
 	    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
-				m_gpg->getEncryptDefault () ? 1 : 0, 0L);
+				!!opt.encrypt_default, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
-			        m_gpg->getSignDefault () ? 1 : 0, 0L);
-	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_SETCHECK, 
-			        m_gpg->getEncryptWithDefaultKey () && enable? 1 : 0, 0L);
+			        !!opt.sign_default, 0L);
+	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
+                                BM_SETCHECK, 
+			        (opt.add_default_key && enable), 0L);
 	    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
-				m_gpg->getSaveDecryptedAttachments () ? 1 : 0, 0L);
+				!!opt.save_decrypted_attach, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS, BM_SETCHECK,
-				m_gpg->getSignAttachments() ? 1 : 0, 0L);
+				!!opt.auto_sign_attach, 0L);
 	    bMsgResult = FALSE;  /* accepts activation */
 	    break; }
 		
@@ -157,27 +157,38 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	    GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
 	    if (strlen (s) > 0 && strchr (s, ' ')) {
-		MessageBox (hDlg, "The default key cannot contain any spaces.",
+		MessageBox (hDlg,
+                            "The default key may not contain any spaces.",
 			    "Outlook GnuPG-Plugin", MB_ICONERROR|MB_OK);
 		bMsgResult = PSNRET_INVALID_NOCHANGEPAGE ;
 		break;
 	    }
-	    if (strlen (s) == 0)
-		m_gpg->setEncryptWithDefaultKey (false);
+	    if (!*s)
+              opt.add_default_key = 0;
 	    else
-		m_gpg->setEncryptWithDefaultKey (SendDlgItemMessage(hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L));
-	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT, 20, (LPARAM) s);		
-	    m_gpg->setStorePasswdTime (atol (s));
-	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT, 200, (LPARAM)s);
-	    m_gpg->setLogFile (s);
-	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_TO, WM_GETTEXT, 200, (LPARAM)s);
-	    m_gpg->setDefaultKey (s);
+              opt.add_default_key = !!SendDlgItemMessage
+                (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L);
+
+	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT,
+                                20, (LPARAM)s);		
+	    opt.passwd_ttl = (int)atol (s);
+	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT,
+                                200, (LPARAM)s);
+	    set_log_file (s);
+	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_TO, WM_GETTEXT,
+                                200, (LPARAM)s);
+	    set_default_key (s);
 		
-	    m_gpg->setEncryptDefault (SendDlgItemMessage(hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L));
-	    m_gpg->setSignDefault (SendDlgItemMessage(hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L));
-	    m_gpg->setSaveDecryptedAttachments (SendDlgItemMessage(hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L));
-	    m_gpg->setSignAttachments (SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS,  BM_GETCHECK, 0, 0L));
-	    m_gpg->writeOptions ();
+	    opt.encrypt_default = !!SendDlgItemMessage
+              (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
+	    opt.sign_default = !!SendDlgItemMessage 
+              (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
+	    opt.save_decrypted_attach = !!SendDlgItemMessage
+              (hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L);
+            opt.auto_sign_attach = !!SendDlgItemMessage
+              (hDlg, IDC_SIGN_ATTACHMENTS,  BM_GETCHECK, 0, 0L);
+
+	    write_options ();
 	    bMsgResult = PSNRET_NOERROR;
 	    break; }
 		

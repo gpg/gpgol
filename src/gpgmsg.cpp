@@ -35,6 +35,7 @@
 #include "util.h"
 #include "msgcache.h"
 #include "engine.h"
+#include "display.h"
 
 static const char oid_mimetag[] =
   {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -108,9 +109,7 @@ public:
       }
     if (msg)
       {
-      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
         msg->AddRef ();
-      log_debug ("%s:%s:%d: here\n", __FILE__, __func__, __LINE__);
         message = msg;
       }
   }
@@ -126,8 +125,18 @@ public:
   void saveChanges (bool permanent);
   bool matchesString (const char *string);
 
-  int encrypt (HWND hwnd);
+  int decrypt (HWND hwnd);
+  int verify (HWND hwnd);
   int sign (HWND hwnd);
+  int encrypt (HWND hwnd)
+  {
+    return encrypt_and_sign (hwnd, false);
+  }
+  int signEncrypt (HWND hwnd)
+  {
+    return encrypt_and_sign (hwnd, true);
+  }
+  int attachPublicKey (const char *keyid);
 
   char **getRecipients (void);
   unsigned int getAttachments (void);
@@ -153,6 +162,7 @@ private:
   } attach;
   
   void loadBody (void);
+  int encrypt_and_sign (HWND hwnd, bool sign);
 };
 
 
@@ -169,6 +179,45 @@ CreateGpgMsg (LPMESSAGE msg)
 }
 
 
+/* Release an array of GPGME keys. */
+static void 
+free_key_array (gpgme_key_t *keys)
+{
+  if (keys)
+    {
+      for (int i = 0; keys[i]; i++) 
+	gpgme_key_release (keys[i]);
+      xfree (keys);
+    }
+}
+
+/* Release an array of strings with recipient names. */
+static void
+free_recipient_array (char **recipients)
+{
+  int i;
+
+  if (recipients)
+    {
+      for (i=0; recipients[i]; i++) 
+	xfree (recipients[i]);	
+      xfree (recipients);
+    }
+}
+
+/* Return the number of recipients in the array RECIPIENTS. */
+static int 
+count_recipients (char **recipients)
+{
+  int i;
+  
+  for (i=0; recipients[i] != NULL; i++)
+    ;
+  return i;
+}
+
+
+
 /* Load the body and make it available as an UTF8 string in the
    instance variable BODY.  */
 void
@@ -528,52 +577,198 @@ GpgMsgImpl::getRecipients ()
 }
 
 
-
-/* Release an arrat of GPGME keys. */
-static void 
-free_key_array (gpgme_key_t *keys)
-{
-  if (keys)
-    {
-      for (int i = 0; keys[i]; i++) 
-	gpgme_key_release (keys[i]);
-      xfree (keys);
-    }
-}
-
-/* Release an array of strings with recipient names. */
-static void
-free_recipient_array (char **recipients)
-{
-  int i;
-
-  if (recipients)
-    {
-      for (i=0; recipients[i]; i++) 
-	xfree (recipients[i]);	
-      xfree (recipients);
-    }
-}
-
-/* Return the number of recipients in the array RECIPIENTS. */
-static int 
-count_recipients (char **recipients)
-{
-  int i;
-  
-  for (i=0; recipients[i] != NULL; i++)
-    ;
-  return i;
-}
 
 
-/* Encrypt the entire message including all attachments. Returns 0 on
-   success. */
+/* Decrypt the message MSG and update the window.  HWND identifies the
+   current window. */
 int 
-GpgMsgImpl::encrypt (HWND hwnd)
+GpgMsgImpl::decrypt (HWND hwnd)
+{
+  log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  openpgp_t mtype;
+  char *plaintext = NULL;
+  int has_attach;
+  int err;
+
+  mtype = getMessageType ();
+  if (mtype == OPENPGP_CLEARSIG)
+    {
+      log_debug ("%s:%s: leave (passing on to verify)\n", __FILE__, __func__);
+      return verify (hwnd);
+    }
+
+  /* Check whether this possibly encrypted message as attachments.  We
+     check right now because we need to get into the decryptio code
+     even if the body is not encrypted but attachments are
+     available. FIXME: I am not sure whether this is the best
+     solution, we might want to skip the decryption step later and
+     also test for encrypted attachments right now.*/
+  has_attach = hasAttachments ();
+  if (mtype == OPENPGP_NONE && !has_attach ) 
+    {
+      MessageBox (NULL, "No valid OpenPGP data found.",
+                  "GPG Decryption", MB_ICONERROR|MB_OK);
+      log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
+      return 0;
+    }
+
+  err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl);
+  if (err)
+    {
+      if (has_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
+        ;
+      else
+        MessageBox (NULL, op_strerror (err),
+                    "GPG Decryption", MB_ICONERROR|MB_OK);
+    }
+  else if (plaintext && *plaintext)
+    {	
+      int is_html = is_html_body (plaintext);
+
+      setPlainText (plaintext);
+      plaintext = NULL;
+
+      /* Also set PR_BODY but do not use 'SaveChanges' to make it
+         permanently.  This way the user can reply with the
+         plaintext but the ciphertext is still stored. */
+      log_debug ("decrypt isHtml=%d\n", is_html);
+
+      /* XXX: find a way to handle text/html message in a better way! */
+      if (is_html || update_display (hwnd, this))
+        {
+          const char s[] = 
+            "The message text cannot be displayed.\n"
+            "You have to save the decrypted message to view it.\n"
+            "Then you need to re-open the message.\n\n"
+            "Do you want to save the decrypted message?";
+          int what;
+          
+          what = MessageBox (NULL, s, "GPG Decryption",
+                             MB_YESNO|MB_ICONWARNING);
+          if (what == IDYES) 
+            {
+              log_debug ("decrypt: saving plaintext message.\n");
+              saveChanges (1);
+            }
+	}
+      else
+        saveChanges (0);
+    }
+
+  if (has_attach)
+    {
+      unsigned int n;
+      
+      n = getAttachments ();
+      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      for (int i=0; i < n; i++) 
+        decryptAttachment (hwnd, i, true, opt.passwd_ttl);
+    }
+
+  log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
+  return err;
+}
+
+
+/* Verify the message and displaythe verification result. */
+int 
+GpgMsgImpl::verify (HWND hwnd)
+{
+  log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  openpgp_t mtype;
+  int err, has_attach;
+  
+  mtype = getMessageType ();
+  has_attach = hasAttachments ();
+  if (mtype == OPENPGP_NONE && !has_attach ) 
+    {
+      log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
+      return 0;
+    }
+
+  err = op_verify (getOrigText (), NULL);
+  if (err)
+    MessageBox (NULL, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
+  else
+    update_display (hwnd, this);
+
+  log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
+  return err;
+}
+
+
+
+
+
+/* Sign the current message. Returns 0 on success. */
+int
+GpgMsgImpl::sign (HWND hwnd)
+{
+  const char *plaintext;
+  char *signedtext = NULL;
+  int err = 0;
+  gpgme_key_t sign_key = NULL;
+
+  log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  
+  /* We don't sign an empty body - a signature on a zero length string
+     is pretty much useless. */
+  if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
+    {
+      log_debug ("%s:%s: leave (empty)", __FILE__, __func__);
+      return 0; 
+    }
+
+  /* Pop up a dialog box to ask for the signer of the message. */
+  if (signer_dialog_box (&sign_key, NULL) == -1)
+    {
+      log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
+      return gpg_error (GPG_ERR_CANCELED);  
+    }
+
+  if (*plaintext)
+    {
+      err = op_sign (plaintext, &signedtext, 
+                     OP_SIG_CLEAR, sign_key, opt.passwd_ttl);
+      if (err)
+        {
+          MessageBox (NULL, op_strerror (err),
+                      "GPG Sign", MB_ICONERROR|MB_OK);
+          goto leave;
+        }
+      setSignedText (signedtext);
+      signedtext = NULL;
+    }
+
+  if (opt.auto_sign_attach && hasAttachments ())
+    {
+      unsigned int n;
+      
+      n = getAttachments ();
+      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      for (int i=0; i < n; i++) 
+        signAttachment (hwnd, i, sign_key, opt.passwd_ttl);
+      /* FIXME: we should throw an error if signing of any attachment
+         failed. */
+    }
+
+ leave:
+  xfree (signedtext);
+  gpgme_key_release (sign_key);
+  log_debug ("%s:%s: leave (err=%s)\n", __FILE__, __func__, op_strerror (err));
+  return err;
+}
+
+
+
+/* Encrypt and optionally sign (if SIGN is true) the entire message
+   including all attachments. Returns 0 on success. */
+int 
+GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
 {
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
   gpgme_key_t *keys = NULL;
+  gpgme_key_t sign_key = NULL;
   bool is_html;
   const char *plaintext;
   char *ciphertext = NULL;
@@ -589,6 +784,17 @@ GpgMsgImpl::encrypt (HWND hwnd)
       return 0; 
     }
 
+  /* Pop up a dialog box to ask for the signer of the message. */
+  if (sign)
+    {
+      if (signer_dialog_box (&sign_key, NULL) == -1)
+        {
+          log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
+          return gpg_error (GPG_ERR_CANCELED);  
+        }
+    }
+
+  /* Gather the keys for the recipients. */
   recipients = getRecipients ();
   n_keys = op_lookup_keys (recipients, &keys, &unknown, &all);
 
@@ -600,6 +806,10 @@ GpgMsgImpl::encrypt (HWND hwnd)
       int opts = 0;
       gpgme_key_t *keys2 = NULL;
 
+      /* FIXME: The implementation is not correct: op_lookup_keys
+         returns the number of missing keys but we compare against the
+         total number of keys; thus the box would pop up even when all
+         have been found. */
       log_debug ("%s:%s: calling recipient_dialog_box2", __FILE__, __func__);
       recipient_dialog_box2 (keys, unknown, all, &keys2, &opts);
       xfree (keys);
@@ -611,8 +821,23 @@ GpgMsgImpl::encrypt (HWND hwnd)
 	}
     }
 
+  if (sign_key)
+    log_debug ("%s:%s: signer: 0x%s %s\n",  __FILE__, __func__,
+               keyid_from_key (sign_key), userid_from_key (sign_key));
+  else
+    log_debug ("%s:%s: no signer\n", __FILE__, __func__);
+  if (keys)
+    {
+      for (int i=0; keys[i] != NULL; i++)
+        log_debug ("%s.%s: recp.%d 0x%s %s\n", __FILE__, __func__,
+                   i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
+    }
+
+
   if (*plaintext)
     {
+      is_html = is_html_body (plaintext);
+
       err = op_encrypt (plaintext, &ciphertext, keys, NULL, 0);
       if (err)
         {
@@ -621,15 +846,35 @@ GpgMsgImpl::encrypt (HWND hwnd)
           goto leave;
         }
 
-      // Need to figure out whether the plaintext was HTML encoded.
-//       if (is_html) 
-//         {
-//           setCipherText (add_html_line_endings (ciphertext), true);
-//           ciphertext = NULL;
-//         }
-//       else
-      setCipherText (ciphertext, false);
+      if (is_html) 
+        setCipherText (add_html_line_endings (ciphertext), true);
+      else
+        setCipherText (ciphertext, false);
       ciphertext = NULL;
+
+//       {
+//         HRESULT hr;
+//         SPropValue prop;
+
+//         prop.ulPropTag=PR_MESSAGE_CLASS_A;
+//         prop.Value.lpszA="IPM.Note.OPENPGP";
+//         hr = HrSetOneProp (message, &prop);
+//         if (hr != S_OK)
+//           {
+//             log_error ("%s:%s: can't set message class: hr=%#lx\n",
+//                        __FILE__, __func__, hr); 
+//           }
+
+//         prop.ulPropTag=PR_CONTENT_TYPE_A;
+//         prop.Value.lpszA="application/encrypted;foo=bar;type=mytype";
+//         hr = HrSetOneProp (message, &prop);
+//         if (hr != S_OK)
+//           {
+//             log_error ("%s:%s: can't set content type: hr=%#lx\n",
+//                        __FILE__, __func__, hr); 
+//           }
+//       }
+
     }
 
   if (hasAttachments ())
@@ -659,67 +904,39 @@ GpgMsgImpl::encrypt (HWND hwnd)
 }
 
 
-/* Sign the current message. Returns 0 on success. */
-int
-GpgMsgImpl::sign (HWND hwnd)
+
+
+/* Attach a public key to a message. */
+int 
+GpgMsgImpl::attachPublicKey (const char *keyid)
 {
-  const char *plaintext;
-  char *signedtext = NULL;
-  int err = 0;
-  gpgme_key_t sign_key = NULL;
+    /* @untested@ */
+#if 0
+    const char *patt[1];
+    char *keyfile;
+    int err, pos = 0;
+    LPATTACH newatt;
 
-  log_debug ("%s:%s: enter\n", __FILE__, __func__);
-  
-  /* We don't sign an empty body - a signature on a zero length string
-     is pretty much useless. */
-  if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
-    {
-      log_debug ("%s:%s: leave (empty)", __FILE__, __func__);
-      return 0; 
+    keyfile = generateTempname (keyid);
+    patt[0] = xstrdup (keyid);
+    err = op_export_keys (patt, keyfile);
+
+    newatt = createAttachment (NULL/*FIXME*/,pos);
+    setAttachMethod (newatt, ATTACH_BY_VALUE);
+    setAttachFilename (newatt, keyfile, false);
+    /* XXX: set proper RFC3156 MIME types. */
+
+    if (streamFromFile (keyfile, newatt)) {
+	log_debug ("attachPublicKey: commit changes.\n");
+	newatt->SaveChanges (FORCE_SAVE);
     }
-
-  /* Pop up a dialog box to ask for the signer of the message. */
-  if (signer_dialog_box (&sign_key, NULL) == -1)
-    {
-      log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
-      return gpg_error (GPG_ERR_CANCELED);  
-    }
-
-  int nstorePasswd = 10; /* FIXME*/
-  int autoSignAtt = 1; /* FIXME*/
-  if (*plaintext)
-    {
-      err = op_sign (plaintext, &signedtext, 
-                     OP_SIG_CLEAR, sign_key, nstorePasswd);
-      if (err)
-        {
-          MessageBox (NULL, op_strerror (err),
-                      "GPG Sign", MB_ICONERROR|MB_OK);
-          goto leave;
-        }
-      setSignedText (signedtext);
-      signedtext = NULL;
-    }
-
-  if (autoSignAtt && hasAttachments ())
-    {
-      unsigned int n;
-      
-      n = getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
-      for (int i=0; i < n; i++) 
-        signAttachment (hwnd, i, sign_key, nstorePasswd);
-      /* FIXME: we should throw an error if signing of any attachment
-         failed. */
-    }
-
- leave:
-  xfree (signedtext);
-  gpgme_key_release (sign_key);
-  log_debug ("%s:%s: leave (err=%s)\n", __FILE__, __func__, op_strerror (err));
-  return err;
+    releaseAttachment (newatt);
+    xfree (keyfile);
+    xfree ((void *)patt[0]);
+    return err;
+#endif
+    return -1;
 }
-
 
 
 

@@ -34,10 +34,11 @@
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "myexchext.h"
-#include "MapiGPGME.h"
+#include "display.h"
 #include "intern.h"
 #include "gpgmsg.hh"
 #include "msgcache.h"
+#include "engine.h"
 
 #include "olflange-ids.h"
 #include "olflange-def.h"
@@ -50,14 +51,6 @@
 
 
 bool g_bInitDll = FALSE;
-
-
-/* FIXME!!!! Huh?  We only have one m_gpg object??? This is strange,
-   AFAICS, Exchange may create several contexts and thus we may be
-   required to run several instances of mapiGPGME concurrently. */
-MapiGPGME *m_gpg = NULL;
-
-
 
 
 /* Registers this module as an Exchange extension. This basically updates
@@ -371,33 +364,28 @@ CGPGExchExt::CGPGExchExt (void)
   
   if (!g_bInitDll)
     {
-      if (!m_gpg)
-        {
-          m_gpg = CreateMapiGPGME ();
-          m_gpg->readOptions ();
-        }
+      read_options ();
+      op_init ();
       g_bInitDll = TRUE;
-      log_debug ("%s:%s: one time init done\n", __FILE__, __func__);
+      log_debug ("%s:%s: first time initialization done\n",
+                 __FILE__, __func__);
     }
 }
 
 
-/*  Uninitializes the dll in the session context. 
-   FIXME:  One instance only????  For what the hell do we use g_bInitDll then?
-*/
+/*  Uninitializes the DLL in the session context. */
 CGPGExchExt::~CGPGExchExt (void) 
 {
   log_debug ("%s:%s: cleaning up CGPGExchExt object\n", __FILE__, __func__);
 
-    if (m_lContext == EECONTEXT_SESSION) {
-	if (g_bInitDll) {
-	    if (m_gpg != NULL) {
-		m_gpg->writeOptions ();
-		delete m_gpg;
-		m_gpg = NULL;
-	    }
-	    g_bInitDll = FALSE;
-            log_debug ("%s:%s: one time deinit done\n", __FILE__, __func__);
+  if (m_lContext == EECONTEXT_SESSION)
+    {
+      if (g_bInitDll)
+        {
+          op_deinit ();
+          write_options ();
+          g_bInitDll = FALSE;
+          log_debug ("%s:%s: DLL shutdown down\n", __FILE__, __func__);
 	}	
     }
 }
@@ -613,7 +601,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
     {
       GpgMsg *m = CreateGpgMsg (msg);
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = m_gpg->signEncrypt (hWnd, m);
+        rc = m->signEncrypt (hWnd);
       if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
         rc = m->encrypt (hWnd);
       if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
@@ -937,8 +925,8 @@ CGPGExchExtCommands::InstallCommands (
       m_nToolbarBitmap2 = SendMessage(hwndToolbar, TB_ADDBITMAP,
                                       1, (LPARAM)&tbab);
     }
-    m_pExchExt->m_gpgEncrypt = m_gpg->getEncryptDefault ();
-    m_pExchExt->m_gpgSign = m_gpg->getSignDefault ();
+    m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
+    m_pExchExt->m_gpgSign    = opt.sign_default;
     if (force_encrypt)
       m_pExchExt->m_gpgEncrypt = true;
   }
@@ -1007,7 +995,7 @@ CGPGExchExtCommands::DoCommand (
           if (nCommandID == m_nCmdEncrypt)
             {
               GpgMsg *m = CreateGpgMsg (pMessage);
-              m_gpg->decrypt (hWnd, m);
+              m->decrypt (hWnd);
               delete m;
 	    }
 	}
@@ -1025,7 +1013,7 @@ CGPGExchExtCommands::DoCommand (
     }
   else if (m_lContext == EECONTEXT_VIEWER)
     {
-      if (m_gpg->startKeyManager ())
+      if (start_key_manager ())
         MessageBox (NULL, "Could not start Key-Manager",
                     "OutlGPG", MB_ICONERROR|MB_OK);
     }

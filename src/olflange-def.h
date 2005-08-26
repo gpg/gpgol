@@ -27,12 +27,6 @@ class CGPGExchExtCommands;
 class CGPGExchExtPropertySheets;
 class CGPGExchApp;
 
-class MapiGPGME;
-
-
-extern MapiGPGME *m_gpg;
-
-
 bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
