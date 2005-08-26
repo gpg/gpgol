@@ -53,7 +53,7 @@ is_html_body (const char *body)
 }
 
 
-/* Create a new body from body wth suitable line endings. Caller must
+/* Create a new body from body with suitable line endings. Caller must
    release the result. */
 char *
 add_html_line_endings (const char *body)
@@ -133,3 +133,42 @@ update_display (HWND hwnd, GpgMsg *msg)
     }
 }
 
+
+/* Set the body of MESSAGE to STRING.  Returns 0 on success or an
+   error code otherwise. */
+int
+set_message_body (LPMESSAGE message, const char *string)
+{
+  HRESULT hr;
+  SPropValue prop;
+  BOOL dummy_bool;
+  const char *s;
+  
+  /* Decide whether we ned to use the Unicode version. */
+  for (s=string; *s && !(*s & 0x80); s++)
+    ;
+  if (*s)
+    {
+      prop.ulPropTag = PR_BODY_W;
+      prop.Value.lpszW = utf8_to_wchar (string);
+      hr = HrSetOneProp (message, &prop);
+      xfree (prop.Value.lpszW);
+    }
+  else /* Only plain ASCII. */
+    {
+      prop.ulPropTag = PR_BODY_A;
+      prop.Value.lpszA = (CHAR*)string;
+      hr = HrSetOneProp (message, &prop);
+    }
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: HrSetOneProp failed: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      return gpg_error (GPG_ERR_GENERAL);
+    }
+  hr = RTFSync (message, RTF_SYNC_BODY_CHANGED, &dummy_bool);
+  if (hr != S_OK)
+    log_debug ("%s:%s: RTFSync failed: hr=%#lx - error ignored",
+               __FILE__, __func__, hr); 
+  return 0;
+}

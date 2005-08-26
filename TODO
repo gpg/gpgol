@@ -4,20 +4,15 @@
 
 * much better HTML support.
 
-* factor out more common code in encrypt, signEncrypt.
-
-* grep all XXX in the code and provide fixes.
-
-* provide a general passphrase caching system to allow to store
-  more than one passphrase. This can be done with a hash table and
-  the key-ID is used as the index to access the passphrase.
-
-* handle unicode messages and find out why UTF-8 messages cannot be
-  manipulated.
-
 * find out why sometimes the new body cannot set to a MAPI object. In
   this case the body is empty but the W32 API said it was correctly set.
+  This might be due to the length of the object.  HrGetOneProp has
+  such limitations adn thus it owould be reasonable to assume that the
+  same holds true for HrSetOneProp.  We might want to use Openproperty
+  for longer texts.
 
-* implement a static shared section inside the DLL to provide the key cache
-  objects. right now we load all keys on demand.
+* There is no verification status for attachments. What about
+  generating a new text attachemnts with the status information?  We
+  need to make sure that it can be identified as locally generated.
+
 

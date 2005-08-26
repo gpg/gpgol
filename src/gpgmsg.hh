@@ -67,19 +67,10 @@ public:
      ownership of STRING is transferred to this object. */
   virtual void setPlainText (char *string);
 
-  /* Save STRING as the ciphertext version of the message.  WARNING:
-     ownership of STRING is transferred to this object. */
-  virtual void setCipherText (char *string, bool html);
-
   /* Save STRING as the signed version of the message.  WARNING:
      ownership of STRING is transferred to this object. */
   virtual void setSignedText (char *string);
   
-  /* Save the changes made to the message.  With PERMANENT set to true
-     they are really stored, when not set they are only saved
-     temporary. */
-  virtual void saveChanges (bool permanent);
-
   /* Return true if STRING matches the actual message. */ 
   virtual bool matchesString (const char *string);
 

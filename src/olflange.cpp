@@ -385,7 +385,7 @@ CGPGExchExt::~CGPGExchExt (void)
           op_deinit ();
           write_options ();
           g_bInitDll = FALSE;
-          log_debug ("%s:%s: DLL shutdown down\n", __FILE__, __func__);
+          log_debug ("%s:%s: DLL closed down\n", __FILE__, __func__);
 	}	
     }
 }
@@ -808,7 +808,8 @@ CGPGExchExtCommands::InstallCommands (
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (FAILED(hr))
         log_debug ("%s:%s: getObject failed: hr=%#x\n", hr);
-      else if ( (body = msgcache_get (pMessage, &refhandle)) 
+      else if ( !COMPAT_NOMSGCACHE() 
+                && (body = msgcache_get (pMessage, &refhandle)) 
                 && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
         {
           dispparams.cNamedArgs = 1;

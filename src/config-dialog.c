@@ -27,6 +27,7 @@
 #include <shlobj.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <gpgme.h>
 
 #include "outlgpg-ids.h"
@@ -370,28 +371,65 @@ config_dialog_box (HWND parent)
 int
 start_key_manager (void)
 {
-    PROCESS_INFORMATION pi;
-    STARTUPINFO si;
-    char *keyman = NULL;
-    
-    if (load_config_value (NULL, REGPATH, "keyManager", &keyman))
-	return -1;
+  PROCESS_INFORMATION pi;
+  STARTUPINFO si;
+  char *p;
+  char *keyman = NULL;
+  
+  if (load_config_value (NULL, REGPATH, "keyManager", &keyman))
+    {
+      /* In case we did not found a registry entry we try to locate
+         the keymanager in the same directory as the gpgme backend. */
+      gpgme_engine_info_t info;
 
-    /* create startup info for the gpg process */
-    memset (&si, 0, sizeof (si));
-    si.cb = sizeof (STARTUPINFO);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;
+      if (gpgme_get_engine_info (&info))
+        return -1;
 
-    if (CreateProcess (NULL, keyman,
-			NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
-			NULL, NULL, &si, &pi) == TRUE) {
-	CloseHandle (pi.hProcess);
-	CloseHandle (pi.hThread);
+      while (info && info->protocol != GPGME_PROTOCOL_OpenPGP)
+        info = info->next;
+      if (info && info->file_name && *info->file_name)
+        {
+          keyman = xmalloc (strlen (info->file_name) + 10);
+          strcpy (keyman, info->file_name);
+          for (p=keyman; *p; p++)
+            if (*p == '/')
+              *p = '\\';
+          p = strrchr (keyman, '\\');
+          if (!p)
+            {
+              xfree (keyman);
+              return -1;
+            }
+          strcpy (p+1, "winpt.exe");
+          if (access (keyman, F_OK))
+            {
+              strcpy (p+1, "gpa.exe");
+              if (access (keyman, F_OK))
+                {
+                  xfree (keyman);
+                  return -1;
+                }
+            }
+        }
     }
 
-    xfree (keyman);
-    return 0;
+
+  
+  /* Create startup info for the keymanager process. */
+  memset (&si, 0, sizeof (si));
+  si.cb = sizeof (STARTUPINFO);
+  si.dwFlags = STARTF_USESHOWWINDOW;
+  si.wShowWindow = SW_SHOW;
+  
+  if (CreateProcess (NULL, keyman,
+                     NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
+                     NULL, NULL, &si, &pi) == TRUE) {
+    CloseHandle (pi.hProcess);
+    CloseHandle (pi.hThread);
+  }
+  
+  xfree (keyman);
+  return 0;
 }
 
 

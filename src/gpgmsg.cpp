@@ -120,9 +120,7 @@ public:
   const char *GpgMsgImpl::getDisplayText (void);
   const char *getPlainText (void);
   void setPlainText (char *string);
-  void setCipherText (char *string, bool html);
   void setSignedText (char *string);
-  void saveChanges (bool permanent);
   bool matchesString (const char *string);
 
   int decrypt (HWND hwnd);
@@ -238,14 +236,15 @@ GpgMsgImpl::loadBody (void)
                               0, 0, (LPUNKNOWN*)&stream);
   if ( hr != S_OK )
     {
-      log_debug_w32 (hr, "%s:%s: OpenProperty failed", __FILE__, __func__);
+      log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
+                 __FILE__, __func__, hr);
       return;
     }
 
   hr = stream->Stat (&statInfo, STATFLAG_NONAME);
   if ( hr != S_OK )
     {
-      log_debug_w32 (hr, "%s:%s: Stat failed", __FILE__, __func__);
+      log_debug ("%s:%s: Stat failed: hr=%#lx", __FILE__, __func__, hr);
       stream->Release ();
       return;
     }
@@ -257,7 +256,7 @@ GpgMsgImpl::loadBody (void)
   hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
   if ( hr != S_OK )
     {
-      log_debug_w32 (hr, "%s:%s: Read failed", __FILE__, __func__);
+      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
       xfree (body);
       body = NULL;
       stream->Release ();
@@ -395,16 +394,6 @@ GpgMsgImpl::setPlainText (char *string)
   msgcache_put (body_plain, 0, message);
 }
 
-/* Save STRING as the ciphertext version of the message.  WARNING:
-   ownership of STRING is transferred to this object. HTML indicates
-   whether the ciphertext was originally HTML. */
-void
-GpgMsgImpl::setCipherText (char *string, bool html)
-{
-  xfree (body_cipher);
-  body_cipher = string;
-  body_cipher_is_html = html;
-}
 
 /* Save STRING as the signed version of the message.  WARNING:
    ownership of STRING is transferred to this object. */
@@ -413,71 +402,6 @@ GpgMsgImpl::setSignedText (char *string)
 {
   xfree (body_signed);
   body_signed = string;
-}
-
-/* Save the changes made to the message.  With PERMANENT set to true
-   they are really stored, when not set they are only saved
-   temporary. */
-void
-GpgMsgImpl::saveChanges (bool permanent)
-{
-  SPropValue sProp; 
-  HRESULT hr;
-  int rc = TRUE;
-
-  if (!body_plain)
-    return; /* Nothing to save. */
-
-  if (!permanent)
-    return;
-  
-  /* Make sure that the Plaintext and the Richtext are in sync. */
-//   if (message)
-//     {
-//       BOOL changed;
-
-//       sProp.ulPropTag = PR_BODY_A;
-//       sProp.Value.lpszA = "";
-//       hr = HrSetOneProp(message, &sProp);
-//       changed = false;
-//       RTFSync(message, RTF_SYNC_BODY_CHANGED, &changed);
-//       sProp.Value.lpszA = body_plain;
-//       hr = HrSetOneProp(message, &sProp);
-//       RTFSync(message, RTF_SYNC_BODY_CHANGED, &changed);
-//     }
-
-  sProp.ulPropTag = PR_BODY_W;
-  sProp.Value.lpszW = utf8_to_wchar (body_plain);
-  if (!sProp.Value.lpszW)
-    {
-      log_debug_w32 (-1, "%s:%s: error converting from utf8\n",
-                     __FILE__, __func__);
-      return;
-    }
-  hr = HrSetOneProp (message, &sProp);
-  xfree (sProp.Value.lpszW);
-  if (hr < 0)
-    log_debug_w32 (-1, "%s:%s: HrSetOneProp failed", __FILE__, __func__);
-  else
-    {
-      log_debug ("%s:%s: PR_BODY set to `%s'\n",
-                 __FILE__, __func__, body_plain);
-      {
-        GpgMsg *xmsg = CreateGpgMsg (message);
-        log_debug ("%s:%s:    cross check `%s'\n",
-                   __FILE__, __func__, xmsg->getOrigText ());
-        delete xmsg;
-      }
-      if (permanent && message)
-        {
-          hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
-          if (hr < 0)
-            log_debug_w32 (-1, "%s:%s: SaveChanges failed",
-                           __FILE__, __func__);
-        }
-    }
-
-  log_debug ("%s:%s: leave\n", __FILE__, __func__);
 }
 
 
@@ -589,6 +513,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   char *plaintext = NULL;
   int has_attach;
   int err;
+  HRESULT hr;
 
   mtype = getMessageType ();
   if (mtype == OPENPGP_CLEARSIG)
@@ -612,7 +537,9 @@ GpgMsgImpl::decrypt (HWND hwnd)
       return 0;
     }
 
-  err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl);
+
+  err = *getOrigText()? op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl)
+                      : gpg_error (GPG_ERR_NO_DATA);
   if (err)
     {
       if (has_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
@@ -625,16 +552,22 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {	
       int is_html = is_html_body (plaintext);
 
+      set_message_body (message, plaintext);
       setPlainText (plaintext);
       plaintext = NULL;
 
       /* Also set PR_BODY but do not use 'SaveChanges' to make it
          permanently.  This way the user can reply with the
-         plaintext but the ciphertext is still stored. */
+         plaintext but the ciphertext is still stored. 
+
+         NOET: That does not work for OL2003!  This is the reason we
+         implemented the (not fully working) msgcache system. */
       log_debug ("decrypt isHtml=%d\n", is_html);
 
       /* XXX: find a way to handle text/html message in a better way! */
-      if (is_html || update_display (hwnd, this))
+      /* I have disabled the kludge to see what happens to a html
+         message. */
+      if (/*is_html ||*/ update_display (hwnd, this))
         {
           const char s[] = 
             "The message text cannot be displayed.\n"
@@ -648,11 +581,12 @@ GpgMsgImpl::decrypt (HWND hwnd)
           if (what == IDYES) 
             {
               log_debug ("decrypt: saving plaintext message.\n");
-              saveChanges (1);
+              hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+              if (FAILED (hr))
+                log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
+                           __FILE__, __func__, hr);
             }
 	}
-      else
-        saveChanges (0);
     }
 
   if (has_attach)
@@ -752,6 +686,19 @@ GpgMsgImpl::sign (HWND hwnd)
          failed. */
     }
 
+  /* Now that we successfully processed the attachments, we can save
+     the changes to the body.  For unknown reasons we need to set it
+     to empty first. */
+  if (*plaintext)
+    {
+      err = set_message_body (message, "");
+      if (!err)
+        set_message_body (message, signedtext);
+      if (err)
+        goto leave;
+    }
+
+
  leave:
   xfree (signedtext);
   gpgme_key_release (sign_key);
@@ -777,6 +724,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
   int err = 0;
   size_t all = 0;
   int n_keys;
+    
   
   if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
     {
@@ -847,10 +795,11 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
         }
 
       if (is_html) 
-        setCipherText (add_html_line_endings (ciphertext), true);
-      else
-        setCipherText (ciphertext, false);
-      ciphertext = NULL;
+        {
+          char *tmp = add_html_line_endings (ciphertext);
+          xfree (ciphertext);
+          ciphertext = tmp;
+        }
 
 //       {
 //         HRESULT hr;
@@ -886,11 +835,30 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
       for (int i=0; !err && i < n; i++) 
         err = encryptAttachment (hwnd, i, keys, NULL, 0);
       if (err)
-        MessageBox (NULL, op_strerror (err),
-                    "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
+        {
+          MessageBox (NULL, op_strerror (err),
+                      "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
+          goto leave;
+        }
     }
 
+  /* Now that we successfully processed the attachments, we can save
+     the changes to the body.  For unknown reasons we need to set it
+     to empty first. */
+  if (*plaintext)
+    {
+      err = set_message_body (message, "");
+      if (!err)
+        set_message_body (message, ciphertext);
+      if (err)
+        goto leave;
+    }
+
+
  leave:
+  /* FIXME: What to do with already encrypted attachments if some of
+     the encrypted (or other operations) failed? */
+
   for (int i=0; i < n_keys; i++)
     xfree (unknown[i]);
   if (n_keys)
@@ -1147,6 +1115,8 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
   LPATTACH att;
   int method, err;
 
+  log_debug ("%s:%s: processing attachment %d", __FILE__, __func__, pos);
+
   /* Make sure that we can access the attachment table. */
   if (!message || !getAttachments ())
     {
@@ -1207,6 +1177,9 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
       LPSTREAM from, to;
 
       suggested_name = get_attach_filename (att);
+      if (suggested_name)
+        log_debug ("%s:%s: attachment %d, filename `%s'", 
+                   __FILE__, __func__, pos, suggested_name);
       /* We only want to automatically decrypt attachmenst with
          certain extensions.  FIXME: Also look for content-types. */
       if (!suggested_name 
@@ -1215,8 +1188,8 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
               && stricmp (s, ".gpg") 
               && stricmp (s, ".asc")))
         {
-          log_debug ( "%s:%s: attachment %d has no pgp extension\n", 
-                      __FILE__, __func__);
+          log_debug ("%s:%s: attachment %d has no pgp extension\n", 
+                     __FILE__, __func__, pos);
           goto leave;
         }
       outname = get_save_filename (hwnd, suggested_name);

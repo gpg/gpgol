@@ -30,4 +30,7 @@ char *add_html_line_endings (const char *body);
 
 int update_display (HWND hwnd, GpgMsg *msg);
 
+int set_message_body (LPMESSAGE message, const char *string);
+
+
 #endif /*DISPLAY_H*/

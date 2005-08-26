@@ -320,6 +320,12 @@ read_options (void)
   load_extension_value ("defaultKey", &val);
   set_default_key (val);
   xfree (val); val = NULL;
+
+  /* Note, that on prupose theses flags are only Registry changeable.
+     The format of the entry is a string of the format "0xnnnnnnn". */
+  load_extension_value ("compatFlags", &val);
+  opt.compat_flags = val? strtoul (val, NULL, 0) : 0;
+  xfree (val); val = NULL;
 }
 
 

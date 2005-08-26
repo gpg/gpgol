@@ -120,8 +120,12 @@ struct
   int enc_format;            /* Encryption format for attachments. */
   char *default_key;         /* Malloced default key or NULL. */
   int add_default_key;       /* Always also encrypt to the default key. */
+
+  unsigned int compat_flags; /* compatibility flags. */
 } opt;
 
+
+#define COMPAT_NOMSGCACHE() (opt.compat_flags & 1)
 
 
 

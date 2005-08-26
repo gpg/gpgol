@@ -64,7 +64,7 @@ op_set_debug_mode (int val, const char *file)
   if (val > 0) 
     {
       debug_file = (char *)xcalloc (1, strlen (file) + strlen (s) + 2);
-      sprintf (debug_file, "%s=%d:%s", s, val, file);
+      sprintf (debug_file, "%s=%d;%s", s, val, file);
       putenv (debug_file);
     }
   else
@@ -530,9 +530,10 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl)
     }
 
 
-  /* If the callback indicated a cancel operation, clear the error. */
-  if (dk.opts & OPT_FLAG_CANCEL)
-    err = 0;
+  /* If the callback indicated a cancel operation, set the error
+     accordingly. */
+  if (err && (dk.opts & OPT_FLAG_CANCEL))
+    err = gpg_error (GPG_ERR_CANCELED);
   
 leave:    
   if (ctx)
@@ -580,6 +581,37 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl)
   err = gpgme_op_decrypt (ctx, in, out);
   dk.ctx = NULL;
   update_passphrase_cache (err, &dk);
+  /* Act upon the result of the decryption operation. */
+  if (!err) 
+    {
+      gpgme_verify_result_t res;
+
+      /* Decryption succeeded.  Now check the state of the signatures. */
+      res = gpgme_op_verify_result (ctx);
+      if (res && res->signatures)
+        verify_dialog_box (res);
+    }
+  else if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED)
+    {
+      /* The decryption failed.  See whether we can determine the real
+         problem. */
+      gpgme_decrypt_result_t res;
+      res = gpgme_op_decrypt_result (ctx);
+      if (res != NULL && res->recipients != NULL &&
+          gpgme_err_code (res->recipients->status) == GPG_ERR_NO_SECKEY)
+        err = GPG_ERR_NO_SECKEY;
+      /* XXX: return the keyids */
+    }
+  else
+    {
+      /* Decryption failed for other reasons. */
+    }
+
+
+  /* If the callback indicated a cancel operation, set the error
+     accordingly. */
+  if (err && (dk.opts & OPT_FLAG_CANCEL))
+    err = gpg_error (GPG_ERR_CANCELED);
 
  fail:
   if (in)
