@@ -680,6 +680,57 @@ op_verify (const char *inbuf, char **outbuf)
   return err;
 }
 
+/* Verify a detached message where the data is to be read from the
+   DATA_STREAM and the signature itself is expected to be the string
+   SIG_STRING.  FILENAME will be shown by the verification status
+   dialog box. */ 
+int
+op_verify_detached_sig (LPSTREAM data_stream,
+                        const char *sig_string, const char *filename)
+{
+  struct gpgme_data_cbs cbs;
+  gpgme_data_t data = NULL;
+  gpgme_data_t sig = NULL;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  gpgme_verify_result_t res = NULL;
+
+  memset (&cbs, 0, sizeof cbs);
+  cbs.read = stream_read_cb;
+  cbs.write = stream_write_cb;
+
+  op_init ();
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new_from_cbs (&data, &cbs, data_stream);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new_from_mem (&sig, sig_string, strlen (sig_string), 0);
+  if (err)
+    goto leave;
+
+  err = gpgme_op_verify (ctx, sig, data, NULL);
+  if (!err)
+    {
+      res = gpgme_op_verify_result (ctx);
+      if (res) 
+        verify_dialog_box (res);
+    }
+
+ leave:
+  if (data)
+    gpgme_data_release (data);
+  if (sig)
+    gpgme_data_release (sig);
+  if (ctx)
+    gpgme_release (ctx);
+  return err;
+}
+
 
 
 

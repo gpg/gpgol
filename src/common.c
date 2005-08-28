@@ -245,3 +245,25 @@ utf8_to_wchar2 (const char *string, size_t len)
   return result;
 }
 
+
+/* Strip off trailing white spaces from STRING.  Returns STRING. */
+char *
+trim_trailing_spaces (char *string)
+{
+  char *p, *mark;
+
+  for (mark=NULL, p=string; *p; p++)
+    {
+      if (strchr (" \t\r\n", *p ))
+        {
+          if (!mark)
+            mark = p;
+	}
+	else
+          mark = NULL;
+    }
+
+  if (mark)
+    *mark = 0;
+  return string;
+}

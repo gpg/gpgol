@@ -55,6 +55,8 @@ char *wchar_to_utf8 (const wchar_t *string);
 wchar_t *utf8_to_wchar (const char *string);
 wchar_t *utf8_to_wchar2 (const char *string, size_t len);
 
+char *trim_trailing_spaces (char *string);
+
 
 /*-- main.c --*/
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));

@@ -48,6 +48,26 @@ static const char oid_mimetag[] =
                                        __FILE__, __func__, __LINE__); \
                         } while (0)
 
+struct attach_info
+{
+  int end_of_table;  /* True if this is the last plus one entry of the
+                        table. */
+  int is_encrypted;  /* This is an encrypted attchment. */
+  int is_signed;     /* This is a signed attachment. */
+  unsigned int sig_pos; /* For signed attachments the index of the
+                           attachment with the detached signature. */
+  
+  int method;        /* MAPI attachmend method. */
+  char *filename;    /* Malloced filename of this attachment or NULL. */
+  char *content_type;/* Malloced string with the mime attrib or NULL.
+                        Parameters are stripped off thus a compare
+                        against "type/subtype" is sufficient. */
+  const char *content_type_parms; /* If not NULL the parameters of the
+                                     content_type. */
+
+};
+typedef struct attach_info *attach_info_t;
+
 
 
 /*
@@ -65,7 +85,7 @@ public:
     body_signed = NULL;
     body_cipher_is_html = false;
 
-    attach.table = NULL;
+    attach.att_table = NULL;
     attach.rows = NULL;
   }
 
@@ -78,10 +98,10 @@ public:
     xfree (body_cipher);
     xfree (body_signed);
 
-    if (attach.table)
+    if (attach.att_table)
       {
-        attach.table->Release ();
-        attach.table = NULL;
+        attach.att_table->Release ();
+        attach.att_table = NULL;
       }
     if (attach.rows)
       {
@@ -138,6 +158,9 @@ public:
 
   char **getRecipients (void);
   unsigned int getAttachments (void);
+  void verifyAttachment (HWND hwnd, attach_info_t table,
+                         unsigned int pos_data,
+                         unsigned int pos_sig);
   void decryptAttachment (HWND hwnd, int pos, bool save_plaintext, int ttl);
   void signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl);
   int encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
@@ -155,11 +178,12 @@ private:
   /* This structure collects the information about attachments. */
   struct 
   {
-    LPMAPITABLE table;/* The loaded attachment table or NULL. */
-    LPSRowSet   rows; /* The retrieved set of rows from the table. */
+    LPMAPITABLE att_table;/* The loaded attachment table or NULL. */
+    LPSRowSet   rows;     /* The retrieved set of rows from the table. */
   } attach;
   
   void loadBody (void);
+  attach_info_t gatherAttachmentInfo (void);
   int encrypt_and_sign (HWND hwnd, bool sign);
 };
 
@@ -203,6 +227,23 @@ free_recipient_array (char **recipients)
     }
 }
 
+/* Release a table with attachments infos. */
+static void
+release_attach_info (attach_info_t table)
+{
+  int i;
+
+  if (!table)
+    return;
+  for (i=0; !table[i].end_of_table; i++)
+    {
+      xfree (table[i].filename);
+      xfree (table[i].content_type);
+    }
+  xfree (table);
+}
+
+
 /* Return the number of recipients in the array RECIPIENTS. */
 static int 
 count_recipients (char **recipients)
@@ -212,6 +253,66 @@ count_recipients (char **recipients)
   for (i=0; recipients[i] != NULL; i++)
     ;
   return i;
+}
+
+
+/* Return a string suitable for displaying in a message box.  The
+   function takes FORMAT and replaces the string "@LIST@" with the
+   names of the attachmets. Depending on the set bits in WHAT only
+   certain attachments are inserted. 
+
+   Defined bits in MODE are:
+      0 = Any attachment
+      1 = signed attachments
+      2 = encrypted attachments
+
+   Caller must free the returned value.  Routine is guaranteed to
+   return a string.
+*/
+static char *
+text_from_attach_info (attach_info_t table, const char *format,
+                       unsigned int what)
+{
+  int pos;
+  size_t length;
+  char *buffer, *p;
+  const char *marker;
+
+  marker = strstr (format, "@LIST@");
+  if (!marker)
+    return xstrdup (format);
+
+#define CONDITION  (table[pos].filename \
+                    && ( (what&1) \
+                         || ((what & 2) && table[pos].is_signed) \
+                         || ((what & 4) && table[pos].is_encrypted)))
+
+  for (length=0, pos=0; !table[pos].end_of_table; pos++)
+    if (CONDITION)
+      length += 2 + strlen (table[pos].filename) + 1;
+
+  length += strlen (format);
+  buffer = p = (char*)xmalloc (length+1);
+
+  strncpy (p, format, marker - format);
+  p += marker - format;
+
+  for (pos=0; !table[pos].end_of_table; pos++)
+    if (CONDITION)
+      {
+        if (table[pos].is_signed)
+          p = stpcpy (p, "S ");
+        else if (table[pos].is_encrypted)
+          p = stpcpy (p, "E ");
+        else
+          p = stpcpy (p, "* ");
+        p = stpcpy (p, table[pos].filename);
+        p = stpcpy (p, "\n");
+      }
+  strcpy (p, marker+6);
+#undef CONDITION
+
+  return buffer;
 }
 
 
@@ -511,8 +612,12 @@ GpgMsgImpl::decrypt (HWND hwnd)
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
   openpgp_t mtype;
   char *plaintext = NULL;
-  int has_attach;
+  attach_info_t table = NULL;
   int err;
+  unsigned int pos;
+  unsigned int n_attach = 0;
+  unsigned int n_encrypted = 0;
+  unsigned int n_signed = 0;
   HRESULT hr;
 
   mtype = getMessageType ();
@@ -522,18 +627,31 @@ GpgMsgImpl::decrypt (HWND hwnd)
       return verify (hwnd);
     }
 
-  /* Check whether this possibly encrypted message as attachments.  We
-     check right now because we need to get into the decryptio code
-     even if the body is not encrypted but attachments are
-     available. FIXME: I am not sure whether this is the best
-     solution, we might want to skip the decryption step later and
-     also test for encrypted attachments right now.*/
-  has_attach = hasAttachments ();
-  if (mtype == OPENPGP_NONE && !has_attach ) 
+  /* Check whether this possibly encrypted message has encrypted
+     attachments.  We check right now because we need to get into the
+     decryption code even if the body is not encrypted but attachments
+     are available. */
+  table = gatherAttachmentInfo ();
+  if (table)
     {
+      for (pos=0; !table[pos].end_of_table; pos++)
+        if (table[pos].is_encrypted)
+          n_encrypted++;
+        else if (table[pos].is_signed)
+          n_signed++;
+      n_attach = pos;
+    }
+  log_debug ("%s:%s: message has %u attachments with "
+             "%u signed and %d encrypted\n",
+             __FILE__, __func__, n_attach, n_signed, n_encrypted);
+  if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed) 
+    {
+      /* Fixme: we should display the messsage box only if decryption
+         has explicity be requested. */
       MessageBox (NULL, "No valid OpenPGP data found.",
                   "GPG Decryption", MB_ICONERROR|MB_OK);
       log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
+      release_attach_info (table);
       return 0;
     }
 
@@ -542,7 +660,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
                       : gpg_error (GPG_ERR_NO_DATA);
   if (err)
     {
-      if (has_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
+      if (n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
         ;
       else
         MessageBox (NULL, op_strerror (err),
@@ -560,7 +678,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
          permanently.  This way the user can reply with the
          plaintext but the ciphertext is still stored. 
 
-         NOET: That does not work for OL2003!  This is the reason we
+         NOTE: That does not work for OL2003!  This is the reason we
          implemented the (not fully working) msgcache system. */
       log_debug ("decrypt isHtml=%d\n", is_html);
 
@@ -589,14 +707,62 @@ GpgMsgImpl::decrypt (HWND hwnd)
 	}
     }
 
-  if (has_attach)
+
+  /* Only for debugging. */
+  {
+    char *text = text_from_attach_info (table,
+                                        "List of attachments:\n@LIST@", 1);
+    MessageBox (NULL, text, "Debug infon", MB_OK|MB_ICONWARNING);
+    xfree (text);
+  }
+
+  /* If we have signed attachments.  Ask whether the signatures should
+     be verified; we do this is case of large attachments where
+     verification might take long. */
+  if (n_signed)
     {
-      unsigned int n;
+      const char s[] = 
+        "Signed attachments found.\n\n"
+        "@LIST@\n"
+        "Do you want to verify the signatures?";
+      int what;
+      char *text;
+
+      text = text_from_attach_info (table, s, 2);
       
-      n = getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
-      for (int i=0; i < n; i++) 
-        decryptAttachment (hwnd, i, true, opt.passwd_ttl);
+      what = MessageBox (NULL, text, "Attachment Verification",
+                         MB_YESNO|MB_ICONWARNING);
+      xfree (text);
+      if (what == IDYES) 
+        {
+          for (pos=0; !table[pos].end_of_table; pos++)
+            if (table[pos].is_signed)
+              {
+                assert (table[pos].sig_pos < n_attach);
+                verifyAttachment (hwnd, table, pos, table[pos].sig_pos);
+              }
+        }
+    }
+
+  if (n_encrypted)
+    {
+      const char s[] = 
+        "Encrypted attachments found.\n\n"
+        "@LIST@\n"
+        "Do you want to decrypt and save them?";
+      int what;
+      char *text;
+
+      text = text_from_attach_info (table, s, 4);
+      what = MessageBox (NULL, text, "Attachment Decryption",
+                         MB_YESNO|MB_ICONWARNING);
+      xfree (text);
+      if (what == IDYES) 
+        {
+          for (pos=0; !table[pos].end_of_table; pos++)
+            if (table[pos].is_encrypted)
+              decryptAttachment (hwnd, pos, true, opt.passwd_ttl);
+        }
     }
 
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
@@ -933,7 +1099,7 @@ GpgMsgImpl::getAttachments (void)
   if (!message)
     return 0;
 
-  if (!attach.table)
+  if (!attach.att_table)
     {
       hr = message->GetAttachmentTable (0, &table);
       if (FAILED (hr))
@@ -952,7 +1118,7 @@ GpgMsgImpl::getAttachments (void)
           table->Release ();
           return 0;
         }
-      attach.table = table;
+      attach.att_table = table;
       attach.rows = rows;
     }
 
@@ -981,6 +1147,85 @@ get_attach_method (LPATTACH obj)
   method = propval->Value.l;
   MAPIFreeBuffer (propval);
   return method;
+}
+
+
+/* Return the content-type of the attachment OBJ or NULL if it dow not
+   exists.  Caller must free. */
+static char *
+get_attach_mime_tag (LPATTACH obj)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  int method ;
+  char *name;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_MIME_TAG_A, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: error getting attachment's MIME tag: hr=%#lx",
+                 __FILE__, __func__, hr);
+      return NULL; 
+    }
+  switch ( PROP_TYPE (propval->ulPropTag) )
+    {
+    case PT_UNICODE:
+      name = wchar_to_utf8 (propval->Value.lpszW);
+      if (!name)
+        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+      break;
+      
+    case PT_STRING8:
+      name = xstrdup (propval->Value.lpszA);
+      break;
+      
+    default:
+      log_debug ("%s:%s: proptag=%xlx not supported\n",
+                 __FILE__, __func__, propval->ulPropTag);
+      break;
+    }
+  MAPIFreeBuffer (propval);
+  return name;
+}
+
+
+/* Return the data property of an attachments or NULL in case of an
+   error.  Caller must free.  Note, that this routine should only be
+   used for short data objects like detached signatures. */
+static char *
+get_short_attach_data (LPATTACH obj)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  int method ;
+  char *data;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_DATA_BIN, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: error getting attachment's data: hr=%#lx",
+                 __FILE__, __func__, hr);
+      return NULL; 
+    }
+  switch ( PROP_TYPE (propval->ulPropTag) )
+    {
+    case PT_UNICODE:
+      data = wchar_to_utf8 (propval->Value.lpszW);
+      if (!data)
+        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+      break;
+      
+    case PT_STRING8:
+      data = xstrdup (propval->Value.lpszA);
+      break;
+      
+    default:
+      log_debug ("%s:%s: proptag=%xlx not supported\n",
+                 __FILE__, __func__, propval->ulPropTag);
+      break;
+    }
+  MAPIFreeBuffer (propval);
+  return data;
 }
 
 
@@ -1101,6 +1346,196 @@ get_save_filename (HWND root, const char *srcname)
   if (GetSaveFileName (&ofn))
     return xstrdup (fname);
   return NULL;
+}
+
+
+/* Gather information about attachments and return a new object with
+   these information.  Caller must release the returned information.
+   The routine will return NULL in case of an error or if no
+   attachments are available. */
+attach_info_t
+GpgMsgImpl::gatherAttachmentInfo (void)
+{    
+  HRESULT hr;
+  attach_info_t table;
+  unsigned int pos, n_attach;
+  int method, err;
+  const char *s;
+
+  n_attach = getAttachments ();
+  log_debug ("%s:%s: message has %u attachments\n",
+             __FILE__, __func__, n_attach);
+  if (!n_attach)
+      return NULL;
+
+  table = (attach_info_t)xcalloc (n_attach+1, sizeof *table);
+  for (pos=0; pos < n_attach; pos++) 
+    {
+      LPATTACH att;
+
+      hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open attachment %d: hr=%#lx",
+                     __FILE__, __func__, pos, hr);
+          continue;
+        }
+
+      table[pos].method = get_attach_method (att);
+      table[pos].filename = get_attach_filename (att);
+      table[pos].content_type = get_attach_mime_tag (att);
+      if (table[pos].content_type)
+        {
+          char *p = strchr (table[pos].content_type, ';');
+          if (p)
+            {
+              *p++ = 0;
+              trim_trailing_spaces (table[pos].content_type);
+              while (strchr (" \t\r\n", *p))
+                p++;
+              trim_trailing_spaces (p);
+              table[pos].content_type_parms = p;
+            }
+        }
+      att->Release ();
+    }
+  table[pos].end_of_table = 1;
+
+  /* Figure out whether there are encrypted attachments. */
+  for (pos=0; !table[pos].end_of_table; pos++)
+    {
+      if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
+          &&  (!stricmp (s, ".pgp") || stricmp (s, ".gpg")))
+        table[pos].is_encrypted = 1;
+      else if (table[pos].content_type  
+               && ( !stricmp (table[pos].content_type,
+                              "application/pgp-encrypted")
+                   || (!stricmp (table[pos].content_type,
+                                 "multipart/encrypted")
+                       && table[pos].content_type_parms
+                       && strstr (table[pos].content_type_parms,
+                                  "application/pgp-encrypted"))))
+        table[pos].is_encrypted = 1;
+    }
+     
+  /* Figure out what attachments are signed. */
+  for (pos=0; !table[pos].end_of_table; pos++)
+    {
+      if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
+          &&  !stricmp (s, ".asc")
+          && table[pos].content_type  
+          && !stricmp (table[pos].content_type, "application/pgp-signed"))
+        {
+          size_t len = (s - table[pos].filename);
+
+          /* We mark the actual file, assuming that the .asc is a
+             detached signature.  To correlate the data file and the
+             signature we keep track of the POS. */
+          for (int i=0; !table[i].end_of_table; i++)
+            if (i != pos && table[i].filename 
+                && strlen (table[i].filename) == len
+                && !strncmp (table[i].filename, table[pos].filename, len))
+              {
+                table[i].is_signed = 1;
+                table[i].sig_pos = pos;
+              }
+        }
+    }
+
+  return table;
+}
+
+
+
+
+/* Verify the ATTachment at attachments and table position POS_DATA
+   agains the signature at position POS_SIG.  Display the status for
+   each signature. */
+void
+GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
+                              unsigned int pos_data,
+                              unsigned int pos_sig)
+
+{    
+  HRESULT hr;
+  LPATTACH att;
+  int err;
+  char *sig_data;
+
+  log_debug ("%s:%s: verifying attachment %d/%d",
+             __FILE__, __func__, pos_data, pos_sig);
+
+  assert (table);
+  assert (message);
+
+  /* First we copy the actual signature into a memory buffer.  Such a
+     signature is expected to be samll enough to be readable directly
+     (i.e.less that 16k as suggested by the MS MAPI docs). */
+  hr = message->OpenAttach (pos_sig, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment %d (sig): hr=%#lx",
+                 __FILE__, __func__, pos_sig, hr);
+      return;
+    }
+
+  if ( table[pos_sig].method == ATTACH_BY_VALUE )
+    sig_data = get_short_attach_data (att);
+  else
+    {
+      log_error ("%s:%s: attachment %d (sig): method %d not supported",
+                 __FILE__, __func__, pos_sig, table[pos_sig].method);
+      att->Release ();
+      return;
+    }
+  att->Release ();
+  if (!sig_data)
+    return; /* Problem getting signature; error has already been
+               logged. */
+
+  /* Now get on with the actual signed data. */
+  hr = message->OpenAttach (pos_data, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment %d (data): hr=%#lx",
+                 __FILE__, __func__, pos_data, hr);
+      xfree (sig_data);
+      return;
+    }
+
+  if ( table[pos_data].method == ATTACH_BY_VALUE )
+    {
+      LPSTREAM stream;
+
+      hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                              0, 0, (LPUNKNOWN*) &stream);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
+                     __FILE__, __func__, pos_data, hr);
+          goto leave;
+        }
+      err = op_verify_detached_sig (stream, sig_data,
+                                    table[pos_data].filename);
+      if (err)
+        {
+          log_debug ("%s:%s: verify detached signature failed: %s",
+                     __FILE__, __func__, op_strerror (err)); 
+          MessageBox (NULL, op_strerror (err),
+                      "GPG Attachment Verification", MB_ICONERROR|MB_OK);
+        }
+      stream->Release ();
+    }
+  else
+    {
+      log_error ("%s:%s: attachment %d (data): method %d not supported",
+                 __FILE__, __func__, pos_data, table[pos_data].method);
+    }
+
+ leave:
+  /* Close this attachment. */
+  xfree (sig_data);
+  att->Release ();
 }
 
 

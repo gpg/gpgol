@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-#ifndef _GPGMEDLGS_ENGINE_H
-#define _GPGMEDLGS_ENGINE_H 1
+#ifndef ENGINE_H
+#define ENGINE_H 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,6 +60,8 @@ int op_decrypt (const char *inbuf, char **outbuf, int ttl);
 int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl);
 
 int op_verify (const char *inbuf, char **outbuf);
+int op_verify_detached_sig (LPSTREAM data, const char *sig,
+                            const char *filename);
 
 
 int op_export_keys (const char *pattern[], const char *outfile);
@@ -77,4 +79,4 @@ const char* op_strerror (int err);
 #endif
 
 
-#endif /*_GPGMEDLGS_ENGINE_H*/
+#endif /*ENGINE_H*/
