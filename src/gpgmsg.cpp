@@ -69,7 +69,6 @@ struct attach_info
 typedef struct attach_info *attach_info_t;
 
 
-
 /*
    The implementation class of MapiGPGME.  
  */
@@ -161,7 +160,8 @@ public:
   void verifyAttachment (HWND hwnd, attach_info_t table,
                          unsigned int pos_data,
                          unsigned int pos_sig);
-  void decryptAttachment (HWND hwnd, int pos, bool save_plaintext, int ttl);
+  void decryptAttachment (HWND hwnd, int pos, bool save_plaintext, int ttl,
+                          const char *filename);
   void signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl);
   int encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
                          gpgme_key_t sign_key, int ttl);
@@ -331,7 +331,7 @@ GpgMsgImpl::loadBody (void)
 
   if (body || !message)
     return;
-  
+
 #if 1
   hr = message->OpenProperty (PR_BODY, &IID_IStream,
                               0, 0, (LPUNKNOWN*)&stream);
@@ -648,22 +648,23 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {
       /* Fixme: we should display the messsage box only if decryption
          has explicity be requested. */
-      MessageBox (NULL, "No valid OpenPGP data found.",
-                  "GPG Decryption", MB_ICONERROR|MB_OK);
+      MessageBox (hwnd, "No valid OpenPGP data found.",
+                  "GPG Decryption", MB_ICONWARNING|MB_OK);
       log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
       release_attach_info (table);
       return 0;
     }
 
 
-  err = *getOrigText()? op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl)
+  err = *getOrigText()? op_decrypt (getOrigText (), &plaintext,
+                                    opt.passwd_ttl, NULL)
                       : gpg_error (GPG_ERR_NO_DATA);
   if (err)
     {
       if (n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
         ;
       else
-        MessageBox (NULL, op_strerror (err),
+        MessageBox (hwnd, op_strerror (err),
                     "GPG Decryption", MB_ICONERROR|MB_OK);
     }
   else if (plaintext && *plaintext)
@@ -694,7 +695,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
             "Do you want to save the decrypted message?";
           int what;
           
-          what = MessageBox (NULL, s, "GPG Decryption",
+          what = MessageBox (hwnd, s, "GPG Decryption",
                              MB_YESNO|MB_ICONWARNING);
           if (what == IDYES) 
             {
@@ -707,14 +708,6 @@ GpgMsgImpl::decrypt (HWND hwnd)
 	}
     }
 
-
-  /* Only for debugging. */
-  {
-    char *text = text_from_attach_info (table,
-                                        "List of attachments:\n@LIST@", 1);
-    MessageBox (NULL, text, "Debug infon", MB_OK|MB_ICONWARNING);
-    xfree (text);
-  }
 
   /* If we have signed attachments.  Ask whether the signatures should
      be verified; we do this is case of large attachments where
@@ -730,8 +723,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
 
       text = text_from_attach_info (table, s, 2);
       
-      what = MessageBox (NULL, text, "Attachment Verification",
-                         MB_YESNO|MB_ICONWARNING);
+      what = MessageBox (hwnd, text, "Attachment Verification",
+                         MB_YESNO|MB_ICONINFORMATION);
       xfree (text);
       if (what == IDYES) 
         {
@@ -754,14 +747,15 @@ GpgMsgImpl::decrypt (HWND hwnd)
       char *text;
 
       text = text_from_attach_info (table, s, 4);
-      what = MessageBox (NULL, text, "Attachment Decryption",
-                         MB_YESNO|MB_ICONWARNING);
+      what = MessageBox (hwnd, text, "Attachment Decryption",
+                         MB_YESNO|MB_ICONINFORMATION);
       xfree (text);
       if (what == IDYES) 
         {
           for (pos=0; !table[pos].end_of_table; pos++)
             if (table[pos].is_encrypted)
-              decryptAttachment (hwnd, pos, true, opt.passwd_ttl);
+              decryptAttachment (hwnd, pos, true, opt.passwd_ttl,
+                                 table[pos].filename);
         }
     }
 
@@ -770,7 +764,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
 }
 
 
-/* Verify the message and displaythe verification result. */
+/* Verify the message and display the verification result. */
 int 
 GpgMsgImpl::verify (HWND hwnd)
 {
@@ -786,9 +780,9 @@ GpgMsgImpl::verify (HWND hwnd)
       return 0;
     }
 
-  err = op_verify (getOrigText (), NULL);
+  err = op_verify (getOrigText (), NULL, NULL);
   if (err)
-    MessageBox (NULL, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
+    MessageBox (hwnd, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
   else
     update_display (hwnd, this);
 
@@ -832,7 +826,7 @@ GpgMsgImpl::sign (HWND hwnd)
                      OP_SIG_CLEAR, sign_key, opt.passwd_ttl);
       if (err)
         {
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Sign", MB_ICONERROR|MB_OK);
           goto leave;
         }
@@ -955,7 +949,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
       err = op_encrypt (plaintext, &ciphertext, keys, NULL, 0);
       if (err)
         {
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Encryption", MB_ICONERROR|MB_OK);
           goto leave;
         }
@@ -1002,7 +996,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
         err = encryptAttachment (hwnd, i, keys, NULL, 0);
       if (err)
         {
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
           goto leave;
         }
@@ -1182,6 +1176,7 @@ get_attach_mime_tag (LPATTACH obj)
     default:
       log_debug ("%s:%s: proptag=%xlx not supported\n",
                  __FILE__, __func__, propval->ulPropTag);
+      name = NULL;
       break;
     }
   MAPIFreeBuffer (propval);
@@ -1209,19 +1204,18 @@ get_short_attach_data (LPATTACH obj)
     }
   switch ( PROP_TYPE (propval->ulPropTag) )
     {
-    case PT_UNICODE:
-      data = wchar_to_utf8 (propval->Value.lpszW);
-      if (!data)
-        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
-      break;
-      
-    case PT_STRING8:
-      data = xstrdup (propval->Value.lpszA);
+    case PT_BINARY:
+      /* This is a binary obnject but we know that it must be plain
+         ASCII due to the armoed format.  */
+      data = (char*)xmalloc (propval->Value.bin.cb + 1);
+      memcpy (data, propval->Value.bin.lpb, propval->Value.bin.cb);
+      data[propval->Value.bin.cb] = 0;
       break;
       
     default:
-      log_debug ("%s:%s: proptag=%xlx not supported\n",
+      log_debug ("%s:%s: proptag=%#lx not supported\n",
                  __FILE__, __func__, propval->ulPropTag);
+      data = NULL;
       break;
     }
   MAPIFreeBuffer (propval);
@@ -1309,6 +1303,7 @@ get_attach_filename (LPATTACH obj)
     default:
       log_debug ("%s:%s: proptag=%xlx not supported\n",
                  __FILE__, __func__, propval->ulPropTag);
+      name = NULL;
       break;
     }
   MAPIFreeBuffer (propval);
@@ -1332,6 +1327,10 @@ get_save_filename (HWND root, const char *srcname)
   OPENFILENAME ofn;
 
   memset (fname, 0, sizeof (fname));
+  strncpy (fname, srcname, MAX_PATH-1);
+  fname[MAX_PATH] = 0;  
+  
+
   memset (&ofn, 0, sizeof (ofn));
   ofn.lStructSize = sizeof (ofn);
   ofn.hwndOwner = root;
@@ -1340,7 +1339,7 @@ get_save_filename (HWND root, const char *srcname)
   ofn.lpstrFileTitle = NULL;
   ofn.nMaxFileTitle = 0;
   ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-  ofn.lpstrTitle = "GPG - Save decrypted attachments";
+  ofn.lpstrTitle = "GPG - Save decrypted attachment";
   ofn.lpstrFilter = filter;
 
   if (GetSaveFileName (&ofn))
@@ -1405,7 +1404,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   for (pos=0; !table[pos].end_of_table; pos++)
     {
       if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
-          &&  (!stricmp (s, ".pgp") || stricmp (s, ".gpg")))
+          &&  (!stricmp (s, ".pgp") || !stricmp (s, ".gpg")))
         table[pos].is_encrypted = 1;
       else if (table[pos].content_type  
                && ( !stricmp (table[pos].content_type,
@@ -1424,7 +1423,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
       if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
           &&  !stricmp (s, ".asc")
           && table[pos].content_type  
-          && !stricmp (table[pos].content_type, "application/pgp-signed"))
+          && !stricmp (table[pos].content_type, "application/pgp-signature"))
         {
           size_t len = (s - table[pos].filename);
 
@@ -1441,6 +1440,17 @@ GpgMsgImpl::gatherAttachmentInfo (void)
               }
         }
     }
+
+  log_debug ("%s:%s: attachment info:\n", __FILE__, __func__);
+  for (int i=0; !table[i].end_of_table; i++)
+    {
+      log_debug ("\t%d %d %d %u `%s' `%s' `%s'\n",
+                 i, table[i].is_encrypted,
+                 table[i].is_signed, table[i].sig_pos,
+                 table[i].filename, table[i].content_type,
+                 table[i].content_type_parms);
+    }
+  
 
   return table;
 }
@@ -1521,7 +1531,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
         {
           log_debug ("%s:%s: verify detached signature failed: %s",
                      __FILE__, __func__, op_strerror (err)); 
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Verification", MB_ICONERROR|MB_OK);
         }
       stream->Release ();
@@ -1541,10 +1551,11 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
 
 /* Decrypt the attachment with the internal number POS.
    SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
-   attachment is not yet supported. */
+   attachment is not yet supported.  If FILENAME is not NULL it will
+   be displayed along with status outputs. */
 void
 GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
-                               int ttl)
+                               int ttl, const char *filename)
 {    
   HRESULT hr;
   LPATTACH att;
@@ -1606,7 +1617,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
     }
   else if (method == ATTACH_BY_VALUE)
     {
-      const char *s;
+      char *s;
       char *outname;
       char *suggested_name;
       LPSTREAM from, to;
@@ -1614,18 +1625,20 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
       suggested_name = get_attach_filename (att);
       if (suggested_name)
         log_debug ("%s:%s: attachment %d, filename `%s'", 
-                   __FILE__, __func__, pos, suggested_name);
-      /* We only want to automatically decrypt attachmenst with
-         certain extensions.  FIXME: Also look for content-types. */
-      if (!suggested_name 
-          || !(s = strrchr (suggested_name, '.'))
-          || (stricmp (s, ".pgp") 
-              && stricmp (s, ".gpg") 
-              && stricmp (s, ".asc")))
+                  __FILE__, __func__, pos, suggested_name);
+      /* Strip of know extensions or use a default name. */
+      if (!suggested_name)
         {
-          log_debug ("%s:%s: attachment %d has no pgp extension\n", 
-                     __FILE__, __func__, pos);
-          goto leave;
+          xfree (suggested_name);
+          suggested_name = (char*)xmalloc (50);
+          snprintf (suggested_name, 49, "unnamed-%d.dat", pos);
+        }
+      else if ((s = strrchr (suggested_name, '.'))
+               && (!stricmp (s, ".pgp") 
+                   || !stricmp (s, ".gpg") 
+                   || !stricmp (s, ".asc")) )
+        {
+          *s = 0;
         }
       outname = get_save_filename (hwnd, suggested_name);
       xfree (suggested_name);
@@ -1652,7 +1665,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           goto leave;
         }
       
-      err = op_decrypt_stream (from, to, ttl);
+      err = op_decrypt_stream (from, to, ttl, filename);
       if (err)
         {
           log_debug ("%s:%s: decrypt stream failed: %s",
@@ -1660,7 +1673,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           to->Revert ();
           to->Release ();
           from->Release ();
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
           /* FIXME: We might need to delete outname now.  However a
              sensible implementation of the stream object should have
@@ -1832,7 +1845,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
           log_debug ("%s:%s: sign stream failed: %s",
                      __FILE__, __func__, op_strerror (err)); 
           to->Revert ();
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Signing", MB_ICONERROR|MB_OK);
           goto leave;
         }
@@ -2023,7 +2036,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
           log_debug ("%s:%s: encrypt stream failed: %s",
                      __FILE__, __func__, op_strerror (err)); 
           to->Revert ();
-          MessageBox (NULL, op_strerror (err),
+          MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
           goto leave;
         }

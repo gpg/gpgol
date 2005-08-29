@@ -164,7 +164,7 @@ int store_extension_value (const char *key, const char *val);
 int load_extension_value (const char *key, char **val);
 
 /*-- verify-dialog.c --*/
-int verify_dialog_box (gpgme_verify_result_t res);
+int verify_dialog_box (gpgme_verify_result_t res, const char *filename);
 
 #ifdef __cplusplus
 }

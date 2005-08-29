@@ -56,10 +56,12 @@ int op_sign (const char *inbuf, char **outbuf, int mode,
 int op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
                     gpgme_key_t sign_key, int ttl);
 
-int op_decrypt (const char *inbuf, char **outbuf, int ttl);
-int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl);
+int op_decrypt (const char *inbuf, char **outbuf, int ttl,
+                const char *filename);
+int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
+                       const char *filename);
 
-int op_verify (const char *inbuf, char **outbuf);
+int op_verify (const char *inbuf, char **outbuf, const char *filename);
 int op_verify_detached_sig (LPSTREAM data, const char *sig,
                             const char *filename);
 

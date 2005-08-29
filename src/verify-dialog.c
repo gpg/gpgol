@@ -29,6 +29,13 @@
 #include "keycache.h"
 #include "intern.h"
 
+struct dialog_context
+{
+  gpgme_verify_result_t res;
+  const char *filename;
+};
+
+
 static char*
 get_timestamp (time_t l)
 {
@@ -165,14 +172,22 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 static BOOL CALLBACK
 verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static gpgme_verify_result_t ctx;
+    static struct dialog_context *ctx;
 
     switch (msg) {
     case WM_INITDIALOG:
-	ctx = (gpgme_verify_result_t)lparam;
-	load_sigbox (dlg, ctx);
+	ctx = (struct dialog_context *)lparam;
+	load_sigbox (dlg, ctx->res);
 	center_window (dlg, NULL);
 	SetForegroundWindow (dlg);
+        if (ctx->filename)
+          {
+            char *tmp = xmalloc (strlen (ctx->filename) + 100);
+            strcpy (stpcpy (stpcpy (tmp, "Verification Result ("),
+                            ctx->filename), ")");
+            SetWindowText (dlg, tmp);
+            xfree (tmp);
+          }
 	break;
 
     case WM_COMMAND:
@@ -187,11 +202,19 @@ verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 
-/* Display the verify dialog based on the gpgme result in @res. */
+/* Display the verify dialog based on the gpgme result in
+   RES. FILENAME is used to modify the caption of the dialog; it may
+   be NULL. */
 int
-verify_dialog_box (gpgme_verify_result_t res)
+verify_dialog_box (gpgme_verify_result_t res, const char *filename)
 {
-    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_VRY, GetDesktopWindow (),
-		    verify_dlg_proc, (LPARAM)res);
-    return res->signatures->summary == GPGME_SIGSUM_GREEN? 0 : -1;
+  struct dialog_context ctx;
+
+  memset (&ctx,0, sizeof ctx);
+  ctx.res = res;
+  ctx.filename = filename;
+
+  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_VRY, GetDesktopWindow (),
+                  verify_dlg_proc, (LPARAM)&ctx);
+  return res->signatures->summary == GPGME_SIGSUM_GREEN? 0 : -1;
 }

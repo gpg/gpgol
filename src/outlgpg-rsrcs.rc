@@ -101,7 +101,7 @@ END
 
 IDD_VRY_DE DIALOG DISCARDABLE  0, 0, 253, 116
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Verify Dialog"
+CAPTION "Verifictation Result"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Signatur erstellt",IDC_STATIC,3,6,49,8
@@ -243,7 +243,7 @@ END
 
 IDD_VRY DIALOG DISCARDABLE  0, 0, 253, 116
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Verify Dialog"
+CAPTION "Verification Result"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Signature made",IDC_STATIC,3,6,50,8

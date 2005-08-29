@@ -106,7 +106,7 @@ public:
      SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
      attachemnt is not yet supported. */
   virtual void decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
-                                  int ttl);
+                                  int ttl, const char *filename);
 
   virtual void signAttachment (HWND hwnd, int pos,
                                gpgme_key_t sign_key, int ttl);

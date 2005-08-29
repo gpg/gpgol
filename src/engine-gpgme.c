@@ -40,6 +40,11 @@
 #include "passcache.h"
 #include "engine.h"
 
+#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
+                                       __FILE__, __func__, __LINE__); \
+                        } while (0)
+
+
 static char *debug_file = NULL;
 static int init_done = 0;
 
@@ -464,9 +469,10 @@ op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
 
 /* Run the decryption.  Decrypts INBUF to OUTBUF, caller must xfree
    the result at OUTBUF.  TTL is the time in seconds to cache a
-   passphrase. */
+   passphrase.  If FILENAME is not NULL it will be displayed along
+   with status outputs. */
 int 
-op_decrypt (const char *inbuf, char **outbuf, int ttl)
+op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename)
 {
   struct decrypt_key_s dk;
   gpgme_data_t in = NULL;
@@ -511,7 +517,7 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl)
       /* Now check the state of any signature. */
       res = gpgme_op_verify_result (ctx);
       if (res && res->signatures)
-        verify_dialog_box (res);
+        verify_dialog_box (res, filename);
     }
   else if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED)
     {
@@ -546,9 +552,12 @@ leave:
 }
 
 /* Decrypt the stream INSTREAM directly to the stream OUTSTREAM.
-   Returns 0 on success or an gpgme error code on failure. */
+   Returns 0 on success or an gpgme error code on failure.  If
+   FILENAME is not NULL it will be displayed along with status
+   outputs. */
 int
-op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl)
+op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
+                   const char *filename)
 {    
   struct decrypt_key_s dk;
   struct gpgme_data_cbs cbs;
@@ -589,7 +598,7 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl)
       /* Decryption succeeded.  Now check the state of the signatures. */
       res = gpgme_op_verify_result (ctx);
       if (res && res->signatures)
-        verify_dialog_box (res);
+        verify_dialog_box (res, filename);
     }
   else if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED)
     {
@@ -627,11 +636,12 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl)
 
 /* Verify a message in INBUF and return the new message (i.e. the one
    with stripped off dash escaping) in a newly allocated buffer
-   OUTBUF. IF OUTBUF is NULL only the verification result will be
+   OUTBUF. If OUTBUF is NULL only the verification result will be
    displayed (this is suitable for PGP/MIME messages).  A dialog box
-   will show the result of the verification. */
+   will show the result of the verification.  If FILENAME is not NULL
+   it will be displayed along with status outputs. */
 int
-op_verify (const char *inbuf, char **outbuf)
+op_verify (const char *inbuf, char **outbuf, const char *filename)
 {
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;
@@ -639,7 +649,8 @@ op_verify (const char *inbuf, char **outbuf)
   gpgme_error_t err;
   gpgme_verify_result_t res = NULL;
 
-  *outbuf = NULL;
+  if (outbuf)
+    *outbuf = NULL;
 
   op_init ();
 
@@ -668,7 +679,7 @@ op_verify (const char *inbuf, char **outbuf)
       res = gpgme_op_verify_result (ctx);
     }
   if (res) 
-    verify_dialog_box (res);
+    verify_dialog_box (res, filename);
 
  leave:
   if (out)
@@ -718,7 +729,7 @@ op_verify_detached_sig (LPSTREAM data_stream,
     {
       res = gpgme_op_verify_result (ctx);
       if (res) 
-        verify_dialog_box (res);
+        verify_dialog_box (res, filename);
     }
 
  leave:
