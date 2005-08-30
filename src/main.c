@@ -338,8 +338,10 @@ read_options (void)
             case 0: opt.compat.no_msgcache = x; break;
             case 1: opt.compat.no_pgpmime = x; break;
             case 2: opt.compat.no_oom_write = x; break;
+            case 3: opt.compat.preview_decryption = x; break;
             }
         }
+      log_debug ("Note: using compatibility flags: %s", val);
     }
   xfree (val); val = NULL;
 }

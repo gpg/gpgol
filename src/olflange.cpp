@@ -2,14 +2,14 @@
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
- * This file is part of OutlGPG.
+ * This file is part of GPGol.
  * 
- * OutlGPG is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * OutlGPG is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
@@ -100,7 +100,7 @@ DllRegisterServer (void)
     }
     
     dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hkey, "OutlGPG", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+    RegSetValueEx (hkey, "GPGol", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
 
     /* To avoid conflicts with the old G-DATA plugin and older vesions
        of this Plugin, we remove the key used by these versions. */
@@ -113,7 +113,7 @@ DllRegisterServer (void)
     RegCloseKey (hkey);
     
     hkey = NULL;
-    lstrcpy (szKeyBuf, "Software\\GNU\\OutlGPG");
+    lstrcpy (szKeyBuf, "Software\\GNU\\GPGol");
     RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
 		    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
     if (hkey != NULL)
@@ -140,7 +140,7 @@ DllUnregisterServer (void)
 	log_debug ("DllUnregisterServer: access denied.\n");
 	return E_ACCESSDENIED;
     }
-    RegDeleteValue (hkey, "OutlGPG");
+    RegDeleteValue (hkey, "GPGol");
     /* set outlook update flag */
     CHAR szEntry[512];
     strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
@@ -603,6 +603,31 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
                                           ULONG lFlags)
 {
   log_debug ("%s:%s: received\n", __FILE__, __func__);
+  if (opt.compat.preview_decryption)
+    {
+      HRESULT hr;
+      HWND hWnd = NULL;
+      LPMESSAGE pMessage = NULL;
+      LPMDB pMDB = NULL;
+
+      if (FAILED (pEECB->GetWindow (&hWnd)))
+        hWnd = NULL;
+      hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      if (SUCCEEDED (hr))
+        {
+          GpgMsg *m = CreateGpgMsg (pMessage);
+          m->setExchangeCallback ((void*)pEECB);
+          m->setSilent (1);
+          m->decrypt (hWnd);
+          delete m;
+	}
+      if (pMessage)
+        UlRelease(pMessage);
+      if (pMDB)
+        UlRelease(pMDB);
+    }
+  
+
   return S_FALSE;
 }
 
@@ -1060,7 +1085,7 @@ CGPGExchExtCommands::DoCommand (
     {
       if (start_key_manager ())
         MessageBox (NULL, "Could not start Key-Manager",
-                    "OutlGPG", MB_ICONERROR|MB_OK);
+                    "GPGol", MB_ICONERROR|MB_OK);
     }
 
   return S_OK; 

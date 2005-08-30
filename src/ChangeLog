@@ -1,5 +1,7 @@
 2005-08-30  Werner Koch  <wk@g10code.com>
 
+	Renamed from "outlgpg" to "gpgol".
+
 	More or less finished this major rewrite.
 
 2005-08-26  Werner Koch  <wk@g10code.com>

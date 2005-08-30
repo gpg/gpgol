@@ -1,4 +1,4 @@
-# Makefile.am - main makefile for OutlGPG
+# Makefile.am - main makefile for GPGol
 # Copyright (C) 2005 g10 Code GmbH
 # 
 # This file is free software; as a special exception the author gives

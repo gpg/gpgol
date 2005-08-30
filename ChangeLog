@@ -1,3 +1,7 @@
+2005-08-30  Werner Koch  <wk@g10code.com>
+
+	Renamed project to gpgol.
+
 2005-08-14  Werner Koch  <wk@g10code.com>
 
 	* configure.ac: Build src/versioninfo.rc.

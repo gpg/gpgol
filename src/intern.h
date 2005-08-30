@@ -55,7 +55,7 @@ typedef enum
     GPG_ATTACH_SIGN = 4,
     GPG_ATTACH_SIGNENCRYPT = GPG_ATTACH_SIGN|GPG_ATTACH_ENCRYPT
   }
-outlgpg_attachment_action_t;
+gpgol_attachment_action_t;
 
 
 typedef enum
@@ -64,7 +64,7 @@ typedef enum
     GPG_FMT_CLASSIC = 1,    /* encrypt attachments without any encoding */
     GPG_FMT_PGP_PEF = 2     /* use the PGP partioned encoding format (PEF) */
   } 
-outlgpg_format_t;
+gpgol_format_t;
 
 /* Type of a message. */
 typedef enum 
@@ -127,6 +127,7 @@ struct
     unsigned int no_msgcache:1;
     unsigned int no_pgpmime:1;
     unsigned int no_oom_write:1; /* Don't write using Outlooks object model. */
+    unsigned int preview_decryption:1;
   } compat; 
 } opt;
 

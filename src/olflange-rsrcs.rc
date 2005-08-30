@@ -1,14 +1,14 @@
 /* olflange-rsrcs.rc - Olflange specific resource.
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
- * This file is part of OutlGPG.
+ * This file is part of GPGol.
  * 
- * OutlGPG is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * OutlGPG is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
@@ -81,7 +81,7 @@ BEGIN
     LTEXT           "Logdatei",IDC_STATIC,18,146,28,8
     EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "OutlGPG by g10 Code GmbH", IDC_STATIC,8,185,100,8
+    LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
     LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9
     CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
                     SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
@@ -199,7 +199,7 @@ BEGIN
     LTEXT           "Logfile",IDC_STATIC,18,146,22,8
     EDITTEXT        IDC_DEBUG_LOGFILE,48,145,138,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "OutlGPG by g10 Code GmbH", IDC_STATIC,8,185,100,8
+    LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
     LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9
     CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
                     SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64

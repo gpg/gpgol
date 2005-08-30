@@ -1,7 +1,7 @@
 /* Simple wrapper to create one resource file from several RC
    files. */
 
-#include "outlgpg-rsrcs.rc"
+#include "gpgol-rsrcs.rc"
 #include "olflange-rsrcs.rc"
 #include "versioninfo.rc"
 

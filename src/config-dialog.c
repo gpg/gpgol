@@ -2,14 +2,14 @@
  *	Copyright (C) 2005 g10 Code GmbH
  *	Copyright (C) 2003 Timo Schulz
  *
- * This file is part of OutlGPG.
+ * This file is part of GPGol.
  * 
- * OutlGPG is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * OutlGPG is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <gpgme.h>
 
-#include "outlgpg-ids.h"
+#include "gpgol-ids.h"
 #include "keycache.h"
 #include "intern.h"
 
@@ -38,7 +38,7 @@
 #define REGPATH "Software\\GNU\\GnuPG"
 
 /* Registry path to store plugin settings */
-#define OUTLGPG_REGPATH "Software\\GNU\\OutlGPG"
+#define GPGOL_REGPATH "Software\\GNU\\GPGol"
 
 static char*
 get_open_file_name (const char *dir)
@@ -438,7 +438,7 @@ start_key_manager (void)
 int
 store_extension_value (const char *key, const char *val)
 {
-    return store_config_value (HKEY_CURRENT_USER, OUTLGPG_REGPATH, key, val);
+    return store_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
 }
 
 /* Load a key from the registry with the key given by @key. The value is
@@ -446,5 +446,5 @@ store_extension_value (const char *key, const char *val)
 int
 load_extension_value (const char *key, char **val)
 {
-    return load_config_value (HKEY_CURRENT_USER, OUTLGPG_REGPATH, key, val);
+    return load_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
 }

@@ -1,4 +1,4 @@
-# configure.ac - for Outlgpg
+# configure.ac - for GPGol
 # Copyright (C) 2005 g10 Code GmbH
 #
 # This file is free software; as a special exception the author gives
@@ -15,7 +15,7 @@ min_automake_version="1.9.4"
 
 # Version number: Remember to change it immediately *after* a release.
 #                 Add a "-cvs" prefix for non-released code.
-AC_INIT(outlgpg, 0.100.0-cvs, bug-outlgpg@g10code.com)
+AC_INIT(gpgol, 0.9.0-cvs, bug-gpgol@g10code.com)
 
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0
@@ -168,22 +168,6 @@ fi
 AC_SUBST(W32LIBS)
 
 
-
-# AC_CONFIG_LINKS([
-# olflange/gpgexch.cpp:olflange/GPGExch.cpp
-# olflange/gpgexch.def:olflange/GPGExch.def
-# olflange/gpgexch.dsp:olflange/GPGExch.dsp
-# olflange/gpgexch.dsw:olflange/GPGExch.dsw
-# olflange/gpgexch.h:olflange/GPGExch.h
-# olflange/gpgexch.plg:olflange/GPGExch.plg
-# olflange/gpgexch.rc:olflange/GPGExch.rc
-# olflange/gpgexchange.h:olflange/GPGExchange.h
-# olflange/gpgoptions.cpp:olflange/GPGOptions.cpp
-# olflange/gpgoptionsdlg.cpp:olflange/GPGOptionsDlg.cpp
-# olflange/stdafx.cpp:olflange/StdAfx.cpp
-# olflange/stdafx.h:olflange/StdAfx.h
-# ])
-# 
 
 #
 # Print errors here so that they are visible all

@@ -1,14 +1,14 @@
 /* gpgmsg.cpp - Implementation ofthe GpgMsg class
  *	Copyright (C) 2005 g10 Code GmbH
  *
- * This file is part of OutlGPG.
+ * This file is part of GPGol.
  * 
- * OutlGPG is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * OutlGPG is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
@@ -84,7 +84,7 @@ public:
     body = NULL;
     body_plain = NULL;
     is_pgpmime = false;
-    
+    silent = false;
 
     attach.att_table = NULL;
     attach.rows = NULL;
@@ -139,6 +139,11 @@ public:
     exchange_cb = cb;
   }
   
+  void setSilent (bool value)
+  {
+    silent = value;
+  }
+
   openpgp_t getMessageType (void);
   bool hasAttachments (void);
   const char *getOrigText (void);
@@ -177,6 +182,8 @@ private:
   char *body;         /* utf-8 encoded body string or NULL. */
   char *body_plain;   /* Plaintext version of BODY or NULL. */
   bool is_pgpmime;    /* True if the message is a PGP/MIME encrypted one. */
+  bool silent;        /* Don't pop up message boxes.  Currently this
+                         is only used with decryption. g*/
 
   /* This structure collects the information about attachments. */
   struct 
@@ -700,10 +707,9 @@ GpgMsgImpl::decrypt (HWND hwnd)
              __FILE__, __func__, n_attach, n_signed, n_encrypted);
   if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed) 
     {
-      /* Fixme: we should display the messsage box only if decryption
-         has explicity be requested. */
-      MessageBox (hwnd, "No valid OpenPGP data found.",
-                  "GPG Decryption", MB_ICONWARNING|MB_OK);
+      if (!silent)
+        MessageBox (hwnd, "No valid OpenPGP data found.",
+                    "GPG Decryption", MB_ICONWARNING|MB_OK);
       log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
       release_attach_info (table);
       return 0;
@@ -794,7 +800,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       /* XXX: find a way to handle text/html message in a better way! */
       /* I have disabled the kludge to see what happens to a html
          message. */
-      if (/*is_html ||*/ update_display (hwnd, this, exchange_cb)) 
+      if (!silent && /*is_html ||*/ update_display (hwnd, this, exchange_cb)) 
         {
           const char s[] = 
             "The message text cannot be displayed.\n"
@@ -820,7 +826,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   /* If we have signed attachments.  Ask whether the signatures should
      be verified; we do this is case of large attachments where
      verification might take long. */
-  if (n_signed && !pgpmime_succeeded)
+  if (!silent && n_signed && !pgpmime_succeeded)
     {
       const char s[] = 
         "Signed attachments found.\n\n"
@@ -845,7 +851,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
     }
 
-  if (n_encrypted && !pgpmime_succeeded)
+  if (!silent && n_encrypted && !pgpmime_succeeded)
     {
       const char s[] = 
         "Encrypted attachments found.\n\n"
@@ -953,7 +959,7 @@ GpgMsgImpl::sign (HWND hwnd)
          failed. */
     }
 
-  set_x_header (message, "Outlgpg-Version", PACKAGE_VERSION);
+  set_x_header (message, "GPGol-Version", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it
@@ -1110,7 +1116,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
         }
     }
 
-  set_x_header (message, "Outlgpg-Version", PACKAGE_VERSION);
+  set_x_header (message, "GPGol-Version", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it
@@ -1578,7 +1584,12 @@ GpgMsgImpl::gatherAttachmentInfo (void)
                                  "multipart/encrypted")
                        && table[pos].content_type_parms
                        && strstr (table[pos].content_type_parms,
-                                  "application/pgp-encrypted"))))
+                                  "application/pgp-encrypted"))
+                   || (!stricmp (table[pos].content_type,
+                                 "application/pgp")
+                       && table[pos].content_type_parms
+                       && strstr (table[pos].content_type_parms,
+                                  "x-action=encrypt"))))
         table[pos].is_encrypted = 1;
     }
      
@@ -1604,6 +1615,11 @@ GpgMsgImpl::gatherAttachmentInfo (void)
                 table[i].sig_pos = pos;
               }
         }
+      else if (table[pos].content_type  
+               && (!stricmp (table[pos].content_type, "application/pgp")
+                   && table[pos].content_type_parms
+                   && strstr (table[pos].content_type_parms,"x-action=sign")))
+        table[pos].is_signed = 1;
     }
 
   log_debug ("%s:%s: attachment info:\n", __FILE__, __func__);

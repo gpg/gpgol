@@ -1,4 +1,4 @@
-# Makefile.am - main makefile for dialogs part of OutlGPG
+# Makefile.am - main makefile for dialogs part of GPGol
 # Copyright (C) 2005 g10 Code GmbH
 # 
 # This file is free software; as a special exception the author gives
@@ -11,18 +11,18 @@
 
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = outlgpg 
-EXTRA_DIST = versioninfo.rc.in outlgpg-rsrcs.rc olflange-rsrcs.rc \
+bin_PROGRAMS = gpgol 
+EXTRA_DIST = versioninfo.rc.in gpgol-rsrcs.rc olflange-rsrcs.rc \
 	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp    
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) -shared
 AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
 
-outlgpg_SOURCES = \
-	main.c  outlgpg.def         \
+gpgol_SOURCES = \
+	main.c  gpgol.def           \
 	resource.rc	            \
-        outlgpg-ids.h               \
+        gpgol-ids.h                 \
 	olflange.cpp olflange.h     \
 	olflange-def.h              \
 	olflange-dlgs.cpp           \
@@ -44,10 +44,10 @@ outlgpg_SOURCES = \
 	mymapi.h  mymapitags.h      \
         vasprintf.c          
 
-outlgpg_LDADD = outlgpg.def  \
+gpgol_LDADD = gpgol.def  \
 		$(GPGME_LIBS) mapi32.dll -lshell32 -lgdi32 -lcomdlg32
 
-resource.o: resource.rc versioninfo.rc outlgpg-rsrcs.rc olflange-rsrcs.rc
+resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 
 .rc.o:
 	$(WINDRES) `test -f '$<' || echo '$(srcdir)/'`$< $@

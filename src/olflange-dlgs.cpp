@@ -2,14 +2,14 @@
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
- * This file is part of OutlGPG.
+ * This file is part of GPGol.
  * 
- * OutlGPG is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * OutlGPG is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
@@ -102,7 +102,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             && y >= rect_banner.top && y <= rect_banner.bottom)
           {
             ShellExecute (NULL, "open",
-                          "http://www.g10code.com/p-outlgpg.html",
+                          "http://www.g10code.com/p-gpgol.html",
                           NULL, NULL, SW_SHOWNORMAL);	
           }
       }
@@ -194,29 +194,29 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		
 	case PSN_HELP:
 	    MessageBox (pnmhdr->hwndFrom,
-    "This is OutlGPG version " PACKAGE_VERSION "\n"
+    "This is GPGol version " PACKAGE_VERSION "\n"
     "Copyright (C) 2005 g10 Code GmbH\n"
     "\n"
-    "OutlGPG is a plugin for Outlook to allow encryption and\n"
+    "GPGol is a plugin for Outlook to allow encryption and\n"
     "signing of messages using the OpenPGP standard. It makes\n"
     "use of the GnuPG software (http://www.gnupg.org). Latest\n"
     "release information are accessible by clicking on the logo.\n"
     "\n"
-    "OutlGPG is free software; you can redistribute it and/or\n"
+    "GPGol is free software; you can redistribute it and/or\n"
     "modify it under the terms of the GNU Lesser General Public\n"
     "License as published by the Free Software Foundation; either\n"
     "version 2.1 of the License, or (at your option) any later version.\n"
     "\n"
-    "OutlGPG is distributed in the hope that it will be useful,\n"
+    "GPGol is distributed in the hope that it will be useful,\n"
     "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n"
-    "Lesser General Public License for more details.\n"
+    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+    "GNU Lesser General Public License for more details.\n"
     "\n"
     "You should have received a copy of the GNU Lesser General Public\n"
     "License along with this library; if not, write to the Free Software\n"
     "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA\n"
     "02110-1301, USA.\n",
-                  "GnuPG Plugin", MB_OK);
+                  "GPGol", MB_OK);
 	    bMsgResult = TRUE;
 	    break;
 

@@ -1,6 +1,6 @@
 
-LIBRARY      "OutlGPG"
-DESCRIPTION  'OutlGPG Plugin for Outlook'
+LIBRARY      "gpgol"
+DESCRIPTION  'GPGol - GPG Plugin for Outlook'
 
 EXPORTS
     ExchEntryPoint = ExchEntryPoint@0            @1

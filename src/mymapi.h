@@ -1,4 +1,4 @@
-/* mymapi.h - MAPI definitions required for OutlGPG and Mingw32
+/* mymapi.h - MAPI definitions required for GPGol and Mingw32
  * Copyright (C) 1998 Justin Bradford
  * Copyright (C) 2000 François Gouget
  * Copyright (C) 2005 g10 Code GmbH

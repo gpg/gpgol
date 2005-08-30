@@ -1,14 +1,14 @@
 /* util.h - Common functions.
  *	Copyright (C) 2005 g10 Code GmbH
  *
- * This file is part of OutlGPG.
+ * This file is part of GPGol.
  * 
- * OutlGPG is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * OutlGPG is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
@@ -80,14 +80,14 @@ int write_options (void);
 
 #ifndef HAVE_STPCPY
 static inline char *
-_outlgpg_stpcpy (char *a, const char *b)
+_gpgol_stpcpy (char *a, const char *b)
 {
   while (*b)
     *a++ = *b++;
   *a = 0;
   return a;
 }
-#define stpcpy(a,b) _outlgpg_stpcpy ((a), (b))
+#define stpcpy(a,b) _gpgol_stpcpy ((a), (b))
 #endif /*!HAVE_STPCPY*/
 
 
