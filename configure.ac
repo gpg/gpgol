@@ -15,7 +15,7 @@ min_automake_version="1.9.4"
 
 # Version number: Remember to change it immediately *after* a release.
 #                 Add a "-cvs" prefix for non-released code.
-AC_INIT(outlgpg, 0.99.5-cvs, bug-outlgpg@g10code.com)
+AC_INIT(outlgpg, 0.100.0-cvs, bug-outlgpg@g10code.com)
 
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0

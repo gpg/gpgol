@@ -321,10 +321,26 @@ read_options (void)
   set_default_key (val);
   xfree (val); val = NULL;
 
-  /* Note, that on prupose theses flags are only Registry changeable.
-     The format of the entry is a string of the format "0xnnnnnnn". */
+  /* Note, that on purpose these flags are only Registry changeable.
+     The format of the entry is a string of of "0" and "1" digits; see
+     the switch below for a description. */
   load_extension_value ("compatFlags", &val);
-  opt.compat_flags = val? strtoul (val, NULL, 0) : 0;
+  if (val)
+    {
+      const char *s = val;
+      int i, x;
+
+      for (s=val, i=0; *s; s++, i++)
+        {
+          x = *s == '1';
+          switch (i)
+            {
+            case 0: opt.compat.no_msgcache = x; break;
+            case 1: opt.compat.no_pgpmime = x; break;
+            case 2: opt.compat.no_oom_write = x; break;
+            }
+        }
+    }
   xfree (val); val = NULL;
 }
 

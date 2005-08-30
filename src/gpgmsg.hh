@@ -47,6 +47,9 @@ public:
   /* Set a new MAPI message into the object. */
   virtual void setMapiMessage (LPMESSAGE msg);
 
+  /* Set the callback for Exchange. */
+  virtual void setExchangeCallback (void *cb);
+  
   /* Return the type of the message. */
   virtual openpgp_t getMessageType (void);
 
@@ -63,14 +66,6 @@ public:
      text.  */
   virtual const char *getDisplayText (void);
 
-  /* Save STRING as the plaintext version of the message.  WARNING:
-     ownership of STRING is transferred to this object. */
-  virtual void setPlainText (char *string);
-
-  /* Save STRING as the signed version of the message.  WARNING:
-     ownership of STRING is transferred to this object. */
-  virtual void setSignedText (char *string);
-  
   /* Return true if STRING matches the actual message. */ 
   virtual bool matchesString (const char *string);
 

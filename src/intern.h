@@ -121,11 +121,14 @@ struct
   char *default_key;         /* Malloced default key or NULL. */
   int add_default_key;       /* Always also encrypt to the default key. */
 
-  unsigned int compat_flags; /* compatibility flags. */
+  /* The compatibility flags. */
+  struct 
+  {
+    unsigned int no_msgcache:1;
+    unsigned int no_pgpmime:1;
+    unsigned int no_oom_write:1; /* Don't write using Outlooks object model. */
+  } compat; 
 } opt;
-
-
-#define COMPAT_NOMSGCACHE() (opt.compat_flags & 1)
 
 
 

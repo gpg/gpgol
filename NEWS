@@ -1,16 +1,15 @@
-Noteworthy changes for version 0.99.5
+Noteworthy changes for version 0.100.0
 =================================================
 
-* The package as meanwhile be renamed to outlgpg and with this
-  versions thye actual DLLs have also been renamed to olgpgmain.dll
-  and olgpgcore.dll.
+* Major rewrite.
 
-* olgpgcore.dll may now be build using the Mingw32 toolchain; this is
-  actually the suggested build environment.  olgpgmain.dll still
-  requires a native compiler with support for ATL; however most of the
-  functionality is in the other DLL.
+* The package as been renamed to outlgpg and consist of only one
+  DLL named "outlgpg.dll".  Installation of gpgme.dll and
+  libgpg-error.dll is required.
 
-* outlgpg now uses the GPGME library.
+* It may now only be build using the Mingw32 toolchain.
+
+* outlgpg now uses the standard GPGME.
 
 
 Noteworthy changes for version 0.6.1 (unreleased)

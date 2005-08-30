@@ -331,6 +331,54 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
 }
 
 
+int
+put_outlook_property (void *pEECB, const char *key, const char *value)
+{
+  int result = -1;
+  HRESULT hr;
+  LPMDB pMDB = NULL;
+  LPMESSAGE pMessage = NULL;
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  DISPID dispid_put = DISPID_PROPERTYPUT;
+  DISPPARAMS dispparams;
+  VARIANT aVariant;
+
+  if (!pEECB)
+    return -1;
+
+  hr = ((LPEXCHEXTCALLBACK)pEECB)->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+  if (FAILED(hr))
+    log_debug ("%s:%s: getObject failed: hr=%#x\n", hr);
+  else if ( (pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB,
+                                            key, &dispid)))
+    {
+      dispparams.cNamedArgs = 1;
+      dispparams.rgdispidNamedArgs = &dispid_put;
+      dispparams.cArgs = 1;
+      dispparams.rgvarg = &aVariant;
+      dispparams.rgvarg[0].vt = VT_LPWSTR;
+      dispparams.rgvarg[0].bstrVal = utf8_to_wchar (value);
+      hr = pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                         DISPATCH_PROPERTYPUT, &dispparams,
+                         NULL, NULL, NULL);
+      xfree (dispparams.rgvarg[0].bstrVal);
+      log_debug ("%s:%s: PROPERTYPUT(%s) result -> %#lx\n",
+                 __FILE__, __func__, key, hr);
+
+      pDisp->Release();
+      pDisp = NULL;
+      result = 0;
+    }
+
+  if (pMessage)
+    UlRelease(pMessage);
+  if (pMDB)
+    UlRelease(pMDB);
+  return result;
+}
+
+
 
 /* The entry point which Exchange calls.  This is called for each
    context entry. Creates a new CGPGExchExt object every time so each
@@ -600,6 +648,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
   if (SUCCEEDED (hr))
     {
       GpgMsg *m = CreateGpgMsg (msg);
+      m->setExchangeCallback ((void*)pEECB);
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = m->signEncrypt (hWnd);
       if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
@@ -808,7 +857,7 @@ CGPGExchExtCommands::InstallCommands (
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (FAILED(hr))
         log_debug ("%s:%s: getObject failed: hr=%#x\n", hr);
-      else if ( !COMPAT_NOMSGCACHE() 
+      else if ( !opt.compat.no_msgcache
                 && (body = msgcache_get (pMessage, &refhandle)) 
                 && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
         {
@@ -996,6 +1045,7 @@ CGPGExchExtCommands::DoCommand (
           if (nCommandID == m_nCmdEncrypt)
             {
               GpgMsg *m = CreateGpgMsg (pMessage);
+              m->setExchangeCallback ((void*)pEECB);
               m->decrypt (hWnd);
               delete m;
 	    }

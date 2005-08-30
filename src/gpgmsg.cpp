@@ -41,9 +41,6 @@ static const char oid_mimetag[] =
   {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
 
 
-/* The string used as the standard XXXXX of decrypted attachments. */
-#define ATT_FILE_PREFIX ".pgpenc"
-
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                        __FILE__, __func__, __LINE__); \
                         } while (0)
@@ -69,6 +66,11 @@ struct attach_info
 typedef struct attach_info *attach_info_t;
 
 
+static int get_attach_method (LPATTACH obj);
+static bool set_x_header (LPMESSAGE msg, const char *name, const char *val);
+
+
+
 /*
    The implementation class of MapiGPGME.  
  */
@@ -78,11 +80,11 @@ public:
   GpgMsgImpl () 
   {
     message = NULL;
+    exchange_cb = NULL;
     body = NULL;
     body_plain = NULL;
-    body_cipher = NULL;
-    body_signed = NULL;
-    body_cipher_is_html = false;
+    is_pgpmime = false;
+    
 
     attach.att_table = NULL;
     attach.rows = NULL;
@@ -94,8 +96,6 @@ public:
       message->Release ();
     xfree (body);
     xfree (body_plain);
-    xfree (body_cipher);
-    xfree (body_signed);
 
     if (attach.att_table)
       {
@@ -132,14 +132,18 @@ public:
         message = msg;
       }
   }
+
+  /* Set the callback for Exchange. */
+  void setExchangeCallback (void *cb)
+  {
+    exchange_cb = cb;
+  }
   
   openpgp_t getMessageType (void);
   bool hasAttachments (void);
   const char *getOrigText (void);
   const char *GpgMsgImpl::getDisplayText (void);
   const char *getPlainText (void);
-  void setPlainText (char *string);
-  void setSignedText (char *string);
   bool matchesString (const char *string);
 
   int decrypt (HWND hwnd);
@@ -169,11 +173,10 @@ public:
 
 private:
   LPMESSAGE message;  /* Pointer to the message. */
+  void *exchange_cb;  /* Call back used with the display function. */
   char *body;         /* utf-8 encoded body string or NULL. */
   char *body_plain;   /* Plaintext version of BODY or NULL. */
-  char *body_cipher;  /* Enciphered version of BODY or NULL. */
-  char *body_signed;  /* Signed version of BODY or NULL. */
-  bool body_cipher_is_html; /* Indicating that BODY_CIPHER holds HTML. */
+  bool is_pgpmime;    /* True if the message is a PGP/MIME encrypted one. */
 
   /* This structure collects the information about attachments. */
   struct 
@@ -183,6 +186,7 @@ private:
   } attach;
   
   void loadBody (void);
+  bool isPgpmimeVersionPart (int pos);
   attach_info_t gatherAttachmentInfo (void);
   int encrypt_and_sign (HWND hwnd, bool sign);
 };
@@ -332,89 +336,86 @@ GpgMsgImpl::loadBody (void)
   if (body || !message)
     return;
 
-#if 1
-  hr = message->OpenProperty (PR_BODY, &IID_IStream,
-                              0, 0, (LPUNKNOWN*)&stream);
-  if ( hr != S_OK )
-    {
-      log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
-                 __FILE__, __func__, hr);
-      return;
-    }
-
-  hr = stream->Stat (&statInfo, STATFLAG_NONAME);
-  if ( hr != S_OK )
-    {
-      log_debug ("%s:%s: Stat failed: hr=%#lx", __FILE__, __func__, hr);
-      stream->Release ();
-      return;
-    }
-  
-  /* FIXME: We might want to read only the first 1k to decide whetehr
-     this is actually an OpenPGP message and only then continue
-     reading.  This requires some changes in this module. */
-  body = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 2);
-  hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
-  if ( hr != S_OK )
-    {
-      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
-      xfree (body);
-      body = NULL;
-      stream->Release ();
-      return;
-    }
-  body[nread] = 0;
-  body[nread+1] = 0;
-  if (nread != statInfo.cbSize.QuadPart)
-    {
-      log_debug ("%s:%s: not enough bytes returned\n", __FILE__, __func__);
-      xfree (body);
-      body = NULL;
-      stream->Release ();
-      return;
-    }
-  stream->Release ();
-
-  /* Fixme: We need to optimize this. */
-  {
-    char *tmp;
-    tmp = wchar_to_utf8 ((wchar_t*)body);
-    if (!tmp)
-      log_debug ("%s: error converting to utf8\n", __func__);
-    else
-      {
-        xfree (body);
-        body = tmp;
-      }
-  }
-
-#else /* Old method. */
   hr = HrGetOneProp ((LPMAPIPROP)message, PR_BODY, &lpspvFEID);
-  if (FAILED (hr))
-    {
-      log_debug ("%s: HrGetOneProp failed\n", __func__);
-      return;
+  if (SUCCEEDED (hr))
+    { /* Message is small enough to be retrieved this way. */
+      switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
+        {
+        case PT_UNICODE:
+          body = wchar_to_utf8 (lpspvFEID->Value.lpszW);
+          if (!body)
+            log_debug ("%s: error converting to utf8\n", __func__);
+          break;
+          
+        case PT_STRING8:
+          body = xstrdup (lpspvFEID->Value.lpszA);
+          break;
+          
+        default:
+          log_debug ("%s: proptag=0x%08lx not supported\n",
+                     __func__, lpspvFEID->ulPropTag);
+          break;
+        }
+      MAPIFreeBuffer (lpspvFEID);
     }
-    
-  switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
+  else /* Message is large; Use a stream to read it. */
     {
-    case PT_UNICODE:
-      body = wchar_to_utf8 (lpspvFEID->Value.lpszW);
-      if (!body)
-        log_debug ("%s: error converting to utf8\n", __func__);
-      break;
+      hr = message->OpenProperty (PR_BODY, &IID_IStream,
+                                  0, 0, (LPUNKNOWN*)&stream);
+      if ( hr != S_OK )
+        {
+          log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
+                     __FILE__, __func__, hr);
+          return;
+        }
       
-    case PT_STRING8:
-      body = xstrdup (lpspvFEID->Value.lpszA);
-      break;
+      hr = stream->Stat (&statInfo, STATFLAG_NONAME);
+      if ( hr != S_OK )
+        {
+          log_debug ("%s:%s: Stat failed: hr=%#lx", __FILE__, __func__, hr);
+          stream->Release ();
+          return;
+        }
       
-    default:
-      log_debug ("%s: proptag=0x%08lx not supported\n",
-                 __func__, lpspvFEID->ulPropTag);
-      break;
+      /* Fixme: We might want to read only the first 1k to decide
+         whether this is actually an OpenPGP message and only then
+         continue reading.  This requires some changes in this
+         module. */
+      body = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 2);
+      hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
+      if ( hr != S_OK )
+        {
+          log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+          xfree (body);
+          body = NULL;
+          stream->Release ();
+          return;
+        }
+      body[nread] = 0;
+      body[nread+1] = 0;
+      if (nread != statInfo.cbSize.QuadPart)
+        {
+          log_debug ("%s:%s: not enough bytes returned\n", __FILE__, __func__);
+          xfree (body);
+          body = NULL;
+          stream->Release ();
+          return;
+        }
+      stream->Release ();
+      
+      /* FIXME: We need to optimize this. */
+      {
+        char *tmp;
+        tmp = wchar_to_utf8 ((wchar_t*)body);
+        if (!tmp)
+          log_debug ("%s: error converting to utf8\n", __func__);
+        else
+          {
+            xfree (body);
+            body = tmp;
+          }
+      }
     }
-  MAPIFreeBuffer (lpspvFEID);
-#endif  
 
   if (body)
     log_debug ("%s:%s: loaded body `%s' at %p\n",
@@ -425,9 +426,83 @@ GpgMsgImpl::loadBody (void)
 //   prop.Value.l = MAPI_ACCESS_MODIFY;
 //   hr = HrSetOneProp (message, &prop);
 //   if (FAILED (hr))
-//     log_debug_w32 (-1,"%s:%s: updating access to 0x%08lx failed",
-//                    __FILE__, __func__, prop.Value.l);
+//     log_debug ("%s:%s: updating message access to 0x%08lx failed: hr=%#lx",
+//                    __FILE__, __func__, prop.Value.l, hr);
 }
+
+
+/* Return the subject of the message or NULL if it does not
+   exists.  Caller must free. */
+static char *
+get_subject (LPMESSAGE obj)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  char *name;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_SUBJECT, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: error getting the subject: hr=%#lx",
+                 __FILE__, __func__, hr);
+      return NULL; 
+    }
+  switch ( PROP_TYPE (propval->ulPropTag) )
+    {
+    case PT_UNICODE:
+      name = wchar_to_utf8 (propval->Value.lpszW);
+      if (!name)
+        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+      break;
+      
+    case PT_STRING8:
+      name = xstrdup (propval->Value.lpszA);
+      break;
+      
+    default:
+      log_debug ("%s:%s: proptag=%xlx not supported\n",
+                 __FILE__, __func__, propval->ulPropTag);
+      name = NULL;
+      break;
+    }
+  MAPIFreeBuffer (propval);
+  return name;
+}
+
+/* Set the subject of the message OBJ to STRING. Returns 0 on
+   success. */
+static int
+set_subject (LPMESSAGE obj, const char *string)
+{
+  HRESULT hr;
+  SPropValue prop;
+  const char *s;
+  
+  /* Decide whether we ned to use the Unicode version. */
+  for (s=string; *s && !(*s & 0x80); s++)
+    ;
+  if (*s)
+    {
+      prop.ulPropTag = PR_SUBJECT_W;
+      prop.Value.lpszW = utf8_to_wchar (string);
+      hr = HrSetOneProp (obj, &prop);
+      xfree (prop.Value.lpszW);
+    }
+  else /* Only plain ASCII. */
+    {
+      prop.ulPropTag = PR_SUBJECT_A;
+      prop.Value.lpszA = (CHAR*)string;
+      hr = HrSetOneProp (obj, &prop);
+    }
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: HrSetOneProp failed: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      return gpg_error (GPG_ERR_GENERAL);
+    }
+  return 0;
+}
+
 
 
 /* Return the type of a message. */
@@ -481,28 +556,6 @@ GpgMsgImpl::getDisplayText (void)
     return body;
   else
     return "";
-}
-
-
-
-/* Save STRING as the plaintext version of the message.  WARNING:
-   ownership of STRING is transferred to this object. */
-void
-GpgMsgImpl::setPlainText (char *string)
-{
-  xfree (body_plain);
-  body_plain = string;
-  msgcache_put (body_plain, 0, message);
-}
-
-
-/* Save STRING as the signed version of the message.  WARNING:
-   ownership of STRING is transferred to this object. */
-void
-GpgMsgImpl::setSignedText (char *string)
-{
-  xfree (body_signed);
-  body_signed = string;
 }
 
 
@@ -619,6 +672,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   unsigned int n_encrypted = 0;
   unsigned int n_signed = 0;
   HRESULT hr;
+  int pgpmime_succeeded = 0;
 
   mtype = getMessageType ();
   if (mtype == OPENPGP_CLEARSIG)
@@ -655,25 +709,79 @@ GpgMsgImpl::decrypt (HWND hwnd)
       return 0;
     }
 
+  if (is_pgpmime)
+    {
+      LPATTACH att;
+      int method;
+      LPSTREAM from;
+      
+      hr = message->OpenAttach (1, NULL, MAPI_BEST_ACCESS, &att);	
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open PGP/MIME attachment 2: hr=%#lx",
+                     __FILE__, __func__, hr);
+          MessageBox (hwnd, "Problem decrypting PGP/MIME message",
+                      "GPG Decryption", MB_ICONERROR|MB_OK);
+          log_debug ("%s:%s: leave (PGP/MIME problem)\n", __FILE__, __func__);
+          release_attach_info (table);
+          return gpg_error (GPG_ERR_GENERAL);
+        }
 
-  err = *getOrigText()? op_decrypt (getOrigText (), &plaintext,
-                                    opt.passwd_ttl, NULL)
-                      : gpg_error (GPG_ERR_NO_DATA);
+      method = get_attach_method (att);
+      if (method != ATTACH_BY_VALUE)
+        {
+          log_error ("%s:%s: unsupported method %d for PGP/MIME attachment 2",
+                     __FILE__, __func__, method);
+          MessageBox (hwnd, "Problem decrypting PGP/MIME message",
+                      "GPG Decryption", MB_ICONERROR|MB_OK);
+          log_debug ("%s:%s: leave (bad PGP/MIME method)\n",__FILE__,__func__);
+          att->Release ();
+          release_attach_info (table);
+          return gpg_error (GPG_ERR_GENERAL);
+        }
+
+      hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                              0, 0, (LPUNKNOWN*) &from);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open data of attachment 2: hr=%#lx",
+                     __FILE__, __func__, pos, hr);
+          MessageBox (hwnd, "Problem decrypting PGP/MIME message",
+                      "GPG Decryption", MB_ICONERROR|MB_OK);
+          log_debug ("%s:%s: leave (OpenProperty failed)\n",__FILE__,__func__);
+          att->Release ();
+          release_attach_info (table);
+          return gpg_error (GPG_ERR_GENERAL);
+        }
+
+      err = op_decrypt_stream_to_buffer (from, &plaintext,
+                                         opt.passwd_ttl, NULL);
+      from->Release ();
+      att->Release ();
+      if (!err)
+        pgpmime_succeeded = 1;
+    }
+  else if (*getOrigText())
+    err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl, NULL);
+  else
+    err = gpg_error (GPG_ERR_NO_DATA);
   if (err)
     {
-      if (n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
+      if (!is_pgpmime && n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
         ;
       else
         MessageBox (hwnd, op_strerror (err),
-                    "GPG Decryption", MB_ICONERROR|MB_OK);
+                    "GPG decryption failed", MB_ICONERROR|MB_OK);
     }
   else if (plaintext && *plaintext)
     {	
       int is_html = is_html_body (plaintext);
 
       set_message_body (message, plaintext);
-      setPlainText (plaintext);
+      xfree (body_plain);
+      body_plain = plaintext;
       plaintext = NULL;
+      msgcache_put (body_plain, 0, message);
 
       /* Also set PR_BODY but do not use 'SaveChanges' to make it
          permanently.  This way the user can reply with the
@@ -686,7 +794,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       /* XXX: find a way to handle text/html message in a better way! */
       /* I have disabled the kludge to see what happens to a html
          message. */
-      if (/*is_html ||*/ update_display (hwnd, this))
+      if (/*is_html ||*/ update_display (hwnd, this, exchange_cb)) 
         {
           const char s[] = 
             "The message text cannot be displayed.\n"
@@ -712,7 +820,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   /* If we have signed attachments.  Ask whether the signatures should
      be verified; we do this is case of large attachments where
      verification might take long. */
-  if (n_signed)
+  if (n_signed && !pgpmime_succeeded)
     {
       const char s[] = 
         "Signed attachments found.\n\n"
@@ -737,7 +845,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
     }
 
-  if (n_encrypted)
+  if (n_encrypted && !pgpmime_succeeded)
     {
       const char s[] = 
         "Encrypted attachments found.\n\n"
@@ -759,6 +867,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
     }
 
+  release_attach_info (table);
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
   return err;
 }
@@ -784,7 +893,7 @@ GpgMsgImpl::verify (HWND hwnd)
   if (err)
     MessageBox (hwnd, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
   else
-    update_display (hwnd, this);
+    update_display (hwnd, this, NULL);
 
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
   return err;
@@ -803,7 +912,7 @@ GpgMsgImpl::sign (HWND hwnd)
   int err = 0;
   gpgme_key_t sign_key = NULL;
 
-  log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  log_debug ("%s:%s: enter message=%p\n", __FILE__, __func__, message);
   
   /* We don't sign an empty body - a signature on a zero length string
      is pretty much useless. */
@@ -830,8 +939,6 @@ GpgMsgImpl::sign (HWND hwnd)
                       "GPG Sign", MB_ICONERROR|MB_OK);
           goto leave;
         }
-      setSignedText (signedtext);
-      signedtext = NULL;
     }
 
   if (opt.auto_sign_attach && hasAttachments ())
@@ -846,6 +953,8 @@ GpgMsgImpl::sign (HWND hwnd)
          failed. */
     }
 
+  set_x_header (message, "Outlgpg-Version", PACKAGE_VERSION);
+
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it
      to empty first. */
@@ -853,7 +962,7 @@ GpgMsgImpl::sign (HWND hwnd)
     {
       err = set_message_body (message, "");
       if (!err)
-        set_message_body (message, signedtext);
+        err = set_message_body (message, signedtext);
       if (err)
         goto leave;
     }
@@ -874,6 +983,7 @@ int
 GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
 {
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  HRESULT hr;
   gpgme_key_t *keys = NULL;
   gpgme_key_t sign_key = NULL;
   bool is_html;
@@ -941,7 +1051,6 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
                    i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
     }
 
-
   if (*plaintext)
     {
       is_html = is_html_body (plaintext);
@@ -962,7 +1071,6 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
         }
 
 //       {
-//         HRESULT hr;
 //         SPropValue prop;
 
 //         prop.ulPropTag=PR_MESSAGE_CLASS_A;
@@ -1002,6 +1110,8 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
         }
     }
 
+  set_x_header (message, "Outlgpg-Version", PACKAGE_VERSION);
+
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it
      to empty first. */
@@ -1009,7 +1119,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
     {
       err = set_message_body (message, "");
       if (!err)
-        set_message_body (message, ciphertext);
+        err = set_message_body (message, ciphertext);
       if (err)
         goto leave;
     }
@@ -1119,6 +1229,8 @@ GpgMsgImpl::getAttachments (void)
   return attach.rows->cRows > 0? attach.rows->cRows : 0;
 }
 
+
+
 /* Return the attachment method for attachment OBJ. In case of error we
    return 0 which happens to be not defined. */
 static int
@@ -1223,46 +1335,98 @@ get_short_attach_data (LPATTACH obj)
 }
 
 
+/* Check whether the attachment at position POS in the attachment
+   table is the first part of a PGP/MIME message.  This routine should
+   only be called if it has already been checked that the content-type
+   of the attachment is application/pgp-encrypted. */
+bool
+GpgMsgImpl::isPgpmimeVersionPart (int pos)
+{
+  HRESULT hr;
+  LPATTACH att;
+  LPSPropValue propval = NULL;
+  bool result = false;
 
-/* Example Code. */
-static bool 
-set_x_header (GpgMsg * msg, const char *name, const char *val)
-{  
-#ifndef __MINGW32__
-    USES_CONVERSION;
-#endif
-    LPMDB lpMdb = NULL;
-    HRESULT hr = 0;
-    LPSPropTagArray pProps = NULL;
-    SPropValue pv;
-    MAPINAMEID mnid[1];	
-    // {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers	
-    GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
-		 0x00, 0x00, 0x00, 0x46} };
+  hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED(hr))
+    return false;
 
-    memset (&mnid[0], 0, sizeof (MAPINAMEID));
-    mnid[0].lpguid = &guid;
-    mnid[0].ulKind = MNID_STRING;
-//     mnid[0].Kind.lpwstrName = A2W (name);
-// FIXME
-//    hr = msg->GetIDsFromNames (1, (LPMAPINAMEID*)mnid, MAPI_CREATE, &pProps);
-    if (FAILED (hr)) {
-	log_debug ("set X-Header failed.\n");
-	return false;
+  hr = HrGetOneProp ((LPMAPIPROP)att, PR_ATTACH_SIZE, &propval);
+  if (FAILED (hr))
+    {
+      att->Release ();
+      return false;
     }
-    
-    pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
-    pv.Value.lpszA = (char *)val;
-//FIXME     hr = HrSetOneProp(msg, &pv);	
-    if (!SUCCEEDED (hr)) {
-	log_debug ("set X-Header failed.\n");
-	return false;
+  if ( PROP_TYPE (propval->ulPropTag) != PT_LONG
+      || propval->Value.l < 10 || propval->Value.l > 1000 )
+    {
+      MAPIFreeBuffer (propval);
+      att->Release ();
+      return false;
     }
+  MAPIFreeBuffer (propval);
 
-    log_debug ("set X-Header succeeded.\n");
-    return true;
+  hr = HrGetOneProp ((LPMAPIPROP)att, PR_ATTACH_DATA_BIN, &propval);
+  if (SUCCEEDED (hr))
+    {
+      if (PROP_TYPE (propval->ulPropTag) == PT_BINARY)
+        {
+          if (propval->Value.bin.cb > 10 && propval->Value.bin.cb < 15 
+              && !memcmp (propval->Value.bin.lpb, "Version: 1", 10)
+              && ( propval->Value.bin.lpb[10] == '\r'
+                   || propval->Value.bin.lpb[10] == '\n'))
+            result = true;
+        }
+      MAPIFreeBuffer (propval);
+    }
+  att->Release ();
+  return result;
 }
 
+
+
+/* Set an arbitary header in the message MSG with NAME to the value
+   VAL. */
+static bool 
+set_x_header (LPMESSAGE msg, const char *name, const char *val)
+{  
+  HRESULT hr;
+  LPMDB lpMdb = NULL;
+  LPSPropTagArray pProps = NULL;
+  SPropValue pv;
+  MAPINAMEID mnid, *pmnid;	
+  /* {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers */
+  GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
+                                            0x00, 0x00, 0x00, 0x46} };
+
+  if (!msg)
+    return false;
+
+  memset (&mnid, 0, sizeof mnid);
+  mnid.lpguid = &guid;
+  mnid.ulKind = MNID_STRING;
+  mnid.Kind.lpwstrName = utf8_to_wchar (name);
+  pmnid = &mnid;
+  hr = msg->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &pProps);
+  xfree (mnid.Kind.lpwstrName);
+  if (FAILED (hr)) 
+    {
+      log_error ("%s:%s: can't get mapping for header `%s': hr=%#lx\n",
+                 __FILE__, __func__, name, hr); 
+      return false;
+    }
+    
+  pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
+  pv.Value.lpszA = (char *)val;
+  hr = HrSetOneProp(msg, &pv);	
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set header `%s': hr=%#lx\n",
+                 __FILE__, __func__, name, hr); 
+      return false;
+    }
+  return true;
+}
 
 
 
@@ -1361,6 +1525,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   int method, err;
   const char *s;
 
+  is_pgpmime = false;
   n_attach = getAttachments ();
   log_debug ("%s:%s: message has %u attachments\n",
              __FILE__, __func__, n_attach);
@@ -1442,15 +1607,30 @@ GpgMsgImpl::gatherAttachmentInfo (void)
     }
 
   log_debug ("%s:%s: attachment info:\n", __FILE__, __func__);
-  for (int i=0; !table[i].end_of_table; i++)
+  for (pos=0; !table[pos].end_of_table; pos++)
     {
       log_debug ("\t%d %d %d %u `%s' `%s' `%s'\n",
-                 i, table[i].is_encrypted,
-                 table[i].is_signed, table[i].sig_pos,
-                 table[i].filename, table[i].content_type,
-                 table[i].content_type_parms);
+                 pos, table[pos].is_encrypted,
+                 table[pos].is_signed, table[pos].sig_pos,
+                 table[pos].filename, table[pos].content_type,
+                 table[pos].content_type_parms);
     }
-  
+
+  /* Simple check whether this is PGP/MIME encrypted.  At least with
+     OL2003 the conent-type of the body is also correctly set but we
+     don't make use of this as it is not clear whether this is true
+     for othyer storage providers. */
+  if (!opt.compat.no_pgpmime
+      && pos == 2 && table[0].content_type && table[1].content_type
+      && !stricmp (table[0].content_type, "application/pgp-encrypted")
+      && !stricmp (table[1].content_type, "application/octet-stream")
+      && isPgpmimeVersionPart (0))
+    {
+      log_debug ("\tThis is a PGP/MIME encrypted message - table adjusted");
+      table[0].is_encrypted = 0;
+      table[1].is_encrypted = 1;
+      is_pgpmime = true;
+    }
 
   return table;
 }
@@ -2010,7 +2190,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
         }
 
       prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
-      prop.Value.lpszA = "application/pgp-encrypted;foomode=baz";
+      prop.Value.lpszA = "application/pgp-encrypted";
       hr = HrSetOneProp (newatt, &prop);
       if (hr != S_OK)
         {

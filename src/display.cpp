@@ -112,7 +112,7 @@ find_message_window (HWND parent, GpgMsg *msg)
 
 /* Update the display using the message MSG.  Return 0 on success. */
 int
-update_display (HWND hwnd, GpgMsg *msg)
+update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb)
 {
   HWND window;
 
@@ -124,6 +124,11 @@ update_display (HWND hwnd, GpgMsg *msg)
       log_debug ("%s:%s: window text is now `%s'",
                  __FILE__, __func__, msg->getDisplayText ());
       return 0;
+    }
+  else if (exchange_cb && !opt.compat.no_oom_write)
+    {
+      return put_outlook_property (exchange_cb, "Body",
+                                   msg->getDisplayText ());
     }
   else
     {
@@ -141,7 +146,7 @@ set_message_body (LPMESSAGE message, const char *string)
 {
   HRESULT hr;
   SPropValue prop;
-  BOOL dummy_bool;
+  //  BOOL dummy_bool;
   const char *s;
   
   /* Decide whether we ned to use the Unicode version. */
@@ -166,9 +171,13 @@ set_message_body (LPMESSAGE message, const char *string)
                  __FILE__, __func__, hr); 
       return gpg_error (GPG_ERR_GENERAL);
     }
-  hr = RTFSync (message, RTF_SYNC_BODY_CHANGED, &dummy_bool);
-  if (hr != S_OK)
-    log_debug ("%s:%s: RTFSync failed: hr=%#lx - error ignored",
-               __FILE__, __func__, hr); 
+// When enabling the code below the result is that (under OL2003
+// standalone) the message is sent with an empty body.  Thus we don't
+// do it.  Note further that the specs say that when dummy_bool
+// returns true, SaveChanges must be called on the message.
+//   hr = RTFSync (message, RTF_SYNC_BODY_CHANGED, &dummy_bool);
+//   if (hr != S_OK)
+//     log_debug ("%s:%s: RTFSync failed: hr=%#lx - error ignored",
+//                __FILE__, __func__, hr); 
   return 0;
 }

@@ -28,9 +28,13 @@ int is_html_body (const char *body);
 
 char *add_html_line_endings (const char *body);
 
-int update_display (HWND hwnd, GpgMsg *msg);
+int update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb);
 
 int set_message_body (LPMESSAGE message, const char *string);
+
+
+/*-- olflange.cpp --*/
+int put_outlook_property (void *pEECB, const char *key, const char *value);
 
 
 #endif /*DISPLAY_H*/
