@@ -752,32 +752,15 @@ CGPGExchExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 }
 
 
-
-// We can't read the Body object because it would fire up the
-// security pop-up.  Writing is okay.
-//       vtResult.pdispVal = NULL;
-//       pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-//                     DISPATCH_PROPERTYGET, &dispparamsNoArgs,
-//                     &vtResult, NULL, NULL);
-
-//       log_debug ("%s:%s: Body=%p (%s)\n", __FILE__, __func__, 
-//                    vtResult.pbVal,
-//                    (tmp = wchar_to_utf8 ((wchar_t*)vtResult.pbVal)));
-
-
-
-// XXX IExchExtSessionEvents::OnDelivery: could be used to automatically decrypt new mails
-// when they arrive
-
 /* Called by Echange to install commands and toolbar buttons.  Returns
-    S_FALSE to signal Exchange to continue calling extensions. */
+   S_FALSE to signal Exchange to continue calling extensions. */
 STDMETHODIMP 
 CGPGExchExtCommands::InstallCommands (
 	LPEXCHEXTCALLBACK pEECB, // The Exchange Callback Interface.
 	HWND hWnd,               // The window handle to the main window
                                  // of context.
 	HMENU hMenu,             // The menu handle to main menu of context.
-	UINT FAR * pnCommandIDBase,  // The base conmmand id.
+	UINT FAR * pnCommandIDBase,  // The base command id.
 	LPTBENTRY pTBEArray,     // The array of toolbar button entries.
 	UINT nTBECnt,            // The count of button entries in array.
 	ULONG lFlags)            // reserved
@@ -793,22 +776,22 @@ CGPGExchExtCommands::InstallCommands (
   int force_encrypt = 0;
   
   log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
-               m_lContext,
-               (m_lContext == EECONTEXT_SESSION?           "Session"          :
-                m_lContext == EECONTEXT_VIEWER?            "Viewer"           :
-                m_lContext == EECONTEXT_REMOTEVIEWER?      "RemoteViewer"     :
-                m_lContext == EECONTEXT_SEARCHVIEWER?      "SearchViewer"     :
-                m_lContext == EECONTEXT_ADDRBOOK?          "AddrBook"         :
-                m_lContext == EECONTEXT_SENDNOTEMESSAGE?   "SendNoteMessage"  :
-                m_lContext == EECONTEXT_READNOTEMESSAGE?   "ReadNoteMessage"  :
-                m_lContext == EECONTEXT_SENDPOSTMESSAGE?   "SendPostMessage"  :
-                m_lContext == EECONTEXT_READPOSTMESSAGE?   "ReadPostMessage"  :
-                m_lContext == EECONTEXT_READREPORTMESSAGE? "ReadReportMessage":
-                m_lContext == EECONTEXT_SENDRESENDMESSAGE? "SendResendMessage":
-                m_lContext == EECONTEXT_PROPERTYSHEETS?    "PropertySheets"   :
-                m_lContext == EECONTEXT_ADVANCEDCRITERIA?  "AdvancedCriteria" :
-                m_lContext == EECONTEXT_TASK?              "Task" : ""),
-               lFlags);
+             m_lContext,
+             (m_lContext == EECONTEXT_SESSION?           "Session"          :
+              m_lContext == EECONTEXT_VIEWER?            "Viewer"           :
+              m_lContext == EECONTEXT_REMOTEVIEWER?      "RemoteViewer"     :
+              m_lContext == EECONTEXT_SEARCHVIEWER?      "SearchViewer"     :
+              m_lContext == EECONTEXT_ADDRBOOK?          "AddrBook"         :
+              m_lContext == EECONTEXT_SENDNOTEMESSAGE?   "SendNoteMessage"  :
+              m_lContext == EECONTEXT_READNOTEMESSAGE?   "ReadNoteMessage"  :
+              m_lContext == EECONTEXT_SENDPOSTMESSAGE?   "SendPostMessage"  :
+              m_lContext == EECONTEXT_READPOSTMESSAGE?   "ReadPostMessage"  :
+              m_lContext == EECONTEXT_READREPORTMESSAGE? "ReadReportMessage":
+              m_lContext == EECONTEXT_SENDRESENDMESSAGE? "SendResendMessage":
+              m_lContext == EECONTEXT_PROPERTYSHEETS?    "PropertySheets"   :
+              m_lContext == EECONTEXT_ADVANCEDCRITERIA?  "AdvancedCriteria" :
+              m_lContext == EECONTEXT_TASK?              "Task" : ""),
+             lFlags);
 
 
   if (m_lContext == EECONTEXT_READNOTEMESSAGE
@@ -841,7 +824,7 @@ CGPGExchExtCommands::InstallCommands (
      whether he really wants to do that.  
 
      Note, that we can't optimize the code here by first reading the
-     body becuase this would pop up the securiy window, telling tghe
+     body because this would pop up the securiy window, telling the
      user that someone is trying to read these data.
   */
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
@@ -872,7 +855,7 @@ CGPGExchExtCommands::InstallCommands (
                              NULL, NULL, NULL);
           xfree (dispparams.rgvarg[0].bstrVal);
           log_debug ("%s:%s: PROPERTYPUT(body) result -> %d\n",
-                       __FILE__, __func__, hr);
+                     __FILE__, __func__, hr);
 
           pDisp->Release();
           pDisp = NULL;
@@ -893,126 +876,137 @@ CGPGExchExtCommands::InstallCommands (
 
 
   /* XXX: factor out common code */
-  if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
-    int nTBIndex;
-    HWND hwndToolbar = NULL;
-    CHAR szBuffer[128];
+  if (m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+      int nTBIndex;
+      HWND hwndToolbar = NULL;
+      CHAR szBuffer[128];
 
-    pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
-                       NULL, NULL, 0);
-    AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
+      pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
+                         NULL, NULL, 0);
+      AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-    LoadString (glob_hinst, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
-    AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
-                *pnCommandIDBase, szBuffer);
+      LoadString (glob_hinst, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
+      AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
+                  *pnCommandIDBase, szBuffer);
 
-    m_nCmdEncrypt = *pnCommandIDBase;
-    (*pnCommandIDBase)++;
+      m_nCmdEncrypt = *pnCommandIDBase;
+      (*pnCommandIDBase)++;
 	
-    for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {	
-      if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
-        hwndToolbar = pTBEArray[nTBIndex].hwnd;		
-        m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
-        pTBEArray[nTBIndex].itbbBase++;
-        break;		
-      }	
+      for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
+        {	
+          if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
+            {
+              hwndToolbar = pTBEArray[nTBIndex].hwnd;		
+              m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
+              pTBEArray[nTBIndex].itbbBase++;
+              break;		
+            }	
+        }
+
+      if (hwndToolbar)
+        {
+          TBADDBITMAP tbab;
+          tbab.hInst = glob_hinst;
+          tbab.nID = IDB_DECRYPT;
+          m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
+                                          1, (LPARAM)&tbab);
+          m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
+          pTBEArray[nTBIndex].itbbBase++;
+        }
     }
 
-    if (hwndToolbar) {
-      TBADDBITMAP tbab;
-      tbab.hInst = glob_hinst;
-      tbab.nID = IDB_DECRYPT;
-      m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
-                                      1, (LPARAM)&tbab);
-      m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
-      pTBEArray[nTBIndex].itbbBase++;
-    }
-  }
+  if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      CHAR szBuffer[128];
+      int nTBIndex;
+      HWND hwndToolbar = NULL;
 
-  if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
-    CHAR szBuffer[128];
-    int nTBIndex;
-    HWND hwndToolbar = NULL;
-
-    pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools,
-                      NULL, NULL, 0);
-    AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
+      pEECB->GetMenuPos(EECMDID_ToolsCustomizeToolbar, &hMenuTools,
+                        NULL, NULL, 0);
+      AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-    LoadString(glob_hinst, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
-    AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING,
-               *pnCommandIDBase, szBuffer);
+      LoadString(glob_hinst, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
+      AppendMenu(hMenuTools, MF_STRING,
+                 *pnCommandIDBase, szBuffer);
 
-    m_nCmdEncrypt = *pnCommandIDBase;
-    (*pnCommandIDBase)++;
+      m_nCmdEncrypt = *pnCommandIDBase;
+      (*pnCommandIDBase)++;
 
-    LoadString(glob_hinst, IDS_SIGN_MENU_ITEM, szBuffer, 128);
-    AppendMenu(hMenuTools, MF_BYPOSITION | MF_STRING,
-               *pnCommandIDBase, szBuffer);
+      LoadString(glob_hinst, IDS_SIGN_MENU_ITEM, szBuffer, 128);
+      AppendMenu(hMenuTools, MF_STRING,
+                 *pnCommandIDBase, szBuffer);
 
-    m_nCmdSign = *pnCommandIDBase;
-    (*pnCommandIDBase)++;
+      m_nCmdSign = *pnCommandIDBase;
+      (*pnCommandIDBase)++;
 
-    for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
-      {
-        if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
-          {
-            hwndToolbar = pTBEArray[nTBIndex].hwnd;
-            m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
-            pTBEArray[nTBIndex].itbbBase++;
-            break;	
-          }
-      }
+      for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
+        {
+          if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
+            {
+              hwndToolbar = pTBEArray[nTBIndex].hwnd;
+              m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
+              pTBEArray[nTBIndex].itbbBase++;
+              break;	
+            }
+        }
 
-    if (hwndToolbar) {
-      TBADDBITMAP tbab;
-      tbab.hInst = glob_hinst;
-      tbab.nID = IDB_ENCRYPT;
-      m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
-                                      1, (LPARAM)&tbab);
-      m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
-      pTBEArray[nTBIndex].itbbBase++;
-      tbab.nID = IDB_SIGN;
-      m_nToolbarBitmap2 = SendMessage(hwndToolbar, TB_ADDBITMAP,
-                                      1, (LPARAM)&tbab);
+      if (hwndToolbar) 
+        {
+          TBADDBITMAP tbab;
+          tbab.hInst = glob_hinst;
+          tbab.nID = IDB_ENCRYPT;
+          m_nToolbarBitmap1 = SendMessage (hwndToolbar, TB_ADDBITMAP,
+                                           1, (LPARAM)&tbab);
+          m_nToolbarButtonID2 = pTBEArray[nTBIndex].itbbBase;
+          pTBEArray[nTBIndex].itbbBase++;
+          tbab.nID = IDB_SIGN;
+          m_nToolbarBitmap2 = SendMessage (hwndToolbar, TB_ADDBITMAP,
+                                           1, (LPARAM)&tbab);
+        }
+
+      m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
+      m_pExchExt->m_gpgSign    = opt.sign_default;
+      if (force_encrypt)
+        m_pExchExt->m_gpgEncrypt = true;
     }
-    m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
-    m_pExchExt->m_gpgSign    = opt.sign_default;
-    if (force_encrypt)
-      m_pExchExt->m_gpgEncrypt = true;
-  }
 
-  if (m_lContext == EECONTEXT_VIEWER) {
-    CHAR szBuffer[128];
-    int nTBIndex;
-    HWND hwndToolbar = NULL;
+  if (m_lContext == EECONTEXT_VIEWER) 
+    {
+      CHAR szBuffer[128];
+      int nTBIndex;
+      HWND hwndToolbar = NULL;
+      
+      pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
+                         NULL, NULL, 0);
+      AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
+      
+      LoadString (glob_hinst, IDS_KEY_MANAGER, szBuffer, 128);
+      AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
+                  *pnCommandIDBase, szBuffer);
 
-    pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
-                       NULL, NULL, 0);
-    AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
-	
-    LoadString (glob_hinst, IDS_KEY_MANAGER, szBuffer, 128);
-    AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
-                *pnCommandIDBase, szBuffer);
-
-    m_nCmdEncrypt = *pnCommandIDBase;
-    (*pnCommandIDBase)++;	
-
-    for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex) {
-      if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) {
-        hwndToolbar = pTBEArray[nTBIndex].hwnd;
-        m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
-        pTBEArray[nTBIndex].itbbBase++;
-        break;	
-      }
+      m_nCmdEncrypt = *pnCommandIDBase;
+      (*pnCommandIDBase)++;	
+      
+      for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
+        {
+          if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) 
+            {
+              hwndToolbar = pTBEArray[nTBIndex].hwnd;
+              m_nToolbarButtonID1 = pTBEArray[nTBIndex].itbbBase;
+              pTBEArray[nTBIndex].itbbBase++;
+              break;	
+            }
+        }
+      if (hwndToolbar)
+        {
+          TBADDBITMAP tbab;
+          tbab.hInst = glob_hinst;
+          tbab.nID = IDB_KEY_MANAGER;
+          m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
+                                          1, (LPARAM)&tbab);
+        }	
     }
-    if (hwndToolbar) {
-      TBADDBITMAP tbab;
-      tbab.hInst = glob_hinst;
-      tbab.nID = IDB_KEY_MANAGER;
-      m_nToolbarBitmap1 = SendMessage(hwndToolbar, TB_ADDBITMAP,
-                                      1, (LPARAM)&tbab);
-    }	
-  }
   return S_FALSE;
 }
 

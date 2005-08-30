@@ -1,9 +1,0 @@
-; GPGExch.def : Declares the module parameters for the DLL.
-
-LIBRARY      "OLGPGMAIN"
-DESCRIPTION  'Outlook GPG Main DLL'
-
-EXPORTS
-    ExchEntryPoint = ExchEntryPoint@0            @1
-    DllRegisterServer = DllRegisterServer@0      @2	PRIVATE
-    DllUnregisterServer = DllUnregisterServer@0  @3	PRIVATE

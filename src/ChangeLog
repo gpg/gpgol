@@ -1,3 +1,7 @@
+2005-08-30  Werner Koch  <wk@g10code.com>
+
+	More or less finished this major rewrite.
+
 2005-08-26  Werner Koch  <wk@g10code.com>
 
 	* MapiGPGME.cpp, MapiGPGME.h: Removed.

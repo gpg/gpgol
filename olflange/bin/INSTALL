@@ -1,9 +1,0 @@
-
-The file contains binary files of all plugin components for testing.
-
-To install them do the following steps:
-
-1) regsvr32 olgpgmain.dll
-2) copy olgpgcore.dll c:\windows\system32 (\system for W9X)
-
-
