@@ -44,6 +44,10 @@
 #include "olflange-def.h"
 #include "olflange.h"
 
+#define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
+DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da, 
+            0xc6, 0x87, 0x00, 0x0d, 0x60, 0x80, 0xe7, 0x35);
+
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      __FILE__, __func__, __LINE__); \
@@ -58,69 +62,106 @@ bool g_bInitDll = FALSE;
 STDAPI 
 DllRegisterServer (void)
 {    
-    HKEY hkey;
-    CHAR szKeyBuf[1024];
-    CHAR szEntry[512];
-    TCHAR szModuleFileName[MAX_PATH];
-    DWORD dwTemp = 0;
-    long ec;
+  HKEY hkey, hkey2;
+  CHAR szKeyBuf[MAX_PATH+1024];
+  CHAR szEntry[MAX_PATH+512];
+  TCHAR szModuleFileName[MAX_PATH];
+  DWORD dwTemp = 0;
+  long ec;
 
-    /* Get server location. */
-    if (!GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH))
-        return E_FAIL;
+  /* Get server location. */
+  if (!GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH))
+    return E_FAIL;
 
-    lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
-    lstrcpy (szEntry, "4.0;");
-    lstrcat (szEntry, szModuleFileName);
-    lstrcat (szEntry, ";1"); /* Entry point ordinal. */
-    /* Context information string:
-      pos       context
-      1 	EECONTEXT_SESSION
-      2 	EECONTEXT_VIEWER
-      3 	EECONTEXT_REMOTEVIEWER
-      4 	EECONTEXT_SEARCHVIEWER
-      5 	EECONTEXT_ADDRBOOK
-      6 	EECONTEXT_SENDNOTEMESSAGE
-      7 	EECONTEXT_READNOTEMESSAGE
-      8 	EECONTEXT_SENDPOSTMESSAGE
-      9 	EECONTEXT_READPOSTMESSAGE
-      10 	EECONTEXT_READREPORTMESSAGE
-      11 	EECONTEXT_SENDRESENDMESSAGE
-      12 	EECONTEXT_PROPERTYSHEETS
-      13 	EECONTEXT_ADVANCEDCRITERIA
-      14 	EECONTEXT_TASK
-    */
-    lstrcat (szEntry, ";11000111111100"); 
-    ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
-				   REG_OPTION_NON_VOLATILE,
-				   KEY_ALL_ACCESS, NULL, &hkey, NULL);
-    if (ec != ERROR_SUCCESS) {
-	log_debug ("DllRegisterServer failed\n");
-	return E_ACCESSDENIED;
+  lstrcpy (szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
+  lstrcpy (szEntry, "4.0;");
+  lstrcat (szEntry, szModuleFileName);
+  lstrcat (szEntry, ";1"); /* Entry point ordinal. */
+  /* Context information string:
+     pos       context
+     1 	EECONTEXT_SESSION
+     2 	EECONTEXT_VIEWER
+     3 	EECONTEXT_REMOTEVIEWER
+     4 	EECONTEXT_SEARCHVIEWER
+     5 	EECONTEXT_ADDRBOOK
+     6 	EECONTEXT_SENDNOTEMESSAGE
+     7 	EECONTEXT_READNOTEMESSAGE
+     8 	EECONTEXT_SENDPOSTMESSAGE
+     9 	EECONTEXT_READPOSTMESSAGE
+     10 	EECONTEXT_READREPORTMESSAGE
+     11 	EECONTEXT_SENDRESENDMESSAGE
+     12 	EECONTEXT_PROPERTYSHEETS
+     13 	EECONTEXT_ADVANCEDCRITERIA
+     14 	EECONTEXT_TASK
+  */
+  lstrcat (szEntry, ";11000111111100"); 
+  ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
+                       REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS, NULL, &hkey, NULL);
+  if (ec != ERROR_SUCCESS) 
+    {
+      log_debug ("DllRegisterServer failed\n");
+      return E_ACCESSDENIED;
     }
     
-    dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hkey, "GPGol", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+  dwTemp = lstrlen (szEntry) + 1;
+  RegSetValueEx (hkey, "GPGol", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
 
-    /* To avoid conflicts with the old G-DATA plugin and older vesions
-       of this Plugin, we remove the key used by these versions. */
-    RegDeleteValue (hkey, "GPG Exchange");
+  /* To avoid conflicts with the old G-DATA plugin and older vesions
+     of this Plugin, we remove the key used by these versions. */
+  RegDeleteValue (hkey, "GPG Exchange");
 
-    /* Set outlook update flag. */
-    strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
-    dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hkey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
-    RegCloseKey (hkey);
+  /* Set outlook update flag. */
+  strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
+  dwTemp = lstrlen (szEntry) + 1;
+  RegSetValueEx (hkey, "Outlook Setup Extension",
+                 0, REG_SZ, (BYTE*) szEntry, dwTemp);
+  RegCloseKey (hkey);
     
-    hkey = NULL;
-    lstrcpy (szKeyBuf, "Software\\GNU\\GPGol");
-    RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
-		    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
-    if (hkey != NULL)
-	RegCloseKey (hkey);
+  hkey = NULL;
+  lstrcpy (szKeyBuf, "Software\\GNU\\GPGol");
+  RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
+                  REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+  if (hkey != NULL)
+    RegCloseKey (hkey);
 
-    log_debug ("DllRegisterServer succeeded\n");
-    return S_OK;
+  hkey = NULL;
+  strcpy (szKeyBuf, "CLSID\\" CLSIDSTR_GPGOL );
+  ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
+                  REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+  if (ec != ERROR_SUCCESS) 
+    {
+      fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
+      return E_ACCESSDENIED;
+    }
+
+  strcpy (szEntry, "GPGol - The GPG Outlook Plugin");
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  strcpy (szKeyBuf, "InprocServer32");
+  ec = RegCreateKeyEx (hkey, szKeyBuf, 0, NULL, REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS, NULL, &hkey2, NULL);
+  if (ec != ERROR_SUCCESS) 
+    {
+      fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
+      RegCloseKey (hkey);
+      return E_ACCESSDENIED;
+    }
+  strcpy (szEntry, szModuleFileName);
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey2, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  strcpy (szEntry, "Neutral");
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey2, "ThreadingModel", 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  RegCloseKey (hkey2);
+  RegCloseKey (hkey);
+
+
+  log_debug ("DllRegisterServer succeeded\n");
+  return S_OK;
 }
 
 

@@ -13,10 +13,10 @@ src/       Code to build the actual core of the plugin.  The resulting
            DLL will be named "gpgol.dll".  It is to be build using
            the Mingw toolchain.
 
-To install this plugin, copy it some directory (e.g. where gpg lives),
+To install this plugin, copy it to some directory (e.g. where gpg lives),
 make sure that the libgpg-error.dll and gpgme.dll are available in a
 directory where Windows searches for DLLs (e.g. c:\winnt\system32),
-stop Outlook, run the command "revsvr32 outlgpg.dll" and start
+stop Outlook, run the command "regsvr32 outlgpg.dll" and start
 Outlook. You should then find a new tab named "GnuPG" in Outlook's
 option menu.
 
