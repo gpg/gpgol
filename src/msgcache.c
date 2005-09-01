@@ -37,6 +37,16 @@
    ConversationIndex from the OL object but it is easier in
    msgcache_put to retrieve it direct from MAPI.
 
+   The obvious problem with the conversation index is that it does
+   only work with independent messages and fails badly when reading
+   and replying to several mails from one message thread.
+
+   The desitable soultion would be a way to know the rfc822 message-id
+   of the orignal message when entering the reply form.  I can't find
+   such a datum but it might be there anyway. I am here thinking of a
+   MS coder who wants a reply which indicates the message id and the
+   date of the message.
+
    To keep the memory size at bay we but a limit on the maximum cache
    size; thus depending on the total size of the messages the number
    of open inspectors with decrypted messages which can be matched
@@ -170,7 +180,7 @@ msgcache_put (char *body, int transfer, LPMESSAGE message)
   keylen = lpspvFEID->Value.bin.cb;
   key = lpspvFEID->Value.bin.lpb;
 
-  if (!keylen || !key || keylen > 1000)
+  if (!keylen || !key || keylen > 100)
     {
       log_debug ("%s: malformed ConversationIndex\n", __func__);
       MAPIFreeBuffer (lpspvFEID);
@@ -261,6 +271,44 @@ msgcache_get (const void *key, size_t keylen, void **refhandle)
 
   log_hexdump (key, keylen, "%s: cache %s for key: ",
                __func__, result? "hit":"miss");
+  return result;
+}
+
+
+/* Locate a plaintext stored for the mapi MESSSAGE and return it.  The
+   user must provide the address of a void pointer variable which he
+   later needs to pass to the msgcache_unref. Returns NULL if no
+   plaintext is available; msgcache_unref is then not required but
+   won't harm either. */
+const char *
+msgcache_get_from_mapi (LPMESSAGE message, void **refhandle)
+{
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
+  const char *result = NULL;
+
+  *refhandle = NULL;
+
+  if (!message)
+    return NULL; 
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_CONVERSATION_INDEX, &lpspvFEID);
+  if (FAILED (hr))
+    {
+      log_debug ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
+      return NULL;
+    }
+    
+  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
+    {
+      log_debug ("%s: HrGetOneProp returned unexpected property type\n",
+                 __func__);
+      MAPIFreeBuffer (lpspvFEID);
+      return NULL;
+    }
+  result = msgcache_get (lpspvFEID->Value.bin.lpb, lpspvFEID->Value.bin.cb,
+                         refhandle);
+  MAPIFreeBuffer (lpspvFEID);
   return result;
 }
 

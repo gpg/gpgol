@@ -81,7 +81,8 @@ add_html_line_endings (const char *body)
 
 
 /* We need this to find the mailer window because we directly change
-   the text of the window instead of the MAPI object itself. */
+   the text of the window instead of the MAPI object itself.  To do
+   this we walk all windows to find a PGP signature.  */
 static HWND
 find_message_window (HWND parent, GpgMsg *msg)
 {
@@ -95,10 +96,16 @@ find_message_window (HWND parent, GpgMsg *msg)
     {
       char buf[1024+1];
       HWND w;
-
+      size_t len;
+      const char *s;
+      
       memset (buf, 0, sizeof (buf));
       GetWindowText (child, buf, sizeof (buf)-1);
-      if (msg->matchesString (buf))
+      len = strlen (buf);
+      if (len > 22
+          && (s = strstr (buf, "-----BEGIN PGP "))
+          &&  (!strncmp (s+15, "MESSAGE-----", 12)
+               || !strncmp (s+15, "SIGNED MESSAGE-----", 19)))
         return child;
       w = find_message_window (child, msg);
       if (w)

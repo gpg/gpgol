@@ -45,6 +45,20 @@ static const char oid_mimetag[] =
                                        __FILE__, __func__, __LINE__); \
                         } while (0)
 
+/* Constants to describe the PGP armor types. */
+typedef enum 
+  {
+    ARMOR_NONE = 0,
+    ARMOR_MESSAGE,
+    ARMOR_SIGNATURE,
+    ARMOR_SIGNED,
+    ARMOR_FILE,     
+    ARMOR_PUBKEY,
+    ARMOR_SECKEY
+  }
+armor_t;
+
+
 struct attach_info
 {
   int end_of_table;  /* True if this is the last plus one entry of the
@@ -61,7 +75,7 @@ struct attach_info
                         against "type/subtype" is sufficient. */
   const char *content_type_parms; /* If not NULL the parameters of the
                                      content_type. */
-
+  armor_t armor_type;   /* 0 or the type of the PGP armor. */
 };
 typedef struct attach_info *attach_info_t;
 
@@ -149,10 +163,8 @@ public:
   const char *getOrigText (void);
   const char *GpgMsgImpl::getDisplayText (void);
   const char *getPlainText (void);
-  bool matchesString (const char *string);
 
   int decrypt (HWND hwnd);
-  int verify (HWND hwnd);
   int sign (HWND hwnd);
   int encrypt (HWND hwnd)
   {
@@ -569,17 +581,6 @@ GpgMsgImpl::getDisplayText (void)
 }
 
 
-/* Returns true if STRING matches the actual message. */ 
-bool
-GpgMsgImpl::matchesString (const char *string)
-{
-  /* FIXME:  This is a too simple implementation. */
-  if (string && strstr (string, "BEGIN PGP ") )
-    return true;
-  return false;
-}
-
-
 
 /* Return an array of strings with the recipients of the message. On
    success a malloced array is returned containing allocated strings
@@ -684,11 +685,6 @@ GpgMsgImpl::decrypt (HWND hwnd)
   int pgpmime_succeeded = 0;
 
   mtype = getMessageType ();
-  if (mtype == OPENPGP_CLEARSIG)
-    {
-      log_debug ("%s:%s: leave (passing on to verify)\n", __FILE__, __func__);
-      return verify (hwnd);
-    }
 
   /* Check whether this possibly encrypted message has encrypted
      attachments.  We check right now because we need to get into the
@@ -709,10 +705,40 @@ GpgMsgImpl::decrypt (HWND hwnd)
              __FILE__, __func__, n_attach, n_signed, n_encrypted);
   if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed) 
     {
-      if (!silent)
-        MessageBox (hwnd, "No valid OpenPGP data found.",
-                    "GPG Decryption", MB_ICONWARNING|MB_OK);
-      log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
+      /* Because we usually work around the OL object model, it can't
+         notice that we changed the windows's text behind its back (by
+         means of update_display and the SetWindowText API).  Thus it
+         happens sometimes that the ciphertext is still displayed
+         although the MAPI calls in loadBody returned the plaintext
+         (becuase we once used set_message_body).  The effect is that
+         when cliching the decrypt button, we won't have any
+         ciphertext to decrypt and thus get to here.  We try solving
+         this by updating the window if we also have a cached entry.
+
+         Another solution would be to always update the windows's text
+         using a cached plaintext (in OnRead). I have some fear that
+         this might lead to unexpected behaviour in certain cases, so
+         we better only do it on demand and only if the old reply hack
+         has been enabled. */
+      void *refhandle;
+      const char *s;
+
+      if (!opt.compat.old_reply_hack
+          && (s = msgcache_get_from_mapi (message, &refhandle)))
+        {
+          xfree (body_plain);
+          body_plain = xstrdup (s);
+          update_display (hwnd, this, exchange_cb);
+          msgcache_unref (refhandle);
+          log_debug ("%s:%s: leave (already decrypted)\n", __FILE__, __func__);
+        }
+      else
+        {
+          MessageBox (hwnd, "No valid OpenPGP data found.",
+                      "GPG Decryption", MB_ICONWARNING|MB_OK);
+          log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
+        }
+      
       release_attach_info (table);
       return 0;
     }
@@ -769,6 +795,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (!err)
         pgpmime_succeeded = 1;
     }
+  else if (mtype == OPENPGP_CLEARSIG)
+    err = op_verify (getOrigText (), NULL, NULL);
   else if (*getOrigText())
     err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl, NULL);
   else
@@ -777,6 +805,9 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {
       if (!is_pgpmime && n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
         ;
+      else if (mtype == OPENPGP_CLEARSIG)
+        MessageBox (hwnd, op_strerror (err),
+                    "GPG verification failed", MB_ICONERROR|MB_OK);
       else
         MessageBox (hwnd, op_strerror (err),
                     "GPG decryption failed", MB_ICONERROR|MB_OK);
@@ -785,19 +816,24 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {	
       int is_html = is_html_body (plaintext);
 
-      set_message_body (message, plaintext);
+      log_debug ("decrypt isHtml=%d\n", is_html);
+
+      /* Do we really need to set the body?  update_display below
+         should be sufficient.  The problem witgh this is that we have
+         changes in the MAPI and OL will later ask whether to save
+         them.  The original reason for this kludge was to get the
+         plaintext into the reply (by setting the property without
+         calling SaveChanges) - with OL2003 it didn't worked reliable
+         and thus we implemented the trick with the msgcache. For now
+         we will disable it but add a compatibility flag to re-enable
+         it. */
+      if (opt.compat.old_reply_hack)
+        set_message_body (message, plaintext);
+
       xfree (body_plain);
       body_plain = plaintext;
       plaintext = NULL;
       msgcache_put (body_plain, 0, message);
-
-      /* Also set PR_BODY but do not use 'SaveChanges' to make it
-         permanently.  This way the user can reply with the
-         plaintext but the ciphertext is still stored. 
-
-         NOTE: That does not work for OL2003!  This is the reason we
-         implemented the (not fully working) msgcache system. */
-      log_debug ("decrypt isHtml=%d\n", is_html);
 
       /* XXX: find a way to handle text/html message in a better way! */
       /* I have disabled the kludge to see what happens to a html
@@ -876,33 +912,6 @@ GpgMsgImpl::decrypt (HWND hwnd)
     }
 
   release_attach_info (table);
-  log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
-  return err;
-}
-
-
-/* Verify the message and display the verification result. */
-int 
-GpgMsgImpl::verify (HWND hwnd)
-{
-  log_debug ("%s:%s: enter\n", __FILE__, __func__);
-  openpgp_t mtype;
-  int err, has_attach;
-  
-  mtype = getMessageType ();
-  has_attach = hasAttachments ();
-  if (mtype == OPENPGP_NONE && !has_attach ) 
-    {
-      log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
-      return 0;
-    }
-
-  err = op_verify (getOrigText (), NULL, NULL);
-  if (err)
-    MessageBox (hwnd, op_strerror (err), "GPG Verify", MB_ICONERROR|MB_OK);
-  else
-    update_display (hwnd, this, NULL);
-
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
   return err;
 }
@@ -1515,6 +1524,63 @@ get_save_filename (HWND root, const char *srcname)
 }
 
 
+/* Read the attachment ATT and try to detect whether this is a PGP
+   Armored message.  METHOD is the attach method of ATT.  Returns 0 if
+   it is not a PGP attachment. */
+static armor_t
+get_pgp_armor_type (LPATTACH att, int method)
+{
+  HRESULT hr;
+  LPSTREAM stream;
+  char buffer [128];
+  ULONG nread;
+  const char *s;
+
+  if (method != ATTACH_BY_VALUE)
+    return ARMOR_NONE;
+  
+  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                          0, 0, (LPUNKNOWN*) &stream);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: can't attachment data: hr=%#lx",
+                 __FILE__, __func__,  hr);
+      return ARMOR_NONE;
+    }
+
+  hr = stream->Read (buffer, sizeof buffer -1, &nread);
+  if ( hr != S_OK )
+    {
+      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+      stream->Release ();
+      return ARMOR_NONE;
+    }
+  buffer[nread] = 0;
+  stream->Release ();
+
+  s = strstr (buffer, "-----BEGIN PGP ");
+  if (!s)
+    return ARMOR_NONE;
+  s += 15;
+  if (!strncmp (s, "MESSAGE-----", 12))
+    return ARMOR_MESSAGE;
+  else if (!strncmp (s, "SIGNATURE-----", 14))
+    return ARMOR_SIGNATURE;
+  else if (!strncmp (s, "SIGNED MESSAGE-----", 19))
+    return ARMOR_SIGNED;
+  else if (!strncmp (s, "ARMORED FILE-----", 17))
+    return ARMOR_FILE;
+  else if (!strncmp (s, "PUBLIC KEY BLOCK-----", 21))
+    return ARMOR_PUBKEY;
+  else if (!strncmp (s, "PRIVATE KEY BLOCK-----", 22))
+    return ARMOR_SECKEY;
+  else if (!strncmp (s, "SECRET KEY BLOCK-----", 21))
+    return ARMOR_SECKEY;
+  else
+    return ARMOR_NONE;
+}
+
+
 /* Gather information about attachments and return a new object with
    these information.  Caller must release the returned information.
    The routine will return NULL in case of an error or if no
@@ -1562,6 +1628,11 @@ GpgMsgImpl::gatherAttachmentInfo (void)
               trim_trailing_spaces (p);
               table[pos].content_type_parms = p;
             }
+          if (!stricmp (table[pos].content_type, "text/plain")
+              && table[pos].filename 
+              && (s = strrchr (table[pos].filename, '.'))
+              && !stricmp (s, ".asc"))
+            table[pos].armor_type = get_pgp_armor_type (att,table[pos].method);
         }
       att->Release ();
     }
@@ -1570,8 +1641,10 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   /* Figure out whether there are encrypted attachments. */
   for (pos=0; !table[pos].end_of_table; pos++)
     {
-      if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
-          &&  (!stricmp (s, ".pgp") || !stricmp (s, ".gpg")))
+      if (table[pos].armor_type == ARMOR_MESSAGE)
+        table[pos].is_encrypted = 1;
+      else if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
+               &&  (!stricmp (s, ".pgp") || !stricmp (s, ".gpg")))
         table[pos].is_encrypted = 1;
       else if (table[pos].content_type  
                && ( !stricmp (table[pos].content_type,
@@ -1621,9 +1694,10 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   log_debug ("%s:%s: attachment info:\n", __FILE__, __func__);
   for (pos=0; !table[pos].end_of_table; pos++)
     {
-      log_debug ("\t%d %d %d %u `%s' `%s' `%s'\n",
+      log_debug ("\t%d %d %d %u %d `%s' `%s' `%s'\n",
                  pos, table[pos].is_encrypted,
                  table[pos].is_signed, table[pos].sig_pos,
+                 table[pos].armor_type,
                  table[pos].filename, table[pos].content_type,
                  table[pos].content_type_parms);
     }

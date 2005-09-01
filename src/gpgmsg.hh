@@ -69,19 +69,13 @@ public:
      text.  */
   virtual const char *getDisplayText (void);
 
-  /* Return true if STRING matches the actual message. */ 
-  virtual bool matchesString (const char *string);
-
   /* Return a malloced array of malloced strings with the recipients
      of the message. Caller is responsible for freeing this array and
      the strings.  On failure NULL is returned.  */
   virtual char **getRecipients (void);
 
-  /* Decrypt the message and all attachments.  */
+  /* Decrypt and verify the message and all attachments.  */
   virtual int decrypt (HWND hwnd);
-
-  /* Verify the message. */
-  virtual int verify (HWND hwnd);
 
   /* Sign the message and optionally the attachments. */
   virtual int sign (HWND hwnd);

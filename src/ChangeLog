@@ -1,5 +1,17 @@
 2005-09-01  Werner Koch  <wk@g10code.com>
 
+	* gpgmsg.cpp (get_pgp_armor_type): New.
+	(gatherAttachmentInfo):  Enhanced to detect text/plain pgp.
+	(verify): Removed.
+	(decrypt): Do clearsig verification here.
+
+	* gpgmsg.cpp (decrypt): Kludge to workaround OL not updating a
+	window.
+	* msgcache.c (msgcache_get_from_mapi): New.
+	* display.cpp (find_message_window): Don't use the GpgMsg function
+	to to the string compare.
+	* gpgmsg.cpp (matchesString): Removed.
+
 	* msgcache.c (msgcache_set_active): Removed.
 	(msgcache_get): Rewritten.
 	(msgcache_put): Now uses PR_CONVERSATION_INDEX as key.  Update

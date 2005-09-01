@@ -339,6 +339,7 @@ read_options (void)
             case 1: opt.compat.no_pgpmime = x; break;
             case 2: opt.compat.no_oom_write = x; break;
             case 3: opt.compat.preview_decryption = x; break;
+            case 4: opt.compat.old_reply_hack = x; break;
             }
         }
       log_debug ("Note: using compatibility flags: %s", val);

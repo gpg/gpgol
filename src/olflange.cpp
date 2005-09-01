@@ -817,6 +817,27 @@ CGPGExchExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 }
 
 
+static HWND
+show_window_hierarchy (HWND parent, int level)
+{
+  HWND child;
+
+  child = GetWindow (parent, GW_CHILD);
+  while (child)
+    {
+      char buf[1024+1];
+      
+      memset (buf, 0, sizeof (buf));
+      GetWindowText (child, buf, sizeof (buf)-1);
+      log_debug ("XXX %*shwnd=%p `%s'", level*2, "", child, buf);
+      show_window_hierarchy (child, level+1);
+      child = GetNextWindow (child, GW_HWNDNEXT);	
+    }
+
+  return NULL;
+}
+
+
 /* Called by Echange to install commands and toolbar buttons.  Returns
    S_FALSE to signal Exchange to continue calling extensions. */
 STDMETHODIMP 
@@ -933,6 +954,7 @@ CGPGExchExtCommands::InstallCommands (
               && (body = msgcache_get (key, keylen, &refhandle)) 
               && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
             {
+#if 0              
               dispparams.cNamedArgs = 1;
               dispparams.rgdispidNamedArgs = &dispid_put;
               dispparams.cArgs = 1;
@@ -945,7 +967,10 @@ CGPGExchExtCommands::InstallCommands (
               xfree (dispparams.rgvarg[0].bstrVal);
               log_debug ("%s:%s: PROPERTYPUT(body) result -> %#lx\n",
                          __FILE__, __func__, hr);
-              
+#else
+              log_debug ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+              show_window_hierarchy (hWnd, 0);
+#endif
               pDisp->Release();
               pDisp = NULL;
               
@@ -1127,13 +1152,14 @@ CGPGExchExtCommands::DoCommand (
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (SUCCEEDED (hr))
         {
-          show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
           if (nCommandID == m_nCmdEncrypt)
             {
               GpgMsg *m = CreateGpgMsg (pMessage);
               m->setExchangeCallback ((void*)pEECB);
               m->decrypt (hWnd);
               delete m;
+              log_debug ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+              show_window_hierarchy (hWnd, 0);
 	    }
 	}
       if (pMessage)

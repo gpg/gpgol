@@ -128,6 +128,7 @@ struct
     unsigned int no_pgpmime:1;
     unsigned int no_oom_write:1; /* Don't write using Outlooks object model. */
     unsigned int preview_decryption:1;
+    unsigned int old_reply_hack: 1; /* See gpgmsg.cpp:decrypt. */
   } compat; 
 } opt;
 

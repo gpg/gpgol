@@ -35,9 +35,13 @@ int initialize_msgcache (void);
    controls whether the cache will snatch ownership of body. */
 void msgcache_put (char *body, int transfer, LPMESSAGE message);
 
-/* Return the plaintext stored under a KEY of lenbgth KEYLEN or NULL
+/* Return the plaintext stored under a KEY of length KEYLEN or NULL
    if none was found. */
 const char *msgcache_get (const void *key, size_t keylen, void **refhandle);
+
+/* Return the plaintext stored for message MESSAGE or NULL if none was
+   found. */
+const char *msgcache_get_from_mapi (LPMESSAGE message, void **refhandle);
 
 /* Release access to a value returned by msgcache_get.  REFHANDLE is
    the value as stored in the pointer variable by msgcache_get. */
