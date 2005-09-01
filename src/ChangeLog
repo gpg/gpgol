@@ -1,3 +1,14 @@
+2005-09-01  Werner Koch  <wk@g10code.com>
+
+	* msgcache.c (msgcache_set_active): Removed.
+	(msgcache_get): Rewritten.
+	(msgcache_put): Now uses PR_CONVERSATION_INDEX as key.  Update
+	existing entries.
+
+	* olflange.cpp (OnRead): Removed msgcache_set_active.
+	(InstallCommands): Now uses the ConversationIndex to match the
+	reply with the message.
+
 2005-08-31  Werner Koch  <wk@g10code.com>
 
 	* olflange.cpp (DllRegisterServer): Define a CLSID and set the

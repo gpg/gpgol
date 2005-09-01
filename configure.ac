@@ -160,8 +160,11 @@ if test "$GCC" = yes; then
     if test "$USE_MAINTAINER_MODE" = "yes"; then
         CFLAGS="$CFLAGS -Wall -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wno-format-y2k -Wformat-security"
+        CXXFLAGS="$CXXFLAGS -Wall -Wcast-align -Wshadow"
+        CXXFLAGS="$CXXFLAGS -Wno-format-y2k -Wformat-security"
     else
         CFLAGS="$CFLAGS -Wall"
+        CXXFLAGS="$CXXFLAGS -Wall"
     fi
 fi
 

@@ -199,7 +199,6 @@ show_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
 {
   HRESULT hr;
   LPSPropValue lpspvFEID = NULL;
-  cache_item_t item;
   size_t keylen;
   void *key;
 
@@ -307,8 +306,8 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   if (r_dispid)
     *r_dispid = dispid;
 
-  log_debug ("%s:%s:    got IDispatch=%p dispid=%d\n",
-               __FILE__, __func__, pDisp, dispid);
+  log_debug ("%s:%s:    got IDispatch=%p dispid=%u\n",
+               __FILE__, __func__, pDisp, (unsigned int)dispid);
   return pDisp;
 }
 
@@ -316,6 +315,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
 /* Return Outlook's Application object. */
 /* FIXME: We should be able to fold most of the code into
    find_outlook_property. */
+#if 0 /* Not used as of now. */
 static LPUNKNOWN
 get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
 {
@@ -370,6 +370,7 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
     }
   return pUnk;
 }
+#endif /* commented */
 
 
 int
@@ -390,7 +391,7 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
 
   hr = ((LPEXCHEXTCALLBACK)pEECB)->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
   if (FAILED(hr))
-    log_debug ("%s:%s: getObject failed: hr=%#x\n", hr);
+    log_debug ("%s:%s: getObject failed: hr=%#lx\n", __FILE__, __func__, hr);
   else if ( (pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB,
                                             key, &dispid)))
     {
@@ -624,10 +625,8 @@ CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
   LPMESSAGE pMessage = NULL;
 
   log_debug ("%s:%s: received\n", __FILE__, __func__);
-
   pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-  show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
-  msgcache_set_active (pMessage);
+  show_mapi_property (pMessage, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
   if (pMessage)
     UlRelease(pMessage);
   if (pMDB)
@@ -860,21 +859,6 @@ CGPGExchExtCommands::InstallCommands (
              lFlags);
 
 
-  if (m_lContext == EECONTEXT_READNOTEMESSAGE
-      || m_lContext == EECONTEXT_SENDNOTEMESSAGE)
-    {
-      LPMDB pMDB = NULL;
-      LPMESSAGE pMessage = NULL;
-
-      pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-      show_mapi_property (pMessage, PR_ENTRYID, "ENTRYID");
-      show_mapi_property (pMessage, PR_SEARCH_KEY, "SEARCH_KEY");
-      if (pMessage)
-        UlRelease(pMessage);
-      if (pMDB)
-        UlRelease(pMDB);
-    }
-
   /* Outlook 2003 sometimes displays the plaintext sometimes the
      orginal undecrypted text when doing a Reply.  This seems to
      depend on the sieze of the message; my guess it that only short
@@ -882,7 +866,7 @@ CGPGExchExtCommands::InstallCommands (
      fetyched again from the backend - or the other way around.
      Anyway, we can't rely on that and thus me make sure to update the
      Body object right here with our own copy of the plaintext.  To
-     match the text we use the Storage ID Property of MAPI.  
+     match the text we use the ConversationIndex property.
 
      Unfortunately there seems to be no way of resetting the Saved
      property after updating the body, thus even without entering a
@@ -891,48 +875,90 @@ CGPGExchExtCommands::InstallCommands (
 
      Note, that we can't optimize the code here by first reading the
      body because this would pop up the securiy window, telling the
-     user that someone is trying to read these data.
+     user that someone is trying to read this data.
   */
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
     {
       LPMDB pMDB = NULL;
       LPMESSAGE pMessage = NULL;
-      const char *body;
-      void *refhandle = NULL;
       
       /*  Note that for read and send the object returned by the
           outlook extension callback is of class 43 (MailItem) so we
           only need to ask for Body then. */
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (FAILED(hr))
-        log_debug ("%s:%s: getObject failed: hr=%#x\n", hr);
-      else if ( !opt.compat.no_msgcache
-                && (body = msgcache_get (pMessage, &refhandle)) 
-                && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
+        log_debug ("%s:%s: getObject failed: hr=%#lx\n", __FILE__,__func__,hr);
+      else if ( !opt.compat.no_msgcache)
         {
-          dispparams.cNamedArgs = 1;
-          dispparams.rgdispidNamedArgs = &dispid_put;
-          dispparams.cArgs = 1;
-          dispparams.rgvarg = &aVariant;
-          dispparams.rgvarg[0].vt = VT_LPWSTR;
-          dispparams.rgvarg[0].bstrVal = utf8_to_wchar (body);
-          hr = pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                             DISPATCH_PROPERTYPUT, &dispparams,
-                             NULL, NULL, NULL);
-          xfree (dispparams.rgvarg[0].bstrVal);
-          log_debug ("%s:%s: PROPERTYPUT(body) result -> %d\n",
-                     __FILE__, __func__, hr);
+          const char *body;
+          char *key = NULL;
+          size_t keylen = 0;
+          void *refhandle = NULL;
+     
+          pDisp = find_outlook_property (pEECB, "ConversationIndex", &dispid);
+          if (pDisp)
+            {
+              DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
 
-          pDisp->Release();
-          pDisp = NULL;
+              aVariant.bstrVal = NULL;
+              hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                                  DISPATCH_PROPERTYGET, &dispparamsNoArgs,
+                                  &aVariant, NULL, NULL);
+              if (hr != S_OK)
+                log_debug ("%s:%s: retrieving ConversationIndex failed: %#lx",
+                           __FILE__, __func__, hr);
+              else if (aVariant.vt != VT_BSTR || !aVariant.bstrVal)
+                log_debug ("%s:%s: ConversationIndex is not a string (%d)",
+                           __FILE__, __func__, aVariant.vt);
+              else
+                {
+                  char *p;
 
-          /* Because we found the plaintext in the cache we can assume
-             that the orginal message has been encrypted and thus we
-             now set a flag to make sure that by default the reply
-             gets encrypted too. */
-          force_encrypt = 1;
+                  key = wchar_to_utf8 (aVariant.bstrVal);
+                  log_debug ("%s:%s: ConversationIndex is `%s'",
+                           __FILE__, __func__, key);
+                  /* The keyis a hex string.  Convert it to binary. */
+                  for (keylen=0,p=key; hexdigitp(p) && hexdigitp(p+1); p += 2)
+                    ((unsigned char*)key)[keylen++] = xtoi_2 (p);
+                  
+                  /* FIXME: Do we need to free the string returned in
+                     AVARIANT?  Check at other palces too. */
+                }
+
+              pDisp->Release();
+              pDisp = NULL;
+            }
+          
+          if (key && keylen
+              && (body = msgcache_get (key, keylen, &refhandle)) 
+              && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
+            {
+              dispparams.cNamedArgs = 1;
+              dispparams.rgdispidNamedArgs = &dispid_put;
+              dispparams.cArgs = 1;
+              dispparams.rgvarg = &aVariant;
+              dispparams.rgvarg[0].vt = VT_LPWSTR;
+              dispparams.rgvarg[0].bstrVal = utf8_to_wchar (body);
+              hr = pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                                 DISPATCH_PROPERTYPUT, &dispparams,
+                                 NULL, NULL, NULL);
+              xfree (dispparams.rgvarg[0].bstrVal);
+              log_debug ("%s:%s: PROPERTYPUT(body) result -> %#lx\n",
+                         __FILE__, __func__, hr);
+              
+              pDisp->Release();
+              pDisp = NULL;
+              
+              /* Because we found the plaintext in the cache we can assume
+                 that the orginal message has been encrypted and thus we
+                 now set a flag to make sure that by default the reply
+                 gets encrypted too. */
+              force_encrypt = 1;
+            }
+          msgcache_unref (refhandle);
+          xfree (key);
         }
-      msgcache_unref (refhandle);
+      
       if (pMessage)
         UlRelease(pMessage);
       if (pMDB)

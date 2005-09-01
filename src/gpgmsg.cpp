@@ -336,7 +336,7 @@ GpgMsgImpl::loadBody (void)
   HRESULT hr;
   LPSPropValue lpspvFEID = NULL;
   LPSTREAM stream;
-  SPropValue prop;
+//   SPropValue prop;
   STATSTG statInfo;
   ULONG nread;
 
@@ -440,6 +440,7 @@ GpgMsgImpl::loadBody (void)
 
 /* Return the subject of the message or NULL if it does not
    exists.  Caller must free. */
+#if 0
 static char *
 get_subject (LPMESSAGE obj)
 {
@@ -467,7 +468,7 @@ get_subject (LPMESSAGE obj)
       break;
       
     default:
-      log_debug ("%s:%s: proptag=%xlx not supported\n",
+      log_debug ("%s:%s: proptag=%#lx not supported\n",
                  __FILE__, __func__, propval->ulPropTag);
       name = NULL;
       break;
@@ -475,9 +476,11 @@ get_subject (LPMESSAGE obj)
   MAPIFreeBuffer (propval);
   return name;
 }
+#endif
 
 /* Set the subject of the message OBJ to STRING. Returns 0 on
    success. */
+#if 0
 static int
 set_subject (LPMESSAGE obj, const char *string)
 {
@@ -509,7 +512,7 @@ set_subject (LPMESSAGE obj, const char *string)
     }
   return 0;
 }
-
+#endif
 
 
 /* Return the type of a message. */
@@ -591,7 +594,6 @@ GpgMsgImpl::getRecipients ()
   LPMAPITABLE lpRecipientTable = NULL;
   LPSRowSet lpRecipientRows = NULL;
   char **rset;
-  const char *s;
   int i, j;
 
   if (!message)
@@ -617,7 +619,7 @@ GpgMsgImpl::getRecipients ()
 
   rset = (char**)xcalloc (lpRecipientRows->cRows+1, sizeof *rset);
 
-  for (i = j = 0; i < lpRecipientRows->cRows; i++)
+  for (i = j = 0; (unsigned int)i < lpRecipientRows->cRows; i++)
     {
       LPSPropValue row;
 
@@ -751,7 +753,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment 2: hr=%#lx",
-                     __FILE__, __func__, pos, hr);
+                     __FILE__, __func__, hr);
           MessageBox (hwnd, "Problem decrypting PGP/MIME message",
                       "GPG Decryption", MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (OpenProperty failed)\n",__FILE__,__func__);
@@ -953,7 +955,7 @@ GpgMsgImpl::sign (HWND hwnd)
       
       n = getAttachments ();
       log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
-      for (int i=0; i < n; i++) 
+      for (unsigned int i=0; i < n; i++) 
         signAttachment (hwnd, i, sign_key, opt.passwd_ttl);
       /* FIXME: we should throw an error if signing of any attachment
          failed. */
@@ -983,13 +985,12 @@ GpgMsgImpl::sign (HWND hwnd)
 
 
 
-/* Encrypt and optionally sign (if SIGN is true) the entire message
+/* Encrypt and optionally sign (if SIGN_FLAG is true) the entire message
    including all attachments. Returns 0 on success. */
 int 
-GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
+GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
 {
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
-  HRESULT hr;
   gpgme_key_t *keys = NULL;
   gpgme_key_t sign_key = NULL;
   bool is_html;
@@ -1009,7 +1010,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
     }
 
   /* Pop up a dialog box to ask for the signer of the message. */
-  if (sign)
+  if (sign_flag)
     {
       if (signer_dialog_box (&sign_key, NULL) == -1)
         {
@@ -1106,7 +1107,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign)
       
       n = getAttachments ();
       log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
-      for (int i=0; !err && i < n; i++) 
+      for (unsigned int i=0; !err && i < n; i++) 
         err = encryptAttachment (hwnd, i, keys, NULL, 0);
       if (err)
         {
@@ -1269,7 +1270,6 @@ get_attach_mime_tag (LPATTACH obj)
 {
   HRESULT hr;
   LPSPropValue propval = NULL;
-  int method ;
   char *name;
 
   hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_MIME_TAG_A, &propval);
@@ -1292,7 +1292,7 @@ get_attach_mime_tag (LPATTACH obj)
       break;
       
     default:
-      log_debug ("%s:%s: proptag=%xlx not supported\n",
+      log_debug ("%s:%s: proptag=%#lx not supported\n",
                  __FILE__, __func__, propval->ulPropTag);
       name = NULL;
       break;
@@ -1310,7 +1310,6 @@ get_short_attach_data (LPATTACH obj)
 {
   HRESULT hr;
   LPSPropValue propval = NULL;
-  int method ;
   char *data;
 
   hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_DATA_BIN, &propval);
@@ -1397,7 +1396,6 @@ static bool
 set_x_header (LPMESSAGE msg, const char *name, const char *val)
 {  
   HRESULT hr;
-  LPMDB lpMdb = NULL;
   LPSPropTagArray pProps = NULL;
   SPropValue pv;
   MAPINAMEID mnid, *pmnid;	
@@ -1471,7 +1469,7 @@ get_attach_filename (LPATTACH obj)
       break;
       
     default:
-      log_debug ("%s:%s: proptag=%xlx not supported\n",
+      log_debug ("%s:%s: proptag=%#lx not supported\n",
                  __FILE__, __func__, propval->ulPropTag);
       name = NULL;
       break;
@@ -1493,7 +1491,6 @@ get_save_filename (HWND root, const char *srcname)
 {
   char filter[] = "All Files (*.*)\0*.*\0\0";
   char fname[MAX_PATH+1];
-  const char *s;
   OPENFILENAME ofn;
 
   memset (fname, 0, sizeof (fname));
@@ -1528,7 +1525,6 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   HRESULT hr;
   attach_info_t table;
   unsigned int pos, n_attach;
-  int method, err;
   const char *s;
 
   is_pgpmime = false;
@@ -1606,7 +1602,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
           /* We mark the actual file, assuming that the .asc is a
              detached signature.  To correlate the data file and the
              signature we keep track of the POS. */
-          for (int i=0; !table[i].end_of_table; i++)
+          for (unsigned int i=0; !table[i].end_of_table; i++)
             if (i != pos && table[i].filename 
                 && strlen (table[i].filename) == len
                 && !strncmp (table[i].filename, table[pos].filename, len))

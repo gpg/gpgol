@@ -27,10 +27,15 @@
    decryption.
 
    What we do here is to save the plaintext in a list under a key
-   taken from the PR_STORE_ENTRYID property.  It seems that this is a
-   reliable key to match the message again after Reply has been
-   called.  We can't use PR_ENTRYID because this one is different in
-   the reply template message.
+   taken from the PR_CONVERSATION_INDEX property.  It seems that this
+   is a reliable key to match the message again after Reply has been
+   called.  The ConversationIndex as available as an OL item in the
+   SENDNOTEMESSAGE hook is 6 bytes longer that the one we get from
+   MAPI on the orginal message; thus we only compare up to the length
+   we have stored when caching the message.  OL2003 using POP3 uses a
+   ConversationIndex of 22/28 bytes.  Note that we could also read the
+   ConversationIndex from the OL object but it is easier in
+   msgcache_put to retrieve it direct from MAPI.
 
    To keep the memory size at bay we but a limit on the maximum cache
    size; thus depending on the total size of the messages the number
@@ -39,18 +44,8 @@
    is at least one message; this makes sure that in the most common
    case the plaintext is always available.  We use a circular buffer
    so that the oldest messages are flushed from the cache first.  I
-   don't think that it makes much sense to take the sieze of a message
+   don't think that it makes much sense to take the size of a message
    into account here.
-
-   FUBOH: This damned Outlook think is fucked up beyond all hacking.
-   After implementing this cace module here I realized that none of
-   the properties are taken from the message to the reply template:
-   Neither STORE_ENTRYID (which BTW is anyway constant within a
-   folder), nor ENTRYID, nor SEARCHID nor RECORD_KEY.  The only way to
-   solve this is by assuming that the last mail read will be the one
-   which gets replied to.  To implement this, we mark a message as the
-   active one through msgcache_set_active() called from the OnRead
-   hook.  msgcache_get will then simply return the active message.
 */
    
 
@@ -83,8 +78,6 @@ struct cache_item
   int ref;          /* Reference counter, indicating how many callers
                        are currently accessing the plaintext of this
                        object. */
-
-  int is_active;    /* Flag, see comment at top. */
 
   /* The length of the key and the key itself.  The cache item is
      dynamically allocated to fit the size of the key.  Note, that
@@ -155,20 +148,21 @@ msgcache_put (char *body, int transfer, LPMESSAGE message)
   cache_item_t item;
   size_t keylen;
   void *key;
+  void *refhandle;
 
   if (!message)
     return; /* No message: Nop. */
 
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SEARCH_KEY, &lpspvFEID);
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_CONVERSATION_INDEX, &lpspvFEID);
   if (FAILED (hr))
     {
-      log_error ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
+      log_debug ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
       return;
     }
     
   if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
     {
-      log_error ("%s: HrGetOneProp returned unexpected property type\n",
+      log_debug ("%s: HrGetOneProp returned unexpected property type\n",
                  __func__);
       MAPIFreeBuffer (lpspvFEID);
       return;
@@ -176,155 +170,85 @@ msgcache_put (char *body, int transfer, LPMESSAGE message)
   keylen = lpspvFEID->Value.bin.cb;
   key = lpspvFEID->Value.bin.lpb;
 
-  if (!keylen || !key || keylen > 10000)
+  if (!keylen || !key || keylen > 1000)
     {
-      log_error ("%s: malformed PR_SEARCH_KEY\n", __func__);
+      log_debug ("%s: malformed ConversationIndex\n", __func__);
       MAPIFreeBuffer (lpspvFEID);
       return;
     }
 
-  item = xmalloc (sizeof *item + keylen - 1);
-  item->next = NULL;
-  item->ref = 0;
-  item->is_active = 0;
-  item->plaintext = transfer? body : xstrdup (body);
-  item->length = strlen (body);
-  item->keylen = keylen;
-  memcpy (item->key, key, keylen);
-
-  MAPIFreeBuffer (lpspvFEID);
-
-  if (!lock_cache ())
+  if (msgcache_get (key, keylen, &refhandle) )
     {
-      /* FIXME: Decide whether to kick out some entries. */
-      item->next = the_cache;
-      the_cache = item;
-      unlock_cache ();
-    }
-  msgcache_set_active (message);
-}
-
-
-/* If MESSAGE is in our cse set it's active flag and reset the active
-   flag of all others.  */
-void
-msgcache_set_active (LPMESSAGE message)
-{
-  HRESULT hr;
-  LPSPropValue lpspvFEID = NULL;
-  cache_item_t item;
-  size_t keylen = 0;
-  void *key = NULL;
-  int okay = 0;
-
-  if (!message)
-    return; /* No message: Nop. */
-  if (!the_cache)
-    return; /* No cache: avoid needless work. */
-  
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SEARCH_KEY, &lpspvFEID);
-  if (FAILED (hr))
-    {
-      log_error ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
-      goto leave;
-    }
-    
-  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
-    {
-      log_error ("%s: HrGetOneProp returned unexpected property type\n",
-                 __func__);
-      goto leave;
-    }
-  keylen = lpspvFEID->Value.bin.cb;
-  key = lpspvFEID->Value.bin.lpb;
-
-  if (!keylen || !key || keylen > 10000)
-    {
-      log_error ("%s: malformed PR_SEARCH_KEY\n", __func__);
-      goto leave;
-    }
-  okay = 1;
-
-
- leave:
-  if (!lock_cache ())
-    {
-      for (item = the_cache; item; item = item->next)
-        item->is_active = 0;
-      if (okay)
+      /* Update an existing cache item. We know that refhandle is
+         actually the item, thus we can simply change it here. The
+         reference counting makes sure that no other thread will steal
+         it while we are updating.  But we still need to lock. */
+      log_hexdump (key, keylen, "%s: updating key: ", __func__);
+      item = refhandle;
+      if (!lock_cache ())
         {
-          for (item = the_cache; item; item = item->next)
-            {
-              if (item->keylen == keylen 
-                  && !memcmp (item->key, key, keylen))
-                {
-                  item->is_active = 1;
-                  break;
-                }
-            }
+          xfree (item->plaintext);
+          item->plaintext = transfer? body : xstrdup (body);
+          item->length = strlen (body);
         }
-      unlock_cache ();
-    }
+      else /* Oops - locking failed:  Cleanup */
+        {
+          if (transfer)
+            xfree (body);
+        }
 
-  MAPIFreeBuffer (lpspvFEID);
+      msgcache_unref (refhandle);
+      MAPIFreeBuffer (lpspvFEID);
+    }
+  else
+    {
+      /* Create a new cache entry. */
+      item = xmalloc (sizeof *item + keylen - 1);
+      item->next = NULL;
+      item->ref = 0;
+      item->plaintext = transfer? body : xstrdup (body);
+      item->length = strlen (body);
+      item->keylen = keylen;
+      memcpy (item->key, key, keylen);
+      log_hexdump (key, keylen, "%s: new cache key: ", __func__);
+      
+      MAPIFreeBuffer (lpspvFEID);
+      
+      if (!lock_cache ())
+        {
+          /* FIXME: Decide whether to kick out some entries. */
+          item->next = the_cache;
+          the_cache = item;
+          unlock_cache ();
+        }
+    }
 }
 
 
-/* Locate a plaintext stored under a key derived from the MAPI object
-   MESSAGE and return it.  The user must provide the address of a void
-   pointer variable which he later needs to pass to the
-   msgcache_unref. Returns NULL if no plaintext is available;
-   msgcache_unref is then not required but won't harm either. */
+
+/* Locate a plaintext stored under KEY of length KEYLEN and return it.
+   The user must provide the address of a void pointer variable which
+   he later needs to pass to the msgcache_unref. Returns NULL if no
+   plaintext is available; msgcache_unref is then not required but
+   won't harm either. */
 const char *
-msgcache_get (LPMESSAGE message, void **refhandle)
+msgcache_get (const void *key, size_t keylen, void **refhandle)
 {
   cache_item_t item;
   const char *result = NULL;
 
   *refhandle = NULL;
 
-  if (!message)
-    return NULL; /* No message: Nop. */
-  if (!the_cache)
-    return NULL; /* No cache: avoid needless work. */
-  
-#if 0 /* Old code, see comment at top of file. */
-  HRESULT hr;
-  LPSPropValue lpspvFEID = NULL;
-  size_t keylen;
-  void *key;
-
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SEARCH_KEY, &lpspvFEID);
-  if (FAILED (hr))
-    {
-      log_error ("%s: HrGetOneProp failed: hr=%#lx\n", __func__, hr);
-      return NULL;
-    }
-    
-  if ( PROP_TYPE (lpspvFEID->ulPropTag) != PT_BINARY )
-    {
-      log_error ("%s: HrGetOneProp returned unexpected property type\n",
-                 __func__);
-      MAPIFreeBuffer (lpspvFEID);
-      return NULL;
-    }
-  keylen = lpspvFEID->Value.bin.cb;
-  key = lpspvFEID->Value.bin.lpb;
-
-  if (!keylen || !key || keylen > 10000)
-    {
-      log_error ("%s: malformed PR_SEARCH_KEY\n", __func__);
-      MAPIFreeBuffer (lpspvFEID);
-      return NULL;
-    }
-
-
-  if (!lock_cache ())
+  if (!key || !keylen)
+    ; /* No key: Nop. */
+  else if (!the_cache)
+    ; /* No cache: avoid needless work. */
+  else if (!lock_cache ())
     {
       for (item = the_cache; item; item = item->next)
         {
-          if (item->keylen == keylen 
-              && !memcmp (item->key, key, keylen))
+          if (keylen >= item->keylen 
+              && !memcmp (key, item->key, item->keylen))
             {
               item->ref++;
               result = item->plaintext; 
@@ -335,25 +259,8 @@ msgcache_get (LPMESSAGE message, void **refhandle)
       unlock_cache ();
     }
 
-  MAPIFreeBuffer (lpspvFEID);
-#else /* New code. */
-  if (!lock_cache ())
-    {
-      for (item = the_cache; item; item = item->next)
-        {
-          if (item->is_active)
-            {
-              item->ref++;
-              result = item->plaintext; 
-              *refhandle = item;
-              break;
-            }
-        }
-      unlock_cache ();
-    }
-
-#endif /* New code. */
-
+  log_hexdump (key, keylen, "%s: cache %s for key: ",
+               __func__, result? "hit":"miss");
   return result;
 }
 

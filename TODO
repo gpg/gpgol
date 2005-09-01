@@ -15,4 +15,4 @@
   generating a new text attachemnts with the status information?  We
   need to make sure that it can be identified as locally generated.
 
-
+* IMPORTANT: msgcache.c grows without limit - fix it.

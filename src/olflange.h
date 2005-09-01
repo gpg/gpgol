@@ -34,7 +34,7 @@ class CGPGExchExt : public IExchExt
 {
 public:
     CGPGExchExt();
-    ~CGPGExchExt();
+    virtual ~CGPGExchExt();
 
 public:	
     HWND m_hWndExchange;  /* Handle of the exchange window. */

@@ -41,7 +41,7 @@
 bool 
 GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  BOOL bMsgResult;    
+  BOOL bMsgResult = FALSE;    
   static LPNMHDR pnmhdr;
   static HWND hWndPage;
   static int enable = 1;
