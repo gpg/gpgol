@@ -1,7 +1,3 @@
-Package: gpgol
-Contact: info-gpgol@g10code.com
-Bugs:    bug-gpgol@g10code.com
-
 This is a GPG plugin for MS Outlook, formerly known as the G-DATA
 plugin.  There has been no development on this tool for a couple of
 years and thus we started to rewrite it from scratch.
@@ -34,7 +30,8 @@ this does not help, check out the mailing lists and also the bug
 archive at http://bugs.gnupg.org (use username and password "guest",
 select "query" and there category "gpgol") if you did not found any
 information there please send a report, including all relevant version
-numbers to the bug email address as given on top of this file.
+numbers to the address given at the top of this AUTHORS file.
+
 
 
 

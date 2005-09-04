@@ -88,11 +88,11 @@ DllRegisterServer (void)
      7 	EECONTEXT_READNOTEMESSAGE
      8 	EECONTEXT_SENDPOSTMESSAGE
      9 	EECONTEXT_READPOSTMESSAGE
-     10 	EECONTEXT_READREPORTMESSAGE
-     11 	EECONTEXT_SENDRESENDMESSAGE
-     12 	EECONTEXT_PROPERTYSHEETS
-     13 	EECONTEXT_ADVANCEDCRITERIA
-     14 	EECONTEXT_TASK
+     10 EECONTEXT_READREPORTMESSAGE
+     11 EECONTEXT_SENDRESENDMESSAGE
+     12 EECONTEXT_PROPERTYSHEETS
+     13 EECONTEXT_ADVANCEDCRITERIA
+     14 EECONTEXT_TASK
   */
   lstrcat (szEntry, ";11000111111100"); 
   ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
@@ -954,7 +954,7 @@ CGPGExchExtCommands::InstallCommands (
               && (body = msgcache_get (key, keylen, &refhandle)) 
               && (pDisp = find_outlook_property (pEECB, "Body", &dispid)))
             {
-#if 0              
+#if 1
               dispparams.cNamedArgs = 1;
               dispparams.rgdispidNamedArgs = &dispid_put;
               dispparams.cArgs = 1;
@@ -1158,8 +1158,8 @@ CGPGExchExtCommands::DoCommand (
               m->setExchangeCallback ((void*)pEECB);
               m->decrypt (hWnd);
               delete m;
-              log_debug ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-              show_window_hierarchy (hWnd, 0);
+//               log_debug ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//               show_window_hierarchy (hWnd, 0);
 	    }
 	}
       if (pMessage)

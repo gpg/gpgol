@@ -1,14 +1,14 @@
-Noteworthy changes for version 0.9.0
+Noteworthy changes for version 0.9.0 (2005-09-04)
 =================================================
 
 * Major rewrite. Renamed the package to GPGol.  Note, that there used
   to be intermediate versions unter the name OutlGPG
 
-* The package as been renamed to outlgpg and consist of only one DLL
+* The package as been renamed to GPGol and consist of only one DLL
   named "gpgol.dll".  Installation of gpgme.dll and libgpg-error.dll
   is required.
 
-* It may now only be build using the Mingw32 toolchain.
+* It may by now only be build using the Mingw32 toolchain.
 
 * GPGol now uses the standard GPGME.
 
