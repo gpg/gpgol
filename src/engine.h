@@ -62,6 +62,8 @@ int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
                        const char *filename);
 int op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
                                  const char *filename);
+int op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
+                                const char *filename);
 
 int op_verify (const char *inbuf, char **outbuf, const char *filename);
 int op_verify_detached_sig (LPSTREAM data, const char *sig,

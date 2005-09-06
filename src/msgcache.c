@@ -1,4 +1,4 @@
-/* msgcache.cpp - Implementation of a message cache.
+/* msgcache.c - Implementation of a message cache.
  *	Copyright (C) 2005 g10 Code GmbH
  *
  * This file is part of GPGol.

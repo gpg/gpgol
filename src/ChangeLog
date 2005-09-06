@@ -1,3 +1,14 @@
+2005-09-06  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_decrypt_stream): Factored most code out to ..
+	(decrypt_stream): .. new.
+	(op_decrypt_stream_to_buffer): Simplified accordingly.  Fixed
+	possible buffer overflow when trying to make it a string. 
+	(op_decrypt_stream_to_gpgme): New.
+
+	* pgpmime.c, pgpmime.h: New.
+	* rfc822parse.h, rfc822parse.c: New.  Taken from GnuPG 1.9.
+
 2005-09-06  Timo Schulz  <ts@g10code.com>
 
 	* config-dialog.c (get_open_file_name): Correctly terminated filter.

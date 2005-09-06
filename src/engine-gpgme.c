@@ -264,10 +264,12 @@ op_encrypt (const char *inbuf, char **outbuf, gpgme_key_t *keys,
     err = check_encrypt_result (ctx, err);
   else
     {
-      size_t n = 0;	
-      *outbuf = gpgme_data_release_and_get_mem (out, &n);
-      (*outbuf)[n] = 0;
-      out = NULL;
+      /* Return the buffer but first make sure it is a string. */
+      if (gpgme_data_write (out, "", 1) == 1)
+        {
+          *outbuf = gpgme_data_release_and_get_mem (out, NULL);
+          out = NULL; 
+        }
     }
 
 
@@ -392,10 +394,12 @@ op_sign (const char *inbuf, char **outbuf, int mode,
 
   if (!err)
     {
-      size_t n = 0;
-      *outbuf = gpgme_data_release_and_get_mem (out, &n);
-      (*outbuf)[n] = 0;
-      out = NULL;
+      /* Return the buffer but first make sure it is a string. */
+      if (gpgme_data_write (out, "", 1) == 1)
+        {
+          *outbuf = gpgme_data_release_and_get_mem (out, NULL);
+          out = NULL; 
+        }
     }
 
  leave:
@@ -507,12 +511,14 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename)
   if (!err) 
     {
       /* Decryption succeeded.  Store the result at OUTBUF. */
-      size_t n = 0;
       gpgme_verify_result_t res;
 
-      *outbuf = gpgme_data_release_and_get_mem (out, &n);
-      (*outbuf)[n] = 0; /* Make sure it is really a string. */
-      out = NULL; /* (That GPGME object is no any longer valid.) */
+      /* Return the buffer but first make sure it is a string. */
+      if (gpgme_data_write (out, "", 1) == 1)
+        {
+          *outbuf = gpgme_data_release_and_get_mem (out, NULL);
+          out = NULL; 
+        }
 
       /* Now check the state of any signature. */
       res = gpgme_op_verify_result (ctx);
@@ -551,37 +557,22 @@ leave:
   return err;
 }
 
-/* Decrypt the stream INSTREAM directly to the stream OUTSTREAM.
-   Returns 0 on success or an gpgme error code on failure.  If
-   FILENAME is not NULL it will be displayed along with status
-   outputs. */
-int
-op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
-                   const char *filename)
+
+/* Decrypt the GPGME data object IN into the data object OUT.  Returns
+   0 on success or an gpgme error code on failure.  If FILENAME is not
+   NULL it will be displayed along with status outputs. */
+static int
+decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
+                const char *filename)
 {    
   struct decrypt_key_s dk;
-  struct gpgme_data_cbs cbs;
-  gpgme_data_t in = NULL;
-  gpgme_data_t out = NULL;    
   gpgme_ctx_t ctx = NULL;
   gpgme_error_t err;
   
-  memset (&cbs, 0, sizeof cbs);
-  cbs.read = stream_read_cb;
-  cbs.write = stream_write_cb;
-
   memset (&dk, 0, sizeof dk);
   dk.ttl = ttl;
 
-  err = gpgme_data_new_from_cbs (&in, &cbs, instream);
-  if (err)
-    goto fail;
-
   err = gpgme_new (&ctx);
-  if (err)
-    goto fail;
-
-  err = gpgme_data_new_from_cbs (&out, &cbs, outstream);
   if (err)
     goto fail;
 
@@ -623,14 +614,41 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
     err = gpg_error (GPG_ERR_CANCELED);
 
  fail:
-  if (in)
-    gpgme_data_release (in);
-  if (out)
-    gpgme_data_release (out);
   if (ctx)
     gpgme_release (ctx);
   return err;
 }
+
+/* Decrypt the stream INSTREAM directly to the stream OUTSTREAM.
+   Returns 0 on success or an gpgme error code on failure.  If
+   FILENAME is not NULL it will be displayed along with status
+   outputs. */
+int
+op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
+                   const char *filename)
+{
+  struct gpgme_data_cbs cbs;
+  gpgme_data_t in = NULL;
+  gpgme_data_t out = NULL;    
+  gpgme_error_t err;
+  
+  memset (&cbs, 0, sizeof cbs);
+  cbs.read = stream_read_cb;
+  cbs.write = stream_write_cb;
+
+  err = gpgme_data_new_from_cbs (&in, &cbs, instream);
+  if (!err)
+    err = gpgme_data_new_from_cbs (&out, &cbs, outstream);
+  if (!err)
+    err = decrypt_stream (in, out, ttl, filename);
+
+  if (in)
+    gpgme_data_release (in);
+  if (out)
+    gpgme_data_release (out);
+  return err;
+}
+
 
 /* Decrypt the stream INSTREAM directly to the newly allocated buffer OUTBUF.
    Returns 0 on success or an gpgme error code on failure.  If
@@ -640,11 +658,9 @@ int
 op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
                              const char *filename)
 {    
-  struct decrypt_key_s dk;
   struct gpgme_data_cbs cbs;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;    
-  gpgme_ctx_t ctx = NULL;
   gpgme_error_t err;
   
   *outbuf = NULL;
@@ -652,71 +668,50 @@ op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
   memset (&cbs, 0, sizeof cbs);
   cbs.read = stream_read_cb;
 
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
-
   err = gpgme_data_new_from_cbs (&in, &cbs, instream);
-  if (err)
-    goto fail;
-
-  err = gpgme_new (&ctx);
-  if (err)
-    goto fail;
-
-  err = gpgme_data_new (&out);
-  if (err)
-    goto fail;
-
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-  dk.ctx = ctx;
-  err = gpgme_op_decrypt (ctx, in, out);
-  dk.ctx = NULL;
-  update_passphrase_cache (err, &dk);
-  /* Act upon the result of the decryption operation. */
-  if (!err) 
+  if (!err)
+    err = gpgme_data_new (&out);
+  if (!err)
+    err = decrypt_stream (in, out, ttl, filename);
+  if (!err)
     {
-      /* Decryption succeeded.  Store the result at OUTBUF. */
-      size_t n = 0;
-      gpgme_verify_result_t res;
-
-      *outbuf = gpgme_data_release_and_get_mem (out, &n);
-      (*outbuf)[n] = 0; /* Make sure it is really a string. */
-      out = NULL; /* (That GPGME object is no any longer valid.) */
-
-      /* Now check the state of the signatures. */
-      res = gpgme_op_verify_result (ctx);
-      if (res && res->signatures)
-        verify_dialog_box (res, filename);
-    }
-  else if (gpgme_err_code (err) == GPG_ERR_DECRYPT_FAILED)
-    {
-      /* The decryption failed.  See whether we can determine the real
-         problem. */
-      gpgme_decrypt_result_t res;
-      res = gpgme_op_decrypt_result (ctx);
-      if (res != NULL && res->recipients != NULL &&
-          gpgme_err_code (res->recipients->status) == GPG_ERR_NO_SECKEY)
-        err = GPG_ERR_NO_SECKEY;
-      /* XXX: return the keyids */
-    }
-  else
-    {
-      /* Decryption failed for other reasons. */
+      /* Return the buffer but first make sure it is a string. */
+      if (gpgme_data_write (out, "", 1) == 1)
+        {
+          *outbuf = gpgme_data_release_and_get_mem (out, NULL);
+          out = NULL; 
+        }
     }
 
-
-  /* If the callback indicated a cancel operation, set the error
-     accordingly. */
-  if (err && (dk.opts & OPT_FLAG_CANCEL))
-    err = gpg_error (GPG_ERR_CANCELED);
-
- fail:
   if (in)
     gpgme_data_release (in);
   if (out)
     gpgme_data_release (out);
-  if (ctx)
-    gpgme_release (ctx);
+  return err;
+}
+
+
+/* Decrypt the stream INSTREAM directly to the GPGME data object OUT.
+   Returns 0 on success or an gpgme error code on failure.  If
+   FILENAME is not NULL it will be displayed along with status
+   outputs. */
+int
+op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
+                            const char *filename)
+{
+  struct gpgme_data_cbs cbs;
+  gpgme_data_t in = NULL;
+  gpgme_error_t err;
+  
+  memset (&cbs, 0, sizeof cbs);
+  cbs.read = stream_read_cb;
+
+  err = gpgme_data_new_from_cbs (&in, &cbs, instream);
+  if (!err)
+    err = decrypt_stream (in, out, ttl, filename);
+
+  if (in)
+    gpgme_data_release (in);
   return err;
 }
 
@@ -757,12 +752,14 @@ op_verify (const char *inbuf, char **outbuf, const char *filename)
   err = gpgme_op_verify (ctx, in, NULL, out);
   if (!err)
     {
-      size_t n=0;
       if (outbuf) 
         {
-          *outbuf = gpgme_data_release_and_get_mem (out, &n);
-          (*outbuf)[n] = 0;
-          out = NULL;
+          /* Return the buffer but first make sure it is a string. */
+          if (gpgme_data_write (out, "", 1) == 1)
+            {
+              *outbuf = gpgme_data_release_and_get_mem (out, NULL);
+              out = NULL; 
+            }
 	}
       res = gpgme_op_verify_result (ctx);
     }

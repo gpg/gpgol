@@ -30,8 +30,10 @@ gpgol_SOURCES = \
 	myexchext.h                 \
 	display.cpp display.h       \
 	gpgmsg.cpp gpgmsg.hh        \
+	pgpmime.c pgpmime.h         \
 	msgcache.c msgcache.h       \
         engine-gpgme.c	engine.h    \
+	rfc822parse.c rfc822parse.h \
         common.c intern.h	    \
 	passcache.c passcache.h     \
         HashTable.cpp HashTable.h   \

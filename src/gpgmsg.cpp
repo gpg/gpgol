@@ -34,6 +34,7 @@
 #include "gpgmsg.hh"
 #include "util.h"
 #include "msgcache.h"
+#include "pgpmime.h"
 #include "engine.h"
 #include "display.h"
 
@@ -788,8 +789,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
           return gpg_error (GPG_ERR_GENERAL);
         }
 
-      err = op_decrypt_stream_to_buffer (from, &plaintext,
-                                         opt.passwd_ttl, NULL);
+      err = pgpmime_decrypt (from, opt.passwd_ttl, &plaintext);
+      
       from->Release ();
       att->Release ();
       if (!err)
