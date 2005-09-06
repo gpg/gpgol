@@ -53,7 +53,7 @@ get_open_file_name (const char *dir, const char *title)
   ofn.lpstrTitle = title;
   ofn.lStructSize = sizeof (ofn);
   ofn.lpstrInitialDir = dir;
-  ofn.lpstrFilter = "EXE-Files (*.EXE)\0*.EXE";
+  ofn.lpstrFilter = "EXE-Files (*.EXE)\0*.EXE\0\0";
   ofn.lpstrFile = fname;
   ofn.nMaxFile = sizeof (fname)-1;
   if (GetOpenFileName (&ofn) == FALSE)

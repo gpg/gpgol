@@ -655,6 +655,7 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (SUCCEEDED (hr))
         {
+	  show_mapi_property (pMessage, PR_SUBJECT, "PR_SUBJECT");
           GpgMsg *m = CreateGpgMsg (pMessage);
           m->setExchangeCallback ((void*)pEECB);
           m->setSilent (1);
