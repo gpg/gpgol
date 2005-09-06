@@ -41,24 +41,24 @@
 #define GPGOL_REGPATH "Software\\GNU\\GPGol"
 
 static char*
-get_open_file_name (const char *dir)
+get_open_file_name (const char *dir, const char *title)
 {
-    static char fname[MAX_PATH+1];
-    OPENFILENAME ofn;
+  static char fname[MAX_PATH+1];
+  OPENFILENAME ofn;
 
-    memset (&ofn, 0, sizeof (ofn));
-    memset (fname, 0, sizeof (fname));
-    ofn.hwndOwner = GetDesktopWindow();
-    ofn.hInstance = glob_hinst;
-    ofn.lpstrTitle = "Select GnuPG binary";
-    ofn.lStructSize = sizeof (ofn);
-    ofn.lpstrInitialDir = dir;
-    ofn.lpstrFilter = "*.EXE";
-    ofn.lpstrFile = fname;
-    ofn.nMaxFile = sizeof(fname)-1;
-    if (GetOpenFileName(&ofn) == FALSE)
-	return NULL;
-    return fname;
+  memset (&ofn, 0, sizeof (ofn));
+  memset (fname, 0, sizeof (fname));
+  ofn.hwndOwner = GetDesktopWindow ();
+  ofn.hInstance = glob_hinst;
+  ofn.lpstrTitle = title;
+  ofn.lStructSize = sizeof (ofn);
+  ofn.lpstrInitialDir = dir;
+  ofn.lpstrFilter = "EXE-Files (*.EXE)\0*.EXE";
+  ofn.lpstrFile = fname;
+  ofn.nMaxFile = sizeof (fname)-1;
+  if (GetOpenFileName (&ofn) == FALSE)
+    return NULL;
+  return fname;
 }
 
 
@@ -76,24 +76,25 @@ SHFree (void *p)
 
 /* Open the common dialog to select a folder. Caller has to free the string. */
 static char*
-get_folder (void)
+get_folder (const char *title)
 {
-    char fname[MAX_PATH+1];
-    BROWSEINFO bi;
-    ITEMIDLIST * il;
-    char *path = NULL;
+  char fname[MAX_PATH+1];
+  BROWSEINFO bi;
+  ITEMIDLIST * il;
+  char *path = NULL;
 
-    memset (&bi, 0, sizeof (bi));
-    memset (fname, 0, sizeof (fname));
-    bi.hwndOwner = GetDesktopWindow ();
-    bi.lpszTitle = "Select GnuPG home directory";
-    il = SHBrowseForFolder (&bi);
-    if (il != NULL) {
-	SHGetPathFromIDList (il, fname);
-	path = xstrdup (fname);
-	SHFree (il);
+  memset (&bi, 0, sizeof (bi));
+  memset (fname, 0, sizeof (fname));
+  bi.hwndOwner = GetDesktopWindow ();
+  bi.lpszTitle = title;
+  il = SHBrowseForFolder (&bi);
+  if (il != NULL)
+    {
+      SHGetPathFromIDList (il, fname);
+      path = xstrdup (fname);
+      SHFree (il);
     }
-    return path;
+  return path;
 }
 
 
@@ -258,14 +259,14 @@ does_file_exist (const char *name, int is_file)
 static void
 error_box (const char *title)
 {	
-    TCHAR buf[256];
-    DWORD last_err;
+  TCHAR buf[256];
+  DWORD last_err;
 
-    last_err = GetLastError ();
-    FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, last_err, 
-		   MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
-		   buf, sizeof (buf)-1, NULL);
-    MessageBox (NULL, buf, title, MB_OK);
+  last_err = GetLastError ();
+  FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, last_err, 
+                 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                 buf, sizeof (buf)-1, NULL);
+  MessageBox (NULL, buf, title, MB_OK);
 }
 
 
@@ -297,22 +298,22 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	break;
 
     case WM_COMMAND:
-	switch (LOWORD(wparam)) {
+	switch (LOWORD (wparam)) {
 	case IDC_OPT_SELPRG:
-	    buf = get_open_file_name (NULL);
+	    buf = get_open_file_name (NULL, "Select GnuPG Binary");
 	    if (buf && *buf)
 		SetDlgItemText(dlg, IDC_OPT_GPGPRG, buf);
 	    break;
 
 	case IDC_OPT_SELHOMEDIR:
-	    buf = get_folder ();
+	    buf = get_folder ("Select GnuPG Home Directory");
 	    if (buf && *buf)
 		SetDlgItemText(dlg, IDC_OPT_HOMEDIR, buf);
 	    xfree (buf);
 	    break;
 
 	case IDC_OPT_SELKEYMAN:
-	    buf = get_open_file_name (NULL);
+	    buf = get_open_file_name (NULL, "Select GnuPG Key Manager");
 	    if (buf && *buf)
 		SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
 	    break;
@@ -353,17 +354,18 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 void
 config_dialog_box (HWND parent)
 {
-    int resid=0;
+  int resid=0;
 
-    switch (GetUserDefaultLangID ()) {
+  switch (GetUserDefaultLangID ())
+    {
     case 0x0407:    resid = IDD_OPT_DE;break;
     default:	    resid = IDD_OPT; break;
     }
 
-    if (parent == NULL)
-	parent = GetDesktopWindow ();
-    DialogBoxParam (glob_hinst, (LPCTSTR)resid, parent,
-		    config_dlg_proc, 0);
+  if (parent == NULL)
+    parent = GetDesktopWindow ();
+  DialogBoxParam (glob_hinst, (LPCTSTR)resid, parent,
+                  config_dlg_proc, 0);
 }
 
 
@@ -412,8 +414,6 @@ start_key_manager (void)
             }
         }
     }
-
-
   
   /* Create startup info for the keymanager process. */
   memset (&si, 0, sizeof (si));
@@ -423,10 +423,11 @@ start_key_manager (void)
   
   if (CreateProcess (NULL, keyman,
                      NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
-                     NULL, NULL, &si, &pi) == TRUE) {
-    CloseHandle (pi.hProcess);
-    CloseHandle (pi.hThread);
-  }
+                     NULL, NULL, &si, &pi) == TRUE)
+    {
+      CloseHandle (pi.hProcess);
+      CloseHandle (pi.hThread);
+    }
   
   xfree (keyman);
   return 0;

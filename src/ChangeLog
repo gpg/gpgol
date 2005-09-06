@@ -1,3 +1,9 @@
+2005-09-06  Timo Schulz  <ts@g10code.com>
+
+	* config-dialog.c (get_open_file_name): Correctly terminated filter.
+	New parameter for the title. Changed all callers.
+	(get_folder): Likewise.
+	
 2005-09-01  Werner Koch  <wk@g10code.com>
 
 	* gpgmsg.cpp (get_pgp_armor_type): New.

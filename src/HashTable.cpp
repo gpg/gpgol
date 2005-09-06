@@ -55,12 +55,14 @@ HashTable::HashTable (void)
     memset (table, 0, sizeof (void*)*n);
 }
 
-HashTable::HashTable (unsigned int n)
+HashTable::HashTable (unsigned int nelem)
 {
     pos = 0;
-    this->n = n;
-    table = new void*[n];
-    memset (table, 0, sizeof (void*)*n);
+    if (nelem < 1)
+	nelem = 1;
+    this->n = nelem;
+    table = new void*[nelem];
+    memset (table, 0, sizeof (void*)*nelem);
 }
 
 HashTable::~HashTable (void)
