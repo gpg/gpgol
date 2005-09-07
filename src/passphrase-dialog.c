@@ -37,7 +37,7 @@
 static char const allhexdigits[] = "1234567890ABCDEFabcdef";
 
 
-
+#if 0 /* XXX: left over from old code?? */
 static void
 add_string_list (HWND hbox, const char **list, int start_idx)
 {
@@ -48,6 +48,7 @@ add_string_list (HWND hbox, const char **list, int start_idx)
 	SendMessage (hbox, CB_ADDSTRING, 0, (LPARAM)(const char *)s);
     SendMessage (hbox, CB_SETCURSEL, (WPARAM) start_idx, 0);
 }
+#endif
 
 
 static void

@@ -2,24 +2,24 @@
  *	Copyright (C) 2004 Timo Schulz
  *	Copyright (C) 2005 g10 Code GmbH
  *
- * This file is part of GPGME Dialogs.
+ * This file is part of GPGol.
  *
- * GPGME Dialogs is free software; you can redistribute it and/or
+ * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
  *  
- * GPGME Dialogs is distributed in the hope that it will be useful,
+ * GPGol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with GPGME Dialogs; if not, write to the Free Software Foundation, 
+ * along with GPGol; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
-#ifndef _GPGMEDLGS_INTERN_H_
-#define _GPGMEDLGS_INTERN_H_
+#ifndef GPGOL_INTERN_H
+#define GPGOL_INTERN_H
 
 #include <gpgme.h>
 
@@ -45,17 +45,6 @@ enum
     OPT_FLAG_FORCE    =  4,
     OPT_FLAG_CANCEL   =  8
   };
-
-
-typedef enum 
-  {
-    GPG_ATTACH_NONE = 0,
-    GPG_ATTACH_DECRYPT = 1,
-    GPG_ATTACH_ENCRYPT = 2,
-    GPG_ATTACH_SIGN = 4,
-    GPG_ATTACH_SIGNENCRYPT = GPG_ATTACH_SIGN|GPG_ATTACH_ENCRYPT
-  }
-gpgol_attachment_action_t;
 
 
 typedef enum
@@ -98,14 +87,6 @@ struct decrypt_key_s
   unsigned int last_was_bad:1;
 };
 
-struct cache_item_s 
-{
-  char keyid[16+1];
-  char *pass;
-  unsigned ttl;
-};
-typedef struct cache_item_s *cache_item_t;
-
 /* Global options - initialized to default by main.c. */
 #ifdef __cplusplus
 extern
@@ -138,16 +119,9 @@ struct
 void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
 
-cache_item_t cache_item_new (void);
-void cache_item_free (cache_item_t itm);
-
 HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 
 /*-- olflange.cpp --*/
-
-
-/*-- MapiGPGME.cpp --*/
-int initialize_mapi_gpgme (void);
 
 
 /*-- recipient-dialog.c --*/
@@ -175,4 +149,4 @@ int verify_dialog_box (gpgme_verify_result_t res, const char *filename);
 }
 #endif
 
-#endif /*_GPGMEDLGS_INTERN_H_*/
+#endif /*GPGOL_INTERN_H*/

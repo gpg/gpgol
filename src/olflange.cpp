@@ -1,4 +1,4 @@
-/* olflange.cpp - Flange between Outlook and the MapiGPGME class
+/* olflange.cpp - Flange between Outlook and the GpgMsg class
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
@@ -205,8 +205,7 @@ ul_release (LPVOID punk)
   if (!punk)
     return;
   res = UlRelease (punk);
-  if (res != S_OK)
-    log_debug ("%s UlRelease(%p) failed: %lu\n", __func__, punk, res);
+  log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
 }
 
 

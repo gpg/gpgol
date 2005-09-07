@@ -1,5 +1,10 @@
 2005-09-07  Timo Schulz  <ts@g10code.com>
 
+	* common.c: Removed unused code.
+	* intern.h: Likewise.
+
+2005-09-07  Timo Schulz  <ts@g10code.com>
+
 	* olflange.cpp (ul_release): New. Wrapper with error checking
 	around UlRelease.
 	(InstallCommands): Separate test for type and if string is empty.

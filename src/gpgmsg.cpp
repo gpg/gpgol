@@ -87,7 +87,7 @@ static bool set_x_header (LPMESSAGE msg, const char *name, const char *val);
 
 
 /*
-   The implementation class of MapiGPGME.  
+   The implementation class of GpgMsg.  
  */
 class GpgMsgImpl : public GpgMsg
 {

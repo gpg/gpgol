@@ -31,7 +31,6 @@
 #include <gpgme.h>
 
 #include "gpgol-ids.h"
-#include "keycache.h"
 #include "intern.h"
 
 /* Registry path to GnuPG */
