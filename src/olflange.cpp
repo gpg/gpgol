@@ -169,28 +169,46 @@ DllRegisterServer (void)
 STDAPI 
 DllUnregisterServer (void)
 {
-    HKEY hkey;
-    CHAR szKeyBuf[1024];
+  HKEY hkey;
+  CHAR buf[512];
+  DWORD ntemp;
+  long res;
 
-    lstrcpy(szKeyBuf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
-    /* create and open key and subkey */
-    long lResult = RegCreateKeyEx(HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
-				    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
-				    NULL, &hkey, NULL);
-    if (lResult != ERROR_SUCCESS) {
-	log_debug ("DllUnregisterServer: access denied.\n");
-	return E_ACCESSDENIED;
+  strcpy (buf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
+  /* create and open key and subkey */
+  res = RegCreateKeyEx (HKEY_LOCAL_MACHINE, buf, 0, NULL, 
+			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
+			NULL, &hkey, NULL);
+  if (res != ERROR_SUCCESS) 
+    {
+      log_debug ("DllUnregisterServer: access denied.\n");
+      return E_ACCESSDENIED;
     }
-    RegDeleteValue (hkey, "GPGol");
-    /* set outlook update flag */
-    CHAR szEntry[512];
-    strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
-    DWORD dwTemp = lstrlen (szEntry) + 1;
-    RegSetValueEx (hkey, "Outlook Setup Extension", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
-    RegCloseKey (hkey);
-
-    return S_OK;
+  RegDeleteValue (hkey, "GPGol");
+  
+  /* set outlook update flag */  
+  strcpy (buf, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
+  ntemp = strlen (buf) + 1;
+  RegSetValueEx (hkey, "Outlook Setup Extension", 0, 
+		 REG_SZ, (BYTE*) buf, ntemp);
+  RegCloseKey (hkey);
+  
+  return S_OK;
 }
+
+/* Wrapper around UlRelease with error checking. */
+static void 
+ul_release (LPVOID punk)
+{
+  ULONG res;
+  
+  if (!punk)
+    return;
+  res = UlRelease (punk);
+  if (res != S_OK)
+    log_debug ("%s UlRelease(%p) failed: %lu\n", __func__, punk, res);
+}
+
 
 
 /* DISPLAY a MAPI property. */
@@ -299,15 +317,15 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
       return NULL;
     }
       
-  hr = pDisp->GetIDsOfNames(IID_NULL, &wname, 1,
-                            LOCALE_SYSTEM_DEFAULT, &dispid);
+  hr = pDisp->GetIDsOfNames (IID_NULL, &wname, 1,
+                             LOCALE_SYSTEM_DEFAULT, &dispid);
   xfree (wname);
   //log_debug ("   dispid(%s)=%d  (hr=0x%x)\n", name, dispid, hr);
   if (r_dispid)
     *r_dispid = dispid;
 
   log_debug ("%s:%s:    got IDispatch=%p dispid=%u\n",
-               __FILE__, __func__, pDisp, (unsigned int)dispid);
+	     __FILE__, __func__, pDisp, (unsigned int)dispid);
   return pDisp;
 }
 
@@ -390,7 +408,7 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
     return -1;
 
   hr = ((LPEXCHEXTCALLBACK)pEECB)->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-  if (FAILED(hr))
+  if (FAILED (hr))
     log_debug ("%s:%s: getObject failed: hr=%#lx\n", __FILE__, __func__, hr);
   else if ( (pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB,
                                             key, &dispid)))
@@ -401,22 +419,20 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
       dispparams.rgvarg = &aVariant;
       dispparams.rgvarg[0].vt = VT_LPWSTR;
       dispparams.rgvarg[0].bstrVal = utf8_to_wchar (value);
-      hr = pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                         DISPATCH_PROPERTYPUT, &dispparams,
-                         NULL, NULL, NULL);
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+			  DISPATCH_PROPERTYPUT, &dispparams,
+			  NULL, NULL, NULL);
       xfree (dispparams.rgvarg[0].bstrVal);
       log_debug ("%s:%s: PROPERTYPUT(%s) result -> %#lx\n",
                  __FILE__, __func__, key, hr);
 
-      pDisp->Release();
+      pDisp->Release ();
       pDisp = NULL;
       result = 0;
     }
 
-  if (pMessage)
-    UlRelease(pMessage);
-  if (pMDB)
-    UlRelease(pMDB);
+  ul_release (pMessage);
+  ul_release (pMDB);
   return result;
 }
 
@@ -454,6 +470,7 @@ CGPGExchExt::CGPGExchExt (void)
   
   if (!g_bInitDll)
     {
+      /*MAPIInitialize (NULL);*/
       read_options ();
       op_init ();
       g_bInitDll = TRUE;
@@ -472,6 +489,7 @@ CGPGExchExt::~CGPGExchExt (void)
     {
       if (g_bInitDll)
         {
+	  /*MAPIUninitialize ();*/
           op_deinit ();
           write_options ();
           g_bInitDll = FALSE;
@@ -594,7 +612,7 @@ CGPGExchExtMessageEvents::CGPGExchExtMessageEvents
   m_pExchExt = pParentInterface;
   m_lRef = 0; 
   m_bOnSubmitActive = FALSE;
-};
+}
 
 
 STDMETHODIMP 
@@ -627,10 +645,8 @@ CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
   log_debug ("%s:%s: received\n", __FILE__, __func__);
   pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
   show_mapi_property (pMessage, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
-  if (pMessage)
-    UlRelease(pMessage);
-  if (pMDB)
-    UlRelease(pMDB);
+  ul_release (pMessage);
+  ul_release (pMDB);
   return S_FALSE;
 }
 
@@ -655,17 +671,14 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (SUCCEEDED (hr))
         {
-	  show_mapi_property (pMessage, PR_SUBJECT, "PR_SUBJECT");
           GpgMsg *m = CreateGpgMsg (pMessage);
           m->setExchangeCallback ((void*)pEECB);
           m->setSilent (1);
           m->decrypt (hWnd);
           delete m;
 	}
-      if (pMessage)
-        UlRelease(pMessage);
-      if (pMDB)
-        UlRelease(pMDB);
+      ul_release (pMessage);
+      ul_release (pMDB);
     }
   
 
@@ -732,10 +745,8 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
         }
     }
 
-  if (msg)
-    UlRelease(msg);
-  if (pMDB) 
-    UlRelease(pMDB);
+  ul_release (msg);
+  ul_release (pMDB);
 
   return hrReturn;
 }
@@ -801,7 +812,7 @@ CGPGExchExtCommands::CGPGExchExtCommands (CGPGExchExt* pParentInterface)
   m_nToolbarBitmap1 = 0;
   m_nToolbarBitmap2 = 0; 
   m_hWnd = NULL; 
-};
+}
 
 
 
@@ -929,10 +940,10 @@ CGPGExchExtCommands::InstallCommands (
               if (hr != S_OK)
                 log_debug ("%s:%s: retrieving ConversationIndex failed: %#lx",
                            __FILE__, __func__, hr);
-              else if (aVariant.vt != VT_BSTR || !aVariant.bstrVal)
+              else if (aVariant.vt != VT_BSTR)
                 log_debug ("%s:%s: ConversationIndex is not a string (%d)",
                            __FILE__, __func__, aVariant.vt);
-              else
+              else if (aVariant.bstrVal)
                 {
                   char *p;
 
@@ -985,10 +996,8 @@ CGPGExchExtCommands::InstallCommands (
           xfree (key);
         }
       
-      if (pMessage)
-        UlRelease(pMessage);
-      if (pMDB)
-        UlRelease(pMDB);
+      ul_release (pMessage);
+      ul_release (pMDB);
     }
 
 
@@ -1163,10 +1172,8 @@ CGPGExchExtCommands::DoCommand (
 //               show_window_hierarchy (hWnd, 0);
 	    }
 	}
-      if (pMessage)
-        UlRelease(pMessage);
-      if (pMDB)
-        UlRelease(pMDB);
+      ul_release (pMessage);
+      ul_release (pMDB);
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {

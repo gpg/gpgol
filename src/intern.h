@@ -43,7 +43,7 @@ enum
     OPT_FLAG_ARMOR    =  1,
     OPT_FLAG_TEXT     =  2,
     OPT_FLAG_FORCE    =  4,
-    OPT_FLAG_CANCEL   =  8,
+    OPT_FLAG_CANCEL   =  8
   };
 
 
