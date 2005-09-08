@@ -36,9 +36,7 @@ gpgol_SOURCES = \
 	rfc822parse.c rfc822parse.h \
         common.c intern.h	    \
 	passcache.c passcache.h     \
-        HashTable.cpp HashTable.h   \
         keycache.c keycache.h	    \
-	usermap.c  usermap.h        \
         config-dialog.c	            \
         passphrase-dialog.c         \
         recipient-dialog.c          \

@@ -81,23 +81,56 @@ set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
 
 static void
 load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
-{    	
-    gpgme_decrypt_result_t res;
-    gpgme_recipient_t r;
-    void *usermap ;
+{
+  gpgme_decrypt_result_t res;
+  gpgme_recipient_t rset, r;
+  gpgme_ctx_t keyctx=NULL;
+  gpgme_key_t key;
+  gpgme_error_t err;
+  char *p;
+  int c=0;
+  
+  if (ctx == NULL)
+    return;
+  res = gpgme_op_decrypt_result (ctx);
+  if (res == NULL || res->recipients == NULL)
+    return;
+  rset = res->recipients;
+  for (r = rset; r; r = r->next)
+    c++;    
+  p = xcalloc (1, c*(17+2));
+  for (r = rset; r; r = r->next) {
+    strcat (p, r->keyid);
+    strcat (p, " ");
+  }
 
-    if (ctx == NULL)
-	return;
-    res = gpgme_op_decrypt_result (ctx);
-    if (res == NULL || res->recipients == NULL)
-	return;
-    usermap = new_usermap (res->recipients);
-    for (r = res->recipients; r; r = r->next) {
-	char *userid = HashTable_get (usermap, r->keyid);
-	SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0, 
-			    (LPARAM)(const char*)userid);
+  err = gpgme_new (&keyctx);
+  if (err)
+    goto fail;
+  err = gpgme_op_keylist_start (keyctx, p, 0);
+  if (err)
+    goto fail;
+
+  r = rset;
+  for (;;) 
+    {
+      const char *uid;
+      err = gpgme_op_keylist_next (keyctx, &key);
+      if (err)
+	break;
+      uid = gpgme_key_get_string_attr (key, GPGME_ATTR_USERID, NULL, 0);
+      if (uid != NULL) 
+	SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0,
+			    (LPARAM)(const char *)uid);
+	gpgme_key_release (key);
+	key = NULL;
+	r = r->next;
     }
-    free_usermap (usermap);
+
+fail:
+    if (keyctx != NULL)
+	gpgme_release (keyctx);
+    xfree (p);
 }
 
 

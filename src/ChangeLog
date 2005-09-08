@@ -1,3 +1,10 @@
+2004-09-08  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (lod_recipbox): Use gpgme directly
+	to resolve the keyids to userids.
+	* usermap.c, usermap.h: Removed.
+	* HashTable.cpp, HashTable.h: Removed.
+
 2005-09-07  Timo Schulz  <ts@g10code.com>
 
 	* common.c: Removed unused code.
