@@ -31,7 +31,7 @@
 #include "keycache.h"
 #include "passcache.h"
 #include "intern.h"
-#include "usermap.h"
+
 
 
 static char const allhexdigits[] = "1234567890ABCDEFabcdef";
