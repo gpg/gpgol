@@ -43,6 +43,10 @@ extern "C" {
                   } while(0)
 
 
+/* i18n stuff (dummies for now). */
+#define _(a) (a)
+
+
 
 /*-- common.c --*/
 void* xmalloc (size_t n);

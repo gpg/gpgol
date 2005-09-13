@@ -1,4 +1,22 @@
-2004-09-08  Timo Schulz  <ts@g10code.com>
+2005-09-13  Werner Koch  <wk@g10code.com>
+
+	* pgpmime.c (pgpmime_decrypt): New arg ATTESTATION.
+	* engine-gpgme.c (add_verify_attestation): New.
+	(op_decrypt, op_verify_detached_sig, op_verify_detached_sig)
+	(op_verify_detached_sig): Add new arg ATTESTATION.  Changed all
+	callers.
+	(at_sig_summary, at_sig_validity, add_verify_attestation): New.
+	The code has been taken and modified from Mutt's crypt-gpgme.c and
+	entirely been writen by g10 Code.
+	(at_fingerprint): Ditto.
+
+	* gpgmsg.cpp (class GpgMsgImpl): New member ATTESTATION.  Use it
+	in all calls to the functions above.
+
+	* gpgmsg.cpp (decryptAttachment, decrypt): Save plaintext back
+	into the MAPI if desired.
+
+g2004-09-08  Timo Schulz  <ts@g10code.com>
 
 	* passphrase-dialog.c (lod_recipbox): Use gpgme directly
 	to resolve the keyids to userids.

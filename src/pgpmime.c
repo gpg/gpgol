@@ -273,9 +273,12 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
 
 /* Decrypt the PGP/MIME INSTREAM (i.e the second part of the
    multipart/mixed) and allow saving of all attachments. On success a
-   newly allocated body will be stored at BODY. */
+   newly allocated body will be stored at BODY.  If ATTESTATION is not
+   NULL a text with the result of the signature verification will get
+   printed to it.  */
 int
-pgpmime_decrypt (LPSTREAM instream, int ttl, char **body)
+pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
+                 gpgme_data_t attestation)
 {
   gpg_error_t err;
   struct gpgme_data_cbs cbs;
@@ -302,7 +305,8 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body)
   if (err)
     goto leave;
 
-  err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl, NULL);
+  err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl,
+                                    NULL, NULL);
   if (!err && (ctx->parser_error || ctx->line_too_long))
     err = gpg_error (GPG_ERR_GENERAL);
 

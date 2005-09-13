@@ -101,6 +101,8 @@ public:
     is_pgpmime = false;
     silent = false;
 
+    attestation = NULL;
+
     attach.att_table = NULL;
     attach.rows = NULL;
   }
@@ -111,6 +113,9 @@ public:
       message->Release ();
     xfree (body);
     xfree (body_plain);
+
+    if (attestation)
+      gpgme_data_release (attestation);
 
     if (attach.att_table)
       {
@@ -196,7 +201,11 @@ private:
   char *body_plain;   /* Plaintext version of BODY or NULL. */
   bool is_pgpmime;    /* True if the message is a PGP/MIME encrypted one. */
   bool silent;        /* Don't pop up message boxes.  Currently this
-                         is only used with decryption. g*/
+                         is only used with decryption.  */
+
+  /* If not NULL, collect attestation information here. */
+  gpgme_data_t attestation;
+  
 
   /* This structure collects the information about attachments. */
   struct 
@@ -207,6 +216,7 @@ private:
   
   void loadBody (void);
   bool isPgpmimeVersionPart (int pos);
+  void writeAttestation (void);
   attach_info_t gatherAttachmentInfo (void);
   int encrypt_and_sign (HWND hwnd, bool sign);
 };
@@ -666,6 +676,108 @@ GpgMsgImpl::getRecipients ()
 }
 
 
+/* Write an Attestation to the current message. */
+void
+GpgMsgImpl::writeAttestation (void)
+{
+  HRESULT hr;
+  ULONG newpos;
+  SPropValue prop;
+  LPATTACH newatt = NULL;
+  LPSTREAM to = NULL;
+  char *buffer = NULL;
+  ULONG nwritten;
+
+  if (!message || !attestation)
+    return;
+
+  hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't create attachment: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+          
+  prop.ulPropTag = PR_ATTACH_METHOD;
+  prop.Value.ul = ATTACH_BY_VALUE;
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set attach method: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+  
+  prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+  prop.Value.lpszA = "GPGol-Attestation.txt";
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+  
+  hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                             MAPI_CREATE|MAPI_MODIFY, (LPUNKNOWN*)&to);
+  if (FAILED (hr)) 
+    {
+      log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+  
+
+  if (gpgme_data_write (attestation, "", 1) != 1
+      || !(buffer = gpgme_data_release_and_get_mem (attestation, NULL)))
+    {
+      attestation = NULL;
+      log_error ("%s:%s: gpgme_data_write failed\n", __FILE__, __func__); 
+      goto leave;
+    }
+  attestation = NULL;
+
+  log_debug ("writing attestation `%s'\n", buffer);
+
+  hr = to->Write (buffer, strlen (buffer), &nwritten);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
+      goto leave;
+    }
+  
+  to->Commit (0);
+  to->Release ();
+  to = NULL;
+  
+  hr = newatt->SaveChanges (0);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+  hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+
+
+ leave:
+  if (to)
+    {
+      to->Revert ();
+      to->Release ();
+    }
+  if (newatt)
+    newatt->Release ();
+  xfree (buffer);
+}
+
 
 
 /* Decrypt the message MSG and update the window.  HWND identifies the
@@ -711,8 +823,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
          means of update_display and the SetWindowText API).  Thus it
          happens sometimes that the ciphertext is still displayed
          although the MAPI calls in loadBody returned the plaintext
-         (becuase we once used set_message_body).  The effect is that
-         when cliching the decrypt button, we won't have any
+         (because we once used set_message_body).  The effect is that
+         when clicking the decrypt button, we won't have any
          ciphertext to decrypt and thus get to here.  We try solving
          this by updating the window if we also have a cached entry.
 
@@ -744,6 +856,14 @@ GpgMsgImpl::decrypt (HWND hwnd)
       return 0;
     }
 
+  /* We always want an attestation.  Note that we ignore any error
+     because that would anyway be a out of core situation and thus we
+     can't do much about it. */
+  if (!attestation)
+    gpgme_data_new (&attestation);
+  
+
+  /* Process according to type of message. */
   if (is_pgpmime)
     {
       LPATTACH att;
@@ -789,7 +909,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
           return gpg_error (GPG_ERR_GENERAL);
         }
 
-      err = pgpmime_decrypt (from, opt.passwd_ttl, &plaintext);
+      err = pgpmime_decrypt (from, opt.passwd_ttl, &plaintext, attestation);
       
       from->Release ();
       att->Release ();
@@ -797,9 +917,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
         pgpmime_succeeded = 1;
     }
   else if (mtype == OPENPGP_CLEARSIG)
-    err = op_verify (getOrigText (), NULL, NULL);
+    err = op_verify (getOrigText (), NULL, NULL, attestation);
   else if (*getOrigText())
-    err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl, NULL);
+    err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl,
+                      NULL, attestation);
   else
     err = gpg_error (GPG_ERR_NO_DATA);
   if (err)
@@ -836,10 +957,18 @@ GpgMsgImpl::decrypt (HWND hwnd)
       plaintext = NULL;
       msgcache_put (body_plain, 0, message);
 
-      /* XXX: find a way to handle text/html message in a better way! */
-      /* I have disabled the kludge to see what happens to a html
-         message. */
-      if (!silent && /*is_html ||*/ update_display (hwnd, this, exchange_cb)) 
+      if (opt.save_decrypted_attach)
+        {
+          /* User wants us to replace the encrypted message with the
+             plaintext version. */
+          hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+          if (FAILED (hr))
+            log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
+                       __FILE__, __func__, hr);
+          update_display (hwnd, this, exchange_cb);
+          
+        }
+      else if (!silent && update_display (hwnd, this, exchange_cb)) 
         {
           const char s[] = 
             "The message text cannot be displayed.\n"
@@ -911,6 +1040,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
                                  table[pos].filename);
         }
     }
+
+  writeAttestation ();
 
   release_attach_info (table);
   log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
@@ -1793,7 +1924,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
           goto leave;
         }
       err = op_verify_detached_sig (stream, sig_data,
-                                    table[pos_data].filename);
+                                    table[pos_data].filename, attestation);
       if (err)
         {
           log_debug ("%s:%s: verify detached signature failed: %s",
@@ -1827,6 +1958,9 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
   HRESULT hr;
   LPATTACH att;
   int method, err;
+  LPATTACH newatt = NULL;
+  char *outname = NULL;
+  
 
   log_debug ("%s:%s: processing attachment %d", __FILE__, __func__, pos);
 
@@ -1885,14 +2019,13 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
   else if (method == ATTACH_BY_VALUE)
     {
       char *s;
-      char *outname;
       char *suggested_name;
       LPSTREAM from, to;
 
       suggested_name = get_attach_filename (att);
       if (suggested_name)
         log_debug ("%s:%s: attachment %d, filename `%s'", 
-                  __FILE__, __func__, pos, suggested_name);
+                   __FILE__, __func__, pos, suggested_name);
       /* Strip of know extensions or use a default name. */
       if (!suggested_name)
         {
@@ -1907,58 +2040,138 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
         {
           *s = 0;
         }
-      outname = get_save_filename (hwnd, suggested_name);
-      xfree (suggested_name);
-
+      if (opt.save_decrypted_attach)
+        outname = suggested_name;
+      else
+        {
+          outname = get_save_filename (hwnd, suggested_name);
+          xfree (suggested_name);
+        }
+      
       hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
                               0, 0, (LPUNKNOWN*) &from);
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
                      __FILE__, __func__, pos, hr);
-          xfree (outname);
           goto leave;
         }
 
-      hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
-                             (STGM_CREATE | STGM_READWRITE),
-                             outname, NULL, &to); 
-      if (FAILED (hr)) 
+
+      if (opt.save_decrypted_attach) /* Decrypt and save in the MAPI. */
         {
-          log_error ("%s:%s: can't create stream for `%s': hr=%#lx\n",
-                     __FILE__, __func__, outname, hr); 
-          from->Release ();
-          xfree (outname);
-          goto leave;
-        }
+          ULONG newpos;
+          SPropValue prop;
+
+          hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+          if (hr != S_OK)
+            {
+              log_error ("%s:%s: can't create attachment: hr=%#lx\n",
+                         __FILE__, __func__, hr); 
+              goto leave;
+            }
+          
+          prop.ulPropTag = PR_ATTACH_METHOD;
+          prop.Value.ul = ATTACH_BY_VALUE;
+          hr = HrSetOneProp (newatt, &prop);
+          if (hr != S_OK)
+            {
+              log_error ("%s:%s: can't set attach method: hr=%#lx\n",
+                         __FILE__, __func__, hr); 
+              goto leave;
+            }
+          
+          prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+          prop.Value.lpszA = outname;   
+          hr = HrSetOneProp (newatt, &prop);
+          if (hr != S_OK)
+            {
+              log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                         __FILE__, __func__, hr); 
+              goto leave;
+            }
+          log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
+                     __FILE__, __func__, pos, newpos, outname);
+          
+
+          hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                                     MAPI_CREATE|MAPI_MODIFY, (LPUNKNOWN*)&to);
+          if (FAILED (hr)) 
+            {
+              log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                         __FILE__, __func__, hr); 
+              goto leave;
+            }
       
-      err = op_decrypt_stream (from, to, ttl, filename);
-      if (err)
-        {
-          log_debug ("%s:%s: decrypt stream failed: %s",
-                     __FILE__, __func__, op_strerror (err)); 
-          to->Revert ();
+          err = op_decrypt_stream (from, to, ttl, filename, attestation);
+          if (err)
+            {
+              log_debug ("%s:%s: decrypt stream failed: %s",
+                         __FILE__, __func__, op_strerror (err)); 
+              to->Revert ();
+              to->Release ();
+              from->Release ();
+              MessageBox (hwnd, op_strerror (err),
+                          "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
+              goto leave;
+            }
+        
+          to->Commit (0);
           to->Release ();
           from->Release ();
-          MessageBox (hwnd, op_strerror (err),
-                      "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
-          /* FIXME: We might need to delete outname now.  However a
-             sensible implementation of the stream object should have
-             done it trhough the Revert call. */
-          xfree (outname);
-          goto leave;
+
+          hr = newatt->SaveChanges (0);
+          if (hr != S_OK)
+            {
+              log_error ("%s:%s: SaveChanges failed: hr=%#lx\n",
+                         __FILE__, __func__, hr); 
+              goto leave;
+            }
+
+          /* Delete the orginal attachment. FIXME: Should we really do
+             that or better just mark it in the table and delete
+             later? */
+          att->Release ();
+          att = NULL;
+          if (message->DeleteAttach (pos, 0, NULL, 0) == S_OK)
+            log_error ("%s:%s: failed to delete attacghment %d: %s",
+                       __FILE__, __func__, pos, op_strerror (err)); 
+          
         }
+      else  /* Save attachment to a file. */
+        {
+          hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
+                                 (STGM_CREATE | STGM_READWRITE),
+                                 outname, NULL, &to); 
+          if (FAILED (hr)) 
+            {
+              log_error ("%s:%s: can't create stream for `%s': hr=%#lx\n",
+                         __FILE__, __func__, outname, hr); 
+              from->Release ();
+              goto leave;
+            }
+      
+          err = op_decrypt_stream (from, to, ttl, filename, attestation);
+          if (err)
+            {
+              log_debug ("%s:%s: decrypt stream failed: %s",
+                         __FILE__, __func__, op_strerror (err)); 
+              to->Revert ();
+              to->Release ();
+              from->Release ();
+              MessageBox (hwnd, op_strerror (err),
+                          "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
+              /* FIXME: We might need to delete outname now.  However a
+                 sensible implementation of the stream object should have
+                 done it through the Revert call. */
+              goto leave;
+            }
         
-      to->Commit (0);
-      to->Release ();
-      from->Release ();
-
-      /*  Hmmm: Why are we deleting the attachment now????? 
-          Disabled until clarified.   FIXME */
-      //if (message->DeleteAttach (pos, 0, NULL, 0) == S_OK)
-      //   show error;
-
-      xfree (outname);
+          to->Commit (0);
+          to->Release ();
+          from->Release ();
+        }
+      
     }
   else
     {
@@ -1967,8 +2180,11 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
     }
 
  leave:
-  /* Close this attachment. */
-  att->Release ();
+  xfree (outname);
+  if (newatt)
+    newatt->Release ();
+  if (att)
+    att->Release ();
 }
 
 
