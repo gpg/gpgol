@@ -99,6 +99,7 @@ public:
     body = NULL;
     body_plain = NULL;
     is_pgpmime = false;
+    has_attestation = false;
     silent = false;
 
     attestation = NULL;
@@ -200,6 +201,7 @@ private:
   char *body;         /* utf-8 encoded body string or NULL. */
   char *body_plain;   /* Plaintext version of BODY or NULL. */
   bool is_pgpmime;    /* True if the message is a PGP/MIME encrypted one. */
+  bool has_attestation;/* True if we found an attestation attachment. */
   bool silent;        /* Don't pop up message boxes.  Currently this
                          is only used with decryption.  */
 
@@ -686,6 +688,7 @@ GpgMsgImpl::writeAttestation (void)
   LPATTACH newatt = NULL;
   LPSTREAM to = NULL;
   char *buffer = NULL;
+  char *p, *pend;
   ULONG nwritten;
 
   if (!message || !attestation)
@@ -709,6 +712,20 @@ GpgMsgImpl::writeAttestation (void)
       goto leave;
     }
   
+  /* It seem that we need to insert a short filename.  Without it the
+     _displayed_ list of attachments won't get updated although the
+     attachment has been created. */
+  prop.ulPropTag = PR_ATTACH_FILENAME_A;
+  prop.Value.lpszA = "gpgtstt0.txt";
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+
+  /* And not for the real name. */
   prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
   prop.Value.lpszA = "GPGol-Attestation.txt";
   hr = HrSetOneProp (newatt, &prop);
@@ -718,7 +735,28 @@ GpgMsgImpl::writeAttestation (void)
                  __FILE__, __func__, hr); 
       goto leave;
     }
-  
+
+  prop.ulPropTag = PR_ATTACH_TAG;
+  prop.Value.bin.cb  = sizeof oid_mimetag;
+  prop.Value.bin.lpb = (LPBYTE)oid_mimetag;
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set attach tag: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
+  prop.Value.lpszA = "text/plain; charset=utf-8";
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      goto leave;
+    }
+
   hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
                              MAPI_CREATE|MAPI_MODIFY, (LPUNKNOWN*)&to);
   if (FAILED (hr)) 
@@ -739,13 +777,29 @@ GpgMsgImpl::writeAttestation (void)
   attestation = NULL;
 
   log_debug ("writing attestation `%s'\n", buffer);
-
-  hr = to->Write (buffer, strlen (buffer), &nwritten);
+  hr = S_OK;
+  if (!*buffer)
+    {
+      p = _("[No attestation computed (e.g. messages was not signed)");
+      hr = to->Write (p, strlen (p), &nwritten);
+    }
+  else
+    {
+      for (p=buffer; hr == S_OK && (pend = strchr (p, '\n')); p = pend+1)
+        {
+          hr = to->Write (p, pend - p, &nwritten);
+          if (hr == S_OK)
+            hr = to->Write ("\r\n", 2, &nwritten);
+        }
+      if (*p && hr == S_OK)
+        hr = to->Write (p, strlen (p), &nwritten);
+    }
   if (hr != S_OK)
     {
       log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
       goto leave;
     }
+      
   
   to->Commit (0);
   to->Release ();
@@ -859,7 +913,14 @@ GpgMsgImpl::decrypt (HWND hwnd)
   /* We always want an attestation.  Note that we ignore any error
      because that would anyway be a out of core situation and thus we
      can't do much about it. */
-  if (!attestation)
+  if (has_attestation)
+    {
+      if (attestation)
+        gpgme_data_release (attestation);
+      log_debug ("%s:%s: we already have an attestation\n",
+                 __FILE__, __func__);
+    }
+  else if (!attestation)
     gpgme_data_new (&attestation);
   
 
@@ -1726,6 +1787,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   const char *s;
 
   is_pgpmime = false;
+  has_attestation = false;
   n_attach = getAttachments ();
   log_debug ("%s:%s: message has %u attachments\n",
              __FILE__, __func__, n_attach);
@@ -1766,6 +1828,12 @@ GpgMsgImpl::gatherAttachmentInfo (void)
               && !stricmp (s, ".asc"))
             table[pos].armor_type = get_pgp_armor_type (att,table[pos].method);
         }
+      if (table[pos].filename
+          && !stricmp (table[pos].filename, "GPGol-Attestation.txt")
+          && table[pos].content_type
+          && !stricmp (table[pos].content_type, "text/plain"))
+        has_attestation = true;
+
       att->Release ();
     }
   table[pos].end_of_table = 1;
@@ -1835,7 +1903,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
     }
 
   /* Simple check whether this is PGP/MIME encrypted.  At least with
-     OL2003 the conent-type of the body is also correctly set but we
+     OL2003 the content-type of the body is also correctly set but we
      don't make use of this as it is not clear whether this is true
      for othyer storage providers. */
   if (!opt.compat.no_pgpmime

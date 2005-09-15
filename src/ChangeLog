@@ -1,3 +1,17 @@
+2005-09-15  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (OnWriteComplete): Take care of EEME_FAILED.
+	(OnWrite): Check that we are encrypting only plain text messages.
+
+	* myexchext.h: Add flags used by OnReadComplete.
+
+2005-09-14  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (writeAttestation): Add a content type.
+	(gatherAttachmentInfo): Detect whether we already have an attestation.
+	(decrypt): Don't create duplicate attestations.
+	(writeAttestation): Translate LF to CRLF.
+
 2005-09-13  Werner Koch  <wk@g10code.com>
 
 	* pgpmime.c (pgpmime_decrypt): New arg ATTESTATION.

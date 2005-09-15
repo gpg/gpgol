@@ -61,6 +61,10 @@ extern "C" {
 #define EEPS_STORE                      0x00000003
 #define EEPS_TOOLSOPTIONS               0x00000004
 
+/* Flags used by OnFooComplete. */
+#define EEME_FAILED                     0x00000001
+#define EEME_COMPLETE_FAILED            0x00000002
+
 
 /* Command IDs. */
 #define EECMDID_ToolsCustomizeToolbar          134

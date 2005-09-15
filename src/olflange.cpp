@@ -691,16 +691,86 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 {
-    log_debug ("%s:%s: received\n", __FILE__, __func__);
-    return S_FALSE;
+  log_debug ("%s:%s: received\n", __FILE__, __func__);
+
+  HRESULT hr;
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  VARIANT aVariant;
+  DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+  HWND hWnd = NULL;
+
+
+  /* If we are going to encrypt, check that the BodyFormat is
+     something we support.  This helps avoiding surprise by sending
+     out unencrypted messages. */
+  if (m_pExchExt->m_gpgEncrypt)
+    {
+      pDisp = find_outlook_property (pEECB, "BodyFormat", &dispid);
+      if (!pDisp)
+        {
+          log_debug ("%s:%s: BodyFormat not found\n", __FILE__, __func__);
+          m_bWriteFailed = TRUE;	
+          return E_FAIL;
+        }
+      
+      aVariant.bstrVal = NULL;
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                          DISPATCH_PROPERTYGET, &dispparamsNoArgs,
+                          &aVariant, NULL, NULL);
+      if (hr != S_OK)
+        {
+          log_debug ("%s:%s: retrieving BodyFormat failed: %#lx",
+                     __FILE__, __func__, hr);
+          m_bWriteFailed = TRUE;	
+          pDisp->Release();
+          return E_FAIL;
+        }
+  
+      if (aVariant.vt != VT_INT && aVariant.vt != VT_I4)
+        {
+          log_debug ("%s:%s: BodyFormat is not an integer (%d)",
+                     __FILE__, __func__, aVariant.vt);
+          m_bWriteFailed = TRUE;	
+          pDisp->Release();
+          return E_FAIL;
+        }
+  
+      if (aVariant.intVal != 1)
+        {
+
+          log_debug ("%s:%s: BodyFormat is %d",
+                     __FILE__, __func__, aVariant.intVal);
+          
+          if (FAILED(pEECB->GetWindow (&hWnd)))
+            hWnd = NULL;
+          MessageBox (hWnd,
+                      "Sorry, we can only encrypt plain text messages and no\n"
+                      "HTML or RTF messages. Please make sure that only the\n"
+                      "text format has been selected.",
+                      "GPGol", MB_ICONERROR|MB_OK);
+
+          m_bWriteFailed = TRUE;	
+          pDisp->Release();
+          return E_FAIL;
+        }
+      pDisp->Release();
+      
+    }
+  
+  
+  return S_FALSE;
 }
 
 
 /* Called by Exchange when the data has been written to the message.
    Encrypts and signs the message if the options are set.  PEECB is a
    pointer to the IExchExtCallback interface.  Returns: S_FALSE to
-   signal Exchange to continue calling extensions.  E_FAIL to signals
-   Exchange an error; the message will not be sent */
+   signal Exchange to continue calling extensions.  We return E_FAIL
+   to signals Exchange an error; the message will not be sent.  Note
+   that we don't return S_OK because this would mean that we rolled
+   back the write operation and that no further extensions should be
+   called. */
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
                                            ULONG lFlags)
@@ -712,16 +782,20 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
   LPMDB pMDB = NULL;
   HWND hWnd = NULL;
   int rc;
+
+  if (lFlags & (EEME_FAILED|EEME_COMPLETE_FAILED))
+    return S_FALSE; /* We don't need to rollback anything in case
+                       other extensions flagged a failire. */
           
+  if (!m_bOnSubmitActive) /* The user is just saving the message. */
+    return S_FALSE;
+  
+  if (m_bWriteFailed)     /* Operation failed already. */
+    return S_FALSE;
+  
   if (FAILED(pEECB->GetWindow (&hWnd)))
     hWnd = NULL;
 
-  if (!m_bOnSubmitActive) /* the user is just saving the message */
-    return S_FALSE;
-  
-  if (m_bWriteFailed)     /* operation failed already */
-    return S_FALSE;
-  
   HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
@@ -954,7 +1028,7 @@ CGPGExchExtCommands::InstallCommands (
                     ((unsigned char*)key)[keylen++] = xtoi_2 (p);
                   
                   /* FIXME: Do we need to free the string returned in
-                     AVARIANT?  Check at other palces too. */
+                     AVARIANT?  Check at other places too. */
                 }
 
               pDisp->Release();
