@@ -112,7 +112,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (HIWORD (wParam) == BN_CLICKED &&
 	    LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) {
 	    enable ^= 1;
-	    EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable==0? FALSE: TRUE);
+	    EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
+			  enable==0? FALSE: TRUE);
 	}
 	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
 	    config_dialog_box (hDlg);

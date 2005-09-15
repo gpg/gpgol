@@ -121,8 +121,10 @@ void center_window (HWND childwnd, HWND style);
 
 HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 
-/*-- olflange.cpp --*/
-
+/*-- watcher.cpp --*/
+int watcher_init_hook (void);
+int watcher_free_hook (void);
+void watcher_set_callback_ctx (void *cb);
 
 /*-- recipient-dialog.c --*/
 int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);

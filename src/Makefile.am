@@ -42,7 +42,8 @@ gpgol_SOURCES = \
         recipient-dialog.c          \
         verify-dialog.c             \
 	mymapi.h  mymapitags.h      \
-        vasprintf.c          
+        vasprintf.c                 \
+	watcher.cpp
 
 gpgol_LDADD = gpgol.def  \
 		$(GPGME_LIBS) mapi32.dll -lshell32 -lgdi32 -lcomdlg32

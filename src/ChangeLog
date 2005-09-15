@@ -1,3 +1,13 @@
+2005-09-15  Timo Schulz  <ts@g10code.com>
+
+	* util.h: Provider watcher prototypes.
+	* watcher.cpp (watcher_init_hook): New.
+	(watcher_free_hook): New.
+	(watcher_set_callback_ctx): New.
+	(cbt_proc): New.
+	* display.cpp (find_message_window): Removed GpgMsg param.
+	Changed all callers.
+	
 2005-09-15  Werner Koch  <wk@g10code.com>
 
 	* olflange.cpp (OnWriteComplete): Take care of EEME_FAILED.

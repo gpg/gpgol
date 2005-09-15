@@ -84,7 +84,7 @@ add_html_line_endings (const char *body)
    the text of the window instead of the MAPI object itself.  To do
    this we walk all windows to find a PGP signature.  */
 static HWND
-find_message_window (HWND parent, GpgMsg *msg)
+find_message_window (HWND parent)
 {
   HWND child;
 
@@ -107,7 +107,7 @@ find_message_window (HWND parent, GpgMsg *msg)
           &&  (!strncmp (s+15, "MESSAGE-----", 12)
                || !strncmp (s+15, "SIGNED MESSAGE-----", 19)))
         return child;
-      w = find_message_window (child, msg);
+      w = find_message_window (child);
       if (w)
         return w;
       child = GetNextWindow (child, GW_HWNDNEXT);	
@@ -123,7 +123,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb)
 {
   HWND window;
 
-  window = find_message_window (hwnd, msg);
+  window = find_message_window (hwnd);
   if (window)
     {
       log_debug ("%s:%s: window handle %p\n", __FILE__, __func__, window);

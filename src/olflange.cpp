@@ -54,8 +54,7 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
                         } while (0)
 
 
-bool g_bInitDll = FALSE;
-
+bool g_initdll = FALSE;
 
 /* Registers this module as an Exchange extension. This basically updates
    some Registry entries. */
@@ -467,12 +466,12 @@ CGPGExchExt::CGPGExchExt (void)
       || !m_pExchExtPropertySheets)
     out_of_core ();
   
-  if (!g_bInitDll)
+  if (!g_initdll)
     {
-      /*MAPIInitialize (NULL);*/
+      watcher_init_hook ();
       read_options ();
       op_init ();
-      g_bInitDll = TRUE;
+      g_initdll = TRUE;
       log_debug ("%s:%s: first time initialization done\n",
                  __FILE__, __func__);
     }
@@ -486,12 +485,12 @@ CGPGExchExt::~CGPGExchExt (void)
 
   if (m_lContext == EECONTEXT_SESSION)
     {
-      if (g_bInitDll)
+      if (g_initdll)
         {
-	  /*MAPIUninitialize ();*/
+	  watcher_free_hook ();
           op_deinit ();
           write_options ();
-          g_bInitDll = FALSE;
+          g_initdll = FALSE;
           log_debug ("%s:%s: DLL closed down\n", __FILE__, __func__);
 	}	
     }
@@ -1082,6 +1081,7 @@ CGPGExchExtCommands::InstallCommands (
       HWND hwndToolbar = NULL;
       CHAR szBuffer[128];
 
+      watcher_set_callback_ctx ((void *)pEECB);
       pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
                          NULL, NULL, 0);
       AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
