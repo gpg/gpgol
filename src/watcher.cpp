@@ -7,12 +7,12 @@
 #include "mymapitags.h"
 #include "gpgmsg.hh"
 #include "util.h"
+#include "intern.h"
 
 /* Exchange callback context to retrieve the last message. */
 static LPEXCHEXTCALLBACK g_cb = NULL;
 
-/* DLL instance and the hook handle. */
-static HINSTANCE         g_hinst = NULL;
+/* The current hook handle. */
 static HHOOK             g_cbt_hook = NULL;
 
 /* MAPI message and storage handle. */
@@ -47,7 +47,7 @@ find_message_window2 (HWND parent)
       w = find_message_window2 (child);
       if (w)
 	{
-	  log_debug ("%s: watcher found message window.\n", __func__);
+	  log_debug ("%s: watcher found message window: %p\n", __func__, w);
 	  return w;
 	}
       
@@ -117,7 +117,7 @@ watcher_init_hook (void)
 {
   if (g_cbt_hook != NULL)
     return 0;
-  g_cbt_hook = SetWindowsHookEx (WH_CBT, cbt_proc, g_hinst, 0);
+  g_cbt_hook = SetWindowsHookEx (WH_CBT, cbt_proc, glob_hinst, 0);
   if (!g_cbt_hook)
     {
       log_debug ("%s: SetWindowsHookEx failed ec=%d\n", 
