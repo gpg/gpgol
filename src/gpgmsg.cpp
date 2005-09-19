@@ -1193,6 +1193,7 @@ int
 GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
 {
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  HRESULT hr;
   gpgme_key_t *keys = NULL;
   gpgme_key_t sign_key = NULL;
   bool is_html;
@@ -1331,6 +1332,14 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
         err = set_message_body (message, ciphertext);
       if (err)
         goto leave;
+      hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
+                     __FILE__, __func__, hr); 
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave;
+        }
     }
 
 
@@ -2256,7 +2265,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
 }
 
 
-/* Sign the attachment with the internal number POS.  TTL is caching
+/* Sign the attachment with the internal number POS.  TTL is the caching
    time for a required passphrase. */
 void
 GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)

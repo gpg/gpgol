@@ -1,3 +1,12 @@
+2005-09-19  Werner Koch  <wk@g10code.com>
+
+	* main.c (DllMain): Removed debug output; this should not be
+	used before initialization!
+
+	* watcher.cpp: Include config.h.  Removed weird line endings.
+
+	* gpgmsg.cpp (encrypt_and_sign): Call SaveChanges.
+
 2005-09-15  Timo Schulz  <ts@g10code.com>
 
 	* util.h: Provider watcher prototypes.
@@ -40,7 +49,7 @@
 	* gpgmsg.cpp (decryptAttachment, decrypt): Save plaintext back
 	into the MAPI if desired.
 
-g2004-09-08  Timo Schulz  <ts@g10code.com>
+2004-09-08  Timo Schulz  <ts@g10code.com>
 
 	* passphrase-dialog.c (lod_recipbox): Use gpgme directly
 	to resolve the keyids to userids.

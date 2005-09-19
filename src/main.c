@@ -81,7 +81,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 {
   if (reason == DLL_PROCESS_ATTACH)
     {
-      log_debug ("%s: attached to process\n", __func__);
       set_global_hinstance (hinst);
       /* The next call initializes subsystems of gpgme and should be
          done as early as possible.  The actual return value is (the
@@ -101,7 +100,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
   else if (reason == DLL_PROCESS_DETACH)
     {
       watcher_free_hook ();
-      log_debug ("%s: detached from process\n", __func__);
     }
   
   return TRUE;
