@@ -103,7 +103,7 @@ unlock_cache (void)
 
 /* This is routine is used to remove all deleted entries from the
    linked list.  Deleted entries are marked by a value of NULL.  Note,
-   that this routibne must be called in a locked state. */
+   that this routine must be called in a locked state. */
 static void
 remove_deleted_items (void)
 {

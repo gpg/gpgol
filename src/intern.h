@@ -108,8 +108,10 @@ struct
     unsigned int no_msgcache:1;
     unsigned int no_pgpmime:1;
     unsigned int no_oom_write:1; /* Don't write using Outlooks object model. */
-    unsigned int preview_decryption:1;
+    unsigned int preview_decryption:1; /* Decrypt in preview window. */
     unsigned int old_reply_hack: 1; /* See gpgmsg.cpp:decrypt. */
+    unsigned int auto_decrypt: 1;   /* Try to decrypt when clicked. */
+    unsigned int no_attestation: 1; /* Don't create an attestation. */
   } compat; 
 } opt;
 

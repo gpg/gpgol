@@ -468,7 +468,8 @@ CGPGExchExt::CGPGExchExt (void)
   
   if (!g_initdll)
     {
-      watcher_init_hook ();
+      if (opt.compat.auto_decrypt)
+        watcher_init_hook ();
       read_options ();
       op_init ();
       g_initdll = TRUE;
@@ -922,7 +923,7 @@ show_window_hierarchy (HWND parent, int level)
 }
 
 
-/* Called by Echange to install commands and toolbar buttons.  Returns
+/* Called by Exchange to install commands and toolbar buttons.  Returns
    S_FALSE to signal Exchange to continue calling extensions. */
 STDMETHODIMP 
 CGPGExchExtCommands::InstallCommands (
@@ -1081,7 +1082,8 @@ CGPGExchExtCommands::InstallCommands (
       HWND hwndToolbar = NULL;
       CHAR szBuffer[128];
 
-      watcher_set_callback_ctx ((void *)pEECB);
+      if (opt.compat.auto_decrypt)
+        watcher_set_callback_ctx ((void *)pEECB);
       pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &hMenuTools,
                          NULL, NULL, 0);
       AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);

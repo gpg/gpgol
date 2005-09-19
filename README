@@ -12,7 +12,7 @@ src/       Code to build the actual core of the plugin.  The resulting
 To install this plugin, copy it to some directory (e.g. where gpg lives),
 make sure that the libgpg-error.dll and gpgme.dll are available in a
 directory where Windows searches for DLLs (e.g. c:\winnt\system32),
-stop Outlook, run the command "regsvr32 outlgpg.dll" and start
+stop Outlook, run the command "regsvr32 gpgol.dll" and start
 Outlook. You should then find a new tab named "GnuPG" in Outlook's
 option menu.
 
@@ -25,7 +25,7 @@ table when used with a DEF file and generated import lib.  Needs more
 debugging - any BFD cracks who can lend me a helping hand?  (wk).
 
 Bug reporting: First click on the logo on the GnuPG options tab to
-check whether a neer version has been released - try this first.  If
+check whether a newer version has been released - try this first.  If
 this does not help, check out the mailing lists and also the bug
 archive at http://bugs.gnupg.org (use username and password "guest",
 select "query" and there category "gpgol") if you did not found any

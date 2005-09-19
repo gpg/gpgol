@@ -11,7 +11,9 @@
   same holds true for HrSetOneProp.  We might want to use OpenProperty
   for longer texts.
 
-* IMPORTANT: msgcache.c grows without limit - fix it.
-
 * Hook into OnDelivery and rename attachments named like the
-  Attestation attachment we generate locally.
+  Attestation attachment we generate locally.  We might also want to
+  detect whether this is an encrypted message and change the
+  MessageClass accordingly.
+
+

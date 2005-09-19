@@ -920,7 +920,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       log_debug ("%s:%s: we already have an attestation\n",
                  __FILE__, __func__);
     }
-  else if (!attestation)
+  else if (!attestation && !opt.compat.no_attestation)
     gpgme_data_new (&attestation);
   
 
@@ -1163,7 +1163,7 @@ GpgMsgImpl::sign (HWND hwnd)
          failed. */
     }
 
-  set_x_header (message, "GPGol-Version", PACKAGE_VERSION);
+  set_x_header (message, "Gpgol-Version", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it
@@ -1320,7 +1320,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
         }
     }
 
-  set_x_header (message, "GPGol-Version", PACKAGE_VERSION);
+  set_x_header (message, "Gpgol-Version", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it

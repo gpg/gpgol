@@ -74,6 +74,12 @@
 #include "util.h"
 
 
+/* We limit the size of the cache to this value. The cache might take
+   up more space temporary if a new message is larger than this values
+   or if several thereads are currently accessing the cache. */
+#define MAX_CACHESIZE (512*1024)  /* 512k */
+
+
 /* A Item to hold a cache message, i.e. the plaintext and a key. */
 struct cache_item
 {
@@ -143,6 +149,43 @@ unlock_cache (void)
     log_error_w32 (-1, "%s:%s: ReleaseMutex failed", __FILE__, __func__);
 }
 
+
+/* Flush entries from the cache if it gets too large.  NOTE: This
+   function needs to be called with a locked cache.  NEWSIZE is the
+   size of the message we want to put in the cache later. */
+static void
+flush_if_needed (size_t newsize)
+{
+  cache_item_t item, prev;
+  size_t total;
+  
+  for (total = newsize, item = the_cache; item; item = item->next)
+    total += item->length;
+
+  if (total <= MAX_CACHESIZE)
+    return;
+
+  /* Our algorithm to remove entries is pretty simple: We remove
+     entries from the end until we are below the maximum size. */
+ again:
+  for (item = the_cache, prev = NULL; item; prev = item, item = item->next)
+    if ( !item->next && !item->ref)
+      {
+        if (prev)
+          prev->next = NULL;
+        else
+          the_cache = NULL;
+        if (total > item->length)
+          total -= item->length;
+        else
+          total = 0;
+        xfree (item->plaintext);
+        xfree (item);
+        if (total > MAX_CACHESIZE)
+          goto again;
+        break;
+      }
+}
 
 
 /* Put the BODY of a message into the cache.  BODY should be a
@@ -226,7 +269,7 @@ msgcache_put (char *body, int transfer, LPMESSAGE message)
       
       if (!lock_cache ())
         {
-          /* FIXME: Decide whether to kick out some entries. */
+          flush_if_needed (item->length);
           item->next = the_cache;
           the_cache = item;
           unlock_cache ();
@@ -334,8 +377,10 @@ msgcache_unref (void *refhandle)
                            __func__, item);
               else
                 item->ref--;
-              /* Fixme: check whether this one has been scheduled for
-                 removal. */
+              /* We could here check whether this one has been
+                 scheduled for removal.  However, I don't think this
+                 is really required, we just wait for the next new
+                 message which will then remove all pending ones. */
               break;
             }
         }

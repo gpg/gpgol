@@ -1,5 +1,14 @@
 2005-09-19  Werner Koch  <wk@g10code.com>
 
+	* msgcache.c (flush_if_needed): New.
+	(msgcache_put): use it.
+
+	* intern.h (opt): New compatibility flags AUTO_DECRYPT and
+	NO_ATTESTATION.
+	* olflange.cpp (InstallCommands): Use watcher stuff only when this
+	option has been enabled.
+	* gpgmsg.cpp (decrypt): Take care of NO_ATTESTATION.
+
 	* main.c (DllMain): Removed debug output; this should not be
 	used before initialization!
 
