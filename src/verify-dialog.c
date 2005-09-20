@@ -28,6 +28,7 @@
 #include "gpgol-ids.h"
 #include "keycache.h"
 #include "intern.h"
+#include "util.h"
 
 struct dialog_context
 {
@@ -76,95 +77,96 @@ load_akalist (HWND dlg, gpgme_key_t key)
 static void 
 load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 {
-    gpgme_key_t key;
-    char *s, buf[2+16+1];
-    char *p;
-    int stat;
-    int valid, no_key = 0, n = 0;
-
-    s = get_timestamp (ctx->signatures->timestamp);
-    SetDlgItemText (dlg, IDC_VRY_TIME, s);
-
-    s = ctx->signatures->fpr;
-    if (strlen (s) == 40)
-	strncpy (buf+2, s+40-8, 8);
-    else if (strlen (s) == 32) /* MD5:RSAv3 */
-	strncpy (buf+2, s+32-8, 8);
-    else
-	strncpy (buf+2, s+8, 8);
-    buf[10] = 0;
-    buf[0] = '0'; 
-    buf[1] = 'x';
-    SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
-    /*key = find_gpg_key (buf+2, 0);*/
-    key = get_gpg_key (buf+2);
+  gpgme_key_t key;
+  char *s, buf[2+16+1];
+  char *p;
+  int stat;
+  int valid, no_key = 0, n = 0;
+  
+  s = get_timestamp (ctx->signatures->timestamp);
+  SetDlgItemText (dlg, IDC_VRY_TIME, s);
+  
+  s = ctx->signatures->fpr;
+  if (strlen (s) == 40)
+    strncpy (buf+2, s+40-8, 8);
+  else if (strlen (s) == 32) /* MD5:RSAv3 */
+    strncpy (buf+2, s+32-8, 8);
+  else
+    strncpy (buf+2, s+8, 8);
+  buf[10] = 0;
+  buf[0] = '0'; 
+  buf[1] = 'x';
+  SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
+  key = get_gpg_key (buf+2);
+  
+  stat = ctx->signatures->summary;
+  if (stat & GPGME_SIGSUM_GREEN)
+    s = _("Good signature");
+  else if (stat & GPGME_SIGSUM_RED)
+    s = _("BAD signature!");
+  else if (stat & GPGME_SIGSUM_KEY_REVOKED)
+    s = _("Good signature from revoked key");
+  else if (stat & GPGME_SIGSUM_KEY_EXPIRED)
+    s = _("Good signature from expired key");
+  else if (stat & GPGME_SIGSUM_SIG_EXPIRED)
+    s = _("Good expired signature");
+  else if (stat & GPGME_SIGSUM_KEY_MISSING) 
+    {
+      s = _("Could not check signature: missing key");
+      no_key = 1;
+    }
+  else
+    s = _("Verification error");
+  /* XXX: if we have a key we do _NOT_ trust, stat is 'wrong' */
+  SetDlgItemText (dlg, IDC_VRY_STATUS, s);
+  
+  if (key && key->uids) 
+    {
+      s = key->uids->uid;
+      SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
+      
+      n = load_akalist (dlg, key);
+      gpgme_key_release (key);
+      if (n == 0)
+	EnableWindow (GetDlgItem (dlg, IDC_VRY_AKALIST), FALSE);
+    }
+  else 
+    {
+      s = _("User-ID not found");
+      SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
+    }
+  
+  s = (char *)get_pubkey_algo_str (ctx->signatures->pubkey_algo);
+  SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
+  
+  valid = ctx->signatures->validity;
+  if (stat & GPGME_SIGSUM_SIG_EXPIRED) 
+    {
+      char *fmt;
     
-    stat = ctx->signatures->summary;
-    if (stat & GPGME_SIGSUM_GREEN)
-	s = "Good signature";
-    else if (stat & GPGME_SIGSUM_RED)
-	s = "BAD signature!";
-    else if (stat & GPGME_SIGSUM_KEY_REVOKED)
-	s = "Good signature from revoked key";
-    else if (stat & GPGME_SIGSUM_KEY_EXPIRED)
-	s = "Good signature from expired key";
-    else if (stat & GPGME_SIGSUM_SIG_EXPIRED)
-	s = "Good expired signature";
-    else if (stat & GPGME_SIGSUM_KEY_MISSING) {
-	s = "Could not check signature: missing key";
-	no_key = 1;
+      fmt = "Signature expired on %s";
+      s = get_timestamp (ctx->signatures->exp_timestamp);
+      p = xmalloc (strlen (s)+1+strlen (fmt)+2);
+      sprintf (p, fmt, s);
+      SetDlgItemText (dlg, IDC_VRY_HINT, s);
+      xfree (p);
     }
-    else
-	s = "Verification error";
-    /* XXX: if we have a key we do _NOT_ trust, stat is 'wrong' */
-    SetDlgItemText (dlg, IDC_VRY_STATUS, s);
-    
-    if (key) {
-	s = (char*)gpgme_key_get_string_attr (key, GPGME_ATTR_USERID, NULL, 0);
-	SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
-
-	n = load_akalist (dlg, key);
-	gpgme_key_release (key);
-	if (n == 0)
-	    EnableWindow (GetDlgItem (dlg, IDC_VRY_AKALIST), FALSE);
-    }
-    else {
-	s = "User-ID not found";
-	SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
-    }
-
-    switch (ctx->signatures->pubkey_algo) {
-    case GPGME_PK_RSA: s = "RSA"; break;
-    case GPGME_PK_DSA: s = "DSA"; break;
-    default:           s = "???"; break;
-    }
-    SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
-
-    valid = ctx->signatures->validity;
-    if (stat & GPGME_SIGSUM_SIG_EXPIRED) {
-	char *fmt;
-
-	fmt = "Signature expired on %s";
-	s = get_timestamp (ctx->signatures->exp_timestamp);
-	p = xmalloc (strlen (s)+1+strlen (fmt)+2);
-	sprintf (p, fmt, s);
-	SetDlgItemText (dlg, IDC_VRY_HINT, s);
-	xfree (p);
-    }
-    else if (valid < GPGME_VALIDITY_MARGINAL) {
-	switch (valid) {
+  else if (valid < GPGME_VALIDITY_MARGINAL) 
+    {
+      switch (valid) 
+	{
 	case GPGME_VALIDITY_NEVER:
-	    s = "Signature issued by a key we do NOT trust.";
-	    break;
-
+	  s = "Signature issued by a key we do NOT trust.";
+	  break;
+	  
 	default:
-	    if (no_key)
-		s = "";
-	    else
-		s = "Signature issued by a non-valid key.";
-	    break;
+	  if (no_key)
+	    s = "";
+	  else
+	    s = "Signature issued by a non-valid key.";
+	  break;
 	}
-	SetDlgItemText (dlg, IDC_VRY_HINT, s);
+      SetDlgItemText (dlg, IDC_VRY_HINT, s);
     }
 }
 

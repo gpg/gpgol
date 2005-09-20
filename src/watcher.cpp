@@ -20,7 +20,6 @@
  */
 
 #include <config.h>
-
 #include <windows.h>
 #include <stdio.h>
 #include <gpgme.h>
@@ -81,6 +80,7 @@ find_message_window2 (HWND parent)
 }
 
 
+/* Decrypt a single message. */
 static void
 decrypt_message (HWND hwnd, LPMESSAGE msg)
 {
@@ -92,9 +92,19 @@ decrypt_message (HWND hwnd, LPMESSAGE msg)
   msg = NULL;
 }
 
-
-/* XXX: describe what we are doing here! */
-
+/* This hook procedure allows to monitor all windows which are created
+ * and/or activated.
+ * We use it to find the new opened message window and start automatically
+ * the decryption code. The pre-condition is, that the new window has the
+ * proper window class and a child window with valid OpenPGP data.
+ *
+ * We cannot use the HCBT_CREATEWND alone because at the point the hook
+ * procedure is called, the window is only about to be created but the
+ * procedure has not finished yet. Plus the child windows are not yet
+ * created. Thus we check if the new window has the proper class. If
+ * this window is then activated, we call the decryption code and reset
+ * the window handle so the decryption is only called once.
+ */
 static LRESULT CALLBACK
 cbt_proc (int code, WPARAM w, LPARAM l)
 {

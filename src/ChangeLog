@@ -1,19 +1,29 @@
+2005-09-20  Timo Schulz  <ts@g10code.com>
+
+	* attach.c: New.
+	* attach.h: New.
+	* olflange.cpp (CGPGExchExt): Allocate class for
+	attached file events.
+	(QueryInterface): Return interface pointer for
+	attached file events.
+	* passphrase-dialog.c (load_secbox): Use new GPGME
+	interface.
+	(get_pubkey_algo_str): New.
+	* verify-dialog.c (load_sigbox): Likewise.
+	* recipient-dialog.c (load_recipbox): Likewise.
+
 2005-09-19  Werner Koch  <wk@g10code.com>
 
 	* msgcache.c (flush_if_needed): New.
 	(msgcache_put): use it.
-
 	* intern.h (opt): New compatibility flags AUTO_DECRYPT and
 	NO_ATTESTATION.
 	* olflange.cpp (InstallCommands): Use watcher stuff only when this
 	option has been enabled.
 	* gpgmsg.cpp (decrypt): Take care of NO_ATTESTATION.
-
 	* main.c (DllMain): Removed debug output; this should not be
 	used before initialization!
-
 	* watcher.cpp: Include config.h.  Removed weird line endings.
-
 	* gpgmsg.cpp (encrypt_and_sign): Call SaveChanges.
 
 2005-09-15  Timo Schulz  <ts@g10code.com>

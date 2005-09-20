@@ -27,6 +27,7 @@
 #include "gpgol-ids.h"
 #include "keycache.h"
 #include "intern.h"
+#include "util.h"
 
 struct recipient_cb_s {
     char **unknown_keys;    
@@ -84,65 +85,69 @@ initialize_rsetbox (HWND hwnd)
 static void 
 load_rsetbox (HWND hwnd)
 {
-    
-    LVITEM lvi;
-    DWORD val;
-    char keybuf[128];
-    const char * s;
-    const char * trust_items[] = {
-	"UNKNOWN",
+  LVITEM lvi;
+  gpgme_key_t key = NULL;
+  void *ctx = NULL;
+  char keybuf[128], *s;
+  const char * trust_items[] = 
+    {
+      "UNKNOWN",
 	"UNDEFINED",
 	"NEVER",
 	"MARGINAL",
 	"FULL",
-	"ULTIMATE"
+      "ULTIMATE"
     };
-    void *ctx=NULL;
-    size_t doloop=1;
-    gpgme_key_t key=NULL;
+  enum {COL_NAME, COL_EMAIL, COL_KEYINF, COL_KEYID, COL_TRUST};
+  DWORD val;
+  size_t doloop=1;
 
-    memset (&lvi, 0, sizeof (lvi));
-    cleanup_keycache_objects (); /*XXX: rewrite the entire key cache! */
-    enum_gpg_keys (NULL, &ctx);
-    while (doloop) {
-	if (enum_gpg_keys(&key, &ctx))
-	    doloop = 0;
-	if (!gpgme_key_get_ulong_attr (key, GPGME_ATTR_CAN_ENCRYPT, NULL, 0))
-	    continue;
-	/* check that the primary key is *not* revoked, expired or invalid */
-	if (gpgme_key_get_ulong_attr (key, GPGME_ATTR_KEY_REVOKED, NULL, 0)
-         || gpgme_key_get_ulong_attr (key, GPGME_ATTR_KEY_EXPIRED, NULL, 0)
-	 || gpgme_key_get_ulong_attr (key, GPGME_ATTR_KEY_INVALID, NULL, 0))
-	    continue;
-	ListView_InsertItem (hwnd, &lvi);
+  memset (&lvi, 0, sizeof (lvi));
+  cleanup_keycache_objects (); /*XXX: rewrite the entire key cache! */
+  enum_gpg_keys (NULL, &ctx);
+  while (doloop) 
+    {
+      if (enum_gpg_keys(&key, &ctx))
+	doloop = 0;
+      if (!key->subkeys->can_encrypt)
+	continue;
+      
+      /* check that the primary key is *not* revoked, expired or invalid */
+      if (key->revoked || key->expired || key->invalid || key->disabled)
+	continue;
+      if (!key->uids)
+	continue;
+      ListView_InsertItem (hwnd, &lvi);
+      
+      s = key->uids->name;
+      ListView_SetItemText (hwnd, 0, COL_NAME, s);
+      
+      s = key->uids->email;
+      ListView_SetItemText (hwnd, 0, COL_EMAIL, s);
+      
+      s = (char*)get_pubkey_algo_str (key->subkeys->pubkey_algo);
+      sprintf (keybuf, "%s", s);
+      if (key->subkeys->next)
+	{
+	  s = (char*)get_pubkey_algo_str (key->subkeys->next->pubkey_algo);
+	  sprintf (keybuf+strlen (keybuf), "/%s", s);
+	}      
+      strcat (keybuf, " ");
+      if (key->subkeys->next)
+	sprintf (keybuf+strlen (keybuf), "%d", key->subkeys->next->length);
+      else
+	sprintf (keybuf+strlen (keybuf), "%d", key->subkeys->length);
 
-	s = gpgme_key_get_string_attr( key, GPGME_ATTR_NAME, NULL, 0 );
-	ListView_SetItemText( hwnd, 0, 0, (char *)s );
-
-	s = gpgme_key_get_string_attr( key, GPGME_ATTR_EMAIL, NULL, 0 );
-	ListView_SetItemText( hwnd, 0, 1, (char *)s );
-
-	s = gpgme_key_get_string_attr( key, GPGME_ATTR_ALGO, NULL, 0 );
-	sprintf( keybuf, "%s", s );
-	if( (s = gpgme_key_get_string_attr( key, GPGME_ATTR_ALGO, NULL, 1 )) )
-	    sprintf( keybuf+strlen( keybuf ), "/%s", s );
-	strcat( keybuf, " " );
-	if( (val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 1 )) )
-	    sprintf( keybuf+strlen( keybuf ), "%ld", val );
-	else {
-	    val = gpgme_key_get_ulong_attr( key, GPGME_ATTR_LEN, NULL, 0 );
-	    sprintf( keybuf+strlen( keybuf ), "%ld", val );
-	}
-	s = keybuf;
-	ListView_SetItemText( hwnd, 0, 2, (char *) s );
-
-	s = gpgme_key_get_string_attr( key, GPGME_ATTR_KEYID, NULL, 0 ) + 8;
-	ListView_SetItemText( hwnd, 0, 3, (char *)s );
-
-	val = gpgme_key_get_ulong_attr (key, GPGME_ATTR_VALIDITY, NULL, 0);
-	if (val < 0 || val > 5) val = 0;
-	s = (char *)trust_items[val];
-	ListView_SetItemText (hwnd, 0, 4, (char *)s);
+      s = keybuf;
+      ListView_SetItemText (hwnd, 0, COL_KEYINF, s);
+      
+      ListView_SetItemText( hwnd, 0, COL_KEYID, key->subkeys->keyid+8);
+      
+      val = key->uids->validity;
+      if (val < 0 || val > 5) 
+	val = 0;
+      s = (char *)trust_items[val];
+      ListView_SetItemText (hwnd, 0, COL_TRUST, s);
     }
 }
 
@@ -365,39 +370,43 @@ int
 recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
 		       gpgme_key_t **ret_rset, int *ret_opts)
 {
-    struct recipient_cb_s *cb;
-    int i;
-    
-    cb = xcalloc (1, sizeof (struct recipient_cb_s));
-    cb->n = n;
-    cb->fnd_keys = xcalloc (n+1, sizeof (char*));
-    for (i = 0; i < (int)n; i++) {
-	const char *name;
-	if (fnd[i] == NULL) {
-	    cb->fnd_keys[i] = xstrdup ("User-ID not found");
-	    continue;
-	}
-	name = gpgme_key_get_string_attr (fnd[i], GPGME_ATTR_NAME, NULL, 0);
-	if (!name)
-	    name = "User-ID not found";
-	cb->fnd_keys[i] = xstrdup (name);
+  struct recipient_cb_s *cb;
+  int i;
+  
+  cb = xcalloc (1, sizeof (struct recipient_cb_s));
+  cb->n = n;
+  cb->fnd_keys = xcalloc (n+1, sizeof (char*));
+  for (i = 0; i < (int)n; i++) 
+    {
+      const char *name;
+      if (fnd[i] == NULL) {
+	cb->fnd_keys[i] = xstrdup (_("User-ID not found"));
+	continue;
+      }
+      name = fnd[i]->uids->uid;
+      if (!name)
+	name = _("User-ID not found");
+      cb->fnd_keys[i] = xstrdup (name);
     }
-    cb->unknown_keys = unknown;
-    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
-		    recipient_dlg_proc, (LPARAM)cb);
-    if (cb->opts & OPT_FLAG_CANCEL) {
-	*ret_opts = cb->opts;
-	*ret_rset = NULL;
+  cb->unknown_keys = unknown;
+  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
+		  recipient_dlg_proc, (LPARAM)cb);
+  if (cb->opts & OPT_FLAG_CANCEL) 
+    {
+      *ret_opts = cb->opts;
+      *ret_rset = NULL;
     }
-    else {
-	*ret_rset = keycache_to_key_array (cb->rset);
-	keycache_free (cb->rset);
+  else 
+    {
+      *ret_rset = keycache_to_key_array (cb->rset);
+      keycache_free (cb->rset);
     }
-    for (i = 0; i < (int)n; i++) {
-	xfree (cb->fnd_keys[i]);
-	cb->fnd_keys[i] = NULL;
+  for (i = 0; i < (int)n; i++) 
+    {
+      xfree (cb->fnd_keys[i]);
+      cb->fnd_keys[i] = NULL;
     }
-    xfree (cb->fnd_keys);
-    xfree (cb);
-    return 0;
+  xfree (cb->fnd_keys);
+  xfree (cb);
+  return 0;
 }

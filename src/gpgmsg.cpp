@@ -1342,7 +1342,6 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
         }
     }
 
-
  leave:
   /* FIXME: What to do with already encrypted attachments if some of
      the encrypted (or other operations) failed? */

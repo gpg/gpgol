@@ -43,6 +43,7 @@
 #include "olflange-ids.h"
 #include "olflange-def.h"
 #include "olflange.h"
+#include "attach.h"
 
 #define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
 DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da, 
@@ -462,8 +463,9 @@ CGPGExchExt::CGPGExchExt (void)
   m_pExchExtMessageEvents = new CGPGExchExtMessageEvents (this);
   m_pExchExtCommands = new CGPGExchExtCommands (this);
   m_pExchExtPropertySheets = new CGPGExchExtPropertySheets (this);
+  m_pExchExtAttachedFileEvents = new CGPGExchExtAttachedFileEvents (this);
   if (!m_pExchExtMessageEvents || !m_pExchExtCommands
-      || !m_pExchExtPropertySheets)
+      || !m_pExchExtPropertySheets || !m_pExchExtAttachedFileEvents)
     out_of_core ();
   
   if (!g_initdll)
@@ -506,35 +508,43 @@ CGPGExchExt::~CGPGExchExt (void)
 STDMETHODIMP 
 CGPGExchExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
-    HRESULT hr = S_OK;
-
-    *ppvObj = NULL;
-
-    if ((riid == IID_IUnknown) || (riid == IID_IExchExt)) {
-        *ppvObj = (LPUNKNOWN) this;
+  HRESULT hr = S_OK;
+  
+  *ppvObj = NULL;
+  
+  if ((riid == IID_IUnknown) || (riid == IID_IExchExt)) 
+    {
+      *ppvObj = (LPUNKNOWN) this;
     }
-    else if (riid == IID_IExchExtMessageEvents) {
-        *ppvObj = (LPUNKNOWN) m_pExchExtMessageEvents;
-        m_pExchExtMessageEvents->SetContext (m_lContext);
+  else if (riid == IID_IExchExtMessageEvents) 
+    {
+      *ppvObj = (LPUNKNOWN) m_pExchExtMessageEvents;
+      m_pExchExtMessageEvents->SetContext (m_lContext);
     }
-    else if (riid == IID_IExchExtCommands) {
-        *ppvObj = (LPUNKNOWN)m_pExchExtCommands;
-        m_pExchExtCommands->SetContext (m_lContext);
+  else if (riid == IID_IExchExtCommands) 
+    {
+      *ppvObj = (LPUNKNOWN)m_pExchExtCommands;
+      m_pExchExtCommands->SetContext (m_lContext);
     }
-    else if (riid == IID_IExchExtPropertySheets) {
-	if (m_lContext != EECONTEXT_PROPERTYSHEETS)
-	    return E_NOINTERFACE;
-        *ppvObj = (LPUNKNOWN) m_pExchExtPropertySheets;
+  else if (riid == IID_IExchExtPropertySheets) 
+    {
+      if (m_lContext != EECONTEXT_PROPERTYSHEETS)
+	return E_NOINTERFACE;
+      *ppvObj = (LPUNKNOWN) m_pExchExtPropertySheets;
     }
-    else
-        hr = E_NOINTERFACE;
-
-    /* On success we need to bump up the reference counter for the
-       requested object. */
-    if (*ppvObj)
-        ((LPUNKNOWN)*ppvObj)->AddRef();
-
-    /*log_debug("QueryInterface %d\n", __LINE__);*/
+  else if (riid == IID_IExchExtAttachedFileEvents)
+    {
+      *ppvObj = (LPUNKNOWN)m_pExchExtAttachedFileEvents;
+    }  
+  else
+    hr = E_NOINTERFACE;
+  
+  /* On success we need to bump up the reference counter for the
+   requested object. */
+  if (*ppvObj)
+    ((LPUNKNOWN)*ppvObj)->AddRef();
+  
+  /*log_debug("QueryInterface %d\n", __LINE__);*/
     return hr;
 }
 

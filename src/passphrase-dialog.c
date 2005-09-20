@@ -114,14 +114,13 @@ load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
   r = rset;
   for (;;) 
     {
-      const char *uid;
       err = gpgme_op_keylist_next (keyctx, &key);
       if (err)
 	break;
-      uid = gpgme_key_get_string_attr (key, GPGME_ATTR_USERID, NULL, 0);
-      if (uid != NULL) 
+
+      if (key && key->uids != NULL)
 	SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0,
-			    (LPARAM)(const char *)uid);
+			    (LPARAM)(const char *)key->uids->uid);
 	gpgme_key_release (key);
 	key = NULL;
 	r = r->next;
@@ -134,58 +133,80 @@ fail:
 }
 
 
+const char*
+get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
+{
+  
+  switch (alg)
+    {
+    case GPGME_PK_RSA:
+    case GPGME_PK_RSA_E:
+    case GPGME_PK_RSA_S:
+      return "RSA";
+      
+    case GPGME_PK_ELG_E:
+      return "ELG";
+      
+    default:
+      break;
+    }
+  
+  return "???";
+}
+
+
 static void
 load_secbox (HWND dlg, int ctlid)
 {
-    gpgme_key_t sk;
-    size_t n=0, doloop=1;
-    void *ctx=NULL;
+  gpgme_key_t sk;
+  size_t n=0, doloop=1;
+  void *ctx=NULL;
+  
+  enum_gpg_seckeys (NULL, &ctx);
+  while (doloop) 
+    {
+      const char *name, *email, *keyid, *algo;
+      char *p;
+      
+      if (enum_gpg_seckeys (&sk, &ctx))
+	doloop = 0;
+      
+      if (sk->revoked || sk->expired || sk->disabled || sk->invalid)
+	continue;
+      if (!sk->uids)
+	continue;
 
-    enum_gpg_seckeys (NULL, &ctx);
-    while (doloop) {
-	const char *name, *email, *keyid, *algo;
-	char *p;
-
-	if (enum_gpg_seckeys (&sk, &ctx))
-	    doloop = 0;
-
-	if (gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_REVOKED, NULL, 0) ||
-	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0) ||
-	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_INVALID, NULL, 0))
-	    continue;
-	
-	name = gpgme_key_get_string_attr (sk, GPGME_ATTR_NAME, NULL, 0);
-	email = gpgme_key_get_string_attr (sk, GPGME_ATTR_EMAIL, NULL, 0);
-	keyid = gpgme_key_get_string_attr (sk, GPGME_ATTR_KEYID, NULL, 0);
-	algo = gpgme_key_get_string_attr (sk, GPGME_ATTR_ALGO, NULL, 0);
-	if (!email)
-	    email = "";
-	p = (char *)xcalloc (1, strlen (name) + strlen (email) + 17 + 32);
-	if (email && strlen (email))
-	    sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
-	else
-	    sprintf (p, "%s (0x%s, %s)", name, keyid+8, algo);
-	SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
-			    (LPARAM)(const char *) p);
-	xfree (p);
+      name = sk->uids->name;
+      email = sk->uids->email;
+      keyid = sk->subkeys->keyid;
+      algo = get_pubkey_algo_str (sk->subkeys->pubkey_algo);
+      if (!email)
+	email = "";
+      p = (char *)xcalloc (1, strlen (name) + strlen (email) + 17 + 32);
+      if (email && strlen (email))
+	sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
+      else
+	sprintf (p, "%s (0x%s, %s)", name, keyid+8, algo);
+      SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
+			  (LPARAM)(const char *) p);
+      xfree (p);
     }
-    
-    ctx = NULL;
-    reset_gpg_seckeys (&ctx);
-    doloop = 1;
-    n = 0;
-    while (doloop) {
-	if (enum_gpg_seckeys (&sk, &ctx))
-	    doloop = 0;
-	if (gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_REVOKED, NULL, 0) ||
-	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_EXPIRED, NULL, 0) ||
-	    gpgme_key_get_ulong_attr (sk, GPGME_ATTR_KEY_INVALID, NULL, 0))
-	    continue;
-	SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, n, (LPARAM)(DWORD)sk);
-	n++;
+  
+  ctx = NULL;
+  reset_gpg_seckeys (&ctx);
+  doloop = 1;
+  n = 0;
+  while (doloop) 
+    {
+      if (enum_gpg_seckeys (&sk, &ctx))
+	doloop = 0;
+      if (sk->revoked || sk->expired || sk->invalid || sk->disabled)
+	continue;
+      SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, n, (LPARAM)(DWORD)sk);
+      n++;
     }
-    SendDlgItemMessage (dlg, ctlid, CB_SETCURSEL, 0, 0);
-    reset_gpg_seckeys (&ctx);
+  SendDlgItemMessage (dlg, ctlid, CB_SETCURSEL, 0, 0);
+  reset_gpg_seckeys (&ctx);
 }
 
 

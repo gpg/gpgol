@@ -43,7 +43,8 @@ gpgol_SOURCES = \
         verify-dialog.c             \
 	mymapi.h  mymapitags.h      \
         vasprintf.c                 \
-	watcher.cpp
+	watcher.cpp \
+	attach.cpp attach.h
 
 gpgol_LDADD = gpgol.def  \
 		$(GPGME_LIBS) mapi32.dll -lshell32 -lgdi32 -lcomdlg32

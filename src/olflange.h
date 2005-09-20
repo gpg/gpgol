@@ -33,35 +33,36 @@
 class CGPGExchExt : public IExchExt
 {
 public:
-    CGPGExchExt();
-    virtual ~CGPGExchExt();
+  CGPGExchExt();
+  virtual ~CGPGExchExt();
 
 public:	
-    HWND m_hWndExchange;  /* Handle of the exchange window. */
-    /* parameter for sending mails */
-    BOOL  m_gpgEncrypt;
-    BOOL  m_gpgSign;
-
+  HWND m_hWndExchange;  /* Handle of the exchange window. */
+  /* parameter for sending mails */
+  BOOL  m_gpgEncrypt;
+  BOOL  m_gpgSign;
+  
 private:
-    ULONG m_lRef;
-    ULONG m_lContext;
-
-    /* pointer to the other extension objects */
-    CGPGExchExtMessageEvents* m_pExchExtMessageEvents;
-    CGPGExchExtCommands* m_pExchExtCommands;
-    CGPGExchExtPropertySheets* m_pExchExtPropertySheets;
+  ULONG m_lRef;
+  ULONG m_lContext;
+  
+  /* pointer to the other extension objects */
+  CGPGExchExtMessageEvents* m_pExchExtMessageEvents;
+  CGPGExchExtCommands* m_pExchExtCommands;
+  CGPGExchExtPropertySheets* m_pExchExtPropertySheets;
+  CGPGExchExtAttachedFileEvents *m_pExchExtAttachedFileEvents;
 
 public:
-    STDMETHODIMP QueryInterface(REFIID riid, LPVOID* ppvObj);
-    inline STDMETHODIMP_(ULONG) AddRef() { ++m_lRef;  return m_lRef; };
-    inline STDMETHODIMP_(ULONG) Release()
+  STDMETHODIMP QueryInterface(REFIID riid, LPVOID* ppvObj);
+  inline STDMETHODIMP_(ULONG) AddRef() { ++m_lRef;  return m_lRef; };
+  inline STDMETHODIMP_(ULONG) Release()
     {
-	ULONG lCount = --m_lRef;
-	if (!lCount) 
-	    delete this;
-	return lCount;	
+      ULONG lCount = --m_lRef;
+      if (!lCount) 
+	delete this;
+      return lCount;	
     };
-    STDMETHODIMP Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags);
+  STDMETHODIMP Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags);
 };
 
 /*

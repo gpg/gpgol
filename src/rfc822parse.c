@@ -155,7 +155,6 @@ capitalize_header_name (unsigned char *name)
       *name = *name - 'A' + 'a';
 }
 
-
 static char *
 stpcpy (char *a,const char *b)
 {
@@ -165,7 +164,6 @@ stpcpy (char *a,const char *b)
   
   return (char*)a;
 }
-
 
 /* If a callback has been registerd, call it for the event of type
    EVENT. */

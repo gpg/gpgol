@@ -6,6 +6,7 @@
  *
  * Revisions:
  * 2005-08-12  Initial version.
+ * 2005-09-18  Add IExchExtAttachedFileEvents.
  *
  */
 
@@ -329,9 +330,36 @@ DECLARE_INTERFACE_(IOutlookExtCallback, IUnknown)
   STDMETHOD(GetOfficeCharacter)(void **ppmsotfc);
 };
 
+// Flag values for IExchExtAttachedFileEvents::OpenSzFile
+#define EEAFE_OPEN         (0x00000001)
+#define EEAFE_PRINT	   (0x00000002)
+#define EEAFE_QUICKVIEW	   (0x00000003)
 
+#undef INTERFACE
+#define INTERFACE   IExchExtAttachedFileEvents
+
+DECLARE_INTERFACE_(IExchExtAttachedFileEvents, IUnknown)
+{
+  // *** IUnknown methods ***
+  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID FAR * lppvObj) PURE;
+  STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+  STDMETHOD_(ULONG,Release) (THIS) PURE;
+  
+  // *** IExchExtAttachedFileEvents methods ***
+  STDMETHOD(OnReadPattFromSzFile)(THIS_ LPATTACH lpatt, LPTSTR lpszFile,
+				  ULONG ulFlags) PURE;
+  STDMETHOD(OnWritePattToSzFile)(THIS_ LPATTACH lpatt, LPTSTR lpszFile,
+				 ULONG ulFlags) PURE;
+  STDMETHOD(QueryDisallowOpenPatt)(THIS_ LPATTACH lpatt) PURE;
+  STDMETHOD(OnOpenPatt)(THIS_ LPATTACH lpatt) PURE;
+  STDMETHOD(OnOpenSzFile)(THIS_ LPTSTR lpszFile, ULONG ulFlags) PURE;
+};
+typedef IExchExtAttachedFileEvents FAR * LPEXCHEXTATTACHEDFILEEVENTS;
+
+EXTERN_C const IID IID_IExchExtAttachedFileEvents;
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*EXCHEXT_H*/
+
+#endif /*EXCHEXT.h*/

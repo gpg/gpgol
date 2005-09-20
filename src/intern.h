@@ -139,6 +139,7 @@ gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint,
 			     const char *pass_info,
 			     int prev_was_bad, int fd);
 void free_decrypt_key (struct decrypt_key_s * ctx);
+const char *get_pubkey_algo_str (gpgme_pubkey_algo_t id);
 
 /*-- config-dialog.c --*/
 void config_dialog_box (HWND parent);

@@ -25,7 +25,7 @@
 class CGPGExchExtMessageEvents;
 class CGPGExchExtCommands;
 class CGPGExchExtPropertySheets;
-class CGPGExchApp;
+class CGPGExchExtAttachedFileEvents;
 
 bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
