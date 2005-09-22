@@ -592,7 +592,7 @@ decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
 
   gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
   dk.ctx = ctx;
-  err = gpgme_op_decrypt (ctx, in, out);
+  err = gpgme_op_decrypt_verify (ctx, in, out);
   dk.ctx = NULL;
   update_passphrase_cache (err, &dk);
   /* Act upon the result of the decryption operation. */

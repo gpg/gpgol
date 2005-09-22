@@ -16,4 +16,6 @@
   detect whether this is an encrypted message and change the
   MessageClass accordingly.
 
+* Allow for symmetric encryption.
+
 

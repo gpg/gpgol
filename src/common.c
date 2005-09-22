@@ -72,6 +72,41 @@ center_window (HWND childwnd, HWND style)
 }
 
 
+
+/* Return a filename to be used for saving an attachment. Returns a
+   malloced string on success. HWND is the current Window and SRCNAME
+   the filename to be used as suggestion.  On error (i.e. cancel) NULL
+   is returned. */
+char *
+get_save_filename (HWND root, const char *srcname)
+				     
+{
+  char filter[] = "All Files (*.*)\0*.*\0\0";
+  char fname[MAX_PATH+1];
+  OPENFILENAME ofn;
+
+  memset (fname, 0, sizeof (fname));
+  strncpy (fname, srcname, MAX_PATH-1);
+  fname[MAX_PATH] = 0;  
+  
+
+  memset (&ofn, 0, sizeof (ofn));
+  ofn.lStructSize = sizeof (ofn);
+  ofn.hwndOwner = root;
+  ofn.lpstrFile = fname;
+  ofn.nMaxFile = MAX_PATH;
+  ofn.lpstrFileTitle = NULL;
+  ofn.nMaxFileTitle = 0;
+  ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+  ofn.lpstrTitle = "GPG - Save decrypted attachment";
+  ofn.lpstrFilter = filter;
+
+  if (GetSaveFileName (&ofn))
+    return xstrdup (fname);
+  return NULL;
+}
+
+
 void
 out_of_core (void)
 {

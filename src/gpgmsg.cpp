@@ -970,7 +970,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
           return gpg_error (GPG_ERR_GENERAL);
         }
 
-      err = pgpmime_decrypt (from, opt.passwd_ttl, &plaintext, attestation);
+      err = pgpmime_decrypt (from, opt.passwd_ttl, &plaintext, attestation,
+                             hwnd);
       
       from->Release ();
       att->Release ();
@@ -1690,40 +1691,6 @@ get_attach_filename (LPATTACH obj)
 
 
 
-
-/* Return a filename to be used for saving an attachment. Returns an
-   malloced string on success. HWND is the current Window and SRCNAME
-   the filename to be used as suggestion.  On error; i.e. cancel NULL
-   is returned. */
-static char *
-get_save_filename (HWND root, const char *srcname)
-				     
-{
-  char filter[] = "All Files (*.*)\0*.*\0\0";
-  char fname[MAX_PATH+1];
-  OPENFILENAME ofn;
-
-  memset (fname, 0, sizeof (fname));
-  strncpy (fname, srcname, MAX_PATH-1);
-  fname[MAX_PATH] = 0;  
-  
-
-  memset (&ofn, 0, sizeof (ofn));
-  ofn.lStructSize = sizeof (ofn);
-  ofn.hwndOwner = root;
-  ofn.lpstrFile = fname;
-  ofn.nMaxFile = MAX_PATH;
-  ofn.lpstrFileTitle = NULL;
-  ofn.nMaxFileTitle = 0;
-  ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-  ofn.lpstrTitle = "GPG - Save decrypted attachment";
-  ofn.lpstrFilter = filter;
-
-  if (GetSaveFileName (&ofn))
-    return xstrdup (fname);
-  return NULL;
-}
-
 
 /* Read the attachment ATT and try to detect whether this is a PGP
    Armored message.  METHOD is the attach method of ATT.  Returns 0 if
@@ -1793,6 +1760,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   attach_info_t table;
   unsigned int pos, n_attach;
   const char *s;
+  unsigned int attestation_count = 0;
 
   is_pgpmime = false;
   has_attestation = false;
@@ -1840,7 +1808,10 @@ GpgMsgImpl::gatherAttachmentInfo (void)
           && !stricmp (table[pos].filename, "GPGol-Attestation.txt")
           && table[pos].content_type
           && !stricmp (table[pos].content_type, "text/plain"))
-        has_attestation = true;
+        {
+          has_attestation = true;
+          attestation_count++;
+        }
 
       att->Release ();
     }
@@ -1913,9 +1884,12 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   /* Simple check whether this is PGP/MIME encrypted.  At least with
      OL2003 the content-type of the body is also correctly set but we
      don't make use of this as it is not clear whether this is true
-     for othyer storage providers. */
+     for other storage providers.  We use a hack to ignore extra
+     attesttation attachments: Those are assume to come after the both
+     PGP/MIME parts. */
   if (!opt.compat.no_pgpmime
-      && pos == 2 && table[0].content_type && table[1].content_type
+      && pos == 2 + attestation_count
+      && table[0].content_type && table[1].content_type
       && !stricmp (table[0].content_type, "application/pgp-encrypted")
       && !stricmp (table[1].content_type, "application/octet-stream")
       && isPgpmimeVersionPart (0))
@@ -1932,9 +1906,9 @@ GpgMsgImpl::gatherAttachmentInfo (void)
 
 
 
-/* Verify the ATTachment at attachments and table position POS_DATA
-   agains the signature at position POS_SIG.  Display the status for
-   each signature. */
+/* Verify the attachment as recorded in TABLE and at table position
+   POS_DATA against the signature at position POS_SIG.  Display the
+   status for each signature. */
 void
 GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
                               unsigned int pos_data,

@@ -757,7 +757,8 @@ parse_field (HDR_LINE hdr)
   static const char specials[] = "<>@.,;:\\[]\"()";
   static const char specials2[] = "<>@.,;:";
   static const char tspecials[] = "/?=<>@,;:\\[]\"()";
-  static const char tspecials2[] = "/?=<>@.,;:";
+  static const char tspecials2[] = "/?=<>@.,;:";  /* FIXME: really
+                                                     include '.'?*/
   static struct 
   {
     const unsigned char *name;
@@ -765,6 +766,7 @@ parse_field (HDR_LINE hdr)
   } tspecial_header[] = {
     { "Content-Type", 12},
     { "Content-Transfer-Encoding", 25},
+    { "Content-Disposition", 19},
     { NULL, 0}
   };
   const char *delimiters;
