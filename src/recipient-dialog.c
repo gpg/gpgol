@@ -109,7 +109,7 @@ load_rsetbox (HWND hwnd)
     {
       if (enum_gpg_keys(&key, &ctx))
 	doloop = 0;
-      if (!key->subkeys->can_encrypt)
+      if (!key->can_encrypt)
 	continue;
       
       /* check that the primary key is *not* revoked, expired or invalid */
@@ -234,7 +234,6 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     static int rset_state = 1;
     NMHDR * notify;
     HWND hrset;
-    BOOL flag;
     const char *warn;
     int i;
 
@@ -250,8 +249,6 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 	else
 	    initialize_keybox (dlg, rset_cb);
-	CheckDlgButton (dlg, IDC_ENC_OPTARMOR, BST_CHECKED);
-	EnableWindow (GetDlgItem (dlg, IDC_ENC_OPTARMOR), FALSE);
 	center_window (dlg, NULL);
 	SetForegroundWindow (dlg);
 	return TRUE;
@@ -289,9 +286,6 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 			    "Recipient Dialog", MB_ICONINFORMATION|MB_OK);
 		return FALSE;
 	    }
-	    flag = IsDlgButtonChecked (dlg, IDC_ENC_OPTARMOR);
-	    if (flag)
-		rset_cb->opts |= OPT_FLAG_ARMOR;
 	    keycache_new (&rset_cb->rset);
 
 	    for (i=0; i < ListView_GetItemCount (hrset); i++) {

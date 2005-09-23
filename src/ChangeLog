@@ -1,3 +1,11 @@
+2005-09-23  Werner Koch  <wk@g10code.com>
+
+	* recipient-dialog.c (recipient_dlg_proc): Removed
+	IDC_ENC_OPTARMOR stuff; it was not used.
+	(load_rsetbox): Fixed detection of encryption capability.
+
+	* gpgol-ids.h, gpgol-rsrcs.rc: Ditto.
+	
 2005-09-22  Werner Koch  <wk@g10code.com>
 
 	* engine-gpgme.c (decrypt_stream): Use gpgme_op_decrypt_verify.
