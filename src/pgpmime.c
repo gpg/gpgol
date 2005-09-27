@@ -558,7 +558,7 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
     goto leave;
 
   err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl,
-                                    NULL, attestation);
+                                    "[PGP/MIME message]", attestation);
   if (!err && (ctx->parser_error || ctx->line_too_long))
     err = gpg_error (GPG_ERR_GENERAL);
 

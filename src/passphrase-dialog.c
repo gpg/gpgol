@@ -28,27 +28,27 @@
 #include <gpgme.h>
 
 #include "gpgol-ids.h"
-#include "keycache.h"
 #include "passcache.h"
 #include "intern.h"
 
+#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
+                                     __FILE__, __func__, __LINE__); \
+                        } while (0)
+
+/* Object to maintai8n state in the dialogs. */
+struct dialog_context_s
+{
+  struct decrypt_key_s *dec; /* The decryption info. */
+
+  gpgme_key_t *keyarray;     /* NULL or an array of keys. */
+
+  int hide_state;            /* Flag indicating that some stuff is hidden. */
+
+  unsigned int use_as_cb;    /* This is used by the passphrase callback. */
+};
 
 
 static char const allhexdigits[] = "1234567890ABCDEFabcdef";
-
-
-#if 0 /* XXX: left over from old code?? */
-static void
-add_string_list (HWND hbox, const char **list, int start_idx)
-{
-    const char * s;
-    int i;
-
-    for (i=0; (s=list[i]); i++)
-	SendMessage (hbox, CB_ADDSTRING, 0, (LPARAM)(const char *)s);
-    SendMessage (hbox, CB_SETCURSEL, (WPARAM) start_idx, 0);
-}
-#endif
 
 
 static void
@@ -78,61 +78,88 @@ set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
     xfree (key_hint);
 }
 
+/* Release the key array ARRAY as well as all COUNT keys. */
+static void
+release_keyarray (gpgme_key_t *array)
+{
+  size_t n;
+
+  if (array)
+    {
+      for (n=0; array[n]; n++)
+        gpgme_key_release (array[n]);
+      xfree (array);
+    }
+}
+
+/* Return the number of keys in the key array KEYS. */
+static size_t
+count_keys (gpgme_key_t *keys)
+{
+  size_t n = 0;
+
+  if (keys)
+    for (; *keys; keys++)
+      n++;
+  return n;
+}
+
 
 static void
 load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
 {
   gpgme_decrypt_result_t res;
   gpgme_recipient_t rset, r;
-  gpgme_ctx_t keyctx=NULL;
+  gpgme_ctx_t keyctx = NULL;
   gpgme_key_t key;
   gpgme_error_t err;
-  char *p;
-  int c=0;
+  char *buffer, *p;
+  size_t n;
   
-  if (ctx == NULL)
+  if (!ctx)
     return;
+
+  /* Lump together all recipients of the message. */
   res = gpgme_op_decrypt_result (ctx);
-  if (res == NULL || res->recipients == NULL)
+  if (!res || !res->recipients)
     return;
   rset = res->recipients;
-  for (r = rset; r; r = r->next)
-    c++;    
-  p = xcalloc (1, c*(17+2));
-  for (r = rset; r; r = r->next) {
-    strcat (p, r->keyid);
-    strcat (p, " ");
-  }
+  for (n=0, r = rset; r; r = r->next)
+    if (r->keyid)
+      n += strlen (r->keyid) + 1;    
+  buffer = xmalloc (n + 1);
+  for (p=buffer, r = rset; r; r = r->next)
+    if (r->keyid)
+      p = stpcpy (stpcpy (p, r->keyid), " ");
 
+  /* Run a key list on all of them to fill up the list box. */
   err = gpgme_new (&keyctx);
   if (err)
     goto fail;
-  err = gpgme_op_keylist_start (keyctx, p, 0);
+  err = gpgme_op_keylist_start (keyctx, buffer, 0);
   if (err)
     goto fail;
 
-  r = rset;
-  for (;;) 
+  while ( !gpgme_op_keylist_next (keyctx, &key) )
     {
-      err = gpgme_op_keylist_next (keyctx, &key);
-      if (err)
-	break;
-
-      if (key && key->uids != NULL)
+      if (key && key->uids && key->uids->uid)
 	SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0,
 			    (LPARAM)(const char *)key->uids->uid);
+      if (key)
 	gpgme_key_release (key);
-	key = NULL;
-	r = r->next;
     }
 
-fail:
-    if (keyctx != NULL)
-	gpgme_release (keyctx);
-    xfree (p);
+ fail:
+  if (keyctx)
+    gpgme_release (keyctx);
+  xfree (buffer);
 }
 
 
+
+/* Return a string with the short description of the algorithm.  This
+   function is guaranteed to not return NULL or a string longer that 3
+   bytes. */
 const char*
 get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
 {
@@ -146,7 +173,13 @@ get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
       
     case GPGME_PK_ELG_E:
       return "ELG";
-      
+
+    case GPGME_PK_DSA:
+      return "DSA";
+
+    case GPGME_PK_ELG:
+      return "elg";
+
     default:
       break;
     }
@@ -155,262 +188,387 @@ get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
 }
 
 
-static void
+/* Fill a combo box with all keys and return an error with those
+   keys. */
+static gpgme_key_t *
 load_secbox (HWND dlg, int ctlid)
 {
-  gpgme_key_t sk;
-  size_t n=0, doloop=1;
-  void *ctx=NULL;
-  
-  enum_gpg_seckeys (NULL, &ctx);
-  while (doloop) 
+  gpg_error_t err;
+  gpgme_ctx_t ctx;
+  gpgme_key_t key;
+  int pos;
+  gpgme_key_t *keyarray;
+  size_t keyarray_size;
+
+  TRACEPOINT();
+  err = gpgme_new (&ctx);
+  if (err)
+    return NULL;
+
+  TRACEPOINT();
+  err = gpgme_op_keylist_start (ctx, NULL, 1);
+  if (err)
+    {
+      log_error ("failed to initiate key listing: %s\n", gpg_strerror (err));
+      gpgme_release (ctx);
+      return NULL;
+    }
+
+  TRACEPOINT();
+  keyarray_size = 20; 
+  keyarray = xcalloc (keyarray_size+1, sizeof *keyarray);
+  pos = 0;
+
+  while (!gpgme_op_keylist_next (ctx, &key)) 
     {
       const char *name, *email, *keyid, *algo;
       char *p;
       
-      if (enum_gpg_seckeys (&sk, &ctx))
-	doloop = 0;
-      
-      if (sk->revoked || sk->expired || sk->disabled || sk->invalid)
-	continue;
-      if (!sk->uids)
-	continue;
-
-      name = sk->uids->name;
-      email = sk->uids->email;
-      keyid = sk->subkeys->keyid;
-      algo = get_pubkey_algo_str (sk->subkeys->pubkey_algo);
+  TRACEPOINT();
+      if (key->revoked || key->expired || key->disabled || key->invalid)
+        {
+          gpgme_key_release (key);
+          continue;
+        }
+      if (!key->uids || !key->subkeys)
+        {
+          gpgme_key_release (key);
+          continue;
+        }
+        
+      name = key->uids->name;
+      if (!name)
+        name = "";
+      email = key->uids->email;
       if (!email)
 	email = "";
-      p = (char *)xcalloc (1, strlen (name) + strlen (email) + 17 + 32);
-      if (email && strlen (email))
+      keyid = key->subkeys->keyid;
+      if (!keyid || strlen (keyid) < 8)
+        {
+          gpgme_key_release (key);
+          continue;
+        }
+
+      algo = get_pubkey_algo_str (key->subkeys->pubkey_algo);
+      p = xmalloc (strlen (name) + strlen (email) + strlen (keyid+8) + 3 + 20);
+      if (email && *email)
 	sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
       else
 	sprintf (p, "%s (0x%s, %s)", name, keyid+8, algo);
       SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
 			  (LPARAM)(const char *) p);
       xfree (p);
+
+  TRACEPOINT();
+      SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, pos, (LPARAM)pos);
+  TRACEPOINT();
+
+      if (pos >= keyarray_size)
+        {
+          gpgme_key_t *tmparr;
+          size_t i;
+
+  TRACEPOINT();
+          keyarray_size += 10;
+          tmparr = xcalloc (keyarray_size, sizeof *tmparr);
+          for (i=0; i < pos; i++)
+            tmparr[i] = keyarray[i];
+          xfree (keyarray);
+          keyarray = tmparr;
+        }
+      keyarray[pos++] = key;
+  TRACEPOINT();
     }
-  
-  ctx = NULL;
-  reset_gpg_seckeys (&ctx);
-  doloop = 1;
-  n = 0;
-  while (doloop) 
-    {
-      if (enum_gpg_seckeys (&sk, &ctx))
-	doloop = 0;
-      if (sk->revoked || sk->expired || sk->invalid || sk->disabled)
-	continue;
-      SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, n, (LPARAM)(DWORD)sk);
-      n++;
-    }
-  SendDlgItemMessage (dlg, ctlid, CB_SETCURSEL, 0, 0);
-  reset_gpg_seckeys (&ctx);
+
+  TRACEPOINT();
+  gpgme_op_keylist_end (ctx);
+  gpgme_release (ctx);
+  TRACEPOINT();
+  return keyarray;
 }
 
 
 static BOOL CALLBACK
 decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static struct decrypt_key_s * dec;
-    static int hide_state = 1;
-    size_t n;
+  /* Fixme: We should not use a static here but keep it in an array
+     index by DLG. */
+  static struct dialog_context_s *context; 
+  struct decrypt_key_s *dec;
+  size_t n;
 
-    switch (msg) {
-    case WM_INITDIALOG:
-        log_debug ("decrypt_key_dlg_proc: WM_INITDIALOG\n");
-	dec = (struct decrypt_key_s *)lparam;
-	if (dec && dec->use_as_cb) {
-	    dec->opts = 0;
-	    dec->pass = NULL;
-	    set_key_hint (dec, dlg, IDC_DEC_KEYLIST);
-	    EnableWindow (GetDlgItem (dlg, IDC_DEC_KEYLIST), FALSE);
+  if (msg == WM_INITDIALOG)
+    {
+      context = (struct dialog_context_s *)lparam;
+      context->hide_state = 1;
+      dec = context->dec;
+      TRACEPOINT();
+      if (dec && context->use_as_cb) 
+        {
+          dec->opts = 0;
+          dec->pass = NULL;
+          set_key_hint (dec, dlg, IDC_DEC_KEYLIST);
+          EnableWindow (GetDlgItem (dlg, IDC_DEC_KEYLIST), FALSE);
 	}
-	if (dec && dec->last_was_bad)
-	    SetDlgItemText (dlg, IDC_DEC_HINT, "Invalid passphrase; please try again...");
-	else
-	    SetDlgItemText (dlg, IDC_DEC_HINT, "");
-	if (dec && !dec->use_as_cb)
-	    load_secbox (dlg, IDC_DEC_KEYLIST);
-	CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
-	center_window (dlg, NULL);
-	if (dec->hide_pwd) {
-	    ShowWindow (GetDlgItem (dlg, IDC_DEC_HIDE), SW_HIDE);
-	    ShowWindow (GetDlgItem (dlg, IDC_DEC_PASS), SW_HIDE);
-	    ShowWindow (GetDlgItem (dlg, IDC_DEC_PASSINF), SW_HIDE);
-	    /* XXX: make the dialog window smaller */
-	}
-	else
-	    SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
-	SetForegroundWindow (dlg);
-	return FALSE;
+      if (dec && dec->last_was_bad)
+        SetDlgItemText (dlg, IDC_DEC_HINT, 
+                        (dec && dec->last_was_bad)?
+                        _("Invalid passphrase; please try again..."):"");
 
+      TRACEPOINT();
+      if (dec && !context->use_as_cb)
+        context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
+      TRACEPOINT();
+
+      CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
+      center_window (dlg, NULL);
+      if (dec && dec->hide_pwd) 
+        {
+          ShowWindow (GetDlgItem (dlg, IDC_DEC_HIDE), SW_HIDE);
+          ShowWindow (GetDlgItem (dlg, IDC_DEC_PASS), SW_HIDE);
+          ShowWindow (GetDlgItem (dlg, IDC_DEC_PASSINF), SW_HIDE);
+	}
+      else
+        SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
+
+      SetForegroundWindow (dlg);
+      return FALSE;
+    }
+
+  if (!context)
+    return FALSE;
+
+  dec = context->dec;
+
+  switch (msg) 
+    {
     case WM_DESTROY:
-        log_debug ("decrypt_key_dlg_proc: WM_DESTROY\n");
-	hide_state = 1;
-	break;
+      context->hide_state = 1;
+      break;
 
     case WM_SYSCOMMAND:
-        log_debug ("decrypt_key_dlg_proc: WM_SYSCOMMAND\n");
-	if (wparam == SC_CLOSE)
-	    EndDialog (dlg, TRUE);
-	break;
+      if (wparam == SC_CLOSE)
+        EndDialog (dlg, TRUE);
+      break;
 
     case WM_COMMAND:
-        log_debug ("decrypt_key_dlg_proc: WM_COMMAND\n");
-	switch (HIWORD (wparam)) {
+      switch (HIWORD (wparam)) 
+        {
 	case BN_CLICKED:
-	    if ((int)LOWORD (wparam) == IDC_DEC_HIDE) {
-		HWND hwnd;
+          if ((int)LOWORD (wparam) == IDC_DEC_HIDE)
+            {
+              HWND hwnd;
 
-		hide_state ^= 1;
-		hwnd = GetDlgItem (dlg, IDC_DEC_PASS);
-		SendMessage (hwnd, EM_SETPASSWORDCHAR, hide_state? '*' : 0, 0);
-		SetFocus (hwnd);
+              context->hide_state ^= 1;
+              hwnd = GetDlgItem (dlg, IDC_DEC_PASS);
+              SendMessage (hwnd, EM_SETPASSWORDCHAR,
+                           context->hide_state? '*' : 0, 0);
+              SetFocus (hwnd);
 	    }
-	    break;
+          break;
 	}
-	switch (LOWORD (wparam)) {
+
+      switch (LOWORD (wparam)) 
+        {
 	case IDOK:
-	    n = SendDlgItemMessage (dlg, IDC_DEC_PASS, WM_GETTEXTLENGTH, 0, 0);
-	    if (n) {
-		dec->pass = (char *)xcalloc (1, n+2);
-		GetDlgItemText (dlg, IDC_DEC_PASS, dec->pass, n+1);
+          n = SendDlgItemMessage (dlg, IDC_DEC_PASS, WM_GETTEXTLENGTH, 0, 0);
+          if (n && dec) 
+            {
+              dec->pass = xmalloc (n + 2);
+              GetDlgItemText (dlg, IDC_DEC_PASS, dec->pass, n+1);
 	    }
-	    if (!dec->use_as_cb) {
-		int idx = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST, 
-					      CB_GETCURSEL, 0, 0);
-		dec->signer = (gpgme_key_t)SendDlgItemMessage (dlg, IDC_DEC_KEYLIST,
-							       CB_GETITEMDATA, idx, 0);
-		gpgme_key_ref (dec->signer);
-	    }
-	    EndDialog (dlg, TRUE);
-	    break;
+          if (dec && !context->use_as_cb) 
+            {
+              int idx, pos;
 
-	case IDCANCEL:
-	    if (dec && dec->use_as_cb && (dec->flags & 0x01)) {
-		const char *warn = "If you cancel this dialog, the message will be sent without signing.\n\n"
-				   "Do you really want to cancel?";
-		n = MessageBox (dlg, warn, "Secret Key Dialog", MB_ICONWARNING|MB_YESNO);
-		if (n == IDNO)
-		    return FALSE;
+              idx = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST,
+                                        CB_GETCURSEL, 0, 0);
+              pos = SendDlgItemMessage (dlg, IDC_DEC_KEYLIST,
+                                        CB_GETITEMDATA, idx, 0);
+              if (pos >= 0 && pos < count_keys (context->keyarray))
+                {
+                  dec->signer = context->keyarray[pos];
+                  gpgme_key_ref (dec->signer);
+                }
 	    }
-	    dec->opts = OPT_FLAG_CANCEL;
-	    dec->pass = NULL;
-	    EndDialog (dlg, FALSE);
-	    break;
+          EndDialog (dlg, TRUE);
+          break;
+          
+	case IDCANCEL:
+          if (dec && context->use_as_cb && (dec->flags & 0x01)) 
+            {
+              const char *warn = _("If you cancel this dialog, the message"
+                                   " will be sent without signing.\n\n"
+                                   "Do you really want to cancel?");
+              n = MessageBox (dlg, warn, "Secret Key Dialog",
+                              MB_ICONWARNING|MB_YESNO);
+              if (n == IDNO)
+                return FALSE;
+	    }
+          if (dec)
+            {
+              dec->opts = OPT_FLAG_CANCEL;
+              dec->pass = NULL;
+            }
+          EndDialog (dlg, FALSE);
+          break;
 	}
-	break;
+      break; /*WM_COMMAND*/
     }
-    return FALSE;
+
+  return FALSE;
 }
 
 
 static BOOL CALLBACK
 decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static struct decrypt_key_s * dec;
-    static int hide_state = 1;
-    size_t n;
+  /* Fixme: We should not use a static here but keep it in an array
+     index by DLG. */
+  static struct dialog_context_s *context; 
+  struct decrypt_key_s * dec;
+  size_t n;
 
-    switch (msg) {
-    case WM_INITDIALOG:
-	dec = (struct decrypt_key_s *)lparam;
-	if (dec != NULL) {
-	    dec->opts = 0;
-	    dec->pass = NULL;
-	    set_key_hint (dec, dlg, IDC_DECEXT_KEYLIST);
-	    EnableWindow (GetDlgItem (dlg, IDC_DECEXT_KEYLIST), FALSE);
+  if (msg == WM_INITDIALOG)
+    {
+      context = (struct dialog_context_s *)lparam;
+      context->hide_state = 1;
+      dec = context->dec;
+      if (dec) 
+        {
+          dec->opts = 0;
+          dec->pass = NULL;
+          set_key_hint (dec, dlg, IDC_DECEXT_KEYLIST);
+          EnableWindow (GetDlgItem (dlg, IDC_DECEXT_KEYLIST), FALSE);
 	}
-	if (dec && dec->last_was_bad)
-	    SetDlgItemText (dlg, IDC_DECEXT_HINT, "Invalid passphrase; please try again...");
-	else
-	    SetDlgItemText (dlg, IDC_DECEXT_HINT, "");
-	if (dec != NULL)
-	    load_recipbox (dlg, IDC_DECEXT_RSET, (gpgme_ctx_t)dec->ctx);
-	CheckDlgButton (dlg, IDC_DECEXT_HIDE, BST_CHECKED);
-	center_window (dlg, NULL);
-	SetFocus (GetDlgItem (dlg, IDC_DECEXT_PASS));
-	SetForegroundWindow (dlg);
-	return FALSE;
 
+      SetDlgItemText (dlg, IDC_DECEXT_HINT, 
+                      (dec && dec->last_was_bad)?
+                      _("Invalid passphrase; please try again..."):"");
+      if (dec)
+        load_recipbox (dlg, IDC_DECEXT_RSET, (gpgme_ctx_t)dec->ctx);
+
+      CheckDlgButton (dlg, IDC_DECEXT_HIDE, BST_CHECKED);
+      center_window (dlg, NULL);
+      SetFocus (GetDlgItem (dlg, IDC_DECEXT_PASS));
+      SetForegroundWindow (dlg);
+      return FALSE;
+    }
+
+  if (!context)
+    return FALSE;
+
+  dec = context->dec;
+
+  switch (msg) 
+    {
     case WM_DESTROY:
-	hide_state = 1;
-	break;
+      context->hide_state = 1;
+      break;
 
     case WM_SYSCOMMAND:
-	if (wparam == SC_CLOSE)
-	    EndDialog (dlg, TRUE);
-	break;
+      if (wparam == SC_CLOSE)
+        EndDialog (dlg, TRUE);
+      break;
 
     case WM_COMMAND:
-	switch (HIWORD (wparam)) {
+      switch (HIWORD (wparam)) 
+        {
 	case BN_CLICKED:
-	    if ((int)LOWORD (wparam) == IDC_DECEXT_HIDE) {
-		HWND hwnd;
-
-		hide_state ^= 1;
-		hwnd = GetDlgItem (dlg, IDC_DECEXT_PASS);
-		SendMessage (hwnd, EM_SETPASSWORDCHAR, hide_state? '*' : 0, 0);
-		SetFocus (hwnd);
+          if ((int)LOWORD (wparam) == IDC_DECEXT_HIDE) 
+            {
+              HWND hwnd;
+              
+              context->hide_state ^= 1;
+              hwnd = GetDlgItem (dlg, IDC_DECEXT_PASS);
+              SendMessage (hwnd, EM_SETPASSWORDCHAR,
+                           context->hide_state? '*' : 0, 0);
+              SetFocus (hwnd);
 	    }
-	    break;
+          break;
 	}
-	switch (LOWORD (wparam)) {
+
+      switch (LOWORD (wparam)) 
+        {
 	case IDOK:
-	    n = SendDlgItemMessage (dlg, IDC_DECEXT_PASS, WM_GETTEXTLENGTH, 0, 0);
-	    if (n) {
-		dec->pass = (char *)xcalloc( 1, n+2 );
-		GetDlgItemText( dlg, IDC_DECEXT_PASS, dec->pass, n+1 );
+          n = SendDlgItemMessage (dlg, IDC_DECEXT_PASS, WM_GETTEXTLENGTH,0,0);
+          if (n && dec) 
+            {
+              dec->pass = xmalloc ( n + 2 );
+              GetDlgItemText (dlg, IDC_DECEXT_PASS, dec->pass, n+1 );
 	    }
-	    EndDialog (dlg, TRUE);
-	    break;
+          EndDialog (dlg, TRUE);
+          break;
 
 	case IDCANCEL:
-	    if (dec && dec->use_as_cb && (dec->flags & 0x01)) {
-		const char *warn = "If you cancel this dialog, the message will be sent without signing.\n"
-				   "Do you really want to cancel?";
-		n = MessageBox (dlg, warn, "Secret Key Dialog", MB_ICONWARNING|MB_YESNO);
-		if (n == IDNO)
-		    return FALSE;
+          if (dec && context->use_as_cb && (dec->flags & 0x01)) 
+            {
+              const char *warn = _("If you cancel this dialog, the message"
+                                   " will be sent without signing.\n"
+				   "Do you really want to cancel?");
+              n = MessageBox (dlg, warn, "Secret Key Dialog",
+                              MB_ICONWARNING|MB_YESNO);
+              if (n == IDNO)
+                return FALSE;
 	    }
-	    dec->opts = OPT_FLAG_CANCEL;
-	    dec->pass = NULL;
-	    EndDialog (dlg, FALSE);
-	    break;
+          if (dec)
+            {
+              dec->opts = OPT_FLAG_CANCEL;
+              dec->pass = NULL;
+            }
+          EndDialog (dlg, FALSE);
+          break;
 	}
-	break;
+      break; /*WM_COMMAND*/
     }
-    return FALSE;
+
+  return FALSE;
 }
 
-/* Display a signer dialog which contains all secret keys, useable
-   for signing data. The key is returned in r_key. The password in
+/* Display a signer dialog which contains all secret keys, useable for
+   signing data.  The key is returned in R_KEY.  The passprase in
    r_passwd. */
 int 
 signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
 {
-    struct decrypt_key_s hd;
-    int rc = 0;
-
-    memset(&hd, 0, sizeof (hd));
-    hd.hide_pwd = 1;
-    DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
-		    decrypt_key_dlg_proc, (LPARAM)&hd);
-    if (hd.signer) {
-	if (r_passwd)
-	    *r_passwd = xstrdup (hd.pass);
-	else {	    
-	    xfree (hd.pass);
-	    hd.pass = NULL;
-	}
-	*r_key = hd.signer;
+  struct dialog_context_s context; 
+  struct decrypt_key_s dec;
+  
+  TRACEPOINT();
+  memset (&context, 0, sizeof context);
+  memset (&dec, 0, sizeof dec);
+  dec.hide_pwd = 1;
+  context.dec = &dec;
+  
+  TRACEPOINT();
+  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
+                  decrypt_key_dlg_proc, (LPARAM)&context);
+  TRACEPOINT();
+  if (dec.signer) 
+    {
+      if (r_passwd)
+        *r_passwd = dec.pass;
+      else 
+        {	    
+          if (dec.pass)
+            wipestring (dec.pass);
+          xfree (dec.pass);
+        }
+      dec.pass = NULL;
+      *r_key = dec.signer;
+      dec.signer = NULL;
     }
-    if (hd.opts & OPT_FLAG_CANCEL)
-	rc = -1;
-    memset (&hd, 0, sizeof (hd));    
-    return rc;
+  TRACEPOINT();
+  if (dec.pass)
+    wipestring (dec.pass);
+  TRACEPOINT();
+  xfree (dec.pass);
+  if (dec.signer)
+    gpgme_key_release (dec.signer);
+  TRACEPOINT();
+  release_keyarray (context.keyarray);
+  TRACEPOINT();
+  return (dec.opts & OPT_FLAG_CANCEL)? -1 : 0;
 }
 
 
@@ -422,7 +580,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 			 const char *pass_info,
 			 int prev_was_bad, int fd)
 {
-  struct decrypt_key_s *hd = opaque;
+  struct decrypt_key_s *dec = opaque;
   DWORD nwritten = 0;
   char keyidstr[16+1];
 
@@ -432,18 +590,17 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
   *keyidstr = 0; 
 
   /* First remove a possible passphrase from the return structure. */
-  if (hd->pass)
-    wipestring (hd->pass);
-  xfree (hd->pass);
-  hd->pass = NULL;
+  if (dec->pass)
+    wipestring (dec->pass);
+  xfree (dec->pass);
+  dec->pass = NULL;
 
   /* For some reasons the cancel flag has been set - write an empty
      passphrase and close the handle to indicate the cancel state to
      the backend. */
-  if (hd->opts & OPT_FLAG_CANCEL)
+  if (dec->opts & OPT_FLAG_CANCEL)
     {
-      /* FIXME: Casting an FD to a handles is very questionable.  We
-         need to check this. */
+      /* Casting the FD to a handle is okay as gpgme uses OS handles. */
       WriteFile ((HANDLE)fd, "\n", 1, &nwritten, NULL);
       CloseHandle ((HANDLE)fd);
       log_debug ("passphrase_callback_box: leave (due to cancel flag)\n");
@@ -510,20 +667,25 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
     }
   else if (*keyidstr)
     {
-      hd->pass = passcache_get (keyidstr);
+      dec->pass = passcache_get (keyidstr);
       log_debug ("%s: getting passphrase for 0x%s from cache: %s\n",
-                 __func__, keyidstr, hd->pass? "hit":"miss");
+                 __func__, keyidstr, dec->pass? "hit":"miss");
     }
 
   /* Copy the keyID into the context. */
-  assert (strlen (keyidstr) < sizeof hd->keyid);
-  strcpy (hd->keyid, keyidstr);
+  assert (strlen (keyidstr) < sizeof dec->keyid);
+  strcpy (dec->keyid, keyidstr);
 
   /* If we have no cached pssphrase, popup the passphrase dialog. */
-  if (!hd->pass)
+  if (!dec->pass)
     {
       int rc;
       const char *s;
+      struct dialog_context_s context;
+
+      memset (&context, 0, sizeof context);
+      context.dec = dec;
+      context.use_as_cb = 1;
 
       /* Construct the user ID. */
       if (uid_hint)
@@ -536,31 +698,30 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
         }
       else
         s = "[no user Id]";
-      xfree (hd->user_id);
-      hd->user_id = xstrdup (s);
-          
-      hd->last_was_bad = prev_was_bad;
-      hd->use_as_cb = 1; /* FIXME: For what is this used? */
-      if (hd->flags & 0x01)
+      xfree (dec->user_id);
+      dec->user_id = xstrdup (s);
+      dec->last_was_bad = prev_was_bad;
+      if (dec->flags & 0x01)
         rc = DialogBoxParam (glob_hinst, (LPCSTR)IDD_DEC,
                              GetDesktopWindow (),
-                             decrypt_key_dlg_proc, (LPARAM)hd);
+                             decrypt_key_dlg_proc, (LPARAM)&context);
       else
         rc = DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC_EXT,
                              GetDesktopWindow (),
-                             decrypt_key_ext_dlg_proc, (LPARAM)hd);
+                             decrypt_key_ext_dlg_proc, (LPARAM)&context);
       if (rc <= 0) 
         log_debug_w32 (-1, "%s: dialog failed (rc=%d)", __func__, rc);
+      release_keyarray (context.keyarray);
     }
   else 
-    log_debug ("%s:%s: hd=%p hd->pass=`[censored]'\n",
-               __FILE__, __func__, hd);
+    log_debug ("%s:%s: dec=%p dec->pass=`[censored]'\n",
+               __FILE__, __func__, dec);
 
   /* If we got a passphrase, send it to the FD. */
-  if (hd->pass) 
+  if (dec->pass) 
     {
       log_debug ("passphrase_callback_box: sending passphrase ...\n");
-      WriteFile ((HANDLE)fd, hd->pass, strlen (hd->pass), &nwritten, NULL);
+      WriteFile ((HANDLE)fd, dec->pass, strlen (dec->pass), &nwritten, NULL);
     }
 
   WriteFile((HANDLE)fd, "\n", 1, &nwritten, NULL);

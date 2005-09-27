@@ -1,3 +1,43 @@
+2005-09-27  Werner Koch  <wk@g10code.com>
+
+	* pgpmime.c (pgpmime_decrypt): Pass a pseduo filename to the
+	decryption function.
+
+	* verify-dialog.c (load_sigbox): Get key direct from gpgme.
+	* passphrase-dialog.c (load_secbox, load_recipbox): Reworked.
+	(decrypt_key_dlg_proc, decrypt_key_ext_dlg_proc): Reworked.
+	(count_keys, release_keyarray): New.
+	(signer_dialog_box, passphrase_callback_box): Adjusted to above
+	changes.
+	* engine-gpgme.c (op_deinit): Remove keycache cleanup.
+	* Makefile.am (gpgol_SOURCES): Removed keycache.c, keycache.h.
+	* keycache.c, keycache.h: Removed.
+
+	* recipient-dialog.c (recipient_dialog_box) 
+	(recipient_dialog_box2): Rewritten and changed interface.
+	(load_rsetbox): Removed keycache stuff and rewrote to make use of
+	the keyarray.
+	(copy_item, initialize_keybox, recipient_dlg_proc): Ditto.
+	(keycache_to_key_array): Removed.
+	* engine-gpgme.c (op_lookup_keys): Rewritten, changed interface.
+	* gpgmsg.cpp (count_recipients): Renamed to ..
+	(count_strings): .. this.
+	(count_keys): New.
+	(free_recipient_array): Renamed to ..
+	(free_string_array): .. this.
+	(encrypt_and_sign): Adjusted for changes in op_lookup_keys and
+	recipient_dialog_box2.
+
+2005-09-26  Werner Koch  <wk@g10code.com>
+
+	* passphrase-dialog.c (get_pubkey_algo_str): Add DSA and old Elgamal.
+
+	* gpgmsg.cpp (gatherAttachmentInfo): Ignore attachments we can't
+	open.
+
+	* main.c (write_options): Print message on error.  Rearranged to
+	make use of a table for all options.
+
 2005-09-23  Werner Koch  <wk@g10code.com>
 
 	* recipient-dialog.c (recipient_dlg_proc): Removed

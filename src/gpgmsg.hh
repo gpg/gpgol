@@ -45,66 +45,66 @@ public:
     }
 
   /* Set a new MAPI message into the object. */
-  virtual void setMapiMessage (LPMESSAGE msg);
+  virtual void setMapiMessage (LPMESSAGE msg) = 0;
 
   /* Set the callback for Exchange. */
-  virtual void setExchangeCallback (void *cb);
+  virtual void setExchangeCallback (void *cb) = 0;
 
   /* Don't pop up any message boxes. */
-  virtual void setSilent (bool value);
+  virtual void setSilent (bool value) = 0;
 
   /* Return the type of the message. */
-  virtual openpgp_t getMessageType (void);
+  virtual openpgp_t getMessageType (void) = 0;
 
   /* Returns whether the message has any attachments. */
-  virtual bool hasAttachments (void);
+  virtual bool hasAttachments (void) = 0;
 
   /* Return the body text as received or composed.  This is guaranteed
      to never return NULL.  Usually getMessageType is used to check
      whether there is a suitable message. */
-  virtual const char *getOrigText (void);
+  virtual const char *getOrigText (void) = 0;
 
   /* Return the text of the message to be used for the display.  The
      message objects has intrinsic knowledge about the correct
      text.  */
-  virtual const char *getDisplayText (void);
+  virtual const char *getDisplayText (void) = 0;
 
   /* Return a malloced array of malloced strings with the recipients
      of the message. Caller is responsible for freeing this array and
      the strings.  On failure NULL is returned.  */
-  virtual char **getRecipients (void);
+  virtual char **getRecipients (void) = 0;
 
   /* Decrypt and verify the message and all attachments.  */
-  virtual int decrypt (HWND hwnd);
+  virtual int decrypt (HWND hwnd) = 0;
 
   /* Sign the message and optionally the attachments. */
-  virtual int sign (HWND hwnd);
+  virtual int sign (HWND hwnd) = 0;
 
   /* Encrypt the entire message including any attachments. Returns 0
      on success. */
-  virtual int encrypt (HWND hwnd);
+  virtual int encrypt (HWND hwnd) = 0;
 
   /* Encrypt and sign the entire message including any
      attachments. Return 0 on success. */
-  virtual int signEncrypt (HWND hwnd);
+  virtual int signEncrypt (HWND hwnd) = 0;
 
   /* Attach the key identified by KEYID to the message. */
-  virtual int attachPublicKey (const char *keyid);
+  virtual int attachPublicKey (const char *keyid) = 0;
 
   /* Return the number of attachments. */
-  virtual unsigned int getAttachments (void);
+  virtual unsigned int getAttachments (void) = 0;
 
   /* Decrypt the attachment with the internal number POS.
      SAVE_PLAINTEXT must be true to save the attachemnt; displaying a
      attachemnt is not yet supported. */
   virtual void decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
-                                  int ttl, const char *filename);
+                                  int ttl, const char *filename) = 0;
 
   virtual void signAttachment (HWND hwnd, int pos,
-                               gpgme_key_t sign_key, int ttl);
+                               gpgme_key_t sign_key, int ttl) = 0;
 
   virtual int encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
-                                 gpgme_key_t sign_key, int ttl);
+                                 gpgme_key_t sign_key, int ttl) = 0;
 
 };
 

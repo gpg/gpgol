@@ -75,7 +75,7 @@ int op_verify_detached_sig (LPSTREAM data, const char *sig,
 
 int op_export_keys (const char *pattern[], const char *outfile);
 
-int op_lookup_keys (char **id, gpgme_key_t **keys, char ***unknown, size_t *n);
+int op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown);
 
 const char *userid_from_key (gpgme_key_t k);
 const char *keyid_from_key (gpgme_key_t k);

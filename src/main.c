@@ -361,30 +361,47 @@ write_options (void)
   struct 
   {
     const char *name;
+    int  mode;
     int  value;
+    char *s_val;
   } table[] = {
-    {"encryptDefault",           opt.encrypt_default},
-    {"signDefault",              opt.sign_default},
-    {"addDefaultKey",            opt.add_default_key},
-    {"saveDecryptedAttachments", opt.save_decrypted_attach},
-    {"autoSignAttachments",      opt.auto_sign_attach},
+    {"encryptDefault",           0, opt.encrypt_default},
+    {"signDefault",              0, opt.sign_default},
+    {"addDefaultKey",            0, opt.add_default_key},
+    {"saveDecryptedAttachments", 0, opt.save_decrypted_attach},
+    {"autoSignAttachments",      0, opt.auto_sign_attach},
+    {"storePasswdTime",          1, opt.passwd_ttl},
+    {"encodingFormat",           1, opt.enc_format},
+    {"logFile",                  2, 0, logfile},
+    {"defaultKey",               2, 0, opt.default_key},
     {NULL, 0}
   };
   char buf[32];
-  int i;
+  int rc, i;
 
   for (i=0; table[i].name; i++) 
-    store_extension_value (table[i].name, table[i].value? "1": "0");
-
-  store_extension_value ("logFile", logfile? logfile: "");
-  store_extension_value ("defaultKey", opt.default_key? opt.default_key:"");
+    {
+      log_debug ("storing option `%s'\n", table[i].name);
+      switch (table[i].mode)
+        {
+        case 0:
+          rc = store_extension_value (table[i].name, table[i].value? "1": "0");
+          break;
+        case 1:
+          sprintf (buf, "%d", table[i].value);
+          rc = store_extension_value (table[i].name, buf);
+          break;
+        case 2:
+          rc = store_extension_value (table[i].name,
+                                      table[i].s_val? table[i].s_val : "");
+          break;
+        default:
+          rc = -1;
+          break;
+        }
+      if (rc)
+        log_error ("error storing option `%s': rc = %d\n", table[i].name, rc);
+    }
   
-  sprintf (buf, "%d", opt.passwd_ttl);
-  store_extension_value ("storePasswdTime", buf);
-  
-  sprintf (buf, "%d", opt.enc_format);
-  store_extension_value ("encodingFormat", buf);
-
   return 0;
 }
-

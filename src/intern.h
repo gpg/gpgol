@@ -82,7 +82,6 @@ struct decrypt_key_s
   int ttl;  /* TTL of the passphrase. */
   unsigned int flags;
   unsigned int hide_pwd:1;
-  unsigned int use_as_cb:1;
   unsigned int last_was_bad:1;
 };
 
@@ -129,9 +128,9 @@ int watcher_free_hook (void);
 void watcher_set_callback_ctx (void *cb);
 
 /*-- recipient-dialog.c --*/
-int recipient_dialog_box(gpgme_key_t **ret_rset, int *ret_opts);
-int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown, size_t n,
-		           gpgme_key_t **ret_rset, int *ret_opts);
+unsigned int recipient_dialog_box(gpgme_key_t **ret_rset);
+unsigned int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
+                                    gpgme_key_t **ret_rset);
 
 /*-- passphrase-dialog.c --*/
 int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd);

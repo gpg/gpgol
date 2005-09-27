@@ -35,7 +35,6 @@
 #include <objidl.h> /* For IStream. */
 
 #include "gpgme.h"
-#include "keycache.h"
 #include "intern.h"
 #include "passcache.h"
 #include "engine.h"
@@ -90,7 +89,6 @@ void
 op_deinit (void)
 {
   cleanup ();
-  cleanup_keycache_objects ();
 }
 
 
@@ -1183,39 +1181,63 @@ add_verify_attestation (gpgme_data_t a, gpgme_ctx_t ctx,
 
 
 
-/* Try to find a key for each item in array NAMES. If one ore more
-   items were not found, they are stored as malloced strings to the
-   newly allocated array UNKNOWN at the corresponding position.  Found
-   keys are stored in the newly allocated array KEYS. If N is not NULL
-   the total number of items will be stored at that address.  Note,
-   that both UNKNOWN may have NULL entries inbetween. The fucntion
-   returns the nuber of keys not found. Caller needs to releade KEYS
-   and UNKNOWN. 
+/* Try to find a key for each item in array NAMES. Item not found are
+   stored as malloced strings in tghe newly allocated array UNKNOWN.
+   Found keys are stored in the newly allocated array KEYS.  Both
+   arrays are terminated by a NULL entry.  Caller needs to releade
+   KEYS and UNKNOWN.
 
-   FIXME: The calling convetion is far to complicated.  Needs to be revised.
-
+   Returns: 0 on success. However success may also be that one or all
+   keys are unknown.
 */
 int 
-op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown, size_t *n)
+op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown)
 {
-    int i, pos=0;
-    gpgme_key_t k;
+  gpgme_error_t err;
+  gpgme_ctx_t ctx;
+  size_t n;
+  int i, kpos, upos;
+  gpgme_key_t k, k2;
 
-    for (i=0; names[i]; i++)
-	;
-    if (n)
-	*n = i;
-    *unknown = (char **)xcalloc (i+1, sizeof (char*));
-    *keys = (gpgme_key_t *)xcalloc (i+1, sizeof (gpgme_key_t));
-    for (i=0; names[i]; i++) {
-	/*k = find_gpg_email(id[i]);*/
-	k = get_gpg_key (names[i]);
-	if (!k)
-	    (*unknown)[pos++] = xstrdup (names[i]);
-	else
-	    (*keys)[i] = k;
+  *keys = NULL;
+  *unknown = NULL;
+
+  err = gpgme_new (&ctx);
+  if (err)
+    return -1; /* Error. */
+
+  for (n=0; names[n]; n++)
+    ;
+
+  *keys =  xcalloc (n+1, sizeof *keys);
+  *unknown = xcalloc (n+1, sizeof *unknown);
+
+  for (i=kpos=upos=0; names[i]; i++)
+    {
+      k = NULL;
+      err = gpgme_op_keylist_start (ctx, names[i], 0);
+      if (!err)
+        {
+          err = gpgme_op_keylist_next (ctx, &k);
+          if (!err && gpgme_op_keylist_next (ctx, &k2))
+            {
+              /* More than one matching key available.  Take this one
+                 as unknown. */
+              gpgme_key_release (k);
+              gpgme_key_release (k2);
+              k = k2 = NULL;
+            }
+        }
+      gpgme_op_keylist_end (ctx);
+
+      if (k)
+        (*keys)[kpos++] = k;
+      else
+        (*unknown)[upos++] = xstrdup (names[i]);
     }
-    return (i-pos);
+
+  gpgme_release (ctx);
+  return 0;
 }
 
 

@@ -26,7 +26,6 @@
 #include <gpgme.h>
 
 #include "gpgol-ids.h"
-#include "keycache.h"
 #include "intern.h"
 #include "util.h"
 
@@ -77,6 +76,7 @@ load_akalist (HWND dlg, gpgme_key_t key)
 static void 
 load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 {
+  gpgme_error_t err;
   gpgme_key_t key;
   char *s, buf[2+16+1];
   char *p;
@@ -97,8 +97,24 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
   buf[0] = '0'; 
   buf[1] = 'x';
   SetDlgItemText (dlg, IDC_VRY_KEYID, buf);
-  key = get_gpg_key (buf+2);
-  
+
+  {
+    gpgme_ctx_t gctx;
+
+    key = NULL;
+    if (!gpgme_new (&gctx))
+      {
+        err = gpgme_get_key (gctx, buf+2, &key, 0);
+        if (err)
+          {
+            log_debug ("getting key `%s' failed: %s",
+                       buf+2, gpg_strerror (err));
+            key = NULL;
+          }
+        gpgme_release (gctx);
+      }
+  }
+
   stat = ctx->signatures->summary;
   if (stat & GPGME_SIGSUM_GREEN)
     s = _("Good signature");

@@ -64,6 +64,8 @@ struct attach_info
 {
   int end_of_table;  /* True if this is the last plus one entry of the
                         table. */
+  int invalid;       /* Invalid table entry - usally ignored. */
+   
   int is_encrypted;  /* This is an encrypted attchment. */
   int is_signed;     /* This is a signed attachment. */
   unsigned int sig_pos; /* For signed attachments the index of the
@@ -249,17 +251,15 @@ free_key_array (gpgme_key_t *keys)
     }
 }
 
-/* Release an array of strings with recipient names. */
+/* Release an array of strings. */
 static void
-free_recipient_array (char **recipients)
+free_string_array (char **strings)
 {
-  int i;
-
-  if (recipients)
+  if (strings)
     {
-      for (i=0; recipients[i]; i++) 
-	xfree (recipients[i]);	
-      xfree (recipients);
+      for (int i=0; strings[i]; i++) 
+	xfree (strings[i]);	
+      xfree (strings);
     }
 }
 
@@ -280,13 +280,23 @@ release_attach_info (attach_info_t table)
 }
 
 
-/* Return the number of recipients in the array RECIPIENTS. */
-static int 
-count_recipients (char **recipients)
+/* Return the number of strings in the array STRINGS. */
+static size_t
+count_strings (char **strings)
 {
-  int i;
+  size_t i;
   
-  for (i=0; recipients[i] != NULL; i++)
+  for (i=0; strings[i]; i++)
+    ;
+  return i;
+}
+
+static size_t
+count_keys (gpgme_key_t *keys)
+{
+  size_t i;
+  
+  for (i=0; keys[i]; i++)
     ;
   return i;
 }
@@ -1203,8 +1213,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
   char **recipients = NULL;
   char **unknown = NULL;
   int err = 0;
-  size_t all = 0;
-  int n_keys;
+  size_t n_keys, n_unknown, n_recp;
     
   
   if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
@@ -1224,24 +1233,31 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
     }
 
   /* Gather the keys for the recipients. */
+      TRACEPOINT();
   recipients = getRecipients ();
-  n_keys = op_lookup_keys (recipients, &keys, &unknown, &all);
-
-  log_debug ("%s:%s: found %d recipients, need %d, unknown=%p\n",
-             __FILE__, __func__, n_keys, all, unknown);
-  
-  if (n_keys != count_recipients (recipients))
+      TRACEPOINT();
+  if ( op_lookup_keys (recipients, &keys, &unknown) )
     {
-      int opts = 0;
-      gpgme_key_t *keys2 = NULL;
+      log_debug ("%s.%s: leave (lookup keys failed)\n", __FILE__, __func__);
+      return gpg_error (GPG_ERR_GENERAL);  
+    }
+      TRACEPOINT();
+  n_recp = count_strings (recipients);
+  n_keys = count_keys (keys);
+  n_unknown = count_strings (unknown);
+      TRACEPOINT();
+  
+  log_debug ("%s:%s: found %d recipients, need %d, unknown=%d\n",
+             __FILE__, __func__, (int)n_keys, (int)n_recp, (int)n_unknown);
+  
+  if (n_keys != n_recp)
+    {
+      unsigned int opts;
+      gpgme_key_t *keys2;
 
-      /* FIXME: The implementation is not correct: op_lookup_keys
-         returns the number of missing keys but we compare against the
-         total number of keys; thus the box would pop up even when all
-         have been found. */
       log_debug ("%s:%s: calling recipient_dialog_box2", __FILE__, __func__);
-      recipient_dialog_box2 (keys, unknown, all, &keys2, &opts);
-      xfree (keys);
+      opts = recipient_dialog_box2 (keys, unknown, &keys2);
+      free_key_array (keys);
       keys = keys2;
       if (opts & OPT_FLAG_CANCEL) 
         {
@@ -1347,13 +1363,9 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
   /* FIXME: What to do with already encrypted attachments if some of
      the encrypted (or other operations) failed? */
 
-  for (int i=0; i < n_keys; i++)
-    xfree (unknown[i]);
-  if (n_keys)
-    xfree (unknown);
-
   free_key_array (keys);
-  free_recipient_array (recipients);
+  free_string_array (recipients);
+  free_string_array (unknown);
   xfree (ciphertext);
   log_debug ("%s:%s: leave (err=%s)\n", __FILE__, __func__, op_strerror (err));
   return err;
@@ -1474,7 +1486,7 @@ get_attach_method (LPATTACH obj)
 }
 
 
-/* Return the content-type of the attachment OBJ or NULL if it dow not
+/* Return the content-type of the attachment OBJ or NULL if it does not
    exists.  Caller must free. */
 static char *
 get_attach_mime_tag (LPATTACH obj)
@@ -1761,6 +1773,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   unsigned int pos, n_attach;
   const char *s;
   unsigned int attestation_count = 0;
+  unsigned int invalid_count = 0;
 
   is_pgpmime = false;
   has_attestation = false;
@@ -1780,6 +1793,8 @@ GpgMsgImpl::gatherAttachmentInfo (void)
         {
           log_error ("%s:%s: can't open attachment %d: hr=%#lx",
                      __FILE__, __func__, pos, hr);
+          table[pos].invalid = 1;
+          invalid_count++;
           continue;
         }
 
@@ -1820,6 +1835,8 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   /* Figure out whether there are encrypted attachments. */
   for (pos=0; !table[pos].end_of_table; pos++)
     {
+      if (table[pos].invalid)
+        continue;
       if (table[pos].armor_type == ARMOR_MESSAGE)
         table[pos].is_encrypted = 1;
       else if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
@@ -1844,6 +1861,8 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   /* Figure out what attachments are signed. */
   for (pos=0; !table[pos].end_of_table; pos++)
     {
+      if (table[pos].invalid)
+        continue;
       if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
           &&  !stricmp (s, ".asc")
           && table[pos].content_type  
@@ -1855,13 +1874,18 @@ GpgMsgImpl::gatherAttachmentInfo (void)
              detached signature.  To correlate the data file and the
              signature we keep track of the POS. */
           for (unsigned int i=0; !table[i].end_of_table; i++)
-            if (i != pos && table[i].filename 
-                && strlen (table[i].filename) == len
-                && !strncmp (table[i].filename, table[pos].filename, len))
-              {
-                table[i].is_signed = 1;
-                table[i].sig_pos = pos;
-              }
+            {
+              if (table[i].invalid)
+                continue;
+              if (i != pos && table[i].filename 
+                  && strlen (table[i].filename) == len
+                  && !strncmp (table[i].filename, table[pos].filename, len))
+                {
+                  table[i].is_signed = 1;
+                  table[i].sig_pos = pos;
+                }
+            }
+          
         }
       else if (table[pos].content_type  
                && (!stricmp (table[pos].content_type, "application/pgp")
@@ -1873,6 +1897,8 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   log_debug ("%s:%s: attachment info:\n", __FILE__, __func__);
   for (pos=0; !table[pos].end_of_table; pos++)
     {
+      if (table[pos].invalid)
+        continue;
       log_debug ("\t%d %d %d %u %d `%s' `%s' `%s'\n",
                  pos, table[pos].is_encrypted,
                  table[pos].is_signed, table[pos].sig_pos,
@@ -1885,14 +1911,15 @@ GpgMsgImpl::gatherAttachmentInfo (void)
      OL2003 the content-type of the body is also correctly set but we
      don't make use of this as it is not clear whether this is true
      for other storage providers.  We use a hack to ignore extra
-     attesttation attachments: Those are assume to come after the both
-     PGP/MIME parts. */
-  if (!opt.compat.no_pgpmime
-      && pos == 2 + attestation_count
-      && table[0].content_type && table[1].content_type
-      && !stricmp (table[0].content_type, "application/pgp-encrypted")
-      && !stricmp (table[1].content_type, "application/octet-stream")
-      && isPgpmimeVersionPart (0))
+     attesttation attachments: Those are assumed to come after the
+     both PGP/MIME parts. */
+  if (opt.compat.no_pgpmime)
+    ;
+  else if (pos == 2 + attestation_count + invalid_count
+           && table[0].content_type && table[1].content_type
+           && !stricmp (table[0].content_type, "application/pgp-encrypted")
+           && !stricmp (table[1].content_type, "application/octet-stream")
+           && isPgpmimeVersionPart (0))
     {
       log_debug ("\tThis is a PGP/MIME encrypted message - table adjusted");
       table[0].is_encrypted = 0;
