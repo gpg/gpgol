@@ -1013,7 +1013,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       log_debug ("decrypt isHtml=%d\n", is_html);
 
       /* Do we really need to set the body?  update_display below
-         should be sufficient.  The problem witgh this is that we have
+         should be sufficient.  The problem with this is that we did
          changes in the MAPI and OL will later ask whether to save
          them.  The original reason for this kludge was to get the
          plaintext into the reply (by setting the property without
@@ -1233,19 +1233,16 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
     }
 
   /* Gather the keys for the recipients. */
-      TRACEPOINT();
   recipients = getRecipients ();
-      TRACEPOINT();
   if ( op_lookup_keys (recipients, &keys, &unknown) )
     {
       log_debug ("%s.%s: leave (lookup keys failed)\n", __FILE__, __func__);
       return gpg_error (GPG_ERR_GENERAL);  
     }
-      TRACEPOINT();
   n_recp = count_strings (recipients);
   n_keys = count_keys (keys);
   n_unknown = count_strings (unknown);
-      TRACEPOINT();
+
   
   log_debug ("%s:%s: found %d recipients, need %d, unknown=%d\n",
              __FILE__, __func__, (int)n_keys, (int)n_recp, (int)n_unknown);

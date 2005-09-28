@@ -214,6 +214,30 @@ wchar_to_utf8 (const wchar_t *string)
   return result;
 }
 
+
+/* Same as above, but only convert the first LEN wchars.  */
+char *
+wchar_to_utf8_2 (const wchar_t *string, size_t len)
+{
+  int n;
+  char *result;
+
+  /* Note, that CP_UTF8 is not defined in Windows versions earlier
+     than NT.*/
+  n = WideCharToMultiByte (CP_UTF8, 0, string, len, NULL, 0, NULL, NULL);
+  if (n < 0)
+    return NULL;
+
+  result = xmalloc (n+1);
+  n = WideCharToMultiByte (CP_UTF8, 0, string, len, result, n, NULL, NULL);
+  if (n < 0)
+    {
+      xfree (result);
+      return NULL;
+    }
+  return result;
+}
+
 /* Return a malloced wide char string from an UTF-8 encoded input
    string STRING.  Caller must xfree this value. On failure returns
    NULL; caller may use GetLastError to get the actual error number.
@@ -261,6 +285,37 @@ utf8_to_wchar2 (const char *string, size_t len)
     }
   result[n] = 0;
   return result;
+}
+
+
+/* Assume STRING is a Latin-1 encoded and convert it to utf-8.
+   Returns a newly malloced UTF-8 string. */
+char *
+latin1_to_utf8 (const char *string)
+{
+  const char *s;
+  char *buffer, *p;
+  size_t n;
+
+  for (s=string, n=0; *s; s++) 
+    {
+      n++;
+      if (*s & 0x80)
+        n++;
+    }
+  buffer = xmalloc (n + 1);
+  for (s=string, p=buffer; *s; s++)
+    {
+      if (*s & 0x80)
+        {
+          *p++ = 0xc0 | ((*s >> 6) & 3);
+          *p++ = 0x80 | (*s & 0x3f);
+        }
+      else
+        *p++ = *s;
+    }
+  *p = 0;
+  return buffer;
 }
 
 

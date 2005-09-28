@@ -98,6 +98,7 @@ struct pgpmime_context
   int collect_attachment; /* True if we are collecting an attachment. */
   int is_qp_encoded;      /* Current part is QP encoded. */
   int is_base64_encoded;  /* Current part is base 64 encoded. */
+  int is_utf8;            /* Current part has charset utf-8. */
 
   int part_counter;       /* Counts the number of processed parts. */
   char *filename;         /* Current filename (malloced) or NULL. */
@@ -123,6 +124,41 @@ struct pgpmime_context
   char linebuf[1];      /* The buffer. */
 };
 typedef struct pgpmime_context *pgpmime_context_t;
+
+
+/* This function is a wrapper around gpgme_data_write to convert the
+   data to utf-8 first.  We assume Latin-1 here. */
+static int
+latin1_data_write (gpgme_data_t data, const char *line, size_t len)
+{
+  const char *s;
+  char *buffer, *p;
+  size_t i, n;
+  int rc;
+
+  for (s=line, i=0, n=0 ; i < len; s++, i++ ) 
+    {
+      n++;
+      if (*s & 0x80)
+        n++;
+    }
+  buffer = xmalloc (n + 1);
+  for (s=line, i=0, p=buffer; i < len; s++, i++ )
+    {
+      if (*s & 0x80)
+        {
+          *p++ = 0xc0 | ((*s >> 6) & 3);
+          *p++ = 0x80 | (*s & 0x3f);
+        }
+      else
+        *p++ = *s;
+    }
+  assert (p-buffer == n);
+  rc = gpgme_data_write (data, buffer, n);
+  xfree (buffer);
+  return rc;
+}
+
 
 
 /* Do in-place decoding of quoted-printable data of LENGTH in BUFFER.
@@ -262,6 +298,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
       char *p;
       int is_text = 0;
 
+      ctx->is_utf8 = 0;
       field = rfc822parse_parse_field (msg, "Content-Type", -1);
       if (field)
         {
@@ -291,7 +328,11 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
                 }
 
             }
-          
+
+          s1 = rfc822parse_query_parameter (field, "charset", 0);
+          if (s1 && !strcmp (s1, "utf-8"))
+            ctx->is_utf8 = 1;
+
           rfc822parse_release_field (field);
         }
       else
@@ -474,7 +515,12 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                   else
                     len = pos;
                   if (len)
-                    gpgme_data_write (ctx->body, ctx->linebuf, len);
+                    {
+                      if (ctx->is_utf8)
+                        gpgme_data_write (ctx->body, ctx->linebuf, len);
+                      else
+                        latin1_data_write (ctx->body, ctx->linebuf, len);
+                    }
                   if (!ctx->is_base64_encoded)
                     gpgme_data_write (ctx->body, "\r\n", 2);
                 }

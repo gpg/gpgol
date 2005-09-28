@@ -57,6 +57,9 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
 
 bool g_initdll = FALSE;
 
+static HWND show_window_hierarchy (HWND parent, int level);
+
+
 /* Registers this module as an Exchange extension. This basically updates
    some Registry entries. */
 STDAPI 
@@ -484,8 +487,24 @@ CGPGExchExt::CGPGExchExt (void)
 /*  Uninitializes the DLL in the session context. */
 CGPGExchExt::~CGPGExchExt (void) 
 {
-  log_debug ("%s:%s: cleaning up CGPGExchExt object\n", __FILE__, __func__);
-
+  log_debug ("%s:%s: cleaning up CGPGExchExt object; "
+             "context=0x%lx (%s)\n", __FILE__, __func__, 
+             m_lContext,
+             (m_lContext == EECONTEXT_SESSION?           "Session":
+              m_lContext == EECONTEXT_VIEWER?            "Viewer":
+              m_lContext == EECONTEXT_REMOTEVIEWER?      "RemoteViewer":
+              m_lContext == EECONTEXT_SEARCHVIEWER?      "SearchViewer":
+              m_lContext == EECONTEXT_ADDRBOOK?          "AddrBook" :
+              m_lContext == EECONTEXT_SENDNOTEMESSAGE?   "SendNoteMessage" :
+              m_lContext == EECONTEXT_READNOTEMESSAGE?   "ReadNoteMessage" :
+              m_lContext == EECONTEXT_SENDPOSTMESSAGE?   "SendPostMessage" :
+              m_lContext == EECONTEXT_READPOSTMESSAGE?   "ReadPostMessage" :
+              m_lContext == EECONTEXT_READREPORTMESSAGE? "ReadReportMessage" :
+              m_lContext == EECONTEXT_SENDRESENDMESSAGE? "SendResendMessage" :
+              m_lContext == EECONTEXT_PROPERTYSHEETS?    "PropertySheets" :
+              m_lContext == EECONTEXT_ADVANCEDCRITERIA?  "AdvancedCriteria" :
+              m_lContext == EECONTEXT_TASK?              "Task" : ""));
+  
   if (m_lContext == EECONTEXT_SESSION)
     {
       if (g_initdll)
@@ -497,6 +516,7 @@ CGPGExchExt::~CGPGExchExt (void)
           log_debug ("%s:%s: DLL closed down\n", __FILE__, __func__);
 	}	
     }
+
 }
 
 
@@ -656,6 +676,7 @@ CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
   show_mapi_property (pMessage, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
   ul_release (pMessage);
   ul_release (pMDB);
+
   return S_FALSE;
 }
 
@@ -689,7 +710,17 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
       ul_release (pMessage);
       ul_release (pMDB);
     }
-  
+#if 0
+  else
+    {
+      HWND hWnd = NULL;
+
+      if (FAILED (pEECB->GetWindow (&hWnd)))
+        hWnd = NULL;
+      else
+        show_window_hierarchy (hWnd, 0);
+    }
+#endif
 
   return S_FALSE;
 }
@@ -921,10 +952,19 @@ show_window_hierarchy (HWND parent, int level)
   while (child)
     {
       char buf[1024+1];
+      char name[200];
+      int nname;
+      char *pname;
       
       memset (buf, 0, sizeof (buf));
       GetWindowText (child, buf, sizeof (buf)-1);
-      log_debug ("XXX %*shwnd=%p `%s'", level*2, "", child, buf);
+      nname = GetClassName (child, name, sizeof (name)-1);
+      if (nname)
+        pname = name;
+      else
+        pname = NULL;
+      log_debug ("XXX %*shwnd=%p (%s) `%s'", level*2, "", child,
+                 pname? pname:"", buf);
       show_window_hierarchy (child, level+1);
       child = GetNextWindow (child, GW_HWNDNEXT);	
     }
@@ -977,7 +1017,7 @@ CGPGExchExtCommands::InstallCommands (
 
   /* Outlook 2003 sometimes displays the plaintext sometimes the
      orginal undecrypted text when doing a Reply.  This seems to
-     depend on the sieze of the message; my guess it that only short
+     depend on the size of the message; my guess it that only short
      messages are locally saved in the process and larger ones are
      fetyched again from the backend - or the other way around.
      Anyway, we can't rely on that and thus me make sure to update the
@@ -1232,6 +1272,63 @@ CGPGExchExtCommands::DoCommand (
 {
   HRESULT hr;
 
+  log_debug ("%s:%s: commandID=%u (%#x)\n",
+             __FILE__, __func__, nCommandID, nCommandID);
+  if (nCommandID == SC_CLOSE && m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+      /* This is the system close command. Replace it with our own to
+         avoid the "save changes" query, apparently induced by OL
+         internal syncronisation of our SetWindowText message with its
+         own OOM (in this case Body). */
+      LPDISPATCH pDisp;
+      DISPID dispid;
+      DISPPARAMS dispparams;
+      VARIANT aVariant;
+      
+      pDisp = find_outlook_property (pEECB, "Close", &dispid);
+      if (pDisp)
+        {
+          dispparams.rgvarg = &aVariant;
+          dispparams.rgvarg[0].vt = VT_INT;
+          dispparams.rgvarg[0].intVal = 1; /* olDiscard */
+          dispparams.cArgs = 1;
+          dispparams.cNamedArgs = 0;
+          hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                              DISPATCH_METHOD, &dispparams,
+                              NULL, NULL, NULL);
+          pDisp->Release();
+          pDisp = NULL;
+          if (hr == S_OK)
+            {
+              log_debug ("%s:%s: invoking Close succeeded", __FILE__,__func__);
+              return S_OK; /* We handled the close command. */
+            }
+
+          log_debug ("%s:%s: invoking Close failed: %#lx",
+                     __FILE__, __func__, hr);
+        }
+
+      /* We are not interested in the close command - pass it on. */
+      return S_FALSE; 
+    }
+  else if (nCommandID == 154)
+    {
+      log_debug ("%s:%s: command Reply called\n", __FILE__, __func__);
+      /* What we might want to do is to call Reply, then GetInspector
+         and then Activate - this allows us to get full control over
+         the quoted message and avoids the ugly msgcache. */
+    }
+  else if (nCommandID == 155)
+    {
+      log_debug ("%s:%s: command ReplyAll called\n", __FILE__, __func__);
+    }
+  else if (nCommandID == 156)
+    {
+      log_debug ("%s:%s: command Forward called\n", __FILE__, __func__);
+    }
+  
+
+
   if ((nCommandID != m_nCmdEncrypt) 
       && (nCommandID != m_nCmdSign))
     return S_FALSE; 
@@ -1244,6 +1341,9 @@ CGPGExchExtCommands::DoCommand (
 
       if (FAILED (pEECB->GetWindow (&hWnd)))
         hWnd = NULL;
+//       else
+//         show_window_hierarchy (hWnd, 0);
+
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (SUCCEEDED (hr))
         {
@@ -1253,8 +1353,6 @@ CGPGExchExtCommands::DoCommand (
               m->setExchangeCallback ((void*)pEECB);
               m->decrypt (hWnd);
               delete m;
-//               log_debug ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-//               show_window_hierarchy (hWnd, 0);
 	    }
 	}
       ul_release (pMessage);
@@ -1277,10 +1375,31 @@ CGPGExchExtCommands::DoCommand (
   return S_OK; 
 }
 
-
+/* Called by Exchange when it receives a WM_INITMENU message, allowing
+   the extension object to enable, disable, or update its menu
+   commands before the user sees them. This method is called
+   frequently and should be written in a very efficient manner. */
 STDMETHODIMP_(VOID) 
 CGPGExchExtCommands::InitMenu(LPEXCHEXTCALLBACK pEECB) 
 {
+#if 0
+  log_debug ("%s:%s: context=0x%lx (%s)\n", __FILE__, __func__, 
+             m_lContext,
+             (m_lContext == EECONTEXT_SESSION?           "Session"          :
+              m_lContext == EECONTEXT_VIEWER?            "Viewer"           :
+              m_lContext == EECONTEXT_REMOTEVIEWER?      "RemoteViewer"     :
+              m_lContext == EECONTEXT_SEARCHVIEWER?      "SearchViewer"     :
+              m_lContext == EECONTEXT_ADDRBOOK?          "AddrBook"         :
+              m_lContext == EECONTEXT_SENDNOTEMESSAGE?   "SendNoteMessage"  :
+              m_lContext == EECONTEXT_READNOTEMESSAGE?   "ReadNoteMessage"  :
+              m_lContext == EECONTEXT_SENDPOSTMESSAGE?   "SendPostMessage"  :
+              m_lContext == EECONTEXT_READPOSTMESSAGE?   "ReadPostMessage"  :
+              m_lContext == EECONTEXT_READREPORTMESSAGE? "ReadReportMessage":
+              m_lContext == EECONTEXT_SENDRESENDMESSAGE? "SendResendMessage":
+              m_lContext == EECONTEXT_PROPERTYSHEETS?    "PropertySheets"   :
+              m_lContext == EECONTEXT_ADVANCEDCRITERIA?  "AdvancedCriteria" :
+              m_lContext == EECONTEXT_TASK?              "Task" : ""));
+#endif
 }
 
 

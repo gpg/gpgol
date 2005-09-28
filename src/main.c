@@ -328,6 +328,7 @@ read_options (void)
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
      the switch below for a description. */
+  memset (&opt.compat, 0, sizeof opt.compat);
   load_extension_value ("compatFlags", &val);
   if (val)
     {

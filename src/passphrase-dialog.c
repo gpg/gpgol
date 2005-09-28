@@ -52,30 +52,37 @@ static char const allhexdigits[] = "1234567890ABCDEFabcdef";
 
 
 static void
-set_key_hint (struct decrypt_key_s * dec, HWND dlg, int ctrlid)
+set_key_hint (struct decrypt_key_s *dec, HWND dlg, int ctrlid)
 {
-    const char *s = dec->user_id;
-    char *key_hint;
-    char stop_char=0;
-    size_t i=0;
+  const char *s = dec->user_id;
+  char *key_hint;
+  
+  if (s && dec->keyid) 
+    {
+      char stop_char;
+      size_t i = 0;
 
-    if (dec->user_id != NULL) {
-	key_hint = (char *)xmalloc (17 + strlen (dec->user_id) + 32);
-	if (strchr (s, '<') && strchr (s, '>'))
-	    stop_char = '<';
-	else if (strchr (s, '(') && strchr (s, ')'))
-	    stop_char = '(';
-	while (s && *s != stop_char)
-	    key_hint[i++] = *s++;
-	key_hint[i++] = ' ';
-	sprintf (key_hint+i, "(0x%s)", dec->keyid+8);
+      key_hint = xmalloc (17 + strlen (s) + strlen (dec->keyid) + 32);
+      if (strchr (s, '<') && strchr (s, '>'))
+        stop_char = '<';
+      else if (strchr (s, '(') && strchr (s, ')'))
+        stop_char = '(';
+      else
+        stop_char = 0;
+      while (*s != stop_char)
+        key_hint[i++] = *s++;
+      key_hint[i++] = ' ';
+      if (dec->keyid && strlen (dec->keyid) > 8)
+        sprintf (key_hint+i, "(0x%s)", dec->keyid+8);
+      else
+        key_hint[i] = 0;
     }
-    else
-	key_hint = xstrdup ("No key hint given.");
-    SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, 
-			(LPARAM)(const char *)key_hint);
-    SendDlgItemMessage (dlg, ctrlid, CB_SETCURSEL, 0, 0);
-    xfree (key_hint);
+  else
+    key_hint = xstrdup ("No key hint given.");
+  SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, 
+                      (LPARAM)(const char *)key_hint);
+  SendDlgItemMessage (dlg, ctrlid, CB_SETCURSEL, 0, 0);
+  xfree (key_hint);
 }
 
 /* Release the key array ARRAY as well as all COUNT keys. */
@@ -200,12 +207,10 @@ load_secbox (HWND dlg, int ctlid)
   gpgme_key_t *keyarray;
   size_t keyarray_size;
 
-  TRACEPOINT();
   err = gpgme_new (&ctx);
   if (err)
     return NULL;
 
-  TRACEPOINT();
   err = gpgme_op_keylist_start (ctx, NULL, 1);
   if (err)
     {
@@ -214,7 +219,6 @@ load_secbox (HWND dlg, int ctlid)
       return NULL;
     }
 
-  TRACEPOINT();
   keyarray_size = 20; 
   keyarray = xcalloc (keyarray_size+1, sizeof *keyarray);
   pos = 0;
@@ -224,7 +228,6 @@ load_secbox (HWND dlg, int ctlid)
       const char *name, *email, *keyid, *algo;
       char *p;
       
-  TRACEPOINT();
       if (key->revoked || key->expired || key->disabled || key->invalid)
         {
           gpgme_key_release (key);
@@ -259,16 +262,13 @@ load_secbox (HWND dlg, int ctlid)
 			  (LPARAM)(const char *) p);
       xfree (p);
 
-  TRACEPOINT();
       SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, pos, (LPARAM)pos);
-  TRACEPOINT();
 
       if (pos >= keyarray_size)
         {
           gpgme_key_t *tmparr;
           size_t i;
 
-  TRACEPOINT();
           keyarray_size += 10;
           tmparr = xcalloc (keyarray_size, sizeof *tmparr);
           for (i=0; i < pos; i++)
@@ -277,13 +277,10 @@ load_secbox (HWND dlg, int ctlid)
           keyarray = tmparr;
         }
       keyarray[pos++] = key;
-  TRACEPOINT();
     }
 
-  TRACEPOINT();
   gpgme_op_keylist_end (ctx);
   gpgme_release (ctx);
-  TRACEPOINT();
   return keyarray;
 }
 
@@ -302,7 +299,6 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       context = (struct dialog_context_s *)lparam;
       context->hide_state = 1;
       dec = context->dec;
-      TRACEPOINT();
       if (dec && context->use_as_cb) 
         {
           dec->opts = 0;
@@ -315,10 +311,8 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                         (dec && dec->last_was_bad)?
                         _("Invalid passphrase; please try again..."):"");
 
-      TRACEPOINT();
       if (dec && !context->use_as_cb)
         context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
-      TRACEPOINT();
 
       CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
       center_window (dlg, NULL);
@@ -534,16 +528,14 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
   struct dialog_context_s context; 
   struct decrypt_key_s dec;
   
-  TRACEPOINT();
   memset (&context, 0, sizeof context);
   memset (&dec, 0, sizeof dec);
   dec.hide_pwd = 1;
   context.dec = &dec;
   
-  TRACEPOINT();
   DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
                   decrypt_key_dlg_proc, (LPARAM)&context);
-  TRACEPOINT();
+
   if (dec.signer) 
     {
       if (r_passwd)
@@ -558,16 +550,12 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
       *r_key = dec.signer;
       dec.signer = NULL;
     }
-  TRACEPOINT();
   if (dec.pass)
     wipestring (dec.pass);
-  TRACEPOINT();
   xfree (dec.pass);
   if (dec.signer)
     gpgme_key_release (dec.signer);
-  TRACEPOINT();
   release_keyarray (context.keyarray);
-  TRACEPOINT();
   return (dec.opts & OPT_FLAG_CANCEL)? -1 : 0;
 }
 

@@ -56,8 +56,10 @@ void  xfree (void *p);
 void out_of_core (void);
 
 char *wchar_to_utf8 (const wchar_t *string);
+char *wchar_to_utf8_2 (const wchar_t *string, size_t len);
 wchar_t *utf8_to_wchar (const char *string);
 wchar_t *utf8_to_wchar2 (const char *string, size_t len);
+char *latin1_to_utf8 (const char *string);
 
 char *trim_trailing_spaces (char *string);
 

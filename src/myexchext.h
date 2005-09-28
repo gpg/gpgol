@@ -72,6 +72,13 @@ extern "C" {
 #define EECMDID_ToolsOptions                   136
 
 
+/* Flag values for IExchExtAttachedFileEvents::OpenSzFile. */
+#define EEAFE_OPEN         (0x00000001)
+#define EEAFE_PRINT	   (0x00000002)
+#define EEAFE_QUICKVIEW	   (0x00000003)
+
+
+
 /* GUIDs */
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -129,6 +136,9 @@ typedef IExchExtCallback *LPEXCHEXTCALLBACK;
 
 typedef struct IOutlookExtCallback IOutlookExtCallback;
 typedef IOutlookExtCallback *LPOUTLOOKEXTCALLBACK;
+
+typedef struct IExchExtAttachedFileEvents IExchExtAttachedFileEvents;
+typedef IExchExtAttachedFileEvents *LPEXCHEXTATTACHEDFILEEVENTS;
 
 /* The next classes are not yet defined. but if so they should go here. */
 typedef struct IExchExtModeless IExchExtModeless; 
@@ -330,22 +340,19 @@ DECLARE_INTERFACE_(IOutlookExtCallback, IUnknown)
   STDMETHOD(GetOfficeCharacter)(void **ppmsotfc);
 };
 
-// Flag values for IExchExtAttachedFileEvents::OpenSzFile
-#define EEAFE_OPEN         (0x00000001)
-#define EEAFE_PRINT	   (0x00000002)
-#define EEAFE_QUICKVIEW	   (0x00000003)
 
+
+EXTERN_C const IID IID_IExchExtAttachedFileEvents;
 #undef INTERFACE
-#define INTERFACE   IExchExtAttachedFileEvents
-
+#define INTERFACE  IExchExtAttachedFileEvents
 DECLARE_INTERFACE_(IExchExtAttachedFileEvents, IUnknown)
 {
-  // *** IUnknown methods ***
+  /*** IUnknown methods ***/
   STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID FAR * lppvObj) PURE;
   STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
   STDMETHOD_(ULONG,Release) (THIS) PURE;
   
-  // *** IExchExtAttachedFileEvents methods ***
+  /*** IExchExtAttachedFileEvents methods ***/
   STDMETHOD(OnReadPattFromSzFile)(THIS_ LPATTACH lpatt, LPTSTR lpszFile,
 				  ULONG ulFlags) PURE;
   STDMETHOD(OnWritePattToSzFile)(THIS_ LPATTACH lpatt, LPTSTR lpszFile,
@@ -354,9 +361,7 @@ DECLARE_INTERFACE_(IExchExtAttachedFileEvents, IUnknown)
   STDMETHOD(OnOpenPatt)(THIS_ LPATTACH lpatt) PURE;
   STDMETHOD(OnOpenSzFile)(THIS_ LPTSTR lpszFile, ULONG ulFlags) PURE;
 };
-typedef IExchExtAttachedFileEvents FAR * LPEXCHEXTATTACHEDFILEEVENTS;
 
-EXTERN_C const IID IID_IExchExtAttachedFileEvents;
 
 #ifdef __cplusplus
 }

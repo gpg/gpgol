@@ -98,6 +98,18 @@ find_message_window (HWND parent)
       HWND w;
       size_t len;
       const char *s;
+
+      /* OL 2003 SP1 German uses this class name for the main
+         inspector window.  We hope that no other windows uses this
+         class name.  As a fallback we keep on testing for PGP
+         strings, but this does not work for PGP/MIME or already
+         decrypted messages. */
+      len = GetClassName (child, buf, sizeof buf - 1);
+      if (len && !strcmp (buf, "RichEdit20W"))
+        {
+          log_debug ("found class RichEdit20W");
+          return child;
+        }
       
       memset (buf, 0, sizeof (buf));
       GetWindowText (child, buf, sizeof (buf)-1);
@@ -126,14 +138,29 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb)
   window = find_message_window (hwnd);
   if (window)
     {
+      const char *string, *s;
+
       log_debug ("%s:%s: window handle %p\n", __FILE__, __func__, window);
-      SetWindowText (window, msg->getDisplayText ());
+      string = msg->getDisplayText ();
+      
+      /* Decide whether we need to use the Unicode version. */
+      for (s=string; *s && !(*s & 0x80); s++)
+        ;
+      if (*s)
+        {
+          wchar_t *tmp = utf8_to_wchar (string);
+          SetWindowTextW (window, tmp);
+          xfree (tmp);
+        }
+      else
+        SetWindowTextA (window, string);
       log_debug ("%s:%s: window text is now `%s'",
-                 __FILE__, __func__, msg->getDisplayText ());
+                 __FILE__, __func__, string);
       return 0;
     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
+      log_debug ("updating display using OOM");
       return put_outlook_property (exchange_cb, "Body",
                                    msg->getDisplayText ());
     }
@@ -156,7 +183,7 @@ set_message_body (LPMESSAGE message, const char *string)
   //  BOOL dummy_bool;
   const char *s;
   
-  /* Decide whether we ned to use the Unicode version. */
+  /* Decide whether we need to use the Unicode version. */
   for (s=string; *s && !(*s & 0x80); s++)
     ;
   if (*s)

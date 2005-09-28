@@ -1,3 +1,22 @@
+2005-09-28  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (DoCommand): Catch close command and resend to
+	avoid the "save changes?".
+
+	* display.cpp (update_display): Take care of utf-8 issues.
+	* common.c (latin1_to_utf8): New.
+	* pgpmime.c (latin1_data_write): New.
+	(plaintext_handler): Use it here.
+	(message_cb): Detect utf-8 encoding.
+
+	* main.c (read_options): Make sure that compat flags are always
+	properly initialized.
+
+	* display.cpp (find_message_window): First try to find the window
+	by class name.
+
+	* common.c (wchar_to_utf8_2): New.
+
 2005-09-27  Werner Koch  <wk@g10code.com>
 
 	* pgpmime.c (pgpmime_decrypt): Pass a pseduo filename to the
