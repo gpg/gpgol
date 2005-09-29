@@ -1181,8 +1181,8 @@ add_verify_attestation (gpgme_data_t a, gpgme_ctx_t ctx,
 
 
 
-/* Try to find a key for each item in array NAMES. Item not found are
-   stored as malloced strings in tghe newly allocated array UNKNOWN.
+/* Try to find a key for each item in array NAMES. Items not found are
+   stored as malloced strings in the newly allocated array UNKNOWN.
    Found keys are stored in the newly allocated array KEYS.  Both
    arrays are terminated by a NULL entry.  Caller needs to releade
    KEYS and UNKNOWN.
@@ -1219,7 +1219,7 @@ op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown)
       if (!err)
         {
           err = gpgme_op_keylist_next (ctx, &k);
-          if (!err && gpgme_op_keylist_next (ctx, &k2))
+          if (!err && !gpgme_op_keylist_next (ctx, &k2))
             {
               /* More than one matching key available.  Take this one
                  as unknown. */

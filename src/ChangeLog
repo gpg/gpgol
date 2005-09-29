@@ -1,3 +1,14 @@
+2005-09-29  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (encrypt_and_sign): Pass signing key to encryption
+	function.
+
+	* passphrase-dialog.c (signer_dialog_box): New arg encrypting. 
+
+	* gpgmsg.cpp (encrypt_and_sign): Set content type.
+
+	* engine-gpgme.c (op_lookup_keys): Fixed multiple key detection.
+
 2005-09-28  Werner Koch  <wk@g10code.com>
 
 	* olflange.cpp (DoCommand): Catch close command and resend to

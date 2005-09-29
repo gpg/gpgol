@@ -1,3 +1,16 @@
+Noteworthy changes for version 0.9.3 (2005-09-29)
+=================================================
+
+* Fixed bugs introduced with the last release.
+
+* PGP/MIME decryption works now correctly with Latin-1 and utf-8.
+
+* No more pop-ups to ask whether to save changes after just decrypting
+  a message.
+
+* Fixed a couple of bugs possibly leading to crashes.
+
+
 Noteworthy changes for version 0.9.2 (2005-09-22)
 =================================================
 

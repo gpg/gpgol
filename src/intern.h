@@ -133,7 +133,7 @@ unsigned int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
                                     gpgme_key_t **ret_rset);
 
 /*-- passphrase-dialog.c --*/
-int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd);
+int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting);
 gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint, 
 			     const char *pass_info,
 			     int prev_was_bad, int fd);

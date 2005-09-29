@@ -1144,7 +1144,7 @@ GpgMsgImpl::sign (HWND hwnd)
     }
 
   /* Pop up a dialog box to ask for the signer of the message. */
-  if (signer_dialog_box (&sign_key, NULL) == -1)
+  if (signer_dialog_box (&sign_key, NULL, 0) == -1)
     {
       log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
       return gpg_error (GPG_ERR_CANCELED);  
@@ -1214,6 +1214,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
   char **unknown = NULL;
   int err = 0;
   size_t n_keys, n_unknown, n_recp;
+  SPropValue prop;
     
   
   if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
@@ -1225,7 +1226,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
   /* Pop up a dialog box to ask for the signer of the message. */
   if (sign_flag)
     {
-      if (signer_dialog_box (&sign_key, NULL) == -1)
+      if (signer_dialog_box (&sign_key, NULL, 1) == -1)
         {
           log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
           return gpg_error (GPG_ERR_CANCELED);  
@@ -1279,7 +1280,8 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
     {
       is_html = is_html_body (plaintext);
 
-      err = op_encrypt (plaintext, &ciphertext, keys, NULL, 0);
+      err = op_encrypt (plaintext, &ciphertext, 
+                        keys, sign_key, opt.passwd_ttl);
       if (err)
         {
           MessageBox (hwnd, op_strerror (err),
@@ -1296,22 +1298,12 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
 
 //       {
 //         SPropValue prop;
-
 //         prop.ulPropTag=PR_MESSAGE_CLASS_A;
 //         prop.Value.lpszA="IPM.Note.OPENPGP";
 //         hr = HrSetOneProp (message, &prop);
 //         if (hr != S_OK)
 //           {
 //             log_error ("%s:%s: can't set message class: hr=%#lx\n",
-//                        __FILE__, __func__, hr); 
-//           }
-
-//         prop.ulPropTag=PR_CONTENT_TYPE_A;
-//         prop.Value.lpszA="application/encrypted;foo=bar;type=mytype";
-//         hr = HrSetOneProp (message, &prop);
-//         if (hr != S_OK)
-//           {
-//             log_error ("%s:%s: can't set content type: hr=%#lx\n",
 //                        __FILE__, __func__, hr); 
 //           }
 //       }
@@ -1334,7 +1326,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
         }
     }
 
-  set_x_header (message, "Gpgol-Version", PACKAGE_VERSION);
+  set_x_header (message, "GPGOL-VERSION", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  For unknown reasons we need to set it
@@ -1346,6 +1338,20 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
         err = set_message_body (message, ciphertext);
       if (err)
         goto leave;
+
+      /* In case we don't have attachments, Outlook will really insert
+         the following content type into the header.  We use this to
+         declare that the encrypted content of the message is utf-8
+         encoded. */
+      prop.ulPropTag=PR_CONTENT_TYPE_A;
+      prop.Value.lpszA="text/plain; charset=utf-8"; 
+      hr = HrSetOneProp (message, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set content type: hr=%#lx\n",
+                     __FILE__, __func__, hr);
+        }
+
       hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
       if (hr != S_OK)
         {

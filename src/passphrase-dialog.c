@@ -45,6 +45,8 @@ struct dialog_context_s
   int hide_state;            /* Flag indicating that some stuff is hidden. */
 
   unsigned int use_as_cb;    /* This is used by the passphrase callback. */
+
+  int no_encrypt_warning;    /* Print a warning after cancel. */
 };
 
 
@@ -227,6 +229,7 @@ load_secbox (HWND dlg, int ctlid)
     {
       const char *name, *email, *keyid, *algo;
       char *p;
+      long idx;
       
       if (key->revoked || key->expired || key->disabled || key->invalid)
         {
@@ -258,11 +261,16 @@ load_secbox (HWND dlg, int ctlid)
 	sprintf (p, "%s <%s> (0x%s, %s)", name, email, keyid+8, algo);
       else
 	sprintf (p, "%s (0x%s, %s)", name, keyid+8, algo);
-      SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
+      idx = SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
 			  (LPARAM)(const char *) p);
       xfree (p);
-
-      SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, pos, (LPARAM)pos);
+      if (idx < 0) /* Error. */
+        {
+          gpgme_key_release (key);
+          continue;
+        }
+      
+      SendDlgItemMessage (dlg, ctlid, CB_SETITEMDATA, idx, (LPARAM)pos);
 
       if (pos >= keyarray_size)
         {
@@ -278,6 +286,7 @@ load_secbox (HWND dlg, int ctlid)
         }
       keyarray[pos++] = key;
     }
+  SendDlgItemMessage (dlg, ctlid, CB_SETCURSEL, 0, 0);
 
   gpgme_op_keylist_end (ctx);
   gpgme_release (ctx);
@@ -293,6 +302,7 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
   static struct dialog_context_s *context; 
   struct decrypt_key_s *dec;
   size_t n;
+  const char *warn;
 
   if (msg == WM_INITDIALOG)
     {
@@ -389,11 +399,23 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           break;
           
 	case IDCANCEL:
-          if (dec && context->use_as_cb && (dec->flags & 0x01)) 
+          if (context->no_encrypt_warning)
             {
-              const char *warn = _("If you cancel this dialog, the message"
-                                   " will be sent without signing.\n\n"
-                                   "Do you really want to cancel?");
+              warn = _("If you cancel this dialog, the message will be sent"
+                       " in cleartext!\n\n"
+                       "Do you really want to cancel?");
+            }
+          else if (dec && context->use_as_cb && (dec->flags & 0x01)) 
+            {
+              warn = _("If you cancel this dialog, the message"
+                       " will be sent without signing.\n\n"
+                       "Do you really want to cancel?");
+            }
+          else
+            warn = NULL;
+
+          if (warn)
+            {
               n = MessageBox (dlg, warn, "Secret Key Dialog",
                               MB_ICONWARNING|MB_YESNO);
               if (n == IDNO)
@@ -422,6 +444,7 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
   static struct dialog_context_s *context; 
   struct decrypt_key_s * dec;
   size_t n;
+  const char *warn;
 
   if (msg == WM_INITDIALOG)
     {
@@ -495,11 +518,23 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           break;
 
 	case IDCANCEL:
-          if (dec && context->use_as_cb && (dec->flags & 0x01)) 
+          if (context->no_encrypt_warning)
             {
-              const char *warn = _("If you cancel this dialog, the message"
-                                   " will be sent without signing.\n"
-				   "Do you really want to cancel?");
+              warn = _("If you cancel this dialog, the message will be sent"
+                       " in cleartext!\n\n"
+                       "Do you really want to cancel?");
+            }
+          else if (dec && context->use_as_cb && (dec->flags & 0x01)) 
+            {
+              warn = _("If you cancel this dialog, the message"
+                       " will be sent without signing.\n"
+                       "Do you really want to cancel?");
+            }
+          else
+            warn = NULL;
+
+          if (warn)
+            {
               n = MessageBox (dlg, warn, "Secret Key Dialog",
                               MB_ICONWARNING|MB_YESNO);
               if (n == IDNO)
@@ -521,9 +556,10 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
 /* Display a signer dialog which contains all secret keys, useable for
    signing data.  The key is returned in R_KEY.  The passprase in
-   r_passwd. */
+   r_passwd.  IF Encrypting is true, the message will get encrypted
+   later. */
 int 
-signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
+signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting)
 {
   struct dialog_context_s context; 
   struct decrypt_key_s dec;
@@ -532,7 +568,8 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd)
   memset (&dec, 0, sizeof dec);
   dec.hide_pwd = 1;
   context.dec = &dec;
-  
+  context.no_encrypt_warning = encrypting;
+
   DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
                   decrypt_key_dlg_proc, (LPARAM)&context);
 
