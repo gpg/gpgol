@@ -1,6 +1,6 @@
 2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
 
-	* Makefile.am (.rc.o): Invoke windres with -I $(builddir).
+	* Makefile.am (.rc.o): Invoke windres with "-I .".
 
 	* Makefile.am (.rc.o): Invoke windres with -I $(srcdir).
 
