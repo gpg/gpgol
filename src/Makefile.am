@@ -51,7 +51,7 @@ gpgol_LDADD = gpgol.def  \
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 
 .rc.o:
-	$(WINDRES) `test -f '$<' || echo '$(srcdir)/'`$< $@
+	$(WINDRES) -I $(srcdir) `test -f '$<' || echo '$(srcdir)/'`$< $@
 
 
 
