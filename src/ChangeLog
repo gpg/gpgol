@@ -1,5 +1,8 @@
 2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
 
+	* Makefile.am (gpgol_LDADD): Prefix gpgol.def and mapi32.dll with
+	$(srcdir).
+
 	* Makefile.am (.rc.o): Invoke windres with "-I .".
 
 	* Makefile.am (.rc.o): Invoke windres with -I $(srcdir).

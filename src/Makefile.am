@@ -45,8 +45,8 @@ gpgol_SOURCES = \
 	watcher.cpp \
 	attach.cpp attach.h
 
-gpgol_LDADD = gpgol.def  \
-		$(GPGME_LIBS) mapi32.dll -lshell32 -lgdi32 -lcomdlg32
+gpgol_LDADD = $(srcdir) gpgol.def  \
+		$(GPGME_LIBS) $(srcdir) mapi32.dll -lshell32 -lgdi32 -lcomdlg32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 
