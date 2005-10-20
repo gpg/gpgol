@@ -1,3 +1,11 @@
+2005-10-20  Marcus Brinkmann  <marcus@g10code.de>
+
+	* mapi32.def: New file.
+	* Makefile.am (gpgol_DEPENDENCIES): New variable.
+	(libmapi32.a): New target.
+	(gpgol_LDADD): Replace mapi32.dll with "-L . -lmapi32".
+	(clean-local): New target.
+
 2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
 
 	* Makefile.am (gpgol_LDADD): Prefix gpgol.def and mapi32.dll with

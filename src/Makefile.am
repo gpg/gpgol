@@ -13,7 +13,8 @@
 
 bin_PROGRAMS = gpgol 
 EXTRA_DIST = versioninfo.rc.in gpgol-rsrcs.rc olflange-rsrcs.rc \
-	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp    
+	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp \
+	     mapi32.def
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) -shared
@@ -45,17 +46,21 @@ gpgol_SOURCES = \
 	watcher.cpp \
 	attach.cpp attach.h
 
+# W32API 3.2 comes with an unusable libmapi32.a.  We build our own
+# version.  Note the omission of -k (--kill-at) from the DLLTOOL
+# command line.
+gpgol_DEPENDENCIES = libmapi32.a
+
+libmapi32.a: mapi32.def
+	$(DLLTOOL) --output-lib $@ --def $<
+
+clean-local:
+	rm -f libmapi32.a
+
 gpgol_LDADD = $(srcdir)/gpgol.def  \
-		$(GPGME_LIBS) $(srcdir)/mapi32.dll -lshell32 -lgdi32 -lcomdlg32
+	$(GPGME_LIBS) -L . -lmapi32 -lshell32 -lgdi32 -lcomdlg32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 
 .rc.o:
 	$(WINDRES) -I $(srcdir) -I . `test -f '$<' || echo '$(srcdir)/'`$< $@
-
-
-
-
-
-
-
