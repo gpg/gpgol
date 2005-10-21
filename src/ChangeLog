@@ -1,3 +1,10 @@
+2005-10-21  Marcus Brinkmann  <marcus@g10code.de>
+
+	* Makefile.am (libgpgme.a, libgpgme.a): New targets.
+	(gpgol_DEPENDENCIES): Add libgpgme.a and libgpg-error.a.
+	(clean-local): Likewise.
+	(gpgol_LDADD): Link to these local versions statically.
+
 2005-10-20  Marcus Brinkmann  <marcus@g10code.de>
 
 	* mapi32.def: New file.
@@ -7,6 +14,10 @@
 	(clean-local): New target.
 
 2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
+
+	* Makefile.am (gpgol_DEPENDENCIES): New variable.
+	(libmapi32.a): New target.
+	(gpgol_LDADD): Replace mapi32.dll with "-L . -lmapi32".
 
 	* Makefile.am (gpgol_LDADD): Prefix gpgol.def and mapi32.dll with
 	$(srcdir).

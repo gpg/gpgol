@@ -49,16 +49,22 @@ gpgol_SOURCES = \
 # W32API 3.2 comes with an unusable libmapi32.a.  We build our own
 # version.  Note the omission of -k (--kill-at) from the DLLTOOL
 # command line.
-gpgol_DEPENDENCIES = libmapi32.a
+gpgol_DEPENDENCIES = libmapi32.a libgpgme.a libgpg-error.a
 
 libmapi32.a: mapi32.def
 	$(DLLTOOL) --output-lib $@ --def $<
 
+libgpgme.a:
+	ln -s $(shell $(GPGME_CONFIG) --prefix)/lib/libgpgme.a
+
+libgpg-error.a:
+	ln -s $(shell $(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a
+
 clean-local:
-	rm -f libmapi32.a
+	rm -f libmapi32.a libgpgme.a libgpg-error.a
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
-	$(GPGME_LIBS) -L . -lmapi32 -lshell32 -lgdi32 -lcomdlg32
+	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 

@@ -133,7 +133,7 @@ AM_CONDITIONAL(HAVE_W32_SYSTEM, test "$have_w32_system" = yes)
 
 AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
                have_gpgme=yes,have_gpgme=no)
-
+AM_PATH_GPG_ERROR(0.5,, AC_MSG_ERROR([libgpg-error was not found]))
 
 
 # Checks for header files.
