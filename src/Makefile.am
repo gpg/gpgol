@@ -48,7 +48,10 @@ gpgol_SOURCES = \
 
 # W32API 3.2 comes with an unusable libmapi32.a.  We build our own
 # version.  Note the omission of -k (--kill-at) from the DLLTOOL
-# command line.
+# command line.  We also create our own virtual copies to the _static_
+# versions of GPGME and gpg-error, because we want to link to them
+# statically, and not dynamically (otherwise Outlook would not find
+# them).
 gpgol_DEPENDENCIES = libmapi32.a libgpgme.a libgpg-error.a
 
 libmapi32.a: mapi32.def
