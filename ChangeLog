@@ -1,6 +1,7 @@
 2005-11-15  Werner Koch  <wk@g10code.com>
 
 	* configure.ac (BUILD_TIMESTAMP): Include SVN revision.
+	(AM_INIT_AUTOMAKE): Fixed invocation.
 
 2005-10-21  Marcus Brinkmann  <marcus@g10code.de>
 
