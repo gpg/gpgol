@@ -62,7 +62,7 @@ public:
   /* Return the body text as received or composed.  This is guaranteed
      to never return NULL.  Usually getMessageType is used to check
      whether there is a suitable message. */
-  virtual const char *getOrigText (void) = 0;
+  virtual const char *getOrigText (bool want_html) = 0;
 
   /* Return the text of the message to be used for the display.  The
      message objects has intrinsic knowledge about the correct
@@ -82,11 +82,11 @@ public:
 
   /* Encrypt the entire message including any attachments. Returns 0
      on success. */
-  virtual int encrypt (HWND hwnd) = 0;
+  virtual int encrypt (HWND hwnd, bool want_html) = 0;
 
   /* Encrypt and sign the entire message including any
      attachments. Return 0 on success. */
-  virtual int signEncrypt (HWND hwnd) = 0;
+  virtual int signEncrypt (HWND hwnd, bool want_html) = 0;
 
   /* Attach the key identified by KEYID to the message. */
   virtual int attachPublicKey (const char *keyid) = 0;

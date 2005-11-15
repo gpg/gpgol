@@ -641,6 +641,7 @@ CGPGExchExtMessageEvents::CGPGExchExtMessageEvents
   m_pExchExt = pParentInterface;
   m_lRef = 0; 
   m_bOnSubmitActive = FALSE;
+  m_want_html = FALSE;
 }
 
 
@@ -777,7 +778,11 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
           return E_FAIL;
         }
   
-      if (aVariant.intVal != 1)
+      if (aVariant.intVal == 1)
+        m_want_html = 0;
+      else if (aVariant.intVal == 2)
+        m_want_html = 1;
+      else
         {
 
           log_debug ("%s:%s: BodyFormat is %d",
@@ -786,9 +791,9 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
           if (FAILED(pEECB->GetWindow (&hWnd)))
             hWnd = NULL;
           MessageBox (hWnd,
-                      "Sorry, we can only encrypt plain text messages and no\n"
-                      "HTML or RTF messages. Please make sure that only the\n"
-                      "text format has been selected.",
+                      "Sorry, we can only encrypt plain text messages and\n"
+                      "no RTF messages. Please make sure that only the text\n"
+                      "format has been selected.",
                       "GPGol", MB_ICONERROR|MB_OK);
 
           m_bWriteFailed = TRUE;	
@@ -826,7 +831,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
 
   if (lFlags & (EEME_FAILED|EEME_COMPLETE_FAILED))
     return S_FALSE; /* We don't need to rollback anything in case
-                       other extensions flagged a failire. */
+                       other extensions flagged a failure. */
           
   if (!m_bOnSubmitActive) /* The user is just saving the message. */
     return S_FALSE;
@@ -840,22 +845,48 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
   HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
+      SPropTagArray proparray;
+
       GpgMsg *m = CreateGpgMsg (msg);
       m->setExchangeCallback ((void*)pEECB);
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = m->signEncrypt (hWnd);
+        rc = m->signEncrypt (hWnd, m_want_html);
       if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
-        rc = m->encrypt (hWnd);
+        rc = m->encrypt (hWnd, m_want_html);
       if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = m->sign (hWnd);
       else
         rc = 0;
       delete m;
+
+      /* If we are encrypting we need to make sure that the other
+         format gets deleted and is not actually sent in the clear. */
+      if (m_pExchExt->m_gpgEncrypt)
+        {
+          proparray.cValues = 1;
+          proparray.aulPropTag[0] = m_want_html? PR_BODY : PR_BODY_HTML;
+          msg->DeleteProps (&proparray, NULL);
+        }
       
       if (rc)
         {
           hrReturn = E_FAIL;
           m_bWriteFailed = TRUE;	
+
+          /* Due to an error in Outlook the error is ignored and the
+             message sent out anyway.  Thus we better delete the stuff
+             now. */
+          if (m_pExchExt->m_gpgEncrypt)
+            {
+              proparray.cValues = 1;
+              proparray.aulPropTag[0] = m_want_html? PR_BODY_HTML : PR_BODY;
+              hr = msg->DeleteProps (&proparray, NULL);
+              if (hr != S_OK)
+                log_debug ("%s:%s: DeleteProps failed: hr=%#lx\n",
+                           __FILE__, __func__, hr);
+              /* FIXME: We should delete the atatchments too. */
+            }
+          
         }
     }
 

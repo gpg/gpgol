@@ -218,9 +218,10 @@ check_encrypt_result (gpgme_ctx_t ctx, gpgme_error_t err)
 
 
 /* Encrypt the data in INBUF into a newly malloced buffer stored on
-   success at OUTBUF. The recipients are expected in the NULL
-   terminated array KEYS. If SIGN_KEY is not NULl, the data will also
-   be signed using this key.  TTL is the time the passphrase should be
+   success at OUTBUF.  The caller should release this buffer using
+   gpgme_free.  The recipients are expected in the NULL terminated
+   array KEYS. If SIGN_KEY is not NULl, the data will also be signed
+   using this key.  TTL is the time the passphrase should be
    cached. */
 int
 op_encrypt (const char *inbuf, char **outbuf, gpgme_key_t *keys,
@@ -355,7 +356,7 @@ op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream, gpgme_key_t *keys,
 
 
 /* Sign and encrypt the data in INBUF into a newly allocated buffer at
-   OUTBUF. */
+   OUTBUF. Caller needs to free the returned buffer using gpgme_free. */
 int
 op_sign (const char *inbuf, char **outbuf, int mode,
          gpgme_key_t sign_key, int ttl)
@@ -477,11 +478,12 @@ op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
 
 
 
-/* Run the decryption.  Decrypts INBUF to OUTBUF, caller must xfree
-   the result at OUTBUF.  TTL is the time in seconds to cache a
-   passphrase.  If FILENAME is not NULL it will be displayed along
-   with status outputs. If ATTESTATION is not NULL a text with the
-   result of the signature verification will get printed to it. */
+/* Run the decryption.  Decrypts INBUF to OUTBUF; caller needs to free
+   the returned result at OUTBUF using gpgme_free.  the result at
+   OUTBUF.  TTL is the time in seconds to cache a passphrase.  If
+   FILENAME is not NULL it will be displayed along with status
+   outputs. If ATTESTATION is not NULL a text with the result of the
+   signature verification will get printed to it. */
 int 
 op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
             gpgme_data_t attestation)
@@ -664,7 +666,8 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
 }
 
 
-/* Decrypt the stream INSTREAM directly to the newly allocated buffer OUTBUF.
+/* Decrypt the stream INSTREAM directly to the newly allocated buffer
+   OUTBUF.  Caller needs to free the returned buffer using gpgme_free.
    Returns 0 on success or an gpgme error code on failure.  If
    FILENAME is not NULL it will be displayed along with status
    outputs. */
@@ -738,7 +741,8 @@ op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
    will show the result of the verification.  If FILENAME is not NULL
    it will be displayed along with status outputs.  If ATTESTATION is
    not NULL a text with the result of the signature verification will
-   get printed to it. */
+   get printed to it. Caller needs to free the returned buffer at
+   OUTBUF using gpgme_free. */
 int
 op_verify (const char *inbuf, char **outbuf, const char *filename,
            gpgme_data_t attestation)
@@ -1267,7 +1271,7 @@ data_to_file (gpgme_data_t *dat, const char *outfile)
   fwrite (buf, 1, n, out);
   fclose (out);
   /* FIXME: We have no error checking above. */
-  xfree (buf);
+  gpgme_free (buf);
   return 0;
 }
 

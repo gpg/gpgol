@@ -169,19 +169,19 @@ public:
 
   openpgp_t getMessageType (void);
   bool hasAttachments (void);
-  const char *getOrigText (void);
+  const char *getOrigText (bool want_html);
   const char *GpgMsgImpl::getDisplayText (void);
   const char *getPlainText (void);
 
   int decrypt (HWND hwnd);
   int sign (HWND hwnd);
-  int encrypt (HWND hwnd)
+  int encrypt (HWND hwnd, bool want_html)
   {
-    return encrypt_and_sign (hwnd, false);
+    return encrypt_and_sign (hwnd, want_html, false);
   }
-  int signEncrypt (HWND hwnd)
+  int signEncrypt (HWND hwnd, bool want_html)
   {
-    return encrypt_and_sign (hwnd, true);
+    return encrypt_and_sign (hwnd, want_html, true);
   }
   int attachPublicKey (const char *keyid);
 
@@ -218,11 +218,11 @@ private:
     LPSRowSet   rows;     /* The retrieved set of rows from the table. */
   } attach;
   
-  void loadBody (void);
+  void loadBody (bool want_html);
   bool isPgpmimeVersionPart (int pos);
   void writeAttestation (void);
   attach_info_t gatherAttachmentInfo (void);
-  int encrypt_and_sign (HWND hwnd, bool sign);
+  int encrypt_and_sign (HWND hwnd, bool want_html, bool sign);
 };
 
 
@@ -366,7 +366,7 @@ text_from_attach_info (attach_info_t table, const char *format,
 /* Load the body and make it available as an UTF8 string in the
    instance variable BODY.  */
 void
-GpgMsgImpl::loadBody (void)
+GpgMsgImpl::loadBody (bool want_html)
 {
   HRESULT hr;
   LPSPropValue lpspvFEID = NULL;
@@ -378,7 +378,8 @@ GpgMsgImpl::loadBody (void)
   if (body || !message)
     return;
 
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_BODY, &lpspvFEID);
+  hr = HrGetOneProp ((LPMAPIPROP)message,
+                     want_html? PR_BODY_HTML : PR_BODY, &lpspvFEID);
   if (SUCCEEDED (hr))
     { /* Message is small enough to be retrieved this way. */
       switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
@@ -402,8 +403,8 @@ GpgMsgImpl::loadBody (void)
     }
   else /* Message is large; Use a stream to read it. */
     {
-      hr = message->OpenProperty (PR_BODY, &IID_IStream,
-                                  0, 0, (LPUNKNOWN*)&stream);
+      hr = message->OpenProperty (want_html? PR_BODY_HTML : PR_BODY,
+                                  &IID_IStream, 0, 0, (LPUNKNOWN*)&stream);
       if ( hr != S_OK )
         {
           log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
@@ -556,7 +557,7 @@ GpgMsgImpl::getMessageType (void)
 {
   const char *s;
   
-  loadBody ();
+  loadBody (false);
   
   if (!body || !(s = strstr (body, "BEGIN PGP ")))
     return OPENPGP_NONE;
@@ -580,9 +581,9 @@ GpgMsgImpl::getMessageType (void)
 /* Return the body text as received or composed.  This is guaranteed
    to never return NULL.  */
 const char *
-GpgMsgImpl::getOrigText ()
+GpgMsgImpl::getOrigText (bool want_html)
 {
-  loadBody ();
+  loadBody (want_html);
   
   return body? body : "";
 }
@@ -593,7 +594,7 @@ GpgMsgImpl::getOrigText ()
 const char *
 GpgMsgImpl::getDisplayText (void)
 {
-  loadBody ();
+  loadBody (false);
 
   if (body_plain)
     return body_plain;
@@ -839,7 +840,7 @@ GpgMsgImpl::writeAttestation (void)
     }
   if (newatt)
     newatt->Release ();
-  xfree (buffer);
+  gpgme_free (buffer);
 }
 
 
@@ -905,7 +906,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
         {
           xfree (body_plain);
           body_plain = xstrdup (s);
-          update_display (hwnd, this, exchange_cb);
+          update_display (hwnd, this, exchange_cb, is_html_body (s));
           msgcache_unref (refhandle);
           log_debug ("%s:%s: leave (already decrypted)\n", __FILE__, __func__);
         }
@@ -989,9 +990,9 @@ GpgMsgImpl::decrypt (HWND hwnd)
         pgpmime_succeeded = 1;
     }
   else if (mtype == OPENPGP_CLEARSIG)
-    err = op_verify (getOrigText (), NULL, NULL, attestation);
-  else if (*getOrigText())
-    err = op_decrypt (getOrigText (), &plaintext, opt.passwd_ttl,
+    err = op_verify (getOrigText (false), NULL, NULL, attestation);
+  else if (*getOrigText(false))
+    err = op_decrypt (getOrigText (false), &plaintext, opt.passwd_ttl,
                       NULL, attestation);
   else
     err = gpg_error (GPG_ERR_NO_DATA);
@@ -1022,7 +1023,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
          we will disable it but add a compatibility flag to re-enable
          it. */
       if (opt.compat.old_reply_hack)
-        set_message_body (message, plaintext);
+        set_message_body (message, plaintext, is_html);
 
       xfree (body_plain);
       body_plain = plaintext;
@@ -1037,10 +1038,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
           if (FAILED (hr))
             log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
                        __FILE__, __func__, hr);
-          update_display (hwnd, this, exchange_cb);
+          update_display (hwnd, this, exchange_cb, is_html);
           
         }
-      else if (!silent && update_display (hwnd, this, exchange_cb)) 
+      else if (!silent && update_display (hwnd, this, exchange_cb, is_html)) 
         {
           const char s[] = 
             "The message text cannot be displayed.\n"
@@ -1128,16 +1129,18 @@ GpgMsgImpl::decrypt (HWND hwnd)
 int
 GpgMsgImpl::sign (HWND hwnd)
 {
+  HRESULT hr;
   const char *plaintext;
   char *signedtext = NULL;
   int err = 0;
   gpgme_key_t sign_key = NULL;
+  SPropValue prop;
 
   log_debug ("%s:%s: enter message=%p\n", __FILE__, __func__, message);
   
   /* We don't sign an empty body - a signature on a zero length string
      is pretty much useless. */
-  if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
+  if (!*(plaintext = getOrigText (false)) && !hasAttachments ()) 
     {
       log_debug ("%s:%s: leave (empty)", __FILE__, __func__);
       return 0; 
@@ -1174,20 +1177,38 @@ GpgMsgImpl::sign (HWND hwnd)
          failed. */
     }
 
-  set_x_header (message, "Gpgol-Version", PACKAGE_VERSION);
+  set_x_header (message, "GPGOL-VERSION", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
-     the changes to the body.  For unknown reasons we need to set it
-     to empty first. */
+     the changes to the body.  */
   if (*plaintext)
     {
-      err = set_message_body (message, "");
-      if (!err)
-        err = set_message_body (message, signedtext);
+      err = set_message_body (message, signedtext, 0);
       if (err)
         goto leave;
-    }
 
+      /* In case we don't have attachments, Outlook will really insert
+         the following content type into the header.  We use this to
+         declare that the encrypted content of the message is utf-8
+         encoded. */
+      prop.ulPropTag=PR_CONTENT_TYPE_A;
+      prop.Value.lpszA="text/plain; charset=utf-8"; 
+      hr = HrSetOneProp (message, &prop);
+      if (hr != S_OK)
+        {
+          log_error ("%s:%s: can't set content type: hr=%#lx\n",
+                     __FILE__, __func__, hr);
+        }
+    }
+  
+  hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      err = gpg_error (GPG_ERR_GENERAL);
+      goto leave;
+    }
 
  leave:
   xfree (signedtext);
@@ -1198,16 +1219,17 @@ GpgMsgImpl::sign (HWND hwnd)
 
 
 
-/* Encrypt and optionally sign (if SIGN_FLAG is true) the entire message
-   including all attachments. Returns 0 on success. */
+/* Encrypt and optionally sign (if SIGN_FLAG is true) the entire
+   message including all attachments.  If WANT_HTML is true, the text
+   to encrypt will be taken from the html property. Returns 0 on
+   success. */
 int 
-GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
+GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 {
   log_debug ("%s:%s: enter\n", __FILE__, __func__);
   HRESULT hr;
   gpgme_key_t *keys = NULL;
   gpgme_key_t sign_key = NULL;
-  bool is_html;
   const char *plaintext;
   char *ciphertext = NULL;
   char **recipients = NULL;
@@ -1217,7 +1239,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
   SPropValue prop;
     
   
-  if (!*(plaintext = getOrigText ()) && !hasAttachments ()) 
+  if (!*(plaintext = getOrigText (want_html)) && !hasAttachments ()) 
     {
       log_debug ("%s:%s: leave (empty)", __FILE__, __func__);
       return 0; 
@@ -1278,8 +1300,6 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
 
   if (*plaintext)
     {
-      is_html = is_html_body (plaintext);
-
       err = op_encrypt (plaintext, &ciphertext, 
                         keys, sign_key, opt.passwd_ttl);
       if (err)
@@ -1289,7 +1309,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
           goto leave;
         }
 
-      if (is_html) 
+      if (want_html) 
         {
           char *tmp = add_html_line_endings (ciphertext);
           xfree (ciphertext);
@@ -1329,20 +1349,18 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
   set_x_header (message, "GPGOL-VERSION", PACKAGE_VERSION);
 
   /* Now that we successfully processed the attachments, we can save
-     the changes to the body.  For unknown reasons we need to set it
-     to empty first. */
+     the changes to the body.  */
   if (*plaintext)
     {
-      err = set_message_body (message, "");
-      if (!err)
-        err = set_message_body (message, ciphertext);
+      err = set_message_body (message, ciphertext, want_html);
       if (err)
         goto leave;
 
       /* In case we don't have attachments, Outlook will really insert
          the following content type into the header.  We use this to
          declare that the encrypted content of the message is utf-8
-         encoded. */
+         encoded.  Note that we use plain/text even for HTML because
+         it is base64 encoded. */
       prop.ulPropTag=PR_CONTENT_TYPE_A;
       prop.Value.lpszA="text/plain; charset=utf-8"; 
       hr = HrSetOneProp (message, &prop);
@@ -1351,15 +1369,15 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool sign_flag)
           log_error ("%s:%s: can't set content type: hr=%#lx\n",
                      __FILE__, __func__, hr);
         }
-
-      hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
-      if (hr != S_OK)
-        {
-          log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
-          err = gpg_error (GPG_ERR_GENERAL);
-          goto leave;
-        }
+    }
+  
+  hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
+                 __FILE__, __func__, hr); 
+      err = gpg_error (GPG_ERR_GENERAL);
+      goto leave;
     }
 
  leave:
@@ -2214,7 +2232,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           att->Release ();
           att = NULL;
           if (message->DeleteAttach (pos, 0, NULL, 0) == S_OK)
-            log_error ("%s:%s: failed to delete attacghment %d: %s",
+            log_error ("%s:%s: failed to delete attachment %d: %s",
                        __FILE__, __func__, pos, op_strerror (err)); 
           
         }

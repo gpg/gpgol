@@ -835,6 +835,7 @@
 #define PR_YPOS                               PROP_TAG( PT_LONG,        0x3F06)
 #define PR_CONTROL_ID                         PROP_TAG( PT_BINARY,      0x3F07)
 #define PR_INITIAL_DETAILS_PANE               PROP_TAG( PT_LONG,        0x3F08)
+#define PR_MSG_EDITOR_FORMAT                  PROP_TAG( PT_LONG,        0x5903)
 
 #define PROP_ID_SECURE_MIN                0x67F0
 #define PROP_ID_SECURE_MAX                0x67FF

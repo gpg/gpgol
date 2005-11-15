@@ -14,8 +14,9 @@ AC_PREREQ(2.59)
 min_automake_version="1.9.4"
 
 # Version number: Remember to change it immediately *after* a release.
+#                 Make sure to run  "svn up" before a "make dist".
 #                 Add a "-cvs" prefix for non-released code.
-AC_INIT(gpgol, 0.9.3-cvs, bug-gpgol@g10code.com)
+AC_INIT(gpgol, 0.9.4-cvs, bug-gpgol@g10code.com)
 
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0
@@ -44,11 +45,15 @@ AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "$PACKAGE_BUGREPORT",
 AC_DEFINE_UNQUOTED(NEED_GPGME_VERSION, "$NEED_GPGME_VERSION",
                                        [Required version of GPGME])
 
+
 BUILD_TIMESTAMP=`date --iso-8601=minutes`
 AC_SUBST(BUILD_TIMESTAMP)
 changequote(,)dnl
-BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1.0/;s/\./,/g'`
+BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1./;s/\./,/g'`
+tmp="`echo '$Revision$' | sed 's/[^0-9]//g'`"
 changequote([,])dnl
+test -z "$tmp" && tmp="0"
+BUILD_FILEVERSION="${BUILD_FILEVERSION}$tmp"
 AC_SUBST(BUILD_FILEVERSION)
 
 
@@ -157,14 +162,13 @@ if test "$have_w32_system" = yes; then
 fi
 
 if test "$GCC" = yes; then
+    CFLAGS="$CFLAGS -Wall -mms-bitfields"
+    CXXFLAGS="$CXXFLAGS -Wall -mms-bitfields"
     if test "$USE_MAINTAINER_MODE" = "yes"; then
-        CFLAGS="$CFLAGS -Wall -Wcast-align -Wshadow -Wstrict-prototypes"
+        CFLAGS="$CFLAGS -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wno-format-y2k -Wformat-security"
-        CXXFLAGS="$CXXFLAGS -Wall -Wcast-align -Wshadow"
+        CXXFLAGS="$CXXFLAGS -Wcast-align -Wshadow"
         CXXFLAGS="$CXXFLAGS -Wno-format-y2k -Wformat-security"
-    else
-        CFLAGS="$CFLAGS -Wall"
-        CXXFLAGS="$CXXFLAGS -Wall"
     fi
 fi
 

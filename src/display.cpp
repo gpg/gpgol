@@ -131,7 +131,7 @@ find_message_window (HWND parent)
 
 /* Update the display using the message MSG.  Return 0 on success. */
 int
-update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb)
+update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, bool is_html)
 {
   HWND window;
 
@@ -161,7 +161,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb)
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
       log_debug ("updating display using OOM");
-      return put_outlook_property (exchange_cb, "Body",
+      return put_outlook_property (exchange_cb, is_html? "HTMLBody":"Body",
                                    msg->getDisplayText ());
     }
   else
@@ -176,26 +176,28 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb)
 /* Set the body of MESSAGE to STRING.  Returns 0 on success or an
    error code otherwise. */
 int
-set_message_body (LPMESSAGE message, const char *string)
+set_message_body (LPMESSAGE message, const char *string, bool is_html)
 {
   HRESULT hr;
   SPropValue prop;
-  //  BOOL dummy_bool;
+  SPropTagArray proparray;
   const char *s;
+  
+  assert (message);
   
   /* Decide whether we need to use the Unicode version. */
   for (s=string; *s && !(*s & 0x80); s++)
     ;
   if (*s)
     {
-      prop.ulPropTag = PR_BODY_W;
+      prop.ulPropTag = is_html? PR_BODY_HTML_W : PR_BODY_W;
       prop.Value.lpszW = utf8_to_wchar (string);
       hr = HrSetOneProp (message, &prop);
       xfree (prop.Value.lpszW);
     }
   else /* Only plain ASCII. */
     {
-      prop.ulPropTag = PR_BODY_A;
+      prop.ulPropTag = is_html? PR_BODY_HTML_A : PR_BODY_A;
       prop.Value.lpszA = (CHAR*)string;
       hr = HrSetOneProp (message, &prop);
     }
@@ -205,13 +207,14 @@ set_message_body (LPMESSAGE message, const char *string)
                  __FILE__, __func__, hr); 
       return gpg_error (GPG_ERR_GENERAL);
     }
-// When enabling the code below the result is that (under OL2003
-// standalone) the message is sent with an empty body.  Thus we don't
-// do it.  Note further that the specs say that when dummy_bool
-// returns true, SaveChanges must be called on the message.
-//   hr = RTFSync (message, RTF_SYNC_BODY_CHANGED, &dummy_bool);
-//   if (hr != S_OK)
-//     log_debug ("%s:%s: RTFSync failed: hr=%#lx - error ignored",
-//                __FILE__, __func__, hr); 
+
+  /* Instead of using RTF Sync, we simply delete any RTF property. */
+  proparray.cValues = 1;
+  proparray.aulPropTag[0] = PR_RTF_COMPRESSED;
+  hr = message->DeleteProps (&proparray, NULL);
+  if (hr != S_OK)
+    log_debug ("%s:%s: DeleteProps failed: hr=%#lx\n", __FILE__, __func__, hr);
+  
+    
   return 0;
 }

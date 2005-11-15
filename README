@@ -16,14 +16,6 @@ available in a directory where Windows searches for DLLs
 gpgol.dll" and start Outlook. You should then find a new tab named
 "GnuPG" in Outlook's option menu.
 
-Note: For building in src/ you need to throw an original mapi32.dll
-into this directory.  This is due to a bug in the binutils: ld is not
-able to properly read a DEF file but will happily use the same
-information from an actual DLL.  The problem is that symbols like
-HrSetOneProp@8 are actually written without the "@8" into the import
-table when used with a DEF file and generated import lib.  Needs more
-debugging - any BFD cracks who can lend me a helping hand?  (wk).
-
 Bug reporting: First click on the logo on the GnuPG options tab to
 check whether a newer version has been released - try this first.  If
 this does not help, check out the mailing lists and also the bug

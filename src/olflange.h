@@ -84,6 +84,7 @@ private:
   BOOL    m_bOnSubmitActive;
   CGPGExchExt* m_pExchExt;
   BOOL    m_bWriteFailed;
+  BOOL    m_want_html;       /* Encryption of HTML is desired. */
   
 public:
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID *ppvObj);

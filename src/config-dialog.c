@@ -390,7 +390,7 @@ start_key_manager (void)
         info = info->next;
       if (info && info->file_name && *info->file_name)
         {
-          keyman = xmalloc (strlen (info->file_name) + 10);
+          keyman = xmalloc (strlen (info->file_name) + 50);
           strcpy (keyman, info->file_name);
           for (p=keyman; *p; p++)
             if (*p == '/')
@@ -401,10 +401,10 @@ start_key_manager (void)
               xfree (keyman);
               return -1;
             }
-          strcpy (p+1, "winpt.exe");
+          strcpy (p+1, "winpt.exe --keymanager");
           if (access (keyman, F_OK))
             {
-              strcpy (p+1, "gpa.exe");
+              strcpy (p+1, "gpa.exe --keyring");
               if (access (keyman, F_OK))
                 {
                   xfree (keyman);

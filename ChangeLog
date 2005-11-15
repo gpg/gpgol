@@ -1,7 +1,15 @@
+2005-11-15  Werner Koch  <wk@g10code.com>
+
+	* configure.ac (BUILD_TIMESTAMP): Include SVN revision.
+
 2005-10-21  Marcus Brinkmann  <marcus@g10code.de>
 
 	* m4/gpg-error.m4: New file.
 	* configure.ac: Also check for gpg-error.
+
+2005-10-11  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Use MS style bitfields.
 
 2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
 
