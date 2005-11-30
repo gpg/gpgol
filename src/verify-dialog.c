@@ -78,8 +78,9 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
 {
   gpgme_error_t err;
   gpgme_key_t key;
-  char *s, buf[2+16+1];
+  char buf[2+16+1];
   char *p;
+  const char *s;
   int stat;
   int valid, no_key = 0, n = 0;
   
@@ -152,7 +153,7 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
       SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
     }
   
-  s = (char *)get_pubkey_algo_str (ctx->signatures->pubkey_algo);
+  s = get_pubkey_algo_str (ctx->signatures->pubkey_algo);
   SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
   
   valid = ctx->signatures->validity;

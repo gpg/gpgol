@@ -140,7 +140,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, bool is_html)
     {
       const char *string, *s;
 
-      log_debug ("%s:%s: window handle %p\n", __FILE__, __func__, window);
+      log_debug ("%s:%s: window handle %p\n", SRCNAME, __func__, window);
       string = msg->getDisplayText ();
       
       /* Decide whether we need to use the Unicode version. */
@@ -155,7 +155,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, bool is_html)
       else
         SetWindowTextA (window, string);
       log_debug ("%s:%s: window text is now `%s'",
-                 __FILE__, __func__, string);
+                 SRCNAME, __func__, string);
       return 0;
     }
   else if (exchange_cb && !opt.compat.no_oom_write)
@@ -204,17 +204,14 @@ set_message_body (LPMESSAGE message, const char *string, bool is_html)
   if (hr != S_OK)
     {
       log_debug ("%s:%s: HrSetOneProp failed: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       return gpg_error (GPG_ERR_GENERAL);
     }
 
-  /* Instead of using RTF Sync, we simply delete any RTF property. */
-  proparray.cValues = 1;
-  proparray.aulPropTag[0] = PR_RTF_COMPRESSED;
-  hr = message->DeleteProps (&proparray, NULL);
-  if (hr != S_OK)
-    log_debug ("%s:%s: DeleteProps failed: hr=%#lx\n", __FILE__, __func__, hr);
-  
-    
+  /* Note: we once tried to delete the RTF property here to avoid any
+     syncing mess and more important to make sure that no RTF rendered
+     plaintext is left over.  The side effect of this was that the
+     entire PR_BODY go deleted too. */
+
   return 0;
 }

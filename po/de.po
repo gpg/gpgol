@@ -1,0 +1,204 @@
+# de.po - German translation for GPGol
+# Copyright (C) 2005 g10 Code GmbH
+# This file is distributed under the same license as the GPGol package.
+# Werner Koch <wk@gnupg.org>, 2005.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GPGol 0.9.4\n"
+"Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
+"POT-Creation-Date: 2005-11-30 12:02+0100\n"
+"PO-Revision-Date: 2005-11-30 12:55+0100\n"
+"Last-Translator: Werner Koch <wk@gnupg.org>\n"
+"Language-Team: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/engine-gpgme.c:880
+msgid "Fingerprint: "
+msgstr "Fingerabdruck: "
+
+#: src/engine-gpgme.c:937
+msgid "This signature is valid\n"
+msgstr "Diese Unterschrift ist korrekt\n"
+
+#: src/engine-gpgme.c:939
+msgid "signature state is \"green\"\n"
+msgstr "Status der Unterschrift ist \"grün\"\n"
+
+#: src/engine-gpgme.c:941
+msgid "signature state is \"red\"\n"
+msgstr "Status der Unterschrift ist \"rot\"\n"
+
+#: src/engine-gpgme.c:945
+msgid "Warning: One of the keys has been revoked\n"
+msgstr "Warnung: Einer der Schlüssel wurde widerrufen\n"
+
+#: src/engine-gpgme.c:955
+msgid "Warning: The key used to create the signature expired at: "
+msgstr "Warnung: Der Schlüssel mit der diese Unterschrift erzeugt wurde verfiel am: "
+
+#: src/engine-gpgme.c:961
+msgid "Warning: At least one certification key has expired\n"
+msgstr "Warnung: Mindestens einer der Zertifizierungsschlüssel ist abgelaufen\n"
+
+#: src/engine-gpgme.c:967
+msgid "Warning: The signature expired at: "
+msgstr "Die Unterschrift verfiel am: "
+
+#: src/engine-gpgme.c:973
+msgid "Can't verify due to a missing key or certificate\n"
+msgstr "Aufrund eines fehlenden Schlüssels ist eine Überprüfung nicht möglich\n"
+
+#: src/engine-gpgme.c:977
+msgid "The CRL is not available\n"
+msgstr "Die CRL ist nicht verfügbar\n"
+
+#: src/engine-gpgme.c:983
+msgid "Available CRL is too old\n"
+msgstr "Die vorhandene CRL ist zu alt\n"
+
+#: src/engine-gpgme.c:988
+msgid "A policy requirement was not met\n"
+msgstr "Eine Richtlinie wurde nicht erfüllt\n"
+
+#: src/engine-gpgme.c:994
+msgid "A system error occured"
+msgstr "Ein Systemfehler ist aufgetreten"
+
+#: src/engine-gpgme.c:1031
+msgid ""
+"WARNING: We have NO indication whether the key belongs to the person named "
+"as shown above\n"
+msgstr "WARNUNG: Es gibt keinen Hinweis darauf, ob der Schlüssel wirklich der Person gehört, die oben angezeigt ist\n"
+
+#: src/engine-gpgme.c:1038
+msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
+msgstr "WARNUNG: Der Schlüssel gehört NICHT der Person die oben angezeigt ist\n"
+
+#: src/engine-gpgme.c:1042
+msgid ""
+"WARNING: It is NOT certain that the key belongs to the person named as shown "
+"above\n"
+msgstr "WARNING: Es ist nicht sicher, daß der Schlüssel der Person gehört, die oben angezeigt ist\n"
+
+#: src/engine-gpgme.c:1075
+msgid "Verification started at: "
+msgstr "Überprüfung begann am: "
+
+#: src/engine-gpgme.c:1080
+msgid "Verification result for: "
+msgstr "Prüfungsresultat für: "
+
+#: src/engine-gpgme.c:1081
+msgid "[unnamed part]"
+msgstr "[Unbenannter Teil]"
+
+#: src/engine-gpgme.c:1099 src/engine-gpgme.c:1129
+msgid "Good signature from: "
+msgstr "Korrekte Unterschrift von: "
+
+#: src/engine-gpgme.c:1106
+msgid "                aka: "
+msgstr "                    alias: "
+
+#: src/engine-gpgme.c:1110 src/engine-gpgme.c:1132
+msgid "            created: "
+msgstr "                  erzeugt: "
+
+#: src/engine-gpgme.c:1119
+msgid "*BAD* signature claimed to be from: "
+msgstr "*FALSCHE* Unterschrift, vorgeblich von: "
+
+#: src/engine-gpgme.c:1142
+msgid "Error checking signature"
+msgstr "Fehler beim Prüfen der Unetrschrift"
+
+#: src/engine-gpgme.c:1158
+msgid "*** Begin Notation (signature by: "
+msgstr "*** Anfang Notation (Unterschrift von: "
+
+#: src/engine-gpgme.c:1178
+msgid "*** End Notation ***\n"
+msgstr "*** Ende Notation ***\n"
+
+#: src/gpgmsg.cpp:804
+msgid "[No attestation computed (e.g. messages was not signed)"
+msgstr "[Kein Testat berechnet (z.B. da die Nachricht nicht unterschrieben war)"
+
+#: src/passphrase-dialog.c:322 src/passphrase-dialog.c:464
+msgid "Invalid passphrase; please try again..."
+msgstr "Ungültige Passphrase; bitte nochmal versuchen..."
+
+#: src/passphrase-dialog.c:404 src/passphrase-dialog.c:523
+msgid ""
+"If you cancel this dialog, the message will be sent in cleartext!\n"
+"\n"
+"Do you really want to cancel?"
+msgstr ""
+"Wenn Sie diesen Dialog abbrechen, wird die Nachricht im Klartext ausgesendet!\n"
+"\n"
+"Möchten Sie wirklich abbrechen?"
+
+#: src/passphrase-dialog.c:410
+msgid ""
+"If you cancel this dialog, the message will be sent without signing.\n"
+"\n"
+"Do you really want to cancel?"
+msgstr ""
+"Wenn Sie diesen Dialog abbrechen, so wird die Nachricht ohne Unterschrift versendet.\n"
+"\n"
+"Möchten Sie wirklich abbrechen?"
+
+#: src/passphrase-dialog.c:529
+msgid ""
+"If you cancel this dialog, the message will be sent without signing.\n"
+"Do you really want to cancel?"
+msgstr ""
+"Wenn Sie diesen Dialog abbrechen, so wird die Nachricht ohne Unterschrift versendet.\n"
+"\n"
+"Möchten Sie wirklich abbrechen?"
+
+#: src/recipient-dialog.c:459
+msgid ""
+"If you cancel this dialog, the message will be sent in cleartext.\n"
+"\n"
+"Do you really want to cancel?"
+msgstr ""
+"Wenn Sie diesen Dialog abbrechen, so wird die NAchricht im Klartext versendet!\n"
+"\n"
+"Möchten Sie wirklich abbrechen?"
+
+#: src/recipient-dialog.c:531 src/verify-dialog.c:152
+msgid "User-ID not found"
+msgstr "User-ID nicht gefunden"
+
+#: src/verify-dialog.c:121
+msgid "Good signature"
+msgstr "Korrekte Unterschrift"
+
+#: src/verify-dialog.c:123
+msgid "BAD signature!"
+msgstr "FALSCHE Unterschrift!"
+
+#: src/verify-dialog.c:125
+msgid "Good signature from revoked key"
+msgstr "Korrekte Unterschrift; aber Schlüssel wurde widerrufen"
+
+#: src/verify-dialog.c:127
+msgid "Good signature from expired key"
+msgstr "Korrekte Unterschrift; allerdings ist der Schlüssel abgelaufen"
+
+#: src/verify-dialog.c:129
+msgid "Good expired signature"
+msgstr "Korrekte aber abgelaufene Unterschrift"
+
+#: src/verify-dialog.c:132
+msgid "Could not check signature: missing key"
+msgstr "Unterschrift konnte nicht geprüft werden:  Schlüssel fehlt"
+
+#: src/verify-dialog.c:136
+msgid "Verification error"
+msgstr "Überprüfungsfehler"
+

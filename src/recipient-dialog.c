@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include <config.h>
+
 #include <windows.h>
 #include <commctrl.h>
 #include <time.h>
@@ -29,7 +32,7 @@
 #include "util.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     __FILE__, __func__, __LINE__); \
+                                     SRCNAME, __func__, __LINE__); \
                         } while (0)
 
 

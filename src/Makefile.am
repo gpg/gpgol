@@ -44,7 +44,9 @@ gpgol_SOURCES = \
 	mymapi.h  mymapitags.h      \
         vasprintf.c                 \
 	watcher.cpp \
-	attach.cpp attach.h
+	attach.cpp attach.h \
+	w32-gettext.c w32-gettext.h 
+
 
 # W32API 3.2 comes with an unusable libmapi32.a.  We build our own
 # version.  Note the omission of -k (--kill-at) from the DLLTOOL

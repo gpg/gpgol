@@ -1,3 +1,27 @@
+2005-11-30  Werner Koch  <wk@g10code.com>
+
+	* common.c (get_root_key, read_w32_registry_string): New.  Taken
+	for libgpg-error.
+	* main.c (i18n_init): New.
+	(DllMain): Call it.
+	(get_locale_dir, drop_locale_dir): New.
+
+	* w32-gettext.c, w32-gettext.h: New.  Taken form libgpg-error.
+	Slightly modified due to the fact that gpgol is W32-only.
+	* util.h (_, N_): Define standard i18n macros.
+
+	* display.cpp (set_message_body): Do not delete a RTF property.
+
+	* util.h (SRCNAME): New.  Changed all __FILE__ to this.
+	* main.c (log_srcname): New.
+
+2005-11-20  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (loadBody): For HTML try to read the HTMLBody from
+	the OOM as a last resort.
+	* olflange.cpp (get_outlook_property): New.
+	(put_outlook_property_int): New.
+
 2005-11-15  Werner Koch  <wk@g10code.com>
 
 	* Makefile.am (gpgol_LDADD): Remove -lintl for now.

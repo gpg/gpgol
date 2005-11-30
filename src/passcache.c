@@ -87,7 +87,7 @@ lock_cache (void)
   int code = WaitForSingleObject (cache_mutex, INFINITE);
   if (code != WAIT_OBJECT_0)
     log_error ("%s:%s: waiting on mutex failed: code=%#x\n",
-               __FILE__, __func__, code);
+               SRCNAME, __func__, code);
   return code != WAIT_OBJECT_0;
 }
 
@@ -97,7 +97,7 @@ static void
 unlock_cache (void)
 {
   if (!ReleaseMutex (cache_mutex))
-    log_error_w32 (-1, "%s:%s: ReleaseMutex failed", __FILE__, __func__);
+    log_error_w32 (-1, "%s:%s: ReleaseMutex failed", SRCNAME, __func__);
 }
 
 
@@ -169,7 +169,7 @@ passcache_put (const char *key, const char *value, int ttl)
 
   if (!key || !*key)
     {
-      log_error ("%s:%s: no key given", __FILE__, __func__);
+      log_error ("%s:%s: no key given", SRCNAME, __func__);
       return;
     }
 
@@ -203,7 +203,7 @@ passcache_put (const char *key, const char *value, int ttl)
   else if (!ttl || !value || !*value)
     {
       log_debug ("%s:%s: ignoring attempt to add empty entry `%s'",
-                 __FILE__, __func__, key);
+                 SRCNAME, __func__, key);
     }
   else 
     {

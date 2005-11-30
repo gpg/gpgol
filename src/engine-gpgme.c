@@ -40,7 +40,7 @@
 #include "engine.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                       __FILE__, __func__, __LINE__); \
+                                       SRCNAME, __func__, __LINE__); \
                         } while (0)
 
 
@@ -141,7 +141,7 @@ stream_read_cb (void *handle, void *buffer, size_t size)
   hr = IStream_Read (stream, buffer, size, &nread);
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+      log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
       errno = EIO;
       return -1;
     }
@@ -159,7 +159,7 @@ stream_write_cb (void *handle, const void *buffer, size_t size)
   hr = IStream_Write (stream, buffer, size, &nwritten);
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
+      log_debug ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
       errno = EIO;
       return -1;
     }

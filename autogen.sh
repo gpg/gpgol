@@ -35,6 +35,9 @@ AUTOHEADER=${AUTOCONF_PREFIX}${AUTOHEADER:-autoheader}${AUTOCONF_SUFFIX}
 AUTOMAKE=${AUTOMAKE_PREFIX}${AUTOMAKE:-automake}${AUTOMAKE_SUFFIX}
 ACLOCAL=${AUTOMAKE_PREFIX}${ACLOCAL:-aclocal}${AUTOMAKE_SUFFIX}
 
+GETTEXT=${GETTEXT_PREFIX}${GETTEXT:-gettext}${GETTEXT_SUFFIX}
+MSGMERGE=${GETTEXT_PREFIX}${MSGMERGE:-msgmerge}${GETTEXT_SUFFIX}
+
 DIE=no
 
 # ***** W32 build script *******
@@ -106,6 +109,13 @@ q
 }' ${configure_ac}`
 automake_vers_num=`echo "$automake_vers" | cvtver`
 
+gettext_vers=`sed -n '/^AM_GNU_GETTEXT_VERSION(/ { 
+s/^.*(\(.*\))/\1/p
+q
+}' ${configure_ac}`
+gettext_vers_num=`echo "$gettext_vers" | cvtver`
+
+
 
 if [ -z "$autoconf_vers" -o -z "$automake_vers" ]
 then
@@ -120,12 +130,15 @@ fi
 if check_version $AUTOMAKE $automake_vers_num $automake_vers; then
   check_version $ACLOCAL $automake_vers_num $autoconf_vers automake
 fi
+if check_version $GETTEXT $gettext_vers_num $gettext_vers; then
+  check_version $MSGMERGE $gettext_vers_num $gettext_vers gettext
+fi
 
 if test "$DIE" = "yes"; then
     cat <<EOF
 
 Note that you may use alternative versions of the tools by setting 
-the corresponding environment variables; see README.CVS for details.
+the corresponding environment variables; see README.SVN for details.
                    
 EOF
     exit 1

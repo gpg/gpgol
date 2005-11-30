@@ -17,7 +17,7 @@ AUTOMAKE_OPTIONS = dist-bzip2
 EXTRA_DIST = autogen.sh
 
 
-SUBDIRS = src
+SUBDIRS = src po m4
 
 dist-hook:
 	echo "$(VERSION)" > $(distdir)/VERSION

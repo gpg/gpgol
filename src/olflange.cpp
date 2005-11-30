@@ -51,7 +51,7 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     __FILE__, __func__, __LINE__); \
+                                     SRCNAME, __func__, __LINE__); \
                         } while (0)
 
 
@@ -265,7 +265,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   wchar_t *wname;
   const char *s;
 
-  log_debug ("%s:%s: looking for `%s'\n", __FILE__, __func__, name);
+  log_debug ("%s:%s: looking for `%s'\n", SRCNAME, __func__, name);
 
   pCb = NULL;
   pObj = NULL;
@@ -301,7 +301,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
          expected.  To do this we better let GetIdsOfNames also return
          the ID of "Class". */
       //log_debug ("%s:%s: %.*s=%p  (hr=0x%x)\n",
-      //           __FILE__, __func__, (int)(s-name), name, pObj, hr);
+      //           SRCNAME, __func__, (int)(s-name), name, pObj, hr);
       pDisp->Release ();
       pDisp = NULL;
       /* Fixme: Do we need to release pObj? */
@@ -327,7 +327,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
     *r_dispid = dispid;
 
   log_debug ("%s:%s:    got IDispatch=%p dispid=%u\n",
-	     __FILE__, __func__, pDisp, (unsigned int)dispid);
+	     SRCNAME, __func__, pDisp, (unsigned int)dispid);
   return pDisp;
 }
 
@@ -367,7 +367,7 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
                     DISPATCH_PROPERTYGET, &dispparamsNoArgs,
                     &vtResult, NULL, NULL);
       log_debug ("%s:%s: Outlookcallback returned object of class=%d\n",
-                   __FILE__, __func__, vtResult.intVal);
+                   SRCNAME, __func__, vtResult.intVal);
     }
   if (pDisp)
     {
@@ -384,7 +384,7 @@ get_outlook_application_object (LPEXCHEXTCALLBACK lpeecb)
                      &vtResult, NULL, NULL);
       pUnk = vtResult.pdispVal;
       //log_debug ("%s:%s: Outlook.Application=%p\n",
-      //             __FILE__, __func__, pUnk);
+      //             SRCNAME, __func__, pUnk);
       pDisp->Release();
       pDisp = NULL;
     }
@@ -411,7 +411,7 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
 
   hr = ((LPEXCHEXTCALLBACK)pEECB)->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
   if (FAILED (hr))
-    log_debug ("%s:%s: getObject failed: hr=%#lx\n", __FILE__, __func__, hr);
+    log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME, __func__, hr);
   else if ( (pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB,
                                             key, &dispid)))
     {
@@ -426,7 +426,51 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
 			  NULL, NULL, NULL);
       xfree (dispparams.rgvarg[0].bstrVal);
       log_debug ("%s:%s: PROPERTYPUT(%s) result -> %#lx\n",
-                 __FILE__, __func__, key, hr);
+                 SRCNAME, __func__, key, hr);
+
+      pDisp->Release ();
+      pDisp = NULL;
+      result = 0;
+    }
+
+  ul_release (pMessage);
+  ul_release (pMDB);
+  return result;
+}
+
+int
+put_outlook_property_int (void *pEECB, const char *key, int value)
+{
+  int result = -1;
+  HRESULT hr;
+  LPMDB pMDB = NULL;
+  LPMESSAGE pMessage = NULL;
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  DISPID dispid_put = DISPID_PROPERTYPUT;
+  DISPPARAMS dispparams;
+  VARIANT aVariant;
+
+  if (!pEECB)
+    return -1;
+
+  hr = ((LPEXCHEXTCALLBACK)pEECB)->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+  if (FAILED (hr))
+    log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME, __func__, hr);
+  else if ( (pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB,
+                                            key, &dispid)))
+    {
+      dispparams.cNamedArgs = 1;
+      dispparams.rgdispidNamedArgs = &dispid_put;
+      dispparams.cArgs = 1;
+      dispparams.rgvarg = &aVariant;
+      dispparams.rgvarg[0].vt = VT_I4;
+      dispparams.rgvarg[0].intVal = value;
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+			  DISPATCH_PROPERTYPUT, &dispparams,
+			  NULL, NULL, NULL);
+      log_debug ("%s:%s: PROPERTYPUT(%s) result -> %#lx\n",
+                 SRCNAME, __func__, key, hr);
 
       pDisp->Release ();
       pDisp = NULL;
@@ -439,6 +483,51 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
 }
 
 
+/* Retuirn an Outlook OO property anmed KEY.  This needs to be some
+   kind of string. PEECP is required to indificate the context.  On
+   error NULL is returned.   It is usually used with "Body". */
+char *
+get_outlook_property (void *pEECB, const char *key)
+{
+  char *result = NULL;
+  HRESULT hr;
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+  VARIANT aVariant;
+
+  if (!pEECB)
+    return NULL;
+
+  pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB, key, &dispid);
+  if (!pDisp)
+    return NULL;
+
+  aVariant.bstrVal = NULL;
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_PROPERTYGET, &dispparamsNoArgs,
+                      &aVariant, NULL, NULL);
+  if (hr != S_OK)
+    log_debug ("%s:%s: retrieving `%s' failed: %#lx",
+               SRCNAME, __func__, key, hr);
+  else if (aVariant.vt != VT_BSTR)
+    log_debug ("%s:%s: `%s' is not a string (%d)",
+                           SRCNAME, __func__, key, aVariant.vt);
+  else if (aVariant.bstrVal)
+    {
+      result = wchar_to_utf8 (aVariant.bstrVal);
+      log_debug ("%s:%s: `%s' is `%s'",
+                 SRCNAME, __func__, key, result);
+      /* FIXME: Do we need to free the string returned in  AVARIANT? */
+    }
+
+  pDisp->Release();
+  pDisp = NULL;
+
+  return result;
+}
+
+
 
 /* The entry point which Exchange calls.  This is called for each
    context entry. Creates a new CGPGExchExt object every time so each
@@ -446,7 +535,7 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
 EXTERN_C LPEXCHEXT __stdcall
 ExchEntryPoint (void)
 {
-  log_debug ("%s:%s: creating new CGPGExchExt object\n", __FILE__, __func__);
+  log_debug ("%s:%s: creating new CGPGExchExt object\n", SRCNAME, __func__);
   return new CGPGExchExt;
 }
 
@@ -479,7 +568,7 @@ CGPGExchExt::CGPGExchExt (void)
       op_init ();
       g_initdll = TRUE;
       log_debug ("%s:%s: first time initialization done\n",
-                 __FILE__, __func__);
+                 SRCNAME, __func__);
     }
 }
 
@@ -488,7 +577,7 @@ CGPGExchExt::CGPGExchExt (void)
 CGPGExchExt::~CGPGExchExt (void) 
 {
   log_debug ("%s:%s: cleaning up CGPGExchExt object; "
-             "context=0x%lx (%s)\n", __FILE__, __func__, 
+             "context=0x%lx (%s)\n", SRCNAME, __func__, 
              m_lContext,
              (m_lContext == EECONTEXT_SESSION?           "Session":
               m_lContext == EECONTEXT_VIEWER?            "Viewer":
@@ -513,7 +602,7 @@ CGPGExchExt::~CGPGExchExt (void)
           op_deinit ();
           write_options ();
           g_initdll = FALSE;
-          log_debug ("%s:%s: DLL closed down\n", __FILE__, __func__);
+          log_debug ("%s:%s: DLL closed down\n", SRCNAME, __func__);
 	}	
     }
 
@@ -584,7 +673,7 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   /* Save the context in an instance variable. */
   m_lContext = lContext;
 
-  log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
+  log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", SRCNAME, __func__, 
                lContext,
                (lContext == EECONTEXT_SESSION?           "Session":
                 lContext == EECONTEXT_VIEWER?            "Viewer":
@@ -608,7 +697,7 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
       != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
     {
       log_debug ("%s:%s: invalid version 0x%lx\n",
-                   __FILE__, __func__, lBuildVersion);
+                   SRCNAME, __func__, lBuildVersion);
       return S_FALSE;
     }
   
@@ -625,11 +714,11 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
     {
 //       LPUNKNOWN pApplication = get_outlook_application_object (pEECB);
 //       log_debug ("%s:%s: pApplication=%p\n",
-//                    __FILE__, __func__, pApplication);
+//                    SRCNAME, __func__, pApplication);
       return S_OK;
     }
   
-  log_debug ("%s:%s: can't handle this context\n", __FILE__, __func__);
+  log_debug ("%s:%s: can't handle this context\n", SRCNAME, __func__);
   return S_FALSE;
 }
 
@@ -672,7 +761,7 @@ CGPGExchExtMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
   LPMDB pMDB = NULL;
   LPMESSAGE pMessage = NULL;
 
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
   pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
   show_mapi_property (pMessage, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
   ul_release (pMessage);
@@ -689,7 +778,7 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
                                           ULONG lFlags)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
   if (opt.compat.preview_decryption)
     {
       HRESULT hr;
@@ -733,7 +822,7 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
   HRESULT hr;
   LPDISPATCH pDisp;
@@ -751,7 +840,7 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
       pDisp = find_outlook_property (pEECB, "BodyFormat", &dispid);
       if (!pDisp)
         {
-          log_debug ("%s:%s: BodyFormat not found\n", __FILE__, __func__);
+          log_debug ("%s:%s: BodyFormat not found\n", SRCNAME, __func__);
           m_bWriteFailed = TRUE;	
           return E_FAIL;
         }
@@ -763,7 +852,7 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
       if (hr != S_OK)
         {
           log_debug ("%s:%s: retrieving BodyFormat failed: %#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
           m_bWriteFailed = TRUE;	
           pDisp->Release();
           return E_FAIL;
@@ -772,7 +861,7 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
       if (aVariant.vt != VT_INT && aVariant.vt != VT_I4)
         {
           log_debug ("%s:%s: BodyFormat is not an integer (%d)",
-                     __FILE__, __func__, aVariant.vt);
+                     SRCNAME, __func__, aVariant.vt);
           m_bWriteFailed = TRUE;	
           pDisp->Release();
           return E_FAIL;
@@ -786,7 +875,7 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
         {
 
           log_debug ("%s:%s: BodyFormat is %d",
-                     __FILE__, __func__, aVariant.intVal);
+                     SRCNAME, __func__, aVariant.intVal);
           
           if (FAILED(pEECB->GetWindow (&hWnd)))
             hWnd = NULL;
@@ -821,7 +910,7 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
                                            ULONG lFlags)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
   HRESULT hrReturn = S_FALSE;
   LPMESSAGE msg = NULL;
@@ -860,11 +949,15 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
       delete m;
 
       /* If we are encrypting we need to make sure that the other
-         format gets deleted and is not actually sent in the clear. */
+         format gets deleted and is not actually sent in the clear.
+         Note that this otehr format is always HTML because we use the
+         regular PR_BODY for sending the _encrypted_ html. */
       if (m_pExchExt->m_gpgEncrypt)
         {
+          log_debug ("%s:%s: deleting possible extra property PR_BODY_HTML\n",
+                     SRCNAME, __func__);
           proparray.cValues = 1;
-          proparray.aulPropTag[0] = m_want_html? PR_BODY : PR_BODY_HTML;
+          proparray.aulPropTag[0] = PR_BODY_HTML;
           msg->DeleteProps (&proparray, NULL);
         }
       
@@ -873,18 +966,21 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
           hrReturn = E_FAIL;
           m_bWriteFailed = TRUE;	
 
-          /* Due to an error in Outlook the error is ignored and the
+          /* Due to a bug in Outlook the error is ignored and the
              message sent out anyway.  Thus we better delete the stuff
              now. */
           if (m_pExchExt->m_gpgEncrypt)
             {
+              log_debug ("%s:%s: deleting property %s due to error\n",
+                         SRCNAME, __func__,
+                         m_want_html?"PR_BODY":"PR_BODY_HTML");
               proparray.cValues = 1;
               proparray.aulPropTag[0] = m_want_html? PR_BODY_HTML : PR_BODY;
               hr = msg->DeleteProps (&proparray, NULL);
               if (hr != S_OK)
                 log_debug ("%s:%s: DeleteProps failed: hr=%#lx\n",
-                           __FILE__, __func__, hr);
-              /* FIXME: We should delete the atatchments too. */
+                           SRCNAME, __func__, hr);
+              /* FIXME: We should delete the attachments too. */
             }
           
         }
@@ -902,7 +998,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK pEECB)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
   return S_FALSE;
 }
 
@@ -914,7 +1010,7 @@ STDMETHODIMP
 CGPGExchExtMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,
                                                 ULONG lFlags)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
   return S_FALSE;
 }
 
@@ -926,7 +1022,7 @@ CGPGExchExtMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,
 STDMETHODIMP 
 CGPGExchExtMessageEvents::OnSubmit (LPEXCHEXTCALLBACK pEECB)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = TRUE;
   m_bWriteFailed = FALSE;
   return S_FALSE;
@@ -939,7 +1035,7 @@ STDMETHODIMP_ (VOID)
 CGPGExchExtMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK pEECB,
                                             ULONG lFlags)
 {
-  log_debug ("%s:%s: received\n", __FILE__, __func__);
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = FALSE; 
 }
 
@@ -1027,7 +1123,7 @@ CGPGExchExtCommands::InstallCommands (
   VARIANT aVariant;
   int force_encrypt = 0;
   
-  log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", __FILE__, __func__, 
+  log_debug ("%s:%s: context=0x%lx (%s) flags=0x%lx\n", SRCNAME, __func__, 
              m_lContext,
              (m_lContext == EECONTEXT_SESSION?           "Session"          :
               m_lContext == EECONTEXT_VIEWER?            "Viewer"           :
@@ -1074,7 +1170,7 @@ CGPGExchExtCommands::InstallCommands (
           only need to ask for Body then. */
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (FAILED(hr))
-        log_debug ("%s:%s: getObject failed: hr=%#lx\n", __FILE__,__func__,hr);
+        log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME,__func__,hr);
       else if ( !opt.compat.no_msgcache)
         {
           const char *body;
@@ -1093,17 +1189,17 @@ CGPGExchExtCommands::InstallCommands (
                                   &aVariant, NULL, NULL);
               if (hr != S_OK)
                 log_debug ("%s:%s: retrieving ConversationIndex failed: %#lx",
-                           __FILE__, __func__, hr);
+                           SRCNAME, __func__, hr);
               else if (aVariant.vt != VT_BSTR)
                 log_debug ("%s:%s: ConversationIndex is not a string (%d)",
-                           __FILE__, __func__, aVariant.vt);
+                           SRCNAME, __func__, aVariant.vt);
               else if (aVariant.bstrVal)
                 {
                   char *p;
 
                   key = wchar_to_utf8 (aVariant.bstrVal);
                   log_debug ("%s:%s: ConversationIndex is `%s'",
-                           __FILE__, __func__, key);
+                           SRCNAME, __func__, key);
                   /* The keyis a hex string.  Convert it to binary. */
                   for (keylen=0,p=key; hexdigitp(p) && hexdigitp(p+1); p += 2)
                     ((unsigned char*)key)[keylen++] = xtoi_2 (p);
@@ -1132,7 +1228,7 @@ CGPGExchExtCommands::InstallCommands (
                                  NULL, NULL, NULL);
               xfree (dispparams.rgvarg[0].bstrVal);
               log_debug ("%s:%s: PROPERTYPUT(body) result -> %#lx\n",
-                         __FILE__, __func__, hr);
+                         SRCNAME, __func__, hr);
 #else
               log_debug ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
               show_window_hierarchy (hWnd, 0);
@@ -1304,7 +1400,7 @@ CGPGExchExtCommands::DoCommand (
   HRESULT hr;
 
   log_debug ("%s:%s: commandID=%u (%#x)\n",
-             __FILE__, __func__, nCommandID, nCommandID);
+             SRCNAME, __func__, nCommandID, nCommandID);
   if (nCommandID == SC_CLOSE && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       /* This is the system close command. Replace it with our own to
@@ -1331,12 +1427,12 @@ CGPGExchExtCommands::DoCommand (
           pDisp = NULL;
           if (hr == S_OK)
             {
-              log_debug ("%s:%s: invoking Close succeeded", __FILE__,__func__);
+              log_debug ("%s:%s: invoking Close succeeded", SRCNAME,__func__);
               return S_OK; /* We handled the close command. */
             }
 
           log_debug ("%s:%s: invoking Close failed: %#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
         }
 
       /* We are not interested in the close command - pass it on. */
@@ -1344,18 +1440,18 @@ CGPGExchExtCommands::DoCommand (
     }
   else if (nCommandID == 154)
     {
-      log_debug ("%s:%s: command Reply called\n", __FILE__, __func__);
+      log_debug ("%s:%s: command Reply called\n", SRCNAME, __func__);
       /* What we might want to do is to call Reply, then GetInspector
          and then Activate - this allows us to get full control over
          the quoted message and avoids the ugly msgcache. */
     }
   else if (nCommandID == 155)
     {
-      log_debug ("%s:%s: command ReplyAll called\n", __FILE__, __func__);
+      log_debug ("%s:%s: command ReplyAll called\n", SRCNAME, __func__);
     }
   else if (nCommandID == 156)
     {
-      log_debug ("%s:%s: command Forward called\n", __FILE__, __func__);
+      log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
     }
   
 
@@ -1414,7 +1510,7 @@ STDMETHODIMP_(VOID)
 CGPGExchExtCommands::InitMenu(LPEXCHEXTCALLBACK pEECB) 
 {
 #if 0
-  log_debug ("%s:%s: context=0x%lx (%s)\n", __FILE__, __func__, 
+  log_debug ("%s:%s: context=0x%lx (%s)\n", SRCNAME, __func__, 
              m_lContext,
              (m_lContext == EECONTEXT_SESSION?           "Session"          :
               m_lContext == EECONTEXT_VIEWER?            "Viewer"           :

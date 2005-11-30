@@ -32,7 +32,7 @@
 #include "intern.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     __FILE__, __func__, __LINE__); \
+                                     SRCNAME, __func__, __LINE__); \
                         } while (0)
 
 /* Object to maintai8n state in the dialogs. */
@@ -740,7 +740,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
     }
   else 
     log_debug ("%s:%s: dec=%p dec->pass=`[censored]'\n",
-               __FILE__, __func__, dec);
+               SRCNAME, __func__, dec);
 
   /* If we got a passphrase, send it to the FD. */
   if (dec->pass) 

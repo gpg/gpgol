@@ -273,7 +273,7 @@ debug_message_event (pgpmime_context_t ctx, rfc822parse_event_t event)
     case RFC822PARSE_EPILOGUE: s= "Epilogue"; break;
     default: s= "[unknown event]"; break;
     }
-  log_debug ("%s: ctx=%p, rfc822 event %s\n", __FILE__, ctx, s);
+  log_debug ("%s: ctx=%p, rfc822 event %s\n", SRCNAME, ctx, s);
 }
 
 
@@ -306,7 +306,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
           if (s1)
             {
               log_debug ("%s: ctx=%p, media `%s' `%s'\n",
-                         __FILE__, ctx, s1, s2);
+                         SRCNAME, ctx, s1, s2);
 
               if (!strcmp (s1, "multipart"))
                 {
@@ -414,14 +414,14 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
               if (FAILED (hr)) 
                 {
                   log_error ("%s:%s: can't create file `%s': hr=%#lx\n",
-                             __FILE__, __func__, ctx->filename, hr); 
+                             SRCNAME, __func__, ctx->filename, hr); 
                   MessageBox (ctx->hwnd, "Error creating file\n"
                               "Please select anther one",
                               "I/O-Error", MB_ICONERROR|MB_OK);
                   goto tryagain;
                 }
               log_debug ("%s:%s: writing attachment to `%s'\n",
-                         __FILE__, __func__, ctx->filename); 
+                         SRCNAME, __func__, ctx->filename); 
             }
           xfree (p);
         }
@@ -437,7 +437,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
       else 
         {
           log_error ("%s: ctx=%p, invalid structure: bad nesting level\n",
-                     __FILE__, ctx);
+                     SRCNAME, ctx);
           ctx->parser_error = 1;
         }
     }
@@ -480,7 +480,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
       if (pos >= ctx->linebufsize)
         {
           log_error ("%s: ctx=%p, rfc822 parser failed: line too long\n",
-                     __FILE__, ctx);
+                     SRCNAME, ctx);
           ctx->line_too_long = 1;
           return 0; /* Error. */
         }
@@ -494,7 +494,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
           if (rfc822parse_insert (ctx->msg, ctx->linebuf, pos))
             {
               log_error ("%s: ctx=%p, rfc822 parser failed: %s\n",
-                         __FILE__, ctx, strerror (errno));
+                         SRCNAME, ctx, strerror (errno));
               ctx->parser_error = 1;
               return 0; /* Error. */
             }
@@ -548,7 +548,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                   if (hr)
                     {
                       log_debug ("%s:%s: Write failed: hr=%#lx",
-                                 __FILE__, __func__, hr);
+                                 SRCNAME, __func__, hr);
                       MessageBox (ctx->hwnd, "Error writing file",
                                   "I/O-Error", MB_ICONERROR|MB_OK);
                       ctx->parser_error = 1;

@@ -43,9 +43,10 @@ extern "C" {
                   } while(0)
 
 
-/* i18n stuff (dummies for now). */
-#define _(a) (a)
-
+/* i18n stuff */
+#include "w32-gettext.h"
+#define _(a) gettext (a)
+#define N_(a) gettext_noop (a)
 
 
 /*-- common.c --*/
@@ -62,6 +63,8 @@ wchar_t *utf8_to_wchar2 (const char *string, size_t len);
 char *latin1_to_utf8 (const char *string);
 
 char *trim_trailing_spaces (char *string);
+char *read_w32_registry_string (const char *root, const char *dir,
+                                const char *name);
 
 
 /*-- main.c --*/
@@ -74,6 +77,8 @@ void log_error_w32 (int w32err, const char *fmt,
                     ...) __attribute__ ((format (printf,2,3)));
 void log_hexdump (const void *buf, size_t buflen, const char *fmt, 
                   ...)  __attribute__ ((format (printf,3,4)));
+const char *log_srcname (const char *s);
+#define SRCNAME log_srcname (__FILE__)
      
 const char *get_log_file (void);
 void set_log_file (const char *name);

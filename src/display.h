@@ -35,6 +35,8 @@ int set_message_body (LPMESSAGE message, const char *string, bool is_html);
 
 /*-- olflange.cpp --*/
 int put_outlook_property (void *pEECB, const char *key, const char *value);
+int put_outlook_property_int (void *pEECB, const char *key, int value);
+char *get_outlook_property (void *pEECB, const char *key);
 
 
 #endif /*DISPLAY_H*/

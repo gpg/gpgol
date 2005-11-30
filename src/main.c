@@ -33,6 +33,8 @@
 #include "msgcache.h"
 #include "mymapi.h"
 
+/* Registry key for this software. */
+#define REGKEY "Software\\GNU\\GnuPG"
 
 /* The malloced name of the logfile and the logging stream.  If
    LOGFILE is NULL, no logging is done. */
@@ -44,6 +46,12 @@ static FILE *logfp;
 static HANDLE log_mutex;
 
 
+/* Local function prototypes. */
+static char *get_locale_dir (void);
+static void drop_locale_dir (char *locale_dir);
+
+
+
 /* Initialization of gloabl options.  These are merely the defaults
    and will get updated later from the Registry.  That is done later
    at the time Outlook calls its entry point the first time. */
@@ -74,6 +82,29 @@ initialize_main (void)
   return log_mutex? 0 : -1;
 }
 
+static void
+i18n_init (void)
+{
+  char *locale_dir;
+
+#ifdef ENABLE_NLS
+# ifdef HAVE_LC_MESSAGES
+  setlocale (LC_TIME, "");
+  setlocale (LC_MESSAGES, "");
+# else
+  setlocale (LC_ALL, "" );
+# endif
+#endif
+
+  locale_dir = get_locale_dir ();
+  if (locale_dir)
+    {
+      bindtextdomain (PACKAGE_GT, locale_dir);
+      drop_locale_dir (locale_dir);
+    }
+  textdomain (PACKAGE_GT);
+}
+
 
 /* Entry point called by DLL loader. */
 int WINAPI
@@ -91,6 +122,7 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
       /* Early initializations of our subsystems. */
       if (initialize_main ())
         return FALSE;
+      i18n_init ();
       if (initialize_passcache ())
         return FALSE;
       if (initialize_msgcache ())
@@ -237,6 +269,12 @@ log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
   va_end (a);
 }
 
+const char *
+log_srcname (const char *file)
+{
+  const char *s = strrchr (file, '/');
+  return s? s+1:file;
+}
 
 const char *
 get_log_file (void)
@@ -280,6 +318,44 @@ set_default_key (const char *name)
         }
       unlock_log ();
     }
+}
+
+
+static char *
+get_locale_dir (void)
+{
+  char *instdir;
+  char *p;
+  char *dname;
+
+  instdir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", REGKEY,
+				      "Install Directory");
+  if (!instdir)
+    return NULL;
+  
+  /* Build the key: "<instdir>/share/locale".  */
+#define SLDIR "\\share\\locale"
+  dname = malloc (strlen (instdir) + strlen (SLDIR) + 1);
+  if (!dname)
+    {
+      free (instdir);
+      return NULL;
+    }
+  p = dname;
+  strcpy (p, instdir);
+  p += strlen (instdir);
+  strcpy (p, SLDIR);
+  
+  free (instdir);
+  
+  return dname;
+}
+
+
+static void
+drop_locale_dir (char *locale_dir)
+{
+  free (locale_dir);
 }
 
 

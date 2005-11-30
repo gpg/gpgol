@@ -43,7 +43,7 @@ static const char oid_mimetag[] =
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                       __FILE__, __func__, __LINE__); \
+                                       SRCNAME, __func__, __LINE__); \
                         } while (0)
 
 /* Constants to describe the PGP armor types. */
@@ -408,14 +408,23 @@ GpgMsgImpl::loadBody (bool want_html)
       if ( hr != S_OK )
         {
           log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
+          if (want_html)
+            {
+              log_debug ("%s:%s: trying to read it from the OOM\n",
+                         SRCNAME, __func__);
+              body = get_outlook_property (exchange_cb, "HTMLBody");
+              if (body)
+                goto ready;
+            }
+          
           return;
         }
       
       hr = stream->Stat (&statInfo, STATFLAG_NONAME);
       if ( hr != S_OK )
         {
-          log_debug ("%s:%s: Stat failed: hr=%#lx", __FILE__, __func__, hr);
+          log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
           stream->Release ();
           return;
         }
@@ -428,7 +437,7 @@ GpgMsgImpl::loadBody (bool want_html)
       hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
       if ( hr != S_OK )
         {
-          log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+          log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
           xfree (body);
           body = NULL;
           stream->Release ();
@@ -438,7 +447,7 @@ GpgMsgImpl::loadBody (bool want_html)
       body[nread+1] = 0;
       if (nread != statInfo.cbSize.QuadPart)
         {
-          log_debug ("%s:%s: not enough bytes returned\n", __FILE__, __func__);
+          log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
           xfree (body);
           body = NULL;
           stream->Release ();
@@ -460,9 +469,10 @@ GpgMsgImpl::loadBody (bool want_html)
       }
     }
 
+ ready:
   if (body)
     log_debug ("%s:%s: loaded body `%s' at %p\n",
-               __FILE__, __func__, body, body);
+               SRCNAME, __func__, body, body);
   
 
 //   prop.ulPropTag = PR_ACCESS;
@@ -470,7 +480,7 @@ GpgMsgImpl::loadBody (bool want_html)
 //   hr = HrSetOneProp (message, &prop);
 //   if (FAILED (hr))
 //     log_debug ("%s:%s: updating message access to 0x%08lx failed: hr=%#lx",
-//                    __FILE__, __func__, prop.Value.l, hr);
+//                    SRCNAME, __func__, prop.Value.l, hr);
 }
 
 
@@ -488,7 +498,7 @@ get_subject (LPMESSAGE obj)
   if (FAILED (hr))
     {
       log_error ("%s:%s: error getting the subject: hr=%#lx",
-                 __FILE__, __func__, hr);
+                 SRCNAME, __func__, hr);
       return NULL; 
     }
   switch ( PROP_TYPE (propval->ulPropTag) )
@@ -496,7 +506,7 @@ get_subject (LPMESSAGE obj)
     case PT_UNICODE:
       name = wchar_to_utf8 (propval->Value.lpszW);
       if (!name)
-        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+        log_debug ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
       break;
       
     case PT_STRING8:
@@ -505,7 +515,7 @@ get_subject (LPMESSAGE obj)
       
     default:
       log_debug ("%s:%s: proptag=%#lx not supported\n",
-                 __FILE__, __func__, propval->ulPropTag);
+                 SRCNAME, __func__, propval->ulPropTag);
       name = NULL;
       break;
     }
@@ -543,7 +553,7 @@ set_subject (LPMESSAGE obj, const char *string)
   if (hr != S_OK)
     {
       log_debug ("%s:%s: HrSetOneProp failed: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       return gpg_error (GPG_ERR_GENERAL);
     }
   return 0;
@@ -628,7 +638,7 @@ GpgMsgImpl::getRecipients ()
   if (FAILED (hr)) 
     {
       log_debug_w32 (-1, "%s:%s: GetRecipientTable failed",
-                     __FILE__, __func__);
+                     SRCNAME, __func__);
       return NULL;
     }
 
@@ -636,7 +646,7 @@ GpgMsgImpl::getRecipients ()
                        NULL, NULL, 0L, &lpRecipientRows);
   if (FAILED (hr)) 
     {
-      log_debug_w32 (-1, "%s:%s: GHrQueryAllRows failed", __FILE__, __func__);
+      log_debug_w32 (-1, "%s:%s: GHrQueryAllRows failed", SRCNAME, __func__);
       if (lpRecipientTable)
         lpRecipientTable->Release();
       return NULL;
@@ -660,7 +670,7 @@ GpgMsgImpl::getRecipients ()
             j++;
           else
             log_debug ("%s:%s: error converting recipient to utf8\n",
-                       __FILE__, __func__);
+                       SRCNAME, __func__);
           break;
       
         case PT_STRING8: /* Assume Ascii. */
@@ -669,7 +679,7 @@ GpgMsgImpl::getRecipients ()
           
         default:
           log_debug ("%s:%s: proptag=0x%08lx not supported\n",
-                     __FILE__, __func__, row->ulPropTag);
+                     SRCNAME, __func__, row->ulPropTag);
           break;
         }
     }
@@ -681,9 +691,9 @@ GpgMsgImpl::getRecipients ()
     FreeProws(lpRecipientRows);	
   
   log_debug ("%s:%s: got %d recipients:\n",
-             __FILE__, __func__, j);
+             SRCNAME, __func__, j);
   for (i=0; rset[i]; i++)
-    log_debug ("%s:%s: \t`%s'\n", __FILE__, __func__, rset[i]);
+    log_debug ("%s:%s: \t`%s'\n", SRCNAME, __func__, rset[i]);
 
   return rset;
 }
@@ -709,7 +719,7 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't create attachment: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
           
@@ -719,7 +729,7 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't set attach method: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
   
@@ -732,7 +742,7 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
 
@@ -743,7 +753,7 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
 
@@ -754,7 +764,7 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't set attach tag: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
 
@@ -764,7 +774,7 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
 
@@ -773,7 +783,7 @@ GpgMsgImpl::writeAttestation (void)
   if (FAILED (hr)) 
     {
       log_error ("%s:%s: can't create output stream: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
   
@@ -782,7 +792,7 @@ GpgMsgImpl::writeAttestation (void)
       || !(buffer = gpgme_data_release_and_get_mem (attestation, NULL)))
     {
       attestation = NULL;
-      log_error ("%s:%s: gpgme_data_write failed\n", __FILE__, __func__); 
+      log_error ("%s:%s: gpgme_data_write failed\n", SRCNAME, __func__); 
       goto leave;
     }
   attestation = NULL;
@@ -791,8 +801,9 @@ GpgMsgImpl::writeAttestation (void)
   hr = S_OK;
   if (!*buffer)
     {
-      p = _("[No attestation computed (e.g. messages was not signed)");
-      hr = to->Write (p, strlen (p), &nwritten);
+      const char *s = _("[No attestation computed "
+                        "(e.g. messages was not signed)");
+      hr = to->Write (s, strlen (s), &nwritten);
     }
   else
     {
@@ -807,7 +818,7 @@ GpgMsgImpl::writeAttestation (void)
     }
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: Write failed: hr=%#lx", __FILE__, __func__, hr);
+      log_debug ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
       goto leave;
     }
       
@@ -820,14 +831,14 @@ GpgMsgImpl::writeAttestation (void)
   if (hr != S_OK)
     {
       log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
   hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
   if (hr != S_OK)
     {
       log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       goto leave;
     }
 
@@ -850,7 +861,7 @@ GpgMsgImpl::writeAttestation (void)
 int 
 GpgMsgImpl::decrypt (HWND hwnd)
 {
-  log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  log_debug ("%s:%s: enter\n", SRCNAME, __func__);
   openpgp_t mtype;
   char *plaintext = NULL;
   attach_info_t table = NULL;
@@ -880,7 +891,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
     }
   log_debug ("%s:%s: message has %u attachments with "
              "%u signed and %d encrypted\n",
-             __FILE__, __func__, n_attach, n_signed, n_encrypted);
+             SRCNAME, __func__, n_attach, n_signed, n_encrypted);
   if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed) 
     {
       /* Because we usually work around the OL object model, it can't
@@ -908,13 +919,13 @@ GpgMsgImpl::decrypt (HWND hwnd)
           body_plain = xstrdup (s);
           update_display (hwnd, this, exchange_cb, is_html_body (s));
           msgcache_unref (refhandle);
-          log_debug ("%s:%s: leave (already decrypted)\n", __FILE__, __func__);
+          log_debug ("%s:%s: leave (already decrypted)\n", SRCNAME, __func__);
         }
       else
         {
           MessageBox (hwnd, "No valid OpenPGP data found.",
                       "GPG Decryption", MB_ICONWARNING|MB_OK);
-          log_debug ("%s:%s: leave (no OpenPGP data)\n", __FILE__, __func__);
+          log_debug ("%s:%s: leave (no OpenPGP data)\n", SRCNAME, __func__);
         }
       
       release_attach_info (table);
@@ -929,7 +940,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (attestation)
         gpgme_data_release (attestation);
       log_debug ("%s:%s: we already have an attestation\n",
-                 __FILE__, __func__);
+                 SRCNAME, __func__);
     }
   else if (!attestation && !opt.compat.no_attestation)
     gpgme_data_new (&attestation);
@@ -946,10 +957,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open PGP/MIME attachment 2: hr=%#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
           MessageBox (hwnd, "Problem decrypting PGP/MIME message",
                       "GPG Decryption", MB_ICONERROR|MB_OK);
-          log_debug ("%s:%s: leave (PGP/MIME problem)\n", __FILE__, __func__);
+          log_debug ("%s:%s: leave (PGP/MIME problem)\n", SRCNAME, __func__);
           release_attach_info (table);
           return gpg_error (GPG_ERR_GENERAL);
         }
@@ -958,10 +969,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (method != ATTACH_BY_VALUE)
         {
           log_error ("%s:%s: unsupported method %d for PGP/MIME attachment 2",
-                     __FILE__, __func__, method);
+                     SRCNAME, __func__, method);
           MessageBox (hwnd, "Problem decrypting PGP/MIME message",
                       "GPG Decryption", MB_ICONERROR|MB_OK);
-          log_debug ("%s:%s: leave (bad PGP/MIME method)\n",__FILE__,__func__);
+          log_debug ("%s:%s: leave (bad PGP/MIME method)\n",SRCNAME,__func__);
           att->Release ();
           release_attach_info (table);
           return gpg_error (GPG_ERR_GENERAL);
@@ -972,10 +983,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment 2: hr=%#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
           MessageBox (hwnd, "Problem decrypting PGP/MIME message",
                       "GPG Decryption", MB_ICONERROR|MB_OK);
-          log_debug ("%s:%s: leave (OpenProperty failed)\n",__FILE__,__func__);
+          log_debug ("%s:%s: leave (OpenProperty failed)\n",SRCNAME,__func__);
           att->Release ();
           release_attach_info (table);
           return gpg_error (GPG_ERR_GENERAL);
@@ -1037,7 +1048,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
           hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
           if (FAILED (hr))
             log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
-                       __FILE__, __func__, hr);
+                       SRCNAME, __func__, hr);
           update_display (hwnd, this, exchange_cb, is_html);
           
         }
@@ -1058,7 +1069,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
               hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
               if (FAILED (hr))
                 log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
-                           __FILE__, __func__, hr);
+                           SRCNAME, __func__, hr);
             }
 	}
     }
@@ -1117,7 +1128,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   writeAttestation ();
 
   release_attach_info (table);
-  log_debug ("%s:%s: leave (rc=%d)\n", __FILE__, __func__, err);
+  log_debug ("%s:%s: leave (rc=%d)\n", SRCNAME, __func__, err);
   return err;
 }
 
@@ -1136,20 +1147,20 @@ GpgMsgImpl::sign (HWND hwnd)
   gpgme_key_t sign_key = NULL;
   SPropValue prop;
 
-  log_debug ("%s:%s: enter message=%p\n", __FILE__, __func__, message);
+  log_debug ("%s:%s: enter message=%p\n", SRCNAME, __func__, message);
   
   /* We don't sign an empty body - a signature on a zero length string
      is pretty much useless. */
   if (!*(plaintext = getOrigText (false)) && !hasAttachments ()) 
     {
-      log_debug ("%s:%s: leave (empty)", __FILE__, __func__);
+      log_debug ("%s:%s: leave (empty)", SRCNAME, __func__);
       return 0; 
     }
 
   /* Pop up a dialog box to ask for the signer of the message. */
   if (signer_dialog_box (&sign_key, NULL, 0) == -1)
     {
-      log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
+      log_debug ("%s.%s: leave (dialog failed)\n", SRCNAME, __func__);
       return gpg_error (GPG_ERR_CANCELED);  
     }
 
@@ -1170,7 +1181,7 @@ GpgMsgImpl::sign (HWND hwnd)
       unsigned int n;
       
       n = getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      log_debug ("%s:%s: message has %u attachments\n", SRCNAME, __func__, n);
       for (unsigned int i=0; i < n; i++) 
         signAttachment (hwnd, i, sign_key, opt.passwd_ttl);
       /* FIXME: we should throw an error if signing of any attachment
@@ -1197,7 +1208,7 @@ GpgMsgImpl::sign (HWND hwnd)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set content type: hr=%#lx\n",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
         }
     }
   
@@ -1205,7 +1216,7 @@ GpgMsgImpl::sign (HWND hwnd)
   if (hr != S_OK)
     {
       log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       err = gpg_error (GPG_ERR_GENERAL);
       goto leave;
     }
@@ -1213,7 +1224,7 @@ GpgMsgImpl::sign (HWND hwnd)
  leave:
   xfree (signedtext);
   gpgme_key_release (sign_key);
-  log_debug ("%s:%s: leave (err=%s)\n", __FILE__, __func__, op_strerror (err));
+  log_debug ("%s:%s: leave (err=%s)\n", SRCNAME, __func__, op_strerror (err));
   return err;
 }
 
@@ -1226,7 +1237,7 @@ GpgMsgImpl::sign (HWND hwnd)
 int 
 GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 {
-  log_debug ("%s:%s: enter\n", __FILE__, __func__);
+  log_debug ("%s:%s: enter\n", SRCNAME, __func__);
   HRESULT hr;
   gpgme_key_t *keys = NULL;
   gpgme_key_t sign_key = NULL;
@@ -1241,7 +1252,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   
   if (!*(plaintext = getOrigText (want_html)) && !hasAttachments ()) 
     {
-      log_debug ("%s:%s: leave (empty)", __FILE__, __func__);
+      log_debug ("%s:%s: leave (empty)", SRCNAME, __func__);
       return 0; 
     }
 
@@ -1250,7 +1261,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
     {
       if (signer_dialog_box (&sign_key, NULL, 1) == -1)
         {
-          log_debug ("%s.%s: leave (dialog failed)\n", __FILE__, __func__);
+          log_debug ("%s.%s: leave (dialog failed)\n", SRCNAME, __func__);
           return gpg_error (GPG_ERR_CANCELED);  
         }
     }
@@ -1259,7 +1270,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   recipients = getRecipients ();
   if ( op_lookup_keys (recipients, &keys, &unknown) )
     {
-      log_debug ("%s.%s: leave (lookup keys failed)\n", __FILE__, __func__);
+      log_debug ("%s.%s: leave (lookup keys failed)\n", SRCNAME, __func__);
       return gpg_error (GPG_ERR_GENERAL);  
     }
   n_recp = count_strings (recipients);
@@ -1268,14 +1279,14 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 
   
   log_debug ("%s:%s: found %d recipients, need %d, unknown=%d\n",
-             __FILE__, __func__, (int)n_keys, (int)n_recp, (int)n_unknown);
+             SRCNAME, __func__, (int)n_keys, (int)n_recp, (int)n_unknown);
   
   if (n_keys != n_recp)
     {
       unsigned int opts;
       gpgme_key_t *keys2;
 
-      log_debug ("%s:%s: calling recipient_dialog_box2", __FILE__, __func__);
+      log_debug ("%s:%s: calling recipient_dialog_box2", SRCNAME, __func__);
       opts = recipient_dialog_box2 (keys, unknown, &keys2);
       free_key_array (keys);
       keys = keys2;
@@ -1287,14 +1298,14 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
     }
 
   if (sign_key)
-    log_debug ("%s:%s: signer: 0x%s %s\n",  __FILE__, __func__,
+    log_debug ("%s:%s: signer: 0x%s %s\n",  SRCNAME, __func__,
                keyid_from_key (sign_key), userid_from_key (sign_key));
   else
-    log_debug ("%s:%s: no signer\n", __FILE__, __func__);
+    log_debug ("%s:%s: no signer\n", SRCNAME, __func__);
   if (keys)
     {
       for (int i=0; keys[i] != NULL; i++)
-        log_debug ("%s.%s: recp.%d 0x%s %s\n", __FILE__, __func__,
+        log_debug ("%s.%s: recp.%d 0x%s %s\n", SRCNAME, __func__,
                    i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
     }
 
@@ -1324,7 +1335,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 //         if (hr != S_OK)
 //           {
 //             log_error ("%s:%s: can't set message class: hr=%#lx\n",
-//                        __FILE__, __func__, hr); 
+//                        SRCNAME, __func__, hr); 
 //           }
 //       }
 
@@ -1335,7 +1346,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
       unsigned int n;
       
       n = getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", __FILE__, __func__, n);
+      log_debug ("%s:%s: message has %u attachments\n", SRCNAME, __func__, n);
       for (unsigned int i=0; !err && i < n; i++) 
         err = encryptAttachment (hwnd, i, keys, NULL, 0);
       if (err)
@@ -1352,6 +1363,19 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
      the changes to the body.  */
   if (*plaintext)
     {
+      if (want_html)
+        {
+          /* We better update the body of the OOM too. */
+          if (put_outlook_property (exchange_cb, "Body", ciphertext))
+            log_error ("%s:%s: put OOM property Body failed\n",
+                       SRCNAME, __func__);
+          /* And set the format to plain text. */
+          if (put_outlook_property_int (exchange_cb, "BodyFormat", 1))
+            log_error ("%s:%s: put OOM property BodyFormat failed\n",
+                       SRCNAME, __func__);
+        }
+
+
       err = set_message_body (message, ciphertext, want_html);
       if (err)
         goto leave;
@@ -1367,15 +1391,16 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set content type: hr=%#lx\n",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
         }
+
     }
   
   hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
   if (hr != S_OK)
     {
       log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
-                 __FILE__, __func__, hr); 
+                 SRCNAME, __func__, hr); 
       err = gpg_error (GPG_ERR_GENERAL);
       goto leave;
     }
@@ -1388,7 +1413,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   free_string_array (recipients);
   free_string_array (unknown);
   xfree (ciphertext);
-  log_debug ("%s:%s: leave (err=%s)\n", __FILE__, __func__, op_strerror (err));
+  log_debug ("%s:%s: leave (err=%s)\n", SRCNAME, __func__, op_strerror (err));
   return err;
 }
 
@@ -1460,7 +1485,7 @@ GpgMsgImpl::getAttachments (void)
       if (FAILED (hr))
         {
           log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
           return 0;
         }
       
@@ -1469,7 +1494,7 @@ GpgMsgImpl::getAttachments (void)
       if (FAILED (hr))
         {
           log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
-                     __FILE__, __func__, hr);
+                     SRCNAME, __func__, hr);
           table->Release ();
           return 0;
         }
@@ -1495,7 +1520,7 @@ get_attach_method (LPATTACH obj)
   if (FAILED (hr))
     {
       log_error ("%s:%s: error getting attachment method: hr=%#lx",
-                 __FILE__, __func__, hr);
+                 SRCNAME, __func__, hr);
       return 0; 
     }
   /* We don't bother checking whether we really get a PT_LONG ulong
@@ -1520,7 +1545,7 @@ get_attach_mime_tag (LPATTACH obj)
   if (FAILED (hr))
     {
       log_error ("%s:%s: error getting attachment's MIME tag: hr=%#lx",
-                 __FILE__, __func__, hr);
+                 SRCNAME, __func__, hr);
       return NULL; 
     }
   switch ( PROP_TYPE (propval->ulPropTag) )
@@ -1528,7 +1553,7 @@ get_attach_mime_tag (LPATTACH obj)
     case PT_UNICODE:
       name = wchar_to_utf8 (propval->Value.lpszW);
       if (!name)
-        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+        log_debug ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
       break;
       
     case PT_STRING8:
@@ -1537,7 +1562,7 @@ get_attach_mime_tag (LPATTACH obj)
       
     default:
       log_debug ("%s:%s: proptag=%#lx not supported\n",
-                 __FILE__, __func__, propval->ulPropTag);
+                 SRCNAME, __func__, propval->ulPropTag);
       name = NULL;
       break;
     }
@@ -1560,7 +1585,7 @@ get_short_attach_data (LPATTACH obj)
   if (FAILED (hr))
     {
       log_error ("%s:%s: error getting attachment's data: hr=%#lx",
-                 __FILE__, __func__, hr);
+                 SRCNAME, __func__, hr);
       return NULL; 
     }
   switch ( PROP_TYPE (propval->ulPropTag) )
@@ -1575,7 +1600,7 @@ get_short_attach_data (LPATTACH obj)
       
     default:
       log_debug ("%s:%s: proptag=%#lx not supported\n",
-                 __FILE__, __func__, propval->ulPropTag);
+                 SRCNAME, __func__, propval->ulPropTag);
       data = NULL;
       break;
     }
@@ -1660,7 +1685,7 @@ set_x_header (LPMESSAGE msg, const char *name, const char *val)
   if (FAILED (hr)) 
     {
       log_error ("%s:%s: can't get mapping for header `%s': hr=%#lx\n",
-                 __FILE__, __func__, name, hr); 
+                 SRCNAME, __func__, name, hr); 
       return false;
     }
     
@@ -1670,7 +1695,7 @@ set_x_header (LPMESSAGE msg, const char *name, const char *val)
   if (hr != S_OK)
     {
       log_error ("%s:%s: can't set header `%s': hr=%#lx\n",
-                 __FILE__, __func__, name, hr); 
+                 SRCNAME, __func__, name, hr); 
       return false;
     }
   return true;
@@ -1696,7 +1721,7 @@ get_attach_filename (LPATTACH obj)
     hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
   if (FAILED(hr))
     {
-      log_debug ("%s:%s: no filename property found", __FILE__, __func__);
+      log_debug ("%s:%s: no filename property found", SRCNAME, __func__);
       return NULL;
     }
 
@@ -1705,7 +1730,7 @@ get_attach_filename (LPATTACH obj)
     case PT_UNICODE:
       name = wchar_to_utf8 (propval->Value.lpszW);
       if (!name)
-        log_debug ("%s:%s: error converting to utf8\n", __FILE__, __func__);
+        log_debug ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
       break;
       
     case PT_STRING8:
@@ -1714,7 +1739,7 @@ get_attach_filename (LPATTACH obj)
       
     default:
       log_debug ("%s:%s: proptag=%#lx not supported\n",
-                 __FILE__, __func__, propval->ulPropTag);
+                 SRCNAME, __func__, propval->ulPropTag);
       name = NULL;
       break;
     }
@@ -1745,14 +1770,14 @@ get_pgp_armor_type (LPATTACH att, int method)
   if (FAILED (hr))
     {
       log_debug ("%s:%s: can't attachment data: hr=%#lx",
-                 __FILE__, __func__,  hr);
+                 SRCNAME, __func__,  hr);
       return ARMOR_NONE;
     }
 
   hr = stream->Read (buffer, sizeof buffer -1, &nread);
   if ( hr != S_OK )
     {
-      log_debug ("%s:%s: Read failed: hr=%#lx", __FILE__, __func__, hr);
+      log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
       stream->Release ();
       return ARMOR_NONE;
     }
@@ -1800,7 +1825,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   has_attestation = false;
   n_attach = getAttachments ();
   log_debug ("%s:%s: message has %u attachments\n",
-             __FILE__, __func__, n_attach);
+             SRCNAME, __func__, n_attach);
   if (!n_attach)
       return NULL;
 
@@ -1813,7 +1838,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open attachment %d: hr=%#lx",
-                     __FILE__, __func__, pos, hr);
+                     SRCNAME, __func__, pos, hr);
           table[pos].invalid = 1;
           invalid_count++;
           continue;
@@ -1915,7 +1940,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
         table[pos].is_signed = 1;
     }
 
-  log_debug ("%s:%s: attachment info:\n", __FILE__, __func__);
+  log_debug ("%s:%s: attachment info:\n", SRCNAME, __func__);
   for (pos=0; !table[pos].end_of_table; pos++)
     {
       if (table[pos].invalid)
@@ -1969,7 +1994,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
   char *sig_data;
 
   log_debug ("%s:%s: verifying attachment %d/%d",
-             __FILE__, __func__, pos_data, pos_sig);
+             SRCNAME, __func__, pos_data, pos_sig);
 
   assert (table);
   assert (message);
@@ -1981,7 +2006,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (sig): hr=%#lx",
-                 __FILE__, __func__, pos_sig, hr);
+                 SRCNAME, __func__, pos_sig, hr);
       return;
     }
 
@@ -1990,7 +2015,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
   else
     {
       log_error ("%s:%s: attachment %d (sig): method %d not supported",
-                 __FILE__, __func__, pos_sig, table[pos_sig].method);
+                 SRCNAME, __func__, pos_sig, table[pos_sig].method);
       att->Release ();
       return;
     }
@@ -2004,7 +2029,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (data): hr=%#lx",
-                 __FILE__, __func__, pos_data, hr);
+                 SRCNAME, __func__, pos_data, hr);
       xfree (sig_data);
       return;
     }
@@ -2018,7 +2043,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
-                     __FILE__, __func__, pos_data, hr);
+                     SRCNAME, __func__, pos_data, hr);
           goto leave;
         }
       err = op_verify_detached_sig (stream, sig_data,
@@ -2026,7 +2051,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
       if (err)
         {
           log_debug ("%s:%s: verify detached signature failed: %s",
-                     __FILE__, __func__, op_strerror (err)); 
+                     SRCNAME, __func__, op_strerror (err)); 
           MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Verification", MB_ICONERROR|MB_OK);
         }
@@ -2035,7 +2060,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
   else
     {
       log_error ("%s:%s: attachment %d (data): method %d not supported",
-                 __FILE__, __func__, pos_data, table[pos_data].method);
+                 SRCNAME, __func__, pos_data, table[pos_data].method);
     }
 
  leave:
@@ -2060,18 +2085,18 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
   char *outname = NULL;
   
 
-  log_debug ("%s:%s: processing attachment %d", __FILE__, __func__, pos);
+  log_debug ("%s:%s: processing attachment %d", SRCNAME, __func__, pos);
 
   /* Make sure that we can access the attachment table. */
   if (!message || !getAttachments ())
     {
-      log_debug ("%s:%s: no attachemnts at all", __FILE__, __func__);
+      log_debug ("%s:%s: no attachemnts at all", SRCNAME, __func__);
       return;
     }
 
   if (!save_plaintext)
     {
-      log_error ("%s:%s: save_plaintext not requested", __FILE__, __func__);
+      log_error ("%s:%s: save_plaintext not requested", SRCNAME, __func__);
       return;
     }
 
@@ -2079,7 +2104,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
   if (FAILED (hr))
     {
       log_debug ("%s:%s: can't open attachment %d: hr=%#lx",
-                 __FILE__, __func__, pos, hr);
+                 SRCNAME, __func__, pos, hr);
       return;
     }
 
@@ -2100,7 +2125,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data obj of attachment %d: hr=%#lx",
-                     __FILE__, __func__, pos, hr);
+                     SRCNAME, __func__, pos, hr);
           goto leave;
         }
 
@@ -2123,7 +2148,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
       suggested_name = get_attach_filename (att);
       if (suggested_name)
         log_debug ("%s:%s: attachment %d, filename `%s'", 
-                   __FILE__, __func__, pos, suggested_name);
+                   SRCNAME, __func__, pos, suggested_name);
       /* Strip of know extensions or use a default name. */
       if (!suggested_name)
         {
@@ -2151,7 +2176,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
-                     __FILE__, __func__, pos, hr);
+                     SRCNAME, __func__, pos, hr);
           goto leave;
         }
 
@@ -2165,7 +2190,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (hr != S_OK)
             {
               log_error ("%s:%s: can't create attachment: hr=%#lx\n",
-                         __FILE__, __func__, hr); 
+                         SRCNAME, __func__, hr); 
               goto leave;
             }
           
@@ -2175,7 +2200,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (hr != S_OK)
             {
               log_error ("%s:%s: can't set attach method: hr=%#lx\n",
-                         __FILE__, __func__, hr); 
+                         SRCNAME, __func__, hr); 
               goto leave;
             }
           
@@ -2185,11 +2210,11 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (hr != S_OK)
             {
               log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                         __FILE__, __func__, hr); 
+                         SRCNAME, __func__, hr); 
               goto leave;
             }
           log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
-                     __FILE__, __func__, pos, newpos, outname);
+                     SRCNAME, __func__, pos, newpos, outname);
           
 
           hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
@@ -2197,7 +2222,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (FAILED (hr)) 
             {
               log_error ("%s:%s: can't create output stream: hr=%#lx\n",
-                         __FILE__, __func__, hr); 
+                         SRCNAME, __func__, hr); 
               goto leave;
             }
       
@@ -2205,7 +2230,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (err)
             {
               log_debug ("%s:%s: decrypt stream failed: %s",
-                         __FILE__, __func__, op_strerror (err)); 
+                         SRCNAME, __func__, op_strerror (err)); 
               to->Revert ();
               to->Release ();
               from->Release ();
@@ -2222,7 +2247,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (hr != S_OK)
             {
               log_error ("%s:%s: SaveChanges failed: hr=%#lx\n",
-                         __FILE__, __func__, hr); 
+                         SRCNAME, __func__, hr); 
               goto leave;
             }
 
@@ -2233,7 +2258,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           att = NULL;
           if (message->DeleteAttach (pos, 0, NULL, 0) == S_OK)
             log_error ("%s:%s: failed to delete attachment %d: %s",
-                       __FILE__, __func__, pos, op_strerror (err)); 
+                       SRCNAME, __func__, pos, op_strerror (err)); 
           
         }
       else  /* Save attachment to a file. */
@@ -2244,7 +2269,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (FAILED (hr)) 
             {
               log_error ("%s:%s: can't create stream for `%s': hr=%#lx\n",
-                         __FILE__, __func__, outname, hr); 
+                         SRCNAME, __func__, outname, hr); 
               from->Release ();
               goto leave;
             }
@@ -2253,7 +2278,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
           if (err)
             {
               log_debug ("%s:%s: decrypt stream failed: %s",
-                         __FILE__, __func__, op_strerror (err)); 
+                         SRCNAME, __func__, op_strerror (err)); 
               to->Revert ();
               to->Release ();
               from->Release ();
@@ -2274,7 +2299,7 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
   else
     {
       log_error ("%s:%s: attachment %d: method %d not supported",
-                 __FILE__, __func__, pos, method);
+                 SRCNAME, __func__, pos, method);
     }
 
  leave:
@@ -2302,7 +2327,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
   /* Make sure that we can access the attachment table. */
   if (!message || !getAttachments ())
     {
-      log_debug ("%s:%s: no attachemnts at all", __FILE__, __func__);
+      log_debug ("%s:%s: no attachemnts at all", SRCNAME, __func__);
       return;
     }
 
@@ -2310,7 +2335,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
   if (FAILED (hr))
     {
       log_debug ("%s:%s: can't open attachment %d: hr=%#lx",
-                 __FILE__, __func__, pos, hr);
+                 SRCNAME, __func__, pos, hr);
       return;
     }
 
@@ -2334,7 +2359,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
   if (method == ATTACH_EMBEDDED_MSG)
     {
       log_debug ("%s:%s: signing embedded attachments is not supported",
-                 __FILE__, __func__);
+                 SRCNAME, __func__);
     }
   else if (method == ATTACH_BY_VALUE)
     {
@@ -2346,7 +2371,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
-                     __FILE__, __func__, pos, hr);
+                     SRCNAME, __func__, pos, hr);
           goto leave;
         }
 
@@ -2354,7 +2379,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't create attachment: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
 
@@ -2364,7 +2389,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach method: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
       
@@ -2374,11 +2399,11 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
       log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
-                 __FILE__, __func__, pos, newpos, signame);
+                 SRCNAME, __func__, pos, newpos, signame);
 
       prop.ulPropTag = PR_ATTACH_EXTENSION_A;
       prop.Value.lpszA = ".pgpsig";   
@@ -2386,7 +2411,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach extension: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
 
@@ -2397,7 +2422,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach tag: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
 
@@ -2407,7 +2432,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
 
@@ -2416,7 +2441,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (FAILED (hr)) 
         {
           log_error ("%s:%s: can't create output stream: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
       
@@ -2424,7 +2449,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (err)
         {
           log_debug ("%s:%s: sign stream failed: %s",
-                     __FILE__, __func__, op_strerror (err)); 
+                     SRCNAME, __func__, op_strerror (err)); 
           to->Revert ();
           MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Signing", MB_ICONERROR|MB_OK);
@@ -2440,7 +2465,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
       if (hr != S_OK)
         {
           log_error ("%s:%s: SaveChanges failed: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           goto leave;
         }
 
@@ -2448,7 +2473,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
   else
     {
       log_error ("%s:%s: attachment %d: method %d not supported",
-                 __FILE__, __func__, pos, method);
+                 SRCNAME, __func__, pos, method);
     }
 
  leave:
@@ -2483,7 +2508,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
   /* Make sure that we can access the attachment table. */
   if (!message || !getAttachments ())
     {
-      log_debug ("%s:%s: no attachemnts at all", __FILE__, __func__);
+      log_debug ("%s:%s: no attachemnts at all", SRCNAME, __func__);
       return 0;
     }
 
@@ -2491,7 +2516,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
   if (FAILED (hr))
     {
       log_debug ("%s:%s: can't open attachment %d: hr=%#lx",
-                 __FILE__, __func__, pos, hr);
+                 SRCNAME, __func__, pos, hr);
       err = gpg_error (GPG_ERR_GENERAL);
       return err;
     }
@@ -2516,7 +2541,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
   if (method == ATTACH_EMBEDDED_MSG)
     {
       log_debug ("%s:%s: encrypting embedded attachments is not supported",
-                 __FILE__, __func__);
+                 SRCNAME, __func__);
       err = gpg_error (GPG_ERR_NOT_SUPPORTED);
     }
   else if (method == ATTACH_BY_VALUE)
@@ -2529,7 +2554,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open data of attachment %d: hr=%#lx",
-                     __FILE__, __func__, pos, hr);
+                     SRCNAME, __func__, pos, hr);
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2538,7 +2563,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't create attachment: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2549,7 +2574,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach method: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2560,12 +2585,12 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
       log_debug ("%s:%s: setting filename of attachment %d/%ld to `%s'",
-                 __FILE__, __func__, pos, newpos, filename);
+                 SRCNAME, __func__, pos, newpos, filename);
 
       prop.ulPropTag = PR_ATTACH_EXTENSION_A;
       prop.Value.lpszA = ".pgpenc";   
@@ -2573,7 +2598,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach extension: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2585,7 +2610,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach tag: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2596,7 +2621,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2606,7 +2631,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (FAILED (hr)) 
         {
           log_error ("%s:%s: can't create output stream: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2615,7 +2640,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (err)
         {
           log_debug ("%s:%s: encrypt stream failed: %s",
-                     __FILE__, __func__, op_strerror (err)); 
+                     SRCNAME, __func__, op_strerror (err)); 
           to->Revert ();
           MessageBox (hwnd, op_strerror (err),
                       "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
@@ -2631,7 +2656,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: SaveChanges failed: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2640,7 +2665,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
       if (hr != S_OK)
         {
           log_error ("%s:%s: DeleteAtatch failed: hr=%#lx\n",
-                     __FILE__, __func__, hr); 
+                     SRCNAME, __func__, hr); 
           err = gpg_error (GPG_ERR_GENERAL);
           goto leave;
         }
@@ -2649,7 +2674,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
   else
     {
       log_error ("%s:%s: attachment %d: method %d not supported",
-                 __FILE__, __func__, pos, method);
+                 SRCNAME, __func__, pos, method);
       err = gpg_error (GPG_ERR_NOT_SUPPORTED);
     }
 

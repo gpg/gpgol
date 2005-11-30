@@ -136,7 +136,7 @@ lock_cache (void)
   int code = WaitForSingleObject (cache_mutex, INFINITE);
   if (code != WAIT_OBJECT_0)
     log_error ("%s:%s: waiting on mutex failed: code=%#x\n",
-               __FILE__, __func__, code);
+               SRCNAME, __func__, code);
   return code != WAIT_OBJECT_0;
 }
 
@@ -146,7 +146,7 @@ static void
 unlock_cache (void)
 {
   if (!ReleaseMutex (cache_mutex))
-    log_error_w32 (-1, "%s:%s: ReleaseMutex failed", __FILE__, __func__);
+    log_error_w32 (-1, "%s:%s: ReleaseMutex failed", SRCNAME, __func__);
 }
 
 

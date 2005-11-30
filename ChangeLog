@@ -1,3 +1,11 @@
+2005-11-30  Werner Koch  <wk@g10code.com>
+
+	* po/: New; created by autopoint.
+	* po/Makevars: New.
+	* m4/Makefile.am: Add new m4 files.
+	* autogen.sh: Detect gettext.
+	* configure.ac: Check for gettext.
+
 2005-11-15  Werner Koch  <wk@g10code.com>
 
 	* configure.ac (BUILD_TIMESTAMP): Include SVN revision.

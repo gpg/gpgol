@@ -60,7 +60,11 @@ AC_SUBST(BUILD_FILEVERSION)
 AH_BOTTOM([
 /* Some global constants. */
 
-
+/* Force using of NLS for W32 even if no libintl has been found.  This is 
+   okay because we have our own gettext implementation for W32.  */
+#if defined(HAVE_W32_SYSTEM) && !defined(ENABLE_NLS)
+#define ENABLE_NLS 1
+#endif
 ])
 
 AM_MAINTAINER_MODE
@@ -87,7 +91,6 @@ AC_CHECK_TOOL(DLLTOOL, dlltool, :)
 AC_CHECK_TOOL(WINDRES, windres, :)
 
 
-try_gettext=yes
 have_dosish_system=no
 have_w32_system=no
 case "${host}" in
@@ -98,13 +101,8 @@ case "${host}" in
                   [set this to limit filenames to the 8.3 format])
         AC_DEFINE(HAVE_DRIVE_LETTERS,1,
                   [defined if we must run on a stupid file system])
-        AC_DEFINE(USE_SIMPLE_GETTEXT,1,
-                  [because the Unix gettext has too much overhead on
-                   MingW32 systems and these systems lack Posix functions,
-                   we use a simplified version of gettext])
         have_dosish_system=yes
         have_w32_system=yes
-        try_gettext="no"
         ;;
     *)
     AC_MSG_ERROR([[
@@ -140,6 +138,12 @@ AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
                have_gpgme=yes,have_gpgme=no)
 AM_PATH_GPG_ERROR(0.5,, AC_MSG_ERROR([libgpg-error was not found]))
 
+
+# Note, that autogen.sh greps for the next line.
+AM_GNU_GETTEXT_VERSION(0.12.1)
+AM_GNU_GETTEXT([external])
+# We always want NLs, despite what the above macro figures out.
+USE_NLS=yes
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -203,5 +207,7 @@ fi
 AC_CONFIG_FILES([ Makefile
 src/Makefile
 src/versioninfo.rc        
+po/Makefile.in
+m4/Makefile
 ])
 AC_OUTPUT
