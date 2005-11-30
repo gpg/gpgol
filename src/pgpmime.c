@@ -415,9 +415,9 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
                 {
                   log_error ("%s:%s: can't create file `%s': hr=%#lx\n",
                              SRCNAME, __func__, ctx->filename, hr); 
-                  MessageBox (ctx->hwnd, "Error creating file\n"
-                              "Please select anther one",
-                              "I/O-Error", MB_ICONERROR|MB_OK);
+                  MessageBox (ctx->hwnd, _("Error creating file\n"
+                              "Please select another one"),
+                              _("I/O-Error"), MB_ICONERROR|MB_OK);
                   goto tryagain;
                 }
               log_debug ("%s:%s: writing attachment to `%s'\n",
@@ -549,8 +549,8 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                     {
                       log_debug ("%s:%s: Write failed: hr=%#lx",
                                  SRCNAME, __func__, hr);
-                      MessageBox (ctx->hwnd, "Error writing file",
-                                  "I/O-Error", MB_ICONERROR|MB_OK);
+                      MessageBox (ctx->hwnd, _("Error writing file"),
+                                  _("I/O-Error"), MB_ICONERROR|MB_OK);
                       ctx->parser_error = 1;
                       return 0; /* Error. */
                     }
@@ -604,7 +604,7 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
     goto leave;
 
   err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl,
-                                    "[PGP/MIME message]", attestation);
+                                    _("[PGP/MIME message]"), attestation);
   if (!err && (ctx->parser_error || ctx->line_too_long))
     err = gpg_error (GPG_ERR_GENERAL);
 
@@ -620,7 +620,7 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
             }
         }
       else
-        *body = xstrdup ("[PGP/MIME message without plain text body]");
+        *body = xstrdup (_("[PGP/MIME message without plain text body]"));
     }
 
  leave:

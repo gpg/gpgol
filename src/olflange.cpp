@@ -880,9 +880,9 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
           if (FAILED(pEECB->GetWindow (&hWnd)))
             hWnd = NULL;
           MessageBox (hWnd,
-                      "Sorry, we can only encrypt plain text messages and\n"
+                      _("Sorry, we can only encrypt plain text messages and\n"
                       "no RTF messages. Please make sure that only the text\n"
-                      "format has been selected.",
+                      "format has been selected."),
                       "GPGol", MB_ICONERROR|MB_OK);
 
           m_bWriteFailed = TRUE;	
@@ -1257,7 +1257,6 @@ CGPGExchExtCommands::InstallCommands (
     {
       int nTBIndex;
       HWND hwndToolbar = NULL;
-      CHAR szBuffer[128];
 
       if (opt.compat.auto_decrypt)
         watcher_set_callback_ctx ((void *)pEECB);
@@ -1265,9 +1264,8 @@ CGPGExchExtCommands::InstallCommands (
                          NULL, NULL, 0);
       AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-      LoadString (glob_hinst, IDS_DECRYPT_MENU_ITEM, szBuffer, 128);
       AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
-                  *pnCommandIDBase, szBuffer);
+                  *pnCommandIDBase, _("&Decrypt and verify message"));
 
       m_nCmdEncrypt = *pnCommandIDBase;
       (*pnCommandIDBase)++;
@@ -1297,7 +1295,6 @@ CGPGExchExtCommands::InstallCommands (
 
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
-      CHAR szBuffer[128];
       int nTBIndex;
       HWND hwndToolbar = NULL;
 
@@ -1305,16 +1302,14 @@ CGPGExchExtCommands::InstallCommands (
                         NULL, NULL, 0);
       AppendMenu(hMenuTools, MF_SEPARATOR, 0, NULL);
 	
-      LoadString(glob_hinst, IDS_ENCRYPT_MENU_ITEM, szBuffer, 128);
       AppendMenu(hMenuTools, MF_STRING,
-                 *pnCommandIDBase, szBuffer);
+                 *pnCommandIDBase, _("GPG &encrypt message"));
 
       m_nCmdEncrypt = *pnCommandIDBase;
       (*pnCommandIDBase)++;
 
-      LoadString(glob_hinst, IDS_SIGN_MENU_ITEM, szBuffer, 128);
       AppendMenu(hMenuTools, MF_STRING,
-                 *pnCommandIDBase, szBuffer);
+                 *pnCommandIDBase, _("GPG &sign message"));
 
       m_nCmdSign = *pnCommandIDBase;
       (*pnCommandIDBase)++;
@@ -1352,7 +1347,6 @@ CGPGExchExtCommands::InstallCommands (
 
   if (m_lContext == EECONTEXT_VIEWER) 
     {
-      CHAR szBuffer[128];
       int nTBIndex;
       HWND hwndToolbar = NULL;
       
@@ -1360,9 +1354,8 @@ CGPGExchExtCommands::InstallCommands (
                          NULL, NULL, 0);
       AppendMenu (hMenuTools, MF_SEPARATOR, 0, NULL);
       
-      LoadString (glob_hinst, IDS_KEY_MANAGER, szBuffer, 128);
       AppendMenu (hMenuTools, MF_BYPOSITION | MF_STRING,
-                  *pnCommandIDBase, szBuffer);
+                  *pnCommandIDBase, _("GPG Key &Manager"));
 
       m_nCmdEncrypt = *pnCommandIDBase;
       (*pnCommandIDBase)++;	
@@ -1495,7 +1488,7 @@ CGPGExchExtCommands::DoCommand (
   else if (m_lContext == EECONTEXT_VIEWER)
     {
       if (start_key_manager ())
-        MessageBox (NULL, "Could not start Key-Manager",
+        MessageBox (NULL, _("Could not start Key-Manager"),
                     "GPGol", MB_ICONERROR|MB_OK);
     }
 
@@ -1540,41 +1533,32 @@ CGPGExchExtCommands::Help (
 {
     if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
     	if (nCommandID == m_nCmdEncrypt) {
-	    CHAR szBuffer[512];
-	    CHAR szAppName[128];
-
-	    LoadString (glob_hinst, IDS_DECRYPT_HELP, szBuffer, 511);
-	    LoadString (glob_hinst, IDS_APP_NAME, szAppName, 127);
-	    MessageBox (m_hWnd, szBuffer, szAppName, MB_OK);
+	    MessageBox (m_hWnd,
+                        _("Decrypt and verify the message."),
+                        "GPGol", MB_OK);
 	    return S_OK;
 	}
     }
     if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
-	    CHAR szBuffer[512];
-	    CHAR szAppName[128];
-	    LoadString(glob_hinst, IDS_ENCRYPT_HELP, szBuffer, 511);
-	    LoadString(glob_hinst, IDS_APP_NAME, szAppName, 127);
-	    MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);	
+	    MessageBox(m_hWnd,
+                       _("Select this option to encrypt the message."),
+                       "GPGol", MB_OK);	
 	    return S_OK;
 	} 
-	if (nCommandID == m_nCmdSign) {
-	    CHAR szBuffer[512];	
-	    CHAR szAppName[128];	
-	    LoadString(glob_hinst, IDS_SIGN_HELP, szBuffer, 511);	
-	    LoadString(glob_hinst, IDS_APP_NAME, szAppName, 127);	
-	    MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);	
+	else if (nCommandID == m_nCmdSign) {
+	    MessageBox(m_hWnd,
+                       _("Select this option to sign the message."),
+                       "GPGol", MB_OK);	
 	    return S_OK;
 	} 
     }
 
     if (m_lContext == EECONTEXT_VIEWER) {
     	if (nCommandID == m_nCmdEncrypt) {
-		CHAR szBuffer[512];
-		CHAR szAppName[128];
-		LoadString(glob_hinst, IDS_KEY_MANAGER_HELP, szBuffer, 511);
-		LoadString(glob_hinst, IDS_APP_NAME, szAppName, 127);
-		MessageBox(m_hWnd, szBuffer, szAppName, MB_OK);
+		MessageBox(m_hWnd, 
+                           _("Open GPG Key Manager"),
+                           "GPGol", MB_OK);
 		return S_OK;
 	} 
     }
@@ -1600,40 +1584,42 @@ CGPGExchExtCommands::QueryHelpText(
     if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_DECRYPT_STATUSBAR,
-                            pszText, nCharCnt);
+		lstrcpyn (pszText, ".", nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (glob_hinst, IDS_DECRYPT_TOOLTIP,
-                            pszText, nCharCnt);
+		lstrcpyn (pszText,
+                          _("Decrypt message and verify signature"),
+                          nCharCnt);
 	    return S_OK;
 	}
     }
     if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_ENCRYPT_STATUSBAR,
-                            pszText, nCharCnt);
+		lstrcpyn (pszText, ".", nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (glob_hinst, IDS_ENCRYPT_TOOLTIP,
-                            pszText, nCharCnt);
+		lstrcpyn (pszText,
+                          _("Encrypt message with GPG"),
+                          nCharCnt);
 	    return S_OK;
 	}
 	if (nCommandID == m_nCmdSign) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_SIGN_STATUSBAR, pszText, nCharCnt);
+		lstrcpyn (pszText, ".", nCharCnt);
   	    if (lFlags == EECQHT_TOOLTIP)
-	        LoadString (glob_hinst, IDS_SIGN_TOOLTIP, pszText, nCharCnt);
+		lstrcpyn (pszText,
+                          _("Sign message with GPG"),
+                          nCharCnt);
 	    return S_OK;
 	}
     }
     if (m_lContext == EECONTEXT_VIEWER) {
 	if (nCommandID == m_nCmdEncrypt) {
 	    if (lFlags == EECQHT_STATUS)
-		LoadString (glob_hinst, IDS_KEY_MANAGER_STATUSBAR,
-                            pszText, nCharCnt);
+		lstrcpyn (pszText, ".", nCharCnt);
 	    if (lFlags == EECQHT_TOOLTIP)
-		LoadString (glob_hinst, IDS_KEY_MANAGER_TOOLTIP,
-                            pszText, nCharCnt);
+		lstrcpyn (pszText,
+                          _("Open GPG Key Manager"),
+                          nCharCnt);
 	    return S_OK;
 	}	
     }
@@ -1664,8 +1650,9 @@ CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_DECRYPT_TOOLTIP,
-                                   lpszDescription, nCharCnt);
+			lstrcpyn (lpszDescription,
+                                  _("Decrypt message and verify signature"),
+                                  nCharCnt);
 			return S_OK;
 		}
 	}
@@ -1681,8 +1668,9 @@ CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_ENCRYPT_TOOLTIP,
-                                   lpszDescription, nCharCnt);
+			lstrcpyn (lpszDescription,
+                                  _("Encrypt message with GPG"),
+                                  nCharCnt);
 			return S_OK;
 		}
 		if (nToolbarButtonID == m_nToolbarButtonID2)
@@ -1695,8 +1683,9 @@ CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_SIGN_TOOLTIP,
-                                   lpszDescription, nCharCnt);
+			lstrcpyn (lpszDescription,
+                                  _("Sign message with GPG"),
+                                  nCharCnt);
 			return S_OK;
 		}
 	}
@@ -1710,8 +1699,9 @@ CGPGExchExtCommands::QueryButtonInfo (
 			pTBB->fsStyle = TBSTYLE_BUTTON;
 			pTBB->dwData = 0;
 			pTBB->iString = -1;
-			LoadString(glob_hinst, IDS_KEY_MANAGER_TOOLTIP,
-                                   lpszDescription, nCharCnt);
+			lstrcpyn (lpszDescription,
+                                  _("Open GPG Key Manager"),
+                                  nCharCnt);
 			return S_OK;
 		}
 	}

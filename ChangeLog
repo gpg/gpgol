@@ -1,5 +1,7 @@
 2005-11-30  Werner Koch  <wk@g10code.com>
 
+	* po/de.po: New.
+
 	* po/: New; created by autopoint.
 	* po/Makevars: New.
 	* m4/Makefile.am: Add new m4 files.

@@ -159,9 +159,9 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
   valid = ctx->signatures->validity;
   if (stat & GPGME_SIGSUM_SIG_EXPIRED) 
     {
-      char *fmt;
+      const char *fmt;
     
-      fmt = "Signature expired on %s";
+      fmt = _("Signature expired on %s");
       s = get_timestamp (ctx->signatures->exp_timestamp);
       p = xmalloc (strlen (s)+1+strlen (fmt)+2);
       sprintf (p, fmt, s);
@@ -173,14 +173,14 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
       switch (valid) 
 	{
 	case GPGME_VALIDITY_NEVER:
-	  s = "Signature issued by a key we do NOT trust.";
+	  s = _("Signature issued by a key we do NOT trust.");
 	  break;
 	  
 	default:
 	  if (no_key)
 	    s = "";
 	  else
-	    s = "Signature issued by a non-valid key.";
+	    s = _("Signature issued by a non-valid key.");
 	  break;
 	}
       SetDlgItemText (dlg, IDC_VRY_HINT, s);
@@ -195,15 +195,18 @@ verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
     switch (msg) {
     case WM_INITDIALOG:
+      
 	ctx = (struct dialog_context *)lparam;
 	load_sigbox (dlg, ctx->res);
 	center_window (dlg, NULL);
 	SetForegroundWindow (dlg);
         if (ctx->filename)
           {
-            char *tmp = xmalloc (strlen (ctx->filename) + 100);
-            strcpy (stpcpy (stpcpy (tmp, "Verification Result ("),
-                            ctx->filename), ")");
+            const char *s = _("Verification Result");
+            char *tmp = xmalloc (strlen (ctx->filename) 
+                                 + strlen (s) + 100);
+            strcpy (stpcpy (stpcpy (stpcpy (tmp, s),
+                                    " ("), ctx->filename), ")");
             SetWindowText (dlg, tmp);
             xfree (tmp);
           }

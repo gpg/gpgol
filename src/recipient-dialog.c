@@ -459,7 +459,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           warn = _("If you cancel this dialog, the message will be sent"
                    " in cleartext.\n\n"
                    "Do you really want to cancel?");
-          i = MessageBox (dlg, warn, "Recipient Dialog",
+          i = MessageBox (dlg, warn, _("Recipient Dialog"),
                           MB_ICONWARNING|MB_YESNO);
           if (i != IDNO)
             {

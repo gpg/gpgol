@@ -1,4 +1,4 @@
-/* olflange-rsrcs.rc - Olflange specific resource.
+/* olflange-rsrcs.rc - Olflange specific resource.         -*- c -*-
  *	Copyright (C) 2004, 2005 g10 Code GmbH
  * 
  * This file is part of GPGol.
@@ -106,53 +106,6 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE DISCARDABLE 
-BEGIN
-    IDS_DECRYPT_MENU_ITEM   "&Decrypt and verify message"
-    IDS_DECRYPT_HELP        "Decrypt and verify the message."
-    IDS_APP_NAME            "GnuPG"
-    IDS_DECRYPT_STATUSBAR   "."
-    IDS_DECRYPT_TOOLTIP     "Decrypt message and verify signature"
-    IDS_ENCRYPT_MENU_ITEM   "GPG &encrypt message"
-    IDS_SIGN_MENU_ITEM      "GPG &sign message"
-    IDS_ENCRYPT_HELP        "Select this option to encrypt the message."
-    IDS_SIGN_HELP           "Select this option to sign the message."
-    IDS_SIGN_STATUSBAR      "."
-    IDS_SIGN_TOOLTIP        "Sign message with GPG"
-    IDS_ENCRYPT_STATUSBAR   "."
-    IDS_ENCRYPT_TOOLTIP     "Encrypt message with GPG"
-END
-
-STRINGTABLE DISCARDABLE 
-BEGIN
-    IDS_KEY_MANAGER         "GnuPG Key &Manager"
-    IDS_KEY_MANAGER_HELP    "Open GnuPG Key Manager"
-    IDS_KEY_MANAGER_STATUSBAR "."
-    IDS_KEY_MANAGER_TOOLTIP "Open GnuPG Key Manager"
-    IDS_ERR_REPLACE_TEXT    "The message text could not be refreshed.\nPlease close the message and open it again."
-    IDS_ATT_DECRYPT_AND_SAVE 
-                            "Please close the message and open it again, to open the encrypted attachments or to save them."
-    IDS_SAVE_ATT_TITLE      "Save decrypted attachment"
-END
-
-STRINGTABLE DISCARDABLE 
-BEGIN
-    IDS_SAVE_ATT_FILTER     "All Files (*.*)|*.*||"
-    IDS_ERR_REPLACE_TEXT_ASK_SAVE 
-                            "The message text could not be refreshed. You can only read the message, when you save the decrypted message. Then you need to close it and open it again.\n\nShould the decrypted message be saved?"
-    IDS_ERR_ENCRYPT_ATTACHMENTS 
-                            "An error occured during the encryption of the attachments. The message cannot be sent."
-    IDS_COPY_KEY_TO_CLIPBOARD 
-                            "The key was written to the clipboard. Please add it to the message."
-    IDS_ERR_ENCRYPT_EMBEDDED_OLE 
-                            "Messaged with embedded OLE-objects cannot be encrypted."
-END
 
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////

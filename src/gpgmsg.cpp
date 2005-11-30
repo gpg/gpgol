@@ -923,8 +923,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
       else
         {
-          MessageBox (hwnd, "No valid OpenPGP data found.",
-                      "GPG Decryption", MB_ICONWARNING|MB_OK);
+          MessageBox (hwnd, _("No valid OpenPGP data found."),
+                      _("Decryption"), MB_ICONWARNING|MB_OK);
           log_debug ("%s:%s: leave (no OpenPGP data)\n", SRCNAME, __func__);
         }
       
@@ -958,8 +958,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
         {
           log_error ("%s:%s: can't open PGP/MIME attachment 2: hr=%#lx",
                      SRCNAME, __func__, hr);
-          MessageBox (hwnd, "Problem decrypting PGP/MIME message",
-                      "GPG Decryption", MB_ICONERROR|MB_OK);
+          MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
+                      _("Decryption"), MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (PGP/MIME problem)\n", SRCNAME, __func__);
           release_attach_info (table);
           return gpg_error (GPG_ERR_GENERAL);
@@ -970,8 +970,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
         {
           log_error ("%s:%s: unsupported method %d for PGP/MIME attachment 2",
                      SRCNAME, __func__, method);
-          MessageBox (hwnd, "Problem decrypting PGP/MIME message",
-                      "GPG Decryption", MB_ICONERROR|MB_OK);
+          MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
+                      _("Decryption"), MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (bad PGP/MIME method)\n",SRCNAME,__func__);
           att->Release ();
           release_attach_info (table);
@@ -984,8 +984,8 @@ GpgMsgImpl::decrypt (HWND hwnd)
         {
           log_error ("%s:%s: can't open data of attachment 2: hr=%#lx",
                      SRCNAME, __func__, hr);
-          MessageBox (hwnd, "Problem decrypting PGP/MIME message",
-                      "GPG Decryption", MB_ICONERROR|MB_OK);
+          MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
+                      _("Decryption"), MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (OpenProperty failed)\n",SRCNAME,__func__);
           att->Release ();
           release_attach_info (table);
@@ -1013,10 +1013,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
         ;
       else if (mtype == OPENPGP_CLEARSIG)
         MessageBox (hwnd, op_strerror (err),
-                    "GPG verification failed", MB_ICONERROR|MB_OK);
+                    _("Verification Failure"), MB_ICONERROR|MB_OK);
       else
         MessageBox (hwnd, op_strerror (err),
-                    "GPG decryption failed", MB_ICONERROR|MB_OK);
+                    _("Decryption Failure"), MB_ICONERROR|MB_OK);
     }
   else if (plaintext && *plaintext)
     {	
@@ -1054,14 +1054,14 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
       else if (!silent && update_display (hwnd, this, exchange_cb, is_html)) 
         {
-          const char s[] = 
-            "The message text cannot be displayed.\n"
-            "You have to save the decrypted message to view it.\n"
-            "Then you need to re-open the message.\n\n"
-            "Do you want to save the decrypted message?";
+          const char *s = 
+            _("The message text cannot be displayed.\n"
+              "You have to save the decrypted message to view it.\n"
+              "Then you need to re-open the message.\n\n"
+              "Do you want to save the decrypted message?");
           int what;
           
-          what = MessageBox (hwnd, s, "GPG Decryption",
+          what = MessageBox (hwnd, s, _("Decryption"),
                              MB_YESNO|MB_ICONWARNING);
           if (what == IDYES) 
             {
@@ -1080,16 +1080,17 @@ GpgMsgImpl::decrypt (HWND hwnd)
      verification might take long. */
   if (!silent && n_signed && !pgpmime_succeeded)
     {
-      const char s[] = 
-        "Signed attachments found.\n\n"
-        "@LIST@\n"
-        "Do you want to verify the signatures?";
+      /* TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
+         will be expanded to a list of atatchment names. */
+      const char *s = _("Signed attachments found.\n\n"
+                        "@LIST@\n"
+                        "Do you want to verify the signatures?");
       int what;
       char *text;
 
       text = text_from_attach_info (table, s, 2);
       
-      what = MessageBox (hwnd, text, "Attachment Verification",
+      what = MessageBox (hwnd, text, _("Attachment Verification"),
                          MB_YESNO|MB_ICONINFORMATION);
       xfree (text);
       if (what == IDYES) 
@@ -1105,15 +1106,16 @@ GpgMsgImpl::decrypt (HWND hwnd)
 
   if (!silent && n_encrypted && !pgpmime_succeeded)
     {
-      const char s[] = 
-        "Encrypted attachments found.\n\n"
-        "@LIST@\n"
-        "Do you want to decrypt and save them?";
+      /* TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
+         will be expanded to a list of atatchment names. */
+      const char *s = _("Encrypted attachments found.\n\n"
+                        "@LIST@\n"
+                        "Do you want to decrypt and save them?");
       int what;
       char *text;
 
       text = text_from_attach_info (table, s, 4);
-      what = MessageBox (hwnd, text, "Attachment Decryption",
+      what = MessageBox (hwnd, text, _("Attachment Decryption"),
                          MB_YESNO|MB_ICONINFORMATION);
       xfree (text);
       if (what == IDYES) 
@@ -1171,7 +1173,7 @@ GpgMsgImpl::sign (HWND hwnd)
       if (err)
         {
           MessageBox (hwnd, op_strerror (err),
-                      "GPG Sign", MB_ICONERROR|MB_OK);
+                      _("Signing Failure"), MB_ICONERROR|MB_OK);
           goto leave;
         }
     }
@@ -1316,7 +1318,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
       if (err)
         {
           MessageBox (hwnd, op_strerror (err),
-                      "GPG Encryption", MB_ICONERROR|MB_OK);
+                      _("Encryption Failure"), MB_ICONERROR|MB_OK);
           goto leave;
         }
 
@@ -1352,7 +1354,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
       if (err)
         {
           MessageBox (hwnd, op_strerror (err),
-                      "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
+                      _("Attachment Encryption Failure"), MB_ICONERROR|MB_OK);
           goto leave;
         }
     }
@@ -2053,7 +2055,8 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
           log_debug ("%s:%s: verify detached signature failed: %s",
                      SRCNAME, __func__, op_strerror (err)); 
           MessageBox (hwnd, op_strerror (err),
-                      "GPG Attachment Verification", MB_ICONERROR|MB_OK);
+                      _("Attachment Verification Failure"),
+                      MB_ICONERROR|MB_OK);
         }
       stream->Release ();
     }
@@ -2235,7 +2238,8 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
               to->Release ();
               from->Release ();
               MessageBox (hwnd, op_strerror (err),
-                          "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
+                          _("Attachment Decryption Failure"),
+                          MB_ICONERROR|MB_OK);
               goto leave;
             }
         
@@ -2283,7 +2287,8 @@ GpgMsgImpl::decryptAttachment (HWND hwnd, int pos, bool save_plaintext,
               to->Release ();
               from->Release ();
               MessageBox (hwnd, op_strerror (err),
-                          "GPG Attachment Decryption", MB_ICONERROR|MB_OK);
+                          _("Attachment Decryption Failure"),
+                          MB_ICONERROR|MB_OK);
               /* FIXME: We might need to delete outname now.  However a
                  sensible implementation of the stream object should have
                  done it through the Revert call. */
@@ -2452,7 +2457,7 @@ GpgMsgImpl::signAttachment (HWND hwnd, int pos, gpgme_key_t sign_key, int ttl)
                      SRCNAME, __func__, op_strerror (err)); 
           to->Revert ();
           MessageBox (hwnd, op_strerror (err),
-                      "GPG Attachment Signing", MB_ICONERROR|MB_OK);
+                      _("Attachment Signing Failure"), MB_ICONERROR|MB_OK);
           goto leave;
         }
       from->Release ();
@@ -2643,7 +2648,7 @@ GpgMsgImpl::encryptAttachment (HWND hwnd, int pos, gpgme_key_t *keys,
                      SRCNAME, __func__, op_strerror (err)); 
           to->Revert ();
           MessageBox (hwnd, op_strerror (err),
-                      "GPG Attachment Encryption", MB_ICONERROR|MB_OK);
+                      _("Attachment Encryption Failure"), MB_ICONERROR|MB_OK);
           goto leave;
         }
       from->Release ();

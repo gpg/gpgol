@@ -80,7 +80,7 @@ set_key_hint (struct decrypt_key_s *dec, HWND dlg, int ctrlid)
         key_hint[i] = 0;
     }
   else
-    key_hint = xstrdup ("No key hint given.");
+    key_hint = xstrdup (_("No key hint given."));
   SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, 
                       (LPARAM)(const char *)key_hint);
   SendDlgItemMessage (dlg, ctrlid, CB_SETCURSEL, 0, 0);
@@ -416,7 +416,7 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
           if (warn)
             {
-              n = MessageBox (dlg, warn, "Secret Key Dialog",
+              n = MessageBox (dlg, warn, _("Secret Key Dialog"),
                               MB_ICONWARNING|MB_YESNO);
               if (n == IDNO)
                 return FALSE;
@@ -535,7 +535,7 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
           if (warn)
             {
-              n = MessageBox (dlg, warn, "Secret Key Dialog",
+              n = MessageBox (dlg, warn, _("Secret Key Dialog"),
                               MB_ICONWARNING|MB_YESNO);
               if (n == IDNO)
                 return FALSE;
