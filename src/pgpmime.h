@@ -29,7 +29,8 @@ extern "C" {
 #endif
 
 int pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
-                     gpgme_data_t attestation, HWND hwnd);
+                     gpgme_data_t attestation, HWND hwnd,
+                     int preview_mode);
 
 
 

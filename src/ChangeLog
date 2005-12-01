@@ -1,3 +1,28 @@
+2005-12-01  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_decrypt_stream_to_gpgme, decrypt_stream) 
+	(op_decrypt): Add arg PREVIEW_MODE.
+	* pgpmime.c (pgpmime_decrypt): New arg PREVIEW_MODE.
+	(struct pgpmime_context): New field PREVIEW.
+	(message_cb, plaintext_handler): Handle preview mode.
+	* gpgmsg.cpp (class GpgMsgImpl): Renamed SILENT to PREVIEW.
+	(setSilent): Renamed to ..
+	(setPreview): .. this.
+	(decrypt): Handle preview mode.  Display a string while decrypting
+	PGP/MIME messages.
+
+	* display.cpp (update_display): New arg TEXT.
+	* gpgmsg.cpp (class GpgMsgImpl): Removed BODY_PLAIN and BODY.
+	(getDisplayText): Removed.
+	(loadBody): Changes to return the allocated body.
+	(getOrigText): Removed.
+	(getMessageType): Rewritten to take the body text as argument.
+	(decrypt): Pass plaintext directly to update_display.  Free
+	plaintext.
+	(sign, encrypt_and_sign): Likewise.
+
+	* olflange.cpp (OnWriteComplete): Always delete PR_BODY on error.
+
 2005-11-30  Werner Koch  <wk@g10code.com>
 
 	* gpgmsg.cpp: Made more strings translatable.

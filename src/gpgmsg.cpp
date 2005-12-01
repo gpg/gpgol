@@ -98,11 +98,9 @@ public:
   {
     message = NULL;
     exchange_cb = NULL;
-    body = NULL;
-    body_plain = NULL;
     is_pgpmime = false;
     has_attestation = false;
-    silent = false;
+    preview = false;
 
     attestation = NULL;
 
@@ -114,8 +112,6 @@ public:
   {
     if (message)
       message->Release ();
-    xfree (body);
-    xfree (body_plain);
 
     if (attestation)
       gpgme_data_release (attestation);
@@ -162,15 +158,13 @@ public:
     exchange_cb = cb;
   }
   
-  void setSilent (bool value)
+  void setPreview (bool value)
   {
-    silent = value;
+    preview = value;
   }
 
-  openpgp_t getMessageType (void);
+  openpgp_t getMessageType (const char *s);
   bool hasAttachments (void);
-  const char *getOrigText (bool want_html);
-  const char *GpgMsgImpl::getDisplayText (void);
   const char *getPlainText (void);
 
   int decrypt (HWND hwnd);
@@ -200,12 +194,10 @@ public:
 private:
   LPMESSAGE message;  /* Pointer to the message. */
   void *exchange_cb;  /* Call back used with the display function. */
-  char *body;         /* utf-8 encoded body string or NULL. */
-  char *body_plain;   /* Plaintext version of BODY or NULL. */
   bool is_pgpmime;    /* True if the message is a PGP/MIME encrypted one. */
   bool has_attestation;/* True if we found an attestation attachment. */
-  bool silent;        /* Don't pop up message boxes.  Currently this
-                         is only used with decryption.  */
+  bool preview;       /* Don't pop up message boxes and run only a
+                         body decryption. */
 
   /* If not NULL, collect attestation information here. */
   gpgme_data_t attestation;
@@ -218,7 +210,7 @@ private:
     LPSRowSet   rows;     /* The retrieved set of rows from the table. */
   } attach;
   
-  void loadBody (bool want_html);
+  char *loadBody (bool want_html);
   bool isPgpmimeVersionPart (int pos);
   void writeAttestation (void);
   attach_info_t gatherAttachmentInfo (void);
@@ -363,9 +355,9 @@ text_from_attach_info (attach_info_t table, const char *format,
 
 
 
-/* Load the body and make it available as an UTF8 string in the
-   instance variable BODY.  */
-void
+/* Load the body from the MAP and return it as an UTF8 string.
+   Returns NULL on error.  */
+char *
 GpgMsgImpl::loadBody (bool want_html)
 {
   HRESULT hr;
@@ -374,9 +366,10 @@ GpgMsgImpl::loadBody (bool want_html)
 //   SPropValue prop;
   STATSTG statInfo;
   ULONG nread;
+  char *body = NULL;
 
-  if (body || !message)
-    return;
+  if (!message)
+    return NULL;
 
   hr = HrGetOneProp ((LPMAPIPROP)message,
                      want_html? PR_BODY_HTML : PR_BODY, &lpspvFEID);
@@ -418,7 +411,7 @@ GpgMsgImpl::loadBody (bool want_html)
                 goto ready;
             }
           
-          return;
+          return NULL;
         }
       
       hr = stream->Stat (&statInfo, STATFLAG_NONAME);
@@ -426,7 +419,7 @@ GpgMsgImpl::loadBody (bool want_html)
         {
           log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
           stream->Release ();
-          return;
+          return NULL;
         }
       
       /* Fixme: We might want to read only the first 1k to decide
@@ -439,9 +432,8 @@ GpgMsgImpl::loadBody (bool want_html)
         {
           log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
           xfree (body);
-          body = NULL;
           stream->Release ();
-          return;
+          return NULL;
         }
       body[nread] = 0;
       body[nread+1] = 0;
@@ -449,13 +441,12 @@ GpgMsgImpl::loadBody (bool want_html)
         {
           log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
           xfree (body);
-          body = NULL;
           stream->Release ();
-          return;
+          return NULL;
         }
       stream->Release ();
       
-      /* FIXME: We need to optimize this. */
+      /* FIXME: We should to optimize this. */
       {
         char *tmp;
         tmp = wchar_to_utf8 ((wchar_t*)body);
@@ -481,6 +472,7 @@ GpgMsgImpl::loadBody (bool want_html)
 //   if (FAILED (hr))
 //     log_debug ("%s:%s: updating message access to 0x%08lx failed: hr=%#lx",
 //                    SRCNAME, __func__, prop.Value.l, hr);
+  return body;
 }
 
 
@@ -561,57 +553,28 @@ set_subject (LPMESSAGE obj, const char *string)
 #endif
 
 
-/* Return the type of a message. */
+/* Return the type of a message with the body text in TEXT. */
 openpgp_t
-GpgMsgImpl::getMessageType (void)
+GpgMsgImpl::getMessageType (const char *text)
 {
   const char *s;
-  
-  loadBody (false);
-  
-  if (!body || !(s = strstr (body, "BEGIN PGP ")))
+
+  if (!text || !(s = strstr (text, "BEGIN PGP ")))
     return OPENPGP_NONE;
 
   /* (The extra strstr() above is just a simple optimization.) */
-  if (strstr (body, "BEGIN PGP MESSAGE"))
+  if (strstr (text, "BEGIN PGP MESSAGE"))
     return OPENPGP_MSG;
-  else if (strstr (body, "BEGIN PGP SIGNED MESSAGE"))
+  else if (strstr (text, "BEGIN PGP SIGNED MESSAGE"))
     return OPENPGP_CLEARSIG;
-  else if (strstr (body, "BEGIN PGP SIGNATURE"))
+  else if (strstr (text, "BEGIN PGP SIGNATURE"))
     return OPENPGP_SIG;
-  else if (strstr (body, "BEGIN PGP PUBLIC KEY"))
+  else if (strstr (text, "BEGIN PGP PUBLIC KEY"))
     return OPENPGP_PUBKEY;
-  else if (strstr (body, "BEGIN PGP PRIVATE KEY"))
+  else if (strstr (text, "BEGIN PGP PRIVATE KEY"))
     return OPENPGP_SECKEY;
   else
     return OPENPGP_NONE;
-}
-
-
-/* Return the body text as received or composed.  This is guaranteed
-   to never return NULL.  */
-const char *
-GpgMsgImpl::getOrigText (bool want_html)
-{
-  loadBody (want_html);
-  
-  return body? body : "";
-}
-
-
-/* Return the text of the message to be used for the display.  The
-   message objects has intrinsic knowledge about the correct text.  */
-const char *
-GpgMsgImpl::getDisplayText (void)
-{
-  loadBody (false);
-
-  if (body_plain)
-    return body_plain;
-  else if (body)
-    return body;
-  else
-    return "";
 }
 
 
@@ -857,7 +820,7 @@ GpgMsgImpl::writeAttestation (void)
 
 
 /* Decrypt the message MSG and update the window.  HWND identifies the
-   current window. */
+   current window.  */
 int 
 GpgMsgImpl::decrypt (HWND hwnd)
 {
@@ -872,8 +835,12 @@ GpgMsgImpl::decrypt (HWND hwnd)
   unsigned int n_signed = 0;
   HRESULT hr;
   int pgpmime_succeeded = 0;
+  char *body;
 
-  mtype = getMessageType ();
+  /* Load the body text into BODY.  Note that body may be NULL but in
+     this case MTYPE will be OPENPGP_NONE. */
+  body = loadBody (false);
+  mtype = getMessageType (body);
 
   /* Check whether this possibly encrypted message has encrypted
      attachments.  We check right now because we need to get into the
@@ -915,20 +882,20 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (!opt.compat.old_reply_hack
           && (s = msgcache_get_from_mapi (message, &refhandle)))
         {
-          xfree (body_plain);
-          body_plain = xstrdup (s);
-          update_display (hwnd, this, exchange_cb, is_html_body (s));
+          update_display (hwnd, this, exchange_cb, is_html_body (s), s);
           msgcache_unref (refhandle);
           log_debug ("%s:%s: leave (already decrypted)\n", SRCNAME, __func__);
         }
       else
         {
-          MessageBox (hwnd, _("No valid OpenPGP data found."),
-                      _("Decryption"), MB_ICONWARNING|MB_OK);
+          if (!preview)
+            MessageBox (hwnd, _("No valid OpenPGP data found."),
+                        _("Decryption"), MB_ICONWARNING|MB_OK);
           log_debug ("%s:%s: leave (no OpenPGP data)\n", SRCNAME, __func__);
         }
       
       release_attach_info (table);
+      xfree (body);
       return 0;
     }
 
@@ -942,10 +909,9 @@ GpgMsgImpl::decrypt (HWND hwnd)
       log_debug ("%s:%s: we already have an attestation\n",
                  SRCNAME, __func__);
     }
-  else if (!attestation && !opt.compat.no_attestation)
+  else if (!attestation && !opt.compat.no_attestation && !preview)
     gpgme_data_new (&attestation);
   
-
   /* Process according to type of message. */
   if (is_pgpmime)
     {
@@ -953,15 +919,25 @@ GpgMsgImpl::decrypt (HWND hwnd)
       int method;
       LPSTREAM from;
       
+      /* If there is no body text (this should be the case for
+         PGP/MIME), display a message to indicate that this is such a
+         message.  This is useful in case of such messages with
+         longish attachments which might take long to decrypt. */
+      if (!body || !*body)
+        update_display (hwnd, this, exchange_cb, 0, 
+                        _("[This is a PGP/MIME message]"));        
+
       hr = message->OpenAttach (1, NULL, MAPI_BEST_ACCESS, &att);	
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open PGP/MIME attachment 2: hr=%#lx",
                      SRCNAME, __func__, hr);
-          MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
-                      _("Decryption"), MB_ICONERROR|MB_OK);
+          if (!preview)
+            MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
+                        _("Decryption"), MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (PGP/MIME problem)\n", SRCNAME, __func__);
           release_attach_info (table);
+          xfree (body);
           return gpg_error (GPG_ERR_GENERAL);
         }
 
@@ -970,11 +946,13 @@ GpgMsgImpl::decrypt (HWND hwnd)
         {
           log_error ("%s:%s: unsupported method %d for PGP/MIME attachment 2",
                      SRCNAME, __func__, method);
-          MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
-                      _("Decryption"), MB_ICONERROR|MB_OK);
+          if (!preview)
+            MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
+                        _("Decryption"), MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (bad PGP/MIME method)\n",SRCNAME,__func__);
           att->Release ();
           release_attach_info (table);
+          xfree (body);
           return gpg_error (GPG_ERR_GENERAL);
         }
 
@@ -984,27 +962,34 @@ GpgMsgImpl::decrypt (HWND hwnd)
         {
           log_error ("%s:%s: can't open data of attachment 2: hr=%#lx",
                      SRCNAME, __func__, hr);
-          MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
-                      _("Decryption"), MB_ICONERROR|MB_OK);
+          if (!preview)
+            MessageBox (hwnd, _("Problem decrypting PGP/MIME message"),
+                        _("Decryption"), MB_ICONERROR|MB_OK);
           log_debug ("%s:%s: leave (OpenProperty failed)\n",SRCNAME,__func__);
           att->Release ();
           release_attach_info (table);
+          xfree (body);
           return gpg_error (GPG_ERR_GENERAL);
         }
 
       err = pgpmime_decrypt (from, opt.passwd_ttl, &plaintext, attestation,
-                             hwnd);
+                             hwnd, preview);
       
       from->Release ();
       att->Release ();
       if (!err)
         pgpmime_succeeded = 1;
     }
-  else if (mtype == OPENPGP_CLEARSIG)
-    err = op_verify (getOrigText (false), NULL, NULL, attestation);
-  else if (*getOrigText(false))
-    err = op_decrypt (getOrigText (false), &plaintext, opt.passwd_ttl,
-                      NULL, attestation);
+  else if (mtype == OPENPGP_CLEARSIG )
+    {
+      assert (body);
+      err = preview? 0 : op_verify (body, NULL, NULL, attestation);
+    }
+  else if (body && *body)
+    {
+      err = op_decrypt (body, &plaintext, opt.passwd_ttl, NULL,
+                        attestation, preview);
+    }
   else
     err = gpg_error (GPG_ERR_NO_DATA);
   if (err)
@@ -1014,7 +999,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
       else if (mtype == OPENPGP_CLEARSIG)
         MessageBox (hwnd, op_strerror (err),
                     _("Verification Failure"), MB_ICONERROR|MB_OK);
-      else
+      else if (!preview)
         MessageBox (hwnd, op_strerror (err),
                     _("Decryption Failure"), MB_ICONERROR|MB_OK);
     }
@@ -1036,12 +1021,11 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (opt.compat.old_reply_hack)
         set_message_body (message, plaintext, is_html);
 
-      xfree (body_plain);
-      body_plain = plaintext;
-      plaintext = NULL;
-      msgcache_put (body_plain, 0, message);
+      msgcache_put (plaintext, 0, message);
 
-      if (opt.save_decrypted_attach)
+      if (preview)
+        update_display (hwnd, this, exchange_cb, is_html, plaintext);
+      else if (opt.save_decrypted_attach)
         {
           /* User wants us to replace the encrypted message with the
              plaintext version. */
@@ -1049,10 +1033,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
           if (FAILED (hr))
             log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
                        SRCNAME, __func__, hr);
-          update_display (hwnd, this, exchange_cb, is_html);
+          update_display (hwnd, this, exchange_cb, is_html, plaintext);
           
         }
-      else if (!silent && update_display (hwnd, this, exchange_cb, is_html)) 
+      else if (update_display (hwnd, this, exchange_cb, is_html, plaintext))
         {
           const char *s = 
             _("The message text cannot be displayed.\n"
@@ -1078,7 +1062,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   /* If we have signed attachments.  Ask whether the signatures should
      be verified; we do this is case of large attachments where
      verification might take long. */
-  if (!silent && n_signed && !pgpmime_succeeded)
+  if (!preview && n_signed && !pgpmime_succeeded)
     {
       /* TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
          will be expanded to a list of atatchment names. */
@@ -1104,7 +1088,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
     }
 
-  if (!silent && n_encrypted && !pgpmime_succeeded)
+  if (!preview && n_encrypted && !pgpmime_succeeded)
     {
       /* TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
          will be expanded to a list of atatchment names. */
@@ -1127,9 +1111,12 @@ GpgMsgImpl::decrypt (HWND hwnd)
         }
     }
 
-  writeAttestation ();
+  if (!preview)
+    writeAttestation ();
 
   release_attach_info (table);
+  xfree (plaintext);
+  xfree (body);
   log_debug ("%s:%s: leave (rc=%d)\n", SRCNAME, __func__, err);
   return err;
 }
@@ -1143,7 +1130,7 @@ int
 GpgMsgImpl::sign (HWND hwnd)
 {
   HRESULT hr;
-  const char *plaintext;
+  char *plaintext;
   char *signedtext = NULL;
   int err = 0;
   gpgme_key_t sign_key = NULL;
@@ -1153,9 +1140,11 @@ GpgMsgImpl::sign (HWND hwnd)
   
   /* We don't sign an empty body - a signature on a zero length string
      is pretty much useless. */
-  if (!*(plaintext = getOrigText (false)) && !hasAttachments ()) 
+  plaintext = loadBody (false);
+  if ( (!plaintext || !*plaintext) && !hasAttachments ()) 
     {
       log_debug ("%s:%s: leave (empty)", SRCNAME, __func__);
+      xfree (plaintext);
       return 0; 
     }
 
@@ -1163,10 +1152,11 @@ GpgMsgImpl::sign (HWND hwnd)
   if (signer_dialog_box (&sign_key, NULL, 0) == -1)
     {
       log_debug ("%s.%s: leave (dialog failed)\n", SRCNAME, __func__);
+      xfree (plaintext);
       return gpg_error (GPG_ERR_CANCELED);  
     }
 
-  if (*plaintext)
+  if (plaintext && *plaintext)
     {
       err = op_sign (plaintext, &signedtext, 
                      OP_SIG_CLEAR, sign_key, opt.passwd_ttl);
@@ -1194,7 +1184,7 @@ GpgMsgImpl::sign (HWND hwnd)
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  */
-  if (*plaintext)
+  if (plaintext && *plaintext)
     {
       err = set_message_body (message, signedtext, 0);
       if (err)
@@ -1226,6 +1216,7 @@ GpgMsgImpl::sign (HWND hwnd)
  leave:
   xfree (signedtext);
   gpgme_key_release (sign_key);
+  xfree (plaintext);
   log_debug ("%s:%s: leave (err=%s)\n", SRCNAME, __func__, op_strerror (err));
   return err;
 }
@@ -1234,7 +1225,7 @@ GpgMsgImpl::sign (HWND hwnd)
 
 /* Encrypt and optionally sign (if SIGN_FLAG is true) the entire
    message including all attachments.  If WANT_HTML is true, the text
-   to encrypt will be taken from the html property. Returns 0 on
+   to encrypt will also be taken from the html property. Returns 0 on
    success. */
 int 
 GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
@@ -1243,7 +1234,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   HRESULT hr;
   gpgme_key_t *keys = NULL;
   gpgme_key_t sign_key = NULL;
-  const char *plaintext;
+  char *plaintext;
   char *ciphertext = NULL;
   char **recipients = NULL;
   char **unknown = NULL;
@@ -1251,10 +1242,11 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   size_t n_keys, n_unknown, n_recp;
   SPropValue prop;
     
-  
-  if (!*(plaintext = getOrigText (want_html)) && !hasAttachments ()) 
+  plaintext = loadBody (false);
+  if ( (!plaintext || !*plaintext) && !hasAttachments ()) 
     {
       log_debug ("%s:%s: leave (empty)", SRCNAME, __func__);
+      xfree (plaintext);
       return 0; 
     }
 
@@ -1264,6 +1256,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
       if (signer_dialog_box (&sign_key, NULL, 1) == -1)
         {
           log_debug ("%s.%s: leave (dialog failed)\n", SRCNAME, __func__);
+          xfree (plaintext);
           return gpg_error (GPG_ERR_CANCELED);  
         }
     }
@@ -1311,7 +1304,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
                    i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
     }
 
-  if (*plaintext)
+  if (plaintext && *plaintext)
     {
       err = op_encrypt (plaintext, &ciphertext, 
                         keys, sign_key, opt.passwd_ttl);
@@ -1363,7 +1356,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 
   /* Now that we successfully processed the attachments, we can save
      the changes to the body.  */
-  if (*plaintext)
+  if (plaintext && *plaintext)
     {
       if (want_html)
         {
@@ -1415,6 +1408,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   free_string_array (recipients);
   free_string_array (unknown);
   xfree (ciphertext);
+  xfree (plaintext);
   log_debug ("%s:%s: leave (err=%s)\n", SRCNAME, __func__, op_strerror (err));
   return err;
 }

@@ -28,7 +28,8 @@ int is_html_body (const char *body);
 
 char *add_html_line_endings (const char *body);
 
-int update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, bool is_html);
+int update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
+                    bool is_html, const char *text);
 
 int set_message_body (LPMESSAGE message, const char *string, bool is_html);
 

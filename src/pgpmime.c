@@ -88,6 +88,8 @@ struct pgpmime_context
   HWND hwnd;          /* A window handle to be used for message boxes etc. */
   rfc822parse_t msg;  /* The handle of the RFC822 parser. */
 
+  int preview;        /* Do only decryption and pop up no  message bozes.  */
+
   int nesting_level;  /* Current MIME nesting level. */
   int in_data;        /* We are currently in data (body or attachment). */
 
@@ -324,7 +326,8 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
                 }
               else /* Other type. */
                 {
-                  ctx->collect_attachment = 1;
+                  if (!ctx->preview)
+                    ctx->collect_attachment = 1;
                 }
 
             }
@@ -375,7 +378,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
               if (!gpgme_data_new (&ctx->body))
                 ctx->collect_body = 1;
             }
-          else
+          else if (!ctx->preview)
             ctx->collect_attachment = 1;
         }
 
@@ -403,9 +406,9 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
             }
         tryagain:
           xfree (ctx->filename);
-          ctx->filename = get_save_filename (ctx->hwnd, p);
+          ctx->filename = ctx->preview? NULL:get_save_filename (ctx->hwnd, p);
           if (!ctx->filename)
-            ctx->collect_attachment = 0; /* User das not want to save it. */
+            ctx->collect_attachment = 0; /* User does not want to save it. */
           else
             {
               hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
@@ -416,7 +419,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
                   log_error ("%s:%s: can't create file `%s': hr=%#lx\n",
                              SRCNAME, __func__, ctx->filename, hr); 
                   MessageBox (ctx->hwnd, _("Error creating file\n"
-                              "Please select another one"),
+                                           "Please select another one"),
                               _("I/O-Error"), MB_ICONERROR|MB_OK);
                   goto tryagain;
                 }
@@ -549,8 +552,9 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                     {
                       log_debug ("%s:%s: Write failed: hr=%#lx",
                                  SRCNAME, __func__, hr);
-                      MessageBox (ctx->hwnd, _("Error writing file"),
-                                  _("I/O-Error"), MB_ICONERROR|MB_OK);
+                      if (!ctx->preview)
+                        MessageBox (ctx->hwnd, _("Error writing file"),
+                                    _("I/O-Error"), MB_ICONERROR|MB_OK);
                       ctx->parser_error = 1;
                       return 0; /* Error. */
                     }
@@ -572,10 +576,11 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
    newly allocated body will be stored at BODY.  If ATTESTATION is not
    NULL a text with the result of the signature verification will get
    printed to it.  HWND is the window to be used for message box and
-   such. */
+   such.  In PREVIEW_MODE no verification will be done, no messages
+   saved and no messages boxes will pop up. */
 int
 pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
-                 gpgme_data_t attestation, HWND hwnd)
+                 gpgme_data_t attestation, HWND hwnd, int preview_mode)
 {
   gpg_error_t err;
   struct gpgme_data_cbs cbs;
@@ -590,6 +595,7 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
   ctx = xcalloc (1, sizeof *ctx + LINEBUFSIZE);
   ctx->linebufsize = LINEBUFSIZE;
   ctx->hwnd = hwnd;
+  ctx->preview = preview_mode;
 
   ctx->msg = rfc822parse_open (message_cb, ctx);
   if (!ctx->msg)
@@ -604,7 +610,8 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
     goto leave;
 
   err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl,
-                                    _("[PGP/MIME message]"), attestation);
+                                    _("[PGP/MIME message]"), attestation,
+                                    preview_mode);
   if (!err && (ctx->parser_error || ctx->line_too_long))
     err = gpg_error (GPG_ERR_GENERAL);
 

@@ -781,6 +781,7 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   if (opt.compat.preview_decryption)
     {
+      TRACEPOINT ();
       HRESULT hr;
       HWND hWnd = NULL;
       LPMESSAGE pMessage = NULL;
@@ -793,7 +794,7 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
         {
           GpgMsg *m = CreateGpgMsg (pMessage);
           m->setExchangeCallback ((void*)pEECB);
-          m->setSilent (1);
+          m->setPreview (1);
           m->decrypt (hWnd);
           delete m;
 	}
@@ -950,8 +951,10 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
 
       /* If we are encrypting we need to make sure that the other
          format gets deleted and is not actually sent in the clear.
-         Note that this otehr format is always HTML because we use the
-         regular PR_BODY for sending the _encrypted_ html. */
+         Note that this other format is always HTML because we have
+         moved that into an attachment and kept PR_BODY.  It seems
+         that OL always creates text and HTML if HTML has been
+         selected. */
       if (m_pExchExt->m_gpgEncrypt)
         {
           log_debug ("%s:%s: deleting possible extra property PR_BODY_HTML\n",
@@ -975,12 +978,13 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
                          SRCNAME, __func__,
                          m_want_html?"PR_BODY":"PR_BODY_HTML");
               proparray.cValues = 1;
-              proparray.aulPropTag[0] = m_want_html? PR_BODY_HTML : PR_BODY;
+              proparray.aulPropTag[0] = PR_BODY;
               hr = msg->DeleteProps (&proparray, NULL);
               if (hr != S_OK)
                 log_debug ("%s:%s: DeleteProps failed: hr=%#lx\n",
                            SRCNAME, __func__, hr);
-              /* FIXME: We should delete the attachments too. */
+              /* FIXME: We should delete the attachments too. 
+                 We really, really should do this!!!          */
             }
           
         }
@@ -1048,6 +1052,7 @@ CGPGExchExtCommands::CGPGExchExtCommands (CGPGExchExt* pParentInterface)
   m_lContext = 0; 
   m_nCmdEncrypt = 0;  
   m_nCmdSign = 0; 
+  m_nCmdPreviewDecrypt = 0;
   m_nToolbarButtonID1 = 0; 
   m_nToolbarButtonID2 = 0; 
   m_nToolbarBitmap1 = 0;
@@ -1359,6 +1364,13 @@ CGPGExchExtCommands::InstallCommands (
 
       m_nCmdEncrypt = *pnCommandIDBase;
       (*pnCommandIDBase)++;	
+
+      AppendMenu (hMenuTools, MF_STRING,
+                  *pnCommandIDBase, _("GPG decrypt preview"));
+
+      m_nCmdPreviewDecrypt = *pnCommandIDBase;
+      (*pnCommandIDBase)++;	
+      TRACEPOINT ();
       
       for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
         {
@@ -1448,7 +1460,12 @@ CGPGExchExtCommands::DoCommand (
     }
   
 
-
+  if (nCommandID == m_nCmdPreviewDecrypt && m_lContext == EECONTEXT_VIEWER)
+    {
+      opt.compat.preview_decryption = !opt.compat.preview_decryption;
+      return S_OK;
+    }
+  
   if ((nCommandID != m_nCmdEncrypt) 
       && (nCommandID != m_nCmdSign))
     return S_FALSE; 

@@ -132,6 +132,7 @@ private:
   
   UINT  m_nCmdEncrypt;
   UINT  m_nCmdSign;
+  UINT  m_nCmdPreviewDecrypt;
 
   UINT  m_nToolbarButtonID1;
   UINT  m_nToolbarButtonID2;     

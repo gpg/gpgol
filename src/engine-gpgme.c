@@ -486,7 +486,7 @@ op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
    signature verification will get printed to it. */
 int 
 op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
-            gpgme_data_t attestation)
+            gpgme_data_t attestation, int preview_mode)
 {
   struct decrypt_key_s dk;
   gpgme_data_t in = NULL;
@@ -513,12 +513,17 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
 
   gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
   dk.ctx = ctx;
-  err = gpgme_op_decrypt_verify (ctx, in, out);
+  if (preview_mode)
+    err = gpgme_op_decrypt (ctx, in, out);
+  else
+    err = gpgme_op_decrypt_verify (ctx, in, out);
   dk.ctx = NULL;
   update_passphrase_cache (err, &dk);
 
   /* Act upon the result of the decryption operation. */
-  if (!err) 
+  if (!err && preview_mode) 
+    ;
+  else if (!err) 
     {
       /* Decryption succeeded.  Store the result at OUTBUF. */
       gpgme_verify_result_t res;
@@ -577,7 +582,8 @@ leave:
    will get printed to it. */
 static int
 decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
-                const char *filename, gpgme_data_t attestation)
+                const char *filename, gpgme_data_t attestation, 
+                int preview_mode)
 {    
   struct decrypt_key_s dk;
   gpgme_ctx_t ctx = NULL;
@@ -592,11 +598,16 @@ decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
 
   gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
   dk.ctx = ctx;
-  err = gpgme_op_decrypt_verify (ctx, in, out);
+  if (preview_mode)
+    err = gpgme_op_decrypt (ctx, in, out);
+  else
+    err = gpgme_op_decrypt_verify (ctx, in, out);
   dk.ctx = NULL;
   update_passphrase_cache (err, &dk);
   /* Act upon the result of the decryption operation. */
-  if (!err) 
+  if (!err && preview_mode) 
+    ;
+  else if (!err) 
     {
       gpgme_verify_result_t res;
 
@@ -656,7 +667,7 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
   if (!err)
     err = gpgme_data_new_from_cbs (&out, &cbs, outstream);
   if (!err)
-    err = decrypt_stream (in, out, ttl, filename, attestation);
+    err = decrypt_stream (in, out, ttl, filename, attestation, 0);
 
   if (in)
     gpgme_data_release (in);
@@ -689,7 +700,7 @@ op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
   if (!err)
     err = gpgme_data_new (&out);
   if (!err)
-    err = decrypt_stream (in, out, ttl, filename, attestation);
+    err = decrypt_stream (in, out, ttl, filename, attestation, 0);
   if (!err)
     {
       /* Return the buffer but first make sure it is a string. */
@@ -714,7 +725,8 @@ op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
    outputs. */
 int
 op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
-                            const char *filename, gpgme_data_t attestation)
+                            const char *filename, gpgme_data_t attestation,
+                            int preview_mode)
 {
   struct gpgme_data_cbs cbs;
   gpgme_data_t in = NULL;
@@ -725,7 +737,7 @@ op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
 
   err = gpgme_data_new_from_cbs (&in, &cbs, instream);
   if (!err)
-    err = decrypt_stream (in, out, ttl, filename, attestation);
+    err = decrypt_stream (in, out, ttl, filename, attestation, preview_mode);
 
   if (in)
     gpgme_data_release (in);

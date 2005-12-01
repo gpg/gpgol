@@ -50,24 +50,14 @@ public:
   /* Set the callback for Exchange. */
   virtual void setExchangeCallback (void *cb) = 0;
 
-  /* Don't pop up any message boxes. */
-  virtual void setSilent (bool value) = 0;
+  /* Don't pop up any message boxes and run the decryption only on the body. */
+  virtual void setPreview (bool value) = 0;
 
   /* Return the type of the message. */
-  virtual openpgp_t getMessageType (void) = 0;
+  virtual openpgp_t getMessageType (const char *text) = 0;
 
   /* Returns whether the message has any attachments. */
   virtual bool hasAttachments (void) = 0;
-
-  /* Return the body text as received or composed.  This is guaranteed
-     to never return NULL.  Usually getMessageType is used to check
-     whether there is a suitable message. */
-  virtual const char *getOrigText (bool want_html) = 0;
-
-  /* Return the text of the message to be used for the display.  The
-     message objects has intrinsic knowledge about the correct
-     text.  */
-  virtual const char *getDisplayText (void) = 0;
 
   /* Return a malloced array of malloced strings with the recipients
      of the message. Caller is responsible for freeing this array and

@@ -129,45 +129,46 @@ find_message_window (HWND parent)
 }
 
 
-/* Update the display using the message MSG.  Return 0 on success. */
+/* Update the display with TEXT using the message MSG.  Return 0 on
+   success. */
 int
-update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, bool is_html)
+update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, 
+                bool is_html, const char *text)
 {
   HWND window;
 
   window = find_message_window (hwnd);
   if (window)
     {
-      const char *string, *s;
+      const char *s;
 
       log_debug ("%s:%s: window handle %p\n", SRCNAME, __func__, window);
-      string = msg->getDisplayText ();
       
       /* Decide whether we need to use the Unicode version. */
-      for (s=string; *s && !(*s & 0x80); s++)
+      for (s=text; *s && !(*s & 0x80); s++)
         ;
       if (*s)
         {
-          wchar_t *tmp = utf8_to_wchar (string);
+          wchar_t *tmp = utf8_to_wchar (text);
           SetWindowTextW (window, tmp);
           xfree (tmp);
         }
       else
-        SetWindowTextA (window, string);
+        SetWindowTextA (window, text);
       log_debug ("%s:%s: window text is now `%s'",
-                 SRCNAME, __func__, string);
+                 SRCNAME, __func__, text);
       return 0;
     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
       log_debug ("updating display using OOM");
       return put_outlook_property (exchange_cb, is_html? "HTMLBody":"Body",
-                                   msg->getDisplayText ());
+                                   text);
     }
   else
     {
-      log_debug ("%s: window handle not found for parent %p\n",
-                 __func__, hwnd);
+      log_debug ("%s:%s: window handle not found for parent %p\n",
+                 SRCNAME, __func__, hwnd);
       return -1;
     }
 }
@@ -180,7 +181,7 @@ set_message_body (LPMESSAGE message, const char *string, bool is_html)
 {
   HRESULT hr;
   SPropValue prop;
-  SPropTagArray proparray;
+  //SPropTagArray proparray;
   const char *s;
   
   assert (message);
