@@ -381,6 +381,10 @@ read_options (void)
   opt.sign_default = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
+  load_extension_value ("previewDecrypt", &val);
+  opt.preview_decrypt = val == NULL || *val != '1'? 0 : 1;
+  xfree (val); val = NULL;
+
   load_extension_value ("addDefaultKey", &val);
   opt.add_default_key = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
@@ -419,7 +423,7 @@ read_options (void)
             case 0: opt.compat.no_msgcache = x; break;
             case 1: opt.compat.no_pgpmime = x; break;
             case 2: opt.compat.no_oom_write = x; break;
-            case 3: opt.compat.preview_decryption = x; break;
+            case 3: /* Not used anymore */ break;
             case 4: opt.compat.old_reply_hack = x; break;
             case 5: opt.compat.auto_decrypt = x; break;
             case 6: opt.compat.no_attestation = x; break;
@@ -447,6 +451,7 @@ write_options (void)
     {"addDefaultKey",            0, opt.add_default_key},
     {"saveDecryptedAttachments", 0, opt.save_decrypted_attach},
     {"autoSignAttachments",      0, opt.auto_sign_attach},
+    {"previewDecrypt",           0, opt.preview_decrypt},
     {"storePasswdTime",          1, opt.passwd_ttl},
     {"encodingFormat",           1, opt.enc_format},
     {"logFile",                  2, 0, logfile},

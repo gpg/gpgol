@@ -482,11 +482,16 @@ unsigned int
 recipient_dialog_box (gpgme_key_t **ret_rset)
 {
   struct recipient_cb_s cb;
+  int resid;
   
   *ret_rset = NULL;
 
   memset (&cb, 0, sizeof (cb));
-  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow(),
+  if (!strncmp (gettext_localename (), "de", 2))
+    resid = IDD_ENC_DE;
+  else
+    resid = IDD_ENC;
+  DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow(),
                   recipient_dlg_proc, (LPARAM)&cb);
   if (cb.opts & OPT_FLAG_CANCEL)
     release_keyarray (cb.selected_keys, cb.selected_keys_count);
@@ -514,6 +519,7 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
   struct recipient_cb_s cb;
   int i;
   size_t n;
+  int resid;
 
   *ret_rset = NULL;
 
@@ -533,7 +539,11 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
 
   cb.unknown_keys = unknown;
 
-  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_ENC, GetDesktopWindow (),
+  if (!strncmp (gettext_localename (), "de", 2))
+    resid = IDD_ENC_DE;
+  else
+    resid = IDD_ENC;
+  DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow (),
 		  recipient_dlg_proc, (LPARAM)&cb);
 
   if (cb.opts & OPT_FLAG_CANCEL)

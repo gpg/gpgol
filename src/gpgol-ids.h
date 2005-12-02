@@ -65,6 +65,7 @@
 #define IDC_DECEXT_PASS                 1045
 #define IDC_DECEXT_HINT                 1046
 #define IDC_DECEXT_PASSINF              1047
+#define IDC_DEBUG_LOGFILE               1048
 
 #endif /*GPGOL_IDS_H*/
 

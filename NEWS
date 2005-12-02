@@ -3,6 +3,10 @@ Noteworthy changes for version 0.9.4
 
 * Added translation framework.  Provided German translation.
 
+* New option to enable automatic decryption in the preview window.
+
+* Removed deprecated options to configure gpg path and homedir.
+
 
 Noteworthy changes for version 0.9.3 (2005-09-29)
 =================================================

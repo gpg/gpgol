@@ -1,3 +1,27 @@
+2005-12-02  Werner Koch  <wk@g10code.com>
+
+	* verify-dialog.c (verify_dialog_box): Actually allow for German
+	dialog.
+	* recipient-dialog.c (recipient_dialog_box) 
+	(recipient_dialog_box2): Ditto.
+	* passphrase-dialog.c (signer_dialog_box) 
+	(passphrase_callback_box): Ditto.
+
+	* intern.h (struct): New field PREVIEW_DECRYPT.  Use it instead os
+	the old compatibility flags.
+	* main.c (write_options, read_options): Store/load preview decrypt.
+	* config-dialog.c (config_dlg_proc): Removed homedir and gpgbinary
+	options as they are deprecated. Put logfile entry here.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Remove logfile entry. Add
+	preview-decrypt checkbox.
+	* olflange.cpp (InstallCommands): Remove experimental preview
+	command.
+
+	* w32-gettext.c (gettext_localename): New.
+	* config-dialog.c (config_dialog_box): Use it here to match the
+	gettext behaviour.
+	(GetPages): Ditto.
+
 2005-12-01  Werner Koch  <wk@g10code.com>
 
 	* engine-gpgme.c (op_decrypt_stream_to_gpgme, decrypt_stream) 

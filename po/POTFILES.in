@@ -5,7 +5,6 @@ src/config-dialog.c
 src/display.cpp
 src/engine-gpgme.c
 src/gpgmsg.cpp
-src/keylist.c
 src/main.c
 src/msgcache.c
 src/olflange-dlgs.cpp

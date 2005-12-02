@@ -779,7 +779,7 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
                                           ULONG lFlags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
-  if (opt.compat.preview_decryption)
+  if (opt.preview_decrypt)
     {
       TRACEPOINT ();
       HRESULT hr;
@@ -1052,7 +1052,6 @@ CGPGExchExtCommands::CGPGExchExtCommands (CGPGExchExt* pParentInterface)
   m_lContext = 0; 
   m_nCmdEncrypt = 0;  
   m_nCmdSign = 0; 
-  m_nCmdPreviewDecrypt = 0;
   m_nToolbarButtonID1 = 0; 
   m_nToolbarButtonID2 = 0; 
   m_nToolbarBitmap1 = 0;
@@ -1365,13 +1364,6 @@ CGPGExchExtCommands::InstallCommands (
       m_nCmdEncrypt = *pnCommandIDBase;
       (*pnCommandIDBase)++;	
 
-      AppendMenu (hMenuTools, MF_STRING,
-                  *pnCommandIDBase, _("GPG decrypt preview"));
-
-      m_nCmdPreviewDecrypt = *pnCommandIDBase;
-      (*pnCommandIDBase)++;	
-      TRACEPOINT ();
-      
       for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
         {
           if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid) 
@@ -1460,12 +1452,6 @@ CGPGExchExtCommands::DoCommand (
     }
   
 
-  if (nCommandID == m_nCmdPreviewDecrypt && m_lContext == EECONTEXT_VIEWER)
-    {
-      opt.compat.preview_decryption = !opt.compat.preview_decryption;
-      return S_OK;
-    }
-  
   if ((nCommandID != m_nCmdEncrypt) 
       && (nCommandID != m_nCmdSign))
     return S_FALSE; 
@@ -1789,27 +1775,27 @@ CGPGExchExtPropertySheets::GetPages(
                                  //  containing the number of property 
                                  //  sheets actually used.
 {
-    int resid = 0;
+  int resid ;
 
-    switch (GetUserDefaultLangID ()) {
-    case 0x0407:    resid = IDD_GPG_OPTIONS_DE;break;
-    default:	    resid = IDD_GPG_OPTIONS; break;
-    }
+  if (!strncmp (gettext_localename (), "de", 2))
+    resid = IDD_GPG_OPTIONS_DE;
+  else
+    resid = IDD_GPG_OPTIONS;
 
-    pPSP[0].dwSize = sizeof (PROPSHEETPAGE);
-    pPSP[0].dwFlags = PSP_DEFAULT | PSP_HASHELP;
-    pPSP[0].hInstance = glob_hinst;
-    pPSP[0].pszTemplate = MAKEINTRESOURCE (resid);
-    pPSP[0].hIcon = NULL;     
-    pPSP[0].pszTitle = NULL;  
-    pPSP[0].pfnDlgProc = (DLGPROC) GPGOptionsDlgProc;
-    pPSP[0].lParam = 0;     
-    pPSP[0].pfnCallback = NULL;
-    pPSP[0].pcRefParent = NULL; 
+  pPSP[0].dwSize = sizeof (PROPSHEETPAGE);
+  pPSP[0].dwFlags = PSP_DEFAULT | PSP_HASHELP;
+  pPSP[0].hInstance = glob_hinst;
+  pPSP[0].pszTemplate = MAKEINTRESOURCE (resid);
+  pPSP[0].hIcon = NULL;     
+  pPSP[0].pszTitle = NULL;  
+  pPSP[0].pfnDlgProc = (DLGPROC) GPGOptionsDlgProc;
+  pPSP[0].lParam = 0;     
+  pPSP[0].pfnCallback = NULL;
+  pPSP[0].pcRefParent = NULL; 
 
-    *plPSP = 1;
+  *plPSP = 1;
 
-    return S_OK;
+  return S_OK;
 }
 
 

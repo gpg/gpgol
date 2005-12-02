@@ -80,19 +80,18 @@ END
 
 IDD_OPT_DE DIALOG DISCARDABLE  0, 0, 167, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Konfigurations Dialog"
+CAPTION "Konfigurationsdialog"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Pfad zur GnuPG EXE-Datei",IDC_STATIC,2,10,87,8
-    EDITTEXT        IDC_OPT_GPGPRG,2,22,145,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_OPT_SELPRG,149,21,11,14
-    LTEXT           "Heimatverzeichnis von GnuPG",IDC_STATIC,2,41,98,8
-    EDITTEXT        IDC_OPT_HOMEDIR,2,53,145,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_OPT_SELHOMEDIR,149,53,11,14
-    LTEXT           "Pfad zur EXE-Datei des Key Managers",IDC_STATIC,2,72,
+    LTEXT           "Dateiname der Schlüsselverwaltung",IDC_STATIC,2,20,
                     122,8
-    EDITTEXT        IDC_OPT_KEYMAN,2,81,144,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_OPT_SELKEYMAN,148,80,11,14
+    EDITTEXT        IDC_OPT_KEYMAN,2,34,144,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_OPT_SELKEYMAN,148,34,11,14
+
+    LTEXT           "Debugausgabe (zur Problemanalyse)",IDC_STATIC,2,50,
+                    122,8
+    EDITTEXT        IDC_DEBUG_LOGFILE,2,60,144,12,ES_AUTOHSCROLL
+
     DEFPUSHBUTTON   "&OK",IDOK,112,101,50,14
 END
 
@@ -226,12 +225,6 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
 CAPTION "Configuration Dialog"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Path to GnuPG binary",IDC_STATIC,2,10,70,8
-    EDITTEXT        IDC_OPT_GPGPRG,2,22,145,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_OPT_SELPRG,149,21,11,14
-    LTEXT           "GnuPG home directory",IDC_STATIC,2,41,72,8
-    EDITTEXT        IDC_OPT_HOMEDIR,2,53,145,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_OPT_SELHOMEDIR,149,53,11,14
     LTEXT           "Path to key-manager binary",IDC_STATIC,2,72,87,8
     EDITTEXT        IDC_OPT_KEYMAN,2,81,144,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_OPT_SELKEYMAN,148,80,11,14

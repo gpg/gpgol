@@ -563,14 +563,19 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting)
 {
   struct dialog_context_s context; 
   struct decrypt_key_s dec;
-  
+  int resid;
+
   memset (&context, 0, sizeof context);
   memset (&dec, 0, sizeof dec);
   dec.hide_pwd = 1;
   context.dec = &dec;
   context.no_encrypt_warning = encrypting;
 
-  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC, GetDesktopWindow (),
+  if (!strncmp (gettext_localename (), "de", 2))
+    resid = IDD_DEC_DE;
+  else
+    resid = IDD_DEC;
+  DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow (),
                   decrypt_key_dlg_proc, (LPARAM)&context);
 
   if (dec.signer) 
@@ -608,6 +613,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
   struct decrypt_key_s *dec = opaque;
   DWORD nwritten = 0;
   char keyidstr[16+1];
+  int resid;
 
   log_debug ("passphrase_callback_box: enter (uh=`%s',pi=`%s')\n", 
              uid_hint?uid_hint:"(null)", pass_info?pass_info:"(null)");
@@ -727,13 +733,25 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       dec->user_id = xstrdup (s);
       dec->last_was_bad = prev_was_bad;
       if (dec->flags & 0x01)
-        rc = DialogBoxParam (glob_hinst, (LPCSTR)IDD_DEC,
-                             GetDesktopWindow (),
-                             decrypt_key_dlg_proc, (LPARAM)&context);
+        {
+          if (!strncmp (gettext_localename (), "de", 2))
+            resid = IDD_DEC_DE;
+          else
+            resid = IDD_DEC;
+          rc = DialogBoxParam (glob_hinst, (LPCSTR)resid,
+                               GetDesktopWindow (),
+                               decrypt_key_dlg_proc, (LPARAM)&context);
+        }
       else
-        rc = DialogBoxParam (glob_hinst, (LPCTSTR)IDD_DEC_EXT,
-                             GetDesktopWindow (),
-                             decrypt_key_ext_dlg_proc, (LPARAM)&context);
+        {
+          if (!strncmp (gettext_localename (), "de", 2))
+            resid = IDD_DEC_EXT_DE;
+          else
+            resid = IDD_DEC_EXT;
+          rc = DialogBoxParam (glob_hinst, (LPCTSTR)resid,
+                               GetDesktopWindow (),
+                               decrypt_key_ext_dlg_proc, (LPARAM)&context);
+        }
       if (rc <= 0) 
         log_debug_w32 (-1, "%s: dialog failed (rc=%d)", __func__, rc);
       release_keyarray (context.keyarray);

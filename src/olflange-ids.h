@@ -19,12 +19,12 @@
 #define IDC_SAVE_DECRYPTED              4004
 #define IDC_GPG_OPTIONS                 4006
 #define IDC_BITMAP                      4007
-#define IDC_DEBUG_LOGFILE               4008
 #define IDB_BANNER                      4009
 #define IDC_VERSION_INFO                4009
 #define IDB_BANNER_HI                   4010
 #define IDC_ENCRYPT_TO                  4010
 #define IDC_SIGN_ATTACHMENTS            4011
 #define IDD_GPG_OPTIONS_DE              4012
+#define IDC_PREVIEW_DECRYPT             4013
 
 #endif /*OLFLANGE_IDS_H*/

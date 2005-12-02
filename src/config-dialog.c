@@ -61,6 +61,7 @@ get_open_file_name (const char *dir, const char *title)
 }
 
 
+#if 0
 static void 
 SHFree (void *p) 
 {         
@@ -71,8 +72,9 @@ SHFree (void *p)
 	pm->lpVtbl->Release(pm);         
     } 
 } 
+#endif
 
-
+#if 0
 /* Open the common dialog to select a folder. Caller has to free the string. */
 static char*
 get_folder (const char *title)
@@ -95,7 +97,7 @@ get_folder (const char *title)
     }
   return path;
 }
-
+#endif
 
 static int
 load_config_value_ext (char **val)
@@ -198,6 +200,7 @@ store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 }
 
 
+#if 0
 static int
 does_folder_exist (const char *path)
 {
@@ -217,7 +220,7 @@ does_folder_exist (const char *path)
     }
     return err;
 }
-
+#endif
 
 static int
 does_file_exist (const char *name, int is_file)
@@ -275,56 +278,29 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     char *buf = NULL;
     char name[MAX_PATH+1];
     int n;
+    const char *s;
 
     switch (msg) {
     case WM_INITDIALOG:
 	center_window (dlg, 0);
-	if (!load_config_value (NULL, REGPATH, "gpgProgram", &buf)) {
-	    SetDlgItemText (dlg, IDC_OPT_GPGPRG, buf);
-	    xfree (buf); 
-	    buf=NULL;
-	}
-	if (!load_config_value (NULL, REGPATH, "HomeDir", &buf)) {
-	    SetDlgItemText (dlg, IDC_OPT_HOMEDIR, buf);
-	    xfree (buf); 
-	    buf=NULL;
-	}
 	if (!load_config_value (NULL, REGPATH, "keyManager", &buf)) {
 	    SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
 	    xfree (buf);
 	    buf=NULL;
 	}
+        s = get_log_file ();
+        SetDlgItemText (dlg, IDC_DEBUG_LOGFILE, s);
 	break;
 
     case WM_COMMAND:
 	switch (LOWORD (wparam)) {
-	case IDC_OPT_SELPRG:
-	    buf = get_open_file_name (NULL, "Select GnuPG Binary");
-	    if (buf && *buf)
-		SetDlgItemText(dlg, IDC_OPT_GPGPRG, buf);
-	    break;
-
-	case IDC_OPT_SELHOMEDIR:
-	    buf = get_folder ("Select GnuPG Home Directory");
-	    if (buf && *buf)
-		SetDlgItemText(dlg, IDC_OPT_HOMEDIR, buf);
-	    xfree (buf);
-	    break;
-
 	case IDC_OPT_SELKEYMAN:
-	    buf = get_open_file_name (NULL, "Select GnuPG Key Manager");
+	    buf = get_open_file_name (NULL, _("Select GPG Key Manager"));
 	    if (buf && *buf)
 		SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
 	    break;
 
 	case IDOK:
-	    n = GetDlgItemText (dlg, IDC_OPT_GPGPRG, name, MAX_PATH-1);
-	    if (n > 0) {
-		if (does_file_exist (name, 1))
-		    return FALSE;
-		if (store_config_value (NULL, REGPATH, "gpgProgram", name))
-		    error_box ("GPG Config");
-	    }
 	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN, name, MAX_PATH-1);
 	    if (n > 0) {
 		if (does_file_exist (name, 1))
@@ -332,12 +308,9 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		if (store_config_value (NULL, REGPATH, "keyManager", name))
 		    error_box ("GPG Config");
 	    }
-	    n = GetDlgItemText (dlg, IDC_OPT_HOMEDIR, name, MAX_PATH-1);
+	    n = GetDlgItemText (dlg, IDC_DEBUG_LOGFILE, name, MAX_PATH-1);
 	    if (n > 0) {
-		if (does_folder_exist (name))
-		    return FALSE;
-		if (store_config_value (NULL, REGPATH, "HomeDir", name))
-		    error_box ("GPG Config");
+                set_log_file (name);
 	    }
 	    EndDialog (dlg, TRUE);
 	    break;
@@ -353,18 +326,16 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 void
 config_dialog_box (HWND parent)
 {
-  int resid=0;
+  int resid;
 
-  switch (GetUserDefaultLangID ())
-    {
-    case 0x0407:    resid = IDD_OPT_DE;break;
-    default:	    resid = IDD_OPT; break;
-    }
+  if (!strncmp (gettext_localename (), "de", 2))
+    resid = IDD_OPT_DE;
+  else
+    resid = IDD_OPT;
 
-  if (parent == NULL)
+  if (!parent)
     parent = GetDesktopWindow ();
-  DialogBoxParam (glob_hinst, (LPCTSTR)resid, parent,
-                  config_dlg_proc, 0);
+  DialogBoxParam (glob_hinst, (LPCTSTR)resid, parent, config_dlg_proc, 0);
 }
 
 

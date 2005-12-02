@@ -231,12 +231,17 @@ int
 verify_dialog_box (gpgme_verify_result_t res, const char *filename)
 {
   struct dialog_context ctx;
+  int resid;
 
   memset (&ctx,0, sizeof ctx);
   ctx.res = res;
   ctx.filename = filename;
 
-  DialogBoxParam (glob_hinst, (LPCTSTR)IDD_VRY, GetDesktopWindow (),
+  if (!strncmp (gettext_localename (), "de", 2))
+    resid = IDD_VRY_DE;
+  else
+    resid = IDD_VRY;
+  DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow (),
                   verify_dlg_proc, (LPARAM)&ctx);
   return res->signatures->summary == GPGME_SIGSUM_GREEN? 0 : -1;
 }

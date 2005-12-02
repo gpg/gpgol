@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2005-11-30 17:02+0100\n"
+"POT-Creation-Date: 2005-12-02 17:48+0100\n"
 "PO-Revision-Date: 2005-11-30 17:06+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -15,62 +15,67 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/engine-gpgme.c:880
+#: src/config-dialog.c:298
+#, fuzzy
+msgid "Select GPG Key Manager"
+msgstr "Die GPG Schlüsselverwaltung öffnen"
+
+#: src/engine-gpgme.c:892
 msgid "Fingerprint: "
 msgstr "Fingerabdruck: "
 
-#: src/engine-gpgme.c:937
+#: src/engine-gpgme.c:949
 msgid "This signature is valid\n"
 msgstr "Diese Unterschrift ist korrekt\n"
 
-#: src/engine-gpgme.c:939
+#: src/engine-gpgme.c:951
 msgid "signature state is \"green\"\n"
 msgstr "Status der Unterschrift ist \"grün\"\n"
 
-#: src/engine-gpgme.c:941
+#: src/engine-gpgme.c:953
 msgid "signature state is \"red\"\n"
 msgstr "Status der Unterschrift ist \"rot\"\n"
 
-#: src/engine-gpgme.c:945
+#: src/engine-gpgme.c:957
 msgid "Warning: One of the keys has been revoked\n"
 msgstr "Warnung: Einer der Schlüssel wurde widerrufen\n"
 
-#: src/engine-gpgme.c:955
+#: src/engine-gpgme.c:967
 msgid "Warning: The key used to create the signature expired at: "
 msgstr ""
 "Warnung: Der Schlüssel mit der diese Unterschrift erzeugt wurde verfiel am: "
 
-#: src/engine-gpgme.c:961
+#: src/engine-gpgme.c:973
 msgid "Warning: At least one certification key has expired\n"
 msgstr ""
 "Warnung: Mindestens einer der Zertifizierungsschlüssel ist abgelaufen\n"
 
-#: src/engine-gpgme.c:967
+#: src/engine-gpgme.c:979
 msgid "Warning: The signature expired at: "
 msgstr "Die Unterschrift verfiel am: "
 
-#: src/engine-gpgme.c:973
+#: src/engine-gpgme.c:985
 msgid "Can't verify due to a missing key or certificate\n"
 msgstr ""
 "Aufrund eines fehlenden Schlüssels ist eine Überprüfung nicht möglich\n"
 
-#: src/engine-gpgme.c:977
+#: src/engine-gpgme.c:989
 msgid "The CRL is not available\n"
 msgstr "Die CRL ist nicht verfügbar\n"
 
-#: src/engine-gpgme.c:983
+#: src/engine-gpgme.c:995
 msgid "Available CRL is too old\n"
 msgstr "Die vorhandene CRL ist zu alt\n"
 
-#: src/engine-gpgme.c:988
+#: src/engine-gpgme.c:1000
 msgid "A policy requirement was not met\n"
 msgstr "Eine Richtlinie wurde nicht erfüllt\n"
 
-#: src/engine-gpgme.c:994
+#: src/engine-gpgme.c:1006
 msgid "A system error occured"
 msgstr "Ein Systemfehler ist aufgetreten"
 
-#: src/engine-gpgme.c:1031
+#: src/engine-gpgme.c:1043
 msgid ""
 "WARNING: We have NO indication whether the key belongs to the person named "
 "as shown above\n"
@@ -78,12 +83,12 @@ msgstr ""
 "WARNUNG: Es gibt keinen Hinweis darauf, ob der Schlüssel wirklich der Person "
 "gehört, die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1038
+#: src/engine-gpgme.c:1050
 msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
 msgstr ""
 "WARNUNG: Der Schlüssel gehört NICHT der Person die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1042
+#: src/engine-gpgme.c:1054
 msgid ""
 "WARNING: It is NOT certain that the key belongs to the person named as shown "
 "above\n"
@@ -91,73 +96,78 @@ msgstr ""
 "WARNING: Es ist nicht sicher, daß der Schlüssel der Person gehört, die oben "
 "angezeigt ist\n"
 
-#: src/engine-gpgme.c:1075
+#: src/engine-gpgme.c:1087
 msgid "Verification started at: "
 msgstr "Überprüfung begann am: "
 
-#: src/engine-gpgme.c:1080
+#: src/engine-gpgme.c:1092
 msgid "Verification result for: "
 msgstr "Prüfungsresultat für: "
 
-#: src/engine-gpgme.c:1081
+#: src/engine-gpgme.c:1093
 msgid "[unnamed part]"
 msgstr "[Unbenannter Teil]"
 
-#: src/engine-gpgme.c:1099 src/engine-gpgme.c:1129
+#: src/engine-gpgme.c:1111 src/engine-gpgme.c:1141
 msgid "Good signature from: "
 msgstr "Korrekte Unterschrift von: "
 
-#: src/engine-gpgme.c:1106
+#: src/engine-gpgme.c:1118
 msgid "                aka: "
 msgstr "                    alias: "
 
-#: src/engine-gpgme.c:1110 src/engine-gpgme.c:1132
+#: src/engine-gpgme.c:1122 src/engine-gpgme.c:1144
 msgid "            created: "
 msgstr "                  erzeugt: "
 
-#: src/engine-gpgme.c:1119
+#: src/engine-gpgme.c:1131
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FALSCHE* Unterschrift, vorgeblich von: "
 
-#: src/engine-gpgme.c:1142
+#: src/engine-gpgme.c:1154
 msgid "Error checking signature"
 msgstr "Fehler beim Prüfen der Unetrschrift"
 
-#: src/engine-gpgme.c:1158
+#: src/engine-gpgme.c:1170
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Anfang Notation (Unterschrift von: "
 
-#: src/engine-gpgme.c:1178
+#: src/engine-gpgme.c:1190
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/gpgmsg.cpp:804
+#: src/gpgmsg.cpp:767
 msgid "[No attestation computed (e.g. messages was not signed)"
 msgstr ""
 "[Kein Testat berechnet (z.B. da die Nachricht nicht unterschrieben war)"
 
-#: src/gpgmsg.cpp:926
+#: src/gpgmsg.cpp:892
 msgid "No valid OpenPGP data found."
 msgstr "Keine gültigen OpenPGP Daten gefunden"
 
-#: src/gpgmsg.cpp:927 src/gpgmsg.cpp:962 src/gpgmsg.cpp:974 src/gpgmsg.cpp:988
-#: src/gpgmsg.cpp:1064
+#: src/gpgmsg.cpp:893 src/gpgmsg.cpp:937 src/gpgmsg.cpp:951 src/gpgmsg.cpp:967
+#: src/gpgmsg.cpp:1048
 msgid "Decryption"
 msgstr "Entschlüsselung"
 
-#: src/gpgmsg.cpp:961 src/gpgmsg.cpp:973 src/gpgmsg.cpp:987
+#: src/gpgmsg.cpp:928
+#, fuzzy
+msgid "[This is a PGP/MIME message]"
+msgstr "[PGP/MIME Nachricht]"
+
+#: src/gpgmsg.cpp:936 src/gpgmsg.cpp:950 src/gpgmsg.cpp:966
 msgid "Problem decrypting PGP/MIME message"
 msgstr "Problem bei Entschlüsseln einer PGP/MIME Nachricht"
 
-#: src/gpgmsg.cpp:1016
+#: src/gpgmsg.cpp:1001
 msgid "Verification Failure"
 msgstr "Überprüfungsfehler"
 
-#: src/gpgmsg.cpp:1019
+#: src/gpgmsg.cpp:1004
 msgid "Decryption Failure"
 msgstr "Entschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1058
+#: src/gpgmsg.cpp:1042
 msgid ""
 "The message text cannot be displayed.\n"
 "You have to save the decrypted message to view it.\n"
@@ -173,7 +183,7 @@ msgstr ""
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1085
+#: src/gpgmsg.cpp:1069
 msgid ""
 "Signed attachments found.\n"
 "\n"
@@ -185,13 +195,13 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese Unterschriften überprüfen?"
 
-#: src/gpgmsg.cpp:1093
+#: src/gpgmsg.cpp:1077
 msgid "Attachment Verification"
 msgstr "Überprüfung der Anhänge"
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1111
+#: src/gpgmsg.cpp:1095
 msgid ""
 "Encrypted attachments found.\n"
 "\n"
@@ -203,35 +213,35 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese entschlüsseln und abspeichern?"
 
-#: src/gpgmsg.cpp:1118
+#: src/gpgmsg.cpp:1102
 msgid "Attachment Decryption"
 msgstr "Entschlüsselung eines Anhangs"
 
-#: src/gpgmsg.cpp:1176
+#: src/gpgmsg.cpp:1166
 msgid "Signing Failure"
 msgstr "Unterschrifterstellungsfehler"
 
-#: src/gpgmsg.cpp:1321
+#: src/gpgmsg.cpp:1314
 msgid "Encryption Failure"
 msgstr "Verschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1357 src/gpgmsg.cpp:2651
+#: src/gpgmsg.cpp:1350 src/gpgmsg.cpp:2645
 msgid "Attachment Encryption Failure"
 msgstr "Verschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2058
+#: src/gpgmsg.cpp:2052
 msgid "Attachment Verification Failure"
 msgstr "Überprüfungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2241 src/gpgmsg.cpp:2290
+#: src/gpgmsg.cpp:2235 src/gpgmsg.cpp:2284
 msgid "Attachment Decryption Failure"
 msgstr "Entschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2460
+#: src/gpgmsg.cpp:2454
 msgid "Attachment Signing Failure"
 msgstr "Unterschrifterstellungsfehler eines Anhangs"
 
-#: src/olflange.cpp:883
+#: src/olflange.cpp:884
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -242,51 +252,51 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/olflange.cpp:1268
+#: src/olflange.cpp:1272
 msgid "&Decrypt and verify message"
 msgstr "Entschlüsseln/Prüfen der Nachricht"
 
-#: src/olflange.cpp:1306
+#: src/olflange.cpp:1310
 msgid "GPG &encrypt message"
 msgstr "Mit GPG &verschlüsseln"
 
-#: src/olflange.cpp:1312
+#: src/olflange.cpp:1316
 msgid "GPG &sign message"
 msgstr "Mit GPG unter&schreiben"
 
-#: src/olflange.cpp:1358
+#: src/olflange.cpp:1362
 msgid "GPG Key &Manager"
 msgstr "GPG Schlüssel&verwaltung"
 
-#: src/olflange.cpp:1491
+#: src/olflange.cpp:1494
 msgid "Could not start Key-Manager"
 msgstr "Dei Schlüsselverwaltung konnte nicht aufgerufen werden"
 
-#: src/olflange.cpp:1537
+#: src/olflange.cpp:1540
 msgid "Decrypt and verify the message."
 msgstr "Entschlüsseln und Prüfen der Nachricht."
 
-#: src/olflange.cpp:1545
+#: src/olflange.cpp:1548
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/olflange.cpp:1551
+#: src/olflange.cpp:1554
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
 
-#: src/olflange.cpp:1560 src/olflange.cpp:1621 src/olflange.cpp:1703
+#: src/olflange.cpp:1563 src/olflange.cpp:1624 src/olflange.cpp:1706
 msgid "Open GPG Key Manager"
 msgstr "Die GPG Schlüsselverwaltung öffnen"
 
-#: src/olflange.cpp:1590 src/olflange.cpp:1654
+#: src/olflange.cpp:1593 src/olflange.cpp:1657
 msgid "Decrypt message and verify signature"
 msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
 
-#: src/olflange.cpp:1601 src/olflange.cpp:1672
+#: src/olflange.cpp:1604 src/olflange.cpp:1675
 msgid "Encrypt message with GPG"
 msgstr "Nachricht mit GPG verschlüsseln"
 
-#: src/olflange.cpp:1610 src/olflange.cpp:1687
+#: src/olflange.cpp:1613 src/olflange.cpp:1690
 msgid "Sign message with GPG"
 msgstr "Nachricht mit GPG unterschreiben"
 
@@ -334,7 +344,7 @@ msgstr ""
 "\n"
 "Möchten Sie wirklich abbrechen?"
 
-#: src/pgpmime.c:418
+#: src/pgpmime.c:421
 msgid ""
 "Error creating file\n"
 "Please select another one"
@@ -342,19 +352,19 @@ msgstr ""
 "Fehler bei der Erstellung der Datei.\n"
 "Bitte wählen Sie eine anderen Namen."
 
-#: src/pgpmime.c:420 src/pgpmime.c:553
+#: src/pgpmime.c:423 src/pgpmime.c:557
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
-#: src/pgpmime.c:552
+#: src/pgpmime.c:556
 msgid "Error writing file"
 msgstr "Dateischreibfehler"
 
-#: src/pgpmime.c:607
+#: src/pgpmime.c:613
 msgid "[PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/pgpmime.c:623
+#: src/pgpmime.c:630
 msgid "[PGP/MIME message without plain text body]"
 msgstr "[PGP/MIME Nachricht ohne reinen Textkörper]"
 
@@ -373,7 +383,7 @@ msgstr ""
 msgid "Recipient Dialog"
 msgstr "Auswahl des Empfängerschlüssels"
 
-#: src/recipient-dialog.c:531 src/verify-dialog.c:152
+#: src/recipient-dialog.c:537 src/verify-dialog.c:152
 msgid "User-ID not found"
 msgstr "User-ID nicht gefunden"
 

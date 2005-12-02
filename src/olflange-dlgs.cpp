@@ -128,16 +128,12 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case PSN_SETACTIVE: {
 	    TCHAR s[30];
-	    const char *f;
 	    
 	    if (opt.default_key)		
 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
 	    wsprintf(s, "%d", opt.passwd_ttl);
 	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
                                0, (LPARAM) s);
-	    f = get_log_file ();
-	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_SETTEXT,
-                                0, (LPARAM)f);
 	    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
 				!!opt.encrypt_default, 0L);
@@ -150,6 +146,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				!!opt.save_decrypted_attach, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS, BM_SETCHECK,
 				!!opt.auto_sign_attach, 0L);
+	    SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
+				!!opt.preview_decrypt, 0L);
 	    bMsgResult = FALSE;  /* accepts activation */
 	    break; }
 		
@@ -173,9 +171,6 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT,
                                 20, (LPARAM)s);		
 	    opt.passwd_ttl = (int)atol (s);
-	    SendDlgItemMessage (hDlg, IDC_DEBUG_LOGFILE, WM_GETTEXT,
-                                200, (LPARAM)s);
-	    set_log_file (s);
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_TO, WM_GETTEXT,
                                 200, (LPARAM)s);
 	    set_default_key (s);
@@ -187,7 +182,9 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    opt.save_decrypted_attach = !!SendDlgItemMessage
               (hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L);
             opt.auto_sign_attach = !!SendDlgItemMessage
-              (hDlg, IDC_SIGN_ATTACHMENTS,  BM_GETCHECK, 0, 0L);
+              (hDlg, IDC_SIGN_ATTACHMENTS, BM_GETCHECK, 0, 0L);
+            opt.preview_decrypt = !!SendDlgItemMessage
+              (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
 
 	    write_options ();
 	    bMsgResult = PSNRET_NOERROR;

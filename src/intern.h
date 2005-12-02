@@ -99,6 +99,7 @@ struct
   int enc_format;            /* Encryption format for attachments. */
   char *default_key;         /* Malloced default key or NULL. */
   int add_default_key;       /* Always also encrypt to the default key. */
+  int preview_decrypt;       /* Decrypt in preview window. */
 
   /* The compatibility flags. */
   struct 
@@ -106,7 +107,6 @@ struct
     unsigned int no_msgcache:1;
     unsigned int no_pgpmime:1;
     unsigned int no_oom_write:1; /* Don't write using Outlooks object model. */
-    unsigned int preview_decryption:1; /* Decrypt in preview window. */
     unsigned int old_reply_hack: 1; /* See gpgmsg.cpp:decrypt. */
     unsigned int auto_decrypt: 1;   /* Try to decrypt when clicked. */
     unsigned int no_attestation: 1; /* Don't create an attestation. */
