@@ -69,7 +69,8 @@ clean-local:
 	rm -f libmapi32.a libgpgme.a libgpg-error.a
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
-	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32
+	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
+        -loleaut32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 

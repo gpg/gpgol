@@ -1,4 +1,4 @@
-Noteworthy changes for version 0.9.4
+Noteworthy changes for version 0.9.4 (2005-12-06)
 =================================================
 
 * Added translation framework.  Provided German translation.
@@ -6,6 +6,10 @@ Noteworthy changes for version 0.9.4
 * New option to enable automatic decryption in the preview window.
 
 * Removed deprecated options to configure gpg path and homedir.
+
+* Default key from the option dialog works.
+
+* Support for HTML mails.
 
 
 Noteworthy changes for version 0.9.3 (2005-09-29)

@@ -68,7 +68,7 @@ public:
   virtual int decrypt (HWND hwnd) = 0;
 
   /* Sign the message and optionally the attachments. */
-  virtual int sign (HWND hwnd) = 0;
+  virtual int sign (HWND hwnd, bool want_html) = 0;
 
   /* Encrypt the entire message including any attachments. Returns 0
      on success. */

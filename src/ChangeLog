@@ -1,3 +1,26 @@
+2005-12-06  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (getRecipients): Add the default key to the list of
+	recipients.
+	* recipient-dialog.c (recipient_dlg_proc): Add the already found
+	keys to the selected ones.
+
+	* olflange.cpp (OnWriteComplete): Need to disable the deleting of
+	HTML bodys.
+
+2005-12-05  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Add -loleaut32.
+	* engine-gpgme.c (op_verify_detached_sig_mem): New.
+	* olflange.cpp (OnWriteComplete): Pass HTML flag to sign call.
+	(put_outlook_property): Need to use a BSTR for the sake of putting
+	HTMLBody.
+	* gpgmsg.cpp (sign): Add arg WANT_HTML.
+	(free_attach_info): New.  Use it in the destructor.
+	(createHtmlAttachment): New.
+	(encrypt_and_sign, sign): Use it here.
+	(writeAttestation): Don't write an empty attestation.
+
 2005-12-02  Werner Koch  <wk@g10code.com>
 
 	* verify-dialog.c (verify_dialog_box): Actually allow for German

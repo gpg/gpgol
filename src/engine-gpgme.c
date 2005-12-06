@@ -866,6 +866,56 @@ op_verify_detached_sig (LPSTREAM data_stream,
   return err;
 }
 
+/* Verify a detached message where the data is in the string
+   DATA_STRING and the signature itself is expected to be the string
+   SIG_STRING.  FILENAME will be shown by the verification status
+   dialog box.  If ATTESTATION is not NULL a text with the result of
+   the signature verification will get printed to it.  */ 
+int
+op_verify_detached_sig_mem (const char *data_string,
+                            const char *sig_string, const char *filename,
+                            gpgme_data_t attestation)
+{
+  gpgme_data_t data = NULL;
+  gpgme_data_t sig = NULL;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_error_t err;
+  gpgme_verify_result_t res = NULL;
+
+  op_init ();
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new_from_mem (&data, data_string, strlen (data_string), 0);
+  if (err)
+    goto leave;
+
+  err = gpgme_data_new_from_mem (&sig, sig_string, strlen (sig_string), 0);
+  if (err)
+    goto leave;
+
+  err = gpgme_op_verify (ctx, sig, data, NULL);
+  if (!err)
+    {
+      res = gpgme_op_verify_result (ctx);
+      if (res) 
+        verify_dialog_box (res, filename);
+      if (res && attestation)
+        add_verify_attestation (attestation, ctx, res, filename);
+    }
+
+ leave:
+  if (data)
+    gpgme_data_release (data);
+  if (sig)
+    gpgme_data_release (sig);
+  if (ctx)
+    gpgme_release (ctx);
+  return err;
+}
+
 
 
 static void

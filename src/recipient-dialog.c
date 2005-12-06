@@ -42,7 +42,11 @@ struct recipient_cb_s
                            unknown recipients. */
 
   char **fnd_keys;      /* A string array with the user IDs of already
-                           found keys. */
+                           found keys.  I am not sure why they are
+                           needed here at all - they won't get
+                           displayed for unknown reasons. */
+  gpgme_key_t *fnd_keys_key; /* Same as above but the actual gpgme object. */
+  
 
   /* A bit vector used to return selected options. */
   unsigned int opts;
@@ -352,7 +356,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
   HWND hrset;
   const char *warn;
   size_t pos;
-  int i;
+  int i, j;
 
   switch (msg) 
     {
@@ -416,9 +420,13 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
               return FALSE;
 	    }
 
+          for (j=0; rset_cb->fnd_keys_key && rset_cb->fnd_keys_key[j]; j++)
+            ;
           rset_cb->selected_keys_count = ListView_GetItemCount (hrset);
-          rset_cb->selected_keys = xcalloc (rset_cb->selected_keys_count + 1,
+          rset_cb->selected_keys = xcalloc (rset_cb->selected_keys_count
+                                            + j + 1,
                                             sizeof *rset_cb->selected_keys);
+          /* Add the selected keys. */
           for (i=0, pos=0; i < rset_cb->selected_keys_count; i++) 
             {
               gpgme_key_t key;
@@ -443,7 +451,10 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                       /* Force encryption if one key is not fully
                          trusted.  Actually this is a bit silly but
                          supposedly here to allow adding an option to
-                         disable this "feature".  */
+                         disable this "feature". It is however pretty
+                         much messed up: The default key should never
+                         be processed here but set into the gpg.conf
+                         file becuase it is always trusted.  */
                       rset_cb->opts |= OPT_FLAG_FORCE;
                       break;
                     }
@@ -451,6 +462,13 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
               else
                 log_debug ("List item not correctly initialized - ignored\n");
             }
+          /* Add the already found keys. */
+          for (i=0; rset_cb->fnd_keys_key && rset_cb->fnd_keys_key[i]; i++)
+            {
+              gpgme_key_ref (rset_cb->fnd_keys_key[i]);
+              rset_cb->selected_keys[pos++] = rset_cb->fnd_keys_key[i];
+            }
+
           rset_cb->selected_keys_count = pos;
           EndDialog (dlg, TRUE);
           break;
@@ -537,6 +555,7 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
 	cb.fnd_keys[i] = xstrdup (_("User-ID not found"));
     }
 
+  cb.fnd_keys_key = fnd;
   cb.unknown_keys = unknown;
 
   if (!strncmp (gettext_localename (), "de", 2))

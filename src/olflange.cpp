@@ -208,7 +208,7 @@ ul_release (LPVOID punk)
   if (!punk)
     return;
   res = UlRelease (punk);
-  log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
 }
 
 
@@ -415,19 +415,31 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
   else if ( (pDisp = find_outlook_property ((LPEXCHEXTCALLBACK)pEECB,
                                             key, &dispid)))
     {
+      BSTR abstr;
+
       dispparams.cNamedArgs = 1;
       dispparams.rgdispidNamedArgs = &dispid_put;
       dispparams.cArgs = 1;
       dispparams.rgvarg = &aVariant;
-      dispparams.rgvarg[0].vt = VT_LPWSTR;
-      dispparams.rgvarg[0].bstrVal = utf8_to_wchar (value);
-      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-			  DISPATCH_PROPERTYPUT, &dispparams,
-			  NULL, NULL, NULL);
-      xfree (dispparams.rgvarg[0].bstrVal);
-      log_debug ("%s:%s: PROPERTYPUT(%s) result -> %#lx\n",
-                 SRCNAME, __func__, key, hr);
-
+      {
+        wchar_t *tmp = utf8_to_wchar (value);
+        abstr = SysAllocString (tmp);
+        xfree (tmp);
+      }
+      if (!abstr)
+        log_error ("%s:%s: SysAllocString failed\n", SRCNAME, __func__);
+      else
+        {
+          dispparams.rgvarg[0].vt = VT_BSTR;
+          dispparams.rgvarg[0].bstrVal = abstr;
+          hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                              DISPATCH_PROPERTYPUT, &dispparams,
+                              NULL, NULL, NULL);
+          log_debug ("%s:%s: PROPERTYPUT(%s) result -> %#lx\n",
+                     SRCNAME, __func__, key, hr);
+          SysFreeString (abstr);
+        }
+      
       pDisp->Release ();
       pDisp = NULL;
       result = 0;
@@ -836,7 +848,7 @@ CGPGExchExtMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
   /* If we are going to encrypt, check that the BodyFormat is
      something we support.  This helps avoiding surprise by sending
      out unencrypted messages. */
-  if (m_pExchExt->m_gpgEncrypt)
+  if (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign)
     {
       pDisp = find_outlook_property (pEECB, "BodyFormat", &dispid);
       if (!pDisp)
@@ -944,7 +956,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
       if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
         rc = m->encrypt (hWnd, m_want_html);
       if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = m->sign (hWnd);
+        rc = m->sign (hWnd, m_want_html);
       else
         rc = 0;
       delete m;
@@ -955,15 +967,18 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
          moved that into an attachment and kept PR_BODY.  It seems
          that OL always creates text and HTML if HTML has been
          selected. */
-      if (m_pExchExt->m_gpgEncrypt)
-        {
-          log_debug ("%s:%s: deleting possible extra property PR_BODY_HTML\n",
-                     SRCNAME, __func__);
-          proparray.cValues = 1;
-          proparray.aulPropTag[0] = PR_BODY_HTML;
-          msg->DeleteProps (&proparray, NULL);
-        }
-      
+      /* ARGHH: This seems to delete also the PR_BODY for some reasonh
+         - need to disable this safe net. */
+//       if (m_pExchExt->m_gpgEncrypt)
+//         {
+//           log_debug ("%s:%s: deleting possible extra property PR_BODY_HTML\n",
+//                      SRCNAME, __func__);
+//           proparray.cValues = 1;
+//           proparray.aulPropTag[0] = PR_BODY_HTML;
+//           msg->DeleteProps (&proparray, NULL);
+//         }
+     
+ 
       if (rc)
         {
           hrReturn = E_FAIL;
@@ -974,9 +989,8 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
              now. */
           if (m_pExchExt->m_gpgEncrypt)
             {
-              log_debug ("%s:%s: deleting property %s due to error\n",
-                         SRCNAME, __func__,
-                         m_want_html?"PR_BODY":"PR_BODY_HTML");
+              log_debug ("%s:%s: deleting property PR_BODY due to error\n",
+                         SRCNAME, __func__);
               proparray.cValues = 1;
               proparray.aulPropTag[0] = PR_BODY;
               hr = msg->DeleteProps (&proparray, NULL);
@@ -1204,7 +1218,7 @@ CGPGExchExtCommands::InstallCommands (
                   key = wchar_to_utf8 (aVariant.bstrVal);
                   log_debug ("%s:%s: ConversationIndex is `%s'",
                            SRCNAME, __func__, key);
-                  /* The keyis a hex string.  Convert it to binary. */
+                  /* The key is a hex string.  Convert it to binary. */
                   for (keylen=0,p=key; hexdigitp(p) && hexdigitp(p+1); p += 2)
                     ((unsigned char*)key)[keylen++] = xtoi_2 (p);
                   

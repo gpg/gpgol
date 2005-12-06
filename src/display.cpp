@@ -138,7 +138,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
   HWND window;
 
   window = find_message_window (hwnd);
-  if (window)
+  if (window && !is_html)
     {
       const char *s;
 
@@ -161,7 +161,11 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
-      log_debug ("updating display using OOM");
+      log_debug ("updating display using OOM to `%s'", text);
+      /* Bug in OL 2002 and 2003 - as a workaround set the body first
+         to empty. */
+      if (is_html)
+        put_outlook_property (exchange_cb, "Body", "" );
       return put_outlook_property (exchange_cb, is_html? "HTMLBody":"Body",
                                    text);
     }
@@ -185,6 +189,13 @@ set_message_body (LPMESSAGE message, const char *string, bool is_html)
   const char *s;
   
   assert (message);
+
+//   if (!is_html)
+//     {
+//       prop.ulPropTag = PR_BODY_HTML_A;
+//       prop.Value.lpszA = "";
+//       hr = HrSetOneProp (message, &prop);
+//     }
   
   /* Decide whether we need to use the Unicode version. */
   for (s=string; *s && !(*s & 0x80); s++)

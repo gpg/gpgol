@@ -84,6 +84,7 @@ typedef struct attach_info *attach_info_t;
 
 
 static int get_attach_method (LPATTACH obj);
+static char *get_short_attach_data (LPATTACH obj);
 static bool set_x_header (LPMESSAGE msg, const char *name, const char *val);
 
 
@@ -116,16 +117,7 @@ public:
     if (attestation)
       gpgme_data_release (attestation);
 
-    if (attach.att_table)
-      {
-        attach.att_table->Release ();
-        attach.att_table = NULL;
-      }
-    if (attach.rows)
-      {
-        FreeProws (attach.rows);
-        attach.rows = NULL;
-      }
+    free_attach_info ();
   }
 
   void destroy ()
@@ -168,7 +160,7 @@ public:
   const char *getPlainText (void);
 
   int decrypt (HWND hwnd);
-  int sign (HWND hwnd);
+  int sign (HWND hwnd, bool want_html);
   int encrypt (HWND hwnd, bool want_html)
   {
     return encrypt_and_sign (hwnd, want_html, false);
@@ -210,9 +202,11 @@ private:
     LPSRowSet   rows;     /* The retrieved set of rows from the table. */
   } attach;
   
+  void free_attach_info (void);
   char *loadBody (bool want_html);
   bool isPgpmimeVersionPart (int pos);
   void writeAttestation (void);
+  gpg_error_t createHtmlAttachment (const char *text);
   attach_info_t gatherAttachmentInfo (void);
   int encrypt_and_sign (HWND hwnd, bool want_html, bool sign);
 };
@@ -230,6 +224,20 @@ CreateGpgMsg (LPMESSAGE msg)
   return m;
 }
 
+void
+GpgMsgImpl::free_attach_info (void)
+{
+  if (attach.att_table)
+    {
+      attach.att_table->Release ();
+      attach.att_table = NULL;
+    }
+  if (attach.rows)
+    {
+      FreeProws (attach.rows);
+      attach.rows = NULL;
+    }
+}
 
 /* Release an array of GPGME keys. */
 static void 
@@ -615,7 +623,7 @@ GpgMsgImpl::getRecipients ()
       return NULL;
     }
 
-  rset = (char**)xcalloc (lpRecipientRows->cRows+1, sizeof *rset);
+  rset = (char**)xcalloc (lpRecipientRows->cRows+2, sizeof *rset);
 
   for (i = j = 0; (unsigned int)i < lpRecipientRows->cRows; i++)
     {
@@ -646,6 +654,8 @@ GpgMsgImpl::getRecipients ()
           break;
         }
     }
+  if (opt.default_key && *opt.default_key)
+    rset[j++] = xstrdup (opt.default_key);
   rset[j] = NULL;
 
   if (lpRecipientTable)
@@ -709,7 +719,7 @@ GpgMsgImpl::writeAttestation (void)
       goto leave;
     }
 
-  /* And not for the real name. */
+  /* And now for the real name. */
   prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
   prop.Value.lpszA = "GPGol-Attestation.txt";
   hr = HrSetOneProp (newatt, &prop);
@@ -760,25 +770,19 @@ GpgMsgImpl::writeAttestation (void)
     }
   attestation = NULL;
 
+  if (!*buffer)
+    goto leave;
+
   log_debug ("writing attestation `%s'\n", buffer);
   hr = S_OK;
-  if (!*buffer)
+  for (p=buffer; hr == S_OK && (pend = strchr (p, '\n')); p = pend+1)
     {
-      const char *s = _("[No attestation computed "
-                        "(e.g. messages was not signed)");
-      hr = to->Write (s, strlen (s), &nwritten);
+      hr = to->Write (p, pend - p, &nwritten);
+      if (hr == S_OK)
+        hr = to->Write ("\r\n", 2, &nwritten);
     }
-  else
-    {
-      for (p=buffer; hr == S_OK && (pend = strchr (p, '\n')); p = pend+1)
-        {
-          hr = to->Write (p, pend - p, &nwritten);
-          if (hr == S_OK)
-            hr = to->Write ("\r\n", 2, &nwritten);
-        }
-      if (*p && hr == S_OK)
-        hr = to->Write (p, strlen (p), &nwritten);
-    }
+  if (*p && hr == S_OK)
+    hr = to->Write (p, strlen (p), &nwritten);
   if (hr != S_OK)
     {
       log_debug ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
@@ -818,6 +822,118 @@ GpgMsgImpl::writeAttestation (void)
 }
 
 
+/* Create a new HTML attachment from TEXT and store it as the standard
+   HTML attachment (according to PGP rules).  */
+gpg_error_t
+GpgMsgImpl::createHtmlAttachment (const char *text)
+{
+  HRESULT hr;
+  ULONG newpos;
+  SPropValue prop;
+  LPATTACH newatt = NULL;
+  LPSTREAM to = NULL;
+  ULONG nwritten;
+  gpg_error_t err = gpg_error (GPG_ERR_GENERAL);
+  
+  hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't create HTML attachment: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+          
+  prop.ulPropTag = PR_ATTACH_METHOD;
+  prop.Value.ul = ATTACH_BY_VALUE;
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set HTML attach method: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  
+  prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+  prop.Value.lpszA = "PGPexch.htm";
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set HTML attach filename: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_TAG;
+  prop.Value.bin.cb  = sizeof oid_mimetag;
+  prop.Value.bin.lpb = (LPBYTE)oid_mimetag;
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set HTML attach tag: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
+  prop.Value.lpszA = "text/html";
+  hr = HrSetOneProp (newatt, &prop);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't set HTML attach mime tag: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                             MAPI_CREATE|MAPI_MODIFY, (LPUNKNOWN*)&to);
+  if (FAILED (hr)) 
+    {
+      log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  
+  hr = to->Write (text, strlen (text), &nwritten);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
+      goto leave;
+    }
+      
+  
+  to->Commit (0);
+  to->Release ();
+  to = NULL;
+  
+  hr = newatt->SaveChanges (0);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  err = 0;
+
+ leave:
+  if (to)
+    {
+      to->Revert ();
+      to->Release ();
+    }
+  if (newatt)
+    newatt->Release ();
+  return err;
+}
+
+
 
 /* Decrypt the message MSG and update the window.  HWND identifies the
    current window.  */
@@ -833,8 +949,12 @@ GpgMsgImpl::decrypt (HWND hwnd)
   unsigned int n_attach = 0;
   unsigned int n_encrypted = 0;
   unsigned int n_signed = 0;
+  int have_pgphtml_sig = 0;
+  int have_pgphtml_enc = 0;
+  unsigned int pgphtml_pos = 0;
   HRESULT hr;
   int pgpmime_succeeded = 0;
+  int is_html = 0;
   char *body;
 
   /* Load the body text into BODY.  Note that body may be NULL but in
@@ -851,15 +971,42 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {
       for (pos=0; !table[pos].end_of_table; pos++)
         if (table[pos].is_encrypted)
-          n_encrypted++;
+          {
+            if (!have_pgphtml_enc && !have_pgphtml_sig
+                && table[pos].filename
+                && !strcmp (table[pos].filename, "PGPexch.htm.pgp")
+                && table[pos].content_type  
+                && !strcmp (table[pos].content_type,
+                            "application/pgp-encrypted"))
+              {
+                have_pgphtml_enc = 1;
+                pgphtml_pos = pos;
+              }
+            else
+              n_encrypted++;
+          }
         else if (table[pos].is_signed)
-          n_signed++;
+          {
+            if (!have_pgphtml_sig && !have_pgphtml_enc
+                && table[pos].filename
+                && !strcmp (table[pos].filename, "PGPexch.htm.asc")
+                && table[pos].content_type  
+                && !strcmp (table[pos].content_type,
+                            "application/pgp-signature"))
+              {
+                have_pgphtml_sig = 1;
+                pgphtml_pos = pos;
+              }
+            else
+              n_signed++;
+          }
       n_attach = pos;
     }
   log_debug ("%s:%s: message has %u attachments with "
              "%u signed and %d encrypted\n",
              SRCNAME, __func__, n_attach, n_signed, n_encrypted);
-  if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed) 
+  if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed
+      && !have_pgphtml_enc && !have_pgphtml_sig) 
     {
       /* Because we usually work around the OL object model, it can't
          notice that we changed the windows's text behind its back (by
@@ -989,6 +1136,92 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {
       err = op_decrypt (body, &plaintext, opt.passwd_ttl, NULL,
                         attestation, preview);
+      if (!err && have_pgphtml_enc)
+        is_html = 1;
+    }
+  else if (mtype == OPENPGP_NONE && have_pgphtml_sig)
+    {
+      if (preview)
+        err = 0;
+      else
+        {
+          LPATTACH att;
+          char *htmlbody = loadBody (true);
+
+          if (htmlbody && *htmlbody)
+            {
+              is_html = 1;
+              hr = message->OpenAttach (pgphtml_pos, NULL,
+                                        MAPI_BEST_ACCESS, &att);	
+              if (FAILED (hr))
+                {
+                  log_error ("%s:%s: can't open attachment %d (sig): hr=%#lx",
+                             SRCNAME, __func__, pgphtml_pos, hr);
+                  err = gpg_error (GPG_ERR_GENERAL);
+                }
+              else if (table[pgphtml_pos].method != ATTACH_BY_VALUE)
+                {
+                  log_error ("%s:%s: HTML attachment: method not supported",
+                             SRCNAME, __func__);
+                  att->Release ();
+                  err = gpg_error (GPG_ERR_GENERAL);
+                }
+              else
+                {
+                  char *sigpart = get_short_attach_data (att);
+                  att->Release ();
+                  if (!sigpart)
+                    err = gpg_error (GPG_ERR_GENERAL);
+                  else
+                    {
+                      err = op_verify_detached_sig_mem (htmlbody, sigpart,
+                                                        NULL, attestation);
+                      xfree (sigpart);
+                    }
+                }
+            }
+          else
+            err = gpg_error (GPG_ERR_NO_DATA);
+          xfree (htmlbody);
+        }
+    }
+  else if (mtype == OPENPGP_NONE && have_pgphtml_enc)
+    {
+      LPATTACH att;
+      LPSTREAM from;
+
+      is_html = 1;
+      hr = message->OpenAttach (pgphtml_pos, NULL,
+                                MAPI_BEST_ACCESS, &att);	
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open attachment %d (sig): hr=%#lx",
+                     SRCNAME, __func__, pgphtml_pos, hr);
+          err = gpg_error (GPG_ERR_GENERAL);
+        }
+      else if (table[pgphtml_pos].method != ATTACH_BY_VALUE)
+        {
+          log_error ("%s:%s: HTML attachment: method not supported",
+                     SRCNAME, __func__);
+          att->Release ();
+          err = gpg_error (GPG_ERR_GENERAL);
+        }
+      else if (FAILED(hr = att->OpenProperty (PR_ATTACH_DATA_BIN,
+                                              &IID_IStream, 
+                                              0, 0, (LPUNKNOWN*) &from)))
+        {
+          log_error ("%s:%s: can't open data stream of HTML attachment: "
+                     "hr=%#lx", SRCNAME, __func__, hr);
+          att->Release ();
+          err = gpg_error (GPG_ERR_GENERAL);
+        }
+      else
+        {
+          err = op_decrypt_stream_to_buffer (from, &plaintext, opt.passwd_ttl,
+                                             NULL, attestation);
+          from->Release ();
+          att->Release ();
+        }
     }
   else
     err = gpg_error (GPG_ERR_NO_DATA);
@@ -1005,8 +1238,6 @@ GpgMsgImpl::decrypt (HWND hwnd)
     }
   else if (plaintext && *plaintext)
     {	
-      int is_html = is_html_body (plaintext);
-
       log_debug ("decrypt isHtml=%d\n", is_html);
 
       /* Do we really need to set the body?  update_display below
@@ -1080,7 +1311,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (what == IDYES) 
         {
           for (pos=0; !table[pos].end_of_table; pos++)
-            if (table[pos].is_signed)
+            if ((have_pgphtml_sig || have_pgphtml_enc)
+                && pos == pgphtml_pos)
+              ; /* We already processed this attachment. */
+            else if (table[pos].is_signed)
               {
                 assert (table[pos].sig_pos < n_attach);
                 verifyAttachment (hwnd, table, pos, table[pos].sig_pos);
@@ -1105,7 +1339,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (what == IDYES) 
         {
           for (pos=0; !table[pos].end_of_table; pos++)
-            if (table[pos].is_encrypted)
+            if ((have_pgphtml_sig || have_pgphtml_enc)
+                && pos == pgphtml_pos)
+              ; /* We already processed this attachment. */
+            else if (table[pos].is_encrypted)
               decryptAttachment (hwnd, pos, true, opt.passwd_ttl,
                                  table[pos].filename);
         }
@@ -1127,7 +1364,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
 
 /* Sign the current message. Returns 0 on success. */
 int
-GpgMsgImpl::sign (HWND hwnd)
+GpgMsgImpl::sign (HWND hwnd, bool want_html)
 {
   HRESULT hr;
   char *plaintext;
@@ -1135,11 +1372,13 @@ GpgMsgImpl::sign (HWND hwnd)
   int err = 0;
   gpgme_key_t sign_key = NULL;
   SPropValue prop;
+  int have_html_attach = 0;
 
   log_debug ("%s:%s: enter message=%p\n", SRCNAME, __func__, message);
   
   /* We don't sign an empty body - a signature on a zero length string
-     is pretty much useless. */
+     is pretty much useless.  We assume that a HTML message always
+     comes with a text/plain alternative. */
   plaintext = loadBody (false);
   if ( (!plaintext || !*plaintext) && !hasAttachments ()) 
     {
@@ -1168,7 +1407,34 @@ GpgMsgImpl::sign (HWND hwnd)
         }
     }
 
-  if (opt.auto_sign_attach && hasAttachments ())
+  
+  /* If those brain dead html mails are requested we now figure out
+     whether a HTML body is actually available and move it to an
+     attachment so that the code below will sign it as a regular
+     attachments.  */
+  if (want_html)
+    {
+      char *htmltext = loadBody (true);
+      
+      if (htmltext && *htmltext)
+        {
+          if (!createHtmlAttachment (htmltext))
+            have_html_attach = 1;
+        }
+      xfree (htmltext);
+
+      /* If we got a new attachment we need to release the loaded
+         attachment info so that the next getAttachment call will read
+         fresh info. */
+      if (have_html_attach)
+        free_attach_info ();
+    }
+
+
+  /* Note, there is a side-effect when we have HTML mails: The
+     auto-sign-attch option is ignored. I regard auto-sign-atatch as a
+     silly option anyway. */
+  if ((opt.auto_sign_attach || have_html_attach) && hasAttachments ())
     {
       unsigned int n;
       
@@ -1241,6 +1507,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
   int err = 0;
   size_t n_keys, n_unknown, n_recp;
   SPropValue prop;
+  int have_html_attach = 0;
     
   plaintext = loadBody (false);
   if ( (!plaintext || !*plaintext) && !hasAttachments ()) 
@@ -1315,13 +1582,6 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
           goto leave;
         }
 
-      if (want_html) 
-        {
-          char *tmp = add_html_line_endings (ciphertext);
-          xfree (ciphertext);
-          ciphertext = tmp;
-        }
-
 //       {
 //         SPropValue prop;
 //         prop.ulPropTag=PR_MESSAGE_CLASS_A;
@@ -1335,6 +1595,31 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 //       }
 
     }
+
+
+  /* If those brain dead html mails are requested we now figure out
+     whether a HTML body is actually available and move it to an
+     attachment so that the code below will sign it as a regular
+     attachments.  Note that the orginal HTML body will be deletated
+     in the code calling us. */
+  if (want_html)
+    {
+      char *htmltext = loadBody (true);
+      
+      if (htmltext && *htmltext)
+        {
+          if (!createHtmlAttachment (htmltext))
+            have_html_attach = 1;
+        }
+      xfree (htmltext);
+
+      /* If we got a new attachment we need to release the loaded
+         attachment info so that the next getAttachment call will read
+         fresh info. */
+      if (have_html_attach)
+        free_attach_info ();
+    }
+
 
   if (hasAttachments ())
     {
@@ -1371,7 +1656,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
         }
 
 
-      err = set_message_body (message, ciphertext, want_html);
+      err = set_message_body (message, ciphertext, 0);
       if (err)
         goto leave;
 
@@ -1953,7 +2238,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
      OL2003 the content-type of the body is also correctly set but we
      don't make use of this as it is not clear whether this is true
      for other storage providers.  We use a hack to ignore extra
-     attesttation attachments: Those are assumed to come after the
+     attestation attachments: Those are assumed to come after the
      both PGP/MIME parts. */
   if (opt.compat.no_pgpmime)
     ;
@@ -1996,7 +2281,7 @@ GpgMsgImpl::verifyAttachment (HWND hwnd, attach_info_t table,
   assert (message);
 
   /* First we copy the actual signature into a memory buffer.  Such a
-     signature is expected to be samll enough to be readable directly
+     signature is expected to be small enough to be readable directly
      (i.e.less that 16k as suggested by the MS MAPI docs). */
   hr = message->OpenAttach (pos_sig, NULL, MAPI_BEST_ACCESS, &att);	
   if (FAILED (hr))

@@ -72,6 +72,9 @@ int op_verify (const char *inbuf, char **outbuf, const char *filename,
                gpgme_data_t attestation);
 int op_verify_detached_sig (LPSTREAM data, const char *sig,
                             const char *filename, gpgme_data_t attestation);
+int op_verify_detached_sig_mem (const char *data_string,
+                                const char *sig_string, const char *filename,
+                                gpgme_data_t attestation);
 
 
 int op_export_keys (const char *pattern[], const char *outfile);
