@@ -62,7 +62,6 @@ init_options (void)
                           multiple prompts for attachment encryption
                           are issued. */
   opt.enc_format = GPG_FMT_CLASSIC;
-  opt.add_default_key = 1;
 }
 
 
@@ -385,8 +384,8 @@ read_options (void)
   opt.preview_decrypt = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
-  load_extension_value ("addDefaultKey", &val);
-  opt.add_default_key = val == NULL || *val != '1' ? 0 : 1;
+  load_extension_value ("enableDefaultKey", &val);
+  opt.enable_default_key = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
 
   load_extension_value ("storePasswdTime", &val);
@@ -448,7 +447,6 @@ write_options (void)
   } table[] = {
     {"encryptDefault",           0, opt.encrypt_default},
     {"signDefault",              0, opt.sign_default},
-    {"addDefaultKey",            0, opt.add_default_key},
     {"saveDecryptedAttachments", 0, opt.save_decrypted_attach},
     {"autoSignAttachments",      0, opt.auto_sign_attach},
     {"previewDecrypt",           0, opt.preview_decrypt},
@@ -456,6 +454,7 @@ write_options (void)
     {"encodingFormat",           1, opt.enc_format},
     {"logFile",                  2, 0, logfile},
     {"defaultKey",               2, 0, opt.default_key},
+    {"enableDefaultKey",         0, opt.enable_default_key},
     {NULL, 0}
   };
   char buf[32];

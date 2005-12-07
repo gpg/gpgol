@@ -16,6 +16,9 @@ available in a directory where Windows searches for DLLs
 gpgol.dll" and start Outlook. You should then find a new tab named
 "GnuPG" in Outlook's option menu.
 
+If you are missing icons in the toolbar, checkout the toolbar's
+customize button - you will find the new icons there.
+
 Bug reporting: First click on the logo on the GnuPG options tab to
 check whether a newer version has been released - try this first.  If
 this does not help, check out the mailing lists and also the bug

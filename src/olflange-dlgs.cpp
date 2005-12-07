@@ -44,7 +44,6 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
   BOOL bMsgResult = FALSE;    
   static LPNMHDR pnmhdr;
   static HWND hWndPage;
-  static int enable = 1;
     
   switch (uMsg) 
     {
@@ -71,9 +70,9 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               }		
           }
         
-	enable = !!(opt.default_key && *opt.default_key);
-	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), enable? TRUE:FALSE);
-	if (enable == 1)
+	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
+                      !!opt.enable_default_key);
+	if (opt.enable_default_key)
           CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
 	SetDlgItemText (hDlg, IDC_VERSION_INFO, 
 		        "Version "VERSION " ("__DATE__")");
@@ -111,9 +110,9 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
 	if (HIWORD (wParam) == BN_CLICKED &&
 	    LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) {
-	    enable ^= 1;
+	    opt.enable_default_key = !opt.enable_default_key;
 	    EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
-			  enable==0? FALSE: TRUE);
+			  !!opt.enable_default_key);
 	}
 	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
 	    config_dialog_box (hDlg);
@@ -129,8 +128,10 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case PSN_SETACTIVE: {
 	    TCHAR s[30];
 	    
-	    if (opt.default_key)		
+	    if (opt.default_key && *opt.default_key)		
 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
+            else
+		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, "");
 	    wsprintf(s, "%d", opt.passwd_ttl);
 	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
                                0, (LPARAM) s);
@@ -140,8 +141,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
 			        !!opt.sign_default, 0L);
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
-                                BM_SETCHECK, 
-			        (opt.add_default_key && enable), 0L);
+                                BM_SETCHECK, opt.enable_default_key, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
 				!!opt.save_decrypted_attach, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS, BM_SETCHECK,
@@ -153,27 +153,27 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		
 	case PSN_APPLY:	{
 	    TCHAR s[201];
+            
+            opt.enable_default_key = !!SendDlgItemMessage
+              (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L);
 
-	    GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
-	    if (strlen (s) > 0 && strchr (s, ' ')) {
-		MessageBox (hDlg,
-                            "The default key may not contain any spaces.",
-			    "Outlook GnuPG-Plugin", MB_ICONERROR|MB_OK);
-		bMsgResult = PSNRET_INVALID_NOCHANGEPAGE ;
-		break;
-	    }
-	    if (!*s)
-              opt.add_default_key = 0;
-	    else
-              opt.add_default_key = !!SendDlgItemMessage
-                (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L);
-
+            GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
+            if (strlen (s) > 0 && strchr (s, ' ')) 
+              {
+                if (opt.enable_default_key)
+                  {
+                    MessageBox (hDlg,_("The default key may not"
+                                       " contain any spaces."),
+                                "GPGol", MB_ICONERROR|MB_OK);
+                    bMsgResult = PSNRET_INVALID_NOCHANGEPAGE;
+                    break;
+                  }
+              }
+            set_default_key (s);
+ 
 	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT,
                                 20, (LPARAM)s);		
 	    opt.passwd_ttl = (int)atol (s);
-	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_TO, WM_GETTEXT,
-                                200, (LPARAM)s);
-	    set_default_key (s);
 		
 	    opt.encrypt_default = !!SendDlgItemMessage
               (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);

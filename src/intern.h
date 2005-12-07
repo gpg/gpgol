@@ -97,8 +97,8 @@ struct
   int save_decrypted_attach; /* Save decrypted attachments. */
   int auto_sign_attach;	     /* Sign all outgoing attachments. */
   int enc_format;            /* Encryption format for attachments. */
-  char *default_key;         /* Malloced default key or NULL. */
-  int add_default_key;       /* Always also encrypt to the default key. */
+  char *default_key;         /* The key we want to always encrypt to. */
+  int enable_default_key;    /* Enable the use of DEFAULT_KEY. */
   int preview_decrypt;       /* Decrypt in preview window. */
 
   /* The compatibility flags. */

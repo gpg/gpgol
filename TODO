@@ -2,9 +2,7 @@
   For example 'No Secret Key' should contain the key-ID
   and if possible the primary user-ID.
 
-* much better HTML support.
-
-* find out why sometimes the new body cannot set to a MAPI object. In
+* Find out why sometimes the new body cannot set to a MAPI object. In
   this case the body is empty but the W32 API said it was correctly set.
   This might be due to the length of the object.  HrGetOneProp has
   such limitations and thus it would be reasonable to assume that the

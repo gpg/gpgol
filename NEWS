@@ -1,3 +1,11 @@
+Noteworthy changes for version 0.9.5 (2005-12-07)
+=================================================
+
+* Fixed problems related to use on non-admin accounts.
+
+* Print a warning if used with OL prior to OL2003 SP2.
+
+
 Noteworthy changes for version 0.9.4 (2005-12-06)
 =================================================
 

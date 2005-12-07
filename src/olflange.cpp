@@ -681,6 +681,8 @@ STDMETHODIMP
 CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 {
   ULONG lBuildVersion;
+  ULONG lActualVersion;
+  ULONG lVirtualVersion;
 
   /* Save the context in an instance variable. */
   m_lContext = lContext;
@@ -705,12 +707,52 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   
   /* Check version. */
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
+  pEECB->GetVersion (&lActualVersion, EECBGV_GETACTUALVERSION);
+  pEECB->GetVersion (&lVirtualVersion, EECBGV_GETVIRTUALVERSION);
+  log_debug ("GPGol: detected Outlook build version 0x%lx (%lu.%lu)\n",
+             lBuildVersion,
+             (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,
+             (lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK));
+  log_debug ("GPGol:                 actual version 0x%lx (%u.%u.%u.%u)\n",
+             lActualVersion, 
+             (unsigned int)((lActualVersion >> 24) & 0xff),
+             (unsigned int)((lActualVersion >> 16) & 0xff),
+             (unsigned int)((lActualVersion >> 8) & 0xff),
+             (unsigned int)(lActualVersion & 0xff));
+  log_debug ("GPGol:                virtual version 0x%lx (%u.%u.%u.%u)\n",
+             lVirtualVersion, 
+             (unsigned int)((lVirtualVersion >> 24) & 0xff),
+             (unsigned int)((lVirtualVersion >> 16) & 0xff),
+             (unsigned int)((lVirtualVersion >> 8) & 0xff),
+             (unsigned int)(lVirtualVersion & 0xff));
+
   if (EECBGV_BUILDVERSION_MAJOR
       != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
     {
       log_debug ("%s:%s: invalid version 0x%lx\n",
                    SRCNAME, __func__, lBuildVersion);
       return S_FALSE;
+    }
+  if ((lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573)
+    {
+      static int shown;
+      HWND hwnd;
+      
+      if (!shown)
+        {
+          shown = 1;
+          
+          if (FAILED(pEECB->GetWindow (&hwnd)))
+            hwnd = NULL;
+          MessageBox (hwnd,
+                      _("This version of Outlook is too old!\n\n"
+                        "At least versions of Outlook 2003 older than SP2 "
+                        "exhibit crashes when sending messages and messages "
+                        "might get stuck in the outgoing queue.\n\n"
+                        "Please update at least to SP2 before trying to send "
+                        "a message"),
+                      "GPGol", MB_ICONSTOP|MB_OK);
+        }
     }
   
 
@@ -793,7 +835,6 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   if (opt.preview_decrypt)
     {
-      TRACEPOINT ();
       HRESULT hr;
       HWND hWnd = NULL;
       LPMESSAGE pMessage = NULL;

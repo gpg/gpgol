@@ -654,7 +654,7 @@ GpgMsgImpl::getRecipients ()
           break;
         }
     }
-  if (opt.default_key && *opt.default_key)
+  if (opt.enable_default_key && opt.default_key && *opt.default_key)
     rset[j++] = xstrdup (opt.default_key);
   rset[j] = NULL;
 

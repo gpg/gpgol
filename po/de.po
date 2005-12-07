@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2005-12-06 11:07+0100\n"
-"PO-Revision-Date: 2005-12-06 11:09+0100\n"
+"POT-Creation-Date: 2005-12-07 17:27+0100\n"
+"PO-Revision-Date: 2005-12-07 17:31+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/config-dialog.c:298
+#: src/config-dialog.c:289
 msgid "Select GPG Key Manager"
 msgstr "Das Schlüsselverwaltungsprogramm festlegen"
 
@@ -234,7 +234,28 @@ msgstr "Entschlüsselungsfehler eines Anhangs"
 msgid "Attachment Signing Failure"
 msgstr "Unterschrifterstellungsfehler eines Anhangs"
 
-#: src/olflange.cpp:896
+#: src/olflange-dlgs.cpp:165
+msgid "The default key may not contain any spaces."
+msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
+
+#: src/olflange.cpp:748
+msgid ""
+"This version of Outlook is too old!\n"
+"\n"
+"At least versions of Outlook 2003 older than SP2 exhibit crashes when "
+"sending messages and messages might get stuck in the outgoing queue.\n"
+"\n"
+"Please update at least to SP2 before trying to send a message"
+msgstr ""
+"Diese Version von Outlook ist zu alt!\n"
+"\n"
+"Einige Versionen von Outlook 2003, älter als SP2, verursachen\n"
+"Programmabrüche beim Senden von Nachrichten und diese Nachrichten\n"
+"können dabei in der Ausgabewarteschlange stecken bleiben.\n"
+"\n"
+"Bitte updaten Sie auf SP2 bevor Sie versuchen eine Nachricht zu versenden."
+
+#: src/olflange.cpp:937
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -245,51 +266,51 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/olflange.cpp:1286
+#: src/olflange.cpp:1327
 msgid "&Decrypt and verify message"
 msgstr "Entschlüsseln/Prüfen der Nachricht"
 
-#: src/olflange.cpp:1324
+#: src/olflange.cpp:1365
 msgid "GPG &encrypt message"
 msgstr "Mit GPG &verschlüsseln"
 
-#: src/olflange.cpp:1330
+#: src/olflange.cpp:1371
 msgid "GPG &sign message"
 msgstr "Mit GPG unter&schreiben"
 
-#: src/olflange.cpp:1376
+#: src/olflange.cpp:1417
 msgid "GPG Key &Manager"
 msgstr "GPG Schlüssel&verwaltung"
 
-#: src/olflange.cpp:1508
+#: src/olflange.cpp:1549
 msgid "Could not start Key-Manager"
 msgstr "Dei Schlüsselverwaltung konnte nicht aufgerufen werden"
 
-#: src/olflange.cpp:1554
+#: src/olflange.cpp:1595
 msgid "Decrypt and verify the message."
 msgstr "Entschlüsseln und Prüfen der Nachricht."
 
-#: src/olflange.cpp:1562
+#: src/olflange.cpp:1603
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/olflange.cpp:1568
+#: src/olflange.cpp:1609
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
 
-#: src/olflange.cpp:1577 src/olflange.cpp:1638 src/olflange.cpp:1720
+#: src/olflange.cpp:1618 src/olflange.cpp:1679 src/olflange.cpp:1761
 msgid "Open GPG Key Manager"
 msgstr "Die GPG Schlüsselverwaltung öffnen"
 
-#: src/olflange.cpp:1607 src/olflange.cpp:1671
+#: src/olflange.cpp:1648 src/olflange.cpp:1712
 msgid "Decrypt message and verify signature"
 msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
 
-#: src/olflange.cpp:1618 src/olflange.cpp:1689
+#: src/olflange.cpp:1659 src/olflange.cpp:1730
 msgid "Encrypt message with GPG"
 msgstr "Nachricht mit GPG verschlüsseln"
 
-#: src/olflange.cpp:1627 src/olflange.cpp:1704
+#: src/olflange.cpp:1668 src/olflange.cpp:1745
 msgid "Sign message with GPG"
 msgstr "Nachricht mit GPG unterschreiben"
 

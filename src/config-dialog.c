@@ -99,23 +99,6 @@ get_folder (const char *title)
 }
 #endif
 
-static int
-load_config_value_ext (char **val)
-{
-  static char buf[MAX_PATH+64];
-  
-  /* MSDN: This buffer must be at least MAX_PATH characters in size. */
-  memset (buf, 0, sizeof (buf));
-  if (w32_shgetfolderpath (NULL, CSIDL_APPDATA/*|CSIDL_FLAG_CREATE*/, 
-                           NULL, 0, buf) < 0)
-    return -1;
-  strcat (buf, "\\gnupg");
-  if (GetFileAttributes (buf) == 0xFFFFFFFF)
-    return -1;
-  *val = buf;
-  return 0;
-}
-
 
 static char*
 expand_path (const char *path)
@@ -145,11 +128,12 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
     DWORD size=0, type;
     int ec;
 
+    *val = NULL;
     if (hk == NULL)
 	hk = HKEY_CURRENT_USER;
     ec = RegOpenKeyEx (hk, path, 0, KEY_READ, &h);
     if (ec != ERROR_SUCCESS)
-	return load_config_value_ext (val);
+	return -1;
 
     ec = RegQueryValueEx(h, key, NULL, &type, NULL, &size);
     if (ec != ERROR_SUCCESS) {
@@ -179,24 +163,29 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
 static int
 store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 {
-    HKEY h;
-    int type = REG_SZ;
-    int ec;
-
-    if (hk == NULL)
-	hk = HKEY_CURRENT_USER;
-    ec = RegOpenKeyEx (hk, path, 0, KEY_ALL_ACCESS, &h);
-    if (ec != ERROR_SUCCESS)
-	return -1;
-    if (strchr (val, '%'))
-	type = REG_EXPAND_SZ;
-    ec = RegSetValueEx (h, key, 0, type, (const BYTE*)val, strlen (val));
-    if (ec != ERROR_SUCCESS) {
-	RegCloseKey(h);
-	return -1;
+  HKEY h;
+  int type;
+  int ec;
+  
+  if (hk == NULL)
+    hk = HKEY_CURRENT_USER;
+  ec = RegCreateKeyEx (hk, path, 0, NULL, REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS, NULL, &h, NULL);
+  if (ec != ERROR_SUCCESS)
+    {
+      log_debug_w32 (ec, "creating/opening registry key `%s' failed", path);
+      return -1;
     }
-    RegCloseKey(h);
-    return 0;
+  type = strchr (val, '%')? REG_EXPAND_SZ : REG_SZ;
+  ec = RegSetValueEx (h, key, 0, type, (const BYTE*)val, strlen (val));
+  if (ec != ERROR_SUCCESS)
+    {
+      log_debug_w32 (ec, "saving registry key `%s'->`%s' failed", path, key);
+      RegCloseKey(h);
+      return -1;
+    }
+  RegCloseKey(h);
+  return 0;
 }
 
 
@@ -288,8 +277,10 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 	    xfree (buf);
 	    buf=NULL;
 	}
+        else
+	    SetDlgItemText (dlg, IDC_OPT_KEYMAN, "");
         s = get_log_file ();
-        SetDlgItemText (dlg, IDC_DEBUG_LOGFILE, s);
+        SetDlgItemText (dlg, IDC_DEBUG_LOGFILE, s? s:"");
 	break;
 
     case WM_COMMAND:
@@ -309,9 +300,8 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		    error_box ("GPG Config");
 	    }
 	    n = GetDlgItemText (dlg, IDC_DEBUG_LOGFILE, name, MAX_PATH-1);
-	    if (n > 0) {
-                set_log_file (name);
-	    }
+            set_log_file (n>0?name:NULL);
+
 	    EndDialog (dlg, TRUE);
 	    break;
 	}
@@ -355,7 +345,10 @@ start_key_manager (void)
       gpgme_engine_info_t info;
 
       if (gpgme_get_engine_info (&info))
-        return -1;
+        {
+          log_debug ("%s:%s: get_engine_info failed\n", SRCNAME, __func__);
+          return -1;
+        }
 
       while (info && info->protocol != GPGME_PROTOCOL_OpenPGP)
         info = info->next;
@@ -372,12 +365,20 @@ start_key_manager (void)
               xfree (keyman);
               return -1;
             }
-          strcpy (p+1, "winpt.exe --keymanager");
-          if (access (keyman, F_OK))
+          strcpy (p+1, "winpt.exe");
+          if (!access (keyman, F_OK))
+            strcat (keyman, " --keymanager");
+          else
             {
-              strcpy (p+1, "gpa.exe --keyring");
-              if (access (keyman, F_OK))
+              log_debug ("%s:%s: accessing `%s' failed\n",
+                         SRCNAME, __func__, keyman );
+              strcpy (p+1, "gpa.exe");
+              if (!access (keyman, F_OK))
+                strcat (keyman, " --keyring");
+              else
                 {
+                  log_debug ("%s:%s: accessing `%s' failed\n",
+                             SRCNAME, __func__, keyman );
                   xfree (keyman);
                   return -1;
                 }
@@ -391,6 +392,8 @@ start_key_manager (void)
   si.dwFlags = STARTF_USESHOWWINDOW;
   si.wShowWindow = SW_SHOW;
   
+  log_debug ("%s:%s: running `%s' ...\n",
+             SRCNAME, __func__, keyman );
   if (CreateProcess (NULL, keyman,
                      NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
                      NULL, NULL, &si, &pi) == TRUE)
