@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2005-12-07 17:27+0100\n"
-"PO-Revision-Date: 2005-12-07 17:31+0100\n"
+"POT-Creation-Date: 2006-01-16 12:15+0100\n"
+"PO-Revision-Date: 2006-01-16 12:16+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -430,19 +430,23 @@ msgid "Verification error"
 msgstr "Überprüfungsfehler"
 
 #: src/verify-dialog.c:164
+msgid "This may be due to a wrong option setting"
+msgstr "Möglicherweise durch falsche Einstellungen verursacht"
+
+#: src/verify-dialog.c:170
 #, c-format
 msgid "Signature expired on %s"
 msgstr "Unterschrift abgelaufen am %s"
 
-#: src/verify-dialog.c:176
+#: src/verify-dialog.c:182
 msgid "Signature issued by a key we do NOT trust."
 msgstr "Die Unterschrift stammt von einem Schlüssel dem wir NICHT vertrauen."
 
-#: src/verify-dialog.c:183
+#: src/verify-dialog.c:189
 msgid "Signature issued by a non-valid key."
 msgstr "Die Unterschrift stammt von einem ungültigen Schlüssel."
 
-#: src/verify-dialog.c:205
+#: src/verify-dialog.c:211
 msgid "Verification Result"
 msgstr "Prüfungsresultat"
 

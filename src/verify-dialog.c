@@ -157,7 +157,13 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
   SetDlgItemText (dlg, IDC_VRY_PKALGO, s);
   
   valid = ctx->signatures->validity;
-  if (stat & GPGME_SIGSUM_SIG_EXPIRED) 
+  if (stat & GPGME_SIGSUM_RED)
+    {
+      /* This is a BAD signature; give a hint to the user. */
+      SetDlgItemText (dlg, IDC_VRY_HINT, 
+               _("This may be due to a wrong option setting"));
+    }
+  else if (stat & GPGME_SIGSUM_SIG_EXPIRED) 
     {
       const char *fmt;
     
