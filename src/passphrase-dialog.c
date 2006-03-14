@@ -322,7 +322,10 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                         _("Invalid passphrase; please try again..."):"");
 
       if (dec && !context->use_as_cb)
-        context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
+	{
+	  context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
+	  SetWindowText (dlg, _("Select Signing Key"));
+	}
 
       CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
       center_window (dlg, NULL);

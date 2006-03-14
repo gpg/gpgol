@@ -415,8 +415,8 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           hrset = GetDlgItem (dlg, IDC_ENC_RSET2);
           if (ListView_GetItemCount (hrset) == 0) 
             {
-              MessageBox (dlg, "Please select at least one recipient key.",
-                          "Recipient Dialog", MB_ICONINFORMATION|MB_OK);
+              MessageBox (dlg, _("Please select at least one recipient key."),
+                          _("Recipient Dialog"), MB_ICONINFORMATION|MB_OK);
               return FALSE;
 	    }
 

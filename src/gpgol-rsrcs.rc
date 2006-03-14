@@ -42,7 +42,7 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 
 IDD_ENC_DE DIALOG DISCARDABLE  0, 0, 332, 215
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Recipient Dialog"
+CAPTION "Auswahl des Empfängerschlüssels"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "List1",IDC_ENC_RSET1,"SysListView32",LVS_REPORT | 
@@ -61,7 +61,7 @@ END
 
 IDD_DEC_EXT_DE DIALOG DISCARDABLE  0, 0, 207, 143
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Secret Key Dialog"
+CAPTION "Auswahl des geheimen Schlüssels"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Verschlüsselt mit folgenden Public-Keys:",IDC_STATIC,7,
@@ -99,7 +99,7 @@ END
 
 IDD_VRY_DE DIALOG DISCARDABLE  0, 0, 253, 116
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Verifictation Result"
+CAPTION "Prüfungsresultat"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Signatur erstellt",IDC_STATIC,3,6,49,8
@@ -121,7 +121,7 @@ END
 
 IDD_DEC_DE DIALOG DISCARDABLE  0, 0, 225, 101
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Secret Key Dialog"
+CAPTION "Auswahl des geheimen Schlüssels"
 FONT 8, "MS Sans Serif"
 BEGIN
     COMBOBOX        IDC_DEC_KEYLIST,9,7,209,58,CBS_DROPDOWNLIST | WS_VSCROLL | 
