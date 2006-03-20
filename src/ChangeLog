@@ -1,6 +1,18 @@
-2006-03-20  Werner Koch  <wk@g10code.com>
+2006-03-20  Werner Koch <wk@g10code.com>
 
 	* olflange.cpp (Install): Also check major part of build version.
+	
+2006-03-17  Timo Schulz  <ts@g10code.com>
+
+	* w32-gettext.c (utf8_to_native): Make it global.
+	* config-dialog.c (get_open_file_name): Make sure the selected
+	file really exists.
+	* passphrase-dialog.c (decrypt_dlg_proc): UTF8 conversion.
+	(passphrase_callback_box): Likewise.
+	* recipient-dialog.c (recipient_dlg_proc): Likewise.
+	* verify-dialog.c (load_akalist): Likewise.
+	(load_sigbox): Likewise.
+	* common.c (utf_to_wincp): New.
 
 2006-03-15  Werner Koch  <wk@g10code.com>
 

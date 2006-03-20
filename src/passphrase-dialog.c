@@ -227,8 +227,8 @@ load_secbox (HWND dlg, int ctlid)
 
   while (!gpgme_op_keylist_next (ctx, &key)) 
     {
-      const char *name, *email, *keyid, *algo;
-      char *p;
+      const char *email, *keyid, *algo;
+      char *p, *name;
       long idx;
       
       if (key->revoked || key->expired || key->disabled || key->invalid)
@@ -242,15 +242,17 @@ load_secbox (HWND dlg, int ctlid)
           continue;
         }
         
-      name = key->uids->name;
-      if (!name)
-        name = "";
+      if (!key->uids->name)
+        name = strdup ("");
+      else
+	name = utf8_to_wincp (key->uids->name);
       email = key->uids->email;
       if (!email)
 	email = "";
       keyid = key->subkeys->keyid;
       if (!keyid || strlen (keyid) < 8)
         {
+	  xfree (name);
           gpgme_key_release (key);
           continue;
         }
@@ -262,8 +264,9 @@ load_secbox (HWND dlg, int ctlid)
       else
 	sprintf (p, "%s (0x%s, %s)", name, keyid+8, algo);
       idx = SendDlgItemMessage (dlg, ctlid, CB_ADDSTRING, 0, 
-			  (LPARAM)(const char *) p);
+				(LPARAM)(const char *)p);
       xfree (p);
+      xfree (name);
       if (idx < 0) /* Error. */
         {
           gpgme_key_release (key);
@@ -322,10 +325,7 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                         _("Invalid passphrase; please try again..."):"");
 
       if (dec && !context->use_as_cb)
-	{
-	  context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
-	  SetWindowText (dlg, _("Select Signing Key"));
-	}
+	context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
 
       CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
       center_window (dlg, NULL);
@@ -338,6 +338,8 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       else
         SetFocus (GetDlgItem (dlg, IDC_DEC_PASS));
 
+      if (!context->use_as_cb)
+	SetWindowText (dlg, _("Select Signing Key"));
       SetForegroundWindow (dlg);
       return FALSE;
     }
@@ -733,7 +735,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       else
         s = "[no user Id]";
       xfree (dec->user_id);
-      dec->user_id = xstrdup (s);
+      dec->user_id = utf8_to_wincp (s);
       dec->last_was_bad = prev_was_bad;
       if (dec->flags & 0x01)
         {

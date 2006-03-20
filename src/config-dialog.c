@@ -49,6 +49,7 @@ get_open_file_name (const char *dir, const char *title)
   memset (fname, 0, sizeof (fname));
   ofn.hwndOwner = GetDesktopWindow ();
   ofn.hInstance = glob_hinst;
+  ofn.Flags = OFN_FILEMUSTEXIST;
   ofn.lpstrTitle = title;
   ofn.lStructSize = sizeof (ofn);
   ofn.lpstrInitialDir = dir;

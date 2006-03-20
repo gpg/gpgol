@@ -1461,7 +1461,7 @@ utf8_to_wchar (const char *string)
 }
 
 
-static char *
+char *
 utf8_to_native (const char *string)
 {
   wchar_t *wstring;

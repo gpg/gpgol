@@ -114,11 +114,11 @@ struct
 } opt;
 
 
-
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
 char *get_save_filename (HWND root, const char *srcname);
+char *utf8_to_wincp (const char *string);
 
 HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
 

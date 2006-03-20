@@ -58,18 +58,22 @@ get_timestamp (time_t l)
 static int
 load_akalist (HWND dlg, gpgme_key_t key)
 {
-    gpgme_user_id_t u;
-    int n = 0;
-
-    u = key->uids;
-    if (!u->next)
-	return n;
-    for (u=u->next; u; u=u->next) {
-	SendDlgItemMessage (dlg, IDC_VRY_AKALIST, LB_ADDSTRING,
-			    0, (LPARAM)(const char*)u->uid);
-	n++;
-    }
+  gpgme_user_id_t u;
+  char *uid;
+  int n = 0;
+  
+  u = key->uids;
+  if (!u->next)
     return n;
+  for (u=u->next; u; u=u->next) 
+    {
+      uid = utf8_to_wincp (u->uid);
+      SendDlgItemMessage (dlg, IDC_VRY_AKALIST, LB_ADDSTRING,
+			  0, (LPARAM)(const char*)uid);
+      free (uid);
+      n++;
+    }
+  return n;
 }
 
 
@@ -139,8 +143,9 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
   
   if (key && key->uids) 
     {
-      s = key->uids->uid;
-      SetDlgItemText (dlg, IDC_VRY_ISSUER, s);
+      p = utf8_to_wincp (key->uids->uid);
+      SetDlgItemText (dlg, IDC_VRY_ISSUER, p);
+      free (p);
       
       n = load_akalist (dlg, key);
       gpgme_key_release (key);

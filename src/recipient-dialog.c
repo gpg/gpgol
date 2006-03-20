@@ -170,8 +170,8 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
           continue;
         }
 
-      /* Ignore keys without a user ID or woithout a subkey */
-      if (!key->uids || !key->subkeys )
+      /* Ignore keys without a user ID or without a subkey */
+      if (!key->uids || !key->subkeys)
         {
           gpgme_key_release (key);
           continue;
@@ -179,8 +179,9 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
 
       ListView_InsertItem (hwnd, &lvi);
       
-      s = key->uids->name;
+      s = utf8_to_wincp (key->uids->name);
       ListView_SetItemText (hwnd, 0, COL_NAME, s);
+      xfree (s);
       
       s = key->uids->email;
       ListView_SetItemText (hwnd, 0, COL_EMAIL, s);
@@ -352,7 +353,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
   static struct recipient_cb_s * rset_cb;
   static int rset_state = 1;
-  NMHDR * notify;
+  NMHDR *notify;
   HWND hrset;
   const char *warn;
   size_t pos;
@@ -365,7 +366,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
       initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1));
       rset_cb->keyarray = load_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1),
-                                        &rset_cb->keyarray_count );
+                                        &rset_cb->keyarray_count);
 
       initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET2));
 
@@ -382,6 +383,10 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       SetForegroundWindow (dlg);
       return TRUE;
 
+    case WM_DESTROY:
+      rset_state = 1; /* reset to default. */
+      break;
+      
     case WM_SYSCOMMAND:
       if (wparam == SC_CLOSE)
         EndDialog (dlg, TRUE);
@@ -409,7 +414,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           break;
 	}
 
-      switch ( LOWORD (wparam) ) 
+      switch (LOWORD (wparam))
         {
 	case IDOK:
           hrset = GetDlgItem (dlg, IDC_ENC_RSET2);
