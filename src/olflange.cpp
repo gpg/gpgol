@@ -706,6 +706,7 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                lFlags);
   
   /* Check version. */
+  log_debug ("GPGol: this is %s\n", SRCNAME, __func__, PACKAGE_STRING);
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
   pEECB->GetVersion (&lActualVersion, EECBGV_GETACTUALVERSION);
   pEECB->GetVersion (&lVirtualVersion, EECBGV_GETVIRTUALVERSION);
@@ -733,7 +734,8 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                    SRCNAME, __func__, lBuildVersion);
       return S_FALSE;
     }
-  if ((lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573)
+  if ((lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) < 13
+      ||(lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573)
     {
       static int shown;
       HWND hwnd;

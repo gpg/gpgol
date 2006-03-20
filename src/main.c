@@ -388,8 +388,10 @@ read_options (void)
   opt.enable_default_key = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
 
-  load_extension_value ("storePasswdTime", &val);
-  opt.passwd_ttl = val == NULL || *val == '0'? 0 : atol (val);
+  if (load_extension_value ("storePasswdTime", &val) )
+    opt.passwd_ttl = 600; /* Initial default. */
+  else
+    opt.passwd_ttl = val == NULL || *val == '0'? 0 : atol (val);
   xfree (val); val = NULL;
 
   load_extension_value ("encodingFormat", &val);

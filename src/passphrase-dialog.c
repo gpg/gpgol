@@ -559,7 +559,7 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
 /* Display a signer dialog which contains all secret keys, useable for
    signing data.  The key is returned in R_KEY.  The passprase in
-   r_passwd.  IF Encrypting is true, the message will get encrypted
+   r_passwd.  If Encrypting is true, the message will get encrypted
    later. */
 int 
 signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting)
@@ -659,8 +659,8 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
        For caching we need to use the long keyid from case 1; the main
        keyid can't be used because a key may have different
        passphrases on the subkeys.  Caching for symmetrical keys is
-       not possible becuase there is no information on what
-       key(i.e. passphrase) to use.  Caching of of PINs is not yet
+       not possible because there is no information on what
+       key(i.e. passphrase) to use.  Caching of PINs is not yet
        possible because we don't have information on the card's serial
        number yet; that must be solved by gpgme. 
 
@@ -710,7 +710,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
   assert (strlen (keyidstr) < sizeof dec->keyid);
   strcpy (dec->keyid, keyidstr);
 
-  /* If we have no cached pssphrase, popup the passphrase dialog. */
+  /* If we have no cached passphrase, popup the passphrase dialog. */
   if (!dec->pass)
     {
       int rc;
