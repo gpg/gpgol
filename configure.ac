@@ -1,5 +1,5 @@
 # configure.ac - for GPGol
-# Copyright (C) 2005 g10 Code GmbH
+# Copyright (C) 2005, 2006 g10 Code GmbH
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -16,7 +16,7 @@ min_automake_version="1.9.4"
 # Version number: Remember to change it immediately *after* a release.
 #                 Make sure to run  "svn up" before a "make dist".
 #                 Add a "-cvs" prefix for non-released code.
-AC_INIT(gpgol, 0.9.7-cvs, bug-gpgol@g10code.com)
+AC_INIT(gpgol, 0.9.7, bug-gpgol@g10code.com)
 
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0
