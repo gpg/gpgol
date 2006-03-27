@@ -100,6 +100,7 @@ struct
   char *default_key;         /* The key we want to always encrypt to. */
   int enable_default_key;    /* Enable the use of DEFAULT_KEY. */
   int preview_decrypt;       /* Decrypt in preview window. */
+  int prefer_html;           /* Prefer html in html/text alternatives. */
 
   /* The compatibility flags. */
   struct 

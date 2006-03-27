@@ -1005,9 +1005,9 @@ is_parameter (TOKEN t)
    in RFC2045.
    Returns a pointer to the value which is valid as long as the
    parse context is valid; NULL is returned in case that attr is not
-   defined in the header, a missing value is reppresented by an empty string.
+   defined in the header, a missing value is represented by an empty string.
  
-   With LOWER_VALUE set to true, a matching field valuebe be
+   With LOWER_VALUE set to true, a matching field value will be
    lowercased.
  
    Note, that ATTR should be lowercase.

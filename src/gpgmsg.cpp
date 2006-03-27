@@ -1,5 +1,5 @@
 /* gpgmsg.cpp - Implementation ofthe GpgMsg class
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2006 g10 Code GmbH
  *
  * This file is part of GPGol.
  * 
@@ -37,6 +37,8 @@
 #include "pgpmime.h"
 #include "engine.h"
 #include "display.h"
+#include "rfc822parse.h"
+
 
 static const char oid_mimetag[] =
   {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -99,9 +101,15 @@ public:
   {
     message = NULL;
     exchange_cb = NULL;
-    is_pgpmime = false;
+    is_pgpmime_enc = false;
     has_attestation = false;
     preview = false;
+
+    got_message_ct = false;
+    media_type = NULL;
+    media_subtype = NULL;
+    ct_protocol = NULL;
+    transport_message_headers = NULL;
 
     attestation = NULL;
 
@@ -111,6 +119,11 @@ public:
 
   ~GpgMsgImpl ()
   {
+    xfree (media_type);
+    xfree (media_subtype);
+    xfree (ct_protocol);
+    xfree (transport_message_headers);
+
     if (message)
       message->Release ();
 
@@ -136,6 +149,7 @@ public:
       {
         message->Release ();
         message = NULL;
+        got_message_ct = false;
       }
     if (msg)
       {
@@ -186,14 +200,20 @@ public:
 private:
   LPMESSAGE message;  /* Pointer to the message. */
   void *exchange_cb;  /* Call back used with the display function. */
-  bool is_pgpmime;    /* True if the message is a PGP/MIME encrypted one. */
+  bool is_pgpmime_enc;/* True if the message is a PGP/MIME encrypted one. */
   bool has_attestation;/* True if we found an attestation attachment. */
   bool preview;       /* Don't pop up message boxes and run only a
                          body decryption. */
 
   /* If not NULL, collect attestation information here. */
   gpgme_data_t attestation;
-  
+
+  /* Store information from the messages headers. */ 
+  bool got_message_ct;  /* Flag indicating whether we retrieved the info. */
+  char *media_type;     /* Media type from the content-type or NULL. */
+  char *media_subtype;  /* Media sybtype from the content-type or NULL. */
+  char *ct_protocol;    /* Protocol from the content_type or NULL. */
+  char *transport_message_headers;  /* Al the message headers as one string. */
 
   /* This structure collects the information about attachments. */
   struct 
@@ -204,6 +224,7 @@ private:
   
   void free_attach_info (void);
   char *loadBody (bool want_html);
+  void get_msg_content_type (void);
   bool isPgpmimeVersionPart (int pos);
   void writeAttestation (void);
   gpg_error_t createHtmlAttachment (const char *text);
@@ -363,7 +384,7 @@ text_from_attach_info (attach_info_t table, const char *format,
 
 
 
-/* Load the body from the MAP and return it as an UTF8 string.
+/* Load the body from the MAPI and return it as an UTF8 string.
    Returns NULL on error.  */
 char *
 GpgMsgImpl::loadBody (bool want_html)
@@ -559,6 +580,114 @@ set_subject (LPMESSAGE obj, const char *string)
   return 0;
 }
 #endif
+
+
+
+/* Helper for get_msg_content_type() */
+static int
+get_msg_content_type_cb (void *dummy_arg,
+                         rfc822parse_event_t event, rfc822parse_t msg)
+{
+  if (event == RFC822PARSE_T2BODY)
+    return 42; /* Hack to stop immediately the parsing.  This is
+                  required because the code would else prepare for
+                  MIME handling and we don't want this to happen. In
+                  general it would be better to do any parsing of the
+                  headers here but we need to access instance
+                  variables and it is more complex to do this in a
+                  callback. */
+  return 0;
+}
+
+
+/* Find Content-Type of the current message.  The result will be put
+   into instance variables.  */
+void
+GpgMsgImpl::get_msg_content_type (void)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  rfc822parse_t msg;
+  const char *header_lines, *s;
+  rfc822parse_field_t ctx;
+  size_t length;
+
+  if (got_message_ct)
+    return;
+  got_message_ct = 1;
+
+  xfree (media_type);
+  media_type = NULL;
+  xfree (media_subtype);
+  media_subtype = NULL;
+  xfree (ct_protocol);
+  ct_protocol = NULL;
+  xfree (transport_message_headers);
+  transport_message_headers = NULL;
+
+  hr = HrGetOneProp ((LPMAPIPROP)message,
+                     PR_TRANSPORT_MESSAGE_HEADERS_A, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: error getting the headers lines: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      return; 
+    }
+  if ( PROP_TYPE (propval->ulPropTag) != PT_STRING8 )
+    {
+      /* As per rfc822, header lines must be plain ascii, so no need to
+         cope withy unicode etc. */
+      log_error ("%s:%s: proptag=%#lx not supported\n",
+                 SRCNAME, __func__, propval->ulPropTag);
+      MAPIFreeBuffer (propval);
+      return;
+    }
+
+  header_lines = propval->Value.lpszA;
+
+  /* Save the header lines in case we need them for signature
+     verification. */
+  transport_message_headers = xstrdup (header_lines);
+
+  /* Read the headers into an rfc822 object. */
+  msg = rfc822parse_open (get_msg_content_type_cb, NULL);
+  if (!msg)
+    {
+      log_error ("%s:%s: rfc822parse_open failed\n", SRCNAME, __func__);
+      MAPIFreeBuffer (propval);
+      return;
+    }
+  
+  while ((s = strchr (header_lines, '\n')))
+    {
+      length = (s - header_lines);
+      if (length && s[-1] == '\r')
+        length--;
+      rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
+      header_lines = s+1;
+    }
+  
+  /* Parse the content-type field. */
+  ctx = rfc822parse_parse_field (msg, "Content-Type", -1);
+  if (ctx)
+    {
+      const char *s1, *s2;
+      s1 = rfc822parse_query_media_type (ctx, &s2);
+      if (s1)
+        {
+          media_type = xstrdup (s1);
+          media_subtype = xstrdup (s2);
+          s = rfc822parse_query_parameter (ctx, "protocol", 0);
+          if (s)
+            ct_protocol = xstrdup (s);
+        }
+      rfc822parse_release_field (ctx);
+    }
+
+  rfc822parse_close (msg);
+  MAPIFreeBuffer (propval);
+}
+
 
 
 /* Return the type of a message with the body text in TEXT. */
@@ -949,6 +1078,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   unsigned int n_attach = 0;
   unsigned int n_encrypted = 0;
   unsigned int n_signed = 0;
+  int is_pgpmime_sig = 0;
   int have_pgphtml_sig = 0;
   int have_pgphtml_enc = 0;
   unsigned int pgphtml_pos = 0;
@@ -957,6 +1087,21 @@ GpgMsgImpl::decrypt (HWND hwnd)
   int is_html = 0;
   char *body;
 
+  get_msg_content_type ();
+  log_debug ("%s:%s: parsed content-type: media=%s/%s protocol=%s\n",
+             SRCNAME, __func__,
+             media_type? media_type:"[none]",
+             media_subtype? media_subtype:"[none]",
+             ct_protocol? ct_protocol : "[none]");
+  if (media_type && media_subtype && ct_protocol
+      && !strcmp (media_type, "multipart")
+      && !strcmp (media_subtype, "signed")
+      && !strcmp (ct_protocol, "application/pgp-signature"))
+    {
+      /* This is a PGP/MIME signature.  */
+      is_pgpmime_sig = 1;
+    }
+  
   /* Load the body text into BODY.  Note that body may be NULL but in
      this case MTYPE will be OPENPGP_NONE. */
   body = loadBody (false);
@@ -966,9 +1111,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
      attachments.  We check right now because we need to get into the
      decryption code even if the body is not encrypted but attachments
      are available. */
-  table = gatherAttachmentInfo ();
+  table = is_pgpmime_sig? NULL : gatherAttachmentInfo ();
   if (table)
     {
+      /* Fixup for the special pgphtml attachment. */
       for (pos=0; !table[pos].end_of_table; pos++)
         if (table[pos].is_encrypted)
           {
@@ -1005,8 +1151,9 @@ GpgMsgImpl::decrypt (HWND hwnd)
   log_debug ("%s:%s: message has %u attachments with "
              "%u signed and %d encrypted\n",
              SRCNAME, __func__, n_attach, n_signed, n_encrypted);
+
   if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed
-      && !have_pgphtml_enc && !have_pgphtml_sig) 
+      && !have_pgphtml_enc && !have_pgphtml_sig && !is_pgpmime_sig) 
     {
       /* Because we usually work around the OL object model, it can't
          notice that we changed the windows's text behind its back (by
@@ -1060,7 +1207,46 @@ GpgMsgImpl::decrypt (HWND hwnd)
     gpgme_data_new (&attestation);
   
   /* Process according to type of message. */
-  if (is_pgpmime)
+  if (is_pgpmime_sig)
+    {
+      static int warning_shown;
+      
+      /* We need to do duplicate some work: For retrieving the headers
+         we already used our own rfc822 parser.  For actually
+         verifying the signature we need to concatentate the body with
+         these hesaders and passs it down to pgpmime.c where they will
+         be parsed again. Probably easier to maintain than merging the
+         MAPI access with our rc822 parser code. */
+      const char *mybody = body? body: "";
+      char *tmp;
+      
+      assert (transport_message_headers);
+      tmp = (char*)xmalloc (strlen (transport_message_headers)
+                            + strlen (mybody));
+      strcpy (stpcpy (tmp, transport_message_headers), mybody);
+
+      /* Note, that we don't do an attestation.  This is becuase we
+         don't run the code to check for duplicate attestations. */
+      err = pgpmime_verify (tmp,
+                            opt.passwd_ttl, &plaintext, NULL,
+                            hwnd, preview);
+      xfree (tmp);
+
+      if (err && !warning_shown)
+        {
+          warning_shown = 1;
+          MessageBox
+            (hwnd, _("Note: This is a PGP/MIME signed message.  The GPGol "
+                     "plugin is not always able to verify such a message "
+                     "due to missing support in Outlook.\n\n"
+                     "(This message will be shown only once per session)"),
+                      _("Verification"), MB_ICONWARNING|MB_OK);
+        }
+      
+      if (!err)
+        pgpmime_succeeded = 1;
+    }
+  else if (is_pgpmime_enc)
     {
       LPATTACH att;
       int method;
@@ -1225,9 +1411,10 @@ GpgMsgImpl::decrypt (HWND hwnd)
     }
   else
     err = gpg_error (GPG_ERR_NO_DATA);
+
   if (err)
     {
-      if (!is_pgpmime && n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
+      if (!is_pgpmime_enc && n_attach && gpg_err_code (err) == GPG_ERR_NO_DATA)
         ;
       else if (mtype == OPENPGP_CLEARSIG)
         MessageBox (hwnd, op_strerror (err),
@@ -2102,7 +2289,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
   unsigned int attestation_count = 0;
   unsigned int invalid_count = 0;
 
-  is_pgpmime = false;
+  is_pgpmime_enc = false;
   has_attestation = false;
   n_attach = getAttachments ();
   log_debug ("%s:%s: message has %u attachments\n",
@@ -2251,7 +2438,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
       log_debug ("\tThis is a PGP/MIME encrypted message - table adjusted");
       table[0].is_encrypted = 0;
       table[1].is_encrypted = 1;
-      is_pgpmime = true;
+      is_pgpmime_enc = true;
     }
 
   return table;

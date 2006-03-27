@@ -20,6 +20,13 @@
 
 #ifndef RFC822PARSE_H
 #define RFC822PARSE_H
+#ifdef __cplusplus
+extern "C" {
+#if 0
+}
+#endif
+#endif
+
 
 struct rfc822parse_context;
 typedef struct rfc822parse_context *rfc822parse_t;
@@ -78,4 +85,7 @@ const char *rfc822parse_query_parameter (rfc822parse_field_t ctx,
 const char *rfc822parse_query_media_type (rfc822parse_field_t ctx,
                                           const char **subtype);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*RFC822PARSE_H */

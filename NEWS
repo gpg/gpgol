@@ -1,3 +1,9 @@
+Noteworthy changes for version 0.9.8
+=================================================
+
+* PGP/MIME signature verification may now work in some cases.
+
+
 Noteworthy changes for version 0.9.7 (2006-03-21)
 =================================================
 

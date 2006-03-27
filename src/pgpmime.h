@@ -31,7 +31,8 @@ extern "C" {
 int pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
                      gpgme_data_t attestation, HWND hwnd,
                      int preview_mode);
-
+int pgpmime_verify (const char *message, int ttl, char **body,
+                    gpgme_data_t attestation, HWND hwnd, int preview_mode);
 
 
 #ifdef __cplusplus

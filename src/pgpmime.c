@@ -89,15 +89,28 @@ struct pgpmime_context
   rfc822parse_t msg;  /* The handle of the RFC822 parser. */
 
   int preview;        /* Do only decryption and pop up no  message bozes.  */
+  
+  int verify_mode;    /* True if we want to verify a PGP/MIME signature. */
 
   int nesting_level;  /* Current MIME nesting level. */
   int in_data;        /* We are currently in data (body or attachment). */
 
+  gpgme_data_t signed_data;/* NULL or the data object used to collect
+                              the signed data. It would bet better to
+                              just hash it but there is no support in
+                              gpgme for this yet. */
+  gpgme_data_t sig_data;  /* NULL or data object to collect the
+                             signature attachment which should be a
+                             signature then.  */
   
   gpgme_data_t body;      /* NULL or a data object used to collect the
                              body part we are going to display later. */
   int collect_body;       /* True if we are collecting the body lines. */
   int collect_attachment; /* True if we are collecting an attachment. */
+  int collect_signeddata; /* True if we are collecting the signed data. */
+  int collect_signature;  /* True if we are collecting a signature.  */
+  int start_hashing;      /* Flag used to start collecting signed data. */
+  int hashing_level;      /* MIME level where we started hashing. */
   int is_qp_encoded;      /* Current part is QP encoded. */
   int is_base64_encoded;  /* Current part is base 64 encoded. */
   int is_utf8;            /* Current part has charset utf-8. */
@@ -292,10 +305,26 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
   HRESULT hr;
 
   debug_message_event (ctx, event);
+
+  if (event == RFC822PARSE_BEGIN_HEADER || event == RFC822PARSE_T2BODY)
+    {
+      /* We need to check here whether to start collecting signed data
+         because attachments might come without header lines and thus
+         we won't see the BEGIN_HEADER event. */
+      if (ctx->start_hashing == 1)
+        {
+          ctx->start_hashing = 2;
+          ctx->hashing_level = ctx->nesting_level;
+          ctx->collect_signeddata = 1;
+          gpgme_data_new (&ctx->signed_data);
+        }
+    }
+
+
   if (event == RFC822PARSE_T2BODY)
     {
       rfc822parse_field_t field;
-      const char *s1, *s2;
+      const char *s1, *s2, *s3;
       size_t off;
       char *p;
       int is_text = 0;
@@ -318,11 +347,41 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
 
                      For now encapsulated signed or encrypted
                      containers are not processed in a special way as
-                     they should. */
+                     they should.  Except for the simple verify
+                     mode. */
+                  if (ctx->verify_mode && !ctx->signed_data
+                      && !strcmp (s2,"signed")
+                      && (s3 = rfc822parse_query_parameter (field,
+                                                            "protocol", 0))
+                      && !strcmp (s3, "application/pgp-signature"))
+                    {
+                      /* Need to start the hashing after the next
+                         boundary. */
+                      ctx->start_hashing = 1;
+                    }
                 }
               else if (!strcmp (s1, "text"))
                 {
                   is_text = 1;
+                }
+              else if (ctx->verify_mode
+                       && ctx->nesting_level == 1
+                       && !ctx->sig_data
+                       && !strcmp (s1, "application")
+                       && !strcmp (s2, "pgp-signature"))
+                {
+                  /* This is the second part of a PGP/MIME signature.
+                     We only support here full messages thus checking
+                     the nesting level is sufficient. We do this only
+                     for the first signature (i.e. if sig_data has not
+                     been set yet). We do this only while in verify
+                     mode because we don't want to write a full MUA
+                     (although this would be easier than to tame this
+                     Outlook beast). */
+                  if (!ctx->preview && !gpgme_data_new (&ctx->sig_data))
+                    {
+                      ctx->collect_signature = 1;
+                    }
                 }
               else /* Other type. */
                 {
@@ -344,6 +403,9 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
           is_text = 1;
         }
       ctx->in_data = 1;
+
+      log_debug ("%s: this body: nesting=%d part_counter=%d is_text=%d\n", 
+                 SRCNAME, ctx->nesting_level, ctx->part_counter, is_text);
 
       /* Need to figure out the encoding. */
       ctx->is_qp_encoded = 0;
@@ -382,9 +444,11 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
             ctx->collect_attachment = 1;
         }
 
-      /* Now that if we have an attachment prepare for writing it out. */
+
       if (ctx->collect_attachment)
         {
+          /* Now that if we have an attachment prepare for writing it
+             out. */
           p = NULL;
           field = rfc822parse_parse_field (msg, "Content-Disposition", -1);
           if (field)
@@ -457,6 +521,11 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
           IStream_Release (ctx->outstream);
           ctx->outstream = NULL;
         }
+      if (ctx->start_hashing == 2 && ctx->hashing_level == ctx->nesting_level)
+        {
+          ctx->start_hashing = 3; /* Avoid triggering it again. */
+          ctx->collect_signeddata = 0;
+        }
     }
   else if (event == RFC822PARSE_BEGIN_HEADER)
     {
@@ -502,10 +571,22 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
               return 0; /* Error. */
             }
 
+
+          if (ctx->collect_signeddata && ctx->signed_data)
+            {
+              /* Save the signed data.  Note that we need to delay
+                 the CR/LF because the last line ending belongs to the
+                 next boundary. */
+              if (ctx->collect_signeddata == 2)
+                gpgme_data_write (ctx->signed_data, "\r\n", 2);
+              gpgme_data_write (ctx->signed_data, ctx->linebuf, pos);
+              ctx->collect_signeddata = 2;
+            }
+
           if (ctx->in_data && ctx->collect_body && ctx->body)
             {
               /* We are inside the body of the message.  Save it away
-                 to a gpgme data object.  Note that this gets only
+                 to a gpgme data object.  Note that this is only
                  used for the first text part. */
               if (ctx->collect_body == 1)  /* Need to skip the first line. */
                 ctx->collect_body = 2;
@@ -558,6 +639,25 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                       ctx->parser_error = 1;
                       return 0; /* Error. */
                     }
+                }
+            }
+          else if (ctx->in_data && ctx->collect_signature)
+            {
+              /* We are inside of a signature attachment part.  */
+              if (ctx->collect_signature == 1)  /* Skip the first line. */
+                ctx->collect_signature = 2;
+              else if (ctx->sig_data)
+                {
+                  if (ctx->is_qp_encoded)
+                    len = qp_decode (ctx->linebuf, pos);
+                  else if (ctx->is_base64_encoded)
+                    len = base64_decode (ctx, ctx->linebuf, pos);
+                  else
+                    len = pos;
+                  if (len)
+                    gpgme_data_write (ctx->sig_data, ctx->linebuf, len);
+                  if (!ctx->is_base64_encoded)
+                    gpgme_data_write (ctx->sig_data, "\r\n", 2);
                 }
             }
           
@@ -643,6 +743,92 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
       rfc822parse_close (ctx->msg);
       if (ctx->body)
         gpgme_data_release (ctx->body);
+      xfree (ctx->filename);
+      xfree (ctx);
+    }
+  return err;
+}
+
+
+
+int
+pgpmime_verify (const char *message, int ttl, char **body,
+                gpgme_data_t attestation, HWND hwnd, int preview_mode)
+{
+  gpg_error_t err = 0;
+  pgpmime_context_t ctx;
+  const char *s;
+
+  *body = NULL;
+
+  ctx = xcalloc (1, sizeof *ctx + LINEBUFSIZE);
+  ctx->linebufsize = LINEBUFSIZE;
+  ctx->hwnd = hwnd;
+  ctx->preview = preview_mode;
+  ctx->verify_mode = 1;
+
+  ctx->msg = rfc822parse_open (message_cb, ctx);
+  if (!ctx->msg)
+    {
+      err = gpg_error_from_errno (errno);
+      log_error ("failed to open the RFC822 parser: %s", strerror (errno));
+      goto leave;
+    }
+
+  /* Need to pass the data line by line to the handler. */
+  for (;(s = strchr (message, '\n')); message = s+1)
+    {
+      plaintext_handler (ctx, message, (s - message) + 1);
+      if (ctx->parser_error || ctx->line_too_long)
+        {
+          err = gpg_error (GPG_ERR_GENERAL);
+          break;
+        }
+    }
+
+  /* Unless there is an error we should return the body. */
+  if (!err)
+    {
+      if (ctx->body)
+        {
+          /* Return the buffer but first make sure it is a string. */
+          if (gpgme_data_write (ctx->body, "", 1) == 1)
+            {
+              *body = gpgme_data_release_and_get_mem (ctx->body, NULL);
+              ctx->body = NULL; 
+            }
+        }
+      else
+        *body = xstrdup (_("[PGP/MIME signed message without a "
+                           "plain text body]"));
+    }
+
+  /* Now actually verify the signature. */
+  if (!err && ctx->signed_data && ctx->sig_data)
+    {
+      gpgme_data_seek (ctx->signed_data, 0, SEEK_SET);
+      gpgme_data_seek (ctx->sig_data, 0, SEEK_SET);
+      err = op_verify_detached_sig_gpgme (ctx->signed_data, ctx->sig_data,
+                                          _("[PGP/MIME signature]"),
+                                          attestation);
+    }
+
+
+ leave:
+  if (ctx)
+    {
+      if (ctx->outstream)
+        {
+          IStream_Revert (ctx->outstream);
+          IStream_Release (ctx->outstream);
+        }
+      rfc822parse_close (ctx->msg);
+      if (ctx->body)
+        gpgme_data_release (ctx->body);
+      if (ctx->signed_data)
+        gpgme_data_release (ctx->signed_data);
+      if (ctx->sig_data)
+        gpgme_data_release (ctx->sig_data);
       xfree (ctx->filename);
       xfree (ctx);
     }

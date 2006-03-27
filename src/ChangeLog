@@ -1,3 +1,21 @@
+2006-03-27  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_verify_detached_sig_gpgme): New.
+
+	* pgpmime.c (pgpmime_verify): New. First take on a PGP/MIME
+	signature verification.
+
+	* gpgmsg.cpp (is_pgpmime): Renamed to is_pgpmime_enc.
+	(class GpgMsgImpl): Niew members media_type. media_subtype and
+	ct_protocol.
+	(get_msg_content_type): New.
+	(decrypt): Show a warning for PGP/MIME signed messages.
+
+2006-03-26  Werner Koch  <wk@g10code.com>
+
+	* intern.h: New option PREFER_HTML.
+	* main.c (write_options, read_options): Ditto.
+
 2006-03-20  Werner Koch <wk@g10code.com>
 
 	* olflange.cpp (Install): Also check major part of build version.
@@ -12,7 +30,7 @@
 	* recipient-dialog.c (recipient_dlg_proc): Likewise.
 	* verify-dialog.c (load_akalist): Likewise.
 	(load_sigbox): Likewise.
-	* common.c (utf_to_wincp): New.
+	* common.c (utf8_to_wincp): New.
 
 2006-03-15  Werner Koch  <wk@g10code.com>
 

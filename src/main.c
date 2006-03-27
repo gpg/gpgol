@@ -406,6 +406,10 @@ read_options (void)
   set_default_key (val);
   xfree (val); val = NULL;
 
+  load_extension_value ("preferHtml", &val);
+  opt.prefer_html = val == NULL || *val != '1'? 0 : 1;
+  xfree (val); val = NULL;
+
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
      the switch below for a description. */
@@ -457,6 +461,7 @@ write_options (void)
     {"logFile",                  2, 0, logfile},
     {"defaultKey",               2, 0, opt.default_key},
     {"enableDefaultKey",         0, opt.enable_default_key},
+    {"preferHtml",               0, opt.prefer_html},
     {NULL, 0}
   };
   char buf[32];
