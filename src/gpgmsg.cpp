@@ -87,6 +87,7 @@ typedef struct attach_info *attach_info_t;
 
 static int get_attach_method (LPATTACH obj);
 static char *get_short_attach_data (LPATTACH obj);
+static char *get_long_attach_data (LPMESSAGE msg, attach_info_t table,int pos);
 static bool set_x_header (LPMESSAGE msg, const char *name, const char *val);
 
 
@@ -392,7 +393,6 @@ GpgMsgImpl::loadBody (bool want_html)
   HRESULT hr;
   LPSPropValue lpspvFEID = NULL;
   LPSTREAM stream;
-//   SPropValue prop;
   STATSTG statInfo;
   ULONG nread;
   char *body = NULL;
@@ -491,8 +491,8 @@ GpgMsgImpl::loadBody (bool want_html)
 
  ready:
   if (body)
-    log_debug ("%s:%s: loaded body `%s' at %p\n",
-               SRCNAME, __func__, body, body);
+    log_debug ("%s:%s: loaded body %d bytes of body at %p\n",
+               SRCNAME, __func__, strlen (body), body);
   
 
 //   prop.ulPropTag = PR_ACCESS;
@@ -1082,6 +1082,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
   int have_pgphtml_sig = 0;
   int have_pgphtml_enc = 0;
   unsigned int pgphtml_pos = 0;
+  unsigned int pgphtml_pos_sig = 0;
   HRESULT hr;
   int pgpmime_succeeded = 0;
   int is_html = 0;
@@ -1135,13 +1136,14 @@ GpgMsgImpl::decrypt (HWND hwnd)
           {
             if (!have_pgphtml_sig && !have_pgphtml_enc
                 && table[pos].filename
-                && !strcmp (table[pos].filename, "PGPexch.htm.asc")
+                && !strcmp (table[pos].filename, "PGPexch.htm")
                 && table[pos].content_type  
-                && !strcmp (table[pos].content_type,
-                            "application/pgp-signature"))
+                && !strcmp (table[pos].content_type, "text/html")
+                && table[pos].sig_pos != pos)
               {
                 have_pgphtml_sig = 1;
                 pgphtml_pos = pos;
+                pgphtml_pos_sig = table[pos].sig_pos;
               }
             else
               n_signed++;
@@ -1151,6 +1153,13 @@ GpgMsgImpl::decrypt (HWND hwnd)
   log_debug ("%s:%s: message has %u attachments with "
              "%u signed and %d encrypted\n",
              SRCNAME, __func__, n_attach, n_signed, n_encrypted);
+  if (have_pgphtml_enc)
+    log_debug ("%s:%s: pgphtml encrypted attachment found at pos %d\n",
+               SRCNAME, __func__, pgphtml_pos);
+  if (have_pgphtml_sig)
+    log_debug ("%s:%s: pgphtml signature attachment found at pos %d\n",
+               SRCNAME, __func__, pgphtml_pos);
+  
 
   if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed
       && !have_pgphtml_enc && !have_pgphtml_sig && !is_pgpmime_sig) 
@@ -1200,6 +1209,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
     {
       if (attestation)
         gpgme_data_release (attestation);
+      attestation = NULL;
       log_debug ("%s:%s: we already have an attestation\n",
                  SRCNAME, __func__);
     }
@@ -1313,39 +1323,51 @@ GpgMsgImpl::decrypt (HWND hwnd)
       if (!err)
         pgpmime_succeeded = 1;
     }
-  else if (mtype == OPENPGP_CLEARSIG )
+  else if (mtype == OPENPGP_CLEARSIG && !(have_pgphtml_sig && opt.prefer_html))
     {
+      /* Cleartext signature.  */
+
       assert (body);
       err = preview? 0 : op_verify (body, NULL, NULL, attestation);
     }
-  else if (body && *body)
+  else if ( (body && *body)
+            && !((have_pgphtml_enc||have_pgphtml_sig) && opt.prefer_html))
     {
+      /* Standard encrypted body.  We do not enter this if we also
+         have an pgphtml encrypted attachment and the prefer_html
+         option is activ.  */
+
       err = op_decrypt (body, &plaintext, opt.passwd_ttl, NULL,
                         attestation, preview);
-      if (!err && have_pgphtml_enc)
-        is_html = 1;
     }
-  else if (mtype == OPENPGP_NONE && have_pgphtml_sig)
+  else if ((mtype == OPENPGP_NONE || opt.prefer_html) && have_pgphtml_sig)
     {
+      /* There is no body but a pgphtml signed attachment - decrypt
+         that one. */
       if (preview)
         err = 0;
       else
         {
+          /* Note that we don't access the HTML body.  It seems that
+             Outlooks creates that one on the fly and it will break
+             the signature.  It is better to use the attachment
+             directly. */
           LPATTACH att;
-          char *htmlbody = loadBody (true);
 
-          if (htmlbody && *htmlbody)
+          plaintext = get_long_attach_data (message, table, pgphtml_pos);
+          
+          if (plaintext && *plaintext)
             {
               is_html = 1;
-              hr = message->OpenAttach (pgphtml_pos, NULL,
+              hr = message->OpenAttach (pgphtml_pos_sig, NULL,
                                         MAPI_BEST_ACCESS, &att);	
               if (FAILED (hr))
                 {
                   log_error ("%s:%s: can't open attachment %d (sig): hr=%#lx",
-                             SRCNAME, __func__, pgphtml_pos, hr);
+                             SRCNAME, __func__, pgphtml_pos_sig, hr);
                   err = gpg_error (GPG_ERR_GENERAL);
                 }
-              else if (table[pgphtml_pos].method != ATTACH_BY_VALUE)
+              else if (table[pgphtml_pos_sig].method != ATTACH_BY_VALUE)
                 {
                   log_error ("%s:%s: HTML attachment: method not supported",
                              SRCNAME, __func__);
@@ -1360,7 +1382,7 @@ GpgMsgImpl::decrypt (HWND hwnd)
                     err = gpg_error (GPG_ERR_GENERAL);
                   else
                     {
-                      err = op_verify_detached_sig_mem (htmlbody, sigpart,
+                      err = op_verify_detached_sig_mem (plaintext, sigpart,
                                                         NULL, attestation);
                       xfree (sigpart);
                     }
@@ -1368,11 +1390,12 @@ GpgMsgImpl::decrypt (HWND hwnd)
             }
           else
             err = gpg_error (GPG_ERR_NO_DATA);
-          xfree (htmlbody);
         }
     }
-  else if (mtype == OPENPGP_NONE && have_pgphtml_enc)
+  else if ((mtype == OPENPGP_NONE || opt.prefer_html) && have_pgphtml_enc)
     {
+      /* There is no body but a pgphtml encrypted attachment - decrypt
+         that one. */
       LPATTACH att;
       LPSTREAM from;
 
@@ -2059,8 +2082,8 @@ get_short_attach_data (LPATTACH obj)
   switch ( PROP_TYPE (propval->ulPropTag) )
     {
     case PT_BINARY:
-      /* This is a binary obnject but we know that it must be plain
-         ASCII due to the armoed format.  */
+      /* This is a binary object but we know that it must be plain
+         ASCII due to the armored format.  */
       data = (char*)xmalloc (propval->Value.bin.cb + 1);
       memcpy (data, propval->Value.bin.lpb, propval->Value.bin.cb);
       data[propval->Value.bin.cb] = 0;
@@ -2075,6 +2098,77 @@ get_short_attach_data (LPATTACH obj)
   MAPIFreeBuffer (propval);
   return data;
 }
+
+
+/* Get an statchment as one long C string.  We assume that there are
+   no binary nuls in it.  Returns NULL on failure. */
+static char *
+get_long_attach_data (LPMESSAGE msg, attach_info_t table, int pos)
+{
+  HRESULT hr;
+  LPATTACH att;
+  LPSTREAM stream;
+  STATSTG statInfo;
+  ULONG nread;
+  char *buffer;
+
+  hr = msg->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment %d: hr=%#lx",
+                 SRCNAME, __func__, pos, hr);
+      return NULL;
+    }
+  if (table[pos].method != ATTACH_BY_VALUE)
+    {
+      log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
+      att->Release ();
+      return NULL;
+    }
+
+  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                          0, 0, (LPUNKNOWN*) &stream);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open data stream of attachment: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      att->Release ();
+      return NULL;
+    }
+
+  hr = stream->Stat (&statInfo, STATFLAG_NONAME);
+  if ( hr != S_OK )
+    {
+      log_error ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
+      stream->Release ();
+      att->Release ();
+      return NULL;
+    }
+      
+  buffer = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 2);
+  hr = stream->Read (buffer, (size_t)statInfo.cbSize.QuadPart, &nread);
+  if ( hr != S_OK )
+    {
+      log_error ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
+      xfree (buffer);
+      stream->Release ();
+      att->Release ();
+      return NULL;
+    }
+  buffer[nread] = 0;
+  buffer[nread+1] = 0;
+  if (nread != statInfo.cbSize.QuadPart)
+    {
+      log_error ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
+      xfree (buffer);
+      buffer = NULL;
+    }
+  stream->Release ();
+  att->Release ();
+      
+  return buffer;
+}
+
 
 
 /* Check whether the attachment at position POS in the attachment
@@ -2378,7 +2472,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
       if (table[pos].invalid)
         continue;
       if (table[pos].filename && (s = strrchr (table[pos].filename, '.'))
-          &&  !stricmp (s, ".asc")
+          && !stricmp (s, ".asc")
           && table[pos].content_type  
           && !stricmp (table[pos].content_type, "application/pgp-signature"))
         {

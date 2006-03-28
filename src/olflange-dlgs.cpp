@@ -1,6 +1,6 @@
 /* olflange-dlgs.cpp - New dialogs for Outlook.
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004, 2005 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2006 g10 Code GmbH
  * 
  * This file is part of GPGol.
  * 
@@ -148,6 +148,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				!!opt.auto_sign_attach, 0L);
 	    SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
 				!!opt.preview_decrypt, 0L);
+	    SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
+				!!opt.prefer_html, 0L);
 	    bMsgResult = FALSE;  /* accepts activation */
 	    break; }
 		
@@ -185,6 +187,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               (hDlg, IDC_SIGN_ATTACHMENTS, BM_GETCHECK, 0, 0L);
             opt.preview_decrypt = !!SendDlgItemMessage
               (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
+            opt.prefer_html = !!SendDlgItemMessage
+              (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
 
 	    write_options ();
 	    bMsgResult = PSNRET_NOERROR;

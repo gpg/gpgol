@@ -16,7 +16,7 @@ min_automake_version="1.9.4"
 # Version number: Remember to change it immediately *after* a release.
 #                 Make sure to run  "svn up" before a "make dist".
 #                 Add a "-cvs" prefix for non-released code.
-AC_INIT(gpgol, 0.9.8-cvs, bug-gpgol@g10code.com)
+AC_INIT(gpgol, 0.9.8, bug-gpgol@g10code.com)
 
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0

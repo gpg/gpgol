@@ -1,5 +1,5 @@
 /* olflange-rsrcs.rc - Olflange specific resource.         -*- c -*-
- *	Copyright (C) 2004, 2005 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2006 g10 Code GmbH
  * 
  * This file is part of GPGol.
  * 
@@ -56,7 +56,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "GnuPG"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Optionen",IDC_STATIC,9,9,242,100
+    GROUPBOX        "Optionen",IDC_STATIC,9,9,242,112
     CONTROL         "Neue Nachrichten per Voreinstellung verschlüsseln",
                     IDC_ENCRYPT_DEFAULT,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,24,19,177,10
@@ -77,10 +77,14 @@ BEGIN
                     IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,95,162,10
 
-    GROUPBOX        "Passphrase",IDC_STATIC,9,110,242,31
-    LTEXT           "Passphrase speichern für",IDC_STATIC,24,124,80,8
-    EDITTEXT        IDC_TIME_PHRASES,107,123,39,14,ES_AUTOHSCROLL
-    LTEXT           "Sekunden",IDC_STATIC,151,125,34,8
+    CONTROL         "Wenn möglich, HTML Version anzeigen",
+                    IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24,107,162,10
+
+    GROUPBOX        "Passphrase",IDC_STATIC,9,124,242,31
+    LTEXT           "Passphrase speichern für",IDC_STATIC,24,136,80,8
+    EDITTEXT        IDC_TIME_PHRASES,107,135,39,14,ES_AUTOHSCROLL
+    LTEXT           "Sekunden",IDC_STATIC,151,137,34,8
 
     PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
     LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
@@ -132,7 +136,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "GnuPG"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Options",IDC_STATIC,9,9,242,87
+    GROUPBOX        "Options",IDC_STATIC,9,9,242,112
     CONTROL         "&Encrypt new messages by default",IDC_ENCRYPT_DEFAULT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,19,121,10
     CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
@@ -146,10 +150,22 @@ BEGIN
                     IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,24,67,148,10
     EDITTEXT        IDC_ENCRYPT_TO,36,79,133,12,ES_AUTOHSCROLL
-    GROUPBOX        "Passphrase",IDC_STATIC,9,100,242,31
-    LTEXT           "Cache &passphrase for",IDC_STATIC,24,114,70,8
-    EDITTEXT        IDC_TIME_PHRASES,107,113,39,14,ES_AUTOHSCROLL
-    LTEXT           "seconds",IDC_STATIC,151,115,28,8
+
+    CONTROL         "Also decrypt in preview window",
+                    IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24,95,162,10
+
+    CONTROL         "Show HTML Version is possible",
+                    IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24,107,162,10
+
+
+    GROUPBOX        "Passphrase",IDC_STATIC,9,124,242,31
+    LTEXT           "Cache &passphrase for",IDC_STATIC,24,136,70,8
+    EDITTEXT        IDC_TIME_PHRASES,107,135,39,14,ES_AUTOHSCROLL
+    LTEXT           "seconds",IDC_STATIC,151,137,28,8
+
+
     PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
     LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
     LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9

@@ -1,7 +1,9 @@
-Noteworthy changes for version 0.9.8
+Noteworthy changes for version 0.9.8 (2006-03-28)
 =================================================
 
 * PGP/MIME signature verification may now work in some cases.
+
+* New option to prefer displaying of the HTML part.
 
 
 Noteworthy changes for version 0.9.7 (2006-03-21)

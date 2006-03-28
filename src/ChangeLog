@@ -1,3 +1,11 @@
+2006-03-28  Werner Koch  <wk@g10code.com>
+
+	* olflange-rsrcs.rc (IDD_GPG_OPTIONS_DE): Add new control box.
+	(IDD_GPG_OPTIONS): Updated to match German version.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Ditto.
+	* gpgmsg.cpp (decrypt): Implemented PREFER_HTML option.
+	(get_long_attach_data): New.
+
 2006-03-27  Werner Koch  <wk@g10code.com>
 
 	* engine-gpgme.c (op_verify_detached_sig_gpgme): New.

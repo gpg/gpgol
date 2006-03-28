@@ -26,5 +26,6 @@
 #define IDC_SIGN_ATTACHMENTS            4011
 #define IDD_GPG_OPTIONS_DE              4012
 #define IDC_PREVIEW_DECRYPT             4013
+#define IDC_PREFER_HTML                 4014
 
 #endif /*OLFLANGE_IDS_H*/

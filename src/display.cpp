@@ -161,7 +161,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
-      log_debug ("updating display using OOM to `%s'", text);
+      log_debug ("updating display using OOM\n");
       /* Bug in OL 2002 and 2003 - as a workaround set the body first
          to empty. */
       if (is_html)
