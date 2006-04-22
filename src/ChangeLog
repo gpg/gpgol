@@ -1,3 +1,11 @@
+2006-04-22  Timo Schulz  <ts@g10code.com>
+
+	* common.c (utf8_to_wincp): Corrected utf8 decoding.
+	* passphrase-dialog.c (load_recipbox): Likewise.
+	* olflange-dlg.cpp (GPGOptionsDlgProc): Activate the
+	'confirm' button when the dialog state has been changed.
+	* olflange-rsrcs.rc (IDD_GPG_OPTIONS_DE): Change description.
+	
 2006-03-28  Werner Koch  <wk@g10code.com>
 
 	* olflange-rsrcs.rc (IDD_GPG_OPTIONS_DE): Add new control box.

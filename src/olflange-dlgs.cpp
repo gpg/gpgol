@@ -108,15 +108,31 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 
     case WM_COMMAND:
-	if (HIWORD (wParam) == BN_CLICKED &&
-	    LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) {
-	    opt.enable_default_key = !opt.enable_default_key;
-	    EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
-			  !!opt.enable_default_key);
+      if (HIWORD (wParam) == BN_CLICKED)
+	{
+	  /* If dialog state has been changed, activate the confirm button. */
+	  switch (wParam)
+	    {
+	    case IDC_ENCRYPT_WITH_STANDARD_KEY:
+	    case IDC_PREFER_HTML:
+	    case IDC_SIGN_DEFAULT:
+	    case IDC_SAVE_DECRYPTED:
+	    case IDC_PREVIEW_DECRYPT:
+	    case IDC_SIGN_ATTACHMENTS:
+	      SendMessage (GetParent (hDlg), PSM_CHANGED, (WPARAM)hDlg, 0L);
+	      break;
+	    }
 	}
-	if (LOWORD(wParam) == IDC_GPG_OPTIONS)
-	    config_dialog_box (hDlg);
-	break;
+      if (HIWORD (wParam) == BN_CLICKED &&
+	  LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) 
+	{
+	  opt.enable_default_key = !opt.enable_default_key;
+	  EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
+			!!opt.enable_default_key);
+	}
+      if (LOWORD (wParam) == IDC_GPG_OPTIONS)
+	config_dialog_box (hDlg);
+      break;
 	
     case WM_NOTIFY:
 	pnmhdr = ((LPNMHDR) lParam);

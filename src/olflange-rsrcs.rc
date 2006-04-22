@@ -77,7 +77,7 @@ BEGIN
                     IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,95,162,10
 
-    CONTROL         "Wenn möglich, HTML Version anzeigen",
+    CONTROL         "Wenn möglich, HTML Darstellung anzeigen",
                     IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,107,162,10
 
@@ -155,7 +155,7 @@ BEGIN
                     IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,95,162,10
 
-    CONTROL         "Show HTML Version is possible",
+    CONTROL         "Show HTML View if possible",
                     IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,107,162,10
 

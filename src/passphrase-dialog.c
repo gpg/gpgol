@@ -1,6 +1,6 @@
 /* passphrase-dialog.c
  *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2006 g10 Code GmbH
  *
  * This file is part of GPGol.
  * 
@@ -149,11 +149,15 @@ load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
   if (err)
     goto fail;
 
-  while ( !gpgme_op_keylist_next (keyctx, &key) )
+  while (!gpgme_op_keylist_next (keyctx, &key))
     {
       if (key && key->uids && key->uids->uid)
-	SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0,
-			    (LPARAM)(const char *)key->uids->uid);
+	{
+	  char *utf8_uid = utf8_to_wincp (key->uids->uid);
+	  SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0,
+			      (LPARAM)(const char *)utf8_uid);
+	  xfree (utf8_uid);
+	}
       if (key)
 	gpgme_key_release (key);
     }
@@ -187,7 +191,7 @@ get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
       return "DSA";
 
     case GPGME_PK_ELG:
-      return "elg";
+      return "ELG";
 
     default:
       break;
