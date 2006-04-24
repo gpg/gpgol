@@ -13,15 +13,21 @@
 AC_PREREQ(2.59)
 min_automake_version="1.9.4"
 
-# Version number: Remember to change it immediately *after* a release.
-#                 Make sure to run  "svn up" before a "make dist".
-#                 Add a "-cvs" prefix for non-released code.
-AC_INIT(gpgol, 0.9.8, bug-gpgol@g10code.com)
-
+# Remember to change the version number immediately *after* a release.
+# Set my_issvn to "yes" for non-released code.  Remember to run an
+# "svn up" and "autogen.sh" right before creating a distribution.
+m4_define([my_version], [0.9.9])
+m4_define([my_issvn], [no])
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0
 
 
+m4_define([svn_revision], m4_esyscmd([echo -n $((svn info 2>/dev/null \
+            || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q}')]))
+AC_INIT([gpgol], my_version[]m4_if(my_issvn,[yes],[-svn[]svn_revision]),
+        [bug-gpgol@g10code.com])
+
+SVN_REVISION=svn_revision
 PACKAGE=$PACKAGE_NAME
 PACKAGE_GT=${PACKAGE_NAME}
 VERSION=$PACKAGE_VERSION
@@ -50,10 +56,8 @@ BUILD_TIMESTAMP=`date --iso-8601=minutes`
 AC_SUBST(BUILD_TIMESTAMP)
 changequote(,)dnl
 BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1./;s/\./,/g'`
-tmp="`echo '$Revision$' | sed 's/[^0-9]//g'`"
 changequote([,])dnl
-test -z "$tmp" && tmp="0"
-BUILD_FILEVERSION="${BUILD_FILEVERSION}$tmp"
+BUILD_FILEVERSION="${BUILD_FILEVERSION}${SVN_REVISION}"
 AC_SUBST(BUILD_FILEVERSION)
 
 

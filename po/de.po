@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2006-03-27 20:56+0200\n"
-"PO-Revision-Date: 2006-03-27 21:01+0200\n"
+"POT-Creation-Date: 2006-03-28 11:38+0200\n"
+"PO-Revision-Date: 2006-04-22 14:37+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -139,16 +139,16 @@ msgstr "*** Anfang Notation (Unterschrift von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/gpgmsg.cpp:1186
+#: src/gpgmsg.cpp:1195
 msgid "No valid OpenPGP data found."
 msgstr "Keine gültigen OpenPGP Daten gefunden"
 
-#: src/gpgmsg.cpp:1187 src/gpgmsg.cpp:1270 src/gpgmsg.cpp:1284
-#: src/gpgmsg.cpp:1300 src/gpgmsg.cpp:1466
+#: src/gpgmsg.cpp:1196 src/gpgmsg.cpp:1280 src/gpgmsg.cpp:1294
+#: src/gpgmsg.cpp:1310 src/gpgmsg.cpp:1489
 msgid "Decryption"
 msgstr "Entschlüsselung"
 
-#: src/gpgmsg.cpp:1239
+#: src/gpgmsg.cpp:1249
 msgid ""
 "Note: This is a PGP/MIME signed message.  The GPGol plugin is not always "
 "able to verify such a message due to missing support in Outlook.\n"
@@ -159,29 +159,29 @@ msgstr ""
 "ist nicht immer in der Lage, eine solche Nachricht zu verifizieren.\n"
 "Der Grund hierzu liegt in der fehlenden Unterstützung von Outlook.\n"
 "\n"
-"(Dieser Hinweis wird nur einmalif je Session angezeigt)"
+"(Dieser Hinweis wird nur einmalig pro Sitzung angezeigt)"
 
-#: src/gpgmsg.cpp:1243
+#: src/gpgmsg.cpp:1253
 msgid "Verification"
 msgstr "Überprüfung"
 
-#: src/gpgmsg.cpp:1261
+#: src/gpgmsg.cpp:1271
 msgid "[This is a PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/gpgmsg.cpp:1269 src/gpgmsg.cpp:1283 src/gpgmsg.cpp:1299
+#: src/gpgmsg.cpp:1279 src/gpgmsg.cpp:1293 src/gpgmsg.cpp:1309
 msgid "Problem decrypting PGP/MIME message"
 msgstr "Problem bei Entschlüsseln einer PGP/MIME Nachricht"
 
-#: src/gpgmsg.cpp:1421
+#: src/gpgmsg.cpp:1444
 msgid "Verification Failure"
 msgstr "Überprüfungsfehler"
 
-#: src/gpgmsg.cpp:1424
+#: src/gpgmsg.cpp:1447
 msgid "Decryption Failure"
 msgstr "Entschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1460
+#: src/gpgmsg.cpp:1483
 msgid ""
 "The message text cannot be displayed.\n"
 "You have to save the decrypted message to view it.\n"
@@ -197,7 +197,7 @@ msgstr ""
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1487
+#: src/gpgmsg.cpp:1510
 msgid ""
 "Signed attachments found.\n"
 "\n"
@@ -209,13 +209,13 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese Unterschriften überprüfen?"
 
-#: src/gpgmsg.cpp:1495
+#: src/gpgmsg.cpp:1518
 msgid "Attachment Verification"
 msgstr "Überprüfung der Anhänge"
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1516
+#: src/gpgmsg.cpp:1539
 msgid ""
 "Encrypted attachments found.\n"
 "\n"
@@ -227,35 +227,35 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese entschlüsseln und abspeichern?"
 
-#: src/gpgmsg.cpp:1523
+#: src/gpgmsg.cpp:1546
 msgid "Attachment Decryption"
 msgstr "Entschlüsselung eines Anhangs"
 
-#: src/gpgmsg.cpp:1592
+#: src/gpgmsg.cpp:1615
 msgid "Signing Failure"
 msgstr "Unterschrifterstellungsfehler"
 
-#: src/gpgmsg.cpp:1768
+#: src/gpgmsg.cpp:1791
 msgid "Encryption Failure"
 msgstr "Verschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1822 src/gpgmsg.cpp:3117
+#: src/gpgmsg.cpp:1845 src/gpgmsg.cpp:3211
 msgid "Attachment Encryption Failure"
 msgstr "Verschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2524
+#: src/gpgmsg.cpp:2618
 msgid "Attachment Verification Failure"
 msgstr "Überprüfungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2707 src/gpgmsg.cpp:2756
+#: src/gpgmsg.cpp:2801 src/gpgmsg.cpp:2850
 msgid "Attachment Decryption Failure"
 msgstr "Entschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2926
+#: src/gpgmsg.cpp:3020
 msgid "Attachment Signing Failure"
 msgstr "Unterschrifterstellungsfehler eines Anhangs"
 
-#: src/olflange-dlgs.cpp:165
+#: src/olflange-dlgs.cpp:167
 msgid "The default key may not contain any spaces."
 msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
 
