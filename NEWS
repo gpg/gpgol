@@ -1,7 +1,9 @@
 Noteworthy changes for version 0.9.9 (2006-04-24)
 =================================================
 
-* Mainly cosmetic changes.
+* Some cosmetic changes.
+
+* Encryption to the default key works again.
 
 
 Noteworthy changes for version 0.9.8 (2006-03-28)

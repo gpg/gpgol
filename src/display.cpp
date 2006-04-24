@@ -79,6 +79,35 @@ add_html_line_endings (const char *body)
   
 }
 
+// static HWND
+// show_window_hierarchy (HWND parent, int level)
+// {
+//   HWND child;
+
+//   child = GetWindow (parent, GW_CHILD);
+//   while (child)
+//     {
+//       char buf[1024+1];
+//       char name[200];
+//       int nname;
+//       char *pname;
+      
+//       memset (buf, 0, sizeof (buf));
+//       GetWindowText (child, buf, sizeof (buf)-1);
+//       nname = GetClassName (child, name, sizeof (name)-1);
+//       if (nname)
+//         pname = name;
+//       else
+//         pname = NULL;
+//       log_debug ("### %*shwnd=%p (%s) `%s'", level*2, "", child,
+//                  pname? pname:"", buf);
+//       show_window_hierarchy (child, level+1);
+//       child = GetNextWindow (child, GW_HWNDNEXT);	
+//     }
+
+//   return NULL;
+// }
+
 
 /* We need this to find the mailer window because we directly change
    the text of the window instead of the MAPI object itself.  To do
@@ -137,6 +166,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
 {
   HWND window;
 
+  /*show_window_hierarchy (hwnd, 0);*/
   window = find_message_window (hwnd);
   if (window && !is_html)
     {

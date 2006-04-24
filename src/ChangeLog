@@ -1,3 +1,14 @@
+2006-04-24  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (decrypt): New arg INFO_ONLY.
+	* olflange.cpp (OnReadComplete): Add code to call decrypt but with
+	INFO_ONLY if preview decryption has not been requested.
+	* main.c (read_options): New compatibility option no_preview_info.
+
+	* gpgmsg.cpp (getRecipients): Don't add the default key here.
+	(encrypt_and_sign): But do it here.
+	* engine-gpgme.c (op_get_one_key): New.
+
 2006-04-22  Timo Schulz  <ts@g10code.com>
 
 	* common.c (utf8_to_wincp): Corrected utf8 decoding.

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2006-03-28 11:38+0200\n"
-"PO-Revision-Date: 2006-04-22 14:37+0200\n"
+"POT-Creation-Date: 2006-04-24 16:36+0200\n"
+"PO-Revision-Date: 2006-04-24 16:41+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -139,16 +139,27 @@ msgstr "*** Anfang Notation (Unterschrift von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/gpgmsg.cpp:1195
+#: src/gpgmsg.cpp:1194
 msgid "No valid OpenPGP data found."
 msgstr "Keine gültigen OpenPGP Daten gefunden"
 
-#: src/gpgmsg.cpp:1196 src/gpgmsg.cpp:1280 src/gpgmsg.cpp:1294
-#: src/gpgmsg.cpp:1310 src/gpgmsg.cpp:1489
+#: src/gpgmsg.cpp:1195 src/gpgmsg.cpp:1297 src/gpgmsg.cpp:1311
+#: src/gpgmsg.cpp:1327 src/gpgmsg.cpp:1506
 msgid "Decryption"
 msgstr "Entschlüsselung"
 
-#: src/gpgmsg.cpp:1249
+#: src/gpgmsg.cpp:1212
+msgid ""
+"[This is a PGP/MIME message]\r\n"
+"\r\n"
+"[Use the \"Decrypt\" button in the message window to show its content.]"
+msgstr ""
+"[Dies ist eine PGP/MIME Nachricht]\n"
+"\n"
+"[Benutzen Sie den \"Entschlüsselungs\"-Button im großen\n"
+"Nachrichtenfenster um den Inhalt anzuzeigen.]"
+
+#: src/gpgmsg.cpp:1266
 msgid ""
 "Note: This is a PGP/MIME signed message.  The GPGol plugin is not always "
 "able to verify such a message due to missing support in Outlook.\n"
@@ -161,27 +172,27 @@ msgstr ""
 "\n"
 "(Dieser Hinweis wird nur einmalig pro Sitzung angezeigt)"
 
-#: src/gpgmsg.cpp:1253
+#: src/gpgmsg.cpp:1270
 msgid "Verification"
 msgstr "Überprüfung"
 
-#: src/gpgmsg.cpp:1271
+#: src/gpgmsg.cpp:1288
 msgid "[This is a PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/gpgmsg.cpp:1279 src/gpgmsg.cpp:1293 src/gpgmsg.cpp:1309
+#: src/gpgmsg.cpp:1296 src/gpgmsg.cpp:1310 src/gpgmsg.cpp:1326
 msgid "Problem decrypting PGP/MIME message"
 msgstr "Problem bei Entschlüsseln einer PGP/MIME Nachricht"
 
-#: src/gpgmsg.cpp:1444
+#: src/gpgmsg.cpp:1461
 msgid "Verification Failure"
 msgstr "Überprüfungsfehler"
 
-#: src/gpgmsg.cpp:1447
+#: src/gpgmsg.cpp:1464
 msgid "Decryption Failure"
 msgstr "Entschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1483
+#: src/gpgmsg.cpp:1500
 msgid ""
 "The message text cannot be displayed.\n"
 "You have to save the decrypted message to view it.\n"
@@ -197,7 +208,7 @@ msgstr ""
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1510
+#: src/gpgmsg.cpp:1527
 msgid ""
 "Signed attachments found.\n"
 "\n"
@@ -209,13 +220,13 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese Unterschriften überprüfen?"
 
-#: src/gpgmsg.cpp:1518
+#: src/gpgmsg.cpp:1535
 msgid "Attachment Verification"
 msgstr "Überprüfung der Anhänge"
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1539
+#: src/gpgmsg.cpp:1556
 msgid ""
 "Encrypted attachments found.\n"
 "\n"
@@ -227,35 +238,52 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese entschlüsseln und abspeichern?"
 
-#: src/gpgmsg.cpp:1546
+#: src/gpgmsg.cpp:1563
 msgid "Attachment Decryption"
 msgstr "Entschlüsselung eines Anhangs"
 
-#: src/gpgmsg.cpp:1615
+#: src/gpgmsg.cpp:1632
 msgid "Signing Failure"
 msgstr "Unterschrifterstellungsfehler"
 
-#: src/gpgmsg.cpp:1791
+#: src/gpgmsg.cpp:1800
+msgid ""
+"The configured default encryption key is not available or does not "
+"unambigiously specify a key. Please fix this in the option dialog.\n"
+"\n"
+"This message won't be be encrypted to this key!"
+msgstr ""
+"Der voreingestellte zusätzliche Schlüssel zum Verschlüsseln ist nicht\n"
+"vorhanden oder nicht eindeutig.  Bitte beheben Sie dies in den\n"
+"Optionseinstellungen.\n"
+"\n"
+"Die Nachricht wird deswegen nicht für diesen Schlüssel verschlüsselt!"
+
+#: src/gpgmsg.cpp:1804
+msgid "Encryption"
+msgstr "Verschlüsselung"
+
+#: src/gpgmsg.cpp:1847
 msgid "Encryption Failure"
 msgstr "Verschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1845 src/gpgmsg.cpp:3211
+#: src/gpgmsg.cpp:1901 src/gpgmsg.cpp:3267
 msgid "Attachment Encryption Failure"
 msgstr "Verschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2618
+#: src/gpgmsg.cpp:2674
 msgid "Attachment Verification Failure"
 msgstr "Überprüfungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2801 src/gpgmsg.cpp:2850
+#: src/gpgmsg.cpp:2857 src/gpgmsg.cpp:2906
 msgid "Attachment Decryption Failure"
 msgstr "Entschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:3020
+#: src/gpgmsg.cpp:3076
 msgid "Attachment Signing Failure"
 msgstr "Unterschrifterstellungsfehler eines Anhangs"
 
-#: src/olflange-dlgs.cpp:167
+#: src/olflange-dlgs.cpp:183
 msgid "The default key may not contain any spaces."
 msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
 
@@ -276,7 +304,7 @@ msgstr ""
 "\n"
 "Bitte updaten Sie auf SP2 bevor Sie versuchen eine Nachricht zu versenden."
 
-#: src/olflange.cpp:939
+#: src/olflange.cpp:946
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -287,51 +315,51 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/olflange.cpp:1329
+#: src/olflange.cpp:1336
 msgid "&Decrypt and verify message"
 msgstr "Entschlüsseln/Prüfen der Nachricht"
 
-#: src/olflange.cpp:1367
+#: src/olflange.cpp:1374
 msgid "GPG &encrypt message"
 msgstr "Mit GPG &verschlüsseln"
 
-#: src/olflange.cpp:1373
+#: src/olflange.cpp:1380
 msgid "GPG &sign message"
 msgstr "Mit GPG unter&schreiben"
 
-#: src/olflange.cpp:1419
+#: src/olflange.cpp:1426
 msgid "GPG Key &Manager"
 msgstr "GPG Schlüssel&verwaltung"
 
-#: src/olflange.cpp:1551
+#: src/olflange.cpp:1558
 msgid "Could not start Key-Manager"
 msgstr "Dei Schlüsselverwaltung konnte nicht aufgerufen werden"
 
-#: src/olflange.cpp:1597
+#: src/olflange.cpp:1604
 msgid "Decrypt and verify the message."
 msgstr "Entschlüsseln und Prüfen der Nachricht."
 
-#: src/olflange.cpp:1605
+#: src/olflange.cpp:1612
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/olflange.cpp:1611
+#: src/olflange.cpp:1618
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
 
-#: src/olflange.cpp:1620 src/olflange.cpp:1681 src/olflange.cpp:1763
+#: src/olflange.cpp:1627 src/olflange.cpp:1688 src/olflange.cpp:1770
 msgid "Open GPG Key Manager"
 msgstr "Die GPG Schlüsselverwaltung öffnen"
 
-#: src/olflange.cpp:1650 src/olflange.cpp:1714
+#: src/olflange.cpp:1657 src/olflange.cpp:1721
 msgid "Decrypt message and verify signature"
 msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
 
-#: src/olflange.cpp:1661 src/olflange.cpp:1732
+#: src/olflange.cpp:1668 src/olflange.cpp:1739
 msgid "Encrypt message with GPG"
 msgstr "Nachricht mit GPG verschlüsseln"
 
-#: src/olflange.cpp:1670 src/olflange.cpp:1747
+#: src/olflange.cpp:1677 src/olflange.cpp:1754
 msgid "Sign message with GPG"
 msgstr "Nachricht mit GPG unterschreiben"
 
@@ -339,15 +367,15 @@ msgstr "Nachricht mit GPG unterschreiben"
 msgid "No key hint given."
 msgstr "Kein Hinweis auf den Schlüssel"
 
-#: src/passphrase-dialog.c:325 src/passphrase-dialog.c:469
+#: src/passphrase-dialog.c:329 src/passphrase-dialog.c:473
 msgid "Invalid passphrase; please try again..."
 msgstr "Ungültige Passphrase; bitte nochmal versuchen..."
 
-#: src/passphrase-dialog.c:342
+#: src/passphrase-dialog.c:346
 msgid "Select Signing Key"
 msgstr "Signaturschlüssel auswählen"
 
-#: src/passphrase-dialog.c:409 src/passphrase-dialog.c:528
+#: src/passphrase-dialog.c:413 src/passphrase-dialog.c:532
 msgid ""
 "If you cancel this dialog, the message will be sent in cleartext!\n"
 "\n"
@@ -358,7 +386,7 @@ msgstr ""
 "\n"
 "Möchten Sie wirklich abbrechen?"
 
-#: src/passphrase-dialog.c:415
+#: src/passphrase-dialog.c:419
 msgid ""
 "If you cancel this dialog, the message will be sent without signing.\n"
 "\n"
@@ -369,11 +397,11 @@ msgstr ""
 "\n"
 "Möchten Sie wirklich abbrechen?"
 
-#: src/passphrase-dialog.c:424 src/passphrase-dialog.c:543
+#: src/passphrase-dialog.c:428 src/passphrase-dialog.c:547
 msgid "Secret Key Dialog"
 msgstr "Auswahl des geheimen Schlüssels"
 
-#: src/passphrase-dialog.c:534
+#: src/passphrase-dialog.c:538
 msgid ""
 "If you cancel this dialog, the message will be sent without signing.\n"
 "Do you really want to cancel?"

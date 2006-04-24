@@ -428,7 +428,7 @@ read_options (void)
             case 0: opt.compat.no_msgcache = x; break;
             case 1: opt.compat.no_pgpmime = x; break;
             case 2: opt.compat.no_oom_write = x; break;
-            case 3: /* Not used anymore */ break;
+            case 3: opt.compat.no_preview_info = x; break;
             case 4: opt.compat.old_reply_hack = x; break;
             case 5: opt.compat.auto_decrypt = x; break;
             case 6: opt.compat.no_attestation = x; break;

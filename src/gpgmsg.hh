@@ -65,7 +65,7 @@ public:
   virtual char **getRecipients (void) = 0;
 
   /* Decrypt and verify the message and all attachments.  */
-  virtual int decrypt (HWND hwnd) = 0;
+  virtual int decrypt (HWND hwnd, bool info_only) = 0;
 
   /* Sign the message and optionally the attachments. */
   virtual int sign (HWND hwnd, bool want_html) = 0;

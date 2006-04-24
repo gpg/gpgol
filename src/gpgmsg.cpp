@@ -174,7 +174,7 @@ public:
   bool hasAttachments (void);
   const char *getPlainText (void);
 
-  int decrypt (HWND hwnd);
+  int decrypt (HWND hwnd, bool info_only);
   int sign (HWND hwnd, bool want_html);
   int encrypt (HWND hwnd, bool want_html)
   {
@@ -752,7 +752,7 @@ GpgMsgImpl::getRecipients ()
       return NULL;
     }
 
-  rset = (char**)xcalloc (lpRecipientRows->cRows+2, sizeof *rset);
+  rset = (char**)xcalloc (lpRecipientRows->cRows+1, sizeof *rset);
 
   for (i = j = 0; (unsigned int)i < lpRecipientRows->cRows; i++)
     {
@@ -783,9 +783,6 @@ GpgMsgImpl::getRecipients ()
           break;
         }
     }
-  if (opt.enable_default_key && opt.default_key && *opt.default_key)
-    rset[j++] = xstrdup (opt.default_key);
-  rset[j] = NULL;
 
   if (lpRecipientTable)
     lpRecipientTable->Release();
@@ -1065,9 +1062,11 @@ GpgMsgImpl::createHtmlAttachment (const char *text)
 
 
 /* Decrypt the message MSG and update the window.  HWND identifies the
-   current window.  */
+   current window.  With INFO_ONLY set, the function will only update
+   the display to indicate that a PGP/MIME message has been
+   detected. */
 int 
-GpgMsgImpl::decrypt (HWND hwnd)
+GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
 {
   log_debug ("%s:%s: enter\n", SRCNAME, __func__);
   openpgp_t mtype;
@@ -1159,11 +1158,11 @@ GpgMsgImpl::decrypt (HWND hwnd)
   if (have_pgphtml_sig)
     log_debug ("%s:%s: pgphtml signature attachment found at pos %d\n",
                SRCNAME, __func__, pgphtml_pos);
-  
+
 
   if (mtype == OPENPGP_NONE && !n_encrypted && !n_signed
       && !have_pgphtml_enc && !have_pgphtml_sig && !is_pgpmime_sig) 
-    {
+     {
       /* Because we usually work around the OL object model, it can't
          notice that we changed the windows's text behind its back (by
          means of update_display and the SetWindowText API).  Thus it
@@ -1201,6 +1200,24 @@ GpgMsgImpl::decrypt (HWND hwnd)
       xfree (body);
       return 0;
     }
+
+
+  if (info_only)
+    {
+      /* Note, that we don't use the exchange_cb in the updatedisplay
+         because this might lead to storing the new text in the
+         message.  */
+      if (is_pgpmime_sig || is_pgpmime_enc)
+        update_display (hwnd, this, NULL, 0, 
+                        _("[This is a PGP/MIME message]\r\n\r\n"
+                          "[Use the \"Decrypt\" button in the message window "
+                          "to show its content.]"));        
+      release_attach_info (table);
+      xfree (body);
+      return 0;
+    }
+  
+
 
   /* We always want an attestation.  Note that we ignore any error
      because that would anyway be a out of core situation and thus we
@@ -1769,6 +1786,44 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
 	}
     }
 
+
+  /* If a default key has been set, add it to the list of keys.  Check
+     that the key is actually available. */
+  if (opt.enable_default_key && opt.default_key && *opt.default_key)
+    {
+      gpgme_key_t defkey;
+
+      defkey = op_get_one_key (opt.default_key);
+      if (!defkey)
+        {
+          MessageBox (hwnd,
+                      _("The configured default encryption key is not "
+                        "available or does not unambigiously specify a key. "
+                        "Please fix this in the option dialog.\n\n"
+                        "This message won't be be encrypted to this key!"),
+                      _("Encryption"), MB_ICONWARNING|MB_OK);
+        }
+      else
+        {
+          gpgme_key_t *tmpkeys;
+          int i;
+
+          n_keys = count_keys (keys) + 1;
+          tmpkeys = (gpgme_key_t *)xcalloc (n_keys+1, sizeof *tmpkeys);
+          for (i = 0; keys[i]; i++) 
+            {
+              tmpkeys[i] = keys[i];
+              gpgme_key_ref (tmpkeys[i]);
+            }
+          tmpkeys[i++] = defkey;
+          tmpkeys[i] = NULL;
+          free_key_array (keys);
+          keys = tmpkeys;
+        }
+    }
+  
+
+  /* Show  some debug info. */
   if (sign_key)
     log_debug ("%s:%s: signer: 0x%s %s\n",  SRCNAME, __func__,
                keyid_from_key (sign_key), userid_from_key (sign_key));
@@ -1781,6 +1836,7 @@ GpgMsgImpl::encrypt_and_sign (HWND hwnd, bool want_html, bool sign_flag)
                    i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
     }
 
+  /* Do the encryption.  */
   if (plaintext && *plaintext)
     {
       err = op_encrypt (plaintext, &ciphertext, 

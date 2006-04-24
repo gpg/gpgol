@@ -835,7 +835,10 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
                                           ULONG lFlags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
-  if (opt.preview_decrypt)
+
+  /* The preview_info stuff does not work because for some reasons we
+     can't update the window.  Thus disabled for now. */
+  if (opt.preview_decrypt /*|| !opt.compat.no_preview_info*/)
     {
       HRESULT hr;
       HWND hWnd = NULL;
@@ -850,14 +853,18 @@ CGPGExchExtMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB,
           GpgMsg *m = CreateGpgMsg (pMessage);
           m->setExchangeCallback ((void*)pEECB);
           m->setPreview (1);
-          m->decrypt (hWnd);
+          /* If preview decryption has been requested, do so.  If not,
+             pass true as the second arg to let the fucntion display a
+             hint on what kind of message this is. */
+          m->decrypt (hWnd, !opt.preview_decrypt);
           delete m;
-	}
+ 	}
       ul_release (pMessage);
       ul_release (pMDB);
     }
+
+
 #if 0
-  else
     {
       HWND hWnd = NULL;
 
@@ -1531,7 +1538,7 @@ CGPGExchExtCommands::DoCommand (
             {
               GpgMsg *m = CreateGpgMsg (pMessage);
               m->setExchangeCallback ((void*)pEECB);
-              m->decrypt (hWnd);
+              m->decrypt (hWnd, 0);
               delete m;
 	    }
 	}

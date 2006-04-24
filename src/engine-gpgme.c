@@ -1286,7 +1286,7 @@ add_verify_attestation (gpgme_data_t a, gpgme_ctx_t ctx,
 /* Try to find a key for each item in array NAMES. Items not found are
    stored as malloced strings in the newly allocated array UNKNOWN.
    Found keys are stored in the newly allocated array KEYS.  Both
-   arrays are terminated by a NULL entry.  Caller needs to releade
+   arrays are terminated by a NULL entry.  Caller needs to release
    KEYS and UNKNOWN.
 
    Returns: 0 on success. However success may also be that one or all
@@ -1342,6 +1342,36 @@ op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown)
   return 0;
 }
 
+
+/* Return a GPGME key object matching PATTERN.  If no key matches or
+   the match is ambiguous, return NULL. */
+gpgme_key_t 
+op_get_one_key (char *pattern)
+{
+  gpgme_error_t err;
+  gpgme_ctx_t ctx;
+  gpgme_key_t k, k2;
+
+  err = gpgme_new (&ctx);
+  if (err)
+    return NULL; /* Error. */
+  err = gpgme_op_keylist_start (ctx, pattern, 0);
+  if (!err)
+    {
+      err = gpgme_op_keylist_next (ctx, &k);
+      if (!err && !gpgme_op_keylist_next (ctx, &k2))
+        {
+          /* More than one matching key available.  Return an error
+             instead. */
+          gpgme_key_release (k);
+          gpgme_key_release (k2);
+          k = k2 = NULL;
+        }
+    }
+  gpgme_op_keylist_end (ctx);
+  gpgme_release (ctx);
+  return k;
+}
 
 
 /* Copy the data from the GPGME object DAT to a newly created file

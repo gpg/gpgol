@@ -86,7 +86,7 @@ decrypt_message (HWND hwnd, LPMESSAGE msg)
 {
   GpgMsg *m = CreateGpgMsg (msg);
   m->setExchangeCallback ((void *)g_cb);
-  m->decrypt (hwnd);
+  m->decrypt (hwnd, 0);
   delete m;
   UlRelease (msg);
   msg = NULL;

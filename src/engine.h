@@ -83,6 +83,7 @@ int op_verify_detached_sig_gpgme (gpgme_data_t data, gpgme_data_t sig,
 int op_export_keys (const char *pattern[], const char *outfile);
 
 int op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown);
+gpgme_key_t op_get_one_key (char *pattern);
 
 const char *userid_from_key (gpgme_key_t k);
 const char *keyid_from_key (gpgme_key_t k);
