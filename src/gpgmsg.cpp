@@ -1208,10 +1208,15 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
          because this might lead to storing the new text in the
          message.  */
       if (is_pgpmime_sig || is_pgpmime_enc)
-        update_display (hwnd, this, NULL, 0, 
-                        _("[This is a PGP/MIME message]\r\n\r\n"
-                          "[Use the \"Decrypt\" button in the message window "
-                          "to show its content.]"));        
+        {
+          char *tmp = native_to_utf8 
+            (_("[This is a PGP/MIME message]\r\n\r\n"
+               "[Use the \"Decrypt\" button in the message window "
+               "to show its content.]"));        
+          update_display (hwnd, this, NULL, 0, tmp);
+          xfree (tmp);
+        }
+      
       release_attach_info (table);
       xfree (body);
       return 0;
@@ -1284,9 +1289,13 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
          message.  This is useful in case of such messages with
          longish attachments which might take long to decrypt. */
       if (!body || !*body)
-        update_display (hwnd, this, exchange_cb, 0, 
-                        _("[This is a PGP/MIME message]"));        
-
+        {
+          char *tmp = native_to_utf8 (_("[This is a PGP/MIME message]"));
+          update_display (hwnd, this, exchange_cb, 0, tmp);
+          xfree (tmp);
+        }
+      
+      
       hr = message->OpenAttach (1, NULL, MAPI_BEST_ACCESS, &att);	
       if (FAILED (hr))
         {

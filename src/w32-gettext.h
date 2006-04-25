@@ -53,4 +53,14 @@ const char *gettext_localename (void);
 
 static inline const char *gettext_localename (void) { return ""; }
 
+
 #endif	/* !ENABLE_NLS */
+
+/* Conversion function. */
+char *wchar_to_utf8 (const wchar_t *string);
+wchar_t *utf8_to_wchar (const char *string);
+
+char *utf8_to_native (const char *string);
+char *native_to_utf8 (const char *string);
+
+

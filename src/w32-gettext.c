@@ -33,6 +33,7 @@
 #include <stdint.h>
 
 #include "w32-gettext.h"
+#include "xmalloc.h"
 
 
 /* localname.c from gettext.  */
@@ -1432,12 +1433,36 @@ wchar_to_native (const wchar_t *string)
 }
 
 
+static wchar_t *
+native_to_wchar (const char *string)
+{
+  int n;
+  wchar_t *result;
+
+  n = MultiByteToWideChar (CP_ACP, 0, string, -1, NULL, 0);
+  if (n < 0)
+    return NULL;
+
+  result = malloc ((n+1) * sizeof *result);
+  if (!result)
+    return NULL;
+
+  n = MultiByteToWideChar (CP_ACP, 0, string, -1, result, n);
+  if (n < 0)
+    {
+      free (result);
+      return NULL;
+    }
+  return result;
+}
+
+
 /* Return a malloced wide char string from an UTF-8 encoded input
    string STRING.  Caller must free this value. On failure returns
    NULL; caller may use GetLastError to get the actual error number.
    The result of calling this function with STRING set to NULL is not
    defined. */
-static wchar_t *
+wchar_t *
 utf8_to_wchar (const char *string)
 {
   int n;
@@ -1461,6 +1486,36 @@ utf8_to_wchar (const char *string)
 }
 
 
+/* Return a malloced string encoded in UTF-8 from the wide char input
+   string STRING.  Caller must xfree this value. On failure returns
+   NULL; caller may use GetLastError to get the actual error number.
+   The result of calling this function with STRING set to NULL is not
+   defined. */
+char *
+wchar_to_utf8 (const wchar_t *string)
+{
+  int n;
+  char *result;
+
+  /* Note, that CP_UTF8 is not defined in Windows versions earlier
+     than NT.*/
+  n = WideCharToMultiByte (CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
+  if (n < 0)
+    return NULL;
+
+  result = xmalloc (n+1);
+  n = WideCharToMultiByte (CP_UTF8, 0, string, -1, result, n, NULL, NULL);
+  if (n < 0)
+    {
+      xfree (result);
+      return NULL;
+    }
+  return result;
+}
+
+
+/* Convert UTF8 to the native codepage.  This function is guaranteed
+   to never return NULL.  Caller must xfree the return value. */
 char *
 utf8_to_native (const char *string)
 {
@@ -1469,13 +1524,39 @@ utf8_to_native (const char *string)
 
   wstring = utf8_to_wchar (string);
   if (!wstring)
-    return NULL;
+    return xstrdup ("[Error: utf8_to_wchar failed]");
 
   result = wchar_to_native (wstring);
   free (wstring);
+  if (!result)
+    result = xstrdup ("[Error: wchar_to_native failed]");
 
   return result;
 }
+
+
+/* Convert native character set to utf-8.  This is required if we want
+   to get an utf-8 string from a gettext translated function which
+   internally uses utf8_to_native.  It is guaranteed that NULL is
+   never returned.  Caller must xfree the return value. */
+char *
+native_to_utf8 (const char *string)
+{
+  char *result; 
+  wchar_t *wstring;
+
+  wstring = native_to_wchar (string);
+  if (!wstring)
+    return xstrdup ("[Error: native_to_wchar failed]");
+
+  result = wchar_to_utf8 (wstring);
+  free (wstring);
+  if (!result)
+    result = xstrdup ("[Error: wchar_to_utf8 failed]");
+
+  return result;
+}
+
 
 
 static const char*

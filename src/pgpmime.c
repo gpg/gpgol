@@ -686,6 +686,7 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
   struct gpgme_data_cbs cbs;
   gpgme_data_t plaintext;
   pgpmime_context_t ctx;
+  char *tmp;
 
   *body = NULL;
 
@@ -709,9 +710,10 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
   if (err)
     goto leave;
 
-  err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl,
-                                    _("[PGP/MIME message]"), attestation,
-                                    preview_mode);
+  tmp = native_to_utf8 (_("[PGP/MIME message]"));
+  err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl, tmp,
+                                    attestation, preview_mode);
+  xfree (tmp);
   if (!err && (ctx->parser_error || ctx->line_too_long))
     err = gpg_error (GPG_ERR_GENERAL);
 
@@ -727,7 +729,10 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
             }
         }
       else
-        *body = xstrdup (_("[PGP/MIME message without plain text body]"));
+        {
+          *body = native_to_utf8 (_("[PGP/MIME message "
+                                    "without plain text body]"));
+        }
     }
 
  leave:
@@ -799,18 +804,23 @@ pgpmime_verify (const char *message, int ttl, char **body,
             }
         }
       else
-        *body = xstrdup (_("[PGP/MIME signed message without a "
-                           "plain text body]"));
+        {
+          *body = native_to_utf8 (_("[PGP/MIME signed message without a "
+                                    "plain text body]"));
+        }
     }
 
   /* Now actually verify the signature. */
   if (!err && ctx->signed_data && ctx->sig_data)
     {
+      char *tmp;
+
       gpgme_data_seek (ctx->signed_data, 0, SEEK_SET);
       gpgme_data_seek (ctx->sig_data, 0, SEEK_SET);
+      tmp = native_to_utf8 (_("[PGP/MIME signature]"));
       err = op_verify_detached_sig_gpgme (ctx->signed_data, ctx->sig_data,
-                                          _("[PGP/MIME signature]"),
-                                          attestation);
+                                          tmp, attestation);
+      xfree (tmp);
     }
 
 

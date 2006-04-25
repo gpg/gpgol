@@ -67,7 +67,7 @@ load_akalist (HWND dlg, gpgme_key_t key)
     return n;
   for (u=u->next; u; u=u->next) 
     {
-      uid = utf8_to_wincp (u->uid);
+      uid = utf8_to_native (u->uid);
       SendDlgItemMessage (dlg, IDC_VRY_AKALIST, LB_ADDSTRING,
 			  0, (LPARAM)(const char*)uid);
       xfree (uid);
@@ -143,7 +143,7 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
   
   if (key && key->uids) 
     {
-      p = utf8_to_wincp (key->uids->uid);
+      p = utf8_to_native (key->uids->uid);
       SetDlgItemText (dlg, IDC_VRY_ISSUER, p);
       xfree (p);
       

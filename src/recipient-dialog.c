@@ -179,7 +179,7 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
 
       ListView_InsertItem (hwnd, &lvi);
       
-      s = utf8_to_wincp (key->uids->name);
+      s = utf8_to_native (key->uids->name);
       ListView_SetItemText (hwnd, 0, COL_NAME, s);
       xfree (s);
       

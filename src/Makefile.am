@@ -35,7 +35,7 @@ gpgol_SOURCES = \
 	msgcache.c msgcache.h       \
         engine-gpgme.c	engine.h    \
 	rfc822parse.c rfc822parse.h \
-        common.c util.h intern.h    \
+        common.c util.h intern.h xmalloc.h   \
 	passcache.c passcache.h     \
         config-dialog.c	            \
         passphrase-dialog.c         \

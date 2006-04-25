@@ -153,7 +153,7 @@ load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
     {
       if (key && key->uids && key->uids->uid)
 	{
-	  char *utf8_uid = utf8_to_wincp (key->uids->uid);
+	  char *utf8_uid = utf8_to_native (key->uids->uid);
 	  SendDlgItemMessage (dlg, ctlid, LB_ADDSTRING, 0,
 			      (LPARAM)(const char *)utf8_uid);
 	  xfree (utf8_uid);
@@ -249,7 +249,7 @@ load_secbox (HWND dlg, int ctlid)
       if (!key->uids->name)
         name = strdup ("");
       else
-	name = utf8_to_wincp (key->uids->name);
+	name = utf8_to_native (key->uids->name);
       email = key->uids->email;
       if (!email)
 	email = "";
@@ -739,7 +739,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       else
         s = "[no user Id]";
       xfree (dec->user_id);
-      dec->user_id = utf8_to_wincp (s);
+      dec->user_id = utf8_to_native (s);
       dec->last_was_bad = prev_was_bad;
       if (dec->flags & 0x01)
         {

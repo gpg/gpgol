@@ -1,3 +1,19 @@
+2006-04-25  Werner Koch  <wk@g10code.com>
+
+	* xmalloc.h: New.  Moved prototypes from util.h 
+	* w32-gettext.h:  Include it.
+	* common.c (utf8_to_wincp): Removed and replaced all callers by
+	utf8_to_native.
+	* common.c (wchar_to_utf8, utf8_to_wchar): Moved to ..
+	* w32-gettext.c: .. here.
+	(utf8_to_native): Make sure that we always return
+	a string and never NULL.
+	(native_to_utf8): New.
+	(native_to_wchar): New.
+	* gpgmsg.cpp (decrypt): Use native_to_utf8 for i18n strings
+	expected to be utf-8.
+	* pgpmime.c (pgpmime_decrypt, pgpmime_verify): Ditto.
+
 2006-04-24  Werner Koch  <wk@g10code.com>
 
 	* gpgmsg.cpp (decrypt): New arg INFO_ONLY.

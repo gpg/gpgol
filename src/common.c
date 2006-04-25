@@ -17,6 +17,8 @@
  * along with GPGol; if not, write to the Free Software Foundation, 
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
+
+#include <config.h>
 #include <windows.h>
 #include <time.h>
 
@@ -187,33 +189,6 @@ w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e)
 }
 
 
-/* Return a malloced string encoded in UTF-8 from the wide char input
-   string STRING.  Caller must xfree this value. On failure returns
-   NULL; caller may use GetLastError to get the actual error number.
-   The result of calling this function with STRING set to NULL is not
-   defined. */
-char *
-wchar_to_utf8 (const wchar_t *string)
-{
-  int n;
-  char *result;
-
-  /* Note, that CP_UTF8 is not defined in Windows versions earlier
-     than NT.*/
-  n = WideCharToMultiByte (CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
-  if (n < 0)
-    return NULL;
-
-  result = xmalloc (n+1);
-  n = WideCharToMultiByte (CP_UTF8, 0, string, -1, result, n, NULL, NULL);
-  if (n < 0)
-    {
-      xfree (result);
-      return NULL;
-    }
-  return result;
-}
-
 
 /* Same as above, but only convert the first LEN wchars.  */
 char *
@@ -230,31 +205,6 @@ wchar_to_utf8_2 (const wchar_t *string, size_t len)
 
   result = xmalloc (n+1);
   n = WideCharToMultiByte (CP_UTF8, 0, string, len, result, n, NULL, NULL);
-  if (n < 0)
-    {
-      xfree (result);
-      return NULL;
-    }
-  return result;
-}
-
-/* Return a malloced wide char string from an UTF-8 encoded input
-   string STRING.  Caller must xfree this value. On failure returns
-   NULL; caller may use GetLastError to get the actual error number.
-   The result of calling this function with STRING set to NULL is not
-   defined. */
-wchar_t *
-utf8_to_wchar (const char *string)
-{
-  int n;
-  wchar_t *result;
-
-  n = MultiByteToWideChar (CP_UTF8, 0, string, -1, NULL, 0);
-  if (n < 0)
-    return NULL;
-
-  result = xmalloc ((n+1) * sizeof *result);
-  n = MultiByteToWideChar (CP_UTF8, 0, string, -1, result, n);
   if (n < 0)
     {
       xfree (result);
@@ -288,17 +238,6 @@ utf8_to_wchar2 (const char *string, size_t len)
 }
 
 
-char *utf8_to_native (const char *string);
-    
-/* Convert the UTF8 encoding string STRING into the current
-   Windows charset and return it. */
-char *
-utf8_to_wincp (const char *string)
-{
-  return utf8_to_native (string);
-}
-
-  
 /* Assume STRING is a Latin-1 encoded and convert it to utf-8.
    Returns a newly malloced UTF-8 string. */
 char *
