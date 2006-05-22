@@ -1,3 +1,8 @@
+2006-05-22  Timo Schulz  <ts@g10code.com>
+
+	* verify-dialog.c (load_sigbox): A sigsum of 0 also indicates
+	a valid (good) signature.
+	
 2006-04-25  Werner Koch  <wk@g10code.com>
 
 	* xmalloc.h: New.  Moved prototypes from util.h 

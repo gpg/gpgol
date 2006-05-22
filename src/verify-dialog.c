@@ -121,10 +121,10 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
   }
 
   stat = ctx->signatures->summary;
-  if (stat & GPGME_SIGSUM_GREEN)
-    s = _("Good signature");
-  else if (stat & GPGME_SIGSUM_RED)
+  if (stat & GPGME_SIGSUM_RED)
     s = _("BAD signature!");
+  else if (!stat || (stat & GPGME_SIGSUM_GREEN))
+    s = _("Good signature");
   else if (stat & GPGME_SIGSUM_KEY_REVOKED)
     s = _("Good signature from revoked key");
   else if (stat & GPGME_SIGSUM_KEY_EXPIRED)
