@@ -176,7 +176,6 @@ load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
 const char*
 get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
 {
-  
   switch (alg)
     {
     case GPGME_PK_RSA:
@@ -185,13 +184,11 @@ get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
       return "RSA";
       
     case GPGME_PK_ELG_E:
+    case GPGME_PK_ELG:
       return "ELG";
 
     case GPGME_PK_DSA:
       return "DSA";
-
-    case GPGME_PK_ELG:
-      return "ELG";
 
     default:
       break;
