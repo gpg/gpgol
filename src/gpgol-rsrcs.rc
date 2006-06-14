@@ -227,9 +227,13 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
 CAPTION "Configuration Dialog"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Path to key-manager binary",IDC_STATIC,2,72,87,8
+    LTEXT           "Path to key-manager binary",IDC_STATIC,2,20,122,8
     EDITTEXT        IDC_OPT_KEYMAN,2,81,144,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_OPT_SELKEYMAN,148,80,11,14
+
+    LTEXT	    "Debug output (for analysing problems)", IDC_STATIC, 2,50,122,8
+    EDITTEXT	    IDC_DEBUG_LOGFILE,2,60,144,12,ES_AUTOHSCROLL
+
     DEFPUSHBUTTON   "&OK",IDOK,112,101,50,14
 END
 

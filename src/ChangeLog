@@ -1,3 +1,8 @@
+2006-06-14  Timo Schulz  <ts@g10code.com>
+
+	* gpgol-rscs.rc (IDD_OPT): The English version of the dialog
+	has no log file item. Add it.
+	
 2006-05-22  Timo Schulz  <ts@g10code.com>
 
 	* verify-dialog.c (load_sigbox): A sigsum of 0 also indicates
