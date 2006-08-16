@@ -1,3 +1,13 @@
+2006-08-15  Timo Schulz  <ts@g10code.de>
+
+	* decrypt.bmp, encrypt.bmp: Restore format.
+	* olflange.cpp (OnWriteComplete): Correct exit code handling.
+	* recipient-dialog.c (initialize_rsetbox): Correct column width.
+	(recipient_dlg_proc): Do not show the cancel error any longer.
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Likewise.
+	(decrypt_key_ext_dlg_proc): Ditto.
+	* olgpgcore.def: Deleted unused file.
+	
 2006-06-14  Timo Schulz  <ts@g10code.com>
 
 	* gpgol-rscs.rc (IDD_OPT): The English version of the dialog

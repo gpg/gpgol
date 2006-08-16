@@ -997,15 +997,15 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
   HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
-      SPropTagArray proparray;
+//      SPropTagArray proparray;
 
       GpgMsg *m = CreateGpgMsg (msg);
       m->setExchangeCallback ((void*)pEECB);
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = m->signEncrypt (hWnd, m_want_html);
-      if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
+      else if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
         rc = m->encrypt (hWnd, m_want_html);
-      if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
+      else if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = m->sign (hWnd, m_want_html);
       else
         rc = 0;
@@ -1034,9 +1034,10 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
           hrReturn = E_FAIL;
           m_bWriteFailed = TRUE;	
 
-          /* Due to a bug in Outlook the error is ignored and the
-             message sent out anyway.  Thus we better delete the stuff
-             now. */
+	  /* Outlook should now correctly react and do not deliver
+	     the message in case of an error.
+	   */
+	  #if 0
           if (m_pExchExt->m_gpgEncrypt)
             {
               log_debug ("%s:%s: deleting property PR_BODY due to error\n",
@@ -1050,7 +1051,7 @@ CGPGExchExtMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB,
               /* FIXME: We should delete the attachments too. 
                  We really, really should do this!!!          */
             }
-          
+          #endif
         }
     }
 

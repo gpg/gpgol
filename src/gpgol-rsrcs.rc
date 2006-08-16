@@ -1,5 +1,5 @@
 /* gpgol-rsrcs.rc - Main resources for this DLL        -*- c -*-
- *	Copyright (C) 2004, 2005 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2006 g10 Code GmbH
  * 
  * This file is part of GPGol.
  * 
@@ -46,11 +46,11 @@ CAPTION "Auswahl des Empfängerschlüssels"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "List1",IDC_ENC_RSET1,"SysListView32",LVS_REPORT | 
-                    WS_BORDER | WS_TABSTOP,8,4,314,92
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,4,314,92
     LTEXT           "Ausgewählte Empfänger:",IDC_STATIC,
                     8,98,130,8
     CONTROL         "List2",IDC_ENC_RSET2,"SysListView32",LVS_REPORT | 
-                    WS_BORDER | WS_TABSTOP,8,110,313,49
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,110,313,49
     LTEXT           "Empfänger die NICHT gefunden wurden:",IDC_ENC_INFO,
                     8,161,128,8
     LISTBOX         IDC_ENC_NOTFOUND,8,170,313,22,LBS_SORT | 
@@ -265,9 +265,9 @@ CAPTION "Recipient Dialog"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "List1",IDC_ENC_RSET1,"SysListView32",LVS_REPORT | 
-                    WS_BORDER | WS_TABSTOP,8,4,314,92
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,4,314,92
     CONTROL         "List2",IDC_ENC_RSET2,"SysListView32",LVS_REPORT | 
-                    WS_BORDER | WS_TABSTOP,8,98,313,49
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,98,313,49
     LTEXT           "Recipient which were NOT found",IDC_ENC_INFO,8,149,106,
                     8
     LISTBOX         IDC_ENC_NOTFOUND,8,158,313,22,LBS_SORT | 

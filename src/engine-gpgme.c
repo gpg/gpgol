@@ -116,7 +116,6 @@ op_init (void)
       return err;
     }
   
-  /*init_keycache_objects ();*/
   init_done = 1;
   return 0;
 }
@@ -178,7 +177,7 @@ stream_write_cb (void *handle, const void *buffer, size_t size)
    delete it if the TTL is 0 or an empty value is used. We also wipe
    the passphrase from the context here. */
 static void
-update_passphrase_cache (int err, struct decrypt_key_s *pass_cb_value)
+update_passphrase_cache (int err, struct passphrase_cb_s *pass_cb_value)
 {
   if (*pass_cb_value->keyid)
     {
@@ -227,15 +226,15 @@ int
 op_encrypt (const char *inbuf, char **outbuf, gpgme_key_t *keys,
             gpgme_key_t sign_key, int ttl)
 {
-  struct decrypt_key_s dk;
+  struct passphrase_cb_s cb;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;
   gpgme_error_t err;
   gpgme_ctx_t ctx = NULL;
     
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
-  dk.flags = 0x01; /* FIXME: what is that? */
+  memset (&cb, 0, sizeof cb);
+  cb.ttl = ttl;
+  cb.decrypt_cmd = 0;
 
   *outbuf = NULL;
 
@@ -256,14 +255,14 @@ op_encrypt (const char *inbuf, char **outbuf, gpgme_key_t *keys,
   gpgme_set_armor (ctx, 1);
   if (sign_key)
     {
-      gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-      dk.ctx = ctx;
+      gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+      cb.ctx = ctx;
       err = gpgme_signers_add (ctx, sign_key);
       if (!err)
         err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST,
                                      in, out);
-      dk.ctx = NULL;
-      update_passphrase_cache (err, &dk);
+      cb.ctx = NULL;
+      update_passphrase_cache (err, &cb);
     }
   else
     err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
@@ -299,7 +298,7 @@ int
 op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream, gpgme_key_t *keys,
                    gpgme_key_t sign_key, int ttl)
 {
-  struct decrypt_key_s dk;
+  struct passphrase_cb_s cb;
   struct gpgme_data_cbs cbs;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;
@@ -310,9 +309,9 @@ op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream, gpgme_key_t *keys,
   cbs.read = stream_read_cb;
   cbs.write = stream_write_cb;
 
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
-  dk.flags = 1;
+  memset (&cb, 0, sizeof cb);
+  cb.ttl = ttl;
+  cb.decrypt_cmd = 0;
 
   err = gpgme_data_new_from_cbs (&in, &cbs, instream);
   if (err)
@@ -330,14 +329,14 @@ op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream, gpgme_key_t *keys,
   /* FIXME:  We should not hardcode always trust. */
   if (sign_key)
     {
-      gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-      dk.ctx = ctx;
+      gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+      cb.ctx = ctx;
       err = gpgme_signers_add (ctx, sign_key);
       if (!err)
         err = gpgme_op_encrypt_sign (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST,
                                      in, out);
-      dk.ctx = NULL;
-      update_passphrase_cache (err, &dk);
+      cb.ctx = NULL;
+      update_passphrase_cache (err, &cb);
     }
   else
     err = gpgme_op_encrypt (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
@@ -361,15 +360,15 @@ int
 op_sign (const char *inbuf, char **outbuf, int mode,
          gpgme_key_t sign_key, int ttl)
 {
-  struct decrypt_key_s dk;
+  struct passphrase_cb_s cb;
   gpgme_error_t err;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;
   gpgme_ctx_t ctx = NULL;
 
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
-  dk.flags = 1;
+  memset (&cb, 0, sizeof cb);
+  cb.ttl = ttl;
+  cb.decrypt_cmd = 0;
 
   *outbuf = NULL;
   op_init ();
@@ -393,11 +392,11 @@ op_sign (const char *inbuf, char **outbuf, int mode,
     gpgme_set_textmode (ctx, 1);
   gpgme_set_armor (ctx, 1);
 
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-  dk.ctx = ctx;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+  cb.ctx = ctx;
   err = gpgme_op_sign (ctx, in, out, mode);
-  dk.ctx = NULL;
-  update_passphrase_cache (err, &dk);
+  cb.ctx = NULL;
+  update_passphrase_cache (err, &cb);
 
   if (!err)
     {
@@ -427,7 +426,7 @@ op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
                 gpgme_key_t sign_key, int ttl)
 {
   struct gpgme_data_cbs cbs;
-  struct decrypt_key_s dk;
+  struct passphrase_cb_s cb;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;
   gpgme_ctx_t ctx = NULL;
@@ -437,9 +436,9 @@ op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
   cbs.read = stream_read_cb;
   cbs.write = stream_write_cb;
 
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
-  dk.flags = 0x01; /* fixme: Use a macro for documentation reasons. */
+  memset (&cb, 0, sizeof cb);
+  cb.ttl = ttl;
+  cb.decrypt_cmd = 0;
 
   err = gpgme_data_new_from_cbs (&in, &cbs, instream);
   if (err)
@@ -460,11 +459,11 @@ op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
     gpgme_set_textmode (ctx, 1);
   gpgme_set_armor (ctx, 1);
 
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-  dk.ctx = ctx;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+  cb.ctx = ctx;
   err = gpgme_op_sign (ctx, in, out, mode);
-  dk.ctx = NULL;
-  update_passphrase_cache (err, &dk);
+  cb.ctx = NULL;
+  update_passphrase_cache (err, &cb);
   
  fail:
   if (in)
@@ -488,7 +487,7 @@ int
 op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
             gpgme_data_t attestation, int preview_mode)
 {
-  struct decrypt_key_s dk;
+  struct passphrase_cb_s cb;
   gpgme_data_t in = NULL;
   gpgme_data_t out = NULL;
   gpgme_ctx_t ctx;
@@ -497,8 +496,9 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
   *outbuf = NULL;
   op_init ();
 
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
+  memset (&cb, 0, sizeof cb);
+  cb.ttl = ttl;
+  cb.decrypt_cmd = 1;
 
   err = gpgme_new (&ctx);
   if (err)
@@ -511,14 +511,14 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
   if (err)
     goto leave;
 
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-  dk.ctx = ctx;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+  cb.ctx = ctx;
   if (preview_mode)
     err = gpgme_op_decrypt (ctx, in, out);
   else
     err = gpgme_op_decrypt_verify (ctx, in, out);
-  dk.ctx = NULL;
-  update_passphrase_cache (err, &dk);
+  cb.ctx = NULL;
+  update_passphrase_cache (err, &cb);
 
   /* Act upon the result of the decryption operation. */
   if (!err && preview_mode) 
@@ -561,7 +561,7 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
 
   /* If the callback indicated a cancel operation, set the error
      accordingly. */
-  if (err && (dk.opts & OPT_FLAG_CANCEL))
+  if (err && (cb.opts & OPT_FLAG_CANCEL))
     err = gpg_error (GPG_ERR_CANCELED);
   
 leave:    
@@ -585,25 +585,26 @@ decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
                 const char *filename, gpgme_data_t attestation, 
                 int preview_mode)
 {    
-  struct decrypt_key_s dk;
+  struct passphrase_cb_s cb;
   gpgme_ctx_t ctx = NULL;
   gpgme_error_t err;
   
-  memset (&dk, 0, sizeof dk);
-  dk.ttl = ttl;
+  memset (&cb, 0, sizeof cb);
+  cb.ttl = ttl;
+  cb.decrypt_cmd = 1;
 
   err = gpgme_new (&ctx);
   if (err)
     goto fail;
 
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &dk);
-  dk.ctx = ctx;
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+  cb.ctx = ctx;
   if (preview_mode)
     err = gpgme_op_decrypt (ctx, in, out);
   else
     err = gpgme_op_decrypt_verify (ctx, in, out);
-  dk.ctx = NULL;
-  update_passphrase_cache (err, &dk);
+  cb.ctx = NULL;
+  update_passphrase_cache (err, &cb);
   /* Act upon the result of the decryption operation. */
   if (!err && preview_mode) 
     ;
@@ -637,7 +638,7 @@ decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
 
   /* If the callback indicated a cancel operation, set the error
      accordingly. */
-  if (err && (dk.opts & OPT_FLAG_CANCEL))
+  if (err && (cb.opts & OPT_FLAG_CANCEL))
     err = gpg_error (GPG_ERR_CANCELED);
 
  fail:

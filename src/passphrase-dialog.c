@@ -20,7 +20,9 @@
  * 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <windows.h>
 #include <time.h>
@@ -38,7 +40,7 @@
 /* Object to maintai8n state in the dialogs. */
 struct dialog_context_s
 {
-  struct decrypt_key_s *dec; /* The decryption info. */
+  struct passphrase_cb_s *dec; /* The decryption info. */
 
   gpgme_key_t *keyarray;     /* NULL or an array of keys. */
 
@@ -54,7 +56,7 @@ static char const allhexdigits[] = "1234567890ABCDEFabcdef";
 
 
 static void
-set_key_hint (struct decrypt_key_s *dec, HWND dlg, int ctrlid)
+set_key_hint (struct passphrase_cb_s *dec, HWND dlg, int ctrlid)
 {
   const char *s = dec->user_id;
   char *key_hint;
@@ -93,12 +95,11 @@ release_keyarray (gpgme_key_t *array)
 {
   size_t n;
 
-  if (array)
-    {
-      for (n=0; array[n]; n++)
-        gpgme_key_release (array[n]);
-      xfree (array);
-    }
+  if (!array)
+    return;
+  for (n=0; array[n]; n++)
+    gpgme_key_release (array[n]);
+  xfree (array);
 }
 
 /* Return the number of keys in the key array KEYS. */
@@ -147,7 +148,10 @@ load_recipbox (HWND dlg, int ctlid, gpgme_ctx_t ctx)
     goto fail;
   err = gpgme_op_keylist_start (keyctx, buffer, 0);
   if (err)
-    goto fail;
+    {
+      log_error ("failed to initialize keylisting: %s", gpg_strerror (err));
+      goto fail;
+    }
 
   while (!gpgme_op_keylist_next (keyctx, &key))
     {
@@ -304,9 +308,8 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
   /* Fixme: We should not use a static here but keep it in an array
      index by DLG. */
   static struct dialog_context_s *context; 
-  struct decrypt_key_s *dec;
+  struct passphrase_cb_s *dec;
   size_t n;
-  const char *warn;
 
   if (msg == WM_INITDIALOG)
     {
@@ -356,11 +359,6 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       context->hide_state = 1;
       break;
 
-    case WM_SYSCOMMAND:
-      if (wparam == SC_CLOSE)
-        EndDialog (dlg, TRUE);
-      break;
-
     case WM_COMMAND:
       switch (HIWORD (wparam)) 
         {
@@ -405,28 +403,8 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           break;
           
 	case IDCANCEL:
-          if (context->no_encrypt_warning)
-            {
-              warn = _("If you cancel this dialog, the message will be sent"
-                       " in cleartext!\n\n"
-                       "Do you really want to cancel?");
-            }
-          else if (dec && context->use_as_cb && (dec->flags & 0x01)) 
-            {
-              warn = _("If you cancel this dialog, the message"
-                       " will be sent without signing.\n\n"
-                       "Do you really want to cancel?");
-            }
-          else
-            warn = NULL;
-
-          if (warn)
-            {
-              n = MessageBox (dlg, warn, _("Secret Key Dialog"),
-                              MB_ICONWARNING|MB_YESNO);
-              if (n == IDNO)
-                return FALSE;
-	    }
+	  /* Outlook show now correctly abort the sending process
+	     and thus no warning is shown any longer. */
           if (dec)
             {
               dec->opts = OPT_FLAG_CANCEL;
@@ -448,9 +426,8 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
   /* Fixme: We should not use a static here but keep it in an array
      index by DLG. */
   static struct dialog_context_s *context; 
-  struct decrypt_key_s * dec;
+  struct passphrase_cb_s * dec;
   size_t n;
-  const char *warn;
 
   if (msg == WM_INITDIALOG)
     {
@@ -469,7 +446,7 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                       (dec && dec->last_was_bad)?
                       _("Invalid passphrase; please try again..."):"");
       if (dec)
-        load_recipbox (dlg, IDC_DECEXT_RSET, (gpgme_ctx_t)dec->ctx);
+        load_recipbox (dlg, IDC_DECEXT_RSET, dec->ctx);
 
       CheckDlgButton (dlg, IDC_DECEXT_HIDE, BST_CHECKED);
       center_window (dlg, NULL);
@@ -487,11 +464,6 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     {
     case WM_DESTROY:
       context->hide_state = 1;
-      break;
-
-    case WM_SYSCOMMAND:
-      if (wparam == SC_CLOSE)
-        EndDialog (dlg, TRUE);
       break;
 
     case WM_COMMAND:
@@ -517,35 +489,14 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           n = SendDlgItemMessage (dlg, IDC_DECEXT_PASS, WM_GETTEXTLENGTH,0,0);
           if (n && dec) 
             {
-              dec->pass = xmalloc ( n + 2 );
-              GetDlgItemText (dlg, IDC_DECEXT_PASS, dec->pass, n+1 );
+              dec->pass = xmalloc (n + 2);
+              GetDlgItemText (dlg, IDC_DECEXT_PASS, dec->pass, n+1);
 	    }
           EndDialog (dlg, TRUE);
           break;
 
 	case IDCANCEL:
-          if (context->no_encrypt_warning)
-            {
-              warn = _("If you cancel this dialog, the message will be sent"
-                       " in cleartext!\n\n"
-                       "Do you really want to cancel?");
-            }
-          else if (dec && context->use_as_cb && (dec->flags & 0x01)) 
-            {
-              warn = _("If you cancel this dialog, the message"
-                       " will be sent without signing.\n"
-                       "Do you really want to cancel?");
-            }
-          else
-            warn = NULL;
-
-          if (warn)
-            {
-              n = MessageBox (dlg, warn, _("Secret Key Dialog"),
-                              MB_ICONWARNING|MB_YESNO);
-              if (n == IDNO)
-                return FALSE;
-	    }
+	  /* See comment in decrypt_key_dlg_proc. */
           if (dec)
             {
               dec->opts = OPT_FLAG_CANCEL;
@@ -568,7 +519,7 @@ int
 signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting)
 {
   struct dialog_context_s context; 
-  struct decrypt_key_s dec;
+  struct passphrase_cb_s dec;
   int resid;
 
   memset (&context, 0, sizeof context);
@@ -616,7 +567,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 			 const char *pass_info,
 			 int prev_was_bad, int fd)
 {
-  struct decrypt_key_s *dec = opaque;
+  struct passphrase_cb_s *dec = opaque;
   DWORD nwritten = 0;
   char keyidstr[16+1];
   int resid;
@@ -738,7 +689,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       xfree (dec->user_id);
       dec->user_id = utf8_to_native (s);
       dec->last_was_bad = prev_was_bad;
-      if (dec->flags & 0x01)
+      if (!dec->decrypt_cmd)
         {
           if (!strncmp (gettext_localename (), "de", 2))
             resid = IDD_DEC_DE;
@@ -782,7 +733,7 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
 
 /* Release the context which was used in the passphrase callback. */
 void
-free_decrypt_key (struct decrypt_key_s * ctx)
+free_decrypt_key (struct passphrase_cb_s *ctx)
 {
     if (!ctx)
 	return;

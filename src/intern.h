@@ -1,6 +1,6 @@
 /* intern.h
  *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2006 g10 Code GmbH
  *
  * This file is part of GPGol.
  *
@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 
+/* Possible options for the recipient dialog. */
 enum
   {
     OPT_FLAG_TEXT     =  2,
@@ -71,16 +72,18 @@ extern HINSTANCE glob_hinst;
 extern UINT      this_dll;
 
 
-struct decrypt_key_s 
+/* Passphrase callback structure. */
+struct passphrase_cb_s
 {
   gpgme_key_t signer;
+  gpgme_ctx_t ctx;
   char keyid[16+1];
   char *user_id;
   char *pass;    
-  void *ctx;
   int opts;
   int ttl;  /* TTL of the passphrase. */
-  unsigned int flags;
+  unsigned int decrypt_cmd:1; /* 1 = show decrypt dialog, otherwise secret key
+			         selection. */
   unsigned int hide_pwd:1;
   unsigned int last_was_bad:1;
 };
@@ -130,7 +133,7 @@ int watcher_free_hook (void);
 void watcher_set_callback_ctx (void *cb);
 
 /*-- recipient-dialog.c --*/
-unsigned int recipient_dialog_box(gpgme_key_t **ret_rset);
+unsigned int recipient_dialog_box (gpgme_key_t **ret_rset);
 unsigned int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
                                     gpgme_key_t **ret_rset);
 
@@ -139,7 +142,7 @@ int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting);
 gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint, 
 			     const char *pass_info,
 			     int prev_was_bad, int fd);
-void free_decrypt_key (struct decrypt_key_s * ctx);
+void free_decrypt_key (struct passphrase_cb_s *ctx);
 const char *get_pubkey_algo_str (gpgme_pubkey_algo_t id);
 
 /*-- config-dialog.c --*/

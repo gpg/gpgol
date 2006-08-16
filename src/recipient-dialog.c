@@ -1,6 +1,6 @@
 /* recipient-dialog.c
  *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2006 g10 Code GmbH
  *
  * This file is part of GPGol.
  * 
@@ -20,12 +20,19 @@
  * 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#ifndef _WIN32_IE /* allow to use advanced list view modes. */
+#define _WIN32_IE 0x0600
+#endif
 
 #include <windows.h>
 #include <commctrl.h>
 #include <time.h>
 #include <gpgme.h>
+#include <assert.h>
 
 #include "gpgol-ids.h"
 #include "intern.h"
@@ -87,29 +94,29 @@ initialize_rsetbox (HWND hwnd)
     col.pszText = "E-Mail";
     col.cx = 100;
     col.iSubItem = 1;
-    ListView_InsertColumn( hwnd, 1, &col );
+    ListView_InsertColumn (hwnd, 1, &col);
 
     col.pszText = "Key-Info";
-    col.cx = 110;
+    col.cx = 100;
     col.iSubItem = 2;
-    ListView_InsertColumn( hwnd, 2, &col );
+    ListView_InsertColumn (hwnd, 2, &col);
 
     col.pszText = "Key ID";
-    col.cx = 70;
+    col.cx = 80;
     col.iSubItem = 3;
-    ListView_InsertColumn( hwnd, 3, &col );
+    ListView_InsertColumn (hwnd, 3, &col);
 
     col.pszText = "Validity";
     col.cx = 70;
     col.iSubItem = 4;
-    ListView_InsertColumn( hwnd, 4, &col );
+    ListView_InsertColumn (hwnd, 4, &col);
 
     col.pszText = "Index";
     col.cx = 0;  /* Hide it. */
     col.iSubItem = 5;
-    ListView_InsertColumn( hwnd, 5, &col );
+    ListView_InsertColumn (hwnd, 5, &col);
 
-/*     ListView_SetExtendedListViewStyleEx( hwnd, 0, LVS_EX_FULLROWSELECT ); */
+    ListView_SetExtendedListViewStyleEx (hwnd, 0, LVS_EX_FULLROWSELECT);
 }
 
 
@@ -126,12 +133,12 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
   char keybuf[128], *s;
   const char *trust_items[] = 
     {
-      "UNKNOWN",
-      "UNDEFINED",
-      "NEVER",
-      "MARGINAL",
-      "FULL",
-      "ULTIMATE"
+      "Unknown",
+      "Undefined",
+      "Never",
+      "Marginal",
+      "Full",
+      "Ultimate"
     };
   enum {COL_NAME, COL_EMAIL, COL_KEYINF, COL_KEYID, COL_TRUST, COL_IDX};
   DWORD val;
@@ -208,8 +215,11 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
       s = keybuf;
       ListView_SetItemText (hwnd, 0, COL_KEYINF, s);
       
-      if (key->subkeys->keyid  && strlen (key->subkeys->keyid) > 8)
-        ListView_SetItemText (hwnd, 0, COL_KEYID, key->subkeys->keyid+8);
+      if (key->subkeys->keyid  && strlen (key->subkeys->keyid) > 8) 
+	{
+	  _snprintf (keybuf, sizeof (keybuf)-1, "0x%s", key->subkeys->keyid+8);
+	  ListView_SetItemText (hwnd, 0, COL_KEYID, keybuf);
+	}
       
       val = key->uids->validity;
       if (val < 0 || val > 5) 
@@ -221,6 +231,8 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
       /* I'd like to use SetItemData but that one is only available as
          a member function of CListCtrl; I haved not figured out how
          the vtable is made up.  Thus we use a string with the index. */
+      /* ts: this can be done via the lParam (LVIF_PARAM) item in LVITEM.
+             I will implement this ASAP. */
       sprintf (keybuf, "%u", (unsigned int)pos);
       s = keybuf;
       ListView_SetItemText (hwnd, 0, COL_IDX, s);
@@ -255,12 +267,11 @@ release_keyarray (gpgme_key_t *array, size_t count)
 {
   size_t n;
 
-  if (array)
-    {
-      for (n=0; n < count; n++)
-        gpgme_key_release (array[n]);
-      xfree (array);
-    }
+  if (!array)
+    return;
+  for (n=0; n < count; n++)
+    gpgme_key_release (array[n]);
+  xfree (array);
 }
 
 
@@ -352,10 +363,8 @@ BOOL CALLBACK
 recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
   static struct recipient_cb_s * rset_cb;
-  static int rset_state = 1;
   NMHDR *notify;
   HWND hrset;
-  const char *warn;
   size_t pos;
   int i, j;
 
@@ -363,7 +372,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     {
     case WM_INITDIALOG:
       rset_cb = (struct recipient_cb_s *)lparam;
-
+      assert (rset_cb != NULL);
       initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1));
       rset_cb->keyarray = load_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1),
                                         &rset_cb->keyarray_count);
@@ -383,15 +392,6 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       SetForegroundWindow (dlg);
       return TRUE;
 
-    case WM_DESTROY:
-      rset_state = 1; /* reset to default. */
-      break;
-      
-    case WM_SYSCOMMAND:
-      if (wparam == SC_CLOSE)
-        EndDialog (dlg, TRUE);
-      break;
-
     case WM_NOTIFY:
       notify = (LPNMHDR)lparam;
       if (notify && notify->code == NM_DBLCLK
@@ -401,19 +401,6 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       break;
 
     case WM_COMMAND:
-      switch (HIWORD (wparam))
-        {
-	case BN_CLICKED:
-          if ((int)LOWORD (wparam) == IDC_ENC_OPTSYM)
-            {
-              rset_state ^= 1;
-              EnableWindow (GetDlgItem (dlg, IDC_ENC_RSET1), rset_state);
-              EnableWindow (GetDlgItem (dlg, IDC_ENC_RSET2), rset_state);
-              ListView_DeleteAllItems (GetDlgItem (dlg, IDC_ENC_RSET2));
-	    }
-          break;
-	}
-
       switch (LOWORD (wparam))
         {
 	case IDOK:
@@ -479,16 +466,10 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           break;
 
 	case IDCANCEL:
-          warn = _("If you cancel this dialog, the message will be sent"
-                   " in cleartext.\n\n"
-                   "Do you really want to cancel?");
-          i = MessageBox (dlg, warn, _("Recipient Dialog"),
-                          MB_ICONWARNING|MB_YESNO);
-          if (i != IDNO)
-            {
-              rset_cb->opts = OPT_FLAG_CANCEL;
-              EndDialog (dlg, FALSE);
-            }
+	  /* now that Outlook correctly aborts the delivery, we do not
+	     need any warning message if the user cancels thi dialog. */
+	  rset_cb->opts = OPT_FLAG_CANCEL;
+	  EndDialog (dlg, FALSE);
           break;
 	}
       break;
