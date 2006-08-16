@@ -1,3 +1,12 @@
+Noteworthy changes for version 0.9.11 (unreleased)
+==================================================
+
+* Fix problem that message would be sent in clear
+  text if the user cancelled the operation.
+
+* Cosmetic updates for some dialogs.
+
+
 Noteworthy changes for version 0.9.10 (2006-04-25)
 ==================================================
 
