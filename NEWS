@@ -6,6 +6,12 @@ Noteworthy changes for version 0.9.11 (unreleased)
 
 * Cosmetic updates for some dialogs.
 
+* Do not show the 'select signer dialog' when only
+  one secret key is available in the keyring.
+
+* Fixes for the automatic key selection algorithm
+  used in the recipient key dialog.
+  
 
 Noteworthy changes for version 0.9.10 (2006-04-25)
 ==================================================
