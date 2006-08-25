@@ -48,12 +48,7 @@ struct recipient_cb_s
   char **unknown_keys;  /* A string array with the names of the
                            unknown recipients. */
 
-  char **fnd_keys;      /* A string array with the user IDs of already
-                           found keys.  I am not sure why they are
-                           needed here at all - they won't get
-                           displayed for unknown reasons. */
-  gpgme_key_t *fnd_keys_key; /* Same as above but the actual gpgme object. */
-  
+  gpgme_key_t *fnd_keys; /* email address to key mapping list. */  
 
   /* A bit vector used to return selected options. */
   unsigned int opts;
@@ -68,17 +63,21 @@ struct recipient_cb_s
   size_t      selected_keys_count;
 };
 
-struct key_item_s 
+
+/* Symbolic column IDs. */
+enum klist_col_t 
 {
-  char name [150];
-  char e_mail[100];
-  char key_info[64];
-  char keyid[32];
-  char validity[32];
-  char idx[20];
+  KL_COL_NAME = 0,
+  KL_COL_EMAIL = 1,
+  KL_COL_INFO = 2,
+  KL_COL_KEYID = 3,
+  KL_COL_VALID = 4,
+  KL_COL_INDEX = 5,
+  /* number of columns. */
+  KL_COL_N = 6
 };
 
-
+/* Insert the columns, needed to display keys, into the list view HWND. */
 static void
 initialize_rsetbox (HWND hwnd)
 {
@@ -88,39 +87,41 @@ initialize_rsetbox (HWND hwnd)
     col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     col.pszText = "Name";
     col.cx = 100;
-    col.iSubItem = 0;
-    ListView_InsertColumn (hwnd, 0, &col);
+    col.iSubItem = KL_COL_NAME;
+    ListView_InsertColumn (hwnd, KL_COL_NAME, &col);
 
     col.pszText = "E-Mail";
     col.cx = 100;
-    col.iSubItem = 1;
-    ListView_InsertColumn (hwnd, 1, &col);
+    col.iSubItem = KL_COL_EMAIL;
+    ListView_InsertColumn (hwnd, KL_COL_EMAIL, &col);
 
     col.pszText = "Key-Info";
     col.cx = 100;
-    col.iSubItem = 2;
-    ListView_InsertColumn (hwnd, 2, &col);
+    col.iSubItem = KL_COL_INFO;
+    ListView_InsertColumn (hwnd, KL_COL_INFO, &col);
 
     col.pszText = "Key ID";
     col.cx = 80;
-    col.iSubItem = 3;
-    ListView_InsertColumn (hwnd, 3, &col);
+    col.iSubItem = KL_COL_KEYID;
+    ListView_InsertColumn (hwnd, KL_COL_KEYID, &col);
 
     col.pszText = "Validity";
     col.cx = 70;
-    col.iSubItem = 4;
-    ListView_InsertColumn (hwnd, 4, &col);
+    col.iSubItem = KL_COL_VALID;
+    ListView_InsertColumn (hwnd, KL_COL_VALID, &col);
 
     col.pszText = "Index";
     col.cx = 0;  /* Hide it. */
-    col.iSubItem = 5;
-    ListView_InsertColumn (hwnd, 5, &col);
+    col.iSubItem = KL_COL_INDEX;
+    ListView_InsertColumn (hwnd, KL_COL_INDEX, &col);
 
     ListView_SetExtendedListViewStyleEx (hwnd, 0, LVS_EX_FULLROWSELECT);
 }
 
 
-static gpgme_key_t *
+/* Load the key list view control HWND with all useable keys 
+   for encryption. Return the array size in *R_ARRAYSIZE. */
+static gpgme_key_t*
 load_rsetbox (HWND hwnd, size_t *r_arraysize)
 {
   LVITEM lvi;
@@ -275,14 +276,16 @@ release_keyarray (gpgme_key_t *array, size_t count)
 }
 
 
+#define ITEMSIZE 200
 
+/* Copy one list view item from one view to another. */
 static void
 copy_item (HWND dlg, int id_from, int pos)
 {
   HWND src, dst;
   LVITEM lvi;
-  struct key_item_s from;
-  int idx = pos;
+  char item[KL_COL_N][ITEMSIZE];
+  int idx = pos, i;
   
   src = GetDlgItem (dlg, id_from);
   dst = GetDlgItem (dlg, id_from==IDC_ENC_RSET1 ?
@@ -295,27 +298,19 @@ copy_item (HWND dlg, int id_from, int pos)
         return;
     }
   
-  memset (&from, 0, sizeof (from));
-  ListView_GetItemText (src, idx, 0, from.name, sizeof (from.name)-1);
-  ListView_GetItemText (src, idx, 1, from.e_mail, sizeof (from.e_mail)-1);
-  ListView_GetItemText (src, idx, 2, from.key_info, sizeof (from.key_info)-1);
-  ListView_GetItemText (src, idx, 3, from.keyid, sizeof (from.keyid)-1);
-  ListView_GetItemText (src, idx, 4, from.validity, sizeof (from.validity)-1);
-  ListView_GetItemText (src, idx, 5, from.idx, sizeof (from.idx)-1);
-
+  for (i=0; i < KL_COL_N; i++)
+    ListView_GetItemText (src, idx, i, item[i], ITEMSIZE-1);
   ListView_DeleteItem (src, idx);
   
   memset (&lvi, 0, sizeof (lvi));
   ListView_InsertItem (dst, &lvi);
-  ListView_SetItemText (dst, 0, 0, from.name);
-  ListView_SetItemText (dst, 0, 1, from.e_mail);
-  ListView_SetItemText (dst, 0, 2, from.key_info);
-  ListView_SetItemText (dst, 0, 3, from.keyid);
-  ListView_SetItemText (dst, 0, 4, from.validity);
-  ListView_SetItemText (dst, 0, 5, from.idx);
+  for (i=0; i < KL_COL_N; i++)
+    ListView_SetItemText (dst, 0, i, item[i]);
 }
 
 
+/* Try to find an item with STR as the text in the first column.
+   Return the index of the item or -1 if no item was found. */
 static int
 find_item (HWND hwnd, const char *str)
 {
@@ -323,7 +318,7 @@ find_item (HWND hwnd, const char *str)
     int pos;
 
     memset (&fnd, 0, sizeof (fnd));
-    fnd.flags = LVFI_STRING;
+    fnd.flags = LVFI_STRING|LVFI_PARTIAL;;
     fnd.psz = str;
     pos = ListView_FindItem (hwnd, -1, &fnd);
     if (pos != -1)
@@ -347,13 +342,19 @@ initialize_keybox (HWND dlg, struct recipient_cb_s *cb)
                      (LPARAM)(const char *)cb->unknown_keys[i]);
     }
 
+  /* copy all requested keys into the second recipient listview
+     to indicate that these key were automatically picked via
+     the 'From' mailing header. */
   if (cb->fnd_keys)
     {
       for (i=0; cb->fnd_keys[i]; i++) 
         {
-          n = find_item (rset, cb->fnd_keys[i]);
+	  char *uid = utf8_to_native (cb->fnd_keys[i]->uids->name);
+
+          n = find_item (rset, uid);
           if (n != -1)
             copy_item (dlg, IDC_ENC_RSET1, n);
+	  xfree (uid);
         }
     }
 }
@@ -376,7 +377,6 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1));
       rset_cb->keyarray = load_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1),
                                         &rset_cb->keyarray_count);
-
       initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET2));
 
       if (rset_cb->unknown_keys)
@@ -412,7 +412,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
               return FALSE;
 	    }
 
-          for (j=0; rset_cb->fnd_keys_key && rset_cb->fnd_keys_key[j]; j++)
+          for (j=0; rset_cb->fnd_keys && rset_cb->fnd_keys[j]; j++)
             ;
           rset_cb->selected_keys_count = ListView_GetItemCount (hrset);
           rset_cb->selected_keys = xcalloc (rset_cb->selected_keys_count
@@ -455,10 +455,10 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                 log_debug ("List item not correctly initialized - ignored\n");
             }
           /* Add the already found keys. */
-          for (i=0; rset_cb->fnd_keys_key && rset_cb->fnd_keys_key[i]; i++)
+          for (i=0; rset_cb->fnd_keys && rset_cb->fnd_keys[i]; i++)
             {
-              gpgme_key_ref (rset_cb->fnd_keys_key[i]);
-              rset_cb->selected_keys[pos++] = rset_cb->fnd_keys_key[i];
+              gpgme_key_ref (rset_cb->fnd_keys[i]);
+              rset_cb->selected_keys[pos++] = rset_cb->fnd_keys[i];
             }
 
           rset_cb->selected_keys_count = pos;
@@ -521,27 +521,12 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
 		       gpgme_key_t **ret_rset)
 {
   struct recipient_cb_s cb;
-  int i;
-  size_t n;
   int resid;
-
+  
   *ret_rset = NULL;
 
   memset (&cb, 0, sizeof (cb));
-
-  for (n=0; fnd[n]; n++)
-    ;
-  cb.fnd_keys = xcalloc (n+1, sizeof *cb.fnd_keys);
-
-  for (i = 0; i < n; i++) 
-    {
-      if (fnd[i] && fnd[i]->uids && fnd[i]->uids->uid)
-        cb.fnd_keys[i] = xstrdup (fnd[i]->uids->uid);
-      else
-	cb.fnd_keys[i] = xstrdup (_("User-ID not found"));
-    }
-
-  cb.fnd_keys_key = fnd;
+  cb.fnd_keys = fnd;
   cb.unknown_keys = unknown;
 
   if (!strncmp (gettext_localename (), "de", 2))
@@ -557,8 +542,6 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
     *ret_rset = cb.selected_keys;
 
   release_keyarray (cb.keyarray, cb.keyarray_count);
-  for (i = 0; i < n; i++) 
-    xfree (cb.fnd_keys[i]);
   xfree (cb.fnd_keys);
   return cb.opts;
 }

@@ -1333,9 +1333,22 @@ op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown)
         }
       gpgme_op_keylist_end (ctx);
 
-      if (k)
+      
+      /* only useable keys will be added otherwise they will be stored
+         in unknown (marked with their status). */
+      if (k && !k->revoked && !k->disabled && !k->expired)
         (*keys)[kpos++] = k;
-      else
+      else if (k)
+	{
+	  char *p, *fmt = "%s (%s)";
+	  char *warn = k->revoked? "revoked" : k->expired? "expired" : "disabled";
+	  
+	  p = xcalloc (1, strlen (names[i]) + strlen (warn) + strlen (fmt) +1);
+	  sprintf (p, fmt, names[i], warn);
+	  (*unknown)[upos++] = p;
+	  gpgme_key_release (k);
+	}
+      else if (!k)
         (*unknown)[upos++] = xstrdup (names[i]);
     }
 

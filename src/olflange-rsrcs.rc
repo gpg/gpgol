@@ -51,7 +51,7 @@ IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
 // Dialog
 //
 
-IDD_GPG_OPTIONS_DE DIALOG DISCARDABLE  0, 0, 266, 201
+IDD_GPG_OPTIONS_DE DIALOG DISCARDABLE  0, 0, 266, 274
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "GnuPG"
 FONT 8, "MS Sans Serif"
@@ -77,18 +77,18 @@ BEGIN
                     IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,95,162,10
 
-    CONTROL         "Wenn möglich, HTML Darstellung anzeigen",
+    CONTROL         "HTML Darstellung anzeigen wenn möglich",
                     IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,107,162,10
 
     GROUPBOX        "Passphrase",IDC_STATIC,9,124,242,31
     LTEXT           "Passphrase speichern für",IDC_STATIC,24,136,80,8
     EDITTEXT        IDC_TIME_PHRASES,107,135,39,14,ES_AUTOHSCROLL
-    LTEXT           "Sekunden",IDC_STATIC,151,137,34,8
+    LTEXT           "Minuten",IDC_STATIC,151,137,34,8
 
     PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
     LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
-    LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9
+    LTEXT           "Version x ",IDC_VERSION_INFO,150,185,109,9						  
     CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
                     SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
 END
@@ -131,7 +131,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 266, 201
+IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 266, 271
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "GnuPG"
 FONT 8, "MS Sans Serif"
@@ -155,7 +155,7 @@ BEGIN
                     IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,95,162,10
 
-    CONTROL         "Show HTML View if possible",
+    CONTROL         "Show HTML view if possible",
                     IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,107,162,10
 
@@ -163,12 +163,12 @@ BEGIN
     GROUPBOX        "Passphrase",IDC_STATIC,9,124,242,31
     LTEXT           "Cache &passphrase for",IDC_STATIC,24,136,70,8
     EDITTEXT        IDC_TIME_PHRASES,107,135,39,14,ES_AUTOHSCROLL
-    LTEXT           "seconds",IDC_STATIC,151,137,28,8
+    LTEXT           "minutes",IDC_STATIC,151,137,28,8
 
 
     PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
     LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
-    LTEXT           "Version x ",IDC_VERSION_INFO,150,185,200,9
+    LTEXT           "Version x ",IDC_VERSION_INFO,150,183,109,9
     CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
                     SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
 END

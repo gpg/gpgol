@@ -202,17 +202,16 @@ get_pubkey_algo_str (gpgme_pubkey_algo_t alg)
 }
 
 
-/* Fill a combo box with all keys and return an error with those
-   keys. */
-static gpgme_key_t *
-load_secbox (HWND dlg, int ctlid)
+/* Fill a combo box with all keys and return an error with those keys. 
+   set *R_NKEYS to the amount of keys if requested. */
+static gpgme_key_t*
+load_secbox (HWND dlg, int ctlid, size_t *r_nkeys)
 {
   gpg_error_t err;
   gpgme_ctx_t ctx;
   gpgme_key_t key;
-  int pos;
   gpgme_key_t *keyarray;
-  size_t keyarray_size;
+  size_t pos, keyarray_size;
 
   err = gpgme_new (&ctx);
   if (err)
@@ -298,6 +297,8 @@ load_secbox (HWND dlg, int ctlid)
 
   gpgme_op_keylist_end (ctx);
   gpgme_release (ctx);
+  if (r_nkeys)
+    *r_nkeys = pos;
   return keyarray;
 }
 
@@ -328,8 +329,18 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                         (dec && dec->last_was_bad)?
                         _("Invalid passphrase; please try again..."):"");
 
-      if (dec && !context->use_as_cb)
-	context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST);
+      if (dec && !context->use_as_cb) {
+	context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST, &n);
+	/* if only one secret key is availble, it makes no sense to
+	   ask the user to select one. */
+	if (n == 1) 
+	  {
+	    dec->signer = context->keyarray[0];
+	    gpgme_key_ref (context->keyarray[0]);
+	    EndDialog (dlg, TRUE);
+	    return FALSE;
+	  }
+      }
 
       CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
       center_window (dlg, NULL);

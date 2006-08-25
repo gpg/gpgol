@@ -1,3 +1,21 @@
+2008-08-21  Timo Schulz  <ts@g10code.de>
+
+	* engine-gpgme.c (op_lookup_keys): Only add useable keys
+	and add all invalid keys to unknown.
+	* recipient-dialog.c (copy_item): Rewritten.
+	(initialize_keybox): Add comment to clarify use of fnd_keys.
+	(recipient_dialog_box): Simplified.
+	(find_item): Support partial search.
+	
+2006-08-19  Timo Schulz  <ts@g10code.de>
+
+	* olflange-rsrcs.rc: Correct some dialog sizes.
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Automatically
+	select the secret key if only one is available.
+	* config-dialog.c (GPGOptionsDlgProc): Passphrase cache
+	time is now requested in minutes but still internally
+	stored as seconds.
+	
 2006-08-15  Timo Schulz  <ts@g10code.de>
 
 	* decrypt.bmp, encrypt.bmp: Restore format.

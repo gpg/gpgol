@@ -148,8 +148,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
             else
 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, "");
-	    wsprintf(s, "%d", opt.passwd_ttl);
-	    SendDlgItemMessage(hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
+	    wsprintf (s, "%d", opt.passwd_ttl/60);
+	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
                                0, (LPARAM) s);
 	    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
@@ -191,7 +191,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
  
 	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT,
                                 20, (LPARAM)s);		
-	    opt.passwd_ttl = (int)atol (s);
+	    opt.passwd_ttl = (int)atol (s)*60;
 		
 	    opt.encrypt_default = !!SendDlgItemMessage
               (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
