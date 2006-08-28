@@ -1,3 +1,6 @@
+* inline PGG versenden wir als UTF-8. Andere aber wohl als Latin-1.
+  Heuristic implementieren. 
+
 * Show more details in case of some errors.
   For example 'No Secret Key' should contain the key-ID
   and if possible the primary user-ID.
@@ -15,4 +18,7 @@
   MessageClass accordingly.
 
 * Allow for symmetric encryption.
+
+* Please consider adding a few more options like key singing rules
+  like Enigmail has.
 

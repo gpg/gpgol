@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2006-04-24 16:36+0200\n"
+"POT-Creation-Date: 2006-04-25 17:46+0200\n"
 "PO-Revision-Date: 2006-04-24 16:41+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/common.c:101
+#: src/common.c:103
 msgid "GPG - Save decrypted attachment"
 msgstr "GPG - Sichern der entschlüsselten Anlage"
 
@@ -143,12 +143,12 @@ msgstr "*** Ende Notation ***\n"
 msgid "No valid OpenPGP data found."
 msgstr "Keine gültigen OpenPGP Daten gefunden"
 
-#: src/gpgmsg.cpp:1195 src/gpgmsg.cpp:1297 src/gpgmsg.cpp:1311
-#: src/gpgmsg.cpp:1327 src/gpgmsg.cpp:1506
+#: src/gpgmsg.cpp:1195 src/gpgmsg.cpp:1306 src/gpgmsg.cpp:1320
+#: src/gpgmsg.cpp:1336 src/gpgmsg.cpp:1515
 msgid "Decryption"
 msgstr "Entschlüsselung"
 
-#: src/gpgmsg.cpp:1212
+#: src/gpgmsg.cpp:1213
 msgid ""
 "[This is a PGP/MIME message]\r\n"
 "\r\n"
@@ -159,7 +159,7 @@ msgstr ""
 "[Benutzen Sie den \"Entschlüsselungs\"-Button im großen\n"
 "Nachrichtenfenster um den Inhalt anzuzeigen.]"
 
-#: src/gpgmsg.cpp:1266
+#: src/gpgmsg.cpp:1271
 msgid ""
 "Note: This is a PGP/MIME signed message.  The GPGol plugin is not always "
 "able to verify such a message due to missing support in Outlook.\n"
@@ -172,27 +172,27 @@ msgstr ""
 "\n"
 "(Dieser Hinweis wird nur einmalig pro Sitzung angezeigt)"
 
-#: src/gpgmsg.cpp:1270
+#: src/gpgmsg.cpp:1275
 msgid "Verification"
 msgstr "Überprüfung"
 
-#: src/gpgmsg.cpp:1288
+#: src/gpgmsg.cpp:1293
 msgid "[This is a PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/gpgmsg.cpp:1296 src/gpgmsg.cpp:1310 src/gpgmsg.cpp:1326
+#: src/gpgmsg.cpp:1305 src/gpgmsg.cpp:1319 src/gpgmsg.cpp:1335
 msgid "Problem decrypting PGP/MIME message"
 msgstr "Problem bei Entschlüsseln einer PGP/MIME Nachricht"
 
-#: src/gpgmsg.cpp:1461
+#: src/gpgmsg.cpp:1470
 msgid "Verification Failure"
 msgstr "Überprüfungsfehler"
 
-#: src/gpgmsg.cpp:1464
+#: src/gpgmsg.cpp:1473
 msgid "Decryption Failure"
 msgstr "Entschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1500
+#: src/gpgmsg.cpp:1509
 msgid ""
 "The message text cannot be displayed.\n"
 "You have to save the decrypted message to view it.\n"
@@ -208,7 +208,7 @@ msgstr ""
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1527
+#: src/gpgmsg.cpp:1536
 msgid ""
 "Signed attachments found.\n"
 "\n"
@@ -220,13 +220,13 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese Unterschriften überprüfen?"
 
-#: src/gpgmsg.cpp:1535
+#: src/gpgmsg.cpp:1544
 msgid "Attachment Verification"
 msgstr "Überprüfung der Anhänge"
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1556
+#: src/gpgmsg.cpp:1565
 msgid ""
 "Encrypted attachments found.\n"
 "\n"
@@ -238,15 +238,15 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese entschlüsseln und abspeichern?"
 
-#: src/gpgmsg.cpp:1563
+#: src/gpgmsg.cpp:1572
 msgid "Attachment Decryption"
 msgstr "Entschlüsselung eines Anhangs"
 
-#: src/gpgmsg.cpp:1632
+#: src/gpgmsg.cpp:1641
 msgid "Signing Failure"
 msgstr "Unterschrifterstellungsfehler"
 
-#: src/gpgmsg.cpp:1800
+#: src/gpgmsg.cpp:1809
 msgid ""
 "The configured default encryption key is not available or does not "
 "unambigiously specify a key. Please fix this in the option dialog.\n"
@@ -259,27 +259,27 @@ msgstr ""
 "\n"
 "Die Nachricht wird deswegen nicht für diesen Schlüssel verschlüsselt!"
 
-#: src/gpgmsg.cpp:1804
+#: src/gpgmsg.cpp:1813
 msgid "Encryption"
 msgstr "Verschlüsselung"
 
-#: src/gpgmsg.cpp:1847
+#: src/gpgmsg.cpp:1856
 msgid "Encryption Failure"
 msgstr "Verschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1901 src/gpgmsg.cpp:3267
+#: src/gpgmsg.cpp:1910 src/gpgmsg.cpp:3276
 msgid "Attachment Encryption Failure"
 msgstr "Verschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2674
+#: src/gpgmsg.cpp:2683
 msgid "Attachment Verification Failure"
 msgstr "Überprüfungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2857 src/gpgmsg.cpp:2906
+#: src/gpgmsg.cpp:2866 src/gpgmsg.cpp:2915
 msgid "Attachment Decryption Failure"
 msgstr "Entschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:3076
+#: src/gpgmsg.cpp:3085
 msgid "Attachment Signing Failure"
 msgstr "Unterschrifterstellungsfehler eines Anhangs"
 
@@ -431,15 +431,15 @@ msgstr "Dateischreibfehler"
 msgid "[PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/pgpmime.c:730
+#: src/pgpmime.c:733
 msgid "[PGP/MIME message without plain text body]"
 msgstr "[PGP/MIME Nachricht ohne reinen Textkörper]"
 
-#: src/pgpmime.c:802
+#: src/pgpmime.c:808
 msgid "[PGP/MIME signed message without a plain text body]"
 msgstr "[PGP/MIME signierte Nachricht ohne reinen Textkörper]"
 
-#: src/pgpmime.c:812
+#: src/pgpmime.c:820
 msgid "[PGP/MIME signature]"
 msgstr "[PGP/MIME Signatur]"
 
