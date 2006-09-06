@@ -542,6 +542,5 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
     *ret_rset = cb.selected_keys;
 
   release_keyarray (cb.keyarray, cb.keyarray_count);
-  xfree (cb.fnd_keys);
   return cb.opts;
 }

@@ -1,3 +1,8 @@
+2009-09-06  Timo Schulz  <ts@g10code.de>
+
+	* recipient-dialog.c (recipient_dialog2): Do not free
+	key array here.
+	
 2008-08-21  Timo Schulz  <ts@g10code.de>
 
 	* engine-gpgme.c (op_lookup_keys): Only add useable keys
