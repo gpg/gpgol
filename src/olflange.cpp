@@ -530,7 +530,8 @@ get_outlook_property (void *pEECB, const char *key)
       result = wchar_to_utf8 (aVariant.bstrVal);
       log_debug ("%s:%s: `%s' is `%s'",
                  SRCNAME, __func__, key, result);
-      /* FIXME: Do we need to free the string returned in  AVARIANT? */
+      /* From MSDN (Invoke): It is up to the caller to free the return value.*/
+      SysFreeString (aVariant.bstrVal);
     }
 
   pDisp->Release();
@@ -1240,7 +1241,7 @@ CGPGExchExtCommands::InstallCommands (
       hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
       if (FAILED(hr))
         log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME,__func__,hr);
-      else if ( !opt.compat.no_msgcache)
+      else if (!opt.compat.no_msgcache)
         {
           const char *body;
           char *key = NULL;
@@ -1273,8 +1274,7 @@ CGPGExchExtCommands::InstallCommands (
                   for (keylen=0,p=key; hexdigitp(p) && hexdigitp(p+1); p += 2)
                     ((unsigned char*)key)[keylen++] = xtoi_2 (p);
                   
-                  /* FIXME: Do we need to free the string returned in
-                     AVARIANT?  Check at other places too. */
+		  SysFreeString (aVariant.bstrVal);
                 }
 
               pDisp->Release();

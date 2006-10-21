@@ -72,50 +72,46 @@ enum klist_col_t
   KL_COL_INFO = 2,
   KL_COL_KEYID = 3,
   KL_COL_VALID = 4,
-  KL_COL_INDEX = 5,
   /* number of columns. */
-  KL_COL_N = 6
+  KL_COL_N = 5
 };
 
 /* Insert the columns, needed to display keys, into the list view HWND. */
 static void
 initialize_rsetbox (HWND hwnd)
 {
-    LVCOLUMN col;
+  LVCOLUMN col;
 
-    memset (&col, 0, sizeof (col));
-    col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-    col.pszText = "Name";
-    col.cx = 100;
-    col.iSubItem = KL_COL_NAME;
-    ListView_InsertColumn (hwnd, KL_COL_NAME, &col);
-
-    col.pszText = "E-Mail";
-    col.cx = 100;
-    col.iSubItem = KL_COL_EMAIL;
-    ListView_InsertColumn (hwnd, KL_COL_EMAIL, &col);
-
-    col.pszText = "Key-Info";
-    col.cx = 100;
-    col.iSubItem = KL_COL_INFO;
-    ListView_InsertColumn (hwnd, KL_COL_INFO, &col);
-
-    col.pszText = "Key ID";
-    col.cx = 80;
-    col.iSubItem = KL_COL_KEYID;
-    ListView_InsertColumn (hwnd, KL_COL_KEYID, &col);
-
-    col.pszText = "Validity";
-    col.cx = 70;
-    col.iSubItem = KL_COL_VALID;
-    ListView_InsertColumn (hwnd, KL_COL_VALID, &col);
-
-    col.pszText = "Index";
-    col.cx = 0;  /* Hide it. */
-    col.iSubItem = KL_COL_INDEX;
-    ListView_InsertColumn (hwnd, KL_COL_INDEX, &col);
-
-    ListView_SetExtendedListViewStyleEx (hwnd, 0, LVS_EX_FULLROWSELECT);
+  /* We cannot avoid the casting here because gettext always returns
+     a constant string but the listview interface needs char*. */
+  memset (&col, 0, sizeof (col));
+  col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+  col.pszText = (char*)_("Name");
+  col.cx = 100;
+  col.iSubItem = KL_COL_NAME;
+  ListView_InsertColumn (hwnd, KL_COL_NAME, &col);
+  
+  col.pszText = (char*)_("E-Mail");
+  col.cx = 100;
+  col.iSubItem = KL_COL_EMAIL;
+  ListView_InsertColumn (hwnd, KL_COL_EMAIL, &col);
+  
+  col.pszText = (char*)_("Key-Info");
+  col.cx = 100;
+  col.iSubItem = KL_COL_INFO;
+  ListView_InsertColumn (hwnd, KL_COL_INFO, &col);
+  
+  col.pszText = (char*)_("Key ID");
+  col.cx = 80;
+  col.iSubItem = KL_COL_KEYID;
+  ListView_InsertColumn (hwnd, KL_COL_KEYID, &col);
+  
+  col.pszText = (char*)_("Validity");
+  col.cx = 70;
+  col.iSubItem = KL_COL_VALID;
+  ListView_InsertColumn (hwnd, KL_COL_VALID, &col);
+  
+  ListView_SetExtendedListViewStyleEx (hwnd, 0, LVS_EX_FULLROWSELECT);
 }
 
 
@@ -141,7 +137,7 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
       "Full",
       "Ultimate"
     };
-  enum {COL_NAME, COL_EMAIL, COL_KEYINF, COL_KEYID, COL_TRUST, COL_IDX};
+  enum {COL_NAME, COL_EMAIL, COL_KEYINF, COL_KEYID, COL_TRUST};
   DWORD val;
 
   memset (&lvi, 0, sizeof (lvi));
@@ -185,6 +181,9 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
           continue;
         }
 
+      /* Store the position in the opaque param. */
+      lvi.mask = LVIF_PARAM;
+      lvi.lParam = (LPARAM)pos;
       ListView_InsertItem (hwnd, &lvi);
       
       s = utf8_to_native (key->uids->name);
@@ -216,7 +215,7 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
       s = keybuf;
       ListView_SetItemText (hwnd, 0, COL_KEYINF, s);
       
-      if (key->subkeys->keyid  && strlen (key->subkeys->keyid) > 8) 
+      if (key->subkeys->keyid && strlen (key->subkeys->keyid) > 8) 
 	{
 	  _snprintf (keybuf, sizeof (keybuf)-1, "0x%s", key->subkeys->keyid+8);
 	  ListView_SetItemText (hwnd, 0, COL_KEYID, keybuf);
@@ -228,15 +227,6 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
       strcpy (keybuf, trust_items[val]);
       s = keybuf;
       ListView_SetItemText (hwnd, 0, COL_TRUST, s);
-
-      /* I'd like to use SetItemData but that one is only available as
-         a member function of CListCtrl; I haved not figured out how
-         the vtable is made up.  Thus we use a string with the index. */
-      /* ts: this can be done via the lParam (LVIF_PARAM) item in LVITEM.
-             I will implement this ASAP. */
-      sprintf (keybuf, "%u", (unsigned int)pos);
-      s = keybuf;
-      ListView_SetItemText (hwnd, 0, COL_IDX, s);
 
       if (pos >= keyarray_size)
         {
@@ -276,7 +266,23 @@ release_keyarray (gpgme_key_t *array, size_t count)
 }
 
 
+/* Default maximal text size for a column. */
 #define ITEMSIZE 200
+
+/* Return the opaque param of the item with the index IDX.
+   If the function call failed, return -1. */
+static LPARAM
+lv_get_item_param (HWND hwnd, int idx)
+{
+  LVITEM lv;
+  
+  memset (&lv, 0, sizeof (lv));
+  lv.mask = LVIF_PARAM;
+  lv.iItem = idx;
+  if (!ListView_GetItem (hwnd, &lv))
+    return (LPARAM)-1;
+  return lv.lParam;
+}
 
 /* Copy one list view item from one view to another. */
 static void
@@ -286,6 +292,7 @@ copy_item (HWND dlg, int id_from, int pos)
   LVITEM lvi;
   char item[KL_COL_N][ITEMSIZE];
   int idx = pos, i;
+  int lparam;
   
   src = GetDlgItem (dlg, id_from);
   dst = GetDlgItem (dlg, id_from==IDC_ENC_RSET1 ?
@@ -300,10 +307,18 @@ copy_item (HWND dlg, int id_from, int pos)
   
   for (i=0; i < KL_COL_N; i++)
     ListView_GetItemText (src, idx, i, item[i], ITEMSIZE-1);
+
+  /* Before we delete the item, we backup the lparam which
+     holds the position to copy it to the new item. */
+  lparam = (int)lv_get_item_param (src, idx);
   ListView_DeleteItem (src, idx);
   
+  /* Add the lparam value from the source item. */
   memset (&lvi, 0, sizeof (lvi));
+  lvi.mask = LVIF_PARAM;
+  lvi.lParam = lparam;
   ListView_InsertItem (dst, &lvi);
+  
   for (i=0; i < KL_COL_N; i++)
     ListView_SetItemText (dst, 0, i, item[i]);
 }
@@ -314,16 +329,16 @@ copy_item (HWND dlg, int id_from, int pos)
 static int
 find_item (HWND hwnd, const char *str)
 {
-    LVFINDINFO fnd;
-    int pos;
-
-    memset (&fnd, 0, sizeof (fnd));
-    fnd.flags = LVFI_STRING|LVFI_PARTIAL;;
-    fnd.psz = str;
-    pos = ListView_FindItem (hwnd, -1, &fnd);
-    if (pos != -1)
-	return pos;
-    return -1;
+  LVFINDINFO fnd;
+  int pos;
+  
+  memset (&fnd, 0, sizeof (fnd));
+  fnd.flags = LVFI_STRING|LVFI_PARTIAL;;
+  fnd.psz = str;
+  pos = ListView_FindItem (hwnd, -1, &fnd);
+  if (pos != -1)
+    return pos;
+  return -1;
 }
 
 
@@ -342,28 +357,28 @@ initialize_keybox (HWND dlg, struct recipient_cb_s *cb)
                      (LPARAM)(const char *)cb->unknown_keys[i]);
     }
 
-  /* copy all requested keys into the second recipient listview
+  if (!cb->fnd_keys)
+    return;
+  
+  /* Copy all requested keys into the second recipient listview
      to indicate that these key were automatically picked via
      the 'From' mailing header. */
-  if (cb->fnd_keys)
+  for (i=0; cb->fnd_keys[i]; i++) 
     {
-      for (i=0; cb->fnd_keys[i]; i++) 
-        {
-	  char *uid = utf8_to_native (cb->fnd_keys[i]->uids->name);
-
-          n = find_item (rset, uid);
-          if (n != -1)
-            copy_item (dlg, IDC_ENC_RSET1, n);
-	  xfree (uid);
-        }
-    }
+      char *uid = utf8_to_native (cb->fnd_keys[i]->uids->name);
+      
+      n = find_item (rset, uid);
+      if (n != -1)
+	copy_item (dlg, IDC_ENC_RSET1, n);
+      xfree (uid);
+    }  
 }
 
 
 BOOL CALLBACK
 recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-  static struct recipient_cb_s * rset_cb;
+  static struct recipient_cb_s *rset_cb;
   NMHDR *notify;
   HWND hrset;
   size_t pos;
@@ -383,7 +398,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
         initialize_keybox (dlg, rset_cb);
       else
         {
-          /* No unknown keys - hide the not required windows. */
+          /* No unknown keys and thus we need unwanted dialog windows. */
           ShowWindow (GetDlgItem (dlg, IDC_ENC_INFO), SW_HIDE);
           ShowWindow (GetDlgItem (dlg, IDC_ENC_NOTFOUND), SW_HIDE);
 	}
@@ -409,7 +424,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
             {
               MessageBox (dlg, _("Please select at least one recipient key."),
                           _("Recipient Dialog"), MB_ICONINFORMATION|MB_OK);
-              return FALSE;
+              return TRUE;
 	    }
 
           for (j=0; rset_cb->fnd_keys && rset_cb->fnd_keys[j]; j++)
@@ -422,12 +437,9 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           for (i=0, pos=0; i < rset_cb->selected_keys_count; i++) 
             {
               gpgme_key_t key;
-              int idata;
-              char tmpbuf[30];
-
-              *tmpbuf = 0;
-              ListView_GetItemText (hrset, i, 5, tmpbuf, sizeof tmpbuf - 1);
-              idata = *tmpbuf? strtol (tmpbuf, NULL, 10) : -1;
+	      int idata;
+	      
+	      idata = (int)lv_get_item_param (hrset, i);
               if (idata >= 0 && idata < rset_cb->keyarray_count)
                 {
                   key = rset_cb->keyarray[idata];
