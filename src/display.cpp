@@ -113,7 +113,7 @@ add_html_line_endings (const char *body)
    the text of the window instead of the MAPI object itself.  To do
    this we walk all windows to find a PGP signature.  */
 static HWND
-find_message_window (HWND parent)
+find_message_window (HWND parent, int level)
 {
   HWND child;
 
@@ -134,9 +134,53 @@ find_message_window (HWND parent)
          strings, but this does not work for PGP/MIME or already
          decrypted messages. */
       len = GetClassName (child, buf, sizeof buf - 1);
+//       if (len)
+//         log_debug ("  %*sgot class `%s'", level*2, "", buf);
+      if (level && len >= 10 && !strncmp (buf, "MsoCommand", 10))
+        {
+          /* We won't find anything below MsoCommand windows.
+             Ignoring them fixes a bug where we return a RichEdit20W
+             window which is actually a formatting drop down box or
+             something similar.  Not sure whether the check for level
+             is required, but it won't harm and might help in case an
+             MsoCommand* is the top level.
+             
+             An example of such a message hierarchy is:
+               got class `MsoCommandBarDock'
+               got class `MsoCommandBarDock'
+               got class `MsoCommandBarDock'
+                 got class `MsoCommandBar'
+                 got class `MsoCommandBar'
+                   got class `RichEdit20W'  <--- We don't want that
+                 got class `MsoCommandBar'
+               got class `MsoCommandBarDock'
+               got class `AfxWndW'
+                 got class `#32770'
+                   got class `Static'
+                   got class `Static'
+                   got class `RichEdit20WPT'
+                   got class `Static'
+                   got class `RichEdit20WPT'
+                   got class `Static'
+                   got class `RichEdit20WPT'
+                   got class `Static'
+                   got class `RichEdit20WPT'
+                   got class `Static'
+                   got class `RichEdit20WPT'
+                   got class `Static'
+                   got class `Static'
+                   got class `AfxWndA'
+                     got class `Static'
+                     got class `AfxWndW'
+                       got class `Static'
+                       got class `RichEdit20W'  <--- We want this one
+           */
+          break; /* Not found at this level.  */
+        }
+
       if (len && !strcmp (buf, "RichEdit20W"))
         {
-          log_debug ("found class RichEdit20W");
+          log_debug ("found class `%s'", "RichEdit20W");
           return child;
         }
       
@@ -148,7 +192,7 @@ find_message_window (HWND parent)
           &&  (!strncmp (s+15, "MESSAGE-----", 12)
                || !strncmp (s+15, "SIGNED MESSAGE-----", 19)))
         return child;
-      w = find_message_window (child);
+      w = find_message_window (child, level+1);
       if (w)
         return w;
       child = GetNextWindow (child, GW_HWNDNEXT);	
@@ -167,7 +211,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
   HWND window;
 
   /*show_window_hierarchy (hwnd, 0);*/
-  window = find_message_window (hwnd);
+  window = find_message_window (hwnd, 0);
   if (window && !is_html)
     {
       const char *s;

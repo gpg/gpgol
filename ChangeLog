@@ -1,3 +1,11 @@
+2006-12-13  Werner Koch  <wk@g10code.com>
+
+	* po/LINGUAS: Added sv.
+
+2006-12-13  Daniel Nylander <po@danielnylander.se>  (wk)
+	
+	* po/sv.po: New. 
+
 2006-10-13  Werner Koch  <wk@g10code.com>
 
 	Released 0.9.91.

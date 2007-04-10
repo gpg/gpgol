@@ -1,3 +1,8 @@
+2007-04-10  Werner Koch  <wk@g10code.com>
+
+	* display.cpp (find_message_window): Add arg LEVEL for debugging.
+	Ignore MsoCommand* Windows.  Fixes bug 735.
+
 2006-10-14  Timo Schulz  <ts@g10code.de>
 
 	* recipient-dialog.c (lv_get_item_param): New.
