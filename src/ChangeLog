@@ -1,3 +1,47 @@
+2007-07-19  Werner Koch  <wk@g10code.com>
+
+	* attached-file-events.cpp: Renamed from attach.c.
+	* attached-file-events.h: Renamed from attach.h.  Removed some
+	inlines to the impl file.
+
+	* Makefile.am (gpgol_LDADD): Add libole32.
+
+2007-07-18  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.c (log_mapi_property): Support STRIGN8 and UNICODE.
+
+	* myexchext.h (IExchExtUserEvents, IExchExtSessionEvents): New
+	declarations.
+	* session-events.cpp, session-events.h: New.
+	* olflange.cpp (GpgolExt, QueryInterface): Hook session-events in.
+
+	* olflange.cpp (DllRegisterServer): Register only for interfaces
+	we really use.
+	(ext_context_name): New. Factored out from several places.
+	(Install): Initialize for Session context.
+
+	Renamed all CGPGExchExt* classes to Gpgol*.
+	
+	* olflange.h, olflange.cpp: Factor most code out to ..
+	* ext-commands.cpp, ext-commands.h, message-events.cpp
+	* message-events.h, property-sheets.cpp, property-sheets.h
+	* ol-ext-callback.cpp, ol-ext-callback.h: .. New.
+
+2007-07-17  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Add ws2_32.
+
+	* main.c (log_window_hierarchy, do_log_window_hierarchy): New.
+	* olflange.cpp (show_window_hierarchy): Replace by
+	log_window_hierarchy.
+	(g_initdll): Make static.
+	(InstallCommands): Factor some code out to ..
+	(toolbar_from_tbe, toolbar_add_menu): .. new.
+
+	* mapihelp.c, mapihelp.h: New. 
+	* olflange.cpp (show_mapi_property): Factor out to mapihelp.c
+	and rename to log_mapi_property.
+
 2007-04-10  Werner Koch  <wk@g10code.com>
 
 	* display.cpp (find_message_window): Add arg LEVEL for debugging.

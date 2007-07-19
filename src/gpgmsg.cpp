@@ -1,14 +1,14 @@
-/* gpgmsg.cpp - Implementation ofthe GpgMsg class
+/* gpgmsg.cpp - Implementation of the GpgMsg class
  *	Copyright (C) 2005, 2006 g10 Code GmbH
  *
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  * 
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
  * 
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.

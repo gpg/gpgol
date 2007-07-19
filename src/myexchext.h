@@ -7,7 +7,7 @@
  * Revisions:
  * 2005-08-12  Initial version.
  * 2005-09-18  Add IExchExtAttachedFileEvents.
- *
+ * 2007-07-18  Add IExchExtUserEvents and IExchExtSessionEvents.
  */
 
 #ifndef EXCHEXT_H
@@ -122,6 +122,12 @@ typedef struct TBENTRY *LPTBENTRY;
 typedef struct IExchExt IExchExt;
 typedef IExchExt *LPEXCHEXT;
 
+typedef struct IExchExtUserEvents IExchExtUserEvents;
+typedef IExchExtUserEvents *LPEXCHEXTUSEREVENTS;
+
+typedef struct IExchExtSessionEvents IExchExtSessionEvents;
+typedef IExchExtSessionEvents *LPEXCHEXTSESSIONEVENTS;
+
 typedef struct IExchExtMessageEvents IExchExtMessageEvents;
 typedef IExchExtMessageEvents *LPEXCHEXTMESSAGEEVENTS;
 
@@ -221,6 +227,39 @@ DECLARE_INTERFACE_(IExchExt, IUnknown)
 
   /*** IExchExt methods. ***/
   STDMETHOD(Install)(THIS_ LPEXCHEXTCALLBACK, ULONG, ULONG) PURE;
+};
+
+
+
+EXTERN_C const IID IID_IExchExtUserEvents;
+#undef INTERFACE
+#define INTERFACE IExchExtUserEvents
+DECLARE_INTERFACE_(IExchExtUserEvents, IUnknown)
+{
+  /*** IUnknown methods. ***/
+  STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID*) PURE;
+  STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+  STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+  /*** IExchExtUserEvents methods. ***/
+  STDMETHOD_(void, OnSelectionChange)(THIS_ LPEXCHEXTCALLBACK) PURE;
+  STDMETHOD_(void, OnObjectChange)(THIS_ LPEXCHEXTCALLBACK) PURE;
+};
+
+
+
+EXTERN_C const IID IID_IExchExtSessionEvents;
+#undef INTERFACE
+#define INTERFACE IExchExtSessionEvents
+DECLARE_INTERFACE_(IExchExtSessionEvents, IUnknown)
+{
+  /*** IUnknown methods. ***/
+  STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID*) PURE;
+  STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+  STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+  /*** IExchExtSessionEvents methods. ***/
+  STDMETHOD(OnDelivery)(THIS_ LPEXCHEXTCALLBACK) PURE;
 };
 
 

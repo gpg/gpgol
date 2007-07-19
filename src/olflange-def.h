@@ -22,10 +22,11 @@
 #ifndef OLFLANGE_DEF_H
 #define OLFLANGE_DEF_H
 
-class CGPGExchExtMessageEvents;
-class CGPGExchExtCommands;
-class CGPGExchExtPropertySheets;
-class CGPGExchExtAttachedFileEvents;
+class GpgolExtCommands;
+class GpgolSessionEvents;
+class GpgolMessageEvents;
+class GpgolAttachedFileEvents;
+class GpgolPropertySheets;
 
 bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

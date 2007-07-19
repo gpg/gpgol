@@ -237,7 +237,7 @@ log_debug_w32 (int w32err, const char *fmt, ...)
   va_list a;
 
   if (w32err == -1)
-      w32err = GetLastError ();
+    w32err = GetLastError ();
   
   va_start (a, fmt);
   do_log (fmt, a, w32err, 0, NULL, 0);
@@ -250,7 +250,7 @@ log_error_w32 (int w32err, const char *fmt, ...)
   va_list a;
 
   if (w32err == -1)
-      w32err = GetLastError ();
+    w32err = GetLastError ();
   
   va_start (a, fmt);
   do_log (fmt, a, w32err, 1, NULL, 0);
@@ -267,6 +267,54 @@ log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
   do_log (fmt, a, 0, 2, buf, buflen);
   va_end (a);
 }
+
+
+/* Helper to log_window_hierarchy.  */
+static HWND
+do_log_window_hierarchy (HWND parent, int level)
+{
+  HWND child;
+
+  child = GetWindow (parent, GW_CHILD);
+  while (child)
+    {
+      char buf[1024+1];
+      char name[200];
+      int nname;
+      char *pname;
+      
+      memset (buf, 0, sizeof (buf));
+      GetWindowText (child, buf, sizeof (buf)-1);
+      nname = GetClassName (child, name, sizeof (name)-1);
+      if (nname)
+        pname = name;
+      else
+        pname = NULL;
+      log_debug ("    %*shwnd=%p (%s) `%s'", level*2, "", child,
+                 pname? pname:"", buf);
+      do_log_window_hierarchy (child, level+1);
+      child = GetNextWindow (child, GW_HWNDNEXT);	
+    }
+
+  return NULL;
+}
+
+
+/* Print a debug message using the format string FMT followed by the
+   window hierarchy of WINDOW.  */
+void
+log_window_hierarchy (HWND window, const char *fmt, ...)
+{
+  va_list a;
+
+  va_start (a, fmt);
+  do_log (fmt, a, 0, 0, NULL, 0);
+  va_end (a);
+  do_log_window_hierarchy (window, 0);
+}
+
+
+
 
 const char *
 log_srcname (const char *file)

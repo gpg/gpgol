@@ -41,10 +41,16 @@ gpgol_SOURCES = \
         passphrase-dialog.c         \
         recipient-dialog.c          \
         verify-dialog.c             \
+	mapihelp.cpp mapihelp.h     \
 	mymapi.h  mymapitags.h      \
         vasprintf.c                 \
 	watcher.cpp \
-	attach.cpp attach.h \
+	ext-commands.cpp ext-commands.h       \
+	session-events.cpp  session-events.h  \
+	message-events.cpp  message-events.h  \
+	attached-file-events.cpp attached-file-events.h \
+	property-sheets.cpp property-sheets.h \
+	ol-ext-callback.cpp ol-ext-callback.h \
 	w32-gettext.c w32-gettext.h 
 
 
@@ -70,7 +76,7 @@ clean-local:
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
-        -loleaut32
+        -lole32 -loleaut32 -lws2_32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 

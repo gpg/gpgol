@@ -72,6 +72,9 @@ void log_error_w32 (int w32err, const char *fmt,
                     ...) __attribute__ ((format (printf,2,3)));
 void log_hexdump (const void *buf, size_t buflen, const char *fmt, 
                   ...)  __attribute__ ((format (printf,3,4)));
+void log_window_hierarchy (HWND window, const char *fmt, 
+                           ...) __attribute__ ((format (printf,2,3)));
+
 const char *log_srcname (const char *s);
 #define SRCNAME log_srcname (__FILE__)
      

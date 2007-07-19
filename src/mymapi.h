@@ -1,7 +1,7 @@
 /* mymapi.h - MAPI definitions required for GPGol and Mingw32
  * Copyright (C) 1998 Justin Bradford
  * Copyright (C) 2000 François Gouget
- * Copyright (C) 2005 g10 Code GmbH
+ * Copyright (C) 2005, 2007 g10 Code GmbH
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,9 @@
    Revisions:
    2005-07-26  Initial version (wk at g10code).
    2005-08-14  Tweaked for use with myexchext.h.
+   2007-07-19  Add IConverterSession.  Info taken from
+                 http://blogs.msdn.com/stephen_griffin/archive/2007/06/22/
+                 iconvertersession-do-you-converter-session.aspx
 */
 
 #ifndef MAPI_H
@@ -203,6 +206,12 @@ DEFINE_OLEGUID(PS_ROUTING_DISPLAY_NAME,0x20382,0,0);
 DEFINE_OLEGUID(PS_ROUTING_EMAIL_ADDRESSES,0x20380,0,0);
 DEFINE_OLEGUID(PS_ROUTING_ENTRYID,0x20383,0,0);
 DEFINE_OLEGUID(PS_ROUTING_SEARCH_KEY,0x20384,0,0);
+
+DEFINE_GUID(CLSID_IConverterSession, 0x4e3a7680, 0xb77a,
+            0x11d0, 0x9d, 0xa5, 0x0, 0xc0, 0x4f, 0xd6, 0x56, 0x85); 
+DEFINE_GUID(IID_IConverterSession, 0x4b401570, 0xb77b,
+            0x11d0, 0x9d, 0xa5, 0x0, 0xc0, 0x4f, 0xd6, 0x56, 0x85);
+
 
 
 struct _ENTRYID
@@ -481,6 +490,41 @@ typedef struct _ADRLIST
 } ADRLIST, *LPADRLIST;
 
 
+
+/* Definitions required for IConverterSession. */
+typedef enum tagMIMESAVETYPE
+  {	
+    SAVE_RFC822	= 0,
+    SAVE_RFC1521 = 1
+  } 
+MIMESAVETYPE;
+
+typedef enum tagENCODINGTYPE
+  {
+    IET_BINARY	 = 0,
+    IET_BASE64	 = 1,
+    IET_UUENCODE = 2,
+    IET_QP	 = 3,
+    IET_7BIT	 = 4,
+    IET_8BIT	 = 5,
+    IET_INETCSET = 6,
+    IET_UNICODE	 = 7,
+    IET_RFC1522	 = 8,
+    IET_ENCODED	 = 9,
+    IET_CURRENT	 = 10,
+    IET_UNKNOWN	 = 11,
+    IET_BINHEX40 = 12,
+    IET_LAST	 = 13
+  }
+ENCODINGTYPE;
+
+#define CCSF_SMTP	  0x0002
+#define CCSF_NOHEADERS	  0x0004
+#define CCSF_INCLUDE_BCC  0x0020
+#define CCSF_USE_RTF	  0x0080
+#define CCSF_NO_MSGID	  0x4000
+
+
 
 /**** Class definitions ****/
 typedef const IID *LPCIID;
@@ -506,6 +550,10 @@ typedef struct IMessage *LPMESSAGE;
 
 struct IMsgStore;
 typedef struct IMsgStore *LPMDB;
+
+struct IConverterSession;
+typedef struct IConverterSession *LPCONVERTERSESSION;
+
 
 
 
@@ -654,6 +702,33 @@ DECLARE_INTERFACE_(IMAPITable,IUnknown)
   STDMETHOD(WaitForCompletion)(THIS_ ULONG, ULONG, ULONG*) PURE;
   STDMETHOD(GetCollapseState)(THIS_ ULONG, ULONG, LPBYTE, ULONG*,LPBYTE*) PURE;
   STDMETHOD(SetCollapseState)(THIS_ ULONG, ULONG, LPBYTE, BOOKMARK*) PURE;
+};
+
+
+
+EXTERN_C const IID IID_IConverterSession;
+#undef INTERFACE
+#define INTERFACE IConverterSession
+DECLARE_INTERFACE_(IConverterSession, IUnknown)
+{
+  /*** IUnknown methods ***/
+  STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID*) PURE;
+  STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+  STDMETHOD_(ULONG,Release)(THIS) PURE;
+
+  /*** IConverterSession ***/
+  STDMETHOD(PlaceHolder1)(THIS);
+  STDMETHOD(SetEncoding)(THIS_ ENCODINGTYPE);
+  STDMETHOD(PlaceHolder2)(THIS);
+  STDMETHOD(MIMEToMAPI)(THIS_ LPSTREAM, LPMESSAGE, LPCSTR, ULONG);
+  STDMETHOD(MAPIToMIMEStm)(THIS_ LPMESSAGE,LPSTREAM,ULONG);
+  STDMETHOD(PlaceHolder3)(THIS);
+  STDMETHOD(PlaceHolder4)(THIS);
+  STDMETHOD(PlaceHolder5)(THIS);
+  STDMETHOD(SetTextWrapping)(THIS_ BOOL, ULONG);
+  STDMETHOD(SetSaveFormat)(THIS_ MIMESAVETYPE);
+  STDMETHOD(PlaceHolder8)(THIS);
+  STDMETHOD(PlaceHolder9)(THIS);
 };
 
 
