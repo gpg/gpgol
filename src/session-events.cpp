@@ -29,7 +29,7 @@
 #include "mymapitags.h"
 #include "myexchext.h"
 #include "display.h"
-#include "intern.h"
+#include "common.h"
 #include "gpgmsg.hh"
 #include "msgcache.h"
 #include "engine.h"
@@ -107,6 +107,10 @@ GpgolSessionEvents::OnDelivery (LPEXCHEXTCALLBACK pEECB)
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
   log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
+  /* Note, that at this point even an OpenPGP signed message has the
+     message class IPM.Note.SMIME.MultipartSigned.  If we would not
+     change the message class here, OL will change it later (before an
+     OnRead) to IPM.Note. */
   mapi_change_message_class (pMessage);
   log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
   ul_release (pMessage);

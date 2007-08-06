@@ -34,8 +34,7 @@
 #include <windows.h>
 #include <objidl.h> /* For IStream. */
 
-#include "gpgme.h"
-#include "intern.h"
+#include "common.h"
 #include "passcache.h"
 #include "engine.h"
 
@@ -112,6 +111,14 @@ op_init (void)
   if (err)
     {
       log_debug ("gpgme can't find a suitable OpenPGP backend: %s\n",
+                 gpgme_strerror (err));
+      return err;
+    }
+
+  err = gpgme_engine_check_version (GPGME_PROTOCOL_CMS);
+  if (err)
+    {
+      log_debug ("gpgme can't find a suitable CMS backend: %s\n",
                  gpgme_strerror (err));
       return err;
     }
@@ -538,7 +545,7 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
       /* Now check the state of any signature. */
       res = gpgme_op_verify_result (ctx);
       if (res && res->signatures)
-        verify_dialog_box (res, filename);
+        verify_dialog_box (gpgme_get_protocol (ctx), res, filename);
       if (res && res->signatures && attestation)
         add_verify_attestation (attestation, ctx, res, filename);
     }
@@ -581,7 +588,8 @@ leave:
    is not NULL a text with the result of the signature verification
    will get printed to it. */
 static int
-decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
+decrypt_stream (gpgme_protocol_t protocol,
+                gpgme_data_t in, gpgme_data_t out, int ttl,
                 const char *filename, gpgme_data_t attestation, 
                 int preview_mode)
 {    
@@ -597,7 +605,15 @@ decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
   if (err)
     goto fail;
 
-  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+  err = gpgme_set_protocol (ctx, protocol);
+  if (err)
+    goto fail;
+
+  /* GPGME does not support a command handler for gpgsm.  Thus we
+     can't set the passphrase callback.  */
+  if (protocol != GPGME_PROTOCOL_CMS)
+    gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
+
   cb.ctx = ctx;
   if (preview_mode)
     err = gpgme_op_decrypt (ctx, in, out);
@@ -615,7 +631,7 @@ decrypt_stream (gpgme_data_t in, gpgme_data_t out, int ttl,
       /* Decryption succeeded.  Now check the state of the signatures. */
       res = gpgme_op_verify_result (ctx);
       if (res && res->signatures)
-        verify_dialog_box (res, filename);
+        verify_dialog_box (gpgme_get_protocol (ctx), res, filename);
       if (res && res->signatures && attestation)
         add_verify_attestation (attestation, ctx, res, filename);
     }
@@ -668,7 +684,8 @@ op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
   if (!err)
     err = gpgme_data_new_from_cbs (&out, &cbs, outstream);
   if (!err)
-    err = decrypt_stream (in, out, ttl, filename, attestation, 0);
+    err = decrypt_stream (GPGME_PROTOCOL_OpenPGP,
+                          in, out, ttl, filename, attestation, 0);
 
   if (in)
     gpgme_data_release (in);
@@ -701,7 +718,8 @@ op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
   if (!err)
     err = gpgme_data_new (&out);
   if (!err)
-    err = decrypt_stream (in, out, ttl, filename, attestation, 0);
+    err = decrypt_stream (GPGME_PROTOCOL_OpenPGP,
+                          in, out, ttl, filename, attestation, 0);
   if (!err)
     {
       /* Return the buffer but first make sure it is a string. */
@@ -725,7 +743,8 @@ op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
    FILENAME is not NULL it will be displayed along with status
    outputs. */
 int
-op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
+op_decrypt_stream_to_gpgme (gpgme_protocol_t protocol,
+                            LPSTREAM instream, gpgme_data_t out, int ttl,
                             const char *filename, gpgme_data_t attestation,
                             int preview_mode)
 {
@@ -738,7 +757,8 @@ op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
 
   err = gpgme_data_new_from_cbs (&in, &cbs, instream);
   if (!err)
-    err = decrypt_stream (in, out, ttl, filename, attestation, preview_mode);
+    err = decrypt_stream (protocol, 
+                          in, out, ttl, filename, attestation, preview_mode);
 
   if (in)
     gpgme_data_release (in);
@@ -798,7 +818,7 @@ op_verify (const char *inbuf, char **outbuf, const char *filename,
       res = gpgme_op_verify_result (ctx);
     }
   if (res) 
-    verify_dialog_box (res, filename);
+    verify_dialog_box (gpgme_get_protocol (ctx), res, filename);
   if (res && attestation)
     add_verify_attestation (attestation, ctx, res, filename);
 
@@ -852,7 +872,7 @@ op_verify_detached_sig (LPSTREAM data_stream,
     {
       res = gpgme_op_verify_result (ctx);
       if (res) 
-        verify_dialog_box (res, filename);
+        verify_dialog_box (gpgme_get_protocol (ctx), res, filename);
       if (res && attestation)
         add_verify_attestation (attestation, ctx, res, filename);
     }
@@ -902,7 +922,7 @@ op_verify_detached_sig_mem (const char *data_string,
     {
       res = gpgme_op_verify_result (ctx);
       if (res) 
-        verify_dialog_box (res, filename);
+        verify_dialog_box (gpgme_get_protocol (ctx), res, filename);
       if (res && attestation)
         add_verify_attestation (attestation, ctx, res, filename);
     }
@@ -924,7 +944,8 @@ op_verify_detached_sig_mem (const char *data_string,
    NULL a text with the result of the signature verification will get
    printed to it.  */ 
 int
-op_verify_detached_sig_gpgme (gpgme_data_t data, gpgme_data_t sig,
+op_verify_detached_sig_gpgme (gpgme_protocol_t protocol, 
+                              gpgme_data_t data, gpgme_data_t sig,
                               const char *filename, gpgme_data_t attestation)
 {
   gpgme_ctx_t ctx = NULL;
@@ -937,12 +958,16 @@ op_verify_detached_sig_gpgme (gpgme_data_t data, gpgme_data_t sig,
   if (err)
     goto leave;
 
+  err = gpgme_set_protocol (ctx, protocol);
+  if (err)
+    goto leave;
+
   err = gpgme_op_verify (ctx, sig, data, NULL);
   if (!err)
     {
       res = gpgme_op_verify_result (ctx);
       if (res) 
-        verify_dialog_box (res, filename);
+        verify_dialog_box (gpgme_get_protocol (ctx), res, filename);
       if (res && attestation)
         add_verify_attestation (attestation, ctx, res, filename);
     }
@@ -1025,7 +1050,7 @@ at_fingerprint (gpgme_data_t a, gpgme_key_t key)
 
 
 /* Print common attributes of the signature summary SUM.  Returns
-   trues if a severe warning has been encountered. */
+   true if a severe warning has been encountered. */
 static int 
 at_sig_summary (gpgme_data_t a,  
                 unsigned long sum, gpgme_signature_t sig, gpgme_key_t key)
@@ -1469,7 +1494,14 @@ keyid_from_key (gpgme_key_t k)
 const char*
 op_strerror (int err)
 {
-    return gpgme_strerror (err);
+  return gpgme_strerror (err);
+}
+
+
+const char*
+op_strsource (int err)
+{
+  return gpgme_strsource (err);
 }
 
 

@@ -28,8 +28,8 @@
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "myexchext.h"
+#include "common.h"
 #include "display.h"
-#include "intern.h"
 #include "gpgmsg.hh"
 #include "msgcache.h"
 #include "engine.h"
@@ -39,6 +39,7 @@
 #include "olflange-def.h"
 #include "olflange.h"
 #include "ol-ext-callback.h"
+#include "message.h"
 #include "ext-commands.h"
 
 
@@ -81,6 +82,8 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_lContext = 0; 
   m_nCmdEncrypt = 0;  
   m_nCmdSign = 0; 
+  m_nCmdShowInfo = 0;  
+  m_nCmdCheckSig = 0;
   m_nToolbarButtonID1 = 0; 
   m_nToolbarButtonID2 = 0; 
   m_nToolbarBitmap1 = 0;
@@ -206,13 +209,13 @@ GpgolExtCommands::InstallCommands (
   */
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
     {
-      LPMDB pMDB = NULL;
-      LPMESSAGE pMessage = NULL;
+      LPMDB mdb = NULL;
+      LPMESSAGE message = NULL;
       
       /*  Note that for read and send the object returned by the
           outlook extension callback is of class 43 (MailItem) so we
           only need to ask for Body then. */
-      hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (FAILED(hr))
         log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME,__func__,hr);
       else if (!opt.compat.no_msgcache)
@@ -289,8 +292,8 @@ GpgolExtCommands::InstallCommands (
           xfree (key);
         }
       
-      ul_release (pMessage);
-      ul_release (pMDB);
+      ul_release (message);
+      ul_release (mdb);
     }
 
 
@@ -299,8 +302,16 @@ GpgolExtCommands::InstallCommands (
       if (opt.compat.auto_decrypt)
         watcher_set_callback_ctx ((void *)pEECB);
 
-      toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                        _("&Decrypt and verify message"), &m_nCmdEncrypt,
+      if (m_pExchExt->getMsgtype (pEECB) == MSGTYPE_UNKNOWN)
+        toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
+                          _("&Decrypt and verify message"), &m_nCmdEncrypt,
+                          NULL);
+      else
+        toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
+                          _("&Display S/MIME information"), &m_nCmdShowInfo,
+                          NULL);
+      toolbar_add_menu (pEECB, pnCommandIDBase,
+                        _("Check &signature"), &m_nCmdCheckSig,
                         NULL);
       
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
@@ -438,15 +449,19 @@ GpgolExtCommands::DoCommand (
     }
   
 
-  if ((nCommandID != m_nCmdEncrypt) 
-      && (nCommandID != m_nCmdSign))
-    return S_FALSE; 
+
+  if (nCommandID != m_nCmdEncrypt
+      && nCommandID != m_nCmdSign
+      && nCommandID != m_nCmdShowInfo
+      && nCommandID != m_nCmdCheckSig)
+    return S_FALSE;
+  
 
   if (m_lContext == EECONTEXT_READNOTEMESSAGE) 
     {
       HWND hWnd = NULL;
-      LPMESSAGE pMessage = NULL;
-      LPMDB pMDB = NULL;
+      LPMESSAGE message = NULL;
+      LPMDB mdb = NULL;
 
       if (FAILED (pEECB->GetWindow (&hWnd)))
         hWnd = NULL;
@@ -454,19 +469,30 @@ GpgolExtCommands::DoCommand (
 //         log_window_hierarchy (hWnd, "%s:%s:%d: Windows hierarchy:",
 //                               SRCNAME, __func__, __LINE__);
 
-      hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
           if (nCommandID == m_nCmdEncrypt)
             {
-              GpgMsg *m = CreateGpgMsg (pMessage);
+              GpgMsg *m = CreateGpgMsg (message);
               m->setExchangeCallback ((void*)pEECB);
               m->decrypt (hWnd, 0);
               delete m;
 	    }
+          else if (nCommandID == m_nCmdShowInfo)
+            {
+              MessageBox (NULL, 
+                          _("Here you should see S/MIME related info"),
+                          "GpgOL", MB_ICONINFORMATION|MB_OK);
+            }
+          else if (nCommandID == m_nCmdCheckSig)
+            {
+              message_verify (message, m_pExchExt->getMsgtype (pEECB), 1);
+            }
+
 	}
-      ul_release (pMessage);
-      ul_release (pMDB);
+      ul_release (message);
+      ul_release (mdb);
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -507,43 +533,63 @@ GpgolExtCommands::Help (
 	LPEXCHEXTCALLBACK pEECB, // The pointer to Exchange Callback Interface.
 	UINT nCommandID)         // The command id.
 {
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
-    	if (nCommandID == m_nCmdEncrypt) {
-	    MessageBox (m_hWnd,
-                        _("Decrypt and verify the message."),
-                        "GpgOL", MB_OK);
-	    return S_OK;
+  if (m_lContext == EECONTEXT_READNOTEMESSAGE) 
+    {
+      if (nCommandID == m_nCmdEncrypt) 
+        {
+          MessageBox (m_hWnd,
+                      _("Decrypt and verify the message."),
+                      "GpgOL", MB_OK);
+          return S_OK;
+	}
+      else if (nCommandID == m_nCmdShowInfo) 
+        {
+          MessageBox (m_hWnd,
+                      _("Show information about the S/MIME message status"),
+                      "GpgOL", MB_OK);
+          return S_OK;
+	}
+      else if (nCommandID == m_nCmdCheckSig) 
+        {
+          MessageBox (m_hWnd,
+                      _("Check the signature now and display the result"),
+                      "GpgOL", MB_OK);
+          return S_OK;
 	}
     }
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
-	if (nCommandID == m_nCmdEncrypt) {
-	    MessageBox(m_hWnd,
-                       _("Select this option to encrypt the message."),
-                       "GpgOL", MB_OK);	
-	    return S_OK;
+  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      if (nCommandID == m_nCmdEncrypt)
+        {
+          MessageBox (m_hWnd,
+                      _("Select this option to encrypt the message."),
+                      "GpgOL", MB_OK);	
+          return S_OK;
 	} 
-	else if (nCommandID == m_nCmdSign) {
-	    MessageBox(m_hWnd,
-                       _("Select this option to sign the message."),
-                       "GpgOL", MB_OK);	
-	    return S_OK;
-	} 
-    }
-
-    if (m_lContext == EECONTEXT_VIEWER) {
-    	if (nCommandID == m_nCmdEncrypt) {
-		MessageBox(m_hWnd, 
-                           _("Open GPG Key Manager"),
-                           "GpgOL", MB_OK);
-		return S_OK;
+      else if (nCommandID == m_nCmdSign) 
+        {
+          MessageBox (m_hWnd,
+                      _("Select this option to sign the message."),
+                      "GpgOL", MB_OK);	
+          return S_OK;
 	} 
     }
-
-    return S_FALSE;
+  else if (m_lContext == EECONTEXT_VIEWER) 
+    {
+      if (nCommandID == m_nCmdEncrypt) 
+        {
+          MessageBox (m_hWnd, 
+                      _("Open GPG Key Manager"),
+                      "GpgOL", MB_OK);
+          return S_OK;
+	} 
+    }
+  
+  return S_FALSE;
 }
 
 
-/* Called by Exhange to get the status bar text or the tooltip of a
+/* Called by Exchange to get the status bar text or the tooltip of a
    menu item.  Returns S_OK when it is a menu item of this plugin and
    the text was set; otherwise S_FALSE. */
 STDMETHODIMP 
@@ -557,49 +603,77 @@ GpgolExtCommands::QueryHelpText(
 	  UINT nCharCnt)    // The count of characters available in psz buffer.
 {
 	
-    if (m_lContext == EECONTEXT_READNOTEMESSAGE) {
-	if (nCommandID == m_nCmdEncrypt) {
-	    if (lFlags == EECQHT_STATUS)
-		lstrcpyn (pszText, ".", nCharCnt);
-  	    if (lFlags == EECQHT_TOOLTIP)
-		lstrcpyn (pszText,
-                          _("Decrypt message and verify signature"),
-                          nCharCnt);
-	    return S_OK;
+  if (m_lContext == EECONTEXT_READNOTEMESSAGE) 
+    {
+      if (nCommandID == m_nCmdEncrypt)
+        {
+          if (lFlags == EECQHT_STATUS)
+            lstrcpyn (pszText, ".", nCharCnt);
+          if (lFlags == EECQHT_TOOLTIP)
+            lstrcpyn (pszText,
+                      _("Decrypt message and verify signature"),
+                      nCharCnt);
+          return S_OK;
+	}
+      else if (nCommandID == m_nCmdShowInfo)
+        {
+          if (lFlags == EECQHT_STATUS)
+            lstrcpyn (pszText, ".", nCharCnt);
+          if (lFlags == EECQHT_TOOLTIP)
+            lstrcpyn (pszText,
+                      _("Show S/MIME status info"),
+                      nCharCnt);
+          return S_OK;
+	}
+      else if (nCommandID == m_nCmdCheckSig)
+        {
+          if (lFlags == EECQHT_STATUS)
+            lstrcpyn (pszText, ".", nCharCnt);
+          if (lFlags == EECQHT_TOOLTIP)
+            lstrcpyn (pszText,
+                      _("Check the signature now and display the result"),
+                      nCharCnt);
+          return S_OK;
 	}
     }
-    if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) {
-	if (nCommandID == m_nCmdEncrypt) {
-	    if (lFlags == EECQHT_STATUS)
-		lstrcpyn (pszText, ".", nCharCnt);
-	    if (lFlags == EECQHT_TOOLTIP)
-		lstrcpyn (pszText,
-                          _("Encrypt message with GPG"),
-                          nCharCnt);
-	    return S_OK;
+  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      if (nCommandID == m_nCmdEncrypt) 
+        {
+          if (lFlags == EECQHT_STATUS)
+            lstrcpyn (pszText, ".", nCharCnt);
+          if (lFlags == EECQHT_TOOLTIP)
+            lstrcpyn (pszText,
+                      _("Encrypt message with GPG"),
+                      nCharCnt);
+          return S_OK;
 	}
-	if (nCommandID == m_nCmdSign) {
-	    if (lFlags == EECQHT_STATUS)
-		lstrcpyn (pszText, ".", nCharCnt);
-  	    if (lFlags == EECQHT_TOOLTIP)
-		lstrcpyn (pszText,
-                          _("Sign message with GPG"),
-                          nCharCnt);
-	    return S_OK;
+      else if (nCommandID == m_nCmdSign) 
+        {
+          if (lFlags == EECQHT_STATUS)
+            lstrcpyn (pszText, ".", nCharCnt);
+          if (lFlags == EECQHT_TOOLTIP)
+            lstrcpyn (pszText,
+                      _("Sign message with GPG"),
+                      nCharCnt);
+          return S_OK;
 	}
     }
-    if (m_lContext == EECONTEXT_VIEWER) {
-	if (nCommandID == m_nCmdEncrypt) {
-	    if (lFlags == EECQHT_STATUS)
-		lstrcpyn (pszText, ".", nCharCnt);
-	    if (lFlags == EECQHT_TOOLTIP)
+  else if (m_lContext == EECONTEXT_VIEWER) 
+    {
+      if (nCommandID == m_nCmdEncrypt) 
+        {
+          if (lFlags == EECQHT_STATUS)
+            lstrcpyn (pszText, ".", nCharCnt);
+          if (lFlags == EECQHT_TOOLTIP)
 		lstrcpyn (pszText,
                           _("Open GPG Key Manager"),
                           nCharCnt);
-	    return S_OK;
+          return S_OK;
 	}	
     }
-    return S_FALSE;
+
+  return S_FALSE;
 }
 
 

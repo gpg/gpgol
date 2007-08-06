@@ -29,13 +29,14 @@
 
 #include "mymapi.h"
 #include "mymapitags.h"
-
-#include "intern.h"
+#include "myexchext.h"
+#include "common.h"
 #include "gpgmsg.hh"
 #include "util.h"
 #include "msgcache.h"
 #include "pgpmime.h"
 #include "engine.h"
+#include "ol-ext-callback.h"
 #include "display.h"
 #include "rfc822parse.h"
 
@@ -601,7 +602,9 @@ get_msg_content_type_cb (void *dummy_arg,
 
 
 /* Find Content-Type of the current message.  The result will be put
-   into instance variables.  */
+   into instance variables.  FIXME: This function is basically
+   duplicated in mapihelp.cpp - either remove it here or mak use of
+   the other implementation. */
 void
 GpgMsgImpl::get_msg_content_type (void)
 {
@@ -1184,7 +1187,7 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
       if (!opt.compat.old_reply_hack
           && (s = msgcache_get_from_mapi (message, &refhandle)))
         {
-          update_display (hwnd, this, exchange_cb, is_html_body (s), s);
+          update_display (hwnd, exchange_cb, is_html_body (s), s);
           msgcache_unref (refhandle);
           log_debug ("%s:%s: leave (already decrypted)\n", SRCNAME, __func__);
         }
@@ -1213,7 +1216,7 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
             (_("[This is a PGP/MIME message]\r\n\r\n"
                "[Use the \"Decrypt\" button in the message window "
                "to show its content.]"));        
-          update_display (hwnd, this, NULL, 0, tmp);
+          update_display (hwnd, NULL, 0, tmp);
           xfree (tmp);
         }
       
@@ -1291,7 +1294,7 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
       if (!body || !*body)
         {
           char *tmp = native_to_utf8 (_("[This is a PGP/MIME message]"));
-          update_display (hwnd, this, exchange_cb, 0, tmp);
+          update_display (hwnd, exchange_cb, 0, tmp);
           xfree (tmp);
         }
       
@@ -1491,7 +1494,7 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
       msgcache_put (plaintext, 0, message);
 
       if (preview)
-        update_display (hwnd, this, exchange_cb, is_html, plaintext);
+        update_display (hwnd, exchange_cb, is_html, plaintext);
       else if (opt.save_decrypted_attach)
         {
           /* User wants us to replace the encrypted message with the
@@ -1500,10 +1503,10 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
           if (FAILED (hr))
             log_debug ("%s:%s: SaveChanges failed: hr=%#lx",
                        SRCNAME, __func__, hr);
-          update_display (hwnd, this, exchange_cb, is_html, plaintext);
+          update_display (hwnd, exchange_cb, is_html, plaintext);
           
         }
-      else if (update_display (hwnd, this, exchange_cb, is_html, plaintext))
+      else if (update_display (hwnd, exchange_cb, is_html, plaintext))
         {
           const char *s = 
             _("The message text cannot be displayed.\n"

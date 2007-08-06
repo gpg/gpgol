@@ -64,7 +64,8 @@ int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
 int op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
                                  const char *filename,
                                  gpgme_data_t attestation);
-int op_decrypt_stream_to_gpgme (LPSTREAM instream, gpgme_data_t out, int ttl,
+int op_decrypt_stream_to_gpgme (gpgme_protocol_t protocol,
+                                LPSTREAM instream, gpgme_data_t out, int ttl,
                                 const char *filename, gpgme_data_t attestation,
                                 int preview_mode);
 
@@ -75,7 +76,8 @@ int op_verify_detached_sig (LPSTREAM data, const char *sig,
 int op_verify_detached_sig_mem (const char *data_string,
                                 const char *sig_string, const char *filename,
                                 gpgme_data_t attestation);
-int op_verify_detached_sig_gpgme (gpgme_data_t data, gpgme_data_t sig,
+int op_verify_detached_sig_gpgme (gpgme_protocol_t protocol, 
+                                  gpgme_data_t data, gpgme_data_t sig,
                                   const char *filename,
                                   gpgme_data_t attestation);
 
@@ -88,7 +90,8 @@ gpgme_key_t op_get_one_key (char *pattern);
 const char *userid_from_key (gpgme_key_t k);
 const char *keyid_from_key (gpgme_key_t k);
 
-const char* op_strerror (int err);
+const char *op_strerror (int err);
+const char *op_strsource (int err);
 
 
 #ifdef __cplusplus

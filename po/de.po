@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2006-08-28 15:44+0200\n"
+"POT-Creation-Date: 2007-08-03 18:07+0200\n"
 "PO-Revision-Date: 2007-04-13 12:55+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -15,70 +15,70 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/common.c:103
+#: src/common.c:131
 msgid "GPG - Save decrypted attachment"
 msgstr "GPG - Sichern der entschlüsselten Anlage"
 
-#: src/config-dialog.c:290
+#: src/config-dialog.c:289
 msgid "Select GPG Key Manager"
 msgstr "Das Schlüsselverwaltungsprogramm festlegen"
 
-#: src/engine-gpgme.c:979
+#: src/engine-gpgme.c:991
 msgid "Fingerprint: "
 msgstr "Fingerabdruck: "
 
-#: src/engine-gpgme.c:1036
+#: src/engine-gpgme.c:1048
 msgid "This signature is valid\n"
 msgstr "Diese Unterschrift ist korrekt\n"
 
-#: src/engine-gpgme.c:1038
+#: src/engine-gpgme.c:1050
 msgid "signature state is \"green\"\n"
 msgstr "Status der Unterschrift ist \"grün\"\n"
 
-#: src/engine-gpgme.c:1040
+#: src/engine-gpgme.c:1052
 msgid "signature state is \"red\"\n"
 msgstr "Status der Unterschrift ist \"rot\"\n"
 
-#: src/engine-gpgme.c:1044
+#: src/engine-gpgme.c:1056
 msgid "Warning: One of the keys has been revoked\n"
 msgstr "Warnung: Einer der Schlüssel wurde widerrufen\n"
 
-#: src/engine-gpgme.c:1054
+#: src/engine-gpgme.c:1066
 msgid "Warning: The key used to create the signature expired at: "
 msgstr ""
 "Warnung: Der Schlüssel mit der diese Unterschrift erzeugt wurde verfiel am: "
 
-#: src/engine-gpgme.c:1060
+#: src/engine-gpgme.c:1072
 msgid "Warning: At least one certification key has expired\n"
 msgstr ""
 "Warnung: Mindestens einer der Zertifizierungsschlüssel ist abgelaufen\n"
 
-#: src/engine-gpgme.c:1066
+#: src/engine-gpgme.c:1078
 msgid "Warning: The signature expired at: "
 msgstr "Die Unterschrift verfiel am: "
 
-#: src/engine-gpgme.c:1072
+#: src/engine-gpgme.c:1084
 msgid "Can't verify due to a missing key or certificate\n"
 msgstr ""
 "Aufrund eines fehlenden Schlüssels ist eine Überprüfung nicht möglich\n"
 
-#: src/engine-gpgme.c:1076
+#: src/engine-gpgme.c:1088
 msgid "The CRL is not available\n"
 msgstr "Die CRL ist nicht verfügbar\n"
 
-#: src/engine-gpgme.c:1082
+#: src/engine-gpgme.c:1094
 msgid "Available CRL is too old\n"
 msgstr "Die vorhandene CRL ist zu alt\n"
 
-#: src/engine-gpgme.c:1087
+#: src/engine-gpgme.c:1099
 msgid "A policy requirement was not met\n"
 msgstr "Eine Richtlinie wurde nicht erfüllt\n"
 
-#: src/engine-gpgme.c:1093
+#: src/engine-gpgme.c:1105
 msgid "A system error occured"
 msgstr "Ein Systemfehler ist aufgetreten"
 
-#: src/engine-gpgme.c:1130
+#: src/engine-gpgme.c:1142
 msgid ""
 "WARNING: We have NO indication whether the key belongs to the person named "
 "as shown above\n"
@@ -86,12 +86,12 @@ msgstr ""
 "WARNUNG: Es gibt keinen Hinweis darauf, ob der Schlüssel wirklich der Person "
 "gehört, die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1137
+#: src/engine-gpgme.c:1149
 msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
 msgstr ""
 "WARNUNG: Der Schlüssel gehört NICHT der Person die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1141
+#: src/engine-gpgme.c:1153
 msgid ""
 "WARNING: It is NOT certain that the key belongs to the person named as shown "
 "above\n"
@@ -99,56 +99,56 @@ msgstr ""
 "WARNING: Es ist nicht sicher, daß der Schlüssel der Person gehört, die oben "
 "angezeigt ist\n"
 
-#: src/engine-gpgme.c:1174
+#: src/engine-gpgme.c:1186
 msgid "Verification started at: "
 msgstr "Überprüfung begann am: "
 
-#: src/engine-gpgme.c:1179
+#: src/engine-gpgme.c:1191
 msgid "Verification result for: "
 msgstr "Prüfungsresultat für: "
 
-#: src/engine-gpgme.c:1180
+#: src/engine-gpgme.c:1192
 msgid "[unnamed part]"
 msgstr "[Unbenannter Teil]"
 
-#: src/engine-gpgme.c:1198 src/engine-gpgme.c:1228
+#: src/engine-gpgme.c:1210 src/engine-gpgme.c:1240
 msgid "Good signature from: "
 msgstr "Korrekte Unterschrift von: "
 
-#: src/engine-gpgme.c:1205
+#: src/engine-gpgme.c:1217
 msgid "                aka: "
 msgstr "                    alias: "
 
-#: src/engine-gpgme.c:1209 src/engine-gpgme.c:1231
+#: src/engine-gpgme.c:1221 src/engine-gpgme.c:1243
 msgid "            created: "
 msgstr "                  erzeugt: "
 
-#: src/engine-gpgme.c:1218
+#: src/engine-gpgme.c:1230
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FALSCHE* Unterschrift, vorgeblich von: "
 
-#: src/engine-gpgme.c:1241
+#: src/engine-gpgme.c:1253
 msgid "Error checking signature"
 msgstr "Fehler beim Prüfen der Unterschrift"
 
-#: src/engine-gpgme.c:1257
+#: src/engine-gpgme.c:1269
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Anfang Notation (Unterschrift von: "
 
-#: src/engine-gpgme.c:1277
+#: src/engine-gpgme.c:1289
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/gpgmsg.cpp:1194
+#: src/gpgmsg.cpp:1197
 msgid "No valid OpenPGP data found."
 msgstr "Keine gültigen OpenPGP Daten gefunden"
 
-#: src/gpgmsg.cpp:1195 src/gpgmsg.cpp:1306 src/gpgmsg.cpp:1320
-#: src/gpgmsg.cpp:1336 src/gpgmsg.cpp:1515
+#: src/gpgmsg.cpp:1198 src/gpgmsg.cpp:1309 src/gpgmsg.cpp:1323
+#: src/gpgmsg.cpp:1339 src/gpgmsg.cpp:1518
 msgid "Decryption"
 msgstr "Entschlüsselung"
 
-#: src/gpgmsg.cpp:1213
+#: src/gpgmsg.cpp:1216
 msgid ""
 "[This is a PGP/MIME message]\r\n"
 "\r\n"
@@ -159,7 +159,7 @@ msgstr ""
 "[Benutzen Sie den \"Entschlüsselungs\"-Button im großen\n"
 "Nachrichtenfenster um den Inhalt anzuzeigen.]"
 
-#: src/gpgmsg.cpp:1271
+#: src/gpgmsg.cpp:1274
 msgid ""
 "Note: This is a PGP/MIME signed message.  The GPGol plugin is not always "
 "able to verify such a message due to missing support in Outlook.\n"
@@ -172,27 +172,27 @@ msgstr ""
 "\n"
 "(Dieser Hinweis wird nur einmalig pro Sitzung angezeigt)"
 
-#: src/gpgmsg.cpp:1275
+#: src/gpgmsg.cpp:1278
 msgid "Verification"
 msgstr "Überprüfung"
 
-#: src/gpgmsg.cpp:1293
+#: src/gpgmsg.cpp:1296
 msgid "[This is a PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/gpgmsg.cpp:1305 src/gpgmsg.cpp:1319 src/gpgmsg.cpp:1335
+#: src/gpgmsg.cpp:1308 src/gpgmsg.cpp:1322 src/gpgmsg.cpp:1338
 msgid "Problem decrypting PGP/MIME message"
 msgstr "Problem bei Entschlüsseln einer PGP/MIME Nachricht"
 
-#: src/gpgmsg.cpp:1470
+#: src/gpgmsg.cpp:1473
 msgid "Verification Failure"
 msgstr "Überprüfungsfehler"
 
-#: src/gpgmsg.cpp:1473
+#: src/gpgmsg.cpp:1476
 msgid "Decryption Failure"
 msgstr "Entschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1509
+#: src/gpgmsg.cpp:1512
 msgid ""
 "The message text cannot be displayed.\n"
 "You have to save the decrypted message to view it.\n"
@@ -208,7 +208,7 @@ msgstr ""
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1536
+#: src/gpgmsg.cpp:1539
 msgid ""
 "Signed attachments found.\n"
 "\n"
@@ -220,13 +220,13 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese Unterschriften überprüfen?"
 
-#: src/gpgmsg.cpp:1544
+#: src/gpgmsg.cpp:1547
 msgid "Attachment Verification"
 msgstr "Überprüfung der Anhänge"
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: src/gpgmsg.cpp:1565
+#: src/gpgmsg.cpp:1568
 msgid ""
 "Encrypted attachments found.\n"
 "\n"
@@ -238,15 +238,15 @@ msgstr ""
 "@LIST@\n"
 "Möchten Sie diese entschlüsseln und abspeichern?"
 
-#: src/gpgmsg.cpp:1572
+#: src/gpgmsg.cpp:1575
 msgid "Attachment Decryption"
 msgstr "Entschlüsselung eines Anhangs"
 
-#: src/gpgmsg.cpp:1641
+#: src/gpgmsg.cpp:1644
 msgid "Signing Failure"
 msgstr "Unterschrifterstellungsfehler"
 
-#: src/gpgmsg.cpp:1809
+#: src/gpgmsg.cpp:1812
 msgid ""
 "The configured default encryption key is not available or does not "
 "unambigiously specify a key. Please fix this in the option dialog.\n"
@@ -259,35 +259,35 @@ msgstr ""
 "\n"
 "Die Nachricht wird deswegen nicht für diesen Schlüssel verschlüsselt!"
 
-#: src/gpgmsg.cpp:1813
+#: src/gpgmsg.cpp:1816
 msgid "Encryption"
 msgstr "Verschlüsselung"
 
-#: src/gpgmsg.cpp:1856
+#: src/gpgmsg.cpp:1859
 msgid "Encryption Failure"
 msgstr "Verschlüsselungsfehler"
 
-#: src/gpgmsg.cpp:1910 src/gpgmsg.cpp:3276
+#: src/gpgmsg.cpp:1913 src/gpgmsg.cpp:3279
 msgid "Attachment Encryption Failure"
 msgstr "Verschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2683
+#: src/gpgmsg.cpp:2686
 msgid "Attachment Verification Failure"
 msgstr "Überprüfungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:2866 src/gpgmsg.cpp:2915
+#: src/gpgmsg.cpp:2869 src/gpgmsg.cpp:2918
 msgid "Attachment Decryption Failure"
 msgstr "Entschlüsselungsfehler eines Anhangs"
 
-#: src/gpgmsg.cpp:3085
+#: src/gpgmsg.cpp:3088
 msgid "Attachment Signing Failure"
 msgstr "Unterschrifterstellungsfehler eines Anhangs"
 
-#: src/olflange-dlgs.cpp:183
+#: src/olflange-dlgs.cpp:184
 msgid "The default key may not contain any spaces."
 msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
 
-#: src/olflange.cpp:750
+#: src/olflange.cpp:479
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -304,65 +304,6 @@ msgstr ""
 "\n"
 "Bitte updaten Sie auf SP2 bevor Sie versuchen eine Nachricht zu versenden."
 
-#: src/olflange.cpp:946
-msgid ""
-"Sorry, we can only encrypt plain text messages and\n"
-"no RTF messages. Please make sure that only the text\n"
-"format has been selected."
-msgstr ""
-"Leider ist es nur möglich reine Textnachrichten aber keine\n"
-"Nachrichten im RTF Format zu verschlüsseln.  Bitte stellen \n"
-"Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
-"(In der Menüleiste: \"Format\" => \"Nur Text\")"
-
-#: src/olflange.cpp:1337
-msgid "&Decrypt and verify message"
-msgstr "Entschlüsseln/Prüfen der Nachricht"
-
-#: src/olflange.cpp:1375
-msgid "GPG &encrypt message"
-msgstr "Mit GPG &verschlüsseln"
-
-#: src/olflange.cpp:1381
-msgid "GPG &sign message"
-msgstr "Mit GPG unter&schreiben"
-
-#: src/olflange.cpp:1427
-msgid "GPG Key &Manager"
-msgstr "GPG Schlüssel&verwaltung"
-
-#: src/olflange.cpp:1559
-msgid "Could not start Key-Manager"
-msgstr "Dei Schlüsselverwaltung konnte nicht aufgerufen werden"
-
-#: src/olflange.cpp:1605
-msgid "Decrypt and verify the message."
-msgstr "Entschlüsseln und Prüfen der Nachricht."
-
-#: src/olflange.cpp:1613
-msgid "Select this option to encrypt the message."
-msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
-
-#: src/olflange.cpp:1619
-msgid "Select this option to sign the message."
-msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
-
-#: src/olflange.cpp:1628 src/olflange.cpp:1689 src/olflange.cpp:1771
-msgid "Open GPG Key Manager"
-msgstr "Die GPG Schlüsselverwaltung öffnen"
-
-#: src/olflange.cpp:1658 src/olflange.cpp:1722
-msgid "Decrypt message and verify signature"
-msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
-
-#: src/olflange.cpp:1669 src/olflange.cpp:1740
-msgid "Encrypt message with GPG"
-msgstr "Nachricht mit GPG verschlüsseln"
-
-#: src/olflange.cpp:1678 src/olflange.cpp:1755
-msgid "Sign message with GPG"
-msgstr "Nachricht mit GPG unterschreiben"
-
 #: src/passphrase-dialog.c:85
 msgid "No key hint given."
 msgstr "Kein Hinweis auf den Schlüssel"
@@ -375,7 +316,7 @@ msgstr "Ungültige Passphrase; bitte nochmal versuchen..."
 msgid "Select Signing Key"
 msgstr "Signaturschlüssel auswählen"
 
-#: src/pgpmime.c:485
+#: src/pgpmime.c:356
 msgid ""
 "Error creating file\n"
 "Please select another one"
@@ -383,90 +324,162 @@ msgstr ""
 "Fehler bei der Erstellung der Datei.\n"
 "Bitte wählen Sie eine anderen Namen."
 
-#: src/pgpmime.c:487 src/pgpmime.c:638
+#: src/pgpmime.c:358 src/pgpmime.c:509
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
-#: src/pgpmime.c:637
+#: src/pgpmime.c:508
 msgid "Error writing file"
 msgstr "Dateischreibfehler"
 
-#: src/pgpmime.c:713
+#: src/pgpmime.c:584
 msgid "[PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/pgpmime.c:733
+#: src/pgpmime.c:604
 msgid "[PGP/MIME message without plain text body]"
 msgstr "[PGP/MIME Nachricht ohne reinen Textkörper]"
 
-#: src/pgpmime.c:808
+#: src/pgpmime.c:679
 msgid "[PGP/MIME signed message without a plain text body]"
 msgstr "[PGP/MIME signierte Nachricht ohne reinen Textkörper]"
 
-#: src/pgpmime.c:820
+#: src/pgpmime.c:691
 msgid "[PGP/MIME signature]"
 msgstr "[PGP/MIME Signatur]"
 
-#: src/recipient-dialog.c:410
+#: src/recipient-dialog.c:89
+msgid "Name"
+msgstr ""
+
+#: src/recipient-dialog.c:94
+msgid "E-Mail"
+msgstr ""
+
+#: src/recipient-dialog.c:99
+msgid "Key-Info"
+msgstr ""
+
+#: src/recipient-dialog.c:104
+msgid "Key ID"
+msgstr ""
+
+#: src/recipient-dialog.c:109
+msgid "Validity"
+msgstr ""
+
+#: src/recipient-dialog.c:425
 msgid "Please select at least one recipient key."
 msgstr "Bitte wählen Sie mindestens einen Empfängerschlüssel."
 
-#: src/recipient-dialog.c:411
+#: src/recipient-dialog.c:426
 msgid "Recipient Dialog"
 msgstr "Auswahl des Empfängerschlüssels"
 
-#: src/verify-dialog.c:125
+#: src/verify-dialog.c:126
 msgid "BAD signature!"
 msgstr "FALSCHE Unterschrift!"
 
-#: src/verify-dialog.c:127
+#: src/verify-dialog.c:128
 msgid "Good signature"
 msgstr "Korrekte Unterschrift"
 
-#: src/verify-dialog.c:129
+#: src/verify-dialog.c:130
 msgid "Good signature from revoked key"
 msgstr "Korrekte Unterschrift; aber Schlüssel wurde widerrufen"
 
-#: src/verify-dialog.c:131
+#: src/verify-dialog.c:132
 msgid "Good signature from expired key"
 msgstr "Korrekte Unterschrift; allerdings ist der Schlüssel abgelaufen"
 
-#: src/verify-dialog.c:133
+#: src/verify-dialog.c:134
 msgid "Good expired signature"
 msgstr "Korrekte aber abgelaufene Unterschrift"
 
-#: src/verify-dialog.c:136
+#: src/verify-dialog.c:137
 msgid "Could not check signature: missing key"
 msgstr "Unterschrift konnte nicht geprüft werden:  Schlüssel fehlt"
 
-#: src/verify-dialog.c:140
+#: src/verify-dialog.c:141
 msgid "Verification error"
 msgstr "Überprüfungsfehler"
 
-#: src/verify-dialog.c:157
+#: src/verify-dialog.c:158
 msgid "User-ID not found"
 msgstr "User-ID nicht gefunden"
 
-#: src/verify-dialog.c:169
+#: src/verify-dialog.c:170
 msgid "This may be due to a wrong option setting"
 msgstr "Möglicherweise durch falsche Einstellungen verursacht"
 
-#: src/verify-dialog.c:175
+#: src/verify-dialog.c:176
 #, c-format
 msgid "Signature expired on %s"
 msgstr "Unterschrift abgelaufen am %s"
 
-#: src/verify-dialog.c:187
+#: src/verify-dialog.c:188
 msgid "Signature issued by a key we do NOT trust."
 msgstr "Die Unterschrift stammt von einem Schlüssel dem wir NICHT vertrauen."
 
-#: src/verify-dialog.c:194
+#: src/verify-dialog.c:195
 msgid "Signature issued by a non-valid key."
 msgstr "Die Unterschrift stammt von einem ungültigen Schlüssel."
 
-#: src/verify-dialog.c:216
-msgid "Verification Result"
+#: src/verify-dialog.c:222
+#, fuzzy
+msgid "OpenPGP Verification Result"
 msgstr "Prüfungsresultat"
+
+#: src/verify-dialog.c:225
+#, fuzzy
+msgid "S/MIME Verification Result"
+msgstr "Prüfungsresultat"
+
+#~ msgid ""
+#~ "Sorry, we can only encrypt plain text messages and\n"
+#~ "no RTF messages. Please make sure that only the text\n"
+#~ "format has been selected."
+#~ msgstr ""
+#~ "Leider ist es nur möglich reine Textnachrichten aber keine\n"
+#~ "Nachrichten im RTF Format zu verschlüsseln.  Bitte stellen \n"
+#~ "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
+#~ "(In der Menüleiste: \"Format\" => \"Nur Text\")"
+
+#~ msgid "&Decrypt and verify message"
+#~ msgstr "Entschlüsseln/Prüfen der Nachricht"
+
+#~ msgid "GPG &encrypt message"
+#~ msgstr "Mit GPG &verschlüsseln"
+
+#~ msgid "GPG &sign message"
+#~ msgstr "Mit GPG unter&schreiben"
+
+#~ msgid "GPG Key &Manager"
+#~ msgstr "GPG Schlüssel&verwaltung"
+
+#~ msgid "Could not start Key-Manager"
+#~ msgstr "Dei Schlüsselverwaltung konnte nicht aufgerufen werden"
+
+#~ msgid "Decrypt and verify the message."
+#~ msgstr "Entschlüsseln und Prüfen der Nachricht."
+
+#~ msgid "Select this option to encrypt the message."
+#~ msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
+
+#~ msgid "Select this option to sign the message."
+#~ msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
+
+#~ msgid "Open GPG Key Manager"
+#~ msgstr "Die GPG Schlüsselverwaltung öffnen"
+
+#~ msgid "Decrypt message and verify signature"
+#~ msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
+
+#~ msgid "Encrypt message with GPG"
+#~ msgstr "Nachricht mit GPG verschlüsseln"
+
+#~ msgid "Sign message with GPG"
+#~ msgstr "Nachricht mit GPG unterschreiben"
 
 #~ msgid ""
 #~ "If you cancel this dialog, the message will be sent in cleartext!\n"

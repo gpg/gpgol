@@ -1010,7 +1010,8 @@ is_parameter (TOKEN t)
    With LOWER_VALUE set to true, a matching field value will be
    lowercased.
  
-   Note, that ATTR should be lowercase.
+   Note, that ATTR should be lowercase.  A CTX of NULL is allowed and
+   will return NULL.
  */
 const char *
 rfc822parse_query_parameter (rfc822parse_field_t ctx, const char *attr,

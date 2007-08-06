@@ -27,11 +27,12 @@
 #include <windows.h>
 #include <prsht.h>
 
-#include "intern.h"
 #include "mymapi.h"
 #include "mymapitags.h"
+#include "myexchext.h"
+#include "common.h"
 #include "display.h"
-
+#include "ol-ext-callback.h"
 #include "olflange-def.h"
 #include "olflange-ids.h"
 

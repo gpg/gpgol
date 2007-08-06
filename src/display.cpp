@@ -28,7 +28,10 @@
 
 #include "mymapi.h"
 #include "mymapitags.h"
-#include "intern.h"
+#include "myexchext.h"
+#include "common.h"
+#include "mapihelp.h"
+#include "ol-ext-callback.h"
 #include "display.h"
 
 
@@ -176,7 +179,7 @@ find_message_window (HWND parent, int level)
 /* Update the display with TEXT using the message MSG.  Return 0 on
    success. */
 int
-update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb, 
+update_display (HWND hwnd, void *exchange_cb, 
                 bool is_html, const char *text)
 {
   HWND window;
@@ -206,7 +209,7 @@ update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
-      log_debug ("updating display using OOM\n");
+      log_debug ("%s:%s: updating display using OOM\n", SRCNAME, __func__);
       /* Bug in OL 2002 and 2003 - as a workaround set the body first
          to empty. */
       if (is_html)
@@ -272,3 +275,147 @@ set_message_body (LPMESSAGE message, const char *string, bool is_html)
 
   return 0;
 }
+
+
+
+int
+open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
+{
+  HRESULT hr;
+  LPMAPISESSION session;
+  ULONG token; 
+  char *entryid, *store_entryid, *parent_entryid;
+  size_t entryidlen, store_entryidlen, parent_entryidlen;
+  LPMDB mdb;
+  LPMAPIFOLDER mfolder;
+  ULONG mtype;
+  LPMESSAGE message2;
+  
+  hr = peecb->GetSession (&session, NULL);
+  if (FAILED (hr) )
+    {
+      
+      log_error ("%s:%s: error getting session: hr=%#lx\n", 
+                 SRCNAME, __func__, hr);
+      return -1;
+      
+    }
+  
+  entryid = mapi_get_binary_prop (message, PR_ENTRYID, &entryidlen);
+  if (!entryid)
+    {
+      log_error ("%s:%s: PR_ENTRYID missing\n",  SRCNAME, __func__);
+      session->Release ();
+      return -1;
+    }
+  log_hexdump (entryid, entryidlen, "orig entryid=");
+  store_entryid = mapi_get_binary_prop (message, PR_STORE_ENTRYID,
+                                        &store_entryidlen);
+  if (!store_entryid)
+    {
+      log_error ("%s:%s: PR_STORE_ENTRYID missing\n",  SRCNAME, __func__);
+      session->Release ();
+      xfree (entryid);
+      return -1;
+    }
+  parent_entryid = mapi_get_binary_prop (message, PR_PARENT_ENTRYID,
+                                         &parent_entryidlen);
+  if (!parent_entryid)
+    {
+      log_error ("%s:%s: PR_PARENT_ENTRYID missing\n",  SRCNAME, __func__);
+      session->Release ();
+      xfree (store_entryid);
+      xfree (entryid);
+      return -1;
+    }
+
+  /* Open the message store by ourself.  */
+  hr = session->OpenMsgStore (0, store_entryidlen, (LPENTRYID)store_entryid,
+                              NULL,  MAPI_BEST_ACCESS | MDB_NO_DIALOG, 
+                              &mdb);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: OpenMsgStore failed: hr=%#lx\n", 
+                 SRCNAME, __func__, hr);
+      session->Release ();
+      xfree (parent_entryid);
+      xfree (store_entryid);
+      xfree (entryid);
+      return -1;
+    }
+
+  /* Open the parent folder.  */
+  hr = mdb->OpenEntry (parent_entryidlen,  (LPENTRYID)parent_entryid,
+                       &IID_IMAPIFolder, MAPI_BEST_ACCESS, 
+                       &mtype, (IUnknown**)&mfolder);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: OpenEntry failed: hr=%#lx\n", 
+                 SRCNAME, __func__, hr);
+      session->Release ();
+      xfree (parent_entryid);
+      xfree (store_entryid);
+      xfree (entryid);
+      mdb->Release ();
+      return -1;
+    }
+  log_debug ("%s:%s: mdb::OpenEntry succeeded type=%lx\n", 
+             SRCNAME, __func__, mtype);
+
+  /* Open the message.  */
+  hr = mdb->OpenEntry (entryidlen,  (LPENTRYID)entryid,
+                       &IID_IMessage, MAPI_BEST_ACCESS, 
+                       &mtype, (IUnknown**)&message2);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: OpenEntry[folder] failed: hr=%#lx\n", 
+                 SRCNAME, __func__, hr);
+      session->Release ();
+      xfree (parent_entryid);
+      xfree (store_entryid);
+      xfree (entryid);
+      mdb->Release ();
+      mfolder->Release ();
+      return -1;
+    }
+  log_debug ("%s:%s: mdb::OpenEntry[message] succeeded type=%lx\n", 
+             SRCNAME, __func__, mtype);
+
+  /* Prepare and display the form.  */
+  hr = session->PrepareForm (NULL, message2, &token);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: PrepareForm failed: hr=%#lx\n", 
+                 SRCNAME, __func__, hr);
+      session->Release ();
+      xfree (parent_entryid);
+      xfree (store_entryid);
+      xfree (entryid);
+      mdb->Release ();
+      mfolder->Release ();
+      message2->Release ();
+      return -1;
+    }
+
+  /* Message2 is now represented by TOKEN; we need to release it.  */
+  message2->Release(); message2 = NULL;
+
+  hr = session->ShowForm (0,
+                          mdb, mfolder, 
+                          NULL,  token,
+                          NULL,  
+                          0,
+                          0,  0,
+                          0,  "IPM.Note");
+  log_debug ("%s:%s: ShowForm result: hr=%#lx\n", 
+             SRCNAME, __func__, hr);
+  
+  session->Release ();
+  xfree (parent_entryid);
+  xfree (store_entryid);
+  xfree (entryid);
+  mdb->Release ();
+  mfolder->Release ();
+  return FAILED(hr)? -1:0;
+}
+

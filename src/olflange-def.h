@@ -27,6 +27,7 @@ class GpgolSessionEvents;
 class GpgolMessageEvents;
 class GpgolAttachedFileEvents;
 class GpgolPropertySheets;
+class GpgolItemEvents;
 
 bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

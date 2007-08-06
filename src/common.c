@@ -1,32 +1,60 @@
-/* common.c 
- *	Copyright (C) 2005 g10 Code GmbH
+/* common.c - Common routines used bu GpgOL
+ *	Copyright (C) 2005, 2007 g10 Code GmbH
  *
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  *
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1 
  * of the License, or (at your option) any later version.
  *  
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with GPGol; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 
 #include <config.h>
 #include <windows.h>
 #include <time.h>
 
-#include "gpgme.h"
-#include "intern.h"
-#include "util.h"
+#include "common.h"
 
 HINSTANCE glob_hinst = NULL;
+
+
+/* The reverse base-64 list used for base-64 decoding. */
+static unsigned char const asctobin[256] = {
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3e, 0xff, 0xff, 0xff, 0x3f, 
+  0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 
+  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 
+  0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 
+  0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 
+  0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff
+};
+
+
 
 void
 set_global_hinstance (HINSTANCE hinst)
@@ -402,5 +430,105 @@ read_w32_registry_string (const char *root, const char *dir, const char *name)
  leave:
   RegCloseKey( key_handle );
   return result;
+}
+
+
+
+
+/* Do in-place decoding of quoted-printable data of LENGTH in BUFFER.
+   Returns the new length of the buffer. */
+size_t
+qp_decode (char *buffer, size_t length)
+{
+  char *d, *s;
+
+  for (s=d=buffer; length; length--)
+    if (*s == '=' && length > 2 && hexdigitp (s+1) && hexdigitp (s+2))
+      {
+        s++;
+        *(unsigned char*)d++ = xtoi_2 (s);
+        s += 2;
+        length -= 2;
+      }
+    else
+      *d++ = *s++;
+  
+  return d - buffer;
+}
+
+
+/* Initialize the Base 64 decoder state.  */
+void b64_init (b64_state_t *state)
+{
+  state->idx = 0;
+  state->val = 0;
+  state->stop_seen = 0;
+  state->invalid_encoding = 0;
+}
+
+
+/* Do in-place decoding of base-64 data of LENGTH in BUFFER.  Returns
+   the new length of the buffer. STATE is required to return errors and
+   to maintain the state of the decoder.  */
+size_t
+b64_decode (b64_state_t *state, char *buffer, size_t length)
+{
+  int idx = state->idx;
+  unsigned char val = state->val;
+  int c;
+  char *d, *s;
+
+  if (state->stop_seen)
+    return 0;
+
+  for (s=d=buffer; length; length--, s++)
+    {
+      if (*s == '\n' || *s == ' ' || *s == '\r' || *s == '\t')
+        continue;
+      if (*s == '=')
+        { 
+          /* Pad character: stop */
+          if (idx == 1)
+            *d++ = val; 
+          state->stop_seen = 1;
+          break;
+        }
+
+      if ((c = asctobin[*(unsigned char *)s]) == 255) 
+        {
+          if (!state->invalid_encoding)
+            log_debug ("%s: invalid base64 character %02X at pos %d skipped\n",
+                       __func__, *(unsigned char*)s, (int)(s-buffer));
+          state->invalid_encoding = 1;
+          continue;
+        }
+
+      switch (idx) 
+        {
+        case 0: 
+          val = c << 2;
+          break;
+        case 1: 
+          val |= (c>>4)&3;
+          *d++ = val;
+          val = (c<<4)&0xf0;
+          break;
+        case 2: 
+          val |= (c>>2)&15;
+          *d++ = val;
+          val = (c<<6)&0xc0;
+          break;
+        case 3: 
+          val |= c&0x3f;
+          *d++ = val;
+          break;
+        }
+      idx = (idx+1) % 4;
+    }
+
+  
+  state->idx = idx;
+  state->val = val;
+  return d - buffer;
 }
 

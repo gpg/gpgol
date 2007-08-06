@@ -21,14 +21,12 @@
 #include <config.h>
 
 #include <windows.h>
-
-#include <gpgme.h>
+#include <wincrypt.h>
 
 #include "mymapi.h"
 #include "mymapitags.h"
 
-
-#include "intern.h"
+#include "common.h"
 #include "passcache.h"
 #include "msgcache.h"
 #include "mymapi.h"
@@ -45,6 +43,9 @@ static FILE *logfp;
    functions.  This lock is controlled by this Mutex. */
 static HANDLE log_mutex;
 
+/* The session key used to temporary encrypt attachments.  It is
+   initialized at startup.  */
+static char *the_session_key;
 
 /* Local function prototypes. */
 static char *get_locale_dir (void);
@@ -81,6 +82,37 @@ initialize_main (void)
   return log_mutex? 0 : -1;
 }
 
+/* Return nbytes of cryptographic strong random.  Caller needs to free
+   the returned buffer.  */
+static char *
+get_crypt_random (size_t nbytes) 
+{
+  HCRYPTPROV prov;
+  char *buffer;
+
+  if (!CryptAcquireContext (&prov, NULL, NULL, PROV_RSA_FULL, 
+                            (CRYPT_VERIFYCONTEXT|CRYPT_SILENT)) )
+    return NULL;
+  
+  buffer = xmalloc (nbytes);
+  if (!CryptGenRandom (prov, nbytes, buffer))
+    {
+      xfree (buffer);
+      buffer = NULL;
+    }
+  CryptReleaseContext (prov, 0);
+  return buffer;
+}
+
+
+static int
+initialize_session_key (void)
+{
+  the_session_key = get_crypt_random (16);
+  return !the_session_key;
+}
+
+
 static void
 i18n_init (void)
 {
@@ -113,7 +145,7 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     {
       set_global_hinstance (hinst);
       /* The next call initializes subsystems of gpgme and should be
-         done as early as possible.  The actual return value is (the
+         done as early as possible.  The actual return value (the
          version string) is not used here.  It may be called at any
          time later for this. */
       gpgme_check_version (NULL);
@@ -122,6 +154,8 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
       if (initialize_main ())
         return FALSE;
       i18n_init ();
+      if (initialize_session_key ())
+        return FALSE;
       if (initialize_passcache ())
         return FALSE;
       if (initialize_msgcache ())
@@ -134,6 +168,25 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     }
   
   return TRUE;
+}
+
+
+
+/* Return the static session key we are using for temporary encrypting
+   attachments.  The session key is guaranteed to be available.  */
+const void *
+get_128bit_session_key (void)
+{
+  return the_session_key;
+}
+
+
+/* Return a new allocated IV of size NBYTES.  Caller must free it.  On
+   error NULL is returned. */
+void *
+create_initialization_vector (size_t nbytes)
+{
+  return get_crypt_random (nbytes);
 }
 
 
@@ -347,6 +400,8 @@ set_log_file (const char *name)
       unlock_log ();
     }
 }
+
+
 
 void
 set_default_key (const char *name)

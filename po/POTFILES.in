@@ -1,5 +1,4 @@
 
-src/attach.cpp
 src/common.c
 src/config-dialog.c
 src/display.cpp

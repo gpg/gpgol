@@ -1,25 +1,26 @@
-/* intern.h
+/* common.h - Common declarations for GpgOL
  *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005, 2006 g10 Code GmbH
+ *	Copyright (C) 2005, 2006, 2007 g10 Code GmbH
  *
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  *
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
  *  
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with GPGol; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
-#ifndef GPGOL_INTERN_H
-#define GPGOL_INTERN_H
+#ifndef GPGOL_COMMON_H
+#define GPGOL_COMMON_H
 
 #include <gpgme.h>
 
@@ -31,10 +32,6 @@ extern "C" {
 #if 0
 }
 #endif
-#endif
-
-#ifndef STRICT
-#define STRICT
 #endif
 
 
@@ -119,6 +116,18 @@ struct
 } opt;
 
 
+/* The state object used by b64_decode.  */
+struct b64_state_s
+{
+  int idx;
+  unsigned char val;
+  int stop_seen;
+  int invalid_encoding;
+};
+typedef struct b64_state_s b64_state_t;
+
+
+
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
@@ -126,6 +135,11 @@ char *get_save_filename (HWND root, const char *srcname);
 char *utf8_to_wincp (const char *string);
 
 HRESULT w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e);
+
+size_t qp_decode (char *buffer, size_t length);
+void b64_init (b64_state_t *state);
+size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
+
 
 /*-- watcher.cpp --*/
 int watcher_init_hook (void);
@@ -152,10 +166,12 @@ int store_extension_value (const char *key, const char *val);
 int load_extension_value (const char *key, char **val);
 
 /*-- verify-dialog.c --*/
-int verify_dialog_box (gpgme_verify_result_t res, const char *filename);
+int verify_dialog_box (gpgme_protocol_t protocol, 
+                       gpgme_verify_result_t res, 
+                       const char *filename);
+
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /*GPGOL_INTERN_H*/
+#endif /*GPGOL_COMMON_H*/

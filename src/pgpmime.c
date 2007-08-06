@@ -41,10 +41,9 @@
 
 #include "mymapi.h"
 #include "mymapitags.h"
-
 #include "rfc822parse.h"
-#include "intern.h"
-#include "util.h"
+
+#include "common.h"
 #include "pgpmime.h"
 #include "engine.h"
 
@@ -52,34 +51,6 @@
 /* The maximum length of a line we ar able to porcess.  RFC822 alows
    only for 1000 bytes; thus 2000 seems to be a reasonable value. */
 #define LINEBUFSIZE 2000
-
-/* The reverse base-64 list used for base-64 decoding. */
-static unsigned char const asctobin[256] = {
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3e, 0xff, 0xff, 0xff, 0x3f, 
-  0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 
-  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 
-  0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 
-  0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 
-  0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff
-};
-
-
 
 
 /* The context object we use to track information. */
@@ -120,14 +91,7 @@ struct pgpmime_context
 
   LPSTREAM outstream;     /* NULL or a stream to write a part to. */
 
-  /* Helper to keep the state of the base64 decoder. */
-  struct 
-  {
-    int idx;
-    unsigned char val;
-    int stop_seen;
-    int invalid_encoding;
-  } base64;
+  b64_state_t base64;     /* The state of the BAse-64 decoder.  */
 
   int line_too_long;  /* Indicates that a received line was too long. */
   int parser_error;   /* Indicates that we encountered a error from
@@ -173,96 +137,6 @@ latin1_data_write (gpgme_data_t data, const char *line, size_t len)
   xfree (buffer);
   return rc;
 }
-
-
-
-/* Do in-place decoding of quoted-printable data of LENGTH in BUFFER.
-   Returns the new length of the buffer. */
-static size_t
-qp_decode (char *buffer, size_t length)
-{
-  char *d, *s;
-
-  for (s=d=buffer; length; length--)
-    if (*s == '=' && length > 2 && hexdigitp (s+1) && hexdigitp (s+2))
-      {
-        s++;
-        *(unsigned char*)d++ = xtoi_2 (s);
-        s += 2;
-        length -= 2;
-      }
-    else
-      *d++ = *s++;
-  
-  return d - buffer;
-}
-
-
-/* Do in-place decoding of base-64 data of LENGTH in BUFFER.  Returns
-   the new length of the buffer. CTX is required to return errors and
-   to maintain state of the decoder.  */
-static size_t
-base64_decode (pgpmime_context_t ctx, char *buffer, size_t length)
-{
-  int idx = ctx->base64.idx;
-  unsigned char val = ctx->base64.val;
-  int c;
-  char *d, *s;
-
-  if (ctx->base64.stop_seen)
-    return 0;
-
-  for (s=d=buffer; length; length--, s++)
-    {
-      if (*s == '\n' || *s == ' ' || *s == '\r' || *s == '\t')
-        continue;
-      if (*s == '=')
-        { 
-          /* Pad character: stop */
-          if (idx == 1)
-            *d++ = val; 
-          ctx->base64.stop_seen = 1;
-          break;
-        }
-
-      if ((c = asctobin[*(unsigned char *)s]) == 255) 
-        {
-          if (!ctx->base64.invalid_encoding)
-            log_debug ("%s: invalid base64 character %02X at pos %d skipped\n",
-                       __func__, *(unsigned char*)s, (int)(s-buffer));
-          ctx->base64.invalid_encoding = 1;
-          continue;
-        }
-
-      switch (idx) 
-        {
-        case 0: 
-          val = c << 2;
-          break;
-        case 1: 
-          val |= (c>>4)&3;
-          *d++ = val;
-          val = (c<<4)&0xf0;
-          break;
-        case 2: 
-          val |= (c>>2)&15;
-          *d++ = val;
-          val = (c<<6)&0xc0;
-          break;
-        case 3: 
-          val |= c&0x3f;
-          *d++ = val;
-          break;
-        }
-      idx = (idx+1) % 4;
-    }
-
-  
-  ctx->base64.idx = idx;
-  ctx->base64.val = val;
-  return d - buffer;
-}
-
 
 
 /* Print the message event EVENT. */
@@ -418,10 +292,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
           else if (!stricmp (p+off, "base64"))
             {
               ctx->is_base64_encoded = 1;
-              ctx->base64.idx = 0;
-              ctx->base64.val = 0;
-              ctx->base64.stop_seen = 0;
-              ctx->base64.invalid_encoding = 0;
+              b64_init (&ctx->base64);
             }
           free (p);
         }
@@ -595,7 +466,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                   if (ctx->is_qp_encoded)
                     len = qp_decode (ctx->linebuf, pos);
                   else if (ctx->is_base64_encoded)
-                    len = base64_decode (ctx, ctx->linebuf, pos);
+                    len = b64_decode (&ctx->base64, ctx->linebuf, pos);
                   else
                     len = pos;
                   if (len)
@@ -621,7 +492,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                   if (ctx->is_qp_encoded)
                     len = qp_decode (ctx->linebuf, pos);
                   else if (ctx->is_base64_encoded)
-                    len = base64_decode (ctx, ctx->linebuf, pos);
+                    len = b64_decode (&ctx->base64, ctx->linebuf, pos);
                   else
                     len = pos;
                   if (len)
@@ -651,7 +522,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                   if (ctx->is_qp_encoded)
                     len = qp_decode (ctx->linebuf, pos);
                   else if (ctx->is_base64_encoded)
-                    len = base64_decode (ctx, ctx->linebuf, pos);
+                    len = b64_decode (&ctx->base64, ctx->linebuf, pos);
                   else
                     len = pos;
                   if (len)
@@ -711,7 +582,8 @@ pgpmime_decrypt (LPSTREAM instream, int ttl, char **body,
     goto leave;
 
   tmp = native_to_utf8 (_("[PGP/MIME message]"));
-  err = op_decrypt_stream_to_gpgme (instream, plaintext, ttl, tmp,
+  err = op_decrypt_stream_to_gpgme (GPGME_PROTOCOL_OpenPGP,
+                                    instream, plaintext, ttl, tmp,
                                     attestation, preview_mode);
   xfree (tmp);
   if (!err && (ctx->parser_error || ctx->line_too_long))
@@ -818,7 +690,8 @@ pgpmime_verify (const char *message, int ttl, char **body,
       gpgme_data_seek (ctx->signed_data, 0, SEEK_SET);
       gpgme_data_seek (ctx->sig_data, 0, SEEK_SET);
       tmp = native_to_utf8 (_("[PGP/MIME signature]"));
-      err = op_verify_detached_sig_gpgme (ctx->signed_data, ctx->sig_data,
+      err = op_verify_detached_sig_gpgme (GPGME_PROTOCOL_OpenPGP,
+                                          ctx->signed_data, ctx->sig_data,
                                           tmp, attestation);
       xfree (tmp);
     }

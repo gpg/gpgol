@@ -34,9 +34,9 @@
 #include <gpgme.h>
 #include <assert.h>
 
+#include "common.h"
 #include "gpgol-ids.h"
-#include "intern.h"
-#include "util.h"
+
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \

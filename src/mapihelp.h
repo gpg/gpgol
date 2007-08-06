@@ -22,21 +22,91 @@
 #ifndef MAPIHELP_H
 #define MAPIHELP_H
 
-/* The list of message classes we support.  */
+#ifdef __cplusplus
+extern "C" {
+#if 0
+}
+#endif
+#endif
+
+/* The list of message types we support in GpgOL.  */
 typedef enum 
   {
-    MSGCLS_UNKNOWN = 0,
-    MSGCLS_GPGSM,
-    MSGCLS_GPGSM_MULTIPART_SIGNED
+    MSGTYPE_UNKNOWN = 0,
+    MSGTYPE_GPGOL,
+    MSGTYPE_GPGOL_MULTIPART_SIGNED,
+    MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
+    MSGTYPE_GPGOL_OPAQUE_SIGNED,
+    MSGTYPE_GPGOL_OPAQUE_ENCRYPTED
   }
-msgclass_t;
+msgtype_t;
+
+typedef enum
+  {
+    ATTACHTYPE_UNKNOWN = 0,
+    ATTACHTYPE_MOSS = 1,     /* The original MOSS message (ie. a
+                                S/MIME or PGP/MIME message. */
+    ATTACHTYPE_FROMMOSS = 2  /* Attachment created from MOSS.  */
+  }
+attachtype_t;
+
+/* An object to collect information about one MAPI attachment.  */
+struct mapi_attach_item_s
+{
+  int end_of_table;     /* True if this is the last plus one entry of
+                           the table. */
+  int mapipos;          /* The position which needs to be passed to
+                           MAPI to open the attachment.  -1 means that
+                           there is no valid atatchment.  */
+   
+  int method;           /* MAPI attachment method. */
+  char *filename;       /* Malloced filename of this attachment or NULL. */
+
+  /* Malloced string with the MIME attrib or NULL.  Parameters are
+     stripped off thus a compare against "type/subtype" is
+     sufficient. */
+  char *content_type; 
+
+  /* If not NULL the parameters of the content_type. */
+  const char *content_type_parms; 
+
+  /* The attachment type from Property GpgOL Atatch Type.  */
+  attachtype_t attach_type;
+
+};
+typedef struct mapi_attach_item_s mapi_attach_item_t;
+
 
 
 void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
+int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);
+int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
+int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
+
 int mapi_change_message_class (LPMESSAGE message);
-msgclass_t mapi_get_message_class (LPMESSAGE message);
+msgtype_t mapi_get_message_type (LPMESSAGE message);
 int mapi_to_mime (LPMESSAGE message, const char *filename);
 
+char *mapi_get_binary_prop (LPMESSAGE message,ULONG proptype,size_t *r_nbytes);
+
+mapi_attach_item_t *mapi_create_attach_table (LPMESSAGE message, int fast);
+void mapi_release_attach_table (mapi_attach_item_t *table);
+LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message, 
+                                    mapi_attach_item_t *item);
+char *mapi_get_attach (LPMESSAGE message, 
+                       mapi_attach_item_t *item, size_t *r_nbytes);
+int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
+int mapi_has_sig_status (LPMESSAGE msg);
+int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
+
+char *mapi_get_message_content_type (LPMESSAGE message, 
+                                     char **r_protocol, char **r_smtype);
+
+char *mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
+                                      int *r_ishtml, int *r_protected);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*MAPIHELP_H*/

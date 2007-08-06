@@ -21,9 +21,7 @@
 #ifndef GPGMSG_HH
 #define GPGMSG_HH
 
-#include <gpgme.h>
-
-#include "intern.h"
+#include "common.h"
 
 /* To manage a message we use our own class to keep track about all
    the information we known on the content of a message.  This is

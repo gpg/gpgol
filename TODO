@@ -22,3 +22,8 @@
 * Please consider adding a few more options like key singing rules
   like Enigmail has.
 
+* We should not rite a decrupted file without user content.  A
+  possible solution in attach-file-events.c is to keep tarck of
+  prensented file names and decrypt them only on OpenSzFile.  Need to
+  get some documentaion first.
+

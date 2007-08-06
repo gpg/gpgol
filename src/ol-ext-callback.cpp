@@ -29,7 +29,7 @@
 #include "mymapitags.h"
 #include "myexchext.h"
 #include "display.h"
-#include "intern.h"
+#include "common.h"
 #include "gpgmsg.hh"
 #include "msgcache.h"
 #include "engine.h"

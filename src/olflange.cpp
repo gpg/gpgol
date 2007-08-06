@@ -34,8 +34,9 @@
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "myexchext.h"
+
+#include "common.h"
 #include "display.h"
-#include "intern.h"
 #include "gpgmsg.hh"
 #include "msgcache.h"
 #include "engine.h"
@@ -49,11 +50,16 @@
 #include "message-events.h"
 #include "property-sheets.h"
 #include "attached-file-events.h"
+#include "item-events.h"
 
-
+/* The GUID for this plugin.  */
 #define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
 DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da, 
             0xc6, 0x87, 0x00, 0x0d, 0x60, 0x80, 0xe7, 0x35);
+
+/* For documentation: The GUID used for our custom properties: 
+   {31805ab8-3e92-11dc-879c-00061b031004}
+ */
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -88,6 +94,20 @@ ext_context_name (unsigned long no)
     case EECONTEXT_TASK:              return "Task";
     default: return "?";
     }
+}
+
+
+/* Wrapper around UlRelease with error checking. */
+/* FIXME: Duplicated code.  */
+static void 
+ul_release (LPVOID punk)
+{
+  ULONG res;
+  
+  if (!punk)
+    return;
+  res = UlRelease (punk);
+//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
 }
 
 
@@ -143,7 +163,7 @@ DllRegisterServer (void)
      -    IExchExtModeless
      -    IExchExtModelessCallback
                    ___1234567___ */
-  lstrcat (szEntry, ";1111110"); 
+  lstrcat (szEntry, ";11111101"); 
   ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
                        REG_OPTION_NON_VOLATILE,
                        KEY_ALL_ACCESS, NULL, &hkey, NULL);
@@ -272,19 +292,27 @@ GpgolExt::GpgolExt (void)
   m_hWndExchange = 0;
   m_gpgEncrypt = FALSE;
   m_gpgSign = FALSE;
+  msgtype = MSGTYPE_UNKNOWN;
+  msgtype_valid = FALSE;
 
   m_pExchExtCommands           = new GpgolExtCommands (this);
   m_pExchExtSessionEvents      = new GpgolSessionEvents (this);
   m_pExchExtMessageEvents      = new GpgolMessageEvents (this);
   m_pExchExtAttachedFileEvents = new GpgolAttachedFileEvents (this);
   m_pExchExtPropertySheets     = new GpgolPropertySheets (this);
+  m_pOutlookExtItemEvents      = new GpgolItemEvents (this);
   if (!m_pExchExtCommands
       || !m_pExchExtSessionEvents
       || !m_pExchExtMessageEvents
       || !m_pExchExtAttachedFileEvents
-      || !m_pExchExtPropertySheets)
+      || !m_pExchExtPropertySheets
+      || !m_pOutlookExtItemEvents)
     out_of_core ();
-  
+
+  /* For this class we need to bump the reference counter intially.
+     The question is why it works at all with the other stuff.  */
+  m_pOutlookExtItemEvents->AddRef ();
+
   if (!g_initdll)
     {
       if (opt.compat.auto_decrypt)
@@ -304,6 +332,9 @@ GpgolExt::~GpgolExt (void)
   log_debug ("%s:%s: cleaning up GpgolExt object; context=%s\n",
              SRCNAME, __func__, ext_context_name (m_lContext));
     
+  if (m_pOutlookExtItemEvents)
+    m_pOutlookExtItemEvents->Release ();
+
   if (m_lContext == EECONTEXT_SESSION)
     {
       if (g_initdll)
@@ -315,6 +346,7 @@ GpgolExt::~GpgolExt (void)
           log_debug ("%s:%s: DLL closed down\n", SRCNAME, __func__);
 	}	
     }
+  
 
 }
 
@@ -360,6 +392,10 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 	return E_NOINTERFACE;
       *ppvObj = (LPUNKNOWN) m_pExchExtPropertySheets;
     }
+  else if (riid == IID_IOutlookExtItemEvents)
+    {
+      *ppvObj = (LPUNKNOWN)m_pOutlookExtItemEvents;
+    }  
   else
     hr = E_NOINTERFACE;
   
@@ -382,6 +418,8 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 STDMETHODIMP 
 GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 {
+  static int version_shown;
+  
   ULONG lBuildVersion;
   ULONG lActualVersion;
   ULONG lVirtualVersion;
@@ -397,23 +435,27 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
   pEECB->GetVersion (&lActualVersion, EECBGV_GETACTUALVERSION);
   pEECB->GetVersion (&lVirtualVersion, EECBGV_GETVIRTUALVERSION);
-  log_debug ("%s:%s: detected Outlook build version 0x%lx (%lu.%lu)\n",
-             SRCNAME, __func__, lBuildVersion,
-             (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,
-             (lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK));
-  log_debug ("%s:%s:                 actual version 0x%lx (%u.%u.%u.%u)\n",
-             SRCNAME, __func__, lActualVersion, 
-             (unsigned int)((lActualVersion >> 24) & 0xff),
-             (unsigned int)((lActualVersion >> 16) & 0xff),
+  if (!version_shown)
+    {
+      version_shown = 1;
+      log_debug ("%s:%s: detected Outlook build version 0x%lx (%lu.%lu)\n",
+                 SRCNAME, __func__, lBuildVersion,
+                 (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,
+                 (lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK));
+      log_debug ("%s:%s:                 actual version 0x%lx (%u.%u.%u.%u)\n",
+                 SRCNAME, __func__, lActualVersion, 
+                 (unsigned int)((lActualVersion >> 24) & 0xff),
+                 (unsigned int)((lActualVersion >> 16) & 0xff),
              (unsigned int)((lActualVersion >> 8) & 0xff),
-             (unsigned int)(lActualVersion & 0xff));
-  log_debug ("%s:%s:                virtual version 0x%lx (%u.%u.%u.%u)\n",
-             SRCNAME, __func__, lVirtualVersion, 
-             (unsigned int)((lVirtualVersion >> 24) & 0xff),
-             (unsigned int)((lVirtualVersion >> 16) & 0xff),
+                 (unsigned int)(lActualVersion & 0xff));
+      log_debug ("%s:%s:                virtual version 0x%lx (%u.%u.%u.%u)\n",
+                 SRCNAME, __func__, lVirtualVersion, 
+                 (unsigned int)((lVirtualVersion >> 24) & 0xff),
+                 (unsigned int)((lVirtualVersion >> 16) & 0xff),
              (unsigned int)((lVirtualVersion >> 8) & 0xff),
-             (unsigned int)(lVirtualVersion & 0xff));
-
+                 (unsigned int)(lVirtualVersion & 0xff));
+    }
+  
   if (EECBGV_BUILDVERSION_MAJOR
       != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
     {
@@ -467,5 +509,32 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 }
 
 
+/* Return the message type for the current message.  EECB needs to be
+   passed to allow access to the message object.  The function caches
+   the message class so there is no overhead in calling this
+   method. */
+msgtype_t 
+GpgolExt::getMsgtype (LPEXCHEXTCALLBACK eecb)
+{
+  LPMDB mdb = NULL;
+  LPMESSAGE message = NULL;
 
+  if (msgtype_valid)
+    return msgtype;
+  if (!eecb)
+    {
+      log_error ("%s:%s: eecp not passed", SRCNAME, __func__);
+      return MSGTYPE_UNKNOWN;
+    }
+      
+  eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+  msgtype = mapi_get_message_type (message);
+  log_debug ("%s:%s: found msgtype %d\n", SRCNAME, __func__, msgtype);
+  msgtype_valid = TRUE;
+
+  ul_release (message);
+  ul_release (mdb);
+
+  return msgtype;
+}
 

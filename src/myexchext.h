@@ -8,6 +8,7 @@
  * 2005-08-12  Initial version.
  * 2005-09-18  Add IExchExtAttachedFileEvents.
  * 2007-07-18  Add IExchExtUserEvents and IExchExtSessionEvents.
+ * 2007-07-20  Add IOutlookExtItemEvents.
  */
 
 #ifndef EXCHEXT_H
@@ -97,6 +98,7 @@ DEFINE_OLEGUID(IID_IExchExtAdvancedCriteria,  0x00020d18, 0, 0);
 DEFINE_OLEGUID(IID_IExchExtModeless,          0x00020d19, 0, 0);
 DEFINE_OLEGUID(IID_IExchExtModelessCallback,  0x00020d1a, 0, 0);
 DEFINE_OLEGUID(IID_IOutlookExtCallback,       0x0006720d, 0, 0);
+DEFINE_OLEGUID(IID_IOutlookExtItemEvents,     0x0006723A, 0, 0);
 
 
 /* Type definitions. */
@@ -140,11 +142,15 @@ typedef IExchExtPropertySheets *LPEXCHEXTPROPERTYSHEETS;
 typedef struct IExchExtCallback IExchExtCallback;
 typedef IExchExtCallback *LPEXCHEXTCALLBACK;
 
+typedef struct IExchExtAttachedFileEvents IExchExtAttachedFileEvents;
+typedef IExchExtAttachedFileEvents *LPEXCHEXTATTACHEDFILEEVENTS;
+
 typedef struct IOutlookExtCallback IOutlookExtCallback;
 typedef IOutlookExtCallback *LPOUTLOOKEXTCALLBACK;
 
-typedef struct IExchExtAttachedFileEvents IExchExtAttachedFileEvents;
-typedef IExchExtAttachedFileEvents *LPEXCHEXTATTACHEDFILEEVENTS;
+typedef struct IOutlookExtItemEvents IOutlookExtItemEvents;
+typedef IOutlookExtItemEvents *LPOUTLOOKEXTITEMEVENTS;
+
 
 /* The next classes are not yet defined. but if so they should go here. */
 typedef struct IExchExtModeless IExchExtModeless; 
@@ -364,23 +370,6 @@ DECLARE_INTERFACE_(IExchExtCallback, IUnknown)
 
 
 
-EXTERN_C const IID IID_IOutlookExtCallback;
-#undef INTERFACE
-#define INTERFACE IOutlookExtCallback
-DECLARE_INTERFACE_(IOutlookExtCallback, IUnknown)
-{
-  /*** IUnknown methods. ***/
-  STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID*) PURE;
-  STDMETHOD_(ULONG, AddRef)(THIS) PURE;
-  STDMETHOD_(ULONG, Release)(THIS) PURE;
-
-  /*** IOutlookExtCallback.  **/
-  STDMETHOD(GetObject)(LPUNKNOWN *ppunk);
-  STDMETHOD(GetOfficeCharacter)(void **ppmsotfc);
-};
-
-
-
 EXTERN_C const IID IID_IExchExtAttachedFileEvents;
 #undef INTERFACE
 #define INTERFACE  IExchExtAttachedFileEvents
@@ -399,6 +388,42 @@ DECLARE_INTERFACE_(IExchExtAttachedFileEvents, IUnknown)
   STDMETHOD(QueryDisallowOpenPatt)(THIS_ LPATTACH lpatt) PURE;
   STDMETHOD(OnOpenPatt)(THIS_ LPATTACH lpatt) PURE;
   STDMETHOD(OnOpenSzFile)(THIS_ LPTSTR lpszFile, ULONG ulFlags) PURE;
+};
+
+
+
+EXTERN_C const IID IID_IOutlookExtCallback;
+#undef INTERFACE
+#define INTERFACE IOutlookExtCallback
+DECLARE_INTERFACE_(IOutlookExtCallback, IUnknown)
+{
+  /*** IUnknown methods. ***/
+  STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID*) PURE;
+  STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+  STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+  /*** IOutlookExtCallback.  **/
+  STDMETHOD(GetObject)(LPUNKNOWN *ppunk);
+  STDMETHOD(GetOfficeCharacter)(void **ppmsotfc);
+};
+
+
+
+EXTERN_C const IID IID_IOutlookExtItemEvents;
+#undef INTERFACE
+#define INTERFACE  IOutlookExtItemEvents
+DECLARE_INTERFACE_(IOutlookExtItemEvents, IUnknown)
+{
+  /*** IUnknown methods ***/
+  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID FAR * lppvObj) PURE;
+  STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+  STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+  /*** IOutlookExtItemEvents ***/
+  STDMETHOD(OnOpen)(THIS_ LPEXCHEXTCALLBACK) PURE;
+  STDMETHOD(OnOpenComplete)(THIS_ LPEXCHEXTCALLBACK, ULONG) PURE;
+  STDMETHOD(OnClose)(THIS_ LPEXCHEXTCALLBACK, ULONG) PURE;
+  STDMETHOD(OnCloseComplete)(THIS_ LPEXCHEXTCALLBACK, ULONG) PURE;
 };
 
 

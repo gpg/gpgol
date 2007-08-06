@@ -1,5 +1,5 @@
 /* verify-dialog.c
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2007 g10 Code GmbH
  *
  * This file is part of GPGol.
  * 
@@ -23,15 +23,15 @@
 
 #include <windows.h>
 #include <time.h>
-#include <gpgme.h>
 
+#include "common.h"
 #include "gpgol-ids.h"
-#include "intern.h"
-#include "util.h"
+
 
 struct dialog_context
 {
   gpgme_verify_result_t res;
+  gpgme_protocol_t protocol;
   const char *filename;
 };
 
@@ -78,7 +78,7 @@ load_akalist (HWND dlg, gpgme_key_t key)
 
 
 static void 
-load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
+load_sigbox (HWND dlg, gpgme_verify_result_t ctx, gpgme_protocol_t protocol)
 {
   gpgme_error_t err;
   gpgme_key_t key;
@@ -109,6 +109,7 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx)
     key = NULL;
     if (!gpgme_new (&gctx))
       {
+        gpgme_set_protocol (gctx, protocol);
         err = gpgme_get_key (gctx, buf+2, &key, 0);
         if (err)
           {
@@ -208,12 +209,26 @@ verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_INITDIALOG:
       
 	ctx = (struct dialog_context *)lparam;
-	load_sigbox (dlg, ctx->res);
+	load_sigbox (dlg, ctx->res, ctx->protocol);
 	center_window (dlg, NULL);
 	SetForegroundWindow (dlg);
         if (ctx->filename)
           {
-            const char *s = _("Verification Result");
+            const char *s;
+
+            switch (ctx->protocol)
+              {
+              case GPGME_PROTOCOL_OpenPGP:
+                s = _("OpenPGP Verification Result");
+                break;
+              case GPGME_PROTOCOL_CMS:
+                s = _("S/MIME Verification Result");
+                break;
+              default:
+                s = "?";
+                break;
+              }
+                  
             char *tmp = xmalloc (strlen (ctx->filename) 
                                  + strlen (s) + 100);
             strcpy (stpcpy (stpcpy (stpcpy (tmp, s),
@@ -239,13 +254,15 @@ verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
    RES. FILENAME is used to modify the caption of the dialog; it may
    be NULL. */
 int
-verify_dialog_box (gpgme_verify_result_t res, const char *filename)
+verify_dialog_box (gpgme_protocol_t protocol, 
+                   gpgme_verify_result_t res, const char *filename)
 {
   struct dialog_context ctx;
   int resid;
 
   memset (&ctx,0, sizeof ctx);
   ctx.res = res;
+  ctx.protocol = protocol;
   ctx.filename = filename;
 
   if (!strncmp (gettext_localename (), "de", 2))

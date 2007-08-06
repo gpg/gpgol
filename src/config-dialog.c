@@ -28,10 +28,9 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <gpgme.h>
 
+#include "common.h"
 #include "gpgol-ids.h"
-#include "intern.h"
 
 /* Registry path to GnuPG */
 #define REGPATH "Software\\GNU\\GnuPG"

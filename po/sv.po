@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2006-12-12 23:08+0100\n"
+"POT-Creation-Date: 2007-08-03 18:07+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -15,138 +15,136 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../src/common.c:103
+#: src/common.c:131
 msgid "GPG - Save decrypted attachment"
 msgstr "GPG - Spara dekrypterad bilaga"
 
-#: ../src/config-dialog.c:290
+#: src/config-dialog.c:289
 msgid "Select GPG Key Manager"
 msgstr "Välj GPG-nyckelhanterare"
 
-#: ../src/engine-gpgme.c:979
+#: src/engine-gpgme.c:991
 msgid "Fingerprint: "
 msgstr "Fingeravtryck: "
 
-#: ../src/engine-gpgme.c:1036
+#: src/engine-gpgme.c:1048
 msgid "This signature is valid\n"
 msgstr "Den här signaturen är giltig\n"
 
-#: ../src/engine-gpgme.c:1038
+#: src/engine-gpgme.c:1050
 msgid "signature state is \"green\"\n"
 msgstr "signaturens tillstånd är \"grön\"\n"
 
-#: ../src/engine-gpgme.c:1040
+#: src/engine-gpgme.c:1052
 msgid "signature state is \"red\"\n"
 msgstr "signaturens tillstånd är \"röd\"\n"
 
-#: ../src/engine-gpgme.c:1044
+#: src/engine-gpgme.c:1056
 msgid "Warning: One of the keys has been revoked\n"
 msgstr "Varning: En av nycklarna har spärrats\n"
 
-#: ../src/engine-gpgme.c:1054
+#: src/engine-gpgme.c:1066
 msgid "Warning: The key used to create the signature expired at: "
 msgstr "Varning: Nyckeln som användes för att skapa signaturen gick ut den: "
 
-#: ../src/engine-gpgme.c:1060
+#: src/engine-gpgme.c:1072
 msgid "Warning: At least one certification key has expired\n"
 msgstr "Varning: Åtminstone en certifieringsnyckel har gått ut\n"
 
-#: ../src/engine-gpgme.c:1066
+#: src/engine-gpgme.c:1078
 msgid "Warning: The signature expired at: "
 msgstr "Varning: Signaturen gick ut den: "
 
-#: ../src/engine-gpgme.c:1072
+#: src/engine-gpgme.c:1084
 msgid "Can't verify due to a missing key or certificate\n"
 msgstr "Kan inte validera på grund av en saknad nyckel eller certifikat\n"
 
-#: ../src/engine-gpgme.c:1076
+#: src/engine-gpgme.c:1088
 msgid "The CRL is not available\n"
 msgstr "Spärrlistan är inte tillgänglig\n"
 
-#: ../src/engine-gpgme.c:1082
+#: src/engine-gpgme.c:1094
 msgid "Available CRL is too old\n"
 msgstr "Tillgänglig spärrlista är för gammal\n"
 
-#: ../src/engine-gpgme.c:1087
+#: src/engine-gpgme.c:1099
 msgid "A policy requirement was not met\n"
 msgstr "Ett policykrav matchades inte\n"
 
-#: ../src/engine-gpgme.c:1093
+#: src/engine-gpgme.c:1105
 msgid "A system error occured"
 msgstr "Ett systemfel inträffade"
 
-#: ../src/engine-gpgme.c:1130
-msgid "WARNING: We have NO indication whether the key belongs to the person named as shown above\n"
-msgstr "VARNING: Vi har INGA indikationer på huruvida nyckeln tillhör personen vars namn visas ovanför\n"
+#: src/engine-gpgme.c:1142
+msgid ""
+"WARNING: We have NO indication whether the key belongs to the person named "
+"as shown above\n"
+msgstr ""
+"VARNING: Vi har INGA indikationer på huruvida nyckeln tillhör personen vars "
+"namn visas ovanför\n"
 
-#: ../src/engine-gpgme.c:1137
+#: src/engine-gpgme.c:1149
 msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
 msgstr "VARNING: Nyckeln TILLHÖR INTE personen vars namn visas ovanför\n"
 
-#: ../src/engine-gpgme.c:1141
-msgid "WARNING: It is NOT certain that the key belongs to the person named as shown above\n"
-msgstr "VARNING: Det är INTE säkert att nyckeln tillhör den person vars namn visas ovanför\n"
+#: src/engine-gpgme.c:1153
+msgid ""
+"WARNING: It is NOT certain that the key belongs to the person named as shown "
+"above\n"
+msgstr ""
+"VARNING: Det är INTE säkert att nyckeln tillhör den person vars namn visas "
+"ovanför\n"
 
-#. Nothing yet written to the stream.  Insert the current time.
-#: ../src/engine-gpgme.c:1174
+#: src/engine-gpgme.c:1186
 msgid "Verification started at: "
 msgstr "Validering startad: "
 
-#: ../src/engine-gpgme.c:1179
+#: src/engine-gpgme.c:1191
 msgid "Verification result for: "
 msgstr "Valideringsresultat för: "
 
-#: ../src/engine-gpgme.c:1180
+#: src/engine-gpgme.c:1192
 msgid "[unnamed part]"
 msgstr "[ej namngiven del]"
 
-#. We can't decide (yellow) but this is a PGP key with a
-#. good signature, so we display what a PGP user
-#. expects: The name, fingerprint and the key validity
-#. (which is neither fully or ultimate).
-#: ../src/engine-gpgme.c:1198
-#: ../src/engine-gpgme.c:1228
+#: src/engine-gpgme.c:1210 src/engine-gpgme.c:1240
 msgid "Good signature from: "
 msgstr "Korrekt signatur från: "
 
-#: ../src/engine-gpgme.c:1205
+#: src/engine-gpgme.c:1217
 msgid "                aka: "
 msgstr "även känd som:"
 
-#: ../src/engine-gpgme.c:1209
-#: ../src/engine-gpgme.c:1231
+#: src/engine-gpgme.c:1221 src/engine-gpgme.c:1243
 msgid "            created: "
 msgstr "             skapad: "
 
-#: ../src/engine-gpgme.c:1218
+#: src/engine-gpgme.c:1230
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FELAKTIG* signatur hävdades komma från: "
 
-#: ../src/engine-gpgme.c:1241
+#: src/engine-gpgme.c:1253
 msgid "Error checking signature"
 msgstr "Fel vid kontroll av signatur"
 
-#: ../src/engine-gpgme.c:1257
+#: src/engine-gpgme.c:1269
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Notation start (signatur av: "
 
-#: ../src/engine-gpgme.c:1277
+#: src/engine-gpgme.c:1289
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: ../src/gpgmsg.cpp:1194
+#: src/gpgmsg.cpp:1197
 msgid "No valid OpenPGP data found."
 msgstr "Inget giltigt OpenPGP-data hittades."
 
-#: ../src/gpgmsg.cpp:1195
-#: ../src/gpgmsg.cpp:1306
-#: ../src/gpgmsg.cpp:1320
-#: ../src/gpgmsg.cpp:1336
-#: ../src/gpgmsg.cpp:1515
+#: src/gpgmsg.cpp:1198 src/gpgmsg.cpp:1309 src/gpgmsg.cpp:1323
+#: src/gpgmsg.cpp:1339 src/gpgmsg.cpp:1518
 msgid "Decryption"
 msgstr "Dekryptering"
 
-#: ../src/gpgmsg.cpp:1213
+#: src/gpgmsg.cpp:1216
 msgid ""
 "[This is a PGP/MIME message]\r\n"
 "\r\n"
@@ -156,39 +154,40 @@ msgstr ""
 "\r\n"
 "[Använd knappen \"Dekryptera\" i meddelandefönstret för att visa innehållet.]"
 
-#: ../src/gpgmsg.cpp:1271
+#: src/gpgmsg.cpp:1274
 msgid ""
-"Note: This is a PGP/MIME signed message.  The GPGol plugin is not always able to verify such a message due to missing support in Outlook.\n"
+"Note: This is a PGP/MIME signed message.  The GPGol plugin is not always "
+"able to verify such a message due to missing support in Outlook.\n"
 "\n"
 "(This message will be shown only once per session)"
 msgstr ""
-"Observera: Det här är ett PGP/MIME-signerat meddelande.  Insticksmodulen GPGol kan inte alltid validera ett sådant meddelande på grund av att stöd saknas i Outlook.\n"
+"Observera: Det här är ett PGP/MIME-signerat meddelande.  Insticksmodulen "
+"GPGol kan inte alltid validera ett sådant meddelande på grund av att stöd "
+"saknas i Outlook.\n"
 "\n"
 "(Det här meddelandet kommer endast att visas en gång per session)"
 
-#: ../src/gpgmsg.cpp:1275
+#: src/gpgmsg.cpp:1278
 msgid "Verification"
 msgstr "Validering"
 
-#: ../src/gpgmsg.cpp:1293
+#: src/gpgmsg.cpp:1296
 msgid "[This is a PGP/MIME message]"
 msgstr "[Det här är ett PGP/MIME-meddelande]"
 
-#: ../src/gpgmsg.cpp:1305
-#: ../src/gpgmsg.cpp:1319
-#: ../src/gpgmsg.cpp:1335
+#: src/gpgmsg.cpp:1308 src/gpgmsg.cpp:1322 src/gpgmsg.cpp:1338
 msgid "Problem decrypting PGP/MIME message"
 msgstr "Problem vid dekryptering av PGP/MIME-meddelande"
 
-#: ../src/gpgmsg.cpp:1470
+#: src/gpgmsg.cpp:1473
 msgid "Verification Failure"
 msgstr "Validering misslyckades"
 
-#: ../src/gpgmsg.cpp:1473
+#: src/gpgmsg.cpp:1476
 msgid "Decryption Failure"
 msgstr "Dekryptering misslyckades"
 
-#: ../src/gpgmsg.cpp:1509
+#: src/gpgmsg.cpp:1512
 msgid ""
 "The message text cannot be displayed.\n"
 "You have to save the decrypted message to view it.\n"
@@ -204,7 +203,7 @@ msgstr ""
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: ../src/gpgmsg.cpp:1536
+#: src/gpgmsg.cpp:1539
 msgid ""
 "Signed attachments found.\n"
 "\n"
@@ -216,13 +215,13 @@ msgstr ""
 "@LIST@\n"
 "Vill du validera signaturerna?"
 
-#: ../src/gpgmsg.cpp:1544
+#: src/gpgmsg.cpp:1547
 msgid "Attachment Verification"
 msgstr "Validering av bilaga"
 
 #. TRANSLATORS: Keep the @LIST@ verbatim on a separate line; it
 #. will be expanded to a list of atatchment names.
-#: ../src/gpgmsg.cpp:1565
+#: src/gpgmsg.cpp:1568
 msgid ""
 "Encrypted attachments found.\n"
 "\n"
@@ -234,146 +233,83 @@ msgstr ""
 "@LIST@\n"
 "Vill du dekryptera och spara dem?"
 
-#: ../src/gpgmsg.cpp:1572
+#: src/gpgmsg.cpp:1575
 msgid "Attachment Decryption"
 msgstr "Dekryptering av bilaga"
 
-#: ../src/gpgmsg.cpp:1641
+#: src/gpgmsg.cpp:1644
 msgid "Signing Failure"
 msgstr "Signering misslyckades"
 
-#: ../src/gpgmsg.cpp:1809
+#: src/gpgmsg.cpp:1812
 msgid ""
-"The configured default encryption key is not available or does not unambigiously specify a key. Please fix this in the option dialog.\n"
+"The configured default encryption key is not available or does not "
+"unambigiously specify a key. Please fix this in the option dialog.\n"
 "\n"
 "This message won't be be encrypted to this key!"
 msgstr ""
-"Den konfigurerade standardkrypteringsnyckeln är inte tillgänglig eller anger inte uttryckligen en nyckel. Rätta till det här i inställningarna.\n"
+"Den konfigurerade standardkrypteringsnyckeln är inte tillgänglig eller anger "
+"inte uttryckligen en nyckel. Rätta till det här i inställningarna.\n"
 "\n"
 "Det här meddelandet kommer inte att krypteras med den här nyckeln!"
 
-#: ../src/gpgmsg.cpp:1813
+#: src/gpgmsg.cpp:1816
 msgid "Encryption"
 msgstr "Kryptering"
 
-#: ../src/gpgmsg.cpp:1856
+#: src/gpgmsg.cpp:1859
 msgid "Encryption Failure"
 msgstr "Kryptering misslyckades"
 
-#: ../src/gpgmsg.cpp:1910
-#: ../src/gpgmsg.cpp:3276
+#: src/gpgmsg.cpp:1913 src/gpgmsg.cpp:3279
 msgid "Attachment Encryption Failure"
 msgstr "Kryptering av bilaga misslyckades"
 
-#: ../src/gpgmsg.cpp:2683
+#: src/gpgmsg.cpp:2686
 msgid "Attachment Verification Failure"
 msgstr "Validering av bilaga misslyckades"
 
-#: ../src/gpgmsg.cpp:2866
-#: ../src/gpgmsg.cpp:2915
+#: src/gpgmsg.cpp:2869 src/gpgmsg.cpp:2918
 msgid "Attachment Decryption Failure"
 msgstr "Dekryptering av bilaga misslyckades"
 
-#: ../src/gpgmsg.cpp:3085
+#: src/gpgmsg.cpp:3088
 msgid "Attachment Signing Failure"
 msgstr "Signering av bilaga misslyckades"
 
-#: ../src/olflange-dlgs.cpp:183
+#: src/olflange-dlgs.cpp:184
 msgid "The default key may not contain any spaces."
 msgstr "Standardnyckeln får inte innehålla några blanksteg."
 
-#: ../src/olflange.cpp:751
+#: src/olflange.cpp:479
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
-"At least versions of Outlook 2003 older than SP2 exhibit crashes when sending messages and messages might get stuck in the outgoing queue.\n"
+"At least versions of Outlook 2003 older than SP2 exhibit crashes when "
+"sending messages and messages might get stuck in the outgoing queue.\n"
 "\n"
 "Please update at least to SP2 before trying to send a message"
 msgstr ""
 "Den här versionen av Outlook är för gammal!\n"
 "\n"
-"Åtminstone versioner av Outlook 2003 äldre än SP2 kraschar när meddelanden skickas och meddelanden kan fastna i utgående postkö.\n"
+"Åtminstone versioner av Outlook 2003 äldre än SP2 kraschar när meddelanden "
+"skickas och meddelanden kan fastna i utgående postkö.\n"
 "\n"
 "Uppdatera åtminstone till SP2 innan du försöker skicka ett meddelande"
 
-# A bit unclear in the original text
-#: ../src/olflange.cpp:947
-msgid ""
-"Sorry, we can only encrypt plain text messages and\n"
-"no RTF messages. Please make sure that only the text\n"
-"format has been selected."
-msgstr ""
-"Tyvärr, vi kan endast kryptera vanliga textmeddelanden\n"
-"och inte RTF-meddelanden. Se till att endast textformatet\n"
-"har valts i inställningarna."
-
-#: ../src/olflange.cpp:1337
-msgid "&Decrypt and verify message"
-msgstr "&Dekryptera och validera meddelandet"
-
-#: ../src/olflange.cpp:1375
-msgid "GPG &encrypt message"
-msgstr "GPG-&kryptera meddelandet"
-
-#: ../src/olflange.cpp:1381
-msgid "GPG &sign message"
-msgstr "GPG-&signera meddelandet"
-
-#: ../src/olflange.cpp:1427
-msgid "GPG Key &Manager"
-msgstr "GPG-nyckel&hanterare"
-
-#: ../src/olflange.cpp:1559
-msgid "Could not start Key-Manager"
-msgstr "Kunde inte starta nyckelhanteraren"
-
-#: ../src/olflange.cpp:1605
-msgid "Decrypt and verify the message."
-msgstr "Dekryptera och validera meddelandet."
-
-#: ../src/olflange.cpp:1613
-msgid "Select this option to encrypt the message."
-msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#: ../src/olflange.cpp:1619
-msgid "Select this option to sign the message."
-msgstr "Välj det här alternativet för att signera meddelandet."
-
-#: ../src/olflange.cpp:1628
-#: ../src/olflange.cpp:1689
-#: ../src/olflange.cpp:1771
-msgid "Open GPG Key Manager"
-msgstr "Öppna GPG-nyckelhanteraren"
-
-#: ../src/olflange.cpp:1658
-#: ../src/olflange.cpp:1722
-msgid "Decrypt message and verify signature"
-msgstr "Dekryptera meddelandet och validera signaturen"
-
-#: ../src/olflange.cpp:1669
-#: ../src/olflange.cpp:1740
-msgid "Encrypt message with GPG"
-msgstr "Kryptera meddelandet med GPG"
-
-#: ../src/olflange.cpp:1678
-#: ../src/olflange.cpp:1755
-msgid "Sign message with GPG"
-msgstr "Signera meddelandet med GPG"
-
-#: ../src/passphrase-dialog.c:85
+#: src/passphrase-dialog.c:85
 msgid "No key hint given."
 msgstr "Inget nyckeltips angivet."
 
-#: ../src/passphrase-dialog.c:330
-#: ../src/passphrase-dialog.c:458
+#: src/passphrase-dialog.c:330 src/passphrase-dialog.c:458
 msgid "Invalid passphrase; please try again..."
 msgstr "Ogiltig lösenfras; försök igen..."
 
-#: ../src/passphrase-dialog.c:357
+#: src/passphrase-dialog.c:357
 msgid "Select Signing Key"
 msgstr "Välj signeringsnyckel"
 
-#: ../src/pgpmime.c:485
+#: src/pgpmime.c:356
 msgid ""
 "Error creating file\n"
 "Please select another one"
@@ -381,109 +317,159 @@ msgstr ""
 "Fel vid skapande av fil\n"
 "Välj en annan"
 
-#: ../src/pgpmime.c:487
-#: ../src/pgpmime.c:638
+#: src/pgpmime.c:358 src/pgpmime.c:509
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 
-#: ../src/pgpmime.c:637
+#: src/pgpmime.c:508
 msgid "Error writing file"
 msgstr "Fel vid skrivning av fil"
 
-#: ../src/pgpmime.c:713
+#: src/pgpmime.c:584
 msgid "[PGP/MIME message]"
 msgstr "[PGP/MIME-meddelande]"
 
-#: ../src/pgpmime.c:733
+#: src/pgpmime.c:604
 msgid "[PGP/MIME message without plain text body]"
 msgstr "[PGP/MIME-meddelande utan vanlig meddelandetext]"
 
-#: ../src/pgpmime.c:808
+#: src/pgpmime.c:679
 msgid "[PGP/MIME signed message without a plain text body]"
 msgstr "[PGP/MIME-signerat meddelande utan vanlig meddelandetext]"
 
-#: ../src/pgpmime.c:820
+#: src/pgpmime.c:691
 msgid "[PGP/MIME signature]"
 msgstr "[PGP/MIME-signatur]"
 
-#: ../src/recipient-dialog.c:89
+#: src/recipient-dialog.c:89
 msgid "Name"
 msgstr "Namn"
 
-#: ../src/recipient-dialog.c:94
+#: src/recipient-dialog.c:94
 msgid "E-Mail"
 msgstr "E-post"
 
-#: ../src/recipient-dialog.c:99
+#: src/recipient-dialog.c:99
 msgid "Key-Info"
 msgstr "Nyckelinfo"
 
-#: ../src/recipient-dialog.c:104
+#: src/recipient-dialog.c:104
 msgid "Key ID"
 msgstr "Nyckel-id"
 
-#: ../src/recipient-dialog.c:109
+#: src/recipient-dialog.c:109
 msgid "Validity"
 msgstr "Giltighet"
 
-#: ../src/recipient-dialog.c:425
+#: src/recipient-dialog.c:425
 msgid "Please select at least one recipient key."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: ../src/recipient-dialog.c:426
+#: src/recipient-dialog.c:426
 msgid "Recipient Dialog"
 msgstr "Mottagardialog"
 
-#: ../src/verify-dialog.c:125
+#: src/verify-dialog.c:126
 msgid "BAD signature!"
 msgstr "FELAKTIG signatur!"
 
-#: ../src/verify-dialog.c:127
+#: src/verify-dialog.c:128
 msgid "Good signature"
 msgstr "Korrekt signatur"
 
-#: ../src/verify-dialog.c:129
+#: src/verify-dialog.c:130
 msgid "Good signature from revoked key"
 msgstr "Korrekt signatur från spärrad nyckel"
 
-#: ../src/verify-dialog.c:131
+#: src/verify-dialog.c:132
 msgid "Good signature from expired key"
 msgstr "Korrekt signatur från utgången nyckel"
 
-#: ../src/verify-dialog.c:133
+#: src/verify-dialog.c:134
 msgid "Good expired signature"
 msgstr "Korrekt utgången signatur"
 
-#: ../src/verify-dialog.c:136
+#: src/verify-dialog.c:137
 msgid "Could not check signature: missing key"
 msgstr "Kunde inte kontrollera signaturen: saknar nyckel"
 
-#: ../src/verify-dialog.c:140
+#: src/verify-dialog.c:141
 msgid "Verification error"
 msgstr "Valideringsfel"
 
-#: ../src/verify-dialog.c:157
+#: src/verify-dialog.c:158
 msgid "User-ID not found"
 msgstr "Användaridentiteten hittades inte"
 
-#: ../src/verify-dialog.c:169
+#: src/verify-dialog.c:170
 msgid "This may be due to a wrong option setting"
 msgstr "Det här kan bero på en felaktig inställning"
 
-#: ../src/verify-dialog.c:175
+#: src/verify-dialog.c:176
 #, c-format
 msgid "Signature expired on %s"
 msgstr "Signaturen gick ut den %s"
 
-#: ../src/verify-dialog.c:187
+#: src/verify-dialog.c:188
 msgid "Signature issued by a key we do NOT trust."
 msgstr "Signaturen utfärdad av en nyckel som vi INTE litar på."
 
-#: ../src/verify-dialog.c:194
+#: src/verify-dialog.c:195
 msgid "Signature issued by a non-valid key."
 msgstr "Signaturen utfärdad av en icke-giltig nyckel."
 
-#: ../src/verify-dialog.c:216
-msgid "Verification Result"
+#: src/verify-dialog.c:222
+#, fuzzy
+msgid "OpenPGP Verification Result"
 msgstr "Resultat från validering"
 
+#: src/verify-dialog.c:225
+#, fuzzy
+msgid "S/MIME Verification Result"
+msgstr "Resultat från validering"
+
+# A bit unclear in the original text
+#~ msgid ""
+#~ "Sorry, we can only encrypt plain text messages and\n"
+#~ "no RTF messages. Please make sure that only the text\n"
+#~ "format has been selected."
+#~ msgstr ""
+#~ "Tyvärr, vi kan endast kryptera vanliga textmeddelanden\n"
+#~ "och inte RTF-meddelanden. Se till att endast textformatet\n"
+#~ "har valts i inställningarna."
+
+#~ msgid "&Decrypt and verify message"
+#~ msgstr "&Dekryptera och validera meddelandet"
+
+#~ msgid "GPG &encrypt message"
+#~ msgstr "GPG-&kryptera meddelandet"
+
+#~ msgid "GPG &sign message"
+#~ msgstr "GPG-&signera meddelandet"
+
+#~ msgid "GPG Key &Manager"
+#~ msgstr "GPG-nyckel&hanterare"
+
+#~ msgid "Could not start Key-Manager"
+#~ msgstr "Kunde inte starta nyckelhanteraren"
+
+#~ msgid "Decrypt and verify the message."
+#~ msgstr "Dekryptera och validera meddelandet."
+
+#~ msgid "Select this option to encrypt the message."
+#~ msgstr "Välj det här alternativet för att kryptera meddelandet."
+
+#~ msgid "Select this option to sign the message."
+#~ msgstr "Välj det här alternativet för att signera meddelandet."
+
+#~ msgid "Open GPG Key Manager"
+#~ msgstr "Öppna GPG-nyckelhanteraren"
+
+#~ msgid "Decrypt message and verify signature"
+#~ msgstr "Dekryptera meddelandet och validera signaturen"
+
+#~ msgid "Encrypt message with GPG"
+#~ msgstr "Kryptera meddelandet med GPG"
+
+#~ msgid "Sign message with GPG"
+#~ msgstr "Signera meddelandet med GPG"

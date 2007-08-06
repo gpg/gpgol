@@ -1,3 +1,57 @@
+2007-08-06  Werner Koch  <wk@g10code.com>
+
+	Lots of changes to support S/MIME and to revamp most of the old
+	code.  More changes to follow.  The list of changes below is not
+	complete as it does not identfy all newly written code.
+	
+	* mimeparser.c: New. Based on pgpmime.c 
+
+	* display.cpp (update_display): Removed unused arg MSG.
+	(update_display): Set the body to an empty string even if it is
+	not HTML.
+
+	* olflange.cpp (Install): Print OL version only once.
+
+	* verify-dialog.c (verify_dialog_box): Add arg PROTOCOL.
+	(load_sigbox): Ditto.
+	(verify_dlg_proc): Changed title acccording to used protocol.
+
+	* Makefile.am (gpgol_LDADD): Add libadvapi due to our use of
+	CryptGenRandom.
+
+	* main.c (get_crypt_random, initialize_session_key): New. 
+	(DllMain): Initialize the session key.
+	(get_128bit_session_key, create_initialization_vector): New.
+
+	* serpent.c: New.  Taken from libgcrypt 1.3.0 and stripped down to
+	fit our needs.  Add CFB encryption API.
+	* serpent.h: New.
+
+	* mapihelp.cpp (mapi_mark_moss_attach): New.
+	* mymapitags.h (PR_ATTACHMENT_HIDDEN): New.
+
+	* display.cpp (open_inspector): New.
+
+	* mapihelp.cpp (mapi_get_binary_prop): New.
+
+	* engine-gpgme.c (op_verify_detached_sig_gpgme): Add arg
+	PROTOCOL.  Changed all callers to pass the OPENPGP protocol.
+
+	* common.c (b64_decode): Renamed from base64_decode and use new
+	type for the context.
+	(b64_init): New.
+	* pgpmime.c (qp_decode, base64_decode): Move to common.c and make
+	public.
+
+	* common.h (STRICT): Remove.
+	* intern.h: Rename to common.h.
+
+2007-07-20  Werner Koch  <wk@g10code.com>
+
+	* myexchext.h (IOutlookExtItemEvents.): New.
+	* item-events.h, item-events.cpp: New.
+	* olflange.cpp (GpgolExt, QueryInterface): Hook it in.
+
 2007-07-19  Werner Koch  <wk@g10code.com>
 
 	* attached-file-events.cpp: Renamed from attach.c.

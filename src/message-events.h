@@ -70,9 +70,9 @@ class GpgolMessageEvents : public IExchExtMessageEvents
   STDMETHODIMP_ (VOID)OnSubmitComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags);
 
   inline void SetContext (ULONG lContext)
-  { 
-    m_lContext = lContext;
-  };
+    { 
+      m_lContext = lContext;
+    };
 };
 
 

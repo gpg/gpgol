@@ -27,9 +27,8 @@
 #include "mymapi.h"
 #include "myexchext.h"
 #include "mymapitags.h"
+#include "common.h"
 #include "gpgmsg.hh"
-#include "util.h"
-#include "intern.h"
 
 /* Exchange callback context to retrieve the last message. */
 static LPEXCHEXTCALLBACK g_cb = NULL;

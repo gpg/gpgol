@@ -30,12 +30,14 @@ gpgol_SOURCES = \
 	olflange-ids.h              \
 	myexchext.h                 \
 	display.cpp display.h       \
+	message.cpp message.h       \
 	gpgmsg.cpp gpgmsg.hh        \
 	pgpmime.c pgpmime.h         \
+	mimeparser.c mimeparser.h   \
 	msgcache.c msgcache.h       \
         engine-gpgme.c	engine.h    \
 	rfc822parse.c rfc822parse.h \
-        common.c util.h intern.h xmalloc.h   \
+        common.c util.h xmalloc.h   \
 	passcache.c passcache.h     \
         config-dialog.c	            \
         passphrase-dialog.c         \
@@ -43,6 +45,7 @@ gpgol_SOURCES = \
         verify-dialog.c             \
 	mapihelp.cpp mapihelp.h     \
 	mymapi.h  mymapitags.h      \
+	serpent.c serpent.h         \
         vasprintf.c                 \
 	watcher.cpp \
 	ext-commands.cpp ext-commands.h       \
@@ -50,6 +53,7 @@ gpgol_SOURCES = \
 	message-events.cpp  message-events.h  \
 	attached-file-events.cpp attached-file-events.h \
 	property-sheets.cpp property-sheets.h \
+	item-events.cpp item-events.h         \
 	ol-ext-callback.cpp ol-ext-callback.h \
 	w32-gettext.c w32-gettext.h 
 
@@ -76,7 +80,7 @@ clean-local:
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
-        -lole32 -loleaut32 -lws2_32
+        -lole32 -loleaut32 -lws2_32 -ladvapi32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 

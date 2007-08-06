@@ -22,22 +22,16 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include "gpgmsg.hh"
-
 int is_html_body (const char *body);
 
 char *add_html_line_endings (const char *body);
 
-int update_display (HWND hwnd, GpgMsg *msg, void *exchange_cb,
+int update_display (HWND hwnd, void *exchange_cb,
                     bool is_html, const char *text);
 
 int set_message_body (LPMESSAGE message, const char *string, bool is_html);
 
-
-/*-- olflange.cpp --*/
-int put_outlook_property (void *pEECB, const char *key, const char *value);
-int put_outlook_property_int (void *pEECB, const char *key, int value);
-char *get_outlook_property (void *pEECB, const char *key);
+int open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message);
 
 
 #endif /*DISPLAY_H*/

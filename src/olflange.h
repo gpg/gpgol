@@ -22,6 +22,8 @@
 #ifndef OLFLANGE_H
 #define OLFLANGE_H
 
+#include "mapihelp.h"
+
 
 /*
  GpgolExt 
@@ -46,12 +48,17 @@ private:
   ULONG m_lRef;
   ULONG m_lContext;
   
+  /* Information pertaining to the current message.  */
+  msgtype_t msgtype;    /* Type of the current message.  */
+  BOOL msgtype_valid;   /* Indicates that MSGTYPE is valid.  */
+
   /* Pointer to the other extension objects.  */
-  GpgolExtCommands           *m_pExchExtCommands;
-  GpgolSessionEvents            *m_pExchExtSessionEvents;
+  GpgolExtCommands        *m_pExchExtCommands;
+  GpgolSessionEvents      *m_pExchExtSessionEvents;
   GpgolMessageEvents      *m_pExchExtMessageEvents;
   GpgolPropertySheets     *m_pExchExtPropertySheets;
   GpgolAttachedFileEvents *m_pExchExtAttachedFileEvents;
+  GpgolItemEvents         *m_pOutlookExtItemEvents;
 
 public:
   STDMETHODIMP QueryInterface(REFIID riid, LPVOID* ppvObj);
@@ -64,6 +71,7 @@ public:
       return lCount;	
     };
   STDMETHODIMP Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags);
+  msgtype_t getMsgtype (LPEXCHEXTCALLBACK eecb);
 };
 
 

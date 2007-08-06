@@ -23,21 +23,23 @@
 #include <config.h>
 #endif
 #include <windows.h>
+#include <time.h>  /* FIXME; just for testing.  */
 
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "myexchext.h"
 #include "display.h"
-#include "intern.h"
+#include "common.h"
 #include "gpgmsg.hh"
 #include "msgcache.h"
-#include "engine.h"
 #include "mapihelp.h"
 
 #include "olflange-ids.h"
 #include "olflange-def.h"
 #include "olflange.h"
 #include "ol-ext-callback.h"
+#include "mimeparser.h"
+#include "message.h"
 #include "message-events.h"
 
 
@@ -104,28 +106,52 @@ GpgolMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 STDMETHODIMP 
 GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB) 
 {
-  LPMDB pMDB = NULL;
-  LPMESSAGE pMessage = NULL;
-  msgclass_t msgcls;
+  LPMDB mdb = NULL;
+  LPMESSAGE message = NULL;
   
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
-  pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-  log_mapi_property (pMessage, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
-  msgcls = mapi_get_message_class (pMessage);
-  switch (msgcls)
+  pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+  log_mapi_property (message, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
+  switch (m_pExchExt->getMsgtype (pEECB))
     {
-    case MSGCLS_UNKNOWN: 
+    case MSGTYPE_UNKNOWN: 
       break;
-    case MSGCLS_GPGSM:
-    case MSGCLS_GPGSM_MULTIPART_SIGNED:
-      log_debug ("%s:%s: need to handle msgcls %d\n", 
-                 SRCNAME, __func__, msgcls);
+    case MSGTYPE_GPGOL:
+      log_debug ("%s:%s: ignoring unknown message of original SMIME class\n",
+                 SRCNAME, __func__);
+      break;
+    case MSGTYPE_GPGOL_MULTIPART_SIGNED:
+      log_debug ("%s:%s: processing multipart signed message\n", 
+                 SRCNAME, __func__);
       m_is_smime = TRUE;
+      message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
+      break;
+    case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
+      log_debug ("%s:%s: processing multipart encrypted message\n",
+                 SRCNAME, __func__);
+      m_is_smime = TRUE;
+      message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
+      /* Hmmm, we might want to abort it and run our own inspector
+         instead.  */
+      break;
+    case MSGTYPE_GPGOL_OPAQUE_SIGNED:
+      log_debug ("%s:%s: processing opaque signed message\n", 
+                 SRCNAME, __func__);
+      m_is_smime = TRUE;
+      message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
+      break;
+    case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
+      log_debug ("%s:%s: processing opaque encrypted message\n",
+                 SRCNAME, __func__);
+      m_is_smime = TRUE;
+      message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
+      /* Hmmm, we might want to abort it and run our own inspector
+         instead.  */
       break;
     }
   
-  ul_release (pMessage);
-  ul_release (pMDB);
+  ul_release (message);
+  ul_release (mdb);
 
   return S_FALSE;
 }
@@ -139,21 +165,22 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
+
   /* The preview_info stuff does not work because for some reasons we
      can't update the window.  Thus disabled for now. */
   if (!m_is_smime && opt.preview_decrypt /*|| !opt.compat.no_preview_info*/)
     {
       HRESULT hr;
       HWND hWnd = NULL;
-      LPMESSAGE pMessage = NULL;
-      LPMDB pMDB = NULL;
+      LPMESSAGE message = NULL;
+      LPMDB mdb = NULL;
 
       if (FAILED (pEECB->GetWindow (&hWnd)))
         hWnd = NULL;
-      hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          GpgMsg *m = CreateGpgMsg (pMessage);
+          GpgMsg *m = CreateGpgMsg (message);
           m->setExchangeCallback ((void*)pEECB);
           m->setPreview (1);
           /* If preview decryption has been requested, do so.  If not,
@@ -162,12 +189,37 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
           m->decrypt (hWnd, !opt.preview_decrypt);
           delete m;
  	}
-      ul_release (pMessage);
-      ul_release (pMDB);
+      ul_release (message);
+      ul_release (mdb);
     }
+  else if (m_is_smime)
+    {
+      HRESULT hr;
+      HWND hwnd = NULL;
+      LPMESSAGE message = NULL;
+      LPMDB mdb = NULL;
 
+      if (FAILED (pEECB->GetWindow (&hwnd)))
+        hwnd = NULL;
+      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          int ishtml, wasprotected;
+          char *body;
 
-#if 0
+          /* If the message was protected we don't allow a fallback to
+             the OOM display methods.  FIXME:  This is currently disabled. */
+          body = mapi_get_gpgol_body_attachment (message, NULL,
+                                                 &ishtml, &wasprotected);
+          if (body)
+            update_display (hwnd, /*wasprotected?NULL:*/pEECB, ishtml, body);
+        }
+      ul_release (message);
+      ul_release (mdb);
+    }
+  
+
+#if 1
     {
       HWND hWnd = NULL;
 
