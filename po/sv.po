@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-08-03 18:07+0200\n"
+"POT-Creation-Date: 2007-08-21 23:43+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -23,59 +23,59 @@ msgstr "GPG - Spara dekrypterad bilaga"
 msgid "Select GPG Key Manager"
 msgstr "Välj GPG-nyckelhanterare"
 
-#: src/engine-gpgme.c:991
+#: src/engine-gpgme.c:1004
 msgid "Fingerprint: "
 msgstr "Fingeravtryck: "
 
-#: src/engine-gpgme.c:1048
+#: src/engine-gpgme.c:1061
 msgid "This signature is valid\n"
 msgstr "Den här signaturen är giltig\n"
 
-#: src/engine-gpgme.c:1050
+#: src/engine-gpgme.c:1063
 msgid "signature state is \"green\"\n"
 msgstr "signaturens tillstånd är \"grön\"\n"
 
-#: src/engine-gpgme.c:1052
+#: src/engine-gpgme.c:1065
 msgid "signature state is \"red\"\n"
 msgstr "signaturens tillstånd är \"röd\"\n"
 
-#: src/engine-gpgme.c:1056
+#: src/engine-gpgme.c:1069
 msgid "Warning: One of the keys has been revoked\n"
 msgstr "Varning: En av nycklarna har spärrats\n"
 
-#: src/engine-gpgme.c:1066
+#: src/engine-gpgme.c:1079
 msgid "Warning: The key used to create the signature expired at: "
 msgstr "Varning: Nyckeln som användes för att skapa signaturen gick ut den: "
 
-#: src/engine-gpgme.c:1072
+#: src/engine-gpgme.c:1085
 msgid "Warning: At least one certification key has expired\n"
 msgstr "Varning: Åtminstone en certifieringsnyckel har gått ut\n"
 
-#: src/engine-gpgme.c:1078
+#: src/engine-gpgme.c:1091
 msgid "Warning: The signature expired at: "
 msgstr "Varning: Signaturen gick ut den: "
 
-#: src/engine-gpgme.c:1084
+#: src/engine-gpgme.c:1097
 msgid "Can't verify due to a missing key or certificate\n"
 msgstr "Kan inte validera på grund av en saknad nyckel eller certifikat\n"
 
-#: src/engine-gpgme.c:1088
+#: src/engine-gpgme.c:1101
 msgid "The CRL is not available\n"
 msgstr "Spärrlistan är inte tillgänglig\n"
 
-#: src/engine-gpgme.c:1094
+#: src/engine-gpgme.c:1107
 msgid "Available CRL is too old\n"
 msgstr "Tillgänglig spärrlista är för gammal\n"
 
-#: src/engine-gpgme.c:1099
+#: src/engine-gpgme.c:1112
 msgid "A policy requirement was not met\n"
 msgstr "Ett policykrav matchades inte\n"
 
-#: src/engine-gpgme.c:1105
+#: src/engine-gpgme.c:1118
 msgid "A system error occured"
 msgstr "Ett systemfel inträffade"
 
-#: src/engine-gpgme.c:1142
+#: src/engine-gpgme.c:1155
 msgid ""
 "WARNING: We have NO indication whether the key belongs to the person named "
 "as shown above\n"
@@ -83,11 +83,11 @@ msgstr ""
 "VARNING: Vi har INGA indikationer på huruvida nyckeln tillhör personen vars "
 "namn visas ovanför\n"
 
-#: src/engine-gpgme.c:1149
+#: src/engine-gpgme.c:1162
 msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
 msgstr "VARNING: Nyckeln TILLHÖR INTE personen vars namn visas ovanför\n"
 
-#: src/engine-gpgme.c:1153
+#: src/engine-gpgme.c:1166
 msgid ""
 "WARNING: It is NOT certain that the key belongs to the person named as shown "
 "above\n"
@@ -95,43 +95,43 @@ msgstr ""
 "VARNING: Det är INTE säkert att nyckeln tillhör den person vars namn visas "
 "ovanför\n"
 
-#: src/engine-gpgme.c:1186
+#: src/engine-gpgme.c:1199
 msgid "Verification started at: "
 msgstr "Validering startad: "
 
-#: src/engine-gpgme.c:1191
+#: src/engine-gpgme.c:1204
 msgid "Verification result for: "
 msgstr "Valideringsresultat för: "
 
-#: src/engine-gpgme.c:1192
+#: src/engine-gpgme.c:1205
 msgid "[unnamed part]"
 msgstr "[ej namngiven del]"
 
-#: src/engine-gpgme.c:1210 src/engine-gpgme.c:1240
+#: src/engine-gpgme.c:1223 src/engine-gpgme.c:1253
 msgid "Good signature from: "
 msgstr "Korrekt signatur från: "
 
-#: src/engine-gpgme.c:1217
+#: src/engine-gpgme.c:1230
 msgid "                aka: "
 msgstr "även känd som:"
 
-#: src/engine-gpgme.c:1221 src/engine-gpgme.c:1243
+#: src/engine-gpgme.c:1234 src/engine-gpgme.c:1256
 msgid "            created: "
 msgstr "             skapad: "
 
-#: src/engine-gpgme.c:1230
+#: src/engine-gpgme.c:1243
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FELAKTIG* signatur hävdades komma från: "
 
-#: src/engine-gpgme.c:1253
+#: src/engine-gpgme.c:1266
 msgid "Error checking signature"
 msgstr "Fel vid kontroll av signatur"
 
-#: src/engine-gpgme.c:1269
+#: src/engine-gpgme.c:1282
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Notation start (signatur av: "
 
-#: src/engine-gpgme.c:1289
+#: src/engine-gpgme.c:1302
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
@@ -329,15 +329,15 @@ msgstr "Fel vid skrivning av fil"
 msgid "[PGP/MIME message]"
 msgstr "[PGP/MIME-meddelande]"
 
-#: src/pgpmime.c:604
+#: src/pgpmime.c:605
 msgid "[PGP/MIME message without plain text body]"
 msgstr "[PGP/MIME-meddelande utan vanlig meddelandetext]"
 
-#: src/pgpmime.c:679
+#: src/pgpmime.c:680
 msgid "[PGP/MIME signed message without a plain text body]"
 msgstr "[PGP/MIME-signerat meddelande utan vanlig meddelandetext]"
 
-#: src/pgpmime.c:691
+#: src/pgpmime.c:692
 msgid "[PGP/MIME signature]"
 msgstr "[PGP/MIME-signatur]"
 

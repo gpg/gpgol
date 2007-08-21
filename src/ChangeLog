@@ -1,3 +1,10 @@
+2007-08-21  Werner Koch  <wk@g10code.com>
+
+	* w32-gettext.c (SUBLANG_BENGALI_BANGLADESH): Fix to 2 as per MSDN.
+	(SUBLANG_PUNJABI_PAKISTAN): Remove as it is not in MSDN.
+	(SUBLANG_ROMANIAN_MOLDOVA): Remove as it is not in MSDN.
+	(SUBLANG_ROMANIAN_ROMANIA): Change to value 1 as per MSDN.
+
 2007-08-13  Marcus Brinkmann  <marcus@g10code.de>
 
 	* Makefile.am (gpgol_SOURCES): Add common.h.
