@@ -37,16 +37,20 @@ typedef enum
     MSGTYPE_GPGOL_MULTIPART_SIGNED,
     MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
     MSGTYPE_GPGOL_OPAQUE_SIGNED,
-    MSGTYPE_GPGOL_OPAQUE_ENCRYPTED
+    MSGTYPE_GPGOL_OPAQUE_ENCRYPTED,
+    MSGTYPE_GPGOL_CLEAR_SIGNED,
+    MSGTYPE_GPGOL_PGP_MESSAGE
   }
 msgtype_t;
 
 typedef enum
   {
     ATTACHTYPE_UNKNOWN = 0,
-    ATTACHTYPE_MOSS = 1,     /* The original MOSS message (ie. a
-                                S/MIME or PGP/MIME message. */
-    ATTACHTYPE_FROMMOSS = 2  /* Attachment created from MOSS.  */
+    ATTACHTYPE_MOSS = 1,         /* The original MOSS message (ie. a
+                                    S/MIME or PGP/MIME message. */
+    ATTACHTYPE_FROMMOSS = 2,     /* Attachment created from MOSS.  */
+    ATTACHTYPE_MOSSTEMPL = 3     /* Attachment has been created in the
+                                    course of sendig a message */ 
   }
 attachtype_t;
 
@@ -57,7 +61,7 @@ struct mapi_attach_item_s
                            the table. */
   int mapipos;          /* The position which needs to be passed to
                            MAPI to open the attachment.  -1 means that
-                           there is no valid atatchment.  */
+                           there is no valid attachment.  */
    
   int method;           /* MAPI attachment method. */
   char *filename;       /* Malloced filename of this attachment or NULL. */
@@ -70,7 +74,7 @@ struct mapi_attach_item_s
   /* If not NULL the parameters of the content_type. */
   const char *content_type_parms; 
 
-  /* The attachment type from Property GpgOL Atatch Type.  */
+  /* The attachment type from Property GpgOL Attach Type.  */
   attachtype_t attach_type;
 
 };
@@ -83,11 +87,16 @@ int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
 
+int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
+
 int mapi_change_message_class (LPMESSAGE message);
 msgtype_t mapi_get_message_type (LPMESSAGE message);
 int mapi_to_mime (LPMESSAGE message, const char *filename);
 
 char *mapi_get_binary_prop (LPMESSAGE message,ULONG proptype,size_t *r_nbytes);
+
+LPSTREAM mapi_get_body_as_stream (LPMESSAGE message);
+char *mapi_get_body (LPMESSAGE message, size_t *r_nbytes);
 
 mapi_attach_item_t *mapi_create_attach_table (LPMESSAGE message, int fast);
 void mapi_release_attach_table (mapi_attach_item_t *table);

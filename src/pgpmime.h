@@ -21,6 +21,8 @@
 #ifndef PGPMIME_H
 #define PGPMIME_H
 
+#error not used
+
 #ifdef __cplusplus
 extern "C" {
 #if 0

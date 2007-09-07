@@ -28,6 +28,11 @@
 HINSTANCE glob_hinst = NULL;
 
 
+/* The base-64 list used for base64 encoding. */
+static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ" 
+                                       "abcdefghijklmnopqrstuvwxyz" 
+                                       "0123456789+/"); 
+
 /* The reverse base-64 list used for base-64 decoding. */
 static unsigned char const asctobin[256] = {
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
@@ -443,12 +448,29 @@ qp_decode (char *buffer, size_t length)
   char *d, *s;
 
   for (s=d=buffer; length; length--)
-    if (*s == '=' && length > 2 && hexdigitp (s+1) && hexdigitp (s+2))
+    if (*s == '=')
       {
-        s++;
-        *(unsigned char*)d++ = xtoi_2 (s);
-        s += 2;
-        length -= 2;
+        if (length > 2 && hexdigitp (s+1) && hexdigitp (s+2))
+          {
+            s++;
+            *(unsigned char*)d++ = xtoi_2 (s);
+            s += 2;
+            length -= 2;
+          }
+        else if (length > 2 && s[1] == '\r' && s[2] == '\n')
+          {
+            /* Soft line break.  */
+            s += 3;
+            length -= 2;
+          }
+        else if (length > 1 && s[1] == '\n')
+          {
+            /* Soft line break with only a Unix line terminator. */
+            s += 2;
+            length -= 1;
+          }
+        else
+          *d++ = *s++;
       }
     else
       *d++ = *s++;
@@ -530,5 +552,32 @@ b64_decode (b64_state_t *state, char *buffer, size_t length)
   state->idx = idx;
   state->val = val;
   return d - buffer;
+}
+
+
+/* Create a boundary.  Note that mimemaker.c knows about the structure
+   of the boundary (i.e. that it starts with "=-=") so that it can
+   protect against accidently used boundaries within the content.  */
+char *
+generate_boundary (char *buffer)
+{
+  char *p = buffer;
+  int i;
+
+#if RAND_MAX < (64*2*BOUNDARYSIZE)
+#error RAND_MAX is way too small
+#endif
+
+  *p++ = '=';
+  *p++ = '-';
+  *p++ = '=';
+  for (i=0; i < BOUNDARYSIZE-6; i++) 
+    *p++ = bintoasc[rand () % 64];
+  *p++ = '=';
+  *p++ = '-';
+  *p++ = '=';
+  *p = 0;
+
+  return buffer;
 }
 

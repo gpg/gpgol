@@ -1,3 +1,60 @@
+2007-09-07  Werner Koch  <wk@g10code.com>
+
+	* common.c (qp_decode): Handle softe line breaks. 
+
+2007-09-06  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_get_body): New.
+
+	* mimeparser.c (protocol_t): Move to .. common.h.
+
+2007-09-05  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c, mimemaker.h: New.
+
+2007-08-31  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_set_header): New.
+	* message.cpp (pgp_mime_from_clearsigned): New.
+	(message_verify): Use it.
+	* main.c: Call srand ().
+	* util.h (trailing_ws_p): New.
+	* common.c (generate_boundary): New.
+
+2007-08-30  Werner Koch  <wk@g10code.com>
+
+	* message-events.h (class GpgolMessageEvents): Rename M_IS_SMIME
+	to M_PROCESSED.
+	* message-events.cpp (OnRead, OnReadComplete): Ditto.
+	(OnReadComplete): Remove preview decryption stuff.
+	(OnWriteComplete): Remove GpgMsg based code.
+	* ext-commands.cpp (DoCommand): Ditto
+	(InstallCommands): Do not init the watcher.
+	* olflange.cpp (GpgolExt): Do not init the watcher.
+	(GpgolExt): Do not clanup the watcher.
+	* main.c (DllMain): Ditto.
+	* gpgmsg.cpp, gpgmsg.hh: Remove.
+	* watcher.cpp: Remove
+	* pgpmime.c, pgpmime.h: Remove.
+
+	* mapihelp.h (MSGTYPE_GPGOL_CLEAR_SIGNED)
+	(MSGTYPE_GPGOL_PGP_MESSAGE): New.
+	* mapihelp.cpp (mapi_get_message_type): Map them.
+	(get_msgcls_from_pgp_lines): New.
+	(mapi_change_message_class): Detect old old style PGP messages.
+	(mapi_get_body_as_stream): New.
+	* message.cpp (message_verify, message_decrypt): Handle them.
+	* message-events.cpp (OnRead): Ditto.
+
+2007-08-29  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.h (class GpgolExtCommands): Add members
+	M_NCMDKEYMANAGER and M_NCMDDECRYPT.
+	* ext-commands.cpp (GpgolExtCommands): Initialize it.
+	(InstallCommands): Use them here instead of reusing another variable.
+	(DoCommand, Help, QueryHelpText, QueryButtonInfo): Restructured
+	for better readibility.
+
 2007-08-21  Werner Koch  <wk@g10code.com>
 
 	* w32-gettext.c (SUBLANG_BENGALI_BANGLADESH): Fix to 2 as per MSDN.

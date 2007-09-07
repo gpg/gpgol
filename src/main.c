@@ -108,7 +108,15 @@ get_crypt_random (size_t nbytes)
 static int
 initialize_session_key (void)
 {
-  the_session_key = get_crypt_random (16);
+  the_session_key = get_crypt_random (16+sizeof (unsigned int));
+  if (the_session_key)
+    {
+      /* We use rand() in generate_boundary so we need to seed it. */
+      unsigned int tmp;
+
+      memcpy (&tmp, the_session_key+16, sizeof (unsigned int));
+      srand (tmp);
+    }
   return !the_session_key;
 }
 
@@ -164,7 +172,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     }
   else if (reason == DLL_PROCESS_DETACH)
     {
-      watcher_free_hook ();
     }
   
   return TRUE;
@@ -187,6 +194,15 @@ void *
 create_initialization_vector (size_t nbytes)
 {
   return get_crypt_random (nbytes);
+}
+
+
+/* Create a new boundary for use with MIME. */
+void
+create_boundary (char *buffer, size_t buflen)
+{
+
+
 }
 
 

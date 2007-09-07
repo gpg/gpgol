@@ -21,6 +21,8 @@
 #ifndef GPGMSG_HH
 #define GPGMSG_HH
 
+#error not anymore used.
+
 #include "common.h"
 
 /* To manage a message we use our own class to keep track about all

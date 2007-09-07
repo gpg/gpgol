@@ -1021,6 +1021,11 @@ DECLARE_INTERFACE_(ISpoolerHook, IUnknown)
                 (This)->lpVtbl->CreateAttach ((This),(a),(b),(c),(d))
 #define IMessage_DeleteAttach(This,a,b,c,d) \
                 (This)->lpVtbl->DeleteAttach ((This),(a),(b),(c),(d))
+#define IMessage_SetProps(This,a,b,c) \
+                (This)->lpVtbl->SetProps ((This),(a),(b),(c))
+#define IMessage_DeleteProps(This,a,b) \
+                (This)->lpVtbl->DeleteProps ((This),(a),(b))
+#define IMessage_SaveChanges(This,a) (This)->lpVtbl->SaveChanges ((This),(a))
 
 #define IAttach_Release(This)  (This)->lpVtbl->Release ((This))
 #define IAttach_SaveChanges(This,a) (This)->lpVtbl->SaveChanges ((This),(a))

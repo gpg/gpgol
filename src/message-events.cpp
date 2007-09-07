@@ -23,14 +23,12 @@
 #include <config.h>
 #endif
 #include <windows.h>
-#include <time.h>  /* FIXME; just for testing.  */
 
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "myexchext.h"
 #include "display.h"
 #include "common.h"
-#include "gpgmsg.hh"
 #include "msgcache.h"
 #include "mapihelp.h"
 
@@ -39,6 +37,7 @@
 #include "olflange.h"
 #include "ol-ext-callback.h"
 #include "mimeparser.h"
+#include "mimemaker.h"
 #include "message.h"
 #include "message-events.h"
 
@@ -74,7 +73,7 @@ GpgolMessageEvents::GpgolMessageEvents (GpgolExt *pParentInterface)
   m_lRef = 0; 
   m_bOnSubmitActive = FALSE;
   m_want_html = FALSE;
-  m_is_smime = FALSE;
+  m_processed = FALSE;
 }
 
 
@@ -123,13 +122,13 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
     case MSGTYPE_GPGOL_MULTIPART_SIGNED:
       log_debug ("%s:%s: processing multipart signed message\n", 
                  SRCNAME, __func__);
-      m_is_smime = TRUE;
+      m_processed = TRUE;
       message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
       break;
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       log_debug ("%s:%s: processing multipart encrypted message\n",
                  SRCNAME, __func__);
-      m_is_smime = TRUE;
+      m_processed = TRUE;
       message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
       /* Hmmm, we might want to abort it and run our own inspector
          instead.  */
@@ -137,13 +136,26 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
       log_debug ("%s:%s: processing opaque signed message\n", 
                  SRCNAME, __func__);
-      m_is_smime = TRUE;
+      m_processed = TRUE;
+      message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
+      break;
+    case MSGTYPE_GPGOL_CLEAR_SIGNED:
+      log_debug ("%s:%s: processing clear signed pgp message\n", 
+                 SRCNAME, __func__);
+      m_processed = TRUE;
       message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
       break;
     case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
       log_debug ("%s:%s: processing opaque encrypted message\n",
                  SRCNAME, __func__);
-      m_is_smime = TRUE;
+      m_processed = TRUE;
+      message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
+      /* Hmmm, we might want to abort it and run our own inspector
+         instead.  */
+      break;
+    case MSGTYPE_GPGOL_PGP_MESSAGE:
+      log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
+      m_processed = TRUE;
       message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
       /* Hmmm, we might want to abort it and run our own inspector
          instead.  */
@@ -165,34 +177,9 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
-
-  /* The preview_info stuff does not work because for some reasons we
-     can't update the window.  Thus disabled for now. */
-  if (!m_is_smime && opt.preview_decrypt /*|| !opt.compat.no_preview_info*/)
-    {
-      HRESULT hr;
-      HWND hWnd = NULL;
-      LPMESSAGE message = NULL;
-      LPMDB mdb = NULL;
-
-      if (FAILED (pEECB->GetWindow (&hWnd)))
-        hWnd = NULL;
-      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          GpgMsg *m = CreateGpgMsg (message);
-          m->setExchangeCallback ((void*)pEECB);
-          m->setPreview (1);
-          /* If preview decryption has been requested, do so.  If not,
-             pass true as the second arg to let the fucntion display a
-             hint on what kind of message this is. */
-          m->decrypt (hWnd, !opt.preview_decrypt);
-          delete m;
- 	}
-      ul_release (message);
-      ul_release (mdb);
-    }
-  else if (m_is_smime)
+  /* If the message has been processed by is (i.e. in OnRead), we now
+     use our own display code.  */
+  if (m_processed)
     {
       HRESULT hr;
       HWND hwnd = NULL;
@@ -213,6 +200,10 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
                                                  &ishtml, &wasprotected);
           if (body)
             update_display (hwnd, /*wasprotected?NULL:*/pEECB, ishtml, body);
+          else
+            update_display (hwnd, NULL, 0, 
+                            _("[Crypto operation failed - "
+                              "can't show the body of the message]"));
         }
       ul_release (message);
       ul_release (mdb);
@@ -317,6 +308,8 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 }
 
 
+
+
 /* Called by Exchange when the data has been written to the message.
    Encrypts and signs the message if the options are set.  PEECB is a
    pointer to the IExchExtCallback interface.  Returns: S_FALSE to
@@ -328,13 +321,14 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 STDMETHODIMP 
 GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
 {
-  log_debug ("%s:%s: received\n", SRCNAME, __func__);
-
   HRESULT hrReturn = S_FALSE;
   LPMESSAGE msg = NULL;
   LPMDB pMDB = NULL;
   HWND hWnd = NULL;
   int rc;
+
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
+
 
   if (lFlags & (EEME_FAILED|EEME_COMPLETE_FAILED))
     return S_FALSE; /* We don't need to rollback anything in case
@@ -345,76 +339,37 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
   
   if (m_bWriteFailed)     /* Operation failed already. */
     return S_FALSE;
-  
+
+  /* Try to get the current window. */
   if (FAILED(pEECB->GetWindow (&hWnd)))
     hWnd = NULL;
 
+  /* Get the object and call the encryption or signing fucntion.  */
   HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
-//      SPropTagArray proparray;
-
-      GpgMsg *m = CreateGpgMsg (msg);
-      m->setExchangeCallback ((void*)pEECB);
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = m->signEncrypt (hWnd, m_want_html);
+        rc = mime_sign_encrypt (msg, PROTOCOL_OPENPGP);
       else if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
-        rc = m->encrypt (hWnd, m_want_html);
+        rc = mime_encrypt (msg, PROTOCOL_OPENPGP);
       else if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = m->sign (hWnd, m_want_html);
+        rc = mime_sign (msg, PROTOCOL_OPENPGP);
       else
         rc = 0;
-      delete m;
-
-      /* If we are encrypting we need to make sure that the other
-         format gets deleted and is not actually sent in the clear.
-         Note that this other format is always HTML because we have
-         moved that into an attachment and kept PR_BODY.  It seems
-         that OL always creates text and HTML if HTML has been
-         selected. */
-      /* ARGHH: This seems to delete also the PR_BODY for some reasonh
-         - need to disable this safe net. */
-//       if (m_pExchExt->m_gpgEncrypt)
-//         {
-//           log_debug ("%s:%s: deleting possible extra property PR_BODY_HTML\n",
-//                      SRCNAME, __func__);
-//           proparray.cValues = 1;
-//           proparray.aulPropTag[0] = PR_BODY_HTML;
-//           msg->DeleteProps (&proparray, NULL);
-//         }
-     
- 
+      
       if (rc)
         {
           hrReturn = E_FAIL;
           m_bWriteFailed = TRUE;	
-
-	  /* Outlook should now correctly react and do not deliver
-	     the message in case of an error.
-	   */
-	  #if 0
-          if (m_pExchExt->m_gpgEncrypt)
-            {
-              log_debug ("%s:%s: deleting property PR_BODY due to error\n",
-                         SRCNAME, __func__);
-              proparray.cValues = 1;
-              proparray.aulPropTag[0] = PR_BODY;
-              hr = msg->DeleteProps (&proparray, NULL);
-              if (hr != S_OK)
-                log_debug ("%s:%s: DeleteProps failed: hr=%#lx\n",
-                           SRCNAME, __func__, hr);
-              /* FIXME: We should delete the attachments too. 
-                 We really, really should do this!!!          */
-            }
-          #endif
         }
     }
-
+  
   ul_release (msg);
   ul_release (pMDB);
-
+  
   return hrReturn;
 }
+
 
 /* Called by Exchange when the user selects the "check names" command.
    PEECB is a pointer to the IExchExtCallback interface.  Returns
@@ -452,7 +407,7 @@ GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK pEECB)
 }
 
 
-/* Called by Echange after the message has been submitted to MAPI.
+/* Called by Exchange after the message has been submitted to MAPI.
    PEECB is a pointer to the IExchExtCallback interface. */
 STDMETHODIMP_ (VOID) 
 GpgolMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK pEECB,

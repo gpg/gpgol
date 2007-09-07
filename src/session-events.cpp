@@ -30,7 +30,6 @@
 #include "myexchext.h"
 #include "display.h"
 #include "common.h"
-#include "gpgmsg.hh"
 #include "msgcache.h"
 #include "engine.h"
 #include "mapihelp.h"

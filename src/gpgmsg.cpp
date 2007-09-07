@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#error not anymore used
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -31,7 +32,6 @@
 #include "mymapitags.h"
 #include "myexchext.h"
 #include "common.h"
-#include "gpgmsg.hh"
 #include "util.h"
 #include "msgcache.h"
 #include "pgpmime.h"

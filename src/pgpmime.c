@@ -19,6 +19,8 @@
  * 02110-1301, USA.
  */
 
+#error not used
+
 /*
    EXPLAIN what we are doing here.
 */

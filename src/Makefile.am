@@ -31,9 +31,8 @@ gpgol_SOURCES = \
 	myexchext.h                 \
 	display.cpp display.h       \
 	message.cpp message.h       \
-	gpgmsg.cpp gpgmsg.hh        \
-	pgpmime.c pgpmime.h         \
 	mimeparser.c mimeparser.h   \
+	mimemaker.c mimemaker.h     \
 	msgcache.c msgcache.h       \
         engine-gpgme.c	engine.h    \
 	rfc822parse.c rfc822parse.h \
@@ -48,7 +47,6 @@ gpgol_SOURCES = \
 	mymapi.h  mymapitags.h      \
 	serpent.c serpent.h         \
         vasprintf.c                 \
-	watcher.cpp \
 	ext-commands.cpp ext-commands.h       \
 	session-events.cpp  session-events.h  \
 	message-events.cpp  message-events.h  \

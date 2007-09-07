@@ -34,6 +34,15 @@ extern "C" {
 #endif
 #endif
 
+/* Identifiers for the protocol.  */
+typedef enum
+  {
+    PROTOCOL_UNKNOWN = 0,
+    PROTOCOL_OPENPGP,
+    PROTOCOL_SMIME
+  }
+protocol_t;
+
 
 /* Possible options for the recipient dialog. */
 enum
@@ -140,11 +149,11 @@ size_t qp_decode (char *buffer, size_t length);
 void b64_init (b64_state_t *state);
 size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
 
+/* The length of the boundary - the buffer needs to be allocated one
+   byte larger. */
+#define BOUNDARYSIZE 20
+char *generate_boundary (char *buffer);
 
-/*-- watcher.cpp --*/
-int watcher_init_hook (void);
-int watcher_free_hook (void);
-void watcher_set_callback_ctx (void *cb);
 
 /*-- recipient-dialog.c --*/
 unsigned int recipient_dialog_box (gpgme_key_t **ret_rset);

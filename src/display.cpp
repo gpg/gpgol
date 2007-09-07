@@ -271,7 +271,7 @@ set_message_body (LPMESSAGE message, const char *string, bool is_html)
   /* Note: we once tried to delete the RTF property here to avoid any
      syncing mess and more important to make sure that no RTF rendered
      plaintext is left over.  The side effect of this was that the
-     entire PR_BODY go deleted too. */
+     entire PR_BODY got deleted too. */
 
   return 0;
 }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-08-21 23:43+0200\n"
+"POT-Creation-Date: 2007-09-06 21:27+0200\n"
 "PO-Revision-Date: 2007-04-13 12:55+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/common.c:131
+#: src/common.c:136
 msgid "GPG - Save decrypted attachment"
 msgstr "GPG - Sichern der entschlüsselten Anlage"
 
@@ -287,7 +287,7 @@ msgstr "Unterschrifterstellungsfehler eines Anhangs"
 msgid "The default key may not contain any spaces."
 msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
 
-#: src/olflange.cpp:479
+#: src/olflange.cpp:475
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -316,7 +316,7 @@ msgstr "Ungültige Passphrase; bitte nochmal versuchen..."
 msgid "Select Signing Key"
 msgstr "Signaturschlüssel auswählen"
 
-#: src/pgpmime.c:356
+#: src/pgpmime.c:358
 msgid ""
 "Error creating file\n"
 "Please select another one"
@@ -324,27 +324,27 @@ msgstr ""
 "Fehler bei der Erstellung der Datei.\n"
 "Bitte wählen Sie eine anderen Namen."
 
-#: src/pgpmime.c:358 src/pgpmime.c:509
+#: src/pgpmime.c:360 src/pgpmime.c:511
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
-#: src/pgpmime.c:508
+#: src/pgpmime.c:510
 msgid "Error writing file"
 msgstr "Dateischreibfehler"
 
-#: src/pgpmime.c:584
+#: src/pgpmime.c:586
 msgid "[PGP/MIME message]"
 msgstr "[PGP/MIME Nachricht]"
 
-#: src/pgpmime.c:605
+#: src/pgpmime.c:607
 msgid "[PGP/MIME message without plain text body]"
 msgstr "[PGP/MIME Nachricht ohne reinen Textkörper]"
 
-#: src/pgpmime.c:680
+#: src/pgpmime.c:682
 msgid "[PGP/MIME signed message without a plain text body]"
 msgstr "[PGP/MIME signierte Nachricht ohne reinen Textkörper]"
 
-#: src/pgpmime.c:692
+#: src/pgpmime.c:694
 msgid "[PGP/MIME signature]"
 msgstr "[PGP/MIME Signatur]"
 

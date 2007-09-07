@@ -107,6 +107,21 @@ int write_options (void);
 #define xtoi_2(p)   ((xtoi_1(p) * 16) + xtoi_1((p)+1))
 #define xtoi_4(p)   ((xtoi_2(p) * 256) + xtoi_2((p)+2))
 
+#define tohex(n) ((n) < 10 ? ((n) + '0') : (((n) - 10) + 'A'))
+
+/***** Inline functions.  ****/
+
+/* Return true if LINE consists only of white space (up to and
+   including the LF). */
+static inline int
+trailing_ws_p (const char *line)
+{
+  for ( ; *line && *line != '\n'; line++)
+    if (*line != ' ' && *line != '\t' && *line != '\r')
+      return 0;
+  return 1;
+}
+
 
 /*****  Missing functions.  ****/
 

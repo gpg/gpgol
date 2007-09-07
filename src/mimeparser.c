@@ -20,7 +20,8 @@
  */
 
 /*
-   EXPLAIN what we are doing here.
+   Fixme: Explain how the this parser works and how it fits into the
+   whole picture.
 */
    
 
@@ -65,14 +66,6 @@ static const char oid_mimetag[] =
    only for 1000 bytes; thus 2000 seems to be a reasonable value. */
 #define LINEBUFSIZE 2000
 
-
-typedef enum
-  {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_OPENPGP,
-    PROTOCOL_SMIME
-  }
-protocol_t;
 
 
 /* To keep track of the MIME message structures we use a linked list
@@ -318,7 +311,7 @@ start_attachment (mime_context_t ctx, int is_body)
 
 
   /* The body attachment is special and should not be show in the list
-     of atatchments.  */
+     of attachments.  */
   if (is_body)
     {
       prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
@@ -560,7 +553,9 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
 
   /* Process the Content-type and all its parameters.  */
   ctmain = ctsub = NULL;
-  field = rfc822parse_parse_field (msg, "Content-Type", -1);
+  field = rfc822parse_parse_field (msg, "GnuPG-Content-Type", -1);
+  if (!field)
+    field = rfc822parse_parse_field (msg, "Content-Type", -1);
   if (field)
     ctmain = rfc822parse_query_media_type (field, &ctsub);
   if (!ctmain)
@@ -935,6 +930,7 @@ mime_verify (const char *message, size_t messagelen,
   while ( (s = memchr (message, '\n', messagelen)) )
     {
       len = s - message + 1;
+      log_debug ("passing '%.*s'\n", (int)len, message);
       plaintext_handler (ctx, message, len);
       if (ctx->parser_error || ctx->line_too_long)
         {

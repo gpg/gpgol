@@ -178,6 +178,301 @@ get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag)
 
 
 
+/* Set an arbitary header in the message MSG with NAME to the value
+   VAL. */
+int
+mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
+{  
+  HRESULT hr;
+  LPSPropTagArray pProps = NULL;
+  SPropValue pv;
+  MAPINAMEID mnid, *pmnid;	
+  /* {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers */
+  GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
+                                            0x00, 0x00, 0x00, 0x46} };
+  
+  if (!msg)
+    return -1;
+
+  memset (&mnid, 0, sizeof mnid);
+  mnid.lpguid = &guid;
+  mnid.ulKind = MNID_STRING;
+  mnid.Kind.lpwstrName = utf8_to_wchar (name);
+  pmnid = &mnid;
+  hr = msg->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &pProps);
+  xfree (mnid.Kind.lpwstrName);
+  if (FAILED (hr)) 
+    {
+      log_error ("%s:%s: can't get mapping for header `%s': hr=%#lx\n",
+                 SRCNAME, __func__, name, hr); 
+      return -1;
+    }
+    
+  pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
+  pv.Value.lpszA = (char *)val;
+  hr = HrSetOneProp(msg, &pv);	
+  if (hr)
+    {
+      log_error ("%s:%s: can't set header `%s': hr=%#lx\n",
+                 SRCNAME, __func__, name, hr); 
+      return -1;
+    }
+  return 0;
+}
+
+
+
+/* Return the body as a new IStream object.  Returns NULL on failure.
+   The stream returns the body as an ASCII stream (Use mapi_get_body
+   for an UTF-8 value).  */
+LPSTREAM
+mapi_get_body_as_stream (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSTREAM stream;
+
+  if (!message)
+    return NULL;
+
+  /* We try to get it as an ASCII body.  If this fails we would either
+     need to implement some kind of stream filter to translated to
+     utf-8 or read everyting into a memory buffer and [provide an
+     istream from that memory buffer.  */
+  hr = message->OpenProperty (PR_BODY_A, &IID_IStream, 0, 0, 
+                              (LPUNKNOWN*)&stream);
+  if (hr)
+    {
+      log_debug ("%s:%s: OpenProperty failed: hr=%#lx", SRCNAME, __func__, hr);
+      return NULL;
+    }
+
+  return stream;
+}
+
+
+
+/* Return the body of the message in an allocated buffer.  The buffer
+   is guaranteed to be Nul terminated.  The actual length (ie. the
+   strlen()) will be stored at R_NBYTES.  The body will be returned in
+   UTF-8 encoding. Returns NULL if no body is available.  */
+char *
+mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
+{
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
+  LPSTREAM stream;
+  STATSTG statInfo;
+  ULONG nread;
+  char *body = NULL;
+
+  if (r_nbytes)
+    *r_nbytes = 0;
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_BODY, &lpspvFEID);
+  if (SUCCEEDED (hr))  /* Message is small enough to be retrieved directly. */
+    { 
+      switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
+        {
+        case PT_UNICODE:
+          body = wchar_to_utf8 (lpspvFEID->Value.lpszW);
+          if (!body)
+            log_debug ("%s: error converting to utf8\n", __func__);
+          break;
+          
+        case PT_STRING8:
+          body = xstrdup (lpspvFEID->Value.lpszA);
+          break;
+          
+        default:
+          log_debug ("%s: proptag=0x%08lx not supported\n",
+                     __func__, lpspvFEID->ulPropTag);
+          break;
+        }
+      MAPIFreeBuffer (lpspvFEID);
+    }
+  else /* Message is large; use an IStream to read it.  */
+    {
+      hr = message->OpenProperty (PR_BODY, &IID_IStream, 0, 0, 
+                                  (LPUNKNOWN*)&stream);
+      if (hr)
+        {
+          log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
+                     SRCNAME, __func__, hr);
+          return NULL;
+        }
+      
+      hr = stream->Stat (&statInfo, STATFLAG_NONAME);
+      if (hr)
+        {
+          log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
+          stream->Release ();
+          return NULL;
+        }
+      
+      /* Fixme: We might want to read only the first 1k to decide
+         whether this is actually an OpenPGP message and only then
+         continue reading.  */
+      body = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 2);
+      hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
+      if (hr)
+        {
+          log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
+          xfree (body);
+          stream->Release ();
+          return NULL;
+        }
+      body[nread] = 0;
+      body[nread+1] = 0;
+      if (nread != statInfo.cbSize.QuadPart)
+        {
+          log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
+          xfree (body);
+          stream->Release ();
+          return NULL;
+        }
+      stream->Release ();
+      
+      {
+        char *tmp;
+        tmp = wchar_to_utf8 ((wchar_t*)body);
+        if (!tmp)
+          log_debug ("%s: error converting to utf8\n", __func__);
+        else
+          {
+            xfree (body);
+            body = tmp;
+          }
+      }
+    }
+
+  if (r_nbytes)
+    *r_nbytes = strlen (body);
+  return body;
+}
+
+
+
+/* Look at the body of the MESSAGE and try to figure out whether this
+   is a supported PGP message.  Returns the new message class on
+   return or NULL if not.  */
+static char *
+get_msgcls_from_pgp_lines (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue lpspvFEID = NULL;
+  LPSTREAM stream;
+  STATSTG statInfo;
+  ULONG nread;
+  char *body = NULL;
+  char *p;
+  char *msgcls = NULL;
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_BODY, &lpspvFEID);
+  if (SUCCEEDED (hr))  /* Message is small enough to be retrieved directly. */
+    { 
+      switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
+        {
+        case PT_UNICODE:
+          body = wchar_to_utf8 (lpspvFEID->Value.lpszW);
+          if (!body)
+            log_debug ("%s: error converting to utf8\n", __func__);
+          break;
+          
+        case PT_STRING8:
+          body = xstrdup (lpspvFEID->Value.lpszA);
+          break;
+          
+        default:
+          log_debug ("%s: proptag=0x%08lx not supported\n",
+                     __func__, lpspvFEID->ulPropTag);
+          break;
+        }
+      MAPIFreeBuffer (lpspvFEID);
+    }
+  else /* Message is large; use an IStream to read it.  */
+    {
+      hr = message->OpenProperty (PR_BODY, &IID_IStream, 0, 0, 
+                                  (LPUNKNOWN*)&stream);
+      if (hr)
+        {
+          log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
+                     SRCNAME, __func__, hr);
+          return NULL;
+        }
+      
+      hr = stream->Stat (&statInfo, STATFLAG_NONAME);
+      if (hr)
+        {
+          log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
+          stream->Release ();
+          return NULL;
+        }
+      
+      /* Fixme: We might want to read only the first 1k to decide
+         whether this is actually an OpenPGP message and only then
+         continue reading.  */
+      body = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 2);
+      hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
+      if (hr)
+        {
+          log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
+          xfree (body);
+          stream->Release ();
+          return NULL;
+        }
+      body[nread] = 0;
+      body[nread+1] = 0;
+      if (nread != statInfo.cbSize.QuadPart)
+        {
+          log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
+          xfree (body);
+          stream->Release ();
+          return NULL;
+        }
+      stream->Release ();
+      
+      /* FIXME: We might want to avoid this by directly comparing
+         against wchar_t.  */
+      {
+        char *tmp;
+        tmp = wchar_to_utf8 ((wchar_t*)body);
+        if (!tmp)
+          log_debug ("%s: error converting to utf8\n", __func__);
+        else
+          {
+            xfree (body);
+            body = tmp;
+          }
+      }
+    }
+
+  /* The entire body of the message is now availble in the utf-8
+     string BODY.  Walk over it to figure out its type.  */
+  /* FiXME: We should use a state machine to check whether this is
+     really a valid PGP MIME message and possible even check that
+     there there is no other text before or after the signed text.  */
+  for (p=body; p && *p; p = (p=strchr (p+1, '\n')? (p+1):NULL))
+    if (!strncmp (p, "-----BEGIN PGP ", 15))
+      {
+        if (!strncmp (p+15, "SIGNED MESSAGE-----", 19)
+            && trailing_ws_p (p+15+19))
+          {
+            msgcls = xstrdup ("IPM.Note.GpgOL.ClearSigned");
+            break;
+          }
+        else if (!strncmp (p+15, "MESSAGE-----", 12)
+                 && trailing_ws_p (p+15+12))
+          {
+            msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
+            break;
+          }
+      }
+         
+  xfree (body);
+  return msgcls;
+}
+
+
+
 /* This function checks whether MESSAGE requires processing by us and
    adjusts the message class to our own.  Return true if the message
    was changed. */
@@ -231,6 +526,11 @@ mapi_change_message_class (LPMESSAGE message)
                     newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
                   xfree (proto);
                 }
+              else if (!strcmp (ct, "text/plain"))
+                {
+                  newvalue = get_msgcls_from_pgp_lines (message);
+                }
+              
               xfree (ct);
             }
         }
@@ -344,6 +644,10 @@ mapi_get_message_type (LPMESSAGE message)
             msgtype = MSGTYPE_GPGOL_OPAQUE_SIGNED;
           else if (!strcmp (s, ".OpaqueEncrypted"))
             msgtype = MSGTYPE_GPGOL_OPAQUE_ENCRYPTED;
+          else if (!strcmp (s, ".ClearSigned"))
+            msgtype = MSGTYPE_GPGOL_CLEAR_SIGNED;
+          else if (!strcmp (s, ".PGPMessage"))
+            msgtype = MSGTYPE_GPGOL_PGP_MESSAGE;
           else
             log_debug ("%s:%s: message class `%s' not supported",
                        SRCNAME, __func__, s-14);
@@ -406,7 +710,7 @@ mapi_to_mime (LPMESSAGE message, const char *filename)
 }
 
 
-/* Return a binary propery in a malloced buffer with its length stored
+/* Return a binary property in a malloced buffer with its length stored
    at R_NBYTES.  Returns NULL on error.  */
 char *
 mapi_get_binary_prop (LPMESSAGE message, ULONG proptype, size_t *r_nbytes)
@@ -528,8 +832,9 @@ get_attach_mime_tag (LPATTACH obj)
   hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_MIME_TAG_A, &propval);
   if (FAILED (hr))
     {
-      log_error ("%s:%s: error getting attachment's MIME tag: hr=%#lx",
-                 SRCNAME, __func__, hr);
+      if (hr != MAPI_E_NOT_FOUND)
+        log_error ("%s:%s: error getting attachment's MIME tag: hr=%#lx",
+                   SRCNAME, __func__, hr);
       return NULL; 
     }
   switch ( PROP_TYPE (propval->ulPropTag) )
@@ -748,7 +1053,7 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item)
 
 /* Return a malloced buffer with the content of the attachment. If
    R_NBYTES is not NULL the number of bytes will get stored there.
-   ATT must have an attachment method of ATATCH_BY_VALUE.  Returns
+   ATT must have an attachment method of ATTACH_BY_VALUE.  Returns
    NULL on error.  If UNPROTECT is set and the appropriate crypto
    attribute is available, the function returns the unprotected
    version of the atatchment. */
@@ -1143,7 +1448,7 @@ has_gpgol_body_name (LPATTACH obj)
    If R_NBYTES is not NULL the number of bytes in the returned buffer
    is stored there.  If R_ISHTML is not NULL a flag indicating whether
    the HTML is html formatted is stored there.  If R_PROTECTED is not
-   NULL a flag indicating whethernthe message was protected is store
+   NULL a flag indicating whether the message was protected is stored
    there.  If no body attachment can be found or on any other error
    NULL is returned.  Caller must free the returned string. */
 char *

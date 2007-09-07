@@ -38,9 +38,13 @@ private:
   ULONG m_lContext;
   
   UINT  m_nCmdEncrypt;
+  UINT  m_nCmdDecrypt;
   UINT  m_nCmdSign;
   UINT  m_nCmdShowInfo;
   UINT  m_nCmdCheckSig;
+  UINT  m_nCmdKeyManager;
+  UINT  m_nCmdDebug1;
+  UINT  m_nCmdDebug2;
 
   UINT  m_nToolbarButtonID1;
   UINT  m_nToolbarButtonID2;     

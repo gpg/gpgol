@@ -19,6 +19,8 @@
  * 02110-1301, USA.
  */
 
+#error not anymore used.
+
 #include <config.h>
 #include <windows.h>
 #include <stdio.h>
@@ -28,7 +30,7 @@
 #include "myexchext.h"
 #include "mymapitags.h"
 #include "common.h"
-#include "gpgmsg.hh"
+
 
 /* Exchange callback context to retrieve the last message. */
 static LPEXCHEXTCALLBACK g_cb = NULL;

@@ -1,4 +1,4 @@
-/* mimeparser.h - MIME parser.
+/* mimemaker.h - Construct MIME from MAPI
  *	Copyright (C) 2007 g10 Code GmbH
  *
  * This file is part of GpgOL.
@@ -18,9 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#ifndef MIMEPARSER_H
-#define MIMEPARSER_H
 
+#ifndef MIMEMAKER_H
+#define MIMEMAKER_H
 #ifdef __cplusplus
 extern "C" {
 #if 0
@@ -28,17 +28,12 @@ extern "C" {
 #endif
 #endif
 
-
-int mime_verify (const char *message, size_t messagelen, 
-                 LPMESSAGE mapi_message, int is_smime,
-                 int ttl, 
-                 gpgme_data_t attestation, HWND hwnd, int preview_mode);
-int mime_decrypt (LPSTREAM instream, LPMESSAGE mapi_message, int is_smime,
-                  int ttl,
-                  gpgme_data_t attestation, HWND hwnd, int preview_mode);
+int mime_sign (LPMESSAGE message, protocol_t protocol);
+int mime_encrypt (LPMESSAGE message, protocol_t protocol);
+int mime_sign_encrypt (LPMESSAGE message, protocol_t protocol);
 
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*MIMEPARSER_H*/
+#endif /*MIMEMAKER_H*/

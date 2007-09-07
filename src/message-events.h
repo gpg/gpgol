@@ -42,8 +42,7 @@ class GpgolMessageEvents : public IExchExtMessageEvents
   GpgolExt* m_pExchExt;
   BOOL    m_bWriteFailed;
   BOOL    m_want_html;       /* Encryption of HTML is desired. */
-  BOOL    m_is_smime;        /* The message has an smime message class
-                                we want to process.  */
+  BOOL    m_processed;       /* The message has been porcessed by us.  */
   
  public:
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID *ppvObj);

@@ -1,4 +1,4 @@
-/* olflange.cpp - Flange between Outlook and the GpgMsg class
+/* olflange.cpp - Connect GpgOL to Outlook
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005, 2007 g10 Code GmbH
  * 
@@ -37,7 +37,6 @@
 
 #include "common.h"
 #include "display.h"
-#include "gpgmsg.hh"
 #include "msgcache.h"
 #include "engine.h"
 #include "mapihelp.h"
@@ -315,8 +314,6 @@ GpgolExt::GpgolExt (void)
 
   if (!g_initdll)
     {
-      if (opt.compat.auto_decrypt)
-        watcher_init_hook ();
       read_options ();
       op_init ();
       g_initdll = TRUE;
@@ -339,7 +336,6 @@ GpgolExt::~GpgolExt (void)
     {
       if (g_initdll)
         {
-	  watcher_free_hook ();
           op_deinit ();
           write_options ();
           g_initdll = FALSE;

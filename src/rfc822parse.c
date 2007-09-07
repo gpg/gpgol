@@ -342,7 +342,9 @@ transition_to_body (rfc822parse_t msg)
   if (!rc)
     {
       /* Store the boundary if we have multipart type. */
-      ctx = rfc822parse_parse_field (msg, "Content-Type", -1);
+      ctx = rfc822parse_parse_field (msg, "GnuPG-Content-Type", -1);
+      if (!ctx)
+        ctx = rfc822parse_parse_field (msg, "Content-Type", -1);
       if (ctx)
         {
           const char *s;
@@ -764,6 +766,7 @@ parse_field (HDR_LINE hdr)
     const unsigned char *name;
     size_t namelen;
   } tspecial_header[] = {
+    { "GnuPG-Content-Type", 18},
     { "Content-Type", 12},
     { "Content-Transfer-Encoding", 25},
     { "Content-Disposition", 19},
