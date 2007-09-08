@@ -29,6 +29,13 @@ extern "C" {
 #endif
 #endif
 
+#if __GNUC__ >= 4 
+# define GPGOL_GCC_A_SENTINEL(a) __attribute__ ((sentinel(a)))
+#else
+# define GPGOL_GCC_A_SENTINEL(a) 
+#endif
+
+
 /* To avoid that a compiler optimizes certain memset calls away, these
    macros may be used instead. */
 #define wipememory2(_ptr,_set,_len) do { \

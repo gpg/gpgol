@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
@@ -53,9 +54,50 @@ static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                        "abcdefghijklmnopqrstuvwxyz" 
                                        "0123456789+/"); 
 
-/* The maximum length of a line we are able to process.  RFC822 allows
-   only for 1000 bytes; thus 2000 seems to be a reasonable value. */
-#define LINEBUFSIZE 2000
+/* The object we use instead of IStream.  It allows us to have a
+   callback method for output and thus for processing stuff
+   recursively.  */
+struct sink_s;
+typedef struct sink_s *sink_t;
+struct sink_s
+{
+  void *cb_data;
+  int (*writefnc)(sink_t sink, const void *data, size_t datalen);
+};
+
+
+/*** local prototypes  ***/
+static int write_multistring (sink_t sink, const char *text1,
+                              ...) GPGOL_GCC_A_SENTINEL(0);
+
+
+
+
+
+/* Standard write method used with a sink_t object.  */
+static int
+sink_std_write (sink_t sink, const void *data, size_t datalen)
+{
+  HRESULT hr;
+  LPSTREAM stream = sink->cb_data;
+
+  if (!stream)
+    {
+      log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
+      return -1;
+    }
+  if (!data)
+    return 0;  /* Flush - nothing to do here.  */
+
+  hr = IStream_Write (stream, data, datalen, NULL);
+  if (hr)
+    {
+      log_error ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
+      return -1;
+    }
+  return 0;
+}
+
 
 /* Make sure that PROTOCOL is usable or return a suitable protocol.
    On error PROTOCOL_UNKNOWN is returned.  */
@@ -84,7 +126,7 @@ check_protocol (protocol_t protocol)
    retruned.  The caller needs to call SaveChanges.  Returns NULL on
    failure in which case STREAM will be set to NULL.  */
 static LPATTACH
-create_mapi_attachment (LPMESSAGE message, LPSTREAM *stream)
+create_mapi_attachment (LPMESSAGE message, sink_t sink)
 {
   HRESULT hr;
   ULONG pos;
@@ -92,7 +134,8 @@ create_mapi_attachment (LPMESSAGE message, LPSTREAM *stream)
   LPATTACH att = NULL;
   LPUNKNOWN punk;
 
-  *stream = NULL;
+  sink->cb_data = NULL;
+  sink->writefnc = NULL;
   hr = IMessage_CreateAttach (message, NULL, 0, &pos, &att);
   if (hr)
     {
@@ -165,7 +208,8 @@ create_mapi_attachment (LPMESSAGE message, LPSTREAM *stream)
                  SRCNAME, __func__, hr); 
       goto failure;
     }
-  *stream = (LPSTREAM)punk;
+  sink->cb_data = (LPSTREAM)punk;
+  sink->writefnc = sink_std_write;
   return att;
 
  failure:
@@ -174,49 +218,69 @@ create_mapi_attachment (LPMESSAGE message, LPSTREAM *stream)
 }
 
 
-/* Wrapper around IStream::Write to print an error message.  */
+/* Write data to a sink_t.  */
 static int 
-write_buffer (LPSTREAM stream, const void *data, size_t datalen)
+write_buffer (sink_t sink, const void *data, size_t datalen)
 {
-  HRESULT hr;
-
-  hr = IStream_Write (stream, data, datalen, NULL);
-  if (hr)
+  if (!sink || !sink->writefnc)
     {
-      log_error ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
+      log_error ("%s:%s: sink not properliy setup", SRCNAME, __func__);
       return -1;
     }
-  return 0;
+  return sink->writefnc (sink, data, datalen);
 }
+
 
 
 /* Write the string TEXT to the IStream STREAM.  Returns 0 on sucsess,
    prints an error message and returns -1 on error.  */
 static int 
-write_string (LPSTREAM stream, const char *text)
+write_string (sink_t sink, const char *text)
 {
-  return write_buffer (stream, text, strlen (text));
+  return write_buffer (sink, text, strlen (text));
 }
 
 
-/* Helper to write a boundary to the output stream.  The leading LF
-   will be written as well.  */
+/* Write the string TEXT1 and all folloing arguments of type (const
+   char*) to the SINK.  The list of argumens needs to be terminated
+   with a NULL.  Returns 0 on sucsess, prints an error message and
+   returns -1 on error.  */
 static int
-write_boundary (LPSTREAM stream, const char *boundary, int lastone)
+write_multistring (sink_t sink, const char *text1, ...)
 {
-  int rc = write_string (stream, "\r\n--");
-  if (!rc)
-    rc = write_string (stream, boundary);
-  if (!rc)
-    rc = write_string (stream, lastone? "--\r\n":"\r\n");
+  va_list arg_ptr;
+  int rc;
+  const char *s;
+  
+  va_start (arg_ptr, text1);
+  s = text1;
+  do
+    rc = write_string (sink, s);
+  while (!rc && (s=va_arg (arg_ptr, const char *)));
+  va_end (arg_ptr);
   return rc;
 }
 
 
-/* Write DATALEN bytes of DATA to STREAM in base64 encoding.  This
+
+/* Helper to write a boundary to the output sink.  The leading LF
+   will be written as well.  */
+static int
+write_boundary (sink_t sink, const char *boundary, int lastone)
+{
+  int rc = write_string (sink, "\r\n--");
+  if (!rc)
+    rc = write_string (sink, boundary);
+  if (!rc)
+    rc = write_string (sink, lastone? "--\r\n":"\r\n");
+  return rc;
+}
+
+
+/* Write DATALEN bytes of DATA to SINK in base64 encoding.  This
    creates a complete Base64 chunk including the trailing fillers.  */
 static int
-write_b64 (LPSTREAM stream, const void *data, size_t datalen)
+write_b64 (sink_t sink, const void *data, size_t datalen)
 {
   int rc;
   const unsigned char *p;
@@ -224,6 +288,7 @@ write_b64 (LPSTREAM stream, const void *data, size_t datalen)
   int idx, quads;
   char outbuf[4];
 
+  log_debug ("  writing base64 of length %d\n", (int)datalen);
   idx = quads = 0;
   for (p = data; datalen; p++, datalen--)
     {
@@ -234,13 +299,13 @@ write_b64 (LPSTREAM stream, const void *data, size_t datalen)
           outbuf[1] = bintoasc[(((*inbuf<<4)&060)|((inbuf[1] >> 4)&017))&077];
           outbuf[2] = bintoasc[(((inbuf[1]<<2)&074)|((inbuf[2]>>6)&03))&077];
           outbuf[3] = bintoasc[inbuf[2]&077];
-          if ((rc = write_buffer (stream, outbuf, 4)))
+          if ((rc = write_buffer (sink, outbuf, 4)))
             return rc;
           idx = 0;
           if (++quads >= (64/4)) 
             {
               quads = 0;
-              if ((rc = write_buffer (stream, "\r\n", 2)))
+              if ((rc = write_buffer (sink, "\r\n", 2)))
                 return rc;
             }
         }
@@ -261,21 +326,21 @@ write_b64 (LPSTREAM stream, const void *data, size_t datalen)
           outbuf[2] = bintoasc[((inbuf[1]<<2)&074)&077];
           outbuf[3] = '=';
         }
-      if ((rc = write_buffer (stream, outbuf, 4)))
+      if ((rc = write_buffer (sink, outbuf, 4)))
         return rc;
       ++quads;
     }
 
   if (quads) 
-    if ((rc = write_buffer (stream, "\r\n", 2)))
+    if ((rc = write_buffer (sink, "\r\n", 2)))
       return rc;
 
   return 0;
 }
 
-/* Write DATALEN bytes of DATA to STREAM in quoted-prinable encoding. */
+/* Write DATALEN bytes of DATA to SINK in quoted-prinable encoding. */
 static int
-write_qp (LPSTREAM stream, const void *data, size_t datalen)
+write_qp (sink_t sink, const void *data, size_t datalen)
 {
   int rc;
   const unsigned char *p;
@@ -297,12 +362,13 @@ write_qp (LPSTREAM stream, const void *data, size_t datalen)
                 outbuf[outidx++] = '=';                               \
                 outbuf[outidx++] = '\r';                              \
                 outbuf[outidx++] = '\n';                              \
-                if ((rc = write_buffer (stream, outbuf, outidx)))     \
+                if ((rc = write_buffer (sink, outbuf, outidx)))       \
                   return rc;                                          \
                 outidx = 0;                                           \
               }                                                       \
           } while (0)
               
+  log_debug ("  writing qp of length %d\n", (int)datalen);
   outidx = 0;
   for (p = data; datalen; p++, datalen--)
     {
@@ -311,7 +377,7 @@ write_qp (LPSTREAM stream, const void *data, size_t datalen)
           /* Line break.  */
           outbuf[outidx++] = '\r';
           outbuf[outidx++] = '\n';
-          if ((rc = write_buffer (stream, outbuf, outidx)))
+          if ((rc = write_buffer (sink, outbuf, outidx)))
             return rc;
           outidx = 0;
           if (*p == '\r')
@@ -363,7 +429,7 @@ write_qp (LPSTREAM stream, const void *data, size_t datalen)
     {
       outbuf[outidx++] = '\r';
       outbuf[outidx++] = '\n';
-      if ((rc = write_buffer (stream, outbuf, outidx)))
+      if ((rc = write_buffer (sink, outbuf, outidx)))
         return rc;
     }
 
@@ -373,15 +439,16 @@ write_qp (LPSTREAM stream, const void *data, size_t datalen)
 }
 
 
-/* Write DATALEN bytes of DATA to STREAM in plain ascii encoding. */
+/* Write DATALEN bytes of DATA to SINK in plain ascii encoding. */
 static int
-write_plain (LPSTREAM stream, const void *data, size_t datalen)
+write_plain (sink_t sink, const void *data, size_t datalen)
 {
   int rc;
   const unsigned char *p;
   char outbuf[100];
   int outidx;
 
+  log_debug ("  writing ascii of length %d\n", (int)datalen);
   outidx = 0;
   for (p = data; datalen; p++, datalen--)
     {
@@ -389,7 +456,7 @@ write_plain (LPSTREAM stream, const void *data, size_t datalen)
         {
           outbuf[outidx++] = '\r';
           outbuf[outidx++] = '\n';
-          if ((rc = write_buffer (stream, outbuf, outidx)))
+          if ((rc = write_buffer (sink, outbuf, outidx)))
             return rc;
           outidx = 0;
           if (*p == '\r')
@@ -424,7 +491,7 @@ write_plain (LPSTREAM stream, const void *data, size_t datalen)
     {
       outbuf[outidx++] = '\r';
       outbuf[outidx++] = '\n';
-      if ((rc = write_buffer (stream, outbuf, outidx)))
+      if ((rc = write_buffer (sink, outbuf, outidx)))
         return rc;
     }
 
@@ -660,17 +727,42 @@ infer_content_encoding (const void *data, size_t datalen)
 
 
 
-/* Write a MIME part to STREAM.  The BOUNDARY is written first the
-   DATA is analyzed and appropriate headers are written.  If FILENAME
-   is given it will be added to the part's header. IS_MAPIBODY should
-   be true if teh data has been retrieved from the body property. */
+/* Write a MIME part to SINK.  First the BOUNDARY is written (unless
+   it is NULL) then the DATA is analyzed and appropriate headers are
+   written.  If FILENAME is given it will be added to the part's
+   header.  IS_MAPIBODY should be passed as true if the data has been
+   retrieved from the body property.  */
 static int
-write_part (LPSTREAM stream, const char *data, size_t datalen,
+write_part (sink_t sink, const char *data, size_t datalen,
             const char *boundary, const char *filename, int is_mapibody)
 {
   int rc;
   const char *ct;
   int use_b64, use_qp, is_text;
+
+  if (filename)
+    {
+      /* If there is a filename strip the directory part.  Take care
+         that there might be slashes of backslashes.  */
+      const char *s1 = strrchr (filename, '/');
+      const char *s2 = strrchr (filename, '\\');
+      
+      if (!s1)
+        s1 = s2;
+      else if (s1 && s2 && s2 > s1)
+        s1 = s2;
+
+      if (s1)
+        filename = s1;
+      if (*filename && filename[1] == ':')
+        filename += 2;
+      if (!*filename)
+        filename = NULL;
+    }
+
+  log_debug ("Writing part of length %d%s filename=`%s'\n",
+             (int)datalen, is_mapibody? " (body)":"", 
+             filename?filename:"[none]");
 
   ct = infer_content_type (data, datalen, filename, is_mapibody, &use_b64);
   use_qp = 0;
@@ -685,42 +777,60 @@ write_part (LPSTREAM stream, const char *data, size_t datalen,
     }
   is_text = !strncmp (ct, "text/", 5);
 
-  if ((rc = write_boundary (stream, boundary, 0)))
-    return rc;
-  if (!(rc = write_string (stream, "Content-Type: ")))
-    if (!(rc = write_string (stream, ct)))
-      rc = write_string (stream, is_text? ";\r\n":"\r\n");
-  if (rc)
+  if (boundary)
+    if ((rc = write_boundary (sink, boundary, 0)))
+      return rc;
+  if ((rc=write_multistring (sink,
+                             "Content-Type: ", ct,
+                             (is_text || filename? ";\r\n" :"\r\n"),
+                             NULL)))
     return rc;
 
   /* OL inserts a charset parameter in many cases, so we do it right
      away for all text parts.  We can assume us-ascii if no special
      encoding is required.  */
   if (is_text)
-    if ((rc = write_string (stream, (!use_qp && !use_b64)?
-                            "\tcharset=\"us-ascii\"\r\n":
-                            "\tcharset=\"utf-8\"\r\n")))
+    if ((rc=write_multistring (sink,
+                               "\tcharset=\"",
+                               (!use_qp && !use_b64? "us-ascii" : "utf-8"),
+                               filename ? "\";\r\n" : "\"\r\n",
+                               NULL)))
       return rc;
-    
+
+  if (filename)
+    if ((rc=write_multistring (sink,
+                               "\tname=\"", filename, "\"\r\n",
+                               NULL)))
+      return rc;
+
   /* Note that we need to output even 7bit because OL inserts that
      anyway.  */
-  if (!(rc = write_string (stream, "Content-Transfer-Encoding: ")))
-    rc = write_string (stream, (use_b64? "base64\r\n":
-                                use_qp? "quoted-printable\r\n":"7bit\r\n"));
-  if (rc)
+  if ((rc = write_multistring (sink,
+                               "Content-Transfer-Encoding: ",
+                               (use_b64? "base64\r\n":
+                                use_qp? "quoted-printable\r\n":"7bit\r\n"),
+                               NULL)))
     return rc;
   
+  if (filename)
+    if ((rc=write_multistring (sink,
+                               "Content-Disposition: attachment;\r\n"
+                               "\tfilename=\"", filename, "\"\r\n",
+                               NULL)))
+      return rc;
+
+  
   /* Write delimiter.  */
-  if ((rc = write_string (stream, "\r\n")))
+  if ((rc = write_string (sink, "\r\n")))
     return rc;
   
   /* Write the content.  */
   if (use_b64)
-    rc = write_b64 (stream, data, datalen);
+    rc = write_b64 (sink, data, datalen);
   else if (use_qp)
-    rc = write_qp (stream, data, datalen);
+    rc = write_qp (sink, data, datalen);
   else
-    rc = write_plain (stream, data, datalen);
+    rc = write_plain (sink, data, datalen);
 
   return rc;
 }
@@ -741,11 +851,10 @@ count_usable_attachments (mapi_attach_item_t *table)
   return count;
 }
 
-/* Write old all attachments from TABLE separated by BOUNDARY to
-   STREAM.  This function needs to be syncronized with
-   count_usable_attachments.  */
+/* Write old all attachments from TABLE separated by BOUNDARY to SINK.
+   This function needs to be syncronized with count_usable_attachments.  */
 static int
-write_attachments (LPSTREAM stream, 
+write_attachments (sink_t sink, 
                    LPMESSAGE message, mapi_attach_item_t *table, 
                    const char *boundary)
 {
@@ -765,7 +874,7 @@ write_attachments (LPSTREAM stream,
             log_debug ("Attachment at index %d: length=%d\n", idx, (int)buflen);
           if (!buffer)
             return -1;
-          rc = write_part (stream, buffer, buflen, boundary,
+          rc = write_part (sink, buffer, buflen, boundary,
                            table[idx].filename, 0);
           xfree (buffer);
         }
@@ -798,156 +907,74 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
 
 
 
-/* Sign the MESSAGE using PROTOCOL.  If PROTOCOL is PROTOCOL_UNKNOWN
-   the engine decides what protocol to use.  On return MESSAGE is
-   modified so that sending it will result in a properly MOSS (that is
-   PGP or S/MIME) signed message.  On failure the function tries to
-   keep the original message intact but there is no 100% guarantee for
-   it. */
-int 
-mime_sign (LPMESSAGE message, protocol_t protocol)
+/* Commit changes to the attachment ATTACH and release the object.
+   SINK needs to be passed as well and will also be closed.  Note that
+   the address of ATTACH is expected so that the fucntion can set it
+   to NULL. */
+static int
+close_mapi_attachment (LPATTACH *attach, sink_t sink)
 {
-  int rc;
   HRESULT hr;
-  LPATTACH outattach;
-  LPSTREAM outstream;
-  char boundary[BOUNDARYSIZE+1];
-  char inner_boundary[BOUNDARYSIZE+1];
-  SPropValue prop;
-  mapi_attach_item_t *att_table = NULL;
-  char *body = NULL;
-  int n_att_usable;
+  LPSTREAM stream = sink? sink->cb_data : NULL;
 
-  protocol = check_protocol (protocol);
-  if (protocol == PROTOCOL_UNKNOWN)
-    return -1;
-
-  outattach = create_mapi_attachment (message, &outstream);
-  if (!outattach)
-    return -1;
-
-  /* Get the attachment info and the body.  */
-  body = mapi_get_body (message, NULL);
-  if (body && !*body)
+  if (!stream)
     {
-      xfree (body);
-      body = NULL;
+      log_error ("%s:%s: sink not setup", SRCNAME, __func__);
+      return -1;
     }
-  att_table = mapi_create_attach_table (message, 0);
-  n_att_usable = count_usable_attachments (att_table);
-  if (!n_att_usable && !body)
-    {
-      log_debug ("%s:%s: can't sign an empty message\n", SRCNAME, __func__);
-      goto failure;
-    }
-
-  /* Write the top header.  */
-  generate_boundary (boundary);
-  rc = write_string (outstream, ("MIME-Version: 1.0\r\n"
-                                 "Content-Type: multipart/signed;\r\n"
-                                 "\tprotocol=\"application/"));
-  if (!rc)
-    rc = write_string (outstream, 
-                       (protocol == PROTOCOL_OPENPGP
-                        ? "pgp-signature" 
-                        : "pkcs7-signature"));
-  if (!rc)
-    rc = write_string (outstream, ("\";\r\n\tboundary=\""));
-  if (!rc)
-    rc = write_string (outstream, boundary);
-  if (!rc)
-    rc = write_string (outstream, "\"\r\n");
-  if (rc)
-    goto failure;
-
-  if ((body && n_att_usable) || n_att_usable > 1)
-    {
-      /* A body and at least one attachment or more than one attachment  */
-      generate_boundary (inner_boundary);
-      rc = write_boundary (outstream, boundary, 0);
-      if (!rc)
-        rc = write_string (outstream, ("Content-Type: multipart/mixed;\r\n"
-                                       "\tboundary=\""));
-      if (!rc)
-        rc = write_string (outstream, inner_boundary);
-      if (!rc)
-        rc = write_string (outstream, "\"\r\n");
-      if (rc)
-        goto failure;
-    }
-  else
-    {
-      /* Only one part.  */
-      *inner_boundary = 0;
-    }
-
-  if (body)
-    rc = write_part (outstream, body, strlen (body), 
-                     *inner_boundary? inner_boundary : boundary, NULL, 1);
-  if (!rc && n_att_usable)
-    rc = write_attachments (outstream, message, att_table,
-                            *inner_boundary? inner_boundary : boundary);
-  if (rc)
-    goto failure;
-
-  /* Finish the possible multipart/mixed. */
-  if (*inner_boundary)
-    {
-      rc = write_boundary (outstream, inner_boundary, 1);
-      if (rc)
-        goto failure;
-    }
-
-  /* Write signature attachment.  We don't write it directly but a
-     palceholder there.  This spaceholder starts with the prefix of a
-     boundary so that it won't accidently occur in the actual content. */
-  if ((rc = write_boundary (outstream, boundary, 0)))
-    goto failure;
-
-  if ((rc = write_string (outstream, 
-                          (protocol == PROTOCOL_OPENPGP)?
-                          "Content-Type: application/pgp-signature\r\n":
-                          "Content-Type: application/pkcs7-signature\r\n")))
-    goto failure;
-
-  /* If we would add "Content-Transfer-Encoding: 7bit\r\n" to this
-     atatchment, Outlooks does not processed with sending and even
-     does not return any error.  A wild guess is that while OL adds
-     this header itself, it detects that it already exists and somehow
-     gets into a problem.  It is not a problem with the other parts,
-     though.  Hmmm, triggered by the top levels CT protocol parameter?
-     Any way, it is not required that we add it as we won't hash
-     it.  */
-
-
-  if ((rc = write_string (outstream, "\r\n")))
-    goto failure;
-
-  if ((rc = write_string (outstream, "--=-=@SIGNATURE@\r\n\r\n")))
-    goto failure;
-
-  /* Write the final boundary and finish the attachment.  */
-  if ((rc = write_boundary (outstream, boundary, 1)))
-    goto failure;
-
-  hr = IStream_Commit (outstream, 0);
+  hr = IStream_Commit (stream, 0);
   if (hr)
     {
       log_error ("%s:%s: Commiting output stream failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      goto failure;
+      return -1;
     }
-  IStream_Release (outstream);
-  outstream = NULL;
-  hr = IAttach_SaveChanges (outattach, KEEP_OPEN_READWRITE);
+  IStream_Release (stream);
+  sink->cb_data = NULL;
+  hr = IAttach_SaveChanges (*attach, 0);
   if (hr)
     {
       log_error ("%s:%s: SaveChanges of the attachment failed: hr=%#lx\n",
                  SRCNAME, __func__, hr); 
-      goto failure;
+      return -1;
     }
-  IAttach_Release (outattach);
-  outattach = NULL;
+  IAttach_Release (*attach);
+  *attach = NULL;
+  return 0;
+}
+
+
+/* Cancel changes to the attachment ATTACH and release the object.
+   SINK needs to be passed as well and will also be closed.  Note that
+   the address of ATTACH is expected so that the fucntion can set it
+   to NULL. */
+static void
+cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
+{
+  LPSTREAM stream = sink? sink->cb_data : NULL;
+
+  if (stream)
+    {
+      IStream_Revert (stream);
+      IStream_Release (stream);
+      sink->cb_data = NULL;
+    }
+  if (*attach)
+    {
+      /* Fixme: Should we try to delete it or is there a Revert method? */
+      IAttach_Release (*attach);
+      *attach = NULL;
+    }
+}
+
+
+
+/* Do the final processing for a message. */
+static int
+finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
+{
+  HRESULT hr;
+  SPropValue prop;
 
   /* Set the message class.  */
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
@@ -957,13 +984,13 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
     {
       log_error ("%s:%s: error setting the message class: hr=%#lx\n",
                  SRCNAME, __func__, hr);
-      goto failure;
+      return -1;
     }
 
   /* Now delete all parts of the MAPI message except for the one
      attachment we just created.  */
-  if ((rc = delete_all_attachments (message, att_table)))
-    goto failure;
+  if (delete_all_attachments (message, att_table))
+    return -1;
   {
     /* Delete the body parts.  We don't return any error because there
        might be no body part at all.  To avoid aliasing problems when
@@ -985,34 +1012,313 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
     {
       log_error ("%s:%s: SaveChanges to the message failed: hr=%#lx\n",
                  SRCNAME, __func__, hr); 
-      goto failure;
+      return -1;
     }
 
-  xfree (body);
-  mapi_release_attach_table (att_table);
   return 0;
-
- failure:
-  if (outstream)
-    {
-      IStream_Revert (outstream);
-      IStream_Release (outstream);
-    }
-  if (outattach)
-    {
-      /* Fixme: Should we try to delete it or is tehre a Revert method? */
-      IAttach_Release (outattach);
-    }
-  xfree (body);
-  mapi_release_attach_table (att_table);
-  return -1;
 }
 
 
+/* Sign the MESSAGE using PROTOCOL.  If PROTOCOL is PROTOCOL_UNKNOWN
+   the engine decides what protocol to use.  On return MESSAGE is
+   modified so that sending it will result in a properly MOSS (that is
+   PGP or S/MIME) signed message.  On failure the function tries to
+   keep the original message intact but there is no 100% guarantee for
+   it. */
+int 
+mime_sign (LPMESSAGE message, protocol_t protocol)
+{
+  int result = -1;
+  int rc;
+  LPATTACH attach;
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  char boundary[BOUNDARYSIZE+1];
+  char inner_boundary[BOUNDARYSIZE+1];
+  mapi_attach_item_t *att_table = NULL;
+  char *body = NULL;
+  int n_att_usable;
+
+  protocol = check_protocol (protocol);
+  if (protocol == PROTOCOL_UNKNOWN)
+    return -1;
+
+  attach = create_mapi_attachment (message, sink);
+  if (!attach)
+    return -1;
+
+  /* Get the attachment info and the body.  */
+  body = mapi_get_body (message, NULL);
+  if (body && !*body)
+    {
+      xfree (body);
+      body = NULL;
+    }
+  att_table = mapi_create_attach_table (message, 0);
+  n_att_usable = count_usable_attachments (att_table);
+  if (!n_att_usable && !body)
+    {
+      log_debug ("%s:%s: can't sign an empty message\n", SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Write the top header.  */
+  generate_boundary (boundary);
+  rc = write_multistring (sink,
+                          "MIME-Version: 1.0\r\n"
+                          "Content-Type: multipart/signed;\r\n"
+                          "\tprotocol=\"application/",
+                          (protocol == PROTOCOL_OPENPGP
+                           ? "pgp-signature"
+                           : "pkcs7-signature"),
+                          "\";\r\n\tboundary=\"",
+                          boundary,
+                          "\"\r\n",
+                          NULL);
+  if (rc)
+    goto failure;
+  
+  if ((body && n_att_usable) || n_att_usable > 1)
+    {
+      /* A body and at least one attachment or more than one attachment  */
+      generate_boundary (inner_boundary);
+      if ((rc = write_boundary (sink, boundary, 0)))
+        goto failure;
+      if ((rc=write_multistring (sink, 
+                                 "Content-Type: multipart/mixed;\r\n",
+                                 "\tboundary=\"", inner_boundary, "\"\r\n",
+                                 NULL)))
+          goto failure;
+    }
+  else /* Only one part.  */
+    *inner_boundary = 0;
+
+
+  if (body)
+    rc = write_part (sink, body, strlen (body),
+                     *inner_boundary? inner_boundary : boundary, NULL, 1);
+  if (!rc && n_att_usable)
+    rc = write_attachments (sink, message, att_table,
+                            *inner_boundary? inner_boundary : boundary);
+  if (rc)
+    goto failure;
+
+
+  xfree (body);
+  body = NULL;
+
+  /* Finish the possible multipart/mixed. */
+  if (*inner_boundary)
+    {
+      rc = write_boundary (sink, inner_boundary, 1);
+      if (rc)
+        goto failure;
+    }
+
+
+  /* Write signature attachment.  We don't write it directly but use a
+     placeholder.  */
+  if ((rc = write_boundary (sink, boundary, 0)))
+    goto failure;
+
+  if ((rc=write_string (sink, 
+                        (protocol == PROTOCOL_OPENPGP
+                         ? "Content-Type: application/pgp-signature\r\n"
+                         : "Content-Type: application/pkcs7-signature\r\n"))))
+    goto failure;
+
+  /* If we would add "Content-Transfer-Encoding: 7bit\r\n" to this
+     attachment, Outlooks does not processed with sending and even
+     does not return any error.  A wild guess is that while OL adds
+     this header itself, it detects that it already exists and somehow
+     gets into a problem.  It is not a problem with the other parts,
+     though.  Hmmm, triggered by the top levels CT protocol parameter?
+     Any way, it is not required that we add it as we won't hash
+     it.  */
+
+  if ((rc = write_string (sink, "\r\n")))
+    goto failure;
+
+  /* Let the placeholder start with the prefix of a boundary so that
+     it won't accidently occur in the actual content. */
+  if ((rc = write_string (sink, "--=-=@SIGNATURE@\r\n\r\n")))
+    goto failure;
+
+  /* Write the final boundary and finish the attachment.  */
+  if ((rc = write_boundary (sink, boundary, 1)))
+    goto failure;
+
+  if (close_mapi_attachment (&attach, sink))
+    goto failure;
+
+  if (finalize_message (message, att_table))
+    goto failure;
+
+  result = 0;  /* Everything is fine, fall through the cleanup now.  */
+
+ failure:
+  cancel_mapi_attachment (&attach, sink);
+  xfree (body);
+  mapi_release_attach_table (att_table);
+  return result;
+}
+
+
+
+/* Sink write method used by mime_encrypt.  */
+static int
+sink_encryption_write (sink_t encsink, const void *data, size_t datalen)
+{
+  sink_t outsink = encsink->cb_data;
+
+  if (!outsink)
+    {
+      log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
+      return -1;
+    }
+  if (!data)
+    {
+      /* Flush */
+      return 0;
+    }
+
+  return write_buffer (outsink, data, datalen);
+}
+
+
+/* Encrypt the MESSAGE.  */
 int 
 mime_encrypt (LPMESSAGE message, protocol_t protocol)
 {
-  return -1;
+  int result = -1;
+  int rc;
+  LPATTACH attach;
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  struct sink_s encsinkmem;
+  sink_t encsink = &encsinkmem;
+  char boundary[BOUNDARYSIZE+1];
+  char inner_boundary[BOUNDARYSIZE+1];
+  mapi_attach_item_t *att_table = NULL;
+  char *body = NULL;
+  int n_att_usable;
+
+  protocol = check_protocol (protocol);
+  if (protocol == PROTOCOL_UNKNOWN)
+    return -1;
+
+  /* FIXME For now only PGP/MIME is supported.  */
+
+  attach = create_mapi_attachment (message, sink);
+  if (!attach)
+    return -1;
+
+  /* Get the attachment info and the body.  */
+  body = mapi_get_body (message, NULL);
+  if (body && !*body)
+    {
+      xfree (body);
+      body = NULL;
+    }
+  att_table = mapi_create_attach_table (message, 0);
+  n_att_usable = count_usable_attachments (att_table);
+  if (!n_att_usable && !body)
+    {
+      log_debug ("%s:%s: can't encrypt an empty message\n", SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Write the top header.  */
+  generate_boundary (boundary);
+  if ((rc=write_multistring (sink,
+                             "MIME-Version: 1.0\r\n"
+                             "Content-Type: multipart/encrypted;\r\n"
+                             "\tprotocol=\"application/pgp-encrypted\";\r\n",
+                             "\tboundary=\"", boundary, "\"\r\n",
+                             NULL)))
+    goto failure;
+
+  /* Write the PGP/MIME encrypted part.  */
+  if ((rc = write_boundary (sink, boundary, 0)))
+    goto failure;
+  if ((rc=write_multistring (sink,
+                             "Content-Type: application/pgp-encrypted\r\n"
+                             "\r\n"
+                             "Version: 1\r\n",
+                             NULL)))
+    goto failure;
+
+  /* And start the second part.  */
+  if ((rc = write_boundary (sink, boundary, 0)))
+    goto failure;
+  if ((rc=write_multistring (sink,
+                             "Content-Type: application/octet-stream\r\n"
+                             "\r\n", NULL)))
+    goto failure;
+
+  /* Create a new sink for encrypting the following stuff.  */
+  encsink->cb_data = sink;
+  encsink->writefnc = sink_encryption_write;
+
+  
+  if ((body && n_att_usable) || n_att_usable > 1)
+    {
+      /* A body and at least one attachment or more than one attachment  */
+      generate_boundary (inner_boundary);
+      if ((rc=write_multistring (encsink, 
+                                 "Content-Type: multipart/mixed;\r\n",
+                                 "\tboundary=\"", inner_boundary, "\"\r\n",
+                                 NULL)))
+        goto failure;
+    }
+  else /* Only one part.  */
+    *inner_boundary = 0;
+
+
+  if (body)
+    rc = write_part (encsink, body, strlen (body), 
+                     *inner_boundary? inner_boundary : NULL, NULL, 1);
+  if (!rc && n_att_usable)
+    rc = write_attachments (encsink, message, att_table,
+                            *inner_boundary? inner_boundary : NULL);
+  if (rc)
+    goto failure;
+
+  xfree (body);
+  body = NULL;
+
+  /* Finish the possible multipart/mixed. */
+  if (*inner_boundary && (rc = write_boundary (encsink, inner_boundary, 1)))
+    goto failure;
+
+  /* Flush the encryption sink and thus wait for the encryption to
+     get ready.  */
+  if ((rc = write_buffer (encsink, NULL, 0)))
+    goto failure;
+  /* FIXME: Release the encryption context etc.  Using the flush above
+     is not a clean way of doing it.  */
+  encsink->cb_data = NULL; /* Not needed anymore.  */
+  
+
+  /* Write the final boundary and finish the attachment.  */
+  if ((rc = write_boundary (sink, boundary, 1)))
+    goto failure;
+
+  if (close_mapi_attachment (&attach, sink))
+    goto failure;
+
+  if (finalize_message (message, att_table))
+    goto failure;
+
+  result = 0;  /* Everything is fine, fall through the cleanup now.  */
+
+ failure:
+  if (encsink->cb_data)
+    ;/*FIXME:  Cancel the encryption.  */
+  cancel_mapi_attachment (&attach, sink);
+  xfree (body);
+  mapi_release_attach_table (att_table);
+  return result;
 }
 
 
