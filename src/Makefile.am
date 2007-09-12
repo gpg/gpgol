@@ -34,7 +34,9 @@ gpgol_SOURCES = \
 	mimeparser.c mimeparser.h   \
 	mimemaker.c mimemaker.h     \
 	msgcache.c msgcache.h       \
-        engine-gpgme.c	engine.h    \
+	engine.c engine.h           \
+        engine-assuan.c engine-assuan.h \
+        engine-gpgme.c engine-gpgme.h   \
 	rfc822parse.c rfc822parse.h \
         common.h common.c util.h    \
 	xmalloc.h		    \

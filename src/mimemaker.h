@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 int mime_sign (LPMESSAGE message, protocol_t protocol);
-int mime_encrypt (LPMESSAGE message, protocol_t protocol);
+int mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients);
 int mime_sign_encrypt (LPMESSAGE message, protocol_t protocol);
 
 

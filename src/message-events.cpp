@@ -351,7 +351,7 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = mime_sign_encrypt (msg, PROTOCOL_OPENPGP);
       else if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
-        rc = mime_encrypt (msg, PROTOCOL_OPENPGP);
+        rc = message_encrypt (msg, hWnd);
       else if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = mime_sign (msg, PROTOCOL_OPENPGP);
       else

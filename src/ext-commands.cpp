@@ -31,7 +31,6 @@
 #include "common.h"
 #include "display.h"
 #include "msgcache.h"
-#include "engine.h"
 #include "mapihelp.h"
 
 #include "olflange-ids.h"

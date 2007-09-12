@@ -230,6 +230,13 @@ write_buffer (sink_t sink, const void *data, size_t datalen)
   return sink->writefnc (sink, data, datalen);
 }
 
+/* Same as above but used for passing as callback function.  */
+static int
+write_buffer_voidarg (void *opaque, const void *data, size_t datalen)
+{
+  sink_t sink = opaque;
+  return write_buffer (sink, data, datalen);
+}
 
 
 /* Write the string TEXT to the IStream STREAM.  Returns 0 on sucsess,
@@ -1039,6 +1046,8 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   char *body = NULL;
   int n_att_usable;
 
+  memset (sink, 0, sizeof *sink);
+
   protocol = check_protocol (protocol);
   if (protocol == PROTOCOL_UNKNOWN)
     return -1;
@@ -1169,26 +1178,21 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
 static int
 sink_encryption_write (sink_t encsink, const void *data, size_t datalen)
 {
-  sink_t outsink = encsink->cb_data;
+  engine_filter_t filter = encsink->cb_data;
 
-  if (!outsink)
+  if (!filter)
     {
       log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
       return -1;
     }
-  if (!data)
-    {
-      /* Flush */
-      return 0;
-    }
 
-  return write_buffer (outsink, data, datalen);
+  return engine_filter (filter, data, datalen);
 }
 
 
 /* Encrypt the MESSAGE.  */
 int 
-mime_encrypt (LPMESSAGE message, protocol_t protocol)
+mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 {
   int result = -1;
   int rc;
@@ -1202,6 +1206,10 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol)
   mapi_attach_item_t *att_table = NULL;
   char *body = NULL;
   int n_att_usable;
+  engine_filter_t filter;
+
+  memset (sink, 0, sizeof *sink);
+  memset (encsink, 0, sizeof *encsink);
 
   protocol = check_protocol (protocol);
   if (protocol == PROTOCOL_UNKNOWN)
@@ -1212,6 +1220,14 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol)
   attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
+
+  /* Prepare the encryption.  We do this early as it is quite common
+     that some recipients are not be available and thus the encryption
+     will fail early. */
+  if (engine_create_filter (&filter, write_buffer_voidarg, sink))
+    goto failure;
+  if (engine_encrypt_start (filter, protocol, recipients))
+    goto failure;
 
   /* Get the attachment info and the body.  */
   body = mapi_get_body (message, NULL);
@@ -1257,9 +1273,8 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol)
     goto failure;
 
   /* Create a new sink for encrypting the following stuff.  */
-  encsink->cb_data = sink;
+  encsink->cb_data = filter;
   encsink->writefnc = sink_encryption_write;
-
   
   if ((body && n_att_usable) || n_att_usable > 1)
     {
@@ -1291,12 +1306,13 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol)
   if (*inner_boundary && (rc = write_boundary (encsink, inner_boundary, 1)))
     goto failure;
 
-  /* Flush the encryption sink and thus wait for the encryption to
-     get ready.  */
+  /* Flush the encryption sink and wait for the encryption to get
+     ready.  */
   if ((rc = write_buffer (encsink, NULL, 0)))
     goto failure;
-  /* FIXME: Release the encryption context etc.  Using the flush above
-     is not a clean way of doing it.  */
+  if ((rc = engine_wait (filter)))
+    goto failure;
+  filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
   
 
@@ -1313,8 +1329,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol)
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
 
  failure:
-  if (encsink->cb_data)
-    ;/*FIXME:  Cancel the encryption.  */
+  engine_cancel (filter);
   cancel_mapi_attachment (&attach, sink);
   xfree (body);
   mapi_release_attach_table (att_table);

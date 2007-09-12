@@ -30,6 +30,7 @@
 #include "common.h"
 #include "mapihelp.h"
 #include "mimeparser.h"
+#include "mimemaker.h"
 #include "message.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -497,6 +498,104 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
 }
 
 
+
+
+/* Return an array of strings with the recipients of the message. On
+   success a malloced array is returned containing allocated strings
+   for each recipient.  The end of the array is marked by NULL.
+   Caller is responsible for releasing the array.  On failure NULL is
+   returned.  */
+static char **
+get_recipients (LPMESSAGE message)
+{
+  static SizedSPropTagArray (1L, PropRecipientNum) = {1L, {PR_EMAIL_ADDRESS}};
+  HRESULT hr;
+  LPMAPITABLE lpRecipientTable = NULL;
+  LPSRowSet lpRecipientRows = NULL;
+  unsigned int rowidx;
+  LPSPropValue row;
+  char **rset;
+  int rsetidx;
+
+
+  if (!message)
+    return NULL;
+
+  hr = message->GetRecipientTable (0, &lpRecipientTable);
+  if (FAILED (hr)) 
+    {
+      log_debug_w32 (-1, "%s:%s: GetRecipientTable failed", SRCNAME, __func__);
+      return NULL;
+    }
+
+  hr = HrQueryAllRows (lpRecipientTable, (LPSPropTagArray) &PropRecipientNum,
+                       NULL, NULL, 0L, &lpRecipientRows);
+  if (FAILED (hr)) 
+    {
+      log_debug_w32 (-1, "%s:%s: HrQueryAllRows failed", SRCNAME, __func__);
+      if (lpRecipientTable)
+        lpRecipientTable->Release();
+      return NULL;
+    }
+
+  rset = (char**)xcalloc (lpRecipientRows->cRows+1, sizeof *rset);
+
+  for (rowidx=0, rsetidx=0; rowidx < lpRecipientRows->cRows; rowidx++)
+    {
+      if (!lpRecipientRows->aRow[rowidx].cValues)
+        continue;
+      row = lpRecipientRows->aRow[rowidx].lpProps;
+
+      switch (PROP_TYPE (row->ulPropTag))
+        {
+        case PT_UNICODE:
+          if ((rset[rsetidx] = wchar_to_utf8 (row->Value.lpszW)))
+            rsetidx++;
+          else
+            log_debug ("%s:%s: error converting recipient to utf8\n",
+                       SRCNAME, __func__);
+          break;
+      
+        case PT_STRING8: /* Assume ASCII. */
+          rset[rsetidx++] = xstrdup (row->Value.lpszA);
+          break;
+          
+        default:
+          log_debug ("%s:%s: proptag=0x%08lx not supported\n",
+                     SRCNAME, __func__, row->ulPropTag);
+          break;
+        }
+    }
+
+  if (lpRecipientTable)
+    lpRecipientTable->Release();
+  if (lpRecipientRows)
+    FreeProws(lpRecipientRows);	
+  
+  log_debug ("%s:%s: got %d recipients:\n", SRCNAME, __func__, rsetidx);
+  for (rsetidx=0; rset[rsetidx]; rsetidx++)
+    log_debug ("%s:%s: \t`%s'\n", SRCNAME, __func__, rset[rsetidx]);
+
+  return rset;
+}
+
+
+static void
+release_recipient_array (char **recipients)
+{
+  int idx;
+
+  if (recipients)
+    {
+      for (idx=0; recipients[idx]; idx++)
+        xfree (recipients[idx]);
+      xfree (recipients);
+    }
+}
+
+
+
+
 
 
 #if 0
@@ -644,3 +743,35 @@ message_sign (LPMESSAGE message, HWND hwnd, int want_html)
 }
 
 #endif
+
+
+/* Encrypt the MESSAGE.  */
+int 
+message_encrypt (LPMESSAGE message, HWND hwnd)
+{
+  gpg_error_t err;
+  char **recipients;
+
+  recipients = get_recipients (message);
+  if (!recipients || !recipients[0])
+    {
+      MessageBox (hwnd, _("No recipients for encrypted message given"),
+                  "GpgOL", MB_ICONERROR|MB_OK);
+
+      err = gpg_error (GPG_ERR_GENERAL);
+    }
+  else
+    {
+      err = mime_encrypt (message, PROTOCOL_OPENPGP, recipients);
+      if (err)
+        {
+          char buf[200];
+          
+          snprintf (buf, sizeof buf,
+                    _("Encryption failed (%s)"), gpg_strerror (err));
+          MessageBox (hwnd, buf, "GpgOL", MB_ICONERROR|MB_OK);
+        }
+    }
+  release_recipient_array (recipients);
+  return err;
+}

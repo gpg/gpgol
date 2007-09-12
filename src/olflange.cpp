@@ -315,7 +315,7 @@ GpgolExt::GpgolExt (void)
   if (!g_initdll)
     {
       read_options ();
-      op_init ();
+      engine_init ();
       g_initdll = TRUE;
       log_debug ("%s:%s: first time initialization done\n",
                  SRCNAME, __func__);
@@ -336,7 +336,7 @@ GpgolExt::~GpgolExt (void)
     {
       if (g_initdll)
         {
-          op_deinit ();
+          engine_deinit ();
           write_options ();
           g_initdll = FALSE;
           log_debug ("%s:%s: DLL closed down\n", SRCNAME, __func__);

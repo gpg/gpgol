@@ -1,21 +1,22 @@
-/* engine.h - Crypto engine
- *	Copyright (C) 2005 g10 Code GmbH
+/* engine.h - Crypto engine dispatcher
+ *	Copyright (C) 2007 g10 Code GmbH
  *
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  *
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1 
  * of the License, or (at your option) any later version.
  *  
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with GPGol; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with GpgOL; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 
 #ifndef GPGOL_ENGINE_H
@@ -28,75 +29,50 @@ extern "C" {
 #endif
 #endif
 
-#include <gpgme.h>
-
 typedef enum 
   {
     OP_SIG_NORMAL = 0,
     OP_SIG_DETACH = 1,
     OP_SIG_CLEAR  = 2
   } 
-op_sigtype_t;
+engine_sigtype_t;
 
 
-int op_init (void);
-void op_deinit (void);
+/* The key info object.  */
+struct engine_keyinfo_s;
+typedef struct engine_keyinfo_s *engine_keyinfo_t;
 
-#define op_debug_enable(file) op_set_debug_mode (5, (file))
-#define op_debug_disable() op_set_debug_mode (0, NULL)
-void op_set_debug_mode (int val, const char *file);
-
-int op_encrypt (const char *inbuf, char **outbuf,
-                gpgme_key_t *keys, gpgme_key_t sign_key, int ttl);
-int op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream,
-                       gpgme_key_t *keys, gpgme_key_t sign_key, int ttl);
-
-int op_sign (const char *inbuf, char **outbuf, int mode,
-             gpgme_key_t sign_key, int ttl);
-int op_sign_stream (LPSTREAM instream, LPSTREAM outstream, int mode,
-                    gpgme_key_t sign_key, int ttl);
-
-int op_decrypt (const char *inbuf, char **outbuf, int ttl,
-                const char *filename, gpgme_data_t attestation, 
-                int preview_mode);
-int op_decrypt_stream (LPSTREAM instream, LPSTREAM outstream, int ttl,
-                       const char *filename, gpgme_data_t attestation);
-int op_decrypt_stream_to_buffer (LPSTREAM instream, char **outbuf, int ttl,
-                                 const char *filename,
-                                 gpgme_data_t attestation);
-int op_decrypt_stream_to_gpgme (gpgme_protocol_t protocol,
-                                LPSTREAM instream, gpgme_data_t out, int ttl,
-                                const char *filename, gpgme_data_t attestation,
-                                int preview_mode);
-
-int op_verify (const char *inbuf, char **outbuf, const char *filename,
-               gpgme_data_t attestation);
-int op_verify_detached_sig (LPSTREAM data, const char *sig,
-                            const char *filename, gpgme_data_t attestation);
-int op_verify_detached_sig_mem (const char *data_string,
-                                const char *sig_string, const char *filename,
-                                gpgme_data_t attestation);
-int op_verify_detached_sig_gpgme (gpgme_protocol_t protocol, 
-                                  gpgme_data_t data, gpgme_data_t sig,
-                                  const char *filename,
-                                  gpgme_data_t attestation);
+/* The filter object.  */
+struct engine_filter_s;
+typedef struct engine_filter_s *engine_filter_t;
 
 
-int op_export_keys (const char *pattern[], const char *outfile);
 
-int op_lookup_keys (char **names, gpgme_key_t **keys, char ***unknown);
-gpgme_key_t op_get_one_key (char *pattern);
 
-const char *userid_from_key (gpgme_key_t k);
-const char *keyid_from_key (gpgme_key_t k);
+/*-- engine.c -- */
+int engine_init (void);
+void engine_deinit (void);
 
-const char *op_strerror (int err);
-const char *op_strsource (int err);
+/* This callback function is to be used only by engine-gpgme.c.   */
+void engine_gpgme_finished (engine_filter_t filter, gpg_error_t status);
 
+int engine_filter (engine_filter_t filter,
+                   const void *indata, size_t indatalen);
+int engine_create_filter (engine_filter_t *r_filter,
+                          int (*outfnc) (void *, const void *, size_t),
+                          void *outfncdata);
+int engine_wait (engine_filter_t filter);
+void engine_cancel (engine_filter_t filter);
+
+int engine_encrypt_start (engine_filter_t filter, 
+                          protocol_t protocol, char **recipients);
+
+
+
+void engine_release_key (engine_keyinfo_t key);
+int  engine_get_signer_key (engine_keyinfo_t *r_key, int encrypting);
 
 #ifdef __cplusplus
 }
 #endif
-
-
 #endif /*GPGOL_ENGINE_H*/

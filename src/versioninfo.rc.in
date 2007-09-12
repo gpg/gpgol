@@ -36,14 +36,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "This plugin is available under the terms of the GNU Lesser General Public License.\0"
             VALUE "CompanyName", "g10 Code GmbH\0"
-            VALUE "FileDescription", "GPGol - GnuPG plugin for Outlook\0"
+            VALUE "FileDescription", "GpgOL - GnuPG plugin for Outlook\0"
             VALUE "FileVersion", "@VERSION@\0"
             VALUE "InternalName", "gpgol\0"
             VALUE "LegalCopyright", "Copyright © 2005 g10 Code GmbH\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "gpgol.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "GPGol\0"
+            VALUE "ProductName", "GpgOL\0"
             VALUE "ProductVersion", "@VERSION@\0"
             VALUE "SpecialBuild", "@BUILD_TIMESTAMP@\0"
         END

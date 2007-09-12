@@ -26,5 +26,7 @@
 int message_verify (LPMESSAGE message, msgtype_t msgtype, int force);
 int message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force);
 
+int message_encrypt (LPMESSAGE message, HWND hwnd);
+
 
 #endif /*MESSAGE_H*/

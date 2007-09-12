@@ -1,5 +1,5 @@
-/* engine-gpgme.c - Crypto engine with GPGME
- *	Copyright (C) 2005, 2006, 2007 g10 Code GmbH
+/* engine-assuan.c - Crypto engine suing an Assuan server
+ *	Copyright (C) 2005, 2006, 1007 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -22,7 +22,7 @@
 /* Please note that we assume UTF-8 strings everywhere except when
    noted. */
    
-
+#if 0
 #include <config.h>
 
 #include <stdio.h>
@@ -38,7 +38,6 @@
 #include "common.h"
 #include "passcache.h"
 #include "engine.h"
-#include "engine-gpgme.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                        SRCNAME, __func__, __LINE__); \
@@ -49,7 +48,6 @@ static char *debug_file = NULL;
 static int init_done = 0;
 
 
-static DWORD WINAPI waiter_thread (void *dummy);
 static void add_verify_attestation (gpgme_data_t at, 
                                     gpgme_ctx_t ctx, 
                                     gpgme_verify_result_t res,
@@ -68,21 +66,12 @@ cleanup (void)
 }
 
 
-/* Enable or disable GPGME debug mode. */
+/* Enable or disable the debug mode. */
 void
 op_set_debug_mode (int val, const char *file)
 {
-  const char *s= "GPGME_DEBUG";
-
   cleanup ();
-  if (val > 0) 
-    {
-      debug_file = (char *)xcalloc (1, strlen (file) + strlen (s) + 2);
-      sprintf (debug_file, "%s=%d;%s", s, val, file);
-      putenv (debug_file);
-    }
-  else
-    putenv ("GPGME_DEBUG=");
+  /* FIXME: Enable assuan debugging. */
 }
 
 
@@ -94,89 +83,22 @@ op_deinit (void)
 }
 
 
-/* Initialize the operation system. */
+/* Initialize this operation subsystem. */
 int
 op_init (void)
 {
-  gpgme_error_t err;
-
   if (init_done == 1)
     return 0;
 
-  if (!gpgme_check_version (NEED_GPGME_VERSION)) 
-    {
-      log_debug ("gpgme is too old (need %s, have %s)\n",
-                 NEED_GPGME_VERSION, gpgme_check_version (NULL) );
-      return -1;
-    }
+  /*FIXME*/
 
-  err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
-  if (err)
-    {
-      log_debug ("gpgme can't find a suitable OpenPGP backend: %s\n",
-                 gpgme_strerror (err));
-      return err;
-    }
-
-  err = gpgme_engine_check_version (GPGME_PROTOCOL_CMS);
-  if (err)
-    {
-      log_debug ("gpgme can't find a suitable CMS backend: %s\n",
-                 gpgme_strerror (err));
-      return err;
-    }
-
-  {
-    HANDLE th;
-    DWORD tid;
-
-    th = CreateThread (NULL, 64*1024, waiter_thread, NULL, 0, &tid);
-    if (th == INVALID_HANDLE_VALUE)
-      log_error ("failed to start the gpgme waiter thread\n");
-    else
-      CloseHandle (th);
-  }
 
   init_done = 1;
   return 0;
 }
 
 
-static DWORD WINAPI
-waiter_thread (void *dummy)
-{
-  gpgme_ctx_t ctx;
-  gpg_error_t err;
-  void *filter;
-
-  (void)dummy;
-
-  TRACEPOINT ();
-  for (;;)
-    {
-      /*  Note: We don't use hang becuase this will end up in a tight
-          loop and does not do a voluntary context switch.  Thus we do
-          this by ourself.  Actually it would be better to start
-          gpgme-Wait only if we really have something to do but that
-          is more complicated.  */
-      ctx = gpgme_wait (NULL, &err, 0);
-      if (ctx)
-        {
-          gpgme_get_progress_cb (ctx, NULL, &filter);
-          engine_gpgme_finished (filter, err);
-          gpgme_release (ctx);
-        }
-      else if (err)
-        log_debug ("%s:%s: gpgme_wait failed: %s\n", SRCNAME, __func__, 
-                   gpg_strerror (err));
-      else
-        Sleep (50);
-    }
-}
-
-
-
-/* The read callback used by GPGME to read data from an IStream object. */
+/* The read callback used by Assuan to read data from an IStream object. */
 static ssize_t
 stream_read_cb (void *handle, void *buffer, size_t size)
 {
@@ -202,8 +124,7 @@ stream_read_cb (void *handle, void *buffer, size_t size)
   return nread;
 }
 
-
-/* The write callback used by GPGME to write data to an IStream object. */
+/* The write callback used by Assuan to write data to an IStream object. */
 static ssize_t
 stream_write_cb (void *handle, const void *buffer, size_t size)
 {
@@ -222,36 +143,6 @@ stream_write_cb (void *handle, const void *buffer, size_t size)
 }
 
 
-/* This routine should be called immediately after an operation to
-   make sure that the passphrase cache gets updated. ERR is expected
-   to be the error code from the gpgme operation and PASS_CB_VALUE the
-   context used by the passphrase callback.  
-
-   On any error we flush a possible passphrase for the used keyID from
-   the cache.  On success we store the passphrase into the cache.  The
-   cache will take care of the supplied TTL and for example actually
-   delete it if the TTL is 0 or an empty value is used. We also wipe
-   the passphrase from the context here. */
-static void
-update_passphrase_cache (int err, struct passphrase_cb_s *pass_cb_value)
-{
-  if (*pass_cb_value->keyid)
-    {
-      if (err)
-        passcache_put (pass_cb_value->keyid, NULL, 0);
-      else
-        passcache_put (pass_cb_value->keyid, pass_cb_value->pass,
-                       pass_cb_value->ttl);
-    }
-  if (pass_cb_value->pass)
-    {
-      wipestring (pass_cb_value->pass);
-      xfree (pass_cb_value->pass);
-      pass_cb_value->pass = NULL;
-    }
-}
-
-
 
 
 /* Try to figure out why the encryption failed and provide a more
@@ -262,7 +153,7 @@ check_encrypt_result (gpgme_ctx_t ctx, gpgme_error_t err)
 {
   gpgme_encrypt_result_t res;
 
-  res = gpgme_op_encrypt_result (ctx);
+  res = 0 /*gpgme_op_encrypt_result (ctx)*/;
   if (!res)
     return err;
   if (res->invalid_recipients != NULL)
@@ -408,196 +299,6 @@ op_encrypt_stream (LPSTREAM instream, LPSTREAM outstream, gpgme_key_t *keys,
     gpgme_data_release (out);
   return err;
 }
-
-
-/* Release an array of GPGME keys. */
-static void 
-release_key_array (gpgme_key_t *keys)
-{
-  int i;
-
-  if (keys)
-    {
-      for (i = 0; keys[i]; i++) 
-	gpgme_key_release (keys[i]);
-      xfree (keys);
-    }
-}
-
-/* Return the number of strings in the array STRINGS. */
-static size_t
-count_strings (char **strings)
-{
-  size_t i;
-
-  for (i=0; strings[i]; i++)
-    ;
-  return i;
-}
-
-/* Return the number of keys in the gpgme_key_t array KEYS.  */
-static size_t
-count_keys (gpgme_key_t *keys)
-{
-  size_t i;
-  
-  for (i=0; keys[i]; i++)
-    ;
-  return i;
-}
-
-
-/* Return an array of gpgme key objects derived from thye list of
-   strings in RECPIENTS. */
-static gpg_error_t
-prepare_recipient_keys (gpgme_key_t **r_keys, char **recipients, HWND hwnd)
-{
-  gpg_error_t err;
-  gpgme_key_t *keys = NULL;
-  char **unknown = NULL;
-  size_t n_keys, n_unknown, n_recp;
-  int i;
-
-  *r_keys = NULL;
-  if (op_lookup_keys (recipients, &keys, &unknown))
-    {
-      log_debug ("%s:%s: leave (lookup keys failed)\n", SRCNAME, __func__);
-      return gpg_error (GPG_ERR_GENERAL);  
-    }
-
-  n_recp = count_strings (recipients);
-  n_keys = count_keys (keys);
-  n_unknown = count_strings (unknown);
-
-  log_debug ("%s:%s: found %d recipients, need %d, unknown=%d\n",
-             SRCNAME, __func__, (int)n_keys, (int)n_recp, (int)n_unknown);
-  
-  if (n_keys != n_recp)
-    {
-      unsigned int opts;
-      gpgme_key_t *keys2;
-
-      log_debug ("%s:%s: calling recipient_dialog_box2", SRCNAME, __func__);
-      opts = recipient_dialog_box2 (keys, unknown, &keys2);
-      release_key_array (keys);
-      keys = keys2;
-      if ( (opts & OPT_FLAG_CANCEL) ) 
-        {
-          err = gpg_error (GPG_ERR_CANCELED);
-          goto leave;
-	}
-    }
-
-
-  /* If a default key has been set, add it to the list of keys.  Check
-     that the key is actually available. */
-  if (opt.enable_default_key && opt.default_key && *opt.default_key)
-    {
-      gpgme_key_t defkey;
-      
-      defkey = op_get_one_key (opt.default_key);
-      if (!defkey)
-        {
-          MessageBox (hwnd,
-                      _("The configured default encryption key is not "
-                        "available or does not unambigiously specify a key. "
-                        "Please fix this in the option dialog.\n\n"
-                        "This message won't be be encrypted to this key!"),
-                      _("Encryption"), MB_ICONWARNING|MB_OK);
-        }
-      else
-        {
-          gpgme_key_t *tmpkeys;
-
-          n_keys = count_keys (keys) + 1;
-          tmpkeys = xcalloc (n_keys+1, sizeof *tmpkeys);
-          for (i = 0; keys[i]; i++) 
-            {
-              tmpkeys[i] = keys[i];
-              gpgme_key_ref (tmpkeys[i]);
-            }
-          tmpkeys[i++] = defkey;
-          tmpkeys[i] = NULL;
-          release_key_array (keys);
-          keys = tmpkeys;
-        }
-    }
-  
-  if (keys)
-    {
-      for (i=0; keys[i]; i++)
-        log_debug ("%s:%s: recp.%d 0x%s %s\n", SRCNAME, __func__,
-                   i, keyid_from_key (keys[i]), userid_from_key (keys[i]));
-    }
-  *r_keys = keys;
-  keys = NULL;
-  err = 0;
-
- leave:
-  release_key_array (keys);
-  return err;
-}
-
-
-/* Encrypt the data from INDATA to the OUTDATA object for all
-   recpients given in the NULL terminated array KEYS.  If SIGN_KEY is
-   not NULL the message will also be signed.  On termination of the
-   encryption command engine_gpgme_finished() is called with
-   NOTIFY_DATA as the first argument.  
-
-   This global function is used to avoid allocating an extra context
-   just for this notification.  We abuse the gpgme_set_progress_cb
-   value for storing the pointer with the gpgme context.  */
-int
-op_encrypt_data (gpgme_data_t indata, gpgme_data_t outdata,
-                 void *notify_data, /* FIXME: Add hwnd */
-                 char **recipients, gpgme_key_t sign_key, int ttl)
-{
-  gpg_error_t err;
-  struct passphrase_cb_s cb;
-  gpgme_ctx_t ctx = NULL;
-  gpgme_key_t *keys = NULL;
-
-  memset (&cb, 0, sizeof cb);
-  cb.ttl = ttl;
-  cb.decrypt_cmd = 0;
-
-  err = prepare_recipient_keys (&keys, recipients, NULL);
-  if (err)
-    goto leave;
-
-  err = gpgme_new (&ctx);
-  if (err)
-    goto leave;
-  gpgme_set_progress_cb (ctx, NULL, notify_data);
-
-  gpgme_set_armor (ctx, 1);
-  /* FIXME:  We should not hardcode always trust. */
-  if (sign_key)
-    {
-      gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cb);
-      cb.ctx = ctx;
-      err = gpgme_signers_add (ctx, sign_key);
-      if (!err)
-        err = gpgme_op_encrypt_sign_start (ctx, keys,
-                                           GPGME_ENCRYPT_ALWAYS_TRUST,
-                                           indata, outdata);
-      cb.ctx = NULL;
-      update_passphrase_cache (err, &cb);
-    }
-  else
-    err = gpgme_op_encrypt_start (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, 
-                                  indata, outdata);
-/*   if (err) */
-/*     err = check_encrypt_result (ctx, err); */
-
- leave:
-  if (ctx && err)
-    gpgme_release (ctx);
-  release_key_array (keys);
-  return err;
-}
-
 
 
 /* Sign and encrypt the data in INBUF into a newly allocated buffer at
@@ -1744,3 +1445,4 @@ op_strsource (int err)
 }
 
 
+#endif
