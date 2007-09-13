@@ -50,6 +50,8 @@ static int init_done = 0;
 
 
 static DWORD WINAPI waiter_thread (void *dummy);
+static void update_passphrase_cache (int err, 
+                                     struct passphrase_cb_s *pass_cb_value);
 static void add_verify_attestation (gpgme_data_t at, 
                                     gpgme_ctx_t ctx, 
                                     gpgme_verify_result_t res,
@@ -70,7 +72,7 @@ cleanup (void)
 
 /* Enable or disable GPGME debug mode. */
 void
-op_set_debug_mode (int val, const char *file)
+op_gpgme_set_debug_mode (int val, const char *file)
 {
   const char *s= "GPGME_DEBUG";
 
@@ -88,7 +90,7 @@ op_set_debug_mode (int val, const char *file)
 
 /* Cleanup static resources. */
 void
-op_deinit (void)
+op_gpgme_deinit (void)
 {
   cleanup ();
 }
@@ -96,7 +98,7 @@ op_deinit (void)
 
 /* Initialize the operation system. */
 int
-op_init (void)
+op_gpgme_init (void)
 {
   gpgme_error_t err;
 
@@ -148,6 +150,7 @@ waiter_thread (void *dummy)
   gpgme_ctx_t ctx;
   gpg_error_t err;
   void *filter;
+  void *pass_cb;
 
   (void)dummy;
 
@@ -164,6 +167,10 @@ waiter_thread (void *dummy)
         {
           gpgme_get_progress_cb (ctx, NULL, &filter);
           engine_gpgme_finished (filter, err);
+          gpgme_get_passphrase_cb (ctx, NULL, &pass_cb);
+          if (pass_cb)
+            update_passphrase_cache (err, (struct passphrase_cb_s *)pass_cb);
+          xfree (pass_cb);
           gpgme_release (ctx);
         }
       else if (err)
@@ -294,7 +301,7 @@ op_encrypt (const char *inbuf, char **outbuf, gpgme_key_t *keys,
 
   *outbuf = NULL;
 
-  op_init ();
+  op_gpgme_init ();
   err = gpgme_new (&ctx);
   if (err)
     goto leave;
@@ -549,9 +556,10 @@ prepare_recipient_keys (gpgme_key_t **r_keys, char **recipients, HWND hwnd)
    just for this notification.  We abuse the gpgme_set_progress_cb
    value for storing the pointer with the gpgme context.  */
 int
-op_encrypt_data (gpgme_data_t indata, gpgme_data_t outdata,
-                 void *notify_data, /* FIXME: Add hwnd */
-                 char **recipients, gpgme_key_t sign_key, int ttl)
+op_gpgme_encrypt_data (protocol_t protocol, 
+                       gpgme_data_t indata, gpgme_data_t outdata,
+                       void *notify_data, /* FIXME: Add hwnd */
+                       char **recipients, gpgme_key_t sign_key, int ttl)
 {
   gpg_error_t err;
   struct passphrase_cb_s cb;
@@ -569,6 +577,12 @@ op_encrypt_data (gpgme_data_t indata, gpgme_data_t outdata,
   err = gpgme_new (&ctx);
   if (err)
     goto leave;
+  if (protocol == PROTOCOL_SMIME)
+    {
+      err = gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
+      if (err)
+        goto leave;
+    }
   gpgme_set_progress_cb (ctx, NULL, notify_data);
 
   gpgme_set_armor (ctx, 1);
@@ -599,6 +613,61 @@ op_encrypt_data (gpgme_data_t indata, gpgme_data_t outdata,
 }
 
 
+/* Created a detached signature for INDATA and write it to OUTDATA.
+   On termination of the signing command engine_gpgme_finished() is
+   called with NOTIFY_DATA as the first argument.  */
+int
+op_gpgme_sign_data (protocol_t protocol, 
+                    gpgme_data_t indata, gpgme_data_t outdata,
+                    void *notify_data /* FIXME: Add hwnd */)
+{
+  gpg_error_t err;
+  struct passphrase_cb_s *cb;
+  gpgme_ctx_t ctx = NULL;
+  gpgme_key_t sign_key = NULL;
+
+  if (signer_dialog_box (&sign_key, NULL, 0) == -1)
+    {
+      log_debug ("%s:%s: leave (dialog failed)\n", SRCNAME, __func__);
+      return gpg_error (GPG_ERR_CANCELED);  
+    }
+
+  cb = xcalloc (1, sizeof *cb);
+  cb->ttl = 0 /*FIXME: ttl*/;
+
+  err = gpgme_new (&ctx);
+  if (err)
+    goto leave;
+  if (protocol == PROTOCOL_SMIME)
+    {
+      err = gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
+      if (err)
+        goto leave;
+    }
+
+  gpgme_set_progress_cb (ctx, NULL, notify_data);
+
+  gpgme_set_armor (ctx, 1);
+  gpgme_set_passphrase_cb (ctx, passphrase_callback_box, cb);
+  cb->ctx = ctx;
+  err = gpgme_signers_add (ctx, sign_key);
+  if (!err)
+    err = gpgme_op_sign_start (ctx, indata, outdata, GPGME_SIG_MODE_DETACH);
+
+ leave:
+  if (ctx && err)
+    {
+      xfree (cb);
+      gpgme_release (ctx);
+    }
+  gpgme_key_unref (sign_key);
+  return err;
+}
+
+
+
+
+
 
 /* Sign and encrypt the data in INBUF into a newly allocated buffer at
    OUTBUF. Caller needs to free the returned buffer using gpgme_free. */
@@ -617,7 +686,7 @@ op_sign (const char *inbuf, char **outbuf, int mode,
   cb.decrypt_cmd = 0;
 
   *outbuf = NULL;
-  op_init ();
+  op_gpgme_init ();
   
   err = gpgme_new (&ctx);
   if (err) 
@@ -740,7 +809,7 @@ op_decrypt (const char *inbuf, char **outbuf, int ttl, const char *filename,
   gpgme_error_t err;
   
   *outbuf = NULL;
-  op_init ();
+  op_gpgme_init ();
 
   memset (&cb, 0, sizeof cb);
   cb.ttl = ttl;
@@ -1028,7 +1097,7 @@ op_verify (const char *inbuf, char **outbuf, const char *filename,
   if (outbuf)
     *outbuf = NULL;
 
-  op_init ();
+  op_gpgme_init ();
 
   err = gpgme_new (&ctx);
   if (err)
@@ -1092,7 +1161,7 @@ op_verify_detached_sig (LPSTREAM data_stream,
   cbs.read = stream_read_cb;
   cbs.write = stream_write_cb;
 
-  op_init ();
+  op_gpgme_init ();
 
   err = gpgme_new (&ctx);
   if (err)
@@ -1142,7 +1211,7 @@ op_verify_detached_sig_mem (const char *data_string,
   gpgme_error_t err;
   gpgme_verify_result_t res = NULL;
 
-  op_init ();
+  op_gpgme_init ();
 
   err = gpgme_new (&ctx);
   if (err)
@@ -1191,7 +1260,7 @@ op_verify_detached_sig_gpgme (gpgme_protocol_t protocol,
   gpgme_error_t err;
   gpgme_verify_result_t res = NULL;
 
-  op_init ();
+  op_gpgme_init ();
 
   err = gpgme_new (&ctx);
   if (err)

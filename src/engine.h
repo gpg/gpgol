@@ -66,11 +66,9 @@ void engine_cancel (engine_filter_t filter);
 
 int engine_encrypt_start (engine_filter_t filter, 
                           protocol_t protocol, char **recipients);
+int engine_sign_start (engine_filter_t filter, protocol_t protocol);
 
 
-
-void engine_release_key (engine_keyinfo_t key);
-int  engine_get_signer_key (engine_keyinfo_t *r_key, int encrypting);
 
 #ifdef __cplusplus
 }

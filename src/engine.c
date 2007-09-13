@@ -267,7 +267,7 @@ engine_gpgme_finished (engine_filter_t filter, gpg_error_t status)
 int
 engine_init (void)
 {
-  op_init ();
+  op_gpgme_init ();
   return 0;
 }
 
@@ -276,7 +276,7 @@ engine_init (void)
 void
 engine_deinit (void)
 {
-  op_deinit ();
+  op_gpgme_deinit ();
 
 }
 
@@ -509,58 +509,41 @@ engine_cancel (engine_filter_t filter)
 
 /* Start an encryption operation to all RECIPEINTS using PROTOCOL
    RECIPIENTS is a NULL terminated array of rfc2822 addresses.  FILTER
-   is an object create by engine_create_filter.  The caller needs to
+   is an object created by engine_create_filter.  The caller needs to
    call engine_wait to finish the operation.  A filter object may not
    be reused after having been used through this function.  However,
    the lifetime of the filter object lasts until the final engine_wait
-   or engine_cabcel.  */
+   or engine_cancel.  */
 int
 engine_encrypt_start (engine_filter_t filter,
                       protocol_t protocol, char **recipients)
 {
   gpg_error_t err;
 
-  err = op_encrypt_data (filter->indata, filter->outdata,
-                         filter, recipients, NULL, 0);
+  err = op_gpgme_encrypt_data (protocol, filter->indata, filter->outdata,
+                               filter, recipients, NULL, 0);
+  return err;
+}
+
+
+/* Start an detached signing operation.
+   FILTER
+   is an object created by engine_create_filter.  The caller needs to
+   call engine_wait to finish the operation.  A filter object may not
+   be reused after having been used through this function.  However,
+   the lifetime of the filter object lasts until the final engine_wait
+   or engine_cancel.  */
+int
+engine_sign_start (engine_filter_t filter, protocol_t protocol)
+{
+  gpg_error_t err;
+
+  err = op_gpgme_sign_data (protocol, filter->indata, filter->outdata,
+                            filter);
   return err;
 }
 
 
 
-
-/* Release a KEY.  Do nothing if KEY is NULL.  */
-void
-engine_release_key (engine_keyinfo_t key)
-{
-  if (!key)
-    return;
-  gpgme_key_release (key->gpgme.key);
-  key->gpgme.key = NULL;
-}
-
-
-/* Return a signing key and store it at the R_KEY.  the caller sahll
-   set ENCRYPTING to true if the message will also be encrypted.  On
-   error true is returned and NULL stored at R_KEY.  Not ethat
-   depending on the actual engine use the retruned key might be NULL -
-   thus this shall not be used as an error indication. */
-int 
-engine_get_signer_key (engine_keyinfo_t *r_key, int encrypting)
-{
-  engine_keyinfo_t key;
-  gpgme_key_t sign_key = NULL;
-
-  *r_key = NULL;
-  if (signer_dialog_box (&sign_key, NULL, encrypting) == -1)
-    {
-      log_debug ("%s:%s: failed to get key from dialog\n", SRCNAME, __func__);
-      return gpg_error (GPG_ERR_CANCELED);  
-    }
-  key = xcalloc (1, sizeof **r_key);
-  key->gpgme.key = sign_key;
-
-  *r_key = key;
-  return 0;
-}
 
 

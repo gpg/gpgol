@@ -62,7 +62,17 @@ typedef struct sink_s *sink_t;
 struct sink_s
 {
   void *cb_data;
+  sink_t extrasink;
   int (*writefnc)(sink_t sink, const void *data, size_t datalen);
+};
+
+
+/* Object used to collect data in a memory buffer.  */
+struct databuf_s
+{
+  size_t len;      /* Used length.  */
+  size_t size;     /* Allocated length of BUF.  */
+  char *buf;       /* Malloced buffer.  */
 };
 
 
@@ -419,6 +429,14 @@ write_qp (sink_t sink, const void *data, size_t datalen)
           outbuf[outidx++] = tohex ((*p>>4)&15);
           outbuf[outidx++] = tohex (*p&15);
         }
+      else if (!outidx && datalen >= 5 && !memcmp (p, "From ", 5))
+        {
+          /* Protect the 'F' so that MTAs won't prefix the "From "
+             with an '>' */
+          outbuf[outidx++] = '=';
+          outbuf[outidx++] = tohex ((*p>>4)&15);
+          outbuf[outidx++] = tohex (*p&15);
+        }
       else if (*p >= '!' && *p <= '~' && *p != '=')
         {
           do_softlf (1);
@@ -711,6 +729,12 @@ infer_content_encoding (const void *data, size_t datalen)
         {
           /* This look pretty much like a our own boundary.
              We better protect it by forcing QP encoding.  */
+          need_qp = 1;
+        }
+      else if (len == 1 && datalen >= 5 && !memcmp (p, "From ", 5))
+        {
+          /* The usual From hack is required so that MTAs do not
+             prefix it with an '>'.  */
           need_qp = 1;
         }
     }
@@ -1012,7 +1036,7 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
     proparray.aulPropTag[0] = PR_BODY_HTML;
     IMessage_DeleteProps (message, &proparray, NULL);
   }
-  
+
   /* Save the Changes.  */
   hr = IMessage_SaveChanges (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
   if (hr)
@@ -1025,6 +1049,64 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
   return 0;
 }
 
+
+
+/* Sink write method used by mime_sign.  We write the data to the
+   filter and also to the EXTRASINK but we don't pass a flush request
+   to EXTRASINK. */
+static int
+sink_hashing_write (sink_t hashsink, const void *data, size_t datalen)
+{
+  int rc;
+  engine_filter_t filter = hashsink->cb_data;
+
+  if (!filter || !hashsink->extrasink)
+    {
+      log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
+      return -1;
+    }
+  
+  rc = engine_filter (filter, data, datalen);
+  if (!rc && data && datalen)
+    write_buffer (hashsink->extrasink, data, datalen);
+  return rc;
+}
+
+/* This function is called by the filter to collect the output which
+   is a detached signature.  */
+static int
+collect_signature (void *opaque, const void *data, size_t datalen)
+{
+  struct databuf_s *db = opaque;
+
+  if (db->len + datalen >= db->size)
+    {
+      db->size += datalen + 1024;
+      db->buf = xrealloc (db->buf, db->size);
+    }
+  memcpy (db->buf + db->len, data, datalen);
+  db->len += datalen;
+
+  return 0;
+}
+
+
+/* Helper to create the signing header.  This includes enough space
+   for later fixup of the micalg parameter.  */
+ static void
+create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
+                           const char *boundary, const char *micalg)
+{
+  snprintf (buffer, buflen,
+            "MIME-Version: 1.0\r\n"
+            "Content-Type: multipart/signed;\r\n"
+            "\tprotocol=\"application/%s\";\r\n"
+            "\tmicalg=%-15.15s;\r\n"
+            "\tboundary=\"%s\"\r\n"
+            "\r\n",
+            (protocol==PROTOCOL_OPENPGP? "pgp-signature":"pkcs7-signature"),
+            micalg, boundary);
+}
 
 /* Sign the MESSAGE using PROTOCOL.  If PROTOCOL is PROTOCOL_UNKNOWN
    the engine decides what protocol to use.  On return MESSAGE is
@@ -1040,13 +1122,20 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   LPATTACH attach;
   struct sink_s sinkmem;
   sink_t sink = &sinkmem;
+  struct sink_s hashsinkmem;
+  sink_t hashsink = &hashsinkmem;
   char boundary[BOUNDARYSIZE+1];
   char inner_boundary[BOUNDARYSIZE+1];
   mapi_attach_item_t *att_table = NULL;
   char *body = NULL;
   int n_att_usable;
+  char top_header[BOUNDARYSIZE+200];
+  engine_filter_t filter;
+  struct databuf_s sigbuffer;
 
   memset (sink, 0, sizeof *sink);
+  memset (hashsink, 0, sizeof *hashsink);
+  memset (&sigbuffer, 0, sizeof sigbuffer);
 
   protocol = check_protocol (protocol);
   if (protocol == PROTOCOL_UNKNOWN)
@@ -1055,6 +1144,12 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
+
+  /* Prepare the signing.  */
+  if (engine_create_filter (&filter, collect_signature, &sigbuffer))
+    goto failure;
+  if (engine_sign_start (filter, protocol))
+    goto failure;
 
   /* Get the attachment info and the body.  */
   body = mapi_get_body (message, NULL);
@@ -1073,60 +1168,66 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
 
   /* Write the top header.  */
   generate_boundary (boundary);
-  rc = write_multistring (sink,
-                          "MIME-Version: 1.0\r\n"
-                          "Content-Type: multipart/signed;\r\n"
-                          "\tprotocol=\"application/",
-                          (protocol == PROTOCOL_OPENPGP
-                           ? "pgp-signature"
-                           : "pkcs7-signature"),
-                          "\";\r\n\tboundary=\"",
-                          boundary,
-                          "\"\r\n",
-                          NULL);
-  if (rc)
+  create_top_signing_header (top_header, sizeof top_header,
+                             protocol, boundary, "xxx");
+  if ((rc = write_string (sink, top_header)))
     goto failure;
-  
+
+  /* Create the inner boundary if we have a body and at least one
+     attachment or more than one attachment.  */
   if ((body && n_att_usable) || n_att_usable > 1)
-    {
-      /* A body and at least one attachment or more than one attachment  */
-      generate_boundary (inner_boundary);
-      if ((rc = write_boundary (sink, boundary, 0)))
-        goto failure;
-      if ((rc=write_multistring (sink, 
-                                 "Content-Type: multipart/mixed;\r\n",
-                                 "\tboundary=\"", inner_boundary, "\"\r\n",
-                                 NULL)))
-          goto failure;
-    }
-  else /* Only one part.  */
+    generate_boundary (inner_boundary);
+  else 
     *inner_boundary = 0;
+
+  /* Write the boundary so that it is not included in the hashing.  */
+  if ((rc = write_boundary (sink, boundary, 0)))
+    goto failure;
+
+  /* Create a new sink for hashing and wire/hash our content.  */
+  hashsink->cb_data = filter;
+  hashsink->extrasink = sink;
+  hashsink->writefnc = sink_hashing_write;
+
+  /* Note that OL2003 will add an extra line after the multipart
+     header, thus we do the same to avoid running all through an
+     IConverterSession first. */
+  if (*inner_boundary
+      && (rc=write_multistring (hashsink, 
+                                "Content-Type: multipart/mixed;\r\n",
+                                "\tboundary=\"", inner_boundary, "\"\r\n",
+                                "\r\n",  /* <-- extra line */
+                                NULL)))
+        goto failure;
 
 
   if (body)
-    rc = write_part (sink, body, strlen (body),
-                     *inner_boundary? inner_boundary : boundary, NULL, 1);
+    rc = write_part (hashsink, body, strlen (body),
+                     *inner_boundary? inner_boundary : NULL, NULL, 1);
   if (!rc && n_att_usable)
-    rc = write_attachments (sink, message, att_table,
-                            *inner_boundary? inner_boundary : boundary);
+    rc = write_attachments (hashsink, message, att_table,
+                            *inner_boundary? inner_boundary : NULL);
   if (rc)
     goto failure;
-
 
   xfree (body);
   body = NULL;
 
   /* Finish the possible multipart/mixed. */
-  if (*inner_boundary)
-    {
-      rc = write_boundary (sink, inner_boundary, 1);
-      if (rc)
-        goto failure;
-    }
+  if (*inner_boundary && (rc = write_boundary (hashsink, inner_boundary, 1)))
+    goto failure;
 
+  /* Here we are ready with the hashing.  Flush the filter and wait
+     for the signing process to finish.  */
+  if ((rc = write_buffer (hashsink, NULL, 0)))
+    goto failure;
+  if ((rc = engine_wait (filter)))
+    goto failure;
+  filter = NULL; /* Not valid anymore.  */
+  hashsink->cb_data = NULL; /* Not needed anymore.  */
+  
 
-  /* Write signature attachment.  We don't write it directly but use a
-     placeholder.  */
+  /* Write signature attachment.  */
   if ((rc = write_boundary (sink, boundary, 0)))
     goto failure;
 
@@ -1137,25 +1238,65 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
     goto failure;
 
   /* If we would add "Content-Transfer-Encoding: 7bit\r\n" to this
-     attachment, Outlooks does not processed with sending and even
-     does not return any error.  A wild guess is that while OL adds
-     this header itself, it detects that it already exists and somehow
-     gets into a problem.  It is not a problem with the other parts,
+     attachment, Outlooks does not proceed with sending and even does
+     not return any error.  A wild guess is that while OL adds this
+     header itself, it detects that it already exists and somehow gets
+     into a problem.  It is not a problem with the other parts,
      though.  Hmmm, triggered by the top levels CT protocol parameter?
-     Any way, it is not required that we add it as we won't hash
+     Anyway, it is not required that we add it as we won't hash
      it.  */
 
   if ((rc = write_string (sink, "\r\n")))
     goto failure;
 
-  /* Let the placeholder start with the prefix of a boundary so that
-     it won't accidently occur in the actual content. */
-  if ((rc = write_string (sink, "--=-=@SIGNATURE@\r\n\r\n")))
+  /* Write the signature.  We add an extra CR,LF which should not harm
+     and a terminating 0. */
+  collect_signature (&sigbuffer, "\r\n", 3); 
+  if ((rc = write_string (sink, sigbuffer.buf)))
     goto failure;
+
 
   /* Write the final boundary and finish the attachment.  */
   if ((rc = write_boundary (sink, boundary, 1)))
     goto failure;
+
+  /* Fixup the micalg parameter.  */
+  {
+    HRESULT hr;
+    LARGE_INTEGER off;
+    LPSTREAM stream = sink->cb_data;
+
+    off.QuadPart = 0;
+    hr = IStream_Seek (stream, off, STREAM_SEEK_SET, NULL);
+    if (hr)
+      {
+        log_error ("%s:%s: seeking back to the begin failed: hr=%#lx",
+                   SRCNAME, __func__, hr);
+        goto failure;
+      }
+
+    create_top_signing_header (top_header, sizeof top_header,
+                               protocol, boundary, "pgp-sha1");
+
+    hr = IStream_Write (stream, top_header, strlen (top_header), NULL);
+    if (hr)
+      {
+        log_error ("%s:%s: writing fixed micalg failed: hr=%#lx",
+                   SRCNAME, __func__, hr);
+        goto failure;
+      }
+
+    /* Better seek again to the end. */
+    off.QuadPart = 0;
+    hr = IStream_Seek (stream, off, STREAM_SEEK_END, NULL);
+    if (hr)
+      {
+        log_error ("%s:%s: seeking back to the end failed: hr=%#lx",
+                   SRCNAME, __func__, hr);
+        goto failure;
+      }
+  }
+
 
   if (close_mapi_attachment (&attach, sink))
     goto failure;
@@ -1163,17 +1304,22 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   if (finalize_message (message, att_table))
     goto failure;
 
+  mapi_to_mime (message, "c:\\tmp\\x.msg");
+
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
 
  failure:
+  engine_cancel (filter);
   cancel_mapi_attachment (&attach, sink);
   xfree (body);
   mapi_release_attach_table (att_table);
+  xfree (sigbuffer.buf);
   return result;
 }
 
 
 
+
 /* Sink write method used by mime_encrypt.  */
 static int
 sink_encryption_write (sink_t encsink, const void *data, size_t datalen)

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-09-06 21:27+0200\n"
+"POT-Creation-Date: 2007-09-11 20:30+0200\n"
 "PO-Revision-Date: 2007-04-13 12:55+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -23,62 +23,62 @@ msgstr "GPG - Sichern der entschlüsselten Anlage"
 msgid "Select GPG Key Manager"
 msgstr "Das Schlüsselverwaltungsprogramm festlegen"
 
-#: src/engine-gpgme.c:1004
+#: src/engine-gpgme.c:1099
 msgid "Fingerprint: "
 msgstr "Fingerabdruck: "
 
-#: src/engine-gpgme.c:1061
+#: src/engine-gpgme.c:1156
 msgid "This signature is valid\n"
 msgstr "Diese Unterschrift ist korrekt\n"
 
-#: src/engine-gpgme.c:1063
+#: src/engine-gpgme.c:1158
 msgid "signature state is \"green\"\n"
 msgstr "Status der Unterschrift ist \"grün\"\n"
 
-#: src/engine-gpgme.c:1065
+#: src/engine-gpgme.c:1160
 msgid "signature state is \"red\"\n"
 msgstr "Status der Unterschrift ist \"rot\"\n"
 
-#: src/engine-gpgme.c:1069
+#: src/engine-gpgme.c:1164
 msgid "Warning: One of the keys has been revoked\n"
 msgstr "Warnung: Einer der Schlüssel wurde widerrufen\n"
 
-#: src/engine-gpgme.c:1079
+#: src/engine-gpgme.c:1174
 msgid "Warning: The key used to create the signature expired at: "
 msgstr ""
 "Warnung: Der Schlüssel mit der diese Unterschrift erzeugt wurde verfiel am: "
 
-#: src/engine-gpgme.c:1085
+#: src/engine-gpgme.c:1180
 msgid "Warning: At least one certification key has expired\n"
 msgstr ""
 "Warnung: Mindestens einer der Zertifizierungsschlüssel ist abgelaufen\n"
 
-#: src/engine-gpgme.c:1091
+#: src/engine-gpgme.c:1186
 msgid "Warning: The signature expired at: "
 msgstr "Die Unterschrift verfiel am: "
 
-#: src/engine-gpgme.c:1097
+#: src/engine-gpgme.c:1192
 msgid "Can't verify due to a missing key or certificate\n"
 msgstr ""
 "Aufrund eines fehlenden Schlüssels ist eine Überprüfung nicht möglich\n"
 
-#: src/engine-gpgme.c:1101
+#: src/engine-gpgme.c:1196
 msgid "The CRL is not available\n"
 msgstr "Die CRL ist nicht verfügbar\n"
 
-#: src/engine-gpgme.c:1107
+#: src/engine-gpgme.c:1202
 msgid "Available CRL is too old\n"
 msgstr "Die vorhandene CRL ist zu alt\n"
 
-#: src/engine-gpgme.c:1112
+#: src/engine-gpgme.c:1207
 msgid "A policy requirement was not met\n"
 msgstr "Eine Richtlinie wurde nicht erfüllt\n"
 
-#: src/engine-gpgme.c:1118
+#: src/engine-gpgme.c:1213
 msgid "A system error occured"
 msgstr "Ein Systemfehler ist aufgetreten"
 
-#: src/engine-gpgme.c:1155
+#: src/engine-gpgme.c:1250
 msgid ""
 "WARNING: We have NO indication whether the key belongs to the person named "
 "as shown above\n"
@@ -86,12 +86,12 @@ msgstr ""
 "WARNUNG: Es gibt keinen Hinweis darauf, ob der Schlüssel wirklich der Person "
 "gehört, die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1162
+#: src/engine-gpgme.c:1257
 msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
 msgstr ""
 "WARNUNG: Der Schlüssel gehört NICHT der Person die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1166
+#: src/engine-gpgme.c:1261
 msgid ""
 "WARNING: It is NOT certain that the key belongs to the person named as shown "
 "above\n"
@@ -99,43 +99,43 @@ msgstr ""
 "WARNING: Es ist nicht sicher, daß der Schlüssel der Person gehört, die oben "
 "angezeigt ist\n"
 
-#: src/engine-gpgme.c:1199
+#: src/engine-gpgme.c:1294
 msgid "Verification started at: "
 msgstr "Überprüfung begann am: "
 
-#: src/engine-gpgme.c:1204
+#: src/engine-gpgme.c:1299
 msgid "Verification result for: "
 msgstr "Prüfungsresultat für: "
 
-#: src/engine-gpgme.c:1205
+#: src/engine-gpgme.c:1300
 msgid "[unnamed part]"
 msgstr "[Unbenannter Teil]"
 
-#: src/engine-gpgme.c:1223 src/engine-gpgme.c:1253
+#: src/engine-gpgme.c:1318 src/engine-gpgme.c:1348
 msgid "Good signature from: "
 msgstr "Korrekte Unterschrift von: "
 
-#: src/engine-gpgme.c:1230
+#: src/engine-gpgme.c:1325
 msgid "                aka: "
 msgstr "                    alias: "
 
-#: src/engine-gpgme.c:1234 src/engine-gpgme.c:1256
+#: src/engine-gpgme.c:1329 src/engine-gpgme.c:1351
 msgid "            created: "
 msgstr "                  erzeugt: "
 
-#: src/engine-gpgme.c:1243
+#: src/engine-gpgme.c:1338
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FALSCHE* Unterschrift, vorgeblich von: "
 
-#: src/engine-gpgme.c:1266
+#: src/engine-gpgme.c:1361
 msgid "Error checking signature"
 msgstr "Fehler beim Prüfen der Unterschrift"
 
-#: src/engine-gpgme.c:1282
+#: src/engine-gpgme.c:1377
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Anfang Notation (Unterschrift von: "
 
-#: src/engine-gpgme.c:1302
+#: src/engine-gpgme.c:1397
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 

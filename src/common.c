@@ -167,6 +167,15 @@ xcalloc (size_t m, size_t n)
     return p;
 }
 
+void *
+xrealloc (void *a, size_t n)
+{
+  void *p = realloc (a, n);
+  if (!p)
+    out_of_core ();
+  return p;
+}
+
 char*
 xstrdup (const char *s)
 {

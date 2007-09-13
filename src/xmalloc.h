@@ -32,6 +32,7 @@ extern "C" {
 /*-- common.c --*/
 void* xmalloc (size_t n);
 void* xcalloc (size_t m, size_t n);
+void *xrealloc (void *a, size_t n);
 char* xstrdup (const char *s);
 void  xfree (void *p);
 void out_of_core (void);

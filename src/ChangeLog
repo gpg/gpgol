@@ -1,3 +1,7 @@
+2007-09-13  Werner Koch  <wk@g10code.com>
+
+	* common.c (xrealloc): New.
+
 2007-09-11  Werner Koch  <wk@g10code.com>
 
 	* engine-gpgme.c (op_encrypt_data): New.
