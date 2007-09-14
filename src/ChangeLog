@@ -1,3 +1,7 @@
+2007-09-14  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c: Rewrote most of it.
+
 2007-09-13  Werner Koch  <wk@g10code.com>
 
 	* common.c (xrealloc): New.

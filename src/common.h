@@ -34,12 +34,14 @@ extern "C" {
 #endif
 #endif
 
-/* Identifiers for the protocol.  */
+/* Identifiers for the protocol.  We use different one than those use
+   by gpgme.  FIXME: We might want to define an unknown protocol to
+   non-null and define such a value also in gpgme. */
 typedef enum
   {
     PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_OPENPGP,
-    PROTOCOL_SMIME
+    PROTOCOL_OPENPGP = 1000,
+    PROTOCOL_SMIME   = 1001
   }
 protocol_t;
 

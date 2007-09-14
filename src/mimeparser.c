@@ -761,7 +761,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
 
 
 /* This handler is called by GPGME with the decrypted plaintext. */
-static ssize_t
+static int
 plaintext_handler (void *handle, const void *buffer, size_t size)
 {
   mime_context_t ctx = handle;
@@ -895,20 +895,27 @@ show_mimestruct (mimestruct_item_t mimestruct)
 
 
 
+
 int
-mime_verify (const char *message, size_t messagelen, 
-             LPMESSAGE mapi_message, int is_smime,
-             int ttl, gpgme_data_t attestation, HWND hwnd, int preview_mode)
+mime_verify (protocol_t protocol, const char *message, size_t messagelen, 
+             LPMESSAGE mapi_message, HWND hwnd, int preview_mode)
 {
   gpg_error_t err = 0;
   mime_context_t ctx;
   const char *s;
   size_t len;
+  char *signature = NULL;
+  engine_filter_t filter = NULL;
 
-  (void)is_smime;  /* Not yet used.  */
-
-  log_debug ("%s:%s: enter", SRCNAME, __func__);
-
+  /* Note: PROTOCOL is not used here but figured out directly while
+     collecting the message.  Eventually it might help use setup a
+     proper verification context right at startup to avoid collecting
+     all the stuff.  However there are a couple of problems with that
+     - for example we don't know whether gpgsm behaves correctly by
+     first reading all the data and only the reading the signature.  I
+     guess it is the case but that needs to be checked first.  It is
+     just a performance issue.  */
+ 
   ctx = xcalloc (1, sizeof *ctx + LINEBUFSIZE);
   ctx->linebufsize = LINEBUFSIZE;
   ctx->hwnd = hwnd;
@@ -943,54 +950,67 @@ mime_verify (const char *message, size_t messagelen,
     }
   /* Note: the last character should be a LF, if not we ignore such an
      incomplete last line.  */
-
+  if (ctx->sig_data && gpgme_data_write (ctx->sig_data, "", 1) == 1)
+    {
+      signature = gpgme_data_release_and_get_mem (ctx->sig_data, NULL);
+      ctx->sig_data = NULL; 
+    }
 
   /* Now actually verify the signature. */
-  if (!err && ctx->signed_data && ctx->sig_data)
+  if (!err && ctx->signed_data && signature)
     {
-      char *tmp;
-      gpgme_protocol_t xprot;
-      int inv_prot = 0;
-
       gpgme_data_seek (ctx->signed_data, 0, SEEK_SET);
-      gpgme_data_seek (ctx->sig_data, 0, SEEK_SET);
-      if (ctx->protocol == PROTOCOL_OPENPGP)
-        {
-          tmp = native_to_utf8 (_("[OpenPGP signature]"));
-          xprot = GPGME_PROTOCOL_OpenPGP;
-        }
-      else if (ctx->protocol == PROTOCOL_SMIME)
-        {
-          tmp = native_to_utf8 (_("[S/MIME signature]"));
-          xprot = GPGME_PROTOCOL_CMS;
-        }
-      else
-        {
-          tmp = native_to_utf8 (_("[Unknown signature protocol]"));
-          inv_prot = 1;
-        }
+      
+      if ((err=engine_create_filter (&filter, NULL, NULL)))
+        goto leave;
+      if ((err=engine_verify_start (filter, signature, ctx->protocol)))
+        goto leave;
 
-      err = (inv_prot
-             ? gpg_error (GPG_ERR_UNSUPPORTED_PROTOCOL)
-             : op_verify_detached_sig_gpgme (xprot,
-                                             ctx->signed_data, ctx->sig_data,
-                                             tmp, attestation));
-      log_debug ("%s:%s: checked signature: %s <%s>", 
-                 SRCNAME, __func__, gpg_strerror (err), op_strsource (err));
-      xfree (tmp);
+      /* Filter the data.  */
+      do
+        {
+          int nread;
+          char buffer[4096];
+          
+          nread = gpgme_data_read (ctx->signed_data, buffer, sizeof buffer);
+          if (nread < 0)
+            {
+              err = gpg_error_from_syserror ();
+              log_error ("%s:%s: gpgme_data_read failed: %s", 
+                         SRCNAME, __func__, gpg_strerror (err));
+            }
+          else if (nread)
+            {
+              TRACEPOINT();
+              err = engine_filter (filter, buffer, nread);
+            }
+          else
+            break; /* EOF */
+        }
+      while (!err);
+      if (err)
+        goto leave;
+      
+      /* Wait for the engine to finish.  */
+      if ((err = engine_filter (filter, NULL, 0)))
+        goto leave;
+      if ((err = engine_wait (filter)))
+        goto leave;
+      filter = NULL;
     }
 
 
  leave:
+  TRACEPOINT();
+  gpgme_free (signature);
+  engine_cancel (filter);
   if (ctx)
     {
       /* Cancel any left open attachment.  */
       finish_attachment (ctx, 1); 
       rfc822parse_close (ctx->msg);
-      if (ctx->signed_data)
-        gpgme_data_release (ctx->signed_data);
-      if (ctx->sig_data)
-        gpgme_data_release (ctx->sig_data);
+      gpgme_data_release (ctx->signed_data);
+      gpgme_data_release (ctx->sig_data);
       show_mimestruct (ctx->mimestruct);
       while (ctx->mimestruct)
         {
@@ -1008,26 +1028,19 @@ mime_verify (const char *message, size_t messagelen,
 
 
 
-/* Decrypt the PGP or S/MIME message taken from INSTREAM.  If
-   ATTESTATION is not NULL a text with the result of the signature
-   verification will get printed to it.  HWND is the window to be used
-   for message box and such.  In PREVIEW_MODE no verification will be
-   done, no messages saved and no messages boxes will pop up. */
+/* Decrypt the PGP or S/MIME message taken from INSTREAM.  HWND is the
+   window to be used for message box and such.  In PREVIEW_MODE no
+   verification will be done, no messages saved and no messages boxes
+   will pop up. */
 int
-mime_decrypt (LPSTREAM instream, LPMESSAGE mapi_message, int is_smime,
-              int ttl, gpgme_data_t attestation, HWND hwnd, int preview_mode)
+mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
+              HWND hwnd, int preview_mode)
 {
   gpg_error_t err;
-  struct gpgme_data_cbs cbs;
-  gpgme_data_t plaintext;
   mime_context_t ctx;
-  char *title;
-  gpgme_protocol_t proto;
+  engine_filter_t filter = NULL;
 
-  log_debug ("%s:%s: enter", SRCNAME, __func__);
-
-  memset (&cbs, 0, sizeof cbs);
-  cbs.write = plaintext_handler;
+  log_debug ("%s:%s: enter (protocol=%d)", SRCNAME, __func__, protocol);
 
   ctx = xcalloc (1, sizeof *ctx + LINEBUFSIZE);
   ctx->linebufsize = LINEBUFSIZE;
@@ -1046,30 +1059,61 @@ mime_decrypt (LPSTREAM instream, LPMESSAGE mapi_message, int is_smime,
       goto leave;
     }
 
-  err = gpgme_data_new_from_cbs (&plaintext, &cbs, ctx);
+  /* Prepare the decryption.  */
+/*       title = native_to_utf8 (_("[Encrypted S/MIME message]")); */
+/*       title = native_to_utf8 (_("[Encrypted PGP/MIME message]")); */
+  if ((err=engine_create_filter (&filter, plaintext_handler, ctx)))
+    goto leave;
+  if ((err=engine_decrypt_start (filter, protocol, !preview_mode)))
+    goto leave;
+
+  
+  /* Filter the stream.  */
+  do
+    {
+      HRESULT hr;
+      ULONG nread;
+      char buffer[4096];
+      
+      /* For EOF detection we assume that Read returns no error and
+         thus nread will be 0.  The specs say that "Depending on the
+         implementation, either S_FALSE or an error code could be
+         returned when reading past the end of the stream"; thus we
+         are not really sure whether our assumption is correct.  At
+         another place the documentation says that the implementation
+         used by ISequentialStream exhibits the same EOF behaviour has
+         found on the MSDOS FAT file system.  So we seem to have good
+         karma. */
+      hr = IStream_Read (instream, buffer, sizeof buffer, &nread);
+      if (hr)
+        {
+          log_error ("%s:%s: IStream::Read failed: hr=%#lx", 
+                     SRCNAME, __func__, hr);
+          err = gpg_error (GPG_ERR_EIO);
+        }
+      else if (nread)
+        {
+          err = engine_filter (filter, buffer, nread);
+        }
+      else
+        break; /* EOF */
+    }
+  while (!err);
   if (err)
     goto leave;
 
-  if (is_smime)
-    {
-      proto = GPGME_PROTOCOL_CMS;
-      title = native_to_utf8 (_("[Encrypted S/MIME message]"));
-    }
-  else
-    {
-      proto = GPGME_PROTOCOL_OpenPGP;
-      title = native_to_utf8 (_("[Encrypted PGP/MIME message]"));
-    }
-  err = op_decrypt_stream_to_gpgme (proto, instream, plaintext, ttl, title,
-                                    attestation, preview_mode);
-  xfree (title);
-  if (!err && (ctx->parser_error || ctx->line_too_long))
+  /* Wait for the engine to finish.  */
+  if ((err = engine_filter (filter, NULL, 0)))
+    goto leave;
+  if ((err = engine_wait (filter)))
+    goto leave;
+  filter = NULL;
+
+  if (ctx->parser_error || ctx->line_too_long)
     err = gpg_error (GPG_ERR_GENERAL);
 
-
  leave:
-  if (plaintext)
-    gpgme_data_release (plaintext);
+  engine_cancel (filter);
   if (ctx)
     {
       /* Cancel any left over attachment which means that the MIME

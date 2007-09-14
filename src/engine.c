@@ -27,9 +27,8 @@
 #include <time.h>
 #include <errno.h>
 #include <assert.h>
-/*#define WIN32_LEAN_AND_MEAN  uncomment it after remove LPSTREAM*/
+#define WIN32_LEAN_AND_MEAN 
 #include <windows.h>
-#include <objidl.h> /* For LPSTREAM in engine-gpgme.h   FIXME: Remove it.  */
 
 #include "common.h"
 #include "engine.h"
@@ -233,7 +232,7 @@ filter_gpgme_write_cb (void *handle, const void *buffer, size_t size)
 }
 
 /* This function is called by the gpgme backend to notify a filter
-   object about the final status of an operation.  It may not be
+   object about the final status of an operation.  It may only be
    called by the engine-gpgme.c module. */
 void
 engine_gpgme_finished (engine_filter_t filter, gpg_error_t status)
@@ -295,7 +294,7 @@ int
 engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
 {
   gpg_error_t err;
-  size_t nbytes;
+  int nbytes;
 
   log_debug ("%s:%s: enter; filter=%p\n", SRCNAME, __func__, filter); 
   /* Our implementation is for now straightforward without any
@@ -326,11 +325,11 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
               LeaveCriticalSection (&filter->out.lock);
               return gpg_error (GPG_ERR_EIO);
             }
-          assert (nbytes < filter->out.length && nbytes >= 0);
+          assert (nbytes <= filter->out.length && nbytes >= 0);
           if (nbytes < filter->out.length)
             memmove (filter->out.buffer, filter->out.buffer + nbytes,
                      filter->out.length - nbytes); 
-          filter->out.length =- nbytes;
+          filter->out.length -= nbytes;
         }
       if (!PulseEvent (filter->out.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(out) failed", SRCNAME, __func__);
@@ -383,6 +382,17 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
 }
 
 
+/* Dummy data sink used if caller does not need an output
+   function.  */
+static int
+dummy_outfnc (void *opaque, const void *data, size_t datalen)
+{
+  (void)opaque;
+  (void)data;
+  return (int)datalen;
+}
+
+
 /* Create a new filter object which uses OUTFNC as its data sink.  If
    OUTFNC is called with NULL/0 for the data to be written, the
    function should do a flush.  OUTFNC is expected to return the
@@ -402,7 +412,7 @@ engine_create_filter (engine_filter_t *r_filter,
   filter = create_filter ();
   filter->cb_inbound.read = filter_gpgme_read_cb;
   filter->cb_outbound.write = filter_gpgme_write_cb;
-  filter->outfnc = outfnc;
+  filter->outfnc = outfnc? outfnc : dummy_outfnc;
   filter->outfncdata = outfncdata;
 
   err = gpgme_data_new_from_cbs (&filter->indata, 
@@ -449,20 +459,21 @@ engine_wait (engine_filter_t filter)
       while (filter->out.length)
         {
           int nbytes; 
-          TRACEPOINT ();
+
           nbytes = filter->outfnc (filter->outfncdata, 
                                    filter->out.buffer, filter->out.length);
           if (nbytes == -1)
             {
               log_debug ("%s:%s: error writing data\n", SRCNAME, __func__);
               LeaveCriticalSection (&filter->out.lock);
-              break;
+              return gpg_error (GPG_ERR_EIO);
             }
-          assert (nbytes < filter->out.length && nbytes >= 0);
+          
+          assert (nbytes <= filter->out.length && nbytes >= 0);
           if (nbytes < filter->out.length)
             memmove (filter->out.buffer, filter->out.buffer + nbytes,
                      filter->out.length - nbytes); 
-          filter->out.length =- nbytes;
+          filter->out.length -= nbytes;
         }
       if (!PulseEvent (filter->out.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(out) failed", SRCNAME, __func__);
@@ -471,10 +482,10 @@ engine_wait (engine_filter_t filter)
       more = !filter->in.ready;
       LeaveCriticalSection (&filter->in.lock);
       if (more)
-        Sleep (0);
+        Sleep (100);
     }
   while (more);
-  
+
   if (WaitForSingleObject (filter->in.ready_event, INFINITE) != WAIT_OBJECT_0)
     {
       log_error_w32 (-1, "%s:%s: WFSO failed", SRCNAME, __func__);
@@ -520,26 +531,68 @@ engine_encrypt_start (engine_filter_t filter,
 {
   gpg_error_t err;
 
-  err = op_gpgme_encrypt_data (protocol, filter->indata, filter->outdata,
-                               filter, recipients, NULL, 0);
+  err = op_gpgme_encrypt (protocol, filter->indata, filter->outdata,
+                          filter, recipients, NULL, 0);
   return err;
 }
 
 
-/* Start an detached signing operation.
-   FILTER
-   is an object created by engine_create_filter.  The caller needs to
-   call engine_wait to finish the operation.  A filter object may not
-   be reused after having been used through this function.  However,
-   the lifetime of the filter object lasts until the final engine_wait
-   or engine_cancel.  */
+/* Start an detached signing operation.  FILTER is an object created
+   by engine_create_filter.  The caller needs to call engine_wait to
+   finish the operation.  A filter object may not be reused after
+   having been used through this function.  However, the lifetime of
+   the filter object lasts until the final engine_wait or
+   engine_cancel.  */
 int
 engine_sign_start (engine_filter_t filter, protocol_t protocol)
 {
   gpg_error_t err;
 
-  err = op_gpgme_sign_data (protocol, filter->indata, filter->outdata,
-                            filter);
+  err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
+                       filter);
+  return err;
+}
+
+
+/* Start an decrypt operation.  FILTER is an object created by
+   engine_create_filter.  The caller needs to call engine_wait to
+   finish the operation.  A filter object may not be reused after
+   having been used through this function.  However, the lifetime of
+   the filter object lasts until the final engine_wait or
+   engine_cancel.  */
+int
+engine_decrypt_start (engine_filter_t filter, protocol_t protocol,
+                      int with_verify)
+{
+  gpg_error_t err;
+
+  err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
+                          filter, with_verify);
+  return err;
+}
+
+
+/* Start a verify operation.  FILTER is an object created by
+   engine_create_filter; an output function is not required. SIGNATURE
+   is the detached signature or NULL if FILTER delivers an opaque
+   signature.  The caller needs to call engine_wait to finish the
+   operation.  A filter object may not be reused after having been
+   used through this function.  However, the lifetime of the filter
+   object lasts until the final engine_wait or engine_cancel.  */
+int
+engine_verify_start (engine_filter_t filter, const char *signature,
+                     protocol_t protocol)
+{
+  gpg_error_t err;
+
+  if (!signature)
+    {
+      log_error ("%s:%s: opaque signature are not yet supported\n",
+                 SRCNAME, __func__);
+      return gpg_error (GPG_ERR_NOT_SUPPORTED);
+    }
+
+  err = op_gpgme_verify (protocol, filter->indata, signature, filter);
   return err;
 }
 

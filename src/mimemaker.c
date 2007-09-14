@@ -1484,7 +1484,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 
 
 int 
-mime_sign_encrypt (LPMESSAGE message, protocol_t protocol)
+mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 {
   return -1;
 }

@@ -229,6 +229,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
   int i;
   char *inbuf;
   size_t inbuflen;
+  protocol_t protocol = PROTOCOL_UNKNOWN;
   int err;
 
   switch (msgtype)
@@ -271,6 +272,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
       rawstream->Release ();
       if (!inbuf)
         return -1;
+      protocol = PROTOCOL_OPENPGP;
     }
   else
     {
@@ -311,8 +313,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
         }
     }
 
-  err = mime_verify (inbuf, inbuflen, message, 0, 
-                     opt.passwd_ttl, NULL, NULL, 0);
+  err = mime_verify (protocol, inbuf, inbuflen, message, 0, 0);
   log_debug ("mime_verify returned %d", err);
   if (err)
     {
@@ -347,7 +348,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
   LPSTREAM cipherstream;
   gpg_error_t err;
   int is_opaque = 0;
-  int is_smime = 0;
+  protocol_t protocol;
 
   switch (msgtype)
     {
@@ -373,6 +374,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
       cipherstream = mapi_get_body_as_stream (message);
       if (!cipherstream)
         goto leave;
+      protocol = PROTOCOL_OPENPGP;
     }
   else
     {
@@ -420,7 +422,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
                          SRCNAME, __func__);
               goto leave;
             }
-          is_smime = 1;
+          protocol = PROTOCOL_SMIME;
         }
       else 
         {
@@ -472,6 +474,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
                          SRCNAME, __func__);
               goto leave;
             }
+          protocol = PROTOCOL_OPENPGP;
         }
       
       cipherstream = mapi_get_attach_as_stream (message, table+part2_idx);
@@ -479,8 +482,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
         goto leave; /* Problem getting the attachment.  */
     }
 
-  err = mime_decrypt (cipherstream, message, is_smime, opt.passwd_ttl,
-                      NULL, NULL, 0);
+  err = mime_decrypt (protocol, cipherstream, message, 0, 0);
   log_debug ("mime_decrypt returned %d (%s)", err, gpg_strerror (err));
   if (err)
     {
@@ -595,159 +597,8 @@ release_recipient_array (char **recipients)
 
 
 
-
-
-
-#if 0
-/* Sign the current message. Returns 0 on success. */
-int
-message_sign (LPMESSAGE message, HWND hwnd, int want_html)
-{
-  HRESULT hr;
-  STATSTG statinfo;
-  LPSTREAM plaintext;
-  size_t plaintextlen;
-  char *signedtext = NULL;
-  int err = 0;
-  gpgme_key_t sign_key = NULL;
-  SPropValue prop;
-  int have_html_attach = 0;
-
-  log_debug ("%s:%s: enter message=%p\n", SRCNAME, __func__, message);
-  
-  /* We don't sign an empty body - a signature on a zero length string
-     is pretty much useless.  We assume that a HTML message always
-     comes with a text/plain alternative. */
-  plaintext = mapi_get_body_as_stream (message);
-  if (!plaintext)
-    plaintextlen = 0;
-  else
-    {
-      hr = input->Stat (&statinfo, STATFLAG_NONAME);
-      if (hr)
-        {
-          log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
-          plaintext->Release ();
-          return gpg_error (GPG_ERR_GENERAL);
-        }
-      plaintextlen = (size_t)statinfo.cbSize.QuadPart;
-    }
-
-  if ( !plaintextlen && !has_attachments (message)) 
-    {
-      log_debug ("%s:%s: leave (empty)", SRCNAME, __func__);
-      plaintext->Release ();
-      return 0; 
-    }
-
-  /* Pop up a dialog box to ask for the signer of the message. */
-  if (signer_dialog_box (&sign_key, NULL, 0) == -1)
-    {
-      log_debug ("%s.%s: leave (dialog failed)\n", SRCNAME, __func__);
-      plaintext->Release ();
-      return gpg_error (GPG_ERR_CANCELED);  
-    }
-
-  /* Sign the plaintext */
-  if (plaintextlen)
-    {
-      err = op_sign (plaintext, &signedtext, 
-                     OP_SIG_CLEAR, sign_key, opt.passwd_ttl);
-      if (err)
-        {
-          MessageBox (hwnd, op_strerror (err),
-                      _("Signing Failure"), MB_ICONERROR|MB_OK);
-          plaintext->Release ();
-          return gpg_error (GPG_ERR_GENERAL);
-        }
-    }
-
-  
-  /* If those brain dead html mails are requested we now figure out
-     whether a HTML body is actually available and move it to an
-     attachment so that the code below will sign it as a regular
-     attachments.  */
-  if (want_html)
-    {
-      log_debug ("Signing HTML is not yet supported\n");
-//       char *htmltext = loadBody (true);
-      
-//       if (htmltext && *htmltext)
-//         {
-//           if (!createHtmlAttachment (htmltext))
-//             have_html_attach = 1;
-//         }
-//       xfree (htmltext);
-
-      /* If we got a new attachment we need to release the loaded
-         attachment info so that the next getAttachment call will read
-         fresh info. */
-//       if (have_html_attach)
-//         free_attach_info ();
-    }
-
-
-  /* Note, there is a side-effect when we have HTML mails: The
-     auto-sign-attch option is ignored.  I regard auto-sign-attach as a
-     silly option anyway. */
-  if ((opt.auto_sign_attach || have_html_attach) && has_attachments ())
-    {
-      unsigned int n;
-      
-      n = getAttachments ();
-      log_debug ("%s:%s: message has %u attachments\n", SRCNAME, __func__, n);
-      for (unsigned int i=0; i < n; i++) 
-        signAttachment (hwnd, i, sign_key, opt.passwd_ttl);
-      /* FIXME: we should throw an error if signing of any attachment
-         failed. */
-    }
-
-  set_x_header (message, "GPGOL-VERSION", PACKAGE_VERSION);
-
-  /* Now that we successfully processed the attachments, we can save
-     the changes to the body.  */
-  if (plaintextlen)
-    {
-      err = set_message_body (message, signedtext, 0);
-      if (err)
-        goto leave;
-
-      /* In case we don't have attachments, Outlook will really insert
-         the following content type into the header.  We use this to
-         declare that the encrypted content of the message is utf-8
-         encoded.  If we have atatchments, OUtlook has its own idea of
-         the content type to use.  */
-      prop.ulPropTag=PR_CONTENT_TYPE_A;
-      prop.Value.lpszA="text/plain; charset=utf-8"; 
-      hr = HrSetOneProp (message, &prop);
-      if (hr)
-        log_error ("%s:%s: can't set content type: hr=%#lx\n",
-                   SRCNAME, __func__, hr);
-    }
-  
-  hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
-  if (hr)
-    {
-      log_error ("%s:%s: SaveChanges(message) failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      err = gpg_error (GPG_ERR_GENERAL);
-      goto leave;
-    }
-
- leave:
-  xfree (signedtext);
-  gpgme_key_release (sign_key);
-  xfree (plaintext);
-  log_debug ("%s:%s: leave (err=%s)\n", SRCNAME, __func__, op_strerror (err));
-  return err;
-}
-
-#endif
-
-
-/* Encrypt the MESSAGE.  */
-int 
-message_encrypt (LPMESSAGE message, HWND hwnd)
+static int
+sign_encrypt (LPMESSAGE message, HWND hwnd, int signflag)
 {
   gpg_error_t err;
   char **recipients;
@@ -755,14 +606,17 @@ message_encrypt (LPMESSAGE message, HWND hwnd)
   recipients = get_recipients (message);
   if (!recipients || !recipients[0])
     {
-      MessageBox (hwnd, _("No recipients for encrypted message given"),
+      MessageBox (hwnd, _("No recipients to encrypt to are given"),
                   "GpgOL", MB_ICONERROR|MB_OK);
 
       err = gpg_error (GPG_ERR_GENERAL);
     }
   else
     {
-      err = mime_encrypt (message, PROTOCOL_OPENPGP, recipients);
+      if (signflag)
+        err = mime_sign_encrypt (message, PROTOCOL_OPENPGP, recipients);
+      else
+        err = mime_encrypt (message, PROTOCOL_OPENPGP, recipients);
       if (err)
         {
           char buf[200];
@@ -775,3 +629,42 @@ message_encrypt (LPMESSAGE message, HWND hwnd)
   release_recipient_array (recipients);
   return err;
 }
+
+
+/* Sign the MESSAGE.  */
+int 
+message_sign (LPMESSAGE message, HWND hwnd)
+{
+  gpg_error_t err;
+
+  err = mime_sign (message, PROTOCOL_OPENPGP);
+  if (err)
+    {
+      char buf[200];
+      
+      snprintf (buf, sizeof buf,
+                _("Signing failed (%s)"), gpg_strerror (err));
+      MessageBox (hwnd, buf, "GpgOL", MB_ICONERROR|MB_OK);
+    }
+  return err;
+}
+
+
+
+/* Encrypt the MESSAGE.  */
+int 
+message_encrypt (LPMESSAGE message, HWND hwnd)
+{
+  return sign_encrypt (message, hwnd, 0);
+}
+
+
+/* Sign+Encrypt the MESSAGE.  */
+int 
+message_sign_encrypt (LPMESSAGE message, HWND hwnd)
+{
+  return sign_encrypt (message, hwnd, 1);
+}
+
+
+
