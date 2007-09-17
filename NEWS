@@ -1,8 +1,13 @@
 NOTE: This is the old branch of gpgol.  To avoid conflicts with the
-rewrite the version number shall never reach 0.10.0!
+rewrite the version number shall never reach 0.10.0!  There is enough
+number space: The next number after 0.9.99 is 0.9.100 ;-)
 
-Noteworthy changes for version 0.9.92
+Noteworthy changes for version 0.9.92 (2007-09-17)
 ==================================================
+
+* Fixed a few minor problems. 
+
+* Localized key selection dialog.
 
 
 Noteworthy changes for version 0.9.91 (2006-10-13)

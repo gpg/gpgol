@@ -1,5 +1,9 @@
 2007-09-17  Werner Koch  <wk@g10code.com>
 
+	Released 0.9.92.
+
+	* po/de.po: Add missing translations.
+
 	* autogen.sh: Add --force option.
 
 2006-12-13  Werner Koch  <wk@g10code.com>

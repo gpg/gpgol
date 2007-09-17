@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GPGol 0.9.4\n"
+"Project-Id-Version: GPGol 0.9.92\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2007-09-17 11:36+0200\n"
-"PO-Revision-Date: 2006-04-24 16:41+0200\n"
+"PO-Revision-Date: 2007-09-17 15:04+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -409,23 +409,23 @@ msgstr "[PGP/MIME Signatur]"
 
 #: src/recipient-dialog.c:89
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: src/recipient-dialog.c:94
 msgid "E-Mail"
-msgstr ""
+msgstr "E-Mail"
 
 #: src/recipient-dialog.c:99
 msgid "Key-Info"
-msgstr ""
+msgstr "Schlüssel-Info"
 
 #: src/recipient-dialog.c:104
 msgid "Key ID"
-msgstr ""
+msgstr "Schlüssel-ID"
 
 #: src/recipient-dialog.c:109
 msgid "Validity"
-msgstr ""
+msgstr "Gültigkeit"
 
 #: src/recipient-dialog.c:425
 msgid "Please select at least one recipient key."
