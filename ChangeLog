@@ -1,3 +1,7 @@
+2007-09-17  Werner Koch  <wk@g10code.com>
+
+	* autogen.sh: Add --force option.
+
 2006-12-13  Werner Koch  <wk@g10code.com>
 
 	* po/LINGUAS: Added sv.

@@ -1,3 +1,10 @@
+2007-09-17  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Link with winsock2.
+
+	* w32-gettext.c: Update some LANG_ constants to cope with a new
+	version of the mingw tool chain.
+
 2007-04-10  Werner Koch  <wk@g10code.com>
 
 	* display.cpp (find_message_window): Add arg LEVEL for debugging.

@@ -39,6 +39,11 @@ GETTEXT=${GETTEXT_PREFIX}${GETTEXT:-gettext}${GETTEXT_SUFFIX}
 MSGMERGE=${GETTEXT_PREFIX}${MSGMERGE:-msgmerge}${GETTEXT_SUFFIX}
 
 DIE=no
+FORCE=
+if test x"$1" = x"--force"; then
+  FORCE=" --force"
+  shift
+fi
 
 # ***** W32 build script *******
 # Used to cross-compile for Windows.
@@ -151,7 +156,7 @@ echo "Running autoheader..."
 $AUTOHEADER
 echo "Running automake --gnu ..."
 $AUTOMAKE --gnu;
-echo "Running autoconf..."
-$AUTOCONF
+echo "Running autoconf${FORCE} ..."
+$AUTOCONF${FORCE}
 
 echo "You may now run \"./configure --enable-maintainer-mode && make\"."

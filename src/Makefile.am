@@ -70,7 +70,7 @@ clean-local:
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
-        -loleaut32
+        -loleaut32 -lws2_32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
 

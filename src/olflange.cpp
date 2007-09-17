@@ -708,6 +708,7 @@ CGPGExchExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   
   /* Check version. */
   log_debug ("GPGol: this is %s\n", PACKAGE_STRING);
+  log_debug ("GPGol: using gpgme %s\n", gpgme_check_version (NULL));
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
   pEECB->GetVersion (&lActualVersion, EECBGV_GETACTUALVERSION);
   pEECB->GetVersion (&lVirtualVersion, EECBGV_GETVIRTUALVERSION);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2006-08-28 15:44+0200\n"
+"POT-Creation-Date: 2007-09-17 11:36+0200\n"
 "PO-Revision-Date: 2006-04-24 16:41+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -287,7 +287,7 @@ msgstr "Unterschrifterstellungsfehler eines Anhangs"
 msgid "The default key may not contain any spaces."
 msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
 
-#: src/olflange.cpp:750
+#: src/olflange.cpp:751
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -304,7 +304,7 @@ msgstr ""
 "\n"
 "Bitte updaten Sie auf SP2 bevor Sie versuchen eine Nachricht zu versenden."
 
-#: src/olflange.cpp:946
+#: src/olflange.cpp:947
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -407,11 +407,31 @@ msgstr "[PGP/MIME signierte Nachricht ohne reinen Textkörper]"
 msgid "[PGP/MIME signature]"
 msgstr "[PGP/MIME Signatur]"
 
-#: src/recipient-dialog.c:410
+#: src/recipient-dialog.c:89
+msgid "Name"
+msgstr ""
+
+#: src/recipient-dialog.c:94
+msgid "E-Mail"
+msgstr ""
+
+#: src/recipient-dialog.c:99
+msgid "Key-Info"
+msgstr ""
+
+#: src/recipient-dialog.c:104
+msgid "Key ID"
+msgstr ""
+
+#: src/recipient-dialog.c:109
+msgid "Validity"
+msgstr ""
+
+#: src/recipient-dialog.c:425
 msgid "Please select at least one recipient key."
 msgstr "Bitte wählen Sie mindestens einen Empfängerschlüssel."
 
-#: src/recipient-dialog.c:411
+#: src/recipient-dialog.c:426
 msgid "Recipient Dialog"
 msgstr "Auswahl des Empfängerschlüssels"
 
