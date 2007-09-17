@@ -1,3 +1,7 @@
+2007-09-17  Werner Koch  <wk@g10code.com>
+
+	* autogen.sh (FORCE): Add --force option.
+
 2007-08-13  Marcus Brinkmann  <marcus@g10code.de>
 
 	* configure.ac (svn_revision): Update to latest version from gnupg.

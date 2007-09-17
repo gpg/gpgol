@@ -1,3 +1,7 @@
+2007-09-17  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp: Print gpgme version.
+
 2007-09-14  Werner Koch  <wk@g10code.com>
 
 	* engine-gpgme.c: Rewrote most of it.

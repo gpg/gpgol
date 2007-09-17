@@ -434,6 +434,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   if (!version_shown)
     {
       version_shown = 1;
+      log_debug ("%s:%s: using gpgme %s\n", gpgme_check_version (NULL));
       log_debug ("%s:%s: detected Outlook build version 0x%lx (%lu.%lu)\n",
                  SRCNAME, __func__, lBuildVersion,
                  (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,
