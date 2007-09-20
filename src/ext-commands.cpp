@@ -345,8 +345,8 @@ GpgolExtCommands::InstallCommands (
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                        _("GPG &encrypt message"), &m_nCmdEncrypt,
-                        _("GPG &sign message"), &m_nCmdSign,
+                        _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
+                        _("&sign message with GnuPG"), &m_nCmdSign,
                         NULL );
       
 
@@ -378,7 +378,7 @@ GpgolExtCommands::InstallCommands (
   if (m_lContext == EECONTEXT_VIEWER) 
     {
       toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                        _("GPG Key &Manager"), &m_nCmdKeyManager,
+                        _("GnuPG Key &Manager"), &m_nCmdKeyManager,
                         NULL);
 
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);

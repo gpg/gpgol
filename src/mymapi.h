@@ -108,8 +108,22 @@ typedef struct MapiMessage_s *lpMapiMessage;
 #define MAPI_E_NOT_FOUND                   ((SCODE)0x8004010F)
 
 
-/* MAPILogon */
+/* Object types.  */
+#define MAPI_STORE      0x00000001u
+#define MAPI_ADDRBOOK   0x00000002u
+#define MAPI_FOLDER     0x00000003u
+#define MAPI_ABCONT     0x00000004u
+#define MAPI_MESSAGE    0x00000005u
+#define MAPI_MAILUSER   0x00000006u
+#define MAPI_ATTACH     0x00000007u
+#define MAPI_DISTLIST   0x00000008u	
+#define MAPI_PROFSECT   0x00000009u	
+#define MAPI_STATUS     0x0000000Au
+#define MAPI_SESSION    0x0000000Bu
+#define MAPI_FORMINFO   0x0000000Cu
 
+
+/* MAPILogon */
 #define MAPI_LOGON_UI           0x00000001
 #define MAPI_PASSWORD_UI        0x00020000
 #define MAPI_NEW_SESSION        0x00000002
@@ -118,7 +132,6 @@ typedef struct MapiMessage_s *lpMapiMessage;
 
 
 /* MAPISendMail */
-
 #define MAPI_DIALOG             0x00000008
 
 

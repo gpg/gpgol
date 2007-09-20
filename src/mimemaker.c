@@ -132,8 +132,8 @@ check_protocol (protocol_t protocol)
 
 /* Create a new MAPI attchment for MESSAGE which will be used to
    prepare the MIME message.  On sucess the stream to write the data
-   to is stored at STREAM and the attchment object itself is the
-   retruned.  The caller needs to call SaveChanges.  Returns NULL on
+   to is stored at STREAM and the attachment object itself is the
+   returned.  The caller needs to call SaveChanges.  Returns NULL on
    failure in which case STREAM will be set to NULL.  */
 static LPATTACH
 create_mapi_attachment (LPMESSAGE message, sink_t sink)
@@ -240,12 +240,14 @@ write_buffer (sink_t sink, const void *data, size_t datalen)
   return sink->writefnc (sink, data, datalen);
 }
 
-/* Same as above but used for passing as callback function.  */
+/* Same as above but used for passing as callback function.  This
+   fucntion does not return an error code but the number of bytes
+   written.  */
 static int
-write_buffer_voidarg (void *opaque, const void *data, size_t datalen)
+write_buffer_for_cb (void *opaque, const void *data, size_t datalen)
 {
   sink_t sink = opaque;
-  return write_buffer (sink, data, datalen);
+  return write_buffer (sink, data, datalen) ? -1 : datalen;
 }
 
 
@@ -1018,6 +1020,11 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
       return -1;
     }
 
+  /* Set a special property so that we are later able to identify
+     messages signed or encrypted by us.  */
+  if (mapi_set_sig_status (message, "@"))
+    return -1;
+
   /* Now delete all parts of the MAPI message except for the one
      attachment we just created.  */
   if (delete_all_attachments (message, att_table))
@@ -1036,6 +1043,7 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
     proparray.aulPropTag[0] = PR_BODY_HTML;
     IMessage_DeleteProps (message, &proparray, NULL);
   }
+
 
   /* Save the Changes.  */
   hr = IMessage_SaveChanges (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
@@ -1072,6 +1080,7 @@ sink_hashing_write (sink_t hashsink, const void *data, size_t datalen)
   return rc;
 }
 
+
 /* This function is called by the filter to collect the output which
    is a detached signature.  */
 static int
@@ -1087,7 +1096,7 @@ collect_signature (void *opaque, const void *data, size_t datalen)
   memcpy (db->buf + db->len, data, datalen);
   db->len += datalen;
 
-  return 0;
+  return datalen;
 }
 
 
@@ -1370,7 +1379,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   /* Prepare the encryption.  We do this early as it is quite common
      that some recipients are not be available and thus the encryption
      will fail early. */
-  if (engine_create_filter (&filter, write_buffer_voidarg, sink))
+  if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
   if (engine_encrypt_start (filter, protocol, recipients))
     goto failure;
@@ -1392,6 +1401,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 
   /* Write the top header.  */
   generate_boundary (boundary);
+  TRACEPOINT ();
   if ((rc=write_multistring (sink,
                              "MIME-Version: 1.0\r\n"
                              "Content-Type: multipart/encrypted;\r\n"
@@ -1400,6 +1410,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
                              NULL)))
     goto failure;
 
+  TRACEPOINT ();
   /* Write the PGP/MIME encrypted part.  */
   if ((rc = write_boundary (sink, boundary, 0)))
     goto failure;
@@ -1418,9 +1429,11 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
                              "\r\n", NULL)))
     goto failure;
 
+  TRACEPOINT ();
   /* Create a new sink for encrypting the following stuff.  */
   encsink->cb_data = filter;
   encsink->writefnc = sink_encryption_write;
+  TRACEPOINT ();
   
   if ((body && n_att_usable) || n_att_usable > 1)
     {
@@ -1435,6 +1448,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   else /* Only one part.  */
     *inner_boundary = 0;
 
+  TRACEPOINT ();
 
   if (body)
     rc = write_part (encsink, body, strlen (body), 
@@ -1444,6 +1458,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
                             *inner_boundary? inner_boundary : NULL);
   if (rc)
     goto failure;
+  TRACEPOINT ();
 
   xfree (body);
   body = NULL;
@@ -1461,20 +1476,27 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
   
+  TRACEPOINT ();
 
   /* Write the final boundary and finish the attachment.  */
   if ((rc = write_boundary (sink, boundary, 1)))
     goto failure;
 
+  TRACEPOINT ();
+
   if (close_mapi_attachment (&attach, sink))
     goto failure;
+
+  TRACEPOINT ();
 
   if (finalize_message (message, att_table))
     goto failure;
 
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
+  TRACEPOINT ();
 
  failure:
+  TRACEPOINT ();
   engine_cancel (filter);
   cancel_mapi_attachment (&attach, sink);
   xfree (body);

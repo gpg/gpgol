@@ -35,12 +35,15 @@
 #include "engine-gpgme.h"
 #include "engine-assuan.h"
 
+
 #define FILTER_BUFFER_SIZE 128  /* FIXME: Increase it after testing  */
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
+
+static int debug_filter = 0;
 
 
 /* Definition of the key object.  */
@@ -88,7 +91,42 @@ struct engine_filter_s
   struct gpgme_data_cbs cb_outbound; /* Ditto.  */
   gpgme_data_t indata;               /* Input data.  */
   gpgme_data_t outdata;              /* Output data.  */
+  void *cancel_data;                 /* Used by engine_cancel.  */
 };
+
+
+static void
+take_in_lock (engine_filter_t filter, const char *func)
+{
+  EnterCriticalSection (&filter->in.lock);
+  if (debug_filter > 1)
+    log_debug ("%s:%s: in.lock taken\n", SRCNAME, func);
+}
+
+static void
+release_in_lock (engine_filter_t filter, const char *func)
+{
+  LeaveCriticalSection (&filter->in.lock);
+  if (debug_filter > 1)
+    log_debug ("%s:%s: in.lock released\n", SRCNAME, func);
+}
+
+static void
+take_out_lock (engine_filter_t filter, const char *func)
+{
+  EnterCriticalSection (&filter->out.lock);
+  if (debug_filter > 1)
+    log_debug ("%s:%s: out.lock taken\n", SRCNAME, func);
+}
+
+static void
+release_out_lock (engine_filter_t filter, const char *func)
+{
+  LeaveCriticalSection (&filter->out.lock);
+  if (debug_filter > 1)
+    log_debug ("%s:%s: out.lock released\n", SRCNAME, func);
+}
+
 
 
 
@@ -116,7 +154,6 @@ create_filter (void)
   filter->in.ready_event = CreateEvent (NULL, 0, 0, NULL);
   if (!filter->in.ready_event)
     log_error_w32 (-1, "%s:%s: CreateEvent failed", SRCNAME, __func__);
-  TRACEPOINT ();
 
   return filter;
 }
@@ -127,7 +164,6 @@ release_filter (engine_filter_t filter)
 {
   if (filter)
     {
-      TRACEPOINT ();
       if (filter->in.condvar)
         CloseHandle (filter->in.condvar);
       if (filter->out.condvar)
@@ -159,36 +195,42 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
       return (ssize_t)(-1);
     }
 
-  log_debug ("%s:%s: enter\n",  SRCNAME, __func__);
-  EnterCriticalSection (&filter->in.lock);
+  if (debug_filter)
+    log_debug ("%s:%s: enter\n",  SRCNAME, __func__);
+  take_in_lock (filter, __func__);
   while (!filter->in.length)
     {
       if (filter->in.got_eof || filter->in.ready)
         {
-          LeaveCriticalSection (&filter->in.lock);
-          log_debug ("%s:%s: returning EOF\n", SRCNAME, __func__);
+          release_in_lock (filter, __func__);
+          if (debug_filter)
+            log_debug ("%s:%s: returning EOF\n", SRCNAME, __func__);
           return 0; /* Return EOF. */
         }
-      LeaveCriticalSection (&filter->in.lock);
-      log_debug ("%s:%s: waiting for in.condvar\n", SRCNAME, __func__);
+      release_in_lock (filter, __func__);
+      if (debug_filter)
+        log_debug ("%s:%s: waiting for in.condvar\n", SRCNAME, __func__);
       WaitForSingleObject (filter->in.condvar, 500);
-      EnterCriticalSection (&filter->in.lock);
-      log_debug ("%s:%s: continuing\n", SRCNAME, __func__);
+      take_in_lock (filter, __func__);
+      if (debug_filter)
+        log_debug ("%s:%s: continuing\n", SRCNAME, __func__);
     }
      
-  log_debug ("%s:%s: requested read size=%d (filter.in.length=%d)\n",
-             SRCNAME, __func__, (int)size, (int)filter->in.length);
+  if (debug_filter)
+    log_debug ("%s:%s: requested read size=%d (filter.in.length=%d)\n",
+               SRCNAME, __func__, (int)size, (int)filter->in.length);
   nbytes = size < filter->in.length ? size : filter->in.length;
   memcpy (buffer, filter->in.buffer, nbytes);
   if (filter->in.length > nbytes)
     memmove (filter->in.buffer, filter->in.buffer + nbytes, 
              filter->in.length - nbytes);
   filter->in.length -= nbytes;
-  LeaveCriticalSection (&filter->in.lock);
+  release_in_lock (filter, __func__);
 
-  log_debug ("%s:%s: leave; result=%d\n",
-             SRCNAME, __func__, (int)nbytes);
-
+  if (debug_filter)
+    log_debug ("%s:%s: leave; result=%d\n",
+               SRCNAME, __func__, (int)nbytes);
+  
   return nbytes;
 }
 
@@ -209,53 +251,67 @@ filter_gpgme_write_cb (void *handle, const void *buffer, size_t size)
       return (ssize_t)(-1);
     }
 
-  log_debug ("%s:%s: enter\n",  SRCNAME, __func__);
-  EnterCriticalSection (&filter->out.lock);
+  if (debug_filter)
+    log_debug ("%s:%s: enter\n",  SRCNAME, __func__);
+  take_out_lock (filter, __func__);
   while (filter->out.length)
     {
-      LeaveCriticalSection (&filter->out.lock);
-      log_debug ("%s:%s: waiting for out.condvar\n", SRCNAME, __func__);
+      release_out_lock (filter, __func__);
+      if (debug_filter)
+        log_debug ("%s:%s: waiting for out.condvar\n", SRCNAME, __func__);
       WaitForSingleObject (filter->out.condvar, 500);
-      EnterCriticalSection (&filter->out.lock);
-      log_debug ("%s:%s: continuing\n", SRCNAME, __func__);
+      take_out_lock (filter, __func__);
+      if (debug_filter)
+        log_debug ("%s:%s: continuing\n", SRCNAME, __func__);
     }
 
-  log_debug ("%s:%s: requested write size=%d\n",
-             SRCNAME, __func__, (int)size);
+  if (debug_filter)
+    log_debug ("%s:%s: requested write size=%d\n",
+               SRCNAME, __func__, (int)size);
   nbytes = size < FILTER_BUFFER_SIZE ? size : FILTER_BUFFER_SIZE;
   memcpy (filter->out.buffer, buffer, nbytes);
   filter->out.length = nbytes;
-  LeaveCriticalSection (&filter->out.lock);
+  release_out_lock (filter, __func__);
 
-  log_debug ("%s:%s: write; result=%d\n", SRCNAME, __func__, (int)nbytes);
+  if (debug_filter)
+    log_debug ("%s:%s: write; result=%d\n", SRCNAME, __func__, (int)nbytes);
   return nbytes;
 }
+
+
+/* Store a cancel parameter into FILTER.  Only use by the engine backends. */
+void
+engine_private_set_cancel (engine_filter_t filter, void *cancel_data)
+{
+  filter->cancel_data = cancel_data;
+}
+
 
 /* This function is called by the gpgme backend to notify a filter
    object about the final status of an operation.  It may only be
    called by the engine-gpgme.c module. */
 void
-engine_gpgme_finished (engine_filter_t filter, gpg_error_t status)
+engine_private_finished (engine_filter_t filter, gpg_error_t status)
 {
   if (!filter)
     {
       log_debug ("%s:%s: called without argument\n", SRCNAME, __func__);
       return;
     }
-  log_debug ("%s:%s: filter %p: process terminated: %s <%s>\n", 
-             SRCNAME, __func__, filter, 
-             gpg_strerror (status), gpg_strsource (status));
-
-  EnterCriticalSection (&filter->in.lock);
-  if (filter->in.ready)
-    log_debug ("%s:%s: filter %p: Oops: already flagged as finished\n", 
-               SRCNAME, __func__, filter);
+  if (debug_filter)
+    log_debug ("%s:%s: filter %p: process terminated: %s <%s>\n", 
+               SRCNAME, __func__, filter, 
+               gpg_strerror (status), gpg_strsource (status));
+  
+  take_in_lock (filter, __func__);
   filter->in.ready = 1;
   filter->in.status = status;
+  filter->cancel_data = NULL;
   if (!SetEvent (filter->in.ready_event))
     log_error_w32 (-1, "%s:%s: SetEvent failed", SRCNAME, __func__);
-  LeaveCriticalSection (&filter->in.lock);
-  log_debug ("%s:%s: leaving\n", SRCNAME, __func__);
+  release_in_lock (filter, __func__);
+  if (debug_filter)
+    log_debug ("%s:%s: leaving\n", SRCNAME, __func__);
 }
 
 
@@ -266,8 +322,25 @@ engine_gpgme_finished (engine_filter_t filter, gpg_error_t status)
 int
 engine_init (void)
 {
-  op_gpgme_init ();
-  return 0;
+  gpg_error_t err;
+
+  err = op_gpgme_basic_init ();
+  if (err)
+    return err;
+
+  err = op_assuan_init ();
+  if (err)
+    {
+/*       MessageBox (NULL, */
+/*                   _("The user interface server is not available or does " */
+/*                     "not work.  Using an internal user interface.\n\n" */
+/*                     "This is limited to the OpenPGP protocol and " */
+/*                     "thus S/MIME protected message are not readable."), */
+/*                   _("GpgOL"), MB_ICONWARNING|MB_OK); */
+      err = op_gpgme_init ();
+    }
+
+  return err;
 }
 
 
@@ -275,8 +348,8 @@ engine_init (void)
 void
 engine_deinit (void)
 {
+  op_assuan_deinit ();
   op_gpgme_deinit ();
-
 }
 
 
@@ -296,7 +369,8 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
   gpg_error_t err;
   int nbytes;
 
-  log_debug ("%s:%s: enter; filter=%p\n", SRCNAME, __func__, filter); 
+  if (debug_filter)
+    log_debug ("%s:%s: enter; filter=%p\n", SRCNAME, __func__, filter); 
   /* Our implementation is for now straightforward without any
      additional buffer filling etc.  */
   if (!filter || !filter->outfnc)
@@ -307,22 +381,26 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
   if (filter->in.got_eof)
     return gpg_error (GPG_ERR_CONFLICT); /* EOF has already been indicated.  */
 
-  log_debug ("%s:%s: indata=%p indatalen=%d outfnc=%p\n",
-             SRCNAME, __func__, indata, (int)indatalen, filter->outfnc); 
+  if (debug_filter)
+    log_debug ("%s:%s: indata=%p indatalen=%d outfnc=%p\n",
+               SRCNAME, __func__, indata, (int)indatalen, filter->outfnc); 
   for (;;)
     {
       /* If there is something to write out, do this now to make space
          for more data.  */
-      EnterCriticalSection (&filter->out.lock);
+      take_out_lock (filter, __func__);
       while (filter->out.length)
         {
-          TRACEPOINT ();
+          if (debug_filter)
+            log_debug ("%s:%s: pushing %d bytes to the outfnc\n",
+                       SRCNAME, __func__, filter->out.length); 
           nbytes = filter->outfnc (filter->outfncdata, 
                                    filter->out.buffer, filter->out.length);
           if (nbytes == -1)
             {
-              log_debug ("%s:%s: error writing data\n", SRCNAME, __func__);
-              LeaveCriticalSection (&filter->out.lock);
+              if (debug_filter)
+                log_debug ("%s:%s: error writing data\n", SRCNAME, __func__);
+              release_out_lock (filter, __func__);
               return gpg_error (GPG_ERR_EIO);
             }
           assert (nbytes <= filter->out.length && nbytes >= 0);
@@ -333,12 +411,12 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
         }
       if (!PulseEvent (filter->out.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(out) failed", SRCNAME, __func__);
-      LeaveCriticalSection (&filter->out.lock);
+      release_out_lock (filter, __func__);
       
-      EnterCriticalSection (&filter->in.lock);
+      take_in_lock (filter, __func__);
+
       if (!indata && !indatalen)
         {
-          TRACEPOINT ();
           filter->in.got_eof = 1;
           /* Flush requested.  Tell the output function to also flush.  */
           nbytes = filter->outfnc (filter->outfncdata, NULL, 0);
@@ -349,7 +427,7 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
             }
           else
             err = 0;
-          LeaveCriticalSection (&filter->in.lock);
+          release_in_lock (filter, __func__);
           return err; 
         }
 
@@ -358,7 +436,6 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
          processed.  */
       if (!filter->in.length && indatalen)
         {
-          TRACEPOINT ();
           filter->in.length = (indatalen > FILTER_BUFFER_SIZE
                                ? FILTER_BUFFER_SIZE : indatalen);
           memcpy (filter->in.buffer, indata, filter->in.length);
@@ -367,17 +444,18 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
         }
       if (!filter->in.length || (filter->in.ready && !filter->out.length))
         {
-          LeaveCriticalSection (&filter->in.lock);
+          release_in_lock (filter, __func__);
           err = 0;
           break;  /* the loop.  */
         }
       if (!PulseEvent (filter->in.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(in) failed", SRCNAME, __func__);
-      LeaveCriticalSection (&filter->in.lock);
-      Sleep (0);
+      release_in_lock (filter, __func__);
+      Sleep (50);
     }
 
-  log_debug ("%s:%s: leave; err=%d\n", SRCNAME, __func__, err); 
+  if (debug_filter)
+    log_debug ("%s:%s: leave; err=%d\n", SRCNAME, __func__, err); 
   return err;
 }
 
@@ -443,7 +521,6 @@ engine_wait (engine_filter_t filter)
   gpg_error_t err;
   int more;
 
-  TRACEPOINT ();
   if (!filter || !filter->outfnc)
     return gpg_error (GPG_ERR_INV_VALUE);
 
@@ -455,34 +532,43 @@ engine_wait (engine_filter_t filter)
      wait for the out.lock as well as for the ready_event.  */
   do 
     {
-      EnterCriticalSection (&filter->out.lock);
-      while (filter->out.length)
+      more = 0;
+      take_out_lock (filter, __func__);
+      if (filter->out.length)
         {
           int nbytes; 
 
           nbytes = filter->outfnc (filter->outfncdata, 
                                    filter->out.buffer, filter->out.length);
-          if (nbytes == -1)
+          if (nbytes < 0)
             {
-              log_debug ("%s:%s: error writing data\n", SRCNAME, __func__);
-              LeaveCriticalSection (&filter->out.lock);
+              log_error ("%s:%s: error writing data\n", SRCNAME, __func__);
+              release_out_lock (filter, __func__);
               return gpg_error (GPG_ERR_EIO);
             }
-          
+         
           assert (nbytes <= filter->out.length && nbytes >= 0);
           if (nbytes < filter->out.length)
             memmove (filter->out.buffer, filter->out.buffer + nbytes,
                      filter->out.length - nbytes); 
           filter->out.length -= nbytes;
+          if (filter->out.length)
+            {
+              if (debug_filter > 1)
+                log_debug ("%s:%s: still %d pending bytes for outfnc\n",
+                           SRCNAME, __func__, filter->out.length);
+              more = 1;
+            }
         }
       if (!PulseEvent (filter->out.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(out) failed", SRCNAME, __func__);
-      LeaveCriticalSection (&filter->out.lock);
-      EnterCriticalSection (&filter->in.lock);
-      more = !filter->in.ready;
-      LeaveCriticalSection (&filter->in.lock);
+      release_out_lock (filter, __func__);
+      take_in_lock (filter, __func__);
+      if (!filter->in.ready)
+        more = 1;
+      release_in_lock (filter, __func__);
       if (more)
-        Sleep (100);
+        Sleep (50);
     }
   while (more);
 
@@ -505,14 +591,29 @@ engine_wait (engine_filter_t filter)
 void
 engine_cancel (engine_filter_t filter)
 {
+  void *cancel_data;
+
   if (!filter)
     return;
   
-  EnterCriticalSection (&filter->in.lock);
+  take_in_lock (filter, __func__);
+  cancel_data = filter->cancel_data;
+  filter->cancel_data = NULL;
   filter->in.ready = 1;
-  LeaveCriticalSection (&filter->in.lock);
-  log_debug ("%s:%s: filter %p canceled", SRCNAME, __func__, filter);
-  /* FIXME:  Here we need to kill the underlying gpgme process. */
+  release_in_lock (filter, __func__);
+  if (cancel_data)
+    {
+      log_debug ("%s:%s: filter %p: sending cancel command to backend",
+                 SRCNAME, __func__, filter);
+      engine_gpgme_cancel (cancel_data);
+      if (WaitForSingleObject (filter->in.ready_event, INFINITE)
+          != WAIT_OBJECT_0)
+        log_error_w32 (-1, "%s:%s: WFSO failed", SRCNAME, __func__);
+      else
+        log_debug ("%s:%s: filter %p: backend has been canceled", 
+                   SRCNAME, __func__,  filter);
+    }
+  log_debug ("%s:%s: filter %p: canceled", SRCNAME, __func__, filter);
   release_filter (filter);
 }
 
@@ -532,7 +633,7 @@ engine_encrypt_start (engine_filter_t filter,
   gpg_error_t err;
 
   err = op_gpgme_encrypt (protocol, filter->indata, filter->outdata,
-                          filter, recipients, NULL, 0);
+                          filter, NULL, recipients);
   return err;
 }
 
@@ -549,7 +650,7 @@ engine_sign_start (engine_filter_t filter, protocol_t protocol)
   gpg_error_t err;
 
   err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
-                       filter);
+                       filter, NULL);
   return err;
 }
 
@@ -567,7 +668,7 @@ engine_decrypt_start (engine_filter_t filter, protocol_t protocol,
   gpg_error_t err;
 
   err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
-                          filter, with_verify);
+                          filter, NULL, with_verify);
   return err;
 }
 
@@ -592,7 +693,7 @@ engine_verify_start (engine_filter_t filter, const char *signature,
       return gpg_error (GPG_ERR_NOT_SUPPORTED);
     }
 
-  err = op_gpgme_verify (protocol, filter->indata, signature, filter);
+  err = op_gpgme_verify (protocol, filter->indata, signature, filter, NULL);
   return err;
 }
 

@@ -309,8 +309,7 @@ start_attachment (mime_context_t ctx, int is_body)
       goto leave;
     }
 
-
-  /* The body attachment is special and should not be show in the list
+  /* The body attachment is special and should not be shown in the list
      of attachments.  */
   if (is_body)
     {
@@ -483,7 +482,7 @@ finish_attachment (mime_context_t ctx, int cancel)
         retval = 0;
       else if (ctx->mapi_attach)
         {
-          hr = IAttach_SaveChanges (ctx->mapi_attach, KEEP_OPEN_READWRITE);
+          hr = IAttach_SaveChanges (ctx->mapi_attach, 0);
           if (hr)
             {
               log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
@@ -505,6 +504,14 @@ finish_attachment (mime_context_t ctx, int cancel)
     }
   return retval;
 }
+
+
+static int
+finish_message (LPMESSAGE message)
+{
+  return 0;
+}
+
 
 
 /* Process the transition to body event. 
@@ -778,7 +785,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
           log_error ("%s: ctx=%p, rfc822 parser failed: line too long\n",
                      SRCNAME, ctx);
           ctx->line_too_long = 1;
-          return 0; /* Error. */
+          return -1; /* Error. */
         }
       if (*s != '\n')
         ctx->linebuf[pos++] = *s;
@@ -792,7 +799,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
               log_error ("%s: ctx=%p, rfc822 parser failed: %s\n",
                          SRCNAME, ctx, strerror (errno));
               ctx->parser_error = 1;
-              return 0; /* Error. */
+              return -1; /* Error. */
             }
 
 
@@ -846,7 +853,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                         MessageBox (ctx->hwnd, _("Error writing to stream"),
                                     _("I/O-Error"), MB_ICONERROR|MB_OK);
                       ctx->parser_error = 1;
-                      return 0; /* Error. */
+                      return -1; /* Error. */
                     }
                 }
             }
@@ -1022,6 +1029,8 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
         }
       symenc_close (ctx->symenc);
       xfree (ctx);
+      if (!err)
+        finish_message (mapi_message);
     }
   return err;
 }
@@ -1118,7 +1127,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
     {
       /* Cancel any left over attachment which means that the MIME
          structure was not complete.  However if we have not seen any
-         boundary the message is a non-MIME one but we way have
+         boundary the message is a non-MIME one but we may have
          started the body attachment (gpgol000.txt) - this one needs
          to be finished properly.  */
       finish_attachment (ctx, ctx->any_boundary? 1: 0);
@@ -1138,6 +1147,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
         }
       symenc_close (ctx->symenc);
       xfree (ctx);
+      if (!err)
+        finish_message (mapi_message);
     }
   return err;
 }

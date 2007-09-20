@@ -100,18 +100,17 @@ GpgolMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 
 
 /* Called from Exchange on reading a message.  Returns: S_FALSE to
-   signal Exchange to continue calling extensions.  PEECB is a pointer
+   signal Exchange to continue calling extensions.  EECB is a pointer
    to the IExchExtCallback interface. */
 STDMETHODIMP 
-GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB) 
+GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb) 
 {
   LPMDB mdb = NULL;
   LPMESSAGE message = NULL;
   
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
-  pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
-  log_mapi_property (message, PR_CONVERSATION_INDEX,"PR_CONVERSATION_INDEX");
-  switch (m_pExchExt->getMsgtype (pEECB))
+  eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+  switch (m_pExchExt->getMsgtype (eecb))
     {
     case MSGTYPE_UNKNOWN: 
       break;
@@ -123,13 +122,13 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
       log_debug ("%s:%s: processing multipart signed message\n", 
                  SRCNAME, __func__);
       m_processed = TRUE;
-      message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
+      message_verify (message, m_pExchExt->getMsgtype (eecb), 0);
       break;
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       log_debug ("%s:%s: processing multipart encrypted message\n",
                  SRCNAME, __func__);
       m_processed = TRUE;
-      message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
+      message_decrypt (message, m_pExchExt->getMsgtype (eecb), 0);
       /* Hmmm, we might want to abort it and run our own inspector
          instead.  */
       break;
@@ -137,26 +136,26 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
       log_debug ("%s:%s: processing opaque signed message\n", 
                  SRCNAME, __func__);
       m_processed = TRUE;
-      message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
+      message_verify (message, m_pExchExt->getMsgtype (eecb), 0);
       break;
     case MSGTYPE_GPGOL_CLEAR_SIGNED:
       log_debug ("%s:%s: processing clear signed pgp message\n", 
                  SRCNAME, __func__);
       m_processed = TRUE;
-      message_verify (message, m_pExchExt->getMsgtype (pEECB), 0);
+      message_verify (message, m_pExchExt->getMsgtype (eecb), 0);
       break;
     case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
       log_debug ("%s:%s: processing opaque encrypted message\n",
                  SRCNAME, __func__);
       m_processed = TRUE;
-      message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
+      message_decrypt (message, m_pExchExt->getMsgtype (eecb), 0);
       /* Hmmm, we might want to abort it and run our own inspector
          instead.  */
       break;
     case MSGTYPE_GPGOL_PGP_MESSAGE:
       log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
       m_processed = TRUE;
-      message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 0);
+      message_decrypt (message, m_pExchExt->getMsgtype (eecb), 0);
       /* Hmmm, we might want to abort it and run our own inspector
          instead.  */
       break;
@@ -170,10 +169,10 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK pEECB)
 
 
 /* Called by Exchange after a message has been read.  Returns: S_FALSE
-   to signal Exchange to continue calling extensions.  PEECB is a
-   pointer to the IExchExtCallback interface. LFLAGS are some flags. */
+   to signal Exchange to continue calling extensions.  EECB is a
+   pointer to the IExchExtCallback interface. FLAGS are some flags. */
 STDMETHODIMP 
-GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
+GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
@@ -186,24 +185,26 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
       LPMESSAGE message = NULL;
       LPMDB mdb = NULL;
 
-      if (FAILED (pEECB->GetWindow (&hwnd)))
+      if (FAILED (eecb->GetWindow (&hwnd)))
         hwnd = NULL;
-      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
           int ishtml, wasprotected;
           char *body;
 
           /* If the message was protected we don't allow a fallback to
-             the OOM display methods.  FIXME:  This is currently disabled. */
+             the OOM display methods.  */
           body = mapi_get_gpgol_body_attachment (message, NULL,
                                                  &ishtml, &wasprotected);
           if (body)
-            update_display (hwnd, /*wasprotected?NULL:*/pEECB, ishtml, body);
+            update_display (hwnd, wasprotected? NULL: eecb, ishtml, body);
           else
             update_display (hwnd, NULL, 0, 
                             _("[Crypto operation failed - "
                               "can't show the body of the message]"));
+          put_outlook_property (eecb, "EncryptedStatus", "MyStatus");
+
         }
       ul_release (message);
       ul_release (mdb);
@@ -214,7 +215,7 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
     {
       HWND hWnd = NULL;
 
-      if (FAILED (pEECB->GetWindow (&hWnd)))
+      if (FAILED (eecb->GetWindow (&hWnd)))
         hWnd = NULL;
       else
         log_window_hierarchy (hWnd, "%s:%s:%d: Windows hierarchy:",
@@ -227,10 +228,10 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
 
 
 /* Called by Exchange when a message will be written. Returns: S_FALSE
-   to signal Exchange to continue calling extensions.  PEECB is a
+   to signal Exchange to continue calling extensions.  EECB is a
    pointer to the IExchExtCallback interface. */
 STDMETHODIMP 
-GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
+GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK eecb)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
@@ -247,7 +248,7 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
      out unencrypted messages. */
   if (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign)
     {
-      pDisp = find_outlook_property (pEECB, "BodyFormat", &dispid);
+      pDisp = find_outlook_property (eecb, "BodyFormat", &dispid);
       if (!pDisp)
         {
           log_debug ("%s:%s: BodyFormat not found\n", SRCNAME, __func__);
@@ -287,7 +288,7 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
           log_debug ("%s:%s: BodyFormat is %d",
                      SRCNAME, __func__, aVariant.intVal);
           
-          if (FAILED(pEECB->GetWindow (&hWnd)))
+          if (FAILED(eecb->GetWindow (&hWnd)))
             hWnd = NULL;
           MessageBox (hWnd,
                       _("Sorry, we can only encrypt plain text messages and\n"
@@ -311,7 +312,7 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
 
 
 /* Called by Exchange when the data has been written to the message.
-   Encrypts and signs the message if the options are set.  PEECB is a
+   Encrypts and signs the message if the options are set.  EECB is a
    pointer to the IExchExtCallback interface.  Returns: S_FALSE to
    signal Exchange to continue calling extensions.  We return E_FAIL
    to signals Exchange an error; the message will not be sent.  Note
@@ -319,7 +320,7 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK pEECB)
    back the write operation and that no further extensions should be
    called. */
 STDMETHODIMP 
-GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
+GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   HRESULT hrReturn = S_FALSE;
   LPMESSAGE msg = NULL;
@@ -330,7 +331,7 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
 
-  if (lFlags & (EEME_FAILED|EEME_COMPLETE_FAILED))
+  if (flags & (EEME_FAILED|EEME_COMPLETE_FAILED))
     return S_FALSE; /* We don't need to rollback anything in case
                        other extensions flagged a failure. */
           
@@ -341,11 +342,11 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
     return S_FALSE;
 
   /* Try to get the current window. */
-  if (FAILED(pEECB->GetWindow (&hWnd)))
+  if (FAILED(eecb->GetWindow (&hWnd)))
     hWnd = NULL;
 
   /* Get the object and call the encryption or signing fucntion.  */
-  HRESULT hr = pEECB->GetObject (&pMDB, (LPMAPIPROP *)&msg);
+  HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
@@ -372,10 +373,10 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK pEECB, ULONG lFlags)
 
 
 /* Called by Exchange when the user selects the "check names" command.
-   PEECB is a pointer to the IExchExtCallback interface.  Returns
+   EECB is a pointer to the IExchExtCallback interface.  Returns
    S_FALSE to signal Exchange to continue calling extensions. */
 STDMETHODIMP 
-GpgolMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK pEECB)
+GpgolMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK eecb)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   return S_FALSE;
@@ -383,10 +384,10 @@ GpgolMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK pEECB)
 
 
 /* Called by Exchange when "check names" command is complete.
-   PEECB is a pointer to the IExchExtCallback interface.  Returns
+   EECB is a pointer to the IExchExtCallback interface.  Returns
    S_FALSE to signal Exchange to continue calling extensions. */
 STDMETHODIMP 
-GpgolMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,ULONG lFlags)
+GpgolMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK eecb,ULONG flags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   return S_FALSE;
@@ -394,11 +395,11 @@ GpgolMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK pEECB,ULONG lFlags)
 
 
 /* Called by Exchange before the message data will be written and
-   submitted to MAPI.  PEECB is a pointer to the IExchExtCallback
+   submitted to MAPI.  EECB is a pointer to the IExchExtCallback
    interface.  Returns S_FALSE to signal Exchange to continue calling
    extensions. */
 STDMETHODIMP 
-GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK pEECB)
+GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK eecb)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = TRUE;
@@ -408,10 +409,10 @@ GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK pEECB)
 
 
 /* Called by Exchange after the message has been submitted to MAPI.
-   PEECB is a pointer to the IExchExtCallback interface. */
+   EECB is a pointer to the IExchExtCallback interface. */
 STDMETHODIMP_ (VOID) 
-GpgolMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK pEECB,
-                                            ULONG lFlags)
+GpgolMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK eecb,
+                                            ULONG flags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = FALSE; 

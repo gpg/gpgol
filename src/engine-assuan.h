@@ -29,7 +29,17 @@ extern "C" {
 #endif
 #endif
 
+#include <gpgme.h>  /* We need it for gpgme_data_t.  */
 
+
+
+int  op_assuan_init (void);
+void op_assuan_deinit (void);
+
+int op_assuan_encrypt (protocol_t protocol, 
+                       gpgme_data_t indata, gpgme_data_t outdata,
+                       void *notify_data, /* FIXME: Add hwnd */
+                       char **recipients);
 
 
 

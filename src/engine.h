@@ -53,8 +53,8 @@ typedef struct engine_filter_s *engine_filter_t;
 int engine_init (void);
 void engine_deinit (void);
 
-/* This callback function is to be used only by engine-gpgme.c.   */
-void engine_gpgme_finished (engine_filter_t filter, gpg_error_t status);
+void engine_private_set_cancel (engine_filter_t filter, void *cancel_data);
+void engine_private_finished (engine_filter_t filter, gpg_error_t status);
 
 int engine_filter (engine_filter_t filter,
                    const void *indata, size_t indatalen);

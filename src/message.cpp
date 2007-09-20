@@ -254,7 +254,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
      first to "?" to mark that no verification has yet happened. */
   if (force)
     mapi_set_sig_status (message, "?");
-  else if (mapi_has_sig_status (message))
+  else if (mapi_test_sig_status (message))
     return 0; /* Already checked that message.  */
 
   if (msgtype == MSGTYPE_GPGOL_CLEAR_SIGNED)
@@ -325,9 +325,13 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
   xfree (inbuf);
                     
   if (err)
-    mapi_set_sig_status (message, gpg_strerror (err));
+    {
+      char buf[200];
+      snprintf (buf, sizeof buf, "- %s", gpg_strerror (err));
+      mapi_set_sig_status (message, gpg_strerror (err));
+    }
   else
-    mapi_set_sig_status (message, "Signature was good");
+    mapi_set_sig_status (message, "! Good signature");
 
   mapi_release_attach_table (table);
   return 0;

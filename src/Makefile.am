@@ -50,6 +50,7 @@ gpgol_SOURCES = \
 	serpent.c serpent.h         \
         vasprintf.c                 \
 	ext-commands.cpp ext-commands.h       \
+	user-events.cpp     user-events.h     \
 	session-events.cpp  session-events.h  \
 	message-events.cpp  message-events.h  \
 	attached-file-events.cpp attached-file-events.h \

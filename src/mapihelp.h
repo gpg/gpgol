@@ -50,7 +50,7 @@ typedef enum
                                     S/MIME or PGP/MIME message. */
     ATTACHTYPE_FROMMOSS = 2,     /* Attachment created from MOSS.  */
     ATTACHTYPE_MOSSTEMPL = 3     /* Attachment has been created in the
-                                    course of sendig a message */ 
+                                    course of sending a message */ 
   }
 attachtype_t;
 
@@ -59,6 +59,8 @@ struct mapi_attach_item_s
 {
   int end_of_table;     /* True if this is the last plus one entry of
                            the table. */
+  void *private_mapitable; /* Only for use by mapi_release_attach_table. */
+
   int mapipos;          /* The position which needs to be passed to
                            MAPI to open the attachment.  -1 means that
                            there is no valid attachment.  */
@@ -76,7 +78,6 @@ struct mapi_attach_item_s
 
   /* The attachment type from Property GpgOL Attach Type.  */
   attachtype_t attach_type;
-
 };
 typedef struct mapi_attach_item_s mapi_attach_item_t;
 
@@ -106,6 +107,7 @@ char *mapi_get_attach (LPMESSAGE message,
                        mapi_attach_item_t *item, size_t *r_nbytes);
 int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
 int mapi_has_sig_status (LPMESSAGE msg);
+int mapi_test_sig_status (LPMESSAGE msg);
 int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
 
 char *mapi_get_message_content_type (LPMESSAGE message, 

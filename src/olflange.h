@@ -54,6 +54,7 @@ private:
 
   /* Pointer to the other extension objects.  */
   GpgolExtCommands        *m_pExchExtCommands;
+  GpgolUserEvents         *m_pExchExtUserEvents;
   GpgolSessionEvents      *m_pExchExtSessionEvents;
   GpgolMessageEvents      *m_pExchExtMessageEvents;
   GpgolPropertySheets     *m_pExchExtPropertySheets;

@@ -59,10 +59,12 @@ struct closure_data_s
 };
 
 
+static int basic_init_done = 0;
 static int init_done = 0;
 
 
 static DWORD WINAPI waiter_thread (void *dummy);
+static CRITICAL_SECTION waiter_thread_lock;
 static void update_passphrase_cache (int err, 
                                      struct passphrase_cb_s *pass_cb_value);
 /* static void add_verify_attestation (gpgme_data_t at,  */
@@ -87,21 +89,37 @@ op_gpgme_deinit (void)
 }
 
 
-/* Initialize the operation system. */
+/* First part of the gpgme initialization.  This is sufficient if we
+   only use the gpgme_data_t stuff.  */
 int
-op_gpgme_init (void)
+op_gpgme_basic_init (void)
 {
-  gpgme_error_t err;
-
-  if (init_done == 1)
+  if (basic_init_done)
     return 0;
 
   if (!gpgme_check_version (NEED_GPGME_VERSION)) 
     {
       log_debug ("gpgme is too old (need %s, have %s)\n",
                  NEED_GPGME_VERSION, gpgme_check_version (NULL) );
-      return -1;
+      return gpg_error (GPG_ERR_GENERAL);
     }
+
+  basic_init_done = 1;
+  return 0;
+}
+
+
+int
+op_gpgme_init (void)
+{
+  gpgme_error_t err;
+
+  if (init_done)
+    return 0;
+
+  err = op_gpgme_basic_init ();
+  if (err)
+    return err;
 
   err = gpgme_engine_check_version (GPGME_PROTOCOL_OpenPGP);
   if (err)
@@ -123,6 +141,7 @@ op_gpgme_init (void)
     HANDLE th;
     DWORD tid;
 
+    InitializeCriticalSection (&waiter_thread_lock);
     th = CreateThread (NULL, 128*1024, waiter_thread, NULL, 0, &tid);
     if (th == INVALID_HANDLE_VALUE)
       log_error ("failed to start the gpgme waiter thread\n");
@@ -146,15 +165,16 @@ waiter_thread (void *dummy)
 
   (void)dummy;
 
-  TRACEPOINT ();
   for (;;)
     {
       /*  Note: We don't use hang because this will end up in a tight
           loop and does not do a voluntary context switch.  Thus we do
           this by ourself.  Actually it would be better to start
-          gpgme-Wait only if we really have something to do but that
-          is more complicated.  */
+          gpgme_wait only if we really have something to do but that
+          is a bit more complicated.  */
+      EnterCriticalSection (&waiter_thread_lock);
       ctx = gpgme_wait (NULL, &err, 0);
+      LeaveCriticalSection (&waiter_thread_lock);
       if (ctx)
         {
           gpgme_get_progress_cb (ctx, NULL, &a_voidptr);
@@ -170,6 +190,24 @@ waiter_thread (void *dummy)
                    gpg_strerror (err));
       else
         Sleep (50);
+    }
+}
+
+
+void
+engine_gpgme_cancel (void *cancel_data)
+{
+  gpg_error_t err;
+  gpgme_ctx_t ctx = cancel_data;
+
+  if (ctx)
+    {
+      EnterCriticalSection (&waiter_thread_lock);
+      err = gpgme_cancel (ctx);
+      LeaveCriticalSection (&waiter_thread_lock);
+      if (err)
+        log_debug ("%s:%s: gpgme_cancel failed: %s\n", 
+                   SRCNAME, __func__,  gpg_strerror (err));
     }
 }
 
@@ -367,15 +405,15 @@ encrypt_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
     }
   if (err)
     err = check_encrypt_result (ctx, err);
-  engine_gpgme_finished (cld->filter, err);
+  engine_private_finished (cld->filter, err);
 }
 
 
 /* Encrypt the data from INDATA to the OUTDATA object for all
    recpients given in the NULL terminated array KEYS.  If SIGN_KEY is
    not NULL the message will also be signed.  On termination of the
-   encryption command engine_gpgme_finished() is called with
-   NOTIFY_DATA as the first argument.  
+   encryption command engine_private_finished() is called with
+   FILTER as the first argument.  
 
    This global function is used to avoid allocating an extra context
    just for this notification.  We abuse the gpgme_set_progress_cb
@@ -383,8 +421,8 @@ encrypt_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
 int
 op_gpgme_encrypt (protocol_t protocol, 
                   gpgme_data_t indata, gpgme_data_t outdata,
-                  void *notify_data, /* FIXME: Add hwnd */
-                  char **recipients, gpgme_key_t sign_key, int ttl)
+                  engine_filter_t filter, void *hwnd,
+                  char **recipients)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -393,7 +431,7 @@ op_gpgme_encrypt (protocol_t protocol,
 
   cld = xcalloc (1, sizeof *cld);
   cld->closure = encrypt_closure;
-  cld->filter = notify_data;
+  cld->filter = filter;
 
   err = prepare_recipient_keys (&keys, recipients, NULL);
   if (err)
@@ -420,18 +458,18 @@ op_gpgme_encrypt (protocol_t protocol,
 
   gpgme_set_armor (ctx, 1);
   /* FIXME:  We should not hardcode always trust. */
-  if (sign_key)
-    {
-      gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cld->pw_cb);
-      cld->pw_cb.ctx = ctx;
-      cld->pw_cb.ttl = ttl;
-      err = gpgme_signers_add (ctx, sign_key);
-      if (!err)
-        err = gpgme_op_encrypt_sign_start (ctx, keys,
-                                           GPGME_ENCRYPT_ALWAYS_TRUST,
-                                           indata, outdata);
-    }
-  else
+/*   if (sign_key) */
+/*     { */
+/*       gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cld->pw_cb); */
+/*       cld->pw_cb.ctx = ctx; */
+/*       cld->pw_cb.ttl = opt.passwd_ttl; */
+/*       err = gpgme_signers_add (ctx, sign_key); */
+/*       if (!err) */
+/*         err = gpgme_op_encrypt_sign_start (ctx, keys, */
+/*                                            GPGME_ENCRYPT_ALWAYS_TRUST, */
+/*                                            indata, outdata); */
+/*     } */
+/*   else */
     err = gpgme_op_encrypt_start (ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, 
                                   indata, outdata);
 
@@ -441,6 +479,8 @@ op_gpgme_encrypt (protocol_t protocol,
       xfree (cld);
       gpgme_release (ctx);
     }
+  else
+    engine_private_set_cancel (filter, ctx);
   release_key_array (keys);
   return err;
 }
@@ -454,17 +494,17 @@ static void
 sign_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
 {
   update_passphrase_cache (err, &cld->pw_cb);
-  engine_gpgme_finished (cld->filter, err);
+  engine_private_finished (cld->filter, err);
 }
 
 
 /* Created a detached signature for INDATA and write it to OUTDATA.
-   On termination of the signing command engine_gpgme_finished() is
-   called with NOTIFY_DATA as the first argument.  */
+   On termination of the signing command engine_private_finished() is
+   called with FILTER as the first argument.  */
 int
 op_gpgme_sign (protocol_t protocol, 
                gpgme_data_t indata, gpgme_data_t outdata,
-               void *notify_data /* FIXME: Add hwnd */)
+               engine_filter_t filter, void *hwnd)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -479,7 +519,7 @@ op_gpgme_sign (protocol_t protocol,
 
   cld = xcalloc (1, sizeof *cld);
   cld->closure = sign_closure;
-  cld->filter = notify_data;
+  cld->filter = filter;
 
   err = gpgme_new (&ctx);
   if (err)
@@ -502,6 +542,7 @@ op_gpgme_sign (protocol_t protocol,
   gpgme_set_armor (ctx, 1);
   gpgme_set_passphrase_cb (ctx, passphrase_callback_box, &cld->pw_cb);
   cld->pw_cb.ctx = ctx;
+  cld->pw_cb.ttl = opt.passwd_ttl;
   err = gpgme_signers_add (ctx, sign_key);
   if (!err)
     err = gpgme_op_sign_start (ctx, indata, outdata, GPGME_SIG_MODE_DETACH);
@@ -512,6 +553,8 @@ op_gpgme_sign (protocol_t protocol,
       xfree (cld);
       gpgme_release (ctx);
     }
+  else
+    engine_private_set_cancel (filter, ctx);
   gpgme_key_unref (sign_key);
   return err;
 }
@@ -558,7 +601,7 @@ decrypt_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
   if (err && (cld->pw_cb.opts & OPT_FLAG_CANCEL))
     err = gpg_error (GPG_ERR_CANCELED);
 
-  engine_gpgme_finished (cld->filter, err);
+  engine_private_finished (cld->filter, err);
 }
 
 
@@ -568,7 +611,7 @@ decrypt_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
 int
 op_gpgme_decrypt (protocol_t protocol,
                   gpgme_data_t indata, gpgme_data_t outdata, 
-                  void *notify_data,
+                  engine_filter_t filter, void *hwnd,
                   int with_verify)
 {
   gpgme_error_t err;
@@ -577,7 +620,7 @@ op_gpgme_decrypt (protocol_t protocol,
   
   cld = xcalloc (1, sizeof *cld);
   cld->closure = decrypt_closure;
-  cld->filter = notify_data;
+  cld->filter = filter;
   cld->with_verify = with_verify;
 
   err = gpgme_new (&ctx);
@@ -615,6 +658,8 @@ op_gpgme_decrypt (protocol_t protocol,
       xfree (cld);
       gpgme_release (ctx);
     }
+  else
+    engine_private_set_cancel (filter, ctx);
   return err;
 }
 
@@ -635,7 +680,7 @@ verify_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
         verify_dialog_box (gpgme_get_protocol (ctx), res, NULL);
     }
   gpgme_data_release (cld->sigobj);
-  engine_gpgme_finished (cld->filter, err);
+  engine_private_finished (cld->filter, err);
 }
 
 
@@ -644,7 +689,7 @@ verify_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
 int
 op_gpgme_verify (gpgme_protocol_t protocol, 
                  gpgme_data_t data, const char *signature,
-                 void *notify_data )
+                 engine_filter_t filter, void *hwnd)
 {
   gpgme_error_t err;
   closure_data_t cld;
@@ -653,7 +698,7 @@ op_gpgme_verify (gpgme_protocol_t protocol,
 
   cld = xcalloc (1, sizeof *cld);
   cld->closure = verify_closure;
-  cld->filter = notify_data;
+  cld->filter = filter;
 
   err = gpgme_new (&ctx);
   if (err)
@@ -688,6 +733,8 @@ op_gpgme_verify (gpgme_protocol_t protocol,
       xfree (cld);
       gpgme_release (ctx);
     }
+  else
+    engine_private_set_cancel (filter, ctx);
   return err;
 }
 

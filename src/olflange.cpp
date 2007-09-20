@@ -45,6 +45,7 @@
 #include "olflange-def.h"
 #include "olflange.h"
 #include "ext-commands.h"
+#include "user-events.h"
 #include "session-events.h"
 #include "message-events.h"
 #include "property-sheets.h"
@@ -295,12 +296,14 @@ GpgolExt::GpgolExt (void)
   msgtype_valid = FALSE;
 
   m_pExchExtCommands           = new GpgolExtCommands (this);
+  m_pExchExtUserEvents         = new GpgolUserEvents (this);
   m_pExchExtSessionEvents      = new GpgolSessionEvents (this);
   m_pExchExtMessageEvents      = new GpgolMessageEvents (this);
   m_pExchExtAttachedFileEvents = new GpgolAttachedFileEvents (this);
   m_pExchExtPropertySheets     = new GpgolPropertySheets (this);
   m_pOutlookExtItemEvents      = new GpgolItemEvents (this);
   if (!m_pExchExtCommands
+      || !m_pExchExtUserEvents
       || !m_pExchExtSessionEvents
       || !m_pExchExtMessageEvents
       || !m_pExchExtAttachedFileEvents
@@ -368,6 +371,11 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
       *ppvObj = (LPUNKNOWN)m_pExchExtCommands;
       m_pExchExtCommands->SetContext (m_lContext);
     }
+  else if (riid == IID_IExchExtUserEvents) 
+    {
+      *ppvObj = (LPUNKNOWN) m_pExchExtUserEvents;
+      m_pExchExtUserEvents->SetContext (m_lContext);
+    }
   else if (riid == IID_IExchExtSessionEvents) 
     {
       *ppvObj = (LPUNKNOWN) m_pExchExtSessionEvents;
@@ -434,7 +442,8 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   if (!version_shown)
     {
       version_shown = 1;
-      log_debug ("%s:%s: using gpgme %s\n", gpgme_check_version (NULL));
+      log_debug ("%s:%s: using gpgme %s\n", 
+                 SRCNAME, __func__, gpgme_check_version (NULL));
       log_debug ("%s:%s: detected Outlook build version 0x%lx (%lu.%lu)\n",
                  SRCNAME, __func__, lBuildVersion,
                  (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,

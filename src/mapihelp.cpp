@@ -80,6 +80,10 @@ log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
       log_debug ("%s: %20s=`%s'", __func__, propname, propval->Value.lpszA);
       break;
 
+    case PT_LONG:
+      log_debug ("%s: %20s=%ld", __func__, propname, propval->Value.l);
+      break;
+
     default:
       log_debug ("%s:%s: HrGetOneProp(%s) property type %lu not supported\n",
                  SRCNAME, __func__, propname,
@@ -482,7 +486,6 @@ mapi_change_message_class (LPMESSAGE message)
   HRESULT hr;
   SPropValue prop;
   LPSPropValue propval = NULL;
-  
   char *newvalue = NULL;
 
   if (!message)
@@ -582,21 +585,28 @@ mapi_change_message_class (LPMESSAGE message)
     }
   MAPIFreeBuffer (propval);
   if (!newvalue)
-    return 0;
-
-  prop.ulPropTag = PR_MESSAGE_CLASS_A;
-  prop.Value.lpszA = newvalue; 
-  hr = message->SetProps (1, &prop, NULL);
-  xfree (newvalue);
-  if (hr != S_OK)
     {
-      log_error ("%s:%s: can't set message class: hr=%#lx\n",
-                 SRCNAME, __func__, hr);
-      return 0;
+      /* We use our Sig-Status property to mark messages which passed
+         this function.  This helps use to avoids later tests.  */
+      if (!mapi_has_sig_status (message))
+        mapi_set_sig_status (message, "#");
+    }
+  else
+    {
+      prop.ulPropTag = PR_MESSAGE_CLASS_A;
+      prop.Value.lpszA = newvalue; 
+      hr = message->SetProps (1, &prop, NULL);
+      xfree (newvalue);
+      if (hr)
+        {
+          log_error ("%s:%s: can't set message class: hr=%#lx\n",
+                     SRCNAME, __func__, hr);
+          return 0;
+        }
     }
 
   hr = message->SaveChanges (KEEP_OPEN_READONLY);
-  if (hr != S_OK)
+  if (hr)
     {
       log_error ("%s:%s: SaveChanges() failed: hr=%#lx\n",
                  SRCNAME, __func__, hr); 
@@ -936,16 +946,30 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
     {
       LPATTACH att;
 
-      hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
+      if (mapirows->aRow[pos].cValues < 1)
+        {
+          log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
+          table[pos].mapipos = -1;
+          continue;
+        }
+      if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
+        {
+          log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
+          table[pos].mapipos = -1;
+          continue;
+        }
+      table[pos].mapipos = mapirows->aRow[pos].lpProps[0].Value.l;
+
+      hr = message->OpenAttach (table[pos].mapipos, NULL,
+                                MAPI_BEST_ACCESS, &att);	
       if (FAILED (hr))
         {
-          log_error ("%s:%s: can't open attachment %d: hr=%#lx",
-                     SRCNAME, __func__, pos, hr);
+          log_error ("%s:%s: can't open attachment %d (%d): hr=%#lx",
+                     SRCNAME, __func__, pos, table[pos].mapipos, hr);
           table[pos].mapipos = -1;
           continue;
         }
 
-      table[pos].mapipos = pos;
       table[pos].method = get_attach_method (att);
       table[pos].filename = fast? NULL : get_attach_filename (att);
       table[pos].content_type = fast? NULL : get_attach_mime_tag (att);
@@ -965,9 +989,10 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
       table[pos].attach_type = get_gpgolattachtype (att, moss_tag);
       att->Release ();
     }
-  table[pos].end_of_table = 1;
+  table[0].private_mapitable = mapitable;
   FreeProws (mapirows);
-  mapitable->Release ();
+  table[pos].end_of_table = 1;
+  mapitable = NULL;
 
   if (fast)
     {
@@ -996,10 +1021,14 @@ void
 mapi_release_attach_table (mapi_attach_item_t *table)
 {
   unsigned int pos;
+  LPMAPITABLE mapitable;
 
   if (!table)
     return;
 
+  mapitable = (LPMAPITABLE)table[0].private_mapitable;
+  if (mapitable)
+    mapitable->Release ();
   for (pos=0; !table[pos].end_of_table; pos++)
     {
       xfree (table[pos].filename);
@@ -1258,9 +1287,34 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
 
 
 
-/* Returns True if MESSAGE has a GpgOL Sig Status property.  */
+/* Returns True if MESSAGE has the GpgOL Sig Status property.  */
 int
 mapi_has_sig_status (LPMESSAGE msg)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  int yes;
+
+  if (get_gpgolsigstatus_tag (msg, &tag) )
+    return 0; /* Error:  Assume No.  */
+  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
+  if (FAILED (hr))
+    return 0; /* No.  */  
+  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    yes = 1;
+  else
+    yes = 0;
+
+  MAPIFreeBuffer (propval);
+  return yes;
+}
+
+
+/* Returns True if MESSAGE has a GpgOL Sig Status property and that it
+   is not set to unchecked.  */
+int
+mapi_test_sig_status (LPMESSAGE msg)
 {
   HRESULT hr;
   LPSPropValue propval = NULL;
@@ -1282,9 +1336,17 @@ mapi_has_sig_status (LPMESSAGE msg)
 }
 
 
-/* Set the signature status property to STATUS_STRING.  To set the
-   status to not checked, set it to "?".  Note that this function does
-   not call SaveChanges.  */
+/* Set the signature status property to STATUS_STRING.  There are a
+   few special values:
+
+     "#" The message is not of interest to us.
+     "@" The message has been created and signed or encrypted by us.
+     "?" The signature status has not been checked.
+     "!" The signature verified okay 
+     "~" The signature was not fully verified.
+     "-" The signature is bad
+
+   Note that this function does not call SaveChanges.  */
 int 
 mapi_set_sig_status (LPMESSAGE message, const char *status_string)
 {
@@ -1469,6 +1531,8 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
   if (r_protected)
     *r_protected = 0;
 
+  mapi_release_attach_table (mapi_create_attach_table (message, 0));
+
   if (get_gpgolattachtype_tag (message, &moss_tag) )
     return NULL;
 
@@ -1497,19 +1561,33 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
       log_debug ("%s:%s: No attachments at all", SRCNAME, __func__);
       return NULL;
     }
+  log_debug ("%s:%s: message has %u attachments\n",
+             SRCNAME, __func__, n_attach);
 
   for (pos=0; pos < n_attach; pos++) 
     {
       LPATTACH att;
 
-      hr = message->OpenAttach (pos, NULL, MAPI_BEST_ACCESS, &att);	
-      if (FAILED (hr))
+      if (mapirows->aRow[pos].cValues < 1)
         {
-          log_error ("%s:%s: can't open attachment %d: hr=%#lx",
-                     SRCNAME, __func__, pos, hr);
+          log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
           continue;
         }
-      if ( (bodytype=has_gpgol_body_name (att))
+      if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
+        {
+          log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
+          continue;
+        }
+      hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
+                                NULL, MAPI_BEST_ACCESS, &att);	
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
+                     SRCNAME, __func__, pos, 
+                     mapirows->aRow[pos].lpProps[0].Value.l, hr);
+          continue;
+        }
+      if ((bodytype=has_gpgol_body_name (att))
            && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
         {
           if (get_attach_method (att) == ATTACH_BY_VALUE)
@@ -1524,7 +1602,11 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
   FreeProws (mapirows);
   mapitable->Release ();
   if (!body)
-    log_error ("%s:%s: no suitable body attachment found", SRCNAME, __func__);
+    {
+      log_error ("%s:%s: no suitable body attachment found", SRCNAME,__func__);
+      body = native_to_utf8 (_("[The content of this message is not visible"
+                               " due to an processing error in GpgOL.]"));
+    }
   
   return body;
 }

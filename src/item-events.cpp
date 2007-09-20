@@ -84,7 +84,7 @@ GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK peecb)
 
 
 /* Like all the other Complete methods this one is called after OnOpen
-   has been called for all registred extensions.  FLAGS may have tehse
+   has been called for all registered extensions.  FLAGS may have these
    values:
 
     0 - The open action has not been canceled.

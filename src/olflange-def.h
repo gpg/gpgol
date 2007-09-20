@@ -23,6 +23,7 @@
 #define OLFLANGE_DEF_H
 
 class GpgolExtCommands;
+class GpgolUserEvents;
 class GpgolSessionEvents;
 class GpgolMessageEvents;
 class GpgolAttachedFileEvents;
