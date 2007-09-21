@@ -30,11 +30,29 @@
 #include "common.h"
 #include "olflange-def.h"
 #include "olflange.h"
+#include "message.h"
+#include "mapihelp.h"
+#include "display.h"
 #include "item-events.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
+
+
+/* Wrapper around UlRelease with error checking. */
+/* FIXME: Duplicated code.  */
+static void 
+ul_release (LPVOID punk)
+{
+  ULONG res;
+  
+  if (!punk)
+    return;
+  res = UlRelease (punk);
+//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+}
+
 
 
 
@@ -43,6 +61,8 @@ GpgolItemEvents::GpgolItemEvents (GpgolExt *pParentInterface)
 { 
   m_pExchExt = pParentInterface;
   m_ref = 0;
+  m_processed = false;
+  m_wasencrypted = false;
 }
 
 
@@ -76,9 +96,20 @@ GpgolItemEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
                 displayed.
 */
 STDMETHODIMP 
-GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK peecb)
+GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK eecb)
 {
-  log_debug ("%s:%s: received", SRCNAME, __func__);
+  LPMDB mdb = NULL;
+  LPMESSAGE message = NULL;
+  
+  log_debug ("%s:%s: received\n", SRCNAME, __func__);
+
+  m_wasencrypted = false;
+  eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+  if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb)))
+    m_processed = TRUE;
+  ul_release (message);
+  ul_release (mdb);
+
   return S_FALSE;
 }
 
@@ -99,9 +130,22 @@ GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK peecb)
     The same return values as for OnOpen may be used..
 */ 
 STDMETHODIMP 
-GpgolItemEvents::OnOpenComplete (LPEXCHEXTCALLBACK peecb, ULONG flags)
+GpgolItemEvents::OnOpenComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   log_debug ("%s:%s: received, flags=%#lx", SRCNAME, __func__, flags);
+
+  /* If the message has been processed by is (i.e. in OnOpen), we now
+     use our own display code.  */
+  if (!flags && m_processed)
+    {
+      HWND hwnd = NULL;
+
+      if (FAILED (eecb->GetWindow (&hwnd)))
+        hwnd = NULL;
+      if (message_display_handler (eecb, hwnd))
+        m_wasencrypted = true;
+    }
+  
   return S_FALSE;
 }
 
@@ -114,9 +158,10 @@ GpgolItemEvents::OnOpenComplete (LPEXCHEXTCALLBACK peecb, ULONG flags)
       E_ABORT - Abort the close operation and don't dismiss the window.
 */
 STDMETHODIMP 
-GpgolItemEvents::OnClose (LPEXCHEXTCALLBACK peecb, ULONG save_options)
+GpgolItemEvents::OnClose (LPEXCHEXTCALLBACK eecb, ULONG save_options)
 {
   log_debug ("%s:%s: received, options=%#lx", SRCNAME, __func__, save_options);
+
   return S_FALSE;
 }
 
@@ -124,8 +169,61 @@ GpgolItemEvents::OnClose (LPEXCHEXTCALLBACK peecb, ULONG save_options)
 /* This is the corresponding Complete method for OnClose.  See
    OnOpenComplete for a description.  */
 STDMETHODIMP 
-GpgolItemEvents::OnCloseComplete (LPEXCHEXTCALLBACK peecb, ULONG flags)
+GpgolItemEvents::OnCloseComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   log_debug ("%s:%s: received, flags=%#lx", SRCNAME, __func__, flags);
+
+  if (m_wasencrypted)
+    {
+      /* Delete any body parts so that encrypted stuff won't show up
+         in the clear. */
+      HRESULT hr;
+      LPMESSAGE message = NULL;
+      LPMDB mdb = NULL;
+      
+      log_debug ("%s:%s: deleting body properties", SRCNAME, __func__);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          SPropTagArray proparray;
+          int anyokay = 0;
+          
+          proparray.cValues = 1;
+          proparray.aulPropTag[0] = PR_BODY;
+          hr = message->DeleteProps (&proparray, NULL);
+          if (hr)
+            log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
+                           SRCNAME, __func__);
+          else
+            anyokay++;
+     
+          proparray.cValues = 1;
+          proparray.aulPropTag[0] = PR_BODY_HTML;
+          message->DeleteProps (&proparray, NULL);
+          if (hr)
+            log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
+                           SRCNAME, __func__);
+          else
+            anyokay++;
+
+          if (anyokay)
+            {
+              hr = message->SaveChanges (KEEP_OPEN_READWRITE);
+              if (hr)
+                log_error_w32 (hr, "%s:%s: SaveChanges failed",
+                               SRCNAME, __func__); 
+            }
+
+          m_wasencrypted = false;
+          
+        }  
+      else
+        log_debug_w32 (hr, "%s:%s: error getting message", 
+                       SRCNAME, __func__);
+     
+      ul_release (message);
+      ul_release (mdb);
+    }
+
   return S_FALSE;
 }

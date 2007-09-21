@@ -94,9 +94,9 @@ log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
 }
 
 
-/* Return the property tag for GpgOL Attach Type. */
-int 
-get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
+/* Helper to create a named property. */
+static ULONG 
+create_gpgol_tag (LPMESSAGE message, wchar_t *name, const char *func)
 {
   HRESULT hr;
   LPSPropTagArray proparr = NULL;
@@ -108,17 +108,28 @@ get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
   memset (&mnid, 0, sizeof mnid);
   mnid.lpguid = &guid;
   mnid.ulKind = MNID_STRING;
-  mnid.Kind.lpwstrName = L"GpgOL Attach Type";
+  mnid.Kind.lpwstrName = name;
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
-  if (FAILED (hr)) 
+  if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
     {
-      log_error ("%s:%s: can't map %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Attach Type", hr); 
-      return -1;
+      log_error ("%s:%s: can't map GpgOL property: hr=%#lx\n",
+                 SRCNAME, func, hr); 
+      return 0;
     }
     
-  *r_tag = ((proparr->aulPropTag[0] & 0xFFFF0000) | PT_LONG);
+  return (proparr->aulPropTag[0] & 0xFFFF0000);
+}
+
+
+
+/* Return the property tag for GpgOL Attach Type. */
+int 
+get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Attach Type", __func__)))
+    return -1;
+  *r_tag |= PT_LONG;
   return 0;
 }
 
@@ -127,27 +138,9 @@ get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
 int 
 get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag)
 {
-  HRESULT hr;
-  LPSPropTagArray proparr = NULL;
-  MAPINAMEID mnid, *pmnid;	
-  /* {31805ab8-3e92-11dc-879c-00061b031004}: GpgOL custom properties.  */
-  GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
-                                            0x1b, 0x03, 0x10, 0x04}};
-
-  memset (&mnid, 0, sizeof mnid);
-  mnid.lpguid = &guid;
-  mnid.ulKind = MNID_STRING;
-  mnid.Kind.lpwstrName = L"GpgOL Sig Status";
-  pmnid = &mnid;
-  hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
-  if (FAILED (hr)) 
-    {
-      log_error ("%s:%s: can't map %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Sig Status", hr); 
-      return -1;
-    }
-    
-  *r_tag = ((proparr->aulPropTag[0] & 0xFFFF0000) | PT_STRING8);
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Sig Status", __func__)))
+    return -1;
+  *r_tag |= PT_STRING8;
   return 0;
 }
 
@@ -156,27 +149,20 @@ get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag)
 int 
 get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag)
 {
-  HRESULT hr;
-  LPSPropTagArray proparr = NULL;
-  MAPINAMEID mnid, *pmnid;	
-  /* {31805ab8-3e92-11dc-879c-00061b031004}: GpgOL custom properties.  */
-  GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
-                                            0x1b, 0x03, 0x10, 0x04}};
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Protect IV", __func__)))
+    return -1;
+  *r_tag |= PT_BINARY;
+  return 0;
+}
 
-  memset (&mnid, 0, sizeof mnid);
-  mnid.lpguid = &guid;
-  mnid.ulKind = MNID_STRING;
-  mnid.Kind.lpwstrName = L"GpgOL Protect IV";
-  pmnid = &mnid;
-  hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
-  if (FAILED (hr)) 
-    {
-      log_error ("%s:%s: can't map %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Protect IV", hr); 
-      return -1;
-    }
-    
-  *r_tag = ((proparr->aulPropTag[0] & 0xFFFF0000) | PT_BINARY);
+
+/* Return the property tag for GpgOL MIME structure. */
+int 
+get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL MIME Info", __func__)))
+    return -1;
+  *r_tag |= PT_STRING8;
   return 0;
 }
 
@@ -615,6 +601,40 @@ mapi_change_message_class (LPMESSAGE message)
 
   return 1;
 }
+
+
+/* Return the message class.  This function will never return NULL so
+   it is onlyuseful for debugging.  Caller needs to releasse the
+   returned string.  */
+char *
+mapi_get_message_class (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  char *retstr;
+
+  if (!message)
+    return xstrdup ("[No message]");
+  
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      return xstrdup (hr == MAPI_E_NOT_FOUND?
+                        "[No message class property]":
+                        "[Error getting message class property]");
+    }
+
+  if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
+    retstr = xstrdup (propval->Value.lpszA);
+  else
+    retstr = xstrdup ("[Invalid message class property]");
+    
+  MAPIFreeBuffer (propval);
+  return retstr;
+}
+
 
 
 /* Return the message type.  This function knows only about our own
@@ -1336,6 +1356,33 @@ mapi_test_sig_status (LPMESSAGE msg)
 }
 
 
+/* Return the signature status as an allocated string.  Will never
+   return NULL.  */
+char *
+mapi_get_sig_status (LPMESSAGE msg)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  char *retstr;
+
+  if (get_gpgolsigstatus_tag (msg, &tag) )
+    return xstrdup ("[Error getting tag for sig status]");
+  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
+  if (FAILED (hr))
+    return xstrdup ("");
+  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    retstr = xstrdup (propval->Value.lpszA);
+  else
+    retstr = xstrdup ("[Sig status has an invalid type]");
+
+  MAPIFreeBuffer (propval);
+  return retstr;
+}
+
+
+
+
 /* Set the signature status property to STATUS_STRING.  There are a
    few special values:
 
@@ -1367,6 +1414,33 @@ mapi_set_sig_status (LPMESSAGE message, const char *status_string)
 
   return 0;
 }
+
+
+/* Return the MIME info as an allocated string.  Will never return
+   NULL.  */
+char *
+mapi_get_mime_info (LPMESSAGE msg)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  char *retstr;
+
+  if (get_gpgolmimeinfo_tag (msg, &tag) )
+    return xstrdup ("[Error getting tag for MIME info]");
+  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
+  if (FAILED (hr))
+    return xstrdup ("");
+  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    retstr = xstrdup (propval->Value.lpszA);
+  else
+    retstr = xstrdup ("[MIME info has an invalid type]");
+
+  MAPIFreeBuffer (propval);
+  return retstr;
+}
+
+
 
 
 /* Helper for mapi_get_msg_content_type() */
@@ -1530,8 +1604,6 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
     *r_ishtml = 0;
   if (r_protected)
     *r_protected = 0;
-
-  mapi_release_attach_table (mapi_create_attach_table (message, 0));
 
   if (get_gpgolattachtype_tag (message, &moss_tag) )
     return NULL;

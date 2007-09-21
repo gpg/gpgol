@@ -40,9 +40,10 @@ class GpgolMessageEvents : public IExchExtMessageEvents
   ULONG   m_lContext;
   BOOL    m_bOnSubmitActive;
   GpgolExt* m_pExchExt;
-  BOOL    m_bWriteFailed;
-  BOOL    m_want_html;       /* Encryption of HTML is desired. */
-  BOOL    m_processed;       /* The message has been porcessed by us.  */
+  bool    m_bWriteFailed;
+  bool    m_want_html;       /* Encryption of HTML is desired. */
+  bool    m_processed;       /* The message has been porcessed by us.  */
+  bool    m_wasencrypted;    /* The original message was encrypted.  */
   
  public:
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID *ppvObj);

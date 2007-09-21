@@ -87,10 +87,12 @@ void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
 int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
+int  get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
 
 int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
 int mapi_change_message_class (LPMESSAGE message);
+char *mapi_get_message_class (LPMESSAGE message);
 msgtype_t mapi_get_message_type (LPMESSAGE message);
 int mapi_to_mime (LPMESSAGE message, const char *filename);
 
@@ -108,7 +110,11 @@ char *mapi_get_attach (LPMESSAGE message,
 int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
 int mapi_has_sig_status (LPMESSAGE msg);
 int mapi_test_sig_status (LPMESSAGE msg);
+char *mapi_get_sig_status (LPMESSAGE msg);
+
 int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
+
+char *mapi_get_mime_info (LPMESSAGE msg);
 
 char *mapi_get_message_content_type (LPMESSAGE message, 
                                      char **r_protocol, char **r_smtype);

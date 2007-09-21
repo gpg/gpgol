@@ -412,8 +412,9 @@ GpgolExtCommands::DoCommand (
   if (FAILED (pEECB->GetWindow (&hWnd)))
     hWnd = NULL;
 
-  log_debug ("%s:%s: commandID=%u (%#x) hwnd=%p\n",
-             SRCNAME, __func__, nCommandID, nCommandID, hWnd);
+  log_debug ("%s:%s: commandID=%u (%#x) context=%s hwnd=%p\n",
+             SRCNAME, __func__, nCommandID, nCommandID, 
+             ext_context_name (m_lContext), hWnd);
 
   if (nCommandID == SC_CLOSE && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
@@ -470,26 +471,16 @@ GpgolExtCommands::DoCommand (
       log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
     }
-  else if (nCommandID == m_nCmdEncrypt 
+  else if (nCommandID == m_nCmdDecrypt
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-//           GpgMsg *m = CreateGpgMsg (message);
-//           m->setExchangeCallback ((void*)pEECB);
-//           m->decrypt (hWnd, 0);
-//           delete m;
+          message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 1);
 	}
       ul_release (message);
       ul_release (mdb);
-    }
-  else if (nCommandID == m_nCmdShowInfo
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      MessageBox (NULL, 
-                  _("Here you should see crypto related info"),
-                  "GpgOL", MB_ICONINFORMATION|MB_OK);
     }
   else if (nCommandID == m_nCmdCheckSig
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
@@ -498,6 +489,19 @@ GpgolExtCommands::DoCommand (
       if (SUCCEEDED (hr))
         {
           message_verify (message, m_pExchExt->getMsgtype (pEECB), 1);
+	}
+      else
+        log_debug_w32 (hr, "%s:%s: CmdCheckSig failed", SRCNAME, __func__);
+      ul_release (message);
+      ul_release (mdb);
+    }
+  else if (nCommandID == m_nCmdShowInfo
+           && m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          message_show_info (message, hWnd);
 	}
       ul_release (message);
       ul_release (mdb);

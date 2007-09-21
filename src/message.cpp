@@ -31,6 +31,7 @@
 #include "mapihelp.h"
 #include "mimeparser.h"
 #include "mimemaker.h"
+#include "display.h"
 #include "message.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -38,6 +39,144 @@
                         } while (0)
 
 
+static void 
+ul_release (LPVOID punk)
+{
+  ULONG res;
+  
+  if (!punk)
+    return;
+  res = UlRelease (punk);
+//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+}
+
+
+/* A helper function used by OnRead and OnOpen to dispatch the
+   message.  Returns true if the message has been processed.  */
+bool
+message_incoming_handler (LPMESSAGE message, msgtype_t msgtype)
+{
+  bool retval = false;
+
+  switch (msgtype)
+    {
+    case MSGTYPE_UNKNOWN: 
+      break;
+    case MSGTYPE_GPGOL:
+      log_debug ("%s:%s: ignoring unknown message of original SMIME class\n",
+                 SRCNAME, __func__);
+      break;
+    case MSGTYPE_GPGOL_MULTIPART_SIGNED:
+      log_debug ("%s:%s: processing multipart signed message\n", 
+                 SRCNAME, __func__);
+      retval = true;
+      message_verify (message, msgtype, 0);
+      break;
+    case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
+      log_debug ("%s:%s: processing multipart encrypted message\n",
+                 SRCNAME, __func__);
+      retval = true;
+      message_decrypt (message, msgtype, 0);
+      break;
+    case MSGTYPE_GPGOL_OPAQUE_SIGNED:
+      log_debug ("%s:%s: processing opaque signed message\n", 
+                 SRCNAME, __func__);
+      retval = true;
+      message_verify (message, msgtype, 0);
+      break;
+    case MSGTYPE_GPGOL_CLEAR_SIGNED:
+      log_debug ("%s:%s: processing clear signed pgp message\n", 
+                 SRCNAME, __func__);
+      retval = true;
+      message_verify (message, msgtype, 0);
+      break;
+    case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
+      log_debug ("%s:%s: processing opaque encrypted message\n",
+                 SRCNAME, __func__);
+      retval = true;
+      message_decrypt (message, msgtype, 0);
+      break;
+    case MSGTYPE_GPGOL_PGP_MESSAGE:
+      log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
+      retval = true;
+      message_decrypt (message, msgtype, 0);
+      break;
+    }
+
+  return retval;
+}
+
+
+/* Common Code ise by OnReadComplete and OnOpenComplete to display a
+   modified message.   Returns true if the message was encrypted.  */
+bool
+message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
+{
+  HRESULT hr;
+  LPMESSAGE message = NULL;
+  LPMDB mdb = NULL;
+  int ishtml, wasprotected = false;
+  char *body;
+  
+  hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+  if (SUCCEEDED (hr))
+    {
+      /* If the message was protected we don't allow a fallback to the
+         OOM display methods.  */
+      body = mapi_get_gpgol_body_attachment (message, NULL, 
+                                             &ishtml, &wasprotected);
+      if (body)
+        update_display (hwnd, wasprotected? NULL: eecb, ishtml, body);
+      else
+        update_display (hwnd, NULL, 0, 
+                        _("[Crypto operation failed - "
+                          "can't show the body of the message]"));
+      xfree (body);
+  
+      /*  put_outlook_property (eecb, "EncryptedStatus", "MyStatus"); */
+    }
+  else
+    log_debug_w32 (hr, "%s:%s: error getting message", SRCNAME, __func__);
+
+  ul_release (message);
+  ul_release (mdb);
+
+  return !!wasprotected;
+}
+
+
+/* Display some information about MESSAGE.  */
+void
+message_show_info (LPMESSAGE message, HWND hwnd)
+{
+  char *msgcls = mapi_get_message_class (message);
+  char *sigstat = mapi_get_sig_status (message);
+  char *mimeinfo = mapi_get_mime_info (message);
+  size_t buflen;
+  char *buffer;
+
+  buflen = strlen (msgcls) + strlen (sigstat) + strlen (mimeinfo) + 200;
+  buffer = (char*)xmalloc (buflen+1);
+  snprintf (buffer, buflen, 
+            _("Message class: %s\n"
+              "Sig Status   : %s\n"
+              "Structure of the message:\n"
+              "%s"), 
+            msgcls,
+            sigstat,
+            mimeinfo);
+  
+  MessageBox (hwnd, buffer, _("GpgOL - Message Information"),
+              MB_ICONINFORMATION|MB_OK);
+  xfree (buffer);
+  xfree (mimeinfo);
+  xfree (sigstat);
+  xfree (msgcls);
+}
+
+
+
+
 /* Convert the clear signed message from INPUT into a PS?MIME signed
    message and return it in a new allocated buffer.  OUTPUTLEN
    received the valid length of that buffer; the buffer is guarnateed

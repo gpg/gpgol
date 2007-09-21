@@ -216,7 +216,6 @@ debug_message_event (mime_context_t ctx, rfc822parse_event_t event)
 }
 
 
-
 /* Start a new atatchment.  With IS_BODY set, the attachment is
    actually the body part of the message which is treated in a special
    way. */
@@ -506,9 +505,88 @@ finish_attachment (mime_context_t ctx, int cancel)
 }
 
 
-static int
-finish_message (LPMESSAGE message)
+/* Create the MIME info string.  This is a LF delimited string
+   with one line per MIME part.  Each line is formatted this way:
+   LEVEL:ENCINFO:SIGINFO:CT:CHARSET:FILENAME
+   
+   LEVEL is the nesting level with 0 as the top (rfc822 header)
+   ENCINFO is one of
+      p   PGP/MIME encrypted
+      s   S/MIME encryptyed
+   SIGINFO is one of
+      pX  PGP/MIME signed (also used for clearsigned)
+      sX  S/MIME signed
+      With X being:
+        ?  unklnown status
+        -  Bad signature
+        ~  Good signature but with some problems
+        !  Good signature
+   CT ist the content type of this part
+   CHARSET is the charset used for this part
+   FILENAME is the file name.
+*/
+static char *
+build_mimeinfo (mimestruct_item_t mimestruct)
 {
+  mimestruct_item_t ms;
+  size_t buflen, n;
+  char *buffer, *p;
+  char numbuf[20];
+
+  /* FIXME: We need to escape stuff so that there are no colons.  */
+  for (buflen=0, ms = mimestruct; ms; ms = ms->next)
+    {
+      buflen += sizeof numbuf;
+      buflen += strlen (ms->content_type);
+      buflen += ms->charset? strlen (ms->charset) : 0;
+      buflen += ms->filename? strlen (ms->filename) : 0;
+      buflen += 20;
+    }
+
+  p = buffer = xmalloc (buflen+1);
+  for (ms=mimestruct; ms; ms = ms->next)
+    {
+      snprintf (p, buflen, "%d:::%s:%s:%s:\n",
+                ms->level, ms->content_type,
+                ms->charset? ms->charset : "",
+                ms->filename? ms->filename : "");
+      n = strlen (p);
+      assert (n < buflen);
+      buflen -= n;
+      p += n;
+    }
+
+  return buffer;
+}
+
+
+static int
+finish_message (LPMESSAGE message, gpg_error_t err, 
+                mimestruct_item_t mimestruct)
+{
+  HRESULT hr;
+  SPropValue prop;
+
+  if (get_gpgolmimeinfo_tag (message, &prop.ulPropTag) )
+    return -1;
+  prop.Value.lpszA = build_mimeinfo (mimestruct);
+  hr = IMessage_SetProps (message, 1, &prop, NULL);
+  xfree (prop.Value.lpszA);
+  if (hr)
+    {
+      log_error_w32 (hr, "%s:%s: error setting the mime info",
+                     SRCNAME, __func__);
+      return -1;
+    }
+
+  hr = IMessage_SaveChanges (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
+  if (hr)
+    {
+      log_error_w32 (hr, "%s:%s: SaveChanges to the message failed",
+                     SRCNAME, __func__); 
+      return -1;
+    }
+
   return 0;
 }
 
@@ -888,21 +966,6 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
 
 
 
-static void 
-show_mimestruct (mimestruct_item_t mimestruct)
-{
-  mimestruct_item_t ms;
-
-  for (ms = mimestruct; ms; ms = ms->next)
-    log_debug ("MIMESTRUCT: %*s%s  cs=%s  fn=%s\n",
-               ms->level*2, "", ms->content_type,
-               ms->charset? ms->charset : "[none]",
-               ms->filename? ms->filename : "[none]");
-}
-
-
-
-
 int
 mime_verify (protocol_t protocol, const char *message, size_t messagelen, 
              LPMESSAGE mapi_message, HWND hwnd, int preview_mode)
@@ -988,7 +1051,6 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
             }
           else if (nread)
             {
-              TRACEPOINT();
               err = engine_filter (filter, buffer, nread);
             }
           else
@@ -1008,7 +1070,6 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
 
 
  leave:
-  TRACEPOINT();
   gpgme_free (signature);
   engine_cancel (filter);
   if (ctx)
@@ -1018,7 +1079,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
       rfc822parse_close (ctx->msg);
       gpgme_data_release (ctx->signed_data);
       gpgme_data_release (ctx->sig_data);
-      show_mimestruct (ctx->mimestruct);
+      finish_message (mapi_message, err, ctx->mimestruct);
       while (ctx->mimestruct)
         {
           mimestruct_item_t tmp = ctx->mimestruct->next;
@@ -1029,8 +1090,6 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
         }
       symenc_close (ctx->symenc);
       xfree (ctx);
-      if (!err)
-        finish_message (mapi_message);
     }
   return err;
 }
@@ -1136,7 +1195,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
         gpgme_data_release (ctx->signed_data);
       if (ctx->sig_data)
         gpgme_data_release (ctx->sig_data);
-      show_mimestruct (ctx->mimestruct);
+      finish_message (mapi_message, err, ctx->mimestruct);
       while (ctx->mimestruct)
         {
           mimestruct_item_t tmp = ctx->mimestruct->next;
@@ -1147,8 +1206,6 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
         }
       symenc_close (ctx->symenc);
       xfree (ctx);
-      if (!err)
-        finish_message (mapi_message);
     }
   return err;
 }

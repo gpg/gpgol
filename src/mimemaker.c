@@ -1401,7 +1401,6 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 
   /* Write the top header.  */
   generate_boundary (boundary);
-  TRACEPOINT ();
   if ((rc=write_multistring (sink,
                              "MIME-Version: 1.0\r\n"
                              "Content-Type: multipart/encrypted;\r\n"
@@ -1410,7 +1409,6 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
                              NULL)))
     goto failure;
 
-  TRACEPOINT ();
   /* Write the PGP/MIME encrypted part.  */
   if ((rc = write_boundary (sink, boundary, 0)))
     goto failure;
@@ -1429,11 +1427,9 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
                              "\r\n", NULL)))
     goto failure;
 
-  TRACEPOINT ();
   /* Create a new sink for encrypting the following stuff.  */
   encsink->cb_data = filter;
   encsink->writefnc = sink_encryption_write;
-  TRACEPOINT ();
   
   if ((body && n_att_usable) || n_att_usable > 1)
     {
@@ -1448,8 +1444,6 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   else /* Only one part.  */
     *inner_boundary = 0;
 
-  TRACEPOINT ();
-
   if (body)
     rc = write_part (encsink, body, strlen (body), 
                      *inner_boundary? inner_boundary : NULL, NULL, 1);
@@ -1458,7 +1452,6 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
                             *inner_boundary? inner_boundary : NULL);
   if (rc)
     goto failure;
-  TRACEPOINT ();
 
   xfree (body);
   body = NULL;
@@ -1476,27 +1469,19 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
   
-  TRACEPOINT ();
-
   /* Write the final boundary and finish the attachment.  */
   if ((rc = write_boundary (sink, boundary, 1)))
     goto failure;
 
-  TRACEPOINT ();
-
   if (close_mapi_attachment (&attach, sink))
     goto failure;
-
-  TRACEPOINT ();
 
   if (finalize_message (message, att_table))
     goto failure;
 
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
-  TRACEPOINT ();
 
  failure:
-  TRACEPOINT ();
   engine_cancel (filter);
   cancel_mapi_attachment (&attach, sink);
   xfree (body);

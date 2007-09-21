@@ -115,6 +115,7 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
             SRCNAME, __func__, msgclass);
         }
     }
+
 }
 
 /* I assume this is called from Outlook for all object changes.

@@ -204,7 +204,7 @@ DllRegisterServer (void)
       return E_ACCESSDENIED;
     }
 
-  strcpy (szEntry, "GPGol - The GPG Outlook Plugin");
+  strcpy (szEntry, "GpgOL - The GnuPG Outlook Plugin");
   dwTemp = strlen (szEntry) + 1;
   RegSetValueEx (hkey, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
 

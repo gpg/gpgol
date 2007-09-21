@@ -1,3 +1,15 @@
+2007-09-21  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (build_mimeinfo): New.
+	(finish_message): Store the mime structure.
+	* mapihelp.cpp (mapi_get_message_class): New.
+	(mapi_get_sig_status): New.
+	(get_gpgolprotectiv_tag, get_gpgolsigstatus_tag) 
+	(get_gpgolattachtype_tag): Factored code out to ...
+	(create_gpgol_tag): .. New.
+	(get_gpgolmimeinfo_tag): New.
+	(mapi_get_mime_info): New.
+
 2007-09-20  Werner Koch  <wk@g10code.com>
 
 	* user-events.cpp, user-events.h:  New.

@@ -71,9 +71,10 @@ GpgolMessageEvents::GpgolMessageEvents (GpgolExt *pParentInterface)
 { 
   m_pExchExt = pParentInterface;
   m_lRef = 0; 
-  m_bOnSubmitActive = FALSE;
-  m_want_html = FALSE;
-  m_processed = FALSE;
+  m_bOnSubmitActive = false;
+  m_want_html = false;
+  m_processed = false;
+  m_wasencrypted = false;
 }
 
 
@@ -109,61 +110,17 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
   LPMESSAGE message = NULL;
   
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
-  eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-  switch (m_pExchExt->getMsgtype (eecb))
+
+  m_wasencrypted = false;
+  if (opt.preview_decrypt)
     {
-    case MSGTYPE_UNKNOWN: 
-      break;
-    case MSGTYPE_GPGOL:
-      log_debug ("%s:%s: ignoring unknown message of original SMIME class\n",
-                 SRCNAME, __func__);
-      break;
-    case MSGTYPE_GPGOL_MULTIPART_SIGNED:
-      log_debug ("%s:%s: processing multipart signed message\n", 
-                 SRCNAME, __func__);
-      m_processed = TRUE;
-      message_verify (message, m_pExchExt->getMsgtype (eecb), 0);
-      break;
-    case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
-      log_debug ("%s:%s: processing multipart encrypted message\n",
-                 SRCNAME, __func__);
-      m_processed = TRUE;
-      message_decrypt (message, m_pExchExt->getMsgtype (eecb), 0);
-      /* Hmmm, we might want to abort it and run our own inspector
-         instead.  */
-      break;
-    case MSGTYPE_GPGOL_OPAQUE_SIGNED:
-      log_debug ("%s:%s: processing opaque signed message\n", 
-                 SRCNAME, __func__);
-      m_processed = TRUE;
-      message_verify (message, m_pExchExt->getMsgtype (eecb), 0);
-      break;
-    case MSGTYPE_GPGOL_CLEAR_SIGNED:
-      log_debug ("%s:%s: processing clear signed pgp message\n", 
-                 SRCNAME, __func__);
-      m_processed = TRUE;
-      message_verify (message, m_pExchExt->getMsgtype (eecb), 0);
-      break;
-    case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
-      log_debug ("%s:%s: processing opaque encrypted message\n",
-                 SRCNAME, __func__);
-      m_processed = TRUE;
-      message_decrypt (message, m_pExchExt->getMsgtype (eecb), 0);
-      /* Hmmm, we might want to abort it and run our own inspector
-         instead.  */
-      break;
-    case MSGTYPE_GPGOL_PGP_MESSAGE:
-      log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
-      m_processed = TRUE;
-      message_decrypt (message, m_pExchExt->getMsgtype (eecb), 0);
-      /* Hmmm, we might want to abort it and run our own inspector
-         instead.  */
-      break;
+      eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb)))
+        m_processed = true;
+      ul_release (message);
+      ul_release (mdb);
     }
   
-  ul_release (message);
-  ul_release (mdb);
-
   return S_FALSE;
 }
 
@@ -178,50 +135,16 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 
   /* If the message has been processed by is (i.e. in OnRead), we now
      use our own display code.  */
-  if (m_processed)
+  if (!flags && m_processed)
     {
-      HRESULT hr;
       HWND hwnd = NULL;
-      LPMESSAGE message = NULL;
-      LPMDB mdb = NULL;
 
       if (FAILED (eecb->GetWindow (&hwnd)))
         hwnd = NULL;
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          int ishtml, wasprotected;
-          char *body;
-
-          /* If the message was protected we don't allow a fallback to
-             the OOM display methods.  */
-          body = mapi_get_gpgol_body_attachment (message, NULL,
-                                                 &ishtml, &wasprotected);
-          if (body)
-            update_display (hwnd, wasprotected? NULL: eecb, ishtml, body);
-          else
-            update_display (hwnd, NULL, 0, 
-                            _("[Crypto operation failed - "
-                              "can't show the body of the message]"));
-          put_outlook_property (eecb, "EncryptedStatus", "MyStatus");
-
-        }
-      ul_release (message);
-      ul_release (mdb);
+      if (message_display_handler (eecb, hwnd))
+        m_wasencrypted = true;
     }
   
-
-#if 1
-    {
-      HWND hWnd = NULL;
-
-      if (FAILED (eecb->GetWindow (&hWnd)))
-        hWnd = NULL;
-      else
-        log_window_hierarchy (hWnd, "%s:%s:%d: Windows hierarchy:",
-                              SRCNAME, __func__, __LINE__);
-    }
-#endif
 
   return S_FALSE;
 }
@@ -345,7 +268,7 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   if (FAILED(eecb->GetWindow (&hWnd)))
     hWnd = NULL;
 
-  /* Get the object and call the encryption or signing fucntion.  */
+  /* Get the object and call the encryption or signing function.  */
   HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {

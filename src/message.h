@@ -23,6 +23,11 @@
 #define MESSAGE_H
 
 
+bool message_incoming_handler (LPMESSAGE message, msgtype_t msgtype);
+bool message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd);
+void message_show_info (LPMESSAGE message, HWND hwnd);
+
+
 int message_verify (LPMESSAGE message, msgtype_t msgtype, int force);
 int message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force);
 

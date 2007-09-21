@@ -38,6 +38,8 @@ class GpgolItemEvents : public IOutlookExtItemEvents
  private:
   GpgolExt *m_pExchExt;
   ULONG     m_ref;
+  bool    m_processed;       /* The message has been porcessed by us.  */
+  bool    m_wasencrypted;    /* The original message was encrypted.  */
   
  public:
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID FAR *ppvObj);
