@@ -1,0 +1,231 @@
+\input texinfo
+@setfilename gpgol.info
+@settitle The GpgOL Technical Manual
+
+@dircategory GnuPG Plugin
+@direntry
+* gpgol: (gpgol).              An Outlook Plugin for GnuPG.
+@end direntry
+
+@include version.texi
+
+@c Unify some of the indices.
+@syncodeindex tp fn
+@syncodeindex pg fn
+
+@macro mycopyrightnotice
+Copyright @copyright{} 2007 g10 Code GmbH
+@end macro
+@macro mypermissionnotice
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version. The text of the license can be found in the
+section entitled ``Copying''.
+@end macro
+
+
+
+@ifinfo
+This file documents @acronym{GpgOL}; a GnuPG plugin for Microsoft's
+Outlook MUA.
+
+This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} version
+@value{VERSION}, last updated @value{UPDATED}.
+
+@sp 1
+@mycopyrightnotice{}
+@sp 1
+@mypermissionnotice{}
+@end ifinfo
+
+
+@iftex
+@shorttitlepage The `GpgOL' Technical Manual
+@titlepage
+@center @titlefont{The `GpgOL'}
+@sp 1
+@center @titlefont{Technical Manual}
+@sp 6
+@center for version @value{VERSION}
+@sp 1
+@center last updated @value{UPDATED}
+@sp 1
+@author by Werner Koch, g10 Code GmbH
+@email{wk@@gnupg.org}
+@page
+@vskip 0pt plus 1filll
+@mycopyrightnotice{}
+@sp 1
+@mypermissionnotice{}
+@end titlepage
+@summarycontents
+@contents
+@page
+@end iftex
+
+
+@ifnottex
+@node Top
+@top Main Menu
+This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} version
+@value{VERSION}, last updated @value{UPDATED}.
+@sp 1
+@mycopyrightnotice{}
+@sp 1
+@mypermissionnotice{}
+@sp 1
+@end ifnottex
+
+
+@menu
+* Introduction::                How to use this manual.
+* Assuan Protocol::             Description of the UI server protocol.
+
+Appendices
+
+* Copying::                     The GNU General Public License says how you
+                                can copy and share this manual.
+
+Indices
+
+* Concept Index::               Index of concepts and programs.
+* Function and Data Index::     Index of functions, variables and data types.
+
+@end menu
+
+@node Introduction
+@chapter Introduction
+Bla bla
+
+
+
+@node Assuan Protocol
+@chapter Description of the UI Server Protocol
+
+This section descripes the protocol used between @acronym{GpgOL} and the
+User Interface Server (UI server).  All cryptographic operations are
+done by this server and teh server is responsible for all dialogs.  If a
+a server is not available, @acronym{GpgOL} can only use a very limited
+internal crypto server.
+
+We assume that the connection has already been established; see the
+Assuan manual for details.
+
+@menu
+* ENCRYPT::                  Encrypting a message.
+* Miscellaneous Commands::   Commands not related to a specific operation.
+@end menu
+
+
+
+@node ENCRYPT
+@section Encrypting a Message
+
+Before encrytion can be done the recipients must be set using the
+command:
+
+@deffn Command RECIPIENT @var{string}
+
+Set the recipient for the encryption.  @var{string} is an RFC-2822
+recipient name.  This command may or may not check the recipient for
+validity right away; if it does not all recipients are expected to be
+checked at the time of the @code{ENCRYPT} command.  All @code{RECIPIENT}
+commands are cumulative until a successful @code{ENCRYPT} command or
+until a RESET command.  Linefeeds are obviously not allowed in
+@var{string} and should be folded into spaces (which are equivalent).
+@end deffn
+
+@noindent
+To tell the server the source and destination of the data, the next two
+commands are to be used:
+
+@deffn Command INPUT FD=@var{n}
+Set the file descriptor for the message to be encrypted to @var{n}.  The
+message send to the server is binary encoded. 
+
+GpgOL is a Windows only program, thus @var{n} is not a libc file
+descriptor but a regular system handle.  Given that the Assuan
+connection works over a socket, it is not possible to use regular
+inheritance to make the file descriptor available to the server.
+Thus @code{DuplicateHandle} needs to be used to duplicate a handle
+to the server process.  This is the reason that the server needs to
+implement the @code{GETINFO pid} command.  Sending this command a second
+time replaces the file descriptor set by the last one.
+@c If @var{n} is not given, this commands uses the
+@c %last file descriptor passed to the application.
+@c %@xref{fun-assuan_sendfd, ,the assuan_sendfd function,assuan,the
+@c %Libassuan manual}, on how to do descriptor passing.
+@end deffn
+
+@deffn Command OUTPUT FD=@var{n}
+Set the file descriptor to be used for the output (i.e. the encrypted
+message) to @var{n}.  Binary encoding is expected.  For details on the
+file descriptor, see the @code{INPUT} command.
+@end deffn
+
+@noindent  
+The setting of the recipients, the data source and destination may
+happen in any order, even intermixed.  If this has been done the actual
+encryption operation is called using:
+
+@deffn Command ENCRYPT --protocol=@var{name}
+
+This command reads the plaintext from the file descriptor set by the
+@code{INPUT} command, encrypts it and writes the ciphertext to the file
+descriptor set by the @code{OUTPUT} command.  The server may (and
+should) overlap readind and writing.  The recipients used for the
+encryption are all the recipients set so far.  If any recipient is not
+usable the server should take appropriate measures to notify the user
+about the problem and may cancel the operation by returning an error
+code.  The used file descriptors are a void after this command; the
+recipient list is only cleared if the server returns success.
+
+@noindent
+Because GpgOL uses a streaming mode of operation the server is not
+allowed to auto select the protocol and must obey to the mandatory
+@var{protocol} parameter:
+
+@table @code
+@item OpenPGP
+Use the OpenPGP protocol (RFC-2440).
+@item CMS
+Use the CMS (PKCS#7) protocol (RFC-3852).
+@end table
+
+@end deffn
+
+
+
+
+@node Miscellaneous Commands
+@section Miscellaneous Commands
+
+The server needs to implement the following commands which are not
+related to a specific command:
+
+@deffn Command GETINFO @var{what}
+This is a multi purpose command, commonly used to return a variety of
+information.  The required subcommands as descriped by the @var{waht}
+parameter are:
+
+@table @code
+@item pid
+Return the process id of the server in decimal notation using an Assuan
+data line.
+@end table
+@end deffn
+
+
+
+
+@include gpl.texi
+
+
+@node Concept Index
+@unnumbered Concept Index
+@printindex cp
+@node Function and Data Index
+@unnumbered Function and Data Index
+@printindex fn
+@bye

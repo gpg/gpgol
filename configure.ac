@@ -24,8 +24,11 @@ m4_define([svn_revision], m4_esyscmd([echo -n $( (svn info 2>/dev/null \
 AC_INIT([gpgol], my_version[]m4_if(my_issvn,[yes],[-svn[]svn_revision]),
         [bug-gpgol@g10code.com])
 
+NEED_GPG_ERROR_VERSION=1.4
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0
+NEED_LIBASSUAN_API=1
+NEED_LIBASSUAN_VERSION=1.0.4
 
 
 SVN_REVISION=svn_revision
@@ -39,6 +42,9 @@ AC_CANONICAL_TARGET()
 AM_INIT_AUTOMAKE
 
 AC_GNU_SOURCE
+
+have_gpg_error=no
+have_libassuan=no
 
 AC_SUBST(PACKAGE)
 AC_SUBST(PACKAGE_GT)
@@ -141,7 +147,18 @@ AM_CONDITIONAL(HAVE_W32_SYSTEM, test "$have_w32_system" = yes)
 
 AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
                have_gpgme=yes,have_gpgme=no)
-AM_PATH_GPG_ERROR(0.5,, AC_MSG_ERROR([libgpg-error was not found]))
+AM_PATH_GPG_ERROR("$NEED_GPG_ERROR_VERSION",
+                  have_gpg_error=yes,have_gpg_error=no)
+AC_DEFINE(GPG_ERR_SOURCE_DEFAULT, GPG_ERR_SOURCE_USER_2,
+          [The default error source for GpgOL.])
+AM_PATH_LIBASSUAN("$NEED_LIBASSUAN_API:$NEED_LIBASSUAN_VERSION",
+                  have_libassuan=yes,have_libassuan=no)
+
+AH_BOTTOM([
+/* We don't want the old assuan codes anymore. */
+#define _ASSUAN_ONLY_GPG_ERRORS 1
+])
+
 
 
 # Note, that autogen.sh greps for the next line.
@@ -190,6 +207,16 @@ AC_SUBST(W32LIBS)
 # together and the user can acquire them all together.
 #
 die=no
+if test "$have_gpg_error" = "no"; then
+   die=yes
+   AC_MSG_NOTICE([[
+***  
+*** You need libgpg-error to build this program.
+**  This library is for example available at
+***   ftp://ftp.gnupg.org/pub/gcrypt/libgpg-error
+*** (at least version $NEED_GPG_ERROR_VERSION is required.)
+***]])
+fi
 if test "$have_gpgme" = "no"; then
    die=yes
    AC_MSG_NOTICE([[
@@ -198,6 +225,16 @@ if test "$have_gpgme" = "no"; then
 **  This library is for example available at
 ***   ftp://ftp.gnupg.org/gcrypt/gpgme/
 *** (at least version $NEED_GPGME_VERSION is required.)
+***]])
+fi
+if test "$have_libassuan" = "no"; then
+   die=yes
+   AC_MSG_NOTICE([[
+***
+*** You need libassuan to build this program.
+*** This library is for example available at
+***   ftp://ftp.gnupg.org/pub/gcrypt/libassuan/
+*** (at least version $NEED_LIBASSUAN_VERSION is required).
 ***]])
 fi
 if test "$die" = "yes"; then
@@ -212,6 +249,7 @@ fi
 AC_CONFIG_FILES([ Makefile
 src/Makefile
 src/versioninfo.rc        
+doc/Makefile
 po/Makefile.in
 m4/Makefile
 ])
