@@ -1,5 +1,7 @@
 \input texinfo
+@documentencoding ISO-8859-1
 @setfilename gpgol.info
+@include version.texi
 @settitle The GpgOL Technical Manual
 
 @dircategory GnuPG Plugin
@@ -7,74 +9,70 @@
 * gpgol: (gpgol).              An Outlook Plugin for GnuPG.
 @end direntry
 
-@include version.texi
 
 @c Unify some of the indices.
 @syncodeindex tp fn
 @syncodeindex pg fn
 
-@macro mycopyrightnotice
+@copying
+This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} (version
+@value{VERSION}, @value{UPDATED-MONTH}).
+
+@iftex
+Published by g10 Code GmbH@*
+Hüttenstr. 61@*
+40699 Erkrath, Germany
+@end iftex
+
 Copyright @copyright{} 2007 g10 Code GmbH
-@end macro
-@macro mypermissionnotice
+
+@quotation
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU General Public License as published by the
 Free Software Foundation; either version 3 of the License, or (at your
 option) any later version. The text of the license can be found in the
 section entitled ``Copying''.
-@end macro
+@end quotation
+@end copying
 
+@c
+@c Titlepage
+@c
+@setchapternewpage odd
+@titlepage 
+@title The GpgOL Technical Manual
+@subtitle Version @value{VERSION}
+@subtitle @value{UPDATED-MONTH}
 
+@sp 3
 
-@ifinfo
-This file documents @acronym{GpgOL}; a GnuPG plugin for Microsoft's
-Outlook MUA.
+@sp 3
 
-This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} version
-@value{VERSION}, last updated @value{UPDATED}.
+@author Werner Koch (@email{wk@@gnupg.org})
 
-@sp 1
-@mycopyrightnotice{}
-@sp 1
-@mypermissionnotice{}
-@end ifinfo
-
-
-@iftex
-@shorttitlepage The `GpgOL' Technical Manual
-@titlepage
-@center @titlefont{The `GpgOL'}
-@sp 1
-@center @titlefont{Technical Manual}
-@sp 6
-@center for version @value{VERSION}
-@sp 1
-@center last updated @value{UPDATED}
-@sp 1
-@author by Werner Koch, g10 Code GmbH
-@email{wk@@gnupg.org}
 @page
 @vskip 0pt plus 1filll
-@mycopyrightnotice{}
-@sp 1
-@mypermissionnotice{}
+@insertcopying
 @end titlepage
-@summarycontents
+
+@ifnothtml
 @contents
 @page
-@end iftex
+@end ifnothtml
 
+@c @ifhtml
+@c @center @image{logo}
+@c @end ifhtml
 
 @ifnottex
 @node Top
-@top Main Menu
-This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} version
-@value{VERSION}, last updated @value{UPDATED}.
-@sp 1
-@mycopyrightnotice{}
-@sp 1
-@mypermissionnotice{}
-@sp 1
+@top 
+
+@insertcopying
+
+@noindent
+This file documents @acronym{GpgOL}; a GnuPG plugin for Microsoft's
+Outlook MUA.
 @end ifnottex
 
 
@@ -94,18 +92,29 @@ Indices
 
 @end menu
 
+@ifhtml
+@page
+@summarycontents
+@contents
+@end ifhtml
+
+@c
+@c  I N T R O
+@c
 @node Introduction
 @chapter Introduction
 Bla bla
 
 
-
+@c
+@c  P R O T O C O L  D E S C R I P T I O N
+@c
 @node Assuan Protocol
 @chapter Description of the UI Server Protocol
 
-This section descripes the protocol used between @acronym{GpgOL} and the
+This section describes the protocol used between @acronym{GpgOL} and the
 User Interface Server (UI server).  All cryptographic operations are
-done by this server and teh server is responsible for all dialogs.  If a
+done by this server and the server is responsible for all dialogs.  If a
 a server is not available, @acronym{GpgOL} can only use a very limited
 internal crypto server.
 
@@ -114,6 +123,9 @@ Assuan manual for details.
 
 @menu
 * ENCRYPT::                  Encrypting a message.
+* SIGN::                     Sign a message.
+* DECRYPT::                  Decrypt a message.
+* VERIFY::                   Verify a message.
 * Miscellaneous Commands::   Commands not related to a specific operation.
 @end menu
 
@@ -122,7 +134,7 @@ Assuan manual for details.
 @node ENCRYPT
 @section Encrypting a Message
 
-Before encrytion can be done the recipients must be set using the
+Before encryption can be done the recipients must be set using the
 command:
 
 @deffn Command RECIPIENT @var{string}
@@ -132,7 +144,7 @@ recipient name.  This command may or may not check the recipient for
 validity right away; if it does not all recipients are expected to be
 checked at the time of the @code{ENCRYPT} command.  All @code{RECIPIENT}
 commands are cumulative until a successful @code{ENCRYPT} command or
-until a RESET command.  Linefeeds are obviously not allowed in
+until a @code{RESET} command.  Linefeeds are obviously not allowed in
 @var{string} and should be folded into spaces (which are equivalent).
 @end deffn
 
@@ -160,7 +172,8 @@ time replaces the file descriptor set by the last one.
 
 @deffn Command OUTPUT FD=@var{n}
 Set the file descriptor to be used for the output (i.e. the encrypted
-message) to @var{n}.  Binary encoding is expected.  For details on the
+message) to @var{n}.  For OpenPGP, the output needs to be ASCII armored;
+for CMS, the output needs to be Base-64 encoded.  For details on the
 file descriptor, see the @code{INPUT} command.
 @end deffn
 
@@ -169,12 +182,12 @@ The setting of the recipients, the data source and destination may
 happen in any order, even intermixed.  If this has been done the actual
 encryption operation is called using:
 
-@deffn Command ENCRYPT --protocol=@var{name}
+@deffn Command ENCRYPT -@w{}-protocol=@var{name}
 
 This command reads the plaintext from the file descriptor set by the
 @code{INPUT} command, encrypts it and writes the ciphertext to the file
 descriptor set by the @code{OUTPUT} command.  The server may (and
-should) overlap readind and writing.  The recipients used for the
+should) overlap reading and writing.  The recipients used for the
 encryption are all the recipients set so far.  If any recipient is not
 usable the server should take appropriate measures to notify the user
 about the problem and may cancel the operation by returning an error
@@ -196,8 +209,194 @@ Use the CMS (PKCS#7) protocol (RFC-3852).
 @end deffn
 
 
+@node SIGN
+@section Sign a Message
+
+The server needs to implement opaque signing as well as detached
+signing.  Due to the nature of OpenPGP message it is always required to
+send the entire message to the server; sending just the hash is not
+possible.  The following two commands are required to set the input and
+output file descriptors:
+
+@deffn Command INPUT FD=@var{n}
+Set the file descriptor for the message to be signed to @var{n}.  The
+message send to the server is binary encoded.  For details on the file
+descriptor, see the description of @code{INPUT} in the @code{ENCRYPT}
+section.
+@end deffn
+
+@deffn Command OUTPUT FD=@var{n}
+Set the file descriptor to be used for the output.  The output is either
+the complete signed message or in case of a detached signature just that
+detached signature.  For OpenPGP, the output needs to be ASCII armored;
+for CMS, the output needs to be Base-64 encoded.  For details on the
+file descriptor, see the @code{INPUT} command.
+@end deffn
+
+@noindent
+To allow the server the selection of a non-default signing key the
+client may optionally use the command:
+
+@deffn Command SENDER @var{email}
+@var{email} is the plain ASCII encoded address ("addr-spec" as per
+RFC-2822) enclosed in angle brackets.  The address set with this command
+is valid until a successful @code{SIGN} command or until a @code{RESET}
+command.  A second command overrides the effect of the first one; if
+@var{email} is not given the server shall use the default signing key.
+@end deffn
+
+@noindent
+The signing operation is then initiated by:
+
+@deffn Command SIGN [-@w{}-detached] 
+Sign the data set with the @code{INPUT} command and write it to the sink
+set by OUTPUT.  With option @code{--detached} given, a detached
+signature is created; this is actually the usual way the command is
+used.  
+@end deffn
+
+@noindent
+The client expects the server to send at least this status information
+before the final OK response:
+
+@deffn {Status line} MICALG @var{string}
+The @var{string} represents the hash algorithm used to create the
+signature. It is used with MOSS style signature messaged and defined by
+PGP/MIME (RFC-3156) and S/MIME (RFC-3851).  The GPGME library has a
+supporting function @code{gpgme_hash_algo_name} to return this string.
+@end deffn
 
 
+
+@node DECRYPT
+@section Decrypt a Message
+
+Decryption may include the verification of OpenPGP messages.  This is
+due to the often used combined signing/encryption modus of OpenPGP.  The
+client may pass an option to the server to inhibit the signature
+verification.  The following two commands are required to set the input
+and output file descriptors:
+
+@deffn Command INPUT FD=@var{n}
+Set the file descriptor for the message to be decrypted to @var{n}.  The
+message send to the server is either binary encoded or --- in the case
+of OpenPGP --- ASCII armored.  For details on the file descriptor, see
+the description of @code{INPUT} in the @code{ENCRYPT} section.
+@end deffn
+
+@deffn Command OUTPUT FD=@var{n}
+Set the file descriptor to be used for the output. The output is binary
+encoded. For details on the file descriptor, see the description of
+@code{INPUT} in the @code{ENCRYPT} section.
+@end deffn
+
+@noindent
+The decryption is started with the command:
+
+@deffn Command DECRYPT -@w{}-protocol=@var{name} [-@w{}-no-verify]
+@var{name} is the encryption protocol used for the message. For a
+description of the allowed protocols see the @code{ENCRYPT} command.
+This argument is mandatory.  If the option @option{--no-verify} is given,
+the server should not try to verify a signature, in case the input data
+is an OpenPGP combined message.
+@end deffn
+
+
+@node VERIFY
+@section Verify a Message
+
+The server needs to support the verification of opaque signatures as
+well as detached signatures.  The kind of input sources controls what
+kind message is to be verified.
+
+@deffn Command MESSAGE FD=@var{n}
+This command is used with detached signatures to set the file descriptor
+for the signed data to @var{n}. The data is binary encoded (used
+verbatim).  For details on the file descriptor, see the description of
+@code{INPUT} in the @code{ENCRYPT} section.
+@end deffn
+
+@deffn Command INPUT FD=@var{n}
+Set the file descriptor for the opaque message or the signature part of
+a detached signature to @var{n}.  The message send to the server is
+either binary encoded or -- in the case of OpenPGP -- ASCII armored.
+For details on the file descriptor, see the description of @code{INPUT}
+in the @code{ENCRYPT} section.
+@end deffn
+
+@deffn Command OUTPUT FD=@var{n}
+Set the file descriptor to be used for the output. The output is binary
+encoded and only used for opaque signatures.  For details on the file
+descriptor, see the description of @code{INPUT} in the @code{ENCRYPT}
+section.
+@end deffn
+
+@noindent
+The verification is then started using:
+
+@deffn Command VERIFY -@w{}-protocol=@var{name}
+@var{name} is the signing protocol used for the message. For a
+description of the allowed protocols see the @code{ENCRYPT} command.
+This argument is mandatory.  Depending on the combination of
+@code{MESSAGE} @code{INPUT} and @code{OUTPUT} commands, the server needs
+to select the appropriate verification mode:
+
+@table @asis
+@item MESSAGE and INPUT
+This indicates a detached signature.  Output data is not applicable.
+@item INPUT 
+This indicates an opaque signature.  As no output command has been given,
+the server is only required to check the signature.
+@item INPUT and OUTPUT
+This indicates an opaque signature.  The server shall write the signed
+data to the file descriptor set by the output command.  This data shall
+even be written if the signatures can't be verified.
+@end table
+@end deffn
+
+@noindent
+The client expects the server to send at least this status information
+before the final OK response:
+
+@deffn {Status line} SIGSTATUS @var{flag} @var{displaystring}
+Returns the status for the signature and a short string explaining the
+status.  Valid values for @var{flag} are:
+
+@table @code
+@item none
+The message has a signature but it could not not be verified due to a
+missing key.
+@item green
+The signature is fully valid.
+@item yellow
+The signature is valid but additional information was shown regarding the
+validity of the key.
+@item red
+The signature is not valid. 
+@end table
+
+@var{displaystring} is a percent-and-plus-encoded string with a short
+human readable description of the status.  For example
+
+@smallexample
+S SIGSTATUS green Good+signature+from+Keith+Moon+<keith@@example.net>
+@end smallexample
+
+Note that this string needs to fit into an Assuan line and should be
+short enough to be displayed as short one-liner on the clients window.
+As usual the encoding of this string is UTF-8 and it should be send in
+its translated form.
+
+The server shall send one status line for every signature found on the
+message.
+
+@end deffn
+
+
+
+@c
+@c M I S C E L L A N E O U S  C O M M A N D S
+@c
 @node Miscellaneous Commands
 @section Miscellaneous Commands
 
@@ -206,7 +405,7 @@ related to a specific command:
 
 @deffn Command GETINFO @var{what}
 This is a multi purpose command, commonly used to return a variety of
-information.  The required subcommands as descriped by the @var{waht}
+information.  The required subcommands as described by the @var{what}
 parameter are:
 
 @table @code
@@ -217,15 +416,34 @@ data line.
 @end deffn
 
 
+@noindent
+To allow the server to pop up the windows in the correct relation to the
+client, the client is advised to tell the server by sending the option:
+
+@deffn {Command option} window-id @var{number} 
+The @var{number} represents the native window ID of the clients current
+window.  On Windows systems this is a windows handle (@code{HWND}) and
+on X11 systems it is the @code{X Window ID}.  The number needs to be
+given as a hexadecimal value so that it is easier to convey pointer
+values (e.g. @code{HWND}).
+@end deffn
 
 
 @include gpl.texi
 
-
+@c
+@c  I N D E X E S
+@c
 @node Concept Index
 @unnumbered Concept Index
 @printindex cp
 @node Function and Data Index
 @unnumbered Function and Data Index
 @printindex fn
+
 @bye
+
+
+@c Local Variables:
+@c coding: latin-1
+@c End:
