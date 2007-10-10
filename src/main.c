@@ -483,8 +483,8 @@ read_options (void)
   opt.auto_sign_attach = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
   
-  load_extension_value ("saveDecryptedAttachments", &val);
-  opt.save_decrypted_attach = val == NULL || *val != '1'? 0 : 1;
+  load_extension_value ("smimeDefault", &val);
+  opt.smime_default = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
   load_extension_value ("encryptDefault", &val);
@@ -566,9 +566,9 @@ write_options (void)
     int  value;
     char *s_val;
   } table[] = {
+    {"smimeDefault",             0, opt.smime_default},
     {"encryptDefault",           0, opt.encrypt_default},
     {"signDefault",              0, opt.sign_default},
-    {"saveDecryptedAttachments", 0, opt.save_decrypted_attach},
     {"autoSignAttachments",      0, opt.auto_sign_attach},
     {"previewDecrypt",           0, opt.preview_decrypt},
     {"storePasswdTime",          1, opt.passwd_ttl},

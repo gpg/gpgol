@@ -16,7 +16,7 @@
 #define IDB_ADD_KEYS                    4003
 #define IDC_ENCRYPT_WITH_STANDARD_KEY   4003
 #define IDB_KEY_MANAGER                 4004
-#define IDC_SAVE_DECRYPTED              4004
+#define IDC_SMIME_DEFAULT               4004
 #define IDC_GPG_OPTIONS                 4006
 #define IDC_BITMAP                      4007
 #define IDB_BANNER                      4009
@@ -27,5 +27,6 @@
 #define IDD_GPG_OPTIONS_DE              4012
 #define IDC_PREVIEW_DECRYPT             4013
 #define IDC_PREFER_HTML                 4014
+#define IDB_SELECT_SMIME                4015
 
 #endif /*OLFLANGE_IDS_H*/

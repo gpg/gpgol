@@ -741,7 +741,7 @@ release_recipient_array (char **recipients)
 
 
 static int
-sign_encrypt (LPMESSAGE message, HWND hwnd, int signflag)
+sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
 {
   gpg_error_t err;
   char **recipients;
@@ -757,9 +757,9 @@ sign_encrypt (LPMESSAGE message, HWND hwnd, int signflag)
   else
     {
       if (signflag)
-        err = mime_sign_encrypt (message, PROTOCOL_OPENPGP, recipients);
+        err = mime_sign_encrypt (message, protocol, recipients);
       else
-        err = mime_encrypt (message, PROTOCOL_OPENPGP, recipients);
+        err = mime_encrypt (message, protocol, recipients);
       if (err)
         {
           char buf[200];
@@ -776,11 +776,11 @@ sign_encrypt (LPMESSAGE message, HWND hwnd, int signflag)
 
 /* Sign the MESSAGE.  */
 int 
-message_sign (LPMESSAGE message, HWND hwnd)
+message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd)
 {
   gpg_error_t err;
 
-  err = mime_sign (message, PROTOCOL_OPENPGP);
+  err = mime_sign (message, protocol);
   if (err)
     {
       char buf[200];
@@ -796,17 +796,17 @@ message_sign (LPMESSAGE message, HWND hwnd)
 
 /* Encrypt the MESSAGE.  */
 int 
-message_encrypt (LPMESSAGE message, HWND hwnd)
+message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd)
 {
-  return sign_encrypt (message, hwnd, 0);
+  return sign_encrypt (message, protocol, hwnd, 0);
 }
 
 
 /* Sign+Encrypt the MESSAGE.  */
 int 
-message_sign_encrypt (LPMESSAGE message, HWND hwnd)
+message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd)
 {
-  return sign_encrypt (message, hwnd, 1);
+  return sign_encrypt (message, protocol, hwnd, 1);
 }
 
 

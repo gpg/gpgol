@@ -290,6 +290,7 @@ GpgolExt::GpgolExt (void)
   m_lRef = 1;
   m_lContext = 0;
   m_hWndExchange = 0;
+  m_gpgSelectSmime = FALSE;
   m_gpgEncrypt = FALSE;
   m_gpgSign = FALSE;
   msgtype = MSGTYPE_UNKNOWN;

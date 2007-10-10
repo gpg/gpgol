@@ -78,6 +78,7 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_pExchExt = pParentInterface; 
   m_lRef = 0; 
   m_lContext = 0; 
+  m_nCmdSelectSmime = 0;
   m_nCmdEncrypt = 0;  
   m_nCmdDecrypt = 0;  
   m_nCmdSign = 0; 
@@ -88,8 +89,10 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_nCmdDebug2 = 0;
   m_nToolbarButtonID1 = 0; 
   m_nToolbarButtonID2 = 0; 
+  m_nToolbarButtonID3 = 0; 
   m_nToolbarBitmap1 = 0;
   m_nToolbarBitmap2 = 0; 
+  m_nToolbarBitmap3 = 0; 
   m_hWnd = NULL; 
 }
 
@@ -345,6 +348,7 @@ GpgolExtCommands::InstallCommands (
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
+                        _("use S/MIME protocol"), &m_nCmdSelectSmime,
                         _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
                         _("&sign message with GnuPG"), &m_nCmdSign,
                         NULL );
@@ -367,8 +371,16 @@ GpgolExtCommands::InstallCommands (
           tbab.nID = IDB_SIGN;
           m_nToolbarBitmap2 = SendMessage (hwnd_toolbar, TB_ADDBITMAP,
                                            1, (LPARAM)&tbab);
+
+          m_nToolbarButtonID3 = pTBEArray[tb_idx].itbbBase;
+          pTBEArray[tb_idx].itbbBase++;
+
+          tbab.nID = IDB_SELECT_SMIME;
+          m_nToolbarBitmap3 = SendMessage (hwnd_toolbar, TB_ADDBITMAP,
+                                           1, (LPARAM)&tbab);
         }
 
+      m_pExchExt->m_gpgSelectSmime = opt.smime_default;
       m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
       m_pExchExt->m_gpgSign    = opt.sign_default;
       if (force_encrypt)
@@ -509,6 +521,11 @@ GpgolExtCommands::DoCommand (
       ul_release (message);
       ul_release (mdb);
     }
+  else if (nCommandID == m_nCmdSelectSmime
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      m_pExchExt->m_gpgSelectSmime = !m_pExchExt->m_gpgSelectSmime;
+    }
   else if (nCommandID == m_nCmdEncrypt
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -588,6 +605,13 @@ GpgolExtCommands::Help (LPEXCHEXTCALLBACK pEECB, UINT nCommandID)
                   _("Check the signature now and display the result"),
                   "GpgOL", MB_OK);
     }
+  else if (nCommandID == m_nCmdSelectSmime
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      MessageBox (m_hWnd,
+                  _("Select this option to select the S/MIME protocol."),
+                  "GpgOL", MB_OK);	
+    } 
   else if (nCommandID == m_nCmdEncrypt 
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -654,6 +678,16 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
       if (lFlags == EECQHT_TOOLTIP)
         lstrcpyn (pszText,
                   _("Check the signature now and display the result"),
+                  nCharCnt);
+    }
+  else if (nCommandID == m_nCmdSelectSmime
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      if (lFlags == EECQHT_STATUS)
+        lstrcpyn (pszText, ".", nCharCnt);
+      if (lFlags == EECQHT_TOOLTIP)
+        lstrcpyn (pszText,
+                  _("Use S/MIME for sign/encrypt"),
                   nCharCnt);
     }
   else if (nCommandID == m_nCmdEncrypt
@@ -747,6 +781,20 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
       pTBB->dwData = 0;
       pTBB->iString = -1;
       lstrcpyn (description, _("Sign message with GPG"),
+                description_size);
+    }
+  else if (buttonid == m_nToolbarButtonID3
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+    {
+      pTBB->iBitmap = m_nToolbarBitmap3;             
+      pTBB->idCommand = m_nCmdSelectSmime;
+      pTBB->fsState = TBSTATE_ENABLED;
+      if (m_pExchExt->m_gpgSelectSmime)
+        pTBB->fsState |= TBSTATE_CHECKED;
+      pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
+      pTBB->dwData = 0;
+      pTBB->iString = -1;
+      lstrcpyn (description, _("Use the S/MIME protocol"),
                 description_size);
     }
   else if (buttonid == m_nToolbarButtonID1

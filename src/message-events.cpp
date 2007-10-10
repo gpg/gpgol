@@ -272,12 +272,16 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
+      protocol_t proto = (m_pExchExt->m_gpgSelectSmime
+                          ? PROTOCOL_SMIME
+                          : PROTOCOL_OPENPGP);
+      
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = message_sign_encrypt (msg, hWnd);
+        rc = message_sign_encrypt (msg, proto, hWnd);
       else if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
-        rc = message_encrypt (msg, hWnd);
+        rc = message_encrypt (msg, proto, hWnd);
       else if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
-        rc = message_sign (msg, hWnd);
+        rc = message_sign (msg, proto, hWnd);
       else
         rc = 0;
       

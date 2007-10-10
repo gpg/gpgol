@@ -69,6 +69,7 @@ struct closure_data_s
   gpgme_data_t status_data;
   status_buffer_t status_buffer; /* Allocated on demand.  */
   int status_ready;
+  gpgme_data_t sigdata;   /* Used by verify_closure.  */
   gpg_error_t last_err;
 };
 
@@ -135,6 +136,20 @@ create_command_id (void)
   while (!(cmdid = InterlockedIncrement (&command_id)))
     ;
   return cmdid;
+}
+
+
+static void
+close_pipe (HANDLE apipe[2])
+{
+  int i;
+
+  for (i=0; i < 2; i++)
+    if (apipe[i] != INVALID_HANDLE_VALUE)
+      {
+        CloseHandle (apipe[i]);
+        apipe[i] = INVALID_HANDLE_VALUE;
+      }
 }
 
 
@@ -1099,10 +1114,21 @@ start_command (assuan_context_t ctx, closure_data_t cld,
 }
 
 
+static const char *
+get_protocol_name (protocol_t protocol)
+{
+  switch (protocol)
+    {
+    case PROTOCOL_OPENPGP: return "OpenPGP"; break;
+    case PROTOCOL_SMIME:   return "CMS"; break;
+    default: return NULL;
+    }
+}
+
 
 
 /* Note that this closure is called in the context of the
-   waiter_thread.  */
+   async_worker_thread.  */
 static void
 encrypt_closure (closure_data_t cld)
 {
@@ -1134,6 +1160,10 @@ op_assuan_encrypt (protocol_t protocol,
   pid_t pid;
   int i;
   char *p;
+  const char *protocol_name;
+
+  if (!(protocol_name = get_protocol_name (protocol)))
+    return gpg_error(GPG_ERR_INV_VALUE);
 
   err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
   if (err)
@@ -1143,8 +1173,7 @@ op_assuan_encrypt (protocol_t protocol,
     return err;
   if ((err = create_io_pipe (outpipe, pid, 0)))
     {
-      CloseHandle (inpipe[0]);
-      CloseHandle (outpipe[0]);
+      close_pipe (inpipe);
       return err;
     }
 
@@ -1183,12 +1212,8 @@ op_assuan_encrypt (protocol_t protocol,
                     cmdid, NULL, 0); 
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
                     cmdid, NULL, 1 /* Wait on success */); 
-  err = start_command (ctx, cld, cmdid, 
-                       (protocol == PROTOCOL_OPENPGP
-                        ? "ENCRYPT --protocol=OpenPGP"
-                        : protocol == PROTOCOL_SMIME
-                        ? "ENCRYPT --protocol=CMS"
-                        : "ENCRYPT --protocol=unknown-protocol"));
+  snprintf (line, sizeof line, "ENCRYPT --protocol=%s", protocol_name);
+  err = start_command (ctx, cld, cmdid, line);
   cld = NULL; /* Now owned by start_command.  */
   if (err)
     goto leave;
@@ -1198,14 +1223,8 @@ op_assuan_encrypt (protocol_t protocol,
   if (err)
     {
       /* Fixme: Cancel stuff in the work_queue. */
-      if (inpipe[0] != INVALID_HANDLE_VALUE)
-        CloseHandle (inpipe[0]);
-      if (inpipe[1] != INVALID_HANDLE_VALUE)
-        CloseHandle (inpipe[1]);
-      if (outpipe[0] != INVALID_HANDLE_VALUE)
-        CloseHandle (outpipe[0]);
-      if (outpipe[1] != INVALID_HANDLE_VALUE)
-        CloseHandle (outpipe[1]);
+      close_pipe (inpipe);
+      close_pipe (outpipe);
       xfree (cld);
       assuan_disconnect (ctx);
     }
@@ -1216,33 +1235,278 @@ op_assuan_encrypt (protocol_t protocol,
 
 
 
+/* Note that this closure is called in the context of the
+   async_worker_thread.  */
+static void
+sign_closure (closure_data_t cld)
+{
+  engine_private_finished (cld->filter, cld->final_err);
+}
+
+
+/* Created a detached signature for INDATA and write it to OUTDATA.
+   On termination of the signing command engine_private_finished() is
+   called with FILTER as the first argument.  */
 int 
 op_assuan_sign (protocol_t protocol, 
                 gpgme_data_t indata, gpgme_data_t outdata,
                 engine_filter_t filter, void *hwnd)
 {
-  return gpg_error (GPG_ERR_NOT_IMPLEMENTED);
+  gpg_error_t err;
+  closure_data_t cld;
+  assuan_context_t ctx;
+  char line[1024];
+  HANDLE inpipe[2], outpipe[2];
+  ULONG cmdid;
+  pid_t pid;
+  const char *protocol_name;
+
+
+  if (!(protocol_name = get_protocol_name (protocol)))
+    return gpg_error(GPG_ERR_INV_VALUE);
+
+  err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  if (err)
+    return err;
+
+  if ((err = create_io_pipe (inpipe, pid, 1)))
+    return err;
+  if ((err = create_io_pipe (outpipe, pid, 0)))
+    {
+      close_pipe (inpipe);
+      return err;
+    }
+
+  cld = xcalloc (1, sizeof *cld);
+  cld->closure = sign_closure;
+  cld->filter = filter;
+
+  err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+
+  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+  snprintf (line, sizeof line, "OUTPUT FD=%ld", (unsigned long int)outpipe[1]);
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+
+  /* FIXME: Implement the optinonal SENDER command. */
+
+  enqueue_callback (" input", ctx, indata, inpipe[1], 1, finalize_handler,
+                    cmdid, NULL, 0); 
+  enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
+                    cmdid, NULL, 1 /* Wait on success */); 
+
+  snprintf (line, sizeof line, "SIGN --protocol=%s --detached",
+            protocol_name);
+  err = start_command (ctx, cld, cmdid, line);
+  cld = NULL; /* Now owned by start_command.  */
+  if (err)
+    goto leave;
+
+
+ leave:
+  if (err)
+    {
+      /* Fixme: Cancel stuff in the work_queue. */
+      close_pipe (inpipe);
+      close_pipe (outpipe);
+      xfree (cld);
+      assuan_disconnect (ctx);
+    }
+  else
+    engine_private_set_cancel (filter, ctx);
+  return err;
 }
 
 
+
 
+/* Note that this closure is called in the context of the
+   async_worker_thread.  */
+static void
+decrypt_closure (closure_data_t cld)
+{
+  engine_private_finished (cld->filter, cld->final_err);
+}
+
+
+/* Decrypt data from INDATA to OUTDATE.  If WITH_VERIFY is set, the
+   signature of a PGP/MIME combined message is also verified the same
+   way as with op_assuan_verify.  */
 int 
 op_assuan_decrypt (protocol_t protocol,
                    gpgme_data_t indata, gpgme_data_t outdata, 
                    engine_filter_t filter, void *hwnd,
                    int with_verify)
 {
-  return gpg_error (GPG_ERR_NOT_IMPLEMENTED);
+  gpg_error_t err;
+  closure_data_t cld;
+  assuan_context_t ctx;
+  char line[1024];
+  HANDLE inpipe[2], outpipe[2];
+  ULONG cmdid;
+  pid_t pid;
+  const char *protocol_name;
+
+  if (!(protocol_name = get_protocol_name (protocol)))
+    return gpg_error(GPG_ERR_INV_VALUE);
+
+  err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  if (err)
+    return err;
+
+  if ((err = create_io_pipe (inpipe, pid, 1)))
+    return err;
+  if ((err = create_io_pipe (outpipe, pid, 0)))
+    {
+      close_pipe (inpipe);
+      return err;
+    }
+
+  cld = xcalloc (1, sizeof *cld);
+  cld->closure = decrypt_closure;
+  cld->filter = filter;
+
+  err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+
+  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+  snprintf (line, sizeof line, "OUTPUT FD=%ld", (unsigned long int)outpipe[1]);
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+
+  enqueue_callback (" input", ctx, indata, inpipe[1], 1, finalize_handler,
+                    cmdid, NULL, 0); 
+  enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
+                    cmdid, NULL, 1 /* Wait on success */); 
+
+  snprintf (line, sizeof line, "DECRYPT --protocol=%s%s",
+            protocol_name, with_verify? "":" --no-verify");
+  err = start_command (ctx, cld, cmdid, line);
+  cld = NULL; /* Now owned by start_command.  */
+  if (err)
+    goto leave;
+
+
+ leave:
+  if (err)
+    {
+      /* Fixme: Cancel stuff in the work_queue. */
+      close_pipe (inpipe);
+      close_pipe (outpipe);
+      xfree (cld);
+      assuan_disconnect (ctx);
+    }
+  else
+    engine_private_set_cancel (filter, ctx);
+  return err;
 }
 
 
 
+/* Note that this closure is called in the context of the
+   async_worker_thread.  */
+static void
+verify_closure (closure_data_t cld)
+{
+  gpgme_data_release (cld->sigdata);
+  cld->sigdata = NULL;
+  engine_private_finished (cld->filter, cld->final_err);
+}
+
+
+/* Verify a detached message where the data is in the gpgme object
+   MSGDATA and the signature given as the string SIGNATURE. */
 int 
 op_assuan_verify (gpgme_protocol_t protocol, 
-                   gpgme_data_t data, const char *signature,
-                   engine_filter_t filter, void *hwnd)
+                  gpgme_data_t msgdata, const char *signature,
+                  engine_filter_t filter, void *hwnd)
 {
-  return gpg_error (GPG_ERR_NOT_IMPLEMENTED);
+  gpg_error_t err;
+  closure_data_t cld = NULL;
+  assuan_context_t ctx;
+  char line[1024];
+  HANDLE msgpipe[2], sigpipe[2];
+  ULONG cmdid;
+  pid_t pid;
+  gpgme_data_t sigdata = NULL;
+  const char *protocol_name;
+
+  msgpipe[0] = INVALID_HANDLE_VALUE;
+  msgpipe[1] = INVALID_HANDLE_VALUE;
+  sigpipe[0] = INVALID_HANDLE_VALUE;
+  sigpipe[1] = INVALID_HANDLE_VALUE;
+
+  if (!(protocol_name = get_protocol_name (protocol)))
+    return gpg_error(GPG_ERR_INV_VALUE);
+
+  err = gpgme_data_new_from_mem (&sigdata, signature, strlen (signature), 0);
+  if (err)
+    goto leave;
+
+  err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  if (err)
+    goto leave;
+
+  if ((err = create_io_pipe (msgpipe, pid, 1)))
+    goto leave;
+  if ((err = create_io_pipe (sigpipe, pid, 1)))
+    goto leave;
+
+  cld = xcalloc (1, sizeof *cld);
+  cld->closure = verify_closure;
+  cld->filter = filter;
+  cld->sigdata = sigdata;
+
+  err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+
+  snprintf (line, sizeof line, "MESSAGE FD=%ld",(unsigned long int)msgpipe[0]);
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)sigpipe[0]);
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (err)
+    goto leave;
+
+  enqueue_callback ("   msg", ctx, msgdata, msgpipe[1], 1, finalize_handler,
+                    cmdid, NULL, 0); 
+  enqueue_callback ("   sig", ctx, sigdata, sigpipe[1], 1, finalize_handler, 
+                    cmdid, NULL, 0); 
+
+  snprintf (line, sizeof line, "VERIFY --protocol=%s",  protocol_name);
+  err = start_command (ctx, cld, cmdid, line);
+  cld = NULL;     /* Now owned by start_command.  */
+  sigdata = NULL; /* Ditto.  */
+  if (err)
+    goto leave;
+
+
+ leave:
+  if (err)
+    {
+      /* Fixme: Cancel stuff in the work_queue. */
+      close_pipe (msgpipe);
+      close_pipe (sigpipe);
+      gpgme_data_release (sigdata);
+      xfree (cld);
+      assuan_disconnect (ctx);
+    }
+  else
+    engine_private_set_cancel (filter, ctx);
+  return err;
 }
 
 

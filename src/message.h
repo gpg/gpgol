@@ -31,9 +31,9 @@ void message_show_info (LPMESSAGE message, HWND hwnd);
 int message_verify (LPMESSAGE message, msgtype_t msgtype, int force);
 int message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force);
 
-int message_sign (LPMESSAGE message, HWND hwnd);
-int message_encrypt (LPMESSAGE message, HWND hwnd);
-int message_sign_encrypt (LPMESSAGE message, HWND hwnd);
+int message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd);
+int message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd);
+int message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd);
 
 
 #endif /*MESSAGE_H*/

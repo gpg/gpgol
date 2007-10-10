@@ -63,8 +63,8 @@ BEGIN
     CONTROL         "Neue Nachrichten per Voreinstellung signieren",
                     IDC_SIGN_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,30,162,10
-    CONTROL         "Entschlüsselte Attachments automatisch speichern",
-                    IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+    CONTROL         "S/MIME per Voreinstellung verwenden",
+                    IDC_SMIME_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,42,175,10
     CONTROL         "Automatisch Attachments signieren",IDC_SIGN_ATTACHMENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,54,126,10
@@ -141,8 +141,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,19,121,10
     CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,24,30,111,10
-    CONTROL         "Save decrypted message &automatically",
-                    IDC_SAVE_DECRYPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+    CONTROL         "Use S/MIME by default",
+                    IDC_SMIME_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     24,42,139,10
     CONTROL         "Automatically sign attachments",IDC_SIGN_ATTACHMENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,54,113,10

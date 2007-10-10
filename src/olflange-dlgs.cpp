@@ -117,7 +117,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    case IDC_ENCRYPT_WITH_STANDARD_KEY:
 	    case IDC_PREFER_HTML:
 	    case IDC_SIGN_DEFAULT:
-	    case IDC_SAVE_DECRYPTED:
+	    case IDC_SMIME_DEFAULT:
 	    case IDC_PREVIEW_DECRYPT:
 	    case IDC_SIGN_ATTACHMENTS:
 	      SendMessage (GetParent (hDlg), PSM_CHANGED, (WPARAM)hDlg, 0L);
@@ -159,8 +159,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			        !!opt.sign_default, 0L);
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
                                 BM_SETCHECK, opt.enable_default_key, 0L);
-	    SendDlgItemMessage (hDlg, IDC_SAVE_DECRYPTED, BM_SETCHECK, 
-				!!opt.save_decrypted_attach, 0L);
+	    SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
+				!!opt.smime_default, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS, BM_SETCHECK,
 				!!opt.auto_sign_attach, 0L);
 	    SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
@@ -198,8 +198,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
 	    opt.sign_default = !!SendDlgItemMessage 
               (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
-	    opt.save_decrypted_attach = !!SendDlgItemMessage
-              (hDlg, IDC_SAVE_DECRYPTED, BM_GETCHECK, 0, 0L);
+	    opt.smime_default = !!SendDlgItemMessage
+              (hDlg, IDC_SMIME_DEFAULT, BM_GETCHECK, 0, 0L);
             opt.auto_sign_attach = !!SendDlgItemMessage
               (hDlg, IDC_SIGN_ATTACHMENTS, BM_GETCHECK, 0, 0L);
             opt.preview_decrypt = !!SendDlgItemMessage

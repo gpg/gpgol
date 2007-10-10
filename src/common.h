@@ -103,9 +103,9 @@ extern
 struct 
 {
   int passwd_ttl;            /* Time in seconds the passphrase is stored. */
+  int smime_default;         /* Use S/MIME by default. */
   int encrypt_default;       /* Encrypt by default. */
   int sign_default;          /* Sign by default. */
-  int save_decrypted_attach; /* Save decrypted attachments. */
   int auto_sign_attach;	     /* Sign all outgoing attachments. */
   int enc_format;            /* Encryption format for attachments. */
   char *default_key;         /* The key we want to always encrypt to. */

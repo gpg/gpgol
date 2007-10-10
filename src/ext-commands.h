@@ -37,6 +37,7 @@ private:
   ULONG m_lRef;
   ULONG m_lContext;
   
+  UINT  m_nCmdSelectSmime;
   UINT  m_nCmdEncrypt;
   UINT  m_nCmdDecrypt;
   UINT  m_nCmdSign;
@@ -48,8 +49,10 @@ private:
 
   UINT  m_nToolbarButtonID1;
   UINT  m_nToolbarButtonID2;     
+  UINT  m_nToolbarButtonID3;     
   UINT  m_nToolbarBitmap1;
   UINT  m_nToolbarBitmap2;
+  UINT  m_nToolbarBitmap3;
   
   HWND  m_hWnd;
   

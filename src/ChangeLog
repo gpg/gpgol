@@ -1,3 +1,8 @@
+2007-10-10  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): Remove saveDecryptedAttachment.  Add
+	smimeDefault.
+
 2007-10-08  Werner Koch  <wk@g10code.com>
 
 	* main.c (do_log): Remove trailing LF from w32 error message and
