@@ -43,7 +43,10 @@
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-static int debug_filter = 0;
+static int debug_filter = 1;
+
+/* This variable indicates whether the assuan engine is used.  */
+static int use_assuan;
 
 
 /* Definition of the key object.  */
@@ -60,9 +63,12 @@ struct engine_keyinfo_s
    accessed by one thread. */
 struct engine_filter_s
 {
+  int use_assuan;          /* The same as the global USE_ASSUAN.  */
+
   struct {
     CRITICAL_SECTION lock; /* The lock for the this object. */
     HANDLE condvar;        /* Manual reset event signaled if LENGTH > 0.  */
+    int nonblock;          /* Put gpgme data cb in non blocking mode.  */
     size_t length;         /* Number of bytes in BUFFER waiting to be
                               send down the pipe.  */
     char buffer[FILTER_BUFFER_SIZE];
@@ -77,6 +83,7 @@ struct engine_filter_s
   struct {
     CRITICAL_SECTION lock; /* The lock for the this object. */
     HANDLE condvar;        /* Manual reset event signaled if LENGTH == 0.  */
+    int nonblock;          /* Put gpgme data cb in non blocking mode.  */
     size_t length;         /* Number of bytes in BUFFER waiting to be
                               send back to the caller.  */
     char buffer[FILTER_BUFFER_SIZE];
@@ -155,6 +162,14 @@ create_filter (void)
   if (!filter->in.ready_event)
     log_error_w32 (-1, "%s:%s: CreateEvent failed", SRCNAME, __func__);
 
+  /* If we are using the assuan engine we need to make the gpgme read
+     callback non blocking.  */
+  if (use_assuan)
+    {
+      filter->use_assuan = 1;
+      filter->in.nonblock = 1;
+    }
+
   return filter;
 }
 
@@ -208,6 +223,13 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
           return 0; /* Return EOF. */
         }
       release_in_lock (filter, __func__);
+      if (filter->in.nonblock)
+        {
+          errno = EAGAIN;
+          if (debug_filter)
+            log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
+          return -1;
+        }
       if (debug_filter)
         log_debug ("%s:%s: waiting for in.condvar\n", SRCNAME, __func__);
       WaitForSingleObject (filter->in.condvar, 500);
@@ -257,6 +279,13 @@ filter_gpgme_write_cb (void *handle, const void *buffer, size_t size)
   while (filter->out.length)
     {
       release_out_lock (filter, __func__);
+      if (filter->out.nonblock)
+        {
+          errno = EAGAIN;
+          if (debug_filter)
+            log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
+          return -1;
+        }
       if (debug_filter)
         log_debug ("%s:%s: waiting for out.condvar\n", SRCNAME, __func__);
       WaitForSingleObject (filter->out.condvar, 500);
@@ -274,7 +303,7 @@ filter_gpgme_write_cb (void *handle, const void *buffer, size_t size)
   release_out_lock (filter, __func__);
 
   if (debug_filter)
-    log_debug ("%s:%s: write; result=%d\n", SRCNAME, __func__, (int)nbytes);
+    log_debug ("%s:%s: leave; result=%d\n", SRCNAME, __func__, (int)nbytes);
   return nbytes;
 }
 
@@ -331,14 +360,17 @@ engine_init (void)
   err = op_assuan_init ();
   if (err)
     {
-/*       MessageBox (NULL, */
-/*                   _("The user interface server is not available or does " */
-/*                     "not work.  Using an internal user interface.\n\n" */
-/*                     "This is limited to the OpenPGP protocol and " */
-/*                     "thus S/MIME protected message are not readable."), */
-/*                   _("GpgOL"), MB_ICONWARNING|MB_OK); */
+      use_assuan = 0;
+      MessageBox (NULL,
+                  _("The user interface server is not available or does "
+                    "not work.  Using an internal user interface.\n\n"
+                    "This is limited to the OpenPGP protocol and "
+                    "thus S/MIME protected message are not readable."),
+                  _("GpgOL"), MB_ICONWARNING|MB_OK);
       err = op_gpgme_init ();
     }
+  else
+    use_assuan = 1;
 
   return err;
 }
@@ -605,7 +637,10 @@ engine_cancel (engine_filter_t filter)
     {
       log_debug ("%s:%s: filter %p: sending cancel command to backend",
                  SRCNAME, __func__, filter);
-      engine_gpgme_cancel (cancel_data);
+      if (filter->use_assuan)
+        engine_assuan_cancel (cancel_data);
+      else
+        engine_gpgme_cancel (cancel_data);
       if (WaitForSingleObject (filter->in.ready_event, INFINITE)
           != WAIT_OBJECT_0)
         log_error_w32 (-1, "%s:%s: WFSO failed", SRCNAME, __func__);
@@ -632,8 +667,12 @@ engine_encrypt_start (engine_filter_t filter,
 {
   gpg_error_t err;
 
-  err = op_gpgme_encrypt (protocol, filter->indata, filter->outdata,
-                          filter, NULL, recipients);
+  if (filter->use_assuan)
+    err = op_assuan_encrypt (protocol, filter->indata, filter->outdata,
+                            filter, NULL, recipients);
+  else
+    err = op_gpgme_encrypt (protocol, filter->indata, filter->outdata,
+                            filter, NULL, recipients);
   return err;
 }
 
@@ -649,8 +688,12 @@ engine_sign_start (engine_filter_t filter, protocol_t protocol)
 {
   gpg_error_t err;
 
-  err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
-                       filter, NULL);
+  if (filter->use_assuan)
+    err = op_assuan_sign (protocol, filter->indata, filter->outdata,
+                         filter, NULL);
+  else
+    err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
+                         filter, NULL);
   return err;
 }
 
@@ -667,8 +710,12 @@ engine_decrypt_start (engine_filter_t filter, protocol_t protocol,
 {
   gpg_error_t err;
 
-  err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
-                          filter, NULL, with_verify);
+  if (filter->use_assuan)
+    err = op_assuan_decrypt (protocol, filter->indata, filter->outdata,
+                            filter, NULL, with_verify);
+  else
+    err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
+                            filter, NULL, with_verify);
   return err;
 }
 
@@ -693,7 +740,10 @@ engine_verify_start (engine_filter_t filter, const char *signature,
       return gpg_error (GPG_ERR_NOT_SUPPORTED);
     }
 
-  err = op_gpgme_verify (protocol, filter->indata, signature, filter, NULL);
+  if (filter->use_assuan)
+    err = op_assuan_verify (protocol, filter->indata, signature, filter, NULL);
+  else
+    err = op_gpgme_verify (protocol, filter->indata, signature, filter, NULL);
   return err;
 }
 

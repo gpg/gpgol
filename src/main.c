@@ -31,6 +31,7 @@
 #include "msgcache.h"
 #include "mymapi.h"
 
+
 /* Registry key for this software. */
 #define REGKEY "Software\\GNU\\GnuPG"
 
@@ -197,15 +198,6 @@ create_initialization_vector (size_t nbytes)
 }
 
 
-/* Create a new boundary for use with MIME. */
-void
-create_boundary (char *buffer, size_t buflen)
-{
-
-
-}
-
-
 /* Acquire the mutex for logging.  Returns 0 on success. */
 static int 
 lock_log (void)
@@ -255,7 +247,11 @@ do_log (const char *fmt, va_list a, int w32err, int err,
                      MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
                      tmpbuf, sizeof (tmpbuf)-1, NULL);
       fputs (": ", logfp);
-      fputs (tmpbuf, logfp);
+      if (*tmpbuf && tmpbuf[strlen (tmpbuf)-1] == '\n')
+        tmpbuf[strlen (tmpbuf)-1] = 0;
+      if (*tmpbuf && tmpbuf[strlen (tmpbuf)-1] == '\r')
+        tmpbuf[strlen (tmpbuf)-1] = 0;
+      fprintf (logfp, "%s (%d)", tmpbuf, w32err);
     }
   if (buf)
     {

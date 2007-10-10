@@ -430,6 +430,9 @@ GpgolExtCommands::DoCommand (
       pDisp = find_outlook_property (pEECB, "Close", &dispid);
       if (pDisp)
         {
+          /* Note that there is a report on the Net from 2005 by Amit
+             Joshi where he claims that in Outlook XP olDiscard does
+             not work but is treated like olSave.  */ 
           dispparams.rgvarg = &aVariant;
           dispparams.rgvarg[0].vt = VT_INT;
           dispparams.rgvarg[0].intVal = 1; /* olDiscard */

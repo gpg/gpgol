@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol 0.9.4\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-09-11 20:30+0200\n"
+"POT-Creation-Date: 2007-09-25 12:20+0200\n"
 "PO-Revision-Date: 2007-04-13 12:55+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -23,62 +23,79 @@ msgstr "GPG - Sichern der entschlüsselten Anlage"
 msgid "Select GPG Key Manager"
 msgstr "Das Schlüsselverwaltungsprogramm festlegen"
 
-#: src/engine-gpgme.c:1099
+#: src/engine-gpgme.c:356 src/gpgmsg.cpp:1812
+msgid ""
+"The configured default encryption key is not available or does not "
+"unambigiously specify a key. Please fix this in the option dialog.\n"
+"\n"
+"This message won't be be encrypted to this key!"
+msgstr ""
+"Der voreingestellte zusätzliche Schlüssel zum Verschlüsseln ist nicht\n"
+"vorhanden oder nicht eindeutig.  Bitte beheben Sie dies in den\n"
+"Optionseinstellungen.\n"
+"\n"
+"Die Nachricht wird deswegen nicht für diesen Schlüssel verschlüsselt!"
+
+#: src/engine-gpgme.c:360 src/gpgmsg.cpp:1816
+msgid "Encryption"
+msgstr "Verschlüsselung"
+
+#: src/engine-gpgme.c:766
 msgid "Fingerprint: "
 msgstr "Fingerabdruck: "
 
-#: src/engine-gpgme.c:1156
+#: src/engine-gpgme.c:823
 msgid "This signature is valid\n"
 msgstr "Diese Unterschrift ist korrekt\n"
 
-#: src/engine-gpgme.c:1158
+#: src/engine-gpgme.c:825
 msgid "signature state is \"green\"\n"
 msgstr "Status der Unterschrift ist \"grün\"\n"
 
-#: src/engine-gpgme.c:1160
+#: src/engine-gpgme.c:827
 msgid "signature state is \"red\"\n"
 msgstr "Status der Unterschrift ist \"rot\"\n"
 
-#: src/engine-gpgme.c:1164
+#: src/engine-gpgme.c:831
 msgid "Warning: One of the keys has been revoked\n"
 msgstr "Warnung: Einer der Schlüssel wurde widerrufen\n"
 
-#: src/engine-gpgme.c:1174
+#: src/engine-gpgme.c:841
 msgid "Warning: The key used to create the signature expired at: "
 msgstr ""
 "Warnung: Der Schlüssel mit der diese Unterschrift erzeugt wurde verfiel am: "
 
-#: src/engine-gpgme.c:1180
+#: src/engine-gpgme.c:847
 msgid "Warning: At least one certification key has expired\n"
 msgstr ""
 "Warnung: Mindestens einer der Zertifizierungsschlüssel ist abgelaufen\n"
 
-#: src/engine-gpgme.c:1186
+#: src/engine-gpgme.c:853
 msgid "Warning: The signature expired at: "
 msgstr "Die Unterschrift verfiel am: "
 
-#: src/engine-gpgme.c:1192
+#: src/engine-gpgme.c:859
 msgid "Can't verify due to a missing key or certificate\n"
 msgstr ""
 "Aufrund eines fehlenden Schlüssels ist eine Überprüfung nicht möglich\n"
 
-#: src/engine-gpgme.c:1196
+#: src/engine-gpgme.c:863
 msgid "The CRL is not available\n"
 msgstr "Die CRL ist nicht verfügbar\n"
 
-#: src/engine-gpgme.c:1202
+#: src/engine-gpgme.c:869
 msgid "Available CRL is too old\n"
 msgstr "Die vorhandene CRL ist zu alt\n"
 
-#: src/engine-gpgme.c:1207
+#: src/engine-gpgme.c:874
 msgid "A policy requirement was not met\n"
 msgstr "Eine Richtlinie wurde nicht erfüllt\n"
 
-#: src/engine-gpgme.c:1213
+#: src/engine-gpgme.c:880
 msgid "A system error occured"
 msgstr "Ein Systemfehler ist aufgetreten"
 
-#: src/engine-gpgme.c:1250
+#: src/engine-gpgme.c:917
 msgid ""
 "WARNING: We have NO indication whether the key belongs to the person named "
 "as shown above\n"
@@ -86,12 +103,12 @@ msgstr ""
 "WARNUNG: Es gibt keinen Hinweis darauf, ob der Schlüssel wirklich der Person "
 "gehört, die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1257
+#: src/engine-gpgme.c:924
 msgid "WARNING: The key does NOT BELONG to the person named as shown above\n"
 msgstr ""
 "WARNUNG: Der Schlüssel gehört NICHT der Person die oben angezeigt ist\n"
 
-#: src/engine-gpgme.c:1261
+#: src/engine-gpgme.c:928
 msgid ""
 "WARNING: It is NOT certain that the key belongs to the person named as shown "
 "above\n"
@@ -99,43 +116,43 @@ msgstr ""
 "WARNING: Es ist nicht sicher, daß der Schlüssel der Person gehört, die oben "
 "angezeigt ist\n"
 
-#: src/engine-gpgme.c:1294
+#: src/engine-gpgme.c:961
 msgid "Verification started at: "
 msgstr "Überprüfung begann am: "
 
-#: src/engine-gpgme.c:1299
+#: src/engine-gpgme.c:966
 msgid "Verification result for: "
 msgstr "Prüfungsresultat für: "
 
-#: src/engine-gpgme.c:1300
+#: src/engine-gpgme.c:967
 msgid "[unnamed part]"
 msgstr "[Unbenannter Teil]"
 
-#: src/engine-gpgme.c:1318 src/engine-gpgme.c:1348
+#: src/engine-gpgme.c:985 src/engine-gpgme.c:1015
 msgid "Good signature from: "
 msgstr "Korrekte Unterschrift von: "
 
-#: src/engine-gpgme.c:1325
+#: src/engine-gpgme.c:992
 msgid "                aka: "
 msgstr "                    alias: "
 
-#: src/engine-gpgme.c:1329 src/engine-gpgme.c:1351
+#: src/engine-gpgme.c:996 src/engine-gpgme.c:1018
 msgid "            created: "
 msgstr "                  erzeugt: "
 
-#: src/engine-gpgme.c:1338
+#: src/engine-gpgme.c:1005
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FALSCHE* Unterschrift, vorgeblich von: "
 
-#: src/engine-gpgme.c:1361
+#: src/engine-gpgme.c:1028
 msgid "Error checking signature"
 msgstr "Fehler beim Prüfen der Unterschrift"
 
-#: src/engine-gpgme.c:1377
+#: src/engine-gpgme.c:1044
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Anfang Notation (Unterschrift von: "
 
-#: src/engine-gpgme.c:1397
+#: src/engine-gpgme.c:1064
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
@@ -246,23 +263,6 @@ msgstr "Entschlüsselung eines Anhangs"
 msgid "Signing Failure"
 msgstr "Unterschrifterstellungsfehler"
 
-#: src/gpgmsg.cpp:1812
-msgid ""
-"The configured default encryption key is not available or does not "
-"unambigiously specify a key. Please fix this in the option dialog.\n"
-"\n"
-"This message won't be be encrypted to this key!"
-msgstr ""
-"Der voreingestellte zusätzliche Schlüssel zum Verschlüsseln ist nicht\n"
-"vorhanden oder nicht eindeutig.  Bitte beheben Sie dies in den\n"
-"Optionseinstellungen.\n"
-"\n"
-"Die Nachricht wird deswegen nicht für diesen Schlüssel verschlüsselt!"
-
-#: src/gpgmsg.cpp:1816
-msgid "Encryption"
-msgstr "Verschlüsselung"
-
 #: src/gpgmsg.cpp:1859
 msgid "Encryption Failure"
 msgstr "Verschlüsselungsfehler"
@@ -287,7 +287,7 @@ msgstr "Unterschrifterstellungsfehler eines Anhangs"
 msgid "The default key may not contain any spaces."
 msgstr "Der Standardschlüssel darf keine Leerzeichen enthalten."
 
-#: src/olflange.cpp:475
+#: src/olflange.cpp:485
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"

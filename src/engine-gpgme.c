@@ -410,14 +410,12 @@ encrypt_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
 
 
 /* Encrypt the data from INDATA to the OUTDATA object for all
-   recpients given in the NULL terminated array KEYS.  If SIGN_KEY is
-   not NULL the message will also be signed.  On termination of the
-   encryption command engine_private_finished() is called with
-   FILTER as the first argument.  
-
-   This global function is used to avoid allocating an extra context
-   just for this notification.  We abuse the gpgme_set_progress_cb
-   value for storing the pointer with the gpgme context.  */
+   recpients given in the NULL terminated array RECIPIENTS.  This
+   function terminates with success and then expects the caller to
+   wait for the result of the encryption using engine_wait.  FILTER is
+   used for asynchronous commnication with the engine module.  HWND is
+   the window handle of the current window and used to maintain the
+   correct relationship between a popups and the active window.  */
 int
 op_gpgme_encrypt (protocol_t protocol, 
                   gpgme_data_t indata, gpgme_data_t outdata,

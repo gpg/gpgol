@@ -31,16 +31,26 @@ extern "C" {
 
 #include <gpgme.h>  /* We need it for gpgme_data_t.  */
 
-
+#include "engine.h"
 
 int  op_assuan_init (void);
 void op_assuan_deinit (void);
+void engine_assuan_cancel (void *cancel_data);
 
 int op_assuan_encrypt (protocol_t protocol, 
                        gpgme_data_t indata, gpgme_data_t outdata,
-                       void *notify_data, /* FIXME: Add hwnd */
+                       engine_filter_t notify_data, void *hwnd,
                        char **recipients);
-
+int op_assuan_sign (protocol_t protocol, 
+                    gpgme_data_t indata, gpgme_data_t outdata,
+                    engine_filter_t filter, void *hwnd);
+int op_assuan_decrypt (protocol_t protocol,
+                       gpgme_data_t indata, gpgme_data_t outdata, 
+                       engine_filter_t filter, void *hwnd,
+                       int with_verify);
+int op_assuan_verify (gpgme_protocol_t protocol, 
+                      gpgme_data_t data, const char *signature,
+                      engine_filter_t filter, void *hwnd);
 
 
 

@@ -1,4 +1,4 @@
-/* common.c - Common routines used bu GpgOL
+/* common.c - Common routines used by GpgOL
  *	Copyright (C) 2005, 2007 g10 Code GmbH
  *
  * This file is part of GpgOL.
@@ -21,7 +21,18 @@
 
 #include <config.h>
 #include <windows.h>
+#include <shlobj.h>
+#ifndef CSIDL_APPDATA
+#define CSIDL_APPDATA 0x001a
+#endif
+#ifndef CSIDL_LOCAL_APPDATA
+#define CSIDL_LOCAL_APPDATA 0x001c
+#endif
+#ifndef CSIDL_FLAG_CREATE
+#define CSIDL_FLAG_CREATE 0x8000
+#endif
 #include <time.h>
+#include <fcntl.h>
 
 #include "common.h"
 
@@ -194,7 +205,7 @@ xfree (void *p)
 
 /* This is a helper function to load a Windows function from either of
    one DLLs. */
-HRESULT
+static HRESULT
 w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e)
 {
   static int initialized;
@@ -447,6 +458,77 @@ read_w32_registry_string (const char *root, const char *dir, const char *name)
 }
 
 
+/* Get the standard home directory.  In general this function should
+   not be used as it does not consider a registry value or the
+   GNUPGHOME environment variable.  Please use default_homedir(). */
+static const char *
+standard_homedir (void)
+{
+  static char *dir;
+
+  if (!dir)
+    {
+      char path[MAX_PATH];
+      
+      /* It might be better to use LOCAL_APPDATA because this is
+         defined as "non roaming" and thus more likely to be kept
+         locally.  For private keys this is desired.  However, given
+         that many users copy private keys anyway forth and back,
+         using a system roaming services might be better than to let
+         them do it manually.  A security conscious user will anyway
+         use the registry entry to have better control.  */
+      if (w32_shgetfolderpath (NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE, 
+                               NULL, 0, path) >= 0) 
+        {
+          char *tmp = malloc (strlen (path) + 6 + 1);
+
+	  strcpy (tmp, path);
+	  strcat (tmp, "\\gnupg");
+          
+          dir = tmp;
+          
+          /* Try to create the directory if it does not yet exists.  */
+          if (access (dir, F_OK))
+            CreateDirectory (dir, NULL);
+        }
+      else
+        dir = xstrdup ("C:\\gnupg");
+    }
+  return dir;
+}
+
+
+/* Retrieve the default home directory.  */
+const char *
+default_homedir (void)
+{
+  static char *dir;
+
+  if (!dir)
+    {
+      dir = getenv ("GNUPGHOME");
+      if (!dir || !*dir)
+        {
+          char *tmp;
+          
+          tmp = read_w32_registry_string (NULL, "Software\\GNU\\GnuPG",
+                                          "HomeDir");
+          if (tmp && !*tmp)
+            {
+              free (tmp);
+              tmp = NULL;
+            }
+          if (tmp)
+            dir = tmp;
+          else
+            dir = xstrdup (standard_homedir ());
+        }
+      else
+        dir = xstrdup (dir);
+    }
+  
+  return dir;
+}
 
 
 /* Do in-place decoding of quoted-printable data of LENGTH in BUFFER.

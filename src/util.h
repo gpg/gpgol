@@ -94,6 +94,9 @@ void set_default_key (const char *name);
 void read_options (void);
 int write_options (void);
 
+/*-- Convenience macros. -- */
+#define DIM(v)		     (sizeof(v)/sizeof((v)[0]))
+#define DIMof(type,member)   DIM(((type *)0)->member)
 
 /*-- Macros to replace ctype ones to avoid locale problems. --*/
 #define spacep(p)   (*(p) == ' ' || *(p) == '\t')

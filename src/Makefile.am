@@ -66,22 +66,26 @@ gpgol_SOURCES = \
 # versions of GPGME and gpg-error, because we want to link to them
 # statically, and not dynamically (otherwise Outlook would not find
 # them).
-gpgol_DEPENDENCIES = libmapi32.a libgpgme.a libgpg-error.a
+gpgol_DEPENDENCIES = libmapi32.a libgpg-error.a libgpgme.a libassuan.a
 
 libmapi32.a: mapi32.def
 	$(DLLTOOL) --output-lib $@ --def $<
 
-libgpgme.a:
-	ln -s $(shell $(GPGME_CONFIG) --prefix)/lib/libgpgme.a
-
 libgpg-error.a:
 	ln -s $(shell $(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a
 
+libgpgme.a:
+	ln -s $(shell $(GPGME_CONFIG) --prefix)/lib/libgpgme.a
+
+libassuan.a:
+	ln -s $(shell $(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a
+
 clean-local:
-	rm -f libmapi32.a libgpgme.a libgpg-error.a
+	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
-	-L . -lgpgme -lgpg-error -lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
+	-L . -lgpgme -lassuan -lgpg-error \
+	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
         -lole32 -loleaut32 -lws2_32 -ladvapi32
 
 resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc

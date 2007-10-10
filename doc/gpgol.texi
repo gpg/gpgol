@@ -122,7 +122,7 @@ We assume that the connection has already been established; see the
 Assuan manual for details.
 
 @menu
-* ENCRYPT::                  Encrypting a message.
+* ENCRYPT::                  Encrypt a message.
 * SIGN::                     Sign a message.
 * DECRYPT::                  Decrypt a message.
 * VERIFY::                   Verify a message.
@@ -132,7 +132,7 @@ Assuan manual for details.
 
 
 @node ENCRYPT
-@section Encrypting a Message
+@section Encrypt a Message
 
 Before encryption can be done the recipients must be set using the
 command:
@@ -248,11 +248,13 @@ command.  A second command overrides the effect of the first one; if
 @noindent
 The signing operation is then initiated by:
 
-@deffn Command SIGN [-@w{}-detached] 
+@deffn Command SIGN -@w{}-protocol=@var{name} [-@w{}-detached] 
 Sign the data set with the @code{INPUT} command and write it to the sink
-set by OUTPUT.  With option @code{--detached} given, a detached
+set by OUTPUT.  @var{name} is the signing protocol used for the
+message. For a description of the allowed protocols see the
+@code{ENCRYPT} command.  With option @code{--detached} given, a detached
 signature is created; this is actually the usual way the command is
-used.  
+used.
 @end deffn
 
 @noindent
@@ -442,6 +444,43 @@ values (e.g. @code{HWND}).
 @printindex fn
 
 @bye
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c E D I T O R ' S   A T T I C
+@c 
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+What about the message class mangling?
+
+* On receiving a new message GpgOL checks the MAPI message class
+  property of the message and if this is an S/MIME message class
+  ("IPM.Note.SMIME"), it is changed to a GpgOL specific one
+  ("IPM.Note.GpgOL").  This change is required so that OL does not not
+  apply its own S/MIME handler to the message but leaves it unchanged in
+  the message store.
+
+* For ease of implementarion the same thing applies to PGP messgaes,
+  although OL would not touch these messages.
+
+* When reading a message GpgOL quickly checks the message class and if
+  it is "IPM.Note.GpgOL" it will hook itself into the code path and
+  decrypt/verify the message.
+
+* Messages already in the message store before GpgOL was installed are
+  handled diffwerently: Here an Outlook specific event is used to change
+  the message class when browsing the messages folder.  This code path
+  is not fully ready as it requires the installation of an ECF(ile)
+  which has to be done manually as of now.
+
+* If GpgOL is deinstalled, the existing S/MIME messages can't be
+  decrypted or verified by Outlook's internal S/MIME support.
+  Multipart/signed messages are still readable, though.  We plan to add
+  a little tool for changing the GpgOL message classes back to
+  "IPM.Note.SMIME" which in turn allows using internal S/MIME support
+  again.
+
+
 
 
 @c Local Variables:

@@ -1,3 +1,22 @@
+2007-10-08  Werner Koch  <wk@g10code.com>
+
+	* main.c (do_log): Remove trailing LF from w32 error message and
+	also print the numeric error code.
+
+2007-09-25  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Link against libassuan.
+
+	* util.h (DIM, DIMof): New.
+
+	* engine.c (filter_gpgme_read_cb): Implement nonblock feature.
+	(filter_gpgme_write_cb): Ditto.
+
+2007-09-24  Werner Koch  <wk@g10code.com>
+
+	* common.c (standard_homedir, default_homedir): New. 
+	(w32_shgetfolderpath): Make static.
+
 2007-09-21  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (build_mimeinfo): New.

@@ -1,3 +1,14 @@
+2007-10-05  Werner Koch  <wk@g10code.com>
+
+	* doc/ New. 
+	* doc/Makefile.am: New.
+	* doc/gpgol.texi: New.
+	* doc/gpl.texi: New.
+
+2007-09-25  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Check for libassuan.
+
 2007-09-17  Werner Koch  <wk@g10code.com>
 
 	* autogen.sh (FORCE): Add --force option.
