@@ -17,7 +17,8 @@ AUTOMAKE_OPTIONS = dist-bzip2
 DISTCHECK_CONFIGURE_FLAGS = --host=i586-mingw32msvc --build=i686-pc-linux-gnu \
                             --prefix=@prefix@ \
                             --with-gpg-error-prefix=@prefix@ \
-                            --with-gpgme-prefix=@prefix@
+                            --with-gpgme-prefix=@prefix@ \
+                            --with-libassuan-prefix=@prefix@
 
 EXTRA_DIST = autogen.sh
 

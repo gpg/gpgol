@@ -1,3 +1,26 @@
+2007-10-11  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (toolbar_add_menu): USe "@" to indicate a
+	separator and "" to ski the entry.  Changed callers.
+
+	* common.h (struct): Remove AUTO_SIGN_ATTACH.  Add ENABLE_SMIME.
+	* main.c (read_options, write_options): Save the new option.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Implement new option and
+	print warning.
+	* mapihelp.cpp (mapi_change_message_class): Take care of enable_smime.
+	
+	* olflange-ids.h: Renumbered.
+	* olflange-rsrcs.rc: Keep only the english dialog and changed all
+	text to dummy texts.
+	* olflange-dlgs.cpp (set_labels): New.
+	(GPGOptionsDlgProc): Call it.
+	* property-sheets.cpp (GetPages): Do not distinguish languages.
+	* config-dialog.c (config_dialog_box): Ditto.
+	(config_dlg_set_labels): New.
+	* gpgol-rsrcs.rc (IDD_OPT): Move to olflange-rsrcs.rc and rename
+	to IDD_EXT_OPTIONS.
+	(IDD_OPT_DE): Remove.
+
 2007-10-10  Werner Koch  <wk@g10code.com>
 
 	* main.c (read_options): Remove saveDecryptedAttachment.  Add

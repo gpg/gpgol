@@ -6,17 +6,15 @@
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -523,7 +521,7 @@ mapi_change_message_class (LPMESSAGE message)
               xfree (ct);
             }
         }
-      else if (!strcmp (s, "IPM.Note.SMIME"))
+      else if (opt.enable_smime && !strcmp (s, "IPM.Note.SMIME"))
         {
           /* This is an S/MIME opaque encrypted or signed message.
              Check what it really is.  */
@@ -557,7 +555,8 @@ mapi_change_message_class (LPMESSAGE message)
           if (!newvalue)
             newvalue = xstrdup ("IPM.Note.GpgOL");
         }
-      else if (!strncmp (s, "IPM.Note.SMIME", 14) && (!s[14] || s[14] =='.'))
+      else if (opt.enable_smime
+               && !strncmp (s, "IPM.Note.SMIME", 14) && (!s[14]||s[14] =='.'))
         {
           /* This is "IPM.Note.SMIME.foo" (where ".foo" is optional
              but the previous condition has already taken care of
@@ -573,7 +572,7 @@ mapi_change_message_class (LPMESSAGE message)
   if (!newvalue)
     {
       /* We use our Sig-Status property to mark messages which passed
-         this function.  This helps use to avoids later tests.  */
+         this function.  This helps us to avoid later tests.  */
       if (!mapi_has_sig_status (message))
         mapi_set_sig_status (message, "#");
     }

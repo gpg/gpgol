@@ -265,7 +265,9 @@ before the final OK response:
 The @var{string} represents the hash algorithm used to create the
 signature. It is used with MOSS style signature messaged and defined by
 PGP/MIME (RFC-3156) and S/MIME (RFC-3851).  The GPGME library has a
-supporting function @code{gpgme_hash_algo_name} to return this string.
+supporting function @code{gpgme_hash_algo_name} to return the algorithm
+name as a string.  This string needs to be lowercased and for OpenPGP
+prefixed with "@code{pgp-}".
 @end deffn
 
 

@@ -13,10 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with GpgOL; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <config.h>
@@ -1037,8 +1035,7 @@ status_in_cb (void *opaque, const void *buffer, size_t size)
       memcpy (sb->line+sb->linelen, buffer, nbytes);
       sb->linelen += nbytes;
       size -= nbytes;
-      p = memchr (sb->line, '\n', sb->linelen);
-      if (p && !cld->status_ready)
+      while ((p = memchr (sb->line, '\n', sb->linelen)) && !cld->status_ready)
         {
           *p = 0;
           if (p > sb->line && p[-1] == '\r')
@@ -1059,7 +1056,7 @@ status_in_cb (void *opaque, const void *buffer, size_t size)
           sb->linelen -= (p+1 - sb->line);
           memmove (sb->line, p+1, sb->linelen);
         }
-      else if (sb->linelen >= ASSUAN_LINELENGTH)
+      if (sb->linelen >= ASSUAN_LINELENGTH)
         {
           log_error ("%s:%s: line from server too long", SRCNAME, __func__);
           errno = ERANGE;

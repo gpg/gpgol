@@ -6,17 +6,15 @@
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -150,6 +148,8 @@ toolbar_add_menu (LPEXCHEXTCALLBACK pEECB,
       cmdptr = va_arg (arg_ptr, UINT*);
 
       if (!*string)
+        ; /* Ignore this entry.  */
+      else if (*string == '@' && !string[1])
         AppendMenu (menu, MF_SEPARATOR, 0, NULL);
       else
 	{
@@ -304,31 +304,31 @@ GpgolExtCommands::InstallCommands (
 
   if (m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
+      int need_dvm = 0;
 
       switch (m_pExchExt->getMsgtype (pEECB))
         {
         case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
         case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
         case MSGTYPE_GPGOL_PGP_MESSAGE:
-          toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                            _("&Decrypt and verify message"), &m_nCmdDecrypt,
-                            NULL);
+          need_dvm = 1;
           break;
         default:
           break;
         }
 
       /* We always enable the verify button as it might be useful on
-         an already decryopted message. */
-      toolbar_add_menu (pEECB, pnCommandIDBase,
-                        _("&Verify signature"), &m_nCmdCheckSig,
-                        _("&Display crypto information"), &m_nCmdShowInfo,
-                        NULL);
-
-      toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                        _("Debug-1 (open_inspector)"), &m_nCmdDebug1,
-                        _("Debug-2 (n/a)"), &m_nCmdDebug2,
-                        NULL);
+         an already decrypted message. */
+      toolbar_add_menu 
+        (pEECB, pnCommandIDBase,
+         "@", NULL,
+         need_dvm? _("&Decrypt and verify message"):"", &m_nCmdDecrypt,
+         _("&Verify signature"), &m_nCmdCheckSig,
+         _("&Display crypto information"), &m_nCmdShowInfo,
+         "@", NULL,
+         _("Debug-1 (open_inspector)"), &m_nCmdDebug1,
+         _("Debug-2 (n/a)"), &m_nCmdDebug2,
+         NULL);
       
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
       if (hwnd_toolbar)
@@ -347,11 +347,13 @@ GpgolExtCommands::InstallCommands (
 
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
-      toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                        _("use S/MIME protocol"), &m_nCmdSelectSmime,
-                        _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
-                        _("&sign message with GnuPG"), &m_nCmdSign,
-                        NULL );
+      toolbar_add_menu 
+        (pEECB, pnCommandIDBase,
+         "@", NULL,
+         opt.enable_smime? _("use S/MIME protocol"):"", &m_nCmdSelectSmime,
+         _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
+         _("&sign message with GnuPG"), &m_nCmdSign,
+         NULL );
       
 
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
@@ -380,7 +382,7 @@ GpgolExtCommands::InstallCommands (
                                            1, (LPARAM)&tbab);
         }
 
-      m_pExchExt->m_gpgSelectSmime = opt.smime_default;
+      m_pExchExt->m_gpgSelectSmime = opt.enable_smime && opt.smime_default;
       m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
       m_pExchExt->m_gpgSign    = opt.sign_default;
       if (force_encrypt)
@@ -389,9 +391,11 @@ GpgolExtCommands::InstallCommands (
 
   if (m_lContext == EECONTEXT_VIEWER) 
     {
-      toolbar_add_menu (pEECB, pnCommandIDBase, "", NULL,
-                        _("GnuPG Key &Manager"), &m_nCmdKeyManager,
-                        NULL);
+      toolbar_add_menu 
+        (pEECB, pnCommandIDBase, 
+         "@", NULL,
+         _("GnuPG Key &Manager"), &m_nCmdKeyManager,
+         NULL);
 
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
       if (hwnd_toolbar)
@@ -524,7 +528,8 @@ GpgolExtCommands::DoCommand (
   else if (nCommandID == m_nCmdSelectSmime
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
-      m_pExchExt->m_gpgSelectSmime = !m_pExchExt->m_gpgSelectSmime;
+      if (opt.enable_smime)
+        m_pExchExt->m_gpgSelectSmime = !m_pExchExt->m_gpgSelectSmime;
     }
   else if (nCommandID == m_nCmdEncrypt
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 

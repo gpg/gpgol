@@ -11,10 +11,8 @@
 #define IDD_SYMENC                      103
 #define IDD_DEC                         104
 #define IDD_SIG                         105
-#define IDD_OPT                         106
 #define IDD_VRY                         107
 #define IDD_DEC_EXT                     108
-#define IDD_OPT_DE                      110
 #define IDD_VRY_DE                      111
 #define IDD_DEC_DE                      113
 #define IDD_DEC_EXT_DE                  114
@@ -54,8 +52,6 @@
 #define IDC_VRY_PKALGO                  1034
 #define IDC_ENC_NOTFOUND                1035
 #define IDC_ENC_INFO                    1036
-#define IDC_OPT_KEYMAN                  1037
-#define IDC_OPT_SELKEYMAN               1038
 #define IDC_DEC_HINT                    1039
 #define IDC_VRY_HINT                    1040
 #define IDC_DEC_PASSINF                 1041
@@ -65,7 +61,6 @@
 #define IDC_DECEXT_PASS                 1045
 #define IDC_DECEXT_HINT                 1046
 #define IDC_DECEXT_PASSINF              1047
-#define IDC_DEBUG_LOGFILE               1048
 
 #endif /*GPGOL_IDS_H*/
 

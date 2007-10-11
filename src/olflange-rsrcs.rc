@@ -1,22 +1,20 @@
 /* olflange-rsrcs.rc - Olflange specific resource.         -*- c -*-
  *	Copyright (C) 2004, 2005, 2006 g10 Code GmbH
  * 
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  * 
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 
@@ -25,175 +23,106 @@
 #include "afxres.h"
 
 
-/////////////////////////////////////////////////////////////////////////////
-// Deutsch (Deutschland) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
-#ifdef _WIN32
-LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
-#pragma code_page(1252)
-#endif //_WIN32
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
 IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
 IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
 IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
 IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
 IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
 
-IDD_GPG_OPTIONS_DE DIALOG DISCARDABLE  0, 0, 266, 274
+IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "GnuPG"
+CAPTION "GpgOL"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Optionen",IDC_STATIC,9,9,242,112
-    CONTROL         "Neue Nachrichten per Voreinstellung verschlüsseln",
-                    IDC_ENCRYPT_DEFAULT,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,24,19,177,10
-    CONTROL         "Neue Nachrichten per Voreinstellung signieren",
-                    IDC_SIGN_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,30,162,10
-    CONTROL         "S/MIME per Voreinstellung verwenden",
-                    IDC_SMIME_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,42,175,10
-    CONTROL         "Automatisch Attachments signieren",IDC_SIGN_ATTACHMENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,54,126,10
-    CONTROL         "Nachricht ebenfalls mit voreingestellten Schlüssel verschlüsseln",
-                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,24,67,215,10
-    EDITTEXT        IDC_ENCRYPT_TO,36,79,133,12,ES_AUTOHSCROLL
+    /* Options box.  */
+    GROUPBOX        "options", IDC_G_OPTIONS,
+                    9, 9, 242, 112
 
-    CONTROL         "Auch im Vorschaufenster entschlüsseln",
-                    IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,95,162,10
+    CONTROL         "encrypt-by-default", IDC_ENCRYPT_DEFAULT,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 19, 215, 10
 
-    CONTROL         "HTML Darstellung anzeigen wenn möglich",
-                    IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,107,162,10
+    CONTROL         "sign-by-default", IDC_SIGN_DEFAULT, 
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 30, 215, 10
 
-    GROUPBOX        "Passphrase",IDC_STATIC,9,124,242,31
-    LTEXT           "Passphrase speichern für",IDC_STATIC,24,136,80,8
-    EDITTEXT        IDC_TIME_PHRASES,107,135,39,14,ES_AUTOHSCROLL
-    LTEXT           "Minuten",IDC_STATIC,151,137,34,8
+    CONTROL         "smime-by-default", IDC_SMIME_DEFAULT,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 42, 215, 10
 
-    PUSHBUTTON      "&Erweitert...",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
-    LTEXT           "Version x ",IDC_VERSION_INFO,150,185,109,9						  
-    CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
-                    SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
+    CONTROL         "enable-smime", IDC_ENABLE_SMIME,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 54, 215, 10
+
+    CONTROL         "encrypt-to", IDC_ENCRYPT_WITH_STANDARD_KEY,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 67, 215, 10
+
+    EDITTEXT        IDC_ENCRYPT_TO, 
+                    36, 79, 133, 12, ES_AUTOHSCROLL
+
+    CONTROL         "preview-decrypt", IDC_PREVIEW_DECRYPT,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 95, 215, 10
+
+    CONTROL         "prefer-html", IDC_PREFER_HTML,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 107, 215, 10
+ 
+    /* Passphrase option box.  */
+    GROUPBOX        "Passphrase", IDC_G_PASSPHRASE,
+                    9, 124, 242, 31
+
+    LTEXT           "passphrase-ttl", IDC_T_PASSPHRASE_TTL,
+                     24, 136, 80, 8
+
+    EDITTEXT        IDC_TIME_PHRASES,
+                    107, 135, 39, 14, ES_AUTOHSCROLL
+
+    LTEXT           "minutes", IDC_T_PASSPHRASE_MIN,
+                    151, 137, 50, 8
+
+    /* Stuff below the group boxes.  */
+    PUSHBUTTON      "advanced", IDC_GPG_OPTIONS,
+                    202, 166, 50, 14
+
+    LTEXT           "GpgOL by g10 Code GmbH", IDC_STATIC, 
+                      8, 185, 100, 8
+    LTEXT           "Version x ", IDC_VERSION_INFO,
+                    150, 185, 109, 9
+
+    CONTROL         IDB_BANNER, IDC_BITMAP,
+                    "Static", SS_BITMAP | SS_REALSIZEIMAGE,
+                      8, 200, 150, 64
 END
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
 
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
-BEGIN
-    IDD_GPG_OPTIONS_DE, DIALOG
-    BEGIN
-        LEFTMARGIN, 4
-        RIGHTMARGIN, 259
-        TOPMARGIN, 4
-        BOTTOMMARGIN, 194
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-
-#endif    // Deutsch (Deutschland) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Englisch (USA) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
-#endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-IDD_GPG_OPTIONS DIALOG DISCARDABLE  0, 0, 266, 271
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "GnuPG"
+IDD_EXT_OPTIONS DIALOG DISCARDABLE  0, 0, 167, 119
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "GpgOL - Extended Options"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Options",IDC_STATIC,9,9,242,112
-    CONTROL         "&Encrypt new messages by default",IDC_ENCRYPT_DEFAULT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,19,121,10
-    CONTROL         "&Sign new messages by default",IDC_SIGN_DEFAULT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,24,30,111,10
-    CONTROL         "Use S/MIME by default",
-                    IDC_SMIME_DEFAULT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,42,139,10
-    CONTROL         "Automatically sign attachments",IDC_SIGN_ATTACHMENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,54,113,10
-    CONTROL         "Also encrypt message with the &default key",
-                    IDC_ENCRYPT_WITH_STANDARD_KEY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,24,67,148,10
-    EDITTEXT        IDC_ENCRYPT_TO,36,79,133,12,ES_AUTOHSCROLL
+    LTEXT           "keyman", IDC_T_OPT_KEYMAN_PATH,
+                    2,20, 122,8
 
-    CONTROL         "Also decrypt in preview window",
-                    IDC_PREVIEW_DECRYPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,95,162,10
+    EDITTEXT        IDC_OPT_KEYMAN_PATH,
+                    2, 34, 144, 12, ES_AUTOHSCROLL
 
-    CONTROL         "Show HTML view if possible",
-                    IDC_PREFER_HTML,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24,107,162,10
+    PUSHBUTTON      "...", IDC_OPT_SEL_KEYMAN_PATH,
+                    148, 34, 11, 14
 
+    LTEXT           "debug-logfile", IDC_T_DEBUG_LOGFILE,
+                    2, 50, 122,8
 
-    GROUPBOX        "Passphrase",IDC_STATIC,9,124,242,31
-    LTEXT           "Cache &passphrase for",IDC_STATIC,24,136,70,8
-    EDITTEXT        IDC_TIME_PHRASES,107,135,39,14,ES_AUTOHSCROLL
-    LTEXT           "minutes",IDC_STATIC,151,137,28,8
+    EDITTEXT        IDC_DEBUG_LOGFILE,
+                    2, 60, 144, 12, ES_AUTOHSCROLL
 
-
-    PUSHBUTTON      "Ad&vanced..",IDC_GPG_OPTIONS,202,166,50,14
-    LTEXT           "GPGol by g10 Code GmbH", IDC_STATIC,8,185,100,8
-    LTEXT           "Version x ",IDC_VERSION_INFO,150,183,109,9
-    CONTROL         IDB_BANNER,IDC_BITMAP,"Static",
-                    SS_BITMAP | SS_REALSIZEIMAGE,8,200,150,64
+    DEFPUSHBUTTON   "&OK", IDOK,
+                    112, 101, 50, 14
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
-BEGIN
-    IDD_GPG_OPTIONS, DIALOG
-    BEGIN
-        LEFTMARGIN, 4
-        RIGHTMARGIN, 259
-        TOPMARGIN, 4
-        BOTTOMMARGIN, 194
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-#endif    // Englisch (USA) resources
-/////////////////////////////////////////////////////////////////////////////
 
 
 

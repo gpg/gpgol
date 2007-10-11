@@ -1,23 +1,21 @@
 /* olflange-dlgs.cpp - New dialogs for Outlook.
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004, 2005, 2006 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2006, 2007 g10 Code GmbH
  * 
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  * 
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,6 +34,38 @@
 #include "olflange-def.h"
 #include "olflange-ids.h"
 
+
+/* To avoid writing a dialog template for each language we use gettext
+   for the labels and hope that there is enough space in the dialog to
+   fit teh longest translation.  */
+static void
+set_labels (HWND dlg)
+{
+  static struct { int itemid; const char *label; } labels[] = {
+    { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
+    { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
+    { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
+    { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
+    { IDC_ENCRYPT_WITH_STANDARD_KEY, 
+                            N_("Also encrypt message with the &default key")},
+    { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
+    { IDC_PREFER_HTML,      N_("Show HTML view if possible")},
+
+    { IDC_G_PASSPHRASE,     N_("Passphrase")},
+    { IDC_T_PASSPHRASE_TTL, N_("Cache &passphrase for")}, 
+    { IDC_T_PASSPHRASE_MIN, N_("minutes")},
+
+    { IDC_GPG_OPTIONS,      N_("Ad&vanced..")},
+    { IDC_VERSION_INFO,  "Version "VERSION " ("__DATE__")"},
+    { 0, NULL}
+  };
+  int i;
+
+  for (i=0; labels[i].itemid; i++)
+    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
+
+}  
+    
 
 /* GPGOptionsDlgProc -
    Handles the notifications sent for managing the options property page. */
@@ -73,10 +103,11 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         
 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
                       !!opt.enable_default_key);
+        EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
+                      !!opt.enable_smime);
 	if (opt.enable_default_key)
           CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
-	SetDlgItemText (hDlg, IDC_VERSION_INFO, 
-		        "Version "VERSION " ("__DATE__")");
+        set_labels (hDlg);
       }
       return TRUE;
 
@@ -119,7 +150,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    case IDC_SIGN_DEFAULT:
 	    case IDC_SMIME_DEFAULT:
 	    case IDC_PREVIEW_DECRYPT:
-	    case IDC_SIGN_ATTACHMENTS:
+	    case IDC_ENABLE_SMIME:
 	      SendMessage (GetParent (hDlg), PSM_CHANGED, (WPARAM)hDlg, 0L);
 	      break;
 	    }
@@ -130,6 +161,13 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	  opt.enable_default_key = !opt.enable_default_key;
 	  EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
 			!!opt.enable_default_key);
+	}
+      if (HIWORD (wParam) == BN_CLICKED &&
+	  LOWORD (wParam) == IDC_ENABLE_SMIME) 
+	{
+	  opt.enable_smime = !opt.enable_smime;
+	  EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
+                        opt.enable_smime);
 	}
       if (LOWORD (wParam) == IDC_GPG_OPTIONS)
 	config_dialog_box (hDlg);
@@ -161,8 +199,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                 BM_SETCHECK, opt.enable_default_key, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
 				!!opt.smime_default, 0L);
-	    SendDlgItemMessage (hDlg, IDC_SIGN_ATTACHMENTS, BM_SETCHECK,
-				!!opt.auto_sign_attach, 0L);
+	    SendDlgItemMessage (hDlg, IDC_ENABLE_SMIME, BM_SETCHECK,
+				!!opt.enable_smime, 0L);
 	    SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
 				!!opt.preview_decrypt, 0L);
 	    SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
@@ -183,7 +221,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                   {
                     MessageBox (hDlg,_("The default key may not"
                                        " contain any spaces."),
-                                "GPGol", MB_ICONERROR|MB_OK);
+                                "GpgOL", MB_ICONERROR|MB_OK);
                     bMsgResult = PSNRET_INVALID_NOCHANGEPAGE;
                     break;
                   }
@@ -198,10 +236,21 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
 	    opt.sign_default = !!SendDlgItemMessage 
               (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
+            opt.enable_smime = !!SendDlgItemMessage
+              (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
+            if (opt.enable_smime)
+              {
+                MessageBox (hDlg, 
+          _("You have enabled GpgOL's support for the S/MIME protocol.\n\n"
+            "New S/MIME messages are thus only viewable with GpgOL and "
+            "not anymore with Outlook's internal S/MIME support.  Those "
+            "message will even be unreadable by Outlook after GpgOL has "
+            "been deinstalled.  A tool to mitigate this problem will be "
+            "provided when GpgOL arrives at production quality status."),
+                            "GpgOL", MB_ICONWARNING|MB_OK);
+              }
 	    opt.smime_default = !!SendDlgItemMessage
               (hDlg, IDC_SMIME_DEFAULT, BM_GETCHECK, 0, 0L);
-            opt.auto_sign_attach = !!SendDlgItemMessage
-              (hDlg, IDC_SIGN_ATTACHMENTS, BM_GETCHECK, 0, 0L);
             opt.preview_decrypt = !!SendDlgItemMessage
               (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
             opt.prefer_html = !!SendDlgItemMessage
@@ -211,34 +260,50 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    bMsgResult = PSNRET_NOERROR;
 	    break; }
 		
-	case PSN_HELP:
-	    MessageBox (pnmhdr->hwndFrom,
-    "This is GPGol version " PACKAGE_VERSION "\n"
-    "Copyright (C) 2005 g10 Code GmbH\n"
-    "\n"
-    "GPGol is a plugin for Outlook to allow encryption and\n"
-    "signing of messages using the OpenPGP standard. It makes\n"
-    "use of the GnuPG software (http://www.gnupg.org). Latest\n"
-    "release information are accessible by clicking on the logo.\n"
-    "\n"
-    "GPGol is free software; you can redistribute it and/or\n"
-    "modify it under the terms of the GNU Lesser General Public\n"
-    "License as published by the Free Software Foundation; either\n"
-    "version 2.1 of the License, or (at your option) any later version.\n"
-    "\n"
-    "GPGol is distributed in the hope that it will be useful,\n"
-    "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-    "GNU Lesser General Public License for more details.\n"
-    "\n"
-    "You should have received a copy of the GNU Lesser General Public\n"
-    "License along with this library; if not, write to the Free Software\n"
-    "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA\n"
-    "02110-1301, USA.\n",
-                  "GPGol", MB_OK);
-	    bMsgResult = TRUE;
-	    break;
+	case PSN_HELP: 
+          {
+            const char cpynotice[] = "Copyright (C) 2007 g10 Code GmbH";
+            const char en_notice[] = 
+      "GpgOL is a plugin for Outlook to allow encryption and\n"
+      "signing of messages using the OpenPGP and S/MIME standard.\n"
+      "It uses the GnuPG software (http://www.gnupg.org). Latest\n"
+      "release information are accessible by clicking on the logo.\n"
+      "\n"
+      "GpgOL is free software; you can redistribute it and/or\n"
+      "modify it under the terms of the GNU Lesser General Public\n"
+      "License as published by the Free Software Foundation; either\n"
+      "version 2.1 of the License, or (at your option) any later version.\n"
+      "\n"
+      "GpgOL is distributed in the hope that it will be useful,\n"
+      "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+      "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+      "GNU Lesser General Public License for more details.\n"
+      "\n"
+      "You should have received a copy of the GNU Lesser General Public "
+      "License\n"
+      "along with this program; if not, see <http://www.gnu.org/licenses/>.";
 
+            /* TRANSLATORS: See the source for the full english text.  */
+            const char notice_key[] = N_("-#GpgOLFullHelpText#-");
+            const char *notice;
+            char header[300];
+            char *buffer;
+            size_t nbuffer;
+
+            snprintf (header, sizeof header, _("This is GpgOL version %s"),
+                      PACKAGE_VERSION);
+            notice = _(notice_key);
+            if (!strcmp (notice, notice_key))
+              notice = en_notice;
+            nbuffer = strlen (header)+strlen (cpynotice)+strlen (notice)+20;
+            buffer = (char*)xmalloc (nbuffer);
+            snprintf (buffer, nbuffer, "%s\n%s\n\n%s\n",
+                      header, cpynotice, notice);
+            MessageBox (pnmhdr->hwndFrom, buffer, "GpgOL", MB_OK);
+            xfree (buffer);
+	    bMsgResult = TRUE;
+            break; }
+          
 	default:
 	    bMsgResult = FALSE;
 	    break;	    

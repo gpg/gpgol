@@ -1,21 +1,20 @@
 /* main.c - DLL entry point
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2007 g10 Code GmbH
  *
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  *
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1 
  * of the License, or (at your option) any later version.
  *  
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with GPGol; if not, write to the Free Software Foundation, 
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <config.h>
@@ -479,8 +478,8 @@ read_options (void)
 {
   char *val = NULL;
  
-  load_extension_value ("autoSignAttachments", &val);
-  opt.auto_sign_attach = val == NULL || *val != '1' ? 0 : 1;
+  load_extension_value ("enableSmime", &val);
+  opt.enable_smime = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
   
   load_extension_value ("smimeDefault", &val);
@@ -569,7 +568,7 @@ write_options (void)
     {"smimeDefault",             0, opt.smime_default},
     {"encryptDefault",           0, opt.encrypt_default},
     {"signDefault",              0, opt.sign_default},
-    {"autoSignAttachments",      0, opt.auto_sign_attach},
+    {"enableSmime",              0, opt.enable_smime},
     {"previewDecrypt",           0, opt.preview_decrypt},
     {"storePasswdTime",          1, opt.passwd_ttl},
     {"encodingFormat",           1, opt.enc_format},

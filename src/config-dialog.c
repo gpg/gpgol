@@ -2,22 +2,20 @@
  *	Copyright (C) 2005 g10 Code GmbH
  *	Copyright (C) 2003 Timo Schulz
  *
- * This file is part of GPGol.
+ * This file is part of GpgOL.
  * 
- * GPGol is free software; you can redistribute it and/or
+ * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
- * GPGol is distributed in the hope that it will be useful,
+ * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <config.h>
@@ -31,12 +29,13 @@
 
 #include "common.h"
 #include "gpgol-ids.h"
+#include "olflange-ids.h"
 
 /* Registry path to GnuPG */
 #define REGPATH "Software\\GNU\\GnuPG"
 
 /* Registry path to store plugin settings */
-#define GPGOL_REGPATH "Software\\GNU\\GPGol"
+#define GPGOL_REGPATH "Software\\GNU\\GpgOL"
 
 static char*
 get_open_file_name (const char *dir, const char *title)
@@ -261,6 +260,24 @@ error_box (const char *title)
 }
 
 
+/* To avoid writing a dialog template for each language we use gettext
+   for the labels and hope that there is enough space in the dialog to
+   fit teh longest translation.  */
+static void
+config_dlg_set_labels (HWND dlg)
+{
+  static struct { int itemid; const char *label; } labels[] = {
+    { IDC_T_OPT_KEYMAN_PATH,    N_("Path to key-manager binary")},
+    { IDC_T_DEBUG_LOGFILE,  N_("Debug output (for analysing problems)")},
+    { 0, NULL}
+  };
+  int i;
+
+  for (i=0; labels[i].itemid; i++)
+    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
+
+}  
+
 static BOOL CALLBACK
 config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -273,26 +290,27 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_INITDIALOG:
 	center_window (dlg, 0);
 	if (!load_config_value (NULL, REGPATH, "keyManager", &buf)) {
-	    SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
+	    SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, buf);
 	    xfree (buf);
 	    buf=NULL;
 	}
         else
-	    SetDlgItemText (dlg, IDC_OPT_KEYMAN, "");
+	    SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, "");
         s = get_log_file ();
         SetDlgItemText (dlg, IDC_DEBUG_LOGFILE, s? s:"");
+        config_dlg_set_labels (dlg);
 	break;
 
     case WM_COMMAND:
 	switch (LOWORD (wparam)) {
-	case IDC_OPT_SELKEYMAN:
+	case IDC_OPT_SEL_KEYMAN_PATH:
 	    buf = get_open_file_name (NULL, _("Select GPG Key Manager"));
 	    if (buf && *buf)
-		SetDlgItemText (dlg, IDC_OPT_KEYMAN, buf);
+		SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, buf);
 	    break;
 
 	case IDOK:
-	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN, name, MAX_PATH-1);
+	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, name, MAX_PATH-1);
 	    if (n > 0) {
 		if (does_file_exist (name, 1))
 		    return FALSE;
@@ -318,10 +336,7 @@ config_dialog_box (HWND parent)
 {
   int resid;
 
-  if (!strncmp (gettext_localename (), "de", 2))
-    resid = IDD_OPT_DE;
-  else
-    resid = IDD_OPT;
+  resid = IDD_EXT_OPTIONS;
 
   if (!parent)
     parent = GetDesktopWindow ();

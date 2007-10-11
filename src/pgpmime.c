@@ -1,7 +1,7 @@
 /* pgpmime.c - Try to handle PGP/MIME for Outlook
  *	Copyright (C) 2005 g10 Code GmbH
  *
- * This file is part of GPGol.
+ * This file is part of Gpgol.
  * 
  * GPGol is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

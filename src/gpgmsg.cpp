@@ -6,17 +6,15 @@
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #error not anymore used
@@ -850,7 +848,7 @@ GpgMsgImpl::writeAttestation (void)
 
   /* And now for the real name. */
   prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
-  prop.Value.lpszA = "GPGol-Attestation.txt";
+  prop.Value.lpszA = "GpgOL-Attestation.txt";
   hr = HrSetOneProp (newatt, &prop);
   if (hr != S_OK)
     {
@@ -1271,7 +1269,7 @@ GpgMsgImpl::decrypt (HWND hwnd, bool info_only)
         {
           warning_shown = 1;
           MessageBox
-            (hwnd, _("Note: This is a PGP/MIME signed message.  The GPGol "
+            (hwnd, _("Note: This is a PGP/MIME signed message.  The GpgOL "
                      "plugin is not always able to verify such a message "
                      "due to missing support in Outlook.\n\n"
                      "(This message will be shown only once per session)"),
@@ -2496,7 +2494,7 @@ GpgMsgImpl::gatherAttachmentInfo (void)
             table[pos].armor_type = get_pgp_armor_type (att,table[pos].method);
         }
       if (table[pos].filename
-          && !stricmp (table[pos].filename, "GPGol-Attestation.txt")
+          && !stricmp (table[pos].filename, "GpgOL-Attestation.txt")
           && table[pos].content_type
           && !stricmp (table[pos].content_type, "text/plain"))
         {

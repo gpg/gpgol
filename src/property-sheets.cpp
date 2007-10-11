@@ -6,17 +6,15 @@
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  * 
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -100,17 +98,10 @@ GpgolPropertySheets::GetPages(
                                  //  containing the number of property 
                                  //  sheets actually used.
 {
-  int resid ;
-
-  if (!strncmp (gettext_localename (), "de", 2))
-    resid = IDD_GPG_OPTIONS_DE;
-  else
-    resid = IDD_GPG_OPTIONS;
-
   pPSP[0].dwSize = sizeof (PROPSHEETPAGE);
   pPSP[0].dwFlags = PSP_DEFAULT | PSP_HASHELP;
   pPSP[0].hInstance = glob_hinst;
-  pPSP[0].pszTemplate = MAKEINTRESOURCE (resid);
+  pPSP[0].pszTemplate = MAKEINTRESOURCE (IDD_GPG_OPTIONS);
   pPSP[0].hIcon = NULL;     
   pPSP[0].pszTitle = NULL;  
   pPSP[0].pfnDlgProc = (DLGPROC) GPGOptionsDlgProc;

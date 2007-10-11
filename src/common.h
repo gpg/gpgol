@@ -14,11 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef GPGOL_COMMON_H
 #define GPGOL_COMMON_H
 
@@ -106,7 +105,7 @@ struct
   int smime_default;         /* Use S/MIME by default. */
   int encrypt_default;       /* Encrypt by default. */
   int sign_default;          /* Sign by default. */
-  int auto_sign_attach;	     /* Sign all outgoing attachments. */
+  int enable_smime;	     /* Enable S/MIME support. */
   int enc_format;            /* Encryption format for attachments. */
   char *default_key;         /* The key we want to always encrypt to. */
   int enable_default_key;    /* Enable the use of DEFAULT_KEY. */

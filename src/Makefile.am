@@ -17,8 +17,8 @@ EXTRA_DIST = versioninfo.rc.in gpgol-rsrcs.rc olflange-rsrcs.rc \
 	     mapi32.def
 EXEEXT = .dll
 
-AM_CFLAGS = $(GPGME_CFLAGS) -shared
-AM_CXXFLAGS = $(GPGME_CFLAGS) -shared
+AM_CFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
+AM_CXXFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
 
 gpgol_SOURCES = \
 	main.c  gpgol.def           \
