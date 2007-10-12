@@ -267,7 +267,7 @@ static void
 config_dlg_set_labels (HWND dlg)
 {
   static struct { int itemid; const char *label; } labels[] = {
-    { IDC_T_OPT_KEYMAN_PATH,    N_("Path to key-manager binary")},
+    { IDC_T_OPT_KEYMAN_PATH,    N_("Path to certificate manager binary")},
     { IDC_T_DEBUG_LOGFILE,  N_("Debug output (for analysing problems)")},
     { 0, NULL}
   };

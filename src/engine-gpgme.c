@@ -351,8 +351,8 @@ prepare_recipient_keys (gpgme_key_t **r_keys, char **recipients, HWND hwnd)
       if (!defkey)
         {
           MessageBox (hwnd,
-                      _("The configured default encryption key is not "
-                        "available or does not unambigiously specify a key. "
+                      _("The configured default encryption certificate is not "
+                        "available or does not unambigiously specify one. "
                         "Please fix this in the option dialog.\n\n"
                         "This message won't be be encrypted to this key!"),
                       _("Encryption"), MB_ICONWARNING|MB_OK);
@@ -826,7 +826,7 @@ at_sig_summary (gpgme_data_t a,
 
   if ((sum & GPGME_SIGSUM_KEY_REVOKED))
     {
-      at_puts (a, _("Warning: One of the keys has been revoked\n"));
+      at_puts (a, _("Warning: One of the certificates has been revoked\n"));
       severe = 1;
     }
   
@@ -836,13 +836,13 @@ at_sig_summary (gpgme_data_t a,
 
       if (t)
         {
-          at_puts (a, _("Warning: The key used to create the "
+          at_puts (a, _("Warning: The certificate used to create the "
                         "signature expired at: "));
           at_print_time (a, t);
           at_puts (a, "\n");
         }
       else
-        at_puts (a, _("Warning: At least one certification key "
+        at_puts (a, _("Warning: At least one certification certificate "
                       "has expired\n"));
     }
 
@@ -854,7 +854,7 @@ at_sig_summary (gpgme_data_t a,
     }
 
   if ((sum & GPGME_SIGSUM_KEY_MISSING))
-    at_puts (a, _("Can't verify due to a missing key or certificate\n"));
+    at_puts (a, _("Can't verify due to a missing certificate\n"));
 
   if ((sum & GPGME_SIGSUM_CRL_MISSING))
     {
@@ -913,17 +913,17 @@ at_sig_validity (gpgme_data_t a, gpgme_signature_t sig)
     {
     case GPGME_VALIDITY_UNKNOWN:
       txt = _("WARNING: We have NO indication whether "
-              "the key belongs to the person named "
+              "this certificate belongs to the person named "
               "as shown above\n");
       break;
     case GPGME_VALIDITY_UNDEFINED:
       break;
     case GPGME_VALIDITY_NEVER:
-      txt = _("WARNING: The key does NOT BELONG to "
+      txt = _("WARNING: The certificate does NOT BELONG to "
               "the person named as shown above\n");
       break;
     case GPGME_VALIDITY_MARGINAL:
-      txt = _("WARNING: It is NOT certain that the key "
+      txt = _("WARNING: It is NOT certain that the certificate "
               "belongs to the person named as shown above\n");
       break;
     case GPGME_VALIDITY_FULL:

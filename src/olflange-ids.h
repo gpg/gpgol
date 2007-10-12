@@ -43,6 +43,45 @@
 #define IDC_T_DEBUG_LOGFILE             4113
 #define IDC_DEBUG_LOGFILE               4114
 
+/* Ids for the recipient selection dialog.  */
+#define IDD_ENC                         4201
+#define IDC_ENC_RSET1                   4210
+#define IDC_ENC_RSET2_T                 4211
+#define IDC_ENC_RSET2                   4212
+#define IDC_ENC_NOTFOUND_T              4213
+#define IDC_ENC_NOTFOUND                4214
+
+/* Ids for the two decryption dialogs.  */
+#define IDD_DEC                         4301
+#define IDD_DECEXT                      4302
+#define IDC_DEC_KEYLIST                 4310
+#define IDC_DEC_HINT                    4311
+#define IDC_DEC_PASSINF                 4312
+#define IDC_DEC_PASS                    4313
+#define IDC_DEC_HIDE                    4314
+#define IDC_DECEXT_RSET_T               4320
+#define IDC_DECEXT_RSET                 4321
+#define IDC_DECEXT_KEYLIST              4322
+#define IDC_DECEXT_HINT                 4323
+#define IDC_DECEXT_PASSINF              4324
+#define IDC_DECEXT_PASS                 4325
+#define IDC_DECEXT_HIDE                 4326
+
+/* Ids for the verification dialog.  */
+#define IDD_VRY                         4401
+#define IDC_VRY_TIME_T                  4410
+#define IDC_VRY_TIME                    4411
+#define IDC_VRY_PKALGO_T                4412
+#define IDC_VRY_PKALGO                  4413
+#define IDC_VRY_KEYID_T                 4414
+#define IDC_VRY_KEYID                   4415
+#define IDC_VRY_STATUS                  4416
+#define IDC_VRY_ISSUER_T                4417
+#define IDC_VRY_ISSUER                  4418
+#define IDC_VRY_AKALIST_T               4419
+#define IDC_VRY_AKALIST                 4420
+#define IDC_VRY_HINT                    4421
+
 
 
 #endif /*OLFLANGE_IDS_H*/

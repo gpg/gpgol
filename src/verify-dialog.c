@@ -125,14 +125,14 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx, gpgme_protocol_t protocol)
   else if (!stat || (stat & GPGME_SIGSUM_GREEN))
     s = _("Good signature");
   else if (stat & GPGME_SIGSUM_KEY_REVOKED)
-    s = _("Good signature from revoked key");
+    s = _("Good signature from revoked certificate");
   else if (stat & GPGME_SIGSUM_KEY_EXPIRED)
-    s = _("Good signature from expired key");
+    s = _("Good signature from expired certificate");
   else if (stat & GPGME_SIGSUM_SIG_EXPIRED)
     s = _("Good expired signature");
   else if (stat & GPGME_SIGSUM_KEY_MISSING) 
     {
-      s = _("Could not check signature: missing key");
+      s = _("Could not check signature: missing certificate");
       no_key = 1;
     }
   else
@@ -183,14 +183,14 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx, gpgme_protocol_t protocol)
       switch (valid) 
 	{
 	case GPGME_VALIDITY_NEVER:
-	  s = _("Signature issued by a key we do NOT trust.");
+	  s = _("Signature issued by a certificate we do NOT trust.");
 	  break;
 	  
 	default:
 	  if (no_key)
 	    s = "";
 	  else
-	    s = _("Signature issued by a non-valid key.");
+	    s = _("Signature issued by a non-valid certificate.");
 	  break;
 	}
       SetDlgItemText (dlg, IDC_VRY_HINT, s);
@@ -198,53 +198,79 @@ load_sigbox (HWND dlg, gpgme_verify_result_t ctx, gpgme_protocol_t protocol)
 }
 
 
+
+/* To avoid writing a dialog template for each language we use gettext
+   for the labels and hope that there is enough space in the dialog to
+   fit teh longest translation.  */
+static void
+verify_dlg_set_labels (HWND dlg)
+{
+  static struct { int itemid; const char *label; } labels[] = {
+    { IDC_VRY_TIME_T,   N_("Signature made")},
+    { IDC_VRY_PKALGO_T, N_("using")},
+    { IDC_VRY_KEYID_T,  N_("cert-ID")},
+    { IDC_VRY_ISSUER_T, N_("from")},
+    { IDC_VRY_AKALIST_T,N_("also known as")},
+    { 0, NULL}
+  };
+  int i;
+
+  for (i=0; labels[i].itemid; i++)
+    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
+}  
+
+
+
 static BOOL CALLBACK
 verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static struct dialog_context *ctx;
+  static struct dialog_context *ctx;
 
-    switch (msg) {
+  switch (msg) 
+    {
     case WM_INITDIALOG:
-      
-	ctx = (struct dialog_context *)lparam;
-	load_sigbox (dlg, ctx->res, ctx->protocol);
-	center_window (dlg, NULL);
-	SetForegroundWindow (dlg);
-        if (ctx->filename)
-          {
-            const char *s;
-
-            switch (ctx->protocol)
-              {
-              case GPGME_PROTOCOL_OpenPGP:
-                s = _("OpenPGP Verification Result");
-                break;
-              case GPGME_PROTOCOL_CMS:
-                s = _("S/MIME Verification Result");
-                break;
+      ctx = (struct dialog_context *)lparam;
+      load_sigbox (dlg, ctx->res, ctx->protocol);
+      verify_dlg_set_labels (dlg);
+      center_window (dlg, NULL);
+      SetForegroundWindow (dlg);
+      if (ctx->filename)
+        {
+          const char *s;
+          
+          switch (ctx->protocol)
+            {
+            case GPGME_PROTOCOL_OpenPGP:
+              s = _("OpenPGP Verification Result");
+              break;
+            case GPGME_PROTOCOL_CMS:
+              s = _("S/MIME Verification Result");
+              break;
               default:
                 s = "?";
                 break;
-              }
-                  
-            char *tmp = xmalloc (strlen (ctx->filename) 
-                                 + strlen (s) + 100);
-            strcpy (stpcpy (stpcpy (stpcpy (tmp, s),
-                                    " ("), ctx->filename), ")");
-            SetWindowText (dlg, tmp);
-            xfree (tmp);
+            }
+          
+          char *tmp = xmalloc (strlen (ctx->filename) 
+                               + strlen (s) + 100);
+          strcpy (stpcpy (stpcpy (stpcpy (tmp, s),
+                                  " ("), ctx->filename), ")");
+          SetWindowText (dlg, tmp);
+          xfree (tmp);
           }
-	break;
-
+      break;
+      
     case WM_COMMAND:
-	switch (LOWORD(wparam)) {
-	case IDOK:
-	    EndDialog (dlg, TRUE);
-	    break;
-	}
-	break;
+      switch (LOWORD(wparam))
+        {
+        case IDOK:
+          EndDialog (dlg, TRUE);
+          break;
+        }
+      break;
     }
-    return FALSE;
+
+  return FALSE;
 }
 
 
@@ -263,10 +289,7 @@ verify_dialog_box (gpgme_protocol_t protocol,
   ctx.protocol = protocol;
   ctx.filename = filename;
 
-  if (!strncmp (gettext_localename (), "de", 2))
-    resid = IDD_VRY_DE;
-  else
-    resid = IDD_VRY;
+  resid = IDD_VRY;
   DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow (),
                   verify_dlg_proc, (LPARAM)&ctx);
   return res->signatures->summary == GPGME_SIGSUM_GREEN? 0 : -1;

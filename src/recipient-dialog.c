@@ -1,6 +1,6 @@
 /* recipient-dialog.c
  *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005, 2006 g10 Code GmbH
+ *	Copyright (C) 2005, 2006, 2007 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -34,6 +34,7 @@
 
 #include "common.h"
 #include "gpgol-ids.h"
+#include "olflange-ids.h"
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -372,6 +373,24 @@ initialize_keybox (HWND dlg, struct recipient_cb_s *cb)
     }  
 }
 
+/* To avoid writing a dialog template for each language we use gettext
+   for the labels and hope that there is enough space in the dialog to
+   fit teh longest translation.  */
+static void
+recipient_dlg_set_labels (HWND dlg)
+{
+  static struct { int itemid; const char *label; } labels[] = {
+    { IDC_ENC_RSET2_T,    N_("Selected recipients:")},
+    { IDC_ENC_NOTFOUND_T, N_("Recipient which were NOT found")},
+    { IDCANCEL,           N_("&Cancel")},
+    { 0, NULL}
+  };
+  int i;
+
+  for (i=0; labels[i].itemid; i++)
+    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
+}  
+
 
 BOOL CALLBACK
 recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -387,6 +406,7 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_INITDIALOG:
       rset_cb = (struct recipient_cb_s *)lparam;
       assert (rset_cb != NULL);
+      recipient_dlg_set_labels (dlg);
       initialize_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1));
       rset_cb->keyarray = load_rsetbox (GetDlgItem (dlg, IDC_ENC_RSET1),
                                         &rset_cb->keyarray_count);
@@ -396,8 +416,8 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
         initialize_keybox (dlg, rset_cb);
       else
         {
-          /* No unknown keys and thus we need unwanted dialog windows. */
-          ShowWindow (GetDlgItem (dlg, IDC_ENC_INFO), SW_HIDE);
+          /* No unknown keys; thus we do not need the unwanted key box. */
+          ShowWindow (GetDlgItem (dlg, IDC_ENC_NOTFOUND_T), SW_HIDE);
           ShowWindow (GetDlgItem (dlg, IDC_ENC_NOTFOUND), SW_HIDE);
 	}
 
@@ -420,8 +440,9 @@ recipient_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           hrset = GetDlgItem (dlg, IDC_ENC_RSET2);
           if (ListView_GetItemCount (hrset) == 0) 
             {
-              MessageBox (dlg, _("Please select at least one recipient key."),
-                          _("Recipient Dialog"), MB_ICONINFORMATION|MB_OK);
+              MessageBox (dlg, 
+                      _("Please select at least one recipient certificate."),
+                      _("Recipient Dialog"), MB_ICONINFORMATION|MB_OK);
               return TRUE;
 	    }
 
@@ -501,10 +522,7 @@ recipient_dialog_box (gpgme_key_t **ret_rset)
   *ret_rset = NULL;
 
   memset (&cb, 0, sizeof (cb));
-  if (!strncmp (gettext_localename (), "de", 2))
-    resid = IDD_ENC_DE;
-  else
-    resid = IDD_ENC;
+  resid = IDD_ENC;
   DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow(),
                   recipient_dlg_proc, (LPARAM)&cb);
   if (cb.opts & OPT_FLAG_CANCEL)
@@ -539,10 +557,7 @@ recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
   cb.fnd_keys = fnd;
   cb.unknown_keys = unknown;
 
-  if (!strncmp (gettext_localename (), "de", 2))
-    resid = IDD_ENC_DE;
-  else
-    resid = IDD_ENC;
+  resid = IDD_ENC;
   DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow (),
 		  recipient_dlg_proc, (LPARAM)&cb);
 

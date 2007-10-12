@@ -1,6 +1,6 @@
 /* passphrase-dialog.c
  *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005, 2006 g10 Code GmbH
+ *	Copyright (C) 2005, 2006, 2007 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -29,6 +29,7 @@
 
 #include "common.h"
 #include "gpgol-ids.h"
+#include "olflange-ids.h"
 #include "passcache.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -80,7 +81,7 @@ set_key_hint (struct passphrase_cb_s *dec, HWND dlg, int ctrlid)
         key_hint[i] = 0;
     }
   else
-    key_hint = xstrdup (_("No key hint given."));
+    key_hint = xstrdup (_("No certificate hint given."));
   SendDlgItemMessage (dlg, ctrlid, CB_ADDSTRING, 0, 
                       (LPARAM)(const char *)key_hint);
   SendDlgItemMessage (dlg, ctrlid, CB_SETCURSEL, 0, 0);
@@ -301,6 +302,26 @@ load_secbox (HWND dlg, int ctlid, size_t *r_nkeys)
 }
 
 
+/* To avoid writing a dialog template for each language we use gettext
+   for the labels and hope that there is enough space in the dialog to
+   fit teh longest translation.  */
+static void
+decrypt_key_dlg_set_labels (HWND dlg)
+{
+  static struct { int itemid; const char *label; } labels[] = {
+    { IDC_DEC_PASSINF, N_("Enter passphrase to unlock the secret key")},
+    { IDC_DEC_HIDE,    N_("Hide typing")},
+    { IDCANCEL,        N_("&Cancel")},
+    { 0, NULL}
+  };
+  int i;
+
+  for (i=0; labels[i].itemid; i++)
+    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
+}  
+
+
+
 static BOOL CALLBACK
 decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -327,19 +348,21 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
                         (dec && dec->last_was_bad)?
                         _("Invalid passphrase; please try again..."):"");
 
-      if (dec && !context->use_as_cb) {
-	context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST, &n);
-	/* if only one secret key is availble, it makes no sense to
-	   ask the user to select one. */
-	if (n == 1) 
-	  {
-	    dec->signer = context->keyarray[0];
-	    gpgme_key_ref (context->keyarray[0]);
-	    EndDialog (dlg, TRUE);
-	    return FALSE;
-	  }
-      }
+      if (dec && !context->use_as_cb)
+        {
+          context->keyarray = load_secbox (dlg, IDC_DEC_KEYLIST, &n);
+          /* If only one secret key is available, it makes no sense to
+             ask the user to select one. */
+          if (n == 1) 
+            {
+              dec->signer = context->keyarray[0];
+              gpgme_key_ref (context->keyarray[0]);
+              EndDialog (dlg, TRUE);
+              return FALSE;
+            }
+        }
 
+      decrypt_key_dlg_set_labels (dlg);
       CheckDlgButton (dlg, IDC_DEC_HIDE, BST_CHECKED);
       center_window (dlg, NULL);
       if (dec && dec->hide_pwd) 
@@ -429,6 +452,25 @@ decrypt_key_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 
+/* To avoid writing a dialog template for each language we use gettext
+   for the labels and hope that there is enough space in the dialog to
+   fit teh longest translation.  */
+static void
+decrypt_key_ext_dlg_set_labels (HWND dlg)
+{
+  static struct { int itemid; const char *label; } labels[] = {
+    { IDC_DECEXT_RSET_T,  N_("Encrypted to the following certificates:")},
+    { IDC_DECEXT_PASSINF, N_("Enter passphrase to unlock the secret key")},
+    { IDC_DECEXT_HIDE,    N_("Hide typing")},
+    { IDCANCEL,           N_("&Cancel")},
+    { 0, NULL}
+  };
+  int i;
+
+  for (i=0; labels[i].itemid; i++)
+    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
+}  
+
 static BOOL CALLBACK
 decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -457,6 +499,7 @@ decrypt_key_ext_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
       if (dec)
         load_recipbox (dlg, IDC_DECEXT_RSET, dec->ctx);
 
+      decrypt_key_ext_dlg_set_labels (dlg);
       CheckDlgButton (dlg, IDC_DECEXT_HIDE, BST_CHECKED);
       center_window (dlg, NULL);
       SetFocus (GetDlgItem (dlg, IDC_DECEXT_PASS));
@@ -537,10 +580,7 @@ signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting)
   context.dec = &dec;
   context.no_encrypt_warning = encrypting;
 
-  if (!strncmp (gettext_localename (), "de", 2))
-    resid = IDD_DEC_DE;
-  else
-    resid = IDD_DEC;
+  resid = IDD_DEC;
   DialogBoxParam (glob_hinst, (LPCTSTR)resid, GetDesktopWindow (),
                   decrypt_key_dlg_proc, (LPARAM)&context);
 
@@ -700,20 +740,14 @@ passphrase_callback_box (void *opaque, const char *uid_hint,
       dec->last_was_bad = prev_was_bad;
       if (!dec->decrypt_cmd)
         {
-          if (!strncmp (gettext_localename (), "de", 2))
-            resid = IDD_DEC_DE;
-          else
-            resid = IDD_DEC;
+          resid = IDD_DEC;
           rc = DialogBoxParam (glob_hinst, (LPCSTR)resid,
                                GetDesktopWindow (),
                                decrypt_key_dlg_proc, (LPARAM)&context);
         }
       else
         {
-          if (!strncmp (gettext_localename (), "de", 2))
-            resid = IDD_DEC_EXT_DE;
-          else
-            resid = IDD_DEC_EXT;
+          resid = IDD_DECEXT;
           rc = DialogBoxParam (glob_hinst, (LPCTSTR)resid,
                                GetDesktopWindow (),
                                decrypt_key_ext_dlg_proc, (LPARAM)&context);

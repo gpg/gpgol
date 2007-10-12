@@ -47,7 +47,7 @@ set_labels (HWND dlg)
     { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
     { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
     { IDC_ENCRYPT_WITH_STANDARD_KEY, 
-                            N_("Also encrypt message with the &default key")},
+                     N_("Also encrypt message with the default certificate")},
     { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
     { IDC_PREFER_HTML,      N_("Show HTML view if possible")},
 
@@ -219,7 +219,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               {
                 if (opt.enable_default_key)
                   {
-                    MessageBox (hDlg,_("The default key may not"
+                    MessageBox (hDlg,_("The default certificate may not"
                                        " contain any spaces."),
                                 "GpgOL", MB_ICONERROR|MB_OK);
                     bMsgResult = PSNRET_INVALID_NOCHANGEPAGE;

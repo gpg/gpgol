@@ -1,3 +1,23 @@
+2007-10-12  Werner Koch  <wk@g10code.com>
+
+	* verify-dialog.c (verify_dialog_box): Do not distinguish
+	languages.
+	(verify_dlg_set_labels): New.
+	(verify_dlg_proc): Call it.
+
+	* passphrase-dialog.c (passphrase_callback_box): Do not
+	distinguish languages.
+	(decrypt_key_dlg_set_labels): New.
+	(decrypt_key_dlg_proc): Call it.
+	(decrypt_key_ext_dlg_set_labels): New.
+	(decrypt_key_ext_dlg_proc): Call it.
+
+	* recipient-dialog.c (recipient_dialog_box): Do not distinguish
+	languages.
+	(recipient_dialog_box2): Ditto.
+	(recipient_dlg_set_labels): New.
+	(recipient_dlg_proc): Call it.
+
 2007-10-11  Werner Koch  <wk@g10code.com>
 
 	* ext-commands.cpp (toolbar_add_menu): USe "@" to indicate a

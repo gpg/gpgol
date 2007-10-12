@@ -124,6 +124,161 @@ BEGIN
 END
 
 
+/*
+   The dialog to select recipient keys
+ */
+IDD_ENC DIALOG DISCARDABLE  0, 0, 332, 215
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "GpgOL - Select Recipients"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "List1", IDC_ENC_RSET1,
+                    "SysListView32", LVS_REPORT | LVS_NOSORTHEADER |
+                                     WS_BORDER  | WS_TABSTOP,
+                    8, 4, 314, 92
+
+    LTEXT           "Ausgewählte Empfänger:", IDC_ENC_RSET2_T,
+                    8, 98, 130, 8
+
+    CONTROL         "List2", IDC_ENC_RSET2,
+                    "SysListView32",  LVS_REPORT | LVS_NOSORTHEADER |
+                                      WS_BORDER  | WS_TABSTOP,
+                    8, 110, 313, 49
+
+    LTEXT           "Recipient which were NOT found", IDC_ENC_NOTFOUND_T,
+                    8, 161, 128, 8
+
+    LISTBOX         IDC_ENC_NOTFOUND,
+                    8, 170, 313, 22,  LBS_SORT   | LBS_NOINTEGRALHEIGHT |
+                                      WS_VSCROLL | WS_TABSTOP
+
+    DEFPUSHBUTTON   "&OK", IDOK,
+                     221, 196, 50, 14
+
+    PUSHBUTTON      "&Cancel-btn", IDCANCEL,
+                     273, 196, 50, 14
+END
 
 
+/* 
+   The decryption dialog used to select the secret key.
+*/
+IDD_DEC DIALOG DISCARDABLE  0, 0, 225, 101
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Secret Key Selection"
+FONT 8, "MS Sans Serif"
+BEGIN
+    COMBOBOX        IDC_DEC_KEYLIST, 
+                    9, 7, 209, 58,  CBS_DROPDOWNLIST | WS_VSCROLL | 
+                                    WS_TABSTOP
+
+    LTEXT           "", IDC_DEC_HINT,
+                    9, 25, 201, 10
+
+    LTEXT           "enter-passphrase", IDC_DEC_PASSINF,
+                    9, 37, 158, 8
+
+    EDITTEXT        IDC_DEC_PASS,
+                    9, 51, 207, 12,  ES_PASSWORD | ES_AUTOHSCROLL
+
+    CONTROL         "&Hide Typing", IDC_DEC_HIDE,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    138, 64, 81, 10
+
+    DEFPUSHBUTTON   "&OK", IDOK,
+                    115, 83, 50, 14
+
+    PUSHBUTTON      "&Cancel-btn", IDCANCEL,
+                    167, 83, 50, 14
+END
+
+
+/* 
+   The extended decryption dialog used to select the secret key.
+*/
+IDD_DECEXT DIALOG DISCARDABLE  0, 0, 207, 134
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "GpgOL - Secret Key Selection"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "encrypted-to",IDC_DECEXT_RSET_T,
+                    7, 4, 128, 8
+
+    LISTBOX         IDC_DECEXT_RSET,
+                    7, 16, 193, 25,  LBS_NOINTEGRALHEIGHT | 
+                                     WS_VSCROLL | WS_TABSTOP
+
+    COMBOBOX        IDC_DECEXT_KEYLIST,
+                    8, 54, 191, 14,  CBS_DROPDOWN | CBS_SORT | 
+                                     WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "", IDC_DECEXT_HINT,
+                    7, 73, 193, 8
+
+    LTEXT           "enter-passphrase", IDC_DECEXT_PASSINF,
+                    7, 85, 158, 8
+
+    EDITTEXT        IDC_DECEXT_PASS,
+                    7, 96, 192, 12,  ES_PASSWORD | ES_AUTOHSCROLL
+
+    CONTROL         "hide-typing", IDC_DECEXT_HIDE,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    122, 108, 81, 10
+
+    DEFPUSHBUTTON   "OK", IDOK,
+                    98, 125, 50, 14
+
+    PUSHBUTTON      "&Cancel-btn", IDCANCEL,
+                    149, 125, 50, 14
+END
+
+
+/* 
+   The dialog to display verification results.  
+*/
+IDD_VRY DIALOG DISCARDABLE  0, 0, 253, 116
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "GpgOL - Signature Verification Result"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "made-at", IDC_VRY_TIME_T,
+                    3, 6, 50, 8
+
+    EDITTEXT        IDC_VRY_TIME,
+                    55, 4, 76, 12,  ES_AUTOHSCROLL | ES_READONLY
+
+    LTEXT           "using", IDC_VRY_PKALGO_T,
+                    132, 6, 18, 8
+
+    EDITTEXT        IDC_VRY_PKALGO,
+                    152, 4, 20, 12,  ES_AUTOHSCROLL | ES_READONLY
+
+    LTEXT           "key-id", IDC_VRY_KEYID_T,
+                    174, 7, 50, 8
+
+    EDITTEXT        IDC_VRY_KEYID,
+                    196, 4, 51, 12,  ES_AUTOHSCROLL | ES_READONLY
+
+    EDITTEXT        IDC_VRY_STATUS,
+                    3, 29, 92, 12,   ES_AUTOHSCROLL | ES_READONLY
+
+    LTEXT           "from", IDC_VRY_ISSUER_T,
+                    98, 31, 14, 8
+
+    EDITTEXT        IDC_VRY_ISSUER,
+                    117, 29, 131, 13,  ES_AUTOHSCROLL | ES_READONLY
+
+    LTEXT           "aka", IDC_VRY_AKALIST_T,
+                    3, 47, 56, 8
+
+    LISTBOX         IDC_VRY_AKALIST,
+                    3, 56, 245, 25,  LBS_SORT | LBS_NOINTEGRALHEIGHT |
+                                     WS_VSCROLL | WS_TABSTOP
+
+    LTEXT           "", IDC_VRY_HINT,
+                    3, 83, 245, 10
+
+    DEFPUSHBUTTON   "&OK", IDOK,
+                    198, 96, 50, 14
+END
 
