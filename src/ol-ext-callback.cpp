@@ -31,7 +31,6 @@
 #include "msgcache.h"
 #include "mapihelp.h"
 
-#include "olflange-ids.h"
 #include "olflange-def.h"
 #include "olflange.h"
 #include "ol-ext-callback.h"

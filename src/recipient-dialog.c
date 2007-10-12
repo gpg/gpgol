@@ -34,7 +34,7 @@
 
 #include "common.h"
 #include "gpgol-ids.h"
-#include "olflange-ids.h"
+#include "dialogs.h"
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \

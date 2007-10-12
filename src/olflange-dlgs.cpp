@@ -32,7 +32,7 @@
 #include "display.h"
 #include "ol-ext-callback.h"
 #include "olflange-def.h"
-#include "olflange-ids.h"
+#include "dialogs.h"
 
 
 /* To avoid writing a dialog template for each language we use gettext

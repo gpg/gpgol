@@ -1,8 +1,7 @@
 /* Simple wrapper to create one resource file from several RC
    files. */
 
-#include "gpgol-rsrcs.rc"
-#include "olflange-rsrcs.rc"
+#include "dialogs.rc"
 #include "versioninfo.rc"
 
 

@@ -1,7 +1,11 @@
-Noteworthy changes for version 0.10.0 (2007-10-11)
+Noteworthy changes for version 0.10.1
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
+
+
+Noteworthy changes for version 0.10.0 (2007-10-11)
+==================================================
 
 * Basically a complete rewrite.  A lot of things are still missing but
   if might be useful to see the direction the development takes.

@@ -1,5 +1,5 @@
-/* olflange-rsrcs.rc - Olflange specific resource.         -*- c -*-
- *	Copyright (C) 2004, 2005, 2006 g10 Code GmbH
+/* dialogs.rc - GpgOL dialog resources.                           -*- c -*-
+ * Copyright (C) 2004, 2005, 2006, 2007 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -18,7 +18,7 @@
  */
 
 
-#include "olflange-ids.h"
+#include "dialogs.h"
 
 #include "afxres.h"
 

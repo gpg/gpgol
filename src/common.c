@@ -142,7 +142,7 @@ get_save_filename (HWND root, const char *srcname)
   ofn.lpstrFileTitle = NULL;
   ofn.nMaxFileTitle = 0;
   ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-  ofn.lpstrTitle = _("GPG - Save decrypted attachment");
+  ofn.lpstrTitle = _("GpgOL - Save decrypted attachment");
   ofn.lpstrFilter = filter;
 
   if (GetSaveFileName (&ofn))

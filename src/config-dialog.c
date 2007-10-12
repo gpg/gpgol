@@ -29,7 +29,7 @@
 
 #include "common.h"
 #include "gpgol-ids.h"
-#include "olflange-ids.h"
+#include "dialogs.h"
 
 /* Registry path to GnuPG */
 #define REGPATH "Software\\GNU\\GnuPG"

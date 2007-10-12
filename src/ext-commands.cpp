@@ -31,7 +31,7 @@
 #include "msgcache.h"
 #include "mapihelp.h"
 
-#include "olflange-ids.h"
+#include "dialogs.h"       /* For IDB_foo. */
 #include "olflange-def.h"
 #include "olflange.h"
 #include "ol-ext-callback.h"
@@ -326,8 +326,8 @@ GpgolExtCommands::InstallCommands (
          _("&Verify signature"), &m_nCmdCheckSig,
          _("&Display crypto information"), &m_nCmdShowInfo,
          "@", NULL,
-         _("Debug-1 (open_inspector)"), &m_nCmdDebug1,
-         _("Debug-2 (n/a)"), &m_nCmdDebug2,
+         "Debug-1 (open_inspector)", &m_nCmdDebug1,
+         "Debug-2 (n/a)", &m_nCmdDebug2,
          NULL);
       
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
@@ -394,7 +394,7 @@ GpgolExtCommands::InstallCommands (
       toolbar_add_menu 
         (pEECB, pnCommandIDBase, 
          "@", NULL,
-         _("GnuPG Key &Manager"), &m_nCmdKeyManager,
+         _("GnuPG Certificate &Manager"), &m_nCmdKeyManager,
          NULL);
 
       hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
@@ -545,7 +545,7 @@ GpgolExtCommands::DoCommand (
            && m_lContext == EECONTEXT_VIEWER)
     {
       if (start_key_manager ())
-        MessageBox (NULL, _("Could not start Key-Manager"),
+        MessageBox (NULL, _("Could not start certificate manager"),
                     "GpgOL", MB_ICONERROR|MB_OK);
     }
   else if (nCommandID == m_nCmdDebug1
@@ -634,7 +634,8 @@ GpgolExtCommands::Help (LPEXCHEXTCALLBACK pEECB, UINT nCommandID)
   else if (nCommandID == m_nCmdKeyManager
            && m_lContext == EECONTEXT_VIEWER) 
     {
-      MessageBox (m_hWnd, _("Select this option to open GpgOL Key Manager"),
+      MessageBox (m_hWnd,
+                  _("Select this option to open the certificate manager"),
                   "GpgOL", MB_OK);
     }
   else
@@ -722,7 +723,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
         lstrcpyn (pszText, ".", nCharCnt);
       if (lFlags == EECQHT_TOOLTIP)
         lstrcpyn (pszText,
-                  _("Open the GpgOL Key Manager"),
+                  _("Open the GpgOL certificate manager"),
                   nCharCnt);
     }
   else 
@@ -811,7 +812,7 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
       pTBB->fsStyle = TBSTYLE_BUTTON;
       pTBB->dwData = 0;
       pTBB->iString = -1;
-      lstrcpyn (description, _("Open GPG Key Manager"),
+      lstrcpyn (description, _("Open the certificate manager"),
                 description_size);
     }
   else

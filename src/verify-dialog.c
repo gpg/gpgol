@@ -24,7 +24,7 @@
 
 #include "common.h"
 #include "gpgol-ids.h"
-
+#include "dialogs.h"
 
 struct dialog_context
 {

@@ -1,5 +1,10 @@
 2007-10-12  Werner Koch  <wk@g10code.com>
 
+	* gpgol-rsrcs.rc: Remove.
+	* dialogs.rc: Renamed from olflange-rsrcs.rc.
+	* dialogs.h: Rename for olflange-ids.h.  Changed all includers.
+	* Makefile.am: Adjust accordingly.
+
 	* verify-dialog.c (verify_dialog_box): Do not distinguish
 	languages.
 	(verify_dlg_set_labels): New.

@@ -12,9 +12,9 @@
 ## Process this file with automake to produce Makefile.in
 
 bin_PROGRAMS = gpgol 
-EXTRA_DIST = versioninfo.rc.in gpgol-rsrcs.rc olflange-rsrcs.rc \
-	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp \
-	     mapi32.def
+EXTRA_DIST = versioninfo.rc.in mapi32.def \
+	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp 
+
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
@@ -27,7 +27,7 @@ gpgol_SOURCES = \
 	olflange.cpp olflange.h     \
 	olflange-def.h              \
 	olflange-dlgs.cpp           \
-	olflange-ids.h              \
+	dialogs.rc dialogs.h        \
 	myexchext.h                 \
 	display.cpp display.h       \
 	message.cpp message.h       \
@@ -88,7 +88,7 @@ gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
         -lole32 -loleaut32 -lws2_32 -ladvapi32
 
-resource.o: resource.rc versioninfo.rc gpgol-rsrcs.rc olflange-rsrcs.rc
+resource.o: resource.rc versioninfo.rc dialogs.rc 
 
 .rc.o:
 	$(WINDRES) -I $(srcdir) -I . `test -f '$<' || echo '$(srcdir)/'`$< $@

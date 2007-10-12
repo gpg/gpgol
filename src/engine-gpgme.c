@@ -351,11 +351,11 @@ prepare_recipient_keys (gpgme_key_t **r_keys, char **recipients, HWND hwnd)
       if (!defkey)
         {
           MessageBox (hwnd,
-                      _("The configured default encryption certificate is not "
-                        "available or does not unambigiously specify one. "
-                        "Please fix this in the option dialog.\n\n"
-                        "This message won't be be encrypted to this key!"),
-                      _("Encryption"), MB_ICONWARNING|MB_OK);
+                 _("The configured default encryption certificate is not "
+                   "available or does not unambigiously specify one. "
+                   "Please fix this in the option dialog.\n\n"
+                   "This message won't be be encrypted to this certificate!"),
+                   _("Encryption"), MB_ICONWARNING|MB_OK);
         }
       else
         {

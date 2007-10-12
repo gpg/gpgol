@@ -1,10 +1,11 @@
-/* olflange-ids.h
+/* dialogs.h
 
-   Resurce IDs as used by the olflange part.
+   Resouces IDs for the dialogs.
  */
 
-#ifndef OLFLANGE_IDS_H
-#define OLFLANGE_IDS_H
+#ifndef DIALOGS_H
+#define DIALOGS_H
+
 
 /* Ids used for bitmaps.  */
 #define IDB_DECRYPT                     3001
@@ -15,6 +16,7 @@
 #define IDB_BANNER                      3006
 #define IDB_BANNER_HI                   3007
 #define IDB_SELECT_SMIME                3008
+
 
 /* Ids used for the main config dialog.  */
 #define IDD_GPG_OPTIONS                 4001
@@ -35,6 +37,7 @@
 #define IDC_T_PASSPHRASE_TTL            4024
 #define IDC_T_PASSPHRASE_MIN            4025
 
+
 /* Ids for the extended options dialog.  */
 #define IDD_EXT_OPTIONS                 4101
 #define IDC_T_OPT_KEYMAN_PATH           4110
@@ -43,6 +46,7 @@
 #define IDC_T_DEBUG_LOGFILE             4113
 #define IDC_DEBUG_LOGFILE               4114
 
+
 /* Ids for the recipient selection dialog.  */
 #define IDD_ENC                         4201
 #define IDC_ENC_RSET1                   4210
@@ -50,6 +54,7 @@
 #define IDC_ENC_RSET2                   4212
 #define IDC_ENC_NOTFOUND_T              4213
 #define IDC_ENC_NOTFOUND                4214
+
 
 /* Ids for the two decryption dialogs.  */
 #define IDD_DEC                         4301
@@ -66,6 +71,7 @@
 #define IDC_DECEXT_PASSINF              4324
 #define IDC_DECEXT_PASS                 4325
 #define IDC_DECEXT_HIDE                 4326
+
 
 /* Ids for the verification dialog.  */
 #define IDD_VRY                         4401
@@ -84,4 +90,4 @@
 
 
 
-#endif /*OLFLANGE_IDS_H*/
+#endif /*DIALOGS_H*/

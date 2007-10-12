@@ -32,9 +32,9 @@
 #include "engine.h"
 #include "mapihelp.h"
 
-#include "olflange-ids.h"
 #include "olflange-def.h"
 #include "olflange.h"
+#include "dialogs.h"
 #include "property-sheets.h"
 
 

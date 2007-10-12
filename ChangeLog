@@ -1,3 +1,7 @@
+2007-10-12  Werner Koch  <wk@g10code.com>
+
+	* po/POTFILES.in: Add more files.
+
 2007-10-11  Werner Koch  <wk@g10code.com>
 
 	Released 0.10.0 development version.
