@@ -658,19 +658,28 @@ engine_cancel (engine_filter_t filter)
    call engine_wait to finish the operation.  A filter object may not
    be reused after having been used through this function.  However,
    the lifetime of the filter object lasts until the final engine_wait
-   or engine_cancel.  */
+   or engine_cancel.  On return the protocol to be used is stored at
+   R_PROTOCOL. */
 int
 engine_encrypt_start (engine_filter_t filter,
-                      protocol_t protocol, char **recipients)
+                      protocol_t req_protocol, char **recipients,
+                      protocol_t *r_protocol)
 {
   gpg_error_t err;
+  protocol_t used_protocol;
 
+  *r_protocol = req_protocol;
   if (filter->use_assuan)
-    err = op_assuan_encrypt (protocol, filter->indata, filter->outdata,
-                            filter, NULL, recipients);
+    {
+      err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
+                               filter, NULL, recipients, &used_protocol);
+      if (!err)
+        *r_protocol = used_protocol;
+    }
   else
-    err = op_gpgme_encrypt (protocol, filter->indata, filter->outdata,
+    err = op_gpgme_encrypt (req_protocol, filter->indata, filter->outdata,
                             filter, NULL, recipients);
+      
   return err;
 }
 
@@ -746,6 +755,12 @@ engine_verify_start (engine_filter_t filter, const char *signature,
 }
 
 
-
-
-
+/* Fire up the key manager.  Returns 0 on success.  */
+int
+engine_start_keymanager (void)
+{
+  if (use_assuan)
+    return op_assuan_start_keymanager (NULL);
+  else
+    return gpg_error (GPG_ERR_NOT_SUPPORTED);
+}

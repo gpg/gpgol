@@ -33,6 +33,10 @@ extern "C" {
 #endif
 #endif
 
+/* The Registry key used by GnuPg and closley related software.  */
+#define GNUPG_REGKEY  "Software\\GNU\\GnuPG"
+
+
 /* Identifiers for the protocol.  We use different one than those use
    by gpgme.  FIXME: We might want to define an unknown protocol to
    non-null and define such a value also in gpgme. */
@@ -141,6 +145,7 @@ typedef struct b64_state_s b64_state_t;
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
+HBITMAP get_system_check_bitmap (int checked);
 char *get_save_filename (HWND root, const char *srcname);
 char *utf8_to_wincp (const char *string);
 
@@ -154,6 +159,8 @@ size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
    byte larger. */
 #define BOUNDARYSIZE 20
 char *generate_boundary (char *buffer);
+
+int gpgol_spawn_detached (const char *cmdline);
 
 
 /*-- recipient-dialog.c --*/

@@ -16,6 +16,7 @@
 #define IDB_BANNER                      3006
 #define IDB_BANNER_HI                   3007
 #define IDB_SELECT_SMIME                3008
+#define IDB_KEY_MANAGER_PNG             3105
 
 
 /* Ids used for the main config dialog.  */

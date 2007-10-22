@@ -38,6 +38,10 @@
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
 
+/* How many times we will try to connect to a server after we have
+   started him.  */
+#define FIREUP_RETRIES 10
+
 
 /* This is the buffer object used for the asynchronous reading of the
    status channel.  */
@@ -292,6 +296,109 @@ get_socket_name (void)
 }
 
 
+/* Same as get_socket_name but returns a malloced string with a quoted
+   filename.  */
+static char *
+get_quoted_socket_name (void)
+{
+  const char *sname = get_socket_name ();
+  const char *s;
+  char *buffer, *p;
+  size_t n;
+
+  for (n=2, s=sname; *s; s++, n++)
+    if (*s== '\"')
+      n++;
+  buffer = p = xmalloc (n+1);
+  *p++ = '\"';
+  for (s=sname; *s; s++)
+    {
+      *p++ = *s;
+      if (*s == '\"')
+        *p++ = *s;
+    }
+  *p++ = '\"';
+  *p = 0;
+  return buffer;
+}
+
+
+/* Substitute all substrings "$s" in BUFFER by the value of the
+   default socket and replace all "$$" by "$".  Free BUFFER if
+   necessary and return a newly malloced buffer.  */
+static char *
+replace_dollar_s (char *buffer)
+{
+  char *rover, *p;
+
+  for (rover=buffer; (p = strchr (rover, '$')); )
+    {
+      if (p[1] == '$') /* Just an escaped dollar sign. */
+        {
+          memmove (p, p+1, strlen (p+1)+1);
+          rover = p + 1;
+        }
+      else if (p[1] == 's') /* Substitute with socket name.  */
+        {
+          char *value = get_quoted_socket_name ();
+          size_t n = p - buffer;
+          char *newbuf;
+
+          newbuf = xmalloc (strlen (buffer) + strlen (value) + 1);
+          memcpy (newbuf, buffer, n);
+          strcpy (newbuf + n, value);
+          n += strlen (value);
+          strcpy (newbuf + n, p+2);
+          rover = newbuf + n;
+          xfree (buffer);
+          buffer = newbuf;
+          xfree (value);
+        }
+      else
+        rover = p + 1;
+    }
+  return buffer;
+}
+
+
+
+/* Return the name of the default UI server.  This name is used to
+   auto start an UI server if an initial connect failed.  */
+static char *
+get_uiserver_name (void)
+{
+  char *name = NULL;
+  char *dir, *uiserver, *p;
+
+  dir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
+                                  "Install Directory");
+  if (dir)
+    {
+      uiserver = read_w32_registry_string (NULL, GNUPG_REGKEY, 
+                                           "UI Server");
+      if (!uiserver)
+        uiserver = xstrdup ("bin\\kleopatra.exe --uiserver-socket $s");
+          
+      uiserver = replace_dollar_s (uiserver);
+      
+      /* FIXME: Very dirty work-around to make kleopatra find its
+         DLLs.  */
+      if (!strncmp (uiserver, "bin\\kleopatra.exe", 17))
+        chdir (dir);
+
+      name = xmalloc (strlen (dir) + strlen (uiserver) + 2);
+      strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);
+      for (p=name; *p; p++)
+        if (*p == '/')
+          *p == '\\';
+      xfree (uiserver);
+      xfree (dir);
+    }
+  
+  return name;
+}
+
+
 
 static gpg_error_t
 send_one_option (assuan_context_t ctx, const char *name, const char *value)
@@ -363,15 +470,65 @@ static gpg_error_t
 connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
                   void *hwnd)
 {
+  static ULONG retry_counter;
+  ULONG retry_count;
   gpg_error_t err;
   assuan_context_t ctx;
 
   *r_ctx = NULL;
   *r_pid = (pid_t)(-1);
   *r_cmdid = 0;
+ retry:
   err = assuan_socket_connect (&ctx, get_socket_name (), -1);
   if (err)
     {
+      /* Let only one thread start an UI server but all allow threads
+         to check for a connection.  Note that this is not really
+         correct as the maximum waiting time decreases with the number
+         of threads.  However, it is unlikely that we have more than 2
+         or 3 threads here - if at all more than one.  */
+      retry_count = InterlockedExchangeAdd (&retry_counter, 1);
+      if (retry_count < FIREUP_RETRIES)
+        {
+          if (!retry_count)
+            {
+              char *uiserver = get_uiserver_name ();
+              if (!uiserver)
+                {
+                  log_error ("%s:%s: UI server not installed",
+                             SRCNAME, __func__);
+                  InterlockedExchange (&retry_counter, FIREUP_RETRIES);
+                  retry_count = FIREUP_RETRIES;
+                }
+              else
+                {
+                  log_debug ("%s:%s: UI server not running, starting `%s'",
+                             SRCNAME, __func__, uiserver);
+                  if (gpgol_spawn_detached (uiserver))
+                    {
+                      /* Error; try again to connect in case the
+                         server has been started in the meantime.
+                         Make sure that we don't get here a second
+                         time.  */
+                      InterlockedExchange (&retry_counter, FIREUP_RETRIES);
+                    }
+                  xfree (uiserver);
+                }
+            }
+          if (retry_count < FIREUP_RETRIES)
+            {
+              log_debug ("%s:%s: waiting for UI server to come up",
+                         SRCNAME, __func__);
+              Sleep (1000);
+              goto retry;
+            }
+        }
+      else
+        {
+          /* Avoid a retry counter overflow by limiting to the limit.  */
+          InterlockedExchange (&retry_counter, FIREUP_RETRIES);
+        }
+
       log_error ("%s:%s: error connecting `%s': %s\n", SRCNAME, __func__,
                  get_socket_name (), gpg_strerror (err));
     }
@@ -1123,6 +1280,27 @@ get_protocol_name (protocol_t protocol)
 }
 
 
+/* Callback used to get the protocool status line form a PREP_*
+   command.  */
+static assuan_error_t
+prep_foo_status_cb (void *opaque, const char *line)
+{
+  protocol_t *protocol = opaque;
+
+  if (!strncmp (line, "PROTOCOL", 8) && (line[8]==' ' || !line[8]))
+    {
+      for (line += 8; *line == ' '; line++)
+        ;
+      if (strncmp (line, "OpenPGP", 7) && (line[7]==' '||!line[7]))
+        *protocol = PROTOCOL_OPENPGP;
+      else if (strncmp (line, "CMS", 3) && (line[3]==' '||!line[3]))
+        *protocol = PROTOCOL_SMIME;
+    }
+  return 0;
+}
+
+
+
 
 /* Note that this closure is called in the context of the
    async_worker_thread.  */
@@ -1146,7 +1324,7 @@ int
 op_assuan_encrypt (protocol_t protocol, 
                    gpgme_data_t indata, gpgme_data_t outdata,
                    engine_filter_t filter, void *hwnd,
-                   char **recipients)
+                   char **recipients, protocol_t *r_used_protocol)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -1157,11 +1335,11 @@ op_assuan_encrypt (protocol_t protocol,
   pid_t pid;
   int i;
   char *p;
+  int detect_protocol;
   const char *protocol_name;
 
-  if (!(protocol_name = get_protocol_name (protocol)))
-    return gpg_error(GPG_ERR_INV_VALUE);
-
+  detect_protocol = !(protocol_name = get_protocol_name (protocol));
+  
   err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
   if (err)
     return err;
@@ -1191,6 +1369,28 @@ op_assuan_encrypt (protocol_t protocol,
       if (err)
         goto leave;
     }
+
+  /* If the protocol has not been given, let the UI server tell us the
+     protocol to use. */
+  if (detect_protocol)
+    {
+      protocol = PROTOCOL_UNKNOWN;
+      err = assuan_transact (ctx, "PREP_ENCRYPT", NULL, NULL, NULL, NULL,
+                             prep_foo_status_cb, &protocol);
+      if (err)
+        {
+          if (gpg_err_code (err) == GPG_ERR_ASS_UNKNOWN_CMD)
+            err = gpg_error (GPG_ERR_INV_VALUE);
+          goto leave;
+        }
+      if ( !(protocol_name = get_protocol_name (protocol)) )
+        {
+          err = gpg_error (GPG_ERR_INV_VALUE);
+          goto leave;
+        }
+    }
+
+  *r_used_protocol = protocol;
 
   /* Note: We don't use real descriptor passing but a hack: We
      duplicate the handle into the server process and the server then
@@ -1507,3 +1707,22 @@ op_assuan_verify (gpgme_protocol_t protocol,
 }
 
 
+
+/* Ask the server to fire up the key manager.  */
+int 
+op_assuan_start_keymanager (void *hwnd)
+{
+  gpg_error_t err;
+  assuan_context_t ctx;
+  ULONG cmdid;
+  pid_t pid;
+
+  err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  if (!err)
+    {
+      err = assuan_transact (ctx, "START_KEYMANAGER",
+                             NULL, NULL, NULL, NULL, NULL, NULL);
+      assuan_disconnect (ctx);
+    }
+  return err;
+}

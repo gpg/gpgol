@@ -36,6 +36,7 @@
 #include "olflange.h"
 #include "ol-ext-callback.h"
 #include "message.h"
+#include "engine.h"
 #include "ext-commands.h"
 
 
@@ -43,8 +44,28 @@
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-static void toolbar_add_menu (LPEXCHEXTCALLBACK pEECB, 
-                              UINT FAR *pnCommandIDBase, ...)
+/* An object to store information about active (installed) toolbar
+   buttons.  */
+struct toolbar_info_s
+{
+  toolbar_info_t next;
+
+  UINT button_id;/* The ID of the button as assigned by Outlook.  */
+  UINT bitmap;   /* The bitmap of the button.  */
+  UINT cmd_id;   /* The ID of the command to send on a click.  */
+  const char *desc;/* The description text.  */
+  ULONG context; /* Context under which this entry will be used.  */ 
+};
+
+
+/* Keep copies of some bitmaps.  */
+static int bitmaps_initialized;
+static HBITMAP my_check_bitmap, my_uncheck_bitmap;
+
+
+
+static void add_menu (LPEXCHEXTCALLBACK pEECB, 
+                      UINT FAR *pnCommandIDBase, ...)
 #if __GNUC__ >= 4 
                                __attribute__ ((sentinel))
 #endif
@@ -85,13 +106,26 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_nCmdKeyManager = 0;
   m_nCmdDebug1 = 0;
   m_nCmdDebug2 = 0;
-  m_nToolbarButtonID1 = 0; 
-  m_nToolbarButtonID2 = 0; 
-  m_nToolbarButtonID3 = 0; 
-  m_nToolbarBitmap1 = 0;
-  m_nToolbarBitmap2 = 0; 
-  m_nToolbarBitmap3 = 0; 
+  m_toolbar_info = NULL; 
   m_hWnd = NULL; 
+
+  if (!bitmaps_initialized)
+    {
+      my_uncheck_bitmap = get_system_check_bitmap (0);
+      my_check_bitmap = get_system_check_bitmap (1);
+      bitmaps_initialized = 1;
+    }
+}
+
+/* Destructor */
+GpgolExtCommands::~GpgolExtCommands (void)
+{
+  while (m_toolbar_info)
+    {
+      toolbar_info_t tmp = m_toolbar_info->next;
+      xfree (m_toolbar_info);
+      m_toolbar_info = tmp;
+    }
 }
 
 
@@ -109,32 +143,11 @@ GpgolExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 }
 
 
-/* Return the toolbar's window from the button entry array.  On
-   success the handle of the window is return as well as the
-   corresponding index at R_IDX.  On error NULL is returned and
-   the value at R_IDX is not changed. */
-static HWND
-toolbar_from_tbe (LPTBENTRY pTBEArray, UINT nTBECnt, int *r_idx)
-{
-  int nTBIndex;
-
-  for (nTBIndex = nTBECnt-1; nTBIndex > -1; --nTBIndex)
-    {	
-      if (EETBID_STANDARD == pTBEArray[nTBIndex].tbid)
-        {
-          *r_idx = nTBIndex;
-          return pTBEArray[nTBIndex].hwnd;
-        }	
-    }
-  return NULL;
-}
-
 /* Add a new menu.  The variable entries are made up of pairs of
    strings and UINT *.  A NULL is used to terminate this list. An empty
    string is translated to a separator menu item. */
 static void
-toolbar_add_menu (LPEXCHEXTCALLBACK pEECB, 
-                  UINT FAR *pnCommandIDBase, ...)
+add_menu (LPEXCHEXTCALLBACK pEECB, UINT FAR *pnCommandIDBase, ...)
 {
   va_list arg_ptr;
   HMENU menu;
@@ -142,6 +155,8 @@ toolbar_add_menu (LPEXCHEXTCALLBACK pEECB,
   UINT *cmdptr;
   
   va_start (arg_ptr, pnCommandIDBase);
+  /* We put all new entries into the tools menu.  To make this work we
+     need to pass the id of an existing item from that menu.  */
   pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &menu, NULL, NULL, 0);
   while ( (string = va_arg (arg_ptr, const char *)) )
     {
@@ -154,6 +169,8 @@ toolbar_add_menu (LPEXCHEXTCALLBACK pEECB,
       else
 	{
           AppendMenu (menu, MF_STRING, *pnCommandIDBase, string);
+//           SetMenuItemBitmaps (menu, *pnCommandIDBase, MF_BYCOMMAND,
+//                                    my_uncheck_bitmap, my_check_bitmap);
           if (cmdptr)
             *cmdptr = *pnCommandIDBase;
           (*pnCommandIDBase)++;
@@ -161,6 +178,76 @@ toolbar_add_menu (LPEXCHEXTCALLBACK pEECB,
     }
   va_end (arg_ptr);
 }
+
+
+static void
+check_menu (LPEXCHEXTCALLBACK pEECB, UINT menu_id, int checked)
+{
+  HMENU menu;
+  
+  pEECB->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &menu, NULL, NULL, 0);
+  CheckMenuItem (menu, menu_id, 
+                 MF_BYCOMMAND | (checked?MF_CHECKED:MF_UNCHECKED));
+}
+
+
+void
+GpgolExtCommands::add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...)
+{
+  va_list arg_ptr;
+  const char *desc;
+  UINT bmapid;
+  UINT cmdid;
+  int tbeidx;
+  toolbar_info_t tb_info;
+  int rc;
+
+  for (tbeidx = n_tbearr-1; tbeidx > -1; tbeidx--)
+    if (tbearr[tbeidx].tbid == EETBID_STANDARD)
+      break;
+  if (!(tbeidx > -1))
+    {
+      log_error ("standard toolbar not found");
+      return;
+    }
+  
+  SendMessage (tbearr[tbeidx].hwnd, TB_BUTTONSTRUCTSIZE,
+               (WPARAM)(int)sizeof (TBBUTTON), 0);
+
+  
+  va_start (arg_ptr, n_tbearr);
+
+  while ( (desc = va_arg (arg_ptr, const char *)) )
+    {
+      bmapid = va_arg (arg_ptr, UINT);
+      cmdid = va_arg (arg_ptr, UINT);
+
+      if (!*desc)
+        ; /* Empty description - ignore this item.  */
+      else
+	{
+          TBADDBITMAP tbab;
+  
+          tb_info = (toolbar_info_t)xcalloc (1, sizeof *tb_info);
+          tb_info->button_id = tbearr[tbeidx].itbbBase++;
+
+          tbab.hInst = glob_hinst;
+          tbab.nID = bmapid;
+          rc = SendMessage (tbearr[tbeidx].hwnd, TB_ADDBITMAP,1,(LPARAM)&tbab);
+          if (rc == -1)
+            log_error_w32 (-1, "TB_ADDBITMAP failed for `%s'", desc);
+          tb_info->bitmap = rc;
+          tb_info->cmd_id = cmdid;
+          tb_info->desc = desc;
+          tb_info->context = m_lContext;
+
+          tb_info->next = m_toolbar_info;
+          m_toolbar_info = tb_info;
+        }
+    }
+  va_end (arg_ptr);
+}
+
 
 
 
@@ -185,9 +272,6 @@ GpgolExtCommands::InstallCommands (
   DISPPARAMS dispparams;
   VARIANT aVariant;
   int force_encrypt = 0;
-  int tb_idx;
-  HWND hwnd_toolbar;
-  TBADDBITMAP tbab;
 
   
   log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__, 
@@ -209,7 +293,7 @@ GpgolExtCommands::InstallCommands (
      whether he really wants to do that.
 
      Note, that we can't optimize the code here by first reading the
-     body because this would pop up the securiy window, telling the
+     body because this would pop up the security window, telling the
      user that someone is trying to read this data.
   */
   if (m_lContext == EECONTEXT_SENDNOTEMESSAGE)
@@ -301,7 +385,7 @@ GpgolExtCommands::InstallCommands (
       ul_release (mdb);
     }
 
-
+  /* Now install menu and toolbar items.  */
   if (m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       int need_dvm = 0;
@@ -319,68 +403,33 @@ GpgolExtCommands::InstallCommands (
 
       /* We always enable the verify button as it might be useful on
          an already decrypted message. */
-      toolbar_add_menu 
-        (pEECB, pnCommandIDBase,
-         "@", NULL,
-         need_dvm? _("&Decrypt and verify message"):"", &m_nCmdDecrypt,
-         _("&Verify signature"), &m_nCmdCheckSig,
-         _("&Display crypto information"), &m_nCmdShowInfo,
-         "@", NULL,
-         "Debug-1 (open_inspector)", &m_nCmdDebug1,
-         "Debug-2 (n/a)", &m_nCmdDebug2,
+      add_menu (pEECB, pnCommandIDBase,
+        "@", NULL,
+        need_dvm? _("&Decrypt and verify message"):"", &m_nCmdDecrypt,
+        _("&Verify signature"), &m_nCmdCheckSig,
+        _("&Display crypto information"), &m_nCmdShowInfo,
+        "@", NULL,
+        "Debug-1 (open_inspector)", &m_nCmdDebug1,
+        "Debug-2 (n/a)", &m_nCmdDebug2,
          NULL);
       
-      hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
-      if (hwnd_toolbar)
-        {
-          m_nToolbarButtonID1 = pTBEArray[tb_idx].itbbBase;
-          pTBEArray[tb_idx].itbbBase++;
-
-          tbab.hInst = glob_hinst;
-          tbab.nID = IDB_DECRYPT;
-          m_nToolbarBitmap1 = SendMessage(hwnd_toolbar, TB_ADDBITMAP,
-                                          1, (LPARAM)&tbab);
-          m_nToolbarButtonID2 = pTBEArray[tb_idx].itbbBase;
-          pTBEArray[tb_idx].itbbBase++;
-        }
+      add_toolbar (pTBEArray, nTBECnt,
+        _("Decrypt message and verify signature"), IDB_DECRYPT, m_nCmdDecrypt,
+        NULL, 0, 0);
     }
-
-  if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
-      toolbar_add_menu 
-        (pEECB, pnCommandIDBase,
-         "@", NULL,
-         opt.enable_smime? _("use S/MIME protocol"):"", &m_nCmdSelectSmime,
-         _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
-         _("&sign message with GnuPG"), &m_nCmdSign,
-         NULL );
+      add_menu (pEECB, pnCommandIDBase,
+        "@", NULL,
+        opt.enable_smime? _("use S/MIME protocol"):"", &m_nCmdSelectSmime,
+        _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
+        _("&sign message with GnuPG"), &m_nCmdSign,
+        NULL );
       
-
-      hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
-      if (hwnd_toolbar) 
-        {
-          m_nToolbarButtonID1 = pTBEArray[tb_idx].itbbBase;
-          pTBEArray[tb_idx].itbbBase++;
-
-          tbab.hInst = glob_hinst;
-          tbab.nID = IDB_ENCRYPT;
-          m_nToolbarBitmap1 = SendMessage (hwnd_toolbar, TB_ADDBITMAP,
-                                           1, (LPARAM)&tbab);
-
-          m_nToolbarButtonID2 = pTBEArray[tb_idx].itbbBase;
-          pTBEArray[tb_idx].itbbBase++;
-
-          tbab.nID = IDB_SIGN;
-          m_nToolbarBitmap2 = SendMessage (hwnd_toolbar, TB_ADDBITMAP,
-                                           1, (LPARAM)&tbab);
-
-          m_nToolbarButtonID3 = pTBEArray[tb_idx].itbbBase;
-          pTBEArray[tb_idx].itbbBase++;
-
-          tbab.nID = IDB_SELECT_SMIME;
-          m_nToolbarBitmap3 = SendMessage (hwnd_toolbar, TB_ADDBITMAP,
-                                           1, (LPARAM)&tbab);
-        }
+      add_toolbar (pTBEArray, nTBECnt,
+        _("Encrypt message with GnuPG"), IDB_ENCRYPT, m_nCmdEncrypt,
+        _("Sign message with GnuPG"),    IDB_SIGN,    m_nCmdSign,
+        NULL, 0, 0);
 
       m_pExchExt->m_gpgSelectSmime = opt.enable_smime && opt.smime_default;
       m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
@@ -388,26 +437,16 @@ GpgolExtCommands::InstallCommands (
       if (force_encrypt)
         m_pExchExt->m_gpgEncrypt = true;
     }
-
-  if (m_lContext == EECONTEXT_VIEWER) 
+  else if (m_lContext == EECONTEXT_VIEWER) 
     {
-      toolbar_add_menu 
-        (pEECB, pnCommandIDBase, 
-         "@", NULL,
-         _("GnuPG Certificate &Manager"), &m_nCmdKeyManager,
-         NULL);
+      add_menu (pEECB, pnCommandIDBase, 
+        "@", NULL,
+        _("GnuPG Certificate &Manager"), &m_nCmdKeyManager,
+        NULL);
 
-      hwnd_toolbar = toolbar_from_tbe (pTBEArray, nTBECnt, &tb_idx);
-      if (hwnd_toolbar)
-        {
-          m_nToolbarButtonID1 = pTBEArray[tb_idx].itbbBase;
-          pTBEArray[tb_idx].itbbBase++;
-
-          tbab.hInst = glob_hinst;
-          tbab.nID = IDB_KEY_MANAGER;
-          m_nToolbarBitmap1 = SendMessage(hwnd_toolbar, TB_ADDBITMAP,
-                                          1, (LPARAM)&tbab);
-        }	
+      add_toolbar (pTBEArray, nTBECnt, 
+        _("Open the certificate manager"), IDB_KEY_MANAGER, m_nCmdKeyManager,
+        NULL, 0, 0);
     }
   return S_FALSE;
 }
@@ -472,7 +511,7 @@ GpgolExtCommands::DoCommand (
       /* Closing on our own failed - pass it on. */
       return S_FALSE; 
     }
-  else if (nCommandID == 154)
+  else if (nCommandID == EECMDID_ComposeReplyToSender)
     {
       log_debug ("%s:%s: command Reply called\n", SRCNAME, __func__);
       /* What we might want to do is to call Reply, then GetInspector
@@ -480,12 +519,12 @@ GpgolExtCommands::DoCommand (
          the quoted message and avoids the ugly msgcache. */
       return S_FALSE; /* Pass it on.  */
     }
-  else if (nCommandID == 155)
+  else if (nCommandID == EECMDID_ComposeReplyToAll)
     {
       log_debug ("%s:%s: command ReplyAll called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
     }
-  else if (nCommandID == 156)
+  else if (nCommandID == EECMDID_ComposeForward)
     {
       log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
@@ -535,18 +574,21 @@ GpgolExtCommands::DoCommand (
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
+      check_menu (pEECB, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
     }
-  else if (nCommandID == m_nCmdSign
+    else if (nCommandID == m_nCmdSign
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
+      check_menu (pEECB, m_nCmdSign, m_pExchExt->m_gpgSign);
     }
   else if (nCommandID == m_nCmdKeyManager
            && m_lContext == EECONTEXT_VIEWER)
     {
-      if (start_key_manager ())
-        MessageBox (NULL, _("Could not start certificate manager"),
-                    "GpgOL", MB_ICONERROR|MB_OK);
+      if (engine_start_keymanager ())
+        if (start_key_manager ())
+          MessageBox (NULL, _("Could not start certificate manager"),
+                      "GpgOL", MB_ICONERROR|MB_OK);
     }
   else if (nCommandID == m_nCmdDebug1
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
@@ -572,12 +614,16 @@ GpgolExtCommands::DoCommand (
    commands before the user sees them. This method is called
    frequently and should be written in a very efficient manner. */
 STDMETHODIMP_(VOID) 
-GpgolExtCommands::InitMenu(LPEXCHEXTCALLBACK pEECB) 
+GpgolExtCommands::InitMenu(LPEXCHEXTCALLBACK eecb) 
 {
-#if 0
-  log_debug ("%s:%s: context=%s\n",
-             SRCNAME, __func__, ext_context_name (m_lContext));
-#endif
+  HRESULT hr;
+  HMENU menu;
+  
+  hr = eecb->GetMenu (&menu);
+  if (FAILED(hr))
+      return; /* Ooops.  */
+  CheckMenuItem (menu, m_nCmdEncrypt, MF_BYCOMMAND 
+                 | (m_pExchExt->m_gpgSign?MF_CHECKED:MF_UNCHECKED));
 }
 
 
@@ -735,7 +781,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
 
 /* Called by Exchange to get toolbar button infos.  TOOLBARID is the
    toolbar identifier.  BUTTONID is the toolbar button index.  PTBB is
-   a pointer to toolbar button structure DESCRIPTION is a pointer to
+   a pointer to toolbar button structure.  DESCRIPTION is a pointer to
    buffer receiving the text for the button.  DESCRIPTION_SIZE is the
    maximum size of DESCRIPTION.  FLAGS are flags which might have the
    EXCHEXT_UNICODE bit set.
@@ -748,75 +794,41 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
                                    LPTSTR description, UINT description_size,
                                    ULONG flags)          
 {
-  if (buttonid == m_nToolbarButtonID1
-      && m_lContext == EECONTEXT_READNOTEMESSAGE)
+  toolbar_info_t tb_info;
+
+  for (tb_info = m_toolbar_info; tb_info; tb_info = tb_info->next )
+    if (tb_info->button_id == buttonid
+        && tb_info->context == m_lContext)
+      break;
+  if (!tb_info)
+    return S_FALSE; /* Not one of our toolbar buttons.  */
+
+  pTBB->iBitmap = tb_info->bitmap;
+  pTBB->idCommand = tb_info->cmd_id;
+  pTBB->fsState = TBSTATE_ENABLED;
+  pTBB->fsStyle = TBSTYLE_BUTTON;
+  pTBB->dwData = 0;
+  pTBB->iString = -1;
+  lstrcpyn (description, tb_info->desc, strlen (tb_info->desc));
+
+  if (tb_info->cmd_id == m_nCmdEncrypt)
     {
-      pTBB->iBitmap = m_nToolbarBitmap1;             
-      pTBB->idCommand = m_nCmdEncrypt;
-      pTBB->fsState = TBSTATE_ENABLED;
-      pTBB->fsStyle = TBSTYLE_BUTTON;
-      pTBB->dwData = 0;
-      pTBB->iString = -1;
-      lstrcpyn (description,
-                _("Decrypt message and verify signature"),
-                description_size);
-    }
-  else if (buttonid == m_nToolbarButtonID1
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE)
-    {
-      pTBB->iBitmap = m_nToolbarBitmap1;             
-      pTBB->idCommand = m_nCmdEncrypt;
-      pTBB->fsState = TBSTATE_ENABLED;
+      pTBB->fsStyle |= TBSTYLE_CHECK;
       if (m_pExchExt->m_gpgEncrypt)
         pTBB->fsState |= TBSTATE_CHECKED;
-      pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
-      pTBB->dwData = 0;
-      pTBB->iString = -1;
-      lstrcpyn (description, _("Encrypt message with GPG"),
-                description_size);
     }
-  else if (buttonid == m_nToolbarButtonID2
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+  else if (tb_info->cmd_id == m_nCmdSign)
     {
-      pTBB->iBitmap = m_nToolbarBitmap2;             
-      pTBB->idCommand = m_nCmdSign;
-      pTBB->fsState = TBSTATE_ENABLED;
+      pTBB->fsStyle |= TBSTYLE_CHECK;
       if (m_pExchExt->m_gpgSign)
         pTBB->fsState |= TBSTATE_CHECKED;
-      pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
-      pTBB->dwData = 0;
-      pTBB->iString = -1;
-      lstrcpyn (description, _("Sign message with GPG"),
-                description_size);
     }
-  else if (buttonid == m_nToolbarButtonID3
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE)
+  else if (tb_info->cmd_id == m_nCmdSelectSmime)
     {
-      pTBB->iBitmap = m_nToolbarBitmap3;             
-      pTBB->idCommand = m_nCmdSelectSmime;
-      pTBB->fsState = TBSTATE_ENABLED;
+      pTBB->fsStyle |= TBSTYLE_CHECK;
       if (m_pExchExt->m_gpgSelectSmime)
         pTBB->fsState |= TBSTATE_CHECKED;
-      pTBB->fsStyle = TBSTYLE_BUTTON | TBSTYLE_CHECK;
-      pTBB->dwData = 0;
-      pTBB->iString = -1;
-      lstrcpyn (description, _("Use the S/MIME protocol"),
-                description_size);
     }
-  else if (buttonid == m_nToolbarButtonID1
-           && m_lContext == EECONTEXT_VIEWER)
-    {
-      pTBB->iBitmap = m_nToolbarBitmap1;             
-      pTBB->idCommand = m_nCmdEncrypt;
-      pTBB->fsState = TBSTATE_ENABLED;
-      pTBB->fsStyle = TBSTYLE_BUTTON;
-      pTBB->dwData = 0;
-      pTBB->iString = -1;
-      lstrcpyn (description, _("Open the certificate manager"),
-                description_size);
-    }
-  else
-    return S_FALSE;
 
   return S_OK;
 }
@@ -828,5 +840,4 @@ GpgolExtCommands::ResetToolbar (ULONG lToolbarID, ULONG lFlags)
 {	
   return S_OK;
 }
-
 

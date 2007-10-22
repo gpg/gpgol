@@ -38,7 +38,7 @@ void engine_assuan_cancel (void *cancel_data);
 int op_assuan_encrypt (protocol_t protocol, 
                        gpgme_data_t indata, gpgme_data_t outdata,
                        engine_filter_t notify_data, void *hwnd,
-                       char **recipients);
+                       char **recipients, protocol_t *r_used_protocol);
 int op_assuan_sign (protocol_t protocol, 
                     gpgme_data_t indata, gpgme_data_t outdata,
                     engine_filter_t filter, void *hwnd);
@@ -50,7 +50,7 @@ int op_assuan_verify (gpgme_protocol_t protocol,
                       gpgme_data_t data, const char *signature,
                       engine_filter_t filter, void *hwnd);
 
-
+int op_assuan_start_keymanager (void *hwnd);
 
 
 #ifdef __cplusplus

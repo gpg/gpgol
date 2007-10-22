@@ -62,6 +62,11 @@ struct sink_s
   void *cb_data;
   sink_t extrasink;
   int (*writefnc)(sink_t sink, const void *data, size_t datalen);
+/*   struct { */
+/*     int idx; */
+/*     unsigned char inbuf[4]; */
+/*     int quads; */
+/*   } b64; */
 };
 
 
@@ -115,7 +120,6 @@ check_protocol (protocol_t protocol)
   switch (protocol)
     {
     case PROTOCOL_UNKNOWN:
-      log_error ("fixme: automatic protocol selection is not yet supported");
       return PROTOCOL_UNKNOWN;
     case PROTOCOL_OPENPGP:
     case PROTOCOL_SMIME:
@@ -1343,6 +1347,102 @@ sink_encryption_write (sink_t encsink, const void *data, size_t datalen)
 }
 
 
+#if 0 /* Not used.  */
+/* Sink write method used by mime_encrypt for writing Base64.  */
+static int
+sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
+{
+  engine_filter_t filter = encsink->cb_data;
+  int rc;
+  const unsigned char *p;
+  unsigned char inbuf[4];
+  int idx, quads;
+  char outbuf[6];
+  size_t outbuflen;
+
+  if (!filter)
+    {
+      log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
+      return -1;
+    }
+
+  idx = encsink->b64.idx;
+  assert (idx < 4);
+  memcpy (inbuf, encsink->b64.inbuf, idx);
+  quads = encsink->b64.quads;
+
+  if (!data)  /* Flush. */
+    {
+      outbuflen = 0;
+      if (idx)
+        {
+          outbuf[0] = bintoasc[(*inbuf>>2)&077];
+          if (idx == 1)
+            {
+              outbuf[1] = bintoasc[((*inbuf<<4)&060)&077];
+              outbuf[2] = '=';
+              outbuf[3] = '=';
+            }
+          else 
+            { 
+              outbuf[1] = bintoasc[(((*inbuf<<4)&060)|
+                                    ((inbuf[1]>>4)&017))&077];
+              outbuf[2] = bintoasc[((inbuf[1]<<2)&074)&077];
+              outbuf[3] = '=';
+            }
+          outbuflen = 4;
+          quads++;
+        }
+      
+      if (quads)
+        {
+          outbuf[outbuflen++] = '\r';
+          outbuf[outbuflen++] = '\n';
+        }
+
+      if (outbuflen && (rc = engine_filter (filter, outbuf, outbuflen)))
+        return rc;
+      /* Send the flush command to the filter.  */
+      if ((rc = engine_filter (filter, data, datalen)))
+        return rc;
+    }
+  else
+    {
+      for (p = data; datalen; p++, datalen--)
+        {
+          inbuf[idx++] = *p;
+          if (idx > 2)
+            {
+              idx = 0;
+              outbuf[0] = bintoasc[(*inbuf>>2)&077];
+              outbuf[1] = bintoasc[(((*inbuf<<4)&060)
+                                    |((inbuf[1] >> 4)&017))&077];
+              outbuf[2] = bintoasc[(((inbuf[1]<<2)&074)
+                                    |((inbuf[2]>>6)&03))&077];
+              outbuf[3] = bintoasc[inbuf[2]&077];
+              outbuflen = 4;
+              if (++quads >= (64/4)) 
+                {
+                  quads = 0;
+                  outbuf[4] = '\r';
+                  outbuf[5] = '\n';
+                  outbuflen += 2;
+                }
+              if ((rc = engine_filter (filter, outbuf, outbuflen)))
+                return rc;
+            }
+        }
+    }
+
+  encsink->b64.idx = idx;
+  memcpy (encsink->b64.inbuf, inbuf, idx);
+  encsink->b64.quads = quads;
+  
+  return 0;
+}
+#endif /*Not used.*/
+
+
 /* Encrypt the MESSAGE.  */
 int 
 mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
@@ -1364,12 +1464,6 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
 
-  protocol = check_protocol (protocol);
-  if (protocol == PROTOCOL_UNKNOWN)
-    return -1;
-
-  /* FIXME For now only PGP/MIME is supported.  */
-
   attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
@@ -1379,7 +1473,11 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
      will fail early. */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
-  if (engine_encrypt_start (filter, protocol, recipients))
+  if (engine_encrypt_start (filter, protocol, recipients, &protocol))
+    goto failure;
+
+  protocol = check_protocol (protocol);
+  if (protocol == PROTOCOL_UNKNOWN)
     goto failure;
 
   /* Get the attachment info and the body.  */
@@ -1398,32 +1496,50 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
     }
 
   /* Write the top header.  */
-  generate_boundary (boundary);
-  if ((rc=write_multistring (sink,
-                             "MIME-Version: 1.0\r\n"
-                             "Content-Type: multipart/encrypted;\r\n"
-                             "\tprotocol=\"application/pgp-encrypted\";\r\n",
-                             "\tboundary=\"", boundary, "\"\r\n",
-                             NULL)))
+  if (protocol == PROTOCOL_SMIME)
+    {
+      *boundary = 0;
+      rc = write_multistring (sink,
+                              "MIME-Version: 1.0\r\n"
+                              "Content-Type: application/pkcs7-mime;\r\n"
+                              "\tsmime-type=enveloped-data;\r\n"
+                              "\tname=\"smime.p7m\"\r\n"
+                              "Content-Transfer-Encoding: base64\r\n",
+                              NULL);
+    }
+  else
+    {
+      generate_boundary (boundary);
+      rc = write_multistring (sink,
+                              "MIME-Version: 1.0\r\n"
+                              "Content-Type: multipart/encrypted;\r\n"
+                              "\tprotocol=\"application/pgp-encrypted\";\r\n",
+                              "\tboundary=\"", boundary, "\"\r\n",
+                              NULL);
+    }
+  if (rc)
     goto failure;
 
-  /* Write the PGP/MIME encrypted part.  */
-  if ((rc = write_boundary (sink, boundary, 0)))
-    goto failure;
-  if ((rc=write_multistring (sink,
-                             "Content-Type: application/pgp-encrypted\r\n"
-                             "\r\n"
-                             "Version: 1\r\n",
-                             NULL)))
-    goto failure;
-
-  /* And start the second part.  */
-  if ((rc = write_boundary (sink, boundary, 0)))
-    goto failure;
-  if ((rc=write_multistring (sink,
-                             "Content-Type: application/octet-stream\r\n"
-                             "\r\n", NULL)))
-    goto failure;
+  if (protocol == PROTOCOL_OPENPGP)
+    {
+      /* Write the PGP/MIME encrypted part.  */
+      if ((rc = write_boundary (sink, boundary, 0)))
+        goto failure;
+      if ((rc=write_multistring (sink,
+                                 "Content-Type: application/pgp-encrypted\r\n"
+                                 "\r\n"
+                                 "Version: 1\r\n",
+                                 NULL)))
+        goto failure;
+      
+      /* And start the second part.  */
+      if ((rc = write_boundary (sink, boundary, 0)))
+        goto failure;
+      if ((rc=write_multistring (sink,
+                                 "Content-Type: application/octet-stream\r\n"
+                                 "\r\n", NULL)))
+        goto failure;
+    }
 
   /* Create a new sink for encrypting the following stuff.  */
   encsink->cb_data = filter;
@@ -1467,10 +1583,10 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
   
-  /* Write the final boundary and finish the attachment.  */
-  if ((rc = write_boundary (sink, boundary, 1)))
+  /* Write the final boundary (for OpenPGP) and finish the attachment.  */
+  if (*boundary && (rc = write_boundary (sink, boundary, 1)))
     goto failure;
-
+  
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 

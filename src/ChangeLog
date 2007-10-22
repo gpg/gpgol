@@ -1,3 +1,49 @@
+2007-10-22  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (connect_uiserver): Try to start the server.
+	(get_uiserver_name, replace_dollar_s, get_quoted_socket_name): New.
+
+	* main.c (REGKEY): Remove.
+	* common.h (GNUPG_REGKEY): New.
+	* common.c (default_homedir): Use it in place of a hard coded one.
+	(get_locale_dir): Ditto.
+	(gpgol_spawn_detached): New.
+
+2007-10-18  Werner Koch  <wk@g10code.com>
+
+	* common.c (get_system_check_bitmap): New.
+
+	* decrypt.bmp, encrypt.bmp, sign.bmp, key_mana.bmp: Change
+	background color to pink and voila Outlook presents them
+	transparent.
+
+	* logo.bmp: Cleaned up to use just one color.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Do not use LoadImage.
+
+2007-10-16  Werner Koch  <wk@g10code.com>
+
+	* myexchext.h (EECMDID_): Add a few more of these constants.
+	* ext-commands.cpp (check_menu): New.
+	(toolbar_add_menu): Rename to ..
+	(add_menu): .. this.
+	(toolbar_from_tbe): Remove.
+	(add_toolbar): New.
+	(InstallCommands): Use new toolbar helper.
+	(QueryButtonInfo): Changed to use new toolbar helper.
+	(~GpgolExtCommands): New.
+
+	* engine.c (engine_encrypt_start): Add arg R_PROTOCOL.
+	* engine-assuan.c (op_assuan_encrypt): Add arg R_USED_PROTOCOL and
+	ask the server for it.
+	* mimemaker.c (sink_encryption_write_b64): New.
+	(mime_encrypt): Add S/MIME support.
+
+2007-10-15  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (op_assuan_start_keymanager): New.
+	* engine.c (engine_start_keymanager): New.
+	* ext-commands.cpp (DoCommand): Call it.
+
 2007-10-12  Werner Koch  <wk@g10code.com>
 
 	* gpgol-rsrcs.rc: Remove.

@@ -31,9 +31,6 @@
 #include "mymapi.h"
 
 
-/* Registry key for this software. */
-#define REGKEY "Software\\GNU\\GnuPG"
-
 /* The malloced name of the logfile and the logging stream.  If
    LOGFILE is NULL, no logging is done. */
 static char *logfile;
@@ -441,7 +438,7 @@ get_locale_dir (void)
   char *p;
   char *dname;
 
-  instdir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", REGKEY,
+  instdir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
 				      "Install Directory");
   if (!instdir)
     return NULL;

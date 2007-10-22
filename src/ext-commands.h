@@ -21,6 +21,10 @@
 #define EXT_COMMANDS_H
 
 
+struct toolbar_info_s;
+typedef struct toolbar_info_s *toolbar_info_t;
+
+
 /*
    GpgolExtCommands 
 
@@ -30,7 +34,8 @@ class GpgolExtCommands : public IExchExtCommands
 {
 public:
   GpgolExtCommands (GpgolExt* pParentInterface);
-  
+  virtual ~GpgolExtCommands (void);
+
 private:
   ULONG m_lRef;
   ULONG m_lContext;
@@ -45,16 +50,14 @@ private:
   UINT  m_nCmdDebug1;
   UINT  m_nCmdDebug2;
 
-  UINT  m_nToolbarButtonID1;
-  UINT  m_nToolbarButtonID2;     
-  UINT  m_nToolbarButtonID3;     
-  UINT  m_nToolbarBitmap1;
-  UINT  m_nToolbarBitmap2;
-  UINT  m_nToolbarBitmap3;
+  /* A list of all active toolbar items.  */
+  toolbar_info_t m_toolbar_info;
   
   HWND  m_hWnd;
   
   GpgolExt* m_pExchExt;
+
+  void add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...);
   
 public:
   STDMETHODIMP QueryInterface(REFIID riid, LPVOID *ppvObj);

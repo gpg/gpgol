@@ -69,8 +69,15 @@ extern "C" {
 
 
 /* Command IDs. */
+#define EECMDID_Format                         110
+#define EECMDID_FormatFont                     111
+#define EECMDID_FormatParagraph                112
+#define EECMDID_Tools                          120
 #define EECMDID_ToolsCustomizeToolbar          134
 #define EECMDID_ToolsOptions                   136
+#define EECMDID_ComposeReplyToSender           154
+#define EECMDID_ComposeReplyToAll              155
+#define EECMDID_ComposeForward                 156
 
 
 /* Flag values for IExchExtAttachedFileEvents::OpenSzFile. */

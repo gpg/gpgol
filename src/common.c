@@ -5,9 +5,9 @@
  *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 
+ * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
- *  
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -38,33 +38,33 @@ HINSTANCE glob_hinst = NULL;
 
 
 /* The base-64 list used for base64 encoding. */
-static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ" 
-                                       "abcdefghijklmnopqrstuvwxyz" 
-                                       "0123456789+/"); 
+static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz"
+                                       "0123456789+/");
 
 /* The reverse base-64 list used for base-64 decoding. */
 static unsigned char const asctobin[256] = {
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3e, 0xff, 0xff, 0xff, 0x3f, 
-  0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 
-  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 
-  0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 
-  0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 
-  0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
-  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x3e, 0xff, 0xff, 0xff, 0x3f,
+  0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12,
+  0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24,
+  0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30,
+  0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
   0xff, 0xff, 0xff, 0xff
 };
 
@@ -79,32 +79,32 @@ set_global_hinstance (HINSTANCE hinst)
 /* Center the given window with the desktop window as the
    parent window. */
 void
-center_window (HWND childwnd, HWND style) 
-{     
+center_window (HWND childwnd, HWND style)
+{
     HWND parwnd;
-    RECT rchild, rparent;    
+    RECT rchild, rparent;
     HDC hdc;
     int wchild, hchild, wparent, hparent;
     int wscreen, hscreen, xnew, ynew;
     int flags = SWP_NOSIZE | SWP_NOZORDER;
 
     parwnd = GetDesktopWindow ();
-    GetWindowRect (childwnd, &rchild);     
-    wchild = rchild.right - rchild.left;     
+    GetWindowRect (childwnd, &rchild);
+    wchild = rchild.right - rchild.left;
     hchild = rchild.bottom - rchild.top;
 
-    GetWindowRect (parwnd, &rparent);     
-    wparent = rparent.right - rparent.left;     
-    hparent = rparent.bottom - rparent.top;      
-    
-    hdc = GetDC (childwnd);     
-    wscreen = GetDeviceCaps (hdc, HORZRES);     
-    hscreen = GetDeviceCaps (hdc, VERTRES);     
-    ReleaseDC (childwnd, hdc);      
-    xnew = rparent.left + ((wparent - wchild) / 2);     
+    GetWindowRect (parwnd, &rparent);
+    wparent = rparent.right - rparent.left;
+    hparent = rparent.bottom - rparent.top;
+
+    hdc = GetDC (childwnd);
+    wscreen = GetDeviceCaps (hdc, HORZRES);
+    hscreen = GetDeviceCaps (hdc, VERTRES);
+    ReleaseDC (childwnd, hdc);
+    xnew = rparent.left + ((wparent - wchild) / 2);
     if (xnew < 0)
 	xnew = 0;
-    else if ((xnew+wchild) > wscreen) 
+    else if ((xnew+wchild) > wscreen)
 	xnew = wscreen - wchild;
     ynew = rparent.top  + ((hparent - hchild) / 2);
     if (ynew < 0)
@@ -116,6 +116,76 @@ center_window (HWND childwnd, HWND style)
     SetWindowPos (childwnd, style? style : NULL, xnew, ynew, 0, 0, flags);
 }
 
+
+/* Return the system's bitmap of the check bar used which check boxes.
+   If CHECKED is set, this check mark is returned; if it is not set,
+   the one used for not-checked is returned.  May return NULL on
+   error.  Taken from an example in the platform reference. 
+
+   Not used as of now. */
+HBITMAP
+get_system_check_bitmap (int checked)
+{
+  COLORREF bg_color;
+  HBRUSH bg_brush, saved_dst_brush;
+  HDC src_dc, dst_dc;
+  WORD xsize, ysize;
+  HBITMAP result, saved_dst_bitmap, saved_src_bitmap, checkboxes;
+  BITMAP bitmap;
+  RECT rect;
+
+  bg_color = GetSysColor (COLOR_MENU);
+  bg_brush = CreateSolidBrush (bg_color);
+
+  src_dc = CreateCompatibleDC (NULL);
+  dst_dc = CreateCompatibleDC (src_dc);
+
+  xsize = GetSystemMetrics (SM_CXMENUCHECK);
+  ysize = GetSystemMetrics (SM_CYMENUCHECK);
+  result = CreateCompatibleBitmap(src_dc, xsize, ysize);
+
+  saved_dst_brush  = SelectObject (dst_dc, bg_brush);
+  saved_dst_bitmap = SelectObject (dst_dc, result);
+
+  PatBlt (dst_dc, 0, 0, xsize, ysize, PATCOPY);
+
+  checkboxes = LoadBitmap (NULL, (LPTSTR)OBM_CHECKBOXES);
+
+  saved_src_bitmap = SelectObject (src_dc, checkboxes);
+
+  GetObject (checkboxes, sizeof (BITMAP), &bitmap);
+  rect.top = 0;
+  rect.bottom = (bitmap.bmHeight / 3);
+  if (checked)
+    {
+      /* Select row 1, column 1.  */
+      rect.left  = 0;
+      rect.right = (bitmap.bmWidth / 4);
+    }
+  else
+    {
+      /* Select row 1, column 2. */ 
+      rect.left  = (bitmap.bmWidth / 4);
+      rect.right = (bitmap.bmWidth / 4) * 2;
+    }
+
+  if ( ((rect.right - rect.left) > (int)xsize)
+       || ((rect.bottom - rect.top) > (int)ysize) )
+    StretchBlt (dst_dc, 0, 0, xsize, ysize, src_dc, rect.left, rect.top,
+                rect.right - rect.left, rect.bottom - rect.top, SRCCOPY);
+  else
+    BitBlt (dst_dc, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
+            src_dc, rect.left, rect.top, SRCCOPY);
+
+  SelectObject (src_dc, saved_src_bitmap);
+  SelectObject (dst_dc, saved_dst_brush);
+  result = SelectObject (dst_dc, saved_dst_bitmap);
+
+  DeleteObject (bg_brush);
+  DeleteObject (src_dc);
+  DeleteObject (dst_dc);
+  return result;
+}
 
 
 /* Return a filename to be used for saving an attachment. Returns a
@@ -131,8 +201,8 @@ get_save_filename (HWND root, const char *srcname)
 
   memset (fname, 0, sizeof (fname));
   strncpy (fname, srcname, MAX_PATH-1);
-  fname[MAX_PATH] = 0;  
-  
+  fname[MAX_PATH] = 0;
+
 
   memset (&ofn, 0, sizeof (ofn));
   ofn.lStructSize = sizeof (ofn);
@@ -298,7 +368,7 @@ latin1_to_utf8 (const char *string)
   char *buffer, *p;
   size_t n;
 
-  for (s=string, n=0; *s; s++) 
+  for (s=string, n=0; *s; s++)
     {
       n++;
       if (*s & 0x80)
@@ -467,7 +537,7 @@ standard_homedir (void)
   if (!dir)
     {
       char path[MAX_PATH];
-      
+
       /* It might be better to use LOCAL_APPDATA because this is
          defined as "non roaming" and thus more likely to be kept
          locally.  For private keys this is desired.  However, given
@@ -475,16 +545,16 @@ standard_homedir (void)
          using a system roaming services might be better than to let
          them do it manually.  A security conscious user will anyway
          use the registry entry to have better control.  */
-      if (w32_shgetfolderpath (NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE, 
-                               NULL, 0, path) >= 0) 
+      if (w32_shgetfolderpath (NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE,
+                               NULL, 0, path) >= 0)
         {
           char *tmp = malloc (strlen (path) + 6 + 1);
 
 	  strcpy (tmp, path);
 	  strcat (tmp, "\\gnupg");
-          
+
           dir = tmp;
-          
+
           /* Try to create the directory if it does not yet exists.  */
           if (access (dir, F_OK))
             CreateDirectory (dir, NULL);
@@ -508,9 +578,8 @@ default_homedir (void)
       if (!dir || !*dir)
         {
           char *tmp;
-          
-          tmp = read_w32_registry_string (NULL, "Software\\GNU\\GnuPG",
-                                          "HomeDir");
+
+          tmp = read_w32_registry_string (NULL, GNUPG_REGKEY, "HomeDir");
           if (tmp && !*tmp)
             {
               free (tmp);
@@ -524,7 +593,7 @@ default_homedir (void)
       else
         dir = xstrdup (dir);
     }
-  
+
   return dir;
 }
 
@@ -563,7 +632,7 @@ qp_decode (char *buffer, size_t length)
       }
     else
       *d++ = *s++;
-  
+
   return d - buffer;
 }
 
@@ -597,15 +666,15 @@ b64_decode (b64_state_t *state, char *buffer, size_t length)
       if (*s == '\n' || *s == ' ' || *s == '\r' || *s == '\t')
         continue;
       if (*s == '=')
-        { 
+        {
           /* Pad character: stop */
           if (idx == 1)
-            *d++ = val; 
+            *d++ = val;
           state->stop_seen = 1;
           break;
         }
 
-      if ((c = asctobin[*(unsigned char *)s]) == 255) 
+      if ((c = asctobin[*(unsigned char *)s]) == 255)
         {
           if (!state->invalid_encoding)
             log_debug ("%s: invalid base64 character %02X at pos %d skipped\n",
@@ -614,22 +683,22 @@ b64_decode (b64_state_t *state, char *buffer, size_t length)
           continue;
         }
 
-      switch (idx) 
+      switch (idx)
         {
-        case 0: 
+        case 0:
           val = c << 2;
           break;
-        case 1: 
+        case 1:
           val |= (c>>4)&3;
           *d++ = val;
           val = (c<<4)&0xf0;
           break;
-        case 2: 
+        case 2:
           val |= (c>>2)&15;
           *d++ = val;
           val = (c<<6)&0xc0;
           break;
-        case 3: 
+        case 3:
           val |= c&0x3f;
           *d++ = val;
           break;
@@ -637,7 +706,7 @@ b64_decode (b64_state_t *state, char *buffer, size_t length)
       idx = (idx+1) % 4;
     }
 
-  
+
   state->idx = idx;
   state->val = val;
   return d - buffer;
@@ -660,7 +729,7 @@ generate_boundary (char *buffer)
   *p++ = '=';
   *p++ = '-';
   *p++ = '=';
-  for (i=0; i < BOUNDARYSIZE-6; i++) 
+  for (i=0; i < BOUNDARYSIZE-6; i++)
     *p++ = bintoasc[rand () % 64];
   *p++ = '=';
   *p++ = '-';
@@ -670,3 +739,52 @@ generate_boundary (char *buffer)
   return buffer;
 }
 
+
+/* Fork and exec the program gioven in CMDLINE with /dev/null as
+   stdin, stdout and stderr.  Returns 0 on success.  */
+int
+gpgol_spawn_detached (const char *cmdline)
+{
+  int rc;
+  SECURITY_ATTRIBUTES sec_attr;
+  PROCESS_INFORMATION pi = { NULL, 0, 0, 0 };
+  STARTUPINFO si;
+  int cr_flags;
+  char *cmdline_copy;
+
+  memset (&sec_attr, 0, sizeof sec_attr);
+  sec_attr.nLength = sizeof sec_attr;
+  
+  memset (&si, 0, sizeof si);
+  si.cb = sizeof (si);
+  si.dwFlags = STARTF_USESHOWWINDOW;
+  si.wShowWindow = SW_SHOW;
+
+  cr_flags = (CREATE_DEFAULT_ERROR_MODE
+              | GetPriorityClass (GetCurrentProcess ())
+	      | CREATE_NEW_PROCESS_GROUP
+              | DETACHED_PROCESS); 
+
+  cmdline_copy = xstrdup (cmdline);
+  rc = CreateProcess (NULL,          /* No appliactionname, use CMDLINE.  */
+                      cmdline_copy,  /* Command line arguments.  */
+                      &sec_attr,     /* Process security attributes.  */
+                      &sec_attr,     /* Thread security attributes.  */
+                      TRUE,          /* Inherit handles.  */
+                      cr_flags,      /* Creation flags.  */
+                      NULL,          /* Environment.  */
+                      NULL,          /* Use current drive/directory.  */
+                      &si,           /* Startup information. */
+                      &pi            /* Returns process information.  */
+                      );
+  xfree (cmdline_copy);
+  if (!rc)
+    {
+      log_error_w32 (-1, "%s:%s: CreateProcess failed", SRCNAME, __func__);
+      return -1;
+    }
+
+  CloseHandle (pi.hThread); 
+  CloseHandle (pi.hProcess);
+  return 0;
+}

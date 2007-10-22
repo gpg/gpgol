@@ -80,26 +80,31 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_INITDIALOG:
       {
-        HDC hdc = GetDC (hDlg);
-        if (hdc)
-          {
-            int bits_per_pixel = GetDeviceCaps (hdc, BITSPIXEL);
-            HBITMAP bitmap;
+        /* We don't use this anymore.  Actually I don't know why we
+           used it at all.  Note that this unused code has been
+           converted to use LoadImage instead of LoadBitmap. */
+/*         HDC hdc = GetDC (hDlg); */
+/*         if (hdc) */
+/*           { */
+/*             int bits_per_pixel = GetDeviceCaps (hdc, BITSPIXEL); */
+/*             HANDLE bitmap; */
                 
-            ReleaseDC (hDlg, hdc);	
-            if (bits_per_pixel > 15)
-              {
-                bitmap = LoadBitmap (glob_hinst, MAKEINTRESOURCE(IDB_BANNER));
-                if (bitmap)
-                  {
-                    HBITMAP old = (HBITMAP) SendDlgItemMessage
-                      (hDlg, IDC_BITMAP, STM_SETIMAGE,
-                       IMAGE_BITMAP, (LPARAM)bitmap);
-                    if (old)
-                      DeleteObject (old);	
-                  }	
-              }		
-          }
+/*             if (bits_per_pixel > 15) */
+/*               { */
+/*                 bitmap = LoadImage (glob_hinst, MAKEINTRESOURCE(IDB_BANNER), */
+/*                                     IMAGE_BITMAP, 0, 0, */
+/*                                     LR_CREATEDIBSECTION | LR_LOADTRANSPARENT); */
+/*                 if (bitmap) */
+/*                   { */
+/*                     HBITMAP old = (HBITMAP) SendDlgItemMessage */
+/*                       (hDlg, IDC_BITMAP, STM_SETIMAGE, */
+/*                        IMAGE_BITMAP, (LPARAM)bitmap); */
+/*                     if (old) */
+/*                       DeleteObject (old);	 */
+/*                   }	 */
+/*               }		 */
+/*             ReleaseDC (hDlg, hdc);	 */
+/*           } */
         
 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
                       !!opt.enable_default_key);

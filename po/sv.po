@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-10-12 21:12+0200\n"
+"POT-Creation-Date: 2007-10-22 17:20+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -39,7 +39,7 @@ msgid ""
 "entire message again.  Then open this attachment."
 msgstr ""
 
-#: src/common.c:145
+#: src/common.c:215
 #, fuzzy
 msgid "GpgOL - Save decrypted attachment"
 msgstr "GPG - Spara dekrypterad bilaga"
@@ -206,106 +206,112 @@ msgstr "*** Notation start (signatur av: "
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: src/ext-commands.cpp:325
+#: src/ext-commands.cpp:408
 msgid "&Decrypt and verify message"
 msgstr "&Dekryptera och validera meddelandet"
 
-#: src/ext-commands.cpp:326
+#: src/ext-commands.cpp:409
 #, fuzzy
 msgid "&Verify signature"
 msgstr "FELAKTIG signatur!"
 
-#: src/ext-commands.cpp:327
+#: src/ext-commands.cpp:410
 msgid "&Display crypto information"
 msgstr ""
 
-#: src/ext-commands.cpp:353
+#: src/ext-commands.cpp:417 src/ext-commands.cpp:713
+msgid "Decrypt message and verify signature"
+msgstr "Dekryptera meddelandet och validera signaturen"
+
+#: src/ext-commands.cpp:424
 msgid "use S/MIME protocol"
 msgstr ""
 
-#: src/ext-commands.cpp:354
+#: src/ext-commands.cpp:425
 #, fuzzy
 msgid "&encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:355
+#: src/ext-commands.cpp:426
 #, fuzzy
 msgid "&sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:397
+#: src/ext-commands.cpp:430
+#, fuzzy
+msgid "Encrypt message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/ext-commands.cpp:431
+#, fuzzy
+msgid "Sign message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/ext-commands.cpp:444
 #, fuzzy
 msgid "GnuPG Certificate &Manager"
 msgstr "GPG-nyckel&hanterare"
 
-#: src/ext-commands.cpp:548
+#: src/ext-commands.cpp:448
+msgid "Open the certificate manager"
+msgstr ""
+
+#: src/ext-commands.cpp:590
 #, fuzzy
 msgid "Could not start certificate manager"
 msgstr "Kunde inte starta nyckelhanteraren"
 
-#: src/ext-commands.cpp:595
+#: src/ext-commands.cpp:641
 #, fuzzy
 msgid "Select this option to decrypt and verify the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:602
+#: src/ext-commands.cpp:648
 #, fuzzy
 msgid "Select this option to show information on the crypto status"
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:610 src/ext-commands.cpp:686
+#: src/ext-commands.cpp:656 src/ext-commands.cpp:732
 msgid "Check the signature now and display the result"
 msgstr ""
 
-#: src/ext-commands.cpp:617
+#: src/ext-commands.cpp:663
 #, fuzzy
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:624
+#: src/ext-commands.cpp:670
 msgid "Select this option to encrypt the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:631
+#: src/ext-commands.cpp:677
 msgid "Select this option to sign the message."
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:638
+#: src/ext-commands.cpp:684
 #, fuzzy
 msgid "Select this option to open the certificate manager"
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:667 src/ext-commands.cpp:761
-msgid "Decrypt message and verify signature"
-msgstr "Dekryptera meddelandet och validera signaturen"
-
-#: src/ext-commands.cpp:676
+#: src/ext-commands.cpp:722
 msgid "Show S/MIME status info"
 msgstr ""
 
-#: src/ext-commands.cpp:696
+#: src/ext-commands.cpp:742
 msgid "Use S/MIME for sign/encrypt"
 msgstr ""
 
-#: src/ext-commands.cpp:706 src/ext-commands.cpp:775
+#: src/ext-commands.cpp:752
 #, fuzzy
 msgid "Encrypt message with GPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:716 src/ext-commands.cpp:789
+#: src/ext-commands.cpp:762
 msgid "Sign message with GPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:726
+#: src/ext-commands.cpp:772
 msgid "Open the GpgOL certificate manager"
-msgstr ""
-
-#: src/ext-commands.cpp:803
-msgid "Use the S/MIME protocol"
-msgstr ""
-
-#: src/ext-commands.cpp:815
-msgid "Open the certificate manager"
 msgstr ""
 
 #: src/mapihelp.cpp:1183
@@ -418,12 +424,12 @@ msgstr ""
 msgid "Ad&vanced.."
 msgstr ""
 
-#: src/olflange-dlgs.cpp:222
+#: src/olflange-dlgs.cpp:227
 #, fuzzy
 msgid "The default certificate may not contain any spaces."
 msgstr "Standardnyckeln får inte innehålla några blanksteg."
 
-#: src/olflange-dlgs.cpp:244
+#: src/olflange-dlgs.cpp:249
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -434,11 +440,11 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:287
+#: src/olflange-dlgs.cpp:292
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:293
+#: src/olflange-dlgs.cpp:298
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr ""

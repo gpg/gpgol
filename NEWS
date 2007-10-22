@@ -1,7 +1,19 @@
-Noteworthy changes for version 0.10.1
+Noteworthy changes for version 0.10.1 (2007-10-22)
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
+
+    - Signed and encrypt has not yet been implemented
+    - Under OL2007 some menu entries are missing.
+
+ * Auto start the server.
+
+ * Code cleanups. 
+
+ * Made all dialogs language neutral.
+
+ * The manual has some notes about the Registry usage and new MAPI
+   properties.
 
 
 Noteworthy changes for version 0.10.0 (2007-10-11)
