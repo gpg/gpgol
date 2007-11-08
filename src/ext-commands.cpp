@@ -455,21 +455,19 @@ GpgolExtCommands::InstallCommands (
 /* Called by Exchange when a user selects a command.  Return value:
    S_OK if command is handled, otherwise S_FALSE. */
 STDMETHODIMP 
-GpgolExtCommands::DoCommand (
-                  LPEXCHEXTCALLBACK pEECB, // The Exchange Callback Interface.
-                  UINT nCommandID)         // The command id.
+GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 {
   HRESULT hr;
-  HWND hWnd = NULL;
+  HWND hwnd = NULL;
   LPMESSAGE message = NULL;
   LPMDB mdb = NULL;
       
-  if (FAILED (pEECB->GetWindow (&hWnd)))
-    hWnd = NULL;
+  if (FAILED (eecb->GetWindow (&hwnd)))
+    hwnd = NULL;
 
   log_debug ("%s:%s: commandID=%u (%#x) context=%s hwnd=%p\n",
              SRCNAME, __func__, nCommandID, nCommandID, 
-             ext_context_name (m_lContext), hWnd);
+             ext_context_name (m_lContext), hwnd);
 
   if (nCommandID == SC_CLOSE && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
@@ -482,7 +480,7 @@ GpgolExtCommands::DoCommand (
       DISPPARAMS dispparams;
       VARIANT aVariant;
       
-      pDisp = find_outlook_property (pEECB, "Close", &dispid);
+      pDisp = find_outlook_property (eecb, "Close", &dispid);
       if (pDisp)
         {
           /* Note that there is a report on the Net from 2005 by Amit
@@ -532,10 +530,11 @@ GpgolExtCommands::DoCommand (
   else if (nCommandID == m_nCmdDecrypt
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_decrypt (message, m_pExchExt->getMsgtype (pEECB), 1);
+          message_decrypt (message, m_pExchExt->getMsgtype (eecb), 1);
+          message_display_handler (eecb, hwnd);
 	}
       ul_release (message);
       ul_release (mdb);
@@ -543,10 +542,10 @@ GpgolExtCommands::DoCommand (
   else if (nCommandID == m_nCmdCheckSig
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_verify (message, m_pExchExt->getMsgtype (pEECB), 1);
+          message_verify (message, m_pExchExt->getMsgtype (eecb), 1);
 	}
       else
         log_debug_w32 (hr, "%s:%s: CmdCheckSig failed", SRCNAME, __func__);
@@ -556,10 +555,10 @@ GpgolExtCommands::DoCommand (
   else if (nCommandID == m_nCmdShowInfo
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_show_info (message, hWnd);
+          message_show_info (message, hwnd);
 	}
       ul_release (message);
       ul_release (mdb);
@@ -574,13 +573,13 @@ GpgolExtCommands::DoCommand (
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
-      check_menu (pEECB, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
+      check_menu (eecb, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
     }
     else if (nCommandID == m_nCmdSign
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
-      check_menu (pEECB, m_nCmdSign, m_pExchExt->m_gpgSign);
+      check_menu (eecb, m_nCmdSign, m_pExchExt->m_gpgSign);
     }
   else if (nCommandID == m_nCmdKeyManager
            && m_lContext == EECONTEXT_VIEWER)
@@ -593,10 +592,10 @@ GpgolExtCommands::DoCommand (
   else if (nCommandID == m_nCmdDebug1
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      hr = pEECB->GetObject (&mdb, (LPMAPIPROP *)&message);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          open_inspector (pEECB, message);
+          open_inspector (eecb, message);
 	}
       ul_release (message);
       ul_release (mdb);
@@ -628,11 +627,11 @@ GpgolExtCommands::InitMenu(LPEXCHEXTCALLBACK eecb)
 
 
 /* Called by Exchange when the user requests help for a menu item.
-   PEECP is the pointer to Exchange Callback Interface.  NCOMMANDID is
+   EECB is the pointer to Exchange Callback Interface.  NCOMMANDID is
    the command id.  Return value: S_OK when it is a menu item of this
    plugin and the help was shown; otherwise S_FALSE.  */
 STDMETHODIMP 
-GpgolExtCommands::Help (LPEXCHEXTCALLBACK pEECB, UINT nCommandID)
+GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 {
   if (nCommandID == m_nCmdDecrypt && 
       m_lContext == EECONTEXT_READNOTEMESSAGE) 

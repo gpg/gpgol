@@ -132,7 +132,7 @@ GpgolItemEvents::OnOpenComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   log_debug ("%s:%s: received, flags=%#lx", SRCNAME, __func__, flags);
 
-  /* If the message has been processed by is (i.e. in OnOpen), we now
+  /* If the message has been processed by us (i.e. in OnOpen), we now
      use our own display code.  */
   if (!flags && m_processed)
     {

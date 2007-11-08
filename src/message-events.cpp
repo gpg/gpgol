@@ -128,7 +128,8 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP 
 GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
-  log_debug ("%s:%s: received\n", SRCNAME, __func__);
+  log_debug ("%s:%s: received; flags=%#lx m_processed=%d\n",
+             SRCNAME, __func__, flags, m_processed);
 
   /* If the message has been processed by is (i.e. in OnRead), we now
      use our own display code.  */

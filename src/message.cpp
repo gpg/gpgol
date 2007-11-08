@@ -105,7 +105,7 @@ message_incoming_handler (LPMESSAGE message, msgtype_t msgtype)
 }
 
 
-/* Common Code ise by OnReadComplete and OnOpenComplete to display a
+/* Common Code used by OnReadComplete and OnOpenComplete to display a
    modified message.   Returns true if the message was encrypted.  */
 bool
 message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)

@@ -1,3 +1,15 @@
+2007-10-29  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (create_top_signing_header): Add arg FIRST.
+	(mime_sign): Factor allmost all code out to ..
+	(do_mime_sign): .. new function.
+	(create_mapi_attachment): Add arg TEMPSIGN.
+	(delete_all_attachments): Adjust for that.
+	(mime_encrypt): Factor some code out to ..
+	(create_top_encryption_header): .. new.
+	(write_tempsign_attachment): New.
+	(mime_sign_encrypt): Implement.
+
 2007-10-22  Werner Koch  <wk@g10code.com>
 
 	* engine-assuan.c (connect_uiserver): Try to start the server.

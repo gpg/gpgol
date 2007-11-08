@@ -44,6 +44,12 @@
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
 
+/* The filename of the attachment we create as the result of sign or
+   encrypt operation.  */
+#define MIMEATTACHFILENAME "gpgolXXX.dat"
+/* The filename of another temporary attachment.  */
+#define TMPMIMEATTACHFILENAME "gpgolXX0.dat"
+
 static const char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
 
@@ -136,9 +142,11 @@ check_protocol (protocol_t protocol)
    prepare the MIME message.  On sucess the stream to write the data
    to is stored at STREAM and the attachment object itself is the
    returned.  The caller needs to call SaveChanges.  Returns NULL on
-   failure in which case STREAM will be set to NULL.  */
+   failure in which case STREAM will be set to NULL.  If TEMPSIGN is
+   set the attchment is used only as a temporary buffer and will later
+   be part of an encrypted mIME body.  */
 static LPATTACH
-create_mapi_attachment (LPMESSAGE message, sink_t sink)
+create_mapi_attachment (LPMESSAGE message, sink_t sink, int tempsign)
 {
   HRESULT hr;
   ULONG pos;
@@ -181,7 +189,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
 
   /* We better insert a short filename. */
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = "gpgolXXX.dat";
+  prop.Value.lpszA = tempsign? TMPMIMEATTACHFILENAME : MIMEATTACHFILENAME;
   hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
   if (hr)
     {
@@ -917,6 +925,38 @@ write_attachments (sink_t sink,
 }
 
 
+/* Write the tempsign attachment.  */
+static int
+write_tempsign_attachment (sink_t sink, 
+                           LPMESSAGE message, mapi_attach_item_t *table)
+{
+  int idx, rc;
+  char *buffer;
+  size_t buflen;
+
+  for (idx=0; table && !table[idx].end_of_table; idx++)
+    {
+      if (table[idx].attach_type == ATTACHTYPE_MOSSTEMPL
+          && table[idx].filename
+          && !strcmp (table[idx].filename, TMPMIMEATTACHFILENAME))
+        {
+          buffer = mapi_get_attach (message, table+idx, &buflen);
+          if (!buffer)
+            {
+              log_debug ("Tempsign attachment at index %d not found\n", idx);
+              return -1;
+            }
+          /* Write the attachment out as is.  */
+          rc = write_buffer (sink, buffer, buflen);
+          xfree (buffer);
+          return rc;
+        }
+    }
+  log_error ("Tempsign attachment not found\n");
+  return -1;  /* Ooops.  */
+}
+
+
 /* Delete all attachments from TABLE except for the one we just created */
 static int
 delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
@@ -927,7 +967,9 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
   if (table)
     for (idx=0; !table[idx].end_of_table; idx++)
       {
-        if (table[idx].attach_type == ATTACHTYPE_MOSSTEMPL)
+        if (table[idx].attach_type == ATTACHTYPE_MOSSTEMPL
+            && table[idx].filename
+            && !strcmp (table[idx].filename, MIMEATTACHFILENAME));
           continue;
         hr = IMessage_DeleteAttach (message, table[idx].mapipos, 0, NULL, 0);
         if (hr)
@@ -1103,30 +1145,32 @@ collect_signature (void *opaque, const void *data, size_t datalen)
 
 
 /* Helper to create the signing header.  This includes enough space
-   for later fixup of the micalg parameter.  */
- static void
+   for later fixup of the micalg parameter.  The MIME version is only
+   written if FIRST is set.  */
+static void
 create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
-                           const char *boundary, const char *micalg)
+                           int first, const char *boundary, const char *micalg)
 {
   snprintf (buffer, buflen,
-            "MIME-Version: 1.0\r\n"
+            "%s"
             "Content-Type: multipart/signed;\r\n"
             "\tprotocol=\"application/%s\";\r\n"
             "\tmicalg=%-15.15s;\r\n"
             "\tboundary=\"%s\"\r\n"
             "\r\n",
+            first? "MIME-Version: 1.0\r\n":"",
             (protocol==PROTOCOL_OPENPGP? "pgp-signature":"pkcs7-signature"),
             micalg, boundary);
 }
 
-/* Sign the MESSAGE using PROTOCOL.  If PROTOCOL is PROTOCOL_UNKNOWN
-   the engine decides what protocol to use.  On return MESSAGE is
-   modified so that sending it will result in a properly MOSS (that is
-   PGP or S/MIME) signed message.  On failure the function tries to
-   keep the original message intact but there is no 100% guarantee for
-   it. */
-int 
-mime_sign (LPMESSAGE message, protocol_t protocol)
+
+/* Main body of mime_sign without the the code to delete the original
+   attachments.  On success the function returns the current
+   attachment table at R_ATT_TABLE or sets this to NULL on error.  If
+   TEMPSIGN is set the result will later be encrypted.  */
+static int 
+do_mime_sign (LPMESSAGE message, protocol_t protocol, 
+              mapi_attach_item_t **r_att_table, int tempsign)
 {
   int result = -1;
   int rc;
@@ -1144,6 +1188,8 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   engine_filter_t filter;
   struct databuf_s sigbuffer;
 
+  *r_att_table = NULL;
+
   memset (sink, 0, sizeof *sink);
   memset (hashsink, 0, sizeof *hashsink);
   memset (&sigbuffer, 0, sizeof sigbuffer);
@@ -1152,7 +1198,7 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   if (protocol == PROTOCOL_UNKNOWN)
     return -1;
 
-  attach = create_mapi_attachment (message, sink);
+  attach = create_mapi_attachment (message, sink, tempsign);
   if (!attach)
     return -1;
 
@@ -1180,7 +1226,7 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   /* Write the top header.  */
   generate_boundary (boundary);
   create_top_signing_header (top_header, sizeof top_header,
-                             protocol, boundary, "xxx");
+                             protocol, 1, boundary, "xxx");
   if ((rc = write_string (sink, top_header)))
     goto failure;
 
@@ -1287,7 +1333,7 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
       }
 
     create_top_signing_header (top_header, sizeof top_header,
-                               protocol, boundary, "pgp-sha1");
+                               protocol, 1, boundary, "pgp-sha1");
 
     hr = IStream_Write (stream, top_header, strlen (top_header), NULL);
     if (hr)
@@ -1312,22 +1358,42 @@ mime_sign (LPMESSAGE message, protocol_t protocol)
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
-  if (finalize_message (message, att_table))
-    goto failure;
-
-  mapi_to_mime (message, "c:\\tmp\\x.msg");
-
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
 
  failure:
   engine_cancel (filter);
   cancel_mapi_attachment (&attach, sink);
   xfree (body);
-  mapi_release_attach_table (att_table);
+  if (result)
+    mapi_release_attach_table (att_table);
+  else
+    *r_att_table = att_table;
   xfree (sigbuffer.buf);
   return result;
 }
 
+
+/* Sign the MESSAGE using PROTOCOL.  If PROTOCOL is PROTOCOL_UNKNOWN
+   the engine decides what protocol to use.  On return MESSAGE is
+   modified so that sending it will result in a properly MOSS (that is
+   PGP or S/MIME) signed message.  On failure the function tries to
+   keep the original message intact but there is no 100% guarantee for
+   it. */
+int 
+mime_sign (LPMESSAGE message, protocol_t protocol)
+{
+  int result = -1;
+  mapi_attach_item_t *att_table;
+
+  if (!do_mime_sign (message, protocol, &att_table, 0))
+    {
+      if (!finalize_message (message, att_table))
+        result = 0;
+    }
+
+  mapi_release_attach_table (att_table);
+  return result;
+}
 
 
 
@@ -1443,6 +1509,61 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
 #endif /*Not used.*/
 
 
+/* Helper from mime_encrypt.  BOUNDARY is a buffer of at least
+   BOUNDARYSIZE+1 bytes which will be set on return from that
+   function.  */
+static int
+create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
+{
+  int rc;
+
+  if (protocol == PROTOCOL_SMIME)
+    {
+      *boundary = 0;
+      rc = write_multistring (sink,
+                              "MIME-Version: 1.0\r\n"
+                              "Content-Type: application/pkcs7-mime;\r\n"
+                              "\tsmime-type=enveloped-data;\r\n"
+                              "\tname=\"smime.p7m\"\r\n"
+                              "Content-Transfer-Encoding: base64\r\n",
+                              NULL);
+    }
+  else
+    {
+      generate_boundary (boundary);
+      rc = write_multistring (sink,
+                              "MIME-Version: 1.0\r\n"
+                              "Content-Type: multipart/encrypted;\r\n"
+                              "\tprotocol=\"application/pgp-encrypted\";\r\n",
+                              "\tboundary=\"", boundary, "\"\r\n",
+                              NULL);
+      if (rc)
+        return rc;
+
+      /* Write the PGP/MIME encrypted part.  */
+      rc = write_boundary (sink, boundary, 0);
+      if (rc)
+        return rc;
+      rc = write_multistring (sink,
+                              "Content-Type: application/pgp-encrypted\r\n"
+                              "\r\n"
+                              "Version: 1\r\n", NULL);
+      if (rc)
+        return rc;
+      
+      /* And start the second part.  */
+      rc = write_boundary (sink, boundary, 0);
+      if (rc)
+        return rc;
+      rc = write_multistring (sink,
+                              "Content-Type: application/octet-stream\r\n"
+                              "\r\n", NULL);
+     }
+
+  return rc;
+}
+
+
 /* Encrypt the MESSAGE.  */
 int 
 mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
@@ -1464,7 +1585,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
 
-  attach = create_mapi_attachment (message, sink);
+  attach = create_mapi_attachment (message, sink, 0);
   if (!attach)
     return -1;
 
@@ -1496,50 +1617,9 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
     }
 
   /* Write the top header.  */
-  if (protocol == PROTOCOL_SMIME)
-    {
-      *boundary = 0;
-      rc = write_multistring (sink,
-                              "MIME-Version: 1.0\r\n"
-                              "Content-Type: application/pkcs7-mime;\r\n"
-                              "\tsmime-type=enveloped-data;\r\n"
-                              "\tname=\"smime.p7m\"\r\n"
-                              "Content-Transfer-Encoding: base64\r\n",
-                              NULL);
-    }
-  else
-    {
-      generate_boundary (boundary);
-      rc = write_multistring (sink,
-                              "MIME-Version: 1.0\r\n"
-                              "Content-Type: multipart/encrypted;\r\n"
-                              "\tprotocol=\"application/pgp-encrypted\";\r\n",
-                              "\tboundary=\"", boundary, "\"\r\n",
-                              NULL);
-    }
+  rc = create_top_encryption_header (sink, protocol, boundary);
   if (rc)
     goto failure;
-
-  if (protocol == PROTOCOL_OPENPGP)
-    {
-      /* Write the PGP/MIME encrypted part.  */
-      if ((rc = write_boundary (sink, boundary, 0)))
-        goto failure;
-      if ((rc=write_multistring (sink,
-                                 "Content-Type: application/pgp-encrypted\r\n"
-                                 "\r\n"
-                                 "Version: 1\r\n",
-                                 NULL)))
-        goto failure;
-      
-      /* And start the second part.  */
-      if ((rc = write_boundary (sink, boundary, 0)))
-        goto failure;
-      if ((rc=write_multistring (sink,
-                                 "Content-Type: application/octet-stream\r\n"
-                                 "\r\n", NULL)))
-        goto failure;
-    }
 
   /* Create a new sink for encrypting the following stuff.  */
   encsink->cb_data = filter;
@@ -1604,8 +1684,104 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 }
 
 
+
+
+/* Sign and Encrypt the MESSAGE.  */
 int 
 mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 {
-  return -1;
+  int result = -1;
+  int rc = 0;
+  LPATTACH attach;
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  struct sink_s encsinkmem;
+  sink_t encsink = &encsinkmem;
+  char boundary[BOUNDARYSIZE+1];
+  mapi_attach_item_t *att_table = NULL;
+  engine_filter_t filter;
+
+  memset (sink, 0, sizeof *sink);
+  memset (encsink, 0, sizeof *encsink);
+
+  attach = create_mapi_attachment (message, sink, 0);
+  if (!attach)
+    return -1;
+
+  /* Prepare the encryption.  We do this early as it is quite common
+     that some recipients are not be available and thus the encryption
+     will fail early. */
+  TRACEPOINT ();
+  if (engine_create_filter (&filter, write_buffer_for_cb, sink))
+    goto failure;
+  TRACEPOINT ();
+  if ((rc=engine_encrypt_start (filter, protocol, recipients, &protocol)))
+    goto failure;
+
+  TRACEPOINT ();
+  protocol = check_protocol (protocol);
+  if (protocol == PROTOCOL_UNKNOWN)
+    goto failure;
+  TRACEPOINT ();
+
+  /* Now sign the message.  This creates another attchment with the
+     complete MIME object of the signed message.  We can't do the
+     encryption in streaming mode while running the encryption because
+     we need to fix up that ugly micalg parameter after having created
+     the signature.  */
+  if (!do_mime_sign (message, protocol, &att_table, 1))
+    goto failure;
+
+  TRACEPOINT ();
+  /* Write the top header.  */
+  rc = create_top_encryption_header (sink, protocol, boundary);
+  if (rc)
+    goto failure;
+
+  TRACEPOINT ();
+  /* Create a new sink for encrypting the temporary attachment with
+     the signed message.  */
+  encsink->cb_data = filter;
+  encsink->writefnc = sink_encryption_write;
+  
+  rc = write_tempsign_attachment (encsink, message, att_table);
+  if (rc)
+    goto failure;
+
+  TRACEPOINT ();
+  /* Flush the encryption sink and wait for the encryption to get
+     ready.  */
+  if ((rc = write_buffer (encsink, NULL, 0)))
+    goto failure;
+  TRACEPOINT ();
+  if ((rc = engine_wait (filter)))
+    goto failure;
+  TRACEPOINT ();
+  filter = NULL; /* Not valid anymore.  */
+  encsink->cb_data = NULL; /* Not needed anymore.  */
+  
+  /* Write the final boundary (for OpenPGP) and finish the attachment.  */
+  if (*boundary && (rc = write_boundary (sink, boundary, 1)))
+    goto failure;
+  
+  TRACEPOINT ();
+  if (close_mapi_attachment (&attach, sink))
+    goto failure;
+
+  TRACEPOINT ();
+  if (finalize_message (message, att_table))
+    goto failure;
+
+  TRACEPOINT ();
+  result = 0;  /* Everything is fine, fall through the cleanup now.  */
+
+ failure:
+  TRACEPOINT ();
+  if (result)
+    log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc, 
+               gpg_strerror (rc), gpg_strsource (rc));
+  engine_cancel (filter);
+  cancel_mapi_attachment (&attach, sink);
+  mapi_release_attach_table (att_table);
+  return result;
 }
