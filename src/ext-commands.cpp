@@ -442,7 +442,7 @@ GpgolExtCommands::InstallCommands (
         "@", NULL,
         _(">GnuPG protocol"), NULL,
         _("auto"),   &m_nCmdProtoAuto,        
-        _("OpenPGP"),&m_nCmdProtoPgpmime,        
+        _("PGP/MIME"),&m_nCmdProtoPgpmime,        
         _("S/MIME"), &m_nCmdProtoSmime,        
           "<", NULL,
         _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
@@ -727,7 +727,7 @@ GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       MessageBox (m_hWnd,
-                  _("Select this option to select the OpenPGP protocol."),
+                  _("Select this option to select the PGP/MIME protocol."),
                   "GpgOL", MB_OK);	
     } 
   else if (nCommandID == m_nCmdProtoSmime

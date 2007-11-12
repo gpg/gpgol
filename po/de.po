@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-10-22 17:20+0200\n"
-"PO-Revision-Date: 2007-10-22 17:21+0200\n"
+"POT-Creation-Date: 2007-11-12 15:15+0100\n"
+"PO-Revision-Date: 2007-11-12 15:14+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -61,7 +61,7 @@ msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
 "\n"
-"This is limited to the OpenPGP protocol and thus S/MIME protected message "
+"This is limited to the PGP/MIME protocol and thus S/MIME protected message "
 "are not readable."
 msgstr ""
 "Der Dienst für GpgOLs Benutzerschnittstelle ist nicht verfügbar oder "
@@ -70,7 +70,7 @@ msgstr ""
 "Diese ist allerdings sehr vereinfacht und kann z.B. keine S/MIME "
 "verschlüsselten Nachrichten entschlüsseln."
 
-#: src/engine.c:367
+#: src/engine.c:367 src/ext-commands.cpp:659 src/main.c:603 src/main.c:609
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -208,107 +208,145 @@ msgstr "*** Anfang Notation (Unterschrift von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/ext-commands.cpp:408
+#: src/ext-commands.cpp:427
 msgid "&Decrypt and verify message"
 msgstr "Entschlüsseln/Prüfen der Nachricht"
 
-#: src/ext-commands.cpp:409
+#: src/ext-commands.cpp:428
 msgid "&Verify signature"
 msgstr "&Unterschrift prüfen"
 
-#: src/ext-commands.cpp:410
+#: src/ext-commands.cpp:429
 msgid "&Display crypto information"
 msgstr "~Krypto Informationen anzeigen"
 
-#: src/ext-commands.cpp:417 src/ext-commands.cpp:713
+#: src/ext-commands.cpp:436 src/ext-commands.cpp:787
 msgid "Decrypt message and verify signature"
 msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
 
-#: src/ext-commands.cpp:424
-msgid "use S/MIME protocol"
-msgstr "S/MIME verwenden"
+#: src/ext-commands.cpp:443
+msgid ">GnuPG protocol"
+msgstr ">GnuPG Protokoll"
 
-#: src/ext-commands.cpp:425
+#: src/ext-commands.cpp:444
+msgid "auto"
+msgstr "automatisch"
+
+#: src/ext-commands.cpp:445
+msgid "PGP/MIME"
+msgstr "PGP/MIME"
+
+#: src/ext-commands.cpp:446
+msgid "S/MIME"
+msgstr "S/MIME"
+
+#: src/ext-commands.cpp:448
 msgid "&encrypt message with GnuPG"
 msgstr "Nachricht mit GnuPG verschlüsseln"
 
-#: src/ext-commands.cpp:426
+#: src/ext-commands.cpp:449
 msgid "&sign message with GnuPG"
 msgstr "Nachricht mit GnuPG unterschreiben"
 
-#: src/ext-commands.cpp:430
+#: src/ext-commands.cpp:453
 msgid "Encrypt message with GnuPG"
 msgstr "Nachricht mit GnuPG verschlüsseln"
 
-#: src/ext-commands.cpp:431
+#: src/ext-commands.cpp:454
 msgid "Sign message with GnuPG"
 msgstr "Nachricht mit GnuPG unterschreiben"
 
-#: src/ext-commands.cpp:444
+#: src/ext-commands.cpp:489
 msgid "GnuPG Certificate &Manager"
 msgstr "GnuPG Zertifikats&verwaltung"
 
-#: src/ext-commands.cpp:448
+#: src/ext-commands.cpp:493
 msgid "Open the certificate manager"
 msgstr "Die Zertifikatsverwaltung öffnen"
 
-#: src/ext-commands.cpp:590
+#: src/ext-commands.cpp:658
 msgid "Could not start certificate manager"
 msgstr "Die Zertifikatsverwaltung konnte nicht aufgerufen werden"
 
-#: src/ext-commands.cpp:641
+#: src/ext-commands.cpp:701
 msgid "Select this option to decrypt and verify the message."
 msgstr ""
 "Wählen Sie diese Option um die Nachricht zu entschlüsseln bzw. zu "
 "verifizieren."
 
-#: src/ext-commands.cpp:648
+#: src/ext-commands.cpp:708
 msgid "Select this option to show information on the crypto status"
 msgstr ""
 "Wählen Sie diese Option um Informationen über den Krypto-Status der "
 "Nachricht anzuzeigen."
 
-#: src/ext-commands.cpp:656 src/ext-commands.cpp:732
+#: src/ext-commands.cpp:716 src/ext-commands.cpp:806
 msgid "Check the signature now and display the result"
 msgstr "Die digitale Unterschrift jetzt prüfen und das Resultat anzeigen"
 
-#: src/ext-commands.cpp:663
+#: src/ext-commands.cpp:723
+msgid "Select this option to automatically select the protocol."
+msgstr "Wählen Sie diese Option zum das Protokoll automatisch auszuwählen."
+
+#: src/ext-commands.cpp:730
+msgid "Select this option to select the PGP/MIME protocol."
+msgstr "Wählen Sie diese Option zum das PGP/MIME Protokoll auszuwählen."
+
+#: src/ext-commands.cpp:737
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Wählen Sie diese Option zum das S/MIME Protokoll auszuwählen."
 
-#: src/ext-commands.cpp:670
+#: src/ext-commands.cpp:744
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/ext-commands.cpp:677
+#: src/ext-commands.cpp:751
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
 
-#: src/ext-commands.cpp:684
+#: src/ext-commands.cpp:758
 msgid "Select this option to open the certificate manager"
 msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."
 
-#: src/ext-commands.cpp:722
+#: src/ext-commands.cpp:796
 msgid "Show S/MIME status info"
 msgstr "S/MIME Status Informationen anzeigen"
 
-#: src/ext-commands.cpp:742
+#: src/ext-commands.cpp:816
 msgid "Use S/MIME for sign/encrypt"
 msgstr "S/MIME zum signieren/verschlüsseln verwenden"
 
-#: src/ext-commands.cpp:752
+#: src/ext-commands.cpp:826
 msgid "Encrypt message with GPG"
 msgstr "Nachricht mit GnuPG unterschreiben"
 
-#: src/ext-commands.cpp:762
+#: src/ext-commands.cpp:836
 msgid "Sign message with GPG"
 msgstr "Nachricht mit GnuPG unterschreiben"
 
-#: src/ext-commands.cpp:772
+#: src/ext-commands.cpp:846
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
-#: src/mapihelp.cpp:1183
+#: src/main.c:602
+#, c-format
+msgid "Note: Using compatibility flags: %s"
+msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
+
+#: src/main.c:608
+#, c-format
+msgid ""
+"Note: Writing debug logs to\n"
+"\n"
+"\"%s\""
+msgstr ""
+"Notiz: Debug-Logausgaben werden nach\n"
+"\n"
+"\"%s\"\n"
+"\n"
+"geschrieben."
+
+#: src/mapihelp.cpp:1193
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -318,7 +356,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:1678
+#: src/mapihelp.cpp:1739
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -326,7 +364,7 @@ msgstr ""
 "[Aufgrund eines Verarbeitungsfehlers in GpgOL ist der Inhalt dieser "
 "Nachricht nicht sichtbar.]"
 
-#: src/message-events.cpp:214
+#: src/message-events.cpp:215
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -337,13 +375,13 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/message.cpp:130
+#: src/message.cpp:131
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 "[Krypto-Operation ist fehlgeschlagen - Der Text der Nachricht kann nicht "
 "angezeigt werden.]"
 
-#: src/message.cpp:159
+#: src/message.cpp:220
 #, c-format
 msgid ""
 "Message class: %s\n"
@@ -356,29 +394,29 @@ msgstr ""
 "Struktur der Nachricht:\n"
 "%s"
 
-#: src/message.cpp:167
+#: src/message.cpp:228
 msgid "GpgOL - Message Information"
 msgstr "GpgOL - Informationen zu der Nachricht"
 
-#: src/message.cpp:750
+#: src/message.cpp:814
 msgid "No recipients to encrypt to are given"
 msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
 
-#: src/message.cpp:766
+#: src/message.cpp:830
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "Verschlüsselungsfehler (%s)"
 
-#: src/message.cpp:787
+#: src/message.cpp:851
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "Unterschrifterstellungsfehler (%s)"
 
-#: src/mimeparser.c:929
+#: src/mimeparser.c:956
 msgid "Error writing to stream"
 msgstr "Dateischreibfehler"
 
-#: src/mimeparser.c:930
+#: src/mimeparser.c:957
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
@@ -391,47 +429,51 @@ msgid "&Sign new messages by default"
 msgstr "Neue Nachrichten per Voreinstellung signieren"
 
 #: src/olflange-dlgs.cpp:47
+msgid "Use PGP/MIME by default"
+msgstr "PGP/MIME per Voreinstellung verwenden"
+
+#: src/olflange-dlgs.cpp:48
 msgid "Use S/MIME by default"
 msgstr "S/MIME per Voreinstellung verwenden"
 
-#: src/olflange-dlgs.cpp:48
+#: src/olflange-dlgs.cpp:49
 msgid "Enable the S/MIME support"
 msgstr "S/MIME Unterstützung einschalten"
 
-#: src/olflange-dlgs.cpp:50
+#: src/olflange-dlgs.cpp:51
 msgid "Also encrypt message with the default certificate"
 msgstr "Nachricht ebenfalls an das voreingestellte Zertifikat verschlüsseln"
 
-#: src/olflange-dlgs.cpp:51
+#: src/olflange-dlgs.cpp:52
 msgid "Also decrypt in preview window"
 msgstr "Auch im Vorschaufenster entschlüsseln"
 
-#: src/olflange-dlgs.cpp:52
+#: src/olflange-dlgs.cpp:53
 msgid "Show HTML view if possible"
 msgstr "HTML Darstellung anzeigen wenn möglich"
 
-#: src/olflange-dlgs.cpp:54
+#: src/olflange-dlgs.cpp:55
 msgid "Passphrase"
 msgstr "Passphrase"
 
-#: src/olflange-dlgs.cpp:55
+#: src/olflange-dlgs.cpp:56
 msgid "Cache &passphrase for"
 msgstr "Passphrase speichern für"
 
-#: src/olflange-dlgs.cpp:56
+#: src/olflange-dlgs.cpp:57
 msgid "minutes"
 msgstr "Minuten"
 
-#: src/olflange-dlgs.cpp:58
+#: src/olflange-dlgs.cpp:59
 msgid "Ad&vanced.."
 msgstr "&Erweitert..."
 
-#: src/olflange-dlgs.cpp:227
+#: src/olflange-dlgs.cpp:258
 msgid "The default certificate may not contain any spaces."
 msgstr ""
 "Der Bezeichner für das Standardzertifikat darf keine Leerzeichen enthalten."
 
-#: src/olflange-dlgs.cpp:249
+#: src/olflange-dlgs.cpp:280
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -450,11 +492,11 @@ msgstr ""
 "kann."
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:292
+#: src/olflange-dlgs.cpp:329
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 "GpgOL ist ein Plugin für Microsoft Outlook, welches es ermöglicht\n"
-"Nachrichten mittels der Internet-Standards OpenPGP oder S/MIME\n"
+"Nachrichten mittels der Internet-Standards PGP/MIME oder S/MIME\n"
 "zu verschlüsseln und digital zu signieren.  Im Hintergrund wird\n"
 "dazu die GnuPG Software (<http://www.gnupg.org/>) benutzt.\n"
 "Aktuelle Informationen zu GpgOL erhalten Sie durch eine Mausklick\n"
@@ -475,7 +517,7 @@ msgstr ""
 "Public License erhalten haben.  Falls nicht, finden Sie diese\n"
 "unter der Webadresse <http://www.gnu.org/licenses/>."
 
-#: src/olflange-dlgs.cpp:298
+#: src/olflange-dlgs.cpp:335
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
@@ -632,12 +674,15 @@ msgid "also known as"
 msgstr "auch bekannt als"
 
 #: src/verify-dialog.c:244
-msgid "OpenPGP Verification Result"
-msgstr "OpenPGP Prüfungsresultat"
+msgid "PGP/MIME Verification Result"
+msgstr "PGP/MIME Prüfungsresultat"
 
 #: src/verify-dialog.c:247
 msgid "S/MIME Verification Result"
 msgstr "S/MIME Prüfungsresultat"
+
+#~ msgid "use S/MIME protocol"
+#~ msgstr "S/MIME verwenden"
 
 #~ msgid "Use the S/MIME protocol"
 #~ msgstr "S/MIME Unterstützung einschalten"

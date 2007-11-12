@@ -1,4 +1,4 @@
-Noteworthy changes for version 0.10.2
+Noteworthy changes for version 0.10.2 (2007-11-12)
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
@@ -7,6 +7,7 @@ Noteworthy changes for version 0.10.2
 
  * New menu items to select the default protocol.
 
+ * Code cleanups.
 
 Noteworthy changes for version 0.10.1 (2007-10-22)
 ==================================================

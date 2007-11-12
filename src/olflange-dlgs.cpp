@@ -44,7 +44,7 @@ set_labels (HWND dlg)
   static struct { int itemid; const char *label; } labels[] = {
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
-    { IDC_OPENPGP_DEFAULT,  N_("Use OPENPGP by default")},
+    { IDC_OPENPGP_DEFAULT,  N_("Use PGP/MIME by default")},
     { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
     { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
     { IDC_ENCRYPT_WITH_STANDARD_KEY, 

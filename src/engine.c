@@ -362,7 +362,7 @@ engine_init (void)
       MessageBox (NULL,
                   _("The user interface server is not available or does "
                     "not work.  Using an internal user interface.\n\n"
-                    "This is limited to the OpenPGP protocol and "
+                    "This is limited to the PGP/MIME protocol and "
                     "thus S/MIME protected message are not readable."),
                   _("GpgOL"), MB_ICONWARNING|MB_OK);
       err = op_gpgme_init ();

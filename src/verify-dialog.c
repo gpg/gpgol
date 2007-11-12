@@ -241,7 +241,7 @@ verify_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
           switch (ctx->protocol)
             {
             case GPGME_PROTOCOL_OpenPGP:
-              s = _("OpenPGP Verification Result");
+              s = _("PGP/MIME Verification Result");
               break;
             case GPGME_PROTOCOL_CMS:
               s = _("S/MIME Verification Result");
