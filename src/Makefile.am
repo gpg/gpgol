@@ -11,8 +11,10 @@
 
 ## Process this file with automake to produce Makefile.in
 
+unused_sources = item-events.cpp 
+
 bin_PROGRAMS = gpgol 
-EXTRA_DIST = versioninfo.rc.in mapi32.def \
+EXTRA_DIST = versioninfo.rc.in mapi32.def $(unused_sources) \
 	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp 
 
 EXEEXT = .dll
@@ -55,7 +57,7 @@ gpgol_SOURCES = \
 	message-events.cpp  message-events.h  \
 	attached-file-events.cpp attached-file-events.h \
 	property-sheets.cpp property-sheets.h \
-	item-events.cpp item-events.h         \
+	item-events.h         \
 	ol-ext-callback.cpp ol-ext-callback.h \
 	w32-gettext.c w32-gettext.h 
 

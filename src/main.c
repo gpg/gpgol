@@ -44,6 +44,10 @@ static HANDLE log_mutex;
    initialized at startup.  */
 static char *the_session_key;
 
+/* The session marker to identify this session.  Its value is not
+  confidential.  It is initialized at startup.  */
+static char *the_session_marker;
+
 /* Local function prototypes. */
 static char *get_locale_dir (void);
 static void drop_locale_dir (char *locale_dir);
@@ -102,10 +106,11 @@ get_crypt_random (size_t nbytes)
 }
 
 
+/* Initialize the session key and the session marker.  */
 static int
 initialize_session_key (void)
 {
-  the_session_key = get_crypt_random (16+sizeof (unsigned int));
+  the_session_key = get_crypt_random (16+sizeof (unsigned int)+8);
   if (the_session_key)
     {
       /* We use rand() in generate_boundary so we need to seed it. */
@@ -113,6 +118,9 @@ initialize_session_key (void)
 
       memcpy (&tmp, the_session_key+16, sizeof (unsigned int));
       srand (tmp);
+
+      /* And save the session marker. */
+      the_session_marker = the_session_key + 16 + sizeof (unsigned int);
     }
   return !the_session_key;
 }
@@ -182,6 +190,13 @@ const void *
 get_128bit_session_key (void)
 {
   return the_session_key;
+}
+
+
+const void *
+get_64bit_session_marker (void)
+{
+  return the_session_marker;
 }
 
 
@@ -330,6 +345,32 @@ log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
 }
 
 
+static void
+do_log_window_info (HWND window, int level)
+{
+  char buf[1024+1];
+  char name[200];
+  int nname;
+  char *pname;
+
+  if (!window)
+    return;
+      
+  memset (buf, 0, sizeof (buf));
+  GetWindowText (window, buf, sizeof (buf)-1);
+  nname = GetClassName (window, name, sizeof (name)-1);
+  if (nname)
+    pname = name;
+  else
+    pname = NULL;
+  if (level == -1)
+    log_debug ("  parent=%p (%s) `%s'", window, pname? pname:"", buf);
+  else
+    log_debug ("    %*shwnd=%p (%s) `%s'", level*2, "", window,
+               pname? pname:"", buf);
+}
+
+
 /* Helper to log_window_hierarchy.  */
 static HWND
 do_log_window_hierarchy (HWND parent, int level)
@@ -339,20 +380,7 @@ do_log_window_hierarchy (HWND parent, int level)
   child = GetWindow (parent, GW_CHILD);
   while (child)
     {
-      char buf[1024+1];
-      char name[200];
-      int nname;
-      char *pname;
-      
-      memset (buf, 0, sizeof (buf));
-      GetWindowText (child, buf, sizeof (buf)-1);
-      nname = GetClassName (child, name, sizeof (name)-1);
-      if (nname)
-        pname = name;
-      else
-        pname = NULL;
-      log_debug ("    %*shwnd=%p (%s) `%s'", level*2, "", child,
-                 pname? pname:"", buf);
+      do_log_window_info (child, level);
       do_log_window_hierarchy (child, level+1);
       child = GetNextWindow (child, GW_HWNDNEXT);	
     }
@@ -371,7 +399,11 @@ log_window_hierarchy (HWND window, const char *fmt, ...)
   va_start (a, fmt);
   do_log (fmt, a, 0, 0, NULL, 0);
   va_end (a);
-  do_log_window_hierarchy (window, 0);
+  if (window)
+    {
+      do_log_window_info (window, -1);
+      do_log_window_hierarchy (window, 0);
+    }
 }
 
 
@@ -473,14 +505,25 @@ drop_locale_dir (char *locale_dir)
 void
 read_options (void)
 {
+  static int warnings_shown;
   char *val = NULL;
  
+  load_extension_value ("enableDebug", &val);
+  opt.enable_debug = val == NULL || *val != '1' ? 0 : 1;
+  xfree (val); val = NULL;
+
   load_extension_value ("enableSmime", &val);
   opt.enable_smime = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
   
-  load_extension_value ("smimeDefault", &val);
-  opt.smime_default = val == NULL || *val != '1'? 0 : 1;
+  load_extension_value ("defaultProtocol", &val);
+  switch ((!val || *val == '0')? 0 : atol (val))
+    {
+    case 1: opt.default_protocol = PROTOCOL_OPENPGP; break;
+    case 2: opt.default_protocol = PROTOCOL_SMIME; break;
+    case 0:
+    default: opt.default_protocol = PROTOCOL_UNKNOWN /*(auto*)*/; break;
+    }
   xfree (val); val = NULL;
 
   load_extension_value ("encryptDefault", &val);
@@ -547,7 +590,27 @@ read_options (void)
         }
       log_debug ("Note: using compatibility flags: %s", val);
     }
+
+  if (!warnings_shown)
+    {
+      char tmpbuf[512];
+          
+      warnings_shown = 1;
+      if (val && *val)
+        {
+          snprintf (tmpbuf, sizeof tmpbuf,
+                    _("Note: Using compatibility flags: %s"), val);
+          MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
+        }
+      if (logfile && !opt.enable_debug)
+        {
+          snprintf (tmpbuf, sizeof tmpbuf,
+                    _("Note: Writing debug logs to\n\n\"%s\""), logfile);
+          MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
+        }
+    }
   xfree (val); val = NULL;
+
 }
 
 
@@ -562,10 +625,10 @@ write_options (void)
     int  value;
     char *s_val;
   } table[] = {
-    {"smimeDefault",             0, opt.smime_default},
+    {"enableSmime",              0, opt.enable_smime},
+    {"defaultProtocol",          3, opt.default_protocol},
     {"encryptDefault",           0, opt.encrypt_default},
     {"signDefault",              0, opt.sign_default},
-    {"enableSmime",              0, opt.enable_smime},
     {"previewDecrypt",           0, opt.preview_decrypt},
     {"storePasswdTime",          1, opt.passwd_ttl},
     {"encodingFormat",           1, opt.enc_format},
@@ -594,6 +657,18 @@ write_options (void)
           rc = store_extension_value (table[i].name,
                                       table[i].s_val? table[i].s_val : "");
           break;
+        case 3:
+          buf[0] = '0';
+          buf[1] = 0;
+          switch (opt.default_protocol)
+            {
+            case PROTOCOL_UNKNOWN: buf[0] = '0'; /* auto */ break;
+            case PROTOCOL_OPENPGP: buf[0] = '1'; break;
+            case PROTOCOL_SMIME:   buf[0] = '2'; break;
+            }
+          rc = store_extension_value (table[i].name, buf);
+          break;  
+
         default:
           rc = -1;
           break;

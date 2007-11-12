@@ -1,6 +1,3 @@
-* inline PGG versenden wir als UTF-8. Andere aber wohl als Latin-1.
-  Heuristic implementieren. 
-
 * Show more details in case of some errors.
   For example 'No Secret Key' should contain the key-ID
   and if possible the primary user-ID.
@@ -19,11 +16,11 @@
 
 * Allow for symmetric encryption.
 
-* Please consider adding a few more options like key singing rules
+* Please consider adding a few more options like key signing rules
   like Enigmail has.
 
-* We should not rite a decrupted file without user content.  A
-  possible solution in attach-file-events.c is to keep tarck of
-  prensented file names and decrypt them only on OpenSzFile.  Need to
+* We should not write a decrypted file without user consent.  A
+  possible solution in attach-file-events.c is to keep track of
+  presented file names and decrypt them only on OpenSzFile.  Need to
   get some documentaion first.
 

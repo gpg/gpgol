@@ -559,12 +559,39 @@ build_mimeinfo (mimestruct_item_t mimestruct)
 
 
 static int
-finish_message (LPMESSAGE message, gpg_error_t err, 
+finish_message (LPMESSAGE message, gpg_error_t err, int protect_mode, 
                 mimestruct_item_t mimestruct)
 {
   HRESULT hr;
   SPropValue prop;
 
+  /* If this was an encrypted message we save the session marker in a
+     specila property so that we now that we already decrypted that
+     message within this session.  This is pretty useful when
+     scrolling through messages and preview decryption has been
+     enabled.  */
+  if (protect_mode)
+    {
+      char sesmrk[8];
+
+      if (get_gpgollastdecrypted_tag (message, &prop.ulPropTag) )
+        return -1;
+      if (err)
+        memset (sesmrk, 0, 8);
+      else
+        memcpy (sesmrk, get_64bit_session_marker (), 8);
+      prop.Value.bin.cb = 8;
+      prop.Value.bin.lpb = sesmrk;
+      hr = IMessage_SetProps (message, 1, &prop, NULL);
+      if (hr)
+        {
+          log_error ("%s:%s: can't set %s property: hr=%#lx\n",
+                     SRCNAME, __func__, "GpgOL Last Decrypted", hr); 
+          return -1;
+        }
+    }
+
+  /* Store the MIME structure away.  */
   if (get_gpgolmimeinfo_tag (message, &prop.ulPropTag) )
     return -1;
   prop.Value.lpszA = build_mimeinfo (mimestruct);
@@ -1077,7 +1104,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
       rfc822parse_close (ctx->msg);
       gpgme_data_release (ctx->signed_data);
       gpgme_data_release (ctx->sig_data);
-      finish_message (mapi_message, err, ctx->mimestruct);
+      finish_message (mapi_message, err, ctx->protect_mode, ctx->mimestruct);
       while (ctx->mimestruct)
         {
           mimestruct_item_t tmp = ctx->mimestruct->next;
@@ -1193,7 +1220,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
         gpgme_data_release (ctx->signed_data);
       if (ctx->sig_data)
         gpgme_data_release (ctx->sig_data);
-      finish_message (mapi_message, err, ctx->mimestruct);
+      finish_message (mapi_message, err, ctx->protect_mode, ctx->mimestruct);
       while (ctx->mimestruct)
         {
           mimestruct_item_t tmp = ctx->mimestruct->next;

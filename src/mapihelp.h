@@ -85,7 +85,8 @@ void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
 int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
-int  get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
+int get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag);
+int get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
 
 int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
@@ -117,6 +118,8 @@ char *mapi_get_mime_info (LPMESSAGE msg);
 char *mapi_get_message_content_type (LPMESSAGE message, 
                                      char **r_protocol, char **r_smtype);
 
+int   mapi_has_last_decrypted (LPMESSAGE message);
+int   mapi_test_last_decrypted (LPMESSAGE message);
 char *mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
                                       int *r_ishtml, int *r_protected);
 

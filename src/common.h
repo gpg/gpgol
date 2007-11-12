@@ -105,11 +105,12 @@ extern
 #endif
 struct 
 {
+  int enable_debug;	     /* Enable extra debug options. */
+  int enable_smime;	     /* Enable S/MIME support. */
   int passwd_ttl;            /* Time in seconds the passphrase is stored. */
-  int smime_default;         /* Use S/MIME by default. */
+  protocol_t default_protocol;/* The default protocol. */
   int encrypt_default;       /* Encrypt by default. */
   int sign_default;          /* Sign by default. */
-  int enable_smime;	     /* Enable S/MIME support. */
   int enc_format;            /* Encryption format for attachments. */
   char *default_key;         /* The key we want to always encrypt to. */
   int enable_default_key;    /* Enable the use of DEFAULT_KEY. */

@@ -44,6 +44,7 @@ set_labels (HWND dlg)
   static struct { int itemid; const char *label; } labels[] = {
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
+    { IDC_OPENPGP_DEFAULT,  N_("Use OPENPGP by default")},
     { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
     { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
     { IDC_ENCRYPT_WITH_STANDARD_KEY, 
@@ -75,6 +76,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
   BOOL bMsgResult = FALSE;    
   static LPNMHDR pnmhdr;
   static HWND hWndPage;
+  static BOOL openpgp_state = FALSE;
+  static BOOL smime_state = FALSE;
     
   switch (uMsg) 
     {
@@ -106,6 +109,9 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*             ReleaseDC (hDlg, hdc);	 */
 /*           } */
         
+        openpgp_state = opt.default_protocol = PROTOCOL_OPENPGP;
+        smime_state = opt.default_protocol = PROTOCOL_SMIME;
+
 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
                       !!opt.enable_default_key);
         EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
@@ -113,6 +119,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (opt.enable_default_key)
           CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
         set_labels (hDlg);
+        ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS), 
+                    opt.enable_debug? SW_SHOW : SW_HIDE);
       }
       return TRUE;
 
@@ -153,6 +161,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    case IDC_ENCRYPT_WITH_STANDARD_KEY:
 	    case IDC_PREFER_HTML:
 	    case IDC_SIGN_DEFAULT:
+	    case IDC_OPENPGP_DEFAULT:
 	    case IDC_SMIME_DEFAULT:
 	    case IDC_PREVIEW_DECRYPT:
 	    case IDC_ENABLE_SMIME:
@@ -174,7 +183,27 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	  EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
                         opt.enable_smime);
 	}
-      if (LOWORD (wParam) == IDC_GPG_OPTIONS)
+      if (HIWORD (wParam) == BN_CLICKED &&
+	  LOWORD (wParam) == IDC_OPENPGP_DEFAULT) 
+	{
+	  openpgp_state = !openpgp_state;
+          if (openpgp_state)
+            {
+              smime_state = 0;
+              SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK,0,0L);
+            }
+	}
+      if (HIWORD (wParam) == BN_CLICKED &&
+	  LOWORD (wParam) == IDC_SMIME_DEFAULT) 
+	{
+	  smime_state = !smime_state;
+          if (smime_state)
+            {
+              openpgp_state = 0;
+              SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK,0,0L);
+            }
+	}
+      if (opt.enable_debug && LOWORD (wParam) == IDC_GPG_OPTIONS)
 	config_dialog_box (hDlg);
       break;
 	
@@ -189,7 +218,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    TCHAR s[30];
 	    
 	    if (opt.default_key && *opt.default_key)		
-		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
+                SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
             else
 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, "");
 	    wsprintf (s, "%d", opt.passwd_ttl/60);
@@ -202,8 +231,10 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			        !!opt.sign_default, 0L);
 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
                                 BM_SETCHECK, opt.enable_default_key, 0L);
-	    SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
-				!!opt.smime_default, 0L);
+            SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
+                                openpgp_state, 0L);
+            SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
+                                smime_state, 0L);
 	    SendDlgItemMessage (hDlg, IDC_ENABLE_SMIME, BM_SETCHECK,
 				!!opt.enable_smime, 0L);
 	    SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
@@ -254,8 +285,14 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             "provided when GpgOL arrives at production quality status."),
                             "GpgOL", MB_ICONWARNING|MB_OK);
               }
-	    opt.smime_default = !!SendDlgItemMessage
-              (hDlg, IDC_SMIME_DEFAULT, BM_GETCHECK, 0, 0L);
+
+	    if (openpgp_state)
+              opt.default_protocol = PROTOCOL_OPENPGP;
+	    else if (smime_state && opt.enable_smime)
+              opt.default_protocol = PROTOCOL_SMIME;
+            else
+              opt.default_protocol = PROTOCOL_UNKNOWN;
+            
             opt.preview_decrypt = !!SendDlgItemMessage
               (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
             opt.prefer_html = !!SendDlgItemMessage

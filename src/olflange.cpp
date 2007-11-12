@@ -287,7 +287,7 @@ GpgolExt::GpgolExt (void)
   m_lRef = 1;
   m_lContext = 0;
   m_hWndExchange = 0;
-  m_gpgSelectSmime = FALSE;
+  m_protoSelection = PROTOCOL_UNKNOWN;
   m_gpgEncrypt = FALSE;
   m_gpgSign = FALSE;
   msgtype = MSGTYPE_UNKNOWN;
@@ -299,19 +299,19 @@ GpgolExt::GpgolExt (void)
   m_pExchExtMessageEvents      = new GpgolMessageEvents (this);
   m_pExchExtAttachedFileEvents = new GpgolAttachedFileEvents (this);
   m_pExchExtPropertySheets     = new GpgolPropertySheets (this);
-  m_pOutlookExtItemEvents      = new GpgolItemEvents (this);
+//   m_pOutlookExtItemEvents      = new GpgolItemEvents (this);
   if (!m_pExchExtCommands
       || !m_pExchExtUserEvents
       || !m_pExchExtSessionEvents
       || !m_pExchExtMessageEvents
       || !m_pExchExtAttachedFileEvents
       || !m_pExchExtPropertySheets
-      || !m_pOutlookExtItemEvents)
+      /*|| !m_pOutlookExtItemEvents*/)
     out_of_core ();
 
   /* For this class we need to bump the reference counter intially.
      The question is why it works at all with the other stuff.  */
-  m_pOutlookExtItemEvents->AddRef ();
+//   m_pOutlookExtItemEvents->AddRef ();
 
   if (!g_initdll)
     {
@@ -330,8 +330,8 @@ GpgolExt::~GpgolExt (void)
   log_debug ("%s:%s: cleaning up GpgolExt object; context=%s\n",
              SRCNAME, __func__, ext_context_name (m_lContext));
     
-  if (m_pOutlookExtItemEvents)
-    m_pOutlookExtItemEvents->Release ();
+//   if (m_pOutlookExtItemEvents)
+//     m_pOutlookExtItemEvents->Release ();
 
   if (m_lContext == EECONTEXT_SESSION)
     {
@@ -394,10 +394,10 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 	return E_NOINTERFACE;
       *ppvObj = (LPUNKNOWN) m_pExchExtPropertySheets;
     }
-  else if (riid == IID_IOutlookExtItemEvents)
-    {
-      *ppvObj = (LPUNKNOWN)m_pOutlookExtItemEvents;
-    }  
+//   else if (riid == IID_IOutlookExtItemEvents)
+//     {
+//       *ppvObj = (LPUNKNOWN)m_pOutlookExtItemEvents;
+//     }  
   else
     hr = E_NOINTERFACE;
   

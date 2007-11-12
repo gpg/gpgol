@@ -17,6 +17,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#error not used becuase it requires an ECF
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

@@ -39,7 +39,7 @@ public:
   HWND m_hWndExchange;  /* Handle of the exchange window. */
 
   /* Parameters for sending mails.  */
-  BOOL  m_gpgSelectSmime;
+  protocol_t  m_protoSelection;
   BOOL  m_gpgEncrypt;
   BOOL  m_gpgSign;
   

@@ -153,6 +153,16 @@ get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag)
   return 0;
 }
 
+/* Return the property tag for GpgOL Last Decrypted. */
+int 
+get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Last Decrypted",__func__)))
+    return -1;
+  *r_tag |= PT_BINARY;
+  return 0;
+}
+
 
 /* Return the property tag for GpgOL MIME structure. */
 int 
@@ -1547,6 +1557,57 @@ mapi_get_message_content_type (LPMESSAGE message,
 }
 
 
+/* Returns True if MESSAGE has a GpgOL Last Decrypted property with any value.
+   This indicates that there sghould be no PR_BODY tag.  */
+int
+mapi_has_last_decrypted (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  int yes = 0;
+  
+  if (get_gpgollastdecrypted_tag (message, &tag) )
+    return 0; /* No.  */
+  hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
+  if (FAILED (hr))
+    return 0; /* No.  */  
+  
+  if (PROP_TYPE (propval->ulPropTag) == PT_BINARY)
+    yes = 1;
+
+  MAPIFreeBuffer (propval);
+  return yes;
+}
+
+
+/* Returns True if MESSAGE has a GpgOL Last Decrypted property and
+   that matches the curren sessiobn. */
+int
+mapi_test_last_decrypted (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  int yes = 0;
+
+  if (get_gpgollastdecrypted_tag (message, &tag) )
+    return 0; /* No.  */
+  hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
+  if (FAILED (hr))
+    return 0; /* No.  */  
+
+  if (PROP_TYPE (propval->ulPropTag) == PT_BINARY
+      && propval->Value.bin.cb == 8
+      && !memcmp (propval->Value.bin.lpb, get_64bit_session_marker (), 8) )
+    yes = 1;
+
+  MAPIFreeBuffer (propval);
+  return yes;
+}
+
+
+
 /* Helper for mapi_get_gpgol_body_attachment.  */
 static int
 has_gpgol_body_name (LPATTACH obj)
@@ -1681,5 +1742,4 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
   
   return body;
 }
-
 

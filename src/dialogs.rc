@@ -37,7 +37,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     /* Options box.  */
     GROUPBOX        "options", IDC_G_OPTIONS,
-                    9, 9, 242, 112
+                    9, 9, 242, 124
 
     CONTROL         "encrypt-by-default", IDC_ENCRYPT_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
@@ -47,61 +47,65 @@ BEGIN
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 30, 215, 10
 
-    CONTROL         "smime-by-default", IDC_SMIME_DEFAULT,
+    CONTROL         "openpgp-by-default", IDC_OPENPGP_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 42, 215, 10
 
-    CONTROL         "enable-smime", IDC_ENABLE_SMIME,
+    CONTROL         "smime-by-default", IDC_SMIME_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 54, 215, 10
 
+    CONTROL         "enable-smime", IDC_ENABLE_SMIME,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 66, 215, 10
+
     CONTROL         "encrypt-to", IDC_ENCRYPT_WITH_STANDARD_KEY,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 67, 215, 10
+                    24, 79, 215, 10
 
     EDITTEXT        IDC_ENCRYPT_TO, 
-                    36, 79, 133, 12, ES_AUTOHSCROLL
+                    36, 91, 133, 12, ES_AUTOHSCROLL
 
     CONTROL         "preview-decrypt", IDC_PREVIEW_DECRYPT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 95, 215, 10
+                    24, 107, 215, 10
 
     CONTROL         "prefer-html", IDC_PREFER_HTML,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 107, 215, 10
+                    24, 119, 215, 10
  
     /* Passphrase option box.  */
     GROUPBOX        "Passphrase", IDC_G_PASSPHRASE,
-                    9, 124, 242, 31
+                    9, 136, 242, 31
 
     LTEXT           "passphrase-ttl", IDC_T_PASSPHRASE_TTL,
-                     24, 136, 80, 8
+                     24, 148, 80, 8
 
     EDITTEXT        IDC_TIME_PHRASES,
-                    107, 135, 39, 14, ES_AUTOHSCROLL
+                    107, 147, 39, 14, ES_AUTOHSCROLL
 
     LTEXT           "minutes", IDC_T_PASSPHRASE_MIN,
-                    151, 137, 50, 8
+                    151, 149, 50, 8
 
     /* Stuff below the group boxes.  */
     PUSHBUTTON      "advanced", IDC_GPG_OPTIONS,
-                    202, 166, 50, 14
+                    202, 178, 50, 14
 
     LTEXT           "GpgOL by g10 Code GmbH", IDC_STATIC, 
-                      8, 185, 100, 8
+                      8, 197, 100, 8
     LTEXT           "Version x ", IDC_VERSION_INFO,
-                    150, 185, 109, 9
+                    150, 197, 109, 9
 
     CONTROL         IDB_BANNER, IDC_BITMAP,
                     "Static", SS_BITMAP | SS_REALSIZEIMAGE,
-                      8, 200, 150, 64
+                      8, 212, 150, 64
 END
 
 
 
 IDD_EXT_OPTIONS DIALOG DISCARDABLE  0, 0, 167, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "GpgOL - Extended Options"
+CAPTION "GpgOL - Extended Options (debug only!)"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "keyman", IDC_T_OPT_KEYMAN_PATH,

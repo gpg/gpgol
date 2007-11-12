@@ -1,3 +1,37 @@
+2007-11-12  Werner Koch  <wk@g10code.com>
+
+	* olflange.h (class GpgolExt): Rename m_gpgSelectSmime to
+	m_protoSelection.
+	* message-events.cpp (OnWriteComplete): Use it accordingly.
+	* main.c (write_options, read_options): Load and save it.
+	* dialogs.rc: Add new check box for OpenPGP default protocol.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Adjust for above chnages.
+
+2007-11-09  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): New option ENABLE_DEBUG to be enabled
+	only using the Registry.
+	(read_options): Show warning for certain option combinations.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Hide the Advanced options
+	button unless in debug mode.
+
+	* mapihelp.cpp (get_gpgollastdecrypted_tag): New.
+	(mapi_test_last_decrypted): New.
+	(mapi_has_last_decrypted): new.
+	* mimeparser.c (finish_message): Update the Last Decrypted property.
+	* message.cpp (message_decrypt): Use it here.
+	(message_wipe_body_cruft): New.
+
+	* main.c (do_log_window_hierarchy): Factor some code out to ..
+	(do_log_window_info): .. this.
+	(log_window_hierarchy): Log parent window info.
+	(get_64bit_session_marker): New.
+	(initialize_session_key): Init session marker.
+
+	* Makefile.am (gpgol_SOURCES): Remove item-events.cpp 
+	* olflange.cpp (GpgolExt): Disable the GpgOLItemEvents as they can
+	only be used with the undocumented ECF file.
+
 2007-10-29  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (create_top_signing_header): Add arg FIRST.

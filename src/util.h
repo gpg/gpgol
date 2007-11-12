@@ -69,6 +69,7 @@ char *read_w32_registry_string (const char *root, const char *dir,
 
 /*-- main.c --*/
 const void *get_128bit_session_key (void);
+const void *get_64bit_session_marker (void);
 void *create_initialization_vector (size_t nbytes);
 
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));

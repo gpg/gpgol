@@ -1,10 +1,15 @@
-Noteworthy changes for version 0.10.1 (2007-10-22)
+Noteworthy changes for version 0.10.2
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
 
-    - Signed and encrypt has not yet been implemented
     - Under OL2007 some menu entries are missing.
+
+ * New menu items to select the default protocol.
+
+
+Noteworthy changes for version 0.10.1 (2007-10-22)
+==================================================
 
  * Auto start the server.
 

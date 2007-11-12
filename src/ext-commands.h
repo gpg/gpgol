@@ -40,7 +40,9 @@ private:
   ULONG m_lRef;
   ULONG m_lContext;
   
-  UINT  m_nCmdSelectSmime;
+  UINT  m_nCmdProtoAuto;
+  UINT  m_nCmdProtoPgpmime;
+  UINT  m_nCmdProtoSmime;
   UINT  m_nCmdEncrypt;
   UINT  m_nCmdDecrypt;
   UINT  m_nCmdSign;

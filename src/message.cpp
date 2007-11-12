@@ -119,12 +119,13 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
   hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
   if (SUCCEEDED (hr))
     {
-      /* If the message was protected we don't allow a fallback to the
-         OOM display methods.  */
+      /* (old: If the message was protected we don't allow a fallback to the
+         OOM display methods.)  Now: As it is difficult to find the
+         actual winodw we now use the OOM display always.  */
       body = mapi_get_gpgol_body_attachment (message, NULL, 
                                              &ishtml, &wasprotected);
       if (body)
-        update_display (hwnd, wasprotected? NULL: eecb, ishtml, body);
+        update_display (hwnd, /*wasprotected? NULL:*/ eecb, ishtml, body);
       else
         update_display (hwnd, NULL, 0, 
                         _("[Crypto operation failed - "
@@ -141,6 +142,66 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
 
   return !!wasprotected;
 }
+
+
+/* If the current message is an encrypted one remove the body
+   properties which might have come up due to OL internal
+   syncronization and a failing olDiscard feature.  */
+void
+message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb)
+{
+  
+  HRESULT hr;
+  LPMESSAGE message = NULL;
+  LPMDB mdb = NULL;
+      
+  log_debug ("%s:%s: enter", SRCNAME, __func__);
+  hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+  if (SUCCEEDED (hr))
+    {
+      if (mapi_has_last_decrypted (message))
+        {
+          SPropTagArray proparray;
+          int anyokay = 0;
+          
+          proparray.cValues = 1;
+          proparray.aulPropTag[0] = PR_BODY;
+          hr = message->DeleteProps (&proparray, NULL);
+          if (hr)
+            log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
+                           SRCNAME, __func__);
+          else
+            anyokay++;
+          
+          proparray.cValues = 1;
+          proparray.aulPropTag[0] = PR_BODY_HTML;
+          message->DeleteProps (&proparray, NULL);
+          if (hr)
+            log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
+                           SRCNAME, __func__);
+          else
+            anyokay++;
+
+          if (anyokay)
+            {
+              hr = message->SaveChanges (KEEP_OPEN_READWRITE);
+              if (hr)
+                log_error_w32 (hr, "%s:%s: SaveChanges failed",
+                               SRCNAME, __func__); 
+              else
+                log_debug ("%s:%s: SaveChanges succeded; body cruft removed",
+                           SRCNAME, __func__); 
+            }
+        }  
+      else
+        log_debug_w32 (hr, "%s:%s: error getting message", 
+                       SRCNAME, __func__);
+     
+      ul_release (message);
+      ul_release (mdb);
+    }
+}
+
 
 
 /* Display some information about MESSAGE.  */
@@ -476,9 +537,8 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
 
 /* Decrypt MESSAGE, check signature and update the attachments as
    required.  MSGTYPE should be the type of the message so that the
-   function can decide what to do.  With FORCE set the verification is
-   done regardlessless of a cached signature result - hmmm, should we
-   such a thing for an encrypted message? */
+   function can decide what to do.  With FORCE set the decryption is
+   done regardless whether it has already been done.  */
 int
 message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
 {
@@ -508,6 +568,10 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
       break;
     }
   
+  if (!force && mapi_test_last_decrypted (message))
+    return 0; /* Already decrypted this message once during this
+                 session.  No need to do it again. */
+
   if (msgtype == MSGTYPE_GPGOL_PGP_MESSAGE)
     {
       /* PGP messages are special:  All is contained in the body and thus

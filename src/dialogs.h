@@ -25,18 +25,19 @@
 #define IDC_ENCRYPT_DEFAULT             4011
 #define IDC_SIGN_DEFAULT                4012
 #define IDC_ENCRYPT_WITH_STANDARD_KEY   4013
-#define IDC_SMIME_DEFAULT               4014
-#define IDC_GPG_OPTIONS                 4015
-#define IDC_BITMAP                      4016
-#define IDC_VERSION_INFO                4017
-#define IDC_ENCRYPT_TO                  4018
-#define IDC_ENABLE_SMIME                4019
-#define IDC_PREVIEW_DECRYPT             4020
-#define IDC_PREFER_HTML                 4021
-#define IDC_G_OPTIONS                   4022
-#define IDC_G_PASSPHRASE                4023
-#define IDC_T_PASSPHRASE_TTL            4024
-#define IDC_T_PASSPHRASE_MIN            4025
+#define IDC_OPENPGP_DEFAULT             4014
+#define IDC_SMIME_DEFAULT               4015
+#define IDC_GPG_OPTIONS                 4016
+#define IDC_BITMAP                      4017
+#define IDC_VERSION_INFO                4018
+#define IDC_ENCRYPT_TO                  4019
+#define IDC_ENABLE_SMIME                4020
+#define IDC_PREVIEW_DECRYPT             4021
+#define IDC_PREFER_HTML                 4022
+#define IDC_G_OPTIONS                   4023
+#define IDC_G_PASSPHRASE                4024
+#define IDC_T_PASSPHRASE_TTL            4025
+#define IDC_T_PASSPHRASE_MIN            4026
 
 
 /* Ids for the extended options dialog.  */

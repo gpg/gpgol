@@ -109,7 +109,7 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
   m_wasencrypted = false;
-  if (opt.preview_decrypt)
+  if (1 /*opt.preview_decrypt*/)
     {
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb)))
@@ -270,9 +270,7 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
-      protocol_t proto = (m_pExchExt->m_gpgSelectSmime
-                          ? PROTOCOL_SMIME
-                          : PROTOCOL_OPENPGP);
+      protocol_t proto = m_pExchExt->m_protoSelection;
       
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = message_sign_encrypt (msg, proto, hWnd);

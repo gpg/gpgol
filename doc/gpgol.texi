@@ -113,7 +113,11 @@ Indices
 @c
 @node Introduction
 @chapter Introduction
-Bla bla
+
+To debug GpgOL you should set the Registry entry
+@code{HKCU\Software\Gnu\GnuPG:enableDebug} to the string value @code{1}.
+This allows easy setting of a debug file by using the extended options
+menu and enables a few extra menu items.
 
 
 @c
@@ -585,6 +589,12 @@ This binary property is used to store the initialization vector of an
 re-encrypted attachment.  The existence of this property indicates that
 the attachment has been encrypted under the non-permanent session key.
 
+@item GpgOL Last Decrypted
+This binary property is used on the message to save a session marker to
+tell GpgOL whether the message as already been decrypted.  If this
+property does not exists or the session marker does not macth the one of
+the current session, GpgOL needs to decrypt it again.
+
 @item GpgOL MIME Info
 This property is of type STRING8 and used to store the MIME structure of
 the orginal message.  The content are lines of colon delimited fields.
@@ -626,6 +636,30 @@ it is required that all verbatim dollar are too be doubled.  If the
 actual program name contains spaces the program name nees to be enclosed
 in quotes.
 
+@item HKCU\Software\Gnu\GnuPG:enableDebug
+Setting this key to the string @code{1} enables a few extra features in
+the UI, useful only for debugging.
+
+@itemx HKCU\Software\Gnu\GnuPG:logFile
+If the value is not empty, GpgOL takes this as a log file and appends
+debug information to this file.  The file may get very large.
+
+@itemx HKCU\Software\Gnu\GnuPG:compatFlags
+This is a string consisting of @code{0} and @code{1} to enable certain
+compatibility flags.  Not generally useful; use the source for a
+description.
+
+@item HKCU\Software\Gnu\GnuPG:enableSmime   
+@itemx HKCU\Software\Gnu\GnuPG:defaultProtocol
+@itemx HKCU\Software\Gnu\GnuPG:encryptDefault
+@itemx HKCU\Software\Gnu\GnuPG:signDefault   
+@itemx HKCU\Software\Gnu\GnuPG:previewDecrypt
+@itemx HKCU\Software\Gnu\GnuPG:storePasswdTime
+@itemx HKCU\Software\Gnu\GnuPG:encodingFormat 
+@itemx HKCU\Software\Gnu\GnuPG:defaultKey   
+@itemx HKCU\Software\Gnu\GnuPG:enableDefaultKey
+@itemx HKCU\Software\Gnu\GnuPG:preferHtml 
+These registry keys store the values from the configuration dialog.
 
 @end table
 
