@@ -1291,9 +1291,9 @@ prep_foo_status_cb (void *opaque, const char *line)
     {
       for (line += 8; *line == ' '; line++)
         ;
-      if (strncmp (line, "OpenPGP", 7) && (line[7]==' '||!line[7]))
+      if (!strncmp (line, "OpenPGP", 7) && (line[7]==' '||!line[7]))
         *protocol = PROTOCOL_OPENPGP;
-      else if (strncmp (line, "CMS", 3) && (line[3]==' '||!line[3]))
+      else if (!strncmp (line, "CMS", 3) && (line[3]==' '||!line[3]))
         *protocol = PROTOCOL_SMIME;
     }
   return 0;
