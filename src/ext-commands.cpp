@@ -262,6 +262,10 @@ GpgolExtCommands::add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...)
 
           tb_info->next = m_toolbar_info;
           m_toolbar_info = tb_info;
+          log_debug ("%s:%s: ctx=%lx button_id=%d cmd_id=%d '%s'\n", 
+                     SRCNAME, __func__, m_lContext,
+                     tb_info->button_id, tb_info->cmd_id, tb_info->desc);
+          
         }
     }
   va_end (arg_ptr);
@@ -431,10 +435,6 @@ GpgolExtCommands::InstallCommands (
         opt.enable_debug? "Debug-1 (open_inspector)":"", &m_nCmdDebug1,
         opt.enable_debug? "Debug-2 (n/a)":"", &m_nCmdDebug2,
         NULL);
-      
-      add_toolbar (pTBEArray, nTBECnt,
-        _("Decrypt message and verify signature"), IDB_DECRYPT, m_nCmdDecrypt,
-        NULL, 0, 0);
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -778,16 +778,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
                                 LPTSTR pszText,  UINT nCharCnt)    
 {
 	
-  if (nCommandID == m_nCmdDecrypt
-      && m_lContext == EECONTEXT_READNOTEMESSAGE) 
-    {
-      if (lFlags == EECQHT_STATUS)
-        lstrcpyn (pszText, ".", nCharCnt);
-      if (lFlags == EECQHT_TOOLTIP)
-        lstrcpyn (pszText, _("Decrypt message and verify signature"), 
-                  nCharCnt);
-    }
-  else if (nCommandID == m_nCmdShowInfo
+  if (nCommandID == m_nCmdShowInfo
            && m_lContext == EECONTEXT_READNOTEMESSAGE) 
     {
       if (lFlags == EECQHT_STATUS)
@@ -823,7 +814,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
         lstrcpyn (pszText, ".", nCharCnt);
       if (lFlags == EECQHT_TOOLTIP)
         lstrcpyn (pszText,
-                  _("Encrypt message with GPG"),
+                  _("Encrypt message with GnuPG"),
                   nCharCnt);
     }
   else if (nCommandID == m_nCmdSign
@@ -833,7 +824,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
         lstrcpyn (pszText, ".", nCharCnt);
       if (lFlags == EECQHT_TOOLTIP)
         lstrcpyn (pszText,
-                  _("Sign message with GPG"),
+                  _("Sign message with GnuPG"),
                   nCharCnt);
     }
   else if (nCommandID == m_nCmdKeyManager
@@ -877,6 +868,10 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
   if (!tb_info)
     return S_FALSE; /* Not one of our toolbar buttons.  */
 
+  log_debug ("%s:%s: ctx=%lx tbid=%ld button_id(req)=%d got=%d cmd_id=%d '%s'\n", 
+             SRCNAME, __func__, m_lContext, toolbarid, buttonid,
+             tb_info->button_id, tb_info->cmd_id, tb_info->desc);
+  
   pTBB->iBitmap = tb_info->bitmap;
   pTBB->idCommand = tb_info->cmd_id;
   pTBB->fsState = TBSTATE_ENABLED;

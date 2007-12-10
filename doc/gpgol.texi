@@ -115,7 +115,15 @@ Indices
 @chapter Introduction
 
 To debug GpgOL you should set the Registry entry
-@code{HKCU\Software\Gnu\GnuPG:enableDebug} to the string value @code{1}.
+@code{HKCU\Software\Gnu\GpgOL:enableDebug} to the string value @code{1}:
+
+@cartouche
+@example
+[HKEY_CURRENT_USER\Software\GNU\GpgOL]
+"enableDebug"="1"
+@end example
+@end cartouche
+
 This allows easy setting of a debug file by using the extended options
 menu and enables a few extra menu items.
 
@@ -154,12 +162,13 @@ command:
 @deffn Command RECIPIENT @var{string}
 
 Set the recipient for the encryption.  @var{string} is an RFC-2822
-recipient name.  This command may or may not check the recipient for
-validity right away; if it does not all recipients are expected to be
-checked at the time of the @code{ENCRYPT} command.  All @code{RECIPIENT}
-commands are cumulative until a successful @code{ENCRYPT} command or
-until a @code{RESET} command.  Linefeeds are obviously not allowed in
-@var{string} and should be folded into spaces (which are equivalent).
+recipient name ("mailbox" as per section 3.4).  This command may or may
+not check the recipient for validity right away; if it does not all
+recipients are expected to be checked at the time of the @code{ENCRYPT}
+command.  All @code{RECIPIENT} commands are cumulative until a
+successful @code{ENCRYPT} command or until a @code{RESET} command.
+Linefeeds are obviously not allowed in @var{string} and should be folded
+into spaces (which are equivalent).
 @end deffn
 
 @noindent
@@ -205,7 +214,7 @@ should) overlap reading and writing.  The recipients used for the
 encryption are all the recipients set so far.  If any recipient is not
 usable the server should take appropriate measures to notify the user
 about the problem and may cancel the operation by returning an error
-code.  The used file descriptors are a void after this command; the
+code.  The used file descriptors are void after this command; the
 recipient list is only cleared if the server returns success.
 
 @noindent
@@ -331,7 +340,7 @@ before the final OK response:
 
 @deffn {Status line} MICALG @var{string}
 The @var{string} represents the hash algorithm used to create the
-signature. It is used with MOSS style signature messaged and defined by
+signature. It is used with MOSS style signature messages and defined by
 PGP/MIME (RFC-3156) and S/MIME (RFC-3851).  The GPGME library has a
 supporting function @code{gpgme_hash_algo_name} to return the algorithm
 name as a string.  This string needs to be lowercased and for OpenPGP
@@ -379,7 +388,7 @@ is an OpenPGP combined message.
 
 The server needs to support the verification of opaque signatures as
 well as detached signatures.  The kind of input sources controls what
-kind message is to be verified.
+kind message is to be verified. 
 
 @deffn Command MESSAGE FD=@var{n}
 This command is used with detached signatures to set the file descriptor
@@ -406,7 +415,7 @@ section.
 @noindent
 The verification is then started using:
 
-@deffn Command VERIFY -@w{}-protocol=@var{name}
+@deffn Command VERIFY -@w{}-protocol=@var{name} [-@w{}-silent]
 @var{name} is the signing protocol used for the message. For a
 description of the allowed protocols see the @code{ENCRYPT} command.
 This argument is mandatory.  Depending on the combination of
@@ -426,9 +435,10 @@ even be written if the signatures can't be verified.
 @end table
 @end deffn
 
-@noindent
-The client expects the server to send at least this status information
-before the final OK response:
+With @option{--silent} the server shall not display any dialog; this is
+for example used by the client to get the content of opaque signed
+messages. The client expects the server to send at least this status
+information before the final OK response:
 
 @deffn {Status line} SIGSTATUS @var{flag} @var{displaystring}
 Returns the status for the signature and a short string explaining the
@@ -461,6 +471,7 @@ its translated form.
 
 The server shall send one status line for every signature found on the
 message.
+
 
 @end deffn
 
@@ -615,13 +626,13 @@ This is a list of registry entries GpgOL knows about.
 
 @table @code
 
-@item HKLM\Software\Gnu\GnuPG:Install Directory
+@item HKLM\Software\GNU\GnuPG:Install Directory
 This is used by GnuPG to describe the directory where GnupG has been
 installed.  GpgOL requires this to get the location of the localedir
 which is used to show translated strings (@file{gpgol.mo}).  It is
 further used to check whether GnuPG has been installed at all.
 
-@item HKCU\Software\Gnu\GnuPG:UI Server
+@item HKCU\Software\GNU\GnuPG:UI Server
 If the UI server could not be connected, GpgOL tries to start the one
 given in this entry.  It is assumed that the UI server is stored in the
 @code{Install Directory} (as described above).  This Registry entry
@@ -632,33 +643,33 @@ defaults to @code{bin/kleopatra.exe} (FIXME: The final name will be just
 
 In case the UI server requires the socket name as an argument, the
 placeholder @code{$s} may be used to indicate this.  Due to this feature
-it is required that all verbatim dollar are too be doubled.  If the
-actual program name contains spaces the program name nees to be enclosed
+it is required that all verbatim dollar signs are doubled.  If the
+actual program name contains spaces the program name needs to be enclosed
 in quotes.
 
-@item HKCU\Software\Gnu\GnuPG:enableDebug
+@item HKCU\Software\GNU\GpgOL:enableDebug
 Setting this key to the string @code{1} enables a few extra features in
 the UI, useful only for debugging.
 
-@itemx HKCU\Software\Gnu\GnuPG:logFile
+@itemx HKCU\Software\GNU\GpgOL:logFile
 If the value is not empty, GpgOL takes this as a log file and appends
 debug information to this file.  The file may get very large.
 
-@itemx HKCU\Software\Gnu\GnuPG:compatFlags
+@itemx HKCU\Software\GNU\GpgOL:compatFlags
 This is a string consisting of @code{0} and @code{1} to enable certain
 compatibility flags.  Not generally useful; use the source for a
 description.
 
-@item HKCU\Software\Gnu\GnuPG:enableSmime   
-@itemx HKCU\Software\Gnu\GnuPG:defaultProtocol
-@itemx HKCU\Software\Gnu\GnuPG:encryptDefault
-@itemx HKCU\Software\Gnu\GnuPG:signDefault   
-@itemx HKCU\Software\Gnu\GnuPG:previewDecrypt
-@itemx HKCU\Software\Gnu\GnuPG:storePasswdTime
-@itemx HKCU\Software\Gnu\GnuPG:encodingFormat 
-@itemx HKCU\Software\Gnu\GnuPG:defaultKey   
-@itemx HKCU\Software\Gnu\GnuPG:enableDefaultKey
-@itemx HKCU\Software\Gnu\GnuPG:preferHtml 
+@item HKCU\Software\GNU\GpgOL:enableSmime   
+@itemx HKCU\Software\GNU\GpgOL:defaultProtocol
+@itemx HKCU\Software\GNU\GpgOL:encryptDefault
+@itemx HKCU\Software\GNU\GpgOL:signDefault   
+@itemx HKCU\Software\GNU\GpgOL:previewDecrypt
+@itemx HKCU\Software\GNU\GpgOL:storePasswdTime
+@itemx HKCU\Software\GNU\GpgOL:encodingFormat 
+@itemx HKCU\Software\GNU\GpgOL:defaultKey   
+@itemx HKCU\Software\GNU\GpgOL:enableDefaultKey
+@itemx HKCU\Software\GNU\GpgOL:preferHtml 
 These registry keys store the values from the configuration dialog.
 
 @end table

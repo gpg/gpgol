@@ -733,9 +733,9 @@ worker_start_write (work_item_t item)
     {
       if (errno == EAGAIN)
         {
-          log_debug ("%s:%s: [%s:%p] ignoring EAGAIN from callback",
-                     SRCNAME, __func__, item->name, item->hd);
-          Sleep (0);
+/*           log_debug ("%s:%s: [%s:%p] ignoring EAGAIN from callback", */
+/*                      SRCNAME, __func__, item->name, item->hd); */
+          Sleep (10);
           retval = 1;
         }
       else
@@ -825,7 +825,7 @@ async_worker_thread (void *dummy)
   for (;;)
     {
       /* Process our queue and fire up async I/O requests.  */
-      log_debug ("%s:%s: processing work queue", SRCNAME, __func__);
+/*       log_debug ("%s:%s: processing work queue", SRCNAME, __func__); */
       EnterCriticalSection (&work_queue_lock);
       hdarraylen = 0;
       hdarray[hdarraylen++] = work_queue_event;
@@ -874,14 +874,14 @@ async_worker_thread (void *dummy)
                    SRCNAME, __func__, count);
       else
         {
-          log_debug ("%s:%s: %d items in queue; waiting for %d items:", 
-                     SRCNAME, __func__, count, hdarraylen-1);
-          for (item = work_queue; item; item = item->next)
-            {
-              if (item->waiting)
-                log_debug ("%s:%s: [%s:%p]",
-                           SRCNAME, __func__, item->name, item->hd);
-            }
+/*           log_debug ("%s:%s: %d items in queue; waiting for %d items:",  */
+/*                      SRCNAME, __func__, count, hdarraylen-1); */
+/*           for (item = work_queue; item; item = item->next) */
+/*             { */
+/*               if (item->waiting) */
+/*                 log_debug ("%s:%s: [%s:%p]", */
+/*                            SRCNAME, __func__, item->name, item->hd); */
+/*             } */
           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE);
           if (n == WAIT_FAILED)
             {
@@ -890,7 +890,7 @@ async_worker_thread (void *dummy)
             }
           else if (n >= 0 && n < hdarraylen)
             {
-              log_debug ("%s:%s: WFMO succeeded (res=%d)",SRCNAME,__func__, n);
+/*               log_debug ("%s:%s: WFMO succeeded (res=%d)",SRCNAME,__func__, n); */
             }
           else
             {
@@ -901,7 +901,7 @@ async_worker_thread (void *dummy)
 
       /* Handle completion status.  */
       EnterCriticalSection (&work_queue_lock);
-      log_debug ("%s:%s: checking completion states", SRCNAME, __func__);
+/*       log_debug ("%s:%s: checking completion states", SRCNAME, __func__); */
       for (item = work_queue; item; item = item->next)
         {
           if (!item->io_pending)
@@ -950,7 +950,7 @@ async_worker_thread (void *dummy)
       Sleep (0);
 
       EnterCriticalSection (&work_queue_lock);
-      log_debug ("%s:%s: cleaning up work queue", SRCNAME, __func__);
+/*       log_debug ("%s:%s: cleaning up work queue", SRCNAME, __func__); */
       for (item = work_queue; item; item = item->next)
         {
           if (item->used && (item->got_ready || item->got_error))

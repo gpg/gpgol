@@ -1,13 +1,20 @@
-Noteworthy changes for version 0.10.2 (2007-11-12)
+Noteworthy changes for version 0.10.3 (2007-12-10)
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
 
     - Under OL2007 some menu entries are missing.
 
+ * Minor fixes.
+
+
+Noteworthy changes for version 0.10.2 (2007-11-12)
+==================================================
+
  * New menu items to select the default protocol.
 
  * Code cleanups.
+
 
 Noteworthy changes for version 0.10.1 (2007-10-22)
 ==================================================

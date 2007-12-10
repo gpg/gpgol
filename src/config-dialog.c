@@ -304,7 +304,7 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_COMMAND:
 	switch (LOWORD (wparam)) {
 	case IDC_OPT_SEL_KEYMAN_PATH:
-	    buf = get_open_file_name (NULL, _("Select GPG Key Manager"));
+	    buf = get_open_file_name (NULL, _("Select Certificate Manager"));
 	    if (buf && *buf)
 		SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, buf);
 	    break;

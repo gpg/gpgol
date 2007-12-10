@@ -41,7 +41,7 @@
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-static int debug_filter = 1;
+static int debug_filter = 0;
 
 /* This variable indicates whether the assuan engine is used.  */
 static int use_assuan;
@@ -224,7 +224,7 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
       if (filter->in.nonblock)
         {
           errno = EAGAIN;
-          if (debug_filter)
+          if (debug_filter > 1)
             log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
           return -1;
         }
@@ -280,7 +280,7 @@ filter_gpgme_write_cb (void *handle, const void *buffer, size_t size)
       if (filter->out.nonblock)
         {
           errno = EAGAIN;
-          if (debug_filter)
+          if (debug_filter > 1)
             log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
           return -1;
         }

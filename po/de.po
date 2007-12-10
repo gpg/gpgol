@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2007-11-12 15:15+0100\n"
-"PO-Revision-Date: 2007-11-12 15:14+0100\n"
+"POT-Creation-Date: 2007-12-07 08:44+0100\n"
+"PO-Revision-Date: 2007-12-07 08:44+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -53,8 +53,8 @@ msgid "Debug output (for analysing problems)"
 msgstr "Debugausgabe (zur Problemanalyse)"
 
 #: src/config-dialog.c:307
-msgid "Select GPG Key Manager"
-msgstr "Das Schlüsselverwaltungsprogramm festlegen"
+msgid "Select Certificate Manager"
+msgstr "GnuPG Zertifikats&verwaltung"
 
 #: src/engine.c:363
 msgid ""
@@ -70,7 +70,7 @@ msgstr ""
 "Diese ist allerdings sehr vereinfacht und kann z.B. keine S/MIME "
 "verschlüsselten Nachrichten entschlüsseln."
 
-#: src/engine.c:367 src/ext-commands.cpp:659 src/main.c:603 src/main.c:609
+#: src/engine.c:367 src/ext-commands.cpp:663 src/main.c:603 src/main.c:609
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -208,123 +208,115 @@ msgstr "*** Anfang Notation (Unterschrift von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/ext-commands.cpp:427
+#: src/ext-commands.cpp:431
 msgid "&Decrypt and verify message"
 msgstr "Entschlüsseln/Prüfen der Nachricht"
 
-#: src/ext-commands.cpp:428
+#: src/ext-commands.cpp:432
 msgid "&Verify signature"
 msgstr "&Unterschrift prüfen"
 
-#: src/ext-commands.cpp:429
+#: src/ext-commands.cpp:433
 msgid "&Display crypto information"
 msgstr "~Krypto Informationen anzeigen"
 
-#: src/ext-commands.cpp:436 src/ext-commands.cpp:787
+#: src/ext-commands.cpp:440 src/ext-commands.cpp:791
 msgid "Decrypt message and verify signature"
 msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
 
-#: src/ext-commands.cpp:443
+#: src/ext-commands.cpp:447
 msgid ">GnuPG protocol"
 msgstr ">GnuPG Protokoll"
 
-#: src/ext-commands.cpp:444
+#: src/ext-commands.cpp:448
 msgid "auto"
 msgstr "automatisch"
 
-#: src/ext-commands.cpp:445
+#: src/ext-commands.cpp:449
 msgid "PGP/MIME"
 msgstr "PGP/MIME"
 
-#: src/ext-commands.cpp:446
+#: src/ext-commands.cpp:450
 msgid "S/MIME"
 msgstr "S/MIME"
 
-#: src/ext-commands.cpp:448
+#: src/ext-commands.cpp:452
 msgid "&encrypt message with GnuPG"
 msgstr "Nachricht mit GnuPG verschlüsseln"
 
-#: src/ext-commands.cpp:449
+#: src/ext-commands.cpp:453
 msgid "&sign message with GnuPG"
 msgstr "Nachricht mit GnuPG unterschreiben"
 
-#: src/ext-commands.cpp:453
+#: src/ext-commands.cpp:457 src/ext-commands.cpp:830
 msgid "Encrypt message with GnuPG"
 msgstr "Nachricht mit GnuPG verschlüsseln"
 
-#: src/ext-commands.cpp:454
+#: src/ext-commands.cpp:458 src/ext-commands.cpp:840
 msgid "Sign message with GnuPG"
 msgstr "Nachricht mit GnuPG unterschreiben"
 
-#: src/ext-commands.cpp:489
+#: src/ext-commands.cpp:493
 msgid "GnuPG Certificate &Manager"
 msgstr "GnuPG Zertifikats&verwaltung"
 
-#: src/ext-commands.cpp:493
+#: src/ext-commands.cpp:497
 msgid "Open the certificate manager"
 msgstr "Die Zertifikatsverwaltung öffnen"
 
-#: src/ext-commands.cpp:658
+#: src/ext-commands.cpp:662
 msgid "Could not start certificate manager"
 msgstr "Die Zertifikatsverwaltung konnte nicht aufgerufen werden"
 
-#: src/ext-commands.cpp:701
+#: src/ext-commands.cpp:705
 msgid "Select this option to decrypt and verify the message."
 msgstr ""
 "Wählen Sie diese Option um die Nachricht zu entschlüsseln bzw. zu "
 "verifizieren."
 
-#: src/ext-commands.cpp:708
+#: src/ext-commands.cpp:712
 msgid "Select this option to show information on the crypto status"
 msgstr ""
 "Wählen Sie diese Option um Informationen über den Krypto-Status der "
 "Nachricht anzuzeigen."
 
-#: src/ext-commands.cpp:716 src/ext-commands.cpp:806
+#: src/ext-commands.cpp:720 src/ext-commands.cpp:810
 msgid "Check the signature now and display the result"
 msgstr "Die digitale Unterschrift jetzt prüfen und das Resultat anzeigen"
 
-#: src/ext-commands.cpp:723
+#: src/ext-commands.cpp:727
 msgid "Select this option to automatically select the protocol."
 msgstr "Wählen Sie diese Option zum das Protokoll automatisch auszuwählen."
 
-#: src/ext-commands.cpp:730
+#: src/ext-commands.cpp:734
 msgid "Select this option to select the PGP/MIME protocol."
 msgstr "Wählen Sie diese Option zum das PGP/MIME Protokoll auszuwählen."
 
-#: src/ext-commands.cpp:737
+#: src/ext-commands.cpp:741
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Wählen Sie diese Option zum das S/MIME Protokoll auszuwählen."
 
-#: src/ext-commands.cpp:744
+#: src/ext-commands.cpp:748
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/ext-commands.cpp:751
+#: src/ext-commands.cpp:755
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
 
-#: src/ext-commands.cpp:758
+#: src/ext-commands.cpp:762
 msgid "Select this option to open the certificate manager"
 msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."
 
-#: src/ext-commands.cpp:796
+#: src/ext-commands.cpp:800
 msgid "Show S/MIME status info"
 msgstr "S/MIME Status Informationen anzeigen"
 
-#: src/ext-commands.cpp:816
+#: src/ext-commands.cpp:820
 msgid "Use S/MIME for sign/encrypt"
 msgstr "S/MIME zum signieren/verschlüsseln verwenden"
 
-#: src/ext-commands.cpp:826
-msgid "Encrypt message with GPG"
-msgstr "Nachricht mit GnuPG unterschreiben"
-
-#: src/ext-commands.cpp:836
-msgid "Sign message with GPG"
-msgstr "Nachricht mit GnuPG unterschreiben"
-
-#: src/ext-commands.cpp:846
+#: src/ext-commands.cpp:850
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
@@ -680,6 +672,15 @@ msgstr "PGP/MIME Prüfungsresultat"
 #: src/verify-dialog.c:247
 msgid "S/MIME Verification Result"
 msgstr "S/MIME Prüfungsresultat"
+
+#~ msgid "Select GPG Key Manager"
+#~ msgstr "Das Schlüsselverwaltungsprogramm festlegen"
+
+#~ msgid "Encrypt message with GPG"
+#~ msgstr "Nachricht mit GnuPG verschlüsseln"
+
+#~ msgid "Sign message with GPG"
+#~ msgstr "Nachricht mit GnuPG unterschreiben"
 
 #~ msgid "use S/MIME protocol"
 #~ msgstr "S/MIME verwenden"
