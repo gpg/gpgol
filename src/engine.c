@@ -41,7 +41,7 @@
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-static int debug_filter = 0;
+static int debug_filter = 1;
 
 /* This variable indicates whether the assuan engine is used.  */
 static int use_assuan;
@@ -216,7 +216,7 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
       if (filter->in.got_eof || filter->in.ready)
         {
           release_in_lock (filter, __func__);
-          if (debug_filter)
+         if (debug_filter)
             log_debug ("%s:%s: returning EOF\n", SRCNAME, __func__);
           return 0; /* Return EOF. */
         }
@@ -226,6 +226,7 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
           errno = EAGAIN;
           if (debug_filter > 1)
             log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
+          SwitchToThread ();
           return -1;
         }
       if (debug_filter)

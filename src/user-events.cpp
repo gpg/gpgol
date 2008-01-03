@@ -110,7 +110,12 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
       if (SUCCEEDED(hr) && objtype == MAPI_MESSAGE)
         {
           log_debug ("%s:%s: message class: %s\n",
-            SRCNAME, __func__, msgclass);
+                     SRCNAME, __func__, msgclass);
+        }
+      else if (SUCCEEDED(hr) && objtype == MAPI_FOLDER)
+        {
+          log_debug ("%s:%s: objtype: %lu\n",
+                     SRCNAME, __func__, objtype);
         }
     }
 

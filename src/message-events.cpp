@@ -46,16 +46,16 @@
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func, int lnr)
 {
   ULONG res;
   
   if (!punk)
     return;
   res = UlRelease (punk);
-//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+  log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+             SRCNAME, func, lnr, punk, res);
 }
 
 
@@ -114,8 +114,8 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb)))
         m_processed = true;
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
   
   return S_FALSE;
@@ -131,7 +131,7 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   log_debug ("%s:%s: received; flags=%#lx m_processed=%d\n",
              SRCNAME, __func__, flags, m_processed);
 
-  /* If the message has been processed by is (i.e. in OnRead), we now
+  /* If the message has been processed by us (i.e. in OnRead), we now
      use our own display code.  */
   if (!flags && m_processed)
     {
@@ -288,8 +288,8 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
         }
     }
   
-  ul_release (msg);
-  ul_release (pMDB);
+  ul_release (msg, __func__, __LINE__);
+  ul_release (pMDB, __func__, __LINE__);
   
   return hrReturn;
 }
@@ -334,8 +334,7 @@ GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK eecb)
 /* Called by Exchange after the message has been submitted to MAPI.
    EECB is a pointer to the IExchExtCallback interface. */
 STDMETHODIMP_ (VOID) 
-GpgolMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK eecb,
-                                            ULONG flags)
+GpgolMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = FALSE; 

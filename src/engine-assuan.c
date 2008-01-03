@@ -589,7 +589,7 @@ op_assuan_init (void)
   /* Fire up the pipe worker thread. */
   {
     HANDLE th;
-    DWORD tid;
+    DWORD  mytid, tid;
 
     InitializeCriticalSection (&work_queue_lock);
     work_queue_event = CreateEvent (NULL, FALSE, FALSE, NULL);
@@ -598,7 +598,9 @@ op_assuan_init (void)
         log_error_w32 (-1, "%s:%s: CreateEvent failed", SRCNAME, __func__);
         return gpg_error (GPG_ERR_GENERAL);
       }
-    th = CreateThread (NULL, 256*1024, async_worker_thread, NULL, 0, &tid);
+    mytid = GetCurrentThreadId ();
+    th = CreateThread (NULL, 256*1024, async_worker_thread, (void*)mytid,
+                       0, &tid);
     if (th == INVALID_HANDLE_VALUE)
       log_error ("failed to launch the async_worker_thread");
     else
@@ -608,6 +610,52 @@ op_assuan_init (void)
   init_done = 1; 
   return 0;
 }
+
+#if 0 /* Not used. */
+/* Dummy window procedure.  */
+static LRESULT CALLBACK 
+attach_thread_input_wndw_proc (HWND hwnd, UINT msg, 
+                               WPARAM wparam, LPARAM lparam)
+{		
+  return DefWindowProc (hwnd, msg, wparam, lparam);
+}
+
+
+/* Our helper thread needs to attach its input events to the main
+   message queue.  To do this we need to create a the message queue
+   first by creating an hidden window within this thread.  */
+static void
+attach_thread_input (DWORD other_tid)
+{
+  WNDCLASS wndwclass = {0, attach_thread_input_wndw_proc, 0, 0, glob_hinst,
+                        0, 0, 0, 0, "gpgol-assuan-engine"};
+  HWND hwnd;
+
+  /* First create a window to make sure that a message queue exists
+     for this thread.  */
+  if (!RegisterClass (&wndwclass))
+    {
+      log_error_w32 (-1, "%s:%s: error registering window class",
+                     SRCNAME, __func__);
+      return;
+    }
+  hwnd = CreateWindow ("gpgol-assuan-engine", "gpgol-assuan-engine",
+                       0, 0, 0, 0, 0, NULL, NULL, glob_hinst, NULL);
+  if (!hwnd)
+    {
+      log_error_w32 (-1, "%s:%s: error creating main window",
+                     SRCNAME, __func__);
+      return;
+    }
+
+  /* Now attach it to the main thread.  */
+  if (!AttachThreadInput (GetCurrentThreadId (), other_tid,  TRUE))
+    log_error_w32 (-1, "%s:%s: AttachThreadInput failed",
+                   SRCNAME, __func__);
+  log_debug ("%s:%s: attached thread %lu to %lu", SRCNAME, __func__,
+             GetCurrentThreadId (), other_tid);
+}
+#endif /* not used.  */
 
 
 
@@ -819,7 +867,8 @@ async_worker_thread (void *dummy)
   DWORD nbytes;
   HANDLE hdarray[MAXIMUM_WAIT_OBJECTS];
   int count, addit, any_ready, hdarraylen;
-
+  
+/*   attach_thread_input ( (DWORD)dummy ); */
   (void)dummy;
 
   for (;;)
@@ -874,6 +923,23 @@ async_worker_thread (void *dummy)
                    SRCNAME, __func__, count);
       else
         {
+          /* First process any window messages of this thread.  Do
+             this before wating so that the message queue is cleared
+             before waiting and we don't get stucked due to messages
+             not removed.  We need to process the message queue also
+             after the wait becuase we will only get to here if there
+             is actual ui-server work to be done but some messages
+             might still be in the queue.  */
+/*           { */
+/*             MSG msg; */
+
+/*             while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE)) */
+/*               { */
+/*                 TranslateMessage (&msg); */
+/*                 DispatchMessage (&msg); */
+/*               } */
+/*           } */
+
 /*           log_debug ("%s:%s: %d items in queue; waiting for %d items:",  */
 /*                      SRCNAME, __func__, count, hdarraylen-1); */
 /*           for (item = work_queue; item; item = item->next) */
@@ -883,6 +949,8 @@ async_worker_thread (void *dummy)
 /*                            SRCNAME, __func__, item->name, item->hd); */
 /*             } */
           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE);
+/*           n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE, */
+/*                                          INFINITE, QS_ALLEVENTS); */
           if (n == WAIT_FAILED)
             {
               log_error_w32 (-1, "%s:%s: WFMO failed", SRCNAME, __func__);
@@ -892,12 +960,27 @@ async_worker_thread (void *dummy)
             {
 /*               log_debug ("%s:%s: WFMO succeeded (res=%d)",SRCNAME,__func__, n); */
             }
+          else if (n == hdarraylen)
+            ; /* Message event.  */
           else
             {
               log_error ("%s:%s: WFMO returned: %d", SRCNAME, __func__, n);
               Sleep (1000);
             }
+
+          /* Try to process the message queue.  */
+/*           { */
+/*             MSG msg; */
+            
+/*             while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE)) */
+/*               { */
+/*                 TranslateMessage (&msg); */
+/*                 DispatchMessage (&msg); */
+/*               } */
+/*           } */
+
         }
+
 
       /* Handle completion status.  */
       EnterCriticalSection (&work_queue_lock);
@@ -1227,7 +1310,7 @@ status_in_cb (void *opaque, const void *buffer, size_t size)
 
 
 
-/* Start an asynchronous command.  Caller gives up owenership of
+/* Start an asynchronous command.  Caller gives up ownership of
    CLD.  */
 static gpg_error_t
 start_command (assuan_context_t ctx, closure_data_t cld,

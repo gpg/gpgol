@@ -360,6 +360,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   LPSTREAM stream;
   STATSTG statInfo;
   ULONG nread;
+  size_t nbytes;
   char *body = NULL;
   char *p;
   char *msgcls = NULL;
@@ -405,11 +406,13 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
           return NULL;
         }
       
-      /* Fixme: We might want to read only the first 1k to decide
-         whether this is actually an OpenPGP message and only then
-         continue reading.  */
-      body = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 2);
-      hr = stream->Read (body, (size_t)statInfo.cbSize.QuadPart, &nread);
+      /* We read only the first 1k to decide whether this is actually
+         an OpenPGP armored message .  */
+      nbytes = (size_t)statInfo.cbSize.QuadPart;
+      if (nbytes > 1024*2)
+        nbytes = 1024*2;
+      body = (char*)xmalloc (nbytes + 2);
+      hr = stream->Read (body, nbytes, &nread);
       if (hr)
         {
           log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
@@ -428,8 +431,6 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
         }
       stream->Release ();
       
-      /* FIXME: We might want to avoid this by directly comparing
-         against wchar_t.  */
       {
         char *tmp;
         tmp = wchar_to_utf8 ((wchar_t*)body);
@@ -443,27 +444,22 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
       }
     }
 
-  /* The entire body of the message is now availble in the utf-8
-     string BODY.  Walk over it to figure out its type.  */
-  /* FiXME: We should use a state machine to check whether this is
-     really a valid PGP MIME message and possible even check that
-     there there is no other text before or after the signed text.  */
+  /* The first ~1k of the body of the message is now availble in the
+     utf-8 string BODY.  Walk over it to figure out its type.  */
   for (p=body; p && *p; p = (p=strchr (p+1, '\n')? (p+1):NULL))
     if (!strncmp (p, "-----BEGIN PGP ", 15))
       {
         if (!strncmp (p+15, "SIGNED MESSAGE-----", 19)
             && trailing_ws_p (p+15+19))
-          {
-            msgcls = xstrdup ("IPM.Note.GpgOL.ClearSigned");
-            break;
-          }
+          msgcls = xstrdup ("IPM.Note.GpgOL.ClearSigned");
         else if (!strncmp (p+15, "MESSAGE-----", 12)
                  && trailing_ws_p (p+15+12))
-          {
-            msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
-            break;
-          }
+          msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
+        break;
       }
+    else if (!trailing_ws_p (p))
+      break;  /* Text before the PGP message - don't take this as a
+                 proper message.  */
          
   xfree (body);
   return msgcls;
@@ -570,12 +566,49 @@ mapi_change_message_class (LPMESSAGE message)
         {
           /* This is "IPM.Note.SMIME.foo" (where ".foo" is optional
              but the previous condition has already taken care of
-             this.  Note that we can't just insert a new part and keep
-             the SMIME; we need to change the SMIME part of the class
-             name so that Outlook does not proxcess it as an SMIME
-             message. */
+             this).  Note that we can't just insert a new part and
+             keep the SMIME; we need to change the SMIME part of the
+             class name so that Outlook does not process it as an
+             SMIME message. */
           newvalue = (char*)xmalloc (strlen (s) + 1);
           strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
+        }
+      else if (opt.enable_smime && !strcmp (s, "IPM.Note.Secure.CexSig"))
+        {
+          /* This is a CryptoEx generated signature. */
+          char *ct, *smtype;
+
+          ct = mapi_get_message_content_type (message, NULL, &smtype);
+          if (!ct)
+            log_debug ("%s:%s: message has no content type", 
+                       SRCNAME, __func__);
+          else
+            {
+              log_debug ("%s:%s: content type is '%s'", 
+                         SRCNAME, __func__, ct);
+              if (smtype)
+                {
+                  log_debug ("%s:%s:   smime-type is '%s'", 
+                             SRCNAME, __func__, smtype);
+              
+                  if (!strcmp (ct, "application/pkcs7-mime")
+                      || !strcmp (ct, "application/x-pkcs7-mime"))
+                    {
+                      if (!strcmp (smtype, "signed-data"))
+                        newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+                      else if (!strcmp (smtype, "enveloped-data"))
+                        newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+                    }
+                  else if (!strcmp (ct, "application/pkcs7-signature"))
+                    {
+                      newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+                    }
+                  xfree (smtype);
+                }
+              xfree (ct);
+            }
+          if (!newvalue)
+            newvalue = xstrdup ("IPM.Note.GpgOL");
         }
     }
   MAPIFreeBuffer (propval);
@@ -691,6 +724,8 @@ mapi_get_message_type (LPMESSAGE message)
             log_debug ("%s:%s: message class `%s' not supported",
                        SRCNAME, __func__, s-14);
         }
+      else if (!strncmp (s, "IPM.Note.SMIME", 14) && (!s[14] || s[14] =='.'))
+        msgtype = MSGTYPE_SMIME;
     }
   MAPIFreeBuffer (propval);
   return msgtype;

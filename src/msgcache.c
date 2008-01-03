@@ -19,7 +19,7 @@
 
 /* Due to some peculiarities of Outlook 2003 and possible also earlier
    versions we need fixup the text of a reply before editing starts.
-   This is done using the Echache extension mechanism and this module
+   This is done using the Exchange extension mechanism and this module
    provides the means of caching and locating messages.  To be exact,
    we don't cache entire messages but just the plaintext after
    decryption.

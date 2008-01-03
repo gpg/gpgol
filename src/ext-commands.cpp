@@ -75,16 +75,16 @@ static void add_menu (LPEXCHEXTCALLBACK eecb,
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func, int lnr)
 {
   ULONG res;
   
   if (!punk)
     return;
   res = UlRelease (punk);
-//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+  log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+             SRCNAME, func, lnr, punk, res);
 }
 
 
@@ -404,8 +404,8 @@ GpgolExtCommands::InstallCommands (
           xfree (key);
         }
       
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
 
   /* Now install menu and toolbar items.  */
@@ -433,7 +433,7 @@ GpgolExtCommands::InstallCommands (
         _("&Display crypto information"), &m_nCmdShowInfo,
                 "@", NULL,
         opt.enable_debug? "Debug-1 (open_inspector)":"", &m_nCmdDebug1,
-        opt.enable_debug? "Debug-2 (n/a)":"", &m_nCmdDebug2,
+        opt.enable_debug? "Debug-2 (change msg class)":"", &m_nCmdDebug2,
         NULL);
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
@@ -525,6 +525,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       DISPPARAMS dispparams;
       VARIANT aVariant;
       
+      log_debug ("%s:%s: command Close called\n", SRCNAME, __func__);
       pDisp = find_outlook_property (eecb, "Close", &dispid);
       if (pDisp)
         {
@@ -551,6 +552,9 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
           log_debug ("%s:%s: invoking Close failed: %#lx",
                      SRCNAME, __func__, hr);
         }
+      else
+        log_debug ("%s:%s: invoking Close failed: no Close method)",
+                   SRCNAME, __func__);
 
       message_wipe_body_cruft (eecb);
 
@@ -578,18 +582,20 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   else if (nCommandID == m_nCmdDecrypt
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
+      log_debug ("%s:%s: command Decrypt called\n", SRCNAME, __func__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
           message_decrypt (message, m_pExchExt->getMsgtype (eecb), 1);
           message_display_handler (eecb, hwnd);
 	}
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
   else if (nCommandID == m_nCmdCheckSig
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
+      log_debug ("%s:%s: command CheckSig called\n", SRCNAME, __func__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
@@ -597,23 +603,25 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 	}
       else
         log_debug_w32 (hr, "%s:%s: CmdCheckSig failed", SRCNAME, __func__);
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
   else if (nCommandID == m_nCmdShowInfo
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
+      log_debug ("%s:%s: command ShowInfo called\n", SRCNAME, __func__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
           message_show_info (message, hwnd);
 	}
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
   else if (nCommandID == m_nCmdProtoAuto
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
+      log_debug ("%s:%s: command ProtoAuto called\n", SRCNAME, __func__);
       check_menu (eecb, m_nCmdProtoAuto, TRUE);
       check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
       check_menu (eecb, m_nCmdProtoSmime, FALSE);
@@ -622,6 +630,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   else if (nCommandID == m_nCmdProtoPgpmime
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
+      log_debug ("%s:%s: command ProroPggmime called\n", SRCNAME, __func__);
       check_menu (eecb, m_nCmdProtoAuto, FALSE);
       check_menu (eecb, m_nCmdProtoPgpmime, TRUE);
       check_menu (eecb, m_nCmdProtoSmime, FALSE);
@@ -630,6 +639,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   else if (nCommandID == m_nCmdProtoSmime
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
+      log_debug ("%s:%s: command ProtoSmime called\n", SRCNAME, __func__);
       if (opt.enable_smime)
         {
           check_menu (eecb, m_nCmdProtoAuto, FALSE);
@@ -641,18 +651,21 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   else if (nCommandID == m_nCmdEncrypt
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
+      log_debug ("%s:%s: command Encrypt called\n", SRCNAME, __func__);
       m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
       check_menu (eecb, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
     }
-    else if (nCommandID == m_nCmdSign
+  else if (nCommandID == m_nCmdSign
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
+      log_debug ("%s:%s: command Sign called\n", SRCNAME, __func__);
       m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
       check_menu (eecb, m_nCmdSign, m_pExchExt->m_gpgSign);
     }
   else if (nCommandID == m_nCmdKeyManager
            && m_lContext == EECONTEXT_VIEWER)
     {
+      log_debug ("%s:%s: command KeyManager called\n", SRCNAME, __func__);
       if (engine_start_keymanager ())
         if (start_key_manager ())
           MessageBox (NULL, _("Could not start certificate manager"),
@@ -661,17 +674,36 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   else if (opt.enable_debug && nCommandID == m_nCmdDebug1
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
+      log_debug ("%s:%s: command Debug1 (open inspector) called\n",
+                 SRCNAME, __func__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
           open_inspector (eecb, message);
 	}
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
 
     }
+  else if (opt.enable_debug && nCommandID == m_nCmdDebug2
+           && m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+      log_debug ("%s:%s: command Debug2 (change message class) called\n", 
+                 SRCNAME, __func__);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          mapi_change_message_class (message);
+	}
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
+    }
   else
-    return S_FALSE; /* Pass on unknown command. */
+    {
+      log_debug ("%s:%s: command passed on\n", SRCNAME, __func__);
+      return S_FALSE; /* Pass on unknown command. */
+    }
+  
 
   return S_OK; 
 }

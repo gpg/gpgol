@@ -38,14 +38,15 @@
 
 
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func)
 {
   ULONG res;
   
   if (!punk)
     return;
   res = UlRelease (punk);
-//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+  log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
+             SRCNAME, func, punk, res);
 }
 
 
@@ -59,6 +60,26 @@ message_incoming_handler (LPMESSAGE message, msgtype_t msgtype)
   switch (msgtype)
     {
     case MSGTYPE_UNKNOWN: 
+      /* If this message has never passed our change message class
+         code it won't have an unknown msgtype _and_ no sig status
+         flag.  Thus we look at the message class now and change it if
+         required.  It won't get displayed correctly right away but a
+         latter decrypt command or when viewd a second time all has
+         been set.  */
+      if (!mapi_has_sig_status (message))
+        {
+          log_debug ("%s:%s: message class not yet checked - doing now\n",
+                     SRCNAME, __func__);
+          mapi_change_message_class (message);
+        }
+      break;
+    case MSGTYPE_SMIME:
+      if (opt.enable_smime)
+        {
+          log_debug ("%s:%s: message class not checked with smime enabled "
+                     "- doing now\n", SRCNAME, __func__);
+          mapi_change_message_class (message);
+        }
       break;
     case MSGTYPE_GPGOL:
       log_debug ("%s:%s: ignoring unknown message of original SMIME class\n",
@@ -137,8 +158,8 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
   else
     log_debug_w32 (hr, "%s:%s: error getting message", SRCNAME, __func__);
 
-  ul_release (message);
-  ul_release (mdb);
+  ul_release (message, __func__);
+  ul_release (mdb, __func__);
 
   return !!wasprotected;
 }
@@ -197,8 +218,8 @@ message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb)
         log_debug_w32 (hr, "%s:%s: error getting message", 
                        SRCNAME, __func__);
      
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__);
+      ul_release (mdb, __func__);
     }
 }
 
@@ -444,6 +465,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
     case MSGTYPE_GPGOL_PGP_MESSAGE:
       return -1; /* Should not be called for such a message.  */
     case MSGTYPE_UNKNOWN:
+    case MSGTYPE_SMIME:
     case MSGTYPE_GPGOL:
       return 0; /* Nothing to do.  */
     }
@@ -554,6 +576,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
   switch (msgtype)
     {
     case MSGTYPE_UNKNOWN:
+    case MSGTYPE_SMIME:
     case MSGTYPE_GPGOL:
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
     case MSGTYPE_GPGOL_MULTIPART_SIGNED:

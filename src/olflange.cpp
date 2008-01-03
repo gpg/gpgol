@@ -95,16 +95,16 @@ ext_context_name (unsigned long no)
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func)
 {
   ULONG res;
   
   if (!punk)
     return;
   res = UlRelease (punk);
-//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+  log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
+             SRCNAME, func, punk, res);
 }
 
 
@@ -332,7 +332,7 @@ GpgolExt::~GpgolExt (void)
     
 //   if (m_pOutlookExtItemEvents)
 //     m_pOutlookExtItemEvents->Release ();
-
+  
   if (m_lContext == EECONTEXT_SESSION)
     {
       if (g_initdll)
@@ -536,8 +536,8 @@ GpgolExt::getMsgtype (LPEXCHEXTCALLBACK eecb)
   log_debug ("%s:%s: found msgtype %d\n", SRCNAME, __func__, msgtype);
   msgtype_valid = TRUE;
 
-  ul_release (message);
-  ul_release (mdb);
+  ul_release (message, __func__);
+  ul_release (mdb, __func__);
 
   return msgtype;
 }

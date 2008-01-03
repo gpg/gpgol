@@ -31,6 +31,7 @@ extern "C" {
 typedef enum 
   {
     MSGTYPE_UNKNOWN = 0,
+    MSGTYPE_SMIME,         /* Original SMIME class. */
     MSGTYPE_GPGOL,
     MSGTYPE_GPGOL_MULTIPART_SIGNED,
     MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,

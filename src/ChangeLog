@@ -1,3 +1,14 @@
+2007-12-18  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_msgcls_from_pgp_lines): Limit check to the
+	first 1 k and stop testing after the first PGP armor line.
+	(mapi_get_message_type): Return MSGTYPE_SMIME.
+	(mapi_change_message_class): Take care of CryptoEx signatures.
+	* mapihelp.h (MSGTYPE_SMIME): New.
+	* message.cpp (message_incoming_handler): Check message class for
+	unknown and unchecked messages.  Take care MSGTYPE_SMIME.
+	* ext-commands.cpp (DoCommand): Add debug command change message class.
+
 2007-12-07  Werner Koch  <wk@g10code.com>
 
 	* ext-commands.cpp (InstallCommands): Removed toolbar button fro
