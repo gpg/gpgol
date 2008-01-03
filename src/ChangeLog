@@ -1,3 +1,12 @@
+2008-01-03  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (mime_sign_encrypt): Fix result test of do_mime_sign.
+	(write_tempsign_attachment): Remove.
+	(do_mime_sign): Change last ark to a sink_t.
+	(mime_sign_encrypt): Rework to use a temporary stream instead of a
+	temporary attachment.
+	(create_mapi_attachment): Remove arg TEMPSIGN.
+
 2007-12-18  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (get_msgcls_from_pgp_lines): Limit check to the

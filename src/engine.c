@@ -41,7 +41,7 @@
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-static int debug_filter = 1;
+static int debug_filter = 0;
 
 /* This variable indicates whether the assuan engine is used.  */
 static int use_assuan;

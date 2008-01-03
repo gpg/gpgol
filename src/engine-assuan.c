@@ -911,7 +911,7 @@ async_worker_thread (void *dummy)
           if (addit)
             {
               hdarray[hdarraylen++] = item->hd;
-              item->waiting = 1; /* Just for the tarce output.  */
+              item->waiting = 1; /* Just for the trace output.  */
             }
           if (!item->delayed_ready && (item->got_error || item->got_ready))
             any_ready = 1;
@@ -940,14 +940,14 @@ async_worker_thread (void *dummy)
 /*               } */
 /*           } */
 
-/*           log_debug ("%s:%s: %d items in queue; waiting for %d items:",  */
-/*                      SRCNAME, __func__, count, hdarraylen-1); */
-/*           for (item = work_queue; item; item = item->next) */
-/*             { */
-/*               if (item->waiting) */
-/*                 log_debug ("%s:%s: [%s:%p]", */
-/*                            SRCNAME, __func__, item->name, item->hd); */
-/*             } */
+          log_debug ("%s:%s: %d items in queue; waiting for %d items:",
+                     SRCNAME, __func__, count, hdarraylen-1);
+          for (item = work_queue; item; item = item->next)
+            {
+              if (item->waiting)
+                log_debug ("%s:%s: [%s:%p]",
+                           SRCNAME, __func__, item->name, item->hd);
+            }
           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE);
 /*           n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE, */
 /*                                          INFINITE, QS_ALLEVENTS); */

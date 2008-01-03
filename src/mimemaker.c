@@ -1,5 +1,5 @@
 /* mimemaker.c - Construct MIME message out of a MAPI
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -47,8 +47,6 @@
 /* The filename of the attachment we create as the result of sign or
    encrypt operation.  */
 #define MIMEATTACHFILENAME "gpgolXXX.dat"
-/* The filename of another temporary attachment.  */
-#define TMPMIMEATTACHFILENAME "gpgolXX0.dat"
 
 static const char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -140,13 +138,11 @@ check_protocol (protocol_t protocol)
 
 /* Create a new MAPI attchment for MESSAGE which will be used to
    prepare the MIME message.  On sucess the stream to write the data
-   to is stored at STREAM and the attachment object itself is the
+   to is stored at STREAM and the attachment object itself is
    returned.  The caller needs to call SaveChanges.  Returns NULL on
-   failure in which case STREAM will be set to NULL.  If TEMPSIGN is
-   set the attchment is used only as a temporary buffer and will later
-   be part of an encrypted mIME body.  */
+   failure in which case STREAM will be set to NULL.  */
 static LPATTACH
-create_mapi_attachment (LPMESSAGE message, sink_t sink, int tempsign)
+create_mapi_attachment (LPMESSAGE message, sink_t sink)
 {
   HRESULT hr;
   ULONG pos;
@@ -189,7 +185,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink, int tempsign)
 
   /* We better insert a short filename. */
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = tempsign? TMPMIMEATTACHFILENAME : MIMEATTACHFILENAME;
+  prop.Value.lpszA = MIMEATTACHFILENAME;
   hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
   if (hr)
     {
@@ -925,37 +921,6 @@ write_attachments (sink_t sink,
 }
 
 
-/* Write the tempsign attachment.  */
-static int
-write_tempsign_attachment (sink_t sink, 
-                           LPMESSAGE message, mapi_attach_item_t *table)
-{
-  int idx, rc;
-  char *buffer;
-  size_t buflen;
-
-  for (idx=0; table && !table[idx].end_of_table; idx++)
-    {
-      if (table[idx].attach_type == ATTACHTYPE_MOSSTEMPL
-          && table[idx].filename
-          && !strcmp (table[idx].filename, TMPMIMEATTACHFILENAME))
-        {
-          buffer = mapi_get_attach (message, table+idx, &buflen);
-          if (!buffer)
-            {
-              log_debug ("Tempsign attachment at index %d not found\n", idx);
-              return -1;
-            }
-          /* Write the attachment out as is.  */
-          rc = write_buffer (sink, buffer, buflen);
-          xfree (buffer);
-          return rc;
-        }
-    }
-  log_error ("Tempsign attachment not found\n");
-  return -1;  /* Ooops.  */
-}
-
 
 /* Delete all attachments from TABLE except for the one we just created */
 static int
@@ -1167,10 +1132,11 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
 /* Main body of mime_sign without the the code to delete the original
    attachments.  On success the function returns the current
    attachment table at R_ATT_TABLE or sets this to NULL on error.  If
-   TEMPSIGN is set the result will later be encrypted.  */
+   TMPSINK is set not atcghment will be created but the output
+   written to that sink.  */
 static int 
 do_mime_sign (LPMESSAGE message, protocol_t protocol, 
-              mapi_attach_item_t **r_att_table, int tempsign)
+              mapi_attach_item_t **r_att_table, sink_t tmpsink)
 {
   int result = -1;
   int rc;
@@ -1198,9 +1164,17 @@ do_mime_sign (LPMESSAGE message, protocol_t protocol,
   if (protocol == PROTOCOL_UNKNOWN)
     return -1;
 
-  attach = create_mapi_attachment (message, sink, tempsign);
-  if (!attach)
-    return -1;
+  if (tmpsink)
+    {
+      attach = NULL;
+      sink = tmpsink;
+    }
+  else
+    {
+      attach = create_mapi_attachment (message, sink);
+      if (!attach)
+        return -1;
+    }
 
   /* Prepare the signing.  */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
@@ -1241,7 +1215,7 @@ do_mime_sign (LPMESSAGE message, protocol_t protocol,
   if ((rc = write_boundary (sink, boundary, 0)))
     goto failure;
 
-  /* Create a new sink for hashing and wire/hash our content.  */
+  /* Create a new sink for hashing and write/hash our content.  */
   hashsink->cb_data = filter;
   hashsink->extrasink = sink;
   hashsink->writefnc = sink_hashing_write;
@@ -1355,14 +1329,18 @@ do_mime_sign (LPMESSAGE message, protocol_t protocol,
   }
 
 
-  if (close_mapi_attachment (&attach, sink))
-    goto failure;
+  if (attach)
+    {
+      if (close_mapi_attachment (&attach, sink))
+        goto failure;
+    }
 
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
 
  failure:
   engine_cancel (filter);
-  cancel_mapi_attachment (&attach, sink);
+  if (attach)
+    cancel_mapi_attachment (&attach, sink);
   xfree (body);
   if (result)
     mapi_release_attach_table (att_table);
@@ -1585,7 +1563,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
 
-  attach = create_mapi_attachment (message, sink, 0);
+  attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
 
@@ -1692,71 +1670,118 @@ mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 {
   int result = -1;
   int rc = 0;
+  HRESULT hr;
   LPATTACH attach;
+  LPSTREAM tmpstream = NULL;
   struct sink_s sinkmem;
   sink_t sink = &sinkmem;
   struct sink_s encsinkmem;
   sink_t encsink = &encsinkmem;
+  struct sink_s tmpsinkmem;
+  sink_t tmpsink = &tmpsinkmem;
   char boundary[BOUNDARYSIZE+1];
   mapi_attach_item_t *att_table = NULL;
   engine_filter_t filter;
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
+  memset (tmpsink, 0, sizeof *tmpsink);
 
-  attach = create_mapi_attachment (message, sink, 0);
+  attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
+
+  /* Create a temporary sink to construct the signed data.  */ 
+  hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
+                         (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
+                          | STGM_CREATE | STGM_READWRITE),
+                         NULL, "GPG", &tmpstream); 
+  if (FAILED (hr)) 
+    {
+      log_error ("%s:%s: can't create temp file: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      rc = -1;
+      goto failure;
+    }
+  tmpsink->cb_data = tmpstream;
+  tmpsink->writefnc = sink_std_write;
+
 
   /* Prepare the encryption.  We do this early as it is quite common
      that some recipients are not be available and thus the encryption
      will fail early. */
-  TRACEPOINT ();
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
-  TRACEPOINT ();
   if ((rc=engine_encrypt_start (filter, protocol, recipients, &protocol)))
     goto failure;
 
-  TRACEPOINT ();
   protocol = check_protocol (protocol);
   if (protocol == PROTOCOL_UNKNOWN)
     goto failure;
-  TRACEPOINT ();
 
-  /* Now sign the message.  This creates another attchment with the
+  /* Now sign the message.  This creates another attachment with the
      complete MIME object of the signed message.  We can't do the
      encryption in streaming mode while running the encryption because
      we need to fix up that ugly micalg parameter after having created
      the signature.  */
-  if (!do_mime_sign (message, protocol, &att_table, 1))
+  if (do_mime_sign (message, protocol, &att_table, tmpsink))
     goto failure;
 
-  TRACEPOINT ();
   /* Write the top header.  */
   rc = create_top_encryption_header (sink, protocol, boundary);
   if (rc)
     goto failure;
 
-  TRACEPOINT ();
   /* Create a new sink for encrypting the temporary attachment with
      the signed message.  */
   encsink->cb_data = filter;
   encsink->writefnc = sink_encryption_write;
-  
-  rc = write_tempsign_attachment (encsink, message, att_table);
-  if (rc)
-    goto failure;
 
-  TRACEPOINT ();
+  /* Copy the temporary stream to the encryption sink.  */
+  {
+    LARGE_INTEGER off;
+    ULONG nread;
+    char buffer[4096];
+
+    off.QuadPart = 0;
+    hr = IStream_Seek (tmpstream, off, STREAM_SEEK_SET, NULL);
+    if (hr)
+      {
+        log_error ("%s:%s: seeking back to the begin failed: hr=%#lx",
+                   SRCNAME, __func__, hr);
+        rc = gpg_error (GPG_ERR_EIO);
+        goto failure;
+      }
+
+    for (;;)
+      {
+        hr = IStream_Read (tmpstream, buffer, sizeof buffer, &nread);
+        if (hr)
+          {
+            log_error ("%s:%s: IStream::Read failed: hr=%#lx", 
+                       SRCNAME, __func__, hr);
+            rc = gpg_error (GPG_ERR_EIO);
+            goto failure;
+          }
+        if (!nread)
+          break;  /* EOF */
+        rc = write_buffer (encsink, buffer, nread);
+        if (rc)
+          {
+            log_error ("%s:%s: writing tmpstream to encsink failed: %s", 
+                       SRCNAME, __func__, gpg_strerror (rc));
+            goto failure;
+          }
+      }
+  }
+
+
   /* Flush the encryption sink and wait for the encryption to get
      ready.  */
   if ((rc = write_buffer (encsink, NULL, 0)))
     goto failure;
-  TRACEPOINT ();
   if ((rc = engine_wait (filter)))
     goto failure;
-  TRACEPOINT ();
   filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
   
@@ -1764,24 +1789,21 @@ mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
   if (*boundary && (rc = write_boundary (sink, boundary, 1)))
     goto failure;
   
-  TRACEPOINT ();
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
-  TRACEPOINT ();
   if (finalize_message (message, att_table))
     goto failure;
 
-  TRACEPOINT ();
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
 
  failure:
-  TRACEPOINT ();
   if (result)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc, 
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
-  cancel_mapi_attachment (&attach, sink);
+  if (tmpstream)
+    IStream_Release (tmpstream);
   mapi_release_attach_table (att_table);
   return result;
 }
