@@ -1,3 +1,28 @@
+2008-01-04  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (send_options): Call AllowSetForegroundWindow.
+
+	* main.c (read_options): Allo other values than 1 for enableDebug.
+	* common.h (DBG_IOWORKER, DBG_IOWORKER_EXTRA, DBG_FILTER) 
+	(DBG_FILTER): New.
+	* engine.c (debug_filter): Turn it into a macro.
+	(debug_filter_extra): New macro, used instead of checking the
+	value of debug_filter.
+	* engine-assuan.c (debug_ioworker, debug_ioworker_extra): new.
+	Use them all over the file to enable debugging.
+	* engine.c (engine_encrypt_start): Add arg HWND.
+	(engine_sign_start, engine_decrypt_start, engine_verify_start) 
+	(engine_start_keymanager): Ditto.
+
+	* mimemaker.c (mime_encrypt, mime_sign_encrypt, mime_sign) 
+	(do_mime_sign): Add arg HWND and pass it to the engine.
+	* mimeparser.c (mime_verify, mime_decrypt): Pass HWND.
+	* message.cpp (message_sign, sign_encrypt): Pass HWND.
+	(message_incoming_handler, message_verify, message_decrypt): Add
+	arg HWND and pass it on.
+	* message-events.cpp (OnRead): Pass HWND to message function.
+	* ext-commands.cpp (DoCommand):  Ditto.
+
 2008-01-03  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (mime_sign_encrypt): Fix result test of do_mime_sign.

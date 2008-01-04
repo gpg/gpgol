@@ -1,5 +1,5 @@
 /* ext-commands.cpp - Subclass impl of IExchExtCommands
- *	Copyright (C) 2004, 2005, 2007 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -586,7 +586,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_decrypt (message, m_pExchExt->getMsgtype (eecb), 1);
+          message_decrypt (message, m_pExchExt->getMsgtype (eecb), 1, hwnd);
           message_display_handler (eecb, hwnd);
 	}
       ul_release (message, __func__, __LINE__);
@@ -599,7 +599,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_verify (message, m_pExchExt->getMsgtype (eecb), 1);
+          message_verify (message, m_pExchExt->getMsgtype (eecb), 1, hwnd);
 	}
       else
         log_debug_w32 (hr, "%s:%s: CmdCheckSig failed", SRCNAME, __func__);
@@ -666,7 +666,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
            && m_lContext == EECONTEXT_VIEWER)
     {
       log_debug ("%s:%s: command KeyManager called\n", SRCNAME, __func__);
-      if (engine_start_keymanager ())
+      if (engine_start_keymanager (hwnd))
         if (start_key_manager ())
           MessageBox (NULL, _("Could not start certificate manager"),
                       _("GpgOL"), MB_ICONERROR|MB_OK);

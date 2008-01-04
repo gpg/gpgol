@@ -1,5 +1,5 @@
 /* mimemaker.h - Construct MIME from MAPI
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -26,10 +26,11 @@ extern "C" {
 #endif
 #endif
 
-int mime_sign (LPMESSAGE message, protocol_t protocol);
-int mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients);
-int mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, 
-                       char **recipients);
+int mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol);
+int mime_encrypt (LPMESSAGE message, HWND hwnd,
+                  protocol_t protocol, char **recipients);
+int mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
+                       protocol_t protocol, char **recipients);
 
 
 #ifdef __cplusplus

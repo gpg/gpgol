@@ -1,5 +1,5 @@
 /* engine.c - Crypto engine dispatcher
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -41,7 +41,8 @@
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-static int debug_filter = 0;
+#define debug_filter        (opt.enable_debug & DBG_FILTER)
+#define debug_filter_extra  (opt.enable_debug & DBG_FILTER_EXTRA)
 
 /* This variable indicates whether the assuan engine is used.  */
 static int use_assuan;
@@ -104,7 +105,7 @@ static void
 take_in_lock (engine_filter_t filter, const char *func)
 {
   EnterCriticalSection (&filter->in.lock);
-  if (debug_filter > 1)
+  if (debug_filter_extra)
     log_debug ("%s:%s: in.lock taken\n", SRCNAME, func);
 }
 
@@ -112,7 +113,7 @@ static void
 release_in_lock (engine_filter_t filter, const char *func)
 {
   LeaveCriticalSection (&filter->in.lock);
-  if (debug_filter > 1)
+  if (debug_filter_extra)
     log_debug ("%s:%s: in.lock released\n", SRCNAME, func);
 }
 
@@ -120,7 +121,7 @@ static void
 take_out_lock (engine_filter_t filter, const char *func)
 {
   EnterCriticalSection (&filter->out.lock);
-  if (debug_filter > 1)
+  if (debug_filter_extra)
     log_debug ("%s:%s: out.lock taken\n", SRCNAME, func);
 }
 
@@ -128,7 +129,7 @@ static void
 release_out_lock (engine_filter_t filter, const char *func)
 {
   LeaveCriticalSection (&filter->out.lock);
-  if (debug_filter > 1)
+  if (debug_filter_extra)
     log_debug ("%s:%s: out.lock released\n", SRCNAME, func);
 }
 
@@ -224,7 +225,7 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
       if (filter->in.nonblock)
         {
           errno = EAGAIN;
-          if (debug_filter > 1)
+          if (debug_filter_extra)
             log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
           SwitchToThread ();
           return -1;
@@ -281,7 +282,7 @@ filter_gpgme_write_cb (void *handle, const void *buffer, size_t size)
       if (filter->out.nonblock)
         {
           errno = EAGAIN;
-          if (debug_filter > 1)
+          if (debug_filter_extra)
             log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
           return -1;
         }
@@ -585,7 +586,7 @@ engine_wait (engine_filter_t filter)
           filter->out.length -= nbytes;
           if (filter->out.length)
             {
-              if (debug_filter > 1)
+              if (debug_filter_extra)
                 log_debug ("%s:%s: still %d pending bytes for outfnc\n",
                            SRCNAME, __func__, filter->out.length);
               more = 1;
@@ -662,7 +663,7 @@ engine_cancel (engine_filter_t filter)
    or engine_cancel.  On return the protocol to be used is stored at
    R_PROTOCOL. */
 int
-engine_encrypt_start (engine_filter_t filter,
+engine_encrypt_start (engine_filter_t filter, HWND hwnd,
                       protocol_t req_protocol, char **recipients,
                       protocol_t *r_protocol)
 {
@@ -673,13 +674,13 @@ engine_encrypt_start (engine_filter_t filter,
   if (filter->use_assuan)
     {
       err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
-                               filter, NULL, recipients, &used_protocol);
+                               filter, hwnd, recipients, &used_protocol);
       if (!err)
         *r_protocol = used_protocol;
     }
   else
     err = op_gpgme_encrypt (req_protocol, filter->indata, filter->outdata,
-                            filter, NULL, recipients);
+                            filter, hwnd, recipients);
       
   return err;
 }
@@ -692,16 +693,16 @@ engine_encrypt_start (engine_filter_t filter,
    the filter object lasts until the final engine_wait or
    engine_cancel.  */
 int
-engine_sign_start (engine_filter_t filter, protocol_t protocol)
+engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol)
 {
   gpg_error_t err;
 
   if (filter->use_assuan)
     err = op_assuan_sign (protocol, filter->indata, filter->outdata,
-                         filter, NULL);
+                         filter, hwnd);
   else
     err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
-                         filter, NULL);
+                         filter, hwnd);
   return err;
 }
 
@@ -713,17 +714,17 @@ engine_sign_start (engine_filter_t filter, protocol_t protocol)
    the filter object lasts until the final engine_wait or
    engine_cancel.  */
 int
-engine_decrypt_start (engine_filter_t filter, protocol_t protocol,
+engine_decrypt_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
                       int with_verify)
 {
   gpg_error_t err;
 
   if (filter->use_assuan)
     err = op_assuan_decrypt (protocol, filter->indata, filter->outdata,
-                            filter, NULL, with_verify);
+                            filter, hwnd, with_verify);
   else
     err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
-                            filter, NULL, with_verify);
+                            filter, hwnd, with_verify);
   return err;
 }
 
@@ -736,7 +737,7 @@ engine_decrypt_start (engine_filter_t filter, protocol_t protocol,
    used through this function.  However, the lifetime of the filter
    object lasts until the final engine_wait or engine_cancel.  */
 int
-engine_verify_start (engine_filter_t filter, const char *signature,
+engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
                      protocol_t protocol)
 {
   gpg_error_t err;
@@ -749,19 +750,19 @@ engine_verify_start (engine_filter_t filter, const char *signature,
     }
 
   if (filter->use_assuan)
-    err = op_assuan_verify (protocol, filter->indata, signature, filter, NULL);
+    err = op_assuan_verify (protocol, filter->indata, signature, filter, hwnd);
   else
-    err = op_gpgme_verify (protocol, filter->indata, signature, filter, NULL);
+    err = op_gpgme_verify (protocol, filter->indata, signature, filter, hwnd);
   return err;
 }
 
 
 /* Fire up the key manager.  Returns 0 on success.  */
 int
-engine_start_keymanager (void)
+engine_start_keymanager (HWND hwnd)
 {
   if (use_assuan)
-    return op_assuan_start_keymanager (NULL);
+    return op_assuan_start_keymanager (hwnd);
   else
     return gpg_error (GPG_ERR_NOT_SUPPORTED);
 }

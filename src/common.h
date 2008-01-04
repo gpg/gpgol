@@ -105,7 +105,9 @@ extern
 #endif
 struct 
 {
-  int enable_debug;	     /* Enable extra debug options. */
+  int enable_debug;	     /* Enable extra debug options.  Values
+                                larger than 1 increases the debug log
+                                verbosity.  */
   int enable_smime;	     /* Enable S/MIME support. */
   int passwd_ttl;            /* Time in seconds the passphrase is stored. */
   protocol_t default_protocol;/* The default protocol. */
@@ -141,7 +143,12 @@ struct b64_state_s
 };
 typedef struct b64_state_s b64_state_t;
 
-
+/* Bit values used for extra log file verbosity.  Value 1 is reserved
+   to enable debug menu options.  */
+#define DBG_IOWORKER        2
+#define DBG_IOWORKER_EXTRA  4
+#define DBG_FILTER          8
+#define DBG_FILTER_EXTRA   16 
 
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);

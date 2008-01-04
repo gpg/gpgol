@@ -53,7 +53,7 @@ ul_release (LPVOID punk, const char *func)
 /* A helper function used by OnRead and OnOpen to dispatch the
    message.  Returns true if the message has been processed.  */
 bool
-message_incoming_handler (LPMESSAGE message, msgtype_t msgtype)
+message_incoming_handler (LPMESSAGE message,msgtype_t msgtype, HWND hwnd)
 {
   bool retval = false;
 
@@ -89,36 +89,36 @@ message_incoming_handler (LPMESSAGE message, msgtype_t msgtype)
       log_debug ("%s:%s: processing multipart signed message\n", 
                  SRCNAME, __func__);
       retval = true;
-      message_verify (message, msgtype, 0);
+      message_verify (message, msgtype, 0, hwnd);
       break;
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       log_debug ("%s:%s: processing multipart encrypted message\n",
                  SRCNAME, __func__);
       retval = true;
-      message_decrypt (message, msgtype, 0);
+      message_decrypt (message, msgtype, 0, hwnd);
       break;
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
       log_debug ("%s:%s: processing opaque signed message\n", 
                  SRCNAME, __func__);
       retval = true;
-      message_verify (message, msgtype, 0);
+      message_verify (message, msgtype, 0, hwnd);
       break;
     case MSGTYPE_GPGOL_CLEAR_SIGNED:
       log_debug ("%s:%s: processing clear signed pgp message\n", 
                  SRCNAME, __func__);
       retval = true;
-      message_verify (message, msgtype, 0);
+      message_verify (message, msgtype, 0, hwnd);
       break;
     case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
       log_debug ("%s:%s: processing opaque encrypted message\n",
                  SRCNAME, __func__);
       retval = true;
-      message_decrypt (message, msgtype, 0);
+      message_decrypt (message, msgtype, 0, hwnd);
       break;
     case MSGTYPE_GPGOL_PGP_MESSAGE:
       log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
       retval = true;
-      message_decrypt (message, msgtype, 0);
+      message_decrypt (message, msgtype, 0, hwnd);
       break;
     }
 
@@ -441,7 +441,7 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
    what to do.  With FORCE set the verification is done regardlessless
    of a cached signature result. */
 int
-message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
+message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 {
   mapi_attach_item_t *table = NULL;
   int moss_idx = -1;
@@ -533,7 +533,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
         }
     }
 
-  err = mime_verify (protocol, inbuf, inbuflen, message, 0, 0);
+  err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0);
   log_debug ("mime_verify returned %d", err);
   if (err)
     {
@@ -562,7 +562,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force)
    function can decide what to do.  With FORCE set the decryption is
    done regardless whether it has already been done.  */
 int
-message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
+message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 {
   mapi_attach_item_t *table = NULL;
   int part2_idx;
@@ -710,7 +710,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force)
         goto leave; /* Problem getting the attachment.  */
     }
 
-  err = mime_decrypt (protocol, cipherstream, message, 0, 0);
+  err = mime_decrypt (protocol, cipherstream, message, hwnd, 0);
   log_debug ("mime_decrypt returned %d (%s)", err, gpg_strerror (err));
   if (err)
     {
@@ -842,9 +842,9 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
   else
     {
       if (signflag)
-        err = mime_sign_encrypt (message, protocol, recipients);
+        err = mime_sign_encrypt (message, hwnd, protocol, recipients);
       else
-        err = mime_encrypt (message, protocol, recipients);
+        err = mime_encrypt (message, hwnd, protocol, recipients);
       if (err)
         {
           char buf[200];
@@ -865,7 +865,7 @@ message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd)
 {
   gpg_error_t err;
 
-  err = mime_sign (message, protocol);
+  err = mime_sign (message, hwnd, protocol);
   if (err)
     {
       char buf[200];

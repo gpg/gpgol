@@ -62,16 +62,16 @@ int engine_create_filter (engine_filter_t *r_filter,
 int engine_wait (engine_filter_t filter);
 void engine_cancel (engine_filter_t filter);
 
-int engine_encrypt_start (engine_filter_t filter, 
+int engine_encrypt_start (engine_filter_t filter, HWND hwnd,
                           protocol_t req_protocol, char **recipients,
                           protocol_t *r_protocol);
-int engine_sign_start (engine_filter_t filter, protocol_t protocol);
-int engine_decrypt_start (engine_filter_t filter, protocol_t protocol,
-                          int with_verify);
-int engine_verify_start (engine_filter_t filter, const char *signature,
-                         protocol_t protocol);
+int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol);
+int engine_decrypt_start (engine_filter_t filter, HWND hwnd,
+                          protocol_t protocol, int with_verify);
+int engine_verify_start (engine_filter_t filter, HWND hwnd,
+                         const char *signature, protocol_t protocol);
 
-int engine_start_keymanager (void);
+int engine_start_keymanager (HWND hwnd);
 
 
 

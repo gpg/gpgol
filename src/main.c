@@ -509,7 +509,7 @@ read_options (void)
   char *val = NULL;
  
   load_extension_value ("enableDebug", &val);
-  opt.enable_debug = val == NULL || *val != '1' ? 0 : 1;
+  opt.enable_debug = val? atoi (val) : 0;
   xfree (val); val = NULL;
 
   load_extension_value ("enableSmime", &val);

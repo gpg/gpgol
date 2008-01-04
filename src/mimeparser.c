@@ -1,5 +1,5 @@
 /* mimeparser.c - Parse multipart MIME message
- *	Copyright (C) 2005, 2007 g10 Code GmbH
+ *	Copyright (C) 2005, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -1058,7 +1058,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
       
       if ((err=engine_create_filter (&filter, NULL, NULL)))
         goto leave;
-      if ((err=engine_verify_start (filter, signature, ctx->protocol)))
+      if ((err=engine_verify_start (filter, hwnd, signature, ctx->protocol)))
         goto leave;
 
       /* Filter the data.  */
@@ -1157,7 +1157,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
 /*       title = native_to_utf8 (_("[Encrypted PGP/MIME message]")); */
   if ((err=engine_create_filter (&filter, plaintext_handler, ctx)))
     goto leave;
-  if ((err=engine_decrypt_start (filter, protocol, !preview_mode)))
+  if ((err=engine_decrypt_start (filter, hwnd, protocol, !preview_mode)))
     goto leave;
 
   

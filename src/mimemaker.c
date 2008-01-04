@@ -1135,7 +1135,7 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
    TMPSINK is set not atcghment will be created but the output
    written to that sink.  */
 static int 
-do_mime_sign (LPMESSAGE message, protocol_t protocol, 
+do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol, 
               mapi_attach_item_t **r_att_table, sink_t tmpsink)
 {
   int result = -1;
@@ -1179,7 +1179,7 @@ do_mime_sign (LPMESSAGE message, protocol_t protocol,
   /* Prepare the signing.  */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
     goto failure;
-  if (engine_sign_start (filter, protocol))
+  if (engine_sign_start (filter, hwnd, protocol))
     goto failure;
 
   /* Get the attachment info and the body.  */
@@ -1358,12 +1358,12 @@ do_mime_sign (LPMESSAGE message, protocol_t protocol,
    keep the original message intact but there is no 100% guarantee for
    it. */
 int 
-mime_sign (LPMESSAGE message, protocol_t protocol)
+mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
 {
   int result = -1;
   mapi_attach_item_t *att_table;
 
-  if (!do_mime_sign (message, protocol, &att_table, 0))
+  if (!do_mime_sign (message, hwnd, protocol, &att_table, 0))
     {
       if (!finalize_message (message, att_table))
         result = 0;
@@ -1544,7 +1544,8 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
 
 /* Encrypt the MESSAGE.  */
 int 
-mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
+mime_encrypt (LPMESSAGE message, HWND hwnd, 
+              protocol_t protocol, char **recipients)
 {
   int result = -1;
   int rc;
@@ -1572,7 +1573,7 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
      will fail early. */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
-  if (engine_encrypt_start (filter, protocol, recipients, &protocol))
+  if (engine_encrypt_start (filter, hwnd, protocol, recipients, &protocol))
     goto failure;
 
   protocol = check_protocol (protocol);
@@ -1666,7 +1667,8 @@ mime_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
 
 /* Sign and Encrypt the MESSAGE.  */
 int 
-mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
+mime_sign_encrypt (LPMESSAGE message, HWND hwnd, 
+                   protocol_t protocol, char **recipients)
 {
   int result = -1;
   int rc = 0;
@@ -1712,7 +1714,8 @@ mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
      will fail early. */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
-  if ((rc=engine_encrypt_start (filter, protocol, recipients, &protocol)))
+  if ((rc=engine_encrypt_start (filter, hwnd, 
+                                protocol, recipients, &protocol)))
     goto failure;
 
   protocol = check_protocol (protocol);
@@ -1724,7 +1727,7 @@ mime_sign_encrypt (LPMESSAGE message, protocol_t protocol, char **recipients)
      encryption in streaming mode while running the encryption because
      we need to fix up that ugly micalg parameter after having created
      the signature.  */
-  if (do_mime_sign (message, protocol, &att_table, tmpsink))
+  if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink))
     goto failure;
 
   /* Write the top header.  */

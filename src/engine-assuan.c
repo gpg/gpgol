@@ -1,5 +1,5 @@
 /* engine-assuan.c - Crypto engine using an Assuan server
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <assert.h>
 #define WIN32_LEAN_AND_MEAN 
+#define WINVER 0x0500  /* Required for AllowSetForegroundWindow.  */
 #include <windows.h>
 
 #include <assuan.h>
@@ -37,6 +38,11 @@
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                        SRCNAME, __func__, __LINE__); \
                         } while (0)
+
+/* Debug macros.  */
+#define debug_ioworker        (opt.enable_debug & DBG_IOWORKER)
+#define debug_ioworker_extra  (opt.enable_debug & DBG_IOWORKER_EXTRA)
+
 
 /* How many times we will try to connect to a server after we have
    started him.  */
@@ -272,9 +278,10 @@ create_io_pipe (HANDLE filedes[2], pid_t serverpid, int for_write)
 
   filedes[0] = r;
   filedes[1] = w;
-  log_debug ("%s:%s: new pipe created: r=%p%s w=%p%s",  SRCNAME, __func__,
-             r, for_write? " (server)":"",
-             w, !for_write?" (server)":"");
+  if (debug_ioworker)
+    log_debug ("%s:%s: new pipe created: r=%p%s w=%p%s",  SRCNAME, __func__,
+               r, for_write? " (server)":"",
+               w, !for_write?" (server)":"");
   return 0;
 }
 
@@ -445,20 +452,21 @@ send_options (assuan_context_t ctx, void *hwnd, pid_t *r_pid)
   char numbuf[50];
 
   *r_pid = (pid_t)(-1);
-  if (hwnd)
+  err = assuan_transact (ctx, "GETINFO pid", getinfo_pid_cb, r_pid,
+                         NULL, NULL, NULL, NULL);
+  if (!err && *r_pid == (pid_t)(-1))
+    {
+      log_debug ("%s:%s: server did not return a PID", SRCNAME, __func__);
+      err = gpg_error (GPG_ERR_ASSUAN_SERVER_FAULT);
+    }
+
+  if (*r_pid != (pid_t)(-1) && !AllowSetForegroundWindow (*r_pid))
+    log_error_w32 (-1, "AllowSetForegroundWindow(%u) failed", *r_pid);
+
+  if (!err && hwnd)
     {
       snprintf (numbuf, sizeof numbuf, "%lx", (unsigned long)hwnd);
       err = send_one_option (ctx, "window-id", numbuf);
-    }
-  if (!err)
-    {
-      err = assuan_transact (ctx, "GETINFO pid", getinfo_pid_cb, r_pid,
-                             NULL, NULL, NULL, NULL);
-      if (!err && *r_pid == (pid_t)(-1))
-        {
-          log_debug ("%s:%s: server did not return a PID", SRCNAME, __func__);
-          err = gpg_error (GPG_ERR_ASSUAN_SERVER_FAULT);
-        }
     }
 
   return err;
@@ -696,8 +704,11 @@ worker_start_read (work_item_t item)
               item->got_error = 1;
             }
           else
-            log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback", 
-                       SRCNAME, __func__, item->name, item->hd, nwritten);
+            {
+              if (debug_ioworker)
+                log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback", 
+                           SRCNAME, __func__, item->name, item->hd, nwritten);
+            }
         }
       retval = 1;
     }
@@ -707,16 +718,18 @@ worker_start_read (work_item_t item)
 
       if (syserr == ERROR_IO_PENDING)
         {
-          log_debug ("%s:%s: [%s:%p] io(read) pending",
-                     SRCNAME, __func__, item->name, item->hd);
+          if (debug_ioworker)
+            log_debug ("%s:%s: [%s:%p] io(read) pending",
+                       SRCNAME, __func__, item->name, item->hd);
           item->io_pending = sizeof item->buffer;
           retval = 1;
         }
       else if (syserr == ERROR_HANDLE_EOF || syserr == ERROR_BROKEN_PIPE)
         {
-          log_debug ("%s:%s: [%s:%p] EOF%s seen",
-                     SRCNAME, __func__, item->name, item->hd,
-                     syserr == ERROR_BROKEN_PIPE? " (broken pipe)":"");
+          if (debug_ioworker)
+            log_debug ("%s:%s: [%s:%p] EOF%s seen",
+                       SRCNAME, __func__, item->name, item->hd,
+                       syserr == ERROR_BROKEN_PIPE? " (broken pipe)":"");
           item->got_ready = 1;
         }
       else
@@ -757,8 +770,11 @@ worker_check_read (work_item_t item, DWORD nbytes)
           item->got_error = 1;
         }
       else
-        log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback",
-                   SRCNAME, __func__, item->name, item->hd, nwritten);
+        {
+          if (debug_ioworker)
+            log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback",
+                       SRCNAME, __func__, item->name, item->hd, nwritten);
+        }
     }
 }
 
@@ -795,8 +811,9 @@ worker_start_write (work_item_t item)
     }
   else if (!nread)
     {
-      log_debug ("%s:%s: [%s:%p] EOF received from callback",
-                 SRCNAME, __func__, item->name, item->hd);
+      if (debug_ioworker)
+        log_debug ("%s:%s: [%s:%p] EOF received from callback",
+                   SRCNAME, __func__, item->name, item->hd);
       item->got_ready = 1;
       retval = 1;
     }
@@ -811,8 +828,11 @@ worker_start_write (work_item_t item)
               item->got_error = 1;
             }
           else
-            log_debug ("%s:%s: [%s:%p] wrote %lu bytes", 
-                       SRCNAME, __func__, item->name, item->hd, nbytes);
+            {
+              if (debug_ioworker)
+                log_debug ("%s:%s: [%s:%p] wrote %lu bytes", 
+                           SRCNAME, __func__, item->name, item->hd, nbytes);
+            }
           retval = 1;
         }
       else 
@@ -821,8 +841,9 @@ worker_start_write (work_item_t item)
 
           if (syserr == ERROR_IO_PENDING)
             {
-              log_debug ("%s:%s: [%s:%p] io(write) pending (%d bytes)",
-                         SRCNAME, __func__, item->name, item->hd, nread);
+              if (debug_ioworker)
+                log_debug ("%s:%s: [%s:%p] io(write) pending (%d bytes)",
+                           SRCNAME, __func__, item->name, item->hd, nread);
               item->io_pending = nread;
               retval = 1;
             }
@@ -852,8 +873,11 @@ worker_check_write (work_item_t item, DWORD nbytes)
       item->got_error = 1;
     }
   else
-    log_debug ("%s:%s: [%s:%p] write finished (%lu bytes)", 
-               SRCNAME, __func__, item->name, item->hd, nbytes);
+    {
+      if (debug_ioworker)
+        log_debug ("%s:%s: [%s:%p] write finished (%lu bytes)", 
+                   SRCNAME, __func__, item->name, item->hd, nbytes);
+    }
 }
 
 
@@ -896,8 +920,9 @@ async_worker_thread (void *dummy)
           assert (item->data);
           if (hdarraylen == DIM (hdarray))
             {
-              log_debug ("%s:%s: [%s:%p] wait array full - ignored for now",
-                         SRCNAME, __func__, item->name, item->hd);
+              if (debug_ioworker)
+                log_debug ("%s:%s: [%s:%p] wait array full - ignored for now",
+                           SRCNAME, __func__, item->name, item->hd);
               continue;
             }
           
@@ -919,8 +944,11 @@ async_worker_thread (void *dummy)
       LeaveCriticalSection (&work_queue_lock);
 
       if (any_ready)
-        log_debug ("%s:%s: %d items in queue; skipping wait", 
-                   SRCNAME, __func__, count);
+        {
+          if (debug_ioworker_extra)
+            log_debug ("%s:%s: %d items in queue; skipping wait", 
+                       SRCNAME, __func__, count);
+        }
       else
         {
           /* First process any window messages of this thread.  Do
@@ -940,13 +968,16 @@ async_worker_thread (void *dummy)
 /*               } */
 /*           } */
 
-          log_debug ("%s:%s: %d items in queue; waiting for %d items:",
-                     SRCNAME, __func__, count, hdarraylen-1);
-          for (item = work_queue; item; item = item->next)
+          if (debug_ioworker_extra)
             {
-              if (item->waiting)
-                log_debug ("%s:%s: [%s:%p]",
-                           SRCNAME, __func__, item->name, item->hd);
+              log_debug ("%s:%s: %d items in queue; waiting for %d items:",
+                         SRCNAME, __func__, count, hdarraylen-1);
+              for (item = work_queue; item; item = item->next)
+                {
+                  if (item->waiting)
+                    log_debug ("%s:%s: [%s:%p]",
+                               SRCNAME, __func__, item->name, item->hd);
+                }
             }
           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE);
 /*           n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE, */
@@ -984,7 +1015,8 @@ async_worker_thread (void *dummy)
 
       /* Handle completion status.  */
       EnterCriticalSection (&work_queue_lock);
-/*       log_debug ("%s:%s: checking completion states", SRCNAME, __func__); */
+      if (debug_ioworker_extra)
+        log_debug ("%s:%s: checking completion states", SRCNAME, __func__);
       for (item = work_queue; item; item = item->next)
         {
           if (!item->io_pending)
@@ -1005,8 +1037,9 @@ async_worker_thread (void *dummy)
               else if (!item->writing && syserr == ERROR_HANDLE_EOF)
                 {
                   /* Got EOF.  */
-                  log_debug ("%s:%s: [%s:%p] EOF received",
-                             SRCNAME, __func__, item->name, item->hd);
+                  if (debug_ioworker)
+                    log_debug ("%s:%s: [%s:%p] EOF received",
+                               SRCNAME, __func__, item->name, item->hd);
                   item->io_pending = 0;
                   item->got_ready = 1;
                 }
@@ -1033,7 +1066,8 @@ async_worker_thread (void *dummy)
       Sleep (0);
 
       EnterCriticalSection (&work_queue_lock);
-/*       log_debug ("%s:%s: cleaning up work queue", SRCNAME, __func__); */
+      if (debug_ioworker_extra)
+        log_debug ("%s:%s: cleaning up work queue", SRCNAME, __func__); 
       for (item = work_queue; item; item = item->next)
         {
           if (item->used && (item->got_ready || item->got_error))
@@ -1058,17 +1092,19 @@ async_worker_thread (void *dummy)
                           break;
                       if (itm2)
                         {
-                          log_debug ("%s:%s: [%s:%p] delaying closure due to "
-                                     "[%s/%p]", SRCNAME, __func__,
-                                     item->name, item->hd, 
-                                     itm2->name, itm2->hd);
+                          if (debug_ioworker)
+                            log_debug ("%s:%s: [%s:%p] delaying closure "
+                                       "due to [%s/%p]", SRCNAME, __func__,
+                                       item->name, item->hd, 
+                                       itm2->name, itm2->hd);
                           item->delayed_ready = 1;
                           break; 
                         }
                     }
                   item->delayed_ready = 0;
-                  log_debug ("%s:%s: [%s:%p] invoking closure",
-                             SRCNAME,__func__, item->name, item->hd);
+                  if (debug_ioworker)
+                    log_debug ("%s:%s: [%s:%p] invoking closure",
+                               SRCNAME,__func__, item->name, item->hd);
                   
                   item->cld->closure (item->cld);
                   xfree (item->cld);
@@ -1100,8 +1136,9 @@ engine_assuan_cancel (void *cancel_data)
 static void
 finalize_handler (work_item_t item)
 {
-  log_debug ("%s:%s: [%s:%p] closing handle", 
-             SRCNAME, __func__, item->name, item->hd);
+  if (debug_ioworker)
+    log_debug ("%s:%s: [%s:%p] closing handle", 
+               SRCNAME, __func__, item->name, item->hd);
   CloseHandle (item->hd);
   item->hd = INVALID_HANDLE_VALUE;
 }
@@ -1110,7 +1147,9 @@ finalize_handler (work_item_t item)
 static void
 noclose_finalize_handler (work_item_t item)
 {
-  log_debug ("%s:%s: [%s:%p] called", SRCNAME, __func__, item->name, item->hd);
+  if (debug_ioworker)
+    log_debug ("%s:%s: [%s:%p] called",
+               SRCNAME, __func__, item->name, item->hd);
   item->hd = INVALID_HANDLE_VALUE;
 }
 
@@ -1153,8 +1192,10 @@ enqueue_callback (const char *name, assuan_context_t ctx,
   item->aborting = 0;
   item->finalize = fin_handler;
   memset (&item->ov, 0, sizeof item->ov);
-  log_debug ("%s:%s: [%s:%p] created%s",
-             SRCNAME, __func__, item->name, item->hd, created?"":" (reusing)");
+  if (debug_ioworker)
+    log_debug ("%s:%s: [%s:%p] created%s",
+               SRCNAME, __func__, item->name, item->hd,
+               created?"":" (reusing)");
   LeaveCriticalSection (&work_queue_lock);
 }
 
@@ -1170,8 +1211,9 @@ destroy_command (ULONG cmdid)
   for (item = work_queue; item; item = item->next)
     if (item->used && item->cmdid == cmdid && !item->wait_on_success)
       {
-        log_debug ("%s:%s: [%s:%p] cmdid=%lu registered for destroy",
-                   SRCNAME, __func__, item->name, item->hd, item->cmdid);
+        if (debug_ioworker)
+          log_debug ("%s:%s: [%s:%p] cmdid=%lu registered for destroy",
+                     SRCNAME, __func__, item->name, item->hd, item->cmdid);
         /* First send an I/O cancel in case the the last
            GetOverlappedResult returned only a partial result.  This
            works because we are always running within the
@@ -1192,7 +1234,8 @@ status_handler (closure_data_t cld, const char *line)
   gpg_error_t err;
   int retval = 0;
 
-  log_debug ("%s:%s: cld %p, line `%s'", SRCNAME, __func__, cld, line);
+  if (debug_ioworker)
+    log_debug ("%s:%s: cld %p, line `%s'", SRCNAME, __func__, cld, line);
 
   if (*line == '#' || !*line)
     ;

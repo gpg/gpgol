@@ -649,7 +649,21 @@ in quotes.
 
 @item HKCU\Software\GNU\GpgOL:enableDebug
 Setting this key to the string @code{1} enables a few extra features in
-the UI, useful only for debugging.
+the UI, useful only for debugging.  Setting it to values larger than 1
+make the log file output more verbose; these are actually bit flags
+according to the following table (which may change with any release):
+@table @code
+@item 2
+Tell what the Assuan I/O scheduler is doing.
+@item 4 
+Even more verbose Assuan I/O scheduler reporting. 
+@item 8
+Tell what the filter I/O system is doing.
+@item 16 
+Tell how the filter I/O locks the resources.
+@end table
+
+
 
 @itemx HKCU\Software\GNU\GpgOL:logFile
 If the value is not empty, GpgOL takes this as a log file and appends

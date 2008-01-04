@@ -1,5 +1,5 @@
 /* message-events.cpp - Subclass impl of IExchExtMessageEvents
- *	Copyright (C) 2004, 2005, 2007 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -111,8 +111,13 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
   m_wasencrypted = false;
   if (1 /*opt.preview_decrypt*/)
     {
+      HWND hwnd = NULL;
+
+      if (FAILED (eecb->GetWindow (&hwnd)))
+        hwnd = NULL;
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb)))
+      if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb),
+                                    hwnd))
         m_processed = true;
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
