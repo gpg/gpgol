@@ -303,72 +303,6 @@ get_socket_name (void)
 }
 
 
-/* Same as get_socket_name but returns a malloced string with a quoted
-   filename.  */
-static char *
-get_quoted_socket_name (void)
-{
-  const char *sname = get_socket_name ();
-  const char *s;
-  char *buffer, *p;
-  size_t n;
-
-  for (n=2, s=sname; *s; s++, n++)
-    if (*s== '\"')
-      n++;
-  buffer = p = xmalloc (n+1);
-  *p++ = '\"';
-  for (s=sname; *s; s++)
-    {
-      *p++ = *s;
-      if (*s == '\"')
-        *p++ = *s;
-    }
-  *p++ = '\"';
-  *p = 0;
-  return buffer;
-}
-
-
-/* Substitute all substrings "$s" in BUFFER by the value of the
-   default socket and replace all "$$" by "$".  Free BUFFER if
-   necessary and return a newly malloced buffer.  */
-static char *
-replace_dollar_s (char *buffer)
-{
-  char *rover, *p;
-
-  for (rover=buffer; (p = strchr (rover, '$')); )
-    {
-      if (p[1] == '$') /* Just an escaped dollar sign. */
-        {
-          memmove (p, p+1, strlen (p+1)+1);
-          rover = p + 1;
-        }
-      else if (p[1] == 's') /* Substitute with socket name.  */
-        {
-          char *value = get_quoted_socket_name ();
-          size_t n = p - buffer;
-          char *newbuf;
-
-          newbuf = xmalloc (strlen (buffer) + strlen (value) + 1);
-          memcpy (newbuf, buffer, n);
-          strcpy (newbuf + n, value);
-          n += strlen (value);
-          strcpy (newbuf + n, p+2);
-          rover = newbuf + n;
-          xfree (buffer);
-          buffer = newbuf;
-          xfree (value);
-        }
-      else
-        rover = p + 1;
-    }
-  return buffer;
-}
-
-
-
 /* Return the name of the default UI server.  This name is used to
    auto start an UI server if an initial connect failed.  */
 static char *
@@ -384,10 +318,8 @@ get_uiserver_name (void)
       uiserver = read_w32_registry_string (NULL, GNUPG_REGKEY, 
                                            "UI Server");
       if (!uiserver)
-        uiserver = xstrdup ("bin\\kleopatra.exe --uiserver-socket $s");
-          
-      uiserver = replace_dollar_s (uiserver);
-      
+        uiserver = xstrdup ("bin\\kleopatra.exe --daemon");
+
       /* FIXME: Very dirty work-around to make kleopatra find its
          DLLs.  */
       if (!strncmp (uiserver, "bin\\kleopatra.exe", 17))
@@ -395,9 +327,9 @@ get_uiserver_name (void)
 
       name = xmalloc (strlen (dir) + strlen (uiserver) + 2);
       strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);
-      for (p=name; *p; p++)
+      for (p = name; *p; p++)
         if (*p == '/')
-          *p == '\\';
+          *p = '\\';
       xfree (uiserver);
       xfree (dir);
     }
@@ -1202,7 +1134,7 @@ enqueue_callback (const char *name, assuan_context_t ctx,
 
 /* Remove all items from the work queue belonging to the command with
    the id CMDID.  */
-static int
+static void
 destroy_command (ULONG cmdid)
 {
   work_item_t item;

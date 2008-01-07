@@ -1,3 +1,12 @@
+2008-01-07  Marcus Brinkmann  <marcus@g10code.de>
+
+	* engine-assuan.c (replace_dollar_s): Remove obsolete function.
+	(get_quoted_socket_name): Remove obsolete function.
+	(get_uiserver_name): Invoke GUI server with --daemon.  Fix buglet
+	in assignment.
+	(destroy_command): Change return type to void to suppress compiler
+	warning.
+
 2008-01-04  Werner Koch  <wk@g10code.com>
 
 	* engine-assuan.c (send_options): Call AllowSetForegroundWindow.
