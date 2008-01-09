@@ -641,12 +641,6 @@ does not exist, is is first searched below @code{HKLM} and then it
 defaults to @code{bin/kleopatra.exe} (FIXME: The final name will be just
 @code{kleopatra.exe}).
 
-In case the UI server requires the socket name as an argument, the
-placeholder @code{$s} may be used to indicate this.  Due to this feature
-it is required that all verbatim dollar signs are doubled.  If the
-actual program name contains spaces the program name needs to be enclosed
-in quotes.
-
 @item HKCU\Software\GNU\GpgOL:enableDebug
 Setting this key to the string @code{1} enables a few extra features in
 the UI, useful only for debugging.  Setting it to values larger than 1

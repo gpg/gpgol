@@ -6,6 +6,8 @@ Noteworthy changes for version 0.10.4
 
  * Sign and encrypt works now.
 
+ * Texts with embedded attachments are now concatenated.
+
 
 Noteworthy changes for version 0.10.3 (2007-12-10)
 ==================================================

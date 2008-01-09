@@ -477,6 +477,7 @@ mapi_change_message_class (LPMESSAGE message)
   SPropValue prop;
   LPSPropValue propval = NULL;
   char *newvalue = NULL;
+  int need_save = 0;
 
   if (!message)
     return 0; /* No message: Nop. */
@@ -496,7 +497,7 @@ mapi_change_message_class (LPMESSAGE message)
       if (!strcmp (s, "IPM.Note"))
         {
           /* Most message today are of this type.  However a PGP/MIME
-             encrypted message although has this class here.  We need
+             encrypted message also has this class here.  We need
              to see whether we can detect such a mail right here and
              change the message class accordingly. */
           char *ct, *proto;
@@ -516,7 +517,16 @@ mapi_change_message_class (LPMESSAGE message)
               
                   if (!strcmp (ct, "multipart/encrypted")
                       && !strcmp (proto, "application/pgp-encrypted"))
-                    newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+                    {
+                      newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+                    }
+                  else if (!strcmp (ct, "multipart/signed")
+                           && !strcmp (proto, "application/pgp-signature"))
+                    {
+                      /* Sometimes we receive a PGP/MIME signed
+                         message with a class IPM.Note.  */
+                      newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+                    }
                   xfree (proto);
                 }
               else if (!strcmp (ct, "text/plain"))
@@ -617,7 +627,10 @@ mapi_change_message_class (LPMESSAGE message)
       /* We use our Sig-Status property to mark messages which passed
          this function.  This helps us to avoid later tests.  */
       if (!mapi_has_sig_status (message))
-        mapi_set_sig_status (message, "#");
+        {
+          mapi_set_sig_status (message, "#");
+          need_save = 1;
+        }
     }
   else
     {
@@ -631,14 +644,18 @@ mapi_change_message_class (LPMESSAGE message)
                      SRCNAME, __func__, hr);
           return 0;
         }
+      need_save = 1;
     }
 
-  hr = message->SaveChanges (KEEP_OPEN_READONLY);
-  if (hr)
+  if (need_save)
     {
-      log_error ("%s:%s: SaveChanges() failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      return 0;
+      hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
+      if (hr)
+        {
+          log_error ("%s:%s: SaveChanges() failed: hr=%#lx\n",
+                     SRCNAME, __func__, hr); 
+          return 0;
+        }
     }
 
   return 1;

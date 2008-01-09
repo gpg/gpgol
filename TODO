@@ -22,5 +22,5 @@
 * We should not write a decrypted file without user consent.  A
   possible solution in attach-file-events.c is to keep track of
   presented file names and decrypt them only on OpenSzFile.  Need to
-  get some documentaion first.
+  find some documentation first.
 

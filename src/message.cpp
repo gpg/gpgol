@@ -64,8 +64,10 @@ message_incoming_handler (LPMESSAGE message,msgtype_t msgtype, HWND hwnd)
          code it won't have an unknown msgtype _and_ no sig status
          flag.  Thus we look at the message class now and change it if
          required.  It won't get displayed correctly right away but a
-         latter decrypt command or when viewd a second time all has
-         been set.  */
+         latter decrypt command or when viewed a second time all has
+         been set.  Note that we should have similar code for some
+         message classes in GpgolUserEvents:OnSelectionChange; but
+         tehre are a couiple of problems.  */
       if (!mapi_has_sig_status (message))
         {
           log_debug ("%s:%s: message class not yet checked - doing now\n",
@@ -443,6 +445,7 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
 int
 message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 {
+  HRESULT hr;
   mapi_attach_item_t *table = NULL;
   int moss_idx = -1;
   int i;
@@ -463,10 +466,14 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
     case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
     case MSGTYPE_GPGOL_PGP_MESSAGE:
+      log_debug ("%s:%s: message of type %d not expected",
+                 SRCNAME, __func__, msgtype);
       return -1; /* Should not be called for such a message.  */
     case MSGTYPE_UNKNOWN:
     case MSGTYPE_SMIME:
     case MSGTYPE_GPGOL:
+      log_debug ("%s:%s: message of type %d ignored",
+                 SRCNAME, __func__, msgtype);
       return 0; /* Nothing to do.  */
     }
   
@@ -552,6 +559,12 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     }
   else
     mapi_set_sig_status (message, "! Good signature");
+
+  hr = message->SaveChanges (KEEP_OPEN_READWRITE);
+  if (hr)
+    log_error_w32 (hr, "%s:%s: SaveChanges failed",
+                   SRCNAME, __func__); 
+
 
   mapi_release_attach_table (table);
   return 0;

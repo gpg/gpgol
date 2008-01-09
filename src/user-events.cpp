@@ -1,5 +1,5 @@
 /* user-events.cpp - Subclass impl of IExchExtUserEvents
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -43,19 +43,17 @@
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
-#if 0
-static void 
-ul_release (LPVOID punk)
-{
-  ULONG res;
+// static void 
+// ul_release (LPVOID punk, const char *func, int lnr)
+// {
+//   ULONG res;
   
-  if (!punk)
-    return;
-  res = UlRelease (punk);
-//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
-}
-#endif
+//   if (!punk)
+//     return;
+//   res = UlRelease (punk);
+//   log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+//              SRCNAME, func, lnr, punk, res);
+// }
 
 
 
@@ -105,12 +103,39 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
   hr = eecb->GetSelectionCount (&count);
   if (SUCCEEDED (hr) && count > 0)
     {
+      /* Get the first selected item.  */
       hr = eecb->GetSelectionItem (0L, NULL, NULL, &objtype,
                                    msgclass, sizeof msgclass -1, NULL, 0L);
       if (SUCCEEDED(hr) && objtype == MAPI_MESSAGE)
         {
           log_debug ("%s:%s: message class: %s\n",
                      SRCNAME, __func__, msgclass);
+
+          /* If SMIME has been enabled and the current message is of
+             class SMIME or in the past processed by CryptoEx, we
+             change the message class. */ 
+          // Unfortunaltely we can't use this because:
+          // 1. GetSelectionItem is as usual heavily undocumented and
+          // we need to guess a bit to see how to get message from the
+          // EntryID (2nd and 3rd arg).  2.  There are reports that
+          // OL2007 crashes when changing the message here.
+//           if (opt.enable_smime 
+//               && (!strncmp (msgclass, "IPM.Note.SMIME", 14)
+//                   || !strncmp (msgclass, "IPM.Note.Secure.Cex", 19)))
+//             {
+//               LPMESSAGE message = NULL;
+//               LPMDB mdb = NULL;
+
+//               hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+//               if (SUCCEEDED (hr) && !mapi_has_sig_status (message))
+//                 {
+//                   log_debug ("%s:%s: message class not yet checked"
+//                              " - doing now\n", SRCNAME, __func__);
+//                   mapi_change_message_class (message);
+//                 }
+//               ul_release (message, __func__, __LINE__);
+//               ul_release (mdb, __func__, __LINE__);
+//             }
         }
       else if (SUCCEEDED(hr) && objtype == MAPI_FOLDER)
         {

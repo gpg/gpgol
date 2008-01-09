@@ -17,11 +17,6 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
-   Fixme: Explain how the this parser works and how it fits into the
-   whole picture.
-*/
-   
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -116,6 +111,7 @@ struct mime_context
   int is_qp_encoded;      /* Current part is QP encoded. */
   int is_base64_encoded;  /* Current part is base 64 encoded. */
   int is_utf8;            /* Current part has charset utf-8. */
+  int is_body;            /* The current part belongs to the body.  */
   protocol_t protocol;    /* The detected crypto protocol.  */
 
   int part_counter;       /* Counts the number of processed parts. */
@@ -134,7 +130,14 @@ struct mime_context
   LPSTREAM outstream;     /* NULL or a stream to write a part to. */
   LPATTACH mapi_attach;   /* The attachment object we are writing.  */
   symenc_t symenc;        /* NULL or the context used to protect
-                             attachments. */
+                             an attachment. */
+  struct {
+    LPSTREAM outstream;   /* Saved stream used to continue a body
+                             part. */
+    LPATTACH mapi_attach; /* Saved attachment used to continue a body part.  */
+    symenc_t symenc;      /* Saved encryption context used to continue
+                             a body part.  */
+  } body_saved;
   int any_attachments_created;  /* True if we created a new atatchment.  */
 
   b64_state_t base64;     /* The state of the Base-64 decoder.  */
@@ -320,7 +323,7 @@ start_attachment (mime_context_t ctx, int is_body)
           goto leave;
         }
     }
-  
+  ctx->is_body = is_body;
 
   /* We need to insert a short filename .  Without it, the _displayed_
      list of attachments won't get updated although the attachment has
@@ -469,7 +472,13 @@ finish_attachment (mime_context_t ctx, int cancel)
   log_debug ("%s:%s: for ctx=%p cancel=%d", SRCNAME, __func__, ctx, cancel);
 #endif
 
-  if (ctx->outstream)
+  if (ctx->outstream && ctx->is_body && !ctx->body_saved.outstream)
+    {
+      ctx->body_saved.outstream = ctx->outstream;
+      ctx->outstream = NULL;
+      retval = 0;
+    }
+  else if (ctx->outstream)
     {
       IStream_Commit (ctx->outstream, 0);
       IStream_Release (ctx->outstream);
@@ -489,18 +498,79 @@ finish_attachment (mime_context_t ctx, int cancel)
             retval = 0; /* Success.  */
         }
     }
-  if (ctx->mapi_attach)
+
+  if (ctx->mapi_attach && ctx->is_body && !ctx->body_saved.mapi_attach)
+    {
+      ctx->body_saved.mapi_attach = ctx->mapi_attach;
+      ctx->mapi_attach = NULL;
+    }
+  else if (ctx->mapi_attach)
     {
       IAttach_Release (ctx->mapi_attach);
       ctx->mapi_attach = NULL;
     }
-  if (ctx->symenc)
+
+  if (ctx->symenc && ctx->is_body && !ctx->body_saved.symenc)
+    {
+      ctx->body_saved.symenc = ctx->symenc;
+      ctx->symenc = NULL;
+    }
+  else if (ctx->symenc)
     {
       symenc_close (ctx->symenc);
       ctx->symenc = NULL;
     }
+
+  ctx->is_body = 0;
+  
   return retval;
 }
+
+
+/* Finish the saved body part.  This is required because we delay the
+   finishing of body parts.  */
+static int 
+finish_saved_body (mime_context_t ctx, int cancel)
+{
+  HRESULT hr;
+  int retval = -1;
+
+  if (ctx->body_saved.outstream)
+    {
+      IStream_Commit (ctx->body_saved.outstream, 0);
+      IStream_Release (ctx->body_saved.outstream);
+      ctx->body_saved.outstream = NULL;
+
+      if (cancel)
+        retval = 0;
+      else if (ctx->body_saved.mapi_attach)
+        {
+          hr = IAttach_SaveChanges (ctx->body_saved.mapi_attach, 0);
+          if (hr)
+            {
+              log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
+                         SRCNAME, __func__, hr); 
+            }
+          else
+            retval = 0; /* Success.  */
+        }
+    }
+
+  if (ctx->body_saved.mapi_attach)
+    {
+      IAttach_Release (ctx->body_saved.mapi_attach);
+      ctx->body_saved.mapi_attach = NULL;
+    }
+
+  if (ctx->symenc)
+    {
+      symenc_close (ctx->body_saved.symenc);
+      ctx->body_saved.symenc = NULL;
+    }
+
+  return retval;
+}
+
 
 
 /* Create the MIME info string.  This is a LF delimited string
@@ -566,7 +636,7 @@ finish_message (LPMESSAGE message, gpg_error_t err, int protect_mode,
   SPropValue prop;
 
   /* If this was an encrypted message we save the session marker in a
-     specila property so that we now that we already decrypted that
+     speciat property so that we now that we already decrypted that
      message within this session.  This is pretty useful when
      scrolling through messages and preview decryption has been
      enabled.  */
@@ -630,7 +700,6 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   size_t off;
   char *p;
   int is_text = 0;
-  int is_body = 0;
   char *filename = NULL; 
   char *charset = NULL;
         
@@ -767,24 +836,62 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   /* If this is a text part, decide whether we treat it as our body. */
   if (is_text)
     {
+      ctx->collect_attachment = 1;
+
       /* If this is the first text part at all we will start to
          collect it and use it later as the regular body.  */
       if (!ctx->body_seen)
         {
           ctx->body_seen = 1;
-          ctx->collect_attachment = 1;
-          is_body = 1;
+          if (start_attachment (ctx, 1))
+            return -1;
+          assert (ctx->outstream);
         }
-      else if (!ctx->preview)
-        ctx->collect_attachment = 1;
+      else if (!ctx->body_saved.outstream || !ctx->body_saved.mapi_attach)
+        {
+          /* Oops: We expected to continue a body but the state is not
+             correct.  Create a plain attachment instead.  */
+          log_debug ("%s:%s: ctx=%p, no saved outstream or mapi_attach (%p,%p)",
+                     SRCNAME, __func__, ctx, 
+                     ctx->body_saved.outstream, ctx->body_saved.mapi_attach);
+          if (start_attachment (ctx, 0))
+            return -1;
+          assert (ctx->outstream);
+        }
+      else if (ctx->outstream || ctx->mapi_attach || ctx->symenc)
+        {
+          /* We expected to continue a body but the last attachment
+             has not been properly closed.  Create a plain attachment
+             instead.  */
+          log_debug ("%s:%s: ctx=%p, outstream, mapi_attach or symenc not "
+                     "closed (%p,%p,%p)",
+                     SRCNAME, __func__, ctx, 
+                     ctx->outstream, ctx->mapi_attach, ctx->symenc);
+          if (start_attachment (ctx, 0))
+            return -1;
+          assert (ctx->outstream);
+        }
+      else 
+        {
+          /* We already got one body and thus we can continue that
+             last attachment.  */
+#ifdef DEBUG_PARSER
+          log_debug ("%s:%s: continuing body part\n", SRCNAME, __func__);
+#endif
+          ctx->is_body = 1;
+          ctx->outstream = ctx->body_saved.outstream;
+          ctx->mapi_attach = ctx->body_saved.mapi_attach;
+          ctx->symenc = ctx->body_saved.symenc;
+          ctx->body_saved.outstream = NULL;
+          ctx->body_saved.mapi_attach = NULL;
+          ctx->body_saved.symenc = NULL;
+        }
     }
-
-
-  if (ctx->collect_attachment)
+  else if (ctx->collect_attachment)
     {
       /* Now that if we have an attachment prepare a new MAPI
          attachment.  */
-      if (start_attachment (ctx, is_body))
+      if (start_attachment (ctx, 0))
         return -1;
       assert (ctx->outstream);
     }
@@ -1101,6 +1208,8 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
     {
       /* Cancel any left open attachment.  */
       finish_attachment (ctx, 1); 
+      /* Save the body atatchment. */
+      finish_saved_body (ctx, 0);
       rfc822parse_close (ctx->msg);
       gpgme_data_release (ctx->signed_data);
       gpgme_data_release (ctx->sig_data);
@@ -1114,6 +1223,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
           ctx->mimestruct = tmp;
         }
       symenc_close (ctx->symenc);
+      symenc_close (ctx->body_saved.symenc);
       xfree (ctx);
     }
   return err;
@@ -1169,7 +1279,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       char buffer[4096];
       
       /* For EOF detection we assume that Read returns no error and
-         thus nread will be 0.  The specs say that "Depending on the
+         thus NREAD will be 0.  The specs say that "Depending on the
          implementation, either S_FALSE or an error code could be
          returned when reading past the end of the stream"; thus we
          are not really sure whether our assumption is correct.  At
@@ -1215,6 +1325,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
          started the body attachment (gpgol000.txt) - this one needs
          to be finished properly.  */
       finish_attachment (ctx, ctx->any_boundary? 1: 0);
+      /* Save the body attachment.  */
+      finish_saved_body (ctx, 0);
       rfc822parse_close (ctx->msg);
       if (ctx->signed_data)
         gpgme_data_release (ctx->signed_data);
@@ -1230,6 +1342,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
           ctx->mimestruct = tmp;
         }
       symenc_close (ctx->symenc);
+      symenc_close (ctx->body_saved.symenc);
       xfree (ctx);
     }
   return err;
