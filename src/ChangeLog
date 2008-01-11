@@ -1,3 +1,28 @@
+2008-01-11  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (finalize_message): Add args PROTOCOL and ENCRYPT
+	and use them to set the override message class.
+	(mime_sign, mime_encrypt, mime_sign_encrypt): Pass this info via
+	the new args.
+	* message.cpp (message_decrypt): Add hack fro seldgenerated messages.
+
+2008-01-10  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgolmsgclass_tag, mapi_set_gpgol_msg_class):
+	New.
+	(mapi_change_message_class, mapi_get_message_type): Try override
+	first.
+
+	* message.cpp (message_incoming_handler): Remove arg MSGTYE and
+	let the function retrieve it.  Changed all callers.  Retry after a
+	sucessful message class change.
+	* olflange.cpp (getMsgtype): Remove.  The caching might lead to
+	problems and makes it all more complex.  Changed all callers to
+	use mapi_get_message_type.
+	
+	* mimemaker.c (create_top_encryption_header) <SMIME>: Write empty
+	line after header.
+
 2008-01-09  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (finish_saved_body): New.

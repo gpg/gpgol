@@ -412,18 +412,28 @@ GpgolExtCommands::InstallCommands (
   if (m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       int need_dvm = 0;
+      LPMDB mdb = NULL;
+      LPMESSAGE message = NULL;
 
-      switch (m_pExchExt->getMsgtype (eecb))
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (FAILED(hr))
+        log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME, __func__, hr);
+      else
         {
-        case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
-        case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
-        case MSGTYPE_GPGOL_PGP_MESSAGE:
-          need_dvm = 1;
-          break;
-        default:
-          break;
+          switch (mapi_get_message_type (message))
+            {
+            case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
+            case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
+            case MSGTYPE_GPGOL_PGP_MESSAGE:
+              need_dvm = 1;
+              break;
+            default:
+              break;
+            }
         }
-
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
+      
       /* We always enable the verify button as it might be useful on
          an already decrypted message. */
       add_menu (eecb, pnCommandIDBase,
@@ -586,7 +596,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_decrypt (message, m_pExchExt->getMsgtype (eecb), 1, hwnd);
+          message_decrypt (message, mapi_get_message_type (message), 1, hwnd);
           message_display_handler (eecb, hwnd);
 	}
       ul_release (message, __func__, __LINE__);
@@ -599,7 +609,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_verify (message, m_pExchExt->getMsgtype (eecb), 1, hwnd);
+          message_verify (message, mapi_get_message_type (message), 1, hwnd);
 	}
       else
         log_debug_w32 (hr, "%s:%s: CmdCheckSig failed", SRCNAME, __func__);

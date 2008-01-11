@@ -106,7 +106,7 @@ GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK eecb)
 
   m_wasencrypted = false;
   eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-  if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb), hwnd))
+  if (message_incoming_handler (message, hwnd))
     m_processed = TRUE;
   ul_release (message);
   ul_release (mdb);

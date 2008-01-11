@@ -30,6 +30,13 @@
 #include "serpent.h"
 #include "mapihelp.h"
 
+#ifndef CRYPT_E_STREAM_INSUFFICIENT_DATA
+#define CRYPT_E_STREAM_INSUFFICIENT_DATA 0x80091011
+#endif
+#ifndef CRYPT_E_ASN1_BADTAG
+#define CRYPT_E_ASN1_BADTAG 0x8009310B
+#endif
+
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -119,6 +126,16 @@ create_gpgol_tag (LPMESSAGE message, wchar_t *name, const char *func)
   return (proparr->aulPropTag[0] & 0xFFFF0000);
 }
 
+
+/* Return the property tag for GpgOL Msg Class. */
+int 
+get_gpgolmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Msg Class", __func__)))
+    return -1;
+  *r_tag |= PT_STRING8;
+  return 0;
+}
 
 
 /* Return the property tag for GpgOL Attach Type. */
@@ -474,6 +491,7 @@ int
 mapi_change_message_class (LPMESSAGE message)
 {
   HRESULT hr;
+  ULONG tag;
   SPropValue prop;
   LPSPropValue propval = NULL;
   char *newvalue = NULL;
@@ -482,13 +500,22 @@ mapi_change_message_class (LPMESSAGE message)
   if (!message)
     return 0; /* No message: Nop. */
 
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
+  if (get_gpgolmsgclass_tag (message, &tag) )
+    return 0; /* Ooops. */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
   if (FAILED (hr))
     {
-      log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr);
-      return 0;
+      hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+                     SRCNAME, __func__, hr);
+          return 0;
+        }
     }
+  else
+    log_debug ("%s:%s: have override message class\n", SRCNAME, __func__);
     
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
@@ -663,7 +690,7 @@ mapi_change_message_class (LPMESSAGE message)
 
 
 /* Return the message class.  This function will never return NULL so
-   it is onlyuseful for debugging.  Caller needs to releasse the
+   it is only useful for debugging.  Caller needs to release the
    returned string.  */
 char *
 mapi_get_message_class (LPMESSAGE message)
@@ -703,19 +730,31 @@ msgtype_t
 mapi_get_message_type (LPMESSAGE message)
 {
   HRESULT hr;
+  ULONG tag;
   LPSPropValue propval = NULL;
   msgtype_t msgtype = MSGTYPE_UNKNOWN;
 
   if (!message)
     return msgtype; 
 
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
+  if (get_gpgolmsgclass_tag (message, &tag) )
+    return msgtype; /* Ooops */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
   if (FAILED (hr))
     {
-      log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+      log_error ("%s:%s: HrGetOneProp(GpgOLMsgClass) failed: hr=%#lx\n",
                  SRCNAME, __func__, hr);
-      return msgtype;
+      hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+                     SRCNAME, __func__, hr);
+          return msgtype;
+        }
     }
+  else
+    log_debug ("%s:%s: have override message class\n", SRCNAME, __func__);
     
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
@@ -1470,6 +1509,35 @@ mapi_set_sig_status (LPMESSAGE message, const char *status_string)
     {
       log_error ("%s:%s: can't set %s property: hr=%#lx\n",
                  SRCNAME, __func__, "GpgOL Sig Status", hr); 
+      return -1;
+    }
+
+  return 0;
+}
+
+
+/* When sending a message we need to fake the message class so that OL
+   processes it according to our needs.  However, if we later try to
+   get the message class from the sent message, OL still has the SMIME
+   message class and tries to hide this by trying to decrypt the
+   message and return the message class from the plaintext.  To
+   mitigate the problem we define our own msg class override
+   property.  */
+int 
+mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name)
+{
+  HRESULT hr;
+  SPropValue prop;
+
+  if (get_gpgolmsgclass_tag (message, &prop.ulPropTag) )
+    return -1;
+  prop.Value.lpszA = xstrdup (name);
+  hr = HrSetOneProp (message, &prop);	
+  xfree (prop.Value.lpszA);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set %s property: hr=%#lx\n",
+                 SRCNAME, __func__, "GpgOL Msg Class", hr); 
       return -1;
     }
 

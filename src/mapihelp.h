@@ -114,6 +114,8 @@ char *mapi_get_sig_status (LPMESSAGE msg);
 
 int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
 
+int mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name);
+
 char *mapi_get_mime_info (LPMESSAGE msg);
 
 char *mapi_get_message_content_type (LPMESSAGE message, 

@@ -8,6 +8,8 @@ Noteworthy changes for version 0.10.4
 
  * Texts with embedded attachments are now concatenated.
 
+ * Encrypted message are now viewable in the sent messages folder.
+
 
 Noteworthy changes for version 0.10.3 (2007-12-10)
 ==================================================

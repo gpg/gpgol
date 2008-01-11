@@ -47,10 +47,6 @@ private:
   ULONG m_lRef;
   ULONG m_lContext;
   
-  /* Information pertaining to the current message.  */
-  msgtype_t msgtype;    /* Type of the current message.  */
-  BOOL msgtype_valid;   /* Indicates that MSGTYPE is valid.  */
-
   /* Pointer to the other extension objects.  */
   GpgolExtCommands        *m_pExchExtCommands;
   GpgolUserEvents         *m_pExchExtUserEvents;
@@ -71,7 +67,6 @@ public:
       return lCount;	
     };
   STDMETHODIMP Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags);
-  msgtype_t getMsgtype (LPEXCHEXTCALLBACK eecb);
 };
 
 

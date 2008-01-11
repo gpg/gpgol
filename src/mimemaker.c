@@ -1013,7 +1013,8 @@ cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 
 /* Do the final processing for a message. */
 static int
-finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
+finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
+                  protocol_t protocol, int encrypt)
 {
   HRESULT hr;
   SPropValue prop;
@@ -1032,6 +1033,17 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table)
   /* Set a special property so that we are later able to identify
      messages signed or encrypted by us.  */
   if (mapi_set_sig_status (message, "@"))
+    return -1;
+
+  /* We also need to set the message class into our custom
+     property. This override is at leas required for encrypted
+     messages.  */
+  if (mapi_set_gpgol_msg_class (message,
+                                (encrypt? 
+                                 (protocol == PROTOCOL_SMIME? 
+                                  "IPM.Note.GpgOL.OpaqueEncrypted" :
+                                  "IPM.Note.GpgOL.MultipartEncrypted") :
+                                 "IPM.Note.GpgOL.MultipartSigned")))
     return -1;
 
   /* Now delete all parts of the MAPI message except for the one
@@ -1365,7 +1377,7 @@ mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
 
   if (!do_mime_sign (message, hwnd, protocol, &att_table, 0))
     {
-      if (!finalize_message (message, att_table))
+      if (!finalize_message (message, att_table, protocol, 0))
         result = 0;
     }
 
@@ -1503,7 +1515,8 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
                               "Content-Type: application/pkcs7-mime;\r\n"
                               "\tsmime-type=enveloped-data;\r\n"
                               "\tname=\"smime.p7m\"\r\n"
-                              "Content-Transfer-Encoding: base64\r\n",
+                              "Content-Transfer-Encoding: base64\r\n"
+                              "\r\n",
                               NULL);
     }
   else
@@ -1649,7 +1662,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
-  if (finalize_message (message, att_table))
+  if (finalize_message (message, att_table, protocol, 1))
     goto failure;
 
   result = 0;  /* Everything is fine, fall through the cleanup now.  */
@@ -1795,7 +1808,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
-  if (finalize_message (message, att_table))
+  if (finalize_message (message, att_table, protocol, 1))
     goto failure;
 
   result = 0;  /* Everything is fine, fall through the cleanup now.  */

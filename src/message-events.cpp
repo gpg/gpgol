@@ -116,8 +116,7 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
       if (FAILED (eecb->GetWindow (&hwnd)))
         hwnd = NULL;
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (message_incoming_handler (message, m_pExchExt->getMsgtype (eecb),
-                                    hwnd))
+      if (message_incoming_handler (message, hwnd))
         m_processed = true;
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);

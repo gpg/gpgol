@@ -95,17 +95,17 @@ ext_context_name (unsigned long no)
 
 
 /* Wrapper around UlRelease with error checking. */
-static void 
-ul_release (LPVOID punk, const char *func)
-{
-  ULONG res;
+// static void 
+// ul_release (LPVOID punk, const char *func)
+// {
+//   ULONG res;
   
-  if (!punk)
-    return;
-  res = UlRelease (punk);
-  log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
-             SRCNAME, func, punk, res);
-}
+//   if (!punk)
+//     return;
+//   res = UlRelease (punk);
+//   log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
+//              SRCNAME, func, punk, res);
+// }
 
 
 
@@ -290,8 +290,6 @@ GpgolExt::GpgolExt (void)
   m_protoSelection = PROTOCOL_UNKNOWN;
   m_gpgEncrypt = FALSE;
   m_gpgSign = FALSE;
-  msgtype = MSGTYPE_UNKNOWN;
-  msgtype_valid = FALSE;
 
   m_pExchExtCommands           = new GpgolExtCommands (this);
   m_pExchExtUserEvents         = new GpgolUserEvents (this);
@@ -511,34 +509,3 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   log_debug ("%s:%s: can't handle this context\n", SRCNAME, __func__);
   return S_FALSE;
 }
-
-
-/* Return the message type for the current message.  EECB needs to be
-   passed to allow access to the message object.  The function caches
-   the message class so there is no overhead in calling this
-   method. */
-msgtype_t 
-GpgolExt::getMsgtype (LPEXCHEXTCALLBACK eecb)
-{
-  LPMDB mdb = NULL;
-  LPMESSAGE message = NULL;
-
-  if (msgtype_valid)
-    return msgtype;
-  if (!eecb)
-    {
-      log_error ("%s:%s: eecp not passed", SRCNAME, __func__);
-      return MSGTYPE_UNKNOWN;
-    }
-      
-  eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-  msgtype = mapi_get_message_type (message);
-  log_debug ("%s:%s: found msgtype %d\n", SRCNAME, __func__, msgtype);
-  msgtype_valid = TRUE;
-
-  ul_release (message, __func__);
-  ul_release (mdb, __func__);
-
-  return msgtype;
-}
-
