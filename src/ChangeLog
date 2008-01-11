@@ -4,6 +4,8 @@
 	and use them to set the override message class.
 	(mime_sign, mime_encrypt, mime_sign_encrypt): Pass this info via
 	the new args.
+	(do_mime_sign): Set micalg to sha1 for CMS.
+
 	* message.cpp (message_decrypt): Add hack fro seldgenerated messages.
 
 2008-01-10  Werner Koch  <wk@g10code.com>

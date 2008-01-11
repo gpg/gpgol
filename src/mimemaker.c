@@ -1319,7 +1319,8 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
       }
 
     create_top_signing_header (top_header, sizeof top_header,
-                               protocol, 1, boundary, "pgp-sha1");
+                               protocol, 1, boundary,
+                               protocol == PROTOCOL_SMIME? "sha1":"pgp-sha1");
 
     hr = IStream_Write (stream, top_header, strlen (top_header), NULL);
     if (hr)
