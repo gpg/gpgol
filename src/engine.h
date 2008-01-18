@@ -69,7 +69,8 @@ int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol);
 int engine_decrypt_start (engine_filter_t filter, HWND hwnd,
                           protocol_t protocol, int with_verify);
 int engine_verify_start (engine_filter_t filter, HWND hwnd,
-                         const char *signature, protocol_t protocol);
+                         const char *signature, size_t sig_len,
+			 protocol_t protocol);
 
 int engine_start_keymanager (HWND hwnd);
 

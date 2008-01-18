@@ -1684,7 +1684,7 @@ verify_closure (closure_data_t cld)
    MSGDATA and the signature given as the string SIGNATURE. */
 int 
 op_assuan_verify (gpgme_protocol_t protocol, 
-                  gpgme_data_t msgdata, const char *signature,
+                  gpgme_data_t msgdata, const char *signature, size_t sig_len,
                   engine_filter_t filter, void *hwnd)
 {
   gpg_error_t err;
@@ -1705,7 +1705,7 @@ op_assuan_verify (gpgme_protocol_t protocol,
   if (!(protocol_name = get_protocol_name (protocol)))
     return gpg_error(GPG_ERR_INV_VALUE);
 
-  err = gpgme_data_new_from_mem (&sigdata, signature, strlen (signature), 0);
+  err = gpgme_data_new_from_mem (&sigdata, signature, sig_len, 0);
   if (err)
     goto leave;
 

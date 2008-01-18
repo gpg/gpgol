@@ -738,7 +738,7 @@ engine_decrypt_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
    object lasts until the final engine_wait or engine_cancel.  */
 int
 engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
-                     protocol_t protocol)
+		     size_t sig_len, protocol_t protocol)
 {
   gpg_error_t err;
 
@@ -750,9 +750,11 @@ engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
     }
 
   if (filter->use_assuan)
-    err = op_assuan_verify (protocol, filter->indata, signature, filter, hwnd);
+    err = op_assuan_verify (protocol, filter->indata, signature,
+			    sig_len, filter, hwnd);
   else
-    err = op_gpgme_verify (protocol, filter->indata, signature, filter, hwnd);
+    err = op_gpgme_verify (protocol, filter->indata, signature,
+			   sig_len, filter, hwnd);
   return err;
 }
 

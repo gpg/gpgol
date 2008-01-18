@@ -684,7 +684,7 @@ verify_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
    DATA and the signature given as the string SIGNATUEE. */
 int
 op_gpgme_verify (gpgme_protocol_t protocol, 
-                 gpgme_data_t data, const char *signature,
+                 gpgme_data_t data, const char *signature, size_t sig_len,
                  engine_filter_t filter, void *hwnd)
 {
   gpgme_error_t err;
@@ -715,7 +715,7 @@ op_gpgme_verify (gpgme_protocol_t protocol,
   if (err)
     goto leave;
 
-  err = gpgme_data_new_from_mem (&sigobj, signature, strlen (signature), 0);
+  err = gpgme_data_new_from_mem (&sigobj, signature, sig_len, 0);
   if (err)
     goto leave;
   cld->sigobj = sigobj;

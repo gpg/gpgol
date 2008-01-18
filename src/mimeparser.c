@@ -1107,6 +1107,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
   const char *s;
   size_t len;
   char *signature = NULL;
+  size_t sig_len;
   engine_filter_t filter = NULL;
 
   /* Note: PROTOCOL is not used here but figured out directly while
@@ -1154,7 +1155,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
      incomplete last line.  */
   if (ctx->sig_data && gpgme_data_write (ctx->sig_data, "", 1) == 1)
     {
-      signature = gpgme_data_release_and_get_mem (ctx->sig_data, NULL);
+      signature = gpgme_data_release_and_get_mem (ctx->sig_data, &sig_len);
       ctx->sig_data = NULL; 
     }
 
@@ -1165,7 +1166,8 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
       
       if ((err=engine_create_filter (&filter, NULL, NULL)))
         goto leave;
-      if ((err=engine_verify_start (filter, hwnd, signature, ctx->protocol)))
+      if ((err=engine_verify_start (filter, hwnd, signature, sig_len,
+				    ctx->protocol)))
         goto leave;
 
       /* Filter the data.  */
