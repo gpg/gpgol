@@ -890,7 +890,7 @@ count_usable_attachments (mapi_attach_item_t *table)
   return count;
 }
 
-/* Write old all attachments from TABLE separated by BOUNDARY to SINK.
+/* Write out all attachments from TABLE separated by BOUNDARY to SINK.
    This function needs to be syncronized with count_usable_attachments.  */
 static int
 write_attachments (sink_t sink, 
@@ -934,7 +934,7 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
       {
         if (table[idx].attach_type == ATTACHTYPE_MOSSTEMPL
             && table[idx].filename
-            && !strcmp (table[idx].filename, MIMEATTACHFILENAME));
+            && !strcmp (table[idx].filename, MIMEATTACHFILENAME))
           continue;
         hr = IMessage_DeleteAttach (message, table[idx].mapipos, 0, NULL, 0);
         if (hr)
@@ -1144,7 +1144,7 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
 /* Main body of mime_sign without the the code to delete the original
    attachments.  On success the function returns the current
    attachment table at R_ATT_TABLE or sets this to NULL on error.  If
-   TMPSINK is set not atcghment will be created but the output
+   TMPSINK is set no attachment will be created but the output
    written to that sink.  */
 static int 
 do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol, 
@@ -1277,7 +1277,9 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   if ((rc=write_string (sink, 
                         (protocol == PROTOCOL_OPENPGP
                          ? "Content-Type: application/pgp-signature\r\n"
-                         : "Content-Type: application/pkcs7-signature\r\n"))))
+                         : ("Content-Transfer-Encoding: base64\r\n"
+                            "Content-Type: application/pkcs7-signature\r\n")
+                         ))))
     goto failure;
 
   /* If we would add "Content-Transfer-Encoding: 7bit\r\n" to this
@@ -1286,8 +1288,10 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
      header itself, it detects that it already exists and somehow gets
      into a problem.  It is not a problem with the other parts,
      though.  Hmmm, triggered by the top levels CT protocol parameter?
-     Anyway, it is not required that we add it as we won't hash
-     it.  */
+     Anyway, it is not required that we add it as we won't hash it.
+     Note, that this only holds for OpenPGP; for S/MIME we need to set
+     set CTE.  We even write it before the CT because that is the same
+     as Outlook would do it for a missing CTE. */
 
   if ((rc = write_string (sink, "\r\n")))
     goto failure;

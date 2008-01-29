@@ -1,3 +1,9 @@
+2008-01-29  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (do_mime_sign): Set CTE for SMIME.
+	(delete_all_attachments): Remove extra semicolon accidently
+	inserted with revision 916.
+
 2008-01-18  Marcus Brinkmann  <marcus@g10code.de>
 
 	* mimeparser.c (mime_verify): New variable sig_len, and pass it on
