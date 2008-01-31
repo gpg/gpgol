@@ -91,7 +91,7 @@ int get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
 
 int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
-int mapi_change_message_class (LPMESSAGE message);
+int mapi_change_message_class (LPMESSAGE message, int sync_override);
 char *mapi_get_message_class (LPMESSAGE message);
 msgtype_t mapi_get_message_type (LPMESSAGE message);
 int mapi_to_mime (LPMESSAGE message, const char *filename);
@@ -123,7 +123,8 @@ char *mapi_get_message_content_type (LPMESSAGE message,
 
 int   mapi_has_last_decrypted (LPMESSAGE message);
 int   mapi_test_last_decrypted (LPMESSAGE message);
-char *mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
+int   mapi_get_gpgol_body_attachment (LPMESSAGE message,
+                                      char **r_body, size_t *r_nbytes,
                                       int *r_ishtml, int *r_protected);
 
 

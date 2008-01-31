@@ -77,7 +77,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd)
         {
           log_debug ("%s:%s: message class not yet checked - doing now\n",
                      SRCNAME, __func__);
-          if (mapi_change_message_class (message))
+          if (mapi_change_message_class (message, 0))
             goto retry;
         }
       break;
@@ -86,7 +86,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd)
         {
           log_debug ("%s:%s: message class not checked with smime enabled "
                      "- doing now\n", SRCNAME, __func__);
-          if (mapi_change_message_class (message))
+          if (mapi_change_message_class (message, 0))
             goto retry;
         }
       break;
@@ -140,6 +140,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd)
 bool
 message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
 {
+  int err;
   HRESULT hr;
   LPMESSAGE message = NULL;
   LPMDB mdb = NULL;
@@ -151,10 +152,10 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
     {
       /* (old: If the message was protected we don't allow a fallback to the
          OOM display methods.)  Now: As it is difficult to find the
-         actual winodw we now use the OOM display always.  */
-      body = mapi_get_gpgol_body_attachment (message, NULL, 
-                                             &ishtml, &wasprotected);
-      if (body)
+         actual window we now use the OOM display always.  */
+      err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
+                                            &ishtml, &wasprotected);
+      if (!err && body)
         update_display (hwnd, /*wasprotected? NULL:*/ eecb, ishtml, body);
       else
         update_display (hwnd, NULL, 0, 
@@ -485,10 +486,15 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     }
   
   /* If a verification is forced, we set the cached signature status
-     first to "?" to mark that no verification has yet happened. */
+     first to "?" to mark that no verification has yet happened.  If a
+     verification status has been set and the body attachment is
+     available we don't do a verification again.  The need to check
+     for the body attachment is to avoid problems if that attachment
+     has accidently be deleted. */
   if (force)
     mapi_set_sig_status (message, "?");
-  else if (mapi_test_sig_status (message))
+  else if (mapi_test_sig_status (message) 
+           && !mapi_get_gpgol_body_attachment (message, NULL,NULL,NULL,NULL))
     return 0; /* Already checked that message.  */
 
   if (msgtype == MSGTYPE_GPGOL_CLEAR_SIGNED)

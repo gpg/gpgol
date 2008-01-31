@@ -1,3 +1,15 @@
+2008-01-31  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (message_verify): Check that the body attachment is
+	available before shortcutting the verification.
+	* user-events.cpp (OnSelectionChange): Change SMIME message
+	class.
+	* mapihelp.cpp (mapi_change_message_class): Add arg
+	SYNC_OVERRIDE. Changed all callers to pass false.
+	(mapi_test_sig_status): Take care of sent messages.
+	(mapi_get_gpgol_body_attachment): Change args to allow use as
+	testing fucntion too.  Adjusted caller.
+
 2008-01-29  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (do_mime_sign): Set CTE for SMIME.

@@ -703,7 +703,8 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          mapi_change_message_class (message);
+          /* We sync here. */
+          mapi_change_message_class (message, 1);
 	}
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);

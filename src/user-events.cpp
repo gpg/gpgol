@@ -43,17 +43,17 @@
 
 
 /* Wrapper around UlRelease with error checking. */
-// static void 
-// ul_release (LPVOID punk, const char *func, int lnr)
-// {
-//   ULONG res;
+static void 
+ul_release (LPVOID punk, const char *func, int lnr)
+{
+  ULONG res;
   
-//   if (!punk)
-//     return;
-//   res = UlRelease (punk);
-//   log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
-//              SRCNAME, func, lnr, punk, res);
-// }
+  if (!punk)
+    return;
+  res = UlRelease (punk);
+  log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+             SRCNAME, func, lnr, punk, res);
+}
 
 
 
@@ -95,8 +95,10 @@ STDMETHODIMP_ (VOID)
 GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb) 
 {
   HRESULT hr;
-  ULONG count, objtype;
+  ULONG count, objtype, msgflags;
   char msgclass[256];
+  LPENTRYID entryid = NULL;
+  ULONG entryidlen;
 
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
@@ -104,8 +106,9 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
   if (SUCCEEDED (hr) && count > 0)
     {
       /* Get the first selected item.  */
-      hr = eecb->GetSelectionItem (0L, NULL, NULL, &objtype,
-                                   msgclass, sizeof msgclass -1, NULL, 0L);
+      hr = eecb->GetSelectionItem (0L, &entryidlen, &entryid, &objtype,
+                                   msgclass, sizeof msgclass -1, 
+                                   &msgflags, 0L);
       if (SUCCEEDED(hr) && objtype == MAPI_MESSAGE)
         {
           log_debug ("%s:%s: message class: %s\n",
@@ -113,29 +116,49 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
 
           /* If SMIME has been enabled and the current message is of
              class SMIME or in the past processed by CryptoEx, we
-             change the message class. */ 
-          // Unfortunaltely we can't use this because:
-          // 1. GetSelectionItem is as usual heavily undocumented and
-          // we need to guess a bit to see how to get message from the
-          // EntryID (2nd and 3rd arg).  2.  There are reports that
-          // OL2007 crashes when changing the message here.
-//           if (opt.enable_smime 
-//               && (!strncmp (msgclass, "IPM.Note.SMIME", 14)
-//                   || !strncmp (msgclass, "IPM.Note.Secure.Cex", 19)))
-//             {
-//               LPMESSAGE message = NULL;
-//               LPMDB mdb = NULL;
+             change the message class. 
 
-//               hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-//               if (SUCCEEDED (hr) && !mapi_has_sig_status (message))
-//                 {
-//                   log_debug ("%s:%s: message class not yet checked"
-//                              " - doing now\n", SRCNAME, __func__);
-//                   mapi_change_message_class (message);
-//                 }
-//               ul_release (message, __func__, __LINE__);
-//               ul_release (mdb, __func__, __LINE__);
-//             }
+             Note that there is a report on the Net that OL2007
+             crashes when changing the message here. */
+          if (opt.enable_smime 
+              && (!strncmp (msgclass, "IPM.Note.SMIME", 14)
+                  || !strncmp (msgclass, "IPM.Note.Secure.Cex", 19)))
+            {
+              LPMAPIFOLDER folder = NULL;
+              LPMDB mdb = NULL;
+              LPMESSAGE message = NULL;
+
+              if (entryid)
+                log_hexdump (entryid, entryidlen, "selected entryid=");
+              else
+                log_debug ("no selected entry id");
+
+              hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&folder);
+              if (SUCCEEDED (hr) && entryid)
+                {
+                  hr = mdb->OpenEntry (entryidlen, entryid,
+                                       &IID_IMessage, MAPI_BEST_ACCESS, 
+                                       &objtype, (IUnknown**)&message);
+                  if (SUCCEEDED (hr)) 
+                    {
+                      if (objtype == MAPI_MESSAGE)
+                        {
+                          log_debug ("%s:%s: about to change or sync "
+                                     "the message class",
+                                     SRCNAME, __func__);
+                          /* We sync the message class here to get rid
+                             of IPM.Note.SMIME etc. */
+                          mapi_change_message_class (message, 1);
+                        }
+                    }
+                  else
+                    log_error ("%s:%s: OpenEntry failed: hr=%#lx\n", 
+                               SRCNAME, __func__, hr);
+                  ul_release (message, __func__, __LINE__);
+                }
+              ul_release (folder, __func__, __LINE__);
+              ul_release (mdb, __func__, __LINE__);
+            }
         }
       else if (SUCCEEDED(hr) && objtype == MAPI_FOLDER)
         {
@@ -143,8 +166,11 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
                      SRCNAME, __func__, objtype);
         }
     }
-
+  
+  if (entryid)
+    MAPIFreeBuffer (entryid);
 }
+
 
 /* I assume this is called from Outlook for all object changes.
 

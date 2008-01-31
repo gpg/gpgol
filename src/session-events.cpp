@@ -108,7 +108,7 @@ GpgolSessionEvents::OnDelivery (LPEXCHEXTCALLBACK pEECB)
      message class IPM.Note.SMIME.MultipartSigned.  If we would not
      change the message class here, OL will change it later (before an
      OnRead) to IPM.Note. */
-  mapi_change_message_class (pMessage);
+  mapi_change_message_class (pMessage, 0);
   log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
   ul_release (pMessage);
   ul_release (pMDB);

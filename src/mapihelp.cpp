@@ -485,10 +485,12 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
 
 
 /* This function checks whether MESSAGE requires processing by us and
-   adjusts the message class to our own.  Return true if the message
-   was changed. */
+   adjusts the message class to our own.  By passing true for
+   SYNC_OVERRIDE the actual MAPI message class will be updated to our
+   own message class overide.  Return true if the message was
+   changed. */
 int
-mapi_change_message_class (LPMESSAGE message)
+mapi_change_message_class (LPMESSAGE message, int sync_override)
 {
   HRESULT hr;
   ULONG tag;
@@ -496,6 +498,7 @@ mapi_change_message_class (LPMESSAGE message)
   LPSPropValue propval = NULL;
   char *newvalue = NULL;
   int need_save = 0;
+  int have_override = 0;
 
   if (!message)
     return 0; /* No message: Nop. */
@@ -515,7 +518,10 @@ mapi_change_message_class (LPMESSAGE message)
         }
     }
   else
-    log_debug ("%s:%s: have override message class\n", SRCNAME, __func__);
+    {
+      have_override = 1;
+      log_debug ("%s:%s: have override message class\n", SRCNAME, __func__);
+    }
     
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
@@ -610,6 +616,21 @@ mapi_change_message_class (LPMESSAGE message)
           newvalue = (char*)xmalloc (strlen (s) + 1);
           strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
         }
+      else if (opt.enable_smime && sync_override && have_override
+               && !strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14]||s[14] =='.'))
+        {
+          /* In case the original message class is not yet an GpgOL
+             class we set it here.  This is needed to convince Outlook
+             not to do any special processing for IPM.Note.SMIME etc.  */
+          LPSPropValue propval2 = NULL;
+
+          hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A,
+                             &propval2);
+          if (SUCCEEDED (hr) && PROP_TYPE (propval2->ulPropTag) == PT_STRING8
+              && propval2->Value.lpszA && strcmp (propval2->Value.lpszA, s))
+            newvalue = (char*)xstrdup (s);
+          MAPIFreeBuffer (propval2);
+        }
       else if (opt.enable_smime && !strcmp (s, "IPM.Note.Secure.CexSig"))
         {
           /* This is a CryptoEx generated signature. */
@@ -661,6 +682,8 @@ mapi_change_message_class (LPMESSAGE message)
     }
   else
     {
+      log_debug ("%s:%s: setting message class to `%s'\n",
+                     SRCNAME, __func__, newvalue);
       prop.ulPropTag = PR_MESSAGE_CLASS_A;
       prop.Value.lpszA = newvalue; 
       hr = message->SetProps (1, &prop, NULL);
@@ -743,12 +766,10 @@ mapi_get_message_type (LPMESSAGE message)
   hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
   if (FAILED (hr))
     {
-      log_error ("%s:%s: HrGetOneProp(GpgOLMsgClass) failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr);
       hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
       if (FAILED (hr))
         {
-          log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+          log_error ("%s:%s: HrGetOneProp(PR_MESSAGE_CLASS) failed: hr=%#lx\n",
                      SRCNAME, __func__, hr);
           return msgtype;
         }
@@ -1446,8 +1467,12 @@ mapi_test_sig_status (LPMESSAGE msg)
   hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
   if (FAILED (hr))
     return 0; /* No.  */  
+
+  /* We return False if we have an unknown signature status (?) or the
+     message has been setn by us and not yet checked (@).  */
   if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
-    yes = !(propval->Value.lpszA && !strcmp (propval->Value.lpszA, "?"));
+    yes = !(propval->Value.lpszA && (!strcmp (propval->Value.lpszA, "?")
+                                     || !strcmp (propval->Value.lpszA, "@")));
   else
     yes = 0;
 
@@ -1765,10 +1790,15 @@ has_gpgol_body_name (LPATTACH obj)
    is stored there.  If R_ISHTML is not NULL a flag indicating whether
    the HTML is html formatted is stored there.  If R_PROTECTED is not
    NULL a flag indicating whether the message was protected is stored
-   there.  If no body attachment can be found or on any other error
-   NULL is returned.  Caller must free the returned string. */
-char *
-mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes, 
+   there.  If no body attachment can be found or on any other error an
+   error codes is returned and NULL is stored at R_BODY.  Caller must
+   free the returned string.  If NULL is passed for R_BODY, the
+   function will only test whether a body attachment is available and
+   return an error code if not.  R_IS_HTML and R_PROTECTED are not
+   defined in this case.  */
+int
+mapi_get_gpgol_body_attachment (LPMESSAGE message, 
+                                char **r_body, size_t *r_nbytes, 
                                 int *r_ishtml, int *r_protected)
 {    
   HRESULT hr;
@@ -1779,21 +1809,24 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
   ULONG moss_tag;
   char *body = NULL;
   int bodytype;
+  int found = 0;
 
+  if (r_body)
+    *r_body = NULL;
   if (r_ishtml)
     *r_ishtml = 0;
   if (r_protected)
     *r_protected = 0;
 
   if (get_gpgolattachtype_tag (message, &moss_tag) )
-    return NULL;
+    return -1;
 
   hr = message->GetAttachmentTable (0, &mapitable);
   if (FAILED (hr))
     {
       log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      return NULL;
+      return -1;
     }
       
   hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
@@ -1803,7 +1836,7 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
       mapitable->Release ();
-      return NULL;
+      return -1;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (!n_attach)
@@ -1811,7 +1844,7 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
       FreeProws (mapirows);
       mapitable->Release ();
       log_debug ("%s:%s: No attachments at all", SRCNAME, __func__);
-      return NULL;
+      return -1;
     }
   log_debug ("%s:%s: message has %u attachments\n",
              SRCNAME, __func__, n_attach);
@@ -1842,8 +1875,12 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
       if ((bodytype=has_gpgol_body_name (att))
            && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
         {
-          if (get_attach_method (att) == ATTACH_BY_VALUE)
-            body = attach_to_buffer (att, r_nbytes, 1, r_protected);
+          found = 1;
+          if (r_body)
+            {
+              if (get_attach_method (att) == ATTACH_BY_VALUE)
+                body = attach_to_buffer (att, r_nbytes, 1, r_protected);
+            }
           att->Release ();
           if (r_ishtml)
             *r_ishtml = (bodytype == 2);
@@ -1853,13 +1890,20 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message, size_t *r_nbytes,
     }
   FreeProws (mapirows);
   mapitable->Release ();
-  if (!body)
+  if (!found)
     {
       log_error ("%s:%s: no suitable body attachment found", SRCNAME,__func__);
-      body = native_to_utf8 (_("[The content of this message is not visible"
-                               " due to an processing error in GpgOL.]"));
+      if (r_body)
+        *r_body = native_to_utf8 
+          (_("[The content of this message is not visible"
+             " due to an processing error in GpgOL.]"));
+      return -1;
     }
-  
-  return body;
+
+  if (r_body)
+    *r_body = body;
+  else
+    xfree (body);  /* (Should not happen.)  */
+  return 0;
 }
 
