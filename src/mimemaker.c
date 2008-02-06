@@ -44,9 +44,6 @@
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-/* The filename of the attachment we create as the result of sign or
-   encrypt operation.  */
-#define MIMEATTACHFILENAME "gpgolXXX.dat"
 
 static const char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};

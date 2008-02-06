@@ -1,3 +1,19 @@
+2008-02-06  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (mime_decrypt): New arg IS_RFC822.
+	* message.cpp (message_decrypt): Add code to see whether to use
+	the new arg.
+
+2008-02-01  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (ciphertext_handler, ciphermessage_cb)
+	(ciphermessage_t2body): New.
+	(mime_decrypt): Use an rfc822 parser to pass the message to the
+	engine.
+
+	* mapihelp.cpp (mapi_get_attach_as_stream): Add arg R_ATTACH.
+	(mapi_set_attach_hidden): New.
+
 2008-01-31  Werner Koch  <wk@g10code.com>
 
 	* message.cpp (message_verify): Check that the body attachment is

@@ -32,7 +32,7 @@ int mime_verify (protocol_t protocol, const char *message, size_t messagelen,
                  LPMESSAGE mapi_message, 
                  HWND hwnd, int preview_mode);
 int mime_decrypt (protocol_t protocol, 
-                  LPSTREAM instream, LPMESSAGE mapi_message,
+                  LPSTREAM instream, LPMESSAGE mapi_message, int is_rfc822,
                   HWND hwnd, int preview_mode);
 
 

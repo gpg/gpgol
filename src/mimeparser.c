@@ -120,6 +120,8 @@ struct mime_context
                              working on a MIME message and not just on
                              plain rfc822 message.  */
   
+  engine_filter_t outfilter; /* Fiter as used by ciphertext_handler.  */
+
   /* A linked list describing the structure of the mime message.  This
      list gets build up while parsing the message.  */
   mimestruct_item_t mimestruct;
@@ -732,9 +734,7 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
 
   /* Process the Content-type and all its parameters.  */
   ctmain = ctsub = NULL;
-  field = rfc822parse_parse_field (msg, "GnuPG-Content-Type", -1);
-  if (!field)
-    field = rfc822parse_parse_field (msg, "Content-Type", -1);
+  field = rfc822parse_parse_field (msg, "Content-Type", -1);
   if (field)
     ctmain = rfc822parse_query_media_type (field, &ctsub);
   if (!ctmain)
@@ -1140,7 +1140,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
   while ( (s = memchr (message, '\n', messagelen)) )
     {
       len = s - message + 1;
-      log_debug ("passing '%.*s'\n", (int)len, message);
+/*       log_debug ("passing '%.*s'\n", (int)len, message); */
       plaintext_handler (ctx, message, len);
       if (ctx->parser_error || ctx->line_too_long)
         {
@@ -1233,19 +1233,218 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
 
 
 
+/* Process the transition to body event in the decryption parser.
+
+   This means we have received the empty line indicating the body and
+   should now check the headers to see what to do about this part.  */
+static int
+ciphermessage_t2body (mime_context_t ctx, rfc822parse_t msg)
+{
+  rfc822parse_field_t field;
+  const char *ctmain, *ctsub;
+  size_t off;
+  char *p;
+  int is_text = 0;
+        
+  /* Figure out the encoding.  */
+  ctx->is_qp_encoded = 0;
+  ctx->is_base64_encoded = 0;
+  p = rfc822parse_get_field (msg, "Content-Transfer-Encoding", -1, &off);
+  if (p)
+    {
+      if (!stricmp (p+off, "quoted-printable"))
+        ctx->is_qp_encoded = 1;
+      else if (!stricmp (p+off, "base64"))
+        {
+          ctx->is_base64_encoded = 1;
+          b64_init (&ctx->base64);
+        }
+      free (p);
+    }
+
+  /* Process the Content-type and all its parameters.  */
+  /* Fixme: Currently we don't make any use of it but consider all the
+     content to be the encrypted data.  */
+  ctmain = ctsub = NULL;
+  field = rfc822parse_parse_field (msg, "Content-Type", -1);
+  if (field)
+    ctmain = rfc822parse_query_media_type (field, &ctsub);
+  if (!ctmain)
+    {
+      /* Either there is no content type field or it is faulty; in
+         both cases we fall back to text/plain.  */
+      ctmain = "text";
+      ctsub  = "plain";
+    }
+
+#ifdef DEBUG_PARSER  
+  log_debug ("%s:%s: ctx=%p, ct=`%s/%s'\n",
+             SRCNAME, __func__, ctx, ctmain, ctsub);
+#endif
+  rfc822parse_release_field (field); /* (Content-type) */
+  ctx->in_data = 1;
+
+#ifdef DEBUG_PARSER
+  log_debug ("%s:%s: this body: nesting=%d part_counter=%d is_text=%d\n",
+             SRCNAME, __func__, 
+             ctx->nesting_level, ctx->part_counter, is_text);
+#endif
+
+
+  return 0;
+}
+
+/* This routine gets called by the RFC822 decryption parser for all
+   kind of events.  Should return 0 on success or -1 as well as
+   setting errno on failure.  */
+static int
+ciphermessage_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
+{
+  int retval = 0;
+  mime_context_t decctx = opaque;
+
+  debug_message_event (decctx, event);
+
+  switch (event)
+    {
+    case RFC822PARSE_T2BODY:
+      retval = ciphermessage_t2body (decctx, msg);
+      break;
+
+    case RFC822PARSE_LEVEL_DOWN:
+      decctx->nesting_level++;
+      break;
+
+    case RFC822PARSE_LEVEL_UP:
+      if (decctx->nesting_level)
+        decctx->nesting_level--;
+      else 
+        {
+          log_error ("%s: decctx=%p, invalid structure: bad nesting level\n",
+                     SRCNAME, decctx);
+          decctx->parser_error = 1;
+        }
+      break;
+    
+    case RFC822PARSE_BOUNDARY:
+    case RFC822PARSE_LAST_BOUNDARY:
+      decctx->any_boundary = 1;
+      decctx->in_data = 0;
+      break;
+    
+    case RFC822PARSE_BEGIN_HEADER:
+      decctx->part_counter++;
+      break;
+
+    default:  /* Ignore all other events. */
+      break;
+    }
+
+  return retval;
+}
+
+
+/* This handler is called by us with the MIME message containing the
+   ciphertext. */
+static int
+ciphertext_handler (void *handle, const void *buffer, size_t size)
+{
+  mime_context_t ctx = handle;
+  const char *s;
+  size_t nleft, pos, len;
+  gpg_error_t err;
+
+  s = buffer;
+  pos = ctx->linebufpos;
+  nleft = size;
+  for (; nleft ; nleft--, s++)
+    {
+      if (pos >= ctx->linebufsize)
+        {
+          log_error ("%s:%s: ctx=%p, rfc822 parser failed: line too long\n",
+                     SRCNAME, __func__, ctx);
+          ctx->line_too_long = 1;
+          return -1; /* Error. */
+        }
+      if (*s != '\n')
+        ctx->linebuf[pos++] = *s;
+      else
+        { /* Got a complete line.  Remove the last CR.  */
+          if (pos && ctx->linebuf[pos-1] == '\r')
+            pos--;
+
+          if (rfc822parse_insert (ctx->msg, ctx->linebuf, pos))
+            {
+              log_error ("%s:%s: ctx=%p, rfc822 parser failed: %s\n",
+                         SRCNAME, __func__, ctx, strerror (errno));
+              ctx->parser_error = 1;
+              return -1; /* Error. */
+            }
+
+          if (ctx->in_data)
+            {
+              /* We are inside the data.  That should be the actual
+                 ciphertext in the given encoding.  Pass it on to the
+                 crypto engine. */
+              if (ctx->is_qp_encoded)
+                len = qp_decode (ctx->linebuf, pos);
+              else if (ctx->is_base64_encoded)
+                len = b64_decode (&ctx->base64, ctx->linebuf, pos);
+              else
+                len = pos;
+              if (len)
+                err = engine_filter (ctx->outfilter, ctx->linebuf, len);
+              else
+                err = 0;
+              if (!err && !ctx->is_base64_encoded)
+                {
+                  char tmp[3] = "\r\n";
+                  err = engine_filter (ctx->outfilter, tmp, 2);
+                }
+              if (err)
+                {
+                  log_debug ("%s:%s: sending ciphertext to engine failed: %s",
+                             SRCNAME, __func__, gpg_strerror (err));
+                  ctx->parser_error = 1;
+                  return -1; /* Error. */
+                }
+            }
+          
+          /* Continue with next line. */
+          pos = 0;
+        }
+    }
+  ctx->linebufpos = pos;
+
+  return size;
+}
+
+
+
 /* Decrypt the PGP or S/MIME message taken from INSTREAM.  HWND is the
    window to be used for message box and such.  In PREVIEW_MODE no
    verification will be done, no messages saved and no messages boxes
-   will pop up. */
+   will pop up.  If IS_RFC822 is set, the message is expected to be in
+   rfc822 format.  */
 int
 mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
-              HWND hwnd, int preview_mode)
+              int is_rfc822, HWND hwnd, int preview_mode)
 {
   gpg_error_t err;
-  mime_context_t ctx;
+  mime_context_t decctx, ctx;
   engine_filter_t filter = NULL;
 
-  log_debug ("%s:%s: enter (protocol=%d)", SRCNAME, __func__, protocol);
+  log_debug ("%s:%s: enter (protocol=%d, is_rfc822=%d)",
+             SRCNAME, __func__, protocol, is_rfc822);
+
+  if (is_rfc822)
+    {
+      decctx = xcalloc (1, sizeof *decctx + LINEBUFSIZE);
+      decctx->linebufsize = LINEBUFSIZE;
+      decctx->hwnd = hwnd;
+    }
+  else
+    decctx = NULL;
 
   ctx = xcalloc (1, sizeof *ctx + LINEBUFSIZE);
   ctx->linebufsize = LINEBUFSIZE;
@@ -1254,6 +1453,18 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   ctx->preview = preview_mode;
   ctx->mapi_message = mapi_message;
   ctx->mimestruct_tail = &ctx->mimestruct;
+
+  if (decctx)
+    {
+      decctx->msg = rfc822parse_open (ciphermessage_cb, decctx);
+      if (!decctx->msg)
+        {
+          err = gpg_error_from_syserror ();
+          log_error ("%s:%s: failed to open the RFC822 decryption parser: %s", 
+                     SRCNAME, __func__, gpg_strerror (err));
+          goto leave;
+        }
+    }
 
   ctx->msg = rfc822parse_open (message_cb, ctx);
   if (!ctx->msg)
@@ -1272,6 +1483,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   if ((err=engine_decrypt_start (filter, hwnd, protocol, !preview_mode)))
     goto leave;
 
+  if (decctx)
+    decctx->outfilter = filter;
   
   /* Filter the stream.  */
   do
@@ -1298,7 +1511,17 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
         }
       else if (nread)
         {
-          err = engine_filter (filter, buffer, nread);
+          if (decctx)
+            {
+               ciphertext_handler (decctx, buffer, nread);
+               if (ctx->parser_error || ctx->line_too_long)
+                 {
+                   err = gpg_error (GPG_ERR_GENERAL);
+                   break;
+                 }
+            }
+          else
+            err = engine_filter (filter, buffer, nread);
         }
       else
         break; /* EOF */
@@ -1346,6 +1569,11 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       symenc_close (ctx->symenc);
       symenc_close (ctx->body_saved.symenc);
       xfree (ctx);
+    }
+  if (decctx)
+    {
+      rfc822parse_close (decctx->msg);
+      xfree (decctx);
     }
   return err;
 }

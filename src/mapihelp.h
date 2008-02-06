@@ -80,6 +80,10 @@ struct mapi_attach_item_s
 };
 typedef struct mapi_attach_item_s mapi_attach_item_t;
 
+/* The filename of the attachment we create as the result of sign or
+   encrypt operation.  Don't change this name as some tests rely on
+   it.  */
+#define MIMEATTACHFILENAME "gpgolXXX.dat"
 
 
 void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
@@ -104,7 +108,8 @@ char *mapi_get_body (LPMESSAGE message, size_t *r_nbytes);
 mapi_attach_item_t *mapi_create_attach_table (LPMESSAGE message, int fast);
 void mapi_release_attach_table (mapi_attach_item_t *table);
 LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message, 
-                                    mapi_attach_item_t *item);
+                                    mapi_attach_item_t *item, 
+                                    LPATTACH *r_attach);
 char *mapi_get_attach (LPMESSAGE message, 
                        mapi_attach_item_t *item, size_t *r_nbytes);
 int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
@@ -115,6 +120,8 @@ char *mapi_get_sig_status (LPMESSAGE msg);
 int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
 
 int mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name);
+
+int  mapi_set_attach_hidden (LPATTACH attach);
 
 char *mapi_get_mime_info (LPMESSAGE msg);
 

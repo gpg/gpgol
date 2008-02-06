@@ -1,5 +1,5 @@
 /* mapihelp.cpp - Helper functions for MAPI
- *	Copyright (C) 2005, 2007 g10 Code GmbH
+ *	Copyright (C) 2005, 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -1180,13 +1180,19 @@ mapi_release_attach_table (mapi_attach_item_t *table)
 
 
 /* Return an attachment as a new IStream object.  Returns NULL on
-   failure. */
+   failure.  If R_ATATCH is not NULL the actual attachment will not be
+   released by stored at that address; the caller needs to release it
+   in this case.  */
 LPSTREAM
-mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item)
+mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
+                           LPATTACH *r_attach)
 {
   HRESULT hr;
   LPATTACH att;
   LPSTREAM stream;
+
+  if (r_attach)
+    *r_attach = NULL;
 
   if (!item || item->end_of_table || item->mapipos == -1)
     return NULL;
@@ -1215,7 +1221,10 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item)
       return NULL;
     }
 
-  att->Release ();
+  if (r_attach)
+    *r_attach = att;
+  else
+    att->Release ();
 
   return stream;
 }
@@ -1362,7 +1371,7 @@ mapi_get_attach (LPMESSAGE message, mapi_attach_item_t *item, size_t *r_nbytes)
 
 
 /* Mark this attachment as the orginal MOSS message.  We set a custom
-   property as weel ast the hidden hidden flag on ot..  */
+   property as well as the hidden hidden flag.  */
 int 
 mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
 {
@@ -1423,6 +1432,47 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
     
  leave:
   att->Release ();
+  return retval;
+}
+
+
+/* If the hidden property has not been set on ATTACH, set it and save
+   the changes. */
+int 
+mapi_set_attach_hidden (LPATTACH attach)
+{
+  int retval = -1;
+  HRESULT hr;
+  LPSPropValue propval;
+  SPropValue prop;
+
+  hr = HrGetOneProp ((LPMAPIPROP)attach, PR_ATTACHMENT_HIDDEN, &propval);
+  if (SUCCEEDED (hr) 
+      && PROP_TYPE (propval->ulPropTag) == PT_BOOLEAN
+      && propval->Value.b)
+    return 0;/* Already set to hidden. */
+
+  prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
+  prop.Value.b = TRUE;
+  hr = HrSetOneProp (attach, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set hidden attach flag: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  
+  hr = attach->SaveChanges (KEEP_OPEN_READWRITE);
+  if (hr)
+    {
+      log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  
+  retval = 0;
+    
+ leave:
   return retval;
 }
 
