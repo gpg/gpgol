@@ -1777,7 +1777,7 @@ mapi_has_last_decrypted (LPMESSAGE message)
 
 
 /* Returns True if MESSAGE has a GpgOL Last Decrypted property and
-   that matches the curren sessiobn. */
+   that matches the current session. */
 int
 mapi_test_last_decrypted (LPMESSAGE message)
 {
@@ -1787,10 +1787,10 @@ mapi_test_last_decrypted (LPMESSAGE message)
   int yes = 0;
 
   if (get_gpgollastdecrypted_tag (message, &tag) )
-    return 0; /* No.  */
+    goto leave; /* No.  */
   hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
   if (FAILED (hr))
-    return 0; /* No.  */  
+    goto leave; /* No.  */  
 
   if (PROP_TYPE (propval->ulPropTag) == PT_BINARY
       && propval->Value.bin.cb == 8
@@ -1798,6 +1798,9 @@ mapi_test_last_decrypted (LPMESSAGE message)
     yes = 1;
 
   MAPIFreeBuffer (propval);
+ leave:
+  log_debug ("%s:%s: message decrypted during this session: %s\n",
+             SRCNAME, __func__, yes?"yes":"no");
   return yes;
 }
 

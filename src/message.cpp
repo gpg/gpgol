@@ -190,44 +190,63 @@ message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb)
   hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
   if (SUCCEEDED (hr))
     {
-      if (mapi_has_last_decrypted (message))
+      switch (mapi_get_message_type (message))
         {
-          SPropTagArray proparray;
-          int anyokay = 0;
-          
-          proparray.cValues = 1;
-          proparray.aulPropTag[0] = PR_BODY;
-          hr = message->DeleteProps (&proparray, NULL);
-          if (hr)
-            log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
-                           SRCNAME, __func__);
-          else
-            anyokay++;
-          
-          proparray.cValues = 1;
-          proparray.aulPropTag[0] = PR_BODY_HTML;
-          message->DeleteProps (&proparray, NULL);
-          if (hr)
-            log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
-                           SRCNAME, __func__);
-          else
-            anyokay++;
+        case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
+        case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
+          {
+            if (mapi_has_last_decrypted (message))
+              {
+                SPropTagArray proparray;
+                int anyokay = 0;
+            
+                proparray.cValues = 1;
+                proparray.aulPropTag[0] = PR_BODY;
+                hr = message->DeleteProps (&proparray, NULL);
+                if (hr)
+                  log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
+                                 SRCNAME, __func__);
+                else
+                  anyokay++;
+            
+                proparray.cValues = 1;
+                proparray.aulPropTag[0] = PR_BODY_HTML;
+                message->DeleteProps (&proparray, NULL);
+                if (hr)
+                  log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
+                                 SRCNAME, __func__);
+                else
+                  anyokay++;
 
-          if (anyokay)
-            {
-              hr = message->SaveChanges (KEEP_OPEN_READWRITE);
-              if (hr)
-                log_error_w32 (hr, "%s:%s: SaveChanges failed",
-                               SRCNAME, __func__); 
-              else
-                log_debug ("%s:%s: SaveChanges succeded; body cruft removed",
-                           SRCNAME, __func__); 
-            }
-        }  
-      else
-        log_debug_w32 (hr, "%s:%s: error getting message", 
-                       SRCNAME, __func__);
-     
+                if (anyokay)
+                  {
+                    hr = message->SaveChanges (KEEP_OPEN_READWRITE);
+                    if (hr)
+                      log_error_w32 (hr, "%s:%s: SaveChanges failed",
+                                     SRCNAME, __func__); 
+                    else
+                      log_debug ("%s:%s: SaveChanges succeded; "
+                                 "body cruft removed",
+                                 SRCNAME, __func__); 
+                  }
+              }  
+            else
+              log_debug_w32 (hr, "%s:%s: "
+                             "error getting message decryption status", 
+                             SRCNAME, __func__);
+          }
+          break;
+
+        case MSGTYPE_GPGOL_PGP_MESSAGE:
+          /* We can't delete the body of a message if it is an inline
+             PGP encrypted message because the body holds the
+             ciphertext.  */
+          break;
+
+        default: 
+          break;
+        }
+      
       ul_release (message, __func__);
       ul_release (mdb, __func__);
     }
