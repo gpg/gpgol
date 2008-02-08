@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-02-06 14:47+0100\n"
+"POT-Creation-Date: 2008-02-08 12:53+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -66,7 +66,7 @@ msgid ""
 "are not readable."
 msgstr ""
 
-#: src/engine.c:369 src/ext-commands.cpp:682 src/main.c:603 src/main.c:609
+#: src/engine.c:369 src/ext-commands.cpp:683 src/main.c:603 src/main.c:609
 msgid "GpgOL"
 msgstr ""
 
@@ -207,121 +207,121 @@ msgstr "*** Notation start (signatur av: "
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: src/ext-commands.cpp:441
+#: src/ext-commands.cpp:442
 msgid "&Decrypt and verify message"
 msgstr "&Dekryptera och validera meddelandet"
 
-#: src/ext-commands.cpp:442
+#: src/ext-commands.cpp:443
 #, fuzzy
 msgid "&Verify signature"
 msgstr "FELAKTIG signatur!"
 
-#: src/ext-commands.cpp:443
+#: src/ext-commands.cpp:444
 msgid "&Display crypto information"
 msgstr ""
 
-#: src/ext-commands.cpp:453
+#: src/ext-commands.cpp:454
 msgid ">GnuPG protocol"
 msgstr ""
 
-#: src/ext-commands.cpp:454
+#: src/ext-commands.cpp:455
 msgid "auto"
 msgstr ""
 
-#: src/ext-commands.cpp:455
+#: src/ext-commands.cpp:456
 #, fuzzy
 msgid "PGP/MIME"
 msgstr "[PGP/MIME-meddelande]"
 
-#: src/ext-commands.cpp:456
+#: src/ext-commands.cpp:457
 msgid "S/MIME"
 msgstr ""
 
-#: src/ext-commands.cpp:458
+#: src/ext-commands.cpp:459
 #, fuzzy
 msgid "&encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:459
+#: src/ext-commands.cpp:460
 #, fuzzy
 msgid "&sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:463 src/ext-commands.cpp:860
+#: src/ext-commands.cpp:464 src/ext-commands.cpp:861
 #, fuzzy
 msgid "Encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:464 src/ext-commands.cpp:870
+#: src/ext-commands.cpp:465 src/ext-commands.cpp:871
 #, fuzzy
 msgid "Sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:499
+#: src/ext-commands.cpp:500
 #, fuzzy
 msgid "GnuPG Certificate &Manager"
 msgstr "GPG-nyckel&hanterare"
 
-#: src/ext-commands.cpp:503
+#: src/ext-commands.cpp:504
 msgid "Open the certificate manager"
 msgstr ""
 
-#: src/ext-commands.cpp:681
+#: src/ext-commands.cpp:682
 #, fuzzy
 msgid "Could not start certificate manager"
 msgstr "Kunde inte starta nyckelhanteraren"
 
-#: src/ext-commands.cpp:744
+#: src/ext-commands.cpp:745
 #, fuzzy
 msgid "Select this option to decrypt and verify the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:751
+#: src/ext-commands.cpp:752
 #, fuzzy
 msgid "Select this option to show information on the crypto status"
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:759 src/ext-commands.cpp:840
+#: src/ext-commands.cpp:760 src/ext-commands.cpp:841
 msgid "Check the signature now and display the result"
 msgstr ""
 
-#: src/ext-commands.cpp:766
+#: src/ext-commands.cpp:767
 #, fuzzy
 msgid "Select this option to automatically select the protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:773
+#: src/ext-commands.cpp:774
 #, fuzzy
 msgid "Select this option to select the PGP/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:780
+#: src/ext-commands.cpp:781
 #, fuzzy
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:787
+#: src/ext-commands.cpp:788
 msgid "Select this option to encrypt the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:794
+#: src/ext-commands.cpp:795
 msgid "Select this option to sign the message."
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:801
+#: src/ext-commands.cpp:802
 #, fuzzy
 msgid "Select this option to open the certificate manager"
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:830
+#: src/ext-commands.cpp:831
 msgid "Show S/MIME status info"
 msgstr ""
 
-#: src/ext-commands.cpp:850
+#: src/ext-commands.cpp:851
 msgid "Use S/MIME for sign/encrypt"
 msgstr ""
 
-#: src/ext-commands.cpp:880
+#: src/ext-commands.cpp:881
 msgid "Open the GpgOL certificate manager"
 msgstr ""
 
@@ -338,21 +338,21 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1314
+#: src/mapihelp.cpp:1343
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:1948
+#: src/mapihelp.cpp:1980
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
 msgstr ""
 
 # A bit unclear in the original text
-#: src/message-events.cpp:219
+#: src/message-events.cpp:220
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -362,11 +362,11 @@ msgstr ""
 "och inte RTF-meddelanden. Se till att endast textformatet\n"
 "har valts i inställningarna."
 
-#: src/message.cpp:162
+#: src/message.cpp:163
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 
-#: src/message.cpp:251
+#: src/message.cpp:271
 #, c-format
 msgid ""
 "Message class: %s\n"
@@ -375,20 +375,20 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/message.cpp:259
+#: src/message.cpp:279
 msgid "GpgOL - Message Information"
 msgstr ""
 
-#: src/message.cpp:911
+#: src/message.cpp:967
 msgid "No recipients to encrypt to are given"
 msgstr ""
 
-#: src/message.cpp:927
+#: src/message.cpp:983
 #, fuzzy, c-format
 msgid "Encryption failed (%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:948
+#: src/message.cpp:1004
 #, fuzzy, c-format
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
@@ -477,7 +477,7 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr ""
 
-#: src/olflange.cpp:481
+#: src/olflange.cpp:482
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
