@@ -742,19 +742,23 @@ engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
 {
   gpg_error_t err;
 
-  if (!signature)
+  if (!signature && !filter->use_assuan)
     {
-      log_error ("%s:%s: opaque signature are not yet supported\n",
+      log_error ("%s:%s: opaque signatures are not supported "
+                 "by the internal backend\n",
                  SRCNAME, __func__);
       return gpg_error (GPG_ERR_NOT_SUPPORTED);
     }
 
-  if (filter->use_assuan)
-    err = op_assuan_verify (protocol, filter->indata, signature,
-			    sig_len, filter, hwnd);
+  if (filter->use_assuan && !signature)
+    err = op_assuan_verify (protocol, filter->indata, NULL, 0,
+			    filter->outdata, filter, hwnd);
+  else if (filter->use_assuan)
+    err = op_assuan_verify (protocol, filter->indata, signature, sig_len,
+			    NULL, filter, hwnd);
   else
-    err = op_gpgme_verify (protocol, filter->indata, signature,
-			   sig_len, filter, hwnd);
+    err = op_gpgme_verify (protocol, filter->indata, signature, sig_len,
+                           filter, hwnd);
   return err;
 }
 

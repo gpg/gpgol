@@ -149,6 +149,7 @@ typedef struct b64_state_s b64_state_t;
 #define DBG_IOWORKER_EXTRA  4
 #define DBG_FILTER          8
 #define DBG_FILTER_EXTRA   16 
+#define DBG_MEMORY         32
 
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);

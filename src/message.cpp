@@ -45,8 +45,9 @@ ul_release (LPVOID punk, const char *func)
   if (!punk)
     return;
   res = UlRelease (punk);
-  log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
-             SRCNAME, func, punk, res);
+  if (opt.enable_debug & DBG_MEMORY)
+    log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
+               SRCNAME, func, punk, res);
 }
 
 
@@ -286,7 +287,7 @@ message_show_info (LPMESSAGE message, HWND hwnd)
 
 
 
-/* Convert the clear signed message from INPUT into a PS?MIME signed
+/* Convert the clear signed message from INPUT into a PGP/MIME signed
    message and return it in a new allocated buffer.  OUTPUTLEN
    received the valid length of that buffer; the buffer is guarnateed
    to be Nul terminated.  */
@@ -474,20 +475,18 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 {
   HRESULT hr;
   mapi_attach_item_t *table = NULL;
+  LPSTREAM opaquestream = NULL;
   int moss_idx = -1;
   int i;
-  char *inbuf;
-  size_t inbuflen;
+  char *inbuf = NULL;
+  size_t inbuflen = 0;
   protocol_t protocol = PROTOCOL_UNKNOWN;
   int err;
 
   switch (msgtype)
     {
     case MSGTYPE_GPGOL_MULTIPART_SIGNED:
-      break;
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
-      log_debug ("Opaque signed message are not yet supported!");
-      return 0;
     case MSGTYPE_GPGOL_CLEAR_SIGNED:
       break;
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
@@ -533,6 +532,38 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
         return -1;
       protocol = PROTOCOL_OPENPGP;
     }
+  else if (msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED)
+    {
+      /* S/MIME opaque signed message: The data is expected to be in
+         an attachment.  */
+      table = mapi_create_attach_table (message, 0);
+      if (!table)
+        return -1; /* No attachment - this should not happen.  */
+
+      for (i=0; !table[i].end_of_table; i++)
+        if (table[i].content_type               
+            && (!strcmp (table[i].content_type, "application/pkcs7-mime")
+                || !strcmp (table[i].content_type,
+                            "application/x-pkcs7-mime"))
+            && table[i].filename
+            && !strcmp (table[i].filename, "smime.p7m"))
+          break;
+      if (table[i].end_of_table)
+        {
+          log_debug ("%s:%s: attachment for opaque signed S/MIME not found",
+                     SRCNAME, __func__);
+          mapi_release_attach_table (table);
+          return -1;
+        }
+
+      opaquestream = mapi_get_attach_as_stream (message, table+i, NULL);
+      if (!opaquestream)
+        {
+          mapi_release_attach_table (table);
+          return -1; /* Problem getting the attachment.  */
+        }
+      protocol = PROTOCOL_SMIME;
+    }
   else
     {
       /* PGP/MIME or S/MIME stuff.  */
@@ -572,8 +603,11 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
         }
     }
 
-  err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0);
-  log_debug ("mime_verify returned %d", err);
+  if (opaquestream)
+    err = mime_verify_opaque (protocol, opaquestream, message, hwnd, 0);
+  else
+    err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0);
+  log_debug ("mime_verify%s returned %d", opaquestream? "_opaque":"", err);
   if (err)
     {
       char buf[200];
@@ -581,6 +615,8 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
       snprintf (buf, sizeof buf, "Verify failed (%s)", gpg_strerror (err));
       MessageBox (NULL, buf, "GpgOL", MB_ICONINFORMATION|MB_OK);
     }
+  if (opaquestream)
+    opaquestream->Release ();
   xfree (inbuf);
                     
   if (err)
@@ -601,6 +637,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   mapi_release_attach_table (table);
   return 0;
 }
+
 
 /* Decrypt MESSAGE, check signature and update the attachments as
    required.  MSGTYPE should be the type of the message so that the
@@ -764,7 +801,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
             {
               /* This is likely a PGP/MIME created by us.  Due to the
                  way we created that message, the MAPI derived content
-                 type is wrong and there is only one attachtment
+                 type is wrong and there is only one attachment
                  (gpgolXXX.dat).  We simply assume that it is PGP/MIME
                  encrypted and pass it on to the mime parser.  We also
                  keep the attachment open so that we can later set it

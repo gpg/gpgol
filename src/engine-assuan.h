@@ -48,6 +48,7 @@ int op_assuan_decrypt (protocol_t protocol,
                        int with_verify);
 int op_assuan_verify (gpgme_protocol_t protocol, 
                       gpgme_data_t data, const char *signature, size_t sig_len,
+                      gpgme_data_t outdata,
                       engine_filter_t filter, void *hwnd);
 
 int op_assuan_start_keymanager (void *hwnd);

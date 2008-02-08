@@ -1232,6 +1232,115 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
 }
 
 
+/* A special version of mime_verify which works only for S/MIME opaque
+   signed messages.  The message is expected to be a binary data
+   stream with a CMS signature.  This function passes the entire
+   message to the crypto engine and then parses the (cleartext) output
+   for rendering the data.  */
+int
+mime_verify_opaque (protocol_t protocol, LPSTREAM instream, 
+                    LPMESSAGE mapi_message, HWND hwnd, int preview_mode)
+{
+  gpg_error_t err = 0;
+  mime_context_t ctx;
+  engine_filter_t filter = NULL;
+
+  log_debug ("%s:%s: enter (protocol=%d)", SRCNAME, __func__, protocol);
+
+  if (protocol != PROTOCOL_SMIME)
+    return gpg_error (GPG_ERR_INV_VALUE);
+
+  ctx = xcalloc (1, sizeof *ctx + LINEBUFSIZE);
+  ctx->linebufsize = LINEBUFSIZE;
+  ctx->hwnd = hwnd;
+  ctx->preview = preview_mode;
+  ctx->verify_mode = 0;
+  ctx->mapi_message = mapi_message;
+  ctx->mimestruct_tail = &ctx->mimestruct;
+
+  ctx->msg = rfc822parse_open (message_cb, ctx);
+  if (!ctx->msg)
+    {
+      err = gpg_error_from_syserror ();
+      log_error ("%s:%s: failed to open the RFC822 parser: %s", 
+                 SRCNAME, __func__, gpg_strerror (err));
+      goto leave;
+    }
+
+  if ((err=engine_create_filter (&filter, plaintext_handler, ctx)))
+    goto leave;
+  if ((err=engine_verify_start (filter, hwnd, NULL, 0, protocol)))
+    goto leave;
+
+  /* Filter the stream.  */
+  do
+    {
+      HRESULT hr;
+      ULONG nread;
+      char buffer[4096];
+      
+      hr = IStream_Read (instream, buffer, sizeof buffer, &nread);
+      if (hr)
+        {
+          log_error ("%s:%s: IStream::Read failed: hr=%#lx", 
+                     SRCNAME, __func__, hr);
+          err = gpg_error (GPG_ERR_EIO);
+        }
+      else if (nread)
+        {
+          err = engine_filter (filter, buffer, nread);
+        }
+      else
+        break; /* EOF */
+    }
+  while (!err);
+  if (err)
+    goto leave;
+
+  /* Wait for the engine to finish.  */
+  if ((err = engine_filter (filter, NULL, 0)))
+    goto leave;
+  if ((err = engine_wait (filter)))
+    goto leave;
+  filter = NULL;
+
+  if (ctx->parser_error || ctx->line_too_long)
+    err = gpg_error (GPG_ERR_GENERAL);
+
+ leave:
+  engine_cancel (filter);
+  if (ctx)
+    {
+      /* Cancel any left over attachment which means that the MIME
+         structure was not complete.  However if we have not seen any
+         boundary the message is a non-MIME one but we may have
+         started the body attachment (gpgol000.txt) - this one needs
+         to be finished properly.  */
+      finish_attachment (ctx, ctx->any_boundary? 1: 0);
+      /* Save the body attachment. */
+      finish_saved_body (ctx, 0);
+      rfc822parse_close (ctx->msg);
+      if (ctx->signed_data)
+        gpgme_data_release (ctx->signed_data);
+      if (ctx->sig_data)
+        gpgme_data_release (ctx->sig_data);
+      finish_message (mapi_message, err, ctx->protect_mode, ctx->mimestruct);
+      while (ctx->mimestruct)
+        {
+          mimestruct_item_t tmp = ctx->mimestruct->next;
+          xfree (ctx->mimestruct->filename);
+          xfree (ctx->mimestruct->charset);
+          xfree (ctx->mimestruct);
+          ctx->mimestruct = tmp;
+        }
+      symenc_close (ctx->symenc);
+      symenc_close (ctx->body_saved.symenc);
+      xfree (ctx);
+    }
+  return err;
+}
+
+
 
 /* Process the transition to body event in the decryption parser.
 

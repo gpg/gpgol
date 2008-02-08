@@ -1,5 +1,5 @@
 /* mimeparser.h - MIME parser.
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -31,6 +31,8 @@ extern "C" {
 int mime_verify (protocol_t protocol, const char *message, size_t messagelen, 
                  LPMESSAGE mapi_message, 
                  HWND hwnd, int preview_mode);
+int mime_verify_opaque (protocol_t protocol, LPSTREAM instream, 
+                        LPMESSAGE mapi_message, HWND hwnd, int preview_mode);
 int mime_decrypt (protocol_t protocol, 
                   LPSTREAM instream, LPMESSAGE mapi_message, int is_rfc822,
                   HWND hwnd, int preview_mode);

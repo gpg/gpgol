@@ -526,7 +526,10 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
       const char *s = propval->Value.lpszA;
-
+      int cexenc = 0;
+      
+      log_debug ("%s:%s: checking message class `%s'", 
+                       SRCNAME, __func__, s);
       if (!strcmp (s, "IPM.Note"))
         {
           /* Most message today are of this type.  However a PGP/MIME
@@ -631,24 +634,33 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
             newvalue = (char*)xstrdup (s);
           MAPIFreeBuffer (propval2);
         }
-      else if (opt.enable_smime && !strcmp (s, "IPM.Note.Secure.CexSig"))
+      else if (opt.enable_smime 
+               && (!strcmp (s, "IPM.Note.Secure.CexSig")
+                   || (cexenc = !strcmp (s, "IPM.Note.Secure.CexEnc"))))
         {
-          /* This is a CryptoEx generated signature. */
-          char *ct, *smtype;
+          /* This is a CryptoEx generated signature or encrypted data. */
+          char *ct, *smtype, *proto;
 
-          ct = mapi_get_message_content_type (message, NULL, &smtype);
+          ct = mapi_get_message_content_type (message, &proto, &smtype);
           if (!ct)
-            log_debug ("%s:%s: message has no content type", 
-                       SRCNAME, __func__);
+            {
+              log_debug ("%s:%s: message has no content type", 
+                         SRCNAME, __func__);
+              if (cexenc)
+                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+            }
           else
             {
               log_debug ("%s:%s: content type is '%s'", 
                          SRCNAME, __func__, ct);
               if (smtype)
+               log_debug ("%s:%s:   smime-type is '%s'", 
+                           SRCNAME, __func__, smtype);
+              if (proto)
+                log_debug ("%s:%s:     protocol is '%s'", 
+                           SRCNAME, __func__, proto);
+              if (smtype)
                 {
-                  log_debug ("%s:%s:   smime-type is '%s'", 
-                             SRCNAME, __func__, smtype);
-              
                   if (!strcmp (ct, "application/pkcs7-mime")
                       || !strcmp (ct, "application/x-pkcs7-mime"))
                     {
@@ -657,12 +669,29 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                       else if (!strcmp (smtype, "enveloped-data"))
                         newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
                     }
-                  else if (!strcmp (ct, "application/pkcs7-signature"))
-                    {
-                      newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-                    }
-                  xfree (smtype);
                 }
+
+              if (!newvalue && proto)
+                {
+                  if (!strcmp (ct, "multipart/signed")
+                      && (!strcmp (proto, "application/pkcs7-signature")
+                          || !strcmp (proto, "application/x-pkcs7-signature")))
+                    newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+                  else if (!strcmp (ct, "multipart/signed")
+                           && (!strcmp (proto, "application/pgp-signature")))
+                    newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+                }
+
+              if (!newvalue && !strcmp (ct, "text/plain"))
+                {
+                  newvalue = get_msgcls_from_pgp_lines (message);
+                }
+
+              if (!newvalue && cexenc)
+                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+
+              xfree (smtype);
+              xfree (proto);
               xfree (ct);
             }
           if (!newvalue)
@@ -1654,7 +1683,7 @@ get_message_content_type_cb (void *dummy_arg,
 {
   if (event == RFC822PARSE_T2BODY)
     return 42; /* Hack to stop the parsing after having read the
-                  outher headers. */
+                  outer headers. */
   return 0;
 }
 

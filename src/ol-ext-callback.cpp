@@ -50,7 +50,8 @@ ul_release (LPVOID punk)
   if (!punk)
     return;
   res = UlRelease (punk);
-//   log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+  if (opt.enable_debug & DBG_MEMORY)
+    log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
 }
 
 

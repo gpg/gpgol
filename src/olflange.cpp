@@ -103,8 +103,9 @@ ext_context_name (unsigned long no)
 //   if (!punk)
 //     return;
 //   res = UlRelease (punk);
-//   log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
-//              SRCNAME, func, punk, res);
+//   if (opt.enable_debug & DBG_MEMORY)
+//     log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
+//                SRCNAME, func, punk, res);
 // }
 
 

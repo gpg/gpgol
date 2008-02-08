@@ -1,4 +1,17 @@
+2008-02-08  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_change_message_class): Improve detecion of
+	CryptoEx messages.
+
 2008-02-07  Werner Koch  <wk@g10code.com>
+
+	* engine.c (engine_verify_start): Enable opaque signature for the
+	assuan backend.
+	* engine-assuan.c (op_assuan_verify): New arg OUTDATA.  Add
+	support for opaque signatures.
+
+	* mimeparser.c (mime_verify_opaque): New.
+	* message.cpp (message_verify): Handle opaque signed S/MIME.
 
 	* message.cpp (message_wipe_body_cruft): Delete only encrypted
 	messages.

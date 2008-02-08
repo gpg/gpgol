@@ -1680,43 +1680,76 @@ verify_closure (closure_data_t cld)
 }
 
 
-/* Verify a detached message where the data is in the gpgme object
-   MSGDATA and the signature given as the string SIGNATURE. */
+/* With MSGDATA, SIGNATURE and SIGLEN given: 
+
+      Verify a detached message where the data is in the gpgme object
+      MSGDATA and the signature given as the string SIGNATURE. 
+
+   With MSGDATA and OUTDATA given:
+
+      Verify an opaque signature from MSGDATA and write the decoded
+      plaintext to OUTDATA.
+
+*/
 int 
 op_assuan_verify (gpgme_protocol_t protocol, 
                   gpgme_data_t msgdata, const char *signature, size_t sig_len,
+                  gpgme_data_t outdata,
                   engine_filter_t filter, void *hwnd)
 {
   gpg_error_t err;
   closure_data_t cld = NULL;
   assuan_context_t ctx;
   char line[1024];
-  HANDLE msgpipe[2], sigpipe[2];
+  HANDLE msgpipe[2], sigpipe[2], outpipe[2];
   ULONG cmdid;
   pid_t pid;
   gpgme_data_t sigdata = NULL;
   const char *protocol_name;
+  int opaque_mode;
 
   msgpipe[0] = INVALID_HANDLE_VALUE;
   msgpipe[1] = INVALID_HANDLE_VALUE;
   sigpipe[0] = INVALID_HANDLE_VALUE;
   sigpipe[1] = INVALID_HANDLE_VALUE;
+  outpipe[0] = INVALID_HANDLE_VALUE;
+  outpipe[1] = INVALID_HANDLE_VALUE;
 
   if (!(protocol_name = get_protocol_name (protocol)))
     return gpg_error(GPG_ERR_INV_VALUE);
 
-  err = gpgme_data_new_from_mem (&sigdata, signature, sig_len, 0);
-  if (err)
-    goto leave;
+  if (signature && sig_len && !outdata)
+    opaque_mode = 0;
+  else if (!signature && !sig_len && outdata)
+    opaque_mode = 1;
+  else
+    return gpg_error(GPG_ERR_INV_VALUE);
+
+  if (!opaque_mode)
+    {
+      err = gpgme_data_new_from_mem (&sigdata, signature, sig_len, 0);
+      if (err)
+        goto leave;
+    }
 
   err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
   if (err)
     goto leave;
 
-  if ((err = create_io_pipe (msgpipe, pid, 1)))
-    goto leave;
-  if ((err = create_io_pipe (sigpipe, pid, 1)))
-    goto leave;
+  if (!opaque_mode)
+    {
+      if ((err = create_io_pipe (msgpipe, pid, 1)))
+        goto leave;
+      if ((err = create_io_pipe (sigpipe, pid, 1)))
+        goto leave;
+    }
+  else
+    {
+      if ((err = create_io_pipe (msgpipe, pid, 1)))
+        goto leave;
+      if ((err = create_io_pipe (outpipe, pid, 0)))
+        goto leave;
+    }
 
   cld = xcalloc (1, sizeof *cld);
   cld->closure = verify_closure;
@@ -1727,19 +1760,40 @@ op_assuan_verify (gpgme_protocol_t protocol,
   if (err)
     goto leave;
 
-  snprintf (line, sizeof line, "MESSAGE FD=%ld",(unsigned long int)msgpipe[0]);
-  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
-  if (err)
-    goto leave;
-  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)sigpipe[0]);
-  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
-  if (err)
-    goto leave;
-
-  enqueue_callback ("   msg", ctx, msgdata, msgpipe[1], 1, finalize_handler,
-                    cmdid, NULL, 0); 
-  enqueue_callback ("   sig", ctx, sigdata, sigpipe[1], 1, finalize_handler, 
-                    cmdid, NULL, 0); 
+  if (!opaque_mode)
+    {
+      snprintf (line, sizeof line, "MESSAGE FD=%ld",
+                (unsigned long int)msgpipe[0]);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        goto leave;
+      snprintf (line, sizeof line, "INPUT FD=%ld",
+                (unsigned long int)sigpipe[0]);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        goto leave;
+      enqueue_callback ("   msg", ctx, msgdata, msgpipe[1], 1,
+                        finalize_handler, cmdid, NULL, 0); 
+      enqueue_callback ("   sig", ctx, sigdata, sigpipe[1], 1, 
+                        finalize_handler, cmdid, NULL, 0); 
+    }
+  else 
+    {
+      snprintf (line, sizeof line, "INPUT FD=%ld",
+                (unsigned long int)msgpipe[0]);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        goto leave;
+      snprintf (line, sizeof line, "OUTPUT FD=%ld",
+                (unsigned long int)outpipe[1]);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        goto leave;
+      enqueue_callback ("   msg", ctx, msgdata, msgpipe[1], 1,
+                        finalize_handler, cmdid, NULL, 0); 
+      enqueue_callback ("   out", ctx, outdata, outpipe[0], 0,
+                        finalize_handler, cmdid, NULL, 1); 
+    }
 
   snprintf (line, sizeof line, "VERIFY --protocol=%s",  protocol_name);
   err = start_command (ctx, cld, cmdid, line);
@@ -1755,6 +1809,7 @@ op_assuan_verify (gpgme_protocol_t protocol,
       /* Fixme: Cancel stuff in the work_queue. */
       close_pipe (msgpipe);
       close_pipe (sigpipe);
+      close_pipe (outpipe);
       gpgme_data_release (sigdata);
       xfree (cld);
       assuan_disconnect (ctx);

@@ -647,16 +647,18 @@ the UI, useful only for debugging.  Setting it to values larger than 1
 make the log file output more verbose; these are actually bit flags
 according to the following table (which may change with any release):
 @table @code
-@item 2
+@item 2  (0x0002)
 Tell what the Assuan I/O scheduler is doing.
-@item 4 
+@item 4  (0x0004)
 Even more verbose Assuan I/O scheduler reporting. 
-@item 8
+@item 8  (0x0008)
 Tell what the filter I/O system is doing.
-@item 16 
+@item 16 (0x0010)
 Tell how the filter I/O locks the resources.
+@item 32 (0x0020)
+Tell about resource allocation.
 @end table
-
+You may use the regular C-syntax for entering the value.
 
 
 @itemx HKCU\Software\GNU\GpgOL:logFile
