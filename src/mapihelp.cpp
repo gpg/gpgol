@@ -43,6 +43,12 @@
                         } while (0)
 
 
+static int get_attach_method (LPATTACH obj);
+static int has_smime_filename (LPATTACH obj);
+
+
+
+
 /* Print a MAPI property to the log stream. */
 void
 log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
@@ -483,6 +489,133 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
 }
 
 
+/* Check whether the message is really a CMS encrypted message.  This
+   function is required due to a bug in CryptoEx which sometimes
+   assignes the *.CexEnc message class to signed messages and only
+   updates the message class after accessing them.  Thus in old stores
+   there may be a lot of *.CexEnc message which are actually just
+   signed.  We check here whether such a message is really encrypted
+   by looking at the object identifier inside the CMS data.  Returns
+   true if the message is really encrypted.  */
+static int
+is_really_cms_encrypted (LPMESSAGE message)
+{    
+  HRESULT hr;
+  SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
+  LPMAPITABLE mapitable;
+  LPSRowSet   mapirows;
+  unsigned int pos, n_attach;
+  int is_encrypted = 0;
+  LPATTACH att = NULL;
+  LPSTREAM stream = NULL;
+  char buffer[24];  /* 24 bytes are more than enough to peek at.
+                       Cf. ksba_cms_identify() from the libksba
+                       package.  */
+  const char *p;
+  ULONG nread;
+  size_t n;
+  tlvinfo_t ti;
+
+  hr = message->GetAttachmentTable (0, &mapitable);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      return 0;
+    }
+      
+  hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
+                       NULL, NULL, 0, &mapirows);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      mapitable->Release ();
+      return 0;
+    }
+  n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
+  if (n_attach != 1)
+    {
+      FreeProws (mapirows);
+      mapitable->Release ();
+      log_debug ("%s:%s: not just one attachments", SRCNAME, __func__);
+      return 0;
+    }
+  pos = 0;
+
+  if (mapirows->aRow[pos].cValues < 1)
+    {
+      log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
+      goto leave;
+    }
+  if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
+    {
+      log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
+      goto leave;
+    }
+  hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
+                            NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
+                 SRCNAME, __func__, pos, 
+                 mapirows->aRow[pos].lpProps[0].Value.l, hr);
+      goto leave;
+    }
+  if (!has_smime_filename (att))
+    goto leave;
+  if (get_attach_method (att) != ATTACH_BY_VALUE)
+    goto leave;
+  
+  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                          0, 0, (LPUNKNOWN*) &stream);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open data stream of attachment: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  hr = stream->Read (buffer, sizeof buffer, &nread);
+  if ( hr != S_OK )
+    {
+      log_error ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
+      goto leave;
+    }
+  if (nread < sizeof buffer)
+    {
+      log_error ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
+      goto leave;
+    }
+
+  p = buffer;
+  n = nread;
+  if (parse_tlv (&p, &n, &ti))
+    goto leave;
+  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_SEQUENCE
+        && ti.is_cons) )
+    goto leave;
+  if (parse_tlv (&p, &n, &ti))
+    goto leave;
+  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_OBJECT_ID
+        && !ti.is_cons && ti.length) || ti.length > n)
+    goto leave;
+  /* Now is this enveloped data (1.2.840.113549.1.7.3)?  */
+  if (ti.length == 9 && !memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x03", 9))
+    is_encrypted = 1;
+
+
+ leave:
+  if (stream)
+    stream->Release ();
+  if (att)
+    att->Release ();
+  FreeProws (mapirows);
+  mapitable->Release ();
+  return !!is_encrypted;
+}
+
+
 
 /* This function checks whether MESSAGE requires processing by us and
    adjusts the message class to our own.  By passing true for
@@ -647,7 +780,12 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
               log_debug ("%s:%s: message has no content type", 
                          SRCNAME, __func__);
               if (cexenc)
-                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+                {
+                  if (is_really_cms_encrypted (message))
+                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+                  else
+                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+                }
             }
           else
             {
@@ -687,8 +825,13 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                   newvalue = get_msgcls_from_pgp_lines (message);
                 }
 
-              if (!newvalue && cexenc)
-                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+              if (!newvalue)
+                {
+                  if (is_really_cms_encrypted (message))
+                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+                  else
+                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+                }
 
               xfree (smtype);
               xfree (proto);
@@ -1366,7 +1509,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
 
 
 
-/* Return an attachment as a malloced buffer; The size of the buffer
+/* Return an attachment as a malloced buffer.  The size of the buffer
    will be stored at R_NBYTES.  Returns NULL on failure. */
 char *
 mapi_get_attach (LPMESSAGE message, mapi_attach_item_t *item, size_t *r_nbytes)
@@ -1860,6 +2003,33 @@ has_gpgol_body_name (LPATTACH obj)
         yes = 1;
       else if (!strcmp (propval->Value.lpszA, "gpgol000.htm"))
         yes = 2;
+    }
+  MAPIFreeBuffer (propval);
+  return yes;
+}
+
+/* Helper to check whether the file name of OBJ is "smime.p7m".
+   Returns on true if so.  */
+static int
+has_smime_filename (LPATTACH obj)
+{
+  HRESULT hr;
+  LPSPropValue propval;
+  int yes = 0;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
+  if (FAILED(hr))
+    return 0;
+
+  if ( PROP_TYPE (propval->ulPropTag) == PT_UNICODE)
+    {
+      if (!wcscmp (propval->Value.lpszW, L"smime.p7m"))
+        yes = 1;
+    }
+  else if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    {
+      if (!strcmp (propval->Value.lpszA, "smime.p7m"))
+        yes = 1;
     }
   MAPIFreeBuffer (propval);
   return yes;

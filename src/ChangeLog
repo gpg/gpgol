@@ -1,3 +1,12 @@
+2008-02-11  Werner Koch  <wk@g10code.com>
+
+	* common.h (tlvinfo_t): New.
+	* common.c (parse_tlv): New.  Based on code from libksba.
+	* mapihelp.cpp (has_smime_filename): New.
+	(is_really_cms_encrypted): New.
+	(mapi_change_message_class): Use this here to work around a
+	CryptoEx bug.
+
 2008-02-08  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (mapi_change_message_class): Improve detecion of
