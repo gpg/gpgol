@@ -1,3 +1,11 @@
+2008-02-13  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgolcharset_tag, mapi_get_gpgol_charset) 
+	(mapi_set_gpgol_charset): New. 
+	(mapi_get_gpgol_body_attachment): Transcode from Latin-1.
+	* mimeparser.c (start_attachment): Set the charset property.
+	(struct mime_context): Remove is_utf8 field.
+
 2008-02-11  Werner Koch  <wk@g10code.com>
 
 	* common.h (tlvinfo_t): New.

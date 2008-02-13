@@ -110,7 +110,6 @@ struct mime_context
   int hashing_level;      /* MIME level where we started hashing. */
   int is_qp_encoded;      /* Current part is QP encoded. */
   int is_base64_encoded;  /* Current part is base 64 encoded. */
-  int is_utf8;            /* Current part has charset utf-8. */
   int is_body;            /* The current part belongs to the body.  */
   protocol_t protocol;    /* The detected crypto protocol.  */
 
@@ -384,6 +383,16 @@ start_attachment (mime_context_t ctx, int is_body)
       log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
                  SRCNAME, __func__, hr); 
       goto leave;
+    }
+
+  /* If we have the MIME info and a charset info and that is not
+     UTF-8, set our own Charset property.  */
+  if (ctx->mimestruct_cur)
+    {
+      const char *s = ctx->mimestruct_cur->charset;
+      if (s && strcmp (s, "utf-8") && strcmp (s, "UTF-8")
+          && strcmp (s, "utf8") && strcmp (s, "UTF8"))
+        mapi_set_gpgol_charset ((LPMESSAGE)newatt, s);
     }
 
 
@@ -750,11 +759,9 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
              SRCNAME, __func__, ctx, ctmain, ctsub);
 #endif
 
-  /* We only support UTF-8 for now.  Check here.  */
   s = rfc822parse_query_parameter (field, "charset", 0);
   if (s)
     charset = xstrdup (s);
-  ctx->is_utf8 = (s && !strcmp (s, "utf-8"));
 
   /* Update our idea of the entire MIME structure.  */
   {
@@ -829,8 +836,9 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   ctx->in_data = 1;
 
 #ifdef DEBUG_PARSER
-  log_debug ("%s: this body: nesting=%d part_counter=%d is_text=%d\n",
-             SRCNAME, ctx->nesting_level, ctx->part_counter, is_text);
+  log_debug ("%s: this body: nesting=%d partno=%d is_text=%d charset=\"%s\"\n",
+             SRCNAME, ctx->nesting_level, ctx->part_counter, is_text, 
+             ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"");
 #endif
 
   /* If this is a text part, decide whether we treat it as our body. */

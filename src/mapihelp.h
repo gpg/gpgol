@@ -121,6 +121,9 @@ int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
 
 int mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name);
 
+char *mapi_get_gpgol_charset (LPMESSAGE obj);
+int mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset);
+
 int  mapi_set_attach_hidden (LPATTACH attach);
 
 char *mapi_get_mime_info (LPMESSAGE msg);

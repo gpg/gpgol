@@ -600,6 +600,11 @@ This binary property is used to store the initialization vector of an
 re-encrypted attachment.  The existence of this property indicates that
 the attachment has been encrypted under the non-permanent session key.
 
+@item GpgOL Charset
+This is a property of type STRING8 and used to describe the character
+set of an attachment or of the body.  If this propery is missing the
+default of UTF-8 is assumed.
+
 @item GpgOL Last Decrypted
 This binary property is used on the message to save a session marker to
 tell GpgOL whether the message as already been decrypted.  If this

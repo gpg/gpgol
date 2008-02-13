@@ -21,6 +21,7 @@
 #include <config.h>
 #endif
 
+#include <ctype.h>
 #include <windows.h>
 
 #include "mymapi.h"
@@ -197,6 +198,16 @@ get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag)
   return 0;
 }
 
+
+/* Return the property tag for GpgOL Charset. */
+int 
+get_gpgolcharset_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Charset", __func__)))
+    return -1;
+  *r_tag |= PT_STRING8;
+  return 0;
+}
 
 
 /* Set an arbitary header in the message MSG with NAME to the value
@@ -1792,6 +1803,69 @@ mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name)
 }
 
 
+/* Return the charset as assigned by GpgOL to an attachment.  This may
+   return NULL it is has not been assigned or is the standard
+   (UTF-8). */
+char *
+mapi_get_gpgol_charset (LPMESSAGE obj)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  char *retstr;
+
+  if (get_gpgolcharset_tag (obj, &tag) )
+    return NULL; /* Error.  */
+  hr = HrGetOneProp ((LPMAPIPROP)obj, tag, &propval);
+  if (FAILED (hr))
+    return NULL;
+  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    {
+      if (!strcmp (propval->Value.lpszA, "utf-8"))
+        retstr = NULL;
+      else
+        retstr = xstrdup (propval->Value.lpszA);
+    }
+  else
+    retstr = NULL;
+
+  MAPIFreeBuffer (propval);
+  return retstr;
+}
+
+
+/* Set the GpgOl charset t an asstachment. 
+   Note that this function does not call SaveChanges.  */
+int 
+mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset)
+{
+  HRESULT hr;
+  SPropValue prop;
+  char *p;
+
+  /* Note that we lowercase the value and cut it to a max of 32
+     characters.  The latter is required to make sure that
+     HrSetOneProp will always work.  */
+  if (get_gpgolcharset_tag (obj, &prop.ulPropTag) )
+    return -1;
+  prop.Value.lpszA = xstrdup (charset);
+  for (p=prop.Value.lpszA; *p; p++)
+    *p = tolower (*(unsigned char*)p);
+  if (strlen (prop.Value.lpszA) > 32)
+    prop.Value.lpszA[32] = 0;
+  hr = HrSetOneProp ((LPMAPIPROP)obj, &prop);	
+  xfree (prop.Value.lpszA);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set %s property: hr=%#lx\n",
+                 SRCNAME, __func__, "GpgOL Charset", hr); 
+      return -1;
+    }
+
+  return 0;
+}
+
+
 /* Return the MIME info as an allocated string.  Will never return
    NULL.  */
 char *
@@ -2130,8 +2204,22 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
           found = 1;
           if (r_body)
             {
+              char *charset;
+              
               if (get_attach_method (att) == ATTACH_BY_VALUE)
                 body = attach_to_buffer (att, r_nbytes, 1, r_protected);
+              if (body && (charset = mapi_get_gpgol_charset ((LPMESSAGE)att)))
+                {
+                  /* We only support transcoding from Latin-1 for now.  */
+                  if (strcmp (charset, "iso-8859-1") 
+                      && !strcmp (charset, "latin-1"))
+                    log_debug ("%s:%s: Using Latin-1 instead of %s",
+                               SRCNAME, __func__, charset);
+                  xfree (charset);
+                  charset = latin1_to_utf8 (body);
+                  xfree (body);
+                  body = charset;
+                }
             }
           att->Release ();
           if (r_ishtml)
