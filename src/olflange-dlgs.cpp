@@ -47,8 +47,8 @@ set_labels (HWND dlg)
     { IDC_OPENPGP_DEFAULT,  N_("Use PGP/MIME by default")},
     { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
     { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
-    { IDC_ENCRYPT_WITH_STANDARD_KEY, 
-                     N_("Also encrypt message with the default certificate")},
+//     { IDC_ENCRYPT_WITH_STANDARD_KEY, 
+//                      N_("Also encrypt message with the default certificate")},
     { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
     { IDC_PREFER_HTML,      N_("Show HTML view if possible")},
 
@@ -112,12 +112,12 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         openpgp_state = opt.default_protocol = PROTOCOL_OPENPGP;
         smime_state = opt.default_protocol = PROTOCOL_SMIME;
 
-	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
-                      !!opt.enable_default_key);
+// 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
+//                       !!opt.enable_default_key);
         EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
                       !!opt.enable_smime);
-	if (opt.enable_default_key)
-          CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
+// 	if (opt.enable_default_key)
+//           CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
         set_labels (hDlg);
         ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS), 
                     opt.enable_debug? SW_SHOW : SW_HIDE);
@@ -169,13 +169,13 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      break;
 	    }
 	}
-      if (HIWORD (wParam) == BN_CLICKED &&
-	  LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) 
-	{
-	  opt.enable_default_key = !opt.enable_default_key;
-	  EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
-			!!opt.enable_default_key);
-	}
+//       if (HIWORD (wParam) == BN_CLICKED &&
+// 	  LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) 
+// 	{
+// 	  opt.enable_default_key = !opt.enable_default_key;
+// 	  EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
+// 			!!opt.enable_default_key);
+// 	}
       if (HIWORD (wParam) == BN_CLICKED &&
 	  LOWORD (wParam) == IDC_ENABLE_SMIME) 
 	{
@@ -217,10 +217,10 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case PSN_SETACTIVE: {
 	    TCHAR s[30];
 	    
-	    if (opt.default_key && *opt.default_key)		
-                SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
-            else
-		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, "");
+// 	    if (opt.default_key && *opt.default_key)		
+//                 SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
+//             else
+// 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, "");
 	    wsprintf (s, "%d", opt.passwd_ttl/60);
 	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
                                0, (LPARAM) s);
@@ -229,8 +229,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				!!opt.encrypt_default, 0L);
 	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
 			        !!opt.sign_default, 0L);
-	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
-                                BM_SETCHECK, opt.enable_default_key, 0L);
+// 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
+//                                 BM_SETCHECK, opt.enable_default_key, 0L);
             SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
                                 openpgp_state, 0L);
             SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
@@ -247,22 +247,22 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case PSN_APPLY:	{
 	    TCHAR s[201];
             
-            opt.enable_default_key = !!SendDlgItemMessage
-              (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L);
+//             opt.enable_default_key = !!SendDlgItemMessage
+//               (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L);
 
-            GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
-            if (strlen (s) > 0 && strchr (s, ' ')) 
-              {
-                if (opt.enable_default_key)
-                  {
-                    MessageBox (hDlg,_("The default certificate may not"
-                                       " contain any spaces."),
-                                "GpgOL", MB_ICONERROR|MB_OK);
-                    bMsgResult = PSNRET_INVALID_NOCHANGEPAGE;
-                    break;
-                  }
-              }
-            set_default_key (s);
+//             GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
+//             if (strlen (s) > 0 && strchr (s, ' ')) 
+//               {
+//                 if (opt.enable_default_key)
+//                   {
+//                     MessageBox (hDlg,_("The default certificate may not"
+//                                        " contain any spaces."),
+//                                 "GpgOL", MB_ICONERROR|MB_OK);
+//                     bMsgResult = PSNRET_INVALID_NOCHANGEPAGE;
+//                     break;
+//                   }
+//               }
+//             set_default_key (s);
  
 	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT,
                                 20, (LPARAM)s);		

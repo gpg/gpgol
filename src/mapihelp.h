@@ -48,8 +48,11 @@ typedef enum
     ATTACHTYPE_MOSS = 1,         /* The original MOSS message (ie. a
                                     S/MIME or PGP/MIME message. */
     ATTACHTYPE_FROMMOSS = 2,     /* Attachment created from MOSS.  */
-    ATTACHTYPE_MOSSTEMPL = 3     /* Attachment has been created in the
+    ATTACHTYPE_MOSSTEMPL = 3,    /* Attachment has been created in the
                                     course of sending a message */ 
+    ATTACHTYPE_PGPBODY = 4       /* Attachment contains the original
+                                    PGP message body of PGP inline
+                                    encrypted messages.  */
   }
 attachtype_t;
 
@@ -81,10 +84,13 @@ struct mapi_attach_item_s
 typedef struct mapi_attach_item_s mapi_attach_item_t;
 
 /* The filename of the attachment we create as the result of sign or
-   encrypt operation.  Don't change this name as some tests rely on
+   encrypt operations.  Don't change this name as some tests rely on
    it.  */
 #define MIMEATTACHFILENAME "gpgolXXX.dat"
-
+/* The name of the file we use to store the original body of PGP
+   encrypted messages.  Note that PGP/MIME message don't need that
+   because Outlook carries them as 2 attachments.  */
+#define PGPBODYFILENAME    "gpgolPGP.dat"
 
 void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
 int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);

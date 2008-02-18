@@ -1,3 +1,11 @@
+2008-02-18  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.5 development version.
+
+2008-02-15  Werner Koch  <wk@g10code.com>
+
+	* po/de.po: Describe more explicit on how to start the UI-server.
+
 2008-02-06  Werner Koch  <wk@g10code.com>
 
 	Released 0.10.4 development version.

@@ -557,6 +557,12 @@ attachments created by GpgOL.  These values are used:
 
   @item ATTACHTYPE_MOSSTEMPL = 3
   The attachment has been created in the course of sending a message.
+
+  @item ATTACHTYPE_PGPBODY = 4
+  The attachment contains the original PGP message body of PGP inline
+  encrypted messages.  We need to save this away because it may happen
+  that in the course of displaying the plaintext Outlook overwrites the
+  actual body due to internal syncronization.
   @end table
 
 @item GpgOL Sig Status

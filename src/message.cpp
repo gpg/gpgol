@@ -176,6 +176,43 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
 }
 
 
+/* Helper for message_wipe_body_cruft.  */
+static void
+do_wipe_body (LPMESSAGE message)
+{
+  HRESULT hr;
+  SPropTagArray proparray;
+  int anyokay = 0;
+  
+  proparray.cValues = 1;
+  proparray.aulPropTag[0] = PR_BODY;
+  hr = message->DeleteProps (&proparray, NULL);
+  if (hr)
+    log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed", SRCNAME, __func__);
+  else
+    anyokay++;
+            
+  proparray.cValues = 1;
+  proparray.aulPropTag[0] = PR_BODY_HTML;
+  message->DeleteProps (&proparray, NULL);
+  if (hr)
+    log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
+                   SRCNAME, __func__);
+  else
+    anyokay++;
+  
+  if (anyokay)
+    {
+      hr = message->SaveChanges (KEEP_OPEN_READWRITE);
+      if (hr)
+        log_error_w32 (hr, "%s:%s: SaveChanges failed", SRCNAME, __func__); 
+      else
+        log_debug ("%s:%s: SaveChanges succeded; body cruft removed",
+                   SRCNAME, __func__); 
+    }
+}
+
+
 /* If the current message is an encrypted one remove the body
    properties which might have come up due to OL internal
    syncronization and a failing olDiscard feature.  */
@@ -197,40 +234,7 @@ message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb)
         case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
           {
             if (mapi_has_last_decrypted (message))
-              {
-                SPropTagArray proparray;
-                int anyokay = 0;
-            
-                proparray.cValues = 1;
-                proparray.aulPropTag[0] = PR_BODY;
-                hr = message->DeleteProps (&proparray, NULL);
-                if (hr)
-                  log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
-                                 SRCNAME, __func__);
-                else
-                  anyokay++;
-            
-                proparray.cValues = 1;
-                proparray.aulPropTag[0] = PR_BODY_HTML;
-                message->DeleteProps (&proparray, NULL);
-                if (hr)
-                  log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
-                                 SRCNAME, __func__);
-                else
-                  anyokay++;
-
-                if (anyokay)
-                  {
-                    hr = message->SaveChanges (KEEP_OPEN_READWRITE);
-                    if (hr)
-                      log_error_w32 (hr, "%s:%s: SaveChanges failed",
-                                     SRCNAME, __func__); 
-                    else
-                      log_debug ("%s:%s: SaveChanges succeded; "
-                                 "body cruft removed",
-                                 SRCNAME, __func__); 
-                  }
-              }  
+              do_wipe_body (message);
             else
               log_debug_w32 (hr, "%s:%s: "
                              "error getting message decryption status", 
@@ -239,9 +243,32 @@ message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb)
           break;
 
         case MSGTYPE_GPGOL_PGP_MESSAGE:
-          /* We can't delete the body of a message if it is an inline
-             PGP encrypted message because the body holds the
-             ciphertext.  */
+          {
+            /* In general we can't delete the body of a message if it
+               is an inline PGP encrypted message because the body
+               holds the ciphertext.  However, while decrypting, we
+               take a copy of the body and work on that in future; if
+               this has been done we can delete the body.  */
+            mapi_attach_item_t *table;
+            int found = 0;
+            int tblidx;
+
+            table = mapi_create_attach_table (message, 0);
+            if (table)
+              {
+                for (tblidx=0; !table[tblidx].end_of_table; tblidx++)
+                  if (table[tblidx].attach_type == ATTACHTYPE_PGPBODY
+                      && table[tblidx].filename 
+                      && !strcmp (table[tblidx].filename, PGPBODYFILENAME))
+                    {
+                      found = 1;
+                      break;
+                    }
+              }
+            mapi_release_attach_table (table);
+            if (found)
+              do_wipe_body (message);
+          }
           break;
 
         default: 
@@ -268,12 +295,12 @@ message_show_info (LPMESSAGE message, HWND hwnd)
   buflen = strlen (msgcls) + strlen (sigstat) + strlen (mimeinfo) + 200;
   buffer = (char*)xmalloc (buflen+1);
   snprintf (buffer, buflen, 
-            _("Message class: %s\n"
-              "Sig Status   : %s\n"
-              "Structure of the message:\n"
+            _("Signature status: %s\n"
+              "Message class ..: %s\n"
+              "MIME structure .:\n"
               "%s"), 
-            msgcls,
             sigstat,
+            msgcls,
             mimeinfo);
   
   MessageBox (hwnd, buffer, _("GpgOL - Message Information"),
@@ -465,7 +492,6 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
 }
 
 
-
 /* Verify MESSAGE and update the attachments as required.  MSGTYPE
    should be the type of the message so that the fucntion can decide
    what to do.  With FORCE set the verification is done regardlessless
@@ -639,6 +665,138 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 }
 
 
+/* Copy the MAPI body to a PGPBODY type attachment. */
+static int
+pgp_body_to_attachment (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSTREAM instream;
+  ULONG newpos;
+  LPATTACH newatt = NULL;
+  SPropValue prop;
+  LPSTREAM outstream = NULL;
+  LPUNKNOWN punk;
+
+  instream = mapi_get_body_as_stream (message);
+  if (!instream)
+    return -1;
+  
+  hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+  if (hr)
+    {
+      log_error ("%s:%s: can't create attachment: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_METHOD;
+  prop.Value.ul = ATTACH_BY_VALUE;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set attach method: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  /* Mark that attachment so that we know why it has been created.  */
+  if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
+    goto leave;
+  prop.Value.l = ATTACHTYPE_PGPBODY;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);	
+  if (hr)
+    {
+      log_error ("%s:%s: can't set %s property: hr=%#lx\n",
+                 SRCNAME, __func__, "GpgOL Attach Type", hr); 
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
+  prop.Value.b = TRUE;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set hidden attach flag: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_FILENAME_A;
+  prop.Value.lpszA = PGPBODYFILENAME;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+
+  punk = (LPUNKNOWN)outstream;
+  hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                             MAPI_CREATE|MAPI_MODIFY, &punk);
+  if (FAILED (hr)) 
+    {
+      log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  outstream = (LPSTREAM)punk;
+
+  /* Insert a blank line so that our mime parser skips over the mail
+     headers.  */
+  hr = outstream->Write ("\r\n", 2, NULL);
+  if (hr)
+    {
+      log_error ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  {
+    ULARGE_INTEGER cb;
+    cb.QuadPart = 0xffffffffffffffffll;
+    hr = instream->CopyTo (outstream, cb, NULL, NULL);
+  }
+  if (hr)
+    {
+      log_error ("%s:%s: can't copy streams: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  hr = outstream->Commit (0);
+  if (hr)
+    {
+      log_error ("%s:%s: Commiting output stream failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  outstream->Release ();
+  outstream = NULL;
+  hr = newatt->SaveChanges (0);
+  if (hr)
+    {
+      log_error ("%s:%s: SaveChanges of the attachment failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  newatt->Release ();
+  newatt = NULL;
+  hr = message->SaveChanges (KEEP_OPEN_READWRITE);
+  if (hr)
+    log_error ("%s:%s: SaveChanges failed: hr=%#lx\n", SRCNAME, __func__, hr); 
+
+ leave:
+  if (outstream)
+    {
+      outstream->Revert ();
+      outstream->Release ();
+    }
+  if (newatt)
+    newatt->Release ();
+  instream->Release ();
+  return hr? -1:0;
+}
+
+
 /* Decrypt MESSAGE, check signature and update the attachments as
    required.  MSGTYPE should be the type of the message so that the
    function can decide what to do.  With FORCE set the decryption is
@@ -647,7 +805,7 @@ int
 message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 {
   mapi_attach_item_t *table = NULL;
-  int part2_idx;
+  int part1_idx, part2_idx;
   int tblidx;
   int retval = -1;
   LPSTREAM cipherstream;
@@ -682,12 +840,58 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 
   if (msgtype == MSGTYPE_GPGOL_PGP_MESSAGE)
     {
-      /* PGP messages are special:  All is contained in the body and thus
-         there is no requirement for an attachment.  */
-      cipherstream = mapi_get_body_as_stream (message);
+      /* PGP messages are special: All is contained in the body and
+         thus there would be no requirement for an attachment.
+         However, due to problems with Outlook overwriting the body of
+         the message after decryption, we need to save the body away
+         before decrypting it.  We then always look for that original
+         body atatchment and create one if it does not exist.  */
+      part1_idx = -1;
+      table = mapi_create_attach_table (message, 0);
+      if (!table)
+        ;
+      else
+        {
+          for (tblidx=0; !table[tblidx].end_of_table; tblidx++)
+            if (table[tblidx].attach_type == ATTACHTYPE_PGPBODY
+                && table[tblidx].filename 
+                && !strcmp (table[tblidx].filename, PGPBODYFILENAME))
+              {
+                part1_idx = tblidx;
+                break;
+              }
+        }
+      if (part1_idx == -1)
+        {
+          mapi_release_attach_table (table);
+          if (pgp_body_to_attachment (message))
+            table = NULL;
+          else
+            table = mapi_create_attach_table (message, 0);
+          if (table)
+            {
+              for (tblidx=0; !table[tblidx].end_of_table; tblidx++)
+                if (table[tblidx].attach_type == ATTACHTYPE_PGPBODY
+                    && table[tblidx].filename 
+                    && !strcmp (table[tblidx].filename, PGPBODYFILENAME))
+                  {
+                    part1_idx = tblidx;
+                    break;
+                  }
+            }
+        }
+      if (!table || part1_idx == -1)
+        {
+          log_debug ("%s:%s: problem copying the PGP inline encrypted message",
+                     SRCNAME, __func__);
+          goto leave;
+        }
+      cipherstream = mapi_get_attach_as_stream (message, table+part1_idx,
+                                                NULL);
       if (!cipherstream)
-        goto leave;
+        goto leave; /* Problem getting the attachment.  */
       protocol = PROTOCOL_OPENPGP;
+      need_rfc822_parser = 1;
     }
   else
     {
@@ -756,8 +960,6 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
              attachments by looking at all attachments.  Only if this
              fails we identify them by their order (i.e. the first 2
              attachments) and mark them as part1 and part2.  */
-          int part1_idx;
-          
           part1_idx = part2_idx = -1;
           for (tblidx=0; !table[tblidx].end_of_table; tblidx++)
             if (table[tblidx].attach_type == ATTACHTYPE_MOSS)

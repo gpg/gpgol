@@ -1,8 +1,15 @@
-Noteworthy changes for version 0.10.4 (2008-02-06)
+Noteworthy changes for version 0.10.5 (2008-02-18)
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
     - Under OL2007 some menu entries are missing.
+
+ * PGP inline encrypted mails are not anymore deleted after the first
+   decryption.
+
+
+Noteworthy changes for version 0.10.4 (2008-02-06)
+==================================================
 
  * Sign and encrypt works now.
 

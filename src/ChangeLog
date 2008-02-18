@@ -1,3 +1,18 @@
+2008-02-18  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (pgp_body_to_attachment): New.
+	(message_decrypt): Use it.
+	(message_wipe_body_cruft): Also wipe already processed PGP
+	encrypted messages.  Factor common code out to ...
+	(do_wipe_body): .. new.
+	* mapihelp.h (ATTACHTYPE_PGPBODY): New.
+
+2008-02-15  Werner Koch  <wk@g10code.com>
+
+	* olflange-dlgs.cpp: Remove code for IDC_ENCRYPT_WITH_STANDARD_KEY
+	and IDC_ENCRYPT_TO.
+	* dialogs.rc: Ditto.
+
 2008-02-13  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (get_gpgolcharset_tag, mapi_get_gpgol_charset) 

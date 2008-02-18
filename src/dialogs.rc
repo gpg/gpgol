@@ -59,12 +59,14 @@ BEGIN
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 66, 215, 10
 
-    CONTROL         "encrypt-to", IDC_ENCRYPT_WITH_STANDARD_KEY,
-                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 79, 215, 10
+  /* Note: We epp the spae for now in case we need to add other config
+     options. */
+/*     CONTROL         "encrypt-to", IDC_ENCRYPT_WITH_STANDARD_KEY, */
+/*                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP, */
+/*                     24, 79, 215, 10 */
 
-    EDITTEXT        IDC_ENCRYPT_TO, 
-                    36, 91, 133, 12, ES_AUTOHSCROLL
+/*     EDITTEXT        IDC_ENCRYPT_TO,  */
+/*                     36, 91, 133, 12, ES_AUTOHSCROLL */
 
     CONTROL         "preview-decrypt", IDC_PREVIEW_DECRYPT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
