@@ -318,12 +318,7 @@ get_uiserver_name (void)
       uiserver = read_w32_registry_string (NULL, GNUPG_REGKEY, 
                                            "UI Server");
       if (!uiserver)
-        uiserver = xstrdup ("bin\\kleopatra.exe --daemon");
-
-      /* FIXME: Very dirty work-around to make kleopatra find its
-         DLLs.  */
-      if (!strncmp (uiserver, "bin\\kleopatra.exe", 17))
-        chdir (dir);
+        uiserver = xstrdup ("kleopatra.exe --daemon");
 
       name = xmalloc (strlen (dir) + strlen (uiserver) + 2);
       strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);

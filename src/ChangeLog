@@ -1,3 +1,8 @@
+2008-02-19  Marcus Brinkmann  <marcus@g10code.de>
+
+	* engine-assuan.c (get_uiserver_name): Change default uiserver
+	path and remove work-around.
+
 2008-02-18  Werner Koch  <wk@g10code.com>
 
 	* message.cpp (pgp_body_to_attachment): New.
