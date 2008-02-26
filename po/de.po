@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-02-11 14:15+0100\n"
-"PO-Revision-Date: 2008-02-15 17:47+0100\n"
+"POT-Creation-Date: 2008-02-26 12:47+0100\n"
+"PO-Revision-Date: 2008-02-26 12:54+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -64,9 +64,11 @@ msgid ""
 "This is limited to the PGP/MIME protocol and thus S/MIME protected message "
 "are not readable."
 msgstr ""
-"Achtung: Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden werden.\n"
+"Achtung: Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden "
+"werden.\n"
 "\n"
-"Um GpgOL zu nutzen probieren Sie bitte eine der folgenden Möglichkeiten aus:\n"
+"Um GpgOL zu nutzen probieren Sie bitte eine der folgenden Möglichkeiten "
+"aus:\n"
 "\n"
 "1. Entweder: Outlook beenden und erneut starten.\n"
 "\n"
@@ -75,6 +77,7 @@ msgstr ""
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
 
 #: src/engine.c:369 src/ext-commands.cpp:683 src/main.c:603 src/main.c:609
+#: src/message.cpp:326
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -338,7 +341,7 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1486
+#: src/mapihelp.cpp:1516
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -348,7 +351,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2150
+#: src/mapihelp.cpp:2257
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -367,48 +370,79 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/message.cpp:163
+#: src/message.cpp:171
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 "[Krypto-Operation ist fehlgeschlagen - Der Text der Nachricht kann nicht "
 "angezeigt werden.]"
 
-#: src/message.cpp:271
+#: src/message.cpp:306
 #, c-format
 msgid ""
-"Message class: %s\n"
-"Sig Status   : %s\n"
-"Structure of the message:\n"
+"Signature status: %s\n"
+"Message class ..: %s\n"
+"MIME structure .:\n"
 "%s"
 msgstr ""
-"Nachrichtenklasse: %s\n"
-"Signatur-Status: %s\n"
-"Struktur der Nachricht:\n"
+"Status der Unterschrift: %s\n"
+"Nachrichtenklasse .....: %s\n"
+"Struktur der Nachricht :\n"
 "%s"
 
-#: src/message.cpp:279
+#: src/message.cpp:314
 msgid "GpgOL - Message Information"
 msgstr "GpgOL - Informationen zu der Nachricht"
 
-#: src/message.cpp:967
+#: src/message.cpp:538
+msgid "Signature verification of an encrypted message is not possible."
+msgstr "Die Prüfung der Unterschrift ist bei einer verschlüsselten Nachrichten nicht möglich."
+
+#: src/message.cpp:549
+msgid "Signature verification of this message class is not possible."
+msgstr "Die Prüfung der Unterschrift ist bei dieser Nachrichtenklasse nicht möglich."
+
+#: src/message.cpp:552
+msgid ""
+"Signature verification of this S/MIME message is not possible.  Please check "
+"that S/MIME processing has been enabled."
+msgstr "Die Prüfung der Unterschrift ist bei dieser S/MIME Nachricht nicht möglich.  Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME eingeschaltet ist."
+
+#: src/message.cpp:556
+msgid "This message has no signature."
+msgstr "Diese Nachricht hat keine Unterschrift."
+
+#: src/message.cpp:856
+msgid "This message is not encrypted."
+msgstr "Diese Nachricht ist nicht verschlüsselt."
+
+#: src/message.cpp:1080
+#, c-format
+msgid ""
+"Decryption failed\n"
+"(%s)"
+msgstr ""
+"Entschlüsselungsfehler\n"
+"(%s)"
+
+#: src/message.cpp:1208
 msgid "No recipients to encrypt to are given"
 msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
 
-#: src/message.cpp:983
+#: src/message.cpp:1224
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "Verschlüsselungsfehler (%s)"
 
-#: src/message.cpp:1004
+#: src/message.cpp:1245
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "Unterschrifterstellungsfehler (%s)"
 
-#: src/mimeparser.c:1063
+#: src/mimeparser.c:1072
 msgid "Error writing to stream"
 msgstr "Dateischreibfehler"
 
-#: src/mimeparser.c:1064
+#: src/mimeparser.c:1073
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
@@ -431,10 +465,6 @@ msgstr "S/MIME per Voreinstellung verwenden"
 #: src/olflange-dlgs.cpp:49
 msgid "Enable the S/MIME support"
 msgstr "S/MIME Unterstützung einschalten"
-
-#: src/olflange-dlgs.cpp:51
-msgid "Also encrypt message with the default certificate"
-msgstr "Nachricht ebenfalls an das voreingestellte Zertifikat verschlüsseln"
 
 #: src/olflange-dlgs.cpp:52
 msgid "Also decrypt in preview window"
@@ -460,11 +490,6 @@ msgstr "Minuten"
 msgid "Ad&vanced.."
 msgstr "&Erweitert..."
 
-#: src/olflange-dlgs.cpp:258
-msgid "The default certificate may not contain any spaces."
-msgstr ""
-"Der Bezeichner für das Standardzertifikat darf keine Leerzeichen enthalten."
-
 #: src/olflange-dlgs.cpp:280
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
@@ -476,7 +501,12 @@ msgid ""
 msgstr ""
 "Sie haben die S/MIME Unterstützung von GpgOL eingeschaltet.\n"
 "\n"
-"Neue S/MIME Nachrichten werden jetzt nur noch mittels GpgOL sichtbar sein und nicht mehr über Outlooks interne S/MIME Unterstützung.  Diese Nachrichten werden auch dann nicht mehr mit Outlook lesbar sein, wenn GpgOL deinstalliert wurde.  Mit dem Erscheinen der endgültigen Version von GpgOL wird aber ein Werkzeug bereitgestellt werden, welches dieses Problem lösen kann."
+"Neue S/MIME Nachrichten werden jetzt nur noch mittels GpgOL sichtbar sein "
+"und nicht mehr über Outlooks interne S/MIME Unterstützung.  Diese "
+"Nachrichten werden auch dann nicht mehr mit Outlook lesbar sein, wenn GpgOL "
+"deinstalliert wurde.  Mit dem Erscheinen der endgültigen Version von GpgOL "
+"wird aber ein Werkzeug bereitgestellt werden, welches dieses Problem lösen "
+"kann."
 
 #. TRANSLATORS: See the source for the full english text.
 #: src/olflange-dlgs.cpp:329
@@ -668,8 +698,24 @@ msgstr "PGP/MIME Prüfungsresultat"
 msgid "S/MIME Verification Result"
 msgstr "S/MIME Prüfungsresultat"
 
-#~ msgid "Decrypt message and verify signature"
-#~ msgstr "Nachricht entschlüsseln und Unterschrift prüfen"
+#~ msgid ""
+#~ "Message class: %s\n"
+#~ "Sig Status   : %s\n"
+#~ "Structure of the message:\n"
+#~ "%s"
+#~ msgstr ""
+#~ "Nachrichtenklasse: %s\n"
+#~ "Signatur-Status: %s\n"
+#~ "Struktur der Nachricht:\n"
+#~ "%s"
+
+#~ msgid "Also encrypt message with the default certificate"
+#~ msgstr "Nachricht ebenfalls an das voreingestellte Zertifikat verschlüsseln"
+
+#~ msgid "The default certificate may not contain any spaces."
+#~ msgstr ""
+#~ "Der Bezeichner für das Standardzertifikat darf keine Leerzeichen "
+#~ "enthalten."
 
 #~ msgid "Select GPG Key Manager"
 #~ msgstr "Das Schlüsselverwaltungsprogramm festlegen"

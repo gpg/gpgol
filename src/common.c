@@ -599,12 +599,19 @@ default_homedir (void)
 
 
 /* Do in-place decoding of quoted-printable data of LENGTH in BUFFER.
-   Returns the new length of the buffer. */
+   Returns the new length of the buffer and stores true at R_SLBRK if
+   the line ended with a soft line break; false is stored if not.
+   This fucntion asssumes that a complete line is passed in
+   buffer.  */
 size_t
-qp_decode (char *buffer, size_t length)
+qp_decode (char *buffer, size_t length, int *r_slbrk)
 {
   char *d, *s;
 
+  if (r_slbrk)
+    *r_slbrk = 0;
+
+  /* Fixme:  We should remove trailing white space first.  */
   for (s=d=buffer; length; length--)
     if (*s == '=')
       {
@@ -620,12 +627,23 @@ qp_decode (char *buffer, size_t length)
             /* Soft line break.  */
             s += 3;
             length -= 2;
+            if (r_slbrk && length == 1)
+              *r_slbrk = 1;
           }
         else if (length > 1 && s[1] == '\n')
           {
             /* Soft line break with only a Unix line terminator. */
             s += 2;
             length -= 1;
+            if (r_slbrk && length == 1)
+              *r_slbrk = 1;
+          }
+        else if (length == 1)
+          {
+            /* Soft line break at the end of the line. */
+            s += 1;
+            if (r_slbrk)
+              *r_slbrk = 1;
           }
         else
           *d++ = *s++;

@@ -1,3 +1,18 @@
+2008-02-26  Werner Koch  <wk@g10code.com>
+
+	* common.c (qp_decode): Add arg S_LBRK.
+	* mimeparser.c (plaintext_handler, ciphertext_handler): Handle
+	soft line breaks.
+
+	* mapihelp.cpp (mapi_change_message_class): Handle opaque S/MIME
+	messages without an smime-type parameter.
+
+2008-02-25  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (message_verify): Show message boxes for non-signed
+	messages.
+	(message_decrypt): Likewise.
+
 2008-02-19  Marcus Brinkmann  <marcus@g10code.de>
 
 	* engine-assuan.c (get_uiserver_name): Change default uiserver

@@ -500,14 +500,21 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
 }
 
 
-/* Check whether the message is really a CMS encrypted message.  This
-   function is required due to a bug in CryptoEx which sometimes
-   assignes the *.CexEnc message class to signed messages and only
-   updates the message class after accessing them.  Thus in old stores
-   there may be a lot of *.CexEnc message which are actually just
-   signed.  We check here whether such a message is really encrypted
-   by looking at the object identifier inside the CMS data.  Returns
-   true if the message is really encrypted.  */
+/* Check whether the message is really a CMS encrypted message.  
+   We check here whether the message is really encrypted by looking at
+   the object identifier inside the CMS data.  Returns true if the
+   message is really encrypted.
+
+   This function is required for two reasons: 
+
+   1. Due to a bug in CryptoEx which sometimes assignes the *.CexEnc
+      message class to signed messages and only updates the message
+      class after accessing them.  Thus in old stores there may be a
+      lot of *.CexEnc message which are actually just signed.
+ 
+   2. Is the smime-typeparameter is missing we need another way to
+      decide whether to decrypt or to verify.
+ */
 static int
 is_really_cms_encrypted (LPMESSAGE message)
 {    
@@ -746,6 +753,18 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                     }
                   xfree (smtype);
                 }
+              else
+                {
+                  /* No smime type.  The filename parameter is often
+                     not reliable, thus we better look into the
+                     message to see whetehr it is encrypted and assume
+                     an opaque signed one if not.  */
+                  if (is_really_cms_encrypted (message))
+                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+                  else
+                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+                }
+              
               xfree (ct);
             }
           if (!newvalue)

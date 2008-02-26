@@ -181,7 +181,7 @@ char *utf8_to_wincp (const char *string);
 
 const char *default_homedir (void);
 
-size_t qp_decode (char *buffer, size_t length);
+size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
 void b64_init (b64_state_t *state);
 size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
 

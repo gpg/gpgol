@@ -1040,9 +1040,10 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
               else if (ctx->outstream)
                 {
                   HRESULT hr = 0;
+                  int slbrk = 0;
 
                   if (ctx->is_qp_encoded)
-                    len = qp_decode (ctx->linebuf, pos);
+                    len = qp_decode (ctx->linebuf, pos, &slbrk);
                   else if (ctx->is_base64_encoded)
                     len = b64_decode (&ctx->base64, ctx->linebuf, pos);
                   else
@@ -1055,10 +1056,10 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                       hr = IStream_Write (ctx->outstream, ctx->linebuf,
                                           len, NULL);
                     }
-                  if (!hr && !ctx->is_base64_encoded)
+                  if (!hr && !ctx->is_base64_encoded && !slbrk)
                     {
                       char tmp[3] = "\r\n";
-
+                      
                       if (ctx->symenc)
                         symenc_cfb_encrypt (ctx->symenc, tmp, tmp, 2);
                       hr = IStream_Write (ctx->outstream, tmp, 2, NULL);
@@ -1082,15 +1083,17 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                 ctx->collect_signature = 2;
               else if (ctx->sig_data)
                 {
+                  int slbrk = 0;
+
                   if (ctx->is_qp_encoded)
-                    len = qp_decode (ctx->linebuf, pos);
+                    len = qp_decode (ctx->linebuf, pos, &slbrk);
                   else if (ctx->is_base64_encoded)
                     len = b64_decode (&ctx->base64, ctx->linebuf, pos);
                   else
                     len = pos;
                   if (len)
                     gpgme_data_write (ctx->sig_data, ctx->linebuf, len);
-                  if (!ctx->is_base64_encoded)
+                  if (!ctx->is_base64_encoded && !slbrk)
                     gpgme_data_write (ctx->sig_data, "\r\n", 2);
                 }
             }
@@ -1503,8 +1506,10 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
               /* We are inside the data.  That should be the actual
                  ciphertext in the given encoding.  Pass it on to the
                  crypto engine. */
+              int slbrk = 0;
+
               if (ctx->is_qp_encoded)
-                len = qp_decode (ctx->linebuf, pos);
+                len = qp_decode (ctx->linebuf, pos, &slbrk);
               else if (ctx->is_base64_encoded)
                 len = b64_decode (&ctx->base64, ctx->linebuf, pos);
               else
@@ -1513,7 +1518,7 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
                 err = engine_filter (ctx->outfilter, ctx->linebuf, len);
               else
                 err = 0;
-              if (!err && !ctx->is_base64_encoded)
+              if (!err && !ctx->is_base64_encoded && !slbrk)
                 {
                   char tmp[3] = "\r\n";
                   err = engine_filter (ctx->outfilter, tmp, 2);

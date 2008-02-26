@@ -1,8 +1,21 @@
-Noteworthy changes for version 0.10.5 (2008-02-18)
+Noteworthy changes for version 0.10.6
 ==================================================
 
  UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
     - Under OL2007 some menu entries are missing.
+
+ * More tweaks to allow processing of opaque encrypted or signed
+   S/MIME.
+
+ * Shows an error message when trying to decrypt/verify messages not
+   signed or encrypted.
+
+ * Soft line breaks in QP encoded messages are now correctly
+   processed.
+
+
+Noteworthy changes for version 0.10.5 (2008-02-18)
+==================================================
 
  * PGP inline encrypted mails are not anymore deleted after the first
    decryption.

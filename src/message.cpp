@@ -30,6 +30,7 @@
 #include "mimeparser.h"
 #include "mimemaker.h"
 #include "display.h"
+#include "ol-ext-callback.h"
 #include "message.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -157,14 +158,21 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
       err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
                                             &ishtml, &wasprotected);
       if (!err && body)
-        update_display (hwnd, /*wasprotected? NULL:*/ eecb, ishtml, body);
+        {
+          put_outlook_property (eecb, "GpgOLStatus", 
+                                mapi_get_sig_status (message));
+
+          update_display (hwnd, /*wasprotected? NULL:*/ eecb, ishtml, body);
+        }
       else
-        update_display (hwnd, NULL, 0, 
-                        _("[Crypto operation failed - "
-                          "can't show the body of the message]"));
+        {
+          put_outlook_property (eecb, "GpgOLStatus", "?");
+          update_display (hwnd, NULL, 0, 
+                          _("[Crypto operation failed - "
+                            "can't show the body of the message]"));
+        }
       xfree (body);
   
-      /*  put_outlook_property (eecb, "EncryptedStatus", "MyStatus"); */
     }
   else
     log_debug_w32 (hr, "%s:%s: error getting message", SRCNAME, __func__);
@@ -311,6 +319,12 @@ message_show_info (LPMESSAGE message, HWND hwnd)
   xfree (msgcls);
 }
 
+
+static void
+show_message (HWND hwnd, const char *text)
+{
+  MessageBox (hwnd, text, _("GpgOL"), MB_ICONINFORMATION|MB_OK);
+}
 
 
 
@@ -520,12 +534,26 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     case MSGTYPE_GPGOL_PGP_MESSAGE:
       log_debug ("%s:%s: message of type %d not expected",
                  SRCNAME, __func__, msgtype);
+      if (force)
+        show_message (hwnd, _("Signature verification of an encrypted message "
+                              "is not possible."));
       return -1; /* Should not be called for such a message.  */
-    case MSGTYPE_UNKNOWN:
-    case MSGTYPE_SMIME:
     case MSGTYPE_GPGOL:
-      log_debug ("%s:%s: message of type %d ignored",
+    case MSGTYPE_SMIME:
+    case MSGTYPE_UNKNOWN:
+      log_debug ("%s:%s: message of type %d ignored", 
                  SRCNAME, __func__, msgtype);
+      if (!force)
+        ;
+      else if (msgtype == MSGTYPE_GPGOL)
+        show_message (hwnd, _("Signature verification of this "
+                              "message class is not possible."));
+      else if (msgtype == MSGTYPE_SMIME)
+        show_message (hwnd, _("Signature verification of this "
+                              "S/MIME message is not possible.  Please check "
+                              "that S/MIME processing has been enabled."));
+      else
+        show_message (hwnd, _("This message has no signature."));
       return 0; /* Nothing to do.  */
     }
   
@@ -824,6 +852,8 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
     case MSGTYPE_GPGOL_MULTIPART_SIGNED:
     case MSGTYPE_GPGOL_CLEAR_SIGNED:
+      if (force)
+        show_message (hwnd, _("This message is not encrypted.")); 
       return -1; /* Should not have been called for this.  */
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       break;
@@ -1040,8 +1070,17 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     {
       char buf[200];
       
-      snprintf (buf, sizeof buf, "Decryption failed (%s)", gpg_strerror (err));
-      MessageBox (NULL, buf, "GpgOL", MB_ICONINFORMATION|MB_OK);
+      switch (gpg_err_code (err))
+        {
+        case GPG_ERR_NO_DATA:
+          /* The UI server already displayed a message.  */
+          break;
+        default:
+          snprintf (buf, sizeof buf,
+                    _("Decryption failed\n(%s)"), gpg_strerror (err));
+          MessageBox (NULL, buf, "GpgOL", MB_ICONINFORMATION|MB_OK);
+          break;
+        }
     }
   else
     {
