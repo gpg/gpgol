@@ -1,3 +1,9 @@
+2008-02-28  Werner Koch  <wk@g10code.com>
+
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Fix initial setting of
+	openpgp and smime state.  I wish C would haved used := for
+	assignments.
+
 2008-02-26  Werner Koch  <wk@g10code.com>
 
 	* common.c (qp_decode): Add arg S_LBRK.

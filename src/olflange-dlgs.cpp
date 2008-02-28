@@ -109,8 +109,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*             ReleaseDC (hDlg, hdc);	 */
 /*           } */
         
-        openpgp_state = opt.default_protocol = PROTOCOL_OPENPGP;
-        smime_state = opt.default_protocol = PROTOCOL_SMIME;
+        openpgp_state = (opt.default_protocol == PROTOCOL_OPENPGP);
+        smime_state = (opt.default_protocol == PROTOCOL_SMIME);
 
 // 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
 //                       !!opt.enable_default_key);
