@@ -41,7 +41,8 @@ int op_assuan_encrypt (protocol_t protocol,
                        char **recipients, protocol_t *r_used_protocol);
 int op_assuan_sign (protocol_t protocol, 
                     gpgme_data_t indata, gpgme_data_t outdata,
-                    engine_filter_t filter, void *hwnd);
+                    engine_filter_t filter, void *hwnd,
+                    const char *sender, protocol_t *r_used_protocol);
 int op_assuan_decrypt (protocol_t protocol,
                        gpgme_data_t indata, gpgme_data_t outdata, 
                        engine_filter_t filter, void *hwnd,

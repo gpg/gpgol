@@ -232,7 +232,7 @@ Use the CMS (PKCS#7) protocol (RFC-3852).
 @end deffn
 
 To support automagically selection of the protocol depending on the
-selected keys, the server may implement the follwoing extra command:
+selected keys, the server MAY implement the command:
 
 @deffn Command PREP_ENCRYPT [-@w{}-protocol=@var{name}]
 
@@ -320,6 +320,9 @@ RFC-2822) enclosed in angle brackets.  The address set with this command
 is valid until a successful @code{SIGN} command or until a @code{RESET}
 command.  A second command overrides the effect of the first one; if
 @var{email} is not given the server shall use the default signing key.
+The server shall also suggest a protocol to use for signing.  The client
+may use this suggested protocol on its own discretion.  The same status
+line as with PREP_ENCRYPT is used for this.
 @end deffn
 
 @noindent

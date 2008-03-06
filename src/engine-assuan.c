@@ -1333,8 +1333,8 @@ get_protocol_name (protocol_t protocol)
 }
 
 
-/* Callback used to get the protocool status line form a PREP_*
-   command.  */
+/* Callback used to get the protocool status line form a PREP_ENCRYPT
+   or SENDER command.  */
 static assuan_error_t
 prep_foo_status_cb (void *opaque, const char *line)
 {
@@ -1496,11 +1496,14 @@ sign_closure (closure_data_t cld)
 
 /* Created a detached signature for INDATA and write it to OUTDATA.
    On termination of the signing command engine_private_finished() is
-   called with FILTER as the first argument.  */
+   called with FILTER as the first argument.  SENDER is the sender's
+   mail address (a mailbox).  The used protocol wioll be stored at
+   R_PROTOCOL. */
 int 
 op_assuan_sign (protocol_t protocol, 
                 gpgme_data_t indata, gpgme_data_t outdata,
-                engine_filter_t filter, void *hwnd)
+                engine_filter_t filter, void *hwnd,
+                const char *sender, protocol_t *r_used_protocol)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -1509,11 +1512,11 @@ op_assuan_sign (protocol_t protocol,
   HANDLE inpipe[2], outpipe[2];
   ULONG cmdid;
   pid_t pid;
+  int detect_protocol;
   const char *protocol_name;
+  protocol_t suggested_protocol;
 
-
-  if (!(protocol_name = get_protocol_name (protocol)))
-    return gpg_error(GPG_ERR_INV_VALUE);
+  detect_protocol = !(protocol_name = get_protocol_name (protocol));
 
   err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
   if (err)
@@ -1535,6 +1538,36 @@ op_assuan_sign (protocol_t protocol,
   if (err)
     goto leave;
 
+  /* We always send the SENDER command becuase it allows us to figure
+     out the protocol to use.  In case the UI server faisl to send the
+     protocol we fall back to OpenPGP.  */
+  suggested_protocol = PROTOCOL_UNKNOWN;
+  if (!sender)
+    sender = "<kleopatra-does-not-allow-an-empty-arg@example.net>";
+  snprintf (line, sizeof line, "SENDER%s%s", sender? " ":"", sender?sender:"");
+  err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL,
+                         prep_foo_status_cb, &suggested_protocol);
+  if (err)
+    {
+      if (gpg_err_code (err) == GPG_ERR_ASS_UNKNOWN_CMD)
+        err = gpg_error (GPG_ERR_INV_VALUE);
+      goto leave;
+    }
+  if (detect_protocol)
+    {
+      log_debug ("%s:%s: suggested protocol is %d", 
+                 SRCNAME, __func__, suggested_protocol);
+      protocol = (suggested_protocol == PROTOCOL_UNKNOWN?
+                  PROTOCOL_OPENPGP : suggested_protocol);
+      if ( !(protocol_name = get_protocol_name (protocol)) )
+        {
+          err = gpg_error (GPG_ERR_INV_VALUE);
+          goto leave;
+        }
+    }
+  *r_used_protocol = protocol;
+  log_debug ("%s:%s: using protocol %s", SRCNAME, __func__, protocol_name);
+
   snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
@@ -1543,8 +1576,6 @@ op_assuan_sign (protocol_t protocol,
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-
-  /* FIXME: Implement the optinonal SENDER command. */
 
   enqueue_callback (" input", ctx, indata, inpipe[1], 1, finalize_handler,
                     cmdid, NULL, 0); 

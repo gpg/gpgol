@@ -510,6 +510,13 @@ read_options (void)
  
   load_extension_value ("enableDebug", &val);
   opt.enable_debug = val? strtoul (val, NULL, 0) : 0;
+  if (!val)
+    {
+      /* To help the user enable debugging make sure that the registry
+         key exists.  Note that the other registry keys are stored
+         after using the configuration dialog.  */
+      store_extension_value ("enableDebug", "0");
+    }
   xfree (val); val = NULL;
 
   load_extension_value ("enableSmime", &val);
@@ -640,22 +647,29 @@ write_options (void)
   };
   char buf[32];
   int rc, i;
+  const char *string;
 
   for (i=0; table[i].name; i++) 
     {
-      log_debug ("storing option `%s'\n", table[i].name);
       switch (table[i].mode)
         {
         case 0:
-          rc = store_extension_value (table[i].name, table[i].value? "1": "0");
+          string = table[i].value? "1": "0";
+          log_debug ("storing option `%s' value=`%s'\n",
+                     table[i].name, string);
+          rc = store_extension_value (table[i].name, string);
           break;
         case 1:
           sprintf (buf, "%d", table[i].value);
+          log_debug ("storing option `%s' value=`%s'\n",
+                     table[i].name, buf);
           rc = store_extension_value (table[i].name, buf);
           break;
         case 2:
-          rc = store_extension_value (table[i].name,
-                                      table[i].s_val? table[i].s_val : "");
+          string = table[i].s_val? table[i].s_val : "";
+          log_debug ("storing option `%s' value=`%s'\n",
+                     table[i].name, string);
+          rc = store_extension_value (table[i].name, string);
           break;
         case 3:
           buf[0] = '0';
@@ -666,6 +680,8 @@ write_options (void)
             case PROTOCOL_OPENPGP: buf[0] = '1'; break;
             case PROTOCOL_SMIME:   buf[0] = '2'; break;
             }
+          log_debug ("storing option `%s' value=`%s'\n",
+                     table[i].name, buf);
           rc = store_extension_value (table[i].name, buf);
           break;  
 

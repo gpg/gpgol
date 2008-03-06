@@ -65,7 +65,9 @@ void engine_cancel (engine_filter_t filter);
 int engine_encrypt_start (engine_filter_t filter, HWND hwnd,
                           protocol_t req_protocol, char **recipients,
                           protocol_t *r_protocol);
-int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol);
+int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
+                       const char *sender, protocol_t *r_protocol);
+
 int engine_decrypt_start (engine_filter_t filter, HWND hwnd,
                           protocol_t protocol, int with_verify);
 int engine_verify_start (engine_filter_t filter, HWND hwnd,

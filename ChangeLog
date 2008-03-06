@@ -1,3 +1,8 @@
+2008-03-06  Werner Koch  <wk@g10code.com>
+
+	* doc/gpgol.texi (SIGN): Extend the SIGNER command to allow
+	suggestion of a protocol.
+
 2008-02-18  Werner Koch  <wk@g10code.com>
 
 	Release 0.10.5 development version.

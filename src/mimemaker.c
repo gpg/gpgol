@@ -1169,10 +1169,6 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   memset (hashsink, 0, sizeof *hashsink);
   memset (&sigbuffer, 0, sizeof sigbuffer);
 
-  protocol = check_protocol (protocol);
-  if (protocol == PROTOCOL_UNKNOWN)
-    return -1;
-
   if (tmpsink)
     {
       attach = NULL;
@@ -1185,11 +1181,19 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
         return -1;
     }
 
-  /* Prepare the signing.  */
+  /* Prepare the signing.  FIXME: figure out the signer of the mail.  */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
     goto failure;
-  if (engine_sign_start (filter, hwnd, protocol))
+  if (engine_sign_start (filter, hwnd, protocol, NULL, &protocol))
     goto failure;
+
+  protocol = check_protocol (protocol);
+  if (protocol == PROTOCOL_UNKNOWN)
+    {
+      log_error ("%s:%s: no protocol selected", SRCNAME, __func__);
+      goto failure;
+    }
+
 
   /* Get the attachment info and the body.  */
   body = mapi_get_body (message, NULL);
@@ -1726,7 +1730,8 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
 
   /* Prepare the encryption.  We do this early as it is quite common
      that some recipients are not be available and thus the encryption
-     will fail early. */
+     will fail early.  This is also required to allow the UIserver to
+     figure out the protocol to use if we have not forced one.  */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
   if ((rc=engine_encrypt_start (filter, hwnd, 
@@ -1741,7 +1746,8 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      complete MIME object of the signed message.  We can't do the
      encryption in streaming mode while running the encryption because
      we need to fix up that ugly micalg parameter after having created
-     the signature.  */
+     the signature.  Note that the protocol to use is taken from the
+     encryption operation. */
   if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink))
     goto failure;
 

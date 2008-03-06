@@ -179,6 +179,19 @@ DllRegisterServer (void)
   RegDeleteValue (hkey, "GPG Exchange");
 
   /* Set outlook update flag. */
+  /* Fixme: We have not yet implemented this hint from Microsoft:
+
+       In order for .ecf-based ECEs to be detected by Outlook on Vista,
+       one needs to delete if present:
+
+       [HKEY_CURRENT_USER\Software\Microsoft\Office\[Office Version]\Outlook]
+       "Exchange Client Extension"=
+             "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX"
+
+       [Office Version] is 11.0 ( for OL 03 ), 12.0 ( OL 07 )...
+
+     Obviously due to HKCU, that also requires to run this code at
+     startup.  However, we don't use an ECF right now.  */
   strcpy (szEntry, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
   dwTemp = lstrlen (szEntry) + 1;
   RegSetValueEx (hkey, "Outlook Setup Extension",
@@ -259,6 +272,8 @@ DllUnregisterServer (void)
   RegSetValueEx (hkey, "Outlook Setup Extension", 0, 
 		 REG_SZ, (BYTE*) buf, ntemp);
   RegCloseKey (hkey);
+
+  /* Fixme: delet CLSIDs. */
   
   return S_OK;
 }

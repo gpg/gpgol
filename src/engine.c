@@ -691,18 +691,30 @@ engine_encrypt_start (engine_filter_t filter, HWND hwnd,
    finish the operation.  A filter object may not be reused after
    having been used through this function.  However, the lifetime of
    the filter object lasts until the final engine_wait or
-   engine_cancel.  */
+   engine_cancel.  SENDER is the sender's mailbox or NULL.  On return
+   the protocol to be used is stored at R_PROTOCOL. */
 int
-engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol)
+engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
+                   const char *sender, protocol_t *r_protocol)
 {
   gpg_error_t err;
+  protocol_t used_protocol;
 
   if (filter->use_assuan)
-    err = op_assuan_sign (protocol, filter->indata, filter->outdata,
-                         filter, hwnd);
+    {
+      err = op_assuan_sign (protocol, filter->indata, filter->outdata,
+                            filter, hwnd, sender, &used_protocol);
+      if (!err)
+        *r_protocol = used_protocol;
+    }
   else
-    err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
-                         filter, hwnd);
+    {
+      err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
+                           filter, hwnd);
+      if (!err)
+        *r_protocol = (protocol == GPGME_PROTOCOL_UNKNOWN?
+                       GPGME_PROTOCOL_OpenPGP : protocol);
+    }
   return err;
 }
 
