@@ -130,6 +130,9 @@ struct
     unsigned int auto_decrypt: 1;   /* Try to decrypt when clicked. */
     unsigned int no_attestation: 1; /* Don't create an attestation. */
   } compat; 
+
+  /* The SVN revision as stored in the registry.  */
+  int svn_revision; 
 } opt;
 
 

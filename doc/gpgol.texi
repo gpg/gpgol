@@ -671,6 +671,8 @@ Tell what the filter I/O system is doing.
 Tell how the filter I/O locks the resources.
 @item 32 (0x0020)
 Tell about resource allocation.
+@item 64 (0x0040)
+Tell about command events.
 @end table
 You may use the regular C-syntax for entering the value.
 
@@ -695,6 +697,12 @@ description.
 @itemx HKCU\Software\GNU\GpgOL:enableDefaultKey
 @itemx HKCU\Software\GNU\GpgOL:preferHtml 
 These registry keys store the values from the configuration dialog.
+
+@item HKCU\Software\GNU\GpgOL:svnRevision
+When leaving GpgOL's options dialog, the SVN revision number of the current
+version will be stored in this entry.  This is used to display a note
+after software upgrades.
+
 
 @end table
 

@@ -1,5 +1,9 @@
 2008-03-07  Werner Koch  <wk@g10code.com>
 
+	* common.h (opt): Add field SVN_REVISION.
+	* main.c (read_options, write_options): Set it.
+	* olflange.cpp (GpgolExt): Print a warning on program update.
+
 	* engine.c (struct engine_filter_s): Add field ADD_EXTRA_LF.
 	(engine_request_exra_lf): New.
 	(engine_wait): Implement that.

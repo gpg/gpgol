@@ -1,6 +1,6 @@
 /* olflange-dlgs.cpp - New dialogs for Outlook.
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004, 2005, 2006, 2007 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2006, 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -297,6 +297,10 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
             opt.prefer_html = !!SendDlgItemMessage
               (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
+
+            /* Now that the user has confirmed the options dialog, we
+               mark the Registry with revision of this build.  */
+            opt.svn_revision = SVN_REVISION;
 
 	    write_options ();
 	    bMsgResult = PSNRET_NOERROR;

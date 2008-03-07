@@ -334,6 +334,15 @@ GpgolExt::GpgolExt (void)
       g_initdll = TRUE;
       log_debug ("%s:%s: first time initialization done\n",
                  SRCNAME, __func__);
+      if ( SVN_REVISION > opt.svn_revision )
+        MessageBox (NULL,
+                    _("You have installed a new version of GpgOL.\n"
+                      "\n"
+                      "Please open the option dialog and check that"
+                      " the settings are correct for your needs.  The option"
+                      " dialog can be found in the main menu at:"
+                      " Extras->Options->GpgOL.\n"),
+                      "GpgOL", MB_ICONHAND|MB_OK);
     }
 }
 

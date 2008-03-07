@@ -57,6 +57,7 @@ AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "$PACKAGE_BUGREPORT",
                                         [Bug report address])
 AC_DEFINE_UNQUOTED(NEED_GPGME_VERSION, "$NEED_GPGME_VERSION",
                                        [Required version of GPGME])
+AC_DEFINE_UNQUOTED(SVN_REVISION, ${SVN_REVISION}, [Current SVN revision])
 
 
 BUILD_TIMESTAMP=`date --iso-8601=minutes`

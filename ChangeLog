@@ -1,3 +1,7 @@
+2008-03-07  Werner Koch  <wk@g10code.com>
+
+	* configure.ac (SVN_REVISION): New AC_DEFINE.
+
 2008-03-06  Werner Koch  <wk@g10code.com>
 
 	* doc/gpgol.texi (SIGN): Extend the SIGNER command to allow
