@@ -101,7 +101,8 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
   LPENTRYID entryid = NULL;
   ULONG entryidlen;
 
-  log_debug ("%s:%s: received\n", SRCNAME, __func__);
+  if (debug_commands)
+    log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
   hr = eecb->GetSelectionCount (&count);
   if (SUCCEEDED (hr) && count > 0)
@@ -112,8 +113,9 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
                                    &msgflags, 0L);
       if (SUCCEEDED(hr) && objtype == MAPI_MESSAGE)
         {
-          log_debug ("%s:%s: message class: %s\n",
-                     SRCNAME, __func__, msgclass);
+          if (debug_commands)
+            log_debug ("%s:%s: message class: %s\n",
+                       SRCNAME, __func__, msgclass);
 
           /* If SMIME has been enabled and the current message is of
              class SMIME or in the past processed by CryptoEx, we
@@ -163,8 +165,9 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
         }
       else if (SUCCEEDED(hr) && objtype == MAPI_FOLDER)
         {
-          log_debug ("%s:%s: objtype: %lu\n",
-                     SRCNAME, __func__, objtype);
+          if (debug_commands)
+            log_debug ("%s:%s: objtype: %lu\n",
+                       SRCNAME, __func__, objtype);
         }
     }
   
@@ -179,7 +182,7 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP_ (VOID)
 GpgolUserEvents::OnObjectChange (LPEXCHEXTCALLBACK eecb) 
 { 
-  log_debug ("%s:%s: received\n", SRCNAME, __func__);
-
+  if (debug_commands)
+    log_debug ("%s:%s: received\n", SRCNAME, __func__);
 }
 

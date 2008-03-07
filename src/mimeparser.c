@@ -88,6 +88,7 @@ struct mime_context
   
   int protect_mode;   /* Encrypt all attachments etc. (cf. SYMENC). */
   int verify_mode;    /* True if we want to verify a signature. */
+  int no_mail_header; /* True if we want to bypass all MIME parsing.  */
 
   int nesting_level;  /* Current MIME nesting level. */
   int in_data;        /* We are currently in data (body or attachment). */
@@ -919,6 +920,39 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
   mime_context_t ctx = opaque;
 
   debug_message_event (ctx, event);
+  if (ctx->no_mail_header)
+    {
+      /* Assume that this is not a regular mail but plain text. */
+      if (!ctx->body_seen)
+        {
+#ifdef DEBUG_PARSER
+          log_debug ("%s:%s: assuming this is plain text without headers\n",
+                     SRCNAME, __func__);
+#endif
+          ctx->in_data = 1;
+          ctx->collect_attachment = 2; /* 2 so we don't skip the first line. */
+          ctx->body_seen = 1;
+          /* Create a fake MIME structure.  */
+          /* Fixme: We might want to take it from the enclosing message.  */
+          {
+            const char ctmain[] = "text";
+            const char ctsub[] = "plain";
+            mimestruct_item_t ms;
+            
+            ms = xmalloc (sizeof *ms + strlen (ctmain) + 1 + strlen (ctsub));
+            ctx->mimestruct_cur = ms;
+            *ctx->mimestruct_tail = ms;
+            ctx->mimestruct_tail = &ms->next;
+            ms->next = NULL;
+            strcpy (stpcpy (stpcpy (ms->content_type, ctmain), "/"), ctsub);
+            ms->level = 0;
+          }
+          if (start_attachment (ctx, 1))
+            return -1;
+          assert (ctx->outstream);
+        }
+      return 0;
+    }
 
   if (event == RFC822PARSE_BEGIN_HEADER || event == RFC822PARSE_T2BODY)
     {
@@ -1012,6 +1046,8 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
           if (pos && ctx->linebuf[pos-1] == '\r')
             pos--;
 
+/*           log_debug ("%s:%s: ctx=%p, line=`%.*s'\n", */
+/*                      SRCNAME, __func__, ctx, (int)pos, ctx->linebuf); */
           if (rfc822parse_insert (ctx->msg, ctx->linebuf, pos))
             {
               log_error ("%s: ctx=%p, rfc822 parser failed: %s\n",
@@ -1493,6 +1529,8 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
           if (pos && ctx->linebuf[pos-1] == '\r')
             pos--;
 
+/*           log_debug ("%s:%s: ctx=%p, line=`%.*s'\n", */
+/*                      SRCNAME, __func__, ctx, (int)pos, ctx->linebuf); */
           if (rfc822parse_insert (ctx->msg, ctx->linebuf, pos))
             {
               log_error ("%s:%s: ctx=%p, rfc822 parser failed: %s\n",
@@ -1547,10 +1585,11 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
    window to be used for message box and such.  In PREVIEW_MODE no
    verification will be done, no messages saved and no messages boxes
    will pop up.  If IS_RFC822 is set, the message is expected to be in
-   rfc822 format.  */
+   rfc822 format.  The caller should send SIMPLE_PGP is the input
+   message is a simple PGP message. */
 int
 mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
-              int is_rfc822, HWND hwnd, int preview_mode)
+              int is_rfc822, int simple_pgp, HWND hwnd, int preview_mode)
 {
   gpg_error_t err;
   mime_context_t decctx, ctx;
@@ -1575,6 +1614,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   ctx->preview = preview_mode;
   ctx->mapi_message = mapi_message;
   ctx->mimestruct_tail = &ctx->mimestruct;
+  ctx->no_mail_header = simple_pgp;
 
   if (decctx)
     {
@@ -1602,6 +1642,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
 /*       title = native_to_utf8 (_("[Encrypted PGP/MIME message]")); */
   if ((err=engine_create_filter (&filter, plaintext_handler, ctx)))
     goto leave;
+  if (simple_pgp)
+    engine_request_exra_lf (filter);
   if ((err=engine_decrypt_start (filter, hwnd, protocol, !preview_mode)))
     goto leave;
 

@@ -843,6 +843,8 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   LPATTACH saved_attach = NULL;
   int need_saved_attach = 0;
   int need_rfc822_parser = 0;
+  int is_simple_pgp = 0;
+  
 
   switch (msgtype)
     {
@@ -922,6 +924,8 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
         goto leave; /* Problem getting the attachment.  */
       protocol = PROTOCOL_OPENPGP;
       need_rfc822_parser = 1;
+      is_simple_pgp = 1;
+      
     }
   else
     {
@@ -1064,7 +1068,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     }
 
   err = mime_decrypt (protocol, cipherstream, message, 
-                      need_rfc822_parser, hwnd, 0);
+                      need_rfc822_parser, is_simple_pgp, hwnd, 0);
   log_debug ("mime_decrypt returned %d (%s)", err, gpg_strerror (err));
   if (err)
     {

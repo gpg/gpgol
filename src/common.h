@@ -150,6 +150,10 @@ typedef struct b64_state_s b64_state_t;
 #define DBG_FILTER          8
 #define DBG_FILTER_EXTRA   16 
 #define DBG_MEMORY         32
+#define DBG_COMMANDS       64
+
+/* Macros to used in conditionals to enabel debug output.  */
+#define debug_commands    (opt.enable_debug & DBG_COMMANDS)
 
 
 /* Type and constants used with parse_tlv.  */

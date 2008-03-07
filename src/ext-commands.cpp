@@ -204,8 +204,9 @@ check_menu (LPEXCHEXTCALLBACK eecb, UINT menu_id, int checked)
   HMENU menu;
 
   eecb->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &menu, NULL, NULL, 0);
-  log_debug ("check_menu: eecb=%p menu_id=%u checked=%d -> menu=%p\n", 
-             eecb, menu_id, checked, menu);
+  if (debug_commands)
+    log_debug ("check_menu: eecb=%p menu_id=%u checked=%d -> menu=%p\n", 
+               eecb, menu_id, checked, menu);
   CheckMenuItem (menu, menu_id, 
                  MF_BYCOMMAND | (checked?MF_CHECKED:MF_UNCHECKED));
 }
@@ -263,9 +264,10 @@ GpgolExtCommands::add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...)
 
           tb_info->next = m_toolbar_info;
           m_toolbar_info = tb_info;
-          log_debug ("%s:%s: ctx=%lx button_id=%d cmd_id=%d '%s'\n", 
-                     SRCNAME, __func__, m_lContext,
-                     tb_info->button_id, tb_info->cmd_id, tb_info->desc);
+          if (debug_commands)
+            log_debug ("%s:%s: ctx=%lx button_id=%d cmd_id=%d '%s'\n", 
+                       SRCNAME, __func__, m_lContext,
+                       tb_info->button_id, tb_info->cmd_id, tb_info->desc);
           
         }
     }
@@ -298,8 +300,9 @@ GpgolExtCommands::InstallCommands (
   int force_encrypt = 0;
 
   
-  log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__, 
-             ext_context_name (m_lContext), lFlags);
+  if (debug_commands)
+    log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__, 
+               ext_context_name (m_lContext), lFlags);
 
 
   /* Outlook 2003 sometimes displays the plaintext and sometimes the
@@ -521,9 +524,10 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   if (FAILED (eecb->GetWindow (&hwnd)))
     hwnd = NULL;
 
-  log_debug ("%s:%s: commandID=%u (%#x) context=%s hwnd=%p\n",
-             SRCNAME, __func__, nCommandID, nCommandID, 
-             ext_context_name (m_lContext), hwnd);
+  if (debug_commands)
+    log_debug ("%s:%s: commandID=%u (%#x) context=%s hwnd=%p\n",
+               SRCNAME, __func__, nCommandID, nCommandID, 
+               ext_context_name (m_lContext), hwnd);
 
   if (nCommandID == SC_CLOSE && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
@@ -536,7 +540,8 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       DISPPARAMS dispparams;
       VARIANT aVariant;
       
-      log_debug ("%s:%s: command Close called\n", SRCNAME, __func__);
+      if (debug_commands)
+        log_debug ("%s:%s: command Close called\n", SRCNAME, __func__);
       pDisp = find_outlook_property (eecb, "Close", &dispid);
       if (pDisp)
         {
@@ -574,7 +579,8 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
     }
   else if (nCommandID == EECMDID_ComposeReplyToSender)
     {
-      log_debug ("%s:%s: command Reply called\n", SRCNAME, __func__);
+      if (debug_commands)
+        log_debug ("%s:%s: command Reply called\n", SRCNAME, __func__);
       /* What we might want to do is to call Reply, then GetInspector
          and then Activate - this allows us to get full control over
          the quoted message and avoids the ugly msgcache. */
@@ -582,12 +588,14 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
     }
   else if (nCommandID == EECMDID_ComposeReplyToAll)
     {
-      log_debug ("%s:%s: command ReplyAll called\n", SRCNAME, __func__);
+      if (debug_commands)
+        log_debug ("%s:%s: command ReplyAll called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
     }
   else if (nCommandID == EECMDID_ComposeForward)
     {
-      log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
+      if (debug_commands)
+        log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
     }
   else if (nCommandID == m_nCmdDecrypt
@@ -641,7 +649,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
   else if (nCommandID == m_nCmdProtoPgpmime
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
-      log_debug ("%s:%s: command ProroPggmime called\n", SRCNAME, __func__);
+      log_debug ("%s:%s: command ProtoPgpmime called\n", SRCNAME, __func__);
       check_menu (eecb, m_nCmdProtoAuto, FALSE);
       check_menu (eecb, m_nCmdProtoPgpmime, TRUE);
       check_menu (eecb, m_nCmdProtoSmime, FALSE);
@@ -712,7 +720,8 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
     }
   else
     {
-      log_debug ("%s:%s: command passed on\n", SRCNAME, __func__);
+      if (debug_commands)
+        log_debug ("%s:%s: command passed on\n", SRCNAME, __func__);
       return S_FALSE; /* Pass on unknown command. */
     }
   
@@ -912,9 +921,11 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
   if (!tb_info)
     return S_FALSE; /* Not one of our toolbar buttons.  */
 
-  log_debug ("%s:%s: ctx=%lx tbid=%ld button_id(req)=%d got=%d cmd_id=%d '%s'\n", 
-             SRCNAME, __func__, m_lContext, toolbarid, buttonid,
-             tb_info->button_id, tb_info->cmd_id, tb_info->desc);
+  if (debug_commands)
+    log_debug ("%s:%s: ctx=%lx tbid=%ld button_id(req)=%d got=%d"
+               " cmd_id=%d '%s'\n", 
+               SRCNAME, __func__, m_lContext, toolbarid, buttonid,
+               tb_info->button_id, tb_info->cmd_id, tb_info->desc);
   
   pTBB->iBitmap = tb_info->bitmap;
   pTBB->idCommand = tb_info->cmd_id;

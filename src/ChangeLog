@@ -1,3 +1,17 @@
+2008-03-07  Werner Koch  <wk@g10code.com>
+
+	* engine.c (struct engine_filter_s): Add field ADD_EXTRA_LF.
+	(engine_request_exra_lf): New.
+	(engine_wait): Implement that.
+	* mimeparser.c (mime_decrypt): Add arg SIMPLE_PGP and call
+	engine_request_exra_lf.
+	(struct mime_context): Add field NO_MAIL_HEADER.
+	(message_cb): Implement it.
+	* message.cpp (message_decrypt): Set that flag for old style PGP.
+
+	* common.h (DBG_COMMANDS, debug_commands): New.
+	* ext-commands.cpp: Use it.
+
 2008-03-06  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (do_mime_sign): Figure out the protocol to use.

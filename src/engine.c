@@ -88,6 +88,9 @@ struct engine_filter_s
     char buffer[FILTER_BUFFER_SIZE];
   } out;
 
+  /* Flag to push an extra LF out.  */
+  int add_extra_lf;
+
   /* The data sink as set by engine_create_filter.  */
   int (*outfnc) (void *, const void *, size_t);
   void *outfncdata;
@@ -544,6 +547,13 @@ engine_create_filter (engine_filter_t *r_filter,
 }
 
 
+/* Set the FILTER in a mode which pushes an extra lineffed out.  */
+void
+engine_request_exra_lf (engine_filter_t filter)
+{
+  filter->add_extra_lf = 1;
+}
+
 
 /* Wait for FILTER to finish.  Returns 0 on success.  FILTER is not
    valid after the function has returned success.  */
@@ -552,6 +562,7 @@ engine_wait (engine_filter_t filter)
 {
   gpg_error_t err;
   int more;
+  int nbytes; 
 
   if (!filter || !filter->outfnc)
     return gpg_error (GPG_ERR_INV_VALUE);
@@ -568,8 +579,6 @@ engine_wait (engine_filter_t filter)
       take_out_lock (filter, __func__);
       if (filter->out.length)
         {
-          int nbytes; 
-
           nbytes = filter->outfnc (filter->outfncdata, 
                                    filter->out.buffer, filter->out.length);
           if (nbytes < 0)
@@ -603,6 +612,49 @@ engine_wait (engine_filter_t filter)
         Sleep (50);
     }
   while (more);
+
+  /* If requested write an extra LF, so that the MIME parser sees a
+     complete line.  */
+  if (filter->add_extra_lf)
+    {
+      int extra_written = 0;
+      do 
+        {
+          more = 0;
+          take_out_lock (filter, __func__);
+          if (!extra_written)
+            {
+              nbytes = filter->outfnc (filter->outfncdata, "\n", 1);
+              if (nbytes < 0)
+                {
+                  log_error ("%s:%s: error writing extra lf\n", 
+                             SRCNAME, __func__);
+                  release_out_lock (filter, __func__);
+                  return gpg_error (GPG_ERR_EIO);
+                }
+              if (!nbytes)
+                {
+                  if (debug_filter_extra)
+                    log_debug ("%s:%s: extra lf still pending for outfnc\n",
+                               SRCNAME, __func__);
+                  more = 1;
+                }
+              else
+                extra_written = 1;
+            }
+          if (!PulseEvent (filter->out.condvar))
+            log_error_w32 (-1, "%s:%s: PulseEvent(out) failed",
+                           SRCNAME, __func__);
+          release_out_lock (filter, __func__);
+          take_in_lock (filter, __func__);
+          if (!filter->in.ready)
+            more = 1;
+          release_in_lock (filter, __func__);
+          if (more)
+            Sleep (50);
+        }
+      while (more);
+    }
 
   if (WaitForSingleObject (filter->in.ready_event, INFINITE) != WAIT_OBJECT_0)
     {

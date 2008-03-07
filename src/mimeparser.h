@@ -35,7 +35,7 @@ int mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
                         LPMESSAGE mapi_message, HWND hwnd, int preview_mode);
 int mime_decrypt (protocol_t protocol, 
                   LPSTREAM instream, LPMESSAGE mapi_message, int is_rfc822,
-                  HWND hwnd, int preview_mode);
+                  int simple_pgp, HWND hwnd, int preview_mode);
 
 
 #ifdef __cplusplus

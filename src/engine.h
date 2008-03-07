@@ -59,6 +59,7 @@ int engine_filter (engine_filter_t filter,
 int engine_create_filter (engine_filter_t *r_filter,
                           int (*outfnc) (void *, const void *, size_t),
                           void *outfncdata);
+void engine_request_exra_lf (engine_filter_t filter);
 int engine_wait (engine_filter_t filter);
 void engine_cancel (engine_filter_t filter);
 
