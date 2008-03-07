@@ -13,6 +13,11 @@ Noteworthy changes for version 0.10.6
  * Soft line breaks in QP encoded messages are now correctly
    processed.
 
+ * The sender's address is send to the UI server to allow it to select
+   an appropriate signing key.
+
+ * Automatic protocol selection works now also with signing.
+
 
 Noteworthy changes for version 0.10.5 (2008-02-18)
 ==================================================

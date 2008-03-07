@@ -1,5 +1,5 @@
 /* mapihelp.h - Helper functions for MAPI
- *	Copyright (C) 2005, 2007 g10 Code GmbH
+ *	Copyright (C) 2005, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -103,6 +103,7 @@ int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
 int mapi_change_message_class (LPMESSAGE message, int sync_override);
 char *mapi_get_message_class (LPMESSAGE message);
+char *mapi_get_sender (LPMESSAGE message);
 msgtype_t mapi_get_message_type (LPMESSAGE message);
 int mapi_to_mime (LPMESSAGE message, const char *filename);
 

@@ -381,6 +381,7 @@
 #define PR_PREPROCESS                           PROP_TAG( PT_BOOLEAN,   0x0E22)
 #define PR_ORIGINATING_MTA_CERTIFICATE          PROP_TAG( PT_BINARY,    0x0E25)
 #define PR_PROOF_OF_SUBMISSION                  PROP_TAG( PT_BINARY,    0x0E26)
+#define PR_PRIMARY_SEND_ACCT                    PROP_TAG( PT_UNICODE,   0x0E28)
 #define PR_ENTRYID                              PROP_TAG( PT_BINARY,    0x0FFF)
 #define PR_OBJECT_TYPE                          PROP_TAG( PT_LONG,      0x0FFE)
 #define PR_ICON                                 PROP_TAG( PT_BINARY,    0x0FFD)

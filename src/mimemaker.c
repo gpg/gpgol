@@ -1184,7 +1184,8 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   /* Prepare the signing.  FIXME: figure out the signer of the mail.  */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
     goto failure;
-  if (engine_sign_start (filter, hwnd, protocol, NULL, &protocol))
+  if (engine_sign_start (filter, hwnd, protocol, 
+                         mapi_get_sender (message), &protocol))
     goto failure;
 
   protocol = check_protocol (protocol);

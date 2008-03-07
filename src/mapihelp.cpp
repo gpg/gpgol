@@ -948,6 +948,66 @@ mapi_get_message_class (LPMESSAGE message)
 
 
 
+/* Return teh sender of the message.  According to the specs this is
+   an UTF-8 string; we rely on that the UI server handles
+   internationalized domain names.  */ 
+char *
+mapi_get_sender (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  char *buf;
+  char *p0, *p;
+  
+  if (!message)
+    return NULL; /* No message: Nop. */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_PRIMARY_SEND_ACCT, &propval);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrGetOneProp failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      return NULL;
+    }
+    
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
+    {
+      log_debug ("%s:%s: HrGetOneProp returns invalid type %lu\n",
+                 SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
+      MAPIFreeBuffer (propval);
+      return NULL;
+    }
+  
+  buf = wchar_to_utf8 (propval->Value.lpszW);
+  MAPIFreeBuffer (propval);
+  if (!buf)
+    {
+      log_error ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
+      return NULL;
+    }
+  /* The PR_PRIMARY_SEND_ACCT property seems to be divided into fields
+     using Ctrl-A as delimiter.  The first field looks like the ascii
+     formatted number of fields to follow, the second field like the
+     email account and the third seems to be a textual description of
+     that account.  We return the second field. */
+  p = strchr (buf, '\x01');
+  if (!p)
+    {
+      log_error ("%s:%s: unknown format of the value `%s'\n",
+                 SRCNAME, __func__, buf);
+      xfree (buf);
+      return NULL;
+    }
+  for (p0=buf, p++; *p && *p != '\x01';)
+    *p0++ = *p++;
+  *p0 = 0;
+  log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, buf);
+  return buf;
+}
+
+
+
+
 /* Return the message type.  This function knows only about our own
    message types.  Returns MSGTYPE_UNKNOWN for any MESSAGE we have
    no special support for.  */

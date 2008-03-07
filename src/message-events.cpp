@@ -276,7 +276,7 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   if (SUCCEEDED (hr))
     {
       protocol_t proto = m_pExchExt->m_protoSelection;
-      
+
       if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = message_sign_encrypt (msg, proto, hWnd);
       else if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)

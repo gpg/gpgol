@@ -1,5 +1,9 @@
 2008-03-07  Werner Koch  <wk@g10code.com>
 
+	* mapihelp.cpp (mapi_get_sender): New.
+	* mymapitags.h (PR_PRIMARY_SEND_ACCT): New.
+	* mimemaker.c (do_mime_sign): Pass the sender to the engine.
+
 	* common.h (opt): Add field SVN_REVISION.
 	* main.c (read_options, write_options): Set it.
 	* olflange.cpp (GpgolExt): Print a warning on program update.
