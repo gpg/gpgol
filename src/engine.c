@@ -34,7 +34,7 @@
 #include "engine-assuan.h"
 
 
-#define FILTER_BUFFER_SIZE 128  /* FIXME: Increase it after testing  */
+#define FILTER_BUFFER_SIZE 4096
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -486,7 +486,7 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
       if (!PulseEvent (filter->in.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(in) failed", SRCNAME, __func__);
       release_in_lock (filter, __func__);
-      Sleep (50);
+      SwitchToThread ();
     }
 
   if (debug_filter)
@@ -609,7 +609,7 @@ engine_wait (engine_filter_t filter)
         more = 1;
       release_in_lock (filter, __func__);
       if (more)
-        Sleep (50);
+        SwitchToThread ();
     }
   while (more);
 
@@ -651,7 +651,7 @@ engine_wait (engine_filter_t filter)
             more = 1;
           release_in_lock (filter, __func__);
           if (more)
-            Sleep (50);
+            SwitchToThread ();
         }
       while (more);
     }

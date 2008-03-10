@@ -110,7 +110,7 @@ struct work_item_s
                                     the item is removed from the
                                     queue.  */
   OVERLAPPED ov;     /* The overlapped info structure.  */
-  char buffer[128];  /* The buffer used by ReadFile or WriteFile.  */
+  char buffer[1024]; /* The buffer used by ReadFile or WriteFile.  */
 };
 
 
@@ -726,7 +726,7 @@ worker_start_write (work_item_t item)
         {
 /*           log_debug ("%s:%s: [%s:%p] ignoring EAGAIN from callback", */
 /*                      SRCNAME, __func__, item->name, item->hd); */
-          Sleep (10);
+          SwitchToThread ();
           retval = 1;
         }
       else
@@ -990,7 +990,7 @@ async_worker_thread (void *dummy)
         }
       LeaveCriticalSection (&work_queue_lock);
 
-      Sleep (0);
+      SwitchToThread ();
 
       EnterCriticalSection (&work_queue_lock);
       if (debug_ioworker_extra)

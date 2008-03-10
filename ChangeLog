@@ -1,3 +1,7 @@
+2008-03-10  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.6.
+
 2008-03-07  Werner Koch  <wk@g10code.com>
 
 	* configure.ac (SVN_REVISION): New AC_DEFINE.

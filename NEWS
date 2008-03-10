@@ -1,8 +1,5 @@
-Noteworthy changes for version 0.10.6
+Noteworthy changes for version 0.10.6 (2008-03-10)
 ==================================================
-
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
-    - Under OL2007 some menu entries are missing.
 
  * More tweaks to allow processing of opaque encrypted or signed
    S/MIME.
@@ -17,6 +14,8 @@ Noteworthy changes for version 0.10.6
    an appropriate signing key.
 
  * Automatic protocol selection works now also with signing.
+
+ * Processing large messages is faster.
 
 
 Noteworthy changes for version 0.10.5 (2008-02-18)

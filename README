@@ -1,11 +1,6 @@
 GpgOL is a GnuPG plugin for MS Outlook.
 
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
- UNDER HEAVY DEVELOPMENT - DO NOT USE FOR PRODUCTION!
+WARNING:  This version requires the latest Kleopatra software.
 
 
 .          Top directory with build scripts and information files.
@@ -31,8 +26,3 @@ archive at http://bugs.gnupg.org (use username and password "guest",
 select "query" and there category "gpgol") if you did not found any
 information there please send a report, including all relevant version
 numbers to the address given at the top of this AUTHORS file.
-
-
-
-
-
