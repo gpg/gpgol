@@ -1,4 +1,4 @@
-Noteworthy changes for version 0.10.7
+Noteworthy changes for version 0.10.7 (2008-03-11)
 ==================================================
 
  * Changed the way sign+encrypt works to help the UI-server.
