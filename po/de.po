@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-03-07 12:10+0100\n"
+"POT-Creation-Date: 2008-03-10 10:02+0100\n"
 "PO-Revision-Date: 2008-03-07 13:31+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -341,7 +341,7 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1516
+#: src/mapihelp.cpp:1576
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -351,7 +351,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2257
+#: src/mapihelp.cpp:2317
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -555,7 +555,9 @@ msgid ""
 msgstr ""
 "Eine neue Version von GpgOL ist installiert worden.\n"
 "\n"
-"Bitte öffnen Sie das Fenster mit den Einstellungen und um zu kontrollieren ob die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
+"Bitte öffnen Sie das Fenster mit den Einstellungen und um zu kontrollieren "
+"ob die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
+"Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
 #: src/olflange.cpp:506
 msgid ""

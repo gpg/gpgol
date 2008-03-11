@@ -1593,7 +1593,9 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
      will fail early. */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
-  if (engine_encrypt_start (filter, hwnd, protocol, recipients, &protocol))
+  if (engine_encrypt_prepare (filter, hwnd, protocol, recipients, &protocol))
+    goto failure;
+  if (engine_encrypt_start (filter, 0))
     goto failure;
 
   protocol = check_protocol (protocol);
@@ -1730,13 +1732,13 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
 
 
   /* Prepare the encryption.  We do this early as it is quite common
-     that some recipients are not be available and thus the encryption
+     that some recipients are not available and thus the encryption
      will fail early.  This is also required to allow the UIserver to
      figure out the protocol to use if we have not forced one.  */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
-  if ((rc=engine_encrypt_start (filter, hwnd, 
-                                protocol, recipients, &protocol)))
+  if ((rc=engine_encrypt_prepare (filter, hwnd, 
+                                  protocol, recipients, &protocol)))
     goto failure;
 
   protocol = check_protocol (protocol);
@@ -1750,6 +1752,18 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      the signature.  Note that the protocol to use is taken from the
      encryption operation. */
   if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink))
+    goto failure;
+
+  /* Now send the actual ENCRYPT command.  This split up between
+     prepare and start is necessary to help with the implementarion of
+     the UI-server.  If we would send the ENCRYPT command immediately
+     the UI-server might block while reading from the input stream
+     because we are first going to do a sign operation which in trun
+     needs the attention of the UI server.  A more robust but
+     complicated approach to the UI-server would be to delay the
+     reading (and thus the start of the underlying encrypt operation)
+     until the first byte has been received. */
+  if ((rc=engine_encrypt_start (filter, 0)))
     goto failure;
 
   /* Write the top header.  */

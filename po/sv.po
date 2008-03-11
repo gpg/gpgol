@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-03-07 12:10+0100\n"
+"POT-Creation-Date: 2008-03-10 10:02+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -339,14 +339,14 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1516
+#: src/mapihelp.cpp:1576
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2257
+#: src/mapihelp.cpp:2317
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"

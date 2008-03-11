@@ -1,5 +1,5 @@
 /* engine-assuan.h - Assuan server based crypto engine
- *	Copyright (C) 2007 g10 Code GmbH
+ *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -31,6 +31,8 @@ extern "C" {
 
 #include "engine.h"
 
+struct engine_assuan_encstate_s;
+
 int  op_assuan_init (void);
 void op_assuan_deinit (void);
 void engine_assuan_cancel (void *cancel_data);
@@ -38,7 +40,10 @@ void engine_assuan_cancel (void *cancel_data);
 int op_assuan_encrypt (protocol_t protocol, 
                        gpgme_data_t indata, gpgme_data_t outdata,
                        engine_filter_t notify_data, void *hwnd,
-                       char **recipients, protocol_t *r_used_protocol);
+                       char **recipients, protocol_t *r_used_protocol,
+                       struct engine_assuan_encstate_s **r_encstate);
+int op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
+                              int cancel);
 int op_assuan_sign (protocol_t protocol, 
                     gpgme_data_t indata, gpgme_data_t outdata,
                     engine_filter_t filter, void *hwnd,

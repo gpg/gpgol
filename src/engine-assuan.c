@@ -114,6 +114,20 @@ struct work_item_s
 };
 
 
+/* A helper context used to convey information from op_assuan_encrypt
+   to op_assuan_encrypt_bottom.  */
+struct engine_assuan_encstate_s
+{
+  engine_filter_t filter;
+  const char *protocol_name;
+  HANDLE inpipe[2];
+  HANDLE outpipe[2];
+  closure_data_t cld;
+  assuan_context_t ctx;
+  ULONG cmdid;
+};
+
+
 /* The queue of all outstandig I/O operations.  Protected by the
    work_queue_lock.  */
 static work_item_t work_queue;
@@ -1372,12 +1386,15 @@ encrypt_closure (closure_data_t cld)
    the window handle of the current window and used to maintain the
    correct relationship between a popups and the active window.  If
    this function returns success, the data objects may only be
-   destroyed after an engine_wait or engine_cancel.  */
+   destroyed after an engine_wait or engine_cancel.  On success the
+   fucntion returns a pojunter to the encryption state and thus
+   requires that op_assuan_encrypt_bottom will be run later. */
 int
 op_assuan_encrypt (protocol_t protocol, 
                    gpgme_data_t indata, gpgme_data_t outdata,
                    engine_filter_t filter, void *hwnd,
-                   char **recipients, protocol_t *r_used_protocol)
+                   char **recipients, protocol_t *r_used_protocol,
+                   struct engine_assuan_encstate_s **r_encstate)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -1390,9 +1407,12 @@ op_assuan_encrypt (protocol_t protocol,
   char *p;
   int detect_protocol;
   const char *protocol_name;
+  struct engine_assuan_encstate_s *encstate;
+
+  *r_encstate = NULL;
 
   detect_protocol = !(protocol_name = get_protocol_name (protocol));
-  
+
   err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
   if (err)
     return err;
@@ -1462,12 +1482,19 @@ op_assuan_encrypt (protocol_t protocol,
                     cmdid, NULL, 0); 
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
                     cmdid, NULL, 1 /* Wait on success */); 
-  snprintf (line, sizeof line, "ENCRYPT --protocol=%s", protocol_name);
-  err = start_command (ctx, cld, cmdid, line);
-  cld = NULL; /* Now owned by start_command.  */
-  if (err)
-    goto leave;
 
+  encstate = xcalloc (1, sizeof *encstate);
+  encstate->filter = filter;
+  encstate->protocol_name = protocol_name;
+  encstate->inpipe[0] = inpipe[0];
+  encstate->inpipe[1] = inpipe[1];
+  encstate->outpipe[0] = outpipe[0];
+  encstate->outpipe[1] = outpipe[1];
+  encstate->cld = cld;
+  encstate->ctx = ctx;
+  encstate->cmdid = cmdid;
+  *r_encstate = encstate;
+  return 0;
 
  leave:
   if (err)
@@ -1482,6 +1509,43 @@ op_assuan_encrypt (protocol_t protocol,
     engine_private_set_cancel (filter, ctx);
   return err;
 }
+
+/* Continue and actually start the encryption or cancel it with CANCEL
+   set to TRUE.  The fucntion takes ownvership of ENCSTATE.  */
+int
+op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
+                          int cancel)
+{
+  char line[1024];
+  gpg_error_t err;
+
+  if (!encstate)
+    return 0;
+  if (cancel)
+    err = gpg_error (GPG_ERR_CANCELED);
+  else
+    {
+      snprintf (line, sizeof line, "ENCRYPT --protocol=%s",
+                encstate->protocol_name);
+      err = start_command (encstate->ctx, encstate->cld, 
+                           encstate->cmdid, line);
+      encstate->cld = NULL; /* Now owned by start_command.  */
+    }
+
+  if (err)
+    {
+      /* Fixme: Cancel stuff in the work_queue. */
+      close_pipe (encstate->inpipe);
+      close_pipe (encstate->outpipe);
+      xfree (encstate->cld);
+      assuan_disconnect (encstate->ctx);
+    }
+  else
+    engine_private_set_cancel (encstate->filter, encstate->ctx);
+  xfree (encstate);
+  return err;
+}
+
 
 
 

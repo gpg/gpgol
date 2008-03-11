@@ -1,3 +1,15 @@
+2008-03-11  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (op_assuan_encrypt): Factor some code out to ..
+	(op_assuan_encrypt_bottom): .. new.
+	(engine_assuan_encstate_s): New.
+	* engine.c (engine_encrypt_start): Split some code into ..
+	(engine_encrypt_prepare): .. new.
+	(engine_cancel): Cancel prepared encryption.
+	* mimemaker.c (mime_encrypt): Use engine_encrypt_prepare and _start.
+	(mime_sign_encrypt): Likewise, but do the _start only after
+	completing the signing.
+
 2008-03-10  Werner Koch  <wk@g10code.com>
 
 	* engine.c (FILTER_BUFFER_SIZE): Increase to 4k.

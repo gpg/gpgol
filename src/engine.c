@@ -101,6 +101,10 @@ struct engine_filter_s
   gpgme_data_t indata;               /* Input data.  */
   gpgme_data_t outdata;              /* Output data.  */
   void *cancel_data;                 /* Used by engine_cancel.  */
+
+  /* A pointer used convey information from engine_encrypt_prepare to
+     engine_encrypt_start.  */
+  struct engine_assuan_encstate_s *encstate;
 };
 
 
@@ -680,6 +684,9 @@ engine_cancel (engine_filter_t filter)
   if (!filter)
     return;
   
+  /* First we need to cancel a possible prepared encrypt operation. */
+  engine_encrypt_start (filter, 1);
+
   take_in_lock (filter, __func__);
   cancel_data = filter->cancel_data;
   filter->cancel_data = NULL;
@@ -713,11 +720,14 @@ engine_cancel (engine_filter_t filter)
    be reused after having been used through this function.  However,
    the lifetime of the filter object lasts until the final engine_wait
    or engine_cancel.  On return the protocol to be used is stored at
-   R_PROTOCOL. */
+   R_PROTOCOL.  This is a two part fucntion.  engine_encrypt_prepare
+   needs to be called first followed by engine_encrypt_start.  The
+   latter command has just one argument CANCEL which can be set to
+   true to cancel the prepared command.  */
 int
-engine_encrypt_start (engine_filter_t filter, HWND hwnd,
-                      protocol_t req_protocol, char **recipients,
-                      protocol_t *r_protocol)
+engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
+                        protocol_t req_protocol, char **recipients,
+                        protocol_t *r_protocol)
 {
   gpg_error_t err;
   protocol_t used_protocol;
@@ -726,13 +736,31 @@ engine_encrypt_start (engine_filter_t filter, HWND hwnd,
   if (filter->use_assuan)
     {
       err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
-                               filter, hwnd, recipients, &used_protocol);
+                               filter, hwnd, recipients, &used_protocol,
+                               &filter->encstate);
       if (!err)
         *r_protocol = used_protocol;
     }
   else
     err = op_gpgme_encrypt (req_protocol, filter->indata, filter->outdata,
                             filter, hwnd, recipients);
+      
+  return err;
+}
+
+/* See engine_encrypt_prepare.  */
+int
+engine_encrypt_start (engine_filter_t filter, int cancel)
+{
+  gpg_error_t err;
+
+  if (filter->use_assuan)
+    {
+      err = op_assuan_encrypt_bottom (filter->encstate, cancel);
+      filter->encstate = NULL;
+    }
+  else
+    err = 0; /* This is a dummy here.  */
       
   return err;
 }
