@@ -290,7 +290,7 @@ indicated by a @sc{c:}, server responses by @sc{c:}:
 @section Sign a Message
 
 The server needs to implement opaque signing as well as detached
-signing.  Due to the nature of OpenPGP message it is always required to
+signing.  Due to the nature of OpenPGP messages it is always required to
 send the entire message to the server; sending just the hash is not
 possible.  The following two commands are required to set the input and
 output file descriptors:

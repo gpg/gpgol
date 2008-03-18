@@ -1,3 +1,9 @@
+Noteworthy changes for version 0.10.8 (2008-03-18)
+=================================================
+
+ * Fixed a segv introduced with 0.10.6.
+
+
 Noteworthy changes for version 0.10.7 (2008-03-11)
 ==================================================
 

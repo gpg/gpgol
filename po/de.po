@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-03-10 10:02+0100\n"
+"POT-Creation-Date: 2008-03-11 11:36+0100\n"
 "PO-Revision-Date: 2008-03-07 13:31+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -56,7 +56,7 @@ msgstr "Debugausgabe (zur Problemanalyse)"
 msgid "Select Certificate Manager"
 msgstr "GnuPG Zertifikats&verwaltung"
 
-#: src/engine.c:368
+#: src/engine.c:372
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -76,7 +76,7 @@ msgstr ""
 "   (unter \"GnuPG für Windows\") oder auf einem anderen Weg starten.\n"
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
 
-#: src/engine.c:372 src/ext-commands.cpp:691 src/main.c:614 src/main.c:620
+#: src/engine.c:376 src/ext-commands.cpp:691 src/main.c:614 src/main.c:620
 #: src/message.cpp:326
 msgid "GpgOL"
 msgstr "GpgOL"
