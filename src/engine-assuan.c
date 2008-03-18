@@ -839,7 +839,8 @@ async_worker_thread (void *dummy)
   for (;;)
     {
       /* Process our queue and fire up async I/O requests.  */
-/*       log_debug ("%s:%s: processing work queue", SRCNAME, __func__); */
+      if (debug_ioworker_extra)
+        log_debug ("%s:%s: processing work queue", SRCNAME, __func__);
       EnterCriticalSection (&work_queue_lock);
       hdarraylen = 0;
       hdarray[hdarraylen++] = work_queue_event;
@@ -930,10 +931,16 @@ async_worker_thread (void *dummy)
             }
           else if (n >= 0 && n < hdarraylen)
             {
-/*               log_debug ("%s:%s: WFMO succeeded (res=%d)",SRCNAME,__func__, n); */
+              if (debug_ioworker_extra)
+                log_debug ("%s:%s: WFMO succeeded (res=%d)",
+                           SRCNAME,__func__, n);
             }
           else if (n == hdarraylen)
-            ; /* Message event.  */
+            {
+              if (debug_ioworker_extra)
+                log_debug ("%s:%s: WFMO succeeded - MSGEVENT (res=%d)",
+                           SRCNAME,__func__, n);
+            }
           else
             {
               log_error ("%s:%s: WFMO returned: %d", SRCNAME, __func__, n);
@@ -980,6 +987,15 @@ async_worker_thread (void *dummy)
                   /* Got EOF.  */
                   if (debug_ioworker)
                     log_debug ("%s:%s: [%s:%p] EOF received",
+                               SRCNAME, __func__, item->name, item->hd);
+                  item->io_pending = 0;
+                  item->got_ready = 1;
+                }
+              else if (!item->writing && syserr == ERROR_BROKEN_PIPE)
+                {
+                  /* Got EOF.  */
+                  if (debug_ioworker)
+                    log_debug ("%s:%s: [%s:%p] EOF (broken pipe) received",
                                SRCNAME, __func__, item->name, item->hd);
                   item->io_pending = 0;
                   item->got_ready = 1;

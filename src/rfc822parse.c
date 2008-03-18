@@ -250,6 +250,7 @@ rfc822parse_open (rfc822parse_cb_t cb, void *cb_value)
             {
               release_handle_data (msg);
               free (msg);
+              errno = 0;/* Not meaningful after the callback.  */ 
               msg = NULL;
             }
         }

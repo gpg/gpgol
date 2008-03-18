@@ -1,3 +1,16 @@
+2008-03-18  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (message_cb): Clear all mimestruct fields.  Fixes
+	segv introduced 2008-03-07.
+
+	* engine-assuan.c (async_worker_thread): Handle broken pipe.
+
+2008-03-13  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (message_cb): Skip the OPEN event in non-MIME mode.
+
+	* rfc822parse.c (rfc822parse_open): Reset ERRNO.
+
 2008-03-11  Werner Koch  <wk@g10code.com>
 
 	* engine-assuan.c (op_assuan_encrypt): Factor some code out to ..

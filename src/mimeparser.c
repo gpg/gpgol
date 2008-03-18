@@ -70,7 +70,7 @@ struct mimestruct_item_s
   mimestruct_item_t next;
   unsigned int level;   /* Level in the hierarchy of that part.  0
                            indicates the outer body.  */
-  char *filename;       /* Malloced fileanme or NULL.  */
+  char *filename;       /* Malloced filename or NULL.  */
   char *charset;        /* Malloced charset or NULL.  */
   char content_type[1]; /* String with the content type. */
 };
@@ -253,7 +253,7 @@ start_attachment (mime_context_t ctx, int is_body)
       symenc_close (ctx->symenc);
       ctx->symenc = NULL;
     }
-  
+
   /* Before we start with the first attachment we need to delete all
      attachments which might have been created already by a past
      parser run.  */
@@ -923,6 +923,8 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
   if (ctx->no_mail_header)
     {
       /* Assume that this is not a regular mail but plain text. */
+      if (event == RFC822PARSE_OPEN)
+        return 0; /*  We need to skip the OPEN event.  */
       if (!ctx->body_seen)
         {
 #ifdef DEBUG_PARSER
@@ -946,6 +948,8 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
             ms->next = NULL;
             strcpy (stpcpy (stpcpy (ms->content_type, ctmain), "/"), ctsub);
             ms->level = 0;
+            ms->filename = NULL;
+            ms->charset = NULL;
           }
           if (start_attachment (ctx, 1))
             return -1;
