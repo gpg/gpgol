@@ -1,3 +1,12 @@
+Noteworthy changes for version 0.10.9 (2008-03-19)
+=================================================
+
+ * Decrypt opaque signed and encrypted S/MIME mails.
+
+ * Handle old-style PGP message with attachments.  Note that the
+   signature verification currently may indicate a bad signature.
+
+
 Noteworthy changes for version 0.10.8 (2008-03-18)
 =================================================
 

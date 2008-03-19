@@ -673,6 +673,10 @@ Tell how the filter I/O locks the resources.
 Tell about resource allocation.
 @item 64 (0x0040)
 Tell about command events.
+@item 128 (0x0080)
+Tell what the MIME parser is doing
+@item 256 (0x0100)
+Print data lines while parsing MIME.
 @end table
 You may use the regular C-syntax for entering the value.
 

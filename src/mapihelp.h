@@ -117,7 +117,7 @@ void mapi_release_attach_table (mapi_attach_item_t *table);
 LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message, 
                                     mapi_attach_item_t *item, 
                                     LPATTACH *r_attach);
-char *mapi_get_attach (LPMESSAGE message, 
+char *mapi_get_attach (LPMESSAGE message, int unprotect,
                        mapi_attach_item_t *item, size_t *r_nbytes);
 int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
 int mapi_has_sig_status (LPMESSAGE msg);

@@ -1,3 +1,19 @@
+2008-03-19  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_change_message_class): Look into
+	multipart/mixed for PGP messages.
+
+	* mapihelp.cpp (mapi_get_attach): Add arg UNPROTECT and changed
+	all callers.
+	* common.h (DBG_MIME_PARSER, DBG_MIME_DATA): New.
+	* mimeparser.c (debug_mime_parser, debug_mime_data): New to
+	replace DEBUG_PARSER.
+	(struct mime_context): Add field is_opaque_signed. 
+	(t2body): Set it.
+	(mime_decrypt): Handle an embedded opaque signed S/MIME part.
+	(mime_verify_opaque): Add arg INBUFER, INBUFFERLEN and
+	START_PART_COUNTER.
+
 2008-03-18  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (message_cb): Clear all mimestruct fields.  Fixes

@@ -148,14 +148,16 @@ typedef struct b64_state_s b64_state_t;
 
 /* Bit values used for extra log file verbosity.  Value 1 is reserved
    to enable debug menu options.  */
-#define DBG_IOWORKER        2
-#define DBG_IOWORKER_EXTRA  4
-#define DBG_FILTER          8
-#define DBG_FILTER_EXTRA   16 
-#define DBG_MEMORY         32
-#define DBG_COMMANDS       64
+#define DBG_IOWORKER       (1<<1)
+#define DBG_IOWORKER_EXTRA (1<<2) 
+#define DBG_FILTER         (1<<3)
+#define DBG_FILTER_EXTRA   (1<<4) 
+#define DBG_MEMORY         (1<<5)
+#define DBG_COMMANDS       (1<<6)
+#define DBG_MIME_PARSER    (1<<7)
+#define DBG_MIME_DATA      (1<<8)
 
-/* Macros to used in conditionals to enabel debug output.  */
+/* Macros to used in conditionals to enable debug output.  */
 #define debug_commands    (opt.enable_debug & DBG_COMMANDS)
 
 

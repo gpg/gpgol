@@ -43,12 +43,14 @@
 #include "serpent.h"
 #include "mimeparser.h"
 
-/* Define the next to get extra debug message for the MIME parser.  */
-#define DEBUG_PARSER 1
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
+
+#define debug_mime_parser (opt.enable_debug & (DBG_MIME_PARSER|DBG_MIME_DATA))
+#define debug_mime_data (opt.enable_debug & DBG_MIME_DATA)
+
 
 static const char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -112,6 +114,7 @@ struct mime_context
   int is_qp_encoded;      /* Current part is QP encoded. */
   int is_base64_encoded;  /* Current part is base 64 encoded. */
   int is_body;            /* The current part belongs to the body.  */
+  int is_opaque_signed;   /* Flag indicating opaque signed S/MIME. */
   protocol_t protocol;    /* The detected crypto protocol.  */
 
   int part_counter;       /* Counts the number of processed parts. */
@@ -213,9 +216,8 @@ debug_message_event (mime_context_t ctx, rfc822parse_event_t event)
     case RFC822PARSE_EPILOGUE: s= "Epilogue"; break;
     default: s= "[unknown event]"; break;
     }
-#ifdef DEBUG_PARSER
-  log_debug ("%s: ctx=%p, rfc822 event %s\n", SRCNAME, ctx, s);
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s: ctx=%p, rfc822 event %s\n", SRCNAME, ctx, s);
 }
 
 
@@ -233,9 +235,8 @@ start_attachment (mime_context_t ctx, int is_body)
   LPSTREAM to = NULL;
   LPUNKNOWN punk;
 
-#ifdef DEBUG_PARSER
-  log_debug ("%s:%s: for ctx=%p is_body=%d", SRCNAME, __func__, ctx, is_body);
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s:%s: for ctx=%p is_body=%d", SRCNAME, __func__, ctx,is_body);
 
   /* Just in case something has not been finished, do it here. */
   if (ctx->outstream)
@@ -480,9 +481,8 @@ finish_attachment (mime_context_t ctx, int cancel)
   HRESULT hr;
   int retval = -1;
 
-#ifdef DEBUG_PARSER
-  log_debug ("%s:%s: for ctx=%p cancel=%d", SRCNAME, __func__, ctx, cancel);
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s:%s: for ctx=%p cancel=%d", SRCNAME, __func__, ctx, cancel);
 
   if (ctx->outstream && ctx->is_body && !ctx->body_saved.outstream)
     {
@@ -755,10 +755,9 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
       ctsub  = "plain";
     }
 
-#ifdef DEBUG_PARSER  
-  log_debug ("%s:%s: ctx=%p, ct=`%s/%s'\n",
-             SRCNAME, __func__, ctx, ctmain, ctsub);
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s:%s: ctx=%p, ct=`%s/%s'\n",
+               SRCNAME, __func__, ctx, ctmain, ctsub);
 
   s = rfc822parse_query_parameter (field, "charset", 0);
   if (s)
@@ -830,17 +829,30 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
     }
   else /* Other type. */
     {
+      /* Check whether this attachment is an opaque signed S/MIME
+         part.  We use a counter to later check that tehre is only one
+         such part. */
+      if (!strcmp (ctmain, "application") && !strcmp (ctsub, "pkcs7-mime"))
+        {
+          const char *smtype = rfc822parse_query_parameter (field,
+                                                            "smime-type", 0);
+          if (smtype && !strcmp (smtype, "signed-data"))
+            ctx->is_opaque_signed++;
+        }
+
       if (!ctx->preview)
         ctx->collect_attachment = 1;
     }
   rfc822parse_release_field (field); /* (Content-type) */
   ctx->in_data = 1;
 
-#ifdef DEBUG_PARSER
-  log_debug ("%s: this body: nesting=%d partno=%d is_text=%d charset=\"%s\"\n",
-             SRCNAME, ctx->nesting_level, ctx->part_counter, is_text, 
-             ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"");
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s:%s: this body: nesting=%d partno=%d is_text=%d, is_opq=%d"
+               " charset=\"%s\"\n",
+               SRCNAME, __func__, 
+               ctx->nesting_level, ctx->part_counter, is_text, 
+               ctx->is_opaque_signed,
+               ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"");
 
   /* If this is a text part, decide whether we treat it as our body. */
   if (is_text)
@@ -884,9 +896,8 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
         {
           /* We already got one body and thus we can continue that
              last attachment.  */
-#ifdef DEBUG_PARSER
-          log_debug ("%s:%s: continuing body part\n", SRCNAME, __func__);
-#endif
+          if (debug_mime_parser)
+            log_debug ("%s:%s: continuing body part\n", SRCNAME, __func__);
           ctx->is_body = 1;
           ctx->outstream = ctx->body_saved.outstream;
           ctx->mapi_attach = ctx->body_saved.mapi_attach;
@@ -927,10 +938,9 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
         return 0; /*  We need to skip the OPEN event.  */
       if (!ctx->body_seen)
         {
-#ifdef DEBUG_PARSER
-          log_debug ("%s:%s: assuming this is plain text without headers\n",
-                     SRCNAME, __func__);
-#endif
+          if (debug_mime_parser)
+            log_debug ("%s:%s: assuming this is plain text without headers\n",
+                       SRCNAME, __func__);
           ctx->in_data = 1;
           ctx->collect_attachment = 2; /* 2 so we don't skip the first line. */
           ctx->body_seen = 1;
@@ -1050,8 +1060,9 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
           if (pos && ctx->linebuf[pos-1] == '\r')
             pos--;
 
-/*           log_debug ("%s:%s: ctx=%p, line=`%.*s'\n", */
-/*                      SRCNAME, __func__, ctx, (int)pos, ctx->linebuf); */
+          if (debug_mime_data)
+            log_debug ("%s:%s: ctx=%p, line=`%.*s'\n",
+                       SRCNAME, __func__, ctx, (int)pos, ctx->linebuf);
           if (rfc822parse_insert (ctx->msg, ctx->linebuf, pos))
             {
               log_error ("%s: ctx=%p, rfc822 parser failed: %s\n",
@@ -1191,7 +1202,9 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
   while ( (s = memchr (message, '\n', messagelen)) )
     {
       len = s - message + 1;
-/*       log_debug ("passing '%.*s'\n", (int)len, message); */
+      if (debug_mime_data)
+        log_debug ("%s:%s: passing '%.*s'\n", 
+                   SRCNAME, __func__, (int)len, message);
       plaintext_handler (ctx, message, len);
       if (ctx->parser_error || ctx->line_too_long)
         {
@@ -1284,19 +1297,27 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
 
 
 /* A special version of mime_verify which works only for S/MIME opaque
-   signed messages.  The message is expected to be a binary data
-   stream with a CMS signature.  This function passes the entire
-   message to the crypto engine and then parses the (cleartext) output
-   for rendering the data.  */
+   signed messages.  The message is expected to be a binary CMS
+   signature eityher as an ISTREAM (if instream is not NULL) or
+   provided in a buffer (INBUFFER and INBUFERLEN).  This function
+   passes the entire message to the crypto engine and then parses the
+   (cleartext) output for rendering the data.  START_PART_COUNTER
+   should normally be set to 0. */
 int
 mime_verify_opaque (protocol_t protocol, LPSTREAM instream, 
-                    LPMESSAGE mapi_message, HWND hwnd, int preview_mode)
+                    const char *inbuffer, size_t inbufferlen,
+                    LPMESSAGE mapi_message, HWND hwnd, int preview_mode,
+                    int start_part_counter)
 {
   gpg_error_t err = 0;
   mime_context_t ctx;
   engine_filter_t filter = NULL;
 
   log_debug ("%s:%s: enter (protocol=%d)", SRCNAME, __func__, protocol);
+
+  if ((instream && (inbuffer || inbufferlen))
+      || (!instream && !inbuffer))
+    return gpg_error (GPG_ERR_INV_VALUE);
 
   if (protocol != PROTOCOL_SMIME)
     return gpg_error (GPG_ERR_INV_VALUE);
@@ -1308,6 +1329,7 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
   ctx->verify_mode = 0;
   ctx->mapi_message = mapi_message;
   ctx->mimestruct_tail = &ctx->mimestruct;
+  ctx->part_counter = start_part_counter;
 
   ctx->msg = rfc822parse_open (message_cb, ctx);
   if (!ctx->msg)
@@ -1323,28 +1345,36 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
   if ((err=engine_verify_start (filter, hwnd, NULL, 0, protocol)))
     goto leave;
 
-  /* Filter the stream.  */
-  do
+  if (instream)
     {
-      HRESULT hr;
-      ULONG nread;
-      char buffer[4096];
+      /* Filter the stream.  */
+      do
+        {
+          HRESULT hr;
+          ULONG nread;
+          char buffer[4096];
       
-      hr = IStream_Read (instream, buffer, sizeof buffer, &nread);
-      if (hr)
-        {
-          log_error ("%s:%s: IStream::Read failed: hr=%#lx", 
-                     SRCNAME, __func__, hr);
-          err = gpg_error (GPG_ERR_EIO);
+          hr = IStream_Read (instream, buffer, sizeof buffer, &nread);
+          if (hr)
+            {
+              log_error ("%s:%s: IStream::Read failed: hr=%#lx", 
+                         SRCNAME, __func__, hr);
+              err = gpg_error (GPG_ERR_EIO);
+            }
+          else if (nread)
+            {
+              err = engine_filter (filter, buffer, nread);
+            }
+          else
+            break; /* EOF */
         }
-      else if (nread)
-        {
-          err = engine_filter (filter, buffer, nread);
-        }
-      else
-        break; /* EOF */
+      while (!err);
     }
-  while (!err);
+  else
+    {
+      /* Filter the buffer.  */
+      err = engine_filter (filter, inbuffer, inbufferlen);
+    }
   if (err)
     goto leave;
 
@@ -1437,18 +1467,17 @@ ciphermessage_t2body (mime_context_t ctx, rfc822parse_t msg)
       ctsub  = "plain";
     }
 
-#ifdef DEBUG_PARSER  
-  log_debug ("%s:%s: ctx=%p, ct=`%s/%s'\n",
-             SRCNAME, __func__, ctx, ctmain, ctsub);
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s:%s: ctx=%p, ct=`%s/%s'\n",
+               SRCNAME, __func__, ctx, ctmain, ctsub);
+
   rfc822parse_release_field (field); /* (Content-type) */
   ctx->in_data = 1;
 
-#ifdef DEBUG_PARSER
-  log_debug ("%s:%s: this body: nesting=%d part_counter=%d is_text=%d\n",
-             SRCNAME, __func__, 
-             ctx->nesting_level, ctx->part_counter, is_text);
-#endif
+  if (debug_mime_parser)
+    log_debug ("%s:%s: this body: nesting=%d part_counter=%d is_text=%d\n",
+               SRCNAME, __func__, 
+               ctx->nesting_level, ctx->part_counter, is_text);
 
 
   return 0;
@@ -1533,8 +1562,9 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
           if (pos && ctx->linebuf[pos-1] == '\r')
             pos--;
 
-/*           log_debug ("%s:%s: ctx=%p, line=`%.*s'\n", */
-/*                      SRCNAME, __func__, ctx, (int)pos, ctx->linebuf); */
+          if (debug_mime_data)
+            log_debug ("%s:%s: ctx=%p, line=`%.*s'\n",
+                       SRCNAME, __func__, ctx, (int)pos, ctx->linebuf);
           if (rfc822parse_insert (ctx->msg, ctx->linebuf, pos))
             {
               log_error ("%s:%s: ctx=%p, rfc822 parser failed: %s\n",
@@ -1598,6 +1628,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   gpg_error_t err;
   mime_context_t decctx, ctx;
   engine_filter_t filter = NULL;
+  int opaque_signed = 0;
+  int last_part_counter = 0;
 
   log_debug ("%s:%s: enter (protocol=%d, is_rfc822=%d)",
              SRCNAME, __func__, protocol, is_rfc822);
@@ -1736,12 +1768,63 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
         }
       symenc_close (ctx->symenc);
       symenc_close (ctx->body_saved.symenc);
+      last_part_counter = ctx->part_counter;
+      opaque_signed = (ctx->is_opaque_signed == 1);
       xfree (ctx);
     }
   if (decctx)
     {
       rfc822parse_close (decctx->msg);
       xfree (decctx);
+    }
+
+  if (!err && opaque_signed)
+    {
+      /* Handle an S/MIME opaque signed part.  The decryption has
+         written an attachment we are now going to verify and render
+         to the body attachment.  */
+      mapi_attach_item_t *table;
+      char *plainbuffer = NULL;
+      size_t plainbufferlen;
+      int i;
+
+      table = mapi_create_attach_table (mapi_message, 0);
+      if (!table)
+        {
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave_verify;
+        }
+
+      for (i=0; !table[i].end_of_table; i++)
+        if (table[i].attach_type == ATTACHTYPE_FROMMOSS
+            && table[i].content_type               
+            && !strcmp (table[i].content_type, "application/pkcs7-mime"))
+          break;
+      if (table[i].end_of_table)
+        {
+          log_debug ("%s:%s: attachment for opaque signed S/MIME not found",
+                     SRCNAME, __func__);
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave_verify;
+        }
+      plainbuffer = mapi_get_attach (mapi_message, 1, table+i,
+                                     &plainbufferlen);
+      if (!plainbuffer)
+        {
+          err = gpg_error (GPG_ERR_GENERAL);
+          goto leave_verify;
+        }
+
+      err = mime_verify_opaque (PROTOCOL_SMIME, NULL, 
+                                plainbuffer, plainbufferlen,
+                                mapi_message, hwnd, 0, last_part_counter+1);
+      
+      log_debug ("%s:%s: mime_verify_opaque returned %d", 
+                 SRCNAME, __func__, err);
+
+    leave_verify:
+      xfree (plainbuffer);
+      mapi_release_attach_table (table);
     }
   return err;
 }

@@ -32,7 +32,9 @@ int mime_verify (protocol_t protocol, const char *message, size_t messagelen,
                  LPMESSAGE mapi_message, 
                  HWND hwnd, int preview_mode);
 int mime_verify_opaque (protocol_t protocol, LPSTREAM instream, 
-                        LPMESSAGE mapi_message, HWND hwnd, int preview_mode);
+                        const char *inbuffer, size_t inbufferlen,
+                        LPMESSAGE mapi_message, HWND hwnd, int preview_mode,
+                        int start_part_counter);
 int mime_decrypt (protocol_t protocol, 
                   LPSTREAM instream, LPMESSAGE mapi_message, int is_rfc822,
                   int simple_pgp, HWND hwnd, int preview_mode);

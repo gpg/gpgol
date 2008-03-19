@@ -330,7 +330,7 @@ show_message (HWND hwnd, const char *text)
 
 /* Convert the clear signed message from INPUT into a PGP/MIME signed
    message and return it in a new allocated buffer.  OUTPUTLEN
-   received the valid length of that buffer; the buffer is guarnateed
+   received the valid length of that buffer; the buffer is guaranteed
    to be Nul terminated.  */
 static char *
 pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
@@ -649,7 +649,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
           return -1; /* No original attachment - this should not happen.  */
         }
 
-      inbuf = mapi_get_attach (message, table+0, &inbuflen);
+      inbuf = mapi_get_attach (message, 0, table+0, &inbuflen);
       if (!inbuf)
         {
           mapi_release_attach_table (table);
@@ -658,7 +658,8 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     }
 
   if (opaquestream)
-    err = mime_verify_opaque (protocol, opaquestream, message, hwnd, 0);
+    err = mime_verify_opaque (protocol, opaquestream,
+                              NULL, 0, message, hwnd, 0, 0);
   else
     err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0);
   log_debug ("mime_verify%s returned %d", opaquestream? "_opaque":"", err);
@@ -877,7 +878,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
          However, due to problems with Outlook overwriting the body of
          the message after decryption, we need to save the body away
          before decrypting it.  We then always look for that original
-         body atatchment and create one if it does not exist.  */
+         body attachment or create one if it does not exist.  */
       part1_idx = -1;
       table = mapi_create_attach_table (message, 0);
       if (!table)

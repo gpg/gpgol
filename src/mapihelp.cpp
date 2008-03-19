@@ -384,8 +384,8 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
 
 
 /* Look at the body of the MESSAGE and try to figure out whether this
-   is a supported PGP message.  Returns the new message class on
-   return or NULL if not.  */
+   is a supported PGP message.  Returns the new message class or NULL
+   if it does not look like a PGP message.  */
 static char *
 get_msgcls_from_pgp_lines (LPMESSAGE message)
 {
@@ -718,6 +718,13 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                 }
               else if (!strcmp (ct, "text/plain"))
                 {
+                  newvalue = get_msgcls_from_pgp_lines (message);
+                }
+              else if (!strcmp (ct, "multipart/mixed"))
+                {
+                  /* It is quite common to have a multipart/mixed mail
+                     with separate encrypted PGP parts.  Look at the
+                     body to decide.  */
                   newvalue = get_msgcls_from_pgp_lines (message);
                 }
               
@@ -1600,9 +1607,11 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
 
 
 /* Return an attachment as a malloced buffer.  The size of the buffer
-   will be stored at R_NBYTES.  Returns NULL on failure. */
+   will be stored at R_NBYTES.  If unprotect is true, the atatchment
+   will be unprotected.  Returns NULL on failure. */
 char *
-mapi_get_attach (LPMESSAGE message, mapi_attach_item_t *item, size_t *r_nbytes)
+mapi_get_attach (LPMESSAGE message, int unprotect, 
+                 mapi_attach_item_t *item, size_t *r_nbytes)
 {
   HRESULT hr;
   LPATTACH att;
@@ -1625,7 +1634,7 @@ mapi_get_attach (LPMESSAGE message, mapi_attach_item_t *item, size_t *r_nbytes)
       return NULL;
     }
 
-  buffer = attach_to_buffer (att, r_nbytes, 0, NULL);
+  buffer = attach_to_buffer (att, r_nbytes, unprotect, NULL);
   att->Release ();
 
   return buffer;
