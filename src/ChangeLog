@@ -1,3 +1,11 @@
+2008-03-26  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (cleanup): Implement.
+	(op_gpgme_init): Save thread handle.
+	(waiter_thread): Check shutdown flags.
+
+	* engine-assuan.c (get_uiserver_name): Fallback to GPA.
+
 2008-03-19  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (mapi_change_message_class): Look into

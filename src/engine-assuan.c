@@ -324,6 +324,7 @@ get_uiserver_name (void)
 {
   char *name = NULL;
   char *dir, *uiserver, *p;
+  int extra_arglen = 0;
 
   dir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
                                   "Install Directory");
@@ -332,15 +333,43 @@ get_uiserver_name (void)
       uiserver = read_w32_registry_string (NULL, GNUPG_REGKEY, 
                                            "UI Server");
       if (!uiserver)
-        uiserver = xstrdup ("kleopatra.exe --daemon");
+        {
+          uiserver = xstrdup ("kleopatra.exe");
+          extra_arglen = 9; /* Space required for " --daemon".  */
+        }
 
-      name = xmalloc (strlen (dir) + strlen (uiserver) + 2);
+      name = xmalloc (strlen (dir) + strlen (uiserver) + extra_arglen + 2);
       strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);
       for (p = name; *p; p++)
         if (*p == '/')
           *p = '\\';
       xfree (uiserver);
+      if (extra_arglen && access (name, F_OK))
+        {
+          /* Kleopatra iis not nstalled: Try GPA instead but if it is
+             also not available still return the Kleopatra
+             filename.  */
+          const char gpaserver[] = "gpa.exe";
+          char *name2;
+          
+          name2 = xmalloc (strlen (dir) + strlen (gpaserver) + extra_arglen+2);
+          strcpy (stpcpy (stpcpy (name2, dir), "\\"), gpaserver);
+          for (p = name2; *p; p++)
+            if (*p == '/')
+              *p = '\\';
+          if (access (name2, F_OK ))
+            xfree (name2);
+          else
+            {
+              xfree (name);
+              name = name2;
+            }
+        }
       xfree (dir);
+
+      /* Append the arg for Kleopatra.  */
+      if (name && extra_arglen)
+        strcat (name, " --daemon");
     }
   
   return name;

@@ -1,5 +1,5 @@
 /* engine-gpgme.c - Crypto engine with GPGME
- *	Copyright (C) 2005, 2006, 2007 g10 Code GmbH
+ *	Copyright (C) 2005, 2006, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -59,10 +59,11 @@ struct closure_data_s
 
 static int basic_init_done = 0;
 static int init_done = 0;
-
+static int shutdown_gpgme = 0;
 
 static DWORD WINAPI waiter_thread (void *dummy);
 static CRITICAL_SECTION waiter_thread_lock;
+static HANDLE waiter_thread_handle = INVALID_HANDLE_VALUE;
 static void update_passphrase_cache (int err, 
                                      struct passphrase_cb_s *pass_cb_value);
 /* static void add_verify_attestation (gpgme_data_t at,  */
@@ -75,7 +76,17 @@ static void update_passphrase_cache (int err,
 static void
 cleanup (void)
 {
-  /* Fixme: We should stop the thread.  */
+  if (init_done && waiter_thread_handle != INVALID_HANDLE_VALUE )
+    {
+      DWORD ec;
+
+      EnterCriticalSection (&waiter_thread_lock);
+      shutdown_gpgme = 1;
+      LeaveCriticalSection (&waiter_thread_lock);
+      while ( GetExitCodeThread (waiter_thread_handle, &ec) )
+        Sleep (100);
+      waiter_thread_handle = INVALID_HANDLE_VALUE;
+    }
 }
 
 
@@ -139,12 +150,13 @@ op_gpgme_init (void)
     HANDLE th;
     DWORD tid;
 
+    waiter_thread_handle = INVALID_HANDLE_VALUE;
     InitializeCriticalSection (&waiter_thread_lock);
     th = CreateThread (NULL, 128*1024, waiter_thread, NULL, 0, &tid);
     if (th == INVALID_HANDLE_VALUE)
       log_error ("failed to start the gpgme waiter thread\n");
     else
-      CloseHandle (th);
+      waiter_thread_handle = th;
   }
 
   init_done = 1;
@@ -163,7 +175,7 @@ waiter_thread (void *dummy)
 
   (void)dummy;
 
-  for (;;)
+  while (!shutdown_gpgme)
     {
       /*  Note: We don't use hang because this will end up in a tight
           loop and does not do a voluntary context switch.  Thus we do
@@ -189,6 +201,8 @@ waiter_thread (void *dummy)
       else
         Sleep (50);
     }
+  ExitThread (0);
+  return 0;
 }
 
 
