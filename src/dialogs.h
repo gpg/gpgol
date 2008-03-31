@@ -17,7 +17,8 @@
 #define IDB_BANNER_HI                   3007
 #define IDB_SELECT_SMIME                3008
 #define IDB_KEY_MANAGER_PNG             3105
-
+#define IDB_CRYPTO_STATE                3005 /* We use the keymanager
+                                                icon for now*/
 
 /* Ids used for the main config dialog.  */
 #define IDD_GPG_OPTIONS                 4001
@@ -34,17 +35,13 @@
 #define IDC_ENABLE_SMIME                4020
 #define IDC_PREVIEW_DECRYPT             4021
 #define IDC_PREFER_HTML                 4022
-#define IDC_G_OPTIONS                   4023
-#define IDC_G_PASSPHRASE                4024
-#define IDC_T_PASSPHRASE_TTL            4025
-#define IDC_T_PASSPHRASE_MIN            4026
+#define IDC_G_GENERAL                   4023
+#define IDC_G_SEND                      4024
+#define IDC_G_RECV                      4025
 
 
 /* Ids for the extended options dialog.  */
 #define IDD_EXT_OPTIONS                 4101
-#define IDC_T_OPT_KEYMAN_PATH           4110
-#define IDC_OPT_KEYMAN_PATH             4111
-#define IDC_OPT_SEL_KEYMAN_PATH         4112
 #define IDC_T_DEBUG_LOGFILE             4113
 #define IDC_DEBUG_LOGFILE               4114
 

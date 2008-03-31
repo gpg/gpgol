@@ -1,3 +1,28 @@
+2008-03-31  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.h (class GpgolExtCommands): Add m_nCmdCryptoState.
+	* ext-commands.cpp (InstallCommands): Add a toolbar crypto state
+	button.
+	(DoCommand): Show a message when trying to select the disabled
+	S/MIME protocol.
+
+	* message.cpp (message_sign, message_verify, message_decrypt) 
+	(sign_encrypt): Display message boxes only in debug mode.
+
+	* olflange-dlgs.cpp: Remove G-Data 2001 copyright because all that
+	old code has gone.
+
+	* dialogs.rc (IDD_EXT_OPTIONS): Remove option to select the key
+	manager.
+	(IDD_GPG_OPTIONS): Remove caching time, reorder options, add group
+	boxes.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Clean up accordingly.
+	* config-dialog.c (config_dlg_proc): Ditto.
+	(get_open_file_name, does_file_exist, error_box): Remove.
+
+	* ext-commands.cpp: Rename nCmdShowInfo to nCmdDebug0 and enable
+	it only in debug mode.
+
 2008-03-26  Werner Koch  <wk@g10code.com>
 
 	* engine-gpgme.c (cleanup): Implement.

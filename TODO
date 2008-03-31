@@ -1,18 +1,9 @@
-* Show more details in case of some errors.
-  For example 'No Secret Key' should contain the key-ID
-  and if possible the primary user-ID.
-
 * Find out why sometimes the new body cannot set to a MAPI object. In
   this case the body is empty but the W32 API said it was correctly set.
   This might be due to the length of the object.  HrGetOneProp has
   such limitations and thus it would be reasonable to assume that the
   same holds true for HrSetOneProp.  We might want to use OpenProperty
   for longer texts.
-
-* Hook into OnDelivery and rename attachments named like the
-  Attestation attachment we generate locally.  We might also want to
-  detect whether this is an encrypted message and change the
-  MessageClass accordingly.
 
 * Allow for symmetric encryption.
 

@@ -1,5 +1,4 @@
 /* olflange-dlgs.cpp - New dialogs for Outlook.
- *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005, 2006, 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
@@ -42,22 +41,21 @@ static void
 set_labels (HWND dlg)
 {
   static struct { int itemid; const char *label; } labels[] = {
+    { IDC_G_GENERAL,        N_("General")},
+    { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
+
+    { IDC_G_SEND,           N_("Message sending")},
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
     { IDC_OPENPGP_DEFAULT,  N_("Use PGP/MIME by default")},
     { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
-    { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
-//     { IDC_ENCRYPT_WITH_STANDARD_KEY, 
-//                      N_("Also encrypt message with the default certificate")},
+
+    { IDC_G_RECV,           N_("Message receiving")},
     { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
     { IDC_PREFER_HTML,      N_("Show HTML view if possible")},
 
-    { IDC_G_PASSPHRASE,     N_("Passphrase")},
-    { IDC_T_PASSPHRASE_TTL, N_("Cache &passphrase for")}, 
-    { IDC_T_PASSPHRASE_MIN, N_("minutes")},
-
-    { IDC_GPG_OPTIONS,      N_("Ad&vanced..")},
-    { IDC_VERSION_INFO,  "Version "VERSION " ("__DATE__")"},
+    { IDC_GPG_OPTIONS,      "Debug..."},
+    { IDC_VERSION_INFO,  "Version "VERSION "  ("__DATE__")"},
     { 0, NULL}
   };
   int i;
@@ -75,49 +73,18 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   BOOL bMsgResult = FALSE;    
   static LPNMHDR pnmhdr;
-  static HWND hWndPage;
   static BOOL openpgp_state = FALSE;
   static BOOL smime_state = FALSE;
-    
+  
   switch (uMsg) 
     {
     case WM_INITDIALOG:
       {
-        /* We don't use this anymore.  Actually I don't know why we
-           used it at all.  Note that this unused code has been
-           converted to use LoadImage instead of LoadBitmap. */
-/*         HDC hdc = GetDC (hDlg); */
-/*         if (hdc) */
-/*           { */
-/*             int bits_per_pixel = GetDeviceCaps (hdc, BITSPIXEL); */
-/*             HANDLE bitmap; */
-                
-/*             if (bits_per_pixel > 15) */
-/*               { */
-/*                 bitmap = LoadImage (glob_hinst, MAKEINTRESOURCE(IDB_BANNER), */
-/*                                     IMAGE_BITMAP, 0, 0, */
-/*                                     LR_CREATEDIBSECTION | LR_LOADTRANSPARENT); */
-/*                 if (bitmap) */
-/*                   { */
-/*                     HBITMAP old = (HBITMAP) SendDlgItemMessage */
-/*                       (hDlg, IDC_BITMAP, STM_SETIMAGE, */
-/*                        IMAGE_BITMAP, (LPARAM)bitmap); */
-/*                     if (old) */
-/*                       DeleteObject (old);	 */
-/*                   }	 */
-/*               }		 */
-/*             ReleaseDC (hDlg, hdc);	 */
-/*           } */
-        
         openpgp_state = (opt.default_protocol == PROTOCOL_OPENPGP);
         smime_state = (opt.default_protocol == PROTOCOL_SMIME);
-
-// 	EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO),
-//                       !!opt.enable_default_key);
+        
         EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
                       !!opt.enable_smime);
-// 	if (opt.enable_default_key)
-//           CheckDlgButton (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BST_CHECKED);
         set_labels (hDlg);
         ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS), 
                     opt.enable_debug? SW_SHOW : SW_HIDE);
@@ -158,24 +125,16 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	  /* If dialog state has been changed, activate the confirm button. */
 	  switch (wParam)
 	    {
-	    case IDC_ENCRYPT_WITH_STANDARD_KEY:
-	    case IDC_PREFER_HTML:
+	    case IDC_ENABLE_SMIME:
+	    case IDC_ENCRYPT_DEFAULT:
 	    case IDC_SIGN_DEFAULT:
 	    case IDC_OPENPGP_DEFAULT:
 	    case IDC_SMIME_DEFAULT:
 	    case IDC_PREVIEW_DECRYPT:
-	    case IDC_ENABLE_SMIME:
 	      SendMessage (GetParent (hDlg), PSM_CHANGED, (WPARAM)hDlg, 0L);
 	      break;
 	    }
 	}
-//       if (HIWORD (wParam) == BN_CLICKED &&
-// 	  LOWORD (wParam) == IDC_ENCRYPT_WITH_STANDARD_KEY) 
-// 	{
-// 	  opt.enable_default_key = !opt.enable_default_key;
-// 	  EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_TO), 
-// 			!!opt.enable_default_key);
-// 	}
       if (HIWORD (wParam) == BN_CLICKED &&
 	  LOWORD (wParam) == IDC_ENABLE_SMIME) 
 	{
@@ -208,107 +167,77 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
 	
     case WM_NOTIFY:
-	pnmhdr = ((LPNMHDR) lParam);
-	switch (pnmhdr->code) {
+      pnmhdr = ((LPNMHDR) lParam);
+      switch (pnmhdr->code) 
+        {
 	case PSN_KILLACTIVE:
-	    bMsgResult = FALSE;  /* allow this page to receive PSN_APPLY */
-	    break;
+          bMsgResult = FALSE;  /*(Allow this page to receive PSN_APPLY. */
+          break;
 
-	case PSN_SETACTIVE: {
-	    TCHAR s[30];
-	    
-// 	    if (opt.default_key && *opt.default_key)		
-//                 SetDlgItemText (hDlg, IDC_ENCRYPT_TO, opt.default_key);
-//             else
-// 		SetDlgItemText (hDlg, IDC_ENCRYPT_TO, "");
-	    wsprintf (s, "%d", opt.passwd_ttl/60);
-	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_SETTEXT,
-                               0, (LPARAM) s);
-	    hWndPage = pnmhdr->hwndFrom;   // to be used in WM_COMMAND
-	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
-				!!opt.encrypt_default, 0L);
-	    SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
-			        !!opt.sign_default, 0L);
-// 	    SendDlgItemMessage (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY,
-//                                 BM_SETCHECK, opt.enable_default_key, 0L);
-            SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
+	case PSN_SETACTIVE: 
+          SendDlgItemMessage (hDlg, IDC_ENABLE_SMIME, BM_SETCHECK,
+                              !!opt.enable_smime, 0L);
+          
+          SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
+                              !!opt.encrypt_default, 0L);
+          SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
+                              !!opt.sign_default, 0L);
+          SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
                                 openpgp_state, 0L);
-            SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
-                                smime_state, 0L);
-	    SendDlgItemMessage (hDlg, IDC_ENABLE_SMIME, BM_SETCHECK,
-				!!opt.enable_smime, 0L);
-	    SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
-				!!opt.preview_decrypt, 0L);
-	    SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
+          SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
+                              smime_state, 0L);
+          
+          SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
+                              !!opt.preview_decrypt, 0L);
+          SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
 				!!opt.prefer_html, 0L);
-	    bMsgResult = FALSE;  /* accepts activation */
-	    break; }
+          bMsgResult = FALSE;  /* Accepts activation. */
+          break; 
 		
-	case PSN_APPLY:	{
-	    TCHAR s[201];
-            
-//             opt.enable_default_key = !!SendDlgItemMessage
-//               (hDlg, IDC_ENCRYPT_WITH_STANDARD_KEY, BM_GETCHECK, 0, 0L);
-
-//             GetDlgItemText (hDlg, IDC_ENCRYPT_TO, s, 200);
-//             if (strlen (s) > 0 && strchr (s, ' ')) 
-//               {
-//                 if (opt.enable_default_key)
-//                   {
-//                     MessageBox (hDlg,_("The default certificate may not"
-//                                        " contain any spaces."),
-//                                 "GpgOL", MB_ICONERROR|MB_OK);
-//                     bMsgResult = PSNRET_INVALID_NOCHANGEPAGE;
-//                     break;
-//                   }
-//               }
-//             set_default_key (s);
- 
-	    SendDlgItemMessage (hDlg, IDC_TIME_PHRASES, WM_GETTEXT,
-                                20, (LPARAM)s);		
-	    opt.passwd_ttl = (int)atol (s)*60;
-		
-	    opt.encrypt_default = !!SendDlgItemMessage
-              (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
-	    opt.sign_default = !!SendDlgItemMessage 
-              (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
-            opt.enable_smime = !!SendDlgItemMessage
-              (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
-            if (opt.enable_smime)
-              {
-                MessageBox (hDlg, 
-          _("You have enabled GpgOL's support for the S/MIME protocol.\n\n"
-            "New S/MIME messages are thus only viewable with GpgOL and "
-            "not anymore with Outlook's internal S/MIME support.  Those "
-            "message will even be unreadable by Outlook after GpgOL has "
-            "been deinstalled.  A tool to mitigate this problem will be "
-            "provided when GpgOL arrives at production quality status."),
+	case PSN_APPLY:	
+          opt.enable_smime = !!SendDlgItemMessage
+            (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
+          
+          opt.encrypt_default = !!SendDlgItemMessage
+            (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
+          opt.sign_default = !!SendDlgItemMessage 
+            (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
+          
+          if (opt.enable_smime)
+            {
+              MessageBox (hDlg, 
+              _("You have enabled GpgOL's support for the S/MIME protocol.\n\n"
+                "New S/MIME messages are thus only viewable with GpgOL and "
+                "not anymore with Outlook's internal S/MIME support.  Those "
+                "message will even be unreadable by Outlook after GpgOL has "
+                "been deinstalled.  A tool to mitigate this problem will be "
+                "provided when GpgOL arrives at production quality status."),
                             "GpgOL", MB_ICONWARNING|MB_OK);
-              }
+            }
 
-	    if (openpgp_state)
-              opt.default_protocol = PROTOCOL_OPENPGP;
-	    else if (smime_state && opt.enable_smime)
-              opt.default_protocol = PROTOCOL_SMIME;
-            else
-              opt.default_protocol = PROTOCOL_UNKNOWN;
+          if (openpgp_state)
+            opt.default_protocol = PROTOCOL_OPENPGP;
+          else if (smime_state && opt.enable_smime)
+            opt.default_protocol = PROTOCOL_SMIME;
+          else
+            opt.default_protocol = PROTOCOL_UNKNOWN;
             
-            opt.preview_decrypt = !!SendDlgItemMessage
-              (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
-            opt.prefer_html = !!SendDlgItemMessage
-              (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
-
-            /* Now that the user has confirmed the options dialog, we
-               mark the Registry with revision of this build.  */
-            opt.svn_revision = SVN_REVISION;
-
-	    write_options ();
-	    bMsgResult = PSNRET_NOERROR;
-	    break; }
-		
+          opt.preview_decrypt = !!SendDlgItemMessage
+            (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
+          opt.prefer_html = !!SendDlgItemMessage
+            (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
+          
+          /* Now that the user has confirmed the options dialog, we
+             mark the Registry with revision of this build.  */
+          opt.svn_revision = SVN_REVISION;
+          
+          write_options ();
+          bMsgResult = PSNRET_NOERROR;
+          break; 
+          
 	case PSN_HELP: 
           {
-            const char cpynotice[] = "Copyright (C) 2007 g10 Code GmbH";
+            const char cpynotice[] = "Copyright (C) 2008 g10 Code GmbH";
             const char en_notice[] = 
       "GpgOL is a plugin for Outlook to allow encryption and\n"
       "signing of messages using the OpenPGP and S/MIME standard.\n"
@@ -335,7 +264,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             char header[300];
             char *buffer;
             size_t nbuffer;
-
+            
             snprintf (header, sizeof header, _("This is GpgOL version %s"),
                       PACKAGE_VERSION);
             notice = _(notice_key);
@@ -347,19 +276,22 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                       header, cpynotice, notice);
             MessageBox (pnmhdr->hwndFrom, buffer, "GpgOL", MB_OK);
             xfree (buffer);
-	    bMsgResult = TRUE;
-            break; }
+          }
+          bMsgResult = TRUE;
+          break; 
           
 	default:
-	    bMsgResult = FALSE;
-	    break;	    
+          bMsgResult = FALSE;
+          break;	    
 	}
-	SetWindowLong (hDlg, DWL_MSGRESULT, bMsgResult);
-	break;
+
+      SetWindowLong (hDlg, DWL_MSGRESULT, bMsgResult);
+      break;
 
     default:
-	bMsgResult = FALSE;
-	break;		
+      bMsgResult = FALSE;
+      break;		
     }
-    return bMsgResult;
+
+  return bMsgResult;
 }

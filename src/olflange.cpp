@@ -338,7 +338,7 @@ GpgolExt::GpgolExt (void)
         MessageBox (NULL,
                     _("You have installed a new version of GpgOL.\n"
                       "\n"
-                      "Please open the option dialog and check that"
+                      "Please open the option dialog and confirm that"
                       " the settings are correct for your needs.  The option"
                       " dialog can be found in the main menu at:"
                       " Extras->Options->GpgOL.\n"),

@@ -663,7 +663,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   else
     err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0);
   log_debug ("mime_verify%s returned %d", opaquestream? "_opaque":"", err);
-  if (err)
+  if (err && opt.enable_debug)
     {
       char buf[200];
       
@@ -1071,7 +1071,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   err = mime_decrypt (protocol, cipherstream, message, 
                       need_rfc822_parser, is_simple_pgp, hwnd, 0);
   log_debug ("mime_decrypt returned %d (%s)", err, gpg_strerror (err));
-  if (err)
+  if (err && opt.enable_debug)
     {
       char buf[200];
       
@@ -1087,7 +1087,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
           break;
         }
     }
-  else
+  else if (!err)
     {
       if (saved_attach)
         mapi_set_attach_hidden (saved_attach);
@@ -1221,7 +1221,7 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
         err = mime_sign_encrypt (message, hwnd, protocol, recipients);
       else
         err = mime_encrypt (message, hwnd, protocol, recipients);
-      if (err)
+      if (err && opt.enable_debug)
         {
           char buf[200];
           
@@ -1242,7 +1242,7 @@ message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd)
   gpg_error_t err;
 
   err = mime_sign (message, hwnd, protocol);
-  if (err)
+  if (err && opt.enable_debug)
     {
       char buf[200];
       

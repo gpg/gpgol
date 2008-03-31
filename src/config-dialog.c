@@ -1,5 +1,5 @@
 /* config-dialog.c
- *	Copyright (C) 2005 g10 Code GmbH
+ *	Copyright (C) 2005, 2008 g10 Code GmbH
  *	Copyright (C) 2003 Timo Schulz
  *
  * This file is part of GpgOL.
@@ -36,67 +36,6 @@
 
 /* Registry path to store plugin settings */
 #define GPGOL_REGPATH "Software\\GNU\\GpgOL"
-
-static char*
-get_open_file_name (const char *dir, const char *title)
-{
-  static char fname[MAX_PATH+1];
-  OPENFILENAME ofn;
-
-  memset (&ofn, 0, sizeof (ofn));
-  memset (fname, 0, sizeof (fname));
-  ofn.hwndOwner = GetDesktopWindow ();
-  ofn.hInstance = glob_hinst;
-  ofn.Flags = OFN_FILEMUSTEXIST;
-  ofn.lpstrTitle = title;
-  ofn.lStructSize = sizeof (ofn);
-  ofn.lpstrInitialDir = dir;
-  ofn.lpstrFilter = "EXE-Files (*.EXE)\0*.EXE\0\0";
-  ofn.lpstrFile = fname;
-  ofn.nMaxFile = sizeof (fname)-1;
-  if (GetOpenFileName (&ofn) == FALSE)
-    return NULL;
-  return fname;
-}
-
-
-#if 0
-static void 
-SHFree (void *p) 
-{         
-    IMalloc *pm;         
-    SHGetMalloc (&pm);
-    if (pm) {
-	pm->lpVtbl->Free(pm,p);
-	pm->lpVtbl->Release(pm);         
-    } 
-} 
-#endif
-
-#if 0
-/* Open the common dialog to select a folder. Caller has to free the string. */
-static char*
-get_folder (const char *title)
-{
-  char fname[MAX_PATH+1];
-  BROWSEINFO bi;
-  ITEMIDLIST * il;
-  char *path = NULL;
-
-  memset (&bi, 0, sizeof (bi));
-  memset (fname, 0, sizeof (fname));
-  bi.hwndOwner = GetDesktopWindow ();
-  bi.lpszTitle = title;
-  il = SHBrowseForFolder (&bi);
-  if (il != NULL)
-    {
-      SHGetPathFromIDList (il, fname);
-      path = xstrdup (fname);
-      SHFree (il);
-    }
-  return path;
-}
-#endif
 
 
 static char*
@@ -188,78 +127,6 @@ store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 }
 
 
-#if 0
-static int
-does_folder_exist (const char *path)
-{
-    int attrs = GetFileAttributes (path);
-    int err = 0;
-
-    if (attrs == 0xFFFFFFFF)
-	err = -1;
-    else if (!(attrs & FILE_ATTRIBUTE_DIRECTORY))
-	err = -1;
-    if (err != 0) {
-	const char *fmt = "\"%s\" either does not exist or is not a directory";
-	char *p = xmalloc (strlen (fmt) + strlen (path) + 2 + 2);
-	sprintf (p, fmt, path);
-	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
-	xfree (p);
-    }
-    return err;
-}
-#endif
-
-static int
-does_file_exist (const char *name, int is_file)
-{
-    struct stat st;
-    const char *s;
-    char *p, *name2;
-    int err = 0;
-
-    /* check WinPT specific flags */
-    if ((p=strstr (name, "--keymanager"))) {
-	name2 = xcalloc (1, (p-name)+2);
-	strncpy (name2, name, (p-name)-1);
-    }
-    else
-	name2 = xstrdup (name);
-
-    if (stat (name2, &st) == -1) {
-	s = "\"%s\" does not exist.";
-	p = xmalloc (strlen (s) + strlen (name2) + 2);
-	sprintf (p, s, name2);
-	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
-	err = -1;
-    }
-    else if (is_file && !(st.st_mode & _S_IFREG)) {
-	s = "\"%s\" is not a regular file.";
-	p = xmalloc (strlen (s) + strlen (name2) + 2);
-	sprintf (p, s, name2);
-	MessageBox (NULL, p, "Config Error", MB_ICONERROR|MB_OK);
-	err = -1;
-    }
-    xfree (name2);
-    xfree (p);
-    return err;
-}
-
-
-static void
-error_box (const char *title)
-{	
-  TCHAR buf[256];
-  DWORD last_err;
-
-  last_err = GetLastError ();
-  FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, last_err, 
-                 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
-                 buf, sizeof (buf)-1, NULL);
-  MessageBox (NULL, buf, title, MB_OK);
-}
-
-
 /* To avoid writing a dialog template for each language we use gettext
    for the labels and hope that there is enough space in the dialog to
    fit teh longest translation.  */
@@ -267,7 +134,6 @@ static void
 config_dlg_set_labels (HWND dlg)
 {
   static struct { int itemid; const char *label; } labels[] = {
-    { IDC_T_OPT_KEYMAN_PATH,    N_("Path to certificate manager binary")},
     { IDC_T_DEBUG_LOGFILE,  N_("Debug output (for analysing problems)")},
     { 0, NULL}
   };
@@ -275,58 +141,38 @@ config_dlg_set_labels (HWND dlg)
 
   for (i=0; labels[i].itemid; i++)
     SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
-
+  
 }  
 
 static BOOL CALLBACK
 config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    char *buf = NULL;
-    char name[MAX_PATH+1];
-    int n;
-    const char *s;
-
-    switch (msg) {
+  char name[MAX_PATH+1];
+  int n;
+  const char *s;
+  
+  switch (msg) 
+    {
     case WM_INITDIALOG:
-	center_window (dlg, 0);
-	if (!load_config_value (NULL, REGPATH, "keyManager", &buf)) {
-	    SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, buf);
-	    xfree (buf);
-	    buf=NULL;
-	}
-        else
-	    SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, "");
-        s = get_log_file ();
-        SetDlgItemText (dlg, IDC_DEBUG_LOGFILE, s? s:"");
-        config_dlg_set_labels (dlg);
-	break;
-
+      center_window (dlg, 0);
+      s = get_log_file ();
+      SetDlgItemText (dlg, IDC_DEBUG_LOGFILE, s? s:"");
+      config_dlg_set_labels (dlg);
+      break;
+      
     case WM_COMMAND:
-	switch (LOWORD (wparam)) {
-	case IDC_OPT_SEL_KEYMAN_PATH:
-	    buf = get_open_file_name (NULL, _("Select Certificate Manager"));
-	    if (buf && *buf)
-		SetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, buf);
-	    break;
-
+      switch (LOWORD (wparam)) 
+        {
 	case IDOK:
-	    n = GetDlgItemText (dlg, IDC_OPT_KEYMAN_PATH, name, MAX_PATH-1);
-	    if (n > 0) {
-		if (does_file_exist (name, 1))
-		    return FALSE;
-		if (store_config_value (NULL, REGPATH, "keyManager", name))
-		    error_box ("GPG Config");
-	    }
-	    n = GetDlgItemText (dlg, IDC_DEBUG_LOGFILE, name, MAX_PATH-1);
-            set_log_file (n>0?name:NULL);
-
-	    EndDialog (dlg, TRUE);
-	    break;
+          n = GetDlgItemText (dlg, IDC_DEBUG_LOGFILE, name, MAX_PATH-1);
+          set_log_file (n>0?name:NULL);
+          EndDialog (dlg, TRUE);
+          break;
 	}
-	break;
+      break;
     }
-
-    return FALSE;
+  
+  return FALSE;
 }
 
 

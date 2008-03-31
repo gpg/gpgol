@@ -104,9 +104,10 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_nCmdEncrypt = 0;  
   m_nCmdDecrypt = 0;  
   m_nCmdSign = 0; 
-  m_nCmdShowInfo = 0;  
   m_nCmdCheckSig = 0;
   m_nCmdKeyManager = 0;
+  m_nCmdCryptoState = 0;
+  m_nCmdDebug0 = 0;
   m_nCmdDebug1 = 0;
   m_nCmdDebug2 = 0;
   m_toolbar_info = NULL; 
@@ -444,11 +445,23 @@ GpgolExtCommands::InstallCommands (
         "@", NULL,
         need_dvm? _("&Decrypt and verify message"):"", &m_nCmdDecrypt,
         _("&Verify signature"), &m_nCmdCheckSig,
-        _("&Display crypto information"), &m_nCmdShowInfo,
-                "@", NULL,
-        opt.enable_debug? "Debug-1 (open_inspector)":"", &m_nCmdDebug1,
-        opt.enable_debug? "Debug-2 (change msg class)":"", &m_nCmdDebug2,
+        opt.enable_debug? "GpgOL Debug-0 (display crypto info)":"", 
+                &m_nCmdDebug0,
+        opt.enable_debug? "GpgOL Debug-1 (open_inspector)":"", &m_nCmdDebug1,
+        opt.enable_debug? "GpgOL Debug-2 (change msg class)":"", &m_nCmdDebug2,
         NULL);
+
+
+      add_toolbar (pTBEArray, nTBECnt, 
+                   need_dvm
+                   ? _("This is an encrypted message.\n"
+                       "Click for more information. ")
+                   : _("This is a signed message.\n"
+                       "Click for more information. "),
+                   IDB_CRYPTO_STATE, m_nCmdCryptoState,
+                   NULL, 0, 0);
+
+
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -625,18 +638,6 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
     }
-  else if (nCommandID == m_nCmdShowInfo
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      log_debug ("%s:%s: command ShowInfo called\n", SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          message_show_info (message, hwnd);
-	}
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-    }
   else if (nCommandID == m_nCmdProtoAuto
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -666,6 +667,17 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
           check_menu (eecb, m_nCmdProtoSmime, TRUE);
           m_pExchExt->m_protoSelection = PROTOCOL_SMIME;
         }
+      else
+        {
+          MessageBox (hwnd,
+                      _("Support for S/MIME has not been enabled.\n"
+                        "\n"
+                        "To enable S/MIME support, open the option dialog"
+                        " and check \"Enable the S/MIME support\".  The"
+                        " option dialog can be found in the main menu at:"
+                       " Extras->Options->GpgOL.\n"),
+                      "GpgOL", MB_ICONHAND|MB_OK);
+        }
     }
   else if (nCommandID == m_nCmdEncrypt
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
@@ -689,6 +701,20 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
         if (start_key_manager ())
           MessageBox (NULL, _("Could not start certificate manager"),
                       _("GpgOL"), MB_ICONERROR|MB_OK);
+    }
+  else if (((opt.enable_debug && nCommandID == m_nCmdDebug0)
+            || nCommandID == m_nCmdCryptoState)
+           && m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+      log_debug ("%s:%s: command Debug0 (showInfo) called\n",
+                 SRCNAME, __func__);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          message_show_info (message, hwnd);
+	}
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
   else if (opt.enable_debug && nCommandID == m_nCmdDebug1
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
@@ -752,14 +778,6 @@ GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
     {
       MessageBox (m_hWnd,
                   _("Select this option to decrypt and verify the message."),
-                  "GpgOL", MB_OK);
-    }
-  else if (nCommandID == m_nCmdShowInfo
-           && m_lContext == EECONTEXT_READNOTEMESSAGE) 
-    {
-      MessageBox (m_hWnd,
-                  _("Select this option to show information"
-                    " on the crypto status"),
                   "GpgOL", MB_OK);
     }
   else if (nCommandID == m_nCmdCheckSig
@@ -831,16 +849,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
                                 LPTSTR pszText,  UINT nCharCnt)    
 {
 	
-  if (nCommandID == m_nCmdShowInfo
-           && m_lContext == EECONTEXT_READNOTEMESSAGE) 
-    {
-      if (lFlags == EECQHT_STATUS)
-        lstrcpyn (pszText, ".", nCharCnt);
-      if (lFlags == EECQHT_TOOLTIP)
-        lstrcpyn (pszText, _("Show S/MIME status info"),
-                  nCharCnt);
-    }
-  else if (nCommandID == m_nCmdCheckSig
+  if (nCommandID == m_nCmdCheckSig
            && m_lContext == EECONTEXT_READNOTEMESSAGE) 
     {
       if (lFlags == EECQHT_STATUS)
@@ -933,6 +942,7 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
   pTBB->fsStyle = TBSTYLE_BUTTON;
   pTBB->dwData = 0;
   pTBB->iString = -1;
+  
   lstrcpyn (description, tb_info->desc, strlen (tb_info->desc));
 
   if (tb_info->cmd_id == m_nCmdEncrypt)
