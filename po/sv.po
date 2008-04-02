@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-03-31 18:00+0200\n"
+"POT-Creation-Date: 2008-04-02 17:45+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -48,7 +48,7 @@ msgstr "GPG - Spara dekrypterad bilaga"
 msgid "Debug output (for analysing problems)"
 msgstr ""
 
-#: src/engine.c:372
+#: src/engine.c:405
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -57,7 +57,7 @@ msgid ""
 "are not readable."
 msgstr ""
 
-#: src/engine.c:376 src/ext-commands.cpp:703 src/main.c:614 src/main.c:620
+#: src/engine.c:409 src/ext-commands.cpp:703 src/main.c:665 src/main.c:671
 #: src/message.cpp:326
 msgid "GpgOL"
 msgstr ""
@@ -325,12 +325,12 @@ msgstr ""
 msgid "Open the GpgOL certificate manager"
 msgstr ""
 
-#: src/main.c:613
+#: src/main.c:664
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr ""
 
-#: src/main.c:619
+#: src/main.c:670
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"

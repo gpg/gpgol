@@ -1,4 +1,22 @@
+2008-04-02  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (destroy_command): Add arg FORCE.
+	(op_assuan_encrypt_bottom): Call destroy_command.
+
+	* mimeparser.c (struct mime_context): Use parser_error to return
+	gpg error codes.
+
+	* main.c (read_options): Allow names for debug flags.
+	* common.c (trim_spaces): New.
+
 2008-03-31  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (struct work_item_s): Add SWITCH_COUNTER.
+	(switch_threads, clear_switch_threads): New.
+	(worker_start_write): Use it.
+	* engine.c (struct engine_filter_s): Add SWITCH_COUNTER.
+	(switch_threads, clear_switch_threads): New.
+	(filter_gpgme_read_cb): Use it.
 
 	* ext-commands.h (class GpgolExtCommands): Add m_nCmdCryptoState.
 	* ext-commands.cpp (InstallCommands): Add a toolbar crypto state

@@ -413,6 +413,36 @@ trim_trailing_spaces (char *string)
 }
 
 
+/* Strip off leading and trailing white spaces from STRING.  Returns
+   STRING. */
+char *
+trim_spaces (char *arg_string)
+{
+  char *string = arg_string;
+  char *p, *mark;
+
+  /* Find first non space character. */
+  for (p = string; *p && isascii (*p) && isspace (*p) ; p++ )
+    ;
+  /* Move characters. */
+  for (mark = NULL; (*string = *p); string++, p++ )
+    {
+      if (isascii (*p) && isspace (*p))
+        {
+          if (!mark)
+          mark = string;
+        }
+      else
+        mark = NULL ;
+    }
+  if (mark)
+    *mark = 0;
+  
+  return arg_string;
+}
+
+
+
 /* Helper for read_w32_registry_string(). */
 static HKEY
 get_root_key(const char *root)

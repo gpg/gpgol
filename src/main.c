@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include <wincrypt.h>
+#include <ctype.h>
 
 #include "mymapi.h"
 #include "mymapitags.h"
@@ -507,10 +508,52 @@ read_options (void)
 {
   static int warnings_shown;
   char *val = NULL;
- 
+
+  /* Set the log file first so that output from this function is
+     logged too.  */
+  load_extension_value ("logFile", &val);
+  set_log_file (val);
+  xfree (val); val = NULL;
+  
+  /* Parse the debug flags.  */
   load_extension_value ("enableDebug", &val);
-  opt.enable_debug = val? strtoul (val, NULL, 0) : 0;
-  if (!val)
+  opt.enable_debug = 0;
+  if (val)
+    {
+      char *p, *pend;
+
+      trim_spaces (val);
+      for (p = val; p; p = pend)
+        {
+          pend = strpbrk (p, ", \t\n\r\f");
+          if (pend)
+            {
+              *pend++ = 0;
+              pend += strspn (pend, ", \t\n\r\f");
+            }
+          if (isascii (*p) && isdigit (*p))
+            opt.enable_debug |= strtoul (p, NULL, 0);
+          else if (!strcmp (p, "ioworker"))
+            opt.enable_debug |= DBG_IOWORKER;
+          else if (!strcmp (p, "ioworker-extra"))
+            opt.enable_debug |= DBG_IOWORKER_EXTRA;
+          else if (!strcmp (p, "filter"))
+            opt.enable_debug |= DBG_FILTER;
+          else if (!strcmp (p, "filter-extra"))
+            opt.enable_debug |= DBG_FILTER_EXTRA;
+          else if (!strcmp (p, "memory"))
+            opt.enable_debug |= DBG_MEMORY;
+          else if (!strcmp (p, "commands"))
+            opt.enable_debug |= DBG_COMMANDS;
+          else if (!strcmp (p, "mime-parser"))
+            opt.enable_debug |= DBG_MIME_PARSER;
+          else if (!strcmp (p, "mime-data"))
+            opt.enable_debug |= DBG_MIME_DATA;
+          else
+            log_debug ("invalid debug flag `%s' ignored", p);
+        }
+    }
+  else
     {
       /* To help the user enable debugging make sure that the registry
          key exists.  Note that the other registry keys are stored
@@ -518,6 +561,18 @@ read_options (void)
       store_extension_value ("enableDebug", "0");
     }
   xfree (val); val = NULL;
+  if (opt.enable_debug)
+    log_debug ("enabled debug flags:%s%s%s%s%s%s%s%s\n",
+               (opt.enable_debug & DBG_IOWORKER)? " ioworker":"",
+               (opt.enable_debug & DBG_IOWORKER_EXTRA)? " ioworker-extra":"",
+               (opt.enable_debug & DBG_FILTER)? " filter":"",
+               (opt.enable_debug & DBG_FILTER_EXTRA)? " filter-extra":"",
+               (opt.enable_debug & DBG_MEMORY)? " memory":"",
+               (opt.enable_debug & DBG_COMMANDS)? " commands":"",
+               (opt.enable_debug & DBG_MIME_PARSER)? " mime-parser":"",
+               (opt.enable_debug & DBG_MIME_DATA)? " mime-data":""
+               );
+
 
   load_extension_value ("enableSmime", &val);
   opt.enable_smime = val == NULL || *val != '1' ? 0 : 1;
@@ -559,10 +614,6 @@ read_options (void)
   opt.enc_format = val == NULL? GPG_FMT_CLASSIC  : atol (val);
   xfree (val); val = NULL;
 
-  load_extension_value ("logFile", &val);
-  set_log_file (val);
-  xfree (val); val = NULL;
-  
   load_extension_value ("defaultKey", &val);
   set_default_key (val);
   xfree (val); val = NULL;

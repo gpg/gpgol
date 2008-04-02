@@ -74,13 +74,13 @@ libmapi32.a: mapi32.def
 	$(DLLTOOL) --output-lib $@ --def $<
 
 libgpg-error.a:
-	ln -s $(shell $(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a
+	ln -s $$($(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a .
 
 libgpgme.a:
-	ln -s $(shell $(GPGME_CONFIG) --prefix)/lib/libgpgme.a
+	ln -s $$($(GPGME_CONFIG) --prefix)/lib/libgpgme.a .
 
 libassuan.a:
-	ln -s $(shell $(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a
+	ln -s $$($(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a .
 
 clean-local:
 	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a

@@ -16,12 +16,13 @@ min_automake_version="1.9.4"
 # Remember to change the version number immediately *after* a release.
 # Set my_issvn to "yes" for non-released code.  Remember to run an
 # "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [0.10.9])
+m4_define([my_version], [0.10.10])
 m4_define([my_issvn], [no])
 
 m4_define([svn_revision], m4_esyscmd([echo -n $( (svn info 2>/dev/null \
             || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q;}')]))
-AC_INIT([gpgol], my_version[]m4_if(my_issvn,[yes],[-svn[]svn_revision]),
+AC_INIT([gpgol], 
+        [my_version[]m4_if(my_issvn,[yes],[-svn[]svn_revision])],
         [bug-gpgol@g10code.com])
 
 NEED_GPG_ERROR_VERSION=1.4

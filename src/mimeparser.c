@@ -123,7 +123,7 @@ struct mime_context
                              working on a MIME message and not just on
                              plain rfc822 message.  */
   
-  engine_filter_t outfilter; /* Fiter as used by ciphertext_handler.  */
+  engine_filter_t outfilter; /* Filter as used by ciphertext_handler.  */
 
   /* A linked list describing the structure of the mime message.  This
      list gets build up while parsing the message.  */
@@ -148,8 +148,8 @@ struct mime_context
   b64_state_t base64;     /* The state of the Base-64 decoder.  */
 
   int line_too_long;  /* Indicates that a received line was too long. */
-  int parser_error;   /* Indicates that we encountered a error from
-                         the parser. */
+  gpg_error_t parser_error;   /* Indicates that we encountered a error from
+                                 the parser. */
 
   /* Buffer used to constructed complete files. */
   size_t linebufsize;   /* The allocated size of the buffer. */
@@ -1000,7 +1000,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
         {
           log_error ("%s: ctx=%p, invalid structure: bad nesting level\n",
                      SRCNAME, ctx);
-          ctx->parser_error = 1;
+          ctx->parser_error = gpg_error (GPG_ERR_GENERAL);
         }
       break;
     
@@ -1067,7 +1067,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
             {
               log_error ("%s: ctx=%p, rfc822 parser failed: %s\n",
                          SRCNAME, ctx, strerror (errno));
-              ctx->parser_error = 1;
+              ctx->parser_error = gpg_error (GPG_ERR_GENERAL);
               return -1; /* Error. */
             }
 
@@ -1122,7 +1122,7 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
                       if (!ctx->preview)
                         MessageBox (ctx->hwnd, _("Error writing to stream"),
                                     _("I/O-Error"), MB_ICONERROR|MB_OK);
-                      ctx->parser_error = 1;
+                      ctx->parser_error = gpg_error (GPG_ERR_EIO);
                       return -1; /* Error. */
                     }
                 }
@@ -1206,7 +1206,12 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
         log_debug ("%s:%s: passing '%.*s'\n", 
                    SRCNAME, __func__, (int)len, message);
       plaintext_handler (ctx, message, len);
-      if (ctx->parser_error || ctx->line_too_long)
+      if (ctx->parser_error)
+        {
+          err = ctx->parser_error;
+          break;
+        }
+      else if (ctx->line_too_long)
         {
           err = gpg_error (GPG_ERR_GENERAL);
           break;
@@ -1385,7 +1390,9 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
     goto leave;
   filter = NULL;
 
-  if (ctx->parser_error || ctx->line_too_long)
+  if (ctx->parser_error)
+    err = ctx->parser_error;
+  else if (ctx->line_too_long)
     err = gpg_error (GPG_ERR_GENERAL);
 
  leave:
@@ -1511,7 +1518,7 @@ ciphermessage_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
         {
           log_error ("%s: decctx=%p, invalid structure: bad nesting level\n",
                      SRCNAME, decctx);
-          decctx->parser_error = 1;
+          decctx->parser_error = gpg_error (GPG_ERR_GENERAL);
         }
       break;
     
@@ -1569,7 +1576,7 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
             {
               log_error ("%s:%s: ctx=%p, rfc822 parser failed: %s\n",
                          SRCNAME, __func__, ctx, strerror (errno));
-              ctx->parser_error = 1;
+              ctx->parser_error = gpg_error (GPG_ERR_GENERAL);
               return -1; /* Error. */
             }
 
@@ -1599,7 +1606,7 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
                 {
                   log_debug ("%s:%s: sending ciphertext to engine failed: %s",
                              SRCNAME, __func__, gpg_strerror (err));
-                  ctx->parser_error = 1;
+                  ctx->parser_error = err;
                   return -1; /* Error. */
                 }
             }
@@ -1714,7 +1721,12 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
           if (decctx)
             {
                ciphertext_handler (decctx, buffer, nread);
-               if (ctx->parser_error || ctx->line_too_long)
+               if (decctx->parser_error)
+                 {
+                   err = decctx->parser_error;
+                   break;
+                 }
+               else if (decctx->line_too_long)
                  {
                    err = gpg_error (GPG_ERR_GENERAL);
                    break;
@@ -1737,7 +1749,9 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
     goto leave;
   filter = NULL;
 
-  if (ctx->parser_error || ctx->line_too_long)
+  if (ctx->parser_error)
+    err = ctx->parser_error;
+  else if (ctx->line_too_long)
     err = gpg_error (GPG_ERR_GENERAL);
 
  leave:

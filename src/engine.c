@@ -105,6 +105,9 @@ struct engine_filter_s
   /* A pointer used convey information from engine_encrypt_prepare to
      engine_encrypt_start.  */
   struct engine_assuan_encstate_s *encstate;
+
+  /* Counter used to optimize voluntary thread switching. */
+  ULONG switch_counter;
 };
 
 
@@ -198,6 +201,34 @@ release_filter (engine_filter_t filter)
 }
 
 
+/* This is a wraper around SwitchToThread, a syscall we unfortunately
+   need due to the lack of an sophisticated event system.  The wrapper
+   calls SwitchToThread but after a couple of immediate folliwing
+   switches, it introduces a short delays.  */
+static void
+switch_threads (engine_filter_t filter)
+{
+  ULONG count;
+
+  count = InterlockedExchangeAdd (&filter->switch_counter, 1);
+  if (count > 5)
+    {
+      InterlockedExchange (&filter->switch_counter, 5);
+      SleepEx (50, TRUE); 
+    }
+  else if (!SwitchToThread ())
+    {
+      /* No runable other thread: Fall asleep. */
+      SleepEx (5, TRUE);
+    }
+}
+
+/* Call this fucntion if some action has been done.  */
+static void
+clear_switch_threads (engine_filter_t filter)
+{
+  InterlockedExchange (&filter->switch_counter, 0);
+}
 
 
 /* This read callback is used by GPGME to read data from a filter
@@ -234,9 +265,11 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
           errno = EAGAIN;
           if (debug_filter_extra)
             log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
-          SwitchToThread ();
+          switch_threads (filter);
           return -1;
         }
+      else
+        clear_switch_threads (filter);
       if (debug_filter)
         log_debug ("%s:%s: waiting for in.condvar\n", SRCNAME, __func__);
       WaitForSingleObject (filter->in.condvar, 500);
@@ -425,8 +458,11 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
                SRCNAME, __func__, indata, (int)indatalen, filter->outfnc); 
   for (;;)
     {
+      int any;
+
       /* If there is something to write out, do this now to make space
          for more data.  */
+      any = 0;
       take_out_lock (filter, __func__);
       while (filter->out.length)
         {
@@ -447,13 +483,19 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
             memmove (filter->out.buffer, filter->out.buffer + nbytes,
                      filter->out.length - nbytes); 
           filter->out.length -= nbytes;
+          any = 1;
         }
       if (!PulseEvent (filter->out.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(out) failed", SRCNAME, __func__);
       release_out_lock (filter, __func__);
-      
-      take_in_lock (filter, __func__);
 
+      if (any)
+        clear_switch_threads (filter);
+      else
+        switch_threads (filter);
+
+      any = 0;
+      take_in_lock (filter, __func__);
       if (!indata && !indatalen)
         {
           filter->in.got_eof = 1;
@@ -480,17 +522,23 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
           memcpy (filter->in.buffer, indata, filter->in.length);
           indata    += filter->in.length;
           indatalen -= filter->in.length;
+          any = 1;
         }
+      /* Terminate the loop if the filter queue is empty OR the filter
+         is ready and there is nothing left for output.  */
       if (!filter->in.length || (filter->in.ready && !filter->out.length))
         {
           release_in_lock (filter, __func__);
-          err = 0;
+          err = filter->in.status;
           break;  /* the loop.  */
         }
       if (!PulseEvent (filter->in.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(in) failed", SRCNAME, __func__);
       release_in_lock (filter, __func__);
-      SwitchToThread ();
+      if (any)
+        clear_switch_threads (filter);
+      else
+        switch_threads (filter);
     }
 
   if (debug_filter)

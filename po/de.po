@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-03-31 18:00+0200\n"
+"POT-Creation-Date: 2008-04-02 17:45+0200\n"
 "PO-Revision-Date: 2008-03-31 18:06+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -48,7 +48,7 @@ msgstr "GpgOL - Sichern der entschlüsselten Anlage"
 msgid "Debug output (for analysing problems)"
 msgstr "Debugausgabe (zur Problemanalyse)"
 
-#: src/engine.c:372
+#: src/engine.c:405
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -68,7 +68,7 @@ msgstr ""
 "   (unter \"GnuPG für Windows\") oder auf einem anderen Weg starten.\n"
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
 
-#: src/engine.c:376 src/ext-commands.cpp:703 src/main.c:614 src/main.c:620
+#: src/engine.c:409 src/ext-commands.cpp:703 src/main.c:665 src/main.c:671
 #: src/message.cpp:326
 msgid "GpgOL"
 msgstr "GpgOL"
@@ -281,7 +281,10 @@ msgid ""
 msgstr ""
 "Unterstützung für S/MIME ist nicht eingeschaltet.\n"
 "\n"
-"Um die S/MIME Unterstützung einzuschalten, öffnen Sie bitte das Fenster mit den Einstellungen um dort die Option \"S/MIME Unterstützung einschalten\" zu aktivieren.  Sie finden die Einstellungen im Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
+"Um die S/MIME Unterstützung einzuschalten, öffnen Sie bitte das Fenster mit "
+"den Einstellungen um dort die Option \"S/MIME Unterstützung einschalten\" zu "
+"aktivieren.  Sie finden die Einstellungen im Hauptmenu unter:  Extras-"
+">Optionen->GpgOL.\n"
 
 #: src/ext-commands.cpp:702
 msgid "Could not start certificate manager"
@@ -329,12 +332,12 @@ msgstr "S/MIME zum signieren/verschlüsseln verwenden"
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
-#: src/main.c:613
+#: src/main.c:664
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
 
-#: src/main.c:619
+#: src/main.c:670
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -557,7 +560,9 @@ msgid ""
 msgstr ""
 "Eine neue Version von GpgOL ist installiert worden.\n"
 "\n"
-"Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß die die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
+"Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß "
+"die die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
+"Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
 #: src/olflange.cpp:506
 msgid ""

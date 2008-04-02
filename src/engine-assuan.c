@@ -111,6 +111,8 @@ struct work_item_s
                                     queue.  */
   OVERLAPPED ov;     /* The overlapped info structure.  */
   char buffer[1024]; /* The buffer used by ReadFile or WriteFile.  */
+
+  ULONG switch_counter; /* Used by switch_threads.  */
 };
 
 
@@ -636,6 +638,39 @@ attach_thread_input (DWORD other_tid)
 #endif /* not used.  */
 
 
+/* This is a wraper around SwitchToThread, a syscall we unfortunately
+   need due to the lack of an sophisticated event system.  The wrapper
+   calls SwitchToThread but after a couple of immediate folliwing
+   switches, it introduces a short delays.  */
+static void
+switch_threads (work_item_t item)
+{
+  ULONG count;
+
+  count = InterlockedExchangeAdd (&item->switch_counter, 1);
+  if (count > 5)
+    {
+      /* Tried too often without success.  Use Sleep until
+         clear_switch_threads has been called.  */
+      InterlockedExchange (&item->switch_counter, 5);
+      SleepEx (60, TRUE); 
+    }
+  else if (!SwitchToThread ())
+    {
+      /* No runable other thread: Fall asleep. */
+      SleepEx (8, TRUE);
+    }
+}
+
+/* Call this fucntion if some action has been done.  */
+static void
+clear_switch_threads (work_item_t item)
+{
+  InterlockedExchange (&item->switch_counter, 0);
+}
+
+
+
 
 /* Helper for async_worker_thread.  Returns true if the item's handle
    needs to be put on the wait list.  This is called with the worker
@@ -763,13 +798,16 @@ worker_start_write (work_item_t item)
   /* Read from the callback and the write to the handle.  The gpgme
      callback is expected to never block.  */
   nread = gpgme_data_read (item->data, item->buffer, sizeof item->buffer);
+  if (nread < 0 && errno == EAGAIN)
+    switch_threads (item);
+  else
+    clear_switch_threads (item);
   if (nread < 0)
     {
       if (errno == EAGAIN)
         {
 /*           log_debug ("%s:%s: [%s:%p] ignoring EAGAIN from callback", */
 /*                      SRCNAME, __func__, item->name, item->hd); */
-          SwitchToThread ();
           retval = 1;
         }
       else
@@ -955,7 +993,21 @@ async_worker_thread (void *dummy)
 /*                                          INFINITE, QS_ALLEVENTS); */
           if (n == WAIT_FAILED)
             {
+              int i;
+              DWORD hdinfo;
+                  
               log_error_w32 (-1, "%s:%s: WFMO failed", SRCNAME, __func__);
+              for (i=0; i < hdarraylen; i++)
+                {
+                  hdinfo = 0;
+                  if (!GetHandleInformation (hdarray[i], &hdinfo))
+                    log_debug_w32 (-1, "%s:%s: WFMO GetHandleInfo(%p) failed", 
+                                   SRCNAME, __func__, hdarray[i]);
+                  else
+                    log_debug ("%s:%s: WFMO GetHandleInfo(%p)=0x%lu", 
+                               SRCNAME, __func__, hdarray[i],
+                               (unsigned long)hdinfo);
+                }
               Sleep (1000);
             }
           else if (n >= 0 && n < hdarraylen)
@@ -1060,33 +1112,60 @@ async_worker_thread (void *dummy)
             {
               if (item->cld)
                 {
+                  work_item_t itm2;
+
                   if (!item->cld->final_err && item->got_error)
                     item->cld->final_err = gpg_error (GPG_ERR_EIO);
 
-                  if (!item->cld->final_err)
+                  /* Check whether there are other work items in this
+                     group we need to wait for before invoking the
+                     closure. */
+                  for (itm2=work_queue; itm2; itm2 = itm2->next)
+                    if (itm2->used && itm2 != item 
+                        && itm2->cmdid == item->cmdid
+                        && itm2->wait_on_success
+                        && !(itm2->got_ready || itm2->got_error))
+                      break;
+                  if (itm2)
                     {
-                      /* Check whether there are other work items in
-                         this group we need to wait for before
-                         invoking the closure. */
-                      work_item_t itm2;
-                      
-                      for (itm2=work_queue; itm2; itm2 = itm2->next)
-                        if (itm2->used && itm2 != item 
-                            && itm2->cmdid == item->cmdid
-                            && itm2->wait_on_success
-                            && !(itm2->got_ready || itm2->got_error))
-                          break;
-                      if (itm2)
+                      if (debug_ioworker)
+                        log_debug ("%s:%s: [%s:%p] delaying closure "
+                                   "due to [%s:%p]", SRCNAME, __func__,
+                                   item->name, item->hd, 
+                                   itm2->name, itm2->hd);
+                      item->delayed_ready = 1;
+                      if (item->cld->final_err)
                         {
-                          if (debug_ioworker)
-                            log_debug ("%s:%s: [%s:%p] delaying closure "
-                                       "due to [%s/%p]", SRCNAME, __func__,
-                                       item->name, item->hd, 
-                                       itm2->name, itm2->hd);
-                          item->delayed_ready = 1;
-                          break; 
+                          /* If we received an error we better do not
+                             assume that the server has properly
+                             closed all I/O channels.  Send a cancel
+                             to the work item we are waiting for. */
+                          if (!itm2->aborting)
+                            {
+                              if (debug_ioworker)
+                                log_debug ("%s:%s: [%s:%p] calling CancelIO",
+                                           SRCNAME, __func__,
+                                           itm2->name, itm2->hd);
+                              itm2->aborting = 1;
+                              if (!CancelIo (itm2->hd))
+                                log_error_w32 (-1, "%s:%s: [%s:%p] "
+                                               "CancelIo failed",
+                                               SRCNAME,__func__, 
+                                               itm2->name, itm2->hd);
+                            }
+                          else
+                            {
+                              if (debug_ioworker)
+                                log_debug ("%s:%s: [%s:%p] clearing "
+                                           "wait on success flag",
+                                           SRCNAME, __func__,
+                                           itm2->name, itm2->hd);
+                              itm2->wait_on_success = 0;
+                            }
                         }
+                      break; 
                     }
+
                   item->delayed_ready = 0;
                   if (debug_ioworker)
                     log_debug ("%s:%s: [%s:%p] invoking closure",
@@ -1189,18 +1268,19 @@ enqueue_callback (const char *name, assuan_context_t ctx,
 /* Remove all items from the work queue belonging to the command with
    the id CMDID.  */
 static void
-destroy_command (ULONG cmdid)
+destroy_command (ULONG cmdid, int force)
 {
   work_item_t item;
 
   EnterCriticalSection (&work_queue_lock);
   for (item = work_queue; item; item = item->next)
-    if (item->used && item->cmdid == cmdid && !item->wait_on_success)
+    if (item->used && item->cmdid == cmdid 
+        && (!item->wait_on_success || force))
       {
         if (debug_ioworker)
           log_debug ("%s:%s: [%s:%p] cmdid=%lu registered for destroy",
                      SRCNAME, __func__, item->name, item->hd, item->cmdid);
-        /* First send an I/O cancel in case the the last
+        /* First send an I/O cancel in case the last
            GetOverlappedResult returned only a partial result.  This
            works because we are always running within the
            async_worker_thread.  */
@@ -1315,7 +1395,7 @@ status_in_cb (void *opaque, const void *buffer, size_t size)
               break;
             case 1: /* Ready. */
               cld->status_ready = 1;
-              destroy_command (cld->cmdid);
+              destroy_command (cld->cmdid, 0);
               break;
             default:
               log_error ("%s:%s: invalid line from server", SRCNAME, __func__);
@@ -1432,7 +1512,7 @@ encrypt_closure (closure_data_t cld)
    correct relationship between a popups and the active window.  If
    this function returns success, the data objects may only be
    destroyed after an engine_wait or engine_cancel.  On success the
-   fucntion returns a pojunter to the encryption state and thus
+   function returns a poiunter to the encryption state and thus
    requires that op_assuan_encrypt_bottom will be run later. */
 int
 op_assuan_encrypt (protocol_t protocol, 
@@ -1579,11 +1659,15 @@ op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
 
   if (err)
     {
-      /* Fixme: Cancel stuff in the work_queue. */
+      xfree (encstate->cld);
+      encstate->cld = NULL;
+      engine_private_set_cancel (encstate->filter, NULL);
       close_pipe (encstate->inpipe);
       close_pipe (encstate->outpipe);
-      xfree (encstate->cld);
+      if (cancel)
+        destroy_command (encstate->cmdid, 1);
       assuan_disconnect (encstate->ctx);
+      encstate->ctx = NULL;
     }
   else
     engine_private_set_cancel (encstate->filter, encstate->ctx);

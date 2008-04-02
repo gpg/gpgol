@@ -661,24 +661,26 @@ the UI, useful only for debugging.  Setting it to values larger than 1
 make the log file output more verbose; these are actually bit flags
 according to the following table (which may change with any release):
 @table @code
-@item 2  (0x0002)
+@item 2 (0x0002) (ioworker)
 Tell what the Assuan I/O scheduler is doing.
-@item 4  (0x0004)
+@item 4 (0x0004) (ioworker-extra)
 Even more verbose Assuan I/O scheduler reporting. 
-@item 8  (0x0008)
+@item 8  (0x0008) (filter)
 Tell what the filter I/O system is doing.
-@item 16 (0x0010)
+@item 16 (0x0010) (filter-extra)
 Tell how the filter I/O locks the resources.
-@item 32 (0x0020)
+@item 32 (0x0020) (memory)
 Tell about resource allocation.
-@item 64 (0x0040)
+@item 64 (0x0040) (commands)
 Tell about command events.
-@item 128 (0x0080)
+@item 128 (0x0080) (mime-parser)
 Tell what the MIME parser is doing
-@item 256 (0x0100)
+@item 256 (0x0100) (mime-data)
 Print data lines while parsing MIME.
 @end table
-You may use the regular C-syntax for entering the value.
+You may use the regular C-syntax for entering the value.  As an
+alternative you may use the names ofthe flags, separated by space or
+comma.
 
 
 @itemx HKCU\Software\GNU\GpgOL:logFile
