@@ -99,11 +99,12 @@ struct work_item_s
   gpgme_data_t data; /* The data object we write to or read from.  */
   int writing;       /* If true we are going to write to HD.  */
   HANDLE hd;         /* The handle we read from or write to.  */
+  int inactive;      /* If set, the handle is not yet active.  */
   int io_pending;    /* I/O is still pending.  The value is the number
                         of bytes to be written or the size of the
                         buffer given to ReadFile. */
   int got_ready;     /* Operation finished.  */
-  int delayed_ready; /* Ready but delayed to to a missing prerequesite.  */
+  int delayed_ready; /* Ready but delayed due to a missing prerequesite.  */
   int got_error;     /* An error as been encountered.  */
   int aborting;      /* Set to true after a CancelIO has been issued.  */
   void (*finalize)(work_item_t); /* Function called immediately before
@@ -672,13 +673,49 @@ clear_switch_threads (work_item_t item)
 
 
 
+/* Helper to write to the callback.  */
+static void
+write_to_callback (work_item_t item, DWORD nbytes)
+{
+  int nwritten;
+
+  if (!nbytes)
+    {
+      /* (With overlapped, EOF is not indicated by NBYTES==0.)  */
+      log_error ("%s:%s: [%s:%p] short read (0 bytes)",
+                 SRCNAME, __func__, item->name, item->hd);
+    }
+  else
+    {
+      assert (nbytes > 0);
+      nwritten = gpgme_data_write (item->data, item->buffer, nbytes);
+      if (nwritten < 0)
+        {
+          log_error ("%s:%s: [%s:%p] error writing to callback: %s",
+                     SRCNAME, __func__, item->name, item->hd,strerror (errno));
+          item->got_error = 1;
+        }
+      else if (nwritten < nbytes)
+        {
+          log_error ("%s:%s: [%s:%p] short write to callback (%d of %lu)",
+                     SRCNAME, __func__, item->name, item->hd, nwritten,nbytes);
+          item->got_error = 1;
+        }
+      else
+        {
+          if (debug_ioworker)
+            log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback",
+                       SRCNAME, __func__, item->name, item->hd, nwritten);
+        }
+    }
+}
+
 /* Helper for async_worker_thread.  Returns true if the item's handle
    needs to be put on the wait list.  This is called with the worker
    mutex hold. */
 static int
 worker_start_read (work_item_t item)
 {
-  int nwritten;
   DWORD nbytes;
   int retval = 0;
 
@@ -687,34 +724,7 @@ worker_start_read (work_item_t item)
   if (ReadFile (item->hd, item->buffer, sizeof item->buffer,
                 &nbytes, &item->ov) )
     {
-      /* (With overlapped, EOF is not indicated by NBYTES==0.)  */
-      if (!nbytes)
-        log_error ("%s:%s: [%s:%p] short read (0 bytes)",
-                   SRCNAME, __func__, item->name, item->hd);
-      else
-        {
-          nwritten = gpgme_data_write (item->data, item->buffer, nbytes);
-          if (nwritten < 0)
-            {
-              log_error ("%s:%s: [%s:%p] writing to callback failed: %s",
-                         SRCNAME, __func__, item->name, item->hd,
-                         strerror (errno));
-              item->got_error = 1;
-            }
-          else if (nwritten < nbytes)
-            {
-              log_error ("%s:%s: [%s:%p] short write to callback (%d of %lu)",
-                         SRCNAME, __func__, item->name, item->hd,
-                         nwritten, nbytes);
-              item->got_error = 1;
-            }
-          else
-            {
-              if (debug_ioworker)
-                log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback", 
-                           SRCNAME, __func__, item->name, item->hd, nwritten);
-            }
-        }
+      write_to_callback (item, nbytes);
       retval = 1;
     }
   else 
@@ -753,34 +763,7 @@ worker_start_read (work_item_t item)
 static void
 worker_check_read (work_item_t item, DWORD nbytes)
 {
-  int nwritten;
-
-  if (!nbytes)
-    log_error ("%s:%s: [%s:%p] short read (0 bytes)",
-               SRCNAME, __func__, item->name, item->hd);
-  else
-    {
-      assert (nbytes > 0);
-      nwritten = gpgme_data_write (item->data, item->buffer, nbytes);
-      if (nwritten < 0)
-        {
-          log_error ("%s:%s: [%s:%p] error writing to callback: %s",
-                     SRCNAME, __func__, item->name, item->hd,strerror (errno));
-          item->got_error = 1;
-        }
-      else if (nwritten < nbytes)
-        {
-          log_error ("%s:%s: [%s:%p] short write to callback (%d of %lu)",
-                     SRCNAME, __func__, item->name, item->hd, nwritten,nbytes);
-          item->got_error = 1;
-        }
-      else
-        {
-          if (debug_ioworker)
-            log_debug ("%s:%s: [%s:%p] wrote %d bytes to callback",
-                       SRCNAME, __func__, item->name, item->hd, nwritten);
-        }
-    }
+  write_to_callback (item, nbytes);
 }
 
 
@@ -795,23 +778,26 @@ worker_start_write (work_item_t item)
   DWORD nbytes;
   int retval = 0;
 
+  assert (!item->io_pending);
+
   /* Read from the callback and the write to the handle.  The gpgme
      callback is expected to never block.  */
   nread = gpgme_data_read (item->data, item->buffer, sizeof item->buffer);
-  if (nread < 0 && errno == EAGAIN)
-    switch_threads (item);
-  else
-    clear_switch_threads (item);
   if (nread < 0)
     {
       if (errno == EAGAIN)
         {
-/*           log_debug ("%s:%s: [%s:%p] ignoring EAGAIN from callback", */
-/*                      SRCNAME, __func__, item->name, item->hd); */
+          /* EAGAIN from the callback.  That means that data is
+             currently not available.  */
+          if (debug_ioworker_extra)
+            log_debug ("%s:%s: [%s:%p] EAGAIN received from callback",
+                       SRCNAME, __func__, item->name, item->hd);
+          switch_threads (item);
           retval = 1;
         }
       else
         {
+          clear_switch_threads (item);
           log_error ("%s:%s: [%s:%p] error reading from callback: %s",
                      SRCNAME, __func__, item->name, item->hd,strerror (errno));
           item->got_error = 1;
@@ -819,14 +805,15 @@ worker_start_write (work_item_t item)
     }
   else if (!nread)
     {
+      clear_switch_threads (item);
       if (debug_ioworker)
         log_debug ("%s:%s: [%s:%p] EOF received from callback",
                    SRCNAME, __func__, item->name, item->hd);
       item->got_ready = 1;
-      retval = 1;
     }
   else 
     {                  
+      clear_switch_threads (item);
       if (WriteFile (item->hd, item->buffer, nread, &nbytes, &item->ov))
         {
           if (nbytes < nread)
@@ -841,7 +828,7 @@ worker_start_write (work_item_t item)
                 log_debug ("%s:%s: [%s:%p] wrote %lu bytes", 
                            SRCNAME, __func__, item->name, item->hd, nbytes);
             }
-          retval = 1;
+          retval = 1; /* Keep on waiting for space in the pipe.  */
         }
       else 
         {
@@ -849,11 +836,12 @@ worker_start_write (work_item_t item)
 
           if (syserr == ERROR_IO_PENDING)
             {
+              /* This is the common case.  Start the async I/O.  */
               if (debug_ioworker)
                 log_debug ("%s:%s: [%s:%p] io(write) pending (%d bytes)",
                            SRCNAME, __func__, item->name, item->hd, nread);
               item->io_pending = nread;
-              retval = 1;
+              retval = 1; /* Need to wait for the I/O to complete.  */
             }
           else
             {
@@ -905,12 +893,17 @@ async_worker_thread (void *dummy)
 
   for (;;)
     {
-      /* Process our queue and fire up async I/O requests.  */
+      /* 
+         Step 1: Walk our queue and fire up async I/O requests.  
+       */
       if (debug_ioworker_extra)
-        log_debug ("%s:%s: processing work queue", SRCNAME, __func__);
+        log_debug ("%s:%s: step 1 - scanning work queue", SRCNAME, __func__);
       EnterCriticalSection (&work_queue_lock);
+      
+      /* We always need to wait on the the work queue event.  */
       hdarraylen = 0;
       hdarray[hdarraylen++] = work_queue_event;
+
       count = 0;
       any_ready = 0;
       for (item = work_queue; item; item = item->next)
@@ -934,8 +927,15 @@ async_worker_thread (void *dummy)
                            SRCNAME, __func__, item->name, item->hd);
               continue;
             }
-          
-          if (item->io_pending)
+
+          /* Decide whether we need to wait for this item.  This is
+             the case if the previous WriteFile or ReadFile indicated
+             that I/O is pending or if the worker_start_foo function
+             indicated that we should wait.  Put handles we want to
+             wait upon into HDARRAY. */ 
+          if (item->inactive)
+            addit = 0;
+          else if (item->io_pending)
             addit = 1;
           else if (item->writing)
             addit = worker_start_write (item);
@@ -945,26 +945,47 @@ async_worker_thread (void *dummy)
           if (addit)
             {
               hdarray[hdarraylen++] = item->hd;
-              item->waiting = 1; /* Just for the trace output.  */
+              item->waiting = 1; /* Only required for debugging.  */
             }
+
+          /* Set a flag if this work item is ready or got an error.  */
           if (!item->delayed_ready && (item->got_error || item->got_ready))
             any_ready = 1;
         }
       LeaveCriticalSection (&work_queue_lock);
 
+      /*
+         Step 2: Wait for events or handle activitity.
+       */
       if (any_ready)
         {
+          /* There is at least one work item which is ready or got an
+             error.  Skip the wait step so that we process it
+             immediately.  */
           if (debug_ioworker_extra)
-            log_debug ("%s:%s: %d items in queue; skipping wait", 
+            log_debug ("%s:%s: step 2 - %d items in queue; skipping wait", 
                        SRCNAME, __func__, count);
         }
       else
         {
-          /* First process any window messages of this thread.  Do
+          if (debug_ioworker_extra)
+            {
+              log_debug ("%s:%s: step 2 - "
+                         "%d items in queue; waiting for %d items:",
+                         SRCNAME, __func__, count, hdarraylen-1);
+              for (item = work_queue; item; item = item->next)
+                {
+                  if (item->waiting)
+                    log_debug ("%s:%s: [%s:%p]",
+                               SRCNAME, __func__, item->name, item->hd);
+                }
+            }
+          /* [Currently not used]
+             First process any window messages of this thread.  Do
              this before wating so that the message queue is cleared
              before waiting and we don't get stucked due to messages
              not removed.  We need to process the message queue also
-             after the wait becuase we will only get to here if there
+             after the wait because we will only get to here if there
              is actual ui-server work to be done but some messages
              might still be in the queue.  */
 /*           { */
@@ -977,22 +998,14 @@ async_worker_thread (void *dummy)
 /*               } */
 /*           } */
 
-          if (debug_ioworker_extra)
-            {
-              log_debug ("%s:%s: %d items in queue; waiting for %d items:",
-                         SRCNAME, __func__, count, hdarraylen-1);
-              for (item = work_queue; item; item = item->next)
-                {
-                  if (item->waiting)
-                    log_debug ("%s:%s: [%s:%p]",
-                               SRCNAME, __func__, item->name, item->hd);
-                }
-            }
           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE);
 /*           n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE, */
 /*                                          INFINITE, QS_ALLEVENTS); */
           if (n == WAIT_FAILED)
             {
+              /* The WFMO failed.  This is an error; to help debugging
+                 we now print information about all the handles we
+                 wanted to wait upon.  */
               int i;
               DWORD hdinfo;
                   
@@ -1013,14 +1026,14 @@ async_worker_thread (void *dummy)
           else if (n >= 0 && n < hdarraylen)
             {
               if (debug_ioworker_extra)
-                log_debug ("%s:%s: WFMO succeeded (res=%d)",
-                           SRCNAME,__func__, n);
+                log_debug ("%s:%s: WFMO succeeded (res=%d, hd=%p)",
+                           SRCNAME, __func__, n, hdarray[n]);
             }
           else if (n == hdarraylen)
             {
               if (debug_ioworker_extra)
-                log_debug ("%s:%s: WFMO succeeded - MSGEVENT (res=%d)",
-                           SRCNAME,__func__, n);
+                log_debug ("%s:%s: WFMO succeeded (res=%d, msgevent)",
+                           SRCNAME, __func__, n);
             }
           else
             {
@@ -1028,7 +1041,8 @@ async_worker_thread (void *dummy)
               Sleep (1000);
             }
 
-          /* Try to process the message queue.  */
+          /* [Currently not used] 
+             Try to process the message queue.  */
 /*           { */
 /*             MSG msg; */
             
@@ -1038,20 +1052,29 @@ async_worker_thread (void *dummy)
 /*                 DispatchMessage (&msg); */
 /*               } */
 /*           } */
-
         }
 
-
-      /* Handle completion status.  */
+      /*
+         Step 3: Handle I/O completion status.
+       */
       EnterCriticalSection (&work_queue_lock);
       if (debug_ioworker_extra)
-        log_debug ("%s:%s: checking completion states", SRCNAME, __func__);
+        log_debug ("%s:%s: step 3 - checking completion states", 
+                   SRCNAME, __func__);
       for (item = work_queue; item; item = item->next)
         {
-          if (!item->io_pending)
-            ;
+          if (!item->io_pending || item->inactive)
+            {
+              /* No I/O is pending for that item, thus there is no
+                 need to check a completion status.  */
+            }
           else if (GetOverlappedResult (item->hd, &item->ov, &nbytes, FALSE))
             {
+              /* An overlapped I/O result is available.  Check that
+                 the returned number of bytes are plausible and clear
+                 the I/O pending flag of this work item.  For a a read
+                 item worker_check_read forwards the received data to
+                 the caller.  */
               if (item->writing)
                 worker_check_write (item, nbytes);
               else
@@ -1060,32 +1083,33 @@ async_worker_thread (void *dummy)
             }
           else 
             {
+              /* Some kind of error occured: Set appropriate
+                 flags.  */
               int syserr = GetLastError ();
               if (syserr == ERROR_IO_INCOMPLETE)
-                ;
-              else if (!item->writing && syserr == ERROR_HANDLE_EOF)
                 {
-                  /* Got EOF.  */
-                  if (debug_ioworker)
-                    log_debug ("%s:%s: [%s:%p] EOF received",
-                               SRCNAME, __func__, item->name, item->hd);
-                  item->io_pending = 0;
-                  item->got_ready = 1;
+                  /* This is a common case, the I/O has not yet
+                     completed for this work item.  No need for any
+                     action. */
                 }
-              else if (!item->writing && syserr == ERROR_BROKEN_PIPE)
+              else if (!item->writing && (syserr == ERROR_HANDLE_EOF
+                                          || syserr == ERROR_BROKEN_PIPE) )
                 {
                   /* Got EOF.  */
                   if (debug_ioworker)
-                    log_debug ("%s:%s: [%s:%p] EOF (broken pipe) received",
-                               SRCNAME, __func__, item->name, item->hd);
+                    log_debug ("%s:%s: [%s:%p] EOF%s received",
+                               SRCNAME, __func__, item->name, item->hd,
+                               syserr==ERROR_BROKEN_PIPE?" (broken pipe)":"");
                   item->io_pending = 0;
                   item->got_ready = 1;
                 }
               else
                 {
+                  /* Something went wrong.  We better cancel the I/O. */
                   log_error_w32 (syserr,
                                  "%s:%s: [%s:%p] GetOverlappedResult failed",
                                  SRCNAME, __func__, item->name, item->hd);
+                  item->io_pending = 0;
                   item->got_error = 1;
                   if (!item->aborting)
                     {
@@ -1101,19 +1125,32 @@ async_worker_thread (void *dummy)
         }
       LeaveCriticalSection (&work_queue_lock);
 
+      /* 
+         Step 4: Act on the flags set in step 3.
+       */
+
+      /* Give the system a chance to process cancel I/O etc. */
       SwitchToThread ();
 
       EnterCriticalSection (&work_queue_lock);
       if (debug_ioworker_extra)
-        log_debug ("%s:%s: cleaning up work queue", SRCNAME, __func__); 
+        log_debug ("%s:%s: step 4 - cleaning up work queue",
+                   SRCNAME, __func__); 
       for (item = work_queue; item; item = item->next)
         {
           if (item->used && (item->got_ready || item->got_error))
             {
+              /* This is a work item either flagged as ready or as in
+                 error state. */
+              
               if (item->cld)
                 {
+                  /* Perform the closure.  */
                   work_item_t itm2;
 
+                  /* If the Assuan state did not return an ERR but the
+                     I/O machinery set this work item int the error
+                     state, we set the final error to reflect this.  */
                   if (!item->cld->final_err && item->got_error)
                     item->cld->final_err = gpg_error (GPG_ERR_EIO);
 
@@ -1128,6 +1165,8 @@ async_worker_thread (void *dummy)
                       break;
                   if (itm2)
                     {
+                      /* We need to delay the closure until all work
+                         items we depend on are ready.  */
                       if (debug_ioworker)
                         log_debug ("%s:%s: [%s:%p] delaying closure "
                                    "due to [%s:%p]", SRCNAME, __func__,
@@ -1136,8 +1175,8 @@ async_worker_thread (void *dummy)
                       item->delayed_ready = 1;
                       if (item->cld->final_err)
                         {
-                          /* If we received an error we better do not
-                             assume that the server has properly
+                          /* However, if we received an error we better
+                             do not assume that the server has properly
                              closed all I/O channels.  Send a cancel
                              to the work item we are waiting for. */
                           if (!itm2->aborting)
@@ -1155,6 +1194,9 @@ async_worker_thread (void *dummy)
                             }
                           else
                             {
+                              /* Ooops second time here: Clear the
+                                 wait flag so that we won't get to
+                                 here anymore.  */
                               if (debug_ioworker)
                                 log_debug ("%s:%s: [%s:%p] clearing "
                                            "wait on success flag",
@@ -1163,9 +1205,9 @@ async_worker_thread (void *dummy)
                               itm2->wait_on_success = 0;
                             }
                         }
-                      break; 
+                      goto step4_cont;
                     }
-
+                  
                   item->delayed_ready = 0;
                   if (debug_ioworker)
                     log_debug ("%s:%s: [%s:%p] invoking closure",
@@ -1174,11 +1216,13 @@ async_worker_thread (void *dummy)
                   item->cld->closure (item->cld);
                   xfree (item->cld);
                   item->cld = NULL;
-                }
+                } /* End closure processing.  */
 
               item->got_ready = 0;
               item->finalize (item);
               item->used = 0;
+            step4_cont:
+              ;
             }
         }
 
@@ -1226,7 +1270,8 @@ static void
 enqueue_callback (const char *name, assuan_context_t ctx, 
                   gpgme_data_t data, HANDLE hd,
                   int for_write, void (*fin_handler)(work_item_t),
-                  ULONG cmdid, closure_data_t cld, int wait_on_success)
+                  ULONG cmdid, closure_data_t cld, 
+                  int wait_on_success, int inactive)
 {
   work_item_t item;
   int created = 0;
@@ -1250,6 +1295,7 @@ enqueue_callback (const char *name, assuan_context_t ctx,
   item->data = data;
   item->writing = for_write;
   item->hd = hd;
+  item->inactive = inactive;
   item->io_pending = 0;
   item->got_ready = 0;
   item->delayed_ready = 0;
@@ -1265,8 +1311,20 @@ enqueue_callback (const char *name, assuan_context_t ctx,
 }
 
 
-/* Remove all items from the work queue belonging to the command with
-   the id CMDID.  */
+/* Set all items of CMDID into the active state.  */
+static void
+set_items_active (ULONG cmdid)
+{
+  work_item_t item;
+
+  EnterCriticalSection (&work_queue_lock);
+  for (item = work_queue; item; item = item->next)
+    if (item->used && item->cmdid == cmdid)
+      item->inactive = 0;
+  LeaveCriticalSection (&work_queue_lock);
+}
+
+
 static void
 destroy_command (ULONG cmdid, int force)
 {
@@ -1429,6 +1487,9 @@ start_command (assuan_context_t ctx, closure_data_t cld,
   assuan_fd_t fds[5];
   int nfds;
 
+  if (debug_ioworker)
+    log_debug ("%s:%s: sending `%s'", SRCNAME, __func__, line);
+
   /* Get the fd used by assuan for status channel reads.  This is the
      first fd returned by assuan_get_active_fds for read fds.  */
   nfds = assuan_get_active_fds (ctx, 0, fds, DIM (fds));
@@ -1448,8 +1509,9 @@ start_command (assuan_context_t ctx, closure_data_t cld,
       return err;
     }
 
+  set_items_active (cmdid);
   enqueue_callback ("status", ctx, cld->status_data, fds[0], 0,
-                    noclose_finalize_handler, cmdid, cld, 0);
+                    noclose_finalize_handler, cmdid, cld, 0, 0);
   cld = NULL; /* Now belongs to the status work item.  */
 
   /* Process the work queue.  */
@@ -1603,10 +1665,13 @@ op_assuan_encrypt (protocol_t protocol,
   if (err)
     goto leave;
 
+  /* The work items are created as inactive, so that the worker thread
+     ignores them.  They are set to active by with the start_command
+     function called by op_assuan_encrypt_bottom.  */
   enqueue_callback (" input", ctx, indata, inpipe[1], 1, finalize_handler,
-                    cmdid, NULL, 0); 
+                    cmdid, NULL, 0, 1); 
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
-                    cmdid, NULL, 1 /* Wait on success */); 
+                    cmdid, NULL, 1 /* Wait on success */, 1); 
 
   encstate = xcalloc (1, sizeof *encstate);
   encstate->filter = filter;
@@ -1771,9 +1836,9 @@ op_assuan_sign (protocol_t protocol,
     goto leave;
 
   enqueue_callback (" input", ctx, indata, inpipe[1], 1, finalize_handler,
-                    cmdid, NULL, 0); 
+                    cmdid, NULL, 0, 0); 
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
-                    cmdid, NULL, 1 /* Wait on success */); 
+                    cmdid, NULL, 1 /* Wait on success */, 0); 
 
   snprintf (line, sizeof line, "SIGN --protocol=%s --detached",
             protocol_name);
@@ -1860,9 +1925,9 @@ op_assuan_decrypt (protocol_t protocol,
     goto leave;
 
   enqueue_callback (" input", ctx, indata, inpipe[1], 1, finalize_handler,
-                    cmdid, NULL, 0); 
+                    cmdid, NULL, 0, 0); 
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
-                    cmdid, NULL, 1 /* Wait on success */); 
+                    cmdid, NULL, 1 /* Wait on success */, 0); 
 
   snprintf (line, sizeof line, "DECRYPT --protocol=%s%s",
             protocol_name, with_verify? "":" --no-verify");
@@ -1992,9 +2057,9 @@ op_assuan_verify (gpgme_protocol_t protocol,
       if (err)
         goto leave;
       enqueue_callback ("   msg", ctx, msgdata, msgpipe[1], 1,
-                        finalize_handler, cmdid, NULL, 0); 
+                        finalize_handler, cmdid, NULL, 0, 0); 
       enqueue_callback ("   sig", ctx, sigdata, sigpipe[1], 1, 
-                        finalize_handler, cmdid, NULL, 0); 
+                        finalize_handler, cmdid, NULL, 0, 0); 
     }
   else 
     {
@@ -2009,9 +2074,9 @@ op_assuan_verify (gpgme_protocol_t protocol,
       if (err)
         goto leave;
       enqueue_callback ("   msg", ctx, msgdata, msgpipe[1], 1,
-                        finalize_handler, cmdid, NULL, 0); 
+                        finalize_handler, cmdid, NULL, 0, 0); 
       enqueue_callback ("   out", ctx, outdata, outpipe[0], 0,
-                        finalize_handler, cmdid, NULL, 1); 
+                        finalize_handler, cmdid, NULL, 1, 0); 
     }
 
   snprintf (line, sizeof line, "VERIFY --protocol=%s",  protocol_name);

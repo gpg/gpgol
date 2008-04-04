@@ -1,3 +1,11 @@
+2008-04-04  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.11.
+
+2008-04-02  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.10.
+
 2008-04-01  Werner Koch  <wk@g10code.com>
 
 	* configure.ac (AC_INIT): Fix quoting.

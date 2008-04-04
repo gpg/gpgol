@@ -1,3 +1,17 @@
+2008-04-04  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (worker_start_read, worker_check_read): Factor
+	common code out to ..
+	(write_to_callback): .. new.
+	(async_worker_thread): Better comments and minor changes.
+	(enqueue_callback): Add arg INACTIVE.
+	(set_items_active): New.
+	(start_command): Set items active.
+	(op_assuan_encrypt): Create input and output items as inactive.
+	(async_worker_thread): Handle the inactive flag.
+
+	* common.c (gpgol_spawn_detached): Do not inherit handles.
+
 2008-04-02  Werner Koch  <wk@g10code.com>
 
 	* engine-assuan.c (destroy_command): Add arg FORCE.

@@ -247,7 +247,9 @@ do_log (const char *fmt, va_list a, int w32err, int err,
       return;
     }
   
-  fprintf (logfp, "%lu/", (unsigned long)GetCurrentThreadId ());
+  fprintf (logfp, "%05lu/%lu/", 
+           ((unsigned long)GetTickCount () % 100000),
+           (unsigned long)GetCurrentThreadId ());
   if (err == 1)
     fputs ("ERROR/", logfp);
   vfprintf (logfp, fmt, a);

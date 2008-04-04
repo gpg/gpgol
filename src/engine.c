@@ -255,7 +255,7 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
       if (filter->in.got_eof || filter->in.ready)
         {
           release_in_lock (filter, __func__);
-         if (debug_filter)
+          if (debug_filter)
             log_debug ("%s:%s: returning EOF\n", SRCNAME, __func__);
           return 0; /* Return EOF. */
         }

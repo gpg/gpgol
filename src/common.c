@@ -31,6 +31,7 @@
 #endif
 #include <time.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "common.h"
 
@@ -788,7 +789,7 @@ generate_boundary (char *buffer)
 }
 
 
-/* Fork and exec the program gioven in CMDLINE with /dev/null as
+/* Fork and exec the program given in CMDLINE with /dev/null as
    stdin, stdout and stderr.  Returns 0 on success.  */
 int
 gpgol_spawn_detached (const char *cmdline)
@@ -818,7 +819,7 @@ gpgol_spawn_detached (const char *cmdline)
                       cmdline_copy,  /* Command line arguments.  */
                       &sec_attr,     /* Process security attributes.  */
                       &sec_attr,     /* Thread security attributes.  */
-                      TRUE,          /* Inherit handles.  */
+                      FALSE,          /* Inherit handles.  */
                       cr_flags,      /* Creation flags.  */
                       NULL,          /* Environment.  */
                       NULL,          /* Use current drive/directory.  */
