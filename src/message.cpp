@@ -53,9 +53,11 @@ ul_release (LPVOID punk, const char *func)
 
 
 /* A helper function used by OnRead and OnOpen to dispatch the
-   message.  Returns true if the message has been processed.  */
+   message.  If FORCE is true, the force flag is passed to the
+   verification or decryption.  Returns true if the message has been
+   processed.  */
 bool
-message_incoming_handler (LPMESSAGE message, HWND hwnd)
+message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
 {
   bool retval = false;
   msgtype_t msgtype;
@@ -74,8 +76,8 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd)
          latter decrypt command or when viewed a second time all has
          been set.  Note that we should have similar code for some
          message classes in GpgolUserEvents:OnSelectionChange; but
-         tehre are a couiple of problems.  */
-      if (pass == 1 && !mapi_has_sig_status (message))
+         tehre are a couple of problems.  */
+      if (pass == 1 && !force && !mapi_has_sig_status (message))
         {
           log_debug ("%s:%s: message class not yet checked - doing now\n",
                      SRCNAME, __func__);
@@ -84,7 +86,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd)
         }
       break;
     case MSGTYPE_SMIME:
-      if (pass == 1 && opt.enable_smime)
+      if (pass == 1 && !force && opt.enable_smime)
         {
           log_debug ("%s:%s: message class not checked with smime enabled "
                      "- doing now\n", SRCNAME, __func__);
@@ -100,36 +102,36 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd)
       log_debug ("%s:%s: processing multipart signed message\n", 
                  SRCNAME, __func__);
       retval = true;
-      message_verify (message, msgtype, 0, hwnd);
+      message_verify (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       log_debug ("%s:%s: processing multipart encrypted message\n",
                  SRCNAME, __func__);
       retval = true;
-      message_decrypt (message, msgtype, 0, hwnd);
+      message_decrypt (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
       log_debug ("%s:%s: processing opaque signed message\n", 
                  SRCNAME, __func__);
       retval = true;
-      message_verify (message, msgtype, 0, hwnd);
+      message_verify (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_CLEAR_SIGNED:
       log_debug ("%s:%s: processing clear signed pgp message\n", 
                  SRCNAME, __func__);
       retval = true;
-      message_verify (message, msgtype, 0, hwnd);
+      message_verify (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
       log_debug ("%s:%s: processing opaque encrypted message\n",
                  SRCNAME, __func__);
       retval = true;
-      message_decrypt (message, msgtype, 0, hwnd);
+      message_decrypt (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_PGP_MESSAGE:
       log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
       retval = true;
-      message_decrypt (message, msgtype, 0, hwnd);
+      message_decrypt (message, msgtype, force, hwnd);
       break;
     }
 
@@ -152,9 +154,6 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
   hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
   if (SUCCEEDED (hr))
     {
-      /* (old: If the message was protected we don't allow a fallback to the
-         OOM display methods.)  Now: As it is difficult to find the
-         actual window we now use the OOM display always.  */
       err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
                                             &ishtml, &wasprotected);
       if (!err && body)
@@ -162,12 +161,12 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
           put_outlook_property (eecb, "GpgOLStatus", 
                                 mapi_get_sig_status (message));
 
-          update_display (hwnd, /*wasprotected? NULL:*/ eecb, ishtml, body);
+          update_display (hwnd, eecb, wasprotected, ishtml, body);
         }
       else
         {
           put_outlook_property (eecb, "GpgOLStatus", "?");
-          update_display (hwnd, NULL, 0, 
+          update_display (hwnd, NULL, 0, 0, 
                           _("[Crypto operation failed - "
                             "can't show the body of the message]"));
         }
@@ -184,40 +183,13 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
 }
 
 
+
 /* Helper for message_wipe_body_cruft.  */
 static void
 do_wipe_body (LPMESSAGE message)
 {
-  HRESULT hr;
-  SPropTagArray proparray;
-  int anyokay = 0;
-  
-  proparray.cValues = 1;
-  proparray.aulPropTag[0] = PR_BODY;
-  hr = message->DeleteProps (&proparray, NULL);
-  if (hr)
-    log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed", SRCNAME, __func__);
-  else
-    anyokay++;
-            
-  proparray.cValues = 1;
-  proparray.aulPropTag[0] = PR_BODY_HTML;
-  message->DeleteProps (&proparray, NULL);
-  if (hr)
-    log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
-                   SRCNAME, __func__);
-  else
-    anyokay++;
-  
-  if (anyokay)
-    {
-      hr = message->SaveChanges (KEEP_OPEN_READWRITE);
-      if (hr)
-        log_error_w32 (hr, "%s:%s: SaveChanges failed", SRCNAME, __func__); 
-      else
-        log_debug ("%s:%s: SaveChanges succeded; body cruft removed",
-                   SRCNAME, __func__); 
-    }
+  if (!mapi_delete_body_props (message, KEEP_OPEN_READWRITE))
+    log_debug ("%s:%s: body cruft removed", SRCNAME, __func__); 
 }
 
 
@@ -513,7 +485,6 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
 int
 message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 {
-  HRESULT hr;
   mapi_attach_item_t *table = NULL;
   LPSTREAM opaquestream = NULL;
   int moss_idx = -1;
@@ -683,11 +654,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   else
     mapi_set_sig_status (message, "! Good signature");
 
-  hr = message->SaveChanges (KEEP_OPEN_READWRITE);
-  if (hr)
-    log_error_w32 (hr, "%s:%s: SaveChanges failed",
-                   SRCNAME, __func__); 
-
+  mapi_save_changes (message, KEEP_OPEN_READWRITE);
 
   mapi_release_attach_table (table);
   return 0;
@@ -809,9 +776,7 @@ pgp_body_to_attachment (LPMESSAGE message)
     }
   newatt->Release ();
   newatt = NULL;
-  hr = message->SaveChanges (KEEP_OPEN_READWRITE);
-  if (hr)
-    log_error ("%s:%s: SaveChanges failed: hr=%#lx\n", SRCNAME, __func__, hr); 
+  hr = mapi_save_changes (message, KEEP_OPEN_READWRITE);
 
  leave:
   if (outstream)

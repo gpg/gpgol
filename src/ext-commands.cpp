@@ -102,9 +102,7 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_nCmdProtoPgpmime = 0;
   m_nCmdProtoSmime = 0;
   m_nCmdEncrypt = 0;  
-  m_nCmdDecrypt = 0;  
   m_nCmdSign = 0; 
-  m_nCmdCheckSig = 0;
   m_nCmdKeyManager = 0;
   m_nCmdCryptoState = 0;
   m_nCmdDebug0 = 0;
@@ -210,6 +208,29 @@ check_menu (LPEXCHEXTCALLBACK eecb, UINT menu_id, int checked)
                eecb, menu_id, checked, menu);
   CheckMenuItem (menu, menu_id, 
                  MF_BYCOMMAND | (checked?MF_CHECKED:MF_UNCHECKED));
+}
+
+void
+GpgolExtCommands::update_protocol_menu (LPEXCHEXTCALLBACK eecb)
+{
+  switch (m_pExchExt->m_protoSelection)
+    {
+    case PROTOCOL_OPENPGP:
+      check_menu (eecb, m_nCmdProtoAuto, FALSE);
+      check_menu (eecb, m_nCmdProtoPgpmime, TRUE);
+      check_menu (eecb, m_nCmdProtoSmime, FALSE);
+      break;
+    case PROTOCOL_SMIME:
+      check_menu (eecb, m_nCmdProtoAuto, FALSE);
+      check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
+      check_menu (eecb, m_nCmdProtoSmime, TRUE);
+      break;
+    default:
+      check_menu (eecb, m_nCmdProtoAuto, TRUE);
+      check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
+      check_menu (eecb, m_nCmdProtoSmime, FALSE);
+      break;
+    }
 }
 
 
@@ -379,7 +400,6 @@ GpgolExtCommands::InstallCommands (
               && (body = msgcache_get (key, keylen, &refhandle)) 
               && (pDisp = find_outlook_property (eecb, "Body", &dispid)))
             {
-#if 1
               dispparams.cNamedArgs = 1;
               dispparams.rgdispidNamedArgs = &dispid_put;
               dispparams.cArgs = 1;
@@ -392,10 +412,7 @@ GpgolExtCommands::InstallCommands (
               xfree (dispparams.rgvarg[0].bstrVal);
               log_debug ("%s:%s: PROPERTYPUT(body) result -> %#lx\n",
                          SRCNAME, __func__, hr);
-#else
-              log_window_hierarchy (hWnd, "%s:%s:%d: Windows hierarchy:",
-                                    SRCNAME, __func__, __LINE__);
-#endif
+
               pDisp->Release();
               pDisp = NULL;
               
@@ -416,7 +433,7 @@ GpgolExtCommands::InstallCommands (
   /* Now install menu and toolbar items.  */
   if (m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      int need_dvm = 0;
+      int is_encrypted = 0;
       LPMDB mdb = NULL;
       LPMESSAGE message = NULL;
 
@@ -430,7 +447,7 @@ GpgolExtCommands::InstallCommands (
             case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
             case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
             case MSGTYPE_GPGOL_PGP_MESSAGE:
-              need_dvm = 1;
+              is_encrypted = 1;
               break;
             default:
               break;
@@ -443,24 +460,21 @@ GpgolExtCommands::InstallCommands (
          an already decrypted message. */
       add_menu (eecb, pnCommandIDBase,
         "@", NULL,
-        need_dvm? _("&Decrypt and verify message"):"", &m_nCmdDecrypt,
-        _("&Verify signature"), &m_nCmdCheckSig,
+        _("GpgOL Decrypt/Verify"), &m_nCmdCryptoState,
         opt.enable_debug? "GpgOL Debug-0 (display crypto info)":"", 
                 &m_nCmdDebug0,
         opt.enable_debug? "GpgOL Debug-1 (open_inspector)":"", &m_nCmdDebug1,
         opt.enable_debug? "GpgOL Debug-2 (change msg class)":"", &m_nCmdDebug2,
         NULL);
 
-
       add_toolbar (pTBEArray, nTBECnt, 
-                   need_dvm
+                   is_encrypted
                    ? _("This is an encrypted message.\n"
                        "Click for more information. ")
                    : _("This is a signed message.\n"
                        "Click for more information. "),
                    IDB_CRYPTO_STATE, m_nCmdCryptoState,
                    NULL, 0, 0);
-
 
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
@@ -477,29 +491,15 @@ GpgolExtCommands::InstallCommands (
         NULL );
       
       add_toolbar (pTBEArray, nTBECnt,
-        _("Encrypt message with GnuPG"), IDB_ENCRYPT, m_nCmdEncrypt,
-        _("Sign message with GnuPG"),    IDB_SIGN,    m_nCmdSign,
-        NULL, 0, 0);
+                   "Encrypt", IDB_ENCRYPT, m_nCmdEncrypt,
+                   "Sign",    IDB_SIGN,    m_nCmdSign,
+                   "Autoselect", IDB_PROTO_AUTO, m_nCmdProtoAuto,
+                   "Use PGP/MIME", IDB_PROTO_PGPMIME, m_nCmdProtoPgpmime,
+                   "Use/MIME", IDB_PROTO_SMIME, m_nCmdProtoSmime,
+                   NULL, 0, 0);
 
       m_pExchExt->m_protoSelection = opt.default_protocol;
-      switch (opt.default_protocol)
-        {
-        case PROTOCOL_OPENPGP:
-          check_menu (eecb, m_nCmdProtoAuto, FALSE);
-          check_menu (eecb, m_nCmdProtoPgpmime, TRUE);
-          check_menu (eecb, m_nCmdProtoSmime, FALSE);
-          break;
-        case PROTOCOL_SMIME:
-          check_menu (eecb, m_nCmdProtoAuto, FALSE);
-          check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
-          check_menu (eecb, m_nCmdProtoSmime, TRUE);
-          break;
-        default:
-          check_menu (eecb, m_nCmdProtoAuto, TRUE);
-          check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
-          check_menu (eecb, m_nCmdProtoSmime, FALSE);
-          break;
-        }
+      update_protocol_menu (eecb);
 
       m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
 
@@ -611,30 +611,19 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
         log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
     }
-  else if (nCommandID == m_nCmdDecrypt
+  else if (nCommandID == m_nCmdCryptoState
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      log_debug ("%s:%s: command Decrypt called\n", SRCNAME, __func__);
+      log_debug ("%s:%s: command CryptoState called\n", SRCNAME, __func__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          message_decrypt (message, mapi_get_message_type (message), 1, hwnd);
-          message_display_handler (eecb, hwnd);
-	}
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-    }
-  else if (nCommandID == m_nCmdCheckSig
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      log_debug ("%s:%s: command CheckSig called\n", SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          message_verify (message, mapi_get_message_type (message), 1, hwnd);
+          if (message_incoming_handler (message, hwnd, true))
+            message_display_handler (eecb, hwnd);
 	}
       else
-        log_debug_w32 (hr, "%s:%s: CmdCheckSig failed", SRCNAME, __func__);
+        log_debug_w32 (hr, "%s:%s: command CryptoState failed", 
+                       SRCNAME, __func__);
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
     }
@@ -642,19 +631,15 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       log_debug ("%s:%s: command ProtoAuto called\n", SRCNAME, __func__);
-      check_menu (eecb, m_nCmdProtoAuto, TRUE);
-      check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
-      check_menu (eecb, m_nCmdProtoSmime, FALSE);
       m_pExchExt->m_protoSelection = PROTOCOL_UNKNOWN;
+      update_protocol_menu (eecb);
     }
   else if (nCommandID == m_nCmdProtoPgpmime
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       log_debug ("%s:%s: command ProtoPgpmime called\n", SRCNAME, __func__);
-      check_menu (eecb, m_nCmdProtoAuto, FALSE);
-      check_menu (eecb, m_nCmdProtoPgpmime, TRUE);
-      check_menu (eecb, m_nCmdProtoSmime, FALSE);
       m_pExchExt->m_protoSelection = PROTOCOL_OPENPGP;
+      update_protocol_menu (eecb);
     }
   else if (nCommandID == m_nCmdProtoSmime
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
@@ -662,10 +647,8 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       log_debug ("%s:%s: command ProtoSmime called\n", SRCNAME, __func__);
       if (opt.enable_smime)
         {
-          check_menu (eecb, m_nCmdProtoAuto, FALSE);
-          check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
-          check_menu (eecb, m_nCmdProtoSmime, TRUE);
           m_pExchExt->m_protoSelection = PROTOCOL_SMIME;
+          update_protocol_menu (eecb);
         }
       else
         {
@@ -702,12 +685,14 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
           MessageBox (NULL, _("Could not start certificate manager"),
                       _("GpgOL"), MB_ICONERROR|MB_OK);
     }
-  else if (((opt.enable_debug && nCommandID == m_nCmdDebug0)
-            || nCommandID == m_nCmdCryptoState)
+  else if (opt.enable_debug && nCommandID == m_nCmdDebug0
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       log_debug ("%s:%s: command Debug0 (showInfo) called\n",
                  SRCNAME, __func__);
+//       log_window_hierarchy (GetDesktopWindow(),
+//                             "%s:%s:%d: Window hierarchy:",
+//                             SRCNAME, __func__, __LINE__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
@@ -728,7 +713,6 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 	}
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
-
     }
   else if (opt.enable_debug && nCommandID == m_nCmdDebug2
            && m_lContext == EECONTEXT_READNOTEMESSAGE)
@@ -773,25 +757,11 @@ GpgolExtCommands::InitMenu(LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP 
 GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 {
-  if (nCommandID == m_nCmdDecrypt && 
-      m_lContext == EECONTEXT_READNOTEMESSAGE) 
-    {
-      MessageBox (m_hWnd,
-                  _("Select this option to decrypt and verify the message."),
-                  "GpgOL", MB_OK);
-    }
-  else if (nCommandID == m_nCmdCheckSig
-           && m_lContext == EECONTEXT_READNOTEMESSAGE) 
-    {
-      MessageBox (m_hWnd,
-                  _("Check the signature now and display the result"),
-                  "GpgOL", MB_OK);
-    }
-  else if (nCommandID == m_nCmdProtoAuto
+  if (nCommandID == m_nCmdProtoAuto
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       MessageBox (m_hWnd,
-                  _("Select this option to automatically select the protocol."),
+                 _("Select this option to automatically select the protocol."),
                   "GpgOL", MB_OK);	
     } 
   else if (nCommandID == m_nCmdProtoPgpmime
@@ -849,14 +819,24 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
                                 LPTSTR pszText,  UINT nCharCnt)    
 {
 	
-  if (nCommandID == m_nCmdCheckSig
-           && m_lContext == EECONTEXT_READNOTEMESSAGE) 
+  if (nCommandID == m_nCmdProtoAuto
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       if (lFlags == EECQHT_STATUS)
         lstrcpyn (pszText, ".", nCharCnt);
       if (lFlags == EECQHT_TOOLTIP)
         lstrcpyn (pszText,
-                  _("Check the signature now and display the result"),
+                  _("Automatically select the protocol for sign/encrypt"),
+                  nCharCnt);
+    }
+  else if (nCommandID == m_nCmdProtoPgpmime
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      if (lFlags == EECQHT_STATUS)
+        lstrcpyn (pszText, ".", nCharCnt);
+      if (lFlags == EECQHT_TOOLTIP)
+        lstrcpyn (pszText,
+                  _("Use PGP/MIME for sign/encrypt"),
                   nCharCnt);
     }
   else if (nCommandID == m_nCmdProtoSmime
@@ -960,7 +940,8 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
   else if (tb_info->cmd_id == m_nCmdProtoAuto)
     {
       pTBB->fsStyle |= TBSTYLE_CHECK;
-      if (m_pExchExt->m_protoSelection == PROTOCOL_UNKNOWN)
+      if (m_pExchExt->m_protoSelection != PROTOCOL_OPENPGP
+          && m_pExchExt->m_protoSelection != PROTOCOL_SMIME)
         pTBB->fsState |= TBSTATE_CHECKED;
     }
   else if (tb_info->cmd_id == m_nCmdProtoPgpmime)

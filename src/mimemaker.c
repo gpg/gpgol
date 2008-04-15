@@ -1047,32 +1047,8 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
      attachment we just created.  */
   if (delete_all_attachments (message, att_table))
     return -1;
-  {
-    /* Delete the body parts.  We don't return any error because there
-       might be no body part at all.  To avoid aliasing problems when
-       using static initialized array (SizedSPropTagArray macro) we
-       call it two times in a row.  */
-    SPropTagArray proparray;
 
-    proparray.cValues = 1;
-    proparray.aulPropTag[0] = PR_BODY;
-    IMessage_DeleteProps (message, &proparray, NULL);
-    proparray.cValues = 1;
-    proparray.aulPropTag[0] = PR_BODY_HTML;
-    IMessage_DeleteProps (message, &proparray, NULL);
-  }
-
-
-  /* Save the Changes.  */
-  hr = IMessage_SaveChanges (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
-  if (hr)
-    {
-      log_error ("%s:%s: SaveChanges to the message failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      return -1;
-    }
-
-  return 0;
+  return mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
 }
 
 

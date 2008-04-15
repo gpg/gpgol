@@ -490,6 +490,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                  SRCNAME, __func__, lBuildVersion);
       return S_FALSE;
     }
+  
   if ((lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) < 13
       ||(lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573)
     {
@@ -525,13 +526,11 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
       || lContext == EECONTEXT_VIEWER
       || lContext == EECONTEXT_SESSION)
     {
-
-//       LPUNKNOWN pApplication = get_outlook_application_object (pEECB);
-//       log_debug ("%s:%s: pApplication=%p\n",
-//                    SRCNAME, __func__, pApplication);
       return S_OK;
     }
   
   log_debug ("%s:%s: can't handle this context\n", SRCNAME, __func__);
   return S_FALSE;
 }
+
+

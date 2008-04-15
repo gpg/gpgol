@@ -210,6 +210,54 @@ get_gpgolcharset_tag (LPMESSAGE message, ULONG *r_tag)
 }
 
 
+/* A Wrapper around the SaveChanges method.  This function should be
+   called indirect through the mapi_save_changes macro.  Returns 0 on
+   success. */
+int
+mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
+                      const char *dbg_file, const char *dbg_func)
+{
+  HRESULT hr;
+  SPropTagArray proparray;
+  int any = 0;
+  
+  if (mapi_has_last_decrypted (message))
+    {
+      proparray.cValues = 1;
+      proparray.aulPropTag[0] = PR_BODY;
+      hr = message->DeleteProps (&proparray, NULL);
+      if (hr)
+        log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
+                       log_srcname (dbg_file), dbg_func);
+      else
+        any = 1;
+
+      proparray.cValues = 1;
+      proparray.aulPropTag[0] = PR_BODY_HTML;
+      hr = message->DeleteProps (&proparray, NULL);
+      if (hr)
+        log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed",
+                       log_srcname (dbg_file), dbg_func);
+      else
+        any = 1;
+    }
+
+  if (!only_del_body || any)
+    {
+      hr = message->SaveChanges (flags);
+      if (hr)
+        {
+          log_error ("%s:%s: SaveChanges(%lu) failed: hr=%#lx\n",
+                     log_srcname (dbg_file), dbg_func,
+                     (unsigned long)flags, hr); 
+          return -1;
+        }
+    }
+  
+  return 0;
+}
+
+
 /* Set an arbitary header in the message MSG with NAME to the value
    VAL. */
 int
@@ -908,13 +956,8 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
 
   if (need_save)
     {
-      hr = message->SaveChanges (KEEP_OPEN_READWRITE|FORCE_SAVE);
-      if (hr)
-        {
-          log_error ("%s:%s: SaveChanges() failed: hr=%#lx\n",
-                     SRCNAME, __func__, hr); 
-          return 0;
-        }
+      if (mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE))
+        return 0;
     }
 
   return 1;
@@ -2087,7 +2130,7 @@ mapi_get_message_content_type (LPMESSAGE message,
 
 
 /* Returns True if MESSAGE has a GpgOL Last Decrypted property with any value.
-   This indicates that there sghould be no PR_BODY tag.  */
+   This indicates that there should be no PR_BODY tag.  */
 int
 mapi_has_last_decrypted (LPMESSAGE message)
 {

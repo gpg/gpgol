@@ -20,12 +20,16 @@
 #ifndef OL_EXT_CALLBACK_H
 #define OL_EXT_CALLBACK_H
 
+#include "myexchext.h"
 
 LPDISPATCH find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
                                   const char *name, DISPID *r_dispid);
 int put_outlook_property (void *pEECB, const char *key, const char *value);
 int put_outlook_property_int (void *pEECB, const char *key, int value);
 char *get_outlook_property (void *pEECB, const char *key);
+
+int is_preview_pane_visible (LPEXCHEXTCALLBACK eecb);
+void show_preview_pane (LPEXCHEXTCALLBACK eecb, int visible);
 
 
 #endif /*OL_EXT_CALLBACK_H*/

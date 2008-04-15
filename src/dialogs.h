@@ -8,17 +8,18 @@
 
 
 /* Ids used for bitmaps.  */
-#define IDB_DECRYPT                     3001
+#define IDB_DECRYPT                     3001  /* Not used.  */
 #define IDB_ENCRYPT                     3002
 #define IDB_SIGN                        3003
 #define IDB_ADD_KEYS                    3004
 #define IDB_KEY_MANAGER                 3005
-#define IDB_BANNER                      3006
-#define IDB_BANNER_HI                   3007
-#define IDB_SELECT_SMIME                3008
-#define IDB_KEY_MANAGER_PNG             3105
-#define IDB_CRYPTO_STATE                3005 /* We use the keymanager
-                                                icon for now*/
+#define IDB_BANNER                      3006  /* The g10 Code logo.  */
+#define IDB_BANNER_HI                   3007  /* Not used.  */
+#define IDB_CRYPTO_STATE                3008  
+#define IDB_PROTO_AUTO                  3009
+#define IDB_PROTO_PGPMIME               3010
+#define IDB_PROTO_SMIME                 3011
+
 
 /* Ids used for the main config dialog.  */
 #define IDD_GPG_OPTIONS                 4001

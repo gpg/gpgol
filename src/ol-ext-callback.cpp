@@ -290,4 +290,96 @@ get_outlook_property (void *pEECB, const char *key)
 }
 
 
+/* Check whether the preview pane is visisble.  Returns:
+   -1 := Don't know.
+    0 := No
+    1 := Yes.
+ */
+int
+is_preview_pane_visible (LPEXCHEXTCALLBACK eecb)
+{
+  HRESULT hr;      
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  VARIANT aVariant, rVariant;
+      
+  pDisp = find_outlook_property (eecb,
+                                 "Application.ActiveExplorer.IsPaneVisible",
+                                 &dispid);
+  if (!pDisp)
+    {
+      log_debug ("%s:%s: ActiveExplorer.IsPaneVisible NOT found\n",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  dispparams.rgvarg = &aVariant;
+  dispparams.rgvarg[0].vt = VT_INT;
+  dispparams.rgvarg[0].intVal = 3; /* olPreview */
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+  rVariant.bstrVal = NULL;
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_METHOD, &dispparams,
+                      &rVariant, NULL, NULL);
+  pDisp->Release();
+  pDisp = NULL;
+  if (hr == S_OK && rVariant.vt != VT_BOOL)
+    {
+      log_debug ("%s:%s: invoking IsPaneVisible succeeded but vt is %d",
+                 SRCNAME, __func__, rVariant.vt);
+      if (rVariant.vt == VT_BSTR && rVariant.bstrVal)
+        SysFreeString (rVariant.bstrVal);
+      return -1;
+    }
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: invoking IsPaneVisible failed: %#lx",
+                 SRCNAME, __func__, hr);
+      return -1;
+    }
+  
+  return !!rVariant.boolVal;
+  
+}
+
+
+/* Set the preview pane to visible if visble is true or to invisible
+   if visible is false.  */
+void
+show_preview_pane (LPEXCHEXTCALLBACK eecb, int visible)
+{
+  HRESULT hr;      
+  LPDISPATCH pDisp;
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  VARIANT aVariant[2];
+      
+  pDisp = find_outlook_property (eecb,
+                                 "Application.ActiveExplorer.ShowPane",
+                                 &dispid);
+  if (!pDisp)
+    {
+      log_debug ("%s:%s: ActiveExplorer.ShowPane NOT found\n",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_INT;
+  dispparams.rgvarg[0].intVal = 3; /* olPreview */
+  dispparams.rgvarg[1].vt = VT_BOOL;
+  dispparams.rgvarg[1].boolVal = !!visible;
+  dispparams.cArgs = 2;
+  dispparams.cNamedArgs = 0;
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_METHOD, &dispparams,
+                      NULL, NULL, NULL);
+  pDisp->Release();
+  pDisp = NULL;
+  if (hr != S_OK)
+    log_debug ("%s:%s: invoking ShowPane(%d) failed: %#lx",
+               SRCNAME, __func__, visible, hr);
+}
 

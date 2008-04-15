@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-04-02 17:45+0200\n"
+"POT-Creation-Date: 2008-04-04 15:52+0200\n"
 "PO-Revision-Date: 2008-03-31 18:06+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -40,7 +40,7 @@ msgstr ""
 "um die gesamte Nachricht nochmal zu entschlüsseln.  Danach können\n"
 "Sie das Attachment wieder öffenen."
 
-#: src/common.c:215
+#: src/common.c:216
 msgid "GpgOL - Save decrypted attachment"
 msgstr "GpgOL - Sichern der entschlüsselten Anlage"
 
@@ -68,7 +68,7 @@ msgstr ""
 "   (unter \"GnuPG für Windows\") oder auf einem anderen Weg starten.\n"
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
 
-#: src/engine.c:409 src/ext-commands.cpp:703 src/main.c:665 src/main.c:671
+#: src/engine.c:409 src/ext-commands.cpp:703 src/main.c:667 src/main.c:673
 #: src/message.cpp:326
 msgid "GpgOL"
 msgstr "GpgOL"
@@ -332,12 +332,12 @@ msgstr "S/MIME zum signieren/verschlüsseln verwenden"
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
-#: src/main.c:664
+#: src/main.c:666
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
 
-#: src/main.c:670
+#: src/main.c:672
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"

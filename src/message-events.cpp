@@ -104,20 +104,34 @@ GpgolMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 STDMETHODIMP 
 GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb) 
 {
+  HWND hwnd = NULL;
   LPMDB mdb = NULL;
   LPMESSAGE message = NULL;
+  int got_inspector = 0;
   
-  log_debug ("%s:%s: received\n", SRCNAME, __func__);
-
   m_wasencrypted = false;
-  if (1 /*opt.preview_decrypt*/)
-    {
-      HWND hwnd = NULL;
+  if (FAILED (eecb->GetWindow (&hwnd)))
+    hwnd = NULL;
 
-      if (FAILED (eecb->GetWindow (&hwnd)))
-        hwnd = NULL;
+  if (is_inspector_display (hwnd))
+    got_inspector = 1;
+
+  log_debug ("%s:%s: received (hwnd=%p) %s\n", 
+             SRCNAME, __func__, hwnd, got_inspector? "got_inspector":"");
+
+  /* Fixme: If preview decryption is not enabled and we have an
+     encrypted message, we might want to show a greyed out preview
+     window.  There are two ways to clear the preview window: 
+     - Change the message class to something unknown to Outlook, like 
+       IPM.GpgOL.  This shows a grey and empty preview window.
+     - Set flag 0x2000 in the 0x8510 property (SideEffects).  This
+       shows a grey window with a notice that the message can't be 
+       shown due to active content.  */  
+
+  if (got_inspector || opt.preview_decrypt)
+    {
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (message_incoming_handler (message, hwnd))
+      if (message_incoming_handler (message, hwnd, false))
         m_processed = true;
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
@@ -133,7 +147,7 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP 
 GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
-  log_debug ("%s:%s: received; flags=%#lx m_processed=%d\n",
+  log_debug ("%s:%s: received; flags=%#lx m_processed=%d \n",
              SRCNAME, __func__, flags, m_processed);
 
   /* If the message has been processed by us (i.e. in OnRead), we now
@@ -144,6 +158,7 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 
       if (FAILED (eecb->GetWindow (&hwnd)))
         hwnd = NULL;
+      log_debug ("%s:%s: (hwnd=%p)\n", SRCNAME, __func__, hwnd);
       if (message_display_handler (eecb, hwnd))
         m_wasencrypted = true;
     }

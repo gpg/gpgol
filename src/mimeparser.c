@@ -648,8 +648,8 @@ finish_message (LPMESSAGE message, gpg_error_t err, int protect_mode,
   SPropValue prop;
 
   /* If this was an encrypted message we save the session marker in a
-     speciat property so that we now that we already decrypted that
-     message within this session.  This is pretty useful when
+     special property so that we later know that we already decrypted
+     that message within this session.  This is pretty useful when
      scrolling through messages and preview decryption has been
      enabled.  */
   if (protect_mode)
@@ -686,15 +686,7 @@ finish_message (LPMESSAGE message, gpg_error_t err, int protect_mode,
       return -1;
     }
 
-  hr = IMessage_SaveChanges (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
-  if (hr)
-    {
-      log_error_w32 (hr, "%s:%s: SaveChanges to the message failed",
-                     SRCNAME, __func__); 
-      return -1;
-    }
-
-  return 0;
+  return mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
 }
 
 
@@ -1303,7 +1295,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
 
 /* A special version of mime_verify which works only for S/MIME opaque
    signed messages.  The message is expected to be a binary CMS
-   signature eityher as an ISTREAM (if instream is not NULL) or
+   signature either as an ISTREAM (if instream is not NULL) or
    provided in a buffer (INBUFFER and INBUFERLEN).  This function
    passes the entire message to the crypto engine and then parses the
    (cleartext) output for rendering the data.  START_PART_COUNTER

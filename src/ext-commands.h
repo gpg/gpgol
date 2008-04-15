@@ -44,9 +44,7 @@ private:
   UINT  m_nCmdProtoPgpmime;
   UINT  m_nCmdProtoSmime;
   UINT  m_nCmdEncrypt;
-  UINT  m_nCmdDecrypt;
   UINT  m_nCmdSign;
-  UINT  m_nCmdCheckSig;
   UINT  m_nCmdKeyManager;
   UINT  m_nCmdCryptoState;
   UINT  m_nCmdDebug0;
@@ -61,6 +59,7 @@ private:
   GpgolExt* m_pExchExt;
 
   void add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...);
+  void update_protocol_menu (LPEXCHEXTCALLBACK eecb);
   
 public:
   STDMETHODIMP QueryInterface(REFIID riid, LPVOID *ppvObj);
@@ -95,6 +94,7 @@ public:
   { 
     m_lContext = lContext;
   };
+
 };
 
 

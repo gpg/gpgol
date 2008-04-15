@@ -22,12 +22,19 @@
 
 #include "afxres.h"
 
+/* To create these bitmaps, you need to use an Outlook specific
+   palette.  A palette file for The Gimp is included as
+   Outlook.gpl.  */
 
-IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
+/*IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"*/
 IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
 IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
 IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
 IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
+IDB_CRYPTO_STATE        BITMAP  DISCARDABLE     "cryptostate.bmp"
+IDB_PROTO_AUTO          BITMAP  DISCARDABLE     "proto-auto.bmp"
+IDB_PROTO_PGPMIME       BITMAP  DISCARDABLE     "proto-pgpmime.bmp"
+IDB_PROTO_SMIME         BITMAP  DISCARDABLE     "proto-smime.bmp"
 
 
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274

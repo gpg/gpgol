@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#error not used becuase it requires an ECF
+#error not used because it requires an ECF
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -107,7 +107,7 @@ GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK eecb)
 
   m_wasencrypted = false;
   eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-  if (message_incoming_handler (message, hwnd))
+  if (message_incoming_handler (message, hwnd, false))
     m_processed = TRUE;
   ul_release (message);
   ul_release (mdb);
@@ -187,37 +187,8 @@ GpgolItemEvents::OnCloseComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
-          SPropTagArray proparray;
-          int anyokay = 0;
-          
-          proparray.cValues = 1;
-          proparray.aulPropTag[0] = PR_BODY;
-          hr = message->DeleteProps (&proparray, NULL);
-          if (hr)
-            log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
-                           SRCNAME, __func__);
-          else
-            anyokay++;
-     
-          proparray.cValues = 1;
-          proparray.aulPropTag[0] = PR_BODY_HTML;
-          message->DeleteProps (&proparray, NULL);
-          if (hr)
-            log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed", 
-                           SRCNAME, __func__);
-          else
-            anyokay++;
-
-          if (anyokay)
-            {
-              hr = message->SaveChanges (KEEP_OPEN_READWRITE);
-              if (hr)
-                log_error_w32 (hr, "%s:%s: SaveChanges failed",
-                               SRCNAME, __func__); 
-            }
-
+          mapi_delete_body_parts (message, KEEP_OPEN_READWRITE);
           m_wasencrypted = false;
-          
         }  
       else
         log_debug_w32 (hr, "%s:%s: error getting message", 

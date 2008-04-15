@@ -355,10 +355,15 @@ do_log_window_info (HWND window, int level)
   char name[200];
   int nname;
   char *pname;
+  DWORD pid;
 
   if (!window)
     return;
-      
+
+  GetWindowThreadProcessId (window, &pid);
+  if (pid != GetCurrentProcessId ())
+    return;
+ 
   memset (buf, 0, sizeof (buf));
   GetWindowText (window, buf, sizeof (buf)-1);
   nname = GetClassName (window, name, sizeof (name)-1);
@@ -366,11 +371,13 @@ do_log_window_info (HWND window, int level)
     pname = name;
   else
     pname = NULL;
+
   if (level == -1)
-    log_debug ("  parent=%p (%s) `%s'", window, pname? pname:"", buf);
-  else
-    log_debug ("    %*shwnd=%p (%s) `%s'", level*2, "", window,
+    log_debug ("  parent=%p/%lu (%s) `%s'", window, (unsigned long)pid,
                pname? pname:"", buf);
+  else
+    log_debug ("    %*shwnd=%p/%lu (%s) `%s'", level*2, "", window,
+               (unsigned long)pid, pname? pname:"", buf);
 }
 
 
@@ -408,8 +415,6 @@ log_window_hierarchy (HWND window, const char *fmt, ...)
       do_log_window_hierarchy (window, 0);
     }
 }
-
-
 
 
 const char *

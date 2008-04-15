@@ -21,7 +21,7 @@
 #define MESSAGE_H
 
 
-bool message_incoming_handler (LPMESSAGE message, HWND hwnd);
+bool message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force);
 bool message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd);
 void message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb);
 void message_show_info (LPMESSAGE message, HWND hwnd);

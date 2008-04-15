@@ -1,3 +1,37 @@
+2008-04-15  Werner Koch  <wk@g10code.com>
+
+	* Outlook.gpl: New.
+
+2008-04-14  Werner Koch  <wk@g10code.com>
+
+	* display.cpp (is_inspector_display): New.
+	(find_message_window): Rewrote.
+
+	* message-events.cpp (OnRead): Use it.
+	* message.cpp (message_incoming_handler): Add arg FORCE.
+	* message-events.cpp (OnRead): Pass false for FORCE.
+	* item-events.cpp (OnOpen): Ditto.
+	* ext-commands.cpp (DoCommand): Let CmdCryptoState process and
+	display the current message again.
+	(GpgolExtCommands): Remove m_nCmdCheckSig and m_nCmdDecrypt.
+
+2008-04-10  Werner Koch  <wk@g10code.com>
+
+	* ol-ext-callback.cpp (is_preview_pane_visible)
+	(show_preview_pane): New.
+
+	* display.cpp (update_display): Add arg IS_SENSITIVE and do not
+	use the OOM method if this is set.
+
+	* mapihelp.h (mapi_save_changes): New. Use if everywhere.
+	(mapi_delete_body_props): Use it to delete body parts.
+	* mapihelp.cpp (mapi_do_save_changes): New.
+	* mimemaker.c (finalize_message): Do no delete body parts because
+	mapi_save_changes does this now.
+
+	* mimeparser.c (finish_message): Remove the body property in
+	protect mode.
+
 2008-04-04  Werner Koch  <wk@g10code.com>
 
 	* engine-assuan.c (worker_start_read, worker_check_read): Factor

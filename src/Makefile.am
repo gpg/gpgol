@@ -14,8 +14,10 @@
 unused_sources = item-events.cpp 
 
 bin_PROGRAMS = gpgol 
-EXTRA_DIST = versioninfo.rc.in mapi32.def $(unused_sources) \
-	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp 
+EXTRA_DIST = versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
+	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp \
+             proto-auto.bmp proto-pgpmime.bmp proto-smime.bmp \
+             cryptostate.bmp
 
 EXEEXT = .dll
 

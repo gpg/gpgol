@@ -99,6 +99,14 @@ int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
 
+int mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
+                          const char *dbg_file, const char *dbg_func);
+#define mapi_save_changes(a,b) \
+        mapi_do_save_changes ((a),(b), 0, __FILE__, __func__)
+#define mapi_delete_body_props(a,b) \
+        mapi_do_save_changes ((a),(b), 1, __FILE__, __func__)
+
+
 int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
 int mapi_change_message_class (LPMESSAGE message, int sync_override);

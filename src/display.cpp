@@ -81,11 +81,20 @@ add_html_line_endings (const char *body)
 }
 
 
+/* A helper object for find_message_window.  */
+struct find_message_window_state
+{
+  int level;
+  int seen_32770:1;
+  int seen_afxwndw:1;
+};
+
+
+
 /* We need this to find the mailer window because we directly change
-   the text of the window instead of the MAPI object itself.  To do
-   this we walk all windows to find a PGP signature.  */
+   the text of the window instead of the MAPI object itself.  */
 static HWND
-find_message_window (HWND parent, int level)
+find_message_window (HWND parent, struct  find_message_window_state *findstate)
 {
   HWND child;
 
@@ -98,7 +107,6 @@ find_message_window (HWND parent, int level)
       char buf[1024+1];
       HWND w;
       size_t len;
-      const char *s;
 
       /* OL 2003 SP1 German uses this class name for the main
          inspector window.  We hope that no other windows uses this
@@ -107,8 +115,11 @@ find_message_window (HWND parent, int level)
          decrypted messages. */
       len = GetClassName (child, buf, sizeof buf - 1);
 //       if (len)
-//         log_debug ("  %*sgot class `%s'", level*2, "", buf);
-      if (level && len >= 10 && !strncmp (buf, "MsoCommand", 10))
+//         log_debug ("  %*sgot class `%s'", 2 * findstate->level, "", buf);
+      if (!len)
+        ;
+      else if (findstate->level && len >= 10 
+               && !strncmp (buf, "MsoCommand", 10))
         {
           /* We won't find anything below MsoCommand windows.
              Ignoring them fixes a bug where we return a RichEdit20W
@@ -149,46 +160,70 @@ find_message_window (HWND parent, int level)
            */
           break; /* Not found at this level.  */
         }
-
-      if (len && !strcmp (buf, "RichEdit20W"))
+      else if (findstate->level == 2 && !strcmp (buf, "#32770"))
         {
-          log_debug ("found class `%s'", "RichEdit20W");
+          /* An inspector window has the #32770 class window at level
+             2 whereas the preview window has it at level 4.  (OL2003
+             SP2, German).  */
+          findstate->seen_32770 = 1;
+          findstate->seen_afxwndw = 0;
+        }
+      else if (findstate->seen_afxwndw && !strcmp (buf, "AfxWndW"))
+        {
+          findstate->seen_afxwndw = 1;
+        }
+      else if (findstate->seen_32770 && findstate->seen_afxwndw
+               && !strcmp (buf, "RichEdit20W"))
+        {
+          log_debug ("found window class `%s' at level %d", 
+                     "RichEdit20W", findstate->level);
           return child;
         }
       
-      memset (buf, 0, sizeof (buf));
-      GetWindowText (child, buf, sizeof (buf)-1);
-      len = strlen (buf);
-      if (len > 22
-          && (s = strstr (buf, "-----BEGIN PGP "))
-          &&  (!strncmp (s+15, "MESSAGE-----", 12)
-               || !strncmp (s+15, "SIGNED MESSAGE-----", 19)))
-        return child;
-      w = find_message_window (child, level+1);
+      findstate->level++;
+      w = find_message_window (child, findstate);
+      findstate->level--;
+      findstate->seen_32770 = 0;  /* Only interested in windows below.  */
+      findstate->seen_afxwndw = 0;
       if (w)
         return w;
-      child = GetNextWindow (child, GW_HWNDNEXT);	
+      child = GetNextWindow (child, GW_HWNDNEXT);
     }
 
   return NULL;
 }
 
 
+/* Returns true if the the current display (as described by HWND) is a
+   real inspector and not the preview window.  This is not 100%
+   reliable. */
+int
+is_inspector_display (HWND hwnd)
+{
+  struct find_message_window_state findstate;
+
+  memset (&findstate, 0, sizeof findstate);
+  return !!find_message_window (hwnd, &findstate);
+}
+
+
 /* Update the display with TEXT using the message MSG.  Return 0 on
    success. */
 int
-update_display (HWND hwnd, void *exchange_cb, 
+update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
                 bool is_html, const char *text)
 {
   HWND window;
+  struct find_message_window_state findstate;
 
-  /*show_window_hierarchy (hwnd, 0);*/
-  window = find_message_window (hwnd, 0);
+  memset (&findstate, 0, sizeof findstate);
+  window = find_message_window (hwnd, &findstate);
   if (window && !is_html)
     {
       const char *s;
 
-      log_debug ("%s:%s: window handle %p\n", SRCNAME, __func__, window);
+      log_debug ("%s:%s: updating display using handle %p\n",
+                 SRCNAME, __func__, window);
       
       /* Decide whether we need to use the Unicode version. */
       for (s=text; *s && !(*s & 0x80); s++)
@@ -201,10 +236,18 @@ update_display (HWND hwnd, void *exchange_cb,
         }
       else
         SetWindowTextA (window, text);
-      log_debug ("%s:%s: window text is now `%s'",
-                 SRCNAME, __func__, text);
       return 0;
     }
+//   else if (exchange_cb && is_sensitive && !opt.compat.no_oom_write)
+//     {
+//       log_debug ("%s:%s: updating display using OOM (note)\n", 
+//                  SRCNAME, __func__);
+//       if (is_html)
+//         put_outlook_property (exchange_cb, "Body", "" );
+//       return put_outlook_property
+//         (exchange_cb, "Body",
+//          _("[Encrypted body not shown - please open the message]"));
+//     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
       log_debug ("%s:%s: updating display using OOM\n", SRCNAME, __func__);
@@ -213,7 +256,7 @@ update_display (HWND hwnd, void *exchange_cb,
       if (is_html)
         put_outlook_property (exchange_cb, "Body", "" );
       return put_outlook_property (exchange_cb, is_html? "HTMLBody":"Body",
-                                   text);
+                                 text);
     }
   else
     {
@@ -224,55 +267,58 @@ update_display (HWND hwnd, void *exchange_cb,
 }
 
 
+
 /* Set the body of MESSAGE to STRING.  Returns 0 on success or an
    error code otherwise. */
-int
-set_message_body (LPMESSAGE message, const char *string, bool is_html)
-{
-  HRESULT hr;
-  SPropValue prop;
-  //SPropTagArray proparray;
-  const char *s;
+#if 0 /* Not anymore used.  */
+  int
+  set_message_body (LPMESSAGE message, const char *string, bool is_html)
+  {
+    HRESULT hr;
+    SPropValue prop;
+    //SPropTagArray proparray;
+    const char *s;
+    
+    assert (message);
   
-  assert (message);
-
-//   if (!is_html)
-//     {
-//       prop.ulPropTag = PR_BODY_HTML_A;
-//       prop.Value.lpszA = "";
-//       hr = HrSetOneProp (message, &prop);
-//     }
+  //   if (!is_html)
+  //     {
+  //       prop.ulPropTag = PR_BODY_HTML_A;
+  //       prop.Value.lpszA = "";
+  //       hr = HrSetOneProp (message, &prop);
+  //     }
+    
+    /* Decide whether we need to use the Unicode version. */
+    for (s=string; *s && !(*s & 0x80); s++)
+      ;
+    if (*s)
+      {
+        prop.ulPropTag = is_html? PR_BODY_HTML_W : PR_BODY_W;
+        prop.Value.lpszW = utf8_to_wchar (string);
+        hr = HrSetOneProp (message, &prop);
+        xfree (prop.Value.lpszW);
+      }
+    else /* Only plain ASCII. */
+      {
+        prop.ulPropTag = is_html? PR_BODY_HTML_A : PR_BODY_A;
+        prop.Value.lpszA = (CHAR*)string;
+        hr = HrSetOneProp (message, &prop);
+      }
+    if (hr != S_OK)
+      {
+        log_debug ("%s:%s: HrSetOneProp failed: hr=%#lx\n",
+                   SRCNAME, __func__, hr); 
+        return gpg_error (GPG_ERR_GENERAL);
+      }
   
-  /* Decide whether we need to use the Unicode version. */
-  for (s=string; *s && !(*s & 0x80); s++)
-    ;
-  if (*s)
-    {
-      prop.ulPropTag = is_html? PR_BODY_HTML_W : PR_BODY_W;
-      prop.Value.lpszW = utf8_to_wchar (string);
-      hr = HrSetOneProp (message, &prop);
-      xfree (prop.Value.lpszW);
-    }
-  else /* Only plain ASCII. */
-    {
-      prop.ulPropTag = is_html? PR_BODY_HTML_A : PR_BODY_A;
-      prop.Value.lpszA = (CHAR*)string;
-      hr = HrSetOneProp (message, &prop);
-    }
-  if (hr != S_OK)
-    {
-      log_debug ("%s:%s: HrSetOneProp failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      return gpg_error (GPG_ERR_GENERAL);
-    }
-
-  /* Note: we once tried to delete the RTF property here to avoid any
-     syncing mess and more important to make sure that no RTF rendered
-     plaintext is left over.  The side effect of this was that the
-     entire PR_BODY got deleted too. */
-
-  return 0;
-}
+    /* Note: we once tried to delete the RTF property here to avoid any
+       syncing mess and more important to make sure that no RTF rendered
+       plaintext is left over.  The side effect of this was that the
+       entire PR_BODY got deleted too. */
+  
+    return 0;
+  }
+#endif /* Not anymore used.  */
 
 
 
