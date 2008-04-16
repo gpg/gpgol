@@ -42,6 +42,7 @@ class GpgolMessageEvents : public IExchExtMessageEvents
   bool    m_want_html;       /* Encryption of HTML is desired. */
   bool    m_processed;       /* The message has been porcessed by us.  */
   bool    m_wasencrypted;    /* The original message was encrypted.  */
+  bool    m_gotinspector;    /* We are working on a real inspector.  */
   
  public:
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID *ppvObj);

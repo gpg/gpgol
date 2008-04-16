@@ -1,3 +1,11 @@
+2008-04-16  Werner Koch  <wk@g10code.com>
+
+	* message-events.h (class GpgolMessageEvents): Add M_GOTINSPECTOR.
+	* message.cpp (message_incoming_handler): Change return type.
+
+	* ext-commands.cpp (check_toolbar, check_menu_toolbar): New.
+	(update_protocol_menu): Explicitly update the toolbar.
+
 2008-04-15  Werner Koch  <wk@g10code.com>
 
 	* Outlook.gpl: New.

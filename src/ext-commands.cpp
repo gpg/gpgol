@@ -21,6 +21,7 @@
 #include <config.h>
 #endif
 
+#define _WIN32_IE 0x400 /* Need TBIF_COMMAND et al.  */
 #include <windows.h>
 
 #include "mymapi.h"
@@ -55,6 +56,7 @@ struct toolbar_info_s
   UINT cmd_id;   /* The ID of the command to send on a click.  */
   const char *desc;/* The description text.  */
   ULONG context; /* Context under which this entry will be used.  */ 
+  int did_qbi;   /* Has been processed by QueryButtonInfo.  */
 };
 
 
@@ -210,25 +212,85 @@ check_menu (LPEXCHEXTCALLBACK eecb, UINT menu_id, int checked)
                  MF_BYCOMMAND | (checked?MF_CHECKED:MF_UNCHECKED));
 }
 
+
+static void
+check_toolbar (LPEXCHEXTCALLBACK eecb, struct toolbar_info_s *toolbar_info,
+               UINT cmd_id, int checked)
+{
+  HWND hwnd;
+  toolbar_info_t tb_info;
+  TBBUTTONINFOA tbb;
+
+  eecb->GetToolbar (EETBID_STANDARD, &hwnd);
+  if (debug_commands)
+    log_debug ("check_toolbar: eecb=%p cmd_id=%u checked=%d -> hwnd=%p\n", 
+               eecb, cmd_id, checked, hwnd);
+
+  for (tb_info = toolbar_info; tb_info; tb_info = tb_info->next )
+    if (tb_info->cmd_id == cmd_id)
+      break;
+  if (!tb_info)
+    {
+      log_error ("check_toolbar: no such toolbar button");
+      return;
+    }
+  if (!tb_info->did_qbi)
+    {
+      if(debug_commands)
+        log_debug ("check_toolbar: button(cmd_id=%d) not yet initialized",
+                   cmd_id);
+      return;
+    }
+
+  tbb.cbSize = sizeof (tbb);
+  tbb.dwMask = TBIF_COMMAND | TBIF_STATE | TBIF_STYLE;
+  if (!SendMessage (hwnd, TB_GETBUTTONINFO, cmd_id, (LPARAM)&tbb))
+    log_error_w32 (-1, "TB_GETBUTTONINFO failed");
+  else
+    {
+      tbb.cbSize = sizeof (tbb);
+      tbb.dwMask = TBIF_STATE;
+      if (checked)
+        tbb.fsState |= TBSTATE_CHECKED;
+      else
+        tbb.fsState &= ~TBSTATE_CHECKED;
+      if (!SendMessage (hwnd, TB_SETBUTTONINFO, cmd_id, (LPARAM)&tbb))
+        log_error_w32 (-1, "TB_SETBUTTONINFO failed");
+    }
+}
+
+
+static void
+check_menu_toolbar (LPEXCHEXTCALLBACK eecb,
+                    struct toolbar_info_s *toolbar_info,
+                    UINT cmd_id, int checked)
+{
+  check_menu (eecb, cmd_id, checked);
+  check_toolbar (eecb, toolbar_info, cmd_id, checked);
+}
+
+
 void
 GpgolExtCommands::update_protocol_menu (LPEXCHEXTCALLBACK eecb)
 {
+  if (debug_commands)
+    log_debug ("update_protocol_menu called\n");
   switch (m_pExchExt->m_protoSelection)
     {
     case PROTOCOL_OPENPGP:
-      check_menu (eecb, m_nCmdProtoAuto, FALSE);
-      check_menu (eecb, m_nCmdProtoPgpmime, TRUE);
-      check_menu (eecb, m_nCmdProtoSmime, FALSE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoAuto, FALSE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoPgpmime, TRUE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoSmime, FALSE);
       break;
     case PROTOCOL_SMIME:
-      check_menu (eecb, m_nCmdProtoAuto, FALSE);
-      check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
-      check_menu (eecb, m_nCmdProtoSmime, TRUE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoAuto, FALSE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoPgpmime, FALSE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoSmime, TRUE);
       break;
     default:
-      check_menu (eecb, m_nCmdProtoAuto, TRUE);
-      check_menu (eecb, m_nCmdProtoPgpmime, FALSE);
-      check_menu (eecb, m_nCmdProtoSmime, FALSE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoAuto, TRUE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoPgpmime, FALSE);
+      check_menu_toolbar (eecb, m_toolbar_info, m_nCmdProtoSmime, FALSE);
       break;
     }
 }
@@ -267,6 +329,11 @@ GpgolExtCommands::add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...)
 
       if (!*desc)
         ; /* Empty description - ignore this item.  */
+      else if (*desc == '|' && !desc[1])
+        {
+          /* Separator. Ignore BMAPID and CMDID.  */
+          /* Not yet implemented.  */
+        }
       else
 	{
           TBADDBITMAP tbab;
@@ -290,10 +357,10 @@ GpgolExtCommands::add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...)
             log_debug ("%s:%s: ctx=%lx button_id=%d cmd_id=%d '%s'\n", 
                        SRCNAME, __func__, m_lContext,
                        tb_info->button_id, tb_info->cmd_id, tb_info->desc);
-          
         }
     }
   va_end (arg_ptr);
+
 }
 
 
@@ -690,9 +757,6 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
     {
       log_debug ("%s:%s: command Debug0 (showInfo) called\n",
                  SRCNAME, __func__);
-//       log_window_hierarchy (GetDesktopWindow(),
-//                             "%s:%s:%d: Window hierarchy:",
-//                             SRCNAME, __func__, __LINE__);
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       if (SUCCEEDED (hr))
         {
@@ -888,7 +952,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
 
 /* Called by Exchange to get toolbar button infos.  TOOLBARID is the
    toolbar identifier.  BUTTONID is the toolbar button index.  PTBB is
-   a pointer to toolbar button structure.  DESCRIPTION is a pointer to
+   a pointer to the toolbar button structure.  DESCRIPTION is a pointer to
    buffer receiving the text for the button.  DESCRIPTION_SIZE is the
    maximum size of DESCRIPTION.  FLAGS are flags which might have the
    EXCHEXT_UNICODE bit set.
@@ -915,6 +979,9 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
                " cmd_id=%d '%s'\n", 
                SRCNAME, __func__, m_lContext, toolbarid, buttonid,
                tb_info->button_id, tb_info->cmd_id, tb_info->desc);
+
+  /* Mark that this button has passed this function.  */
+  tb_info->did_qbi = 1;
   
   pTBB->iBitmap = tb_info->bitmap;
   pTBB->idCommand = tb_info->cmd_id;

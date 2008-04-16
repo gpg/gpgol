@@ -54,12 +54,15 @@ ul_release (LPVOID punk, const char *func)
 
 /* A helper function used by OnRead and OnOpen to dispatch the
    message.  If FORCE is true, the force flag is passed to the
-   verification or decryption.  Returns true if the message has been
-   processed.  */
-bool
+   verification or decryption.  Returns:
+     0 = Message has not been processed by us.
+     1 = Message has been processed and was not encrypted.
+     2 = Message has been processed by us and was possibly encrypted.
+*/
+int
 message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
 {
-  bool retval = false;
+  int retval = 0;
   msgtype_t msgtype;
   int pass = 0;
 
@@ -101,36 +104,36 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
     case MSGTYPE_GPGOL_MULTIPART_SIGNED:
       log_debug ("%s:%s: processing multipart signed message\n", 
                  SRCNAME, __func__);
-      retval = true;
+      retval = 1;
       message_verify (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       log_debug ("%s:%s: processing multipart encrypted message\n",
                  SRCNAME, __func__);
-      retval = true;
+      retval = 2;
       message_decrypt (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_OPAQUE_SIGNED:
       log_debug ("%s:%s: processing opaque signed message\n", 
                  SRCNAME, __func__);
-      retval = true;
+      retval = 1;
       message_verify (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_CLEAR_SIGNED:
       log_debug ("%s:%s: processing clear signed pgp message\n", 
                  SRCNAME, __func__);
-      retval = true;
+      retval = 1;
       message_verify (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
       log_debug ("%s:%s: processing opaque encrypted message\n",
                  SRCNAME, __func__);
-      retval = true;
+      retval = 2;
       message_decrypt (message, msgtype, force, hwnd);
       break;
     case MSGTYPE_GPGOL_PGP_MESSAGE:
       log_debug ("%s:%s: processing pgp message\n", SRCNAME, __func__);
-      retval = true;
+      retval = 2;
       message_decrypt (message, msgtype, force, hwnd);
       break;
     }

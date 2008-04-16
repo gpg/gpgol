@@ -1,7 +1,15 @@
+Noteworthy changes for version 0.10.12 (2008-04-16)
+===================================================
+
+ * Added icons. 
+
+ * Minor usuability changes.
+
+
 Noteworthy changes for version 0.10.11 (2008-04-04)
 ===================================================
 
- * Fixed a performavce problem with signed+encrypted.
+ * Fixed a performance problem with signed+encrypted.
 
 
 Noteworthy changes for version 0.10.10 (2008-04-02)
