@@ -201,9 +201,14 @@ int
 is_inspector_display (HWND hwnd)
 {
   struct find_message_window_state findstate;
+  int rc;
 
   memset (&findstate, 0, sizeof findstate);
-  return !!find_message_window (hwnd, &findstate);
+  rc = !!find_message_window (hwnd, &findstate);
+  if (!rc)
+    log_window_hierarchy (hwnd, "The windows blow hwnd %p", hwnd);
+  
+  return rc;
 }
 
 

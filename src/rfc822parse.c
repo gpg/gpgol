@@ -1012,14 +1012,31 @@ is_parameter (TOKEN t)
    With LOWER_VALUE set to true, a matching field value will be
    lowercased.
  
-   Note, that ATTR should be lowercase.  A CTX of NULL is allowed and
-   will return NULL.
+   Note, that ATTR should be lowercase.  If ATTR is NULL the fucntion
+   returns the first token of the field; i.e. not the parameter but
+   the actual value.  A CTX of NULL is allowed and will return NULL.
  */
 const char *
 rfc822parse_query_parameter (rfc822parse_field_t ctx, const char *attr,
                              int lower_value)
 {
   TOKEN t, a;
+
+  if (!attr)
+    {
+      t = ctx;
+      if (t
+          && (t->type == tATOM || t->type == tQUOTED || t->type == tDOMAINLIT))
+        {
+          if ( lower_value && !t->flags.lowered )
+            {
+              lowercase_string (t->data);
+              t->flags.lowered = 1;
+            }
+          return t->data;
+        }
+      return NULL;
+    }
 
   for (t = ctx; t; t = t->next)
     {
@@ -1213,7 +1230,22 @@ msg_cb (void *dummy_arg, rfc822parse_event_t event, rfc822parse_t msg)
         }
       else
         printf ("***   media: text/plain [assumed]\n");
-      
+
+      ctx = rfc822parse_parse_field (msg, "Content-Disposition", -1);
+      if (ctx)
+        {
+          const char *s1;
+          TOKEN t;
+
+          s1 = rfc822parse_query_parameter (ctx, NULL, 1);
+          if (s1)
+            printf ("***   disp: type=`%s'\n", s1);
+          s1 = rfc822parse_query_parameter (ctx, "filename", 0);
+          if (s1)
+            printf ("***   disp: fname=`%s'\n", s1);
+
+          rfc822parse_release_field (ctx);
+        }
     }
 
 

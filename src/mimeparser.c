@@ -704,6 +704,7 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   size_t off;
   char *p;
   int is_text = 0;
+  int not_inline_text = 0;
   char *filename = NULL; 
   char *charset = NULL;
         
@@ -731,6 +732,9 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
       s = rfc822parse_query_parameter (field, "filename", 0);
       if (s)
         filename = xstrdup (s);
+      s = rfc822parse_query_parameter (field, NULL, 1);
+      if (s && !strcmp (s, "inline"))
+        not_inline_text = 1;
       rfc822parse_release_field (field);
     }
 
@@ -838,6 +842,11 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   rfc822parse_release_field (field); /* (Content-type) */
   ctx->in_data = 1;
 
+  /* Need to start an attachment if we have seen a content disposition
+     other then the inline type.  */ 
+  if (is_text && not_inline_text)
+    ctx->collect_attachment = 1;
+
   if (debug_mime_parser)
     log_debug ("%s:%s: this body: nesting=%d partno=%d is_text=%d, is_opq=%d"
                " charset=\"%s\"\n",
@@ -847,7 +856,7 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
                ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"");
 
   /* If this is a text part, decide whether we treat it as our body. */
-  if (is_text)
+  if (is_text && !not_inline_text)
     {
       ctx->collect_attachment = 1;
 

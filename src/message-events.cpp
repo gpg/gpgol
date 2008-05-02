@@ -127,6 +127,11 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
        shows a grey window with a notice that the message can't be 
        shown due to active content.  */  
 
+  /* The is_inspector_display function is not reliable enough.
+     Missing another solution we set it to true for now with the
+     result that the preview decryption can't be disabled.  */
+  m_gotinspector = 1;
+  
   if (m_gotinspector || opt.preview_decrypt)
     {
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
