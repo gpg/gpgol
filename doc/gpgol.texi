@@ -312,18 +312,8 @@ file descriptor, see the @code{INPUT} command.
 
 @noindent
 To allow the server the selection of a non-default signing key the
-client may optionally use the command:
-
-@deffn Command SENDER @var{email}
-@var{email} is the plain ASCII encoded address ("addr-spec" as per
-RFC-2822) enclosed in angle brackets.  The address set with this command
-is valid until a successful @code{SIGN} command or until a @code{RESET}
-command.  A second command overrides the effect of the first one; if
-@var{email} is not given the server shall use the default signing key.
-The server shall also suggest a protocol to use for signing.  The client
-may use this suggested protocol on its own discretion.  The same status
-line as with PREP_ENCRYPT is used for this.
-@end deffn
+client may optionally use the @code{SENDER} command, see @ref{command
+SENDER}.
 
 @noindent
 The signing operation is then initiated by:
@@ -524,6 +514,44 @@ The server shall pop up the main window of the key manager (aka
 certificate manager).  The client expects that the key manager is brought
 into the foregound and that this command immediatley returns (does not
 wait until the key manager has been fully brought up).
+@end deffn
+
+@anchor{command SENDER}
+@noindent
+When doing an operation on a mail, it is useful to let the server know
+the address of the sender:
+
+@deffn Command SENDER [-@w{}-info] @var{email}
+@var{email} is the plain ASCII encoded address ("addr-spec" as per
+RFC-2822) enclosed in angle brackets.  The address set with this command
+is valid until a successful completion of the operation or until a
+@code{RESET} command.  A second command overrides the effect of the
+first one; if @var{email} is not given and @option{--info} is not used,
+the server shall use the default signing key.
+
+If option @option{--info} is not given, the server shall also suggest a
+protocol to use for signing.  The client may use this suggested protocol
+on its own discretion.  The same status line as with PREP_ENCRYPT is
+used for this.
+@end deffn
+
+@noindent 
+To allow the UI-server to visually identify a running operation or to
+associate operations the server MAY support the command:
+
+@deffn Command SESSION @var{number} [@var{string}]
+The @var{number} is an arbitrary value, a server may use to associate
+simultaneous running sessions.  It is a 32 bit unsigned integer with
+@code{0} as a special value indicating that no session association shall
+be done.
+
+If @var{string} is given, the server may use this as the title of a
+window or, in the case of an email operation, to extract the sender's
+address. The string may contain spaces; thus no plus-escaping is used.
+
+This command may be used at any time and overrides the effect of the
+last command.  A @code{RESET} undoes the effect of this command.
+
 @end deffn
 
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -749,7 +777,7 @@ What about the message class mangling?
   apply its own S/MIME handler to the message but leaves it unchanged in
   the message store.
 
-* For ease of implementarion the same thing applies to PGP messgaes,
+* For ease of implementation the same thing applies to PGP messgaes,
   although OL would not touch these messages.
 
 * When reading a message GpgOL quickly checks the message class and if
@@ -757,7 +785,7 @@ What about the message class mangling?
   decrypt/verify the message.
 
 * Messages already in the message store before GpgOL was installed are
-  handled diffwerently: Here an Outlook specific event is used to change
+  handled differently: Here an Outlook specific event is used to change
   the message class when browsing the messages folder.  This code path
   is not fully ready as it requires the installation of an ECF(ile)
   which has to be done manually as of now.
@@ -768,7 +796,6 @@ What about the message class mangling?
   a little tool for changing the GpgOL message classes back to
   "IPM.Note.SMIME" which in turn allows using internal S/MIME support
   again.
-
 
 
 

@@ -205,8 +205,8 @@ is_inspector_display (HWND hwnd)
 
   memset (&findstate, 0, sizeof findstate);
   rc = !!find_message_window (hwnd, &findstate);
-  if (!rc)
-    log_window_hierarchy (hwnd, "The windows blow hwnd %p", hwnd);
+//   if (!rc)
+//     log_window_hierarchy (hwnd, "The windows below hwnd %p", hwnd);
   
   return rc;
 }
