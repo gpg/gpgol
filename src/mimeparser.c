@@ -733,7 +733,7 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
       if (s)
         filename = xstrdup (s);
       s = rfc822parse_query_parameter (field, NULL, 1);
-      if (s && !strcmp (s, "inline"))
+      if (s && strcmp (s, "inline"))
         not_inline_text = 1;
       rfc822parse_release_field (field);
     }

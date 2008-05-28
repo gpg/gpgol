@@ -1,3 +1,14 @@
+2008-05-23  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (struct sink_s): Add field ENC_COUNTER.
+	(write_buffer_for_cb): Update that.
+	(mime_encrypt): Bail out if no data has been encrypted.
+	(mime_sign_encrypt): Ditto.
+
+2008-05-07  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (t2body): Fix last change.
+
 2008-05-02  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (t2body): Detect non-inline text parts.

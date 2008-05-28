@@ -560,7 +560,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
       class after accessing them.  Thus in old stores there may be a
       lot of *.CexEnc message which are actually just signed.
  
-   2. Is the smime-typeparameter is missing we need another way to
+   2. If the smime-type parameter is missing we need another way to
       decide whether to decrypt or to verify.
  */
 static int

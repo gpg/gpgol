@@ -63,6 +63,7 @@ struct sink_s
   void *cb_data;
   sink_t extrasink;
   int (*writefnc)(sink_t sink, const void *data, size_t datalen);
+  unsigned long enc_counter; /* Used by write_buffer_for_cb.  */
 /*   struct { */
 /*     int idx; */
 /*     unsigned char inbuf[4]; */
@@ -237,7 +238,7 @@ write_buffer (sink_t sink, const void *data, size_t datalen)
 {
   if (!sink || !sink->writefnc)
     {
-      log_error ("%s:%s: sink not properliy setup", SRCNAME, __func__);
+      log_error ("%s:%s: sink not properly setup", SRCNAME, __func__);
       return -1;
     }
   return sink->writefnc (sink, data, datalen);
@@ -250,6 +251,7 @@ static int
 write_buffer_for_cb (void *opaque, const void *data, size_t datalen)
 {
   sink_t sink = opaque;
+  sink->enc_counter += datalen;
   return write_buffer (sink, data, datalen) ? -1 : datalen;
 }
 
@@ -1565,8 +1567,8 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
     return -1;
 
   /* Prepare the encryption.  We do this early as it is quite common
-     that some recipients are not be available and thus the encryption
-     will fail early. */
+     that some recipient keys are not available and thus the
+     encryption will fail early. */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
   if (engine_encrypt_prepare (filter, hwnd, protocol, recipients, &protocol))
@@ -1639,7 +1641,13 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
     goto failure;
   filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
-  
+
+    if (!sink->enc_counter)
+    {
+      log_debug ("%s:%s: nothing received from engine", SRCNAME, __func__);
+      goto failure;
+    }
+
   /* Write the final boundary (for OpenPGP) and finish the attachment.  */
   if (*boundary && (rc = write_boundary (sink, boundary, 1)))
     goto failure;
@@ -1799,6 +1807,12 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
     goto failure;
   filter = NULL; /* Not valid anymore.  */
   encsink->cb_data = NULL; /* Not needed anymore.  */
+
+  if (!sink->enc_counter)
+    {
+      log_debug ("%s:%s: nothing received from engine", SRCNAME, __func__);
+      goto failure;
+    }
   
   /* Write the final boundary (for OpenPGP) and finish the attachment.  */
   if (*boundary && (rc = write_boundary (sink, boundary, 1)))
