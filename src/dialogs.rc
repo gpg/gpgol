@@ -72,7 +72,7 @@ BEGIN
 
     /* Receive options box.  */
     GROUPBOX        "recv-options", IDC_G_RECV,
-                    9, 104, 250, 36
+                    9, 104, 250, 47
 
     CONTROL         "preview-decrypt", IDC_PREVIEW_DECRYPT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
@@ -81,6 +81,10 @@ BEGIN
     CONTROL         "prefer-html", IDC_PREFER_HTML,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 125, 215, 10
+ 
+    CONTROL         "body-as-attachment", IDC_BODY_AS_ATTACHMENT,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 136, 215, 10
  
     /* Stuff below the group boxes.  */
     LTEXT           "GpgOL by g10 Code GmbH", IDC_STATIC, 

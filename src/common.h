@@ -118,6 +118,7 @@ struct
   int enable_default_key;    /* Enable the use of DEFAULT_KEY. */
   int preview_decrypt;       /* Decrypt in preview window. */
   int prefer_html;           /* Prefer html in html/text alternatives. */
+  int body_as_attachment;    /* Present encrypted message as attachment.  */
 
   /* The compatibility flags. */
   struct 

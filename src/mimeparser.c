@@ -312,12 +312,14 @@ start_attachment (mime_context_t ctx, int is_body)
       goto leave;
     }
 
-  /* The body attachment is special and should not be shown in the list
-     of attachments.  */
+  /* The body attachment is special and should not be shown in the
+     list of attachments.  If the option body-as-attachment is used
+     and the message is protected we do set the hidden flag to
+     false.  */
   if (is_body)
     {
       prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
-      prop.Value.b = TRUE;
+      prop.Value.b = (ctx->protect_mode && opt.body_as_attachment)? FALSE:TRUE;
       hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
       if (hr)
         {

@@ -1685,7 +1685,7 @@ mapi_get_attach (LPMESSAGE message, int unprotect,
 
 
 /* Mark this attachment as the orginal MOSS message.  We set a custom
-   property as well as the hidden hidden flag.  */
+   property as well as the hidden flag.  */
 int 
 mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
 {
@@ -1789,6 +1789,27 @@ mapi_set_attach_hidden (LPATTACH attach)
  leave:
   return retval;
 }
+
+
+/* Returns true if ATTACH has the hidden flag set to true.  */
+int
+mapi_test_attach_hidden (LPATTACH attach)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  int result = 0;
+  
+  hr = HrGetOneProp ((LPMAPIPROP)attach, PR_ATTACHMENT_HIDDEN, &propval);
+  if (FAILED (hr))
+    return result; /* No.  */  
+  
+  if (PROP_TYPE (propval->ulPropTag) == PT_BOOLEAN && propval->Value.b)
+    result = 1; /* Yes.  */
+
+  MAPIFreeBuffer (propval);
+  return result;
+}
+
 
 
 
@@ -2333,7 +2354,20 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
            && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
         {
           found = 1;
-          if (r_body)
+          if (!r_body)
+            ; /* Body content has not been requested. */
+          else if (opt.body_as_attachment && !mapi_test_attach_hidden (att))
+            {
+              /* The body is to be shown as an attachment. */
+              body = native_to_utf8 
+                (bodytype == 2
+                 ? ("[Open the attachment \"gpgol000.htm\""
+                    " to view the message.]")
+                 : ("[Open the attachment \"gpgol000.txt\""
+                    " to view the message.]"));
+              found = 1;
+            }
+          else
             {
               char *charset;
               

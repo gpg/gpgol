@@ -1,3 +1,16 @@
+2008-05-28  Werner Koch  <wk@g10code.com>
+
+	* dialogs.h (IDC_BODY_AS_ATTACHMENT): New.
+	* dialogs.rc: Add body-as-attachemnt checkbox to the otpion
+	dialog.
+	* olflange-dlgs.cpp (set_labels, GPGOptionsDlgProc): Add it.
+	* main.c (write_options, read_options): Handle bodyAsAttachment
+	registry key.
+	* mimeparser.c (start_attachment): Do not set the hidden flag if
+	the new option is used.
+	* mapihelp.cpp (mapi_test_attach_hidden): New.
+	(mapi_get_gpgol_body_attachment): Make use of that flag.
+
 2008-05-23  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (struct sink_s): Add field ENC_COUNTER.

@@ -39,6 +39,7 @@
 #define IDC_G_GENERAL                   4023
 #define IDC_G_SEND                      4024
 #define IDC_G_RECV                      4025
+#define IDC_BODY_AS_ATTACHMENT          4026
 
 
 /* Ids for the extended options dialog.  */

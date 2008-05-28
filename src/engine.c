@@ -486,7 +486,8 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
           any = 1;
         }
       if (!PulseEvent (filter->out.condvar))
-        log_error_w32 (-1, "%s:%s: PulseEvent(out) failed", SRCNAME, __func__);
+        log_error_w32 (-1, "%s:%s: PulseEvent(%p)[out] failed", 
+                       SRCNAME, __func__, filter->out.condvar);
       release_out_lock (filter, __func__);
 
       if (any)
@@ -533,7 +534,8 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
           break;  /* the loop.  */
         }
       if (!PulseEvent (filter->in.condvar))
-        log_error_w32 (-1, "%s:%s: PulseEvent(in) failed", SRCNAME, __func__);
+        log_error_w32 (-1, "%s:%s: PulseEvent(%p)[in] failed", 
+                       SRCNAME, __func__, filter->in.condvar);
       release_in_lock (filter, __func__);
       if (any)
         clear_switch_threads (filter);

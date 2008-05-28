@@ -140,6 +140,7 @@ char *mapi_get_gpgol_charset (LPMESSAGE obj);
 int mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset);
 
 int  mapi_set_attach_hidden (LPATTACH attach);
+int  mapi_test_attach_hidden (LPATTACH attach);
 
 char *mapi_get_mime_info (LPMESSAGE msg);
 

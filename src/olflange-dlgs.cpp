@@ -53,6 +53,7 @@ set_labels (HWND dlg)
     { IDC_G_RECV,           N_("Message receiving")},
     { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
     { IDC_PREFER_HTML,      N_("Show HTML view if possible")},
+    { IDC_BODY_AS_ATTACHMENT, N_("Present encrypted message as attachment")},
 
     { IDC_GPG_OPTIONS,      "Debug..."},
     { IDC_VERSION_INFO,  "Version "VERSION "  ("__DATE__")"},
@@ -191,6 +192,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                               !!opt.preview_decrypt, 0L);
           SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
 				!!opt.prefer_html, 0L);
+          SendDlgItemMessage (hDlg, IDC_BODY_AS_ATTACHMENT, BM_SETCHECK,
+				!!opt.body_as_attachment, 0L);
           bMsgResult = FALSE;  /* Accepts activation. */
           break; 
 		
@@ -226,6 +229,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
           opt.prefer_html = !!SendDlgItemMessage
             (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
+          opt.body_as_attachment = !!SendDlgItemMessage
+            (hDlg, IDC_BODY_AS_ATTACHMENT, BM_GETCHECK, 0, 0L);
           
           /* Now that the user has confirmed the options dialog, we
              mark the Registry with revision of this build.  */

@@ -633,6 +633,10 @@ read_options (void)
   opt.svn_revision = val? atol (val) : 0;
   xfree (val); val = NULL;
 
+  load_extension_value ("bodyAsAttachment", &val);
+  opt.body_as_attachment = val == NULL || *val != '1'? 0 : 1;
+  xfree (val); val = NULL;
+
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
      the switch below for a description. */
@@ -706,6 +710,7 @@ write_options (void)
     {"enableDefaultKey",         0, opt.enable_default_key},
     {"preferHtml",               0, opt.prefer_html},
     {"svnRevision",              1, opt.svn_revision},
+    {"bodyAsAttachment",         0, opt.body_as_attachment},
     {NULL, 0}
   };
   char buf[32];

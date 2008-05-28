@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-05-06 10:41+0200\n"
+"POT-Creation-Date: 2008-05-28 15:37+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -57,7 +57,7 @@ msgid ""
 "are not readable."
 msgstr ""
 
-#: src/engine.c:409 src/ext-commands.cpp:753 src/main.c:672 src/main.c:678
+#: src/engine.c:409 src/ext-commands.cpp:753 src/main.c:676 src/main.c:682
 #: src/message.cpp:301
 msgid "GpgOL"
 msgstr ""
@@ -320,12 +320,12 @@ msgstr "Signera meddelandet med GPG"
 msgid "Open the GpgOL certificate manager"
 msgstr ""
 
-#: src/main.c:671
+#: src/main.c:675
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr ""
 
-#: src/main.c:677
+#: src/main.c:681
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -340,7 +340,7 @@ msgid ""
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2369
+#: src/mapihelp.cpp:2403
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -418,12 +418,12 @@ msgstr "Kryptering misslyckades"
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
 
-#: src/mimeparser.c:1124
+#: src/mimeparser.c:1126
 #, fuzzy
 msgid "Error writing to stream"
 msgstr "Fel vid skrivning av fil"
 
-#: src/mimeparser.c:1125
+#: src/mimeparser.c:1127
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 
@@ -468,7 +468,11 @@ msgstr ""
 msgid "Show HTML view if possible"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:209
+#: src/olflange-dlgs.cpp:56
+msgid "Present encrypted message as attachment"
+msgstr ""
+
+#: src/olflange-dlgs.cpp:212
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -479,11 +483,11 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:262
+#: src/olflange-dlgs.cpp:267
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:268
+#: src/olflange-dlgs.cpp:273
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr ""

@@ -1,3 +1,11 @@
+Noteworthy changes for version 0.10.15
+===================================================
+
+ * New option to present the body of a message as an attachment.  This
+   is useful to make sure that the body will never show up in
+   plaintext in the message store.
+
+
 Noteworthy changes for version 0.10.14 (2008-05-28)
 ===================================================
 
