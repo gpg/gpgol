@@ -1,3 +1,8 @@
+2008-06-04  Werner Koch  <wk@g10code.com>
+
+	* doc/gpgol.texi (Assuan Protocol): Remove protocol specs.  They
+	are now part of the GPGME manual.
+
 2008-05-28  Werner Koch  <wk@g10code.com>
 
 	* Release 0.10.14.
