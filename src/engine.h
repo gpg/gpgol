@@ -50,9 +50,13 @@ typedef struct engine_filter_s *engine_filter_t;
 /*-- engine.c -- */
 int engine_init (void);
 void engine_deinit (void);
+unsigned int engine_new_session_number (void);
 
 void engine_private_set_cancel (engine_filter_t filter, void *cancel_data);
 void engine_private_finished (engine_filter_t filter, gpg_error_t status);
+
+unsigned int engine_private_get_session_number (engine_filter_t filter);
+const char *engine_private_get_session_title (engine_filter_t filter);
 
 int engine_filter (engine_filter_t filter,
                    const void *indata, size_t indatalen);
@@ -60,6 +64,10 @@ int engine_create_filter (engine_filter_t *r_filter,
                           int (*outfnc) (void *, const void *, size_t),
                           void *outfncdata);
 void engine_request_exra_lf (engine_filter_t filter);
+void engine_set_session_number (engine_filter_t filter, unsigned int value);
+void engine_set_session_title (engine_filter_t filter, const char *title);
+void engine_set_sender_address (engine_filter_t filter, const char *addr);
+
 int engine_wait (engine_filter_t filter);
 void engine_cancel (engine_filter_t filter);
 

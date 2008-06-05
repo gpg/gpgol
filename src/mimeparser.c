@@ -1238,6 +1238,12 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
       
       if ((err=engine_create_filter (&filter, NULL, NULL)))
         goto leave;
+      engine_set_session_number (filter, engine_new_session_number ());
+      {
+        char *tmp = mapi_get_subject (mapi_message);
+        engine_set_session_title (filter, tmp);
+        xfree (tmp);
+      }
       if ((err=engine_verify_start (filter, hwnd, signature, sig_len,
 				    ctx->protocol)))
         goto leave;
@@ -1350,6 +1356,12 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
 
   if ((err=engine_create_filter (&filter, plaintext_handler, ctx)))
     goto leave;
+  engine_set_session_number (filter, engine_new_session_number ());
+  {
+    char *tmp = mapi_get_subject (mapi_message);
+    engine_set_session_title (filter, tmp);
+    xfree (tmp);
+  }
   if ((err=engine_verify_start (filter, hwnd, NULL, 0, protocol)))
     goto leave;
 
@@ -1690,6 +1702,12 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
     goto leave;
   if (simple_pgp)
     engine_request_exra_lf (filter);
+  engine_set_session_number (filter, engine_new_session_number ());
+  {
+    char *tmp = mapi_get_subject (mapi_message);
+    engine_set_session_title (filter, tmp);
+    xfree (tmp);
+  }
   if ((err=engine_decrypt_start (filter, hwnd, protocol, !preview_mode)))
     goto leave;
 

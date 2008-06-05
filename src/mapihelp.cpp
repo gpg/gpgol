@@ -998,7 +998,7 @@ mapi_get_message_class (LPMESSAGE message)
 
 
 
-/* Return teh sender of the message.  According to the specs this is
+/* Return the sender of the message.  According to the specs this is
    an UTF-8 string; we rely on that the UI server handles
    internationalized domain names.  */ 
 char *
@@ -1052,6 +1052,45 @@ mapi_get_sender (LPMESSAGE message)
     *p0++ = *p++;
   *p0 = 0;
   log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, buf);
+  return buf;
+}
+
+/* Return the subject of the message as a malloced UTF-8 string.
+   Returns a replacement string if a subject is missing.  */
+char *
+mapi_get_subject (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  char *buf;
+  
+  if (!message)
+    return xstrdup ("[no message]"); /* Ooops.  */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SUBJECT_W, &propval);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrGetOneProp failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      return xstrdup (_("[no subject]"));
+    }
+    
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
+    {
+      log_debug ("%s:%s: HrGetOneProp returns invalid type %lu\n",
+                 SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
+      MAPIFreeBuffer (propval);
+      return xstrdup (_("[no subject]"));
+    }
+  
+  buf = wchar_to_utf8 (propval->Value.lpszW);
+  MAPIFreeBuffer (propval);
+  if (!buf)
+    {
+      log_error ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
+      return xstrdup (_("[no subject]"));
+    }
+
   return buf;
 }
 

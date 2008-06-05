@@ -108,6 +108,13 @@ struct engine_filter_s
 
   /* Counter used to optimize voluntary thread switching. */
   ULONG switch_counter;
+
+  /* Optional data to be passed to the backend to help the server
+     display a useful title and to associate operations with one OL
+     task.  */
+  unsigned int session_number;
+  char *session_title;     /* (malloced) */
+  char *sender_address;    /* (malloced) */
 };
 
 
@@ -196,6 +203,8 @@ release_filter (engine_filter_t filter)
         CloseHandle (filter->in.ready_event);
       gpgme_data_release (filter->indata);
       gpgme_data_release (filter->outdata);
+      xfree (filter->session_title);
+      xfree (filter->sender_address);
       xfree (filter);
     }
 }
@@ -384,6 +393,17 @@ engine_private_finished (engine_filter_t filter, gpg_error_t status)
 }
 
 
+unsigned int
+engine_private_get_session_number (engine_filter_t filter)
+{
+  return filter? filter->session_number : 0;
+}
+
+const char *
+engine_private_get_session_title (engine_filter_t filter)
+{
+  return filter? filter->session_title : NULL;
+}
 
 
 
@@ -422,6 +442,21 @@ engine_deinit (void)
 {
   op_assuan_deinit ();
   op_gpgme_deinit ();
+}
+
+/* Helper function to return a new session number.  */
+unsigned int
+engine_new_session_number (void)
+{
+  static ULONG number;
+  ULONG n;
+
+  /* The protocol says the session number is a 32 bit value, thus we
+     make that sure even in the case that ULONG is changed to a 64 bit
+     type (Not an issue under Windows, though). */
+  while (!((n = InterlockedIncrement (&number))&0xffffffff) )
+    ;
+  return n;
 }
 
 
@@ -601,11 +636,46 @@ engine_create_filter (engine_filter_t *r_filter,
 }
 
 
-/* Set the FILTER in a mode which pushes an extra lineffed out.  */
+/* Set the FILTER in a mode which pushes an extra linefeed out.  */
 void
 engine_request_exra_lf (engine_filter_t filter)
 {
   filter->add_extra_lf = 1;
+}
+
+
+/* Set the session number for FILTER to NUMBER.  */
+void
+engine_set_session_number (engine_filter_t filter, unsigned int value)
+{
+  if (filter)
+    filter->session_number = value;
+}
+
+/* Set the session title for FILTER to TITLE.  */
+void
+engine_set_session_title (engine_filter_t filter, const char *title)
+{
+  if (filter)
+    {
+      xfree (filter->session_title);
+      filter->session_title = title? xstrdup (title) : NULL;
+    }
+}
+
+/* Set the sender address for FILTER to ADDR.  Setting the sender
+   address to NULL is allowed.  This sender address may be used by the
+   server to check whether the used key matches the sender address
+   while verifying a message.  Note that this sender address is not
+   used for selecting a key during encryption or verification. */
+void
+engine_set_sender_address (engine_filter_t filter, const char *addr)
+{
+  if (filter)
+    {
+      xfree (filter->sender_address);
+      filter->sender_address = addr? xstrdup (addr) : NULL;
+    }
 }
 
 
@@ -763,7 +833,7 @@ engine_cancel (engine_filter_t filter)
 
 
 
-/* Start an encryption operation to all RECIPEINTS using PROTOCOL
+/* Start an encryption operation to all RECIPIENTS using PROTOCOL
    RECIPIENTS is a NULL terminated array of rfc2822 addresses.  FILTER
    is an object created by engine_create_filter.  The caller needs to
    call engine_wait to finish the operation.  A filter object may not

@@ -526,8 +526,22 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
 }
 
 
+/* end the optiona session information. */
+static void
+send_session_info (assuan_context_t ctx, engine_filter_t filter)
+{
+  char line[1020];
+  unsigned int number = engine_private_get_session_number (filter);
+  const char *title   = engine_private_get_session_title (filter);
 
-
+  if (title && *title)
+    snprintf (line, sizeof line, "SESSION %u %s", number, title);
+  else
+    snprintf (line, sizeof line, "SESSION %u", number);
+  assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+}
+
+
 
 static void
 cleanup (void)
@@ -1796,13 +1810,14 @@ op_assuan_sign (protocol_t protocol,
   if (err)
     goto leave;
 
-  /* We always send the SENDER command becuase it allows us to figure
+  /* We always send the SENDER command because it allows us to figure
      out the protocol to use.  In case the UI server faisl to send the
      protocol we fall back to OpenPGP.  */
   suggested_protocol = PROTOCOL_UNKNOWN;
   if (!sender)
     sender = "<kleopatra-does-not-allow-an-empty-arg@example.net>";
-  snprintf (line, sizeof line, "SENDER%s%s", sender? " ":"", sender?sender:"");
+  snprintf (line, sizeof line, "SENDER%s%s",
+            sender? " -- ":"", sender?sender:"");
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL,
                          prep_foo_status_cb, &suggested_protocol);
   if (err)
@@ -1914,6 +1929,8 @@ op_assuan_decrypt (protocol_t protocol,
   err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
+
+  send_session_info (ctx, filter);
 
   snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -2043,6 +2060,8 @@ op_assuan_verify (gpgme_protocol_t protocol,
   err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
+
+  send_session_info (ctx, filter);
 
   if (!opaque_mode)
     {

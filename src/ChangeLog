@@ -1,3 +1,20 @@
+2008-06-05  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (mime_decrypt): Set session number and title.
+	(mime_verify_opaque, mime_verify): Ditto.
+	* mapihelp.cpp (mapi_get_subject): New.
+	* engine.c (engine_set_session_number, engine_set_session_title) 
+	(engine_set_sender_address): New.
+	(struct engine_filter_s): Add fields session_number, session_title
+	and sender_address.
+	(engine_private_get_session_number): New. 
+	(engine_private_get_session_title): New.
+	(release_filter): Release them.
+	(engine_new_session_number): New.
+	* engine-assuan.c (send_session_info): New
+	(op_assuan_decrypt, op_assuan_verify): Call it.
+	(op_assuan_sign): Use the end-of-option option for the SENDER command.
+
 2008-05-28  Werner Koch  <wk@g10code.com>
 
 	* dialogs.h (IDC_BODY_AS_ATTACHMENT): New.
