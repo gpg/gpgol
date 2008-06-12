@@ -250,12 +250,12 @@ STDAPI
 DllUnregisterServer (void)
 {
   HKEY hkey;
-  CHAR buf[512];
+  CHAR buf[MAX_PATH+1024];
   DWORD ntemp;
   long res;
 
   strcpy (buf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
-  /* create and open key and subkey */
+  /* Create and open key and subkey. */
   res = RegCreateKeyEx (HKEY_LOCAL_MACHINE, buf, 0, NULL, 
 			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
 			NULL, &hkey, NULL);
@@ -266,14 +266,18 @@ DllUnregisterServer (void)
     }
   RegDeleteValue (hkey, "GpgOL");
   
-  /* set outlook update flag */  
+  /* Set outlook update flag.  */  
   strcpy (buf, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
   ntemp = strlen (buf) + 1;
   RegSetValueEx (hkey, "Outlook Setup Extension", 0, 
 		 REG_SZ, (BYTE*) buf, ntemp);
   RegCloseKey (hkey);
 
-  /* Fixme: delet CLSIDs. */
+  /* Delete CLSIDs. */
+  strcpy (buf, "CLSID\\" CLSIDSTR_GPGOL "\\InprocServer32");
+  RegDeleteKey (HKEY_CLASSES_ROOT, buf);
+  strcpy (buf, "CLSID\\" CLSIDSTR_GPGOL);
+  RegDeleteKey (HKEY_CLASSES_ROOT, buf);
   
   return S_OK;
 }
