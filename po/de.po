@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-05-28 15:37+0200\n"
-"PO-Revision-Date: 2008-05-28 15:38+0200\n"
+"POT-Creation-Date: 2008-06-12 17:11+0200\n"
+"PO-Revision-Date: 2008-06-12 17:13+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -48,7 +48,7 @@ msgstr "GpgOL - Sichern der entschlüsselten Anlage"
 msgid "Debug output (for analysing problems)"
 msgstr "Debugausgabe (zur Problemanalyse)"
 
-#: src/engine.c:405
+#: src/engine.c:425
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -68,7 +68,7 @@ msgstr ""
 "   (unter \"GnuPG für Windows\") oder auf einem anderen Weg starten.\n"
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
 
-#: src/engine.c:409 src/ext-commands.cpp:753 src/main.c:676 src/main.c:682
+#: src/engine.c:429 src/ext-commands.cpp:753 src/main.c:676 src/main.c:682
 #: src/message.cpp:301
 msgid "GpgOL"
 msgstr "GpgOL"
@@ -344,7 +344,11 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1626
+#: src/mapihelp.cpp:1115 src/mapihelp.cpp:1123 src/mapihelp.cpp:1131
+msgid "[no subject]"
+msgstr "[Kein Betreff]"
+
+#: src/mapihelp.cpp:1705
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -354,7 +358,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2403
+#: src/mapihelp.cpp:2482
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -499,7 +503,11 @@ msgstr "HTML Darstellung anzeigen wenn möglich"
 msgid "Present encrypted message as attachment"
 msgstr "Verschlüsselte Nachricht as Anlage anzeigen"
 
-#: src/olflange-dlgs.cpp:212
+#: src/olflange-dlgs.cpp:59
+msgid "Crypto Engine"
+msgstr "Kryptoserver"
+
+#: src/olflange-dlgs.cpp:215
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -518,7 +526,7 @@ msgstr ""
 "kann."
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:267
+#: src/olflange-dlgs.cpp:270
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 "GpgOL ist ein Plugin für Microsoft Outlook, welches es ermöglicht\n"
@@ -543,12 +551,12 @@ msgstr ""
 "Public License erhalten haben.  Falls nicht, finden Sie diese\n"
 "unter der Webadresse <http://www.gnu.org/licenses/>."
 
-#: src/olflange-dlgs.cpp:273
+#: src/olflange-dlgs.cpp:276
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
 
-#: src/olflange.cpp:339
+#: src/olflange.cpp:343
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -562,7 +570,7 @@ msgstr ""
 "die die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
 "Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
-#: src/olflange.cpp:507
+#: src/olflange.cpp:511
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"

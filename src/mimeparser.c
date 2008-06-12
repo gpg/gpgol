@@ -1244,8 +1244,13 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
         engine_set_session_title (filter, tmp);
         xfree (tmp);
       }
-      if ((err=engine_verify_start (filter, hwnd, signature, sig_len,
-				    ctx->protocol)))
+      {
+        char *from = mapi_get_from_address (mapi_message);
+        err = engine_verify_start (filter, hwnd, signature, sig_len,
+                                   ctx->protocol, from);
+        xfree (from);
+      }
+      if (err)
         goto leave;
 
       /* Filter the data.  */
@@ -1362,7 +1367,12 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
     engine_set_session_title (filter, tmp);
     xfree (tmp);
   }
-  if ((err=engine_verify_start (filter, hwnd, NULL, 0, protocol)))
+  {
+    char *from = mapi_get_from_address (mapi_message);
+    err = engine_verify_start (filter, hwnd, NULL, 0, protocol, from);
+    xfree (from);
+  }
+  if (err);
     goto leave;
 
   if (instream)
@@ -1708,7 +1718,12 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
     engine_set_session_title (filter, tmp);
     xfree (tmp);
   }
-  if ((err=engine_decrypt_start (filter, hwnd, protocol, !preview_mode)))
+  {
+    char *from = preview_mode? NULL : mapi_get_from_address (mapi_message);
+    err = engine_decrypt_start (filter, hwnd, protocol, !preview_mode, from);
+    xfree (from);
+  }
+  if (err)
     goto leave;
 
   if (decctx)

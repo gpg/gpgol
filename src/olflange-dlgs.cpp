@@ -32,7 +32,7 @@
 #include "ol-ext-callback.h"
 #include "olflange-def.h"
 #include "dialogs.h"
-
+#include "engine.h"
 
 /* To avoid writing a dialog template for each language we use gettext
    for the labels and hope that there is enough space in the dialog to
@@ -56,6 +56,7 @@ set_labels (HWND dlg)
     { IDC_BODY_AS_ATTACHMENT, N_("Present encrypted message as attachment")},
 
     { IDC_GPG_OPTIONS,      "Debug..."},
+    { IDC_GPG_CONF,         N_("Crypto Engine")},
     { IDC_VERSION_INFO,  "Version "VERSION "  ("__DATE__")"},
     { 0, NULL}
   };
@@ -165,6 +166,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
       if (opt.enable_debug && LOWORD (wParam) == IDC_GPG_OPTIONS)
 	config_dialog_box (hDlg);
+      else if (LOWORD (wParam) == IDC_GPG_CONF)
+        engine_start_confdialog (hDlg);
       break;
 	
     case WM_NOTIFY:

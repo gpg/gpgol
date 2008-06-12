@@ -32,7 +32,7 @@ Hüttenstr. 61@*
 40699 Erkrath, Germany
 @end iftex
 
-Copyright @copyright{} 2007 g10 Code GmbH
+Copyright @copyright{} 2007, 2008 g10 Code GmbH
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -89,6 +89,8 @@ Outlook MUA.
 * Assuan Protocol::             Description of the UI server protocol.
 * MAPI Properties::             MAPI Properties used by GpgOL.
 * Registry Settings::           How GpgOL uses the Registry.
+* MAPI Providers::              What MAPI Storage or Transport providers
+                                can do to help GpgOL.
 
 Appendices
 
@@ -329,6 +331,108 @@ after software upgrades.
 
 
 @end table
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c  MAPI Providers
+@c
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@node MAPI Providers
+@chapter What MAPI Storage or Transport providers can do to help GpgOL
+
+GpgOL uses some tricks to make decryption of OpenPGP message better fit
+into the Outlook framework.  This is due to a lack of proper Plugin API
+for Outllok and becuase some features of Outlook --- meant as a security
+measure --- hinder a better implementation.  That is not to say that
+Outlook will be less secure when used with GpgOL --- to the opposite:
+Due to encryption and digital signature reading and sending mail with
+GpgOL support can be much more secure than using Outlook as is.
+
+There are some points where custom MAPI storage or transport
+providers can help GpgOL to gain better performance and to make it more
+secure.
+
+@section MAPI Message Class Renaming
+
+To implement S/MIME processing in GpgOL and inhibit XXXXXX
+
+
+@section MAPI Attachment Processing
+
+GpgOL creates a couple of attachments for the purpose of storing a
+parsed mail and to allow Outlook to display attachments in the usual way
+without sending them as plaintext to the storage.  The attachments are
+only stored on the local disk while being opened from the attachment's
+context menu for viewing.  Almost all these attchments are ephemeral and
+may be deleted when not displayed.  GpgOL re-creates them by parsing the
+orginal message if neeeded.  In fact they are always re-created after
+Outlook as been started again.  This is because the attachments holding
+the plaintext are symmetrical encrypted with an ephemeral session key,
+only valid as long as Outlook runs.
+
+TODO
+
+
+@section MAPI PR_BODY Processing
+
+GPOL does not use the PR_BODY property.  This is because internal
+Outlook syncronisation may change that property after the plaintext of a
+message has been displayed.  In general this is not a problem because
+the messages processed by GpgOL do not use that property (the orginal
+S/MIME and PGP/MIME message is stored in attachments).  However, there
+is one exception: Inline PGP message (in contrast to the modern PGP/MIME
+messages) are conveyed in the PR_BODY.  To avoid changing that orginal
+mail, GpgOL copies such a body to a new attachment named
+@file{gpgolPGP.dat}, flags it as hidden and sets the attach type to
+ATTACHTYPE_PGPBODY (See above under MAPI Properties).  That attachment
+may never be deleted!
+
+Due to internal OL syncronisation, plaintext data may end up in PR_BODY,
+GpgOL tries hard to delete PR_BODY so that it nevers shows up in the
+MAPI storage.  However this is hard and here a storage provider can help
+by deleting PR_BODY under one of these conditions:
+
+@itemize @bullet
+
+@item
+If the message class is either @code{IPM.Note.GpgOL.MultipartEncrypted}
+or @code{IPM.Note.GpgOL.OpaqueEncrypted} and in addition the message has
+a property @code{GpgOL Last Decrypted} (with any value), delete the
+properties @code{PR_BODY} and @code{PR_BODY_HTML}.
+
+@item
+If the message class is @code{IPM.Note.GpgOL.PGPMessage} and an
+attachment of ATTACHTYPE_PGPBODY with a filename @file{gpgolPGP.dat}
+exists, delete the properties @code{PR_BODY} and @code{PR_BODY_HTML}.
+
+@end itemize
+
+Instead of deleting it should be sufficient to make sure
+that such PR_BODYs are not update and don't make it to the disk or a
+strage server. 
+
+Implementing such a feature would really help with end-to-end encryption
+where the security policy requires that the plaintext of an encrypted
+message will never be stored on a disk or leave the local machine.
+
+
+@section Filtering GpgOL internal properties
+
+To avoid attacks by importing TNEF data with certain GpgOL internal
+properties, a MAPI provider may want to filter them out when receiving a
+message from an external location.  It is not yet clear whetehr this is
+really needed.
+
+FIXME.
+
+
+
+
+
+
+
+
+
 
 
 

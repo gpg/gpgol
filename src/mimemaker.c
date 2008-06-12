@@ -1159,7 +1159,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
         return -1;
     }
 
-  /* Prepare the signing.  FIXME: figure out the signer of the mail.  */
+  /* Prepare the signing. */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
     goto failure;
   if (engine_sign_start (filter, hwnd, protocol, 

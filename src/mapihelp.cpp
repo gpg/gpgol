@@ -1055,6 +1055,46 @@ mapi_get_sender (LPMESSAGE message)
   return buf;
 }
 
+/* Return the from address of the message as a malloced UTF-8 string.
+   Returns NULL if that address is not available.  */
+char *
+mapi_get_from_address (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  char *buf;
+  
+  if (!message)
+    return xstrdup ("[no message]"); /* Ooops.  */
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SENDER_EMAIL_ADDRESS_W, &propval);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrGetOneProp failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      return NULL;
+    }
+    
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
+    {
+      log_debug ("%s:%s: HrGetOneProp returns invalid type %lu\n",
+                 SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
+      MAPIFreeBuffer (propval);
+      return NULL;
+    }
+  
+  buf = wchar_to_utf8 (propval->Value.lpszW);
+  MAPIFreeBuffer (propval);
+  if (!buf)
+    {
+      log_error ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
+      return NULL;
+    }
+
+  return buf;
+}
+
+
 /* Return the subject of the message as a malloced UTF-8 string.
    Returns a replacement string if a subject is missing.  */
 char *

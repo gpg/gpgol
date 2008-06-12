@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-05-28 15:37+0200\n"
+"POT-Creation-Date: 2008-06-12 17:11+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -48,7 +48,7 @@ msgstr "GPG - Spara dekrypterad bilaga"
 msgid "Debug output (for analysing problems)"
 msgstr ""
 
-#: src/engine.c:405
+#: src/engine.c:425
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -57,7 +57,7 @@ msgid ""
 "are not readable."
 msgstr ""
 
-#: src/engine.c:409 src/ext-commands.cpp:753 src/main.c:676 src/main.c:682
+#: src/engine.c:429 src/ext-commands.cpp:753 src/main.c:676 src/main.c:682
 #: src/message.cpp:301
 msgid "GpgOL"
 msgstr ""
@@ -333,14 +333,18 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1626
+#: src/mapihelp.cpp:1115 src/mapihelp.cpp:1123 src/mapihelp.cpp:1131
+msgid "[no subject]"
+msgstr ""
+
+#: src/mapihelp.cpp:1705
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2403
+#: src/mapihelp.cpp:2482
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -472,7 +476,11 @@ msgstr ""
 msgid "Present encrypted message as attachment"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:212
+#: src/olflange-dlgs.cpp:59
+msgid "Crypto Engine"
+msgstr ""
+
+#: src/olflange-dlgs.cpp:215
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -483,16 +491,16 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:267
+#: src/olflange-dlgs.cpp:270
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:273
+#: src/olflange-dlgs.cpp:276
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr ""
 
-#: src/olflange.cpp:339
+#: src/olflange.cpp:343
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -501,7 +509,7 @@ msgid ""
 ">Options->GpgOL.\n"
 msgstr ""
 
-#: src/olflange.cpp:507
+#: src/olflange.cpp:511
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"

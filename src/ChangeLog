@@ -1,5 +1,18 @@
 2008-06-12  Werner Koch  <wk@g10code.com>
 
+	* dialogs.rc: Add button for calling the engine's configuration.
+	* dialogs.h (IDC_GPG_CONF): New.
+	* engine.c (engine_start_confdialog): New.
+	* engine-assuan.c (op_assuan_start_confdialog): New.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Act upon the button.
+
+	* mapihelp.cpp (mapi_get_from_address): New.
+	* engine.c (engine_decrypt_start, engine_verify_start): Add new
+	arg FROM_ADDRESS.
+	* engine-assuan.c (op_assuan_verify, op_assuan_decrypt): Ditto.
+	* mimeparser.c (mime_verify, mime_verify_opaque, mime_decrypt):
+	Pass FROM_ADDRESS to the backend.
+
 	* olflange.cpp (DllUnregisterServer): Delete CLSIDs.
 
 2008-06-05  Werner Koch  <wk@g10code.com>

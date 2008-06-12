@@ -117,6 +117,7 @@ int mapi_to_mime (LPMESSAGE message, const char *filename);
 
 char *mapi_get_binary_prop (LPMESSAGE message,ULONG proptype,size_t *r_nbytes);
 
+char *mapi_get_from_address (LPMESSAGE message);
 char *mapi_get_subject (LPMESSAGE message);
 
 LPSTREAM mapi_get_body_as_stream (LPMESSAGE message);

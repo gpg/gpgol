@@ -51,13 +51,16 @@ int op_assuan_sign (protocol_t protocol,
 int op_assuan_decrypt (protocol_t protocol,
                        gpgme_data_t indata, gpgme_data_t outdata, 
                        engine_filter_t filter, void *hwnd,
-                       int with_verify);
+                       int with_verify, const char *from_address);
 int op_assuan_verify (gpgme_protocol_t protocol, 
                       gpgme_data_t data, const char *signature, size_t sig_len,
                       gpgme_data_t outdata,
-                      engine_filter_t filter, void *hwnd);
+                      engine_filter_t filter, void *hwnd,
+                      const char *from_address);
 
 int op_assuan_start_keymanager (void *hwnd);
+
+int op_assuan_start_confdialog (void *hwnd);
 
 
 #ifdef __cplusplus

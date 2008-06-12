@@ -924,16 +924,18 @@ engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
    finish the operation.  A filter object may not be reused after
    having been used through this function.  However, the lifetime of
    the filter object lasts until the final engine_wait or
-   engine_cancel.  */
+   engine_cancel.  FROM_ADDRESS may be passed to allow the backend
+   matching the sender's address with the one in the certificate (in
+   case the decrypted message ncludes a signed message). */
 int
 engine_decrypt_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
-                      int with_verify)
+                      int with_verify, const char *from_address)
 {
   gpg_error_t err;
 
   if (filter->use_assuan)
     err = op_assuan_decrypt (protocol, filter->indata, filter->outdata,
-                            filter, hwnd, with_verify);
+                            filter, hwnd, with_verify, from_address);
   else
     err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
                             filter, hwnd, with_verify);
@@ -947,10 +949,13 @@ engine_decrypt_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
    signature.  The caller needs to call engine_wait to finish the
    operation.  A filter object may not be reused after having been
    used through this function.  However, the lifetime of the filter
-   object lasts until the final engine_wait or engine_cancel.  */
+   object lasts until the final engine_wait or engine_cancel.
+   FROM_ADDRESS may be passed to allow the backend matching the
+   sender's address with the one in the certificate. */
 int
 engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
-		     size_t sig_len, protocol_t protocol)
+		     size_t sig_len, protocol_t protocol, 
+                     const char *from_address)
 {
   gpg_error_t err;
 
@@ -964,10 +969,10 @@ engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
 
   if (filter->use_assuan && !signature)
     err = op_assuan_verify (protocol, filter->indata, NULL, 0,
-			    filter->outdata, filter, hwnd);
+			    filter->outdata, filter, hwnd, from_address);
   else if (filter->use_assuan)
     err = op_assuan_verify (protocol, filter->indata, signature, sig_len,
-			    NULL, filter, hwnd);
+			    NULL, filter, hwnd, from_address);
   else
     err = op_gpgme_verify (protocol, filter->indata, signature, sig_len,
                            filter, hwnd);
@@ -981,6 +986,16 @@ engine_start_keymanager (HWND hwnd)
 {
   if (use_assuan)
     return op_assuan_start_keymanager (hwnd);
+  else
+    return gpg_error (GPG_ERR_NOT_SUPPORTED);
+}
+
+/* Fire up the config dialog.  Returns 0 on success.  */
+int
+engine_start_confdialog (HWND hwnd)
+{
+  if (use_assuan)
+    return op_assuan_start_confdialog (hwnd);
   else
     return gpg_error (GPG_ERR_NOT_SUPPORTED);
 }

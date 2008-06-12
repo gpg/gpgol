@@ -79,12 +79,15 @@ int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
                        const char *sender, protocol_t *r_protocol);
 
 int engine_decrypt_start (engine_filter_t filter, HWND hwnd,
-                          protocol_t protocol, int with_verify);
+                          protocol_t protocol, int with_verify,
+                          const char *from_address);
 int engine_verify_start (engine_filter_t filter, HWND hwnd,
                          const char *signature, size_t sig_len,
-			 protocol_t protocol);
+			 protocol_t protocol,
+                         const char *from_address);
 
 int engine_start_keymanager (HWND hwnd);
+int engine_start_confdialog (HWND hwnd);
 
 
 

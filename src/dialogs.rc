@@ -97,7 +97,10 @@ BEGIN
                       8, 212, 150, 64
 
     PUSHBUTTON      "advanced", IDC_GPG_OPTIONS,
-                    209, 240, 50, 14
+                    130, 240, 50, 14
+
+    PUSHBUTTON      "gpgconf", IDC_GPG_CONF,
+                    190, 240, 70, 14
 
 END
 

@@ -1769,8 +1769,8 @@ sign_closure (closure_data_t cld)
 /* Created a detached signature for INDATA and write it to OUTDATA.
    On termination of the signing command engine_private_finished() is
    called with FILTER as the first argument.  SENDER is the sender's
-   mail address (a mailbox).  The used protocol wioll be stored at
-   R_PROTOCOL. */
+   mail address (a mailbox).  The used protocol will be stored at
+   R_USED_PROTOCOL on return. */
 int 
 op_assuan_sign (protocol_t protocol, 
                 gpgme_data_t indata, gpgme_data_t outdata,
@@ -1896,7 +1896,7 @@ int
 op_assuan_decrypt (protocol_t protocol,
                    gpgme_data_t indata, gpgme_data_t outdata, 
                    engine_filter_t filter, void *hwnd,
-                   int with_verify)
+                   int with_verify, const char *from_address)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -1931,6 +1931,13 @@ op_assuan_decrypt (protocol_t protocol,
     goto leave;
 
   send_session_info (ctx, filter);
+  if (with_verify && from_address)
+    {
+      snprintf (line, sizeof line, "SENDER --info -- %s", from_address);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        goto leave;
+    }
 
   snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -1996,7 +2003,7 @@ int
 op_assuan_verify (gpgme_protocol_t protocol, 
                   gpgme_data_t msgdata, const char *signature, size_t sig_len,
                   gpgme_data_t outdata,
-                  engine_filter_t filter, void *hwnd)
+                  engine_filter_t filter, void *hwnd, const char *from_address)
 {
   gpg_error_t err;
   closure_data_t cld = NULL;
@@ -2062,6 +2069,13 @@ op_assuan_verify (gpgme_protocol_t protocol,
     goto leave;
 
   send_session_info (ctx, filter);
+  if (from_address)
+    {
+      snprintf (line, sizeof line, "SENDER --info -- %s", from_address);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        goto leave;
+    }
 
   if (!opaque_mode)
     {
@@ -2137,6 +2151,27 @@ op_assuan_start_keymanager (void *hwnd)
   if (!err)
     {
       err = assuan_transact (ctx, "START_KEYMANAGER",
+                             NULL, NULL, NULL, NULL, NULL, NULL);
+      assuan_disconnect (ctx);
+    }
+  return err;
+}
+
+
+
+/* Ask the server to fire up the config dialog.  */
+int 
+op_assuan_start_confdialog (void *hwnd)
+{
+  gpg_error_t err;
+  assuan_context_t ctx;
+  ULONG cmdid;
+  pid_t pid;
+
+  err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  if (!err)
+    {
+      err = assuan_transact (ctx, "START_CONFDIALOG",
                              NULL, NULL, NULL, NULL, NULL, NULL);
       assuan_disconnect (ctx);
     }
