@@ -218,7 +218,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 "message will even be unreadable by Outlook after GpgOL has "
                 "been deinstalled.  A tool to mitigate this problem will be "
                 "provided when GpgOL arrives at production quality status."),
-                            "GpgOL", MB_ICONWARNING|MB_OK);
+                            "GpgOL", MB_ICONINFORMATION|MB_OK);
             }
 
           if (openpgp_state)

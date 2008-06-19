@@ -346,7 +346,7 @@ GpgolExt::GpgolExt (void)
                       " the settings are correct for your needs.  The option"
                       " dialog can be found in the main menu at:"
                       " Extras->Options->GpgOL.\n"),
-                      "GpgOL", MB_ICONHAND|MB_OK);
+                      "GpgOL", MB_ICONINFORMATION|MB_OK);
     }
 }
 
