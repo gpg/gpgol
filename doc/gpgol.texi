@@ -173,7 +173,7 @@ attachments created by GpgOL.  These values are used:
 
   @item ATTACHTYPE_FROMMOSS = 2
   The attachment has been created from the original MOSS attachment.  It
-  will automagically be recreated as needed.  If the atatchment has
+  will automagically be recreated as needed.  If the attachment has
   been created from an encrypted message, it is saved re-encrypted under
   a non-permanent session key.  This session key is valid as long as the
   current Outlook porcess exists.
@@ -342,7 +342,7 @@ after software upgrades.
 
 GpgOL uses some tricks to make decryption of OpenPGP message better fit
 into the Outlook framework.  This is due to a lack of proper Plugin API
-for Outllok and becuase some features of Outlook --- meant as a security
+for Outllok and because some features of Outlook --- meant as a security
 measure --- hinder a better implementation.  That is not to say that
 Outlook will be less secure when used with GpgOL --- to the opposite:
 Due to encryption and digital signature reading and sending mail with
@@ -354,7 +354,77 @@ secure.
 
 @section MAPI Message Class Renaming
 
-To implement S/MIME processing in GpgOL and inhibit XXXXXX
+To implement S/MIME processing using its own engine, GpgOL needs to
+inhibit Outlook from doing the S/MIME before the message is passed to
+the ECE hooks.  As usual this is done by changing the message class
+(PR_MESSAGE_CLASS).  For new message this happens right away at the
+OnDelivery hook; for already existing messages GpgOL tries to detect
+the case at several other places (which is less reliable but in general
+works).
+
+@noindent
+The renaming is very straightforward:
+
+@itemize @bullet
+@item 
+If the message class is just @code{IPM.Note} extra tests are done to
+figure out a suitable message class.  This yields one of these new
+message classes:
+
+@table @code
+@item IPM.Note.GpgOL.OpaqueSigned
+@item IPM.Note.GpgOL.OpaqueEncrypted
+@item IPM.Note.GpgOL.ClearSigned
+@item IPM.Note.GpgOL.PGPMessage
+@end table
+
+@item
+If the message class is either @code{IPM.Note.SMIME} or that one
+followed by a dot and a subclass, the @code{SMIME} string is replaced
+by @code{GpgOL}.
+
+@item
+If the message class is @code{IPM.Note.Secure.CexSig} or
+@code{IPM.Note.Secure.CexEnc} the class is changed depending on other
+information to one of:
+
+@table @code
+@item IPM.Note.GpgOL.OpaqueSigned
+@item IPM.Note.GpgOL.OpaqueEncrypted
+@item IPM.Note.GpgOL.MultipartSigned
+@item IPM.Note.GpgOL
+@item IPM.Note.GpgOL.ClearSigned
+@item IPM.Note.GpgOL.PGPMessage
+@end table
+
+@end itemize
+
+To revert these message class changes one need to replace any message
+class prefix of @code{IPM.Note.GpgOL} by @code{IPM.Note.SMIME}.  There
+are two caveats however:
+
+@itemize
+
+@item
+GpgOL copies or flags the original MOSS attachment as created by
+Outlook to a new attachment with the attach type set to ATTACHTYPE_MOSS.
+If such an attachment exists it should be converted back to the original
+attachment (or used to convert the message back to RFC-822).  It might
+however not exist and in this case there should be only one attachment
+at all as created by Outlook, so no further changes are required.
+
+@item 
+Inline PGP encrypted mails (@code{IPM.Note.GpgOL.PGPMessage}) might have
+a wrong PR_BODY. This condition can be detected by the existance of an
+attachment named @file{gpgolPGP.dat}, flagged as hidden and with the
+attach type ATTACHTYPE_PGPBODY (See above under MAPI Properties).  If
+such an attachment exists, it should be copied to PR_BODY and may then
+be deleted. 
+@end itemize
+
+@noindent
+Note that reverting original CryptoEx message classes (@code{CexSig}
+etc.) back is not possible.  They are identical to GpgOL messages.
 
 
 @section MAPI Attachment Processing
@@ -363,19 +433,19 @@ GpgOL creates a couple of attachments for the purpose of storing a
 parsed mail and to allow Outlook to display attachments in the usual way
 without sending them as plaintext to the storage.  The attachments are
 only stored on the local disk while being opened from the attachment's
-context menu for viewing.  Almost all these attchments are ephemeral and
+context menu for viewing.  Almost all these attachments are ephemeral and
 may be deleted when not displayed.  GpgOL re-creates them by parsing the
-orginal message if neeeded.  In fact they are always re-created after
+original message if neeeded.  In fact they are always re-created after
 Outlook as been started again.  This is because the attachments holding
 the plaintext are symmetrical encrypted with an ephemeral session key,
 only valid as long as Outlook runs.
 
-TODO
+FIXME:  Needs more documentation.
 
 
 @section MAPI PR_BODY Processing
 
-GPOL does not use the PR_BODY property.  This is because internal
+GpgOL does not use the PR_BODY property.  This is because internal
 Outlook syncronisation may change that property after the plaintext of a
 message has been displayed.  In general this is not a problem because
 the messages processed by GpgOL do not use that property (the orginal
@@ -420,17 +490,10 @@ message will never be stored on a disk or leave the local machine.
 
 To avoid attacks by importing TNEF data with certain GpgOL internal
 properties, a MAPI provider may want to filter them out when receiving a
-message from an external location.  It is not yet clear whetehr this is
+message from an external location.  It is not yet clear whether this is
 really needed.
 
 FIXME.
-
-
-
-
-
-
-
 
 
 
