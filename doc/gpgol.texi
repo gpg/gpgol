@@ -161,6 +161,14 @@ should be used.  The GUID assigned to these properties is
 
 @table @code
 
+@item GpgOL Msg Class
+This is a STRING8 property used as a override for PR_MESSAGE_CLASS.
+GpgOL uses this internally for creating messages.
+
+@item GpgOL Old Msg Class
+This is a STRING8 property which saves the original PR_MESSAGE_CLASS
+before GpgOL chnages it.
+
 @item GpgOL Attach Type
 This is a property of type LONG and used to further describe the
 attachments created by GpgOL.  These values are used:

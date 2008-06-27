@@ -93,6 +93,7 @@ typedef struct mapi_attach_item_s mapi_attach_item_t;
 #define PGPBODYFILENAME    "gpgolPGP.dat"
 
 void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
+int get_gpgololdmsgclass_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);

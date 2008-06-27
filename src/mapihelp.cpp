@@ -144,6 +144,18 @@ get_gpgolmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
   return 0;
 }
 
+/* Return the property tag for GpgOL Old Msg Class.  The Old Msg Class
+   saves the message class as seen before we changed it the first
+   time. */
+int 
+get_gpgololdmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Old Msg Class", __func__)))
+    return -1;
+  *r_tag |= PT_STRING8;
+  return 0;
+}
+
 
 /* Return the property tag for GpgOL Attach Type. */
 int 
@@ -926,7 +938,6 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
             newvalue = xstrdup ("IPM.Note.GpgOL");
         }
     }
-  MAPIFreeBuffer (propval);
   if (!newvalue)
     {
       /* We use our Sig-Status property to mark messages which passed
@@ -939,6 +950,37 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
     }
   else
     {
+      /* Save old message class if not yet done.  (The second
+         consition is just a failsafe check). */
+      if (!get_gpgololdmsgclass_tag (message, &tag)
+          && PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+        {
+          LPSPropValue propval2 = NULL;
+
+          hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval2);
+          if (!FAILED (hr))
+            MAPIFreeBuffer (propval2);
+          else
+            {
+              /* No such property - save it.  */
+              log_debug ("%s:%s: saving old message class\n",
+                         SRCNAME, __func__);
+              prop.ulPropTag = tag;
+              prop.Value.lpszA = propval->Value.lpszA; 
+              hr = message->SetProps (1, &prop, NULL);
+              xfree (newvalue);
+              if (hr)
+                {
+                  log_error ("%s:%s: can't save old message class: hr=%#lx\n",
+                             SRCNAME, __func__, hr);
+                  MAPIFreeBuffer (propval);
+                  return 0;
+                }
+              need_save = 1;
+            }
+        }
+      
+      /* Change message class.  */
       log_debug ("%s:%s: setting message class to `%s'\n",
                      SRCNAME, __func__, newvalue);
       prop.ulPropTag = PR_MESSAGE_CLASS_A;
@@ -949,10 +991,12 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
         {
           log_error ("%s:%s: can't set message class: hr=%#lx\n",
                      SRCNAME, __func__, hr);
+          MAPIFreeBuffer (propval);
           return 0;
         }
       need_save = 1;
     }
+  MAPIFreeBuffer (propval);
 
   if (need_save)
     {
