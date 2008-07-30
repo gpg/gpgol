@@ -349,9 +349,8 @@ get_uiserver_name (void)
       xfree (uiserver);
       if (extra_arglen && access (name, F_OK))
         {
-          /* Kleopatra iis not nstalled: Try GPA instead but if it is
-             also not available still return the Kleopatra
-             filename.  */
+          /* Kleopatra is not installed: Try GPA instead but if it is
+             also not available return the Kleopatra filename.  */
           const char gpaserver[] = "gpa.exe";
           char *name2;
           
@@ -526,7 +525,7 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
 }
 
 
-/* end the optiona session information. */
+/* Send the optional session information. */
 static void
 send_session_info (assuan_context_t ctx, engine_filter_t filter)
 {

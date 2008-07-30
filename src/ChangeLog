@@ -1,3 +1,17 @@
+2008-07-30  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (Install): Improve version check.
+
+	* revert.cpp, revert.h: New. 
+	* mapihelp.cpp (mapi_attachment_to_body): New.
+	(mapi_get_old_message_class): New.
+	(mapi_change_message_class): Do not release newvalue when saving
+	the old class.
+	* olflange.cpp (parse_version_number, parse_version_string) 
+	(compare_versions, gpgol_check_version): New.
+	* ext-commands.cpp (DoCommand): Support a "revert message class"
+	debug command.
+
 2008-06-27  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (get_gpgololdmsgclass_tag): New.

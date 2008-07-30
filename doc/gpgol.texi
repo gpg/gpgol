@@ -167,7 +167,7 @@ GpgOL uses this internally for creating messages.
 
 @item GpgOL Old Msg Class
 This is a STRING8 property which saves the original PR_MESSAGE_CLASS
-before GpgOL chnages it.
+before GpgOL changes it.
 
 @item GpgOL Attach Type
 This is a property of type LONG and used to further describe the
@@ -280,8 +280,7 @@ given in this entry.  It is assumed that the UI server is stored in the
 @code{Install Directory} (as described above).  This Registry entry
 gives the actual command name relative to this directory.  If the key
 does not exist, is is first searched below @code{HKLM} and then it
-defaults to @code{bin/kleopatra.exe} (FIXME: The final name will be just
-@code{kleopatra.exe}).
+defaults to @code{kleopatra.exe}.
 
 @item HKCU\Software\GNU\GpgOL:enableDebug
 Setting this key to the string @code{1} enables a few extra features in
@@ -307,7 +306,7 @@ Tell what the MIME parser is doing
 Print data lines while parsing MIME.
 @end table
 You may use the regular C-syntax for entering the value.  As an
-alternative you may use the names ofthe flags, separated by space or
+alternative you may use the names of the flags, separated by space or
 comma.
 
 
@@ -486,7 +485,7 @@ exists, delete the properties @code{PR_BODY} and @code{PR_BODY_HTML}.
 @end itemize
 
 Instead of deleting it should be sufficient to make sure
-that such PR_BODYs are not update and don't make it to the disk or a
+that such PR_BODYs are not updated and don't make it to the disk or a
 strage server. 
 
 Implementing such a feature would really help with end-to-end encryption

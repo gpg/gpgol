@@ -75,7 +75,7 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   wchar_t *wname;
   const char *s;
 
-  log_debug ("%s:%s: looking for `%s'\n", SRCNAME, __func__, name);
+  // log_debug ("%s:%s: looking for `%s'\n", SRCNAME, __func__, name);
 
   pCb = NULL;
   pObj = NULL;
@@ -136,8 +136,8 @@ find_outlook_property (LPEXCHEXTCALLBACK lpeecb,
   if (r_dispid)
     *r_dispid = dispid;
 
-  log_debug ("%s:%s:    got IDispatch=%p dispid=%u\n",
-	     SRCNAME, __func__, pDisp, (unsigned int)dispid);
+  //log_debug ("%s:%s:    got IDispatch=%p dispid=%u\n",
+  //	     SRCNAME, __func__, pDisp, (unsigned int)dispid);
   return pDisp;
 }
 
@@ -277,8 +277,8 @@ get_outlook_property (void *pEECB, const char *key)
   else if (aVariant.bstrVal)
     {
       result = wchar_to_utf8 (aVariant.bstrVal);
-      log_debug ("%s:%s: `%s' is `%s'",
-                 SRCNAME, __func__, key, result);
+      //log_debug ("%s:%s: `%s' is `%s'",
+      //           SRCNAME, __func__, key, result);
       /* From MSDN (Invoke): It is up to the caller to free the return value.*/
       SysFreeString (aVariant.bstrVal);
     }

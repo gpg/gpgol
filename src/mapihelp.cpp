@@ -951,7 +951,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
   else
     {
       /* Save old message class if not yet done.  (The second
-         consition is just a failsafe check). */
+         condition is just a failsafe check). */
       if (!get_gpgololdmsgclass_tag (message, &tag)
           && PROP_TYPE (propval->ulPropTag) == PT_STRING8)
         {
@@ -968,7 +968,6 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
               prop.ulPropTag = tag;
               prop.Value.lpszA = propval->Value.lpszA; 
               hr = message->SetProps (1, &prop, NULL);
-              xfree (newvalue);
               if (hr)
                 {
                   log_error ("%s:%s: can't save old message class: hr=%#lx\n",
@@ -982,7 +981,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
       
       /* Change message class.  */
       log_debug ("%s:%s: setting message class to `%s'\n",
-                     SRCNAME, __func__, newvalue);
+                 SRCNAME, __func__, newvalue);
       prop.ulPropTag = PR_MESSAGE_CLASS_A;
       prop.Value.lpszA = newvalue; 
       hr = message->SetProps (1, &prop, NULL);
@@ -1009,7 +1008,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
 
 
 /* Return the message class.  This function will never return NULL so
-   it is only useful for debugging.  Caller needs to release the
+   it is mostly useful for debugging.  Caller needs to release the
    returned string.  */
 char *
 mapi_get_message_class (LPMESSAGE message)
@@ -1035,6 +1034,40 @@ mapi_get_message_class (LPMESSAGE message)
     retstr = xstrdup (propval->Value.lpszA);
   else
     retstr = xstrdup ("[Invalid message class property]");
+    
+  MAPIFreeBuffer (propval);
+  return retstr;
+}
+
+/* Return the old message class.  This function returns NULL if no old
+   message class has been saved.  Caller needs to release the returned
+   string.  */
+char *
+mapi_get_old_message_class (LPMESSAGE message)
+{
+  HRESULT hr;
+  ULONG tag;
+  LPSPropValue propval = NULL;
+  char *retstr;
+
+  if (!message)
+    return NULL;
+  
+  if (get_gpgololdmsgclass_tag (message, &tag))
+    return NULL;
+
+  hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      return NULL;
+    }
+
+  if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
+    retstr = xstrdup (propval->Value.lpszA);
+  else
+    retstr = NULL;
     
   MAPIFreeBuffer (propval);
   return retstr;
@@ -1615,8 +1648,8 @@ mapi_release_attach_table (mapi_attach_item_t *table)
 
 
 /* Return an attachment as a new IStream object.  Returns NULL on
-   failure.  If R_ATATCH is not NULL the actual attachment will not be
-   released by stored at that address; the caller needs to release it
+   failure.  If R_ATTACH is not NULL the actual attachment will not be
+   released but stored at that address; the caller needs to release it
    in this case.  */
 LPSTREAM
 mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
@@ -1807,7 +1840,7 @@ mapi_get_attach (LPMESSAGE message, int unprotect,
 }
 
 
-/* Mark this attachment as the orginal MOSS message.  We set a custom
+/* Mark this attachment as the original MOSS message.  We set a custom
    property as well as the hidden flag.  */
 int 
 mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
@@ -1828,13 +1861,6 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
       return -1;
     }
 
-  if (FAILED (hr)) 
-    {
-      log_error ("%s:%s: can't map %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Attach Type", hr); 
-      goto leave;
-    }
-    
   if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
     goto leave;
   prop.Value.l = ATTACHTYPE_MOSS;
@@ -1977,7 +2003,7 @@ mapi_test_sig_status (LPMESSAGE msg)
     return 0; /* No.  */  
 
   /* We return False if we have an unknown signature status (?) or the
-     message has been setn by us and not yet checked (@).  */
+     message has been sent by us and not yet checked (@).  */
   if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
     yes = !(propval->Value.lpszA && (!strcmp (propval->Value.lpszA, "?")
                                      || !strcmp (propval->Value.lpszA, "@")));
@@ -2109,7 +2135,7 @@ mapi_get_gpgol_charset (LPMESSAGE obj)
 }
 
 
-/* Set the GpgOl charset t an asstachment. 
+/* Set the GpgOl charset property to an attachment. 
    Note that this function does not call SaveChanges.  */
 int 
 mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset)
@@ -2534,4 +2560,90 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
     xfree (body);  /* (Should not happen.)  */
   return 0;
 }
+
+
+/* Copy the attachment ITEM of the message MESSAGE verbatim to the
+   PR_BODY property.  Returns 0 on success.  This function does not
+   call SaveChanges. */
+int
+mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item)
+{
+  int result = -1;
+  HRESULT hr; 
+  LPATTACH att = NULL;
+  LPSTREAM instream = NULL;
+  LPSTREAM outstream = NULL;
+  LPUNKNOWN punk;
+
+  if (!message || !item || item->end_of_table || item->mapipos == -1)
+    return -1; /* Error.  */
+
+  hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
+                 SRCNAME, __func__, item->mapipos, hr);
+      goto leave;
+    }
+  if (item->method != ATTACH_BY_VALUE)
+    {
+      log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
+      goto leave;
+    }
+
+  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+                          0, 0, (LPUNKNOWN*) &instream);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open data stream of attachment: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+
+  punk = (LPUNKNOWN)outstream;
+  hr = message->OpenProperty (PR_BODY_A, &IID_IStream, 0,
+                              MAPI_CREATE|MAPI_MODIFY, &punk);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open body stream for update: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  outstream = (LPSTREAM)punk;
+
+  {
+    ULARGE_INTEGER cb;
+    cb.QuadPart = 0xffffffffffffffffll;
+    hr = instream->CopyTo (outstream, cb, NULL, NULL);
+  }
+  if (hr)
+    {
+      log_error ("%s:%s: can't copy streams: hr=%#lx\n",
+                 SRCNAME, __func__, hr); 
+      goto leave;
+    }
+  hr = outstream->Commit (0);
+  if (hr)
+    {
+      log_error ("%s:%s: commiting output stream failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  result = 0;
+  
+ leave:
+  if (outstream)
+    {
+      if (result)
+        outstream->Revert ();
+      outstream->Release ();
+    }
+  if (instream)
+    instream->Release ();
+  if (att)
+    att->Release ();
+  return result;
+}
+
 

@@ -48,6 +48,7 @@
 #include "property-sheets.h"
 #include "attached-file-events.h"
 #include "item-events.h"
+#include "ol-ext-callback.h"
 
 /* The GUID for this plugin.  */
 #define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
@@ -283,6 +284,83 @@ DllUnregisterServer (void)
 }
 
 
+static const char*
+parse_version_number (const char *s, int *number)
+{
+  int val = 0;
+
+  if (*s == '0' && digitp (s+1))
+    return NULL;  /* Leading zeros are not allowed.  */
+  for (; digitp (s); s++)
+    {
+      val *= 10;
+      val += *s - '0';
+    }
+  *number = val;
+  return val < 0 ? NULL : s;
+}
+
+static const char *
+parse_version_string (const char *s, int *major, int *minor, int *micro)
+{
+  s = parse_version_number (s, major);
+  if (!s || *s != '.')
+    return NULL;
+  s++;
+  s = parse_version_number (s, minor);
+  if (!s || *s != '.')
+    return NULL;
+  s++;
+  s = parse_version_number (s, micro);
+  if (!s)
+    return NULL;
+  return s;  /* Patchlevel.  */
+}
+
+static const char *
+compare_versions (const char *my_version, const char *req_version)
+{
+  int my_major, my_minor, my_micro;
+  int rq_major, rq_minor, rq_micro;
+  const char *my_plvl, *rq_plvl;
+
+  if (!req_version)
+    return my_version;
+  if (!my_version)
+    return NULL;
+
+  my_plvl = parse_version_string (my_version, &my_major, &my_minor, &my_micro);
+  if (!my_plvl)
+    return NULL;	/* Very strange: our own version is bogus.  */
+  rq_plvl = parse_version_string(req_version,
+				 &rq_major, &rq_minor, &rq_micro);
+  if (!rq_plvl)
+    return NULL;	/* Requested version string is invalid.  */
+
+  if (my_major > rq_major
+	|| (my_major == rq_major && my_minor > rq_minor)
+      || (my_major == rq_major && my_minor == rq_minor 
+	  && my_micro > rq_micro)
+      || (my_major == rq_major && my_minor == rq_minor
+	  && my_micro == rq_micro
+	  && strcmp( my_plvl, rq_plvl ) >= 0))
+    {
+      return my_version;
+    }
+  return NULL;
+}
+
+/* Check that the the version of GpgOL is at minimum the requested one
+ * and return GpgOL's version string; return NULL if that condition is
+ * not met.  If a NULL is passed to this function, no check is done
+ * and the version string is simply returned.  */
+EXTERN_C const char * __stdcall
+gpgol_check_version (const char *req_version)
+{
+  return compare_versions (PACKAGE_VERSION, req_version);
+}
+
+
 
 
 /* The entry point which Exchange/Outlook calls.  This is called for
@@ -334,6 +412,10 @@ GpgolExt::GpgolExt (void)
   if (!g_initdll)
     {
       read_options ();
+      log_debug ("%s:%s: this is GpgOL %s\n", 
+                 SRCNAME, __func__, PACKAGE_VERSION);
+      log_debug ("%s:%s:   using GPGME %s\n", 
+                 SRCNAME, __func__, gpgme_check_version (NULL));
       engine_init ();
       g_initdll = TRUE;
       log_debug ("%s:%s: first time initialization done\n",
@@ -448,10 +530,11 @@ STDMETHODIMP
 GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 {
   static int version_shown;
-  
+  static char *olversion;
   ULONG lBuildVersion;
   ULONG lActualVersion;
   ULONG lVirtualVersion;
+
 
   /* Save the context in an instance variable. */
   m_lContext = lContext;
@@ -459,16 +542,18 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__,
              ext_context_name (lContext), lFlags);
   
-  /* Check version. */
-  log_debug ("%s:%s: this is %s\n", SRCNAME, __func__, PACKAGE_STRING);
+  /* Check version.  This install method is called by Outlook even
+     before the OOM interface is available, thus we need to keep on
+     checking for the olversion until we get one.  Only then we can
+     display the complete version and do a final test to see whether
+     this is a supported version. */
+  if (!olversion)
+    olversion = get_outlook_property (pEECB, "Application.Version");
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
   pEECB->GetVersion (&lActualVersion, EECBGV_GETACTUALVERSION);
   pEECB->GetVersion (&lVirtualVersion, EECBGV_GETVIRTUALVERSION);
   if (!version_shown)
     {
-      version_shown = 1;
-      log_debug ("%s:%s: using gpgme %s\n", 
-                 SRCNAME, __func__, gpgme_check_version (NULL));
       log_debug ("%s:%s: detected Outlook build version 0x%lx (%lu.%lu)\n",
                  SRCNAME, __func__, lBuildVersion,
                  (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,
@@ -485,6 +570,12 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                  (unsigned int)((lVirtualVersion >> 16) & 0xff),
              (unsigned int)((lVirtualVersion >> 8) & 0xff),
                  (unsigned int)(lVirtualVersion & 0xff));
+      if (olversion)
+        {
+          log_debug ("%s:%s:                    OOM version %s\n",
+                     SRCNAME, __func__, olversion);
+          version_shown = 1;
+        }
     }
   
   if (EECBGV_BUILDVERSION_MAJOR
@@ -495,8 +586,14 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
       return S_FALSE;
     }
   
-  if ((lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) < 13
-      ||(lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573)
+  /* The version numbers as returned by GetVersion are the same for
+     OL2003 as well as for recent OL2002.  My guess is that this
+     version comes from the Exchange Client Extension API and that has
+     been updated in all version of OL.  Thus we also need to check
+     the version number as taken from the Outlook Object Model.  */
+  if ( (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) < 13
+       || (lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573
+       || (olversion && atoi (olversion) < 11) )
     {
       static int shown;
       HWND hwnd;

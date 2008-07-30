@@ -39,7 +39,7 @@
 #include "message.h"
 #include "engine.h"
 #include "ext-commands.h"
-
+#include "revert.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -110,6 +110,7 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_nCmdDebug0 = 0;
   m_nCmdDebug1 = 0;
   m_nCmdDebug2 = 0;
+  m_nCmdDebug3 = 0;
   m_toolbar_info = NULL; 
   m_hWnd = NULL; 
 
@@ -532,6 +533,8 @@ GpgolExtCommands::InstallCommands (
                 &m_nCmdDebug0,
         opt.enable_debug? "GpgOL Debug-1 (open_inspector)":"", &m_nCmdDebug1,
         opt.enable_debug? "GpgOL Debug-2 (change msg class)":"", &m_nCmdDebug2,
+        opt.enable_debug? "GpgOL Debug-3 (revert message class)":"",
+                &m_nCmdDebug3,
         NULL);
 
       add_toolbar (pTBEArray, nTBECnt, 
@@ -788,6 +791,22 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
         {
           /* We sync here. */
           mapi_change_message_class (message, 1);
+	}
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
+    }
+  else if (opt.enable_debug && nCommandID == m_nCmdDebug3
+           && m_lContext == EECONTEXT_READNOTEMESSAGE)
+    {
+      log_debug ("%s:%s: command Debug3 (revert_message_class) called\n", 
+                 SRCNAME, __func__);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          int rc = gpgol_message_revert (message, 1, 
+                                         KEEP_OPEN_READWRITE|FORCE_SAVE);
+          log_debug ("%s:%s: gpgol_message_revert returns %d\n", 
+                     SRCNAME, __func__, rc);
 	}
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);

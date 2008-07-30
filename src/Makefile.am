@@ -35,6 +35,7 @@ gpgol_SOURCES = \
 	myexchext.h                 \
 	display.cpp display.h       \
 	message.cpp message.h       \
+	revert.cpp revert.h         \
 	mimeparser.c mimeparser.h   \
 	mimemaker.c mimemaker.h     \
 	msgcache.c msgcache.h       \

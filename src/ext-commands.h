@@ -50,6 +50,7 @@ private:
   UINT  m_nCmdDebug0;
   UINT  m_nCmdDebug1;
   UINT  m_nCmdDebug2;
+  UINT  m_nCmdDebug3;
 
   /* A list of all active toolbar items.  */
   toolbar_info_t m_toolbar_info;

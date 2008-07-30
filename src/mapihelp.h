@@ -112,6 +112,7 @@ int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
 int mapi_change_message_class (LPMESSAGE message, int sync_override);
 char *mapi_get_message_class (LPMESSAGE message);
+char *mapi_get_old_message_class (LPMESSAGE message);
 char *mapi_get_sender (LPMESSAGE message);
 msgtype_t mapi_get_message_type (LPMESSAGE message);
 int mapi_to_mime (LPMESSAGE message, const char *filename);
@@ -157,6 +158,8 @@ int   mapi_get_gpgol_body_attachment (LPMESSAGE message,
                                       char **r_body, size_t *r_nbytes,
                                       int *r_ishtml, int *r_protected);
 
+
+int   mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item);
 
 #ifdef __cplusplus
 }

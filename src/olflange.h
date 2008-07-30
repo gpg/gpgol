@@ -72,4 +72,7 @@ public:
 
 const char *ext_context_name (unsigned long no);
 
+EXTERN_C const char * __stdcall gpgol_check_version (const char *req_version);
+
+
 #endif /*OLFLANGE_H*/
