@@ -160,7 +160,7 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
                                        &objtype, (IUnknown**)&message);
                   if (SUCCEEDED (hr)) 
                     {
-                      if (objtype == MAPI_MESSAGE)
+                      if (objtype == MAPI_MESSAGE && !opt.disable_gpgol)
                         {
                           log_debug ("%s:%s: about to change or sync "
                                      "the message class",

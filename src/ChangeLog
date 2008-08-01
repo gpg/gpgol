@@ -1,4 +1,16 @@
-2008-07-30  Werner Koch  <wk@g10code.com>
+2008-07-31  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.h (class GpgolExtCommands): Add m_nCmdRevertFolder.
+	* ext-commands.cpp (GpgolExtCommands, InstallCommands): Ditto.
+	(DoCommand): Implement RevertFolder command.
+
+	* common.h (struct): Add variable DISABLE_GPGOL.
+	* session-events.cpp (OnDelivery): Make use of that variable.
+	* message.cpp (message_incoming_handler): Ditto.
+	* user-events.cpp (OnSelectionChange): Ditto
+	* message-events.cpp (OnRead, OnReadComplete, OnWrite) 
+	(OnWriteComplete): Ditto
+	* mapihelp.cpp (mapi_get_int_prop): New.
 
 	* olflange.cpp (Install): Improve version check.
 

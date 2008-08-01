@@ -5,6 +5,9 @@ Noteworthy changes for version 0.10.15
    is useful to make sure that the body will never show up in
    plaintext in the message store.
 
+ * New menu item to remove all GpgOL created flags and attachments
+   from all messages in a folder.
+
 
 Noteworthy changes for version 0.10.14 (2008-05-28)
 ===================================================

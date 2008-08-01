@@ -134,6 +134,11 @@ struct
 
   /* The SVN revision as stored in the registry.  */
   int svn_revision; 
+
+  /* Disable message processing until restart.  This is required to
+     implement message reverting as a perparation to remove GpgOL.  */
+  int disable_gpgol;
+
 } opt;
 
 

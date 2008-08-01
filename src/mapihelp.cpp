@@ -1367,6 +1367,40 @@ mapi_get_binary_prop (LPMESSAGE message, ULONG proptype, size_t *r_nbytes)
   return data;
 }
 
+/* Return an integer property at R_VALUE.  On error the function
+   returns -1 and sets R_VALUE to 0, on success 0 is returned.  */
+int
+mapi_get_int_prop (LPMAPIPROP object, ULONG proptype, LONG *r_value)
+{
+  int rc = -1;
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+
+  *r_value = 0;
+  hr = HrGetOneProp (object, proptype, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: error getting property %#lx: hr=%#lx",
+                 SRCNAME, __func__, proptype, hr);
+      return -1; 
+    }
+  switch ( PROP_TYPE (propval->ulPropTag) )
+    {
+    case PT_LONG:
+      *r_value = propval->Value.l;
+      rc = 0;
+      
+      break;
+      
+    default:
+      log_debug ("%s:%s: requested property %#lx has unknown tag %#lx\n",
+                 SRCNAME, __func__, proptype, propval->ulPropTag);
+      break;
+    }
+  MAPIFreeBuffer (propval);
+  return rc;
+}
+
 
 /* Return the attachment method for attachment OBJ.  In case of error
    we return 0 which happens not to be defined.  */

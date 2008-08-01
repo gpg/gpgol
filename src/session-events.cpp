@@ -103,16 +103,19 @@ GpgolSessionEvents::OnDelivery (LPEXCHEXTCALLBACK pEECB)
   LPMESSAGE pMessage = NULL;
 
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
-  pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
-  log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
-  /* Note, that at this point even an OpenPGP signed message has the
-     message class IPM.Note.SMIME.MultipartSigned.  If we would not
-     change the message class here, OL will change it later (before an
-     OnRead) to IPM.Note. */
-  mapi_change_message_class (pMessage, 0);
-  log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
-  ul_release (pMessage);
-  ul_release (pMDB);
+  if ( !opt.disable_gpgol )
+    {
+      pEECB->GetObject (&pMDB, (LPMAPIPROP *)&pMessage);
+      log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
+      /* Note, that at this point even an OpenPGP signed message has
+         the message class IPM.Note.SMIME.MultipartSigned.  If we
+         would not change the message class here, OL will change it
+         later (before an OnRead) to IPM.Note. */
+      mapi_change_message_class (pMessage, 0);
+      log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
+      ul_release (pMessage);
+      ul_release (pMDB);
+    }
 
   return S_FALSE;
 }

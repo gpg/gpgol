@@ -80,7 +80,8 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
          been set.  Note that we should have similar code for some
          message classes in GpgolUserEvents:OnSelectionChange; but
          tehre are a couple of problems.  */
-      if (pass == 1 && !force && !mapi_has_sig_status (message))
+      if (pass == 1 && !force && !mapi_has_sig_status (message)
+          && !opt.disable_gpgol)
         {
           log_debug ("%s:%s: message class not yet checked - doing now\n",
                      SRCNAME, __func__);
@@ -89,7 +90,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
         }
       break;
     case MSGTYPE_SMIME:
-      if (pass == 1 && !force && opt.enable_smime)
+      if (pass == 1 && !force && opt.enable_smime && !opt.disable_gpgol)
         {
           log_debug ("%s:%s: message class not checked with smime enabled "
                      "- doing now\n", SRCNAME, __func__);

@@ -106,6 +106,7 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_nCmdEncrypt = 0;  
   m_nCmdSign = 0; 
   m_nCmdKeyManager = 0;
+  m_nCmdRevertFolder = 0;
   m_nCmdCryptoState = 0;
   m_nCmdDebug0 = 0;
   m_nCmdDebug1 = 0;
@@ -528,26 +529,29 @@ GpgolExtCommands::InstallCommands (
          an already decrypted message. */
       add_menu (eecb, pnCommandIDBase,
         "@", NULL,
-        _("GpgOL Decrypt/Verify"), &m_nCmdCryptoState,
+        opt.disable_gpgol? "":_("GpgOL Decrypt/Verify"), &m_nCmdCryptoState,
         opt.enable_debug? "GpgOL Debug-0 (display crypto info)":"", 
                 &m_nCmdDebug0,
-        opt.enable_debug? "GpgOL Debug-1 (open_inspector)":"", &m_nCmdDebug1,
-        opt.enable_debug? "GpgOL Debug-2 (change msg class)":"", &m_nCmdDebug2,
+        (opt.enable_debug && !opt.disable_gpgol)?
+                "GpgOL Debug-1 (open_inspector)":"", &m_nCmdDebug1,
+        (opt.enable_debug && !opt.disable_gpgol)? 
+                "GpgOL Debug-2 (change msg class)":"", &m_nCmdDebug2,
         opt.enable_debug? "GpgOL Debug-3 (revert message class)":"",
                 &m_nCmdDebug3,
         NULL);
 
-      add_toolbar (pTBEArray, nTBECnt, 
-                   is_encrypted
-                   ? _("This is an encrypted message.\n"
-                       "Click for more information. ")
-                   : _("This is a signed message.\n"
+      if ( !opt.disable_gpgol)
+        add_toolbar (pTBEArray, nTBECnt, 
+                     is_encrypted
+                     ? _("This is an encrypted message.\n"
+                         "Click for more information. ")
+                     : _("This is a signed message.\n"
                        "Click for more information. "),
-                   IDB_CRYPTO_STATE, m_nCmdCryptoState,
-                   NULL, 0, 0);
+                     IDB_CRYPTO_STATE, m_nCmdCryptoState,
+                     NULL, 0, 0);
 
     }
-  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE && !opt.disable_gpgol) 
     {
       add_menu (eecb, pnCommandIDBase,
         "@", NULL,
@@ -584,6 +588,7 @@ GpgolExtCommands::InstallCommands (
       add_menu (eecb, pnCommandIDBase, 
         "@", NULL,
         _("GnuPG Certificate &Manager"), &m_nCmdKeyManager,
+        _("Remove GpgOL flags from this folder"), &m_nCmdRevertFolder,
         NULL);
 
       add_toolbar (pTBEArray, nTBECnt, 
@@ -754,6 +759,39 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
         if (start_key_manager ())
           MessageBox (NULL, _("Could not start certificate manager"),
                       _("GpgOL"), MB_ICONERROR|MB_OK);
+    }
+  else if (nCommandID == m_nCmdRevertFolder
+           && m_lContext == EECONTEXT_VIEWER)
+    {
+      log_debug ("%s:%s: command ReverFoldert called\n", SRCNAME, __func__);
+      /* Notify the user that the general GpgOl fucntionaly will be
+         disabled when calling this function the first time.  */
+      if ( opt.disable_gpgol
+           || (MessageBox 
+               (hwnd,
+                _("You are about to start the process of reversing messages "
+                  "created by GpgOL to prepare deinstalling of GpgOL. "
+                  "Running this command will put GpgOL into a disabled state "
+                  "so that messages are not anymore processed by GpgOL.\n"
+                  "\n"
+                  "You should convert all folders one after the other with "
+                  "this command, close Outlook and then deinstall GpgOL.\n"
+                  "\n"
+                  "Note that if you start Outlook again with GpgOL still "
+                  "being installed, GpgOL will again process messages."),
+                _("GpgOL"), MB_ICONWARNING|MB_OKCANCEL) == IDOK))
+        {
+          if ( MessageBox 
+               (hwnd,
+                _("Do you want to revert this folder?"),
+                _("GpgOL"), MB_ICONQUESTION|MB_YESNO) == IDYES )
+            {
+              if (!opt.disable_gpgol)
+                opt.disable_gpgol = 1;
+          
+              gpgol_folder_revert (eecb);
+            }
+        }
     }
   else if (opt.enable_debug && nCommandID == m_nCmdDebug0
            && m_lContext == EECONTEXT_READNOTEMESSAGE)

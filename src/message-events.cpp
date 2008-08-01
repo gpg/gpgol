@@ -98,6 +98,75 @@ GpgolMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 }
 
 
+#if 0
+#warning  test code
+static void
+show_event_object (LPEXCHEXTCALLBACK eecb)
+{
+  HRESULT hr;
+  LPOUTLOOKEXTCALLBACK outlook_cb;
+  LPUNKNOWN obj;
+  LPDISPATCH disp;
+  LPTYPEINFO tinfo;
+  BSTR bstrname;
+  char *name;
+
+  outlook_cb = NULL;
+  eecb->QueryInterface(IID_IOutlookExtCallback, (void **)&outlook_cb);
+  if (!outlook_cb)
+    {
+      log_debug ("%s%s: no outlook callback found\n", SRCNAME, __func__);
+      return;
+    }
+		
+  obj = NULL;
+  outlook_cb->GetObject (&obj);
+  if (!obj)
+    {
+      log_debug ("%s%s: no object found for event\n", SRCNAME, __func__);
+      outlook_cb->Release ();
+      return;
+    }
+
+  disp = NULL;
+  obj->QueryInterface (IID_IDispatch, (void **)&disp);
+  obj->Release ();
+  obj = NULL;
+  if (!disp)
+    {
+      log_debug ("%s%s: no dispatcher found for event\n", SRCNAME, __func__);
+      outlook_cb->Release ();
+      return;
+    }
+
+  tinfo = NULL;
+  disp->GetTypeInfo (0, 0, &tinfo);
+  if (!tinfo)
+    {
+      log_debug ("%s%s: no dispatcher found for event\n", SRCNAME, __func__);
+      disp->Release ();
+      outlook_cb->Release ();
+      return;
+    }
+
+  name = NULL;
+  hr = tinfo->GetDocumentation (MEMBERID_NIL, &bstrname, 0, 0, 0);
+  if (hr)
+    log_debug ("%s%s: GetDocumentation failed: hr=%#lx\n", 
+               SRCNAME, __func__, hr);
+
+  name = wchar_to_utf8 (bstrname);
+  SysFreeString (bstrname);
+  log_debug ("%s:%s: event fired by item type `%s'\n",
+             SRCNAME, __func__, name);
+  xfree (name);
+
+  disp->Release ();
+  outlook_cb->Release ();
+}
+#endif /* Test code */
+
+
 
 /* Called from Exchange on reading a message.  Returns: S_FALSE to
    signal Exchange to continue calling extensions.  EECB is a pointer
@@ -118,6 +187,8 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
   log_debug ("%s:%s: received (hwnd=%p) %s\n", 
              SRCNAME, __func__, hwnd, m_gotinspector? "got_inspector":"");
 
+//   show_event_object (eecb);
+
   /* Fixme: If preview decryption is not enabled and we have an
      encrypted message, we might want to show a greyed out preview
      window.  There are two ways to clear the preview window: 
@@ -132,7 +203,7 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
      result that the preview decryption can't be disabled.  */
   m_gotinspector = 1;
   
-  if (m_gotinspector || opt.preview_decrypt)
+  if ( (m_gotinspector || opt.preview_decrypt) && !opt.disable_gpgol )
     {
       eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
       switch (message_incoming_handler (message, hwnd, false))
@@ -167,7 +238,7 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 
   /* If the message has been processed by us (i.e. in OnRead), we now
      use our own display code.  */
-  if (!flags && m_processed)
+  if (!flags && m_processed && !opt.disable_gpgol)
     {
       HWND hwnd = NULL;
 
@@ -197,11 +268,11 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK eecb)
   DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
   HWND hWnd = NULL;
 
-
   /* If we are going to encrypt, check that the BodyFormat is
      something we support.  This helps avoiding surprise by sending
      out unencrypted messages. */
-  if (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign)
+  if ( (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign) 
+       && !opt.disable_gpgol)
     {
       pDisp = find_outlook_property (eecb, "BodyFormat", &dispid);
       if (!pDisp)
@@ -289,6 +360,9 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   if (flags & (EEME_FAILED|EEME_COMPLETE_FAILED))
     return S_FALSE; /* We don't need to rollback anything in case
                        other extensions flagged a failure. */
+
+  if (opt.disable_gpgol)
+    return S_FALSE;
           
   if (!m_bOnSubmitActive) /* The user is just saving the message. */
     return S_FALSE;
