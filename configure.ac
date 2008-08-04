@@ -251,6 +251,7 @@ fi
 AC_CONFIG_FILES([ Makefile
 src/Makefile
 src/versioninfo.rc        
+forms/Makefile
 doc/Makefile
 po/Makefile.in
 m4/Makefile

@@ -1,3 +1,11 @@
+2008-08-04  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (install_forms): New.
+	(GpgolExt): Install forms if needed.
+	* common.c (get_data_dir): New.
+	* common.h (struct): Add field FORMS_REVISION.
+	* main.c (read_options, write_options): Read and write that option.
+
 2008-07-31  Werner Koch  <wk@g10code.com>
 
 	* ext-commands.h (class GpgolExtCommands): Add m_nCmdRevertFolder.

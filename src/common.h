@@ -135,6 +135,9 @@ struct
   /* The SVN revision as stored in the registry.  */
   int svn_revision; 
 
+  /* The SVN revision of the the binary used to install the forms.  */
+  int forms_revision;
+
   /* Disable message processing until restart.  This is required to
      implement message reverting as a perparation to remove GpgOL.  */
   int disable_gpgol;
@@ -195,6 +198,7 @@ char *get_save_filename (HWND root, const char *srcname);
 char *utf8_to_wincp (const char *string);
 
 const char *default_homedir (void);
+char *get_data_dir (void);
 
 size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
 void b64_init (b64_state_t *state);

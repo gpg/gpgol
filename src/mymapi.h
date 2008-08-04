@@ -32,6 +32,7 @@
    2007-07-23  Add IMAPISession; taken from WINE.
    2007-07-24  Add IMsgStore, IMAPIContainer and IMAPIFolder taken from specs.
                Reorganized code.
+   2008-08-01  Add IMAPIFormContainer taken from specs.
 */
 
 #ifndef MAPI_H
@@ -114,8 +115,8 @@ typedef struct MapiMessage_s *lpMapiMessage;
 #define MAPI_MESSAGE    0x00000005u
 #define MAPI_MAILUSER   0x00000006u
 #define MAPI_ATTACH     0x00000007u
-#define MAPI_DISTLIST   0x00000008u	
-#define MAPI_PROFSECT   0x00000009u	
+#define MAPI_DISTLIST   0x00000008u
+#define MAPI_PROFSECT   0x00000009u
 #define MAPI_STATUS     0x0000000Au
 #define MAPI_SESSION    0x0000000Bu
 #define MAPI_FORMINFO   0x0000000Cu
@@ -174,7 +175,7 @@ typedef struct MapiMessage_s *lpMapiMessage;
 
 
 #define FORCE_SUBMIT                  0x00000001ul
-                                      
+
 #define MSGFLAG_READ                  0x00000001ul
 #define MSGFLAG_UNMODIFIED            0x00000002ul
 #define MSGFLAG_SUBMIT                0x00000004ul
@@ -185,7 +186,7 @@ typedef struct MapiMessage_s *lpMapiMessage;
 #define MSGFLAG_RESEND                0x00000080ul
 #define MSGFLAG_RN_PENDING            0x00000100ul
 #define MSGFLAG_NRN_PENDING           0x00000200ul
-                                      
+
 #define SUBMITFLAG_LOCKED             0x00000001ul
 #define SUBMITFLAG_PREPROCESS         0x00000002ul
 
@@ -672,6 +673,9 @@ typedef struct IProfSect *LPPROFSECT;
 struct ISpoolerHook;
 typedef struct ISpoolerHook *LPSPOOLERHOOK;
 
+struct IMAPIFormContainer;
+typedef struct IMAPIFormContainer *LPMAPIFORMCONTAINER;
+
 
 /*** IUnknown methods ***/
 #define MY_IUNKNOWN_METHODS \
@@ -1013,6 +1017,84 @@ DECLARE_INTERFACE_(ISpoolerHook, IUnknown)
 };
 
 
+
+/* IMAPIFormContainer */
+
+#define MAPIFORM_INSTALL_OVERWRITEONCONFLICT  0x10
+
+typedef struct _SMAPIFormPropEnumVal
+{
+  LPTSTR pszDisplayName;
+  ULONG nVal;
+} SMAPIFormPropEnumVal, *LPMAPIFORMPROPENUMVAL;
+
+
+typedef struct _SMAPIFormProp
+{
+  ULONG      ulFlags;
+  ULONG      nPropType;
+  MAPINAMEID nmid;
+  LPTSTR     pszDisplayName;
+  ULONG      nSpecialType;
+  union {
+    struct {
+      MAPINAMEID nmidIdx;
+      ULONG cfpevAvailable;
+      LPMAPIFORMPROPENUMVAL pfpevAvailable;
+    } s1;
+  } u;
+} SMAPIFormProp, *LPMAPIFORMPROP;
+
+typedef struct _SMAPIFormPropArray
+{
+  ULONG cProps;
+  ULONG ulPad;
+  SMAPIFormProp aFormProp[MAPI_DIM];
+} SMAPIFormPropArray, *LPMAPIFORMPROPARRAY;
+
+typedef struct _SMessageClassArray
+{
+  ULONG  cValues;
+  LPCSTR aMessageClass[MAPI_DIM];
+} SMessageClassArray, *LPSMESSAGECLASSARRAY;
+
+
+/* Fixme: The void ptr in ResolveMessageClass and SMAPIFormInfoArray
+   should be a LPMAPIFORMINFO, but we have not yet defined the
+   corresponding class. */
+typedef struct _SMAPIFormInfoArray
+{
+  ULONG cForms;
+  void * aFormInfo[MAPI_DIM];
+} SMAPIFormInfoArray, *LPSMAPIFORMINFOARRAY;
+
+#define MY_IMAPIFORMCONTAINER_METHODS                                         \
+  STDMETHOD(GetLastError)(THIS_ HRESULT, ULONG, LPMAPIERROR FAR*) PURE;       \
+  STDMETHOD(InstallForm)(THIS_ ULONG ulUIParam, ULONG ulFlags,                \
+                         LPCTSTR szCfgPathName) PURE;                         \
+  STDMETHOD(RemoveForm)(THIS_ LPCSTR szMessageClass) PURE;                    \
+  STDMETHOD(ResolveMessageClass) (THIS_ LPCSTR szMessageClass, ULONG ulFlags, \
+                                  void * FAR *pforminfo) PURE;                \
+  STDMETHOD(ResolveMultipleMessageClasses)                                    \
+    (THIS_ LPSMESSAGECLASSARRAY pMsgClassArray, ULONG ulFlags,                \
+     LPSMAPIFORMINFOARRAY FAR *ppfrminfoarray) PURE;                          \
+  STDMETHOD(CalcFormPropSet)(THIS_  ULONG ulFlags,                            \
+                             LPMAPIFORMPROPARRAY FAR *ppResults) PURE;        \
+  STDMETHOD(GetDisplay)(THIS_ ULONG ulFlags,                                  \
+                        LPTSTR FAR *pszDisplayName) PURE;
+
+
+EXTERN_C const IID IID_IMAPIFormContainer;
+#undef INTERFACE
+#define INTERFACE IMAPIFormContainer
+DECLARE_INTERFACE_(IMAPIFormContainer, IUnknown)
+{
+  MY_IUNKNOWN_METHODS;
+  MY_IMAPIFORMCONTAINER_METHODS;
+};
+
+
+
 #undef MY_IUNKNOWN_METHODS
 #undef MY_IMAPIPROP_METHODS
 #undef MY_IMSGSTORE_METHODS
@@ -1022,6 +1104,7 @@ DECLARE_INTERFACE_(ISpoolerHook, IUnknown)
 #undef MY_IMAPITABLE_METHODS
 #undef MY_IMAPISESSION_METHODS
 #undef MY_ISPOOLERHOOK_METHODS
+#undef MY_IMAPIFORMCONTAINER_METHODS
 
 
 
@@ -1086,6 +1169,10 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER,LPFREEBUFFER,
 HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER,LPFREEBUFFER,
                                 ULONG,LPSTR,LPSTR,LPSTREAM*);
 #endif
+
+
+STDAPI MAPIOpenLocalFormContainer (LPMAPIFORMCONTAINER FAR *ppfcnt);
+
 
 #ifdef __cplusplus
 }

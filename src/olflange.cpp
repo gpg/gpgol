@@ -1,6 +1,6 @@
 /* olflange.cpp - Connect GpgOL to Outlook
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004, 2005, 2007 g10 Code GmbH
+ *	Copyright (C) 2004, 2005, 2007, 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -67,6 +67,7 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
 
 static bool g_initdll = FALSE;
 
+static void install_forms (void);
 
 
 
@@ -429,6 +430,8 @@ GpgolExt::GpgolExt (void)
                       " dialog can be found in the main menu at:"
                       " Extras->Options->GpgOL.\n"),
                       "GpgOL", MB_ICONINFORMATION|MB_OK);
+      if ( SVN_REVISION > opt.forms_revision )
+        install_forms ();
     }
 }
 
@@ -632,6 +635,80 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
   
   log_debug ("%s:%s: can't handle this context\n", SRCNAME, __func__);
   return S_FALSE;
+}
+
+
+static void
+install_forms (void)
+{
+  HRESULT hr;
+  LPMAPIFORMCONTAINER formcontainer = NULL;
+  static char *forms[] = 
+    {
+      "gpgol",
+      "gpgol-ms",
+      NULL,
+    };
+  int formidx;
+  LANGID langid;
+  const char *langsuffix;
+  char buffer[MAX_PATH+10];
+  char *datadir;
+  int any_error = 0;
+
+  langid = PRIMARYLANGID (LANGIDFROMLCID (GetThreadLocale ()));
+  switch (langid)
+    {
+    case LANG_GERMAN: langsuffix = "de"; break;
+    default: 
+      log_debug ("%s:%s: No forms available for primary language %d\n",
+                 SRCNAME, __func__, buffer);
+      /* Don't try again.  */
+      opt.forms_revision = SVN_REVISION;
+      write_options ();
+      return;
+    }
+
+  MAPIOpenLocalFormContainer (&formcontainer);
+  if (!formcontainer)
+    {
+      log_error ("%s:%s: error getting local form container\n",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  datadir = get_data_dir ();
+  if (!datadir)
+    {
+      log_error ("%s:%s: error getting data directory\n",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  for (formidx=0; forms[formidx]; formidx++)
+    {
+
+      snprintf (buffer, MAX_PATH, "%s\\%s_%s.cfg",
+                datadir, forms[formidx], langsuffix);
+      hr = formcontainer->InstallForm (0, MAPIFORM_INSTALL_OVERWRITEONCONFLICT,
+                                       buffer);
+      if (hr)
+        {
+          any_error = 1;
+          log_error ("%s:%s: installing form `%s' failed: hr=%#lx\n",
+                     SRCNAME, __func__, buffer, hr);
+        }
+      else
+        log_debug ("%s:%s: form `%s' installed\n",  SRCNAME, __func__, buffer);
+    }
+
+  xfree (datadir);
+
+  if (!any_error)
+    {
+      opt.forms_revision = SVN_REVISION;
+      write_options ();
+    }
 }
 
 

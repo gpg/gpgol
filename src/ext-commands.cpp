@@ -92,8 +92,6 @@ ul_release (LPVOID punk, const char *func, int lnr)
 
 
 
-
-
 /* Constructor */
 GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
 { 

@@ -1,3 +1,9 @@
+2008-08-04  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (SUBDIRS): Add forms.
+	* forms/Makefile.am: New.
+	* forms/gpgol_de.cfg, forms/gpgol-ms_de.cfg: New.
+	
 2008-06-04  Werner Koch  <wk@g10code.com>
 
 	* doc/gpgol.texi (Assuan Protocol): Remove protocol specs.  They

@@ -8,6 +8,9 @@ Noteworthy changes for version 0.10.15
  * New menu item to remove all GpgOL created flags and attachments
    from all messages in a folder.
 
+ * Icons are now installed for messages processed by GpgOL.  For now
+   only for the German version of Outlook.
+
 
 Noteworthy changes for version 0.10.14 (2008-05-28)
 ===================================================

@@ -628,6 +628,39 @@ default_homedir (void)
   return dir;
 }
 
+/* Return the data dir used for forms etc.   Returns NULL on error. */
+char *
+get_data_dir (void)
+{
+  char *instdir;
+  char *p;
+  char *dname;
+
+  instdir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
+				      "Install Directory");
+  if (!instdir)
+    return NULL;
+  
+  /* Build the key: "<instdir>/share/gpgol".  */
+#define SDDIR "\\share\\gpgol"
+  dname = malloc (strlen (instdir) + strlen (SDDIR) + 1);
+  if (!dname)
+    {
+      free (instdir);
+      return NULL;
+    }
+  p = dname;
+  strcpy (p, instdir);
+  p += strlen (instdir);
+  strcpy (p, SDDIR);
+  
+  free (instdir);
+  
+#undef SDDIR
+  return dname;
+}
+
+
 
 /* Do in-place decoding of quoted-printable data of LENGTH in BUFFER.
    Returns the new length of the buffer and stores true at R_SLBRK if
