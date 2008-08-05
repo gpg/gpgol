@@ -807,7 +807,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   int tblidx;
   int retval = -1;
   LPSTREAM cipherstream;
-  gpg_error_t err;
+  gpg_error_t err, sig_err;
   int is_opaque = 0;
   protocol_t protocol;
   LPATTACH saved_attach = NULL;
@@ -1037,8 +1037,9 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
         goto leave; /* Problem getting the attachment.  */
     }
 
+  sig_err = gpg_error (GPG_ERR_NO_DATA);
   err = mime_decrypt (protocol, cipherstream, message, 
-                      need_rfc822_parser, is_simple_pgp, hwnd, 0);
+                      need_rfc822_parser, is_simple_pgp, hwnd, 0, &sig_err);
   log_debug ("mime_decrypt returned %d (%s)", err, gpg_strerror (err));
   if (err && opt.enable_debug)
     {
@@ -1060,6 +1061,25 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     {
       if (saved_attach)
         mapi_set_attach_hidden (saved_attach);
+
+      if (gpg_err_code (sig_err) != GPG_ERR_NO_DATA)
+        {
+          /* Note: Saving the result of the signature in a property
+             will reveal that there is a signature inside the
+             encrypted message - however it does reveal only a
+             common assumption and thus it is acceptable to do
+             this.  */
+          if (sig_err)
+            {
+              char buf[200];
+              snprintf (buf, sizeof buf, "- %s", gpg_strerror (sig_err));
+              mapi_set_sig_status (message, gpg_strerror (sig_err));
+            }
+          else
+            mapi_set_sig_status (message, "! Good signature");
+          mapi_save_changes (message, KEEP_OPEN_READWRITE);
+        }
+      
     }
   cipherstream->Release ();
   retval = 0;

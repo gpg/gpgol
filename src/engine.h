@@ -63,7 +63,7 @@ int engine_filter (engine_filter_t filter,
 int engine_create_filter (engine_filter_t *r_filter,
                           int (*outfnc) (void *, const void *, size_t),
                           void *outfncdata);
-void engine_request_exra_lf (engine_filter_t filter);
+void engine_request_extra_lf (engine_filter_t filter);
 void engine_set_session_number (engine_filter_t filter, unsigned int value);
 void engine_set_session_title (engine_filter_t filter, const char *title);
 void engine_set_sender_address (engine_filter_t filter, const char *addr);

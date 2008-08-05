@@ -69,6 +69,8 @@ static bool g_initdll = FALSE;
 
 static void install_forms (void);
 
+static char *olversion;
+
 
 
 /* Return a string for the context NO.  This never return NULL. */
@@ -93,6 +95,13 @@ ext_context_name (unsigned long no)
     case EECONTEXT_TASK:              return "Task";
     default: return "?";
     }
+}
+
+
+EXTERN_C int
+get_ol_main_version (void)
+{
+  return olversion? atoi (olversion): 0;
 }
 
 
@@ -533,7 +542,6 @@ STDMETHODIMP
 GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 {
   static int version_shown;
-  static char *olversion;
   ULONG lBuildVersion;
   ULONG lActualVersion;
   ULONG lVirtualVersion;
@@ -662,7 +670,7 @@ install_forms (void)
     case LANG_GERMAN: langsuffix = "de"; break;
     default: 
       log_debug ("%s:%s: No forms available for primary language %d\n",
-                 SRCNAME, __func__, buffer);
+                 SRCNAME, __func__, (int)langid);
       /* Don't try again.  */
       opt.forms_revision = SVN_REVISION;
       write_options ();

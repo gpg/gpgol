@@ -638,7 +638,7 @@ engine_create_filter (engine_filter_t *r_filter,
 
 /* Set the FILTER in a mode which pushes an extra linefeed out.  */
 void
-engine_request_exra_lf (engine_filter_t filter)
+engine_request_extra_lf (engine_filter_t filter)
 {
   filter->add_extra_lf = 1;
 }

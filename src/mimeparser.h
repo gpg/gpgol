@@ -37,7 +37,8 @@ int mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
                         int start_part_counter);
 int mime_decrypt (protocol_t protocol, 
                   LPSTREAM instream, LPMESSAGE mapi_message, int is_rfc822,
-                  int simple_pgp, HWND hwnd, int preview_mode);
+                  int simple_pgp, HWND hwnd, int preview_mode,
+                  gpg_error_t *sig_err);
 
 
 #ifdef __cplusplus

@@ -1223,6 +1223,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
       assert (messagelen >= len);
       messagelen -= len;
     }
+
   /* Note: the last character should be a LF, if not we ignore such an
      incomplete last line.  */
   if (ctx->sig_data && gpgme_data_write (ctx->sig_data, "", 1) == 1)
@@ -1651,20 +1652,25 @@ ciphertext_handler (void *handle, const void *buffer, size_t size)
    window to be used for message box and such.  In PREVIEW_MODE no
    verification will be done, no messages saved and no messages boxes
    will pop up.  If IS_RFC822 is set, the message is expected to be in
-   rfc822 format.  The caller should send SIMPLE_PGP is the input
-   message is a simple PGP message. */
+   rfc822 format.  The caller should send SIMPLE_PGP if the input
+   message is a simple (non-MIME) PGP message.  If SIG_ERR is not null
+   and a signature was found and verified, its status is returned
+   there.  If no signature was found SIG_ERR is not changed. */
 int
 mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
-              int is_rfc822, int simple_pgp, HWND hwnd, int preview_mode)
+              int is_rfc822, int simple_pgp, HWND hwnd, int preview_mode,
+              gpg_error_t *sig_err)
 {
   gpg_error_t err;
   mime_context_t decctx, ctx;
   engine_filter_t filter = NULL;
   int opaque_signed = 0;
   int last_part_counter = 0;
+  unsigned int session_number;
+  char *signature = NULL;
 
-  log_debug ("%s:%s: enter (protocol=%d, is_rfc822=%d)",
-             SRCNAME, __func__, protocol, is_rfc822);
+  log_debug ("%s:%s: enter (protocol=%d, is_rfc822=%d, simple_pgp=%d)",
+             SRCNAME, __func__, protocol, is_rfc822, simple_pgp);
 
   if (is_rfc822)
     {
@@ -1680,6 +1686,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   ctx->protect_mode = 1; 
   ctx->hwnd = hwnd;
   ctx->preview = preview_mode;
+  ctx->verify_mode = simple_pgp? 0 : 1;
   ctx->mapi_message = mapi_message;
   ctx->mimestruct_tail = &ctx->mimestruct;
   ctx->no_mail_header = simple_pgp;
@@ -1706,13 +1713,12 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
     }
 
   /* Prepare the decryption.  */
-/*       title = native_to_utf8 (_("[Encrypted S/MIME message]")); */
-/*       title = native_to_utf8 (_("[Encrypted PGP/MIME message]")); */
   if ((err=engine_create_filter (&filter, plaintext_handler, ctx)))
     goto leave;
   if (simple_pgp)
-    engine_request_exra_lf (filter);
-  engine_set_session_number (filter, engine_new_session_number ());
+    engine_request_extra_lf (filter);
+  session_number = engine_new_session_number ();
+  engine_set_session_number (filter, session_number);
   {
     char *tmp = mapi_get_subject (mapi_message);
     engine_set_session_title (filter, tmp);
@@ -1790,8 +1796,81 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   else if (ctx->line_too_long)
     err = gpg_error (GPG_ERR_GENERAL);
 
+  /* Verify an optional inner signature.  */
+  if (!err && !preview_mode 
+      && ctx->sig_data && ctx->signed_data && !ctx->is_opaque_signed)
+    {
+      size_t sig_len;
+
+      assert (!filter);
+
+      if (gpgme_data_write (ctx->sig_data, "", 1) == 1)
+        {
+          signature = gpgme_data_release_and_get_mem (ctx->sig_data, &sig_len);
+          ctx->sig_data = NULL; 
+        }
+
+      if (!err && signature)
+        {
+          gpgme_data_seek (ctx->signed_data, 0, SEEK_SET);
+          
+          if ((err=engine_create_filter (&filter, NULL, NULL)))
+            goto leave;
+          engine_set_session_number (filter, session_number);
+          {
+            char *tmp = mapi_get_subject (mapi_message);
+            engine_set_session_title (filter, tmp);
+            xfree (tmp);
+          }
+          {
+            char *from = mapi_get_from_address (mapi_message);
+            err = engine_verify_start (filter, hwnd, signature, sig_len,
+                                       ctx->protocol, from);
+            xfree (from);
+          }
+          if (err)
+            goto leave;
+
+          /* Filter the data.  */
+          do
+            {
+              int nread;
+              char buffer[4096];
+              
+              nread = gpgme_data_read (ctx->signed_data, buffer,sizeof buffer);
+              if (nread < 0)
+                {
+                  err = gpg_error_from_syserror ();
+                  log_error ("%s:%s: gpgme_data_read failed in verify: %s", 
+                             SRCNAME, __func__, gpg_strerror (err));
+                }
+              else if (nread)
+                {
+                  err = engine_filter (filter, buffer, nread);
+                }
+              else
+                break; /* EOF */
+            }
+          while (!err);
+          if (err)
+            goto leave;
+          
+          /* Wait for the engine to finish.  */
+          if ((err = engine_filter (filter, NULL, 0)))
+            goto leave;
+          err = engine_wait (filter);
+          if (sig_err)
+            *sig_err = err;
+          err = 0;
+          filter = NULL;
+        }
+    }
+
+
  leave:
   engine_cancel (filter);
+  xfree (signature);
+  signature = NULL;
   if (ctx)
     {
       /* Cancel any left over attachment which means that the MIME
@@ -1871,11 +1950,16 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       
       log_debug ("%s:%s: mime_verify_opaque returned %d", 
                  SRCNAME, __func__, err);
+      if (sig_err)
+        *sig_err = err;
+      err = 0;
+
 
     leave_verify:
       xfree (plainbuffer);
       mapi_release_attach_table (table);
     }
+
   return err;
 }
 

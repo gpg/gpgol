@@ -1,3 +1,15 @@
+2008-08-05  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (InstallCommands): Display protocolicons only
+	for OL2007.
+	* olflange.cpp (get_ol_main_version): New.
+
+	* message.cpp (message_decrypt): Save a signature verification
+	result.
+	* mimeparser.c (mime_decrypt): Implement verification of included
+	signatrues.  This feature got lost during the removal of nested
+	crypto operations.
+
 2008-08-04  Werner Koch  <wk@g10code.com>
 
 	* olflange.cpp (install_forms): New.

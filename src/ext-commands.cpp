@@ -515,6 +515,8 @@ GpgolExtCommands::InstallCommands (
             case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
             case MSGTYPE_GPGOL_PGP_MESSAGE:
               is_encrypted = 1;
+              if ( mapi_test_sig_status (message) )
+                is_encrypted++;
               break;
             default:
               break;
@@ -538,9 +540,12 @@ GpgolExtCommands::InstallCommands (
                 &m_nCmdDebug3,
         NULL);
 
-      if ( !opt.disable_gpgol)
+      if (!opt.disable_gpgol)
         add_toolbar (pTBEArray, nTBECnt, 
-                     is_encrypted
+                     is_encrypted == 2 
+                     ? _("This is a signed and encrypted message.\n"
+                         "Click for more information. ")
+                     : is_encrypted
                      ? _("This is an encrypted message.\n"
                          "Click for more information. ")
                      : _("This is a signed message.\n"
@@ -561,14 +566,23 @@ GpgolExtCommands::InstallCommands (
         _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
         _("&sign message with GnuPG"), &m_nCmdSign,
         NULL );
+
+      /* We display the protocol icons only for Outlook 2007 becuase
+         there seems to be no way to add a plain menu item. */
+      if (get_ol_main_version () > 11)
+        add_toolbar (pTBEArray, nTBECnt,
+                     "Encrypt", IDB_ENCRYPT, m_nCmdEncrypt,
+                     "Sign",    IDB_SIGN,    m_nCmdSign,
+                     "Autoselect", IDB_PROTO_AUTO, m_nCmdProtoAuto,
+                     "Use PGP/MIME", IDB_PROTO_PGPMIME, m_nCmdProtoPgpmime,
+                     "Use/MIME", IDB_PROTO_SMIME, m_nCmdProtoSmime,
+                     NULL, 0, 0);
+      else
+        add_toolbar (pTBEArray, nTBECnt,
+                     "Encrypt", IDB_ENCRYPT, m_nCmdEncrypt,
+                     "Sign",    IDB_SIGN,    m_nCmdSign,
+                     NULL, 0, 0);
       
-      add_toolbar (pTBEArray, nTBECnt,
-                   "Encrypt", IDB_ENCRYPT, m_nCmdEncrypt,
-                   "Sign",    IDB_SIGN,    m_nCmdSign,
-                   "Autoselect", IDB_PROTO_AUTO, m_nCmdProtoAuto,
-                   "Use PGP/MIME", IDB_PROTO_PGPMIME, m_nCmdProtoPgpmime,
-                   "Use/MIME", IDB_PROTO_SMIME, m_nCmdProtoSmime,
-                   NULL, 0, 0);
 
       m_pExchExt->m_protoSelection = opt.default_protocol;
       update_protocol_menu (eecb);
