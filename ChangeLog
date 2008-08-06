@@ -1,3 +1,10 @@
+2008-08-06  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.15.
+
+	* forms/sign-l.ico, forms/sign-s.ico: New.
+	* forms/encr-l.ico, forms/encr-s.ico: New
+
 2008-08-04  Werner Koch  <wk@g10code.com>
 
 	* Makefile.am (SUBDIRS): Add forms.

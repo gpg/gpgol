@@ -209,6 +209,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           opt.sign_default = !!SendDlgItemMessage 
             (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
           
+#if 0  /* The mentioned tool is now available.  */
           if (opt.enable_smime)
             {
               MessageBox (hDlg, 
@@ -220,6 +221,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 "provided when GpgOL arrives at production quality status."),
                             "GpgOL", MB_ICONINFORMATION|MB_OK);
             }
+#endif /*0*/
 
           if (openpgp_state)
             opt.default_protocol = PROTOCOL_OPENPGP;

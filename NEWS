@@ -1,8 +1,8 @@
-Noteworthy changes for version 0.10.15
+Noteworthy changes for version 0.10.15 (2008-08-06)
 ===================================================
 
  * New option to present the body of a message as an attachment.  This
-   is useful to make sure that the body will never show up in
+   is useful to make sure that the body will never show up as
    plaintext in the message store.
 
  * New menu item to remove all GpgOL created flags and attachments
