@@ -791,13 +791,14 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
               xfree (ct);
             }
         }
-      else if (opt.enable_smime && !strcmp (s, "IPM.Note.SMIME"))
+      else if (!strcmp (s, "IPM.Note.SMIME"))
         {
           /* This is an S/MIME opaque encrypted or signed message.
-             Check what it really is.  */
-          char *ct, *smtype;
+             Check what it really is.  Notee that this might even be a
+             PGP/MIME mail. */
+          char *ct, *proto, *smtype;
 
-          ct = mapi_get_message_content_type (message, NULL, &smtype);
+          ct = mapi_get_message_content_type (message, &proto, &smtype);
           if (!ct)
             log_debug ("%s:%s: message has no content type", 
                        SRCNAME, __func__);
@@ -805,7 +806,15 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
             {
               log_debug ("%s:%s: content type is '%s'", 
                          SRCNAME, __func__, ct);
-              if (smtype)
+              if (proto 
+                  && !strcmp (ct, "multipart/signed")
+                  && !strcmp (proto, "application/pgp-signature"))
+                {
+                  newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+                }
+              else if (!opt.enable_smime)
+                ; /* S/MIME not enabled; thus no further checks.  */
+              else if (smtype)
                 {
                   log_debug ("%s:%s:   smime-type is '%s'", 
                              SRCNAME, __func__, smtype);
@@ -818,7 +827,6 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                       else if (!strcmp (smtype, "enveloped-data"))
                         newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
                     }
-                  xfree (smtype);
                 }
               else
                 {
@@ -831,10 +839,11 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                   else
                     newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
                 }
-              
+              xfree (smtype);
+              xfree (proto);
               xfree (ct);
             }
-          if (!newvalue)
+          if (!newvalue && opt.enable_smime)
             newvalue = xstrdup ("IPM.Note.GpgOL");
         }
       else if (opt.enable_smime
@@ -848,6 +857,31 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
              SMIME message. */
           newvalue = (char*)xmalloc (strlen (s) + 1);
           strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
+        }
+      else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
+        {
+          /* This is an S/MIME message class but smime support is not
+             enabled.  We need to check whetehr this is actually a
+             PGP/MIME message.  */
+          char *ct, *proto;
+
+          ct = mapi_get_message_content_type (message, &proto, NULL);
+          if (!ct)
+            log_debug ("%s:%s: message has no content type", 
+                       SRCNAME, __func__);
+          else
+            {
+              log_debug ("%s:%s: content type is '%s'", 
+                         SRCNAME, __func__, ct);
+              if (proto 
+                  && !strcmp (ct, "multipart/signed")
+                  && !strcmp (proto, "application/pgp-signature"))
+                {
+                  newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+                }
+              xfree (proto);
+              xfree (ct);
+            }
         }
       else if (opt.enable_smime && sync_override && have_override
                && !strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14]||s[14] =='.'))

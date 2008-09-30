@@ -1,3 +1,8 @@
+2008-09-30  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_change_message_class): Special handling for
+	MultipartSigned if S/MIME support is disabled.
+
 2008-08-06  Werner Koch  <wk@g10code.com>
 
 	* olflange-dlgs.cpp (GPGOptionsDlgProc): Disable S/MIME notice.
