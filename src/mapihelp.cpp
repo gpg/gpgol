@@ -562,8 +562,10 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
 
 /* Check whether the message is really a CMS encrypted message.  
    We check here whether the message is really encrypted by looking at
-   the object identifier inside the CMS data.  Returns true if the
-   message is really encrypted.
+   the object identifier inside the CMS data.  Returns:
+    -1 := Unknown message type,
+     0 := The message is signed,
+     1 := The message is encrypted.
 
    This function is required for two reasons: 
 
@@ -574,6 +576,10 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
  
    2. If the smime-type parameter is missing we need another way to
       decide whether to decrypt or to verify.
+
+   3. Some messages lack a PR_TRANSPORT_MESSAGE_HEADERS and thus it is
+      not possible to deduce the message type from the mail headers.
+      This function may be used to identify the message anyway.
  */
 static int
 is_really_cms_encrypted (LPMESSAGE message)
@@ -583,7 +589,7 @@ is_really_cms_encrypted (LPMESSAGE message)
   LPMAPITABLE mapitable;
   LPSRowSet   mapirows;
   unsigned int pos, n_attach;
-  int is_encrypted = 0;
+  int result = -1; /* Unknown.  */
   LPATTACH att = NULL;
   LPSTREAM stream = NULL;
   char buffer[24];  /* 24 bytes are more than enough to peek at.
@@ -616,7 +622,7 @@ is_really_cms_encrypted (LPMESSAGE message)
     {
       FreeProws (mapirows);
       mapitable->Release ();
-      log_debug ("%s:%s: not just one attachments", SRCNAME, __func__);
+      log_debug ("%s:%s: not just one attachment", SRCNAME, __func__);
       return 0;
     }
   pos = 0;
@@ -678,11 +684,16 @@ is_really_cms_encrypted (LPMESSAGE message)
   if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_OBJECT_ID
         && !ti.is_cons && ti.length) || ti.length > n)
     goto leave;
-  /* Now is this enveloped data (1.2.840.113549.1.7.3)?  */
-  if (ti.length == 9 && !memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x03", 9))
-    is_encrypted = 1;
-
-
+  /* Now is this enveloped data (1.2.840.113549.1.7.3)
+                 or signed data (1.2.840.113549.1.7.2) ? */
+  if (ti.length == 9)
+    {
+      if (!memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x03", 9))
+        result = 1; /* Encrypted.  */
+      else if (!memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02", 9))
+        result = 0; /* Signed.  */
+    }
+  
  leave:
   if (stream)
     stream->Release ();
@@ -690,9 +701,256 @@ is_really_cms_encrypted (LPMESSAGE message)
     att->Release ();
   FreeProws (mapirows);
   mapitable->Release ();
-  return !!is_encrypted;
+  return result;
 }
 
+
+/* Helper for mapi_change_message_class.  Returns the new message
+   class as an allocated string.
+
+   Most message today are of the message class "IPM.Note".  However a
+   PGP/MIME encrypted message also has this class.  We need to see
+   whether we can detect such a mail right here and change the message
+   class accordingly. */
+static char *
+change_message_class_ipm_note (LPMESSAGE message)
+{
+  char *newvalue = NULL;
+  char *ct, *proto;
+
+  ct = mapi_get_message_content_type (message, &proto, NULL);
+  if (!ct)
+    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
+  else
+    {
+      log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
+      if (proto)
+        {
+          log_debug ("%s:%s:     protocol is '%s'", SRCNAME, __func__, proto);
+          
+          if (!strcmp (ct, "multipart/encrypted")
+              && !strcmp (proto, "application/pgp-encrypted"))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+            }
+          else if (!strcmp (ct, "multipart/signed")
+                   && !strcmp (proto, "application/pgp-signature"))
+            {
+              /* Sometimes we receive a PGP/MIME signed message with a
+                 class IPM.Note.  */
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+            }
+          xfree (proto);
+        }
+      else if (!strcmp (ct, "text/plain"))
+        {
+          newvalue = get_msgcls_from_pgp_lines (message);
+        }
+      else if (!strcmp (ct, "multipart/mixed"))
+        {
+          /* It is quite common to have a multipart/mixed mail with
+             separate encrypted PGP parts.  Look at the body to
+             decide.  */
+          newvalue = get_msgcls_from_pgp_lines (message);
+        }
+      
+      xfree (ct);
+    }
+
+  return newvalue;
+}
+
+/* Helper for mapi_change_message_class.  Returns the new message
+   class as an allocated string.
+
+   This function is used for the message class "IPM.Note.SMIME".  It
+   indicates an S/MIME opaque encrypted or signed message.  This may
+   also be an PGP/MIME mail. */
+static char *
+change_message_class_ipm_note_smime (LPMESSAGE message)
+{
+  char *newvalue = NULL;
+  char *ct, *proto, *smtype;
+  
+  ct = mapi_get_message_content_type (message, &proto, &smtype);
+  if (!ct)
+    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
+  else
+    {
+      log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
+      if (proto 
+          && !strcmp (ct, "multipart/signed")
+          && !strcmp (proto, "application/pgp-signature"))
+        {
+          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+        }
+      else if (!opt.enable_smime)
+        ; /* S/MIME not enabled; thus no further checks.  */
+      else if (smtype)
+        {
+          log_debug ("%s:%s:   smime-type is '%s'", SRCNAME, __func__, smtype);
+          
+          if (!strcmp (ct, "application/pkcs7-mime")
+              || !strcmp (ct, "application/x-pkcs7-mime"))
+            {
+              if (!strcmp (smtype, "signed-data"))
+                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+              else if (!strcmp (smtype, "enveloped-data"))
+                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+            }
+        }
+      else
+        {
+          /* No smime type.  The filename parameter is often not
+             reliable, thus we better look into the message to see if
+             it is encrypted and assume an opaque signed one if this
+             is not the case.  */
+          switch (is_really_cms_encrypted (message))
+            {
+            case 0:
+              newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+              break;
+            case 1:
+              newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+              break;
+            }
+          
+        }
+      xfree (smtype);
+      xfree (proto);
+      xfree (ct);
+    }
+  if (!newvalue && opt.enable_smime)
+    newvalue = xstrdup ("IPM.Note.GpgOL");
+
+  return newvalue;
+}
+
+/* Helper for mapi_change_message_class.  Returns the new message
+   class as an allocated string.
+
+   This function is used for the message class
+   "IPM.Note.SMIME.MultipartSigned".  This is an S/MIME message class
+   but smime support is not enabled.  We need to check whether this is
+   actually a PGP/MIME message.  */
+static char *
+change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
+{
+  char *newvalue = NULL;
+  char *ct, *proto;
+
+  ct = mapi_get_message_content_type (message, &proto, NULL);
+  if (!ct)
+    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
+  else
+    {
+      log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
+      if (proto 
+          && !strcmp (ct, "multipart/signed")
+          && !strcmp (proto, "application/pgp-signature"))
+        {
+          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+        }
+      xfree (proto);
+      xfree (ct);
+    }
+  
+  return newvalue;
+}
+
+/* Helper for mapi_change_message_class.  Returns the new message
+   class as an allocated string.
+
+   This function is used for the message classes
+   "IPM.Note.Secure.CexSig" and "IPM.Note.Secure.Cexenc" (in the
+   latter case IS_CEXSIG is true).  These are CryptoEx generated
+   signature or encryption messages.  */
+static char *
+change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
+{
+  char *newvalue = NULL;
+  char *ct, *smtype, *proto;
+  
+  ct = mapi_get_message_content_type (message, &proto, &smtype);
+  if (ct)
+    {
+      log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
+      if (smtype)
+        log_debug ("%s:%s:   smime-type is '%s'", SRCNAME, __func__, smtype);
+      if (proto)
+        log_debug ("%s:%s:     protocol is '%s'", SRCNAME, __func__, proto);
+
+      if (smtype)
+        {
+          if (!strcmp (ct, "application/pkcs7-mime")
+              || !strcmp (ct, "application/x-pkcs7-mime"))
+            {
+              if (!strcmp (smtype, "signed-data"))
+                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+              else if (!strcmp (smtype, "enveloped-data"))
+                newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+            }
+        }
+
+      if (!newvalue && proto)
+        {
+          if (!strcmp (ct, "multipart/signed")
+              && (!strcmp (proto, "application/pkcs7-signature")
+                  || !strcmp (proto, "application/x-pkcs7-signature")))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+            }
+          else if (!strcmp (ct, "multipart/signed")
+                   && (!strcmp (proto, "application/pgp-signature")))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+            }
+        }
+      
+      if (!newvalue && !strcmp (ct, "text/plain"))
+        {
+          newvalue = get_msgcls_from_pgp_lines (message);
+        }
+      
+      if (!newvalue)
+        {
+          switch (is_really_cms_encrypted (message))
+            {
+            case 0:
+              newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+              break;
+            case 1:
+              newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+              break;
+            }
+        }
+      
+      xfree (smtype);
+      xfree (proto);
+      xfree (ct);
+    }
+  else
+    {
+      log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
+      if (is_cexenc)
+        {
+          switch (is_really_cms_encrypted (message))
+            {
+            case 0:
+              newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+              break;
+            case 1:
+              newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+              break;
+            }
+        }
+    }
+
+  if (!newvalue)
+    newvalue = xstrdup ("IPM.Note.GpgOL");
+
+  return newvalue;
+}
 
 
 /* This function checks whether MESSAGE requires processing by us and
@@ -743,108 +1001,11 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                        SRCNAME, __func__, s);
       if (!strcmp (s, "IPM.Note"))
         {
-          /* Most message today are of this type.  However a PGP/MIME
-             encrypted message also has this class here.  We need
-             to see whether we can detect such a mail right here and
-             change the message class accordingly. */
-          char *ct, *proto;
-
-          ct = mapi_get_message_content_type (message, &proto, NULL);
-          if (!ct)
-            log_debug ("%s:%s: message has no content type", 
-                       SRCNAME, __func__);
-          else
-            {
-              log_debug ("%s:%s: content type is '%s'", 
-                         SRCNAME, __func__, ct);
-              if (proto)
-                {
-                  log_debug ("%s:%s:     protocol is '%s'", 
-                             SRCNAME, __func__, proto);
-              
-                  if (!strcmp (ct, "multipart/encrypted")
-                      && !strcmp (proto, "application/pgp-encrypted"))
-                    {
-                      newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
-                    }
-                  else if (!strcmp (ct, "multipart/signed")
-                           && !strcmp (proto, "application/pgp-signature"))
-                    {
-                      /* Sometimes we receive a PGP/MIME signed
-                         message with a class IPM.Note.  */
-                      newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-                    }
-                  xfree (proto);
-                }
-              else if (!strcmp (ct, "text/plain"))
-                {
-                  newvalue = get_msgcls_from_pgp_lines (message);
-                }
-              else if (!strcmp (ct, "multipart/mixed"))
-                {
-                  /* It is quite common to have a multipart/mixed mail
-                     with separate encrypted PGP parts.  Look at the
-                     body to decide.  */
-                  newvalue = get_msgcls_from_pgp_lines (message);
-                }
-              
-              xfree (ct);
-            }
+          newvalue = change_message_class_ipm_note (message);
         }
       else if (!strcmp (s, "IPM.Note.SMIME"))
         {
-          /* This is an S/MIME opaque encrypted or signed message.
-             Check what it really is.  Notee that this might even be a
-             PGP/MIME mail. */
-          char *ct, *proto, *smtype;
-
-          ct = mapi_get_message_content_type (message, &proto, &smtype);
-          if (!ct)
-            log_debug ("%s:%s: message has no content type", 
-                       SRCNAME, __func__);
-          else
-            {
-              log_debug ("%s:%s: content type is '%s'", 
-                         SRCNAME, __func__, ct);
-              if (proto 
-                  && !strcmp (ct, "multipart/signed")
-                  && !strcmp (proto, "application/pgp-signature"))
-                {
-                  newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-                }
-              else if (!opt.enable_smime)
-                ; /* S/MIME not enabled; thus no further checks.  */
-              else if (smtype)
-                {
-                  log_debug ("%s:%s:   smime-type is '%s'", 
-                             SRCNAME, __func__, smtype);
-              
-                  if (!strcmp (ct, "application/pkcs7-mime")
-                      || !strcmp (ct, "application/x-pkcs7-mime"))
-                    {
-                      if (!strcmp (smtype, "signed-data"))
-                        newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
-                      else if (!strcmp (smtype, "enveloped-data"))
-                        newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
-                    }
-                }
-              else
-                {
-                  /* No smime type.  The filename parameter is often
-                     not reliable, thus we better look into the
-                     message to see whetehr it is encrypted and assume
-                     an opaque signed one if not.  */
-                  if (is_really_cms_encrypted (message))
-                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
-                  else
-                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
-                }
-              xfree (smtype);
-              xfree (proto);
-              xfree (ct);
-            }
-          if (!newvalue && opt.enable_smime)
-            newvalue = xstrdup ("IPM.Note.GpgOL");
+          newvalue = change_message_class_ipm_note_smime (message);
         }
       else if (opt.enable_smime
                && !strncmp (s, "IPM.Note.SMIME", 14) && (!s[14]||s[14] =='.'))
@@ -861,27 +1022,10 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
       else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
         {
           /* This is an S/MIME message class but smime support is not
-             enabled.  We need to check whetehr this is actually a
+             enabled.  We need to check whether this is actually a
              PGP/MIME message.  */
-          char *ct, *proto;
-
-          ct = mapi_get_message_content_type (message, &proto, NULL);
-          if (!ct)
-            log_debug ("%s:%s: message has no content type", 
-                       SRCNAME, __func__);
-          else
-            {
-              log_debug ("%s:%s: content type is '%s'", 
-                         SRCNAME, __func__, ct);
-              if (proto 
-                  && !strcmp (ct, "multipart/signed")
-                  && !strcmp (proto, "application/pgp-signature"))
-                {
-                  newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-                }
-              xfree (proto);
-              xfree (ct);
-            }
+          newvalue = change_message_class_ipm_note_smime_multipartsigned
+            (message);
         }
       else if (opt.enable_smime && sync_override && have_override
                && !strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14]||s[14] =='.'))
@@ -902,76 +1046,11 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
                && (!strcmp (s, "IPM.Note.Secure.CexSig")
                    || (cexenc = !strcmp (s, "IPM.Note.Secure.CexEnc"))))
         {
-          /* This is a CryptoEx generated signature or encrypted data. */
-          char *ct, *smtype, *proto;
-
-          ct = mapi_get_message_content_type (message, &proto, &smtype);
-          if (!ct)
-            {
-              log_debug ("%s:%s: message has no content type", 
-                         SRCNAME, __func__);
-              if (cexenc)
-                {
-                  if (is_really_cms_encrypted (message))
-                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
-                  else
-                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
-                }
-            }
-          else
-            {
-              log_debug ("%s:%s: content type is '%s'", 
-                         SRCNAME, __func__, ct);
-              if (smtype)
-               log_debug ("%s:%s:   smime-type is '%s'", 
-                           SRCNAME, __func__, smtype);
-              if (proto)
-                log_debug ("%s:%s:     protocol is '%s'", 
-                           SRCNAME, __func__, proto);
-              if (smtype)
-                {
-                  if (!strcmp (ct, "application/pkcs7-mime")
-                      || !strcmp (ct, "application/x-pkcs7-mime"))
-                    {
-                      if (!strcmp (smtype, "signed-data"))
-                        newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
-                      else if (!strcmp (smtype, "enveloped-data"))
-                        newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
-                    }
-                }
-
-              if (!newvalue && proto)
-                {
-                  if (!strcmp (ct, "multipart/signed")
-                      && (!strcmp (proto, "application/pkcs7-signature")
-                          || !strcmp (proto, "application/x-pkcs7-signature")))
-                    newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-                  else if (!strcmp (ct, "multipart/signed")
-                           && (!strcmp (proto, "application/pgp-signature")))
-                    newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-                }
-
-              if (!newvalue && !strcmp (ct, "text/plain"))
-                {
-                  newvalue = get_msgcls_from_pgp_lines (message);
-                }
-
-              if (!newvalue)
-                {
-                  if (is_really_cms_encrypted (message))
-                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
-                  else
-                    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
-                }
-
-              xfree (smtype);
-              xfree (proto);
-              xfree (ct);
-            }
-          if (!newvalue)
-            newvalue = xstrdup ("IPM.Note.GpgOL");
+          newvalue = change_message_class_ipm_note_secure_cex
+            (message, cexenc);
         }
     }
+
   if (!newvalue)
     {
       /* We use our Sig-Status property to mark messages which passed
@@ -2308,7 +2387,7 @@ mapi_get_message_content_type (LPMESSAGE message,
   if (PROP_TYPE (propval->ulPropTag) != PT_STRING8)
     {
       /* As per rfc822, header lines must be plain ascii, so no need
-         to cope withy unicode etc. */
+         to cope with unicode etc. */
       log_error ("%s:%s: proptag=%#lx not supported\n",
                  SRCNAME, __func__, propval->ulPropTag);
       MAPIFreeBuffer (propval);

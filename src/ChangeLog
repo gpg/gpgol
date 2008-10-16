@@ -1,3 +1,19 @@
+2008-10-16  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (is_really_cms_encrypted): Extend to detect unknown
+	message types.
+	(mapi_change_message_class): Adjust for this change.
+	(mapi_change_message_class): Factor code out to ...
+	(change_message_class_ipm_note) 
+	(change_message_class_ipm_note_smime) 
+	(change_message_class_ipm_note_smime_multipartsigned) 
+	(change_message_class_ipm_note_secure_cex): New.
+
+2008-10-15  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (op_assuan_sign): Send the new --protocl option
+	to the server.
+
 2008-09-30  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (mapi_change_message_class): Special handling for

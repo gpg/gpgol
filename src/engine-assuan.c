@@ -1810,13 +1810,16 @@ op_assuan_sign (protocol_t protocol,
     goto leave;
 
   /* We always send the SENDER command because it allows us to figure
-     out the protocol to use.  In case the UI server faisl to send the
-     protocol we fall back to OpenPGP.  */
+     out the protocol to use.  In case the UI server fails to send the
+     protocol we fall back to OpenPGP.  The --protocol option isused
+     to given the server a hint on what protocol we would prefer. */
   suggested_protocol = PROTOCOL_UNKNOWN;
   if (!sender)
     sender = "<kleopatra-does-not-allow-an-empty-arg@example.net>";
-  snprintf (line, sizeof line, "SENDER%s%s",
-            sender? " -- ":"", sender?sender:"");
+  snprintf (line, sizeof line, "SENDER%s%s -- %s",
+            protocol_name? " --protocol=":"",
+            protocol_name? protocol_name:"",
+            sender? sender:"");
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL,
                          prep_foo_status_cb, &suggested_protocol);
   if (err)
