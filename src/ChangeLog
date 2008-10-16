@@ -1,5 +1,8 @@
 2008-10-16  Werner Koch  <wk@g10code.com>
 
+	* mimeparser.c (start_attachment): Take care not to set the file
+	name "smime.p7m".
+
 	* mapihelp.cpp (is_really_cms_encrypted): Extend to detect unknown
 	message types.
 	(mapi_change_message_class): Adjust for this change.
@@ -8,6 +11,9 @@
 	(change_message_class_ipm_note_smime) 
 	(change_message_class_ipm_note_smime_multipartsigned) 
 	(change_message_class_ipm_note_secure_cex): New.
+	(get_first_attach_mime_tag): New.
+	(change_message_class_ipm_note_secure_cex): Use it here for CexSig.
+	(has_smime_filename): Also look at the long filename.
 
 2008-10-15  Werner Koch  <wk@g10code.com>
 

@@ -46,6 +46,7 @@
 
 static int get_attach_method (LPATTACH obj);
 static int has_smime_filename (LPATTACH obj);
+static char *get_attach_mime_tag (LPATTACH obj);
 
 
 
@@ -605,7 +606,7 @@ is_really_cms_encrypted (LPMESSAGE message)
     {
       log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      return 0;
+      return -1;
     }
       
   hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
@@ -615,7 +616,7 @@ is_really_cms_encrypted (LPMESSAGE message)
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
       mapitable->Release ();
-      return 0;
+      return -1;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (n_attach != 1)
@@ -623,7 +624,7 @@ is_really_cms_encrypted (LPMESSAGE message)
       FreeProws (mapirows);
       mapitable->Release ();
       log_debug ("%s:%s: not just one attachment", SRCNAME, __func__);
-      return 0;
+      return -1;
     }
   pos = 0;
 
@@ -647,9 +648,15 @@ is_really_cms_encrypted (LPMESSAGE message)
       goto leave;
     }
   if (!has_smime_filename (att))
-    goto leave;
+    {
+      log_debug ("%s:%s: no smime filename", SRCNAME, __func__);
+      goto leave;
+    }
   if (get_attach_method (att) != ATTACH_BY_VALUE)
-    goto leave;
+    {
+      log_debug ("%s:%s: wrong attach method", SRCNAME, __func__);
+      goto leave;
+    }
   
   hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
                           0, 0, (LPUNKNOWN*) &stream);
@@ -705,6 +712,86 @@ is_really_cms_encrypted (LPMESSAGE message)
 }
 
 
+
+/* Return the content-type of the first and only attachment of MESSAGE
+   or NULL if it does not exists.  Caller must free. */
+static char *
+get_first_attach_mime_tag (LPMESSAGE message)
+{    
+  HRESULT hr;
+  SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
+  LPMAPITABLE mapitable;
+  LPSRowSet   mapirows;
+  unsigned int pos, n_attach;
+  LPATTACH att = NULL;
+  char *result = NULL;
+
+  hr = message->GetAttachmentTable (0, &mapitable);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      return NULL;
+    }
+      
+  hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
+                       NULL, NULL, 0, &mapirows);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      mapitable->Release ();
+      return NULL;
+    }
+  n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
+  if (n_attach != 1)
+    {
+      FreeProws (mapirows);
+      mapitable->Release ();
+      log_debug ("%s:%s: not just one attachment", SRCNAME, __func__);
+      return NULL;
+    }
+  pos = 0;
+
+  if (mapirows->aRow[pos].cValues < 1)
+    {
+      log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
+      goto leave;
+    }
+  if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
+    {
+      log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
+      goto leave;
+    }
+  hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
+                            NULL, MAPI_BEST_ACCESS, &att);	
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
+                 SRCNAME, __func__, pos, 
+                 mapirows->aRow[pos].lpProps[0].Value.l, hr);
+      goto leave;
+    }
+
+  /* Note: We do not expect a filename.  */
+
+  if (get_attach_method (att) != ATTACH_BY_VALUE)
+    {
+      log_debug ("%s:%s: wrong attach method", SRCNAME, __func__);
+      goto leave;
+    }
+
+  result = get_attach_mime_tag (att);
+  
+ leave:
+  if (att)
+    att->Release ();
+  FreeProws (mapirows);
+  mapitable->Release ();
+  return result;
+}
+
+
 /* Helper for mapi_change_message_class.  Returns the new message
    class as an allocated string.
 
@@ -719,9 +806,7 @@ change_message_class_ipm_note (LPMESSAGE message)
   char *ct, *proto;
 
   ct = mapi_get_message_content_type (message, &proto, NULL);
-  if (!ct)
-    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
-  else
+  if (ct)
     {
       log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
       if (proto)
@@ -756,6 +841,8 @@ change_message_class_ipm_note (LPMESSAGE message)
       
       xfree (ct);
     }
+  else
+    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
 
   return newvalue;
 }
@@ -773,9 +860,7 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
   char *ct, *proto, *smtype;
   
   ct = mapi_get_message_content_type (message, &proto, &smtype);
-  if (!ct)
-    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
-  else
+  if (ct)
     {
       log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
       if (proto 
@@ -814,12 +899,34 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
               newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
               break;
             }
-          
+
         }
       xfree (smtype);
       xfree (proto);
       xfree (ct);
     }
+  else
+    {
+      log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
+
+      /* CryptoEx (or the Toltec Connector) create messages without
+         the transport headers property and thus we don't know the
+         content type.  We try to detect the message type anyway by
+         looking into the first and only attachments.  */
+      switch (is_really_cms_encrypted (message))
+        {
+        case 0:
+          newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueSigned");
+          break;
+        case 1:
+          newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+          break;
+        default: /* Unknown.  */
+          break;
+        }
+    }
+
+  /* If we did not found anything but let's change the class anyway.  */
   if (!newvalue && opt.enable_smime)
     newvalue = xstrdup ("IPM.Note.GpgOL");
 
@@ -840,9 +947,7 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
   char *ct, *proto;
 
   ct = mapi_get_message_content_type (message, &proto, NULL);
-  if (!ct)
-    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
-  else
+  if (ct)
     {
       log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
       if (proto 
@@ -854,6 +959,8 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
       xfree (proto);
       xfree (ct);
     }
+  else
+    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
   
   return newvalue;
 }
@@ -943,6 +1050,20 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
               newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
               break;
             }
+        }
+      else
+        {
+          char *mimetag;
+
+          mimetag = get_first_attach_mime_tag (message);
+          if (mimetag && !strcmp (mimetag, "multipart/signed"))
+            newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+          xfree (mimetag);
+        }
+
+      if (!newvalue)
+        {
+          newvalue = get_msgcls_from_pgp_lines (message);
         }
     }
 
@@ -2541,7 +2662,11 @@ has_smime_filename (LPATTACH obj)
 
   hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
   if (FAILED(hr))
-    return 0;
+    {
+      hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_LONG_FILENAME, &propval);
+      if (FAILED(hr))
+        return 0;
+    }
 
   if ( PROP_TYPE (propval->ulPropTag) == PT_UNICODE)
     {

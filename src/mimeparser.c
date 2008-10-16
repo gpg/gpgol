@@ -353,11 +353,16 @@ start_attachment (mime_context_t ctx, int is_body)
       goto leave;
     }
 
-  /* And now for the real name.  */
+  /* And now for the real name.  We avoid storing the name "smime.p7m"
+     because that one is used at several places in the mapi conversion
+     functions.  */
   if (ctx->mimestruct_cur && ctx->mimestruct_cur->filename)
     {
       prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
-      prop.Value.lpszA = ctx->mimestruct_cur->filename;
+      if (!strcmp (ctx->mimestruct_cur->filename, "smime.p7m"))
+        prop.Value.lpszA = "x-smime.p7m";
+      else
+        prop.Value.lpszA = ctx->mimestruct_cur->filename;
       hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
       if (hr)
         {
