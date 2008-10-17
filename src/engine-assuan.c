@@ -240,8 +240,8 @@ create_io_pipe (HANDLE filedes[2], pid_t serverpid, int for_write)
      only one instance, use the standard timeout of 120 seconds and
      buffers of 4k. */
   pipeno = InterlockedIncrement (&pipenumber);
-  snprintf (pipename, sizeof pipename, "\\\\.\\pipe\\GpgOL_anon.%08lx.%08lx",
-            (unsigned long)GetCurrentProcessId(), pipeno);
+  snprintf (pipename, sizeof pipename, "\\\\.\\pipe\\GpgOL_anon.%08x.%08x",
+            (unsigned int)GetCurrentProcessId(), (unsigned int)pipeno);
   sec_attr.bInheritHandle = /*for_write? TRUE :*/FALSE;
   r = CreateNamedPipe (pipename, (PIPE_ACCESS_INBOUND
                                   | (for_write? 0:FILE_FLAG_OVERLAPPED)),
@@ -437,7 +437,7 @@ send_options (assuan_context_t ctx, void *hwnd, pid_t *r_pid)
 
   if (!err && hwnd)
     {
-      snprintf (numbuf, sizeof numbuf, "%lx", (unsigned long)hwnd);
+      snprintf (numbuf, sizeof numbuf, "%x", (unsigned int)hwnd);
       err = send_one_option (ctx, "window-id", numbuf);
     }
 
@@ -1513,7 +1513,7 @@ start_command (assuan_context_t ctx, closure_data_t cld,
   cld->status_cbs.write = status_in_cb;
   cld->assctx = ctx;
   /* Fixme: We might want to have reference counting for CLD to cope
-     with thye problem that the gpgme data object uses CLD which might
+     with the problem that the gpgme data object uses CLD which might
      get invalidated at any time.  */
   err = gpgme_data_new_from_cbs (&cld->status_data, &cld->status_cbs, cld);
   if (err)
@@ -1669,11 +1669,11 @@ op_assuan_encrypt (protocol_t protocol,
      duplicate the handle into the server process and the server then
      uses this handle.  Eventually we should put this code into
      assuan_sendfd.  */
-  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
+  snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)inpipe[0]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-  snprintf (line, sizeof line, "OUTPUT FD=%ld", (unsigned long int)outpipe[1]);
+  snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
@@ -1843,11 +1843,11 @@ op_assuan_sign (protocol_t protocol,
   *r_used_protocol = protocol;
   log_debug ("%s:%s: using protocol %s", SRCNAME, __func__, protocol_name);
 
-  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
+  snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)inpipe[0]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-  snprintf (line, sizeof line, "OUTPUT FD=%ld", (unsigned long int)outpipe[1]);
+  snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
@@ -1941,11 +1941,11 @@ op_assuan_decrypt (protocol_t protocol,
         goto leave;
     }
 
-  snprintf (line, sizeof line, "INPUT FD=%ld", (unsigned long int)inpipe[0]);
+  snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)inpipe[0]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-  snprintf (line, sizeof line, "OUTPUT FD=%ld", (unsigned long int)outpipe[1]);
+  snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
@@ -2081,13 +2081,11 @@ op_assuan_verify (gpgme_protocol_t protocol,
 
   if (!opaque_mode)
     {
-      snprintf (line, sizeof line, "MESSAGE FD=%ld",
-                (unsigned long int)msgpipe[0]);
+      snprintf (line, sizeof line, "MESSAGE FD=%d", (unsigned int)msgpipe[0]);
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
-      snprintf (line, sizeof line, "INPUT FD=%ld",
-                (unsigned long int)sigpipe[0]);
+      snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)sigpipe[0]);
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
@@ -2098,13 +2096,11 @@ op_assuan_verify (gpgme_protocol_t protocol,
     }
   else 
     {
-      snprintf (line, sizeof line, "INPUT FD=%ld",
-                (unsigned long int)msgpipe[0]);
+      snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)msgpipe[0]);
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
-      snprintf (line, sizeof line, "OUTPUT FD=%ld",
-                (unsigned long int)outpipe[1]);
+      snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;

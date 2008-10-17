@@ -1,3 +1,9 @@
+Noteworthy changes for version 0.10.16
+===================================================
+
+ * Fixed a regression in the last release with opaque signatures.
+
+
 Noteworthy changes for version 0.10.15 (2008-08-06)
 ===================================================
 

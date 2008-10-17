@@ -1,3 +1,14 @@
+2008-10-17  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (mime_verify_opaque): Remove extra semicolon which
+	shortcuted most of the code.  Why didn't gcc notice that?  Bug
+	was introduced on 2008-06-12.
+
+	* engine-assuan.c (create_io_pipe, send_options) 
+	(op_assuan_encrypt, op_assuan_sign, op_assuan_decrypt) 
+	(op_assuan_verify): Replace use of long in snprint by int to
+	workaround a bug in mingw32. Doesn't matter on w32 anyway.
+
 2008-10-16  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (start_attachment): Take care not to set the file

@@ -1378,7 +1378,7 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
     err = engine_verify_start (filter, hwnd, NULL, 0, protocol, from);
     xfree (from);
   }
-  if (err);
+  if (err)
     goto leave;
 
   if (instream)
@@ -1399,16 +1399,27 @@ mime_verify_opaque (protocol_t protocol, LPSTREAM instream,
             }
           else if (nread)
             {
+/*               if (debug_mime_data) */
+/*                 log_hexdump (buffer, nread, "%s:%s: ctx=%p, data: ", */
+/*                              SRCNAME, __func__, ctx); */
               err = engine_filter (filter, buffer, nread);
             }
           else
-            break; /* EOF */
+            {
+/*               if (debug_mime_data) */
+/*                 log_debug ("%s:%s: ctx=%p, data: EOF\n", */
+/*                            SRCNAME, __func__, ctx); */
+              break; /* EOF */
+            }
         }
       while (!err);
     }
   else
     {
       /* Filter the buffer.  */
+/*       if (debug_mime_data) */
+/*         log_hexdump (inbuffer, inbufferlen, "%s:%s: ctx=%p, data: ", */
+/*                      SRCNAME, __func__, ctx); */
       err = engine_filter (filter, inbuffer, inbufferlen);
     }
   if (err)

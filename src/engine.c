@@ -257,7 +257,7 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
     }
 
   if (debug_filter)
-    log_debug ("%s:%s: enter\n",  SRCNAME, __func__);
+    log_debug ("%s:%s: filter %p: enter\n",  SRCNAME, __func__, filter );
   take_in_lock (filter, __func__);
   while (!filter->in.length)
     {
@@ -265,7 +265,8 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
         {
           release_in_lock (filter, __func__);
           if (debug_filter)
-            log_debug ("%s:%s: returning EOF\n", SRCNAME, __func__);
+            log_debug ("%s:%s: filter %p: returning EOF\n", 
+                       SRCNAME, __func__, filter );
           return 0; /* Return EOF. */
         }
       release_in_lock (filter, __func__);
@@ -273,23 +274,26 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
         {
           errno = EAGAIN;
           if (debug_filter_extra)
-            log_debug ("%s:%s: leave; result=EAGAIN\n", SRCNAME, __func__);
+            log_debug ("%s:%s: filter %p: leave; result=EAGAIN\n",
+                       SRCNAME, __func__, filter);
           switch_threads (filter);
           return -1;
         }
       else
         clear_switch_threads (filter);
       if (debug_filter)
-        log_debug ("%s:%s: waiting for in.condvar\n", SRCNAME, __func__);
+        log_debug ("%s:%s: filter %p: waiting for in.condvar\n",
+                   SRCNAME, __func__, filter);
       WaitForSingleObject (filter->in.condvar, 500);
       take_in_lock (filter, __func__);
       if (debug_filter)
-        log_debug ("%s:%s: continuing\n", SRCNAME, __func__);
+        log_debug ("%s:%s: filter %p: continuing\n", 
+                   SRCNAME, __func__, filter);
     }
      
   if (debug_filter)
-    log_debug ("%s:%s: requested read size=%d (filter.in.length=%d)\n",
-               SRCNAME, __func__, (int)size, (int)filter->in.length);
+    log_debug ("%s:%s: filter %p: requested read size=%d (in.length=%d)\n",
+               SRCNAME, __func__, filter, (int)size, (int)filter->in.length);
   nbytes = size < filter->in.length ? size : filter->in.length;
   memcpy (buffer, filter->in.buffer, nbytes);
   if (filter->in.length > nbytes)
@@ -299,8 +303,8 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
   release_in_lock (filter, __func__);
 
   if (debug_filter)
-    log_debug ("%s:%s: leave; result=%d\n",
-               SRCNAME, __func__, (int)nbytes);
+    log_debug ("%s:%s: filter %p: leave; result=%d\n",
+               SRCNAME, __func__, filter, (int)nbytes);
   
   return nbytes;
 }
@@ -627,6 +631,9 @@ engine_create_filter (engine_filter_t *r_filter,
   if (err)
     goto failure;
 
+  if (debug_filter)
+    log_debug ("%s:%s: filter %p: created\n", 
+               SRCNAME, __func__, filter );
   *r_filter = filter;
   return 0;
 
@@ -822,7 +829,8 @@ engine_cancel (engine_filter_t filter)
         engine_gpgme_cancel (cancel_data);
       if (WaitForSingleObject (filter->in.ready_event, INFINITE)
           != WAIT_OBJECT_0)
-        log_error_w32 (-1, "%s:%s: WFSO failed", SRCNAME, __func__);
+        log_error_w32 (-1, "%s:%s: filter %p: WFSO failed", 
+                       SRCNAME, __func__, filter);
       else
         log_debug ("%s:%s: filter %p: backend has been canceled", 
                    SRCNAME, __func__,  filter);

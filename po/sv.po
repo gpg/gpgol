@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-08-06 07:48+0200\n"
+"POT-Creation-Date: 2008-08-06 08:04+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -507,7 +507,7 @@ msgstr ""
 msgid "Crypto Engine"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:215
+#: src/olflange-dlgs.cpp:216
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -518,11 +518,11 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:270
+#: src/olflange-dlgs.cpp:272
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:276
+#: src/olflange-dlgs.cpp:278
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr ""
