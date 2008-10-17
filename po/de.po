@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-08-06 07:48+0200\n"
-"PO-Revision-Date: 2008-08-06 07:56+0200\n"
+"POT-Creation-Date: 2008-08-06 08:04+0200\n"
+"PO-Revision-Date: 2008-10-17 10:27+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -253,11 +253,11 @@ msgstr "S/MIME"
 
 #: src/ext-commands.cpp:566
 msgid "&encrypt message with GnuPG"
-msgstr "Nachricht mit GnuPG verschlüsseln"
+msgstr "Nachricht verschlüsseln"
 
 #: src/ext-commands.cpp:567
 msgid "&sign message with GnuPG"
-msgstr "Nachricht mit GnuPG unterschreiben"
+msgstr "Nachricht unterschreiben"
 
 #: src/ext-commands.cpp:602
 msgid "GnuPG Certificate &Manager"
@@ -302,11 +302,16 @@ msgid ""
 "Note that if you start Outlook again with GpgOL still being installed, GpgOL "
 "will again process messages."
 msgstr ""
-"Sie sind dabei, eine Deinstallation von GpgOL vorzubereiten.  Hierzu wird GpgOL ausgechaltet, so das Nachrichten nicht mehr durch GpgOL angezeigt werden.\n"
+"Sie sind dabei, eine Deinstallation von GpgOL vorzubereiten.  Hierzu wird "
+"GpgOL ausgechaltet, so das Nachrichten nicht mehr durch GpgOL angezeigt "
+"werden.\n"
 "\n"
-"Sie sollten nacheinander dieses Kommandos für alle Ordner aufrufen, danach Outlook schliessen und GpgOL deinstallieren.\n"
+"Sie sollten nacheinander dieses Kommandos für alle Ordner aufrufen, danach "
+"Outlook schliessen und GpgOL deinstallieren.\n"
 "\n"
-"Bitte beachten Sie, daß nach einem erneuten Start von Outlook - mit weiterhin installiertem GpgOL - Nachrichten wieder wie gewohnt von GpgOL angezeigt werden."
+"Bitte beachten Sie, daß nach einem erneuten Start von Outlook - mit "
+"weiterhin installiertem GpgOL - Nachrichten wieder wie gewohnt von GpgOL "
+"angezeigt werden."
 
 #: src/ext-commands.cpp:798
 msgid "Do you want to revert this folder?"
@@ -535,13 +540,13 @@ msgstr "HTML Darstellung anzeigen wenn möglich"
 
 #: src/olflange-dlgs.cpp:56
 msgid "Present encrypted message as attachment"
-msgstr "Verschlüsselte Nachricht as Anlage anzeigen"
+msgstr "Verschlüsselte Nachricht als Anlage anzeigen"
 
 #: src/olflange-dlgs.cpp:59
 msgid "Crypto Engine"
 msgstr "Kryptoserver"
 
-#: src/olflange-dlgs.cpp:215
+#: src/olflange-dlgs.cpp:216
 msgid ""
 "You have enabled GpgOL's support for the S/MIME protocol.\n"
 "\n"
@@ -560,7 +565,7 @@ msgstr ""
 "kann."
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:270
+#: src/olflange-dlgs.cpp:272
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 "GpgOL ist ein Plugin für Microsoft Outlook, welches es ermöglicht\n"
@@ -585,7 +590,7 @@ msgstr ""
 "Public License erhalten haben.  Falls nicht, finden Sie diese\n"
 "unter der Webadresse <http://www.gnu.org/licenses/>."
 
-#: src/olflange-dlgs.cpp:276
+#: src/olflange-dlgs.cpp:278
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
