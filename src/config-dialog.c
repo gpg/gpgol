@@ -150,6 +150,8 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
   char name[MAX_PATH+1];
   int n;
   const char *s;
+
+  (void)lparam;
   
   switch (msg) 
     {

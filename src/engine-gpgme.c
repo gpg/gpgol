@@ -439,6 +439,8 @@ op_gpgme_encrypt (protocol_t protocol,
   gpgme_ctx_t ctx = NULL;
   gpgme_key_t *keys = NULL;
 
+  (void)hwnd;
+
   cld = xcalloc (1, sizeof *cld);
   cld->closure = encrypt_closure;
   cld->filter = filter;
@@ -503,6 +505,8 @@ op_gpgme_encrypt (protocol_t protocol,
 static void
 sign_closure (closure_data_t cld, gpgme_ctx_t ctx, gpg_error_t err)
 {
+  (void)ctx;
+
   update_passphrase_cache (err, &cld->pw_cb);
   engine_private_finished (cld->filter, err);
 }
@@ -520,6 +524,8 @@ op_gpgme_sign (protocol_t protocol,
   closure_data_t cld;
   gpgme_ctx_t ctx = NULL;
   gpgme_key_t sign_key = NULL;
+
+  (void)hwnd;
 
   if (signer_dialog_box (&sign_key, NULL, 0) == -1)
     {
@@ -628,6 +634,8 @@ op_gpgme_decrypt (protocol_t protocol,
   closure_data_t cld;
   gpgme_ctx_t ctx = NULL;
   
+  (void)hwnd;
+
   cld = xcalloc (1, sizeof *cld);
   cld->closure = decrypt_closure;
   cld->filter = filter;
@@ -705,6 +713,8 @@ op_gpgme_verify (gpgme_protocol_t protocol,
   closure_data_t cld;
   gpgme_ctx_t ctx = NULL;
   gpgme_data_t sigobj = NULL;
+
+  (void)hwnd;
 
   cld = xcalloc (1, sizeof *cld);
   cld->closure = verify_closure;

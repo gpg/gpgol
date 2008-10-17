@@ -98,6 +98,9 @@ GpgolPropertySheets::GetPages(
                                  //  containing the number of property 
                                  //  sheets actually used.
 {
+  (void)pEECB;
+  (void)lFlags;
+  
   pPSP[0].dwSize = sizeof (PROPSHEETPAGE);
   pPSP[0].dwFlags = PSP_DEFAULT | PSP_HASHELP;
   pPSP[0].hInstance = glob_hinst;
@@ -117,6 +120,9 @@ GpgolPropertySheets::GetPages(
 
 STDMETHODIMP_ (VOID) 
 GpgolPropertySheets::FreePages (LPPROPSHEETPAGE pPSP,
-                                      ULONG lFlags, ULONG lPSP)
+                                ULONG lFlags, ULONG lPSP)
 {
+  (void)pPSP;
+  (void)lFlags;
+  (void)lPSP;
 }

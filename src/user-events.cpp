@@ -198,6 +198,8 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP_ (VOID)
 GpgolUserEvents::OnObjectChange (LPEXCHEXTCALLBACK eecb) 
 { 
+  (void)eecb;
+  
   if (debug_commands)
     log_debug ("%s:%s: received\n", SRCNAME, __func__);
 }

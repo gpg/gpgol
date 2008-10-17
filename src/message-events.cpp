@@ -409,6 +409,8 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 STDMETHODIMP 
 GpgolMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK eecb)
 {
+  (void)eecb;
+
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   return S_FALSE;
 }
@@ -420,6 +422,9 @@ GpgolMessageEvents::OnCheckNames(LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP 
 GpgolMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK eecb,ULONG flags)
 {
+  (void)eecb;
+  (void)flags;
+
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   return S_FALSE;
 }
@@ -432,6 +437,8 @@ GpgolMessageEvents::OnCheckNamesComplete (LPEXCHEXTCALLBACK eecb,ULONG flags)
 STDMETHODIMP 
 GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK eecb)
 {
+  (void)eecb;
+
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = TRUE;
   m_bWriteFailed = FALSE;
@@ -444,6 +451,9 @@ GpgolMessageEvents::OnSubmit (LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP_ (VOID) 
 GpgolMessageEvents::OnSubmitComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
+  (void)eecb;
+  (void)flags;
+
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
   m_bOnSubmitActive = FALSE; 
 }

@@ -773,6 +773,8 @@ _nl_locale_name (int category, const char *categoryname)
   LANGID langid;
   int primary, sub;
 
+  (void)category;
+
   /* Let the user override the system settings through environment
      variables, as on POSIX systems.  */
   retval = getenv ("LC_ALL");
@@ -1778,6 +1780,8 @@ textdomain (const char *domainname)
 char *
 dgettext (const char *domainname, const char *msgid)
 {
+  (void)domainname;
+
   /* For now, support only one domain.  */
   return (char*)gettext (msgid);
 }

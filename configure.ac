@@ -195,8 +195,20 @@ if test "$GCC" = yes; then
     if test "$USE_MAINTAINER_MODE" = "yes"; then
         CFLAGS="$CFLAGS -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wno-format-y2k -Wformat-security"
+        CFLAGS="$CFLAGS -W -Wno-sign-compare"
         CXXFLAGS="$CXXFLAGS -Wcast-align -Wshadow"
         CXXFLAGS="$CXXFLAGS -Wno-format-y2k -Wformat-security"
+        CXXFLAGS="$CXXFLAGS -W -Wno-sign-compare"
+        AC_MSG_CHECKING([if gcc supports -Wno-missing-field-initializers])
+        _gcc_cflags_save=$CFLAGS
+        CFLAGS="-Wno-missing-field-initializers"
+        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),_gcc_mfi=yes,_gcc_mfi=no)
+        AC_MSG_RESULT($_gcc_mfi)
+        CFLAGS=$_gcc_cflags_save;
+        if test x"$_gcc_mfi" = xyes ; then
+          CFLAGS="$CFLAGS  -Wno-missing-field-initializers"
+          CXXFLAGS="$CXXFLAGS -Wno-missing-field-initializers"
+        fi
     fi
 fi
 

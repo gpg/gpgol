@@ -2467,6 +2467,9 @@ static int
 get_message_content_type_cb (void *dummy_arg,
                              rfc822parse_event_t event, rfc822parse_t msg)
 {
+  (void)dummy_arg;
+  (void)msg;
+
   if (event == RFC822PARSE_T2BODY)
     return 42; /* Hack to stop the parsing after having read the
                   outer headers. */

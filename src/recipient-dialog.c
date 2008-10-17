@@ -221,7 +221,7 @@ load_rsetbox (HWND hwnd, size_t *r_arraysize)
 	}
       
       val = key->uids->validity;
-      if (val < 0 || val > 5) 
+      if (val > 5) 
 	val = 0;
       strcpy (keybuf, trust_items[val]);
       s = keybuf;

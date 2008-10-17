@@ -1180,6 +1180,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
   size_t sig_len;
   engine_filter_t filter = NULL;
 
+  (void)protocol;
   /* Note: PROTOCOL is not used here but figured out directly while
      collecting the message.  Eventually it might help use setup a
      proper verification context right at startup to avoid collecting

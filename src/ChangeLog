@@ -1,5 +1,8 @@
 2008-10-17  Werner Koch  <wk@g10code.com>
 
+	* recipient-dialog.c (load_rsetbox): Remove superfluous check on
+	negativness for an unsigned variable.
+
 	* mimeparser.c (mime_verify_opaque): Remove extra semicolon which
 	shortcuted most of the code.  Why didn't gcc notice that?  Bug
 	was introduced on 2008-06-12.

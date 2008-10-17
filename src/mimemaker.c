@@ -690,7 +690,7 @@ infer_content_type (const char *data, size_t datalen, const char *filename,
      0: Plain ASCII.
      1: Quoted Printable
      2: Base64  */
-static const int
+static int
 infer_content_encoding (const void *data, size_t datalen)
 {
   const unsigned char *p;

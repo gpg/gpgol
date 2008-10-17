@@ -388,6 +388,7 @@ GpgolExtCommands::InstallCommands (
   VARIANT aVariant;
   int force_encrypt = 0;
 
+  (void)hMenu;
   
   if (debug_commands)
     log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__, 
@@ -880,6 +881,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 STDMETHODIMP_(VOID) 
 GpgolExtCommands::InitMenu(LPEXCHEXTCALLBACK eecb) 
 {
+  (void)eecb;
 }
 
 
@@ -890,6 +892,8 @@ GpgolExtCommands::InitMenu(LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP 
 GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 {
+  (void)eecb;
+
   if (nCommandID == m_nCmdProtoAuto
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -1036,6 +1040,9 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
 {
   toolbar_info_t tb_info;
 
+  (void)description_size;
+  (void)flags;
+
   for (tb_info = m_toolbar_info; tb_info; tb_info = tb_info->next )
     if (tb_info->button_id == buttonid
         && tb_info->context == m_lContext)
@@ -1101,6 +1108,9 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
 STDMETHODIMP 
 GpgolExtCommands::ResetToolbar (ULONG lToolbarID, ULONG lFlags)
 {	
+  (void)lToolbarID;
+  (void)lFlags;
+  
   return S_OK;
 }
 

@@ -155,6 +155,8 @@ i18n_init (void)
 int WINAPI
 DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 {
+  (void)reserved;
+
   if (reason == DLL_PROCESS_ATTACH)
     {
       set_global_hinstance (hinst);

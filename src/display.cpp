@@ -221,6 +221,9 @@ update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
   HWND window;
   struct find_message_window_state findstate;
 
+  (void)is_sensitive;
+  
+
   memset (&findstate, 0, sizeof findstate);
   window = find_message_window (hwnd, &findstate);
   if (window && !is_html)

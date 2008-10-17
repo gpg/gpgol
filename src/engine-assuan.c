@@ -1247,6 +1247,7 @@ async_worker_thread (void *dummy)
 void
 engine_assuan_cancel (void *cancel_data)
 {
+  (void)cancel_data;
   /* FIXME */
 }
 
@@ -1288,6 +1289,8 @@ enqueue_callback (const char *name, assuan_context_t ctx,
 {
   work_item_t item;
   int created = 0;
+
+  (void)ctx;
 
   EnterCriticalSection (&work_queue_lock);
   for (item = work_queue; item; item = item->next)
