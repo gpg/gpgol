@@ -30,7 +30,7 @@ extern "C" {
 
 int mime_verify (protocol_t protocol, const char *message, size_t messagelen, 
                  LPMESSAGE mapi_message, 
-                 HWND hwnd, int preview_mode);
+                 HWND hwnd, int preview_mode, int mimehack);
 int mime_verify_opaque (protocol_t protocol, LPSTREAM instream, 
                         const char *inbuffer, size_t inbufferlen,
                         LPMESSAGE mapi_message, HWND hwnd, int preview_mode,

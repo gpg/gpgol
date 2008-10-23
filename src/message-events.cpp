@@ -387,7 +387,14 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
       else if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
         rc = message_sign (msg, proto, hWnd);
       else
-        rc = 0;
+        {
+          /* In case this is a forward message which is not to be
+             signed or encrypted we need to remove a possible body
+             attachment.  */
+          if (mapi_delete_gpgol_body_attachment (msg))
+            mapi_save_changes (msg, KEEP_OPEN_READWRITE);
+          rc = 0;
+        }
       
       if (rc)
         {

@@ -1168,9 +1168,12 @@ plaintext_handler (void *handle, const void *buffer, size_t size)
 
 
 
+/* FIXME: Needs documentation!
+
+   MIMEHACK make the verification code ignore the first two bytes.  */
 int
 mime_verify (protocol_t protocol, const char *message, size_t messagelen, 
-             LPMESSAGE mapi_message, HWND hwnd, int preview_mode)
+             LPMESSAGE mapi_message, HWND hwnd, int preview_mode, int mimehack)
 {
   gpg_error_t err = 0;
   mime_context_t ctx;
@@ -1241,7 +1244,7 @@ mime_verify (protocol_t protocol, const char *message, size_t messagelen,
   /* Now actually verify the signature. */
   if (!err && ctx->signed_data && signature)
     {
-      gpgme_data_seek (ctx->signed_data, 0, SEEK_SET);
+      gpgme_data_seek (ctx->signed_data, mimehack? 2:0, SEEK_SET);
       
       if ((err=engine_create_filter (&filter, NULL, NULL)))
         goto leave;

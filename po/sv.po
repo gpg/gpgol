@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-08-06 08:04+0200\n"
+"POT-Creation-Date: 2008-10-23 10:23+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -48,7 +48,7 @@ msgstr "GPG - Spara dekrypterad bilaga"
 msgid "Debug output (for analysing problems)"
 msgstr ""
 
-#: src/engine.c:425
+#: src/engine.c:429
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -57,8 +57,8 @@ msgid ""
 "are not readable."
 msgstr ""
 
-#: src/engine.c:429 src/ext-commands.cpp:773 src/ext-commands.cpp:794
-#: src/ext-commands.cpp:799 src/main.c:680 src/main.c:686 src/message.cpp:302
+#: src/engine.c:433 src/ext-commands.cpp:774 src/ext-commands.cpp:795
+#: src/ext-commands.cpp:800 src/main.c:682 src/main.c:688 src/message.cpp:302
 msgid "GpgOL"
 msgstr ""
 
@@ -79,63 +79,63 @@ msgstr ""
 msgid "Encryption"
 msgstr "Kryptering"
 
-#: src/engine-gpgme.c:778
+#: src/engine-gpgme.c:788
 msgid "Fingerprint: "
 msgstr "Fingeravtryck: "
 
-#: src/engine-gpgme.c:835
+#: src/engine-gpgme.c:845
 msgid "This signature is valid\n"
 msgstr "Den här signaturen är giltig\n"
 
-#: src/engine-gpgme.c:837
+#: src/engine-gpgme.c:847
 msgid "signature state is \"green\"\n"
 msgstr "signaturens tillstånd är \"grön\"\n"
 
-#: src/engine-gpgme.c:839
+#: src/engine-gpgme.c:849
 msgid "signature state is \"red\"\n"
 msgstr "signaturens tillstånd är \"röd\"\n"
 
-#: src/engine-gpgme.c:843
+#: src/engine-gpgme.c:853
 #, fuzzy
 msgid "Warning: One of the certificates has been revoked\n"
 msgstr "Varning: En av nycklarna har spärrats\n"
 
-#: src/engine-gpgme.c:853
+#: src/engine-gpgme.c:863
 #, fuzzy
 msgid "Warning: The certificate used to create the signature expired at: "
 msgstr "Varning: Nyckeln som användes för att skapa signaturen gick ut den: "
 
-#: src/engine-gpgme.c:859
+#: src/engine-gpgme.c:869
 #, fuzzy
 msgid "Warning: At least one certification certificate has expired\n"
 msgstr "Varning: Åtminstone en certifieringsnyckel har gått ut\n"
 
-#: src/engine-gpgme.c:865
+#: src/engine-gpgme.c:875
 msgid "Warning: The signature expired at: "
 msgstr "Varning: Signaturen gick ut den: "
 
-#: src/engine-gpgme.c:871
+#: src/engine-gpgme.c:881
 #, fuzzy
 msgid "Can't verify due to a missing certificate\n"
 msgstr "Kan inte validera på grund av en saknad nyckel eller certifikat\n"
 
-#: src/engine-gpgme.c:875
+#: src/engine-gpgme.c:885
 msgid "The CRL is not available\n"
 msgstr "Spärrlistan är inte tillgänglig\n"
 
-#: src/engine-gpgme.c:881
+#: src/engine-gpgme.c:891
 msgid "Available CRL is too old\n"
 msgstr "Tillgänglig spärrlista är för gammal\n"
 
-#: src/engine-gpgme.c:886
+#: src/engine-gpgme.c:896
 msgid "A policy requirement was not met\n"
 msgstr "Ett policykrav matchades inte\n"
 
-#: src/engine-gpgme.c:892
+#: src/engine-gpgme.c:902
 msgid "A system error occured"
 msgstr "Ett systemfel inträffade"
 
-#: src/engine-gpgme.c:929
+#: src/engine-gpgme.c:939
 #, fuzzy
 msgid ""
 "WARNING: We have NO indication whether this certificate belongs to the "
@@ -144,13 +144,13 @@ msgstr ""
 "VARNING: Vi har INGA indikationer på huruvida nyckeln tillhör personen vars "
 "namn visas ovanför\n"
 
-#: src/engine-gpgme.c:936
+#: src/engine-gpgme.c:946
 #, fuzzy
 msgid ""
 "WARNING: The certificate does NOT BELONG to the person named as shown above\n"
 msgstr "VARNING: Nyckeln TILLHÖR INTE personen vars namn visas ovanför\n"
 
-#: src/engine-gpgme.c:940
+#: src/engine-gpgme.c:950
 #, fuzzy
 msgid ""
 "WARNING: It is NOT certain that the certificate belongs to the person named "
@@ -159,109 +159,109 @@ msgstr ""
 "VARNING: Det är INTE säkert att nyckeln tillhör den person vars namn visas "
 "ovanför\n"
 
-#: src/engine-gpgme.c:973
+#: src/engine-gpgme.c:983
 msgid "Verification started at: "
 msgstr "Validering startad: "
 
-#: src/engine-gpgme.c:978
+#: src/engine-gpgme.c:988
 msgid "Verification result for: "
 msgstr "Valideringsresultat för: "
 
-#: src/engine-gpgme.c:979
+#: src/engine-gpgme.c:989
 msgid "[unnamed part]"
 msgstr "[ej namngiven del]"
 
-#: src/engine-gpgme.c:997 src/engine-gpgme.c:1027
+#: src/engine-gpgme.c:1007 src/engine-gpgme.c:1037
 msgid "Good signature from: "
 msgstr "Korrekt signatur från: "
 
-#: src/engine-gpgme.c:1004
+#: src/engine-gpgme.c:1014
 msgid "                aka: "
 msgstr "även känd som:"
 
-#: src/engine-gpgme.c:1008 src/engine-gpgme.c:1030
+#: src/engine-gpgme.c:1018 src/engine-gpgme.c:1040
 msgid "            created: "
 msgstr "             skapad: "
 
-#: src/engine-gpgme.c:1017
+#: src/engine-gpgme.c:1027
 msgid "*BAD* signature claimed to be from: "
 msgstr "*FELAKTIG* signatur hävdades komma från: "
 
-#: src/engine-gpgme.c:1040
+#: src/engine-gpgme.c:1050
 msgid "Error checking signature"
 msgstr "Fel vid kontroll av signatur"
 
-#: src/engine-gpgme.c:1056
+#: src/engine-gpgme.c:1066
 msgid "*** Begin Notation (signature by: "
 msgstr "*** Notation start (signatur av: "
 
-#: src/engine-gpgme.c:1076
+#: src/engine-gpgme.c:1086
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: src/ext-commands.cpp:532
+#: src/ext-commands.cpp:533
 msgid "GpgOL Decrypt/Verify"
 msgstr ""
 
-#: src/ext-commands.cpp:546
+#: src/ext-commands.cpp:547
 msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:549
+#: src/ext-commands.cpp:550
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:551
+#: src/ext-commands.cpp:552
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:561
+#: src/ext-commands.cpp:562
 msgid ">GnuPG protocol"
 msgstr ""
 
-#: src/ext-commands.cpp:562
+#: src/ext-commands.cpp:563
 msgid "auto"
 msgstr ""
 
-#: src/ext-commands.cpp:563
+#: src/ext-commands.cpp:564
 #, fuzzy
 msgid "PGP/MIME"
 msgstr "[PGP/MIME-meddelande]"
 
-#: src/ext-commands.cpp:564
+#: src/ext-commands.cpp:565
 msgid "S/MIME"
 msgstr ""
 
-#: src/ext-commands.cpp:566
+#: src/ext-commands.cpp:567
 #, fuzzy
 msgid "&encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:567
+#: src/ext-commands.cpp:568
 #, fuzzy
 msgid "&sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:602
+#: src/ext-commands.cpp:603
 #, fuzzy
 msgid "GnuPG Certificate &Manager"
 msgstr "GPG-nyckel&hanterare"
 
-#: src/ext-commands.cpp:603
+#: src/ext-commands.cpp:604
 msgid "Remove GpgOL flags from this folder"
 msgstr ""
 
-#: src/ext-commands.cpp:607
+#: src/ext-commands.cpp:608
 msgid "Open the certificate manager"
 msgstr ""
 
-#: src/ext-commands.cpp:743
+#: src/ext-commands.cpp:744
 msgid ""
 "Support for S/MIME has not been enabled.\n"
 "\n"
@@ -270,12 +270,12 @@ msgid ""
 ">Options->GpgOL.\n"
 msgstr ""
 
-#: src/ext-commands.cpp:772
+#: src/ext-commands.cpp:773
 #, fuzzy
 msgid "Could not start certificate manager"
 msgstr "Kunde inte starta nyckelhanteraren"
 
-#: src/ext-commands.cpp:784
+#: src/ext-commands.cpp:785
 msgid ""
 "You are about to start the process of reversing messages created by GpgOL to "
 "prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
@@ -288,71 +288,71 @@ msgid ""
 "will again process messages."
 msgstr ""
 
-#: src/ext-commands.cpp:798
+#: src/ext-commands.cpp:799
 msgid "Do you want to revert this folder?"
 msgstr ""
 
-#: src/ext-commands.cpp:897
+#: src/ext-commands.cpp:901
 #, fuzzy
 msgid "Select this option to automatically select the protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:904
+#: src/ext-commands.cpp:908
 #, fuzzy
 msgid "Select this option to select the PGP/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:911
+#: src/ext-commands.cpp:915
 #, fuzzy
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:918
+#: src/ext-commands.cpp:922
 msgid "Select this option to encrypt the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:925
+#: src/ext-commands.cpp:929
 msgid "Select this option to sign the message."
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:932
+#: src/ext-commands.cpp:936
 #, fuzzy
 msgid "Select this option to open the certificate manager"
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:962
+#: src/ext-commands.cpp:966
 #, fuzzy
 msgid "Automatically select the protocol for sign/encrypt"
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:972
+#: src/ext-commands.cpp:976
 msgid "Use PGP/MIME for sign/encrypt"
 msgstr ""
 
-#: src/ext-commands.cpp:982
+#: src/ext-commands.cpp:986
 msgid "Use S/MIME for sign/encrypt"
 msgstr ""
 
-#: src/ext-commands.cpp:992
+#: src/ext-commands.cpp:996
 #, fuzzy
 msgid "Encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:1002
+#: src/ext-commands.cpp:1006
 #, fuzzy
 msgid "Sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:1012
+#: src/ext-commands.cpp:1016
 msgid "Open the GpgOL certificate manager"
 msgstr ""
 
-#: src/main.c:679
+#: src/main.c:681
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr ""
 
-#: src/main.c:685
+#: src/main.c:687
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -360,18 +360,18 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1192 src/mapihelp.cpp:1200 src/mapihelp.cpp:1208
+#: src/mapihelp.cpp:1426 src/mapihelp.cpp:1434 src/mapihelp.cpp:1442
 msgid "[no subject]"
 msgstr ""
 
-#: src/mapihelp.cpp:1816
+#: src/mapihelp.cpp:2050
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2586
+#: src/mapihelp.cpp:2827
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -449,12 +449,12 @@ msgstr "Kryptering misslyckades"
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
 
-#: src/mimeparser.c:1126
+#: src/mimeparser.c:1131
 #, fuzzy
 msgid "Error writing to stream"
 msgstr "Fel vid skrivning av fil"
 
-#: src/mimeparser.c:1127
+#: src/mimeparser.c:1132
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 

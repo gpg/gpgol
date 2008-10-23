@@ -1,3 +1,17 @@
+2008-10-23  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_delete_gpgol_body_attachment): New.
+	* message-events.cpp (OnWriteComplete): Remove a body attachment.
+
+	* message.cpp (message_display_handler): Do not display PGP
+	clearsigned messages.
+	(message_display_handler): Do not update GpgOLStatus; it is not
+	used anyway.
+	(pgp_mime_from_clearsigned): Fix bogus trailing white space
+	removal code.  Insert an empty line.
+	* mimeparser.c (mime_verify): Add arg MIMEHACK.
+	(message_verify): Use it.
+
 2008-10-17  Werner Koch  <wk@g10code.com>
 
 	* recipient-dialog.c (load_rsetbox): Remove superfluous check on

@@ -1482,6 +1482,7 @@ mapi_get_message_type (LPMESSAGE message)
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
       const char *s = propval->Value.lpszA;
+
       if (!strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14] || s[14] =='.'))
         {
           s += 14;
@@ -2834,6 +2835,96 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
   else
     xfree (body);  /* (Should not happen.)  */
   return 0;
+}
+
+
+/* Delete a possible body atatchment.  Returns true if an atatchment
+   has been deleted.  */
+int
+mapi_delete_gpgol_body_attachment (LPMESSAGE message)
+{    
+  HRESULT hr;
+  SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
+  LPMAPITABLE mapitable;
+  LPSRowSet   mapirows;
+  unsigned int pos, n_attach;
+  ULONG moss_tag;
+  int found = 0;
+
+  if (get_gpgolattachtype_tag (message, &moss_tag) )
+    return 0;
+
+  hr = message->GetAttachmentTable (0, &mapitable);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      return 0;
+    }
+      
+  hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
+                       NULL, NULL, 0, &mapirows);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      mapitable->Release ();
+      return 0;
+    }
+  n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
+  if (!n_attach)
+    {
+      FreeProws (mapirows);
+      mapitable->Release ();
+      return 0; /* No Attachments.  */
+    }
+
+  for (pos=0; pos < n_attach; pos++) 
+    {
+      LPATTACH att;
+
+      if (mapirows->aRow[pos].cValues < 1)
+        {
+          log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
+          continue;
+        }
+      if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
+        {
+          log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
+          continue;
+        }
+      hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
+                                NULL, MAPI_BEST_ACCESS, &att);	
+      if (FAILED (hr))
+        {
+          log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
+                     SRCNAME, __func__, pos, 
+                     mapirows->aRow[pos].lpProps[0].Value.l, hr);
+          continue;
+        }
+      if (has_gpgol_body_name (att)
+          && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
+        {
+          att->Release ();
+          hr = message->DeleteAttach (mapirows->aRow[pos].lpProps[0].Value.l,
+                                      0, NULL, 0);
+          if (hr)
+            log_error ("%s:%s: DeleteAttach failed: hr=%#lx\n",
+                         SRCNAME, __func__, hr); 
+          else
+            {
+              log_debug ("%s:%s: body attachment deleted\n", 
+                         SRCNAME, __func__); 
+              found = 1;
+              
+            }
+          break;
+        }
+      att->Release ();
+    }
+  FreeProws (mapirows);
+  mapitable->Release ();
+  return found;
 }
 
 

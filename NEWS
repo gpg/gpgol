@@ -3,6 +3,8 @@ Noteworthy changes for version 0.10.16
 
  * Fixed a regression in the last release with opaque signatures.
 
+ * Fixed PGP cleartext signature verification.
+
 
 Noteworthy changes for version 0.10.15 (2008-08-06)
 ===================================================

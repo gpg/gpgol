@@ -154,28 +154,46 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
   LPMDB mdb = NULL;
   int ishtml, wasprotected = false;
   char *body;
-  
+
   hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
   if (SUCCEEDED (hr))
     {
-      err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
-                                            &ishtml, &wasprotected);
-      if (!err && body)
+      if (mapi_get_message_type (message) == MSGTYPE_GPGOL_CLEAR_SIGNED)
         {
-          put_outlook_property (eecb, "GpgOLStatus", 
-                                mapi_get_sig_status (message));
-
-          update_display (hwnd, eecb, wasprotected, ishtml, body);
+          /* We used to display the clearsigned data in the processed
+             form, that is without the PGP lines and without the dash
+             escaping.  However, this poses the problem that the user
+             does not notice that he is viewing a mail which was
+             signed using a deprecated method and - far worse - it
+             might update the PR_BODY and thus all signature
+             information will get lost.  Of course we could save the
+             body away first like we do it with encrypted mails, but
+             that is too much overhead and GpgOL will always be
+             required to show such a message, which contrdicts the
+             very reason of clearsigned messages.  */
+          log_debug ("%s:%s: skipping display update for ClearSigned\n",
+                     SRCNAME, __func__);
         }
       else
         {
-          put_outlook_property (eecb, "GpgOLStatus", "?");
-          update_display (hwnd, NULL, 0, 0, 
-                          _("[Crypto operation failed - "
-                            "can't show the body of the message]"));
+          err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
+                                                &ishtml, &wasprotected);
+          if (!err && body)
+            {
+              /* put_outlook_property (eecb, "GpgOLStatus",            */
+              /*                       mapi_get_sig_status (message)); */
+              
+              update_display (hwnd, eecb, wasprotected, ishtml, body);
+            }
+          else
+            {
+              /* put_outlook_property (eecb, "GpgOLStatus", "?"); */
+              update_display (hwnd, NULL, 0, 0, 
+                              _("[Crypto operation failed - "
+                                "can't show the body of the message]"));
+            }
+          xfree (body);
         }
-      xfree (body);
-  
     }
   else
     log_debug_w32 (hr, "%s:%s: error getting message", SRCNAME, __func__);
@@ -307,7 +325,10 @@ show_message (HWND hwnd, const char *text)
 /* Convert the clear signed message from INPUT into a PGP/MIME signed
    message and return it in a new allocated buffer.  OUTPUTLEN
    received the valid length of that buffer; the buffer is guaranteed
-   to be Nul terminated.  */
+   to be Nul terminated.  Note: Because we need to insert an empty
+   line to indicate the end of MIME headers, the signature won't
+   verify unless we tell the signature verification routine to skip
+   this first line.  */
 static char *
 pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
 {
@@ -332,7 +353,7 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
             "Content-Type: multipart/signed; boundary=\"%s\";\r\n"
             "              protocol=\"application/pgp-signature\"\r\n"
             "\r\n"
-            "--%s\r\n", boundary, boundary);
+            "--%s\r\n\r\n", boundary, boundary);
   snprintf (sig_header, sizeof sig_header,
             "--%s\r\n"
             "Content-Type: application/pgp-signature\r\n"
@@ -397,16 +418,19 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
           while (*p && *p != '\n')
             {
               if (*p == ' ' || *p == '\t' || *p == '\r')
-                mark = p;
+                {
+                  if (!mark)
+                    mark = dest;
+                }
               else
                 mark = NULL;
               *dest++ = *p++;
             }
           if (mark)
-            *mark =0; /* Remove trailing white space.  */
+            dest = mark;
           if (*p == '\n')
             {
-              if (p[-1] == '\r')
+              if (p > p0 && p[-1] == '\r')
                 *dest++ = '\r';
               *dest++ = '\n';
             }
@@ -497,6 +521,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
   size_t inbuflen = 0;
   protocol_t protocol = PROTOCOL_UNKNOWN;
   int err;
+  int mimehack = 0;
 
   switch (msgtype)
     {
@@ -560,6 +585,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
       if (!inbuf)
         return -1;
       protocol = PROTOCOL_OPENPGP;
+      mimehack = 1; /* Required for our made up PGP/MIME.  */
     }
   else if (msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED)
     {
@@ -636,7 +662,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
     err = mime_verify_opaque (protocol, opaquestream,
                               NULL, 0, message, hwnd, 0, 0);
   else
-    err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0);
+    err = mime_verify (protocol, inbuf, inbuflen, message, hwnd, 0, mimehack);
   log_debug ("mime_verify%s returned %d", opaquestream? "_opaque":"", err);
   if (err && opt.enable_debug)
     {
