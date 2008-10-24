@@ -1,3 +1,11 @@
+2008-10-24  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (struct mime_context): Add flag MAY_BE_OPAQUE_SIGNED.
+	(t2body): Set that flag.
+	(is_cms_signed_data): New.
+	(mime_decrypt): Try to verify if the content is opaque signed
+	without proper MIME headers.
+
 2008-10-23  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (mapi_delete_gpgol_body_attachment): New.
@@ -45,7 +53,7 @@
 
 2008-10-15  Werner Koch  <wk@g10code.com>
 
-	* engine-assuan.c (op_assuan_sign): Send the new --protocl option
+	* engine-assuan.c (op_assuan_sign): Send the new --protocol option
 	to the server.
 
 2008-09-30  Werner Koch  <wk@g10code.com>

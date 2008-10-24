@@ -115,6 +115,7 @@ struct mime_context
   int is_base64_encoded;  /* Current part is base 64 encoded. */
   int is_body;            /* The current part belongs to the body.  */
   int is_opaque_signed;   /* Flag indicating opaque signed S/MIME. */
+  int may_be_opaque_signed;/* Hack, see code.  */
   protocol_t protocol;    /* The detected crypto protocol.  */
 
   int part_counter;       /* Counts the number of processed parts. */
@@ -219,6 +220,34 @@ debug_message_event (mime_context_t ctx, rfc822parse_event_t event)
   if (debug_mime_parser)
     log_debug ("%s: ctx=%p, rfc822 event %s\n", SRCNAME, ctx, s);
 }
+
+
+/* Returns true if the BER encoded data in BUFFER is CMS signed data.
+   LENGTH gives the length of the buffer, for correct detection LENGTH
+   should be at least about 24 bytes.  */
+static int
+is_cms_signed_data (const char *buffer, size_t length)
+{
+  const char *p = buffer;
+  size_t n = length;
+  tlvinfo_t ti;
+          
+  if (parse_tlv (&p, &n, &ti))
+    return 0;
+  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_SEQUENCE
+        && ti.is_cons) )
+    return 0;
+  if (parse_tlv (&p, &n, &ti))
+    return 0;
+  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_OBJECT_ID
+        && !ti.is_cons && ti.length) || ti.length > n)
+    return 0;
+  if (ti.length == 9 && !memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02", 9))
+    return 1;
+  return 0;
+}
+
+
 
 
 /* Start a new atatchment.  With IS_BODY set, the attachment is
@@ -833,7 +862,7 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   else /* Other type. */
     {
       /* Check whether this attachment is an opaque signed S/MIME
-         part.  We use a counter to later check that tehre is only one
+         part.  We use a counter to later check that there is only one
          such part. */
       if (!strcmp (ctmain, "application") && !strcmp (ctsub, "pkcs7-mime"))
         {
@@ -841,6 +870,12 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
                                                             "smime-type", 0);
           if (smtype && !strcmp (smtype, "signed-data"))
             ctx->is_opaque_signed++;
+          else
+            {
+              /* CryptoEx is notorious in setting wrong MIME header.
+                 Mark that so we can test later if possible. */
+              ctx->may_be_opaque_signed++;
+            }
         }
 
       if (!ctx->preview)
@@ -1685,6 +1720,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
   mime_context_t decctx, ctx;
   engine_filter_t filter = NULL;
   int opaque_signed = 0;
+  int may_be_opaque_signed = 0;
   int last_part_counter = 0;
   unsigned int session_number;
   char *signature = NULL;
@@ -1919,6 +1955,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       symenc_close (ctx->body_saved.symenc);
       last_part_counter = ctx->part_counter;
       opaque_signed = (ctx->is_opaque_signed == 1);
+      if (!opaque_signed && ctx->may_be_opaque_signed == 1)
+        may_be_opaque_signed = 1;
       xfree (ctx);
     }
   if (decctx)
@@ -1927,7 +1965,7 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       xfree (decctx);
     }
 
-  if (!err && opaque_signed)
+  if (!err && (opaque_signed || may_be_opaque_signed))
     {
       /* Handle an S/MIME opaque signed part.  The decryption has
          written an attachment we are now going to verify and render
@@ -1940,7 +1978,8 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       table = mapi_create_attach_table (mapi_message, 0);
       if (!table)
         {
-          err = gpg_error (GPG_ERR_GENERAL);
+          if (opaque_signed)
+            err = gpg_error (GPG_ERR_GENERAL);
           goto leave_verify;
         }
 
@@ -1951,30 +1990,44 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
           break;
       if (table[i].end_of_table)
         {
-          log_debug ("%s:%s: attachment for opaque signed S/MIME not found",
-                     SRCNAME, __func__);
-          err = gpg_error (GPG_ERR_GENERAL);
+          if (opaque_signed)
+            {
+              log_debug ("%s:%s: "
+                         "attachment for opaque signed S/MIME not found",
+                         SRCNAME, __func__);
+              err = gpg_error (GPG_ERR_GENERAL);
+            }
           goto leave_verify;
         }
       plainbuffer = mapi_get_attach (mapi_message, 1, table+i,
                                      &plainbufferlen);
       if (!plainbuffer)
         {
-          err = gpg_error (GPG_ERR_GENERAL);
+          if (opaque_signed)
+            err = gpg_error (GPG_ERR_GENERAL);
           goto leave_verify;
         }
 
-      err = mime_verify_opaque (PROTOCOL_SMIME, NULL, 
-                                plainbuffer, plainbufferlen,
-                                mapi_message, hwnd, 0, last_part_counter+1);
+      /* Now that we have the data, we can check whether this is an
+         S/MIME signature (without proper MIME headers). */
+      if (may_be_opaque_signed 
+          && is_cms_signed_data (plainbuffer, plainbufferlen))
+        opaque_signed = 1;
+
+      /* And check the signature.  */
+      if (opaque_signed)
+        {
+          err = mime_verify_opaque (PROTOCOL_SMIME, NULL, 
+                                    plainbuffer, plainbufferlen,
+                                    mapi_message, hwnd, 0,
+                                    last_part_counter+1);
+          log_debug ("%s:%s: mime_verify_opaque returned %d", 
+                     SRCNAME, __func__, err);
+          if (sig_err)
+            *sig_err = err;
+          err = 0;
+        }
       
-      log_debug ("%s:%s: mime_verify_opaque returned %d", 
-                 SRCNAME, __func__, err);
-      if (sig_err)
-        *sig_err = err;
-      err = 0;
-
-
     leave_verify:
       xfree (plainbuffer);
       mapi_release_attach_table (table);

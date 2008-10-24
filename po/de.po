@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-23 10:23+0200\n"
+"POT-Creation-Date: 2008-10-23 20:35+0200\n"
 "PO-Revision-Date: 2008-10-17 10:27+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -69,7 +69,7 @@ msgstr ""
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
 
 #: src/engine.c:433 src/ext-commands.cpp:774 src/ext-commands.cpp:795
-#: src/ext-commands.cpp:800 src/main.c:682 src/main.c:688 src/message.cpp:302
+#: src/ext-commands.cpp:800 src/main.c:682 src/main.c:688 src/message.cpp:320
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -387,7 +387,7 @@ msgstr ""
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
-#: src/mapihelp.cpp:2050
+#: src/mapihelp.cpp:2051
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -397,7 +397,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2827
+#: src/mapihelp.cpp:2828
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -416,13 +416,13 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/message.cpp:174
+#: src/message.cpp:192
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 "[Krypto-Operation ist fehlgeschlagen - Der Text der Nachricht kann nicht "
 "angezeigt werden.]"
 
-#: src/message.cpp:282
+#: src/message.cpp:300
 #, c-format
 msgid ""
 "Signature status: %s\n"
@@ -435,22 +435,22 @@ msgstr ""
 "Struktur der Nachricht :\n"
 "%s"
 
-#: src/message.cpp:290
+#: src/message.cpp:308
 msgid "GpgOL - Message Information"
 msgstr "GpgOL - Informationen zu der Nachricht"
 
-#: src/message.cpp:513
+#: src/message.cpp:538
 msgid "Signature verification of an encrypted message is not possible."
 msgstr ""
 "Die Prüfung der Unterschrift ist bei einer verschlüsselten Nachrichten nicht "
 "möglich."
 
-#: src/message.cpp:524
+#: src/message.cpp:549
 msgid "Signature verification of this message class is not possible."
 msgstr ""
 "Die Prüfung der Unterschrift ist bei dieser Nachrichtenklasse nicht möglich."
 
-#: src/message.cpp:527
+#: src/message.cpp:552
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
@@ -459,15 +459,15 @@ msgstr ""
 "Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME "
 "eingeschaltet ist."
 
-#: src/message.cpp:531
+#: src/message.cpp:556
 msgid "This message has no signature."
 msgstr "Diese Nachricht hat keine Unterschrift."
 
-#: src/message.cpp:828
+#: src/message.cpp:854
 msgid "This message is not encrypted."
 msgstr "Diese Nachricht ist nicht verschlüsselt."
 
-#: src/message.cpp:1055
+#: src/message.cpp:1081
 #, c-format
 msgid ""
 "Decryption failed\n"
@@ -476,16 +476,16 @@ msgstr ""
 "Entschlüsselungsfehler\n"
 "(%s)"
 
-#: src/message.cpp:1202
+#: src/message.cpp:1228
 msgid "No recipients to encrypt to are given"
 msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
 
-#: src/message.cpp:1218
+#: src/message.cpp:1244
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "Verschlüsselungsfehler (%s)"
 
-#: src/message.cpp:1239
+#: src/message.cpp:1265
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "Unterschrifterstellungsfehler (%s)"
