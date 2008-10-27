@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2008-10-27 15:56+0100\n"
-"PO-Revision-Date: 2008-10-17 10:27+0200\n"
+"PO-Revision-Date: 2008-10-27 17:17+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -355,11 +355,11 @@ msgstr "S/MIME zum signieren/verschlüsseln verwenden."
 
 #: src/ext-commands.cpp:996
 msgid "Encrypt message with GnuPG"
-msgstr "Nachricht mit GnuPG verschlüsseln"
+msgstr "Nachricht verschlüsseln"
 
 #: src/ext-commands.cpp:1006
 msgid "Sign message with GnuPG"
-msgstr "Nachricht mit GnuPG unterschreiben"
+msgstr "Nachricht unterschreiben"
 
 #: src/ext-commands.cpp:1016
 msgid "Open the GpgOL certificate manager"
