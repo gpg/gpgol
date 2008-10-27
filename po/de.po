@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-23 20:35+0200\n"
+"POT-Creation-Date: 2008-10-24 14:46+0200\n"
 "PO-Revision-Date: 2008-10-17 10:27+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -490,11 +490,11 @@ msgstr "Verschlüsselungsfehler (%s)"
 msgid "Signing failed (%s)"
 msgstr "Unterschrifterstellungsfehler (%s)"
 
-#: src/mimeparser.c:1131
+#: src/mimeparser.c:1166
 msgid "Error writing to stream"
 msgstr "Dateischreibfehler"
 
-#: src/mimeparser.c:1132
+#: src/mimeparser.c:1167
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 

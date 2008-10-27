@@ -1,3 +1,8 @@
+2008-10-27  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_internetcharsetbody_tag): New.
+	(mapi_get_body_as_stream): Try the new tag first.
+
 2008-10-24  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (struct mime_context): Add flag MAY_BE_OPAQUE_SIGNED.

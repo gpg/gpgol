@@ -223,6 +223,39 @@ get_gpgolcharset_tag (LPMESSAGE message, ULONG *r_tag)
 }
 
 
+/* Return the tag of the Internet Charset Body property which seems to
+   hold the PR_BODY as received and thus before charset
+   conversion.  */
+int
+get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  HRESULT hr;
+  LPSPropTagArray proparr = NULL;
+  MAPINAMEID mnid, *pmnid;	
+  /* {4E3A7680-B77A-11D0-9DA5-00C04FD65685} */
+  GUID guid = {0x4E3A7680, 0xB77A, 0x11D0, {0x9D, 0xA5, 0x00, 0xC0,
+                                            0x4F, 0xD6, 0x56, 0x85}};
+
+  memset (&mnid, 0, sizeof mnid);
+  mnid.lpguid = &guid;
+  mnid.ulKind = MNID_STRING;
+  mnid.Kind.lpwstrName = L"Internet Charset Body";
+  pmnid = &mnid;
+  hr = message->GetIDsFromNames (1, &pmnid, 0, &proparr);
+  if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
+    {
+      log_error ("%s:%s: can't get the Internet Charset Body property:"
+                 " hr=%#lx\n", SRCNAME, __func__, hr); 
+      return -1;
+    }
+    
+  if (!(proparr->aulPropTag[0] & 0xFFFF0000))
+    return -1;
+  *r_tag = ((proparr->aulPropTag[0] & 0xFFFF0000) | PT_BINARY);
+  return 0;
+}
+
+
 /* A Wrapper around the SaveChanges method.  This function should be
    called indirect through the mapi_save_changes macro.  Returns 0 on
    success. */
@@ -322,10 +355,25 @@ LPSTREAM
 mapi_get_body_as_stream (LPMESSAGE message)
 {
   HRESULT hr;
+  ULONG tag;
   LPSTREAM stream;
 
   if (!message)
     return NULL;
+
+  if (!get_internetcharsetbody_tag (message, &tag) )
+    {
+      /* The store knows about the Internet Charset Body property,
+         thus try to get the body from this property if it exists.  */
+      
+      hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
+                                  (LPUNKNOWN*)&stream);
+      if (!hr)
+        return stream;
+
+      log_debug ("%s:%s: OpenProperty tag=%lx failed: hr=%#lx",
+                 SRCNAME, __func__, tag, hr);
+    }
 
   /* We try to get it as an ASCII body.  If this fails we would either
      need to implement some kind of stream filter to translated to
