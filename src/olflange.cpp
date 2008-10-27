@@ -655,6 +655,7 @@ install_forms (void)
     {
       "gpgol",
       "gpgol-ms",
+      "gpgol-cs",
       NULL,
     };
   int formidx;

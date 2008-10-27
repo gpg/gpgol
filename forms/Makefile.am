@@ -13,8 +13,7 @@
 
 icons = encr-l.ico encr-s.ico sign-l.ico sign-s.ico
 
-cfg_german = gpgol_de.cfg gpgol-ms_de.cfg 
-
+cfg_german = gpgol_de.cfg gpgol-ms_de.cfg gpgol-cs_de.cfg 
 
 dist_pkgdata_DATA = $(icons) $(cfg_german)
 

@@ -499,7 +499,6 @@ static char *
 get_msgcls_from_pgp_lines (LPMESSAGE message)
 {
   HRESULT hr;
-  LPSPropValue lpspvFEID = NULL;
   LPSTREAM stream;
   STATSTG statInfo;
   ULONG nread;
@@ -507,103 +506,98 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   char *body = NULL;
   char *p;
   char *msgcls = NULL;
-
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_BODY, &lpspvFEID);
-  if (SUCCEEDED (hr))  /* Message is small enough to be retrieved directly. */
-    { 
-      switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
-        {
-        case PT_UNICODE:
-          body = wchar_to_utf8 (lpspvFEID->Value.lpszW);
-          if (!body)
-            log_debug ("%s: error converting to utf8\n", __func__);
-          break;
-          
-        case PT_STRING8:
-          body = xstrdup (lpspvFEID->Value.lpszA);
-          break;
-          
-        default:
-          log_debug ("%s: proptag=0x%08lx not supported\n",
-                     __func__, lpspvFEID->ulPropTag);
-          break;
-        }
-      MAPIFreeBuffer (lpspvFEID);
-    }
-  else /* Message is large; use an IStream to read it.  */
+  ULONG tag;
+  int   is_binary = 0;
+  
+  hr = 0;
+  if (!get_internetcharsetbody_tag (message, &tag) )
     {
-      hr = message->OpenProperty (PR_BODY, &IID_IStream, 0, 0, 
+      hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
                                   (LPUNKNOWN*)&stream);
-      if (hr)
-        {
-          log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
-                     SRCNAME, __func__, hr);
-          return NULL;
-        }
-      
-      hr = stream->Stat (&statInfo, STATFLAG_NONAME);
-      if (hr)
-        {
-          log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
-          stream->Release ();
-          return NULL;
-        }
-      
-      /* We read only the first 1k to decide whether this is actually
-         an OpenPGP armored message .  */
-      nbytes = (size_t)statInfo.cbSize.QuadPart;
-      if (nbytes > 1024*2)
-        nbytes = 1024*2;
-      body = (char*)xmalloc (nbytes + 2);
-      hr = stream->Read (body, nbytes, &nread);
-      if (hr)
-        {
-          log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
-          xfree (body);
-          stream->Release ();
-          return NULL;
-        }
-      body[nread] = 0;
-      body[nread+1] = 0;
-      if (nread != statInfo.cbSize.QuadPart)
-        {
-          log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
-          xfree (body);
-          stream->Release ();
-          return NULL;
-        }
+      if (!hr)
+        is_binary = 1;
+    }
+  if (hr)
+    {
+      tag = PR_BODY;
+      hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
+                                  (LPUNKNOWN*)&stream);
+    }
+  if (hr)
+    {
+      log_debug ("%s:%s: OpenProperty(%lx) failed: hr=%#lx",
+                 SRCNAME, __func__, tag, hr);
+      return NULL;
+    }
+  
+  hr = stream->Stat (&statInfo, STATFLAG_NONAME);
+  if (hr)
+    {
+      log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
       stream->Release ();
+      return NULL;
+    }
+  
+  /* We read only the first 1k to decide whether this is actually an
+     OpenPGP armored message .  */
+  nbytes = (size_t)statInfo.cbSize.QuadPart;
+  if (nbytes > 1024*2)
+    nbytes = 1024*2;
+  body = (char*)xmalloc (nbytes + 2);
+  hr = stream->Read (body, nbytes, &nread);
+  if (hr)
+    {
+      log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
+      xfree (body);
+      stream->Release ();
+      return NULL;
+    }
+  body[nread] = 0;
+  body[nread+1] = 0;
+  if (nread != nbytes)
+    {
+      log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
       
-      {
-        char *tmp;
-        tmp = wchar_to_utf8 ((wchar_t*)body);
-        if (!tmp)
-          log_debug ("%s: error converting to utf8\n", __func__);
-        else
-          {
-            xfree (body);
-            body = tmp;
-          }
-      }
+      xfree (body);
+      stream->Release ();
+      return NULL;
+    }
+  stream->Release ();
+
+  if (!is_binary)
+    {
+      char *tmp;
+      tmp = wchar_to_utf8 ((wchar_t*)body);
+      if (!tmp)
+        log_debug ("%s: error converting to utf8\n", __func__);
+      else
+        {
+          xfree (body);
+          body = tmp;
+        }
     }
 
-  /* The first ~1k of the body of the message is now availble in the
+
+  /* The first ~1k of the body of the message is now available in the
      utf-8 string BODY.  Walk over it to figure out its type.  */
   for (p=body; p && *p; p = (p=strchr (p+1, '\n')? (p+1):NULL))
-    if (!strncmp (p, "-----BEGIN PGP ", 15))
-      {
-        if (!strncmp (p+15, "SIGNED MESSAGE-----", 19)
-            && trailing_ws_p (p+15+19))
-          msgcls = xstrdup ("IPM.Note.GpgOL.ClearSigned");
-        else if (!strncmp (p+15, "MESSAGE-----", 12)
-                 && trailing_ws_p (p+15+12))
-          msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
-        break;
-      }
-    else if (!trailing_ws_p (p))
-      break;  /* Text before the PGP message - don't take this as a
-                 proper message.  */
-         
+    {
+      if (!strncmp (p, "-----BEGIN PGP ", 15))
+        {
+          if (!strncmp (p+15, "SIGNED MESSAGE-----", 19)
+              && trailing_ws_p (p+15+19))
+            msgcls = xstrdup ("IPM.Note.GpgOL.ClearSigned");
+          else if (!strncmp (p+15, "MESSAGE-----", 12)
+                   && trailing_ws_p (p+15+12))
+            msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
+          break;
+        }
+      else if (!trailing_ws_p (p))
+        break;  /* Text before the PGP message - don't take this as a
+                   proper message.  */
+    }
+  
+
   xfree (body);
   return msgcls;
 }

@@ -1,7 +1,11 @@
 2008-10-27  Werner Koch  <wk@g10code.com>
 
+	* olflange.cpp (install_forms): Add gpgol-cs.
+
 	* mapihelp.cpp (get_internetcharsetbody_tag): New.
 	(mapi_get_body_as_stream): Try the new tag first.
+	(get_msgcls_from_pgp_lines): Ditto.  Remove the simple access
+	method.
 
 2008-10-24  Werner Koch  <wk@g10code.com>
 

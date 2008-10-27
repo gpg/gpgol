@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-24 14:46+0200\n"
+"POT-Creation-Date: 2008-10-27 15:56+0100\n"
 "PO-Revision-Date: 2008-10-17 10:27+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -383,11 +383,11 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1426 src/mapihelp.cpp:1434 src/mapihelp.cpp:1442
+#: src/mapihelp.cpp:1468 src/mapihelp.cpp:1476 src/mapihelp.cpp:1484
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
-#: src/mapihelp.cpp:2051
+#: src/mapihelp.cpp:2093
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -397,7 +397,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2828
+#: src/mapihelp.cpp:2870
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
