@@ -443,7 +443,8 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
           p0 = p;
           if (strncmp (p, "-----BEGIN PGP SIGNATURE-----", 29)
               || !trailing_ws_p (p+29) )
-            fprintf (stderr,"Invalid clear signed message\n");
+            log_debug ("%s:%s: invalid clear signed message\n", 
+                       SRCNAME, __func__);
           state = 3;
           dest = stpcpy (dest, sig_header);
         
@@ -479,7 +480,8 @@ pgp_mime_from_clearsigned (LPSTREAM input, size_t *outputlen)
           p0 = p;
           if (strncmp (p, "-----END PGP SIGNATURE-----", 27)
               || !trailing_ws_p (p+27) )
-            fprintf (stderr,"Invalid clear signed message (no end)\n");
+            log_debug ("%s:%s: invalid clear signed message (no end)\n", 
+                       SRCNAME, __func__);
           while (*p && *p != '\n')
             *dest++ = *p++;
           if (*p == '\n')
