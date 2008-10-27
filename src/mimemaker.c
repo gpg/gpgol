@@ -1127,7 +1127,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
 {
   int result = -1;
   int rc;
-  LPATTACH attach;
+  LPATTACH attach = NULL;
   struct sink_s sinkmem;
   sink_t sink = &sinkmem;
   struct sink_s hashsinkmem;
@@ -1138,7 +1138,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   char *body = NULL;
   int n_att_usable;
   char top_header[BOUNDARYSIZE+200];
-  engine_filter_t filter;
+  engine_filter_t filter = NULL;
   struct databuf_s sigbuffer;
 
   *r_att_table = NULL;
@@ -1159,6 +1159,22 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
         return -1;
     }
 
+  /* Get the attachment info and the body.  */
+  body = mapi_get_body (message, NULL);
+  if (body && !*body)
+    {
+      xfree (body);
+      body = NULL;
+    }
+  att_table = mapi_create_attach_table (message, 0);
+  n_att_usable = count_usable_attachments (att_table);
+  if (!n_att_usable && !body)
+    {
+      log_debug ("%s:%s: can't sign an empty message\n", SRCNAME, __func__);
+      result = gpg_error (GPG_ERR_NO_DATA);
+      goto failure;
+    }
+
   /* Prepare the signing. */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
     goto failure;
@@ -1173,21 +1189,6 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
       goto failure;
     }
 
-
-  /* Get the attachment info and the body.  */
-  body = mapi_get_body (message, NULL);
-  if (body && !*body)
-    {
-      xfree (body);
-      body = NULL;
-    }
-  att_table = mapi_create_attach_table (message, 0);
-  n_att_usable = count_usable_attachments (att_table);
-  if (!n_att_usable && !body)
-    {
-      log_debug ("%s:%s: can't sign an empty message\n", SRCNAME, __func__);
-      goto failure;
-    }
 
   /* Write the top header.  */
   generate_boundary (boundary);
@@ -1360,7 +1361,8 @@ mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
   int result = -1;
   mapi_attach_item_t *att_table;
 
-  if (!do_mime_sign (message, hwnd, protocol, &att_table, 0))
+  result = do_mime_sign (message, hwnd, protocol, &att_table, 0);
+  if (!result)
     {
       if (!finalize_message (message, att_table, protocol, 0))
         result = 0;
@@ -1557,7 +1559,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   mapi_attach_item_t *att_table = NULL;
   char *body = NULL;
   int n_att_usable;
-  engine_filter_t filter;
+  engine_filter_t filter = NULL;
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -1565,6 +1567,27 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
+
+  /* Get the attachment info and the body.  We need to do this before
+     creating the engine's filter sue problem sending the cancel to
+     the engine with nothing for the engine to process.  This is
+     actually a bug in our engine code but we better avoid triggering
+     this bug because the engine sometimes hangs.  Fixme: Needs a
+     proper fix. */
+  body = mapi_get_body (message, NULL);
+  if (body && !*body)
+    {
+      xfree (body);
+      body = NULL;
+    }
+  att_table = mapi_create_attach_table (message, 0);
+  n_att_usable = count_usable_attachments (att_table);
+  if (!n_att_usable && !body)
+    {
+      log_debug ("%s:%s: can't encrypt an empty message\n", SRCNAME, __func__);
+      result = gpg_error (GPG_ERR_NO_DATA);
+      goto failure;
+    }
 
   /* Prepare the encryption.  We do this early as it is quite common
      that some recipient keys are not available and thus the
@@ -1579,21 +1602,6 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   protocol = check_protocol (protocol);
   if (protocol == PROTOCOL_UNKNOWN)
     goto failure;
-
-  /* Get the attachment info and the body.  */
-  body = mapi_get_body (message, NULL);
-  if (body && !*body)
-    {
-      xfree (body);
-      body = NULL;
-    }
-  att_table = mapi_create_attach_table (message, 0);
-  n_att_usable = count_usable_attachments (att_table);
-  if (!n_att_usable && !body)
-    {
-      log_debug ("%s:%s: can't encrypt an empty message\n", SRCNAME, __func__);
-      goto failure;
-    }
 
   /* Write the top header.  */
   rc = create_top_encryption_header (sink, protocol, boundary);
@@ -1689,7 +1697,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   sink_t tmpsink = &tmpsinkmem;
   char boundary[BOUNDARYSIZE+1];
   mapi_attach_item_t *att_table = NULL;
-  engine_filter_t filter;
+  engine_filter_t filter = NULL;
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -1698,6 +1706,37 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   attach = create_mapi_attachment (message, sink);
   if (!attach)
     return -1;
+
+  /* First check that we are not rying to process an empty message
+     which might lock up our engine.  Unfortunately we need to
+     duplicate the code we use in do_mime_sign here.  FIXME: The
+     engine should be fixed instead of using such a workaround.  */
+  {
+    char *body;
+
+    body = mapi_get_body (message, NULL);
+    if (body && !*body)
+    {
+      xfree (body);
+      body = NULL;
+    }
+    att_table = mapi_create_attach_table (message, 0);
+    if (!count_usable_attachments (att_table) && !body)
+      result = gpg_error (GPG_ERR_NO_DATA);
+    xfree (body);
+    if (att_table)
+      {
+        mapi_release_attach_table (att_table);
+        att_table = NULL;
+      }
+    if (gpg_err_code (result) == GPG_ERR_NO_DATA)
+      {
+        log_debug ("%s:%s: can't sign+encrypt an empty message\n",
+                   SRCNAME, __func__);
+        goto failure;
+      }
+  }
+
 
   /* Create a temporary sink to construct the signed data.  */ 
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,

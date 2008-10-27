@@ -1236,7 +1236,13 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
         err = mime_sign_encrypt (message, hwnd, protocol, recipients);
       else
         err = mime_encrypt (message, hwnd, protocol, recipients);
-      if (err && opt.enable_debug)
+      if (gpg_err_code (err) == GPG_ERR_NO_DATA)
+        {
+          MessageBox (hwnd, _("Encrypting or signing an empty message "
+                              "is not possible."),
+                      "GpgOL", MB_ICONERROR|MB_OK);
+        }
+      else if (err && opt.enable_debug)
         {
           char buf[200];
           
@@ -1257,7 +1263,13 @@ message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd)
   gpg_error_t err;
 
   err = mime_sign (message, hwnd, protocol);
-  if (err && opt.enable_debug)
+  if (gpg_err_code (err) == GPG_ERR_NO_DATA)
+    {
+      MessageBox (hwnd, _("Encrypting or signing an empty message "
+                          "is not possible."),
+                  "GpgOL", MB_ICONERROR|MB_OK);
+    }
+  else if (err && opt.enable_debug)
     {
       char buf[200];
       

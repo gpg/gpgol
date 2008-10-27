@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-27 15:56+0100\n"
-"PO-Revision-Date: 2008-10-27 17:17+0100\n"
+"POT-Creation-Date: 2008-10-27 18:31+0100\n"
+"PO-Revision-Date: 2008-10-27 18:32+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -480,12 +480,16 @@ msgstr ""
 msgid "No recipients to encrypt to are given"
 msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
 
-#: src/message.cpp:1244
+#: src/message.cpp:1241 src/message.cpp:1268
+msgid "Encrypting or signing an empty message is not possible."
+msgstr "Eine leere Nachricht kann nicht signiert oder verschlüsselt werden."
+
+#: src/message.cpp:1250
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "Verschlüsselungsfehler (%s)"
 
-#: src/message.cpp:1265
+#: src/message.cpp:1277
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "Unterschrifterstellungsfehler (%s)"

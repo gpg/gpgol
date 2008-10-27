@@ -1,5 +1,14 @@
 2008-10-27  Werner Koch  <wk@g10code.com>
 
+	* mimemaker.c (mime_encrypt): Check for an empty message before
+	creating the filter.  Return a suitable error code.
+	(do_mime_sign): Ditto.
+	(mime_sign_encrypt): Ditto.
+	(mime_sign): Return an error code.
+	* message.cpp (sign_encrypt): Show an error message for empty
+	messages.
+	(message_sign): Ditto.
+
 	* olflange.cpp (install_forms): Add gpgol-cs.
 
 	* mapihelp.cpp (get_internetcharsetbody_tag): New.
