@@ -555,13 +555,17 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
       /* Fill the input buffer, relinquish control to the callback
          processor and loop until all input data has been
          processed.  */
-      if (!filter->in.length && indatalen)
+      if (indatalen && filter->in.length < FILTER_BUFFER_SIZE )
         {
-          filter->in.length = (indatalen > FILTER_BUFFER_SIZE
-                               ? FILTER_BUFFER_SIZE : indatalen);
-          memcpy (filter->in.buffer, indata, filter->in.length);
-          indata    += filter->in.length;
-          indatalen -= filter->in.length;
+          size_t tmplen;
+
+          tmplen = FILTER_BUFFER_SIZE - filter->in.length;
+          tmplen = (indatalen > tmplen? tmplen : indatalen);
+
+          memcpy (filter->in.buffer+filter->in.length, indata, tmplen);
+          filter->in.length += tmplen;
+          indata    += tmplen;
+          indatalen -= tmplen;
           any = 1;
         }
       /* Terminate the loop if the filter queue is empty OR the filter

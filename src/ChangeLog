@@ -1,3 +1,8 @@
+2008-10-29  Werner Koch  <wk@g10code.com>
+
+	* engine.c (engine_filter): Collect more data in the in buffer.
+	* mimemaker.c (write_b64): Buffer up to 2k of output.
+
 2008-10-27  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (mime_encrypt): Check for an empty message before

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-27 18:31+0100\n"
+"POT-Creation-Date: 2008-10-27 18:36+0100\n"
 "PO-Revision-Date: 2008-10-27 18:32+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -439,18 +439,18 @@ msgstr ""
 msgid "GpgOL - Message Information"
 msgstr "GpgOL - Informationen zu der Nachricht"
 
-#: src/message.cpp:538
+#: src/message.cpp:540
 msgid "Signature verification of an encrypted message is not possible."
 msgstr ""
 "Die Prüfung der Unterschrift ist bei einer verschlüsselten Nachrichten nicht "
 "möglich."
 
-#: src/message.cpp:549
+#: src/message.cpp:551
 msgid "Signature verification of this message class is not possible."
 msgstr ""
 "Die Prüfung der Unterschrift ist bei dieser Nachrichtenklasse nicht möglich."
 
-#: src/message.cpp:552
+#: src/message.cpp:554
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
@@ -459,15 +459,15 @@ msgstr ""
 "Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME "
 "eingeschaltet ist."
 
-#: src/message.cpp:556
+#: src/message.cpp:558
 msgid "This message has no signature."
 msgstr "Diese Nachricht hat keine Unterschrift."
 
-#: src/message.cpp:854
+#: src/message.cpp:856
 msgid "This message is not encrypted."
 msgstr "Diese Nachricht ist nicht verschlüsselt."
 
-#: src/message.cpp:1081
+#: src/message.cpp:1083
 #, c-format
 msgid ""
 "Decryption failed\n"
@@ -476,20 +476,20 @@ msgstr ""
 "Entschlüsselungsfehler\n"
 "(%s)"
 
-#: src/message.cpp:1228
+#: src/message.cpp:1230
 msgid "No recipients to encrypt to are given"
 msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
 
-#: src/message.cpp:1241 src/message.cpp:1268
+#: src/message.cpp:1243 src/message.cpp:1270
 msgid "Encrypting or signing an empty message is not possible."
 msgstr "Eine leere Nachricht kann nicht signiert oder verschlüsselt werden."
 
-#: src/message.cpp:1250
+#: src/message.cpp:1252
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "Verschlüsselungsfehler (%s)"
 
-#: src/message.cpp:1277
+#: src/message.cpp:1279
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "Unterschrifterstellungsfehler (%s)"

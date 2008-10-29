@@ -5,6 +5,8 @@ Noteworthy changes for version 0.10.16
 
  * Fixed PGP cleartext signature verification.
 
+ * Encryption of attachments is now much faster.
+
 
 Noteworthy changes for version 0.10.15 (2008-08-06)
 ===================================================

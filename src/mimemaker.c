@@ -310,45 +310,62 @@ write_b64 (sink_t sink, const void *data, size_t datalen)
   const unsigned char *p;
   unsigned char inbuf[4];
   int idx, quads;
-  char outbuf[4];
+  char outbuf[2048];
+  size_t outlen;
 
   log_debug ("  writing base64 of length %d\n", (int)datalen);
   idx = quads = 0;
+  outlen = 0;
   for (p = data; datalen; p++, datalen--)
     {
       inbuf[idx++] = *p;
       if (idx > 2)
         {
-          outbuf[0] = bintoasc[(*inbuf>>2)&077];
-          outbuf[1] = bintoasc[(((*inbuf<<4)&060)|((inbuf[1] >> 4)&017))&077];
-          outbuf[2] = bintoasc[(((inbuf[1]<<2)&074)|((inbuf[2]>>6)&03))&077];
-          outbuf[3] = bintoasc[inbuf[2]&077];
-          if ((rc = write_buffer (sink, outbuf, 4)))
-            return rc;
+          /* We need space for a quad and a possible CR,LF.  */
+          if (outlen+4+2 >= sizeof outbuf)
+            {
+              if ((rc = write_buffer (sink, outbuf, outlen)))
+                return rc;
+              outlen = 0;
+            }
+          outbuf[outlen++] = bintoasc[(*inbuf>>2)&077];
+          outbuf[outlen++] = bintoasc[(((*inbuf<<4)&060)
+                                       |((inbuf[1] >> 4)&017))&077];
+          outbuf[outlen++] = bintoasc[(((inbuf[1]<<2)&074)
+                                       |((inbuf[2]>>6)&03))&077];
+          outbuf[outlen++] = bintoasc[inbuf[2]&077];
           idx = 0;
           if (++quads >= (64/4)) 
             {
               quads = 0;
-              if ((rc = write_buffer (sink, "\r\n", 2)))
-                return rc;
+              outbuf[outlen++] = '\r';
+              outbuf[outlen++] = '\n';
             }
         }
     }
 
+  /* We need space for a quad and a final CR,LF.  */
+  if (outlen+4+2 >= sizeof outbuf)
+    {
+      if ((rc = write_buffer (sink, outbuf, outlen)))
+        return rc;
+      outlen = 0;
+    }
   if (idx)
     {
-      outbuf[0] = bintoasc[(*inbuf>>2)&077];
+      outbuf[outlen++] = bintoasc[(*inbuf>>2)&077];
       if (idx == 1)
         {
-          outbuf[1] = bintoasc[((*inbuf<<4)&060)&077];
-          outbuf[2] = '=';
-          outbuf[3] = '=';
+          outbuf[outlen++] = bintoasc[((*inbuf<<4)&060)&077];
+          outbuf[outlen++] = '=';
+          outbuf[outlen++] = '=';
         }
       else 
         { 
-          outbuf[1] = bintoasc[(((*inbuf<<4)&060)|((inbuf[1]>>4)&017))&077];
-          outbuf[2] = bintoasc[((inbuf[1]<<2)&074)&077];
-          outbuf[3] = '=';
+          outbuf[outlen++] = bintoasc[(((*inbuf<<4)&060)
+                                    |((inbuf[1]>>4)&017))&077];
+          outbuf[outlen++] = bintoasc[((inbuf[1]<<2)&074)&077];
+          outbuf[outlen++] = '=';
         }
       if ((rc = write_buffer (sink, outbuf, 4)))
         return rc;
@@ -356,8 +373,16 @@ write_b64 (sink_t sink, const void *data, size_t datalen)
     }
 
   if (quads) 
-    if ((rc = write_buffer (sink, "\r\n", 2)))
-      return rc;
+    {
+      outbuf[outlen++] = '\r';
+      outbuf[outlen++] = '\n';
+    }
+
+  if (outlen)
+    {
+      if ((rc = write_buffer (sink, outbuf, outlen)))
+        return rc;
+    }
 
   return 0;
 }
