@@ -1148,7 +1148,8 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
    written to that sink.  */
 static int 
 do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol, 
-              mapi_attach_item_t **r_att_table, sink_t tmpsink)
+              mapi_attach_item_t **r_att_table, sink_t tmpsink,
+              unsigned int session_number)
 {
   int result = -1;
   int rc;
@@ -1203,6 +1204,17 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   /* Prepare the signing. */
   if (engine_create_filter (&filter, collect_signature, &sigbuffer))
     goto failure;
+
+  if (session_number)
+    {
+      engine_set_session_number (filter, session_number);
+      {
+        char *tmp = mapi_get_subject (message);
+        engine_set_session_title (filter, tmp);
+        xfree (tmp);
+      }
+    }
+
   if (engine_sign_start (filter, hwnd, protocol, 
                          mapi_get_sender (message), &protocol))
     goto failure;
@@ -1386,7 +1398,8 @@ mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
   int result = -1;
   mapi_attach_item_t *att_table;
 
-  result = do_mime_sign (message, hwnd, protocol, &att_table, 0);
+  result = do_mime_sign (message, hwnd, protocol, &att_table, 0, 
+                         engine_new_session_number ());
   if (!result)
     {
       if (!finalize_message (message, att_table, protocol, 0))
@@ -1619,6 +1632,14 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
      encryption will fail early. */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
+
+  engine_set_session_number (filter, engine_new_session_number ());
+  {
+    char *tmp = mapi_get_subject (message);
+    engine_set_session_title (filter, tmp);
+    xfree (tmp);
+  }
+
   if (engine_encrypt_prepare (filter, hwnd, protocol, recipients, &protocol))
     goto failure;
   if (engine_encrypt_start (filter, 0))
@@ -1723,6 +1744,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   char boundary[BOUNDARYSIZE+1];
   mapi_attach_item_t *att_table = NULL;
   engine_filter_t filter = NULL;
+  unsigned int session_number;
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -1732,7 +1754,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   if (!attach)
     return -1;
 
-  /* First check that we are not rying to process an empty message
+  /* First check that we are not trying to process an empty message
      which might lock up our engine.  Unfortunately we need to
      duplicate the code we use in do_mime_sign here.  FIXME: The
      engine should be fixed instead of using such a workaround.  */
@@ -1785,6 +1807,15 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      figure out the protocol to use if we have not forced one.  */
   if (engine_create_filter (&filter, write_buffer_for_cb, sink))
     goto failure;
+
+  session_number = engine_new_session_number ();
+  engine_set_session_number (filter, session_number);
+  {
+    char *tmp = mapi_get_subject (message);
+    engine_set_session_title (filter, tmp);
+    xfree (tmp);
+  }
+
   if ((rc=engine_encrypt_prepare (filter, hwnd, 
                                   protocol, recipients, &protocol)))
     goto failure;
@@ -1799,7 +1830,8 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      we need to fix up that ugly micalg parameter after having created
      the signature.  Note that the protocol to use is taken from the
      encryption operation. */
-  if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink))
+  if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink, 
+                    session_number))
     goto failure;
 
   /* Now send the actual ENCRYPT command.  This split up between

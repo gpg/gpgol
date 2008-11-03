@@ -1635,6 +1635,7 @@ op_assuan_encrypt (protocol_t protocol,
   err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
+  send_session_info (ctx, filter);
   for (i=0; recipients && recipients[i]; i++)
     {
       snprintf (line, sizeof line, "RECIPIENT %s", recipients[i]);
@@ -1811,6 +1812,8 @@ op_assuan_sign (protocol_t protocol,
   err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
+
+  send_session_info (ctx, filter);
 
   /* We always send the SENDER command because it allows us to figure
      out the protocol to use.  In case the UI server fails to send the

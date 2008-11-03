@@ -1,3 +1,13 @@
+2008-11-03  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (do_mime_sign): Add arg SESSION_NUMBER and pass it
+	to the sign operation.  Set session title.
+	(mime_sign): Create a new session number.
+	(mime_sign_encrypt): Pass a session number and title to the engine.
+	(mime_encrypt): Ditto.
+	* engine-assuan.c (op_assuan_encrypt, op_assuan_sign): Send
+	session info.
+
 2008-10-29  Werner Koch  <wk@g10code.com>
 
 	* engine.c (engine_filter): Collect more data in the in buffer.
