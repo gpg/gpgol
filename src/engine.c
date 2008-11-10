@@ -421,7 +421,15 @@ engine_init (void)
   if (err)
     return err;
 
-  err = op_assuan_init ();
+  do
+    err = op_assuan_init ();
+  while (err
+         && MessageBox (NULL,
+                        _("The user interface server is not available "
+                          "or could not be started in time.  You may "
+                          "want to try again."),
+                        _("GpgOL"),
+                        MB_ICONQUESTION|MB_RETRYCANCEL) == IDRETRY);
   if (err)
     {
       use_assuan = 0;

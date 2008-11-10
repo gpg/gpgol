@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-27 18:36+0100\n"
-"PO-Revision-Date: 2008-10-27 18:32+0100\n"
+"POT-Creation-Date: 2008-11-10 18:05+0100\n"
+"PO-Revision-Date: 2008-11-10 18:07+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -48,7 +48,19 @@ msgstr "GpgOL - Sichern der entschlüsselten Anlage"
 msgid "Debug output (for analysing problems)"
 msgstr "Debugausgabe (zur Problemanalyse)"
 
-#: src/engine.c:429
+#: src/engine.c:428
+msgid ""
+"The user interface server is not available or could not be started in time.  "
+"You may want to try again."
+msgstr "Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
+
+#: src/engine.c:431 src/engine.c:441 src/ext-commands.cpp:774
+#: src/ext-commands.cpp:795 src/ext-commands.cpp:800 src/main.c:682
+#: src/main.c:688 src/message.cpp:320
+msgid "GpgOL"
+msgstr "GpgOL"
+
+#: src/engine.c:437
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -67,11 +79,6 @@ msgstr ""
 "2. Oder: Outlook beenden. Dann \"Kleopatra\" aus dem Startmenü\n"
 "   (unter \"GnuPG für Windows\") oder auf einem anderen Weg starten.\n"
 "   Sobald \"Kleopatra\" läuft, erneut Outlook starten."
-
-#: src/engine.c:433 src/ext-commands.cpp:774 src/ext-commands.cpp:795
-#: src/ext-commands.cpp:800 src/main.c:682 src/main.c:688 src/message.cpp:320
-msgid "GpgOL"
-msgstr "GpgOL"
 
 #: src/engine-gpgme.c:368
 msgid ""

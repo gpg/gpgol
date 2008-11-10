@@ -1,3 +1,10 @@
+2008-11-10  Werner Koch  <wk@g10code.com>
+
+	* engine.c (engine_init): Allow the user to try again if the
+	server did not come up.
+	* engine-assuan.c (connect_uiserver, op_assuan_init): Add a hack
+	to reset the retry counter.
+
 2008-11-03  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (do_mime_sign): Add arg SESSION_NUMBER and pass it

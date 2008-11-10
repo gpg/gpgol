@@ -455,6 +455,13 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
   gpg_error_t err;
   assuan_context_t ctx;
 
+  if (!r_ctx && !r_pid && !r_cmdid && !hwnd)
+    {
+      InterlockedExchange (&retry_counter, 0);
+      return 0;
+    }
+
+
   *r_ctx = NULL;
   *r_pid = (pid_t)(-1);
   *r_cmdid = 0;
@@ -570,6 +577,9 @@ op_assuan_init (void)
   if (init_done)
     return 0;
   
+  /* Reset the retry counter.  */
+  connect_uiserver (NULL, NULL, NULL, NULL);
+
   /* Run a test connection to see whether the UI server is available.  */
   err = connect_uiserver (&ctx, &pid, &cmdid, NULL);
   if (!err)

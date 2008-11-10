@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-10-27 18:36+0100\n"
+"POT-Creation-Date: 2008-11-10 18:05+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -48,18 +48,25 @@ msgstr "GPG - Spara dekrypterad bilaga"
 msgid "Debug output (for analysing problems)"
 msgstr ""
 
-#: src/engine.c:429
+#: src/engine.c:428
+msgid ""
+"The user interface server is not available or could not be started in time.  "
+"You may want to try again."
+msgstr ""
+
+#: src/engine.c:431 src/engine.c:441 src/ext-commands.cpp:774
+#: src/ext-commands.cpp:795 src/ext-commands.cpp:800 src/main.c:682
+#: src/main.c:688 src/message.cpp:320
+msgid "GpgOL"
+msgstr ""
+
+#: src/engine.c:437
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
 "\n"
 "This is limited to the PGP/MIME protocol and thus S/MIME protected message "
 "are not readable."
-msgstr ""
-
-#: src/engine.c:433 src/ext-commands.cpp:774 src/ext-commands.cpp:795
-#: src/ext-commands.cpp:800 src/main.c:682 src/main.c:688 src/message.cpp:320
-msgid "GpgOL"
 msgstr ""
 
 #: src/engine-gpgme.c:368
