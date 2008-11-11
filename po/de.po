@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2008-11-10 18:05+0100\n"
-"PO-Revision-Date: 2008-11-10 18:07+0100\n"
+"PO-Revision-Date: 2008-11-11 18:15+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -52,7 +52,9 @@ msgstr "Debugausgabe (zur Problemanalyse)"
 msgid ""
 "The user interface server is not available or could not be started in time.  "
 "You may want to try again."
-msgstr "Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
+msgstr ""
+"Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder "
+"rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
 #: src/engine.c:431 src/engine.c:441 src/ext-commands.cpp:774
 #: src/ext-commands.cpp:795 src/ext-commands.cpp:800 src/main.c:682
@@ -555,7 +557,7 @@ msgstr "Verschlüsselte Nachricht als Anlage anzeigen"
 
 #: src/olflange-dlgs.cpp:59
 msgid "Crypto Engine"
-msgstr "Kryptoserver"
+msgstr "Kryptoserver ..."
 
 #: src/olflange-dlgs.cpp:216
 msgid ""
