@@ -34,7 +34,7 @@
 #include "engine-assuan.h"
 
 
-#define FILTER_BUFFER_SIZE 4096
+#define FILTER_BUFFER_SIZE (128*1024)
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -105,9 +105,6 @@ struct engine_filter_s
   /* A pointer used convey information from engine_encrypt_prepare to
      engine_encrypt_start.  */
   struct engine_assuan_encstate_s *encstate;
-
-  /* Counter used to optimize voluntary thread switching. */
-  ULONG switch_counter;
 
   /* Optional data to be passed to the backend to help the server
      display a useful title and to associate operations with one OL
@@ -210,36 +207,6 @@ release_filter (engine_filter_t filter)
 }
 
 
-/* This is a wraper around SwitchToThread, a syscall we unfortunately
-   need due to the lack of an sophisticated event system.  The wrapper
-   calls SwitchToThread but after a couple of immediate folliwing
-   switches, it introduces a short delays.  */
-static void
-switch_threads (engine_filter_t filter)
-{
-  ULONG count;
-
-  count = InterlockedExchangeAdd (&filter->switch_counter, 1);
-  if (count > 5)
-    {
-      InterlockedExchange (&filter->switch_counter, 5);
-      SleepEx (50, TRUE); 
-    }
-  else if (!SwitchToThread ())
-    {
-      /* No runable other thread: Fall asleep. */
-      SleepEx (5, TRUE);
-    }
-}
-
-/* Call this fucntion if some action has been done.  */
-static void
-clear_switch_threads (engine_filter_t filter)
-{
-  InterlockedExchange (&filter->switch_counter, 0);
-}
-
-
 /* This read callback is used by GPGME to read data from a filter
    object.  The function should return the number of bytes read, 0 on
    EOF, and -1 on error.  If an error occurs, ERRNO should be set to
@@ -276,11 +243,8 @@ filter_gpgme_read_cb (void *handle, void *buffer, size_t size)
           if (debug_filter_extra)
             log_debug ("%s:%s: filter %p: leave; result=EAGAIN\n",
                        SRCNAME, __func__, filter);
-          switch_threads (filter);
           return -1;
         }
-      else
-        clear_switch_threads (filter);
       if (debug_filter)
         log_debug ("%s:%s: filter %p: waiting for in.condvar\n",
                    SRCNAME, __func__, filter);
@@ -505,11 +469,11 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
                SRCNAME, __func__, indata, (int)indatalen, filter->outfnc); 
   for (;;)
     {
-      int any;
+      int any, anyany;
 
       /* If there is something to write out, do this now to make space
          for more data.  */
-      any = 0;
+      any = anyany = 0;
       take_out_lock (filter, __func__);
       while (filter->out.length)
         {
@@ -530,17 +494,13 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
             memmove (filter->out.buffer, filter->out.buffer + nbytes,
                      filter->out.length - nbytes); 
           filter->out.length -= nbytes;
-          any = 1;
+          any = anyany = 1;
         }
-      if (!PulseEvent (filter->out.condvar))
+      if (any && !PulseEvent (filter->out.condvar))
         log_error_w32 (-1, "%s:%s: PulseEvent(%p)[out] failed", 
                        SRCNAME, __func__, filter->out.condvar);
       release_out_lock (filter, __func__);
 
-      if (any)
-        clear_switch_threads (filter);
-      else
-        switch_threads (filter);
 
       any = 0;
       take_in_lock (filter, __func__);
@@ -576,6 +536,9 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
           indatalen -= tmplen;
           any = 1;
         }
+      if (any && !PulseEvent (filter->in.condvar))
+        log_error_w32 (-1, "%s:%s: PulseEvent(%p)[in] failed", 
+                       SRCNAME, __func__, filter->in.condvar);
       /* Terminate the loop if the filter queue is empty OR the filter
          is ready and there is nothing left for output.  */
       if (!filter->in.length || (filter->in.ready && !filter->out.length))
@@ -584,14 +547,23 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
           err = filter->in.status;
           break;  /* the loop.  */
         }
-      if (!PulseEvent (filter->in.condvar))
-        log_error_w32 (-1, "%s:%s: PulseEvent(%p)[in] failed", 
-                       SRCNAME, __func__, filter->in.condvar);
       release_in_lock (filter, __func__);
-      if (any)
-        clear_switch_threads (filter);
-      else
-        switch_threads (filter);
+
+      /* Also terminate the loop if we have no more data.  This is to
+         allow this threrad to gather more data and to fill up the
+         buffer while I/O is still going on in the other thread.  */
+      if (!indatalen)
+        {
+          err = 0;
+          break;  /* the loop.  */
+        }
+
+      /* In case we did not do anything, we wait for a short while to
+         relieve the CPU from spinning.  This usually happens while
+         the UI-server is waiting for a user response and thus a short
+         delay does not harm.  */
+      if (!anyany)
+        SleepEx (10, TRUE);
     }
 
   if (debug_filter)

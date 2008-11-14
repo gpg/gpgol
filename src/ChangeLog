@@ -1,3 +1,18 @@
+2008-11-14  Werner Koch  <wk@g10code.com>
+
+	* dialogs.rc: Remove preview-decrypt check button.
+	* olflange-dlgs.cpp (set_labels): Ditto.
+
+2008-11-13  Werner Koch  <wk@g10code.com>
+
+	* engine.c (FILTER_BUFFER_SIZE): Increase from 4k to 128k.
+	(switch_threads, clear_switch_threads): Remove.
+	(engine_filter): Pulse event only if anything happened.  Break
+	loop if input data has been put completely into the buffer.  Add a
+	short delay for an idle loop.
+	* engine-assuan.c (work_item_s): Increase buffer from 1k to 8k.
+	(switch_threads, clear_switch_threads): Remove.
+
 2008-11-10  Werner Koch  <wk@g10code.com>
 
 	* engine.c (engine_init): Allow the user to try again if the
@@ -114,7 +129,7 @@
 	* message.cpp (message_decrypt): Save a signature verification
 	result.
 	* mimeparser.c (mime_decrypt): Implement verification of included
-	signatrues.  This feature got lost during the removal of nested
+	signatures.  This feature got lost during the removal of nested
 	crypto operations.
 
 2008-08-04  Werner Koch  <wk@g10code.com>

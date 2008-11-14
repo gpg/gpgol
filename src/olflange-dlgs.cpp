@@ -51,7 +51,7 @@ set_labels (HWND dlg)
     { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
 
     { IDC_G_RECV,           N_("Message receiving")},
-    { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
+//     { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
     { IDC_PREFER_HTML,      N_("Show HTML view if possible")},
     { IDC_BODY_AS_ATTACHMENT, N_("Present encrypted message as attachment")},
 
@@ -132,7 +132,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    case IDC_SIGN_DEFAULT:
 	    case IDC_OPENPGP_DEFAULT:
 	    case IDC_SMIME_DEFAULT:
-	    case IDC_PREVIEW_DECRYPT:
+// 	    case IDC_PREVIEW_DECRYPT:
 	      SendMessage (GetParent (hDlg), PSM_CHANGED, (WPARAM)hDlg, 0L);
 	      break;
 	    }
@@ -191,8 +191,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
                               smime_state, 0L);
           
-          SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
-                              !!opt.preview_decrypt, 0L);
+//           SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
+//                               !!opt.preview_decrypt, 0L);
           SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
 				!!opt.prefer_html, 0L);
           SendDlgItemMessage (hDlg, IDC_BODY_AS_ATTACHMENT, BM_SETCHECK,
@@ -230,8 +230,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           else
             opt.default_protocol = PROTOCOL_UNKNOWN;
             
-          opt.preview_decrypt = !!SendDlgItemMessage
-            (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
+//           opt.preview_decrypt = !!SendDlgItemMessage
+//             (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
           opt.prefer_html = !!SendDlgItemMessage
             (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
           opt.body_as_attachment = !!SendDlgItemMessage

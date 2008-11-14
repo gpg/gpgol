@@ -111,9 +111,7 @@ struct work_item_s
                                     the item is removed from the
                                     queue.  */
   OVERLAPPED ov;     /* The overlapped info structure.  */
-  char buffer[1024]; /* The buffer used by ReadFile or WriteFile.  */
-
-  ULONG switch_counter; /* Used by switch_threads.  */
+  char buffer[8192]; /* The buffer used by ReadFile or WriteFile.  */
 };
 
 
@@ -662,38 +660,6 @@ attach_thread_input (DWORD other_tid)
 #endif /* not used.  */
 
 
-/* This is a wraper around SwitchToThread, a syscall we unfortunately
-   need due to the lack of an sophisticated event system.  The wrapper
-   calls SwitchToThread but after a couple of immediate folliwing
-   switches, it introduces a short delays.  */
-static void
-switch_threads (work_item_t item)
-{
-  ULONG count;
-
-  count = InterlockedExchangeAdd (&item->switch_counter, 1);
-  if (count > 5)
-    {
-      /* Tried too often without success.  Use Sleep until
-         clear_switch_threads has been called.  */
-      InterlockedExchange (&item->switch_counter, 5);
-      SleepEx (60, TRUE); 
-    }
-  else if (!SwitchToThread ())
-    {
-      /* No runable other thread: Fall asleep. */
-      SleepEx (8, TRUE);
-    }
-}
-
-/* Call this fucntion if some action has been done.  */
-static void
-clear_switch_threads (work_item_t item)
-{
-  InterlockedExchange (&item->switch_counter, 0);
-}
-
-
 
 
 /* Helper to write to the callback.  */
@@ -733,9 +699,10 @@ write_to_callback (work_item_t item, DWORD nbytes)
     }
 }
 
-/* Helper for async_worker_thread.  Returns true if the item's handle
-   needs to be put on the wait list.  This is called with the worker
-   mutex hold. */
+/* Helper for async_worker_thread: Read data from the server and pass
+   it on to the caller.  Returns true if the item's handle needs to be
+   put on the wait list.  This is called with the worker mutex
+   hold. */
 static int
 worker_start_read (work_item_t item)
 {
@@ -781,8 +748,9 @@ worker_start_read (work_item_t item)
   return retval;
 }
 
-/* Result checking helper for async_worker_thread.  This is called with
-   the worker mutex hold.  */
+/* Result checking helper for async_worker_thread:  Take data from the
+   server and pass it on to the caller.  This is called with the
+   worker mutex hold.  */
 static void
 worker_check_read (work_item_t item, DWORD nbytes)
 {
@@ -815,12 +783,10 @@ worker_start_write (work_item_t item)
           if (debug_ioworker_extra)
             log_debug ("%s:%s: [%s:%p] EAGAIN received from callback",
                        SRCNAME, __func__, item->name, item->hd);
-          switch_threads (item);
           retval = 1;
         }
       else
         {
-          clear_switch_threads (item);
           log_error ("%s:%s: [%s:%p] error reading from callback: %s",
                      SRCNAME, __func__, item->name, item->hd,strerror (errno));
           item->got_error = 1;
@@ -828,7 +794,6 @@ worker_start_write (work_item_t item)
     }
   else if (!nread)
     {
-      clear_switch_threads (item);
       if (debug_ioworker)
         log_debug ("%s:%s: [%s:%p] EOF received from callback",
                    SRCNAME, __func__, item->name, item->hd);
@@ -836,7 +801,6 @@ worker_start_write (work_item_t item)
     }
   else 
     {                  
-      clear_switch_threads (item);
       if (WriteFile (item->hd, item->buffer, nread, &nbytes, &item->ov))
         {
           if (nbytes < nread)
@@ -1095,7 +1059,7 @@ async_worker_thread (void *dummy)
             {
               /* An overlapped I/O result is available.  Check that
                  the returned number of bytes are plausible and clear
-                 the I/O pending flag of this work item.  For a a read
+                 the I/O pending flag of this work item.  For a read
                  item worker_check_read forwards the received data to
                  the caller.  */
               if (item->writing)

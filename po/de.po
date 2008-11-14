@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-11-10 18:05+0100\n"
+"POT-Creation-Date: 2008-11-14 08:48+0100\n"
 "PO-Revision-Date: 2008-11-11 18:15+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -48,7 +48,7 @@ msgstr "GpgOL - Sichern der entschlüsselten Anlage"
 msgid "Debug output (for analysing problems)"
 msgstr "Debugausgabe (zur Problemanalyse)"
 
-#: src/engine.c:428
+#: src/engine.c:392
 msgid ""
 "The user interface server is not available or could not be started in time.  "
 "You may want to try again."
@@ -56,13 +56,13 @@ msgstr ""
 "Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder "
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
-#: src/engine.c:431 src/engine.c:441 src/ext-commands.cpp:774
+#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:774
 #: src/ext-commands.cpp:795 src/ext-commands.cpp:800 src/main.c:682
 #: src/main.c:688 src/message.cpp:320
 msgid "GpgOL"
 msgstr "GpgOL"
 
-#: src/engine.c:437
+#: src/engine.c:401
 msgid ""
 "The user interface server is not available or does not work.  Using an "
 "internal user interface.\n"
@@ -543,10 +543,6 @@ msgstr "S/MIME per Voreinstellung verwenden"
 msgid "Message receiving"
 msgstr "Lesen von Nachrichten"
 
-#: src/olflange-dlgs.cpp:54
-msgid "Also decrypt in preview window"
-msgstr "Auch im Vorschaufenster entschlüsseln"
-
 #: src/olflange-dlgs.cpp:55
 msgid "Show HTML view if possible"
 msgstr "HTML Darstellung anzeigen wenn möglich"
@@ -780,6 +776,9 @@ msgstr "PGP/MIME Prüfungsresultat"
 #: src/verify-dialog.c:247
 msgid "S/MIME Verification Result"
 msgstr "S/MIME Prüfungsresultat"
+
+#~ msgid "Also decrypt in preview window"
+#~ msgstr "Auch im Vorschaufenster entschlüsseln"
 
 #~ msgid "&Decrypt and verify message"
 #~ msgstr "Entschlüsseln/Prüfen der Nachricht"
