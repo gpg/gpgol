@@ -431,7 +431,8 @@ GpgolExt::GpgolExt (void)
       log_debug ("%s:%s: first time initialization done\n",
                  SRCNAME, __func__);
       if ( SVN_REVISION > opt.svn_revision )
-        MessageBox (NULL,
+        {
+          MessageBox (NULL,
                     _("You have installed a new version of GpgOL.\n"
                       "\n"
                       "Please open the option dialog and confirm that"
@@ -439,6 +440,10 @@ GpgolExt::GpgolExt (void)
                       " dialog can be found in the main menu at:"
                       " Extras->Options->GpgOL.\n"),
                       "GpgOL", MB_ICONINFORMATION|MB_OK);
+          /* Show this warning only once.  */
+          opt.svn_revision = SVN_REVISION;
+          write_options ();
+        }
       if ( SVN_REVISION > opt.forms_revision )
         install_forms ();
     }

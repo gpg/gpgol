@@ -57,7 +57,7 @@ set_labels (HWND dlg)
 
     { IDC_GPG_OPTIONS,      "Debug..."},
     { IDC_GPG_CONF,         N_("Crypto Engine")},
-    { IDC_VERSION_INFO,  "Version "VERSION "  ("__DATE__")"},
+    { IDC_VERSION_INFO,  "Version "VERSION},
     { 0, NULL}
   };
   int i;
@@ -102,7 +102,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HWND bitmap;
         
         GetWindowRect (hDlg, &rect_dlg);
-        bitmap = GetDlgItem (hDlg, IDC_BITMAP);
+        bitmap = GetDlgItem (hDlg, IDC_G10CODE_STRING);
         if (bitmap)
           GetWindowRect (bitmap, &rect_banner);
 
@@ -237,8 +237,9 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           opt.body_as_attachment = !!SendDlgItemMessage
             (hDlg, IDC_BODY_AS_ATTACHMENT, BM_GETCHECK, 0, 0L);
           
-          /* Now that the user has confirmed the options dialog, we
-             mark the Registry with revision of this build.  */
+          /* Make sure that no new-version-installed warning will pop
+             up on the next start.  Not really needed as the warning
+             dialog set this too, but it doesn't harm to do it again. */
           opt.svn_revision = SVN_REVISION;
           
           write_options ();

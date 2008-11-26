@@ -769,9 +769,8 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
     {
       log_debug ("%s:%s: command KeyManager called\n", SRCNAME, __func__);
       if (engine_start_keymanager (hwnd))
-        if (start_key_manager ())
-          MessageBox (NULL, _("Could not start certificate manager"),
-                      _("GpgOL"), MB_ICONERROR|MB_OK);
+        MessageBox (NULL, _("Could not start certificate manager"),
+                    _("GpgOL"), MB_ICONERROR|MB_OK);
     }
   else if (nCommandID == m_nCmdRevertFolder
            && m_lContext == EECONTEXT_VIEWER)
@@ -1039,6 +1038,8 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
                                    ULONG flags)          
 {
   toolbar_info_t tb_info;
+  size_t n;
+  
 
   (void)description_size;
   (void)flags;
@@ -1066,7 +1067,10 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
   pTBB->dwData = 0;
   pTBB->iString = -1;
   
-  lstrcpyn (description, tb_info->desc, strlen (tb_info->desc));
+  n = strlen (tb_info->desc);
+  if (n > description_size)
+    n = description_size;
+  lstrcpyn (description, tb_info->desc, n);
 
   if (tb_info->cmd_id == m_nCmdEncrypt)
     {

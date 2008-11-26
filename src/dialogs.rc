@@ -88,15 +88,16 @@ BEGIN
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 125, 215, 10
  
-    /* Stuff below the group boxes.  */
-    LTEXT           "GpgOL by g10 Code GmbH", IDC_STATIC, 
-                      8, 197, 100, 8
+    /* Stuff at the lower left corner.  */
+    LTEXT           "GpgOL by g10 Code GmbH", IDC_G10CODE_STRING, 
+                      8, 229, 100, 8
     LTEXT           "Version x ", IDC_VERSION_INFO,
-                    130, 197, 129, 9
+                      8, 240, 100, 9
 
-    CONTROL         IDB_BANNER, IDC_BITMAP,
-                    "Static", SS_BITMAP | SS_REALSIZEIMAGE,
-                      8, 212, 150, 64
+  /* No more logo due to problems with the background colour.  */
+/*     CONTROL         IDB_BANNER, IDC_BITMAP, */
+/*                     "Static", SS_BITMAP | SS_REALSIZEIMAGE, */
+/*                       8, 212, 150, 64 */
 
     PUSHBUTTON      "advanced", IDC_GPG_OPTIONS,
                     130, 240, 50, 14

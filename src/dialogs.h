@@ -41,6 +41,7 @@
 #define IDC_G_RECV                      4025
 #define IDC_BODY_AS_ATTACHMENT          4026
 #define IDC_GPG_CONF                    4027
+#define IDC_G10CODE_STRING              4028
 
 
 /* Ids for the extended options dialog.  */

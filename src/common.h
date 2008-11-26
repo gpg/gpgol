@@ -229,7 +229,6 @@ const char *get_pubkey_algo_str (gpgme_pubkey_algo_t id);
 
 /*-- config-dialog.c --*/
 void config_dialog_box (HWND parent);
-int start_key_manager (void);
 int store_extension_value (const char *key, const char *val);
 int load_extension_value (const char *key, char **val);
 

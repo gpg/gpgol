@@ -1,3 +1,17 @@
+2008-11-26  Werner Koch  <wk@g10code.com>
+
+	* config-dialog.c (start_key_manager): Remove.
+	* ext-commands.cpp (DoCommand): Do not use start_key_manager as a
+	fallback.
+
+	* olflange.cpp (GpgolExt): Show new version warning only once.
+
+	* dialogs.rc: Do not display the logo.  Move version info around.
+	* dialogs.h (IDC_G10CODE_STRING): New.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Active product page by a
+	click on IDC_G10CODE_STRING.
+	(set_labels): Remove the build date from the Version field.
+
 2008-11-14  Werner Koch  <wk@g10code.com>
 
 	* dialogs.rc: Remove preview-decrypt check button.
