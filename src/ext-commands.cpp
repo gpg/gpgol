@@ -502,6 +502,8 @@ GpgolExtCommands::InstallCommands (
   if (m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       int is_encrypted = 0;
+      int not_a_gpgol_message = 0;
+      
       LPMDB mdb = NULL;
       LPMESSAGE message = NULL;
 
@@ -518,6 +520,11 @@ GpgolExtCommands::InstallCommands (
               is_encrypted = 1;
               if ( mapi_test_sig_status (message) )
                 is_encrypted++;
+              break;
+            case MSGTYPE_GPGOL:
+            case MSGTYPE_SMIME:
+            case MSGTYPE_UNKNOWN:
+              not_a_gpgol_message = 1;
               break;
             default:
               break;
@@ -541,7 +548,7 @@ GpgolExtCommands::InstallCommands (
                 &m_nCmdDebug3,
         NULL);
 
-      if (!opt.disable_gpgol)
+      if (!opt.disable_gpgol && !not_a_gpgol_message)
         add_toolbar (pTBEArray, nTBECnt, 
                      is_encrypted == 2 
                      ? _("This is a signed and encrypted message.\n"

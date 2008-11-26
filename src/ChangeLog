@@ -1,5 +1,8 @@
 2008-11-26  Werner Koch  <wk@g10code.com>
 
+	* ext-commands.cpp (InstallCommands): Don't show status icon for
+	non-gpgol messages.
+
 	* config-dialog.c (start_key_manager): Remove.
 	* ext-commands.cpp (DoCommand): Do not use start_key_manager as a
 	fallback.
