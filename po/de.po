@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2008-11-14 08:48+0100\n"
-"PO-Revision-Date: 2008-11-26 14:19+0100\n"
+"PO-Revision-Date: 2008-11-26 15:17+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -553,7 +553,7 @@ msgstr "Verschlüsselte Nachricht als Anlage anzeigen"
 
 #: src/olflange-dlgs.cpp:59
 msgid "Crypto Engine"
-msgstr "Kryptoserver ..."
+msgstr "Zertifikatsserver ..."
 
 #: src/olflange-dlgs.cpp:216
 msgid ""
