@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-11-14 08:48+0100\n"
-"PO-Revision-Date: 2008-11-26 15:17+0100\n"
+"POT-Creation-Date: 2008-11-26 16:23+0100\n"
+"PO-Revision-Date: 2008-12-02 18:30+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -56,8 +56,8 @@ msgstr ""
 "Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder "
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
-#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:774
-#: src/ext-commands.cpp:795 src/ext-commands.cpp:800 src/main.c:682
+#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:780
+#: src/ext-commands.cpp:801 src/ext-commands.cpp:806 src/main.c:682
 #: src/main.c:688 src/message.cpp:320
 msgid "GpgOL"
 msgstr "GpgOL"
@@ -216,11 +216,11 @@ msgstr "*** Anfang Notation (Unterschrift von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/ext-commands.cpp:533
+#: src/ext-commands.cpp:540
 msgid "GpgOL Decrypt/Verify"
 msgstr "GpgOL Enschlüsseln/Prüfen"
 
-#: src/ext-commands.cpp:547
+#: src/ext-commands.cpp:554
 msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
@@ -228,7 +228,7 @@ msgstr ""
 "Dies ist eine unterschriebene und verschlüsselte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#: src/ext-commands.cpp:550
+#: src/ext-commands.cpp:557
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
@@ -236,7 +236,7 @@ msgstr ""
 "Dies ist eine verschlüsselte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#: src/ext-commands.cpp:552
+#: src/ext-commands.cpp:559
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
@@ -244,43 +244,43 @@ msgstr ""
 "Dies ist eine unterschriebene Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#: src/ext-commands.cpp:562
+#: src/ext-commands.cpp:569
 msgid ">GnuPG protocol"
 msgstr ">GnuPG Protokoll"
 
-#: src/ext-commands.cpp:563
+#: src/ext-commands.cpp:570
 msgid "auto"
 msgstr "automatisch"
 
-#: src/ext-commands.cpp:564
+#: src/ext-commands.cpp:571
 msgid "PGP/MIME"
 msgstr "PGP/MIME"
 
-#: src/ext-commands.cpp:565
+#: src/ext-commands.cpp:572
 msgid "S/MIME"
 msgstr "S/MIME"
 
-#: src/ext-commands.cpp:567
+#: src/ext-commands.cpp:574
 msgid "&encrypt message with GnuPG"
 msgstr "Nachricht verschlüsseln"
 
-#: src/ext-commands.cpp:568
+#: src/ext-commands.cpp:575
 msgid "&sign message with GnuPG"
 msgstr "Nachricht unterschreiben"
 
-#: src/ext-commands.cpp:603
+#: src/ext-commands.cpp:610
 msgid "GnuPG Certificate &Manager"
 msgstr "GnuPG Zertifikats&verwaltung"
 
-#: src/ext-commands.cpp:604
+#: src/ext-commands.cpp:611
 msgid "Remove GpgOL flags from this folder"
 msgstr "GpgOL Eigenschaften aus diesem Ordner entfernen"
 
-#: src/ext-commands.cpp:608
+#: src/ext-commands.cpp:615
 msgid "Open the certificate manager"
 msgstr "Die Zertifikatsverwaltung öffnen"
 
-#: src/ext-commands.cpp:744
+#: src/ext-commands.cpp:751
 msgid ""
 "Support for S/MIME has not been enabled.\n"
 "\n"
@@ -295,11 +295,11 @@ msgstr ""
 "aktivieren.  Sie finden die Einstellungen im Hauptmenu unter:  Extras-"
 ">Optionen->GpgOL.\n"
 
-#: src/ext-commands.cpp:773
+#: src/ext-commands.cpp:779
 msgid "Could not start certificate manager"
 msgstr "Die Zertifikatsverwaltung konnte nicht aufgerufen werden"
 
-#: src/ext-commands.cpp:785
+#: src/ext-commands.cpp:791
 msgid ""
 "You are about to start the process of reversing messages created by GpgOL to "
 "prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
@@ -322,55 +322,55 @@ msgstr ""
 "weiterhin installiertem GpgOL - Nachrichten wieder wie gewohnt von GpgOL "
 "angezeigt werden."
 
-#: src/ext-commands.cpp:799
+#: src/ext-commands.cpp:805
 msgid "Do you want to revert this folder?"
 msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
-#: src/ext-commands.cpp:901
+#: src/ext-commands.cpp:907
 msgid "Select this option to automatically select the protocol."
 msgstr "Wählen Sie diese Option zum das Protokoll automatisch auszuwählen."
 
-#: src/ext-commands.cpp:908
+#: src/ext-commands.cpp:914
 msgid "Select this option to select the PGP/MIME protocol."
 msgstr "Wählen Sie diese Option zum das PGP/MIME Protokoll auszuwählen."
 
-#: src/ext-commands.cpp:915
+#: src/ext-commands.cpp:921
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Wählen Sie diese Option zum das S/MIME Protokoll auszuwählen."
 
-#: src/ext-commands.cpp:922
+#: src/ext-commands.cpp:928
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/ext-commands.cpp:929
+#: src/ext-commands.cpp:935
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
 
-#: src/ext-commands.cpp:936
+#: src/ext-commands.cpp:942
 msgid "Select this option to open the certificate manager"
 msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."
 
-#: src/ext-commands.cpp:966
+#: src/ext-commands.cpp:972
 msgid "Automatically select the protocol for sign/encrypt"
 msgstr "Wählen Sie diese Option um das Protokoll automatisch auszuwählen."
 
-#: src/ext-commands.cpp:976
+#: src/ext-commands.cpp:982
 msgid "Use PGP/MIME for sign/encrypt"
 msgstr "PGP/MIME zum signieren/verschlüsseln verwenden."
 
-#: src/ext-commands.cpp:986
+#: src/ext-commands.cpp:992
 msgid "Use S/MIME for sign/encrypt"
 msgstr "S/MIME zum signieren/verschlüsseln verwenden."
 
-#: src/ext-commands.cpp:996
+#: src/ext-commands.cpp:1002
 msgid "Encrypt message with GnuPG"
 msgstr "Nachricht verschlüsseln"
 
-#: src/ext-commands.cpp:1006
+#: src/ext-commands.cpp:1012
 msgid "Sign message with GnuPG"
 msgstr "Nachricht unterschreiben"
 
-#: src/ext-commands.cpp:1016
+#: src/ext-commands.cpp:1022
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
@@ -574,7 +574,7 @@ msgstr ""
 "kann."
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:272
+#: src/olflange-dlgs.cpp:273
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 "GpgOL ist ein Plugin für Microsoft Outlook, welches es ermöglicht\n"
@@ -600,12 +600,12 @@ msgstr ""
 "Public License erhalten haben.  Falls nicht, finden Sie diese\n"
 "unter der Webadresse <http://www.gnu.org/licenses/>."
 
-#: src/olflange-dlgs.cpp:278
+#: src/olflange-dlgs.cpp:279
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
 
-#: src/olflange.cpp:435
+#: src/olflange.cpp:436
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -615,11 +615,9 @@ msgid ""
 msgstr ""
 "Eine neue Version von GpgOL ist installiert worden.\n"
 "\n"
-"Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß "
-"die die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
-"Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
+"Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
-#: src/olflange.cpp:619
+#: src/olflange.cpp:624
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
