@@ -248,7 +248,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           
 	case PSN_HELP: 
           {
-            const char cpynotice[] = "Copyright (C) 2008 g10 Code GmbH";
+            const char cpynotice[] = "Copyright (C) 2009 g10 Code GmbH";
             const char en_notice[] = 
       "GpgOL is a plugin for Outlook to allow encryption and\n"
       "signing of messages using the OpenPGP and S/MIME standard.\n"

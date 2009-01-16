@@ -1404,6 +1404,18 @@ mapi_get_sender (LPMESSAGE message)
   for (p0=buf, p++; *p && *p != '\x01';)
     *p0++ = *p++;
   *p0 = 0;
+
+  /* When using an Exchange account this is an X.509 address and not
+     an SMTP address.  We try to detect this here and extract only the
+     CN RDN.  Note that there are two CNs.  This is just a simple
+     approach and not a real parser.  A better way to do this would be
+     to ask MAPI to resolve the X.500 name to an SMTP name.  */
+  if (strstr (buf, "/o=") && strstr (buf, "/ou=") &&
+      (p = strstr (buf, "/cn=Recipients")) && (p = strstr (p+1, "/cn=")))
+    {
+      log_debug ("%s:%s: orig address is `%s'\n", SRCNAME, __func__, buf);
+      memmove (buf, p+4, strlen (p+4)+1);
+    }
   log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, buf);
   return buf;
 }

@@ -1,5 +1,5 @@
 /* engine-assuan.c - Crypto engine using an Assuan server
- *	Copyright (C) 2007, 2008 g10 Code GmbH
+ *	Copyright (C) 2007, 2008, 2009 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -613,7 +613,7 @@ op_assuan_init (void)
   return 0;
 }
 
-#if 0 /* Not used. */
+
 /* Dummy window procedure.  */
 static LRESULT CALLBACK 
 attach_thread_input_wndw_proc (HWND hwnd, UINT msg, 
@@ -657,8 +657,6 @@ attach_thread_input (DWORD other_tid)
   log_debug ("%s:%s: attached thread %lu to %lu", SRCNAME, __func__,
              GetCurrentThreadId (), other_tid);
 }
-#endif /* not used.  */
-
 
 
 
@@ -875,7 +873,7 @@ async_worker_thread (void *dummy)
   HANDLE hdarray[MAXIMUM_WAIT_OBJECTS];
   int count, addit, any_ready, hdarraylen;
   
-/*   attach_thread_input ( (DWORD)dummy ); */
+  attach_thread_input ( (DWORD)dummy );
   (void)dummy;
 
   for (;;)
@@ -975,19 +973,19 @@ async_worker_thread (void *dummy)
              after the wait because we will only get to here if there
              is actual ui-server work to be done but some messages
              might still be in the queue.  */
-/*           { */
-/*             MSG msg; */
+          {
+            MSG msg;
 
-/*             while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE)) */
-/*               { */
-/*                 TranslateMessage (&msg); */
-/*                 DispatchMessage (&msg); */
-/*               } */
-/*           } */
+            while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+              {
+                TranslateMessage (&msg);
+                DispatchMessage (&msg);
+              }
+          }
 
-          n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE);
-/*           n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE, */
-/*                                          INFINITE, QS_ALLEVENTS); */
+/*           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE); */
+          n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE,
+                                         INFINITE, QS_ALLEVENTS);
           if (n == WAIT_FAILED)
             {
               /* The WFMO failed.  This is an error; to help debugging
@@ -1030,15 +1028,15 @@ async_worker_thread (void *dummy)
 
           /* [Currently not used] 
              Try to process the message queue.  */
-/*           { */
-/*             MSG msg; */
+          {
+            MSG msg;
             
-/*             while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE)) */
-/*               { */
-/*                 TranslateMessage (&msg); */
-/*                 DispatchMessage (&msg); */
-/*               } */
-/*           } */
+            while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+              {
+                TranslateMessage (&msg);
+                DispatchMessage (&msg);
+              }
+          }
         }
 
       /*
