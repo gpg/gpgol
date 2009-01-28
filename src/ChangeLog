@@ -1,3 +1,9 @@
+2009-01-28  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (t2body): Take care of x-pkcs7-mime as used by
+	native OL signed messages.
+	(mime_decrypt): Ditto.
+
 2009-01-16  Werner Koch  <wk@g10code.com>
 
 	* engine-assuan.c (attach_thread_input_wndw_proc) 

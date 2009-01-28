@@ -864,7 +864,9 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
       /* Check whether this attachment is an opaque signed S/MIME
          part.  We use a counter to later check that there is only one
          such part. */
-      if (!strcmp (ctmain, "application") && !strcmp (ctsub, "pkcs7-mime"))
+      if (!strcmp (ctmain, "application")
+          && (!strcmp (ctsub, "pkcs7-mime")
+              || !strcmp (ctsub, "x-pkcs7-mime")))
         {
           const char *smtype = rfc822parse_query_parameter (field,
                                                             "smime-type", 0);
@@ -1986,7 +1988,9 @@ mime_decrypt (protocol_t protocol, LPSTREAM instream, LPMESSAGE mapi_message,
       for (i=0; !table[i].end_of_table; i++)
         if (table[i].attach_type == ATTACHTYPE_FROMMOSS
             && table[i].content_type               
-            && !strcmp (table[i].content_type, "application/pkcs7-mime"))
+            && (!strcmp (table[i].content_type, "application/pkcs7-mime")
+                || !strcmp (table[i].content_type, "application/x-pkcs7-mime"))
+            )
           break;
       if (table[i].end_of_table)
         {

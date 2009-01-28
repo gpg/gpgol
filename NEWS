@@ -1,5 +1,7 @@
-Noteworthy changes for version 0.10.18 (unreleased)
+Noteworthy changes for version 0.10.18 (2009-01-28)
 ===================================================
+
+ * Handle OL created S/MIME messages.
 
 
 Noteworthy changes for version 0.10.17 (2008-11-14)

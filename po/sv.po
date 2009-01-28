@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-11-26 16:23+0100\n"
+"POT-Creation-Date: 2009-01-28 09:57+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -367,18 +367,18 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1468 src/mapihelp.cpp:1476 src/mapihelp.cpp:1484
+#: src/mapihelp.cpp:1480 src/mapihelp.cpp:1488 src/mapihelp.cpp:1496
 msgid "[no subject]"
 msgstr ""
 
-#: src/mapihelp.cpp:2093
+#: src/mapihelp.cpp:2105
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2870
+#: src/mapihelp.cpp:2882
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -460,12 +460,12 @@ msgstr "Kryptering misslyckades"
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
 
-#: src/mimeparser.c:1166
+#: src/mimeparser.c:1168
 #, fuzzy
 msgid "Error writing to stream"
 msgstr "Fel vid skrivning av fil"
 
-#: src/mimeparser.c:1167
+#: src/mimeparser.c:1169
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 

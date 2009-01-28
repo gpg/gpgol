@@ -1,3 +1,9 @@
+2009-01-28  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.18.
+
+	* po/de.po: s/Unterschrift/Signatur/.
+
 2008-11-14  Werner Koch  <wk@g10code.com>
 
 	Release 0.10.17.

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 0.10.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2008-11-26 16:23+0100\n"
-"PO-Revision-Date: 2008-12-02 18:30+0100\n"
+"POT-Creation-Date: 2009-01-28 09:57+0100\n"
+"PO-Revision-Date: 2009-01-28 10:08+0100\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Es ist leider nicht mehr möglich, diese Attachment zu öffnen.\n"
 "\n"
-"Bitten benutzen Sie den \"Entschlüsseln/Verifizieren\" Menüpunkt\n"
+"Bitten benutzen Sie den \"Entschlüsseln/Überprüfen\" Menüpunkt\n"
 "um die gesamte Nachricht nochmal zu entschlüsseln.  Danach können\n"
 "Sie das Attachment wieder öffenen."
 
@@ -105,15 +105,15 @@ msgstr "Fingerabdruck: "
 
 #: src/engine-gpgme.c:845
 msgid "This signature is valid\n"
-msgstr "Diese Unterschrift ist korrekt\n"
+msgstr "Diese Signatur ist korrekt\n"
 
 #: src/engine-gpgme.c:847
 msgid "signature state is \"green\"\n"
-msgstr "Status der Unterschrift ist \"grün\"\n"
+msgstr "Status der Signatur ist \"grün\"\n"
 
 #: src/engine-gpgme.c:849
 msgid "signature state is \"red\"\n"
-msgstr "Status der Unterschrift ist \"rot\"\n"
+msgstr "Status der Signatur ist \"rot\"\n"
 
 #: src/engine-gpgme.c:853
 msgid "Warning: One of the certificates has been revoked\n"
@@ -121,8 +121,7 @@ msgstr "Warnung: Eines der Zertifikate wurde widerrufen\n"
 
 #: src/engine-gpgme.c:863
 msgid "Warning: The certificate used to create the signature expired at: "
-msgstr ""
-"Warnung: Das Zertifikat mit der diese Unterschrift erzeugt wurde verfiel am: "
+msgstr "Warnung: Das Zertifikat mit der diese Signatur erzeugt wurde verfiel am: "
 
 #: src/engine-gpgme.c:869
 msgid "Warning: At least one certification certificate has expired\n"
@@ -131,7 +130,7 @@ msgstr ""
 
 #: src/engine-gpgme.c:875
 msgid "Warning: The signature expired at: "
-msgstr "Die Unterschrift verfiel am: "
+msgstr "Die Signatur verfiel am: "
 
 #: src/engine-gpgme.c:881
 msgid "Can't verify due to a missing certificate\n"
@@ -190,7 +189,7 @@ msgstr "[Unbenannter Teil]"
 
 #: src/engine-gpgme.c:1007 src/engine-gpgme.c:1037
 msgid "Good signature from: "
-msgstr "Korrekte Unterschrift von: "
+msgstr "Korrekte Signatur von: "
 
 #: src/engine-gpgme.c:1014
 msgid "                aka: "
@@ -202,15 +201,15 @@ msgstr "                  erzeugt: "
 
 #: src/engine-gpgme.c:1027
 msgid "*BAD* signature claimed to be from: "
-msgstr "*FALSCHE* Unterschrift, vorgeblich von: "
+msgstr "*FALSCHE* Signatur, vorgeblich von: "
 
 #: src/engine-gpgme.c:1050
 msgid "Error checking signature"
-msgstr "Fehler beim Prüfen der Unterschrift"
+msgstr "Fehler beim Prüfen der Signatur"
 
 #: src/engine-gpgme.c:1066
 msgid "*** Begin Notation (signature by: "
-msgstr "*** Anfang Notation (Unterschrift von: "
+msgstr "*** Anfang Notation (Signatur von: "
 
 #: src/engine-gpgme.c:1086
 msgid "*** End Notation ***\n"
@@ -225,7 +224,7 @@ msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
 msgstr ""
-"Dies ist eine unterschriebene und verschlüsselte Nachricht.\n"
+"Dies ist eine signierte und verschlüsselte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
 #: src/ext-commands.cpp:557
@@ -241,7 +240,7 @@ msgid ""
 "This is a signed message.\n"
 "Click for more information. "
 msgstr ""
-"Dies ist eine unterschriebene Nachricht.\n"
+"Dies ist eine signierte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
 #: src/ext-commands.cpp:569
@@ -266,7 +265,7 @@ msgstr "Nachricht verschlüsseln"
 
 #: src/ext-commands.cpp:575
 msgid "&sign message with GnuPG"
-msgstr "Nachricht unterschreiben"
+msgstr "Nachricht signieren"
 
 #: src/ext-commands.cpp:610
 msgid "GnuPG Certificate &Manager"
@@ -344,7 +343,7 @@ msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
 #: src/ext-commands.cpp:935
 msgid "Select this option to sign the message."
-msgstr "Wählen Sie diese Option zum Unterschreiben der Nachricht."
+msgstr "Wählen Sie diese Option zum Signieren der Nachricht."
 
 #: src/ext-commands.cpp:942
 msgid "Select this option to open the certificate manager"
@@ -368,7 +367,7 @@ msgstr "Nachricht verschlüsseln"
 
 #: src/ext-commands.cpp:1012
 msgid "Sign message with GnuPG"
-msgstr "Nachricht unterschreiben"
+msgstr "Nachricht signieren"
 
 #: src/ext-commands.cpp:1022
 msgid "Open the GpgOL certificate manager"
@@ -392,21 +391,18 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1468 src/mapihelp.cpp:1476 src/mapihelp.cpp:1484
+#: src/mapihelp.cpp:1480 src/mapihelp.cpp:1488 src/mapihelp.cpp:1496
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
-#: src/mapihelp.cpp:2093
+#: src/mapihelp.cpp:2105
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
-msgstr ""
-"[Der Inhalt dieser Nachricht ist nicht sichtbar, da sie in einer anderen "
-"Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
-"\"entschlüsseln/verifizieren\" um den Inhalt wieder sichtbar zu machen.]"
+msgstr "[Der Inhalt dieser Nachricht ist nicht sichtbar, da sie in einer anderen Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt \"entschlüsseln/überprüfen\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2870
+#: src/mapihelp.cpp:2882
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -439,7 +435,7 @@ msgid ""
 "MIME structure .:\n"
 "%s"
 msgstr ""
-"Status der Unterschrift: %s\n"
+"Status der Signatur ...: %s\n"
 "Nachrichtenklasse .....: %s\n"
 "Struktur der Nachricht :\n"
 "%s"
@@ -450,27 +446,21 @@ msgstr "GpgOL - Informationen zu der Nachricht"
 
 #: src/message.cpp:540
 msgid "Signature verification of an encrypted message is not possible."
-msgstr ""
-"Die Prüfung der Unterschrift ist bei einer verschlüsselten Nachrichten nicht "
-"möglich."
+msgstr "Die Prüfung der Signatur ist bei einer verschlüsselten Nachrichten nicht möglich."
 
 #: src/message.cpp:551
 msgid "Signature verification of this message class is not possible."
-msgstr ""
-"Die Prüfung der Unterschrift ist bei dieser Nachrichtenklasse nicht möglich."
+msgstr "Die Prüfung der Signatur ist bei dieser Nachrichtenklasse nicht möglich."
 
 #: src/message.cpp:554
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
-msgstr ""
-"Die Prüfung der Unterschrift ist bei dieser S/MIME Nachricht nicht möglich.  "
-"Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME "
-"eingeschaltet ist."
+msgstr "Die Prüfung der Signatur ist bei dieser S/MIME Nachricht nicht möglich.  Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME eingeschaltet ist."
 
 #: src/message.cpp:558
 msgid "This message has no signature."
-msgstr "Diese Nachricht hat keine Unterschrift."
+msgstr "Diese Nachricht hat keine Signatur."
 
 #: src/message.cpp:856
 msgid "This message is not encrypted."
@@ -501,13 +491,13 @@ msgstr "Verschlüsselungsfehler (%s)"
 #: src/message.cpp:1279
 #, c-format
 msgid "Signing failed (%s)"
-msgstr "Unterschrifterstellungsfehler (%s)"
+msgstr "Signaturerstellungsfehler (%s)"
 
-#: src/mimeparser.c:1166
+#: src/mimeparser.c:1168
 msgid "Error writing to stream"
 msgstr "Dateischreibfehler"
 
-#: src/mimeparser.c:1167
+#: src/mimeparser.c:1169
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
@@ -615,7 +605,9 @@ msgid ""
 msgstr ""
 "Eine neue Version von GpgOL ist installiert worden.\n"
 "\n"
-"Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
+"Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß "
+"die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
+"Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
 #: src/olflange.cpp:624
 msgid ""
@@ -701,27 +693,27 @@ msgstr "Auswahl des Empfängerschlüssels"
 
 #: src/verify-dialog.c:124
 msgid "BAD signature!"
-msgstr "FALSCHE Unterschrift!"
+msgstr "FALSCHE Signatur!"
 
 #: src/verify-dialog.c:126
 msgid "Good signature"
-msgstr "Korrekte Unterschrift"
+msgstr "Korrekte Signatur"
 
 #: src/verify-dialog.c:128
 msgid "Good signature from revoked certificate"
-msgstr "Korrekte Unterschrift; aber Zertifikat wurde widerrufen"
+msgstr "Korrekte Signatur; aber Zertifikat wurde widerrufen"
 
 #: src/verify-dialog.c:130
 msgid "Good signature from expired certificate"
-msgstr "Korrekte Unterschrift; allerdings ist das Zertifikat abgelaufen"
+msgstr "Korrekte Signatur; allerdings ist das Zertifikat abgelaufen"
 
 #: src/verify-dialog.c:132
 msgid "Good expired signature"
-msgstr "Korrekte aber abgelaufene Unterschrift"
+msgstr "Korrekte aber abgelaufene Signatur"
 
 #: src/verify-dialog.c:135
 msgid "Could not check signature: missing certificate"
-msgstr "Unterschrift konnte nicht geprüft werden: Zertifikat fehlt"
+msgstr "Signatur konnte nicht geprüft werden: Zertifikat fehlt"
 
 #: src/verify-dialog.c:139
 msgid "Verification error"
@@ -738,15 +730,15 @@ msgstr "Möglicherweise durch falsche Einstellungen verursacht"
 #: src/verify-dialog.c:174
 #, c-format
 msgid "Signature expired on %s"
-msgstr "Unterschrift abgelaufen am %s"
+msgstr "Signatur abgelaufen am %s"
 
 #: src/verify-dialog.c:186
 msgid "Signature issued by a certificate we do NOT trust."
-msgstr "Die Unterschrift stammt von einem Zertifikat dem wir NICHT vertrauen."
+msgstr "Die Signatur stammt von einem Zertifikat dem wir NICHT vertrauen."
 
 #: src/verify-dialog.c:193
 msgid "Signature issued by a non-valid certificate."
-msgstr "Die Unterschrift stammt von einem ungültigen Zertifikat."
+msgstr "Die Signatur stammt von einem ungültigen Zertifikat."
 
 #: src/verify-dialog.c:209
 msgid "Signature made"
