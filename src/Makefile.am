@@ -14,6 +14,7 @@
 unused_sources = item-events.cpp 
 
 bin_PROGRAMS = gpgol 
+#treeview
 EXTRA_DIST = versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
 	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp \
              proto-auto.bmp proto-pgpmime.bmp proto-smime.bmp \
@@ -64,6 +65,8 @@ gpgol_SOURCES = \
 	ol-ext-callback.cpp ol-ext-callback.h \
 	w32-gettext.c w32-gettext.h 
 
+
+#treeview_SOURCES = treeview.c
 
 # W32API 3.2 comes with an unusable libmapi32.a.  We build our own
 # version.  Note the omission of -k (--kill-at) from the DLLTOOL

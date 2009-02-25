@@ -223,6 +223,17 @@ get_gpgolcharset_tag (LPMESSAGE message, ULONG *r_tag)
 }
 
 
+/* Return the property tag for GpgOL Draft Info.  */
+int 
+get_gpgoldraftinfo_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Draft Info", __func__)))
+    return -1;
+  *r_tag |= PT_STRING8;
+  return 0;
+}
+
+
 /* Return the tag of the Internet Charset Body property which seems to
    hold the PR_BODY as received and thus before charset
    conversion.  */
@@ -2483,6 +2494,81 @@ mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset)
     {
       log_error ("%s:%s: can't set %s property: hr=%#lx\n",
                  SRCNAME, __func__, "GpgOL Charset", hr); 
+      return -1;
+    }
+
+  return 0;
+}
+
+
+
+/* Return GpgOL's draft info string as an allocated string.  If no
+   draft info is available, NULL is returned.  */
+char *
+mapi_get_gpgol_draft_info (LPMESSAGE msg)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  ULONG tag;
+  char *retstr;
+
+  if (get_gpgoldraftinfo_tag (msg, &tag) )
+    return NULL;
+  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
+  if (FAILED (hr))
+    return NULL;
+  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    retstr = xstrdup (propval->Value.lpszA);
+  else
+    retstr = NULL;
+
+  MAPIFreeBuffer (propval);
+  return retstr;
+}
+
+
+/* Set GpgOL's draft info string to STRING.  This string is defined as:
+
+   Character 1:  'E' = encrypt selected,
+                 'e' = encrypt not selected.
+                 '-' = don't care
+   Character 2:  'S' = sign selected,
+                 's' = sign not selected.
+                 '-' = don't care
+   Character 3:  'A' = Auto protocol 
+                 'P' = OpenPGP protocol
+                 'X' = S/MIME protocol
+                 '-' = don't care
+                 
+   If string is NULL, the property will get deleted.
+
+   Note that this function does not call SaveChanges.  */
+int 
+mapi_set_gpgol_draft_info (LPMESSAGE message, const char *string)
+{
+  HRESULT hr;
+  SPropValue prop;
+  SPropTagArray proparray;
+
+  if (get_gpgoldraftinfo_tag (message, &prop.ulPropTag) )
+    return -1;
+  if (string)
+    {
+      prop.Value.lpszA = xstrdup (string);
+      hr = HrSetOneProp (message, &prop);	
+      xfree (prop.Value.lpszA);
+    }
+  else
+    {
+      proparray.cValues = 1;
+      proparray.aulPropTag[0] = prop.ulPropTag;
+      hr = message->DeleteProps (&proparray, NULL);
+    }
+  if (hr)
+    {
+      log_error ("%s:%s: can't %s %s property: hr=%#lx\n",
+                 SRCNAME, __func__, string?"set":"delete",
+                 "GpgOL Draft Info", hr); 
       return -1;
     }
 

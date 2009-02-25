@@ -69,6 +69,7 @@ extern "C" {
 
 
 /* Command IDs. */
+#define EECMDID_SaveMessage                     13  /* (name guessed) */
 #define EECMDID_PrevMessage                     87  /* (name guessed) */
 #define EECMDID_NextMessage                     88  /* (name guessed) */
 #define EECMDID_Format                         110

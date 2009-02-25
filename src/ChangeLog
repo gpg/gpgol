@@ -1,3 +1,11 @@
+2009-02-25  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgoldraftinfo_tag): New.
+	(mapi_get_gpgol_draft_info, mapi_set_gpgol_draft_info): New.
+	* ext-commands.cpp (DoCommand): Save encryption selection.
+	(InstallCommands): Get encryption selection from the draft info.
+	* mimemaker.c (finalize_message): Delete the property.
+
 2009-01-28  Werner Koch  <wk@g10code.com>
 
 	* mimeparser.c (t2body): Take care of x-pkcs7-mime as used by

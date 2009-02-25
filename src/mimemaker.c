@@ -1075,6 +1075,10 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
   if (delete_all_attachments (message, att_table))
     return -1;
 
+  /* Remove the draft info so that we don't leak the information on
+     whether the message has been signed etc.  */
+  mapi_set_gpgol_draft_info (message, NULL);
+
   return mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
 }
 

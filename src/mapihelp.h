@@ -145,6 +145,10 @@ int mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name);
 char *mapi_get_gpgol_charset (LPMESSAGE obj);
 int mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset);
 
+char *mapi_get_gpgol_draft_info (LPMESSAGE msg);
+int   mapi_set_gpgol_draft_info (LPMESSAGE message, const char *string);
+
+
 int  mapi_set_attach_hidden (LPATTACH attach);
 int  mapi_test_attach_hidden (LPATTACH attach);
 

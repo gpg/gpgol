@@ -387,6 +387,8 @@ GpgolExtCommands::InstallCommands (
   DISPPARAMS dispparams;
   VARIANT aVariant;
   int force_encrypt = 0;
+  char *draft_info = NULL;
+  
 
   (void)hMenu;
   
@@ -494,6 +496,12 @@ GpgolExtCommands::InstallCommands (
           xfree (key);
         }
       
+      /* Because we have the message open, we use it to get the draft
+         info property.  */
+      if (message)
+        draft_info = mapi_get_gpgol_draft_info (message);
+
+
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
     }
@@ -591,13 +599,30 @@ GpgolExtCommands::InstallCommands (
                      "Sign",    IDB_SIGN,    m_nCmdSign,
                      NULL, 0, 0);
       
-
-      m_pExchExt->m_protoSelection = opt.default_protocol;
+      if (draft_info && strlen (draft_info) >= 3 && draft_info[2] == 'A')
+        m_pExchExt->m_protoSelection = PROTOCOL_UNKNOWN;
+      else if (draft_info && strlen (draft_info) >= 3 && draft_info[2] == 'P')
+        m_pExchExt->m_protoSelection = PROTOCOL_OPENPGP;
+      else if (draft_info && strlen (draft_info) >= 3 && draft_info[2] == 'X')
+        m_pExchExt->m_protoSelection = PROTOCOL_SMIME;
+      else
+        m_pExchExt->m_protoSelection = opt.default_protocol;
       update_protocol_menu (eecb);
 
-      m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
+      if (draft_info && draft_info[0] == 'E')
+        m_pExchExt->m_gpgEncrypt = true;
+      else if (draft_info && draft_info[0] == 'e')
+        m_pExchExt->m_gpgEncrypt = false;
+      else
+        m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
 
-      m_pExchExt->m_gpgSign    = opt.sign_default;
+      if (draft_info && draft_info[0] && draft_info[1] == 'S')
+        m_pExchExt->m_gpgSign = true;
+      else if (draft_info && draft_info[0] && draft_info[1] == 's')
+        m_pExchExt->m_gpgSign = false;
+      else
+        m_pExchExt->m_gpgSign = opt.sign_default;
+
       if (force_encrypt)
         m_pExchExt->m_gpgEncrypt = true;
       check_menu (eecb, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
@@ -615,6 +640,9 @@ GpgolExtCommands::InstallCommands (
         _("Open the certificate manager"), IDB_KEY_MANAGER, m_nCmdKeyManager,
         NULL, 0, 0);
     }
+
+  xfree (draft_info);
+
   return S_FALSE;
 }
 
@@ -867,6 +895,32 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 	}
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
+    }
+  else if (nCommandID == EECMDID_SaveMessage
+           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
+    {
+      char buf[4];
+      
+      log_debug ("%s:%s: command SaveMessage called\n", SRCNAME, __func__);
+      buf[0] = m_pExchExt->m_gpgEncrypt? 'E':'e';
+      buf[1] = m_pExchExt->m_gpgSign? 'S':'s';
+      switch (m_pExchExt->m_protoSelection)
+        {
+        case PROTOCOL_UNKNOWN: buf[2] = 'A'; break;
+        case PROTOCOL_OPENPGP: buf[2] = 'P'; break;
+        case PROTOCOL_SMIME:   buf[2] = 'X'; break;
+        default: buf[2] = '-'; break;
+        }
+      buf[3] = 0;
+
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        mapi_set_gpgol_draft_info (message, buf);
+      else
+        log_debug ("%s:%s: getObject failed: hr=%#lx\n",SRCNAME, __func__, hr);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
+      return S_FALSE; /* Pass on to next handler.  */
     }
   else
     {

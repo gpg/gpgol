@@ -253,6 +253,11 @@ This property is of type STRING8 and used to store the MIME structure of
 the orginal message.  The content are lines of colon delimited fields.
 The specification has not yet been finished.
 
+@item GpgOL Draft Info
+This is a property of type STRING8 used to preserve crypto settings in a
+draft message.  For details see the function
+@code{mapi_set_gpgol_draft_info}.
+
 @end table
 
 

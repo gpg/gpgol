@@ -121,7 +121,8 @@ msgstr "Warnung: Eines der Zertifikate wurde widerrufen\n"
 
 #: src/engine-gpgme.c:863
 msgid "Warning: The certificate used to create the signature expired at: "
-msgstr "Warnung: Das Zertifikat mit der diese Signatur erzeugt wurde verfiel am: "
+msgstr ""
+"Warnung: Das Zertifikat mit der diese Signatur erzeugt wurde verfiel am: "
 
 #: src/engine-gpgme.c:869
 msgid "Warning: At least one certification certificate has expired\n"
@@ -400,7 +401,10 @@ msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
-msgstr "[Der Inhalt dieser Nachricht ist nicht sichtbar, da sie in einer anderen Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt \"entschlüsseln/überprüfen\" um den Inhalt wieder sichtbar zu machen.]"
+msgstr ""
+"[Der Inhalt dieser Nachricht ist nicht sichtbar, da sie in einer anderen "
+"Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
+"\"entschlüsseln/überprüfen\" um den Inhalt wieder sichtbar zu machen.]"
 
 #: src/mapihelp.cpp:2882
 msgid ""
@@ -446,17 +450,23 @@ msgstr "GpgOL - Informationen zu der Nachricht"
 
 #: src/message.cpp:540
 msgid "Signature verification of an encrypted message is not possible."
-msgstr "Die Prüfung der Signatur ist bei einer verschlüsselten Nachrichten nicht möglich."
+msgstr ""
+"Die Prüfung der Signatur ist bei einer verschlüsselten Nachrichten nicht "
+"möglich."
 
 #: src/message.cpp:551
 msgid "Signature verification of this message class is not possible."
-msgstr "Die Prüfung der Signatur ist bei dieser Nachrichtenklasse nicht möglich."
+msgstr ""
+"Die Prüfung der Signatur ist bei dieser Nachrichtenklasse nicht möglich."
 
 #: src/message.cpp:554
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
-msgstr "Die Prüfung der Signatur ist bei dieser S/MIME Nachricht nicht möglich.  Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME eingeschaltet ist."
+msgstr ""
+"Die Prüfung der Signatur ist bei dieser S/MIME Nachricht nicht möglich.  "
+"Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME "
+"eingeschaltet ist."
 
 #: src/message.cpp:558
 msgid "This message has no signature."
