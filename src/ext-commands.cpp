@@ -541,11 +541,10 @@ GpgolExtCommands::InstallCommands (
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
       
-      /* We always enable the verify button as it might be useful on
-         an already decrypted message. */
       add_menu (eecb, pnCommandIDBase,
         "@", NULL,
-        opt.disable_gpgol? "":_("GpgOL Decrypt/Verify"), &m_nCmdCryptoState,
+        (opt.disable_gpgol || not_a_gpgol_message)?
+                "" : _("GpgOL Decrypt/Verify"), &m_nCmdCryptoState,
         opt.enable_debug? "GpgOL Debug-0 (display crypto info)":"", 
                 &m_nCmdDebug0,
         (opt.enable_debug && !opt.disable_gpgol)?
