@@ -72,7 +72,8 @@ int engine_wait (engine_filter_t filter);
 void engine_cancel (engine_filter_t filter);
 
 int engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
-                            protocol_t req_protocol, char **recipients,
+                            protocol_t req_protocol, 
+                            const char *sender, char **recipients,
                             protocol_t *r_protocol);
 int engine_encrypt_start (engine_filter_t filter, int cancel);
 int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,

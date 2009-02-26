@@ -835,10 +835,15 @@ engine_cancel (engine_filter_t filter)
    R_PROTOCOL.  This is a two part fucntion.  engine_encrypt_prepare
    needs to be called first followed by engine_encrypt_start.  The
    latter command has just one argument CANCEL which can be set to
-   true to cancel the prepared command.  */
+   true to cancel the prepared command. 
+
+   SENDER is the sender's mailbox or NULL; this information may be
+   used by the UI-server for role selection.
+ */
 int
 engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
-                        protocol_t req_protocol, char **recipients,
+                        protocol_t req_protocol, 
+                        const char *sender, char **recipients,
                         protocol_t *r_protocol)
 {
   gpg_error_t err;
@@ -848,8 +853,8 @@ engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
   if (filter->use_assuan)
     {
       err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
-                               filter, hwnd, recipients, &used_protocol,
-                               &filter->encstate);
+                               filter, hwnd, sender, recipients,
+                               &used_protocol, &filter->encstate);
       if (!err)
         *r_protocol = used_protocol;
     }

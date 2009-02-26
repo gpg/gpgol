@@ -1563,12 +1563,15 @@ encrypt_closure (closure_data_t cld)
    this function returns success, the data objects may only be
    destroyed after an engine_wait or engine_cancel.  On success the
    function returns a poiunter to the encryption state and thus
-   requires that op_assuan_encrypt_bottom will be run later. */
+   requires that op_assuan_encrypt_bottom will be run later. 
+   SENDER is the sender's mailbox or NULL; this information may be
+   used by the UI-server for role selection.  */
 int
 op_assuan_encrypt (protocol_t protocol, 
                    gpgme_data_t indata, gpgme_data_t outdata,
                    engine_filter_t filter, void *hwnd,
-                   char **recipients, protocol_t *r_used_protocol,
+                   const char *sender, char **recipients,
+                   protocol_t *r_used_protocol,
                    struct engine_assuan_encstate_s **r_encstate)
 {
   gpg_error_t err;
@@ -1608,6 +1611,17 @@ op_assuan_encrypt (protocol_t protocol,
   if (err)
     goto leave;
   send_session_info (ctx, filter);
+
+  /* If a sender has been supplied, tell the server about it.  We
+     don't care about error because servers may not implement SENDER
+     in an encryption context.  */
+  if (sender && *sender)
+    {
+      snprintf (line, sizeof line, "SENDER --info -- %s", sender);
+      assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+    }
+
+  /* Send the recipients to the server.  */
   for (i=0; recipients && recipients[i]; i++)
     {
       snprintf (line, sizeof line, "RECIPIENT %s", recipients[i]);
