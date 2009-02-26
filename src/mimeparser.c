@@ -1,5 +1,5 @@
 /* mimeparser.c - Parse multipart MIME message
- *	Copyright (C) 2005, 2007, 2008 g10 Code GmbH
+ *	Copyright (C) 2005, 2007, 2008, 2009 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
@@ -361,7 +361,13 @@ start_attachment (mime_context_t ctx, int is_body)
 
   /* We need to insert a short filename .  Without it, the _displayed_
      list of attachments won't get updated although the attachment has
-     been created. */
+     been created.  If we know the content type we use an appropriate
+     suffix for the filename.  This is useful so that if no filename
+     is known for the attachment (to be stored in
+     PR_ATTACH_LONG_FILENAME), Outlooks gets an idea about the content
+     of the attachment from this made up filename.  This allows for
+     example to click on the attachment and open it with an
+     appropriate application.  */
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
   {
     char buf[100];
@@ -370,7 +376,36 @@ start_attachment (mime_context_t ctx, int is_body)
       prop.Value.lpszA = is_body == 2? "gpgol000.htm":"gpgol000.txt";
     else
       {
-        snprintf (buf, 100, "gpgol%03d.dat", ctx->part_counter);
+        static struct {
+          const char *suffix;
+          const char *ct;
+        } suffix_table[] = {
+          { "doc", "application/msword" },
+          { "eml", "message/rfc822" },
+          { "htm", "text/html" },
+          { "jpg", "image/jpeg" },
+          { "pdf", "application/pdf" },
+          { "png", "image/png" },
+          { "pps", "application/vnd.ms-powerpoint" },
+          { "ppt", "application/vnd.ms-powerpoint" },
+          { "ps",  "application/postscript" },
+          { NULL, NULL }
+        };
+        const char *suffix = "dat";  /* Default.  */
+        int idx;
+        
+        if (ctx->mimestruct_cur && ctx->mimestruct_cur->content_type)
+          {
+            for (idx=0; suffix_table[idx].ct; idx++)
+              if (!strcmp (ctx->mimestruct_cur->content_type,
+                           suffix_table[idx].ct))
+                {
+                  suffix = suffix_table[idx].suffix;
+                  break;
+                }
+          }
+
+        snprintf (buf, 100, "gpgol%03d.%s", ctx->part_counter, suffix);
         prop.Value.lpszA = buf;
       }
     hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);

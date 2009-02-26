@@ -3,6 +3,9 @@ Noteworthy changes for version 0.10.19
 
  * Save the crypto settings in a message draft.
 
+ * Unnamed attachments are now shown with a suffix matching its MIME
+   type.
+
 
 Noteworthy changes for version 0.10.18 (2009-01-28)
 ===================================================

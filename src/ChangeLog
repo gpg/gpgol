@@ -1,5 +1,8 @@
 2009-02-26  Werner Koch  <wk@g10code.com>
 
+	* mimeparser.c (start_attachment): Try to figure out a good file
+	name suffix for the FILENAME property.
+
 	* ext-commands.cpp (InstallCommands): Disable decrypt button for
 	non GpgOl messages.
 
