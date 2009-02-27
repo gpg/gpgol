@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-01-28 09:57+0100\n"
+"POT-Creation-Date: 2009-02-27 11:22+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -54,8 +54,8 @@ msgid ""
 "You may want to try again."
 msgstr ""
 
-#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:780
-#: src/ext-commands.cpp:801 src/ext-commands.cpp:806 src/main.c:682
+#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:807
+#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:682
 #: src/main.c:688 src/message.cpp:320
 msgid "GpgOL"
 msgstr ""
@@ -206,69 +206,69 @@ msgstr "*** Notation start (signatur av: "
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: src/ext-commands.cpp:540
+#: src/ext-commands.cpp:547
 msgid "GpgOL Decrypt/Verify"
 msgstr ""
 
-#: src/ext-commands.cpp:554
+#: src/ext-commands.cpp:561
 msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:557
+#: src/ext-commands.cpp:564
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:559
+#: src/ext-commands.cpp:566
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:569
+#: src/ext-commands.cpp:576
 msgid ">GnuPG protocol"
 msgstr ""
 
-#: src/ext-commands.cpp:570
+#: src/ext-commands.cpp:577
 msgid "auto"
 msgstr ""
 
-#: src/ext-commands.cpp:571
+#: src/ext-commands.cpp:578
 #, fuzzy
 msgid "PGP/MIME"
 msgstr "[PGP/MIME-meddelande]"
 
-#: src/ext-commands.cpp:572
+#: src/ext-commands.cpp:579
 msgid "S/MIME"
 msgstr ""
 
-#: src/ext-commands.cpp:574
+#: src/ext-commands.cpp:581
 #, fuzzy
 msgid "&encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:575
+#: src/ext-commands.cpp:582
 #, fuzzy
 msgid "&sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:610
+#: src/ext-commands.cpp:634
 #, fuzzy
 msgid "GnuPG Certificate &Manager"
 msgstr "GPG-nyckel&hanterare"
 
-#: src/ext-commands.cpp:611
+#: src/ext-commands.cpp:635
 msgid "Remove GpgOL flags from this folder"
 msgstr ""
 
-#: src/ext-commands.cpp:615
+#: src/ext-commands.cpp:639
 msgid "Open the certificate manager"
 msgstr ""
 
-#: src/ext-commands.cpp:751
+#: src/ext-commands.cpp:778
 msgid ""
 "Support for S/MIME has not been enabled.\n"
 "\n"
@@ -277,12 +277,12 @@ msgid ""
 ">Options->GpgOL.\n"
 msgstr ""
 
-#: src/ext-commands.cpp:779
+#: src/ext-commands.cpp:806
 #, fuzzy
 msgid "Could not start certificate manager"
 msgstr "Kunde inte starta nyckelhanteraren"
 
-#: src/ext-commands.cpp:791
+#: src/ext-commands.cpp:818
 msgid ""
 "You are about to start the process of reversing messages created by GpgOL to "
 "prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
@@ -295,62 +295,62 @@ msgid ""
 "will again process messages."
 msgstr ""
 
-#: src/ext-commands.cpp:805
+#: src/ext-commands.cpp:832
 msgid "Do you want to revert this folder?"
 msgstr ""
 
-#: src/ext-commands.cpp:907
+#: src/ext-commands.cpp:960
 #, fuzzy
 msgid "Select this option to automatically select the protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:914
+#: src/ext-commands.cpp:967
 #, fuzzy
 msgid "Select this option to select the PGP/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:921
+#: src/ext-commands.cpp:974
 #, fuzzy
 msgid "Select this option to select the S/MIME protocol."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:928
+#: src/ext-commands.cpp:981
 msgid "Select this option to encrypt the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:935
+#: src/ext-commands.cpp:988
 msgid "Select this option to sign the message."
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:942
+#: src/ext-commands.cpp:995
 #, fuzzy
 msgid "Select this option to open the certificate manager"
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:972
+#: src/ext-commands.cpp:1025
 #, fuzzy
 msgid "Automatically select the protocol for sign/encrypt"
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:982
+#: src/ext-commands.cpp:1035
 msgid "Use PGP/MIME for sign/encrypt"
 msgstr ""
 
-#: src/ext-commands.cpp:992
+#: src/ext-commands.cpp:1045
 msgid "Use S/MIME for sign/encrypt"
 msgstr ""
 
-#: src/ext-commands.cpp:1002
+#: src/ext-commands.cpp:1055
 #, fuzzy
 msgid "Encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:1012
+#: src/ext-commands.cpp:1065
 #, fuzzy
 msgid "Sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:1022
+#: src/ext-commands.cpp:1075
 msgid "Open the GpgOL certificate manager"
 msgstr ""
 
@@ -367,18 +367,18 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1480 src/mapihelp.cpp:1488 src/mapihelp.cpp:1496
+#: src/mapihelp.cpp:1491 src/mapihelp.cpp:1499 src/mapihelp.cpp:1507
 msgid "[no subject]"
 msgstr ""
 
-#: src/mapihelp.cpp:2105
+#: src/mapihelp.cpp:2116
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2882
+#: src/mapihelp.cpp:2968
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -460,12 +460,12 @@ msgstr "Kryptering misslyckades"
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
 
-#: src/mimeparser.c:1168
+#: src/mimeparser.c:1203
 #, fuzzy
 msgid "Error writing to stream"
 msgstr "Fel vid skrivning av fil"
 
-#: src/mimeparser.c:1169
+#: src/mimeparser.c:1204
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 
