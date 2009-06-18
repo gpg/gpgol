@@ -135,8 +135,11 @@ struct
   /* The SVN revision as stored in the registry.  */
   int svn_revision; 
 
-  /* The SVN revision of the the binary used to install the forms.  */
+  /* The SVN revision of the binary used to install the forms.  */
   int forms_revision;
+
+  /* The stored number of the binary which showed the last announcement.  */
+  int announce_number;
 
   /* Disable message processing until restart.  This is required to
      implement message reverting as a perparation to remove GpgOL.  */

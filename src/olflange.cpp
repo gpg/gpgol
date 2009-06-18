@@ -430,6 +430,40 @@ GpgolExt::GpgolExt (void)
       g_initdll = TRUE;
       log_debug ("%s:%s: first time initialization done\n",
                  SRCNAME, __func__);
+
+#define ANNOUNCE_NUMBER 1
+      if ( ANNOUNCE_NUMBER > opt.announce_number )
+        {
+          /* Note: If you want to change the announcment, you need to
+             increment the ANNOUNCE_NUMBER above.  The number assures
+             that a user will see this message only once.  */
+          MessageBox 
+            (NULL,
+             _("Welcome to GpgOL 1.0\n"
+               "\n"
+               "GpgOL adds integrated OpenPGP and S/MIME encryption "
+               "and digital signing support to Outlook 2003 and 2007.\n"
+               "\n"
+               "Although we tested this software extensively, we can't "
+               "give you any guarantee that it will work as expected. "
+               "The programming interface we are using has not been properly "
+               "documented by Microsoft and thus the functionality of GpgOL "
+               "may cease to work with an update of your Windows system.\n"
+               "\n"
+               "WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START "
+               "TO USE GPGOL ON ANY SENSITIVE DATA!\n"
+               "\n"
+               "There are some known problems, the most severe being "
+               "that sending encrypted or signed mails using an Exchange "
+               "based account does not work.  Using GpgOL along with "
+               "other Outlook plugins may in some cases not work."
+               "\n"),     
+             "GpgOL", MB_ICONINFORMATION|MB_OK);
+          /* Show this warning only once.  */
+          opt.announce_number = ANNOUNCE_NUMBER;
+          write_options ();
+        }
+
       if ( SVN_REVISION > opt.svn_revision )
         {
           MessageBox (NULL,

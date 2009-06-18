@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GpgOL 0.10.0\n"
+"Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-02-27 11:22+0100\n"
-"PO-Revision-Date: 2009-01-28 10:08+0100\n"
+"POT-Creation-Date: 2009-06-18 18:59+0200\n"
+"PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
 "MIME-Version: 1.0\n"
@@ -57,8 +57,8 @@ msgstr ""
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
 #: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:807
-#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:682
-#: src/main.c:688 src/message.cpp:320
+#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:686
+#: src/main.c:692 src/message.cpp:320
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -374,12 +374,12 @@ msgstr "Nachricht signieren"
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
-#: src/main.c:681
+#: src/main.c:685
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
 
-#: src/main.c:687
+#: src/main.c:691
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -605,7 +605,46 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
 
-#: src/olflange.cpp:436
+#: src/olflange.cpp:442
+msgid ""
+"Welcome to GpgOL 1.0\n"
+"\n"
+"GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
+"support to Outlook 2003 and 2007.\n"
+"\n"
+"Although we tested this software extensively, we can't give you any "
+"guarantee that it will work as expected. The programming interface we are "
+"using has not been properly documented by Microsoft and thus the "
+"functionality of GpgOL may cease to work with an update of your Windows "
+"system.\n"
+"\n"
+"WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START TO USE GPGOL ON "
+"ANY SENSITIVE DATA!\n"
+"\n"
+"There are some known problems, the most severe being that sending encrypted "
+"or signed mails using an Exchange based account does not work.  Using GpgOL "
+"along with other Outlook plugins may in some cases not work.\n"
+msgstr ""
+"Willkommen zu GpgOL 1.0 !\n"
+"\n"
+"GpgOL erweitert Outlook 2003 und 2007 um integrierte OpenPGP und S/MIME "
+"Verschlüsselung und digitale Signaturen.\n"
+"\n"
+"Obgleich wir diese Software ausgiebig getestet haben, können wir leider "
+"nicht garantieren, daß sie einwandfrei funktionieren wird.  Die benutzte "
+"Programmierschnittstelle zu Outlook ist von Microsoft nur sehr ungenügend "
+"dokumentiert worden.  Möglicherweise könnte die korrekte Funktion von GpgOL "
+"durch ein Update von Windows beeinträchtig werden.\n"
+"\n"
+"WIR RATEN DRINGEND DAZU, TESTS DER VERSCHLÜSSELUNG DURCHZUFÜHREN, BEVOR "
+"GPGOL FÜR SENSIBLE DATEN BENUTZT WIRD!\n"
+"\n"
+"Es sind einige Problem bekannt: Insbesondere funktioniert das Senden von "
+"verschlüsselten oder signierten Nachrichten über ein Exchange basiertes "
+"Konto nicht.  Wird GpgOL zusammen mit anderen Outlook Plugins benutzt, kann "
+"es möglicherweise nicht richtig arbeiten.\n"
+
+#: src/olflange.cpp:470
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -619,7 +658,7 @@ msgstr ""
 "die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
 "Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
-#: src/olflange.cpp:624
+#: src/olflange.cpp:658
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"

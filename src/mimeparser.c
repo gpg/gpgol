@@ -405,7 +405,7 @@ start_attachment (mime_context_t ctx, int is_body)
                 }
           }
 
-        snprintf (buf, 100, "gpgol%03d.%s", ctx->part_counter, suffix);
+        snprintf (buf, sizeof buf, "gpgol%03d.%s", ctx->part_counter, suffix);
         prop.Value.lpszA = buf;
       }
     hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
