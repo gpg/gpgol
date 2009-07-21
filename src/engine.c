@@ -837,12 +837,18 @@ engine_cancel (engine_filter_t filter)
    latter command has just one argument CANCEL which can be set to
    true to cancel the prepared command. 
 
+   FLAGS modifies the operation.  Valid flags are:
+
+     ENGINE_FLAG_SIGN_FOLLOWS 
+       Expect that we are part of a sign+encrypt operaion.  This
+       allows the UI-server to presetn a better dialog.
+
    SENDER is the sender's mailbox or NULL; this information may be
    used by the UI-server for role selection.
  */
 int
 engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
-                        protocol_t req_protocol, 
+                        protocol_t req_protocol, unsigned int flags,
                         const char *sender, char **recipients,
                         protocol_t *r_protocol)
 {
@@ -853,7 +859,7 @@ engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
   if (filter->use_assuan)
     {
       err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
-                               filter, hwnd, sender, recipients,
+                               filter, hwnd, flags, sender, recipients,
                                &used_protocol, &filter->encstate);
       if (!err)
         *r_protocol = used_protocol;

@@ -1648,7 +1648,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   }
 
   sender = mapi_get_sender (message);
-  if (engine_encrypt_prepare (filter, hwnd, protocol, 
+  if (engine_encrypt_prepare (filter, hwnd, protocol, 0,
                               sender, recipients, &protocol))
     goto failure;
   if (engine_encrypt_start (filter, 0))
@@ -1829,7 +1829,8 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
 
   sender = mapi_get_sender (message);
   if ((rc=engine_encrypt_prepare (filter, hwnd, 
-                                  protocol, sender, recipients, &protocol)))
+                                  protocol, ENGINE_FLAG_SIGN_FOLLOWS,
+                                  sender, recipients, &protocol)))
     goto failure;
 
   protocol = check_protocol (protocol);

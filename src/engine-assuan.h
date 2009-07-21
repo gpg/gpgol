@@ -40,6 +40,7 @@ void engine_assuan_cancel (void *cancel_data);
 int op_assuan_encrypt (protocol_t protocol, 
                        gpgme_data_t indata, gpgme_data_t outdata,
                        engine_filter_t notify_data, void *hwnd,
+                       unsigned int flags,
                        const char *sender, char **recipients,
                        protocol_t *r_used_protocol,
                        struct engine_assuan_encstate_s **r_encstate);

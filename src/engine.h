@@ -44,6 +44,8 @@ typedef struct engine_keyinfo_s *engine_keyinfo_t;
 struct engine_filter_s;
 typedef struct engine_filter_s *engine_filter_t;
 
+/* Flag values used by the engine functions.  */ 
+#define ENGINE_FLAG_SIGN_FOLLOWS 1  /* Expect a sign+encrypt operation.  */
 
 
 
@@ -72,7 +74,7 @@ int engine_wait (engine_filter_t filter);
 void engine_cancel (engine_filter_t filter);
 
 int engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
-                            protocol_t req_protocol, 
+                            protocol_t req_protocol, unsigned int flags,
                             const char *sender, char **recipients,
                             protocol_t *r_protocol);
 int engine_encrypt_start (engine_filter_t filter, int cancel);

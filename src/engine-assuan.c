@@ -1570,6 +1570,7 @@ int
 op_assuan_encrypt (protocol_t protocol, 
                    gpgme_data_t indata, gpgme_data_t outdata,
                    engine_filter_t filter, void *hwnd,
+                   unsigned int flags,
                    const char *sender, char **recipients,
                    protocol_t *r_used_protocol,
                    struct engine_assuan_encstate_s **r_encstate)
@@ -1634,11 +1635,16 @@ op_assuan_encrypt (protocol_t protocol,
     }
 
   /* If the protocol has not been given, let the UI server tell us the
-     protocol to use. */
+     protocol to use.  If we know that we will also sign the message,
+     send the prep_encrypt anyway to tell the server about a
+     forthcoming sign command.  */
   if (detect_protocol)
     {
       protocol = PROTOCOL_UNKNOWN;
-      err = assuan_transact (ctx, "PREP_ENCRYPT", NULL, NULL, NULL, NULL,
+      err = assuan_transact (ctx,
+                             (flags & ENGINE_FLAG_SIGN_FOLLOWS)
+                             ? "PREP_ENCRYPT --expect-sign": "PREP_ENCRYPT",
+                             NULL, NULL, NULL, NULL,
                              prep_foo_status_cb, &protocol);
       if (err)
         {
@@ -1649,6 +1655,24 @@ op_assuan_encrypt (protocol_t protocol,
       if ( !(protocol_name = get_protocol_name (protocol)) )
         {
           err = gpg_error (GPG_ERR_INV_VALUE);
+          goto leave;
+        }
+    }
+  else if ((flags & ENGINE_FLAG_SIGN_FOLLOWS))
+    {
+      if ( !protocol_name )
+        {
+          err = gpg_error (GPG_ERR_INV_VALUE);
+          goto leave;
+        }
+
+      snprintf (line, sizeof line, "PREP_ENCRYPT --protocol=%s --expect-sign",
+                protocol_name);
+      err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      if (err)
+        {
+          if (gpg_err_code (err) == GPG_ERR_ASS_UNKNOWN_CMD)
+            err = gpg_error (GPG_ERR_INV_VALUE);
           goto leave;
         }
     }
