@@ -117,21 +117,28 @@ create_gpgol_tag (LPMESSAGE message, wchar_t *name, const char *func)
   /* {31805ab8-3e92-11dc-879c-00061b031004}: GpgOL custom properties.  */
   GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
                                             0x1b, 0x03, 0x10, 0x04}};
-
+  ULONG result;
+  
   memset (&mnid, 0, sizeof mnid);
   mnid.lpguid = &guid;
   mnid.ulKind = MNID_STRING;
   mnid.Kind.lpwstrName = name;
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
+  if (FAILED (hr))
+    proparr = NULL;
   if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
     {
       log_error ("%s:%s: can't map GpgOL property: hr=%#lx\n",
                  SRCNAME, func, hr); 
-      return 0;
+      result = 0;
     }
+  else
+    result = (proparr->aulPropTag[0] & 0xFFFF0000);
+  if (proparr)
+    MAPIFreeBuffer (proparr);
     
-  return (proparr->aulPropTag[0] & 0xFFFF0000);
+  return result;
 }
 
 
@@ -246,6 +253,7 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   /* {4E3A7680-B77A-11D0-9DA5-00C04FD65685} */
   GUID guid = {0x4E3A7680, 0xB77A, 0x11D0, {0x9D, 0xA5, 0x00, 0xC0,
                                             0x4F, 0xD6, 0x56, 0x85}};
+  int result;
 
   memset (&mnid, 0, sizeof mnid);
   mnid.lpguid = &guid;
@@ -253,17 +261,24 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   mnid.Kind.lpwstrName = L"Internet Charset Body";
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, 0, &proparr);
+  if (FAILED (hr))
+    proparr = NULL;
   if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
     {
       log_error ("%s:%s: can't get the Internet Charset Body property:"
                  " hr=%#lx\n", SRCNAME, __func__, hr); 
-      return -1;
+      result = -1;
     }
-    
-  if (!(proparr->aulPropTag[0] & 0xFFFF0000))
-    return -1;
-  *r_tag = ((proparr->aulPropTag[0] & 0xFFFF0000) | PT_BINARY);
-  return 0;
+  else
+    {
+      result = 0;
+      *r_tag = ((proparr->aulPropTag[0] & 0xFFFF0000) | PT_BINARY);
+    }
+
+  if (proparr)
+    MAPIFreeBuffer (proparr);
+  
+  return result;
 }
 
 
@@ -327,7 +342,8 @@ mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
   /* {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers */
   GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
                                             0x00, 0x00, 0x00, 0x46} };
-  
+  int result;
+
   if (!msg)
     return -1;
 
@@ -340,21 +356,30 @@ mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
   xfree (mnid.Kind.lpwstrName);
   if (FAILED (hr)) 
     {
+      pProps = NULL;
       log_error ("%s:%s: can't get mapping for header `%s': hr=%#lx\n",
                  SRCNAME, __func__, name, hr); 
-      return -1;
+      result = -1;
     }
-    
-  pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
-  pv.Value.lpszA = (char *)val;
-  hr = HrSetOneProp(msg, &pv);	
-  if (hr)
+  else
     {
-      log_error ("%s:%s: can't set header `%s': hr=%#lx\n",
-                 SRCNAME, __func__, name, hr); 
-      return -1;
+      pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
+      pv.Value.lpszA = (char *)val;
+      hr = HrSetOneProp(msg, &pv);	
+      if (hr)
+        {
+          log_error ("%s:%s: can't set header `%s': hr=%#lx\n",
+                     SRCNAME, __func__, name, hr); 
+          result = -1;
+        }
+      else
+        result = 0;
     }
-  return 0;
+
+  if (pProps)
+    MAPIFreeBuffer (pProps);
+
+  return result;
 }
 
 

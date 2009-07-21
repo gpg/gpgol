@@ -1,5 +1,8 @@
 2009-07-21  Werner Koch  <wk@g10code.com>
 
+	* mapihelp.cpp (create_gpgol_tag, get_internetcharsetbody_tag) 
+	(mapi_set_header): Release data returned from GetIDsFromNames.
+
 	* engine.h (ENGINE_FLAG_SIGN_FOLLOWS): New macro.
 	* engine.c (engine_encrypt_prepare): Add arg flags.  Change callers.
 	* engine-assuan.c (op_assuan_encrypt): Ditto.  send PREP_ENCRYPT
