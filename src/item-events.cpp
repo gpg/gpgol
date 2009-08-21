@@ -41,9 +41,8 @@
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func, int lnr)
 {
   ULONG res;
   
@@ -51,8 +50,10 @@ ul_release (LPVOID punk)
     return;
   res = UlRelease (punk);
   if (opt.enable_debug & DBG_MEMORY)
-    log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+    log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+               SRCNAME, func, lnr, punk, res);
 }
+
 
 
 
@@ -109,8 +110,8 @@ GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK eecb)
   eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
   if (message_incoming_handler (message, hwnd, false))
     m_processed = TRUE;
-  ul_release (message);
-  ul_release (mdb);
+  ul_release (message, __func__, __LINE__);
+  ul_release (mdb, __func__, __LINE__);
 
   return S_FALSE;
 }
@@ -194,8 +195,8 @@ GpgolItemEvents::OnCloseComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
         log_debug_w32 (hr, "%s:%s: error getting message", 
                        SRCNAME, __func__);
      
-      ul_release (message);
-      ul_release (mdb);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
 
   return S_FALSE;

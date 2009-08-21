@@ -44,9 +44,8 @@
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func, int lnr)
 {
   ULONG res;
   
@@ -54,12 +53,9 @@ ul_release (LPVOID punk)
     return;
   res = UlRelease (punk);
   if (opt.enable_debug & DBG_MEMORY)
-    log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+    log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+               SRCNAME, func, lnr, punk, res);
 }
-
-
-
-
 
 
 
@@ -113,8 +109,8 @@ GpgolSessionEvents::OnDelivery (LPEXCHEXTCALLBACK pEECB)
          later (before an OnRead) to IPM.Note. */
       mapi_change_message_class (pMessage, 0);
       log_mapi_property (pMessage, PR_MESSAGE_CLASS,"PR_MESSAGE_CLASS");
-      ul_release (pMessage);
-      ul_release (pMDB);
+      ul_release (pMessage, __func__, __LINE__);
+      ul_release (pMDB, __func__, __LINE__);
     }
 
   return S_FALSE;

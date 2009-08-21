@@ -130,6 +130,7 @@ struct
     unsigned int old_reply_hack: 1; /* See gpgmsg.cpp:decrypt. */
     unsigned int auto_decrypt: 1;   /* Try to decrypt when clicked. */
     unsigned int no_attestation: 1; /* Don't create an attestation. */
+    unsigned int use_mwfmo: 1;      /* Use MsgWaitForMultipleObjects.  */
   } compat; 
 
   /* The SVN revision as stored in the registry.  */

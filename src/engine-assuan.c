@@ -872,9 +872,15 @@ async_worker_thread (void *dummy)
   DWORD nbytes;
   HANDLE hdarray[MAXIMUM_WAIT_OBJECTS];
   int count, addit, any_ready, hdarraylen;
+  /* Due to problems opening stuff with Internet exploder, Word or
+     Wordview, we can't use MsgWaitForMultipleObjects and the event
+     loops.  For test purposes a compatibiliy option allows to revert
+     to the old behaviour. */
+  int msgwait = opt.compat.use_mwfmo; 
+
   
-  attach_thread_input ( (DWORD)dummy );
-  (void)dummy;
+  if (msgwait)
+    attach_thread_input ( (DWORD)dummy );
 
   for (;;)
     {
@@ -965,27 +971,31 @@ async_worker_thread (void *dummy)
                                SRCNAME, __func__, item->name, item->hd);
                 }
             }
-          /* [Currently not used]
-             First process any window messages of this thread.  Do
+
+          /* First process any window messages of this thread.  Do
              this before wating so that the message queue is cleared
              before waiting and we don't get stucked due to messages
              not removed.  We need to process the message queue also
              after the wait because we will only get to here if there
              is actual ui-server work to be done but some messages
              might still be in the queue.  */
-          {
-            MSG msg;
-
-            while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
-              {
-                TranslateMessage (&msg);
-                DispatchMessage (&msg);
-              }
-          }
-
-/*           n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE, INFINITE); */
-          n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE,
-                                         INFINITE, QS_ALLEVENTS);
+          if (msgwait)
+            {
+              MSG msg;
+              
+              while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+                {
+                  TranslateMessage (&msg);
+                  DispatchMessage (&msg);
+                }
+              n = MsgWaitForMultipleObjects (hdarraylen, hdarray, FALSE,
+                                             INFINITE, QS_ALLEVENTS);
+            }
+          else
+            {
+              n = WaitForMultipleObjects (hdarraylen, hdarray, FALSE,
+                                          INFINITE);
+            }
           if (n == WAIT_FAILED)
             {
               /* The WFMO failed.  This is an error; to help debugging
@@ -1026,19 +1036,18 @@ async_worker_thread (void *dummy)
               Sleep (1000);
             }
 
-          /* [Currently not used] 
-             Try to process the message queue.  */
-          {
-            MSG msg;
-            
-            while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
-              {
-                TranslateMessage (&msg);
-                DispatchMessage (&msg);
-              }
-          }
+          if (msgwait)
+            {
+              MSG msg;
+              
+              while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
+                {
+                  TranslateMessage (&msg);
+                  DispatchMessage (&msg);
+                }
+            }
         }
-
+      
       /*
          Step 3: Handle I/O completion status.
        */

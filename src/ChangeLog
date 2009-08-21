@@ -1,3 +1,18 @@
+2009-08-21  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (async_worker_thread): Disable the use of
+	MsgWaitForMultipleObjects.
+	* common.h (struct compat): Add USE_MWFMO.
+	* main.c (read_options): Read that flag.
+
+2009-08-19  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (ul_release): Add arg LNR.  Change all callers.
+	* ol-ext-callback.cpp (ul_release): Add args FUNC and LNR.  Change
+	all callers.
+	* item-events.cpp (ul_release): ditto.
+	* session-events.cpp (ul_release): Ditto.
+
 2009-07-21  Werner Koch  <wk@g10code.com>
 
 	* mapihelp.cpp (create_gpgol_tag, get_internetcharsetbody_tag) 

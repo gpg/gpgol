@@ -41,9 +41,8 @@
 
 
 /* Wrapper around UlRelease with error checking. */
-/* FIXME: Duplicated code.  */
 static void 
-ul_release (LPVOID punk)
+ul_release (LPVOID punk, const char *func, int lnr)
 {
   ULONG res;
   
@@ -51,8 +50,10 @@ ul_release (LPVOID punk)
     return;
   res = UlRelease (punk);
   if (opt.enable_debug & DBG_MEMORY)
-    log_debug ("%s UlRelease(%p) had %lu references\n", __func__, punk, res);
+    log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+               SRCNAME, func, lnr, punk, res);
 }
+
 
 
 
@@ -194,8 +195,8 @@ put_outlook_property (void *pEECB, const char *key, const char *value)
       result = 0;
     }
 
-  ul_release (pMessage);
-  ul_release (pMDB);
+  ul_release (pMessage, __func__, __LINE__);
+  ul_release (pMDB, __func__, __LINE__);
   return result;
 }
 
@@ -238,8 +239,8 @@ put_outlook_property_int (void *pEECB, const char *key, int value)
       result = 0;
     }
 
-  ul_release (pMessage);
-  ul_release (pMDB);
+  ul_release (pMessage, __func__, __LINE__);
+  ul_release (pMDB, __func__, __LINE__);
   return result;
 }
 

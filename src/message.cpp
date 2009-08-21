@@ -38,8 +38,9 @@
                         } while (0)
 
 
+/* Wrapper around UlRelease with error checking. */
 static void 
-ul_release (LPVOID punk, const char *func)
+ul_release (LPVOID punk, const char *func, int lnr)
 {
   ULONG res;
   
@@ -47,8 +48,8 @@ ul_release (LPVOID punk, const char *func)
     return;
   res = UlRelease (punk);
   if (opt.enable_debug & DBG_MEMORY)
-    log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
-               SRCNAME, func, punk, res);
+    log_debug ("%s:%s:%d: UlRelease(%p) had %lu references\n", 
+               SRCNAME, func, lnr, punk, res);
 }
 
 
@@ -198,8 +199,8 @@ message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
   else
     log_debug_w32 (hr, "%s:%s: error getting message", SRCNAME, __func__);
 
-  ul_release (message, __func__);
-  ul_release (mdb, __func__);
+  ul_release (message, __func__, __LINE__);
+  ul_release (mdb, __func__, __LINE__);
 
   return !!wasprotected;
 }
@@ -277,8 +278,8 @@ message_wipe_body_cruft (LPEXCHEXTCALLBACK eecb)
           break;
         }
       
-      ul_release (message, __func__);
-      ul_release (mdb, __func__);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
     }
 }
 

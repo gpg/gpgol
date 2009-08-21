@@ -669,6 +669,7 @@ read_options (void)
             case 4: opt.compat.old_reply_hack = x; break;
             case 5: opt.compat.auto_decrypt = x; break;
             case 6: opt.compat.no_attestation = x; break;
+            case 7: opt.compat.use_mwfmo = x; break;
             }
         }
       log_debug ("Note: using compatibility flags: %s", val);
