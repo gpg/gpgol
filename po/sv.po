@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-06-18 18:59+0200\n"
+"POT-Creation-Date: 2009-08-28 19:09+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -55,8 +55,8 @@ msgid ""
 msgstr ""
 
 #: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:807
-#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:686
-#: src/main.c:692 src/message.cpp:320
+#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:687
+#: src/main.c:693 src/message.cpp:321
 msgid "GpgOL"
 msgstr ""
 
@@ -354,12 +354,12 @@ msgstr "Signera meddelandet med GPG"
 msgid "Open the GpgOL certificate manager"
 msgstr ""
 
-#: src/main.c:685
+#: src/main.c:686
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr ""
 
-#: src/main.c:691
+#: src/main.c:692
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -367,18 +367,18 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1491 src/mapihelp.cpp:1499 src/mapihelp.cpp:1507
+#: src/mapihelp.cpp:1527 src/mapihelp.cpp:1535 src/mapihelp.cpp:1543
 msgid "[no subject]"
 msgstr ""
 
-#: src/mapihelp.cpp:2116
+#: src/mapihelp.cpp:2152
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:2968
+#: src/mapihelp.cpp:3004
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -395,11 +395,11 @@ msgstr ""
 "och inte RTF-meddelanden. Se till att endast textformatet\n"
 "har valts i inställningarna."
 
-#: src/message.cpp:192
+#: src/message.cpp:193
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 
-#: src/message.cpp:300
+#: src/message.cpp:301
 #, c-format
 msgid ""
 "Signature status: %s\n"
@@ -408,54 +408,54 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/message.cpp:308
+#: src/message.cpp:309
 msgid "GpgOL - Message Information"
 msgstr ""
 
-#: src/message.cpp:540
+#: src/message.cpp:541
 msgid "Signature verification of an encrypted message is not possible."
 msgstr ""
 
-#: src/message.cpp:551
+#: src/message.cpp:552
 msgid "Signature verification of this message class is not possible."
 msgstr ""
 
-#: src/message.cpp:554
+#: src/message.cpp:555
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
 msgstr ""
 
-#: src/message.cpp:558
+#: src/message.cpp:559
 #, fuzzy
 msgid "This message has no signature."
 msgstr "Dekryptera meddelandet och validera signaturen"
 
-#: src/message.cpp:856
+#: src/message.cpp:857
 msgid "This message is not encrypted."
 msgstr ""
 
-#: src/message.cpp:1083
+#: src/message.cpp:1084
 #, fuzzy, c-format
 msgid ""
 "Decryption failed\n"
 "(%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:1230
+#: src/message.cpp:1231
 msgid "No recipients to encrypt to are given"
 msgstr ""
 
-#: src/message.cpp:1243 src/message.cpp:1270
+#: src/message.cpp:1244 src/message.cpp:1271
 msgid "Encrypting or signing an empty message is not possible."
 msgstr ""
 
-#: src/message.cpp:1252
+#: src/message.cpp:1253
 #, fuzzy, c-format
 msgid "Encryption failed (%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:1279
+#: src/message.cpp:1280
 #, fuzzy, c-format
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"

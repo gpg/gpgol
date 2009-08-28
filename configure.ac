@@ -219,7 +219,6 @@ if test "$GCC" = yes; then
     CFLAGS=$_gcc_cflags_save;
     if test x"$_gcc_psign" = xyes ; then
        CFLAGS="$CFLAGS -Wno-pointer-sign"
-       CXXFLAGS="$CXXFLAGS -Wno-pointer-sign"
     fi
 
 

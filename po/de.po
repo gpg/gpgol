@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-06-18 18:59+0200\n"
+"POT-Creation-Date: 2009-08-28 19:09+0200\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -57,8 +57,8 @@ msgstr ""
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
 #: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:807
-#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:686
-#: src/main.c:692 src/message.cpp:320
+#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:687
+#: src/main.c:693 src/message.cpp:321
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -374,12 +374,12 @@ msgstr "Nachricht signieren"
 msgid "Open the GpgOL certificate manager"
 msgstr "Zertifikatsverwaltung von GpgOL öffnen"
 
-#: src/main.c:685
+#: src/main.c:686
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
 
-#: src/main.c:691
+#: src/main.c:692
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -392,11 +392,11 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1491 src/mapihelp.cpp:1499 src/mapihelp.cpp:1507
+#: src/mapihelp.cpp:1527 src/mapihelp.cpp:1535 src/mapihelp.cpp:1543
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
-#: src/mapihelp.cpp:2116
+#: src/mapihelp.cpp:2152
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -406,7 +406,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/überprüfen\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:2968
+#: src/mapihelp.cpp:3004
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -425,13 +425,13 @@ msgstr ""
 "Sie sicher, daß lediglich das Text Format ausgewählt wurde.\n"
 "(In der Menüleiste: \"Format\" => \"Nur Text\")"
 
-#: src/message.cpp:192
+#: src/message.cpp:193
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 "[Krypto-Operation ist fehlgeschlagen - Der Text der Nachricht kann nicht "
 "angezeigt werden.]"
 
-#: src/message.cpp:300
+#: src/message.cpp:301
 #, c-format
 msgid ""
 "Signature status: %s\n"
@@ -444,22 +444,22 @@ msgstr ""
 "Struktur der Nachricht :\n"
 "%s"
 
-#: src/message.cpp:308
+#: src/message.cpp:309
 msgid "GpgOL - Message Information"
 msgstr "GpgOL - Informationen zu der Nachricht"
 
-#: src/message.cpp:540
+#: src/message.cpp:541
 msgid "Signature verification of an encrypted message is not possible."
 msgstr ""
 "Die Prüfung der Signatur ist bei einer verschlüsselten Nachrichten nicht "
 "möglich."
 
-#: src/message.cpp:551
+#: src/message.cpp:552
 msgid "Signature verification of this message class is not possible."
 msgstr ""
 "Die Prüfung der Signatur ist bei dieser Nachrichtenklasse nicht möglich."
 
-#: src/message.cpp:554
+#: src/message.cpp:555
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
@@ -468,15 +468,15 @@ msgstr ""
 "Bitte überprüfen Sie in den Einstellungen, daß die Verarbeitung von S/MIME "
 "eingeschaltet ist."
 
-#: src/message.cpp:558
+#: src/message.cpp:559
 msgid "This message has no signature."
 msgstr "Diese Nachricht hat keine Signatur."
 
-#: src/message.cpp:856
+#: src/message.cpp:857
 msgid "This message is not encrypted."
 msgstr "Diese Nachricht ist nicht verschlüsselt."
 
-#: src/message.cpp:1083
+#: src/message.cpp:1084
 #, c-format
 msgid ""
 "Decryption failed\n"
@@ -485,20 +485,20 @@ msgstr ""
 "Entschlüsselungsfehler\n"
 "(%s)"
 
-#: src/message.cpp:1230
+#: src/message.cpp:1231
 msgid "No recipients to encrypt to are given"
 msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
 
-#: src/message.cpp:1243 src/message.cpp:1270
+#: src/message.cpp:1244 src/message.cpp:1271
 msgid "Encrypting or signing an empty message is not possible."
 msgstr "Eine leere Nachricht kann nicht signiert oder verschlüsselt werden."
 
-#: src/message.cpp:1252
+#: src/message.cpp:1253
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "Verschlüsselungsfehler (%s)"
 
-#: src/message.cpp:1279
+#: src/message.cpp:1280
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "Signaturerstellungsfehler (%s)"
