@@ -1,3 +1,7 @@
+2009-08-28  Werner Koch  <wk@g10code.com>
+
+	* configure.ac [GCC]: Test for -Wno-pointer-sign.
+
 2009-06-18  Werner Koch  <wk@g10code.com>
 
 	Release 1.0.0.
@@ -22,7 +26,7 @@
 
 2008-10-27  Werner Koch  <wk@g10code.com>
 
-	* forms/gpgol-cs_de.cfg: New. 
+	* forms/gpgol-cs_de.cfg: New.
 
 2008-08-06  Werner Koch  <wk@g10code.com>
 

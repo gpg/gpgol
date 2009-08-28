@@ -1451,6 +1451,17 @@ mapi_get_sender (LPMESSAGE message)
     {
       log_debug ("%s:%s: orig address is `%s'\n", SRCNAME, __func__, buf);
       memmove (buf, p+4, strlen (p+4)+1);
+      if (!strchr (buf, '@'))
+        {
+          /* Some Exchange accounts return only the accoutn name and
+             no rfc821 mail address.  Kleopatra chokes on that, thus
+             we append a domain name.  Thisis a bad hack.  */
+          char *newbuf = (char *)xmalloc (strlen (buf) + 6 + 1);
+          strcpy (stpcpy (newbuf, buf), "@local");
+          xfree (buf);
+          buf = newbuf;
+        }
+      
     }
   log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, buf);
   return buf;

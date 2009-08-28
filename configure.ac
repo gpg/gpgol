@@ -16,8 +16,8 @@ min_automake_version="1.9.4"
 # Remember to change the version number immediately *after* a release.
 # Set my_issvn to "yes" for non-released code.  Remember to run an
 # "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [1.0.0])
-m4_define([my_issvn], [no])
+m4_define([my_version], [1.0.1])
+m4_define([my_issvn], [yes])
 
 m4_define([svn_revision], m4_esyscmd([echo -n $( (svn info 2>/dev/null \
             || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q;}')]))
@@ -206,10 +206,23 @@ if test "$GCC" = yes; then
         AC_MSG_RESULT($_gcc_mfi)
         CFLAGS=$_gcc_cflags_save;
         if test x"$_gcc_mfi" = xyes ; then
-          CFLAGS="$CFLAGS  -Wno-missing-field-initializers"
+          CFLAGS="$CFLAGS -Wno-missing-field-initializers"
           CXXFLAGS="$CXXFLAGS -Wno-missing-field-initializers"
         fi
     fi
+
+    AC_MSG_CHECKING([if gcc supports -Wno-pointer-sign])
+    _gcc_cflags_save=$CFLAGS
+    CFLAGS="-Wno-pointer-sign"
+    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),_gcc_psign=yes,_gcc_psign=no)
+    AC_MSG_RESULT($_gcc_psign)
+    CFLAGS=$_gcc_cflags_save;
+    if test x"$_gcc_psign" = xyes ; then
+       CFLAGS="$CFLAGS -Wno-pointer-sign"
+       CXXFLAGS="$CXXFLAGS -Wno-pointer-sign"
+    fi
+
+
 fi
 
 AC_SUBST(W32LIBS)

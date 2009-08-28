@@ -806,7 +806,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
   if (filename)
     {
       /* If there is a filename strip the directory part.  Take care
-         that there might be slashes of backslashes.  */
+         that there might be slashes or backslashes.  */
       const char *s1 = strrchr (filename, '/');
       const char *s2 = strrchr (filename, '\\');
       
@@ -1297,15 +1297,26 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   if ((rc = write_boundary (sink, boundary, 0)))
     goto failure;
 
-  if ((rc=write_string (sink, 
-                        (protocol == PROTOCOL_OPENPGP
-                         ? "Content-Type: application/pgp-signature\r\n"
-                         : ("Content-Transfer-Encoding: base64\r\n"
-                            "Content-Type: application/pkcs7-signature\r\n")
-                         ))))
-    goto failure;
+  if (protocol == PROTOCOL_OPENPGP)
+    {
+      rc = write_string (sink,
+                         "Content-Type: application/pgp-signature\r\n");
+    }
+  else
+    {
+      rc = write_string (sink,
+                         "Content-Transfer-Encoding: base64\r\n"
+                         "Content-Type: application/pkcs7-signature\r\n");
+      /* rc = write_string (sink, */
+      /*                    "Content-Type: application/x-pkcs7-signature\r\n" */
+      /*                    "\tname=\"smime.p7s\"\r\n" */
+      /*                    "Content-Transfer-Encoding: base64\r\n" */
+      /*                    "Content-Disposition: attachment;\r\n" */
+      /*                    "\tfilename=\"smime.p7s\"\r\n"); */
 
-  /* If we would add "Content-Transfer-Encoding: 7bit\r\n" to this
+    }
+  /* About the above code:
+     If we would add "Content-Transfer-Encoding: 7bit\r\n" to this
      attachment, Outlooks does not proceed with sending and even does
      not return any error.  A wild guess is that while OL adds this
      header itself, it detects that it already exists and somehow gets
@@ -1315,6 +1326,8 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
      Note, that this only holds for OpenPGP; for S/MIME we need to set
      set CTE.  We even write it before the CT because that is the same
      as Outlook would do it for a missing CTE. */
+  if (rc)
+    goto failure;
 
   if ((rc = write_string (sink, "\r\n")))
     goto failure;
