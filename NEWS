@@ -1,5 +1,9 @@
-Noteworthy changes for version 1.0.1 (not released)
+Noteworthy changes for version 1.0.1 (2009-09-28)
 ===================================================
+
+ * No more event loop peeking to avoid problem with Office programs.
+
+ * S/MIME support is now enabled by default.
 
 
 Noteworthy changes for version 1.0.0 (2009-06-18)

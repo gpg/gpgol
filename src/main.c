@@ -584,7 +584,7 @@ read_options (void)
 
 
   load_extension_value ("enableSmime", &val);
-  opt.enable_smime = val == NULL || *val != '1' ? 0 : 1;
+  opt.enable_smime = (!val || atoi (val));
   xfree (val); val = NULL;
   
   load_extension_value ("defaultProtocol", &val);

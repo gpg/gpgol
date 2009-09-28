@@ -1,3 +1,7 @@
+2009-09-25  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): Enable Smime by default.
+
 2009-08-28  Werner Koch  <wk@g10code.com>
 
 	* mimemaker.c (do_mime_sign): Comment cleanup.

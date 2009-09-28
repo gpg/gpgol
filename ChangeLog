@@ -1,3 +1,7 @@
+2009-09-28  Werner Koch  <wk@g10code.com>
+
+	Release 1.0.1.
+
 2009-08-28  Werner Koch  <wk@g10code.com>
 
 	* configure.ac [GCC]: Test for -Wno-pointer-sign.
