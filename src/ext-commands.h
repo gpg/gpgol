@@ -45,9 +45,7 @@ private:
   UINT  m_nCmdProtoSmime;
   UINT  m_nCmdEncrypt;
   UINT  m_nCmdSign;
-  UINT  m_nCmdKeyManager;
   UINT  m_nCmdRevertFolder;
-  UINT  m_nCmdCryptoState;
   UINT  m_nCmdDebug0;
   UINT  m_nCmdDebug1;
   UINT  m_nCmdDebug2;

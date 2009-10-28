@@ -80,7 +80,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
          latter decrypt command or when viewed a second time all has
          been set.  Note that we should have similar code for some
          message classes in GpgolUserEvents:OnSelectionChange; but
-         tehre are a couple of problems.  */
+         there are a couple of problems.  */
       if (pass == 1 && !force && !mapi_has_sig_status (message)
           && !opt.disable_gpgol)
         {

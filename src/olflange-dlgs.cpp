@@ -47,8 +47,6 @@ set_labels (HWND dlg)
     { IDC_G_SEND,           N_("Message sending")},
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
-    { IDC_OPENPGP_DEFAULT,  N_("Use PGP/MIME by default")},
-    { IDC_SMIME_DEFAULT,    N_("Use S/MIME by default")},
 
     { IDC_G_RECV,           N_("Message receiving")},
 //     { IDC_PREVIEW_DECRYPT,  N_("Also decrypt in preview window")},
@@ -75,15 +73,15 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   BOOL bMsgResult = FALSE;    
   static LPNMHDR pnmhdr;
-  static BOOL openpgp_state = FALSE;
-  static BOOL smime_state = FALSE;
+//   static BOOL openpgp_state = FALSE;
+//   static BOOL smime_state = FALSE;
   
   switch (uMsg) 
     {
     case WM_INITDIALOG:
       {
-        openpgp_state = (opt.default_protocol == PROTOCOL_OPENPGP);
-        smime_state = (opt.default_protocol == PROTOCOL_SMIME);
+//         openpgp_state = (opt.default_protocol == PROTOCOL_OPENPGP);
+//         smime_state = (opt.default_protocol == PROTOCOL_SMIME);
         
         EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
                       !!opt.enable_smime);
@@ -130,8 +128,8 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    case IDC_ENABLE_SMIME:
 	    case IDC_ENCRYPT_DEFAULT:
 	    case IDC_SIGN_DEFAULT:
-	    case IDC_OPENPGP_DEFAULT:
-	    case IDC_SMIME_DEFAULT:
+// 	    case IDC_OPENPGP_DEFAULT:
+// 	    case IDC_SMIME_DEFAULT:
 // 	    case IDC_PREVIEW_DECRYPT:
 	      SendMessage (GetParent (hDlg), PSM_CHANGED, (WPARAM)hDlg, 0L);
 	      break;
@@ -144,26 +142,26 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	  EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
                         opt.enable_smime);
 	}
-      if (HIWORD (wParam) == BN_CLICKED &&
-	  LOWORD (wParam) == IDC_OPENPGP_DEFAULT) 
-	{
-	  openpgp_state = !openpgp_state;
-          if (openpgp_state)
-            {
-              smime_state = 0;
-              SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK,0,0L);
-            }
-	}
-      if (HIWORD (wParam) == BN_CLICKED &&
-	  LOWORD (wParam) == IDC_SMIME_DEFAULT) 
-	{
-	  smime_state = !smime_state;
-          if (smime_state)
-            {
-              openpgp_state = 0;
-              SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK,0,0L);
-            }
-	}
+//       if (HIWORD (wParam) == BN_CLICKED &&
+// 	  LOWORD (wParam) == IDC_OPENPGP_DEFAULT) 
+// 	{
+// 	  openpgp_state = !openpgp_state;
+//           if (openpgp_state)
+//             {
+//               smime_state = 0;
+//               SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK,0,0L);
+//             }
+// 	}
+//       if (HIWORD (wParam) == BN_CLICKED &&
+// 	  LOWORD (wParam) == IDC_SMIME_DEFAULT) 
+// 	{
+// 	  smime_state = !smime_state;
+//           if (smime_state)
+//             {
+//               openpgp_state = 0;
+//               SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK,0,0L);
+//             }
+// 	}
       if (opt.enable_debug && LOWORD (wParam) == IDC_GPG_OPTIONS)
 	config_dialog_box (hDlg);
       else if (LOWORD (wParam) == IDC_GPG_CONF)
@@ -186,10 +184,10 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                               !!opt.encrypt_default, 0L);
           SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
                               !!opt.sign_default, 0L);
-          SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
-                                openpgp_state, 0L);
-          SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
-                              smime_state, 0L);
+//           SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
+//                                 openpgp_state, 0L);
+//           SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
+//                               smime_state, 0L);
           
 //           SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
 //                               !!opt.preview_decrypt, 0L);
@@ -209,25 +207,11 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           opt.sign_default = !!SendDlgItemMessage 
             (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
           
-#if 0  /* The mentioned tool is now available.  */
-          if (opt.enable_smime)
-            {
-              MessageBox (hDlg, 
-              _("You have enabled GpgOL's support for the S/MIME protocol.\n\n"
-                "New S/MIME messages are thus only viewable with GpgOL and "
-                "not anymore with Outlook's internal S/MIME support.  Those "
-                "message will even be unreadable by Outlook after GpgOL has "
-                "been deinstalled.  A tool to mitigate this problem will be "
-                "provided when GpgOL arrives at production quality status."),
-                            "GpgOL", MB_ICONINFORMATION|MB_OK);
-            }
-#endif /*0*/
-
-          if (openpgp_state)
-            opt.default_protocol = PROTOCOL_OPENPGP;
-          else if (smime_state && opt.enable_smime)
-            opt.default_protocol = PROTOCOL_SMIME;
-          else
+//           if (openpgp_state)
+//             opt.default_protocol = PROTOCOL_OPENPGP;
+//           else if (smime_state && opt.enable_smime)
+//             opt.default_protocol = PROTOCOL_SMIME;
+//           else
             opt.default_protocol = PROTOCOL_UNKNOWN;
             
 //           opt.preview_decrypt = !!SendDlgItemMessage

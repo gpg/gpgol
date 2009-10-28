@@ -7,18 +7,27 @@
 #define DIALOGS_H
 
 
-/* Ids used for bitmaps.  */
-#define IDB_DECRYPT                     3001  /* Not used.  */
-#define IDB_ENCRYPT                     3002
-#define IDB_SIGN                        3003
-#define IDB_ADD_KEYS                    3004
-#define IDB_KEY_MANAGER                 3005
-#define IDB_BANNER                      3006  /* The g10 Code logo.  */
-#define IDB_BANNER_HI                   3007  /* Not used.  */
-#define IDB_CRYPTO_STATE                3008  
-#define IDB_PROTO_AUTO                  3009
-#define IDB_PROTO_PGPMIME               3010
-#define IDB_PROTO_SMIME                 3011
+/* Ids used for bitmaps. 
+   Note: FOO_MASK must have a value of FOO + 1. */
+#define IDB_ENCRYPT                     3004
+#define IDB_SIGN                        3006
+#define IDB_SIGN_MASK                   3007
+#define IDB_ADD_KEYS                    3008
+#define IDB_KEY_MANAGER                 3010
+#define IDB_KEY_MANAGER_MASK            3011
+#define IDB_BANNER                      3012  /* The g10 Code logo.  */
+#define IDB_BANNER_HI                   3014  /* Not used.  */
+#define IDB_CRYPTO_STATE                3016  
+#define IDB_PROTO_AUTO                  3018  /* Not used.  */
+#define IDB_PROTO_PGPMIME               3020  /* Not used.  */
+#define IDB_PROTO_SMIME                 3022  /* Not used.  */
+#define IDB_PROTO_SMIME_MASK            3023  /* Not used.  */
+#define IDB_DECRYPT                     3024
+#define IDB_DECRYPT_MASK                3025
+#define IDB_VERIFY                      3026
+#define IDB_VERIFY_MASK                 3027
+#define IDB_DECRYPT_VERIFY              3028
+#define IDB_DECRYPT_VERIFY_MASK         3029
 
 
 /* Ids used for the main config dialog.  */

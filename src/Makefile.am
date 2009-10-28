@@ -16,9 +16,14 @@ unused_sources = item-events.cpp
 bin_PROGRAMS = gpgol 
 #treeview
 EXTRA_DIST = versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
-	     logo.bmp decrypt.bmp encrypt.bmp sign.bmp key_mana.bmp \
+	     logo.bmp encrypt.bmp  \
              proto-auto.bmp proto-pgpmime.bmp proto-smime.bmp \
-             cryptostate.bmp
+             cryptostate.bmp \
+             key-manager.bmp key-manager-mask.bmp \
+             decrypt.bmp decrypt-mask.bmp \
+	     verify.bmp  verify-mask.bmp \
+             decrypt-verify.bmp decrypt-verify-mask.bmp \
+	     sign.bmp sign-mask.bmp
 
 EXEEXT = .dll
 
@@ -63,6 +68,10 @@ gpgol_SOURCES = \
 	property-sheets.cpp property-sheets.h \
 	item-events.h         \
 	ol-ext-callback.cpp ol-ext-callback.h \
+	oomhelp.cpp oomhelp.h eventsink.h \
+	explorers.cpp explorers.h \
+	inspectors.cpp inspectors.h \
+	cmdbarcontrols.cpp cmdbarcontrols.h \
 	w32-gettext.c w32-gettext.h 
 
 

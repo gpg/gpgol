@@ -38,6 +38,7 @@
 #include "message.h"
 #include "message-events.h"
 
+#include "explorers.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -98,76 +99,6 @@ GpgolMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 }
 
 
-#if 0
-#warning  test code
-static void
-show_event_object (LPEXCHEXTCALLBACK eecb)
-{
-  HRESULT hr;
-  LPOUTLOOKEXTCALLBACK outlook_cb;
-  LPUNKNOWN obj;
-  LPDISPATCH disp;
-  LPTYPEINFO tinfo;
-  BSTR bstrname;
-  char *name;
-
-  outlook_cb = NULL;
-  eecb->QueryInterface(IID_IOutlookExtCallback, (void **)&outlook_cb);
-  if (!outlook_cb)
-    {
-      log_debug ("%s%s: no outlook callback found\n", SRCNAME, __func__);
-      return;
-    }
-		
-  obj = NULL;
-  outlook_cb->GetObject (&obj);
-  if (!obj)
-    {
-      log_debug ("%s%s: no object found for event\n", SRCNAME, __func__);
-      outlook_cb->Release ();
-      return;
-    }
-
-  disp = NULL;
-  obj->QueryInterface (IID_IDispatch, (void **)&disp);
-  obj->Release ();
-  obj = NULL;
-  if (!disp)
-    {
-      log_debug ("%s%s: no dispatcher found for event\n", SRCNAME, __func__);
-      outlook_cb->Release ();
-      return;
-    }
-
-  tinfo = NULL;
-  disp->GetTypeInfo (0, 0, &tinfo);
-  if (!tinfo)
-    {
-      log_debug ("%s%s: no dispatcher found for event\n", SRCNAME, __func__);
-      disp->Release ();
-      outlook_cb->Release ();
-      return;
-    }
-
-  name = NULL;
-  hr = tinfo->GetDocumentation (MEMBERID_NIL, &bstrname, 0, 0, 0);
-  if (hr)
-    log_debug ("%s%s: GetDocumentation failed: hr=%#lx\n", 
-               SRCNAME, __func__, hr);
-
-  name = wchar_to_utf8 (bstrname);
-  SysFreeString (bstrname);
-  log_debug ("%s:%s: event fired by item type `%s'\n",
-             SRCNAME, __func__, name);
-  xfree (name);
-
-  disp->Release ();
-  outlook_cb->Release ();
-}
-#endif /* Test code */
-
-
-
 /* Called from Exchange on reading a message.  Returns: S_FALSE to
    signal Exchange to continue calling extensions.  EECB is a pointer
    to the IExchExtCallback interface. */
@@ -187,7 +118,8 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
   log_debug ("%s:%s: received (hwnd=%p) %s\n", 
              SRCNAME, __func__, hwnd, m_gotinspector? "got_inspector":"");
 
-//   show_event_object (eecb);
+  show_event_object (eecb, __func__);
+  //add_oom_command_button (eecb);
 
   /* Fixme: If preview decryption is not enabled and we have an
      encrypted message, we might want to show a greyed out preview
@@ -218,7 +150,7 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
         default:
           ;
         }
-      
+
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
     }
@@ -235,6 +167,8 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
   log_debug ("%s:%s: received; flags=%#lx m_processed=%d \n",
              SRCNAME, __func__, flags, m_processed);
+
+  show_event_object (eecb, __func__);
 
   /* If the message has been processed by us (i.e. in OnRead), we now
      use our own display code.  */

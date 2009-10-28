@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-08-28 19:09+0200\n"
+"POT-Creation-Date: 2009-10-26 17:53+0100\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -56,9 +56,8 @@ msgstr ""
 "Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder "
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
-#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:807
-#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:687
-#: src/main.c:693 src/message.cpp:321
+#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:821
+#: src/ext-commands.cpp:826 src/main.c:688 src/main.c:694 src/message.cpp:321
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -216,11 +215,11 @@ msgstr "*** Anfang Notation (Signatur von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/ext-commands.cpp:547
+#: src/ext-commands.cpp:550
 msgid "GpgOL Decrypt/Verify"
 msgstr "GpgOL Enschlüsseln/Prüfen"
 
-#: src/ext-commands.cpp:561
+#: src/ext-commands.cpp:564
 msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
@@ -228,7 +227,7 @@ msgstr ""
 "Dies ist eine signierte und verschlüsselte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#: src/ext-commands.cpp:564
+#: src/ext-commands.cpp:567
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
@@ -236,7 +235,7 @@ msgstr ""
 "Dies ist eine verschlüsselte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#: src/ext-commands.cpp:566
+#: src/ext-commands.cpp:569
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
@@ -244,62 +243,19 @@ msgstr ""
 "Dies ist eine signierte Nachricht.\n"
 "Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#: src/ext-commands.cpp:576
-msgid ">GnuPG protocol"
-msgstr ">GnuPG Protokoll"
-
-#: src/ext-commands.cpp:577
-msgid "auto"
-msgstr "automatisch"
-
-#: src/ext-commands.cpp:578
-msgid "PGP/MIME"
-msgstr "PGP/MIME"
-
-#: src/ext-commands.cpp:579
-msgid "S/MIME"
-msgstr "S/MIME"
-
-#: src/ext-commands.cpp:581
+#: src/ext-commands.cpp:584
 msgid "&encrypt message with GnuPG"
 msgstr "Nachricht verschlüsseln"
 
-#: src/ext-commands.cpp:582
+#: src/ext-commands.cpp:585
 msgid "&sign message with GnuPG"
 msgstr "Nachricht signieren"
 
-#: src/ext-commands.cpp:634
-msgid "GnuPG Certificate &Manager"
-msgstr "GnuPG Zertifikats&verwaltung"
-
-#: src/ext-commands.cpp:635
+#: src/ext-commands.cpp:637
 msgid "Remove GpgOL flags from this folder"
 msgstr "GpgOL Eigenschaften aus diesem Ordner entfernen"
 
-#: src/ext-commands.cpp:639
-msgid "Open the certificate manager"
-msgstr "Die Zertifikatsverwaltung öffnen"
-
-#: src/ext-commands.cpp:778
-msgid ""
-"Support for S/MIME has not been enabled.\n"
-"\n"
-"To enable S/MIME support, open the option dialog and check \"Enable the S/"
-"MIME support\".  The option dialog can be found in the main menu at: Extras-"
-">Options->GpgOL.\n"
-msgstr ""
-"Unterstützung für S/MIME ist nicht eingeschaltet.\n"
-"\n"
-"Um die S/MIME Unterstützung einzuschalten, öffnen Sie bitte das Fenster mit "
-"den Einstellungen um dort die Option \"S/MIME Unterstützung einschalten\" zu "
-"aktivieren.  Sie finden die Einstellungen im Hauptmenu unter:  Extras-"
-">Optionen->GpgOL.\n"
-
-#: src/ext-commands.cpp:806
-msgid "Could not start certificate manager"
-msgstr "Die Zertifikatsverwaltung konnte nicht aufgerufen werden"
-
-#: src/ext-commands.cpp:818
+#: src/ext-commands.cpp:811
 msgid ""
 "You are about to start the process of reversing messages created by GpgOL to "
 "prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
@@ -322,64 +278,32 @@ msgstr ""
 "weiterhin installiertem GpgOL - Nachrichten wieder wie gewohnt von GpgOL "
 "angezeigt werden."
 
-#: src/ext-commands.cpp:832
+#: src/ext-commands.cpp:825
 msgid "Do you want to revert this folder?"
 msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
-#: src/ext-commands.cpp:960
-msgid "Select this option to automatically select the protocol."
-msgstr "Wählen Sie diese Option zum das Protokoll automatisch auszuwählen."
-
-#: src/ext-commands.cpp:967
-msgid "Select this option to select the PGP/MIME protocol."
-msgstr "Wählen Sie diese Option zum das PGP/MIME Protokoll auszuwählen."
-
-#: src/ext-commands.cpp:974
-msgid "Select this option to select the S/MIME protocol."
-msgstr "Wählen Sie diese Option zum das S/MIME Protokoll auszuwählen."
-
-#: src/ext-commands.cpp:981
+#: src/ext-commands.cpp:976
 msgid "Select this option to encrypt the message."
 msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
-#: src/ext-commands.cpp:988
+#: src/ext-commands.cpp:983
 msgid "Select this option to sign the message."
 msgstr "Wählen Sie diese Option zum Signieren der Nachricht."
 
-#: src/ext-commands.cpp:995
-msgid "Select this option to open the certificate manager"
-msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."
-
-#: src/ext-commands.cpp:1025
-msgid "Automatically select the protocol for sign/encrypt"
-msgstr "Wählen Sie diese Option um das Protokoll automatisch auszuwählen."
-
-#: src/ext-commands.cpp:1035
-msgid "Use PGP/MIME for sign/encrypt"
-msgstr "PGP/MIME zum signieren/verschlüsseln verwenden."
-
-#: src/ext-commands.cpp:1045
-msgid "Use S/MIME for sign/encrypt"
-msgstr "S/MIME zum signieren/verschlüsseln verwenden."
-
-#: src/ext-commands.cpp:1055
+#: src/ext-commands.cpp:1043
 msgid "Encrypt message with GnuPG"
 msgstr "Nachricht verschlüsseln"
 
-#: src/ext-commands.cpp:1065
+#: src/ext-commands.cpp:1053
 msgid "Sign message with GnuPG"
 msgstr "Nachricht signieren"
 
-#: src/ext-commands.cpp:1075
-msgid "Open the GpgOL certificate manager"
-msgstr "Zertifikatsverwaltung von GpgOL öffnen"
-
-#: src/main.c:686
+#: src/main.c:687
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
 
-#: src/main.c:692
+#: src/main.c:693
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -414,7 +338,7 @@ msgstr ""
 "[Aufgrund eines Verarbeitungsfehlers in GpgOL ist der Inhalt dieser "
 "Nachricht nicht sichtbar.]"
 
-#: src/message-events.cpp:320
+#: src/message-events.cpp:254
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -531,50 +455,24 @@ msgstr "Neue Nachrichten per Voreinstellung verschlüsseln"
 msgid "&Sign new messages by default"
 msgstr "Neue Nachrichten per Voreinstellung signieren"
 
-#: src/olflange-dlgs.cpp:50
-msgid "Use PGP/MIME by default"
-msgstr "PGP/MIME per Voreinstellung verwenden"
-
 #: src/olflange-dlgs.cpp:51
-msgid "Use S/MIME by default"
-msgstr "S/MIME per Voreinstellung verwenden"
-
-#: src/olflange-dlgs.cpp:53
 msgid "Message receiving"
 msgstr "Lesen von Nachrichten"
 
-#: src/olflange-dlgs.cpp:55
+#: src/olflange-dlgs.cpp:53
 msgid "Show HTML view if possible"
 msgstr "HTML Darstellung anzeigen wenn möglich"
 
-#: src/olflange-dlgs.cpp:56
+#: src/olflange-dlgs.cpp:54
 msgid "Present encrypted message as attachment"
 msgstr "Verschlüsselte Nachricht als Anlage anzeigen"
 
-#: src/olflange-dlgs.cpp:59
+#: src/olflange-dlgs.cpp:57
 msgid "Crypto Engine"
 msgstr "Zertifikatsserver ..."
 
-#: src/olflange-dlgs.cpp:216
-msgid ""
-"You have enabled GpgOL's support for the S/MIME protocol.\n"
-"\n"
-"New S/MIME messages are thus only viewable with GpgOL and not anymore with "
-"Outlook's internal S/MIME support.  Those message will even be unreadable by "
-"Outlook after GpgOL has been deinstalled.  A tool to mitigate this problem "
-"will be provided when GpgOL arrives at production quality status."
-msgstr ""
-"Sie haben die S/MIME Unterstützung von GpgOL eingeschaltet.\n"
-"\n"
-"Neue S/MIME Nachrichten werden jetzt nur noch mittels GpgOL sichtbar sein "
-"und nicht mehr über Outlooks interne S/MIME Unterstützung.  Diese "
-"Nachrichten werden auch dann nicht mehr mit Outlook lesbar sein, wenn GpgOL "
-"deinstalliert wurde.  Mit dem Erscheinen der endgültigen Version von GpgOL "
-"wird aber ein Werkzeug bereitgestellt werden, welches dieses Problem lösen "
-"kann."
-
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:273
+#: src/olflange-dlgs.cpp:257
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 "GpgOL ist ein Plugin für Microsoft Outlook, welches es ermöglicht\n"
@@ -600,12 +498,12 @@ msgstr ""
 "Public License erhalten haben.  Falls nicht, finden Sie diese\n"
 "unter der Webadresse <http://www.gnu.org/licenses/>."
 
-#: src/olflange-dlgs.cpp:279
+#: src/olflange-dlgs.cpp:263
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
 
-#: src/olflange.cpp:442
+#: src/olflange.cpp:447
 msgid ""
 "Welcome to GpgOL 1.0\n"
 "\n"
@@ -644,7 +542,7 @@ msgstr ""
 "Konto nicht.  Wird GpgOL zusammen mit anderen Outlook Plugins benutzt, kann "
 "es möglicherweise nicht richtig arbeiten.\n"
 
-#: src/olflange.cpp:470
+#: src/olflange.cpp:475
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -658,7 +556,7 @@ msgstr ""
 "die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
 "Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
-#: src/olflange.cpp:658
+#: src/olflange.cpp:663
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -816,6 +714,89 @@ msgstr "PGP/MIME Prüfungsresultat"
 #: src/verify-dialog.c:247
 msgid "S/MIME Verification Result"
 msgstr "S/MIME Prüfungsresultat"
+
+#~ msgid "GnuPG Certificate &Manager"
+#~ msgstr "GnuPG Zertifikats&verwaltung"
+
+#~ msgid "Open the certificate manager"
+#~ msgstr "Die Zertifikatsverwaltung öffnen"
+
+#~ msgid "Select this option to open the certificate manager"
+#~ msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."
+
+#~ msgid "Open the GpgOL certificate manager"
+#~ msgstr "Zertifikatsverwaltung von GpgOL öffnen"
+
+#~ msgid ">GnuPG protocol"
+#~ msgstr ">GnuPG Protokoll"
+
+#~ msgid "auto"
+#~ msgstr "automatisch"
+
+#~ msgid "PGP/MIME"
+#~ msgstr "PGP/MIME"
+
+#~ msgid "S/MIME"
+#~ msgstr "S/MIME"
+
+#~ msgid ""
+#~ "Support for S/MIME has not been enabled.\n"
+#~ "\n"
+#~ "To enable S/MIME support, open the option dialog and check \"Enable the S/"
+#~ "MIME support\".  The option dialog can be found in the main menu at: "
+#~ "Extras->Options->GpgOL.\n"
+#~ msgstr ""
+#~ "Unterstützung für S/MIME ist nicht eingeschaltet.\n"
+#~ "\n"
+#~ "Um die S/MIME Unterstützung einzuschalten, öffnen Sie bitte das Fenster "
+#~ "mit den Einstellungen um dort die Option \"S/MIME Unterstützung "
+#~ "einschalten\" zu aktivieren.  Sie finden die Einstellungen im Hauptmenu "
+#~ "unter:  Extras->Optionen->GpgOL.\n"
+
+#~ msgid "Could not start certificate manager"
+#~ msgstr "Die Zertifikatsverwaltung konnte nicht aufgerufen werden"
+
+#~ msgid "Select this option to automatically select the protocol."
+#~ msgstr "Wählen Sie diese Option zum das Protokoll automatisch auszuwählen."
+
+#~ msgid "Select this option to select the PGP/MIME protocol."
+#~ msgstr "Wählen Sie diese Option zum das PGP/MIME Protokoll auszuwählen."
+
+#~ msgid "Select this option to select the S/MIME protocol."
+#~ msgstr "Wählen Sie diese Option zum das S/MIME Protokoll auszuwählen."
+
+#~ msgid "Automatically select the protocol for sign/encrypt"
+#~ msgstr "Wählen Sie diese Option um das Protokoll automatisch auszuwählen."
+
+#~ msgid "Use PGP/MIME for sign/encrypt"
+#~ msgstr "PGP/MIME zum signieren/verschlüsseln verwenden."
+
+#~ msgid "Use S/MIME for sign/encrypt"
+#~ msgstr "S/MIME zum signieren/verschlüsseln verwenden."
+
+#~ msgid "Use PGP/MIME by default"
+#~ msgstr "PGP/MIME per Voreinstellung verwenden"
+
+#~ msgid "Use S/MIME by default"
+#~ msgstr "S/MIME per Voreinstellung verwenden"
+
+#~ msgid ""
+#~ "You have enabled GpgOL's support for the S/MIME protocol.\n"
+#~ "\n"
+#~ "New S/MIME messages are thus only viewable with GpgOL and not anymore "
+#~ "with Outlook's internal S/MIME support.  Those message will even be "
+#~ "unreadable by Outlook after GpgOL has been deinstalled.  A tool to "
+#~ "mitigate this problem will be provided when GpgOL arrives at production "
+#~ "quality status."
+#~ msgstr ""
+#~ "Sie haben die S/MIME Unterstützung von GpgOL eingeschaltet.\n"
+#~ "\n"
+#~ "Neue S/MIME Nachrichten werden jetzt nur noch mittels GpgOL sichtbar sein "
+#~ "und nicht mehr über Outlooks interne S/MIME Unterstützung.  Diese "
+#~ "Nachrichten werden auch dann nicht mehr mit Outlook lesbar sein, wenn "
+#~ "GpgOL deinstalliert wurde.  Mit dem Erscheinen der endgültigen Version "
+#~ "von GpgOL wird aber ein Werkzeug bereitgestellt werden, welches dieses "
+#~ "Problem lösen kann."
 
 #~ msgid "Also decrypt in preview window"
 #~ msgstr "Auch im Vorschaufenster entschlüsseln"

@@ -9,6 +9,7 @@
  * 2005-09-18  Add IExchExtAttachedFileEvents.
  * 2007-07-18  Add IExchExtUserEvents and IExchExtSessionEvents.
  * 2007-07-20  Add IOutlookExtItemEvents.
+ * 2009-10-21  Move generic COM_ stuff to oomhelp.h
  */
 
 #ifndef EXCHEXT_H
@@ -22,9 +23,8 @@ extern "C" {
 #endif
 
 #include <commctrl.h>
-#include <unknwn.h>
+#include "oomhelp.h"
 #include "mymapi.h"
-
 
 /* Constants used by Install. */
 #define EECONTEXT_SESSION               0x00000001
@@ -91,11 +91,6 @@ extern "C" {
 
 
 /* GUIDs */
-DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
-DEFINE_OLEGUID(IID_IUnknown,                  0x00000000, 0, 0);
-DEFINE_OLEGUID(IID_IDispatch,                 0x00020400, 0, 0);
-
 DEFINE_OLEGUID(IID_IExchExtCallback,          0x00020d10, 0, 0);
 DEFINE_OLEGUID(IID_IExchExt,                  0x00020d11, 0, 0);
 DEFINE_OLEGUID(IID_IExchExtCommands,          0x00020d12, 0, 0);
@@ -109,6 +104,9 @@ DEFINE_OLEGUID(IID_IExchExtModeless,          0x00020d19, 0, 0);
 DEFINE_OLEGUID(IID_IExchExtModelessCallback,  0x00020d1a, 0, 0);
 DEFINE_OLEGUID(IID_IOutlookExtCallback,       0x0006720d, 0, 0);
 DEFINE_OLEGUID(IID_IOutlookExtItemEvents,     0x0006723A, 0, 0);
+
+DEFINE_OLEGUID(IID_IOOMMailItem,              0x00063034, 0, 0);
+DEFINE_OLEGUID(IID_IOOMItemEvents,            0x0006302B, 0, 0);
 
 
 /* Type definitions. */
@@ -160,7 +158,6 @@ typedef IOutlookExtCallback *LPOUTLOOKEXTCALLBACK;
 
 typedef struct IOutlookExtItemEvents IOutlookExtItemEvents;
 typedef IOutlookExtItemEvents *LPOUTLOOKEXTITEMEVENTS;
-
 
 /* The next classes are not yet defined. but if so they should go here. */
 typedef struct IExchExtModeless IExchExtModeless; 

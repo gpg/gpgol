@@ -49,6 +49,9 @@
 #include "attached-file-events.h"
 #include "item-events.h"
 #include "ol-ext-callback.h"
+#include "explorers.h"
+#include "inspectors.h"
+#include "cmdbarcontrols.h"
 
 /* The GUID for this plugin.  */
 #define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
@@ -68,6 +71,8 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
 static bool g_initdll = FALSE;
 
 static void install_forms (void);
+static void install_sinks (LPEXCHEXTCALLBACK eecb);
+
 
 static char *olversion;
 
@@ -664,6 +669,13 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                       "GpgOL", MB_ICONSTOP|MB_OK);
         }
     }
+
+  /* If the version from the OOM is available we can assume that the
+     OOM is ready for use and thus we can install the event sinks. */
+  if (olversion)
+    {
+      install_sinks (pEECB);
+    }
   
 
   /* Check context. */
@@ -690,7 +702,7 @@ install_forms (void)
 {
   HRESULT hr;
   LPMAPIFORMCONTAINER formcontainer = NULL;
-  static char *forms[] = 
+  static char const *forms[] = 
     {
       "gpgol",
       "gpgol-ms",
@@ -760,3 +772,65 @@ install_forms (void)
 }
 
 
+
+static void
+install_sinks (LPEXCHEXTCALLBACK eecb)
+{
+  static int done;
+  LPOUTLOOKEXTCALLBACK pCb;
+  LPUNKNOWN rootobj;
+
+  /* We call this function just once.  */
+  if (done)
+    return;
+  done++;
+
+  log_debug ("%s:%s: Enter", SRCNAME, __func__);
+
+  pCb = NULL;
+  rootobj = NULL;
+  eecb->QueryInterface (IID_IOutlookExtCallback, (LPVOID*)&pCb);
+  if (pCb)
+    pCb->GetObject (&rootobj);
+  if (rootobj)
+    {
+      LPDISPATCH disp;
+
+      disp = get_oom_object ((LPDISPATCH)rootobj, "Application.Explorers");
+      if (!disp)
+        log_error ("%s:%s: Explorers NOT found\n", SRCNAME, __func__);
+      else
+        {
+          install_GpgolExplorersEvents_sink (disp);
+          /* Fixme: Register the event sink object somewhere.  */
+          disp->Release ();
+        }
+      
+      /* It seems that when installing this sink the first explorer
+         has already been created and thus we don't see a NewInspector
+         event.  Thus we create the controls direct.  */
+      disp = get_oom_object ((LPDISPATCH)rootobj,
+                             "Application.ActiveExplorer");
+      if (!disp)
+        log_error ("%s:%s: ActiveExplorer NOT found\n", SRCNAME, __func__);
+      else
+        {
+          add_explorer_controls ((LPOOMEXPLORER)disp);
+          disp->Release ();
+        }
+
+      disp = get_oom_object ((LPDISPATCH)rootobj, "Application.Inspectors");
+      if (!disp)
+        log_error ("%s:%s: Inspectors NOT found\n", SRCNAME, __func__);
+      else
+        {
+          install_GpgolInspectorsEvents_sink (disp);
+          /* Fixme: Register the event sink object somewhere.  */
+          disp->Release ();
+        }
+      
+      rootobj->Release ();
+    }
+  
+  log_debug ("%s:%s: Leave", SRCNAME, __func__);
+}

@@ -61,4 +61,4 @@ class GpgolItemEvents : public IOutlookExtItemEvents
   STDMETHODIMP OnCloseComplete (LPEXCHEXTCALLBACK peecb, ULONG flags);
 };
 
-#endif /*ATTACHED_FILE_EVENTS_H*/
+#endif /*ITEM_EVENTS_H*/

@@ -16,8 +16,8 @@ min_automake_version="1.9.4"
 # Remember to change the version number immediately *after* a release.
 # Set my_issvn to "yes" for non-released code.  Remember to run an
 # "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [1.0.1])
-m4_define([my_issvn], [no])
+m4_define([my_version], [1.1.0])
+m4_define([my_issvn], [yes])
 
 m4_define([svn_revision], m4_esyscmd([echo -n $( (svn info 2>/dev/null \
             || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q;}')]))
@@ -190,8 +190,8 @@ if test "$have_w32_system" = yes; then
 fi
 
 if test "$GCC" = yes; then
-    CFLAGS="$CFLAGS -Wall -mms-bitfields"
-    CXXFLAGS="$CXXFLAGS -Wall -mms-bitfields"
+    CFLAGS="$CFLAGS -Wall -mms-bitfields -fno-strict-aliasing"
+    CXXFLAGS="$CXXFLAGS -Wall -mms-bitfields -fno-strict-aliasing"
     if test "$USE_MAINTAINER_MODE" = "yes"; then
         CFLAGS="$CFLAGS -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wno-format-y2k -Wformat-security"

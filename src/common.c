@@ -223,10 +223,25 @@ get_save_filename (HWND root, const char *srcname)
 
 
 void
+fatal_error (const char *format, ...)
+{
+  va_list arg_ptr;
+  char buf[512];
+
+  va_start (arg_ptr, format);
+  vsnprintf (buf, sizeof buf -1, format, arg_ptr);
+  buf[sizeof buf - 1] = 0;
+  va_end (arg_ptr);
+  MessageBox (NULL, buf, "Fatal Error", MB_OK);
+  abort ();
+}
+
+
+void
 out_of_core (void)
 {
-    MessageBox (NULL, "Out of core!", "Fatal Error", MB_OK);
-    abort ();
+  MessageBox (NULL, "Out of core!", "Fatal Error", MB_OK);
+  abort ();
 }
 
 void*
@@ -388,6 +403,38 @@ latin1_to_utf8 (const char *string)
     }
   *p = 0;
   return buffer;
+}
+
+
+/* This function is similar to strncpy().  However it won't copy more
+   than N - 1 characters and makes sure that a Nul is appended. With N
+   given as 0, nothing will happen.  With DEST given as NULL, memory
+   will be allocated using xmalloc (i.e. if it runs out of core the
+   function terminates).  Returns DEST or a pointer to the allocated
+   memory.  */
+char *
+mem2str (char *dest, const void *src, size_t n)
+{
+  char *d;
+  const char *s;
+  
+  if (n)
+    {
+      if (!dest)
+        dest = xmalloc (n);
+      d = dest;
+      s = src ;
+      for (n--; n && *s; n--)
+        *d++ = *s++;
+      *d = 0;
+    }
+  else if (!dest)
+    {
+      dest = xmalloc (1);
+      *dest = 0;
+    }
+  
+  return dest;
 }
 
 

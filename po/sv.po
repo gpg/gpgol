@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-08-28 19:09+0200\n"
+"POT-Creation-Date: 2009-10-26 17:53+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -54,9 +54,8 @@ msgid ""
 "You may want to try again."
 msgstr ""
 
-#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:807
-#: src/ext-commands.cpp:828 src/ext-commands.cpp:833 src/main.c:687
-#: src/main.c:693 src/message.cpp:321
+#: src/engine.c:395 src/engine.c:405 src/ext-commands.cpp:821
+#: src/ext-commands.cpp:826 src/main.c:688 src/main.c:694 src/message.cpp:321
 msgid "GpgOL"
 msgstr ""
 
@@ -206,83 +205,43 @@ msgstr "*** Notation start (signatur av: "
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: src/ext-commands.cpp:547
+#: src/ext-commands.cpp:550
 msgid "GpgOL Decrypt/Verify"
 msgstr ""
 
-#: src/ext-commands.cpp:561
+#: src/ext-commands.cpp:564
 msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:564
+#: src/ext-commands.cpp:567
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:566
+#: src/ext-commands.cpp:569
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
 msgstr ""
 
-#: src/ext-commands.cpp:576
-msgid ">GnuPG protocol"
-msgstr ""
-
-#: src/ext-commands.cpp:577
-msgid "auto"
-msgstr ""
-
-#: src/ext-commands.cpp:578
-#, fuzzy
-msgid "PGP/MIME"
-msgstr "[PGP/MIME-meddelande]"
-
-#: src/ext-commands.cpp:579
-msgid "S/MIME"
-msgstr ""
-
-#: src/ext-commands.cpp:581
+#: src/ext-commands.cpp:584
 #, fuzzy
 msgid "&encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:582
+#: src/ext-commands.cpp:585
 #, fuzzy
 msgid "&sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:634
-#, fuzzy
-msgid "GnuPG Certificate &Manager"
-msgstr "GPG-nyckel&hanterare"
-
-#: src/ext-commands.cpp:635
+#: src/ext-commands.cpp:637
 msgid "Remove GpgOL flags from this folder"
 msgstr ""
 
-#: src/ext-commands.cpp:639
-msgid "Open the certificate manager"
-msgstr ""
-
-#: src/ext-commands.cpp:778
-msgid ""
-"Support for S/MIME has not been enabled.\n"
-"\n"
-"To enable S/MIME support, open the option dialog and check \"Enable the S/"
-"MIME support\".  The option dialog can be found in the main menu at: Extras-"
-">Options->GpgOL.\n"
-msgstr ""
-
-#: src/ext-commands.cpp:806
-#, fuzzy
-msgid "Could not start certificate manager"
-msgstr "Kunde inte starta nyckelhanteraren"
-
-#: src/ext-commands.cpp:818
+#: src/ext-commands.cpp:811
 msgid ""
 "You are about to start the process of reversing messages created by GpgOL to "
 "prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
@@ -295,71 +254,34 @@ msgid ""
 "will again process messages."
 msgstr ""
 
-#: src/ext-commands.cpp:832
+#: src/ext-commands.cpp:825
 msgid "Do you want to revert this folder?"
 msgstr ""
 
-#: src/ext-commands.cpp:960
-#, fuzzy
-msgid "Select this option to automatically select the protocol."
-msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#: src/ext-commands.cpp:967
-#, fuzzy
-msgid "Select this option to select the PGP/MIME protocol."
-msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#: src/ext-commands.cpp:974
-#, fuzzy
-msgid "Select this option to select the S/MIME protocol."
-msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#: src/ext-commands.cpp:981
+#: src/ext-commands.cpp:976
 msgid "Select this option to encrypt the message."
 msgstr "Välj det här alternativet för att kryptera meddelandet."
 
-#: src/ext-commands.cpp:988
+#: src/ext-commands.cpp:983
 msgid "Select this option to sign the message."
 msgstr "Välj det här alternativet för att signera meddelandet."
 
-#: src/ext-commands.cpp:995
-#, fuzzy
-msgid "Select this option to open the certificate manager"
-msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#: src/ext-commands.cpp:1025
-#, fuzzy
-msgid "Automatically select the protocol for sign/encrypt"
-msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#: src/ext-commands.cpp:1035
-msgid "Use PGP/MIME for sign/encrypt"
-msgstr ""
-
-#: src/ext-commands.cpp:1045
-msgid "Use S/MIME for sign/encrypt"
-msgstr ""
-
-#: src/ext-commands.cpp:1055
+#: src/ext-commands.cpp:1043
 #, fuzzy
 msgid "Encrypt message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:1065
+#: src/ext-commands.cpp:1053
 #, fuzzy
 msgid "Sign message with GnuPG"
 msgstr "Signera meddelandet med GPG"
 
-#: src/ext-commands.cpp:1075
-msgid "Open the GpgOL certificate manager"
-msgstr ""
-
-#: src/main.c:686
+#: src/main.c:687
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr ""
 
-#: src/main.c:692
+#: src/main.c:693
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -385,7 +307,7 @@ msgid ""
 msgstr ""
 
 # A bit unclear in the original text
-#: src/message-events.cpp:320
+#: src/message-events.cpp:254
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -490,51 +412,33 @@ msgstr "Kryptera meddelandet med GPG"
 msgid "&Sign new messages by default"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:50
-msgid "Use PGP/MIME by default"
-msgstr ""
-
 #: src/olflange-dlgs.cpp:51
-msgid "Use S/MIME by default"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:53
 msgid "Message receiving"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:55
+#: src/olflange-dlgs.cpp:53
 msgid "Show HTML view if possible"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:56
+#: src/olflange-dlgs.cpp:54
 msgid "Present encrypted message as attachment"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:59
+#: src/olflange-dlgs.cpp:57
 msgid "Crypto Engine"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:216
-msgid ""
-"You have enabled GpgOL's support for the S/MIME protocol.\n"
-"\n"
-"New S/MIME messages are thus only viewable with GpgOL and not anymore with "
-"Outlook's internal S/MIME support.  Those message will even be unreadable by "
-"Outlook after GpgOL has been deinstalled.  A tool to mitigate this problem "
-"will be provided when GpgOL arrives at production quality status."
-msgstr ""
-
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:273
+#: src/olflange-dlgs.cpp:257
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:279
+#: src/olflange-dlgs.cpp:263
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr ""
 
-#: src/olflange.cpp:442
+#: src/olflange.cpp:447
 msgid ""
 "Welcome to GpgOL 1.0\n"
 "\n"
@@ -555,7 +459,7 @@ msgid ""
 "along with other Outlook plugins may in some cases not work.\n"
 msgstr ""
 
-#: src/olflange.cpp:470
+#: src/olflange.cpp:475
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -564,7 +468,7 @@ msgid ""
 ">Options->GpgOL.\n"
 msgstr ""
 
-#: src/olflange.cpp:658
+#: src/olflange.cpp:663
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -730,6 +634,38 @@ msgstr "Resultat från validering"
 #, fuzzy
 msgid "S/MIME Verification Result"
 msgstr "Resultat från validering"
+
+#, fuzzy
+#~ msgid "GnuPG Certificate &Manager"
+#~ msgstr "GPG-nyckel&hanterare"
+
+#, fuzzy
+#~ msgid "Select this option to open the certificate manager"
+#~ msgstr "Välj det här alternativet för att kryptera meddelandet."
+
+#, fuzzy
+#~ msgid "PGP/MIME"
+#~ msgstr "[PGP/MIME-meddelande]"
+
+#, fuzzy
+#~ msgid "Could not start certificate manager"
+#~ msgstr "Kunde inte starta nyckelhanteraren"
+
+#, fuzzy
+#~ msgid "Select this option to automatically select the protocol."
+#~ msgstr "Välj det här alternativet för att kryptera meddelandet."
+
+#, fuzzy
+#~ msgid "Select this option to select the PGP/MIME protocol."
+#~ msgstr "Välj det här alternativet för att kryptera meddelandet."
+
+#, fuzzy
+#~ msgid "Select this option to select the S/MIME protocol."
+#~ msgstr "Välj det här alternativet för att kryptera meddelandet."
+
+#, fuzzy
+#~ msgid "Automatically select the protocol for sign/encrypt"
+#~ msgstr "Välj det här alternativet för att kryptera meddelandet."
 
 #~ msgid "&Decrypt and verify message"
 #~ msgstr "&Dekryptera och validera meddelandet"

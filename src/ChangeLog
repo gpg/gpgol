@@ -1,3 +1,47 @@
+2009-10-28  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp: Remove m_nCmdCryptoState and all related code;
+	now handled in inspectors.cpp.  Remove m_nCmdKeyManager and all
+	related code; now handled in cmdbarcontrols.cpp.
+
+	* oomhelp.cpp, oomhelp.h, eventsink.h: New.
+	* myexchext.h: Move generic COM+ stuff to oomhelp.h.
+	* explorers.cpp, explorers.h: New.
+	* inspectors.cpp, inspectors.h: New.
+	* cmdbarcontrols.cpp cmdbarcontrols.h: New.
+	* olflange.cpp (install_sinks): New.
+	(Install): Call install_sinks.
+	* main.c (DllMain): Call initialize_inspectors.
+
+	* common.c (fatal_error): New.
+
+2009-10-20  Werner Koch  <wk@g10code.com>
+
+	* myexchext.h (IID_IConnectionPoint)
+	(IID_IConnectionPointContainer): Define.  There are missing in
+	current wine  From ReactOS.
+
+2009-10-19  Werner Koch  <wk@g10code.com>
+
+	* message-events.cpp (show_event_object): Move to ..
+	* ol-ext-callback.cpp (show_event_object): .. here.
+	(show_preview_pane): Revert dispparms order to make it work.
+
+	* common.c (mem2str): New.
+
+2009-10-07  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (InstallCommands): Comment out the protocol
+	selection.
+	(DoCommand, Help, QueryHelpText, QueryButtonInfo): Ditto.
+	(update_protocol_menu): Comment out.
+	* main.c (write_options): Do not write the default protocol.
+	(read_options): Always set it to auto.
+	* dialogs.rc: Remove openpgp-by-default and smime-by-default check
+	boxes.
+	* olflange-dlgs.cpp (set_labels): Likewise.
+	(GPGOptionsDlgProc): Likewise.
+
 2009-09-25  Werner Koch  <wk@g10code.com>
 
 	* main.c (read_options): Enable Smime by default.

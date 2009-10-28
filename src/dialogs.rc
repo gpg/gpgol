@@ -28,13 +28,24 @@
 
 /*IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"*/
 IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
-IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
-IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key_mana.bmp"
 IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
 IDB_CRYPTO_STATE        BITMAP  DISCARDABLE     "cryptostate.bmp"
 IDB_PROTO_AUTO          BITMAP  DISCARDABLE     "proto-auto.bmp"
 IDB_PROTO_PGPMIME       BITMAP  DISCARDABLE     "proto-pgpmime.bmp"
 IDB_PROTO_SMIME         BITMAP  DISCARDABLE     "proto-smime.bmp"
+IDB_PROTO_SMIME_MASK    BITMAP  DISCARDABLE     "proto-smime-mask.bmp"
+
+IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key-manager.bmp"
+IDB_KEY_MANAGER_MASK    BITMAP  DISCARDABLE     "key-manager-mask.bmp"
+IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
+IDB_DECRYPT_MASK        BITMAP  DISCARDABLE     "decrypt-mask.bmp"
+IDB_VERIFY              BITMAP  DISCARDABLE     "verify.bmp"
+IDB_VERIFY_MASK         BITMAP  DISCARDABLE     "verify-mask.bmp"
+IDB_DECRYPT_VERIFY      BITMAP  DISCARDABLE     "decrypt-verify.bmp"
+IDB_DECRYPT_VERIFY_MASK BITMAP  DISCARDABLE     "decrypt-verify-mask.bmp"
+IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
+IDB_SIGN_MASK           BITMAP  DISCARDABLE     "sign-mask.bmp"
+
 
 
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274
@@ -52,7 +63,7 @@ BEGIN
 
     /* Send options box.  */
     GROUPBOX        "send-options", IDC_G_SEND,
-                    9, 40, 250, 58
+                    9, 40, 250, 38
 
     CONTROL         "encrypt-by-default", IDC_ENCRYPT_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
@@ -62,17 +73,9 @@ BEGIN
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 61, 215, 10
 
-    CONTROL         "openpgp-by-default", IDC_OPENPGP_DEFAULT,
-                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 72, 215, 10
-
-    CONTROL         "smime-by-default", IDC_SMIME_DEFAULT,
-                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 83, 215, 10
-
     /* Receive options box.  */
     GROUPBOX        "recv-options", IDC_G_RECV,
-                    9, 104, 250, 36
+                    9, 82, 250, 36
 
   /* We have no reliable way to detect the preview window, thus we
      don't show this option.  */
@@ -82,11 +85,11 @@ BEGIN
 
     CONTROL         "prefer-html", IDC_PREFER_HTML,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 114, 215, 10
+                    24,  94, 215, 10
  
     CONTROL         "body-as-attachment", IDC_BODY_AS_ATTACHMENT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 125, 215, 10
+                    24, 103, 215, 10
  
     /* Stuff at the lower left corner.  */
     LTEXT           "GpgOL by g10 Code GmbH", IDC_G10CODE_STRING, 

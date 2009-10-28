@@ -31,5 +31,9 @@ char *get_outlook_property (void *pEECB, const char *key);
 int is_preview_pane_visible (LPEXCHEXTCALLBACK eecb);
 void show_preview_pane (LPEXCHEXTCALLBACK eecb, int visible);
 
+void show_event_object (LPEXCHEXTCALLBACK eecb, const char *description);
+
+void add_oom_command_button (LPEXCHEXTCALLBACK eecb);
+
 
 #endif /*OL_EXT_CALLBACK_H*/

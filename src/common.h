@@ -242,6 +242,10 @@ int verify_dialog_box (gpgme_protocol_t protocol,
                        const char *filename);
 
 
+/*-- inspectors.cpp --*/
+int initialize_inspectors (void);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -31,7 +31,6 @@
 #include "msgcache.h"
 #include "mymapi.h"
 
-
 /* The malloced name of the logfile and the logging stream.  If
    LOGFILE is NULL, no logging is done. */
 static char *logfile;
@@ -175,6 +174,8 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
       if (initialize_passcache ())
         return FALSE;
       if (initialize_msgcache ())
+        return FALSE;
+      if (initialize_inspectors ())
         return FALSE;
       init_options ();
     }
@@ -587,15 +588,16 @@ read_options (void)
   opt.enable_smime = (!val || atoi (val));
   xfree (val); val = NULL;
   
-  load_extension_value ("defaultProtocol", &val);
-  switch ((!val || *val == '0')? 0 : atol (val))
-    {
-    case 1: opt.default_protocol = PROTOCOL_OPENPGP; break;
-    case 2: opt.default_protocol = PROTOCOL_SMIME; break;
-    case 0:
-    default: opt.default_protocol = PROTOCOL_UNKNOWN /*(auto*)*/; break;
-    }
-  xfree (val); val = NULL;
+/*   load_extension_value ("defaultProtocol", &val); */
+/*   switch ((!val || *val == '0')? 0 : atol (val)) */
+/*     { */
+/*     case 1: opt.default_protocol = PROTOCOL_OPENPGP; break; */
+/*     case 2: opt.default_protocol = PROTOCOL_SMIME; break; */
+/*     case 0: */
+/*     default: opt.default_protocol = PROTOCOL_UNKNOWN /\*(auto*)*\/; break; */
+/*     } */
+/*   xfree (val); val = NULL; */
+  opt.default_protocol = PROTOCOL_UNKNOWN; /* (auto)*/
 
   load_extension_value ("encryptDefault", &val);
   opt.encrypt_default = val == NULL || *val != '1'? 0 : 1;
@@ -710,7 +712,7 @@ write_options (void)
     char *s_val;
   } table[] = {
     {"enableSmime",              0, opt.enable_smime},
-    {"defaultProtocol",          3, opt.default_protocol},
+/*     {"defaultProtocol",          3, opt.default_protocol}, */
     {"encryptDefault",           0, opt.encrypt_default},
     {"signDefault",              0, opt.sign_default},
     {"previewDecrypt",           0, opt.preview_decrypt},
@@ -752,19 +754,19 @@ write_options (void)
                      table[i].name, string);
           rc = store_extension_value (table[i].name, string);
           break;
-        case 3:
-          buf[0] = '0';
-          buf[1] = 0;
-          switch (opt.default_protocol)
-            {
-            case PROTOCOL_UNKNOWN: buf[0] = '0'; /* auto */ break;
-            case PROTOCOL_OPENPGP: buf[0] = '1'; break;
-            case PROTOCOL_SMIME:   buf[0] = '2'; break;
-            }
-          log_debug ("storing option `%s' value=`%s'\n",
-                     table[i].name, buf);
-          rc = store_extension_value (table[i].name, buf);
-          break;  
+/*         case 3: */
+/*           buf[0] = '0'; */
+/*           buf[1] = 0; */
+/*           switch (opt.default_protocol) */
+/*             { */
+/*             case PROTOCOL_UNKNOWN: buf[0] = '0'; /\* auto *\/ break; */
+/*             case PROTOCOL_OPENPGP: buf[0] = '1'; break; */
+/*             case PROTOCOL_SMIME:   buf[0] = '2'; break; */
+/*             } */
+/*           log_debug ("storing option `%s' value=`%s'\n", */
+/*                      table[i].name, buf); */
+/*           rc = store_extension_value (table[i].name, buf); */
+/*           break;   */
 
         default:
           rc = -1;

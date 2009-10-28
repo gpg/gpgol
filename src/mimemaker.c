@@ -1060,7 +1060,7 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
     return -1;
 
   /* We also need to set the message class into our custom
-     property. This override is at leas required for encrypted
+     property. This override is at least required for encrypted
      messages.  */
   if (mapi_set_gpgol_msg_class (message,
                                 (encrypt? 

@@ -104,20 +104,20 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
   if (debug_commands)
     log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
-//   switch (is_preview_pane_visible (eecb))
-//     {
-//     case 0:
-//       log_debug ("%s:%s: preview pane is not visible\n", SRCNAME, __func__);
-//       break;
+  // switch (is_preview_pane_visible (eecb))
+  //   {
+  //   case 0:
+  //     log_debug ("%s:%s: preview pane is not visible\n", SRCNAME, __func__);
+  //     break;
       
-//     case 1:
-//       log_debug ("%s:%s: preview pane is visible\n", SRCNAME, __func__);
-//       break;
+  //   case 1:
+  //     log_debug ("%s:%s: preview pane is visible\n", SRCNAME, __func__);
+  //     break;
 
-//     default:
-//       log_debug ("%s:%s: no status for preview pane\n", SRCNAME, __func__);
-//       break;
-//     }
+  //   default:
+  //     log_debug ("%s:%s: no status for preview pane\n", SRCNAME, __func__);
+  //     break;
+  //   }
   
 
   hr = eecb->GetSelectionCount (&count);
