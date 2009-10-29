@@ -136,6 +136,13 @@ trailing_ws_p (const char *line)
   return 1;
 }
 
+/* An strcmp variant with the compare ending at the end of B.  */
+static inline int
+tagcmp (const char *a, const char *b)
+{
+  return strncmp (a, b, strlen (b));
+}
+
 
 /*****  Missing functions.  ****/
 

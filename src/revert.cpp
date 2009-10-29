@@ -236,12 +236,12 @@ gpgol_message_revert (LPMESSAGE message, LONG do_save, ULONG save_flags)
 }
 
 
-/* Revert all messages in the curent folder.  */
+/* Revert all messages in the MAPIFOLDEROBJ.  */
 EXTERN_C LONG __stdcall
-gpgol_folder_revert (LPEXCHEXTCALLBACK eecb)
+gpgol_folder_revert (LPDISPATCH mapifolderobj)
 {
+#if 0
   HRESULT hr;
-  LPMDB mdb = NULL;
   LPMAPIFOLDER folder = NULL;
   LONG proptype;
   LPMAPITABLE contents;
@@ -251,7 +251,7 @@ gpgol_folder_revert (LPEXCHEXTCALLBACK eecb)
   LPMESSAGE message;
   
 
-  log_debug ("%s:%s: gpgol_folder_revert enter\n", SRCNAME, __func__);
+  log_debug ("%s:%s: Enter", SRCNAME, __func__);
   
   hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&folder);
   if (FAILED (hr) )
@@ -353,5 +353,6 @@ gpgol_folder_revert (LPEXCHEXTCALLBACK eecb)
   contents->Release ();
   ul_release (folder, __func__, __LINE__);
   ul_release (mdb, __func__, __LINE__);
+#endif
   return 0;
 }

@@ -22,29 +22,53 @@
 
 #include "afxres.h"
 
-/* To create these bitmaps, you need to use an Outlook specific
-   palette.  A palette file for The Gimp is included as
-   Outlook.gpl.  */
 
-/*IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"*/
-IDB_ENCRYPT             BITMAP  DISCARDABLE     "encrypt.bmp"
+IDB_ENCRYPT_16            BITMAP  DISCARDABLE  "encrypt-16.bmp"
+IDB_ENCRYPT_16M           BITMAP  DISCARDABLE  "encrypt-16m.bmp"      
+//IDB_ENCRYPT_32            BITMAP  DISCARDABLE        
+//IDB_ENCRYPT_32M           BITMAP  DISCARDABLE        
+//IDB_ENCRYPT_64            BITMAP  DISCARDABLE        
+//IDB_ENCRYPT_64M           BITMAP  DISCARDABLE        
+
+IDB_SIGN_16               BITMAP  DISCARDABLE  "sign-16.bmp"
+IDB_SIGN_16M              BITMAP  DISCARDABLE  "sign-16m.bmp"      
+//IDB_SIGN_32               BITMAP  DISCARDABLE        
+//IDB_SIGN_32M              BITMAP  DISCARDABLE        
+//IDB_SIGN_64               BITMAP  DISCARDABLE        
+//IDB_SIGN_64M              BITMAP  DISCARDABLE        
+
+IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "key-manager-16.bmp"
+IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"     
+IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"      
+IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"      
+//IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE        
+//IDB_KEY_MANAGER_64M       BITMAP  DISCARDABLE        
+
+IDB_DECRYPT_16            BITMAP  DISCARDABLE  "decrypt-16.bmp"     
+IDB_DECRYPT_16M           BITMAP  DISCARDABLE  "decrypt-16m.bmp"     
+//IDB_DECRYPT_32            BITMAP  DISCARDABLE        
+//IDB_DECRYPT_32M           BITMAP  DISCARDABLE        
+//IDB_DECRYPT_64            BITMAP  DISCARDABLE        
+//IDB_DECRYPT_64M           BITMAP  DISCARDABLE        
+
+IDB_VERIFY_16             BITMAP  DISCARDABLE  "verify-16.bmp"          
+IDB_VERIFY_16M            BITMAP  DISCARDABLE  "verify-16m.bmp"     
+//IDB_VERIFY_32             BITMAP  DISCARDABLE        
+//IDB_VERIFY_32M            BITMAP  DISCARDABLE        
+//IDB_VERIFY_64             BITMAP  DISCARDABLE        
+//IDB_VERIFY_64M            BITMAP  DISCARDABLE        
+
+IDB_DECRYPT_VERIFY_16     BITMAP  DISCARDABLE  "decrypt-verify-16.bmp" 
+IDB_DECRYPT_VERIFY_16M    BITMAP  DISCARDABLE  "decrypt-verify-16m.bmp"
+//IDB_DECRYPT_VERIFY_32     BITMAP  DISCARDABLE        
+//IDB_DECRYPT_VERIFY_32M    BITMAP  DISCARDABLE        
+//IDB_DECRYPT_VERIFY_64     BITMAP  DISCARDABLE        
+//IDB_DECRYPT_VERIFY_64M    BITMAP  DISCARDABLE        
+
+
+
+
 IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
-IDB_CRYPTO_STATE        BITMAP  DISCARDABLE     "cryptostate.bmp"
-IDB_PROTO_AUTO          BITMAP  DISCARDABLE     "proto-auto.bmp"
-IDB_PROTO_PGPMIME       BITMAP  DISCARDABLE     "proto-pgpmime.bmp"
-IDB_PROTO_SMIME         BITMAP  DISCARDABLE     "proto-smime.bmp"
-IDB_PROTO_SMIME_MASK    BITMAP  DISCARDABLE     "proto-smime-mask.bmp"
-
-IDB_KEY_MANAGER         BITMAP  DISCARDABLE     "key-manager.bmp"
-IDB_KEY_MANAGER_MASK    BITMAP  DISCARDABLE     "key-manager-mask.bmp"
-IDB_DECRYPT             BITMAP  DISCARDABLE     "decrypt.bmp"
-IDB_DECRYPT_MASK        BITMAP  DISCARDABLE     "decrypt-mask.bmp"
-IDB_VERIFY              BITMAP  DISCARDABLE     "verify.bmp"
-IDB_VERIFY_MASK         BITMAP  DISCARDABLE     "verify-mask.bmp"
-IDB_DECRYPT_VERIFY      BITMAP  DISCARDABLE     "decrypt-verify.bmp"
-IDB_DECRYPT_VERIFY_MASK BITMAP  DISCARDABLE     "decrypt-verify-mask.bmp"
-IDB_SIGN                BITMAP  DISCARDABLE     "sign.bmp"
-IDB_SIGN_MASK           BITMAP  DISCARDABLE     "sign-mask.bmp"
 
 
 

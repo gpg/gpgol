@@ -40,17 +40,6 @@ private:
   ULONG m_lRef;
   ULONG m_lContext;
   
-  UINT  m_nCmdProtoAuto;
-  UINT  m_nCmdProtoPgpmime;
-  UINT  m_nCmdProtoSmime;
-  UINT  m_nCmdEncrypt;
-  UINT  m_nCmdSign;
-  UINT  m_nCmdRevertFolder;
-  UINT  m_nCmdDebug0;
-  UINT  m_nCmdDebug1;
-  UINT  m_nCmdDebug2;
-  UINT  m_nCmdDebug3;
-
   /* A list of all active toolbar items.  */
   toolbar_info_t m_toolbar_info;
   

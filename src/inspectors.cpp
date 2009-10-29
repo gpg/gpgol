@@ -37,6 +37,7 @@
 /* Event sink for an Inspectors collection object.  */
 BEGIN_EVENT_SINK(GpgolInspectorsEvents, IOOMInspectorsEvents)
   STDMETHOD (NewInspector) (THIS_ LPOOMINSPECTOR);
+EVENT_SINK_DEFAULT_CTOR(GpgolInspectorsEvents)
 EVENT_SINK_DEFAULT_DTOR(GpgolInspectorsEvents)
 EVENT_SINK_INVOKE(GpgolInspectorsEvents)
 {
@@ -67,6 +68,11 @@ BEGIN_EVENT_SINK(GpgolInspectorEvents, IOOMInspectorEvents)
   STDMETHOD_ (void, Activate) (THIS_);
   STDMETHOD_ (void, Close) (THIS_);
   STDMETHOD_ (void, Deactivate) (THIS_);
+  bool m_first_activate_seen;
+EVENT_SINK_CTOR(GpgolInspectorEvents)
+{
+  m_first_activate_seen = false;
+}
 EVENT_SINK_DEFAULT_DTOR(GpgolInspectorEvents)
 EVENT_SINK_INVOKE(GpgolInspectorEvents)
 {
@@ -95,6 +101,18 @@ END_EVENT_SINK(GpgolInspectorEvents, IID_IOOMInspectorEvents)
 
 
 
+/* A linked list as a simple collection of button.  */
+struct button_list_s
+{
+  struct button_list_s *next;
+  LPDISPATCH sink;
+  LPDISPATCH button;
+  int instid;
+  char tag[1];         /* Variable length string.  */
+};
+typedef struct button_list_s *button_list_t;
+
+
 /* To avoid messing around with the OOM (adding extra objects as user
    properties and such), we keep our own information structure about
    inspectors. */
@@ -110,8 +128,8 @@ struct inspector_info_s
      locate the inspector object.  */
   LPOOMINSPECTOREVENTS eventsink;
 
-  /* The event sink object for the crypto info button.  */
-  LPDISPATCH crypto_info_sink;
+  /* A list of all the buttons.  */
+  button_list_t buttons;
 
 };
 typedef struct inspector_info_s *inspector_info_t;
@@ -120,6 +138,11 @@ typedef struct inspector_info_s *inspector_info_t;
 static inspector_info_t all_inspectors;
 static HANDLE all_inspectors_lock;
 
+
+static void update_crypto_info (LPDISPATCH button);
+
+
+
 /* Initialize this module.  Returns 0 on success.  Called once by dllinit.  */
 int
 initialize_inspectors (void)
@@ -164,6 +187,34 @@ unlock_all_inspectors (void)
 }
 
 
+/* Add SINK and BUTTON to the list at LISTADDR.  The list takes
+   ownership of SINK and BUTTON, thus the caller may not use OBJ or
+   OBJ2 after this call.  If TAG is given it is stored as well.  */
+static void
+move_to_button_list (button_list_t *listaddr, 
+                     LPDISPATCH sink, LPDISPATCH button, const char *tag)
+{
+  button_list_t item;
+  int instid;
+
+  if (!tag)
+    tag = "";
+
+  instid = button? get_oom_int (button, "InstanceId"): 0;
+
+  // log_debug ("%s:%s: sink=%p btn=%p tag=(%s) instid=%d",
+  //            SRCNAME, __func__, sink, button, tag, instid);
+
+  item = (button_list_t)xcalloc (1, sizeof *item + strlen (tag));
+  item->sink = sink;
+  item->button = button;
+  item->instid = instid;
+  strcpy (item->tag, tag);
+  item->next = *listaddr;
+  *listaddr = item;
+}
+
+
 /* Register the inspector object INSPECTOR along with its event SINK.  */
 static void
 register_inspector (LPOOMINSPECTOR inspector, LPOOMINSPECTOREVENTS sink)
@@ -190,6 +241,7 @@ static void
 deregister_inspector (LPOOMINSPECTOREVENTS sink)
 {
   inspector_info_t r, rprev;
+  button_list_t ol, ol2;
 
   if (!sink)
     return;
@@ -215,8 +267,17 @@ deregister_inspector (LPOOMINSPECTOREVENTS sink)
   r->eventsink = NULL;
   if (r->inspector)
     r->inspector->Release ();
-  if (r->crypto_info_sink)
-    r->crypto_info_sink->Release ();
+
+  for (ol = r->buttons; ol; ol = ol2)
+    {
+      ol2 = ol->next;
+      if (ol->sink)
+        ol->sink->Release ();
+      if (ol->button)
+        ol->button->Release ();
+      xfree (ol);
+    }
+
   xfree (r);
 }
 
@@ -242,6 +303,42 @@ get_inspector_info (LPOOMINSPECTOR inspector)
 }
 
 
+/* Search through all objects and find the inspector which has a
+   button with the instanceId INSTID.  The find the button with TAG in
+   that inspector and return it.  Caller must release the returned
+   button.  Returns NULL if not found.  */
+static LPDISPATCH
+get_button_by_instid_and_tag (int instid, const char *tag)
+{
+  LPDISPATCH result = NULL;
+  inspector_info_t iinfo;
+  button_list_t ol;
+
+  // log_debug ("%s:%s: inst=%d tag=(%s)",SRCNAME, __func__, instid, tag);
+
+  lock_all_inspectors ();
+
+  for (iinfo = all_inspectors; iinfo; iinfo = iinfo->next)
+    for (ol = iinfo->buttons; ol; ol = ol->next)
+      if (ol->instid == instid)
+        {
+          /* Found the inspector.  Now look for the tag.  */
+          for (ol = iinfo->buttons; ol; ol = ol->next)
+            if (ol->tag && !strcmp (ol->tag, tag))
+              {
+                result = ol->button;
+                if (result)
+                  result->AddRef ();
+                break;
+              }
+          break;
+        }
+
+  unlock_all_inspectors ();
+  return result;
+}
+
+
 
 /* The method called by outlook for each new inspector.  Note that
    Outlook sometimes reuses Inspectro objects thus this event is not
@@ -261,7 +358,6 @@ GpgolInspectorsEvents::NewInspector (LPOOMINSPECTOR inspector)
     {
       register_inspector (inspector, (LPOOMINSPECTOREVENTS)obj);
       obj->Release ();
-      add_inspector_controls (inspector);
     }
   inspector->Release ();
   return S_OK;
@@ -284,6 +380,7 @@ STDMETHODIMP_(void)
 GpgolInspectorEvents::Activate (void)
 {
   LPDISPATCH obj, button;
+  LPOOMINSPECTOR inspector;
 
   log_debug ("%s:%s: Called", SRCNAME, __func__);
 
@@ -296,7 +393,18 @@ GpgolInspectorEvents::Activate (void)
       log_error ("%s:%s: Object not set", SRCNAME, __func__);
       return;
     }
+  inspector = (LPOOMINSPECTOR)m_object;
 
+  /* If this is the first activate for the inspector, we add the
+     controls.  We do it only now to be sure that everything has been
+     initialized.  Doing that in GpgolInspectorsEvents::NewInspector
+     is not suggested due to claims from some mailing lists.  */ 
+  if (!m_first_activate_seen)
+    {
+      m_first_activate_seen = true;
+      add_inspector_controls (inspector);
+    }
+  
   /* Update the crypt info.  */
   obj = get_oom_object (m_object, "CommandBars");
   if (!obj)
@@ -307,7 +415,7 @@ GpgolInspectorEvents::Activate (void)
       obj->Release ();
       if (button)
         {
-          update_inspector_crypto_info (button);
+          update_crypto_info (button);
           button->Release ();
         }
     }
@@ -323,14 +431,37 @@ GpgolInspectorEvents::Deactivate (void)
 }
 
 
+/* Check whether we are in composer or read mode.  */
+static bool
+is_inspector_in_composer_mode (LPDISPATCH inspector)
+{
+  LPDISPATCH obj;
+  bool in_composer;
+  
+  obj = get_oom_object (inspector, "get_CurrentItem");
+  if (obj)
+    {
+      /* We are in composer mode if the "Sent" property is false and
+         the class is 43.  */
+      in_composer = (!get_oom_bool (obj, "Sent") 
+                     && get_oom_int (obj, "Class") == 43);
+      obj->Release ();
+    }
+  else
+    in_composer = false;
+  return in_composer;
+}
 
 
-
+/* Add all the controls.  */
 void
 add_inspector_controls (LPOOMINSPECTOR inspector)
 {
-  LPDISPATCH pObj, pDisp, pTmp;
+  LPDISPATCH obj, controls, button;
   inspector_info_t inspinfo;
+  button_list_t buttonlist = NULL;
+  const char *tag;
+  int in_composer;
 
   log_debug ("%s:%s: Enter", SRCNAME, __func__);
 
@@ -341,75 +472,206 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
      to keep a lock per inspector. */
 
   /* Check that our controls do not already exist.  */
-  pObj = get_oom_object (inspector, "CommandBars");
-  if (!pObj)
+  obj = get_oom_object (inspector, "CommandBars");
+  if (!obj)
     {
-      log_debug ("%s:%s: CommandBars not found", SRCNAME, __func__);
+      log_error ("%s:%s: CommandBars not found", SRCNAME, __func__);
       return;
     }
-  pDisp = get_oom_control_bytag (pObj, "GpgOL_Inspector_Crypto_Info");
-  pObj->Release ();
-  pObj = NULL;
-  if (pDisp)
+  button= get_oom_control_bytag (obj, "GpgOL_Inspector_Crypto_Info");
+  obj->Release ();
+  if (button)
     {
-      pDisp->Release ();
+      button->Release ();
       log_debug ("%s:%s: Leave (Controls are already added)",
                  SRCNAME, __func__);
       return;
     }
 
-  /* Create our controls.  */
-  pDisp = get_oom_object (inspector,
-                          "CommandBars.Item(Standard).get_Controls");
-  if (!pDisp)
-    log_debug ("%s:%s: CommandBar \"Standard\" not found\n",
+  /* Check whether we are in composer or read mode.  */
+  in_composer = is_inspector_in_composer_mode (inspector);
+
+  /* Add buttons to the Format menu but only in composer mode.  */
+  if (in_composer)
+    {
+      controls = get_oom_object 
+        (inspector, "CommandBars.FindControl(,30006).get_Controls");
+      if (!controls)
+        log_debug ("%s:%s: Menu Popup Format not found\n", SRCNAME, __func__);
+      else
+        {
+          button = opt.disable_gpgol? NULL : add_oom_button (controls);
+          if (button)
+            {
+              put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Encrypt"));
+              put_oom_bool (button, "BeginGroup", true);
+              put_oom_int (button, "Style", msoButtonIconAndCaption );
+              put_oom_string (button, "Caption",
+                              _("&encrypt message with GnuPG"));
+              put_oom_icon (button, IDB_ENCRYPT, 16);
+              
+              obj = install_GpgolCommandBarButtonEvents_sink (button);
+              move_to_button_list (&buttonlist, obj, button, tag);
+            }
+          
+          button = opt.disable_gpgol? NULL : add_oom_button (controls);
+          if (button)
+            {
+              put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Sign"));
+              put_oom_int (button, "Style", msoButtonIconAndCaption );
+              put_oom_string (button, "Caption", _("&sign message with GnuPG"));
+              put_oom_icon (button, IDB_SIGN, 16);
+              
+              obj = install_GpgolCommandBarButtonEvents_sink (button);
+              move_to_button_list (&buttonlist, obj, button, tag);
+            }
+          
+          controls->Release ();
+        }
+    }
+  
+
+  /* Add buttons to the Extra menu.  */
+  controls = get_oom_object (inspector,
+                             "CommandBars.FindControl(,30007).get_Controls");
+  if (!controls)
+    log_debug ("%s:%s: Menu Popup Extras not found\n", SRCNAME, __func__);
+  else
+    {
+      button = in_composer? NULL : add_oom_button (controls);
+      if (button)
+        {
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Verify"));
+          put_oom_int (button, "Style", msoButtonIconAndCaption );
+          put_oom_string (button, "Caption", _("GpgOL Decrypt/Verify"));
+          put_oom_icon (button, IDB_DECRYPT_VERIFY, 16);
+          
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
+        }
+
+      button = opt.enable_debug? add_oom_button (controls) : NULL;
+      if (button)
+        {
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Debug-0"));
+          put_oom_int (button, "Style", msoButtonCaption );
+          put_oom_string (button, "Caption",
+                          "GpgOL Debug-0 (display crypto info)");
+          
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
+        }
+
+      button = opt.enable_debug? add_oom_button (controls) : NULL;
+      if (button)
+        {
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Debug-1"));
+          put_oom_int (button, "Style", msoButtonCaption );
+          put_oom_string (button, "Caption",
+                          "GpgOL Debug-1 (open_inspector)");
+          
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
+        }
+
+      button = opt.enable_debug? add_oom_button (controls) : NULL;
+      if (button)
+        {
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Debug-2"));
+          put_oom_int (button, "Style", msoButtonCaption );
+          put_oom_string (button, "Caption",
+                          "GpgOL Debug-2 (change message class)");
+          
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
+        }
+
+      controls->Release ();
+    }
+
+
+  /* Create the toolbar buttons.  */
+  controls = get_oom_object (inspector,
+                             "CommandBars.Item(Standard).get_Controls");
+  if (!controls)
+    log_error ("%s:%s: CommandBar \"Standard\" not found\n",
                SRCNAME, __func__);
   else
     {
-      pTmp = add_oom_button (pDisp);
-      pDisp->Release ();
-      pDisp = pTmp;
-      if (pDisp)
+      button = (opt.disable_gpgol || !in_composer
+                ? NULL : add_oom_button (controls));
+      if (button)
         {
-          put_oom_string (pDisp, "Tag", "GpgOL_Inspector_Crypto_Info");
-          put_oom_int (pDisp, "Style", msoButtonIcon );
-          put_oom_string (pDisp, "TooltipText",
-                          _("Indicates the crypto status of the message"));
-          put_oom_icon (pDisp, IDB_SIGN, 16);
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Encrypt@t"));
+          put_oom_int (button, "Style", msoButtonIcon );
+          put_oom_string (button, "Caption", _("Encrypt message with GnuPG"));
+          put_oom_icon (button, IDB_ENCRYPT, 16);
+          put_oom_int (button, "State", msoButtonMixed );
           
-          pObj = install_GpgolCommandBarButtonEvents_sink (pDisp);
-          pDisp->Release ();
-          inspinfo = get_inspector_info (inspector);
-          if (inspinfo)
-            {
-              inspinfo->crypto_info_sink = pObj;
-              unlock_all_inspectors ();
-            }
-          else
-            {
-              log_error ("%s:%s: inspector not registered", SRCNAME, __func__);
-              pObj->Release (); /* Get rid of the sink.  */
-            }
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
         }
+
+      button = (opt.disable_gpgol || !in_composer
+                ? NULL : add_oom_button (controls));
+      if (button)
+        {
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Sign@t"));
+          put_oom_int (button, "Style", msoButtonIcon);
+          put_oom_string (button, "Caption", _("Sign message with GnuPG"));
+          put_oom_icon (button, IDB_SIGN, 16);
+          put_oom_int (button, "State", msoButtonDown);
+          
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
+        }
+
+      button = in_composer? NULL : add_oom_button (controls);
+      if (button)
+        {
+          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Crypto_Info"));
+          put_oom_int (button, "Style", msoButtonIcon);
+          
+          obj = install_GpgolCommandBarButtonEvents_sink (button);
+          move_to_button_list (&buttonlist, obj, button, tag);
+        }
+
+      controls->Release ();
     }
 
-  /* FIXME: Menuswe need to add: */
-        // (opt.disable_gpgol || not_a_gpgol_message)?
-        //         "" : _("GpgOL Decrypt/Verify"), &m_nCmdCryptoState,
-        // opt.enable_debug? "GpgOL Debug-0 (display crypto info)":"", 
-        //         &m_nCmdDebug0,
 
+  /* Save the buttonlist.  */
+  inspinfo = get_inspector_info (inspector);
+  if (inspinfo)
+    {
+      inspinfo->buttons = buttonlist;
+      unlock_all_inspectors ();
+    }
+  else
+    {
+      button_list_t ol, ol2;
 
+      log_error ("%s:%s: inspector not registered", SRCNAME, __func__);
+      for (ol = buttonlist; ol; ol = ol2)
+        {
+          ol2 = ol->next;
+          if (ol->sink)
+            ol->sink->Release ();
+          if (ol->button)
+            ol->button->Release ();
+          xfree (ol);
+        }
+    }
     
   log_debug ("%s:%s: Leave", SRCNAME, __func__);
 }
 
 
 /* Update the crypto info icon.  */
-void
-update_inspector_crypto_info (LPDISPATCH button)
+static void
+update_crypto_info (LPDISPATCH button)
 {
-  LPDISPATCH obj;
+  LPDISPATCH inspector;
   char *msgcls = NULL;;
   const char *s;
   int in_composer = 0;
@@ -422,13 +684,13 @@ update_inspector_crypto_info (LPDISPATCH button)
      versions via mapi_get_message_type and mapi_test_sig_status
      in UserProperties and use them instead of a direct lookup of
      the messageClass.  */
-  obj = get_oom_object (button, "get_Parent.get_Parent.get_CurrentItem");
-  if (obj)
+
+  inspector = get_oom_object (button, "get_Parent.get_Parent.get_CurrentItem");
+  if (inspector)
     {
-      msgcls = get_oom_string (obj, "MessageClass");
-      /* If "Sent" is false we are in composer mode  */
-      in_composer = !get_oom_bool (obj, "Sent");
-      obj->Release ();
+      msgcls = get_oom_string (inspector, "MessageClass");
+      in_composer = is_inspector_in_composer_mode (inspector);
+      inspector->Release ();
     }
   if (msgcls)
     {
@@ -494,3 +756,131 @@ update_inspector_crypto_info (LPDISPATCH button)
     }
 }
 
+
+/* Toggle a button and return the new state.  */
+static int
+toggle_button (LPDISPATCH button, const char *tag, int instid)
+{
+  int state = get_oom_int (button, "State");
+  char tag2[256];
+  LPDISPATCH button2;
+
+  log_debug ("%s:%s: button `%s' state is %d", SRCNAME, tag, __func__, state);
+  state = (state == msoButtonUp)? msoButtonDown : msoButtonUp;
+  put_oom_int (button, "State", state);
+
+  /* Toggle the other button.  */
+  mem2str (tag2, tag, sizeof tag2 - 2);
+  if (*tag2 && tag2[1] && !strcmp (tag2+strlen(tag2)-2, "@t"))
+    tag2[strlen(tag2)-2] = 0; /* Remove the "@t".  */
+  else
+    strcat (tag2, "@t");      /* Append a "@t".  */
+
+  button2 = get_button_by_instid_and_tag (instid, tag2);
+  if (!button2)
+    log_debug ("%s:%s: button `%s' not found", SRCNAME, __func__, tag2);
+  else
+    {
+      put_oom_int (button2, "State", state);
+      button2->Release ();
+    }
+  return state;
+}
+
+
+/* Called for a click on an inspector button.  BUTTON is the button
+   object and TAG is the tag value (which is guaranteed not to be
+   NULL).  INSTID is the instance ID of the button. */
+void
+proc_inspector_button_click (LPDISPATCH button, const char *tag, int instid)
+{
+  if (!tagcmp (tag, "GpgOL_Inspector_Encrypt"))
+    {  
+      toggle_button (button, tag, instid);
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Sign"))
+    {  
+      toggle_button (button, tag, instid);
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Verify"))
+    {
+      /* FIXME: We need to invoke decrypt/verify again. */
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Crypto_Info"))
+    {
+      /* FIXME: We should invoke the decrypt/verify again. */
+      update_crypto_info (button);
+#if 0 /* This is the code we used to use.  */
+      log_debug ("%s:%s: command CryptoState called\n", SRCNAME, __func__);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (SUCCEEDED (hr))
+        {
+          if (message_incoming_handler (message, hwnd, true))
+            message_display_handler (eecb, hwnd);
+	}
+      else
+        log_debug_w32 (hr, "%s:%s: command CryptoState failed", 
+                       SRCNAME, __func__);
+      ul_release (message, __func__, __LINE__);
+      ul_release (mdb, __func__, __LINE__);
+#endif
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Debug-0"))
+    {
+      /* Show crypto info.  */
+      log_debug ("%s:%s: command Debug0 (showInfo) called\n",
+                 SRCNAME, __func__);
+      // hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      // if (SUCCEEDED (hr))
+      //   {
+      //     message_show_info (message, hwnd);
+      //   }
+      // ul_release (message, __func__, __LINE__);
+      // ul_release (mdb, __func__, __LINE__);
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Debug-1"))
+    {
+      /* Open inspector.  */
+      log_debug ("%s:%s: command Debug1 (open inspector) called\n",
+                 SRCNAME, __func__);
+      // hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      // if (SUCCEEDED (hr))
+      //   {
+      //     open_inspector (eecb, message);
+      //   }
+      // ul_release (message, __func__, __LINE__);
+      // ul_release (mdb, __func__, __LINE__);
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Debug-2"))
+    {
+      /* Change message class.  */
+      log_debug ("%s:%s: command Debug2 (change message class) called", 
+                 SRCNAME, __func__);
+      // hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      // if (SUCCEEDED (hr))
+      //   {
+      //     /* We sync here. */
+      //     mapi_change_message_class (message, 1);
+      //   }
+      // ul_release (message, __func__, __LINE__);
+      // ul_release (mdb, __func__, __LINE__);
+    }
+  else if (!tagcmp (tag, "GpgOL_Inspector_Debug-3"))
+    {
+      log_debug ("%s:%s: command Debug3 (revert_message_class) called", 
+                 SRCNAME, __func__);
+      // hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      // if (SUCCEEDED (hr))
+      //   {
+      //     int rc = gpgol_message_revert (message, 1, 
+      //                                    KEEP_OPEN_READWRITE|FORCE_SAVE);
+      //     log_debug ("%s:%s: gpgol_message_revert returns %d\n", 
+      //                SRCNAME, __func__, rc);
+      //   }
+      // ul_release (message, __func__, __LINE__);
+      // ul_release (mdb, __func__, __LINE__);
+    }
+
+
+
+}

@@ -24,7 +24,7 @@ EXTERN_C LONG __stdcall gpgol_message_revert (LPMESSAGE message,
                                               LONG do_save,
                                               ULONG save_flags);
 
-EXTERN_C LONG __stdcall gpgol_folder_revert (LPEXCHEXTCALLBACK eecb);
+EXTERN_C LONG __stdcall gpgol_folder_revert (LPDISPATCH mapifolderobj);
 
 
 #endif /*REVERT_H*/

@@ -38,8 +38,8 @@
 #include "ol-ext-callback.h"
 #include "message.h"
 #include "engine.h"
-#include "ext-commands.h"
 #include "revert.h"
+#include "ext-commands.h"
 #include "explorers.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -99,17 +99,7 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_pExchExt = pParentInterface; 
   m_lRef = 0; 
   m_lContext = 0; 
-  m_nCmdProtoAuto = 0;
-  m_nCmdProtoPgpmime = 0;
-  m_nCmdProtoSmime = 0;
-  m_nCmdEncrypt = 0;  
-  m_nCmdSign = 0; 
-  m_nCmdRevertFolder = 0;
-  m_nCmdDebug0 = 0;
-  m_nCmdDebug1 = 0;
-  m_nCmdDebug2 = 0;
-  m_nCmdDebug3 = 0;
-  m_toolbar_info = NULL; 
+    m_toolbar_info = NULL; 
   m_hWnd = NULL; 
 
   if (!bitmaps_initialized)
@@ -426,30 +416,9 @@ GpgolExtCommands::InstallCommands (
   /* Now install menu and toolbar items.  */
   if (m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
-      add_menu (eecb, pnCommandIDBase,
-        "@", NULL,
-        (opt.enable_debug && !opt.disable_gpgol)?
-                "GpgOL Debug-1 (open_inspector)":"", &m_nCmdDebug1,
-        (opt.enable_debug && !opt.disable_gpgol)? 
-                "GpgOL Debug-2 (change msg class)":"", &m_nCmdDebug2,
-        opt.enable_debug? "GpgOL Debug-3 (revert message class)":"",
-                &m_nCmdDebug3,
-        NULL);
-
     }
   else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE && !opt.disable_gpgol) 
     {
-      add_menu (eecb, pnCommandIDBase,
-        "@", NULL,
-        _("&encrypt message with GnuPG"), &m_nCmdEncrypt,
-        _("&sign message with GnuPG"), &m_nCmdSign,
-        NULL );
-
-        add_toolbar (pTBEArray, nTBECnt,
-                     "Encrypt", IDB_ENCRYPT, m_nCmdEncrypt,
-                     "Sign",    IDB_SIGN,    m_nCmdSign,
-                     NULL, 0, 0);
-      
       m_pExchExt->m_protoSelection = opt.default_protocol;
 
       if (draft_info && draft_info[0] == 'E')
@@ -468,15 +437,9 @@ GpgolExtCommands::InstallCommands (
 
       if (force_encrypt)
         m_pExchExt->m_gpgEncrypt = true;
-      check_menu (eecb, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
-      check_menu (eecb, m_nCmdSign, m_pExchExt->m_gpgSign);
     }
   else if (m_lContext == EECONTEXT_VIEWER) 
     {
-      add_menu (eecb, pnCommandIDBase, 
-        "@", NULL,
-        _("Remove GpgOL flags from this folder"), &m_nCmdRevertFolder,
-        NULL);
 
     }
 
@@ -575,109 +538,6 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
         log_debug ("%s:%s: command Forward called\n", SRCNAME, __func__);
       return S_FALSE; /* Pass it on.  */
     }
-  else if (nCommandID == m_nCmdEncrypt
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
-    {
-      log_debug ("%s:%s: command Encrypt called\n", SRCNAME, __func__);
-      m_pExchExt->m_gpgEncrypt = !m_pExchExt->m_gpgEncrypt;
-      check_menu (eecb, m_nCmdEncrypt, m_pExchExt->m_gpgEncrypt);
-    }
-  else if (nCommandID == m_nCmdSign
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
-    {
-      log_debug ("%s:%s: command Sign called\n", SRCNAME, __func__);
-      m_pExchExt->m_gpgSign = !m_pExchExt->m_gpgSign;
-      check_menu (eecb, m_nCmdSign, m_pExchExt->m_gpgSign);
-    }
-  else if (nCommandID == m_nCmdRevertFolder
-           && m_lContext == EECONTEXT_VIEWER)
-    {
-      log_debug ("%s:%s: command ReverFoldert called\n", SRCNAME, __func__);
-      /* Notify the user that the general GpgOl fucntionaly will be
-         disabled when calling this function the first time.  */
-      if ( opt.disable_gpgol
-           || (MessageBox 
-               (hwnd,
-                _("You are about to start the process of reversing messages "
-                  "created by GpgOL to prepare deinstalling of GpgOL. "
-                  "Running this command will put GpgOL into a disabled state "
-                  "so that messages are not anymore processed by GpgOL.\n"
-                  "\n"
-                  "You should convert all folders one after the other with "
-                  "this command, close Outlook and then deinstall GpgOL.\n"
-                  "\n"
-                  "Note that if you start Outlook again with GpgOL still "
-                  "being installed, GpgOL will again process messages."),
-                _("GpgOL"), MB_ICONWARNING|MB_OKCANCEL) == IDOK))
-        {
-          if ( MessageBox 
-               (hwnd,
-                _("Do you want to revert this folder?"),
-                _("GpgOL"), MB_ICONQUESTION|MB_YESNO) == IDYES )
-            {
-              if (!opt.disable_gpgol)
-                opt.disable_gpgol = 1;
-          
-              gpgol_folder_revert (eecb);
-            }
-        }
-    }
-  else if (opt.enable_debug && nCommandID == m_nCmdDebug0
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      log_debug ("%s:%s: command Debug0 (showInfo) called\n",
-                 SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          message_show_info (message, hwnd);
-	}
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-    }
-  else if (opt.enable_debug && nCommandID == m_nCmdDebug1
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      log_debug ("%s:%s: command Debug1 (open inspector) called\n",
-                 SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          open_inspector (eecb, message);
-	}
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-    }
-  else if (opt.enable_debug && nCommandID == m_nCmdDebug2
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      log_debug ("%s:%s: command Debug2 (change message class) called\n", 
-                 SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          /* We sync here. */
-          mapi_change_message_class (message, 1);
-	}
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-    }
-  else if (opt.enable_debug && nCommandID == m_nCmdDebug3
-           && m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-      log_debug ("%s:%s: command Debug3 (revert_message_class) called\n", 
-                 SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          int rc = gpgol_message_revert (message, 1, 
-                                         KEEP_OPEN_READWRITE|FORCE_SAVE);
-          log_debug ("%s:%s: gpgol_message_revert returns %d\n", 
-                     SRCNAME, __func__, rc);
-	}
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-    }
   else if (nCommandID == EECMDID_SaveMessage
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
@@ -738,24 +598,7 @@ GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 
   show_event_object (eecb, __func__);
 
-  if (nCommandID == m_nCmdEncrypt 
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
-    {
-      MessageBox (m_hWnd,
-                  _("Select this option to encrypt the message."),
-                  "GpgOL", MB_OK);	
-    } 
-  else if (nCommandID == m_nCmdSign
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
-    {
-      MessageBox (m_hWnd,
-                  _("Select this option to sign the message."),
-                  "GpgOL", MB_OK);	
-    }
-  else
-    return S_FALSE;
-
-  return S_OK;
+  return S_FALSE;
 }
 
 
@@ -772,30 +615,7 @@ GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
                                 LPTSTR pszText,  UINT nCharCnt)    
 {
 
-  if (nCommandID == m_nCmdEncrypt
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
-    {
-      if (lFlags == EECQHT_STATUS)
-        lstrcpyn (pszText, ".", nCharCnt);
-      if (lFlags == EECQHT_TOOLTIP)
-        lstrcpyn (pszText,
-                  _("Encrypt message with GnuPG"),
-                  nCharCnt);
-    }
-  else if (nCommandID == m_nCmdSign
-           && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
-    {
-      if (lFlags == EECQHT_STATUS)
-        lstrcpyn (pszText, ".", nCharCnt);
-      if (lFlags == EECQHT_TOOLTIP)
-        lstrcpyn (pszText,
-                  _("Sign message with GnuPG"),
-                  nCharCnt);
-    }
-  else 
-    return S_FALSE;
-
-  return S_OK;
+  return S_FALSE;
 }
 
 
@@ -848,19 +668,6 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
   if (n > description_size)
     n = description_size;
   lstrcpyn (description, tb_info->desc, n);
-
-  if (tb_info->cmd_id == m_nCmdEncrypt)
-    {
-      pTBB->fsStyle |= TBSTYLE_CHECK;
-      if (m_pExchExt->m_gpgEncrypt)
-        pTBB->fsState |= TBSTATE_CHECKED;
-    }
-  else if (tb_info->cmd_id == m_nCmdSign)
-    {
-      pTBB->fsStyle |= TBSTYLE_CHECK;
-      if (m_pExchExt->m_gpgSign)
-        pTBB->fsState |= TBSTATE_CHECKED;
-    }
 
   return S_OK;
 }

@@ -340,14 +340,19 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
 }
 
 
-/* Update the icon of PDISP using the bitmap with RESOURCE ID and a
-   mask of (RESOURCE_ID+1).  SIZE specifies the size of the bitmap.
-   Return 0 on success.  */
+/* Update the icon of PDISP using the bitmap with RESOURCE ID.  The
+   function adds the system pixel size to the resource id to compute
+   the actual icon size.  The resource id of the mask is the N+1.  */
 int
 put_oom_icon (LPDISPATCH pDisp, int resource_id, int size)
 {
   int rc;
-  
+
+  /* Fixme: For now we assume a system pixel size of 16.  What we
+     actually should do is to get the current value and then find the
+     best matching icon.  */
+  resource_id += 16;
+
   rc = put_picture_or_mask (pDisp, resource_id, size, 0);
   if (!rc)
     rc = put_picture_or_mask (pDisp, resource_id+1, size, 1);
@@ -495,6 +500,40 @@ get_oom_bool (LPDISPATCH pDisp, const char *name)
                    SRCNAME, __func__, name, rVariant.vt);
       else
         result = !!rVariant.boolVal;
+      VariantClear (&rVariant);
+    }
+
+  return result;
+}
+
+
+/* Get the integer property NAME of the object PDISP.  Returns 0 if
+   not found or if it is not an integer property.  */
+int
+get_oom_int (LPDISPATCH pDisp, const char *name)
+{
+  HRESULT hr;      
+  int result = 0;
+  DISPID dispid;
+  
+  dispid = lookup_oom_dispid (pDisp, name);
+  if (dispid != DISPID_UNKNOWN)
+    {
+      DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+      VARIANT rVariant;
+
+      VariantInit (&rVariant);
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                          DISPATCH_PROPERTYGET, &dispparams,
+                          &rVariant, NULL, NULL);
+      if (hr != S_OK)
+        log_debug ("%s:%s: Property '%s' not found: %#lx",
+                   SRCNAME, __func__, name, hr);
+      else if (rVariant.vt != VT_INT && rVariant.vt != VT_I4)
+        log_debug ("%s:%s: Property `%s' is not an integer (vt=%d)",
+                   SRCNAME, __func__, name, rVariant.vt);
+      else
+        result = rVariant.intVal;
       VariantClear (&rVariant);
     }
 

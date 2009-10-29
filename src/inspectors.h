@@ -124,7 +124,8 @@ LPDISPATCH install_GpgolInspectorEvents_sink (LPDISPATCH object);
 
 void add_inspector_controls (LPOOMINSPECTOR inspector);
 
-void update_inspector_crypto_info (LPDISPATCH button);
+void proc_inspector_button_click (LPDISPATCH button,
+                                  const char *tag, int instid);
 
 
 

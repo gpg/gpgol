@@ -41,6 +41,12 @@ enum
     msoButtonIconAndWrapCaptionBelow = 15 
   };
 
+enum
+  {
+    msoButtonDown = -1,
+    msoButtonUp = 0,
+    msoButtonMixed = 2
+  };
 
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -89,6 +95,9 @@ int put_oom_string (LPDISPATCH pDisp, const char *name, const char *string);
 
 /* Get the boolean property NAME of the object PDISP.  */
 int get_oom_bool (LPDISPATCH pDisp, const char *name);
+
+/* Get the integer property NAME of the object PDISP.  */
+int get_oom_int (LPDISPATCH pDisp, const char *name);
 
 /* Get the string property NAME of the object PDISP.  */
 char *get_oom_string (LPDISPATCH pDisp, const char *name);

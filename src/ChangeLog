@@ -1,3 +1,9 @@
+2009-10-29  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp: Remove m_nCmdDebugN, m_nCmdRevertFolder,
+	m_nCmdSign, m_nCmdEncrypt and all related code.  Now handled in
+	inspectors.cpp.
+
 2009-10-28  Werner Koch  <wk@g10code.com>
 
 	* ext-commands.cpp: Remove m_nCmdCryptoState and all related code;

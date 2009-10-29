@@ -7,27 +7,61 @@
 #define DIALOGS_H
 
 
-/* Ids used for bitmaps. 
-   Note: FOO_MASK must have a value of FOO + 1. */
-#define IDB_ENCRYPT                     3004
-#define IDB_SIGN                        3006
-#define IDB_SIGN_MASK                   3007
-#define IDB_ADD_KEYS                    3008
-#define IDB_KEY_MANAGER                 3010
-#define IDB_KEY_MANAGER_MASK            3011
-#define IDB_BANNER                      3012  /* The g10 Code logo.  */
-#define IDB_BANNER_HI                   3014  /* Not used.  */
-#define IDB_CRYPTO_STATE                3016  
-#define IDB_PROTO_AUTO                  3018  /* Not used.  */
-#define IDB_PROTO_PGPMIME               3020  /* Not used.  */
-#define IDB_PROTO_SMIME                 3022  /* Not used.  */
-#define IDB_PROTO_SMIME_MASK            3023  /* Not used.  */
-#define IDB_DECRYPT                     3024
-#define IDB_DECRYPT_MASK                3025
-#define IDB_VERIFY                      3026
-#define IDB_VERIFY_MASK                 3027
-#define IDB_DECRYPT_VERIFY              3028
-#define IDB_DECRYPT_VERIFY_MASK         3029
+/* Ids used for bitmaps.  There is some magic in the identifiers: In
+   the code we only use values like 3000, the icon code then uses the
+   current system pixel size to the Id and tries to load this one.
+   The mask is always the next id.  */
+#define IDB_ENCRYPT                     3000
+#define IDB_ENCRYPT_16                  3016
+#define IDB_ENCRYPT_16M                 3017
+#define IDB_ENCRYPT_32                  3032
+#define IDB_ENCRYPT_32M                 3033
+#define IDB_ENCRYPT_64                  3064
+#define IDB_ENCRYPT_64M                 3065
+
+#define IDB_SIGN                        3100
+#define IDB_SIGN_16                     3116
+#define IDB_SIGN_16M                    3117
+#define IDB_SIGN_32                     3132
+#define IDB_SIGN_32M                    3133
+#define IDB_SIGN_64                     3164
+#define IDB_SIGN_64M                    3165
+
+#define IDB_KEY_MANAGER                 3200
+#define IDB_KEY_MANAGER_16              3216
+#define IDB_KEY_MANAGER_16M             3217
+#define IDB_KEY_MANAGER_32              3232
+#define IDB_KEY_MANAGER_32M             3233
+#define IDB_KEY_MANAGER_64              3264
+#define IDB_KEY_MANAGER_64M             3265
+
+#define IDB_DECRYPT                     3300
+#define IDB_DECRYPT_16                  3316
+#define IDB_DECRYPT_16M                 3317
+#define IDB_DECRYPT_32                  3332
+#define IDB_DECRYPT_32M                 3333
+#define IDB_DECRYPT_64                  3364
+#define IDB_DECRYPT_64M                 3365
+
+#define IDB_VERIFY                      3400
+#define IDB_VERIFY_16                   3416
+#define IDB_VERIFY_16M                  3417
+#define IDB_VERIFY_32                   3432
+#define IDB_VERIFY_32M                  3433
+#define IDB_VERIFY_64                   3464
+#define IDB_VERIFY_64M                  3465
+
+#define IDB_DECRYPT_VERIFY              3500
+#define IDB_DECRYPT_VERIFY_16           3516
+#define IDB_DECRYPT_VERIFY_16M          3517
+#define IDB_DECRYPT_VERIFY_32           3532
+#define IDB_DECRYPT_VERIFY_32M          3533
+#define IDB_DECRYPT_VERIFY_64           3564
+#define IDB_DECRYPT_VERIFY_64M          3565
+
+
+/* Special */
+#define IDB_BANNER                      3900  /* The g10 Code logo.  */
 
 
 /* Ids used for the main config dialog.  */

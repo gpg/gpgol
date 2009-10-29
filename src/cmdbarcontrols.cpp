@@ -28,6 +28,7 @@
 #include "oomhelp.h"
 #include "cmdbarcontrols.h"
 #include "inspectors.h"
+#include "explorers.h"
 #include "engine.h"
 
 #include "eventsink.h"
@@ -37,6 +38,7 @@
    Click event.  */
 BEGIN_EVENT_SINK(GpgolCommandBarButtonEvents, IOOMCommandBarButtonEvents)
   STDMETHOD (Click) (THIS_ LPDISPATCH, PBOOL);
+EVENT_SINK_DEFAULT_CTOR(GpgolCommandBarButtonEvents)
 EVENT_SINK_DEFAULT_DTOR(GpgolCommandBarButtonEvents)
 EVENT_SINK_INVOKE(GpgolCommandBarButtonEvents)
 {
@@ -69,34 +71,32 @@ END_EVENT_SINK(GpgolCommandBarButtonEvents, IID_IOOMCommandBarButtonEvents)
 
 
 
-static int
-tagcmp (const char *a, const char *b)
-{
-  return strncmp (a, b, strlen (b));
-}
-
-
 /* This is the event sink for a button click.  */
 STDMETHODIMP
 GpgolCommandBarButtonEvents::Click (LPDISPATCH button, PBOOL cancel_default)
 {
   char *tag;
+  int instid;
 
   (void)cancel_default;
-  log_debug ("%s:%s: Called", SRCNAME, __func__);
 
+  tag = get_oom_string (button, "Tag");
+  instid = get_oom_int (button, "InstanceId");
   {
     char *tmp = get_object_name (button);
-    log_debug ("%s:%s: button is %p (%s)", 
-               SRCNAME, __func__, button, tmp? tmp:"(null)");
+    log_debug ("%s:%s: button is %p (%s) tag is (%s) instid %d", 
+               SRCNAME, __func__, button, 
+               tmp? tmp:"(null)",
+               tag? tag:"(null)", instid);
     xfree (tmp);
   }
 
-  tag = get_oom_string (button, "Tag");
-  log_debug ("%s:%s: button's tag is (%s)", 
-             SRCNAME, __func__, tag? tag:"(null)");
   if (!tag)
     ;
+  else if (!tagcmp (tag, "GpgOL_Inspector"))
+    {
+      proc_inspector_button_click (button, tag, instid);
+    }
   else if (!tagcmp (tag, "GpgOL_Start_Key_Manager"))
     {
       /* FIXME: We don't have the current window handle.  */
@@ -104,25 +104,9 @@ GpgolCommandBarButtonEvents::Click (LPDISPATCH button, PBOOL cancel_default)
          MessageBox (NULL, _("Could not start certificate manager"),
                      _("GpgOL"), MB_ICONERROR|MB_OK);
     }
-  else if (!tagcmp (tag, "GpgOL_Inspector_Crypto_Info"))
+  else if (!tagcmp (tag, "GpgOL_Revert_Folder"))
     {
-      /* FIXME: We should invoke the decrypt/verify again. */
-      update_inspector_crypto_info (button);
-#if 0 /* This is the code we used to use.  */
-      log_debug ("%s:%s: command CryptoState called\n", SRCNAME, __func__);
-      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-      if (SUCCEEDED (hr))
-        {
-          if (message_incoming_handler (message, hwnd, true))
-            message_display_handler (eecb, hwnd);
-	}
-      else
-        log_debug_w32 (hr, "%s:%s: command CryptoState failed", 
-                       SRCNAME, __func__);
-      ul_release (message, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
-#endif
-
+      run_explorer_revert_folder (button);
     }
 
   xfree (tag);

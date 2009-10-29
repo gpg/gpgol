@@ -86,6 +86,8 @@ LPDISPATCH install_GpgolExplorersEvents_sink (LPDISPATCH obj);
 
 void add_explorer_controls (LPOOMEXPLORER explorer);
 
+void run_explorer_revert_folder (LPDISPATCH button);
+
 
 
 #endif /*EXPLORERS_H*/

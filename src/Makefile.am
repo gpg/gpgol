@@ -15,15 +15,16 @@ unused_sources = item-events.cpp
 
 bin_PROGRAMS = gpgol 
 #treeview
-EXTRA_DIST = versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
-	     logo.bmp encrypt.bmp  \
-             proto-auto.bmp proto-pgpmime.bmp proto-smime.bmp \
-             cryptostate.bmp \
-             key-manager.bmp key-manager-mask.bmp \
-             decrypt.bmp decrypt-mask.bmp \
-	     verify.bmp  verify-mask.bmp \
-             decrypt-verify.bmp decrypt-verify-mask.bmp \
-	     sign.bmp sign-mask.bmp
+EXTRA_DIST = \
+	versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
+	encrypt-16.bmp encrypt-16m.bmp \
+	sign-16.bmp sign-16m.bmp \
+	key-manager-16.bmp key-manager-16m.bmp \
+	key-manager-32.bmp key-manager-32m.bmp \
+	decrypt-16.bmp decrypt-16m.bmp \
+	verify-16.bmp  verify-16m.bmp \
+	decrypt-verify-16.bmp decrypt-verify-16m.bmp \
+	logo.bmp
 
 EXEEXT = .dll
 
