@@ -1,3 +1,28 @@
+2009-10-30  Werner Koch  <wk@g10code.com>
+
+	* oomhelp.cpp (get_oom_control_bytag): Fix silly bug.
+
+	* inspectors.cpp (get_inspector_composer_flags): New.
+	(set_inspector_composer_flags): New.
+	* oomhelp.cpp (get_eecb_object): New.
+	* message-events.cpp (get_inspector): New.
+	(get_crypto_flags): New.
+	(OnWrite, OnWriteComplete): Use new functions instead of the class
+	members.  Use the new oom property functions.
+	* ext-commands.cpp (get_inspector, get_crypto_flags): New.
+	(DoCommand): Use new function.
+	(set_crypto_flags): New.
+	(InstallCommands): Use set_crypto_flags.
+	(add_menu, check_menu, add_toolbar, struct toolbar_info_s): Remove.
+	(QueryButtonInfo): Remove all code.
+	(InstallCommands): Make use of get_eecb_object and put_oom_string.
+	(DoCommand): Use get_eecb_object.
+	* olflange.h (IExchExt): Remove m_protoSelection, m_gpgSign,
+	m_gpgEncrypt and all related code.
+	* olflange.cpp (Install): Use get_oom_string.
+	* display.cpp (update_display): Ditto.
+	* ol-ext-callback.h, ol-ext-callback.cpp: Remove.
+
 2009-10-29  Werner Koch  <wk@g10code.com>
 
 	* ext-commands.cpp: Remove m_nCmdDebugN, m_nCmdRevertFolder,

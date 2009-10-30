@@ -38,11 +38,6 @@ public:
 public:	
   HWND m_hWndExchange;  /* Handle of the exchange window. */
 
-  /* Parameters for sending mails.  */
-  protocol_t  m_protoSelection;
-  BOOL  m_gpgEncrypt;
-  BOOL  m_gpgSign;
-  
 private:
   ULONG m_lRef;
   ULONG m_lContext;

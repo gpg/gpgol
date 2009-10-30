@@ -68,7 +68,6 @@ gpgol_SOURCES = \
 	attached-file-events.cpp attached-file-events.h \
 	property-sheets.cpp property-sheets.h \
 	item-events.h         \
-	ol-ext-callback.cpp ol-ext-callback.h \
 	oomhelp.cpp oomhelp.h eventsink.h \
 	explorers.cpp explorers.h \
 	inspectors.cpp inspectors.h \

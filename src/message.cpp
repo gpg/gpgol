@@ -30,7 +30,6 @@
 #include "mimeparser.h"
 #include "mimemaker.h"
 #include "display.h"
-#include "ol-ext-callback.h"
 #include "message.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \

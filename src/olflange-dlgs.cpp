@@ -29,7 +29,6 @@
 #include "myexchext.h"
 #include "common.h"
 #include "display.h"
-#include "ol-ext-callback.h"
 #include "olflange-def.h"
 #include "dialogs.h"
 #include "engine.h"

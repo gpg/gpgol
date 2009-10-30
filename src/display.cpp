@@ -29,7 +29,7 @@
 #include "myexchext.h"
 #include "common.h"
 #include "mapihelp.h"
-#include "ol-ext-callback.h"
+#include "olflange-def.h"
 #include "display.h"
 
 
@@ -222,7 +222,6 @@ update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
   struct find_message_window_state findstate;
 
   (void)is_sensitive;
-  
 
   memset (&findstate, 0, sizeof findstate);
   window = find_message_window (hwnd, &findstate);
@@ -246,29 +245,33 @@ update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
         SetWindowTextA (window, text);
       return 0;
     }
-//   else if (exchange_cb && is_sensitive && !opt.compat.no_oom_write)
-//     {
-//       log_debug ("%s:%s: updating display using OOM (note)\n", 
-//                  SRCNAME, __func__);
-//       if (is_html)
-//         put_outlook_property (exchange_cb, "Body", "" );
-//       return put_outlook_property
-//         (exchange_cb, "Body",
-//          _("[Encrypted body not shown - please open the message]"));
-//     }
   else if (exchange_cb && !opt.compat.no_oom_write)
     {
+      LPDISPATCH obj;
+      int rc;
+
       log_debug ("%s:%s: updating display using OOM\n", SRCNAME, __func__);
-      /* Bug in OL 2002 and 2003 - as a workaround set the body first
-         to empty. */
+      
+      obj = get_eecb_object ((LPEXCHEXTCALLBACK)exchange_cb);
+      if (!obj)
+        {
+          log_error ("%s:%s: Object not found via EECB\n", SRCNAME, __func__);
+          return -1;
+        }
+
       if (is_html)
-        put_outlook_property (exchange_cb, "Body", "" );
-      return put_outlook_property (exchange_cb, is_html? "HTMLBody":"Body",
-                                 text);
+        {
+          /* Bug in OL 2002 and 2003 - as a workaround set the body
+             first to empty. */
+          put_oom_string (obj, "Body", "");
+        }
+      rc = put_oom_string (obj, is_html? "HTMLBody":"Body", text);
+      obj->Release ();
+      return rc;
     }
   else
     {
-      log_debug ("%s:%s: window handle not found for parent %p\n",
+      log_error ("%s:%s: window handle not found for parent %p\n",
                  SRCNAME, __func__, hwnd);
       return -1;
     }

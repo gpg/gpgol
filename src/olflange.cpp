@@ -48,7 +48,6 @@
 #include "property-sheets.h"
 #include "attached-file-events.h"
 #include "item-events.h"
-#include "ol-ext-callback.h"
 #include "explorers.h"
 #include "inspectors.h"
 #include "cmdbarcontrols.h"
@@ -400,9 +399,6 @@ GpgolExt::GpgolExt (void)
   m_lRef = 1;
   m_lContext = 0;
   m_hWndExchange = 0;
-  m_protoSelection = PROTOCOL_UNKNOWN;
-  m_gpgEncrypt = FALSE;
-  m_gpgSign = FALSE;
 
   m_pExchExtCommands           = new GpgolExtCommands (this);
   m_pExchExtUserEvents         = new GpgolUserEvents (this);
@@ -603,7 +599,19 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
      display the complete version and do a final test to see whether
      this is a supported version. */
   if (!olversion)
-    olversion = get_outlook_property (pEECB, "Application.Version");
+    {
+      LPDISPATCH obj = get_eecb_object (pEECB);
+      if (obj)
+        {
+          LPDISPATCH disp = get_oom_object (obj, "Application");
+          if (disp)
+            {
+              olversion = get_oom_string (disp, "Version");
+              disp->Release ();
+            }
+          obj->Release ();
+        }
+    }
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
   pEECB->GetVersion (&lActualVersion, EECBGV_GETACTUALVERSION);
   pEECB->GetVersion (&lVirtualVersion, EECBGV_GETVIRTUALVERSION);
@@ -834,3 +842,34 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
   
   log_debug ("%s:%s: Leave", SRCNAME, __func__);
 }
+
+
+/* Return the OOM object via EECB.  If it is not available return
+   NULL.  */
+LPDISPATCH
+get_eecb_object (LPEXCHEXTCALLBACK eecb)
+{
+  HRESULT hr;
+  LPOUTLOOKEXTCALLBACK pCb = NULL;
+  LPUNKNOWN pObj = NULL;
+  LPDISPATCH pDisp = NULL;
+  LPDISPATCH result = NULL;
+  
+  hr = eecb->QueryInterface (IID_IOutlookExtCallback, (LPVOID*)&pCb);
+  if (hr == S_OK && pCb)
+    {
+      pCb->GetObject (&pObj);
+      if (pObj)
+        {
+          /* We better query for IDispatch.  */
+          hr = pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
+          if (hr == S_OK && pDisp)
+            result = pDisp;
+          pObj->Release ();
+        }
+      pCb->Release ();
+    }
+  return result;
+}
+
+

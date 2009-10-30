@@ -32,13 +32,13 @@
 
 #include "olflange-def.h"
 #include "olflange.h"
-#include "ol-ext-callback.h"
 #include "mimeparser.h"
 #include "mimemaker.h"
 #include "message.h"
 #include "message-events.h"
 
 #include "explorers.h"
+#include "inspectors.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -99,6 +99,47 @@ GpgolMessageEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 }
 
 
+/* Return the inspector the the current Mailitem.  If the inspector
+   does not exists, an inspector object is created (but not
+   immediatley shown).  */
+static LPDISPATCH
+get_inspector (LPEXCHEXTCALLBACK eecb)
+{
+  LPDISPATCH obj;
+  LPDISPATCH inspector = NULL;
+  
+  obj = get_eecb_object (eecb);
+  if (obj)
+    {
+      /* This should be MailItem; use the getInspector method.  */
+      inspector = get_oom_object (obj, "GetInspector");
+      obj->Release ();
+    }
+  return inspector;
+}
+
+
+static int
+get_crypto_flags (LPEXCHEXTCALLBACK eecb, bool *r_sign, bool *r_encrypt)
+{
+  LPDISPATCH inspector;
+  int rc;
+
+  inspector = get_inspector (eecb);
+  if (!inspector)
+    {
+      log_error ("%s:%s: inspector not found", SRCNAME, __func__);
+      rc = -1;
+    }
+  else
+    {
+      rc = get_inspector_composer_flags (inspector, r_sign, r_encrypt);
+      inspector->Release ();
+    }
+  return rc;
+}
+
+
 /* Called from Exchange on reading a message.  Returns: S_FALSE to
    signal Exchange to continue calling extensions.  EECB is a pointer
    to the IExchExtCallback interface. */
@@ -117,9 +158,6 @@ GpgolMessageEvents::OnRead (LPEXCHEXTCALLBACK eecb)
 
   log_debug ("%s:%s: received (hwnd=%p) %s\n", 
              SRCNAME, __func__, hwnd, m_gotinspector? "got_inspector":"");
-
-  show_event_object (eecb, __func__);
-  //add_oom_command_button (eecb);
 
   /* Fixme: If preview decryption is not enabled and we have an
      encrypted message, we might want to show a greyed out preview
@@ -168,8 +206,6 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   log_debug ("%s:%s: received; flags=%#lx m_processed=%d \n",
              SRCNAME, __func__, flags, m_processed);
 
-  show_event_object (eecb, __func__);
-
   /* If the message has been processed by us (i.e. in OnRead), we now
      use our own display code.  */
   if (!flags && m_processed && !opt.disable_gpgol)
@@ -193,61 +229,37 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 STDMETHODIMP 
 GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK eecb)
 {
+  LPDISPATCH obj;
+  HWND hWnd = NULL;
+  bool sign, encrypt, need_crypto;
+  int bodyfmt;
+
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
-  HRESULT hr;
-  LPDISPATCH pDisp;
-  DISPID dispid;
-  VARIANT aVariant;
-  DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
-  HWND hWnd = NULL;
-
+  need_crypto = (!get_crypto_flags (eecb, &sign, &encrypt)
+                 && (sign || encrypt));
+    
   /* If we are going to encrypt, check that the BodyFormat is
      something we support.  This helps avoiding surprise by sending
      out unencrypted messages. */
-  if ( (m_pExchExt->m_gpgEncrypt || m_pExchExt->m_gpgSign) 
-       && !opt.disable_gpgol)
+  if (need_crypto && !opt.disable_gpgol)
     {
-      pDisp = find_outlook_property (eecb, "BodyFormat", &dispid);
-      if (!pDisp)
+      obj = get_eecb_object (eecb);
+      if (!obj)
+        bodyfmt = -1;
+      else
         {
-          log_debug ("%s:%s: BodyFormat not found\n", SRCNAME, __func__);
-          m_bWriteFailed = TRUE;	
-          return E_FAIL;
+          bodyfmt = get_oom_int (obj, "BodyFormat");
+          obj->Release ();
         }
-      
-      aVariant.bstrVal = NULL;
-      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                          DISPATCH_PROPERTYGET, &dispparamsNoArgs,
-                          &aVariant, NULL, NULL);
-      if (hr != S_OK)
-        {
-          log_debug ("%s:%s: retrieving BodyFormat failed: %#lx",
-                     SRCNAME, __func__, hr);
-          m_bWriteFailed = TRUE;	
-          pDisp->Release();
-          return E_FAIL;
-        }
-  
-      if (aVariant.vt != VT_INT && aVariant.vt != VT_I4)
-        {
-          log_debug ("%s:%s: BodyFormat is not an integer (%d)",
-                     SRCNAME, __func__, aVariant.vt);
-          m_bWriteFailed = TRUE;	
-          pDisp->Release();
-          return E_FAIL;
-        }
-  
-      if (aVariant.intVal == 1)
+
+      if (bodyfmt == 1)
         m_want_html = 0;
-      else if (aVariant.intVal == 2)
+      else if (bodyfmt == 2)
         m_want_html = 1;
       else
         {
-
-          log_debug ("%s:%s: BodyFormat is %d",
-                     SRCNAME, __func__, aVariant.intVal);
-          
+          log_debug ("%s:%s: BodyFormat is %d", SRCNAME, __func__, bodyfmt);
           if (FAILED(eecb->GetWindow (&hWnd)))
             hWnd = NULL;
           MessageBox (hWnd,
@@ -257,11 +269,8 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK eecb)
                       "GpgOL", MB_ICONERROR|MB_OK);
 
           m_bWriteFailed = TRUE;	
-          pDisp->Release();
           return E_FAIL;
         }
-      pDisp->Release();
-      
     }
   
   
@@ -312,13 +321,17 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
   if (SUCCEEDED (hr))
     {
-      protocol_t proto = m_pExchExt->m_protoSelection;
+      protocol_t proto = PROTOCOL_UNKNOWN; /* Let the UI server select
+                                              the protocol.  */
+      bool sign, encrypt;
 
-      if (m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
+      if (get_crypto_flags (eecb, &sign, &encrypt))
+        rc = -1;
+      else if (encrypt && sign)
         rc = message_sign_encrypt (msg, proto, hWnd);
-      else if (m_pExchExt->m_gpgEncrypt && !m_pExchExt->m_gpgSign)
+      else if (encrypt && !sign)
         rc = message_encrypt (msg, proto, hWnd);
-      else if (!m_pExchExt->m_gpgEncrypt && m_pExchExt->m_gpgSign)
+      else if (!encrypt && sign)
         rc = message_sign (msg, proto, hWnd);
       else
         {

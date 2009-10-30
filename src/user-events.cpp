@@ -34,7 +34,6 @@
 
 #include "olflange-def.h"
 #include "olflange.h"
-#include "ol-ext-callback.h"
 #include "user-events.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \

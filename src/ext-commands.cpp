@@ -35,46 +35,21 @@
 #include "dialogs.h"       /* For IDB_foo. */
 #include "olflange-def.h"
 #include "olflange.h"
-#include "ol-ext-callback.h"
 #include "message.h"
 #include "engine.h"
 #include "revert.h"
 #include "ext-commands.h"
 #include "explorers.h"
+#include "inspectors.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-/* An object to store information about active (installed) toolbar
-   buttons.  */
-struct toolbar_info_s
-{
-  toolbar_info_t next;
-
-  UINT button_id;/* The ID of the button as assigned by Outlook.  */
-  UINT bitmap;   /* The bitmap of the button.  */
-  UINT cmd_id;   /* The ID of the command to send on a click.  */
-  const char *desc;/* The description text.  */
-  ULONG context; /* Context under which this entry will be used.  */ 
-  int did_qbi;   /* Has been processed by QueryButtonInfo.  */
-};
-
 
 /* Keep copies of some bitmaps.  */
 static int bitmaps_initialized;
 static HBITMAP my_check_bitmap, my_uncheck_bitmap;
-
-
-
-static void add_menu (LPEXCHEXTCALLBACK eecb, 
-                      UINT FAR *pnCommandIDBase, ...)
-#if __GNUC__ >= 4 
-                               __attribute__ ((sentinel))
-#endif
-  ;
-
-
 
 
 /* Wrapper around UlRelease with error checking. */
@@ -99,7 +74,6 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
   m_pExchExt = pParentInterface; 
   m_lRef = 0; 
   m_lContext = 0; 
-    m_toolbar_info = NULL; 
   m_hWnd = NULL; 
 
   if (!bitmaps_initialized)
@@ -113,12 +87,7 @@ GpgolExtCommands::GpgolExtCommands (GpgolExt* pParentInterface)
 /* Destructor */
 GpgolExtCommands::~GpgolExtCommands (void)
 {
-  while (m_toolbar_info)
-    {
-      toolbar_info_t tmp = m_toolbar_info->next;
-      xfree (m_toolbar_info);
-      m_toolbar_info = tmp;
-    }
+
 }
 
 
@@ -136,140 +105,62 @@ GpgolExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 }
 
 
-/* Add a new menu.  The variable entries are made up of pairs of
-   strings and UINT *.  A NULL is used to terminate this list.  An
-   empty string is translated to a separator menu item.  One level of
-   submenus are supported. */
-static void
-add_menu (LPEXCHEXTCALLBACK eecb, UINT FAR *pnCommandIDBase, ...)
+/* Note: Duplicated from message-events.cpp.  Eventually we should get
+   rid of this module.  */
+static LPDISPATCH
+get_inspector (LPEXCHEXTCALLBACK eecb)
 {
-  va_list arg_ptr;
-  HMENU mainmenu, submenu, menu;
-  const char *string;
-  UINT *cmdptr;
+  LPDISPATCH obj;
+  LPDISPATCH inspector = NULL;
   
-  va_start (arg_ptr, pnCommandIDBase);
-  /* We put all new entries into the tools menu.  To make this work we
-     need to pass the id of an existing item from that menu.  */
-  eecb->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &mainmenu, NULL, NULL, 0);
-  menu = mainmenu;
-  submenu = NULL;
-  while ( (string = va_arg (arg_ptr, const char *)) )
+  obj = get_eecb_object (eecb);
+  if (obj)
     {
-      cmdptr = va_arg (arg_ptr, UINT*);
-
-      if (!*string)
-        ; /* Ignore this entry.  */
-      else if (*string == '@' && !string[1])
-        AppendMenu (menu, MF_SEPARATOR, 0, NULL);
-      else if (*string == '>')
-        {
-          submenu = CreatePopupMenu ();
-          AppendMenu (menu, MF_STRING|MF_POPUP, (UINT_PTR)submenu, string+1);
-          menu = submenu;
-        }
-      else if (*string == '<')
-        {
-          menu = mainmenu;
-          submenu = NULL;
-        }
-      else
-	{
-          AppendMenu (menu, MF_STRING, *pnCommandIDBase, string);
-          if (menu == submenu)
-            SetMenuItemBitmaps (menu, *pnCommandIDBase, MF_BYCOMMAND,
-                                my_uncheck_bitmap, my_check_bitmap);
-          if (cmdptr)
-            *cmdptr = *pnCommandIDBase;
-          (*pnCommandIDBase)++;
-        }
+      /* This should be MailItem; use the getInspector method.  */
+      inspector = get_oom_object (obj, "GetInspector");
+      obj->Release ();
     }
-  va_end (arg_ptr);
+  return inspector;
 }
 
 
-static void
-check_menu (LPEXCHEXTCALLBACK eecb, UINT menu_id, int checked)
+/* Note: Duplicated from message-events.cpp.  Eventually we should get
+   rid of this module.  */
+static int
+get_crypto_flags (LPEXCHEXTCALLBACK eecb, bool *r_sign, bool *r_encrypt)
 {
-  HMENU menu;
-
-  eecb->GetMenuPos (EECMDID_ToolsCustomizeToolbar, &menu, NULL, NULL, 0);
-  if (debug_commands)
-    log_debug ("check_menu: eecb=%p menu_id=%u checked=%d -> menu=%p\n", 
-               eecb, menu_id, checked, menu);
-  CheckMenuItem (menu, menu_id, 
-                 MF_BYCOMMAND | (checked?MF_CHECKED:MF_UNCHECKED));
-}
-
-
-
-void
-GpgolExtCommands::add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...)
-{
-  va_list arg_ptr;
-  const char *desc;
-  UINT bmapid;
-  UINT cmdid;
-  int tbeidx;
-  toolbar_info_t tb_info;
+  LPDISPATCH inspector;
   int rc;
 
-  for (tbeidx = n_tbearr-1; tbeidx > -1; tbeidx--)
-    if (tbearr[tbeidx].tbid == EETBID_STANDARD)
-      break;
-  if (!(tbeidx > -1))
+  inspector = get_inspector (eecb);
+  if (!inspector)
     {
-      log_error ("standard toolbar not found");
-      return;
+      log_error ("%s:%s: inspector not found", SRCNAME, __func__);
+      rc = -1;
     }
-  
-  SendMessage (tbearr[tbeidx].hwnd, TB_BUTTONSTRUCTSIZE,
-               (WPARAM)(int)sizeof (TBBUTTON), 0);
-
-  
-  va_start (arg_ptr, n_tbearr);
-
-  while ( (desc = va_arg (arg_ptr, const char *)) )
+  else
     {
-      bmapid = va_arg (arg_ptr, UINT);
-      cmdid = va_arg (arg_ptr, UINT);
-
-      if (!*desc)
-        ; /* Empty description - ignore this item.  */
-      else if (*desc == '|' && !desc[1])
-        {
-          /* Separator. Ignore BMAPID and CMDID.  */
-          /* Not yet implemented.  */
-        }
-      else
-	{
-          TBADDBITMAP tbab;
-  
-          tb_info = (toolbar_info_t)xcalloc (1, sizeof *tb_info);
-          tb_info->button_id = tbearr[tbeidx].itbbBase++;
-
-          tbab.hInst = glob_hinst;
-          tbab.nID = bmapid;
-          rc = SendMessage (tbearr[tbeidx].hwnd, TB_ADDBITMAP,1,(LPARAM)&tbab);
-          if (rc == -1)
-            log_error_w32 (-1, "TB_ADDBITMAP failed for `%s'", desc);
-          tb_info->bitmap = rc;
-          tb_info->cmd_id = cmdid;
-          tb_info->desc = desc;
-          tb_info->context = m_lContext;
-
-          tb_info->next = m_toolbar_info;
-          m_toolbar_info = tb_info;
-          if (debug_commands)
-            log_debug ("%s:%s: ctx=%lx button_id=%d cmd_id=%d '%s'\n", 
-                       SRCNAME, __func__, m_lContext,
-                       tb_info->button_id, tb_info->cmd_id, tb_info->desc);
-        }
+      rc = get_inspector_composer_flags (inspector, r_sign, r_encrypt);
+      inspector->Release ();
     }
-  va_end (arg_ptr);
-
+  return rc;
 }
 
+
+static void
+set_crypto_flags (LPEXCHEXTCALLBACK eecb, bool sign, bool encrypt)
+{
+  LPDISPATCH inspector;
+
+  inspector = get_inspector (eecb);
+  if (!inspector)
+    log_error ("%s:%s: inspector not found", SRCNAME, __func__);
+  else
+    {
+      set_inspector_composer_flags (inspector, sign, encrypt);
+      inspector->Release ();
+    }
+}
 
 
 /* Called by Exchange to install commands and toolbar buttons.  Returns
@@ -287,14 +178,7 @@ GpgolExtCommands::InstallCommands (
 {
   HRESULT hr;
   m_hWnd = hWnd;
-  LPDISPATCH pDisp;
-  DISPID dispid;
-  DISPID dispid_put = DISPID_PROPERTYPUT;
-  DISPPARAMS dispparams;
-  VARIANT aVariant;
-  int force_encrypt = 0;
-  char *draft_info = NULL;
-  
+  LPDISPATCH obj;
 
   (void)hMenu;
   
@@ -302,7 +186,6 @@ GpgolExtCommands::InstallCommands (
     log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__, 
                ext_context_name (m_lContext), lFlags);
 
-  show_event_object (eecb, __func__);
 
   /* Outlook 2003 sometimes displays the plaintext and sometimes the
      original undecrypted text when doing a reply.  This seems to
@@ -326,6 +209,8 @@ GpgolExtCommands::InstallCommands (
     {
       LPMDB mdb = NULL;
       LPMESSAGE message = NULL;
+      int force_encrypt = 0;
+      char *draft_info = NULL;
       
       /*  Note that for read and send the object returned by the
           outlook extension callback is of class 43 (MailItem) so we
@@ -335,72 +220,38 @@ GpgolExtCommands::InstallCommands (
         log_debug ("%s:%s: getObject failed: hr=%#lx\n", SRCNAME,__func__,hr);
       else if (!opt.compat.no_msgcache)
         {
-          const char *body;
-          char *key = NULL;
-          size_t keylen = 0;
-          void *refhandle = NULL;
-     
-          pDisp = find_outlook_property (eecb, "ConversationIndex", &dispid);
-          if (pDisp)
+          obj = get_eecb_object (eecb);
+          if (obj)
             {
-              DISPPARAMS dispparamsNoArgs = {NULL, NULL, 0, 0};
+              const char *body;
+              char *key, *p;
+              size_t keylen;
+              void *refhandle = NULL;
 
-              aVariant.bstrVal = NULL;
-              hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                                  DISPATCH_PROPERTYGET, &dispparamsNoArgs,
-                                  &aVariant, NULL, NULL);
-              if (hr != S_OK)
-                log_debug ("%s:%s: retrieving ConversationIndex failed: %#lx",
-                           SRCNAME, __func__, hr);
-              else if (aVariant.vt != VT_BSTR)
-                log_debug ("%s:%s: ConversationIndex is not a string (%d)",
-                           SRCNAME, __func__, aVariant.vt);
-              else if (aVariant.bstrVal)
+              key = get_oom_string (obj, "ConversationIndex");
+              if (key)
                 {
-                  char *p;
-
-                  key = wchar_to_utf8 (aVariant.bstrVal);
                   log_debug ("%s:%s: ConversationIndex is `%s'",
-                           SRCNAME, __func__, key);
+                             SRCNAME, __func__, key);
                   /* The key is a hex string.  Convert it to binary. */
                   for (keylen=0,p=key; hexdigitp(p) && hexdigitp(p+1); p += 2)
                     ((unsigned char*)key)[keylen++] = xtoi_2 (p);
                   
-		  SysFreeString (aVariant.bstrVal);
+                  if (keylen && (body = msgcache_get (key, keylen, &refhandle)))
+                    {
+                      put_oom_string (obj, "Body", body);
+                      /* Because we found the plaintext in the cache
+                         we can assume that the orginal message has
+                         been encrypted and thus we now set a flag to
+                         make sure that by default the reply gets
+                         encrypted too. */
+                      force_encrypt = 1;
+                    }
+                  msgcache_unref (refhandle);
+                  xfree (key);
                 }
-
-              pDisp->Release();
-              pDisp = NULL;
+              obj->Release ();
             }
-          
-          if (key && keylen
-              && (body = msgcache_get (key, keylen, &refhandle)) 
-              && (pDisp = find_outlook_property (eecb, "Body", &dispid)))
-            {
-              dispparams.cNamedArgs = 1;
-              dispparams.rgdispidNamedArgs = &dispid_put;
-              dispparams.cArgs = 1;
-              dispparams.rgvarg = &aVariant;
-              dispparams.rgvarg[0].vt = VT_LPWSTR;
-              dispparams.rgvarg[0].bstrVal = utf8_to_wchar (body);
-              hr = pDisp->Invoke(dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                                 DISPATCH_PROPERTYPUT, &dispparams,
-                                 NULL, NULL, NULL);
-              xfree (dispparams.rgvarg[0].bstrVal);
-              log_debug ("%s:%s: PROPERTYPUT(body) result -> %#lx\n",
-                         SRCNAME, __func__, hr);
-
-              pDisp->Release();
-              pDisp = NULL;
-              
-              /* Because we found the plaintext in the cache we can assume
-                 that the orginal message has been encrypted and thus we
-                 now set a flag to make sure that by default the reply
-                 gets encrypted too. */
-              force_encrypt = 1;
-            }
-          msgcache_unref (refhandle);
-          xfree (key);
         }
       
       /* Because we have the message open, we use it to get the draft
@@ -408,42 +259,35 @@ GpgolExtCommands::InstallCommands (
       if (message)
         draft_info = mapi_get_gpgol_draft_info (message);
 
-
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
+      
+      if (!opt.disable_gpgol) 
+        {
+          bool sign, encrypt;
+          
+          if (draft_info && draft_info[0] == 'E')
+            encrypt = true;
+          else if (draft_info && draft_info[0] == 'e')
+            encrypt = false;
+          else
+            encrypt = !!opt.encrypt_default;
+          
+          if (draft_info && draft_info[0] && draft_info[1] == 'S')
+            sign = true;
+          else if (draft_info && draft_info[0] && draft_info[1] == 's')
+            sign = false;
+          else
+            sign = !!opt.sign_default;
+          
+          if (force_encrypt)
+            encrypt = true;
+          
+          /* FIXME:  ove that to the inspector activation.  */
+          //set_crypto_flags (eecb, sign, encrypt);
+        }
+      xfree (draft_info);
     }
-
-  /* Now install menu and toolbar items.  */
-  if (m_lContext == EECONTEXT_READNOTEMESSAGE)
-    {
-    }
-  else if (m_lContext == EECONTEXT_SENDNOTEMESSAGE && !opt.disable_gpgol) 
-    {
-      m_pExchExt->m_protoSelection = opt.default_protocol;
-
-      if (draft_info && draft_info[0] == 'E')
-        m_pExchExt->m_gpgEncrypt = true;
-      else if (draft_info && draft_info[0] == 'e')
-        m_pExchExt->m_gpgEncrypt = false;
-      else
-        m_pExchExt->m_gpgEncrypt = opt.encrypt_default;
-
-      if (draft_info && draft_info[0] && draft_info[1] == 'S')
-        m_pExchExt->m_gpgSign = true;
-      else if (draft_info && draft_info[0] && draft_info[1] == 's')
-        m_pExchExt->m_gpgSign = false;
-      else
-        m_pExchExt->m_gpgSign = opt.sign_default;
-
-      if (force_encrypt)
-        m_pExchExt->m_gpgEncrypt = true;
-    }
-  else if (m_lContext == EECONTEXT_VIEWER) 
-    {
-
-    }
-
-  xfree (draft_info);
 
   return S_FALSE;
 }
@@ -467,8 +311,6 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
                SRCNAME, __func__, nCommandID, nCommandID, 
                ext_context_name (m_lContext), hwnd);
 
-  show_event_object (eecb, __func__);
-
   if (nCommandID == SC_CLOSE && m_lContext == EECONTEXT_READNOTEMESSAGE)
     {
       /* This is the system close command. Replace it with our own to
@@ -477,14 +319,16 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
          own OOM (in this case Body). */
       LPDISPATCH pDisp;
       DISPID dispid;
-      DISPPARAMS dispparams;
-      VARIANT aVariant;
       
       if (debug_commands)
         log_debug ("%s:%s: command Close called\n", SRCNAME, __func__);
-      pDisp = find_outlook_property (eecb, "Close", &dispid);
-      if (pDisp)
+      
+      pDisp = get_eecb_object (eecb);
+      dispid = lookup_oom_dispid (pDisp, "Close");
+      if (pDisp && dispid != DISPID_UNKNOWN)
         {
+          DISPPARAMS dispparams;
+          VARIANT aVariant;
           /* Note that there is a report on the Net from 2005 by Amit
              Joshi where he claims that in Outlook XP olDiscard does
              not work but is treated like olSave.  */ 
@@ -509,8 +353,12 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
                      SRCNAME, __func__, hr);
         }
       else
-        log_debug ("%s:%s: invoking Close failed: no Close method)",
-                   SRCNAME, __func__);
+        {
+          if (pDisp)
+            pDisp->Release ();
+          log_debug ("%s:%s: invoking Close failed: no Close method)",
+                     SRCNAME, __func__);
+        }
 
       message_wipe_body_cruft (eecb);
 
@@ -542,17 +390,18 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
            && m_lContext == EECONTEXT_SENDNOTEMESSAGE) 
     {
       char buf[4];
+      bool sign, encrypt;
       
       log_debug ("%s:%s: command SaveMessage called\n", SRCNAME, __func__);
-      buf[0] = m_pExchExt->m_gpgEncrypt? 'E':'e';
-      buf[1] = m_pExchExt->m_gpgSign? 'S':'s';
-      switch (m_pExchExt->m_protoSelection)
+
+      if (get_crypto_flags (eecb, &sign, &encrypt))
+        buf[0] = buf[1] = '?';
+      else
         {
-        case PROTOCOL_UNKNOWN: buf[2] = 'A'; break;
-        case PROTOCOL_OPENPGP: buf[2] = 'P'; break;
-        case PROTOCOL_SMIME:   buf[2] = 'X'; break;
-        default: buf[2] = '-'; break;
+          buf[0] = encrypt? 'E':'e';
+          buf[1] = sign?    'S':'s';
         }
+      buf[2] = 'A'; /* Automatic.  */
       buf[3] = 0;
 
       hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
@@ -595,8 +444,7 @@ STDMETHODIMP
 GpgolExtCommands::Help (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
 {
   (void)eecb;
-
-  show_event_object (eecb, __func__);
+  (void)nCommandID;
 
   return S_FALSE;
 }
@@ -634,42 +482,10 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
                                    LPTSTR description, UINT description_size,
                                    ULONG flags)          
 {
-  toolbar_info_t tb_info;
-  size_t n;
-  
-
   (void)description_size;
   (void)flags;
 
-  for (tb_info = m_toolbar_info; tb_info; tb_info = tb_info->next )
-    if (tb_info->button_id == buttonid
-        && tb_info->context == m_lContext)
-      break;
-  if (!tb_info)
-    return S_FALSE; /* Not one of our toolbar buttons.  */
-
-  if (debug_commands)
-    log_debug ("%s:%s: ctx=%lx tbid=%ld button_id(req)=%d got=%d"
-               " cmd_id=%d '%s'\n", 
-               SRCNAME, __func__, m_lContext, toolbarid, buttonid,
-               tb_info->button_id, tb_info->cmd_id, tb_info->desc);
-
-  /* Mark that this button has passed this function.  */
-  tb_info->did_qbi = 1;
-  
-  pTBB->iBitmap = tb_info->bitmap;
-  pTBB->idCommand = tb_info->cmd_id;
-  pTBB->fsState = TBSTATE_ENABLED;
-  pTBB->fsStyle = TBSTYLE_BUTTON;
-  pTBB->dwData = 0;
-  pTBB->iString = -1;
-  
-  n = strlen (tb_info->desc);
-  if (n > description_size)
-    n = description_size;
-  lstrcpyn (description, tb_info->desc, n);
-
-  return S_OK;
+  return S_FALSE; /* Not one of our toolbar buttons.  */
 }
 
 

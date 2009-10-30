@@ -40,16 +40,10 @@ private:
   ULONG m_lRef;
   ULONG m_lContext;
   
-  /* A list of all active toolbar items.  */
-  toolbar_info_t m_toolbar_info;
-  
   HWND  m_hWnd;
   
   GpgolExt* m_pExchExt;
 
-  void add_toolbar (LPTBENTRY tbearr, UINT n_tbearr, ...);
-  void update_protocol_menu (LPEXCHEXTCALLBACK eecb);
-  
 public:
   STDMETHODIMP QueryInterface(REFIID riid, LPVOID *ppvObj);
   inline STDMETHODIMP_(ULONG) AddRef (void)

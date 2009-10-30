@@ -119,7 +119,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
   LPDISPATCH pObj = pStart;
   LPDISPATCH pDisp = NULL;
 
-  log_debug ("%s:%s: looking for %p->`%s'\n",
+  log_debug ("%s:%s: looking for %p->`%s'",
              SRCNAME, __func__, pStart, fullname);
 
   while (pObj)
@@ -148,8 +148,11 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
       if (!pDisp)
         return NULL;  /* The object has no IDispatch interface.  */
       if (!*fullname)
-        return pDisp; /* Ready.  */
-
+        {
+          log_debug ("%s:%s:         got %p",SRCNAME, __func__, pDisp);
+          return pDisp; /* Ready.  */
+        }
+      
       /* Break out the next name part.  */
       {
         const char *dot;
@@ -257,11 +260,11 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
                           &vtResult, NULL, NULL);
       if (parmstr)
         SysFreeString (parmstr);
-      log_debug ("%s:%s:   %s=%p vt=%d (hr=0x%x)\n",
-                 SRCNAME, __func__,
-                 name, vtResult.pdispVal, vtResult.vt, (unsigned int)hr);
       if (hr != S_OK || vtResult.vt != VT_DISPATCH)
         {
+          log_debug ("%s:%s:       error: '%s' p=%p vt=%d hr=0x%x",
+                     SRCNAME, __func__,
+                     name, vtResult.pdispVal, vtResult.vt, (unsigned int)hr);
           VariantClear (&vtResult);
           if (parmstr)
             SysFreeString (parmstr);
@@ -271,7 +274,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
 
       pObj = vtResult.pdispVal;
     }
-
+  log_debug ("%s:%s:       error: no object", SRCNAME, __func__);
   return NULL;
 }
 
@@ -587,6 +590,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
   VARIANT aVariant[4];
   VARIANT rVariant;
   BSTR bstring;
+  LPDISPATCH result = NULL;
 
   dispid = lookup_oom_dispid (pDisp, "FindControl");
   if (dispid == DISPID_UNKNOWN)
@@ -622,13 +626,11 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
                       DISPATCH_METHOD, &dispparams,
                       &rVariant, NULL, NULL);
   SysFreeString (bstring);
-  pDisp->Release();
-  pDisp = NULL;
   if (hr == S_OK && rVariant.vt == VT_DISPATCH && rVariant.pdispVal)
     {
-      rVariant.pdispVal->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
+      rVariant.pdispVal->QueryInterface (IID_IDispatch, (LPVOID*)&result);
       rVariant.pdispVal->Release ();
-      if (!pDisp)
+      if (!result)
         log_debug ("%s:%s: Object with tag `%s' has no dispatch intf.",
                    SRCNAME, __func__, tag);
     }
@@ -639,7 +641,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
       VariantClear (&rVariant);
     }
 
-  return pDisp;
+  return result;
 }
 
 

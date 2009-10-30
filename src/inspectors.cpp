@@ -64,11 +64,15 @@ END_EVENT_SINK(GpgolInspectorsEvents, IID_IOOMInspectorsEvents)
 
 
 /* Event sink for an Inspector object.  */
+typedef struct GpgolInspectorEvents GpgolInspectorEvents;
+typedef GpgolInspectorEvents *LPGPGOLINSPECTOREVENTS;
+
 BEGIN_EVENT_SINK(GpgolInspectorEvents, IOOMInspectorEvents)
   STDMETHOD_ (void, Activate) (THIS_);
   STDMETHOD_ (void, Close) (THIS_);
   STDMETHOD_ (void, Deactivate) (THIS_);
   bool m_first_activate_seen;
+  unsigned long m_serialno;
 EVENT_SINK_CTOR(GpgolInspectorEvents)
 {
   m_first_activate_seen = false;
@@ -105,6 +109,7 @@ END_EVENT_SINK(GpgolInspectorEvents, IID_IOOMInspectorEvents)
 struct button_list_s
 {
   struct button_list_s *next;
+  unsigned long serialno; /* of the inspector.  */
   LPDISPATCH sink;
   LPDISPATCH button;
   int instid;
@@ -124,6 +129,9 @@ struct inspector_info_s
   /* The inspector object.  */
   LPOOMINSPECTOR inspector;
 
+  /* Our serial number for the inspector.  */
+  unsigned long serialno;
+
   /* The event sink object.  This is used by the event methods to
      locate the inspector object.  */
   LPOOMINSPECTOREVENTS eventsink;
@@ -139,6 +147,8 @@ static inspector_info_t all_inspectors;
 static HANDLE all_inspectors_lock;
 
 
+static void add_inspector_controls (LPOOMINSPECTOR inspector, 
+                                    unsigned long serialno);
 static void update_crypto_info (LPDISPATCH button);
 
 
@@ -187,12 +197,30 @@ unlock_all_inspectors (void)
 }
 
 
+/* Return a new serial number for an inspector.  These serial numbers
+   are used to make the button tags unique.  */
+static unsigned long
+create_inspector_serial (void)
+{
+  static long serial;
+  long n;
+
+  /* Avoid returning 0 because we use that value as Nil.  */
+  while (!(n = InterlockedIncrement (&serial)))
+    ;
+  return (unsigned long)n;
+}
+
+
 /* Add SINK and BUTTON to the list at LISTADDR.  The list takes
    ownership of SINK and BUTTON, thus the caller may not use OBJ or
-   OBJ2 after this call.  If TAG is given it is stored as well.  */
+   OBJ2 after this call.  If TAG must be given without the
+   serialnumber suffix.  SERIALNO is the serialno of the correspnding
+   inspector.  */
 static void
 move_to_button_list (button_list_t *listaddr, 
-                     LPDISPATCH sink, LPDISPATCH button, const char *tag)
+                     LPDISPATCH sink, LPDISPATCH button, 
+                     const char *tag, unsigned long serialno)
 {
   button_list_t item;
   int instid;
@@ -202,13 +230,14 @@ move_to_button_list (button_list_t *listaddr,
 
   instid = button? get_oom_int (button, "InstanceId"): 0;
 
-  // log_debug ("%s:%s: sink=%p btn=%p tag=(%s) instid=%d",
-  //            SRCNAME, __func__, sink, button, tag, instid);
+  log_debug ("%s:%s: sink=%p btn=%p tag=(%s) instid=%d",
+             SRCNAME, __func__, sink, button, tag, instid);
 
   item = (button_list_t)xcalloc (1, sizeof *item + strlen (tag));
   item->sink = sink;
   item->button = button;
   item->instid = instid;
+  item->serialno = serialno;
   strcpy (item->tag, tag);
   item->next = *listaddr;
   *listaddr = item;
@@ -217,7 +246,7 @@ move_to_button_list (button_list_t *listaddr,
 
 /* Register the inspector object INSPECTOR along with its event SINK.  */
 static void
-register_inspector (LPOOMINSPECTOR inspector, LPOOMINSPECTOREVENTS sink)
+register_inspector (LPOOMINSPECTOR inspector, LPGPGOLINSPECTOREVENTS sink)
 {
   inspector_info_t item;
 
@@ -225,6 +254,7 @@ register_inspector (LPOOMINSPECTOR inspector, LPOOMINSPECTOREVENTS sink)
   lock_all_inspectors ();
   inspector->AddRef ();
   item->inspector = inspector;
+  item->serialno = sink->m_serialno = create_inspector_serial ();
 
   sink->AddRef ();
   item->eventsink = sink;
@@ -303,6 +333,65 @@ get_inspector_info (LPOOMINSPECTOR inspector)
 }
 
 
+/* Return the serialno of INSPECTOR or 0 if not found.  */
+static unsigned long
+get_serialno (LPDISPATCH inspector)
+{
+  unsigned int result = 0;
+  inspector_info_t iinfo;
+
+  /* FIXME: This might not bet reliable.  We merely compare the
+     pointer and not something like an Instance Id.  We should check
+     whether this is sufficient or whether to track the inspectors
+     with different hack.  For example we could add an invisible menu
+     entry and scan for that entry to get the serial number serial
+     number of it.  A better option would be to add a custom property
+     to the inspector, but that seems not supported - we could of
+     course add it to a button then. */ 
+  lock_all_inspectors ();
+
+  for (iinfo = all_inspectors; iinfo; iinfo = iinfo->next)
+    if (iinfo->inspector == inspector)
+      {
+        result = iinfo->serialno;
+        break;
+      }
+
+  unlock_all_inspectors ();
+  return result;
+}
+
+
+/* Return the button with TAG and assigned to the isnpector with
+   SERIALNO.  Return NULL if not found.  */
+static LPDISPATCH
+get_button (unsigned long serialno, const char *tag)
+{
+  LPDISPATCH result = NULL;
+  inspector_info_t iinfo;
+  button_list_t ol;
+
+  lock_all_inspectors ();
+
+  for (iinfo = all_inspectors; iinfo; iinfo = iinfo->next)
+    if (iinfo->serialno == serialno)
+      {
+        for (ol = iinfo->buttons; ol; ol = ol->next)
+          if (ol->tag && !strcmp (ol->tag, tag))
+            {
+              result = ol->button;
+              if (result)
+                result->AddRef ();
+              break;
+            }
+        break;
+      }
+  
+  unlock_all_inspectors ();
+  return result;
+}
+
+
 /* Search through all objects and find the inspector which has a
    button with the instanceId INSTID.  The find the button with TAG in
    that inspector and return it.  Caller must release the returned
@@ -315,7 +404,7 @@ get_button_by_instid_and_tag (int instid, const char *tag)
   button_list_t ol;
 
   // log_debug ("%s:%s: inst=%d tag=(%s)",SRCNAME, __func__, instid, tag);
-
+  
   lock_all_inspectors ();
 
   for (iinfo = all_inspectors; iinfo; iinfo = iinfo->next)
@@ -340,6 +429,7 @@ get_button_by_instid_and_tag (int instid, const char *tag)
 
 
 
+
 /* The method called by outlook for each new inspector.  Note that
    Outlook sometimes reuses Inspectro objects thus this event is not
    an indication for a newly opened Inspector.  */
@@ -356,7 +446,7 @@ GpgolInspectorsEvents::NewInspector (LPOOMINSPECTOR inspector)
   obj = install_GpgolInspectorEvents_sink ((LPDISPATCH)inspector);
   if (obj)
     {
-      register_inspector (inspector, (LPOOMINSPECTOREVENTS)obj);
+      register_inspector (inspector, (LPGPGOLINSPECTOREVENTS)obj);
       obj->Release ();
     }
   inspector->Release ();
@@ -402,16 +492,16 @@ GpgolInspectorEvents::Activate (void)
   if (!m_first_activate_seen)
     {
       m_first_activate_seen = true;
-      add_inspector_controls (inspector);
+      add_inspector_controls (inspector, m_serialno);
     }
   
   /* Update the crypt info.  */
-  obj = get_oom_object (m_object, "CommandBars");
+  obj = get_oom_object (inspector, "CommandBars");
   if (!obj)
     log_error ("%s:%s: CommandBars not found", SRCNAME, __func__);
   else
     {
-      button = get_oom_control_bytag (obj, "GpgOL_Inspector_Crypto_Info");
+      button = get_button (m_serialno, "GpgOL_Inspector_Crypto_Info");
       obj->Release ();
       if (button)
         {
@@ -453,40 +543,125 @@ is_inspector_in_composer_mode (LPDISPATCH inspector)
 }
 
 
-/* Add all the controls.  */
-void
-add_inspector_controls (LPOOMINSPECTOR inspector)
+/* Get the flags from the inspector; i.e. whether to sign or encrypt a
+   message.  Returns 0 on success.  */
+int
+get_inspector_composer_flags (LPDISPATCH inspector,
+                              bool *r_sign, bool *r_encrypt)
 {
+  LPDISPATCH button;
+  int rc = 0;
+  unsigned long serialno;
+
+  serialno = get_serialno (inspector);
+  if (!serialno)
+    {
+      log_error ("%s:%s: S/n not found", SRCNAME, __func__);
+      return -1;
+    }
+
+  button = get_button (serialno, "GpgOL_Inspector_Sign");
+  if (!button)
+    {
+      log_error ("%s:%s: Sign button not found", SRCNAME, __func__);
+      rc = -1;
+    }
+  else
+    {
+      *r_sign = get_oom_int (button, "State") == msoButtonDown;
+      button->Release ();
+    }
+
+  button = get_button (serialno, "GpgOL_Inspector_Encrypt");
+  if (!button)
+    {
+      log_error ("%s:%s: Encrypt button not found", SRCNAME, __func__);
+      rc = -1;
+    }
+  else
+    {
+      *r_encrypt = get_oom_int (button, "State") == msoButtonDown;
+      button->Release ();
+    }
+  
+  if (!rc)
+    log_debug ("%s:%s: sign=%d encrypt=%d",
+               SRCNAME, __func__, *r_sign, *r_encrypt);
+  return rc;
+}
+
+
+/* Set the flags for the inspector; i.e. whether to sign or encrypt a
+   message.  Returns 0 on success.  */
+int
+set_inspector_composer_flags (LPDISPATCH inspector, bool sign, bool encrypt)
+{
+  LPDISPATCH button;
+  int rc = 0;
+  unsigned long serialno;
+
+  serialno = get_serialno (inspector);
+  if (!serialno)
+    {
+      log_error ("%s:%s: S/n not found", SRCNAME, __func__);
+      return -1;
+    }
+
+  button = get_button (serialno, "GpgOL_Inspector_Sign");
+  if (!button)
+    {
+      log_error ("%s:%s: Sign button not found", SRCNAME, __func__);
+      rc = -1;
+    }
+  else
+    {
+      if (put_oom_int (button, "State", sign? msoButtonDown : msoButtonUp))
+        rc = -1;
+      button->Release ();
+    }
+
+  button = get_button (serialno, "GpgOL_Inspector_Encrypt");
+  if (!button)
+    {
+      log_error ("%s:%s: Encrypt button not found", SRCNAME, __func__);
+      rc = -1;
+    }
+  else
+    {
+      if (put_oom_int (button, "State", encrypt? msoButtonDown : msoButtonUp))
+        rc = -1;
+      button->Release ();
+    }
+  
+  return rc;
+}
+
+
+/* Helper to make the tag unique.  */
+static const char *
+add_tag (LPDISPATCH control, unsigned long serialno, const char *value)
+{
+  char buf[256];
+  
+  snprintf (buf, sizeof buf, "%s#%lu", value, serialno);
+  put_oom_string (control, "Tag", buf);
+  return value;
+}
+
+
+/* Add all the controls.  */
+static void
+add_inspector_controls (LPOOMINSPECTOR inspector, unsigned long serialno)
+{
+  static
   LPDISPATCH obj, controls, button;
   inspector_info_t inspinfo;
   button_list_t buttonlist = NULL;
   const char *tag;
   int in_composer;
 
+
   log_debug ("%s:%s: Enter", SRCNAME, __func__);
-
-  /* In theory we should take a lock here to avoid a race between the
-     test for a new control and the creation.  However, we are not
-     called from a second thread.  FIXME: We might want to use
-     inspector_info insteasd to check this.  However this requires us
-     to keep a lock per inspector. */
-
-  /* Check that our controls do not already exist.  */
-  obj = get_oom_object (inspector, "CommandBars");
-  if (!obj)
-    {
-      log_error ("%s:%s: CommandBars not found", SRCNAME, __func__);
-      return;
-    }
-  button= get_oom_control_bytag (obj, "GpgOL_Inspector_Crypto_Info");
-  obj->Release ();
-  if (button)
-    {
-      button->Release ();
-      log_debug ("%s:%s: Leave (Controls are already added)",
-                 SRCNAME, __func__);
-      return;
-    }
 
   /* Check whether we are in composer or read mode.  */
   in_composer = is_inspector_in_composer_mode (inspector);
@@ -503,7 +678,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           button = opt.disable_gpgol? NULL : add_oom_button (controls);
           if (button)
             {
-              put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Encrypt"));
+              tag = add_tag (button, serialno, "GpgOL_Inspector_Encrypt");
               put_oom_bool (button, "BeginGroup", true);
               put_oom_int (button, "Style", msoButtonIconAndCaption );
               put_oom_string (button, "Caption",
@@ -511,19 +686,19 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
               put_oom_icon (button, IDB_ENCRYPT, 16);
               
               obj = install_GpgolCommandBarButtonEvents_sink (button);
-              move_to_button_list (&buttonlist, obj, button, tag);
+              move_to_button_list (&buttonlist, obj, button, tag, serialno);
             }
           
           button = opt.disable_gpgol? NULL : add_oom_button (controls);
           if (button)
             {
-              put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Sign"));
+              tag = add_tag (button, serialno, "GpgOL_Inspector_Sign");
               put_oom_int (button, "Style", msoButtonIconAndCaption );
               put_oom_string (button, "Caption", _("&sign message with GnuPG"));
               put_oom_icon (button, IDB_SIGN, 16);
               
               obj = install_GpgolCommandBarButtonEvents_sink (button);
-              move_to_button_list (&buttonlist, obj, button, tag);
+              move_to_button_list (&buttonlist, obj, button, tag, serialno);
             }
           
           controls->Release ();
@@ -541,49 +716,49 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
       button = in_composer? NULL : add_oom_button (controls);
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Verify"));
+          tag = add_tag (button, serialno, "GpgOL_Inspector_Verify");
           put_oom_int (button, "Style", msoButtonIconAndCaption );
           put_oom_string (button, "Caption", _("GpgOL Decrypt/Verify"));
           put_oom_icon (button, IDB_DECRYPT_VERIFY, 16);
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       button = opt.enable_debug? add_oom_button (controls) : NULL;
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Debug-0"));
+          tag = add_tag (button, serialno, "GpgOL_Inspector_Debug-0");
           put_oom_int (button, "Style", msoButtonCaption );
           put_oom_string (button, "Caption",
                           "GpgOL Debug-0 (display crypto info)");
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       button = opt.enable_debug? add_oom_button (controls) : NULL;
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Debug-1"));
+          tag = add_tag (button, serialno, "GpgOL_Inspector_Debug-1");
           put_oom_int (button, "Style", msoButtonCaption );
           put_oom_string (button, "Caption",
                           "GpgOL Debug-1 (open_inspector)");
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       button = opt.enable_debug? add_oom_button (controls) : NULL;
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Debug-2"));
+          tag = add_tag (button, serialno,"GpgOL_Inspector_Debug-2");
           put_oom_int (button, "Style", msoButtonCaption );
           put_oom_string (button, "Caption",
                           "GpgOL Debug-2 (change message class)");
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       controls->Release ();
@@ -602,38 +777,38 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
                 ? NULL : add_oom_button (controls));
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Encrypt@t"));
+          tag = add_tag (button, serialno, "GpgOL_Inspector_Encrypt@t");
           put_oom_int (button, "Style", msoButtonIcon );
           put_oom_string (button, "Caption", _("Encrypt message with GnuPG"));
           put_oom_icon (button, IDB_ENCRYPT, 16);
           put_oom_int (button, "State", msoButtonMixed );
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       button = (opt.disable_gpgol || !in_composer
                 ? NULL : add_oom_button (controls));
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Sign@t"));
+          tag = add_tag (button, serialno, "GpgOL_Inspector_Sign@t");
           put_oom_int (button, "Style", msoButtonIcon);
           put_oom_string (button, "Caption", _("Sign message with GnuPG"));
           put_oom_icon (button, IDB_SIGN, 16);
           put_oom_int (button, "State", msoButtonDown);
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       button = in_composer? NULL : add_oom_button (controls);
       if (button)
         {
-          put_oom_string (button, "Tag", (tag = "GpgOL_Inspector_Crypto_Info"));
+          tag = add_tag (button, serialno, "GpgOL_Inspector_Crypto_Info");
           put_oom_int (button, "Style", msoButtonIcon);
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
-          move_to_button_list (&buttonlist, obj, button, tag);
+          move_to_button_list (&buttonlist, obj, button, tag, serialno);
         }
 
       controls->Release ();
@@ -763,14 +938,18 @@ toggle_button (LPDISPATCH button, const char *tag, int instid)
 {
   int state = get_oom_int (button, "State");
   char tag2[256];
+  char *p;
   LPDISPATCH button2;
 
-  log_debug ("%s:%s: button `%s' state is %d", SRCNAME, tag, __func__, state);
+  log_debug ("%s:%s: button `%s' state is %d", SRCNAME, __func__, tag, state);
   state = (state == msoButtonUp)? msoButtonDown : msoButtonUp;
   put_oom_int (button, "State", state);
 
   /* Toggle the other button.  */
   mem2str (tag2, tag, sizeof tag2 - 2);
+  p = strchr (tag2, '#');
+  if (p)
+    *p = 0;  /* Strip the serialno suffix.  */
   if (*tag2 && tag2[1] && !strcmp (tag2+strlen(tag2)-2, "@t"))
     tag2[strlen(tag2)-2] = 0; /* Remove the "@t".  */
   else

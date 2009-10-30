@@ -37,6 +37,7 @@ typedef IOOMInspectorEvents *LPOOMINSPECTOREVENTS;
 typedef struct IOOMInspectorsEvents IOOMInspectorsEvents;
 typedef IOOMInspectorsEvents *LPOOMINSPECTORSEVENTS;
 
+
 EXTERN_C const IID IID_IOOMInspector;
 #undef INTERFACE
 #define INTERFACE  IOOMInspector
@@ -122,10 +123,13 @@ LPDISPATCH install_GpgolInspectorsEvents_sink (LPDISPATCH object);
 LPDISPATCH install_GpgolInspectorEvents_sink (LPDISPATCH object);
 
 
-void add_inspector_controls (LPOOMINSPECTOR inspector);
-
 void proc_inspector_button_click (LPDISPATCH button,
                                   const char *tag, int instid);
+
+int get_inspector_composer_flags (LPDISPATCH inspector,
+                                  bool *r_sign, bool *r_encrypt);
+int set_inspector_composer_flags (LPDISPATCH inspector,
+                                  bool sign, bool encrypt);
 
 
 

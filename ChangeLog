@@ -1,3 +1,7 @@
+2009-10-30  Werner Koch  <wk@g10code.com>
+
+	* forms/Makefile.am (icons): Udpate all icons.
+
 2009-10-08  Werner Koch  <wk@g10code.com>
 
 	* configure.ac (CFLAGS): Add -fno-strict-aliasing.

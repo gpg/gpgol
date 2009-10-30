@@ -30,6 +30,9 @@ class GpgolItemEvents;
 
 bool GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+/* Retrieve the OOM object from the EECB.  */
+LPDISPATCH get_eecb_object (LPEXCHEXTCALLBACK eecb);
+
 
 #endif /*OLFLANGE_DEF_H*/
 
