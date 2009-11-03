@@ -3,6 +3,9 @@
 	* inspectors.cpp (deregister_inspector): Delete the buttons.
 	(set_one_button): New.
 	(set_inspector_composer_flags): Also set toolbar buttons.
+	(toggle_button): Use set_one_button.
+	(get_button_by_instid_and_tag): Remove.
+
 	* oomhelp.cpp (del_oom_button): New.
 
 2009-11-02  Werner Koch  <wk@g10code.com>

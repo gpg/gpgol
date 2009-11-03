@@ -379,41 +379,6 @@ get_inspector_from_instid (int instid)
 }
 
 
-/* Search through all objects and find the inspector which has a
-   button with the instanceId INSTID.  Theb find the button with TAG
-   in that inspector and return it.  Returns NULL if not found.  */
-static LPDISPATCH
-get_button_by_instid_and_tag (int instid, const char *tag)
-{
-  LPDISPATCH result = NULL;
-  inspector_info_t iinfo;
-  button_list_t ol;
-
-  // log_debug ("%s:%s: inst=%d tag=(%s)",SRCNAME, __func__, instid, tag);
-  
-  lock_all_inspectors ();
-
-  for (iinfo = all_inspectors; iinfo; iinfo = iinfo->next)
-    for (ol = iinfo->buttons; ol; ol = ol->next)
-      if (ol->instid == instid)
-        {
-          /* Found the inspector.  Now look for the tag.  */
-          for (ol = iinfo->buttons; ol; ol = ol->next)
-            if (ol->tag && !strcmp (ol->tag, tag))
-              {
-                result = ol->button;
-                if (result)
-                  result->AddRef ();
-                break;
-              }
-          break;
-        }
-
-  unlock_all_inspectors ();
-  return result;
-}
-
-
 /* The method called by outlook for each new inspector.  Note that
    Outlook sometimes reuses Inspectro objects thus this event is not
    an indication for a newly opened Inspector.  */
@@ -591,7 +556,6 @@ set_one_button (LPDISPATCH inspector, const char *tag, bool down)
 }
 
 
-
 /* Set the flags for the inspector; i.e. whether to sign or encrypt a
    message.  Returns 0 on success.  */
 int
@@ -661,6 +625,8 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
               put_oom_string (button, "Caption",
                               _("&encrypt message with GnuPG"));
               put_oom_icon (button, IDB_ENCRYPT, 16);
+              put_oom_int (button, "State",
+                           opt.encrypt_default? msoButtonDown: msoButtonUp);
               
               obj = install_GpgolCommandBarButtonEvents_sink (button);
               move_to_button_list (&buttonlist, obj, button, tag);
@@ -673,6 +639,8 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
               put_oom_int (button, "Style", msoButtonIconAndCaption );
               put_oom_string (button, "Caption", _("&sign message with GnuPG"));
               put_oom_icon (button, IDB_SIGN, 16);
+              put_oom_int (button, "State",
+                           opt.sign_default? msoButtonDown: msoButtonUp);
               
               obj = install_GpgolCommandBarButtonEvents_sink (button);
               move_to_button_list (&buttonlist, obj, button, tag);
@@ -759,6 +727,8 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           put_oom_string (button, "Caption", _("Encrypt message with GnuPG"));
           put_oom_icon (button, IDB_ENCRYPT, 16);
           put_oom_int (button, "State", msoButtonMixed );
+          put_oom_int (button, "State",
+                       opt.encrypt_default? msoButtonDown: msoButtonUp);
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
           move_to_button_list (&buttonlist, obj, button, tag);
@@ -773,6 +743,8 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           put_oom_string (button, "Caption", _("Sign message with GnuPG"));
           put_oom_icon (button, IDB_SIGN, 16);
           put_oom_int (button, "State", msoButtonDown);
+          put_oom_int (button, "State",
+                       opt.sign_default? msoButtonDown: msoButtonUp);
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
           move_to_button_list (&buttonlist, obj, button, tag);
@@ -960,14 +932,22 @@ get_message_from_button (unsigned long instid, LPDISPATCH *r_inspector)
 
 
 /* Toggle a button and return the new state.  */
-static int
+static void
 toggle_button (LPDISPATCH button, const char *tag, int instid)
 {
-  int state = get_oom_int (button, "State");
+  int state;
   char tag2[256];
   char *p;
-  LPDISPATCH button2;
+  LPDISPATCH inspector;
+  
+  inspector = get_inspector_from_instid (instid);
+  if (!inspector)
+    {
+      log_debug ("%s:%s: inspector not found", SRCNAME, __func__);
+      return;
+    }
 
+  state = get_oom_int (button, "State");
   log_debug ("%s:%s: button `%s' state is %d", SRCNAME, __func__, tag, state);
   state = (state == msoButtonUp)? msoButtonDown : msoButtonUp;
   put_oom_int (button, "State", state);
@@ -981,16 +961,10 @@ toggle_button (LPDISPATCH button, const char *tag, int instid)
     tag2[strlen(tag2)-2] = 0; /* Remove the "@t".  */
   else
     strcat (tag2, "@t");      /* Append a "@t".  */
-
-  button2 = get_button_by_instid_and_tag (instid, tag2);
-  if (!button2)
-    log_debug ("%s:%s: button `%s' not found", SRCNAME, __func__, tag2);
-  else
-    {
-      put_oom_int (button2, "State", state);
-      button2->Release ();
-    }
-  return state;
+  
+  log_debug ("%s:%s: setting `%s' state to %d", SRCNAME, __func__, tag2, state);
+  set_one_button (inspector, tag2, state);
+  inspector->Release ();
 }
 
 
