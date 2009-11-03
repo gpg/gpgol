@@ -215,7 +215,7 @@ is_inspector_display (HWND hwnd)
 /* Update the display with TEXT using the message MSG.  Return 0 on
    success. */
 int
-update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
+update_display (HWND hwnd, LPDISPATCH inspector, int is_sensitive,
                 bool is_html, const char *text)
 {
   HWND window;
@@ -245,28 +245,27 @@ update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
         SetWindowTextA (window, text);
       return 0;
     }
-  else if (exchange_cb && !opt.compat.no_oom_write)
+  else if (inspector && !opt.compat.no_oom_write)
     {
-      LPDISPATCH obj;
       int rc;
+      LPDISPATCH item;
 
       log_debug ("%s:%s: updating display using OOM\n", SRCNAME, __func__);
       
-      obj = get_eecb_object ((LPEXCHEXTCALLBACK)exchange_cb);
-      if (!obj)
+      item = get_oom_object (inspector, "get_CurrentItem");
+      if (item)
         {
-          log_error ("%s:%s: Object not found via EECB\n", SRCNAME, __func__);
-          return -1;
+          if (is_html)
+            {
+              /* Bug in OL 2002 and 2003 - as a workaround set the body
+                 first to empty. */
+              put_oom_string (item, "Body", "");
+            }
+          rc = put_oom_string (item, is_html? "HTMLBody":"Body", text);
+          item->Release ();
         }
-
-      if (is_html)
-        {
-          /* Bug in OL 2002 and 2003 - as a workaround set the body
-             first to empty. */
-          put_oom_string (obj, "Body", "");
-        }
-      rc = put_oom_string (obj, is_html? "HTMLBody":"Body", text);
-      obj->Release ();
+      else
+        rc = -1;
       return rc;
     }
   else

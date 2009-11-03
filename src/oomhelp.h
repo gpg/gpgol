@@ -102,12 +102,18 @@ int get_oom_int (LPDISPATCH pDisp, const char *name);
 /* Get the string property NAME of the object PDISP.  */
 char *get_oom_string (LPDISPATCH pDisp, const char *name);
 
+/* Get an IUnknown object from property NAME of PDISP.  */
+LPUNKNOWN get_oom_iunknown (LPDISPATCH pDisp, const char *name);
+
 /* Return the control object with tag property value TAG.  */
 LPDISPATCH get_oom_control_bytag (LPDISPATCH pObj, const char *tag);
 
 /* Add a new button to an object which supports the add method.
    Returns the new object or NULL on error.  */
 LPDISPATCH add_oom_button (LPDISPATCH pObj);
+
+/* Delete a button.  */
+void del_oom_button (LPDISPATCH button);
 
 
 #ifdef __cplusplus

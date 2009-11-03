@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-10-29 18:27+0100\n"
+"POT-Creation-Date: 2009-11-03 11:39+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -54,8 +54,8 @@ msgid ""
 "You may want to try again."
 msgstr ""
 
-#: src/engine.c:395 src/engine.c:405 src/main.c:689 src/main.c:695
-#: src/message.cpp:321
+#: src/engine.c:395 src/engine.c:405 src/main.c:692 src/main.c:698
+#: src/message.cpp:303
 msgid "GpgOL"
 msgstr ""
 
@@ -205,12 +205,12 @@ msgstr "*** Notation start (signatur av: "
 msgid "*** End Notation ***\n"
 msgstr "*** Notation slut ***\n"
 
-#: src/main.c:688
+#: src/main.c:691
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr ""
 
-#: src/main.c:694
+#: src/main.c:697
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -236,7 +236,7 @@ msgid ""
 msgstr ""
 
 # A bit unclear in the original text
-#: src/message-events.cpp:254
+#: src/message-events.cpp:282
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -246,11 +246,11 @@ msgstr ""
 "och inte RTF-meddelanden. Se till att endast textformatet\n"
 "har valts i inställningarna."
 
-#: src/message.cpp:193
+#: src/message.cpp:181
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
 
-#: src/message.cpp:301
+#: src/message.cpp:283
 #, c-format
 msgid ""
 "Signature status: %s\n"
@@ -259,54 +259,54 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/message.cpp:309
+#: src/message.cpp:291
 msgid "GpgOL - Message Information"
 msgstr ""
 
-#: src/message.cpp:541
+#: src/message.cpp:523
 msgid "Signature verification of an encrypted message is not possible."
 msgstr ""
 
-#: src/message.cpp:552
+#: src/message.cpp:534
 msgid "Signature verification of this message class is not possible."
 msgstr ""
 
-#: src/message.cpp:555
+#: src/message.cpp:537
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
 msgstr ""
 
-#: src/message.cpp:559
+#: src/message.cpp:541
 #, fuzzy
 msgid "This message has no signature."
 msgstr "Dekryptera meddelandet och validera signaturen"
 
-#: src/message.cpp:857
+#: src/message.cpp:839
 msgid "This message is not encrypted."
 msgstr ""
 
-#: src/message.cpp:1084
+#: src/message.cpp:1066
 #, fuzzy, c-format
 msgid ""
 "Decryption failed\n"
 "(%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:1231
+#: src/message.cpp:1213
 msgid "No recipients to encrypt to are given"
 msgstr ""
 
-#: src/message.cpp:1244 src/message.cpp:1271
+#: src/message.cpp:1226 src/message.cpp:1253
 msgid "Encrypting or signing an empty message is not possible."
 msgstr ""
 
-#: src/message.cpp:1253
+#: src/message.cpp:1235
 #, fuzzy, c-format
 msgid "Encryption failed (%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:1280
+#: src/message.cpp:1262
 #, fuzzy, c-format
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
@@ -320,54 +320,54 @@ msgstr "Fel vid skrivning av fil"
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 
-#: src/olflange-dlgs.cpp:44
+#: src/olflange-dlgs.cpp:43
 msgid "General"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:45
+#: src/olflange-dlgs.cpp:44
 msgid "Enable the S/MIME support"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:47
+#: src/olflange-dlgs.cpp:46
 msgid "Message sending"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:48
+#: src/olflange-dlgs.cpp:47
 #, fuzzy
 msgid "&Encrypt new messages by default"
 msgstr "Kryptera meddelandet med GPG"
 
-#: src/olflange-dlgs.cpp:49
+#: src/olflange-dlgs.cpp:48
 msgid "&Sign new messages by default"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:51
+#: src/olflange-dlgs.cpp:50
 msgid "Message receiving"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:53
+#: src/olflange-dlgs.cpp:52
 msgid "Show HTML view if possible"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:54
+#: src/olflange-dlgs.cpp:53
 msgid "Present encrypted message as attachment"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:57
+#: src/olflange-dlgs.cpp:56
 msgid "Crypto Engine"
 msgstr ""
 
 #. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:257
+#: src/olflange-dlgs.cpp:256
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
 
-#: src/olflange-dlgs.cpp:263
+#: src/olflange-dlgs.cpp:262
 #, c-format
 msgid "This is GpgOL version %s"
 msgstr ""
 
-#: src/olflange.cpp:447
+#: src/olflange.cpp:444
 msgid ""
 "Welcome to GpgOL 1.0\n"
 "\n"
@@ -388,7 +388,7 @@ msgid ""
 "along with other Outlook plugins may in some cases not work.\n"
 msgstr ""
 
-#: src/olflange.cpp:475
+#: src/olflange.cpp:472
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -397,7 +397,7 @@ msgid ""
 ">Options->GpgOL.\n"
 msgstr ""
 
-#: src/olflange.cpp:663
+#: src/olflange.cpp:672
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"

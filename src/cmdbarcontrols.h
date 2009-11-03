@@ -31,6 +31,9 @@ typedef IOOMCommandBarButtonEvents *LPOOMCOMMANDBARBUTTONEVENTS;
 struct IOOMCommandBarButton;
 typedef IOOMCommandBarButton *LPOOMCOMMANDBARBUTTON;
 
+struct GpgolCommandBarButtonEvents;
+typedef GpgolCommandBarButtonEvents *LPGPGOLCOMMANDBARBUTTONEVENTS;
+
 
 EXTERN_C const IID IID_IOOMCommandBarButtonEvents;
 #undef INTERFACE
@@ -57,6 +60,7 @@ DECLARE_INTERFACE_(IOOMCommandBarButtonEvents, IDispatch)
 
 
 LPDISPATCH install_GpgolCommandBarButtonEvents_sink (LPDISPATCH button);
+void       detach_GpgolCommandBarButtonEvents_sink (LPDISPATCH sink);
 
 
 

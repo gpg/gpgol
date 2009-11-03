@@ -1,7 +1,7 @@
 Noteworthy changes for version 1.1.0
 ===================================================
 
- * Replaced some ECF code by direct OOM code.  This was required to
+ * Replaced most ECE code by direct OOM code.  This was required to
    support better icons; i.e. icons not limited to a 16 color palette.
 
  * New icons.

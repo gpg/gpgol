@@ -118,9 +118,11 @@ DECLARE_INTERFACE_(IOOMInspectorsEvents, IDispatch)
 };
 
 
+/* Create a new sink and attach it to OBJECT.  */
 LPDISPATCH install_GpgolInspectorsEvents_sink (LPDISPATCH object);
 
 LPDISPATCH install_GpgolInspectorEvents_sink (LPDISPATCH object);
+void detach_GpgolInspectorEvents_sink (LPDISPATCH sink);
 
 
 void proc_inspector_button_click (LPDISPATCH button,

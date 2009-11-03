@@ -25,7 +25,7 @@ int is_html_body (const char *body);
 char *add_html_line_endings (const char *body);
 
 int is_inspector_display (HWND hwnd);
-int update_display (HWND hwnd, void *exchange_cb, int is_sensitive,
+int update_display (HWND hwnd, LPDISPATCH inspector, int is_sensitive,
                     bool is_html, const char *text);
 
 int set_message_body (LPMESSAGE message, const char *string, bool is_html);

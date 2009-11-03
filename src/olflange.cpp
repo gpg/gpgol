@@ -50,6 +50,7 @@
 #include "item-events.h"
 #include "explorers.h"
 #include "inspectors.h"
+#include "mailitem.h"
 #include "cmdbarcontrols.h"
 
 /* The GUID for this plugin.  */
@@ -727,7 +728,8 @@ install_forms (void)
   langid = PRIMARYLANGID (LANGIDFROMLCID (GetThreadLocale ()));
   switch (langid)
     {
-    case LANG_GERMAN: langsuffix = "de"; break;
+    case LANG_ENGLISH: langsuffix = "en"; break;
+    case LANG_GERMAN:  langsuffix = "de"; break;
     default: 
       log_debug ("%s:%s: No forms available for primary language %d\n",
                  SRCNAME, __func__, (int)langid);

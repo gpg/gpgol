@@ -210,12 +210,28 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
      use our own display code.  */
   if (!flags && m_processed && !opt.disable_gpgol)
     {
+      HRESULT hr;
+      LPMDB mdb = NULL;
+      LPMESSAGE message = NULL;
       HWND hwnd = NULL;
 
       if (FAILED (eecb->GetWindow (&hwnd)))
         hwnd = NULL;
-      log_debug ("%s:%s: (hwnd=%p)\n", SRCNAME, __func__, hwnd);
-      message_display_handler (eecb, hwnd);
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (hr != S_OK || !message) 
+        log_error ("%s:%s: error getting message: hr=%#lx",
+                   SRCNAME, __func__, hr);
+      else
+        {
+          LPDISPATCH inspector = get_inspector (eecb);
+          message_display_handler (message, inspector, hwnd);
+          if (inspector)
+            inspector->Release ();
+        }
+      if (message)
+        message->Release ();
+      if (mdb)
+        mdb->Release ();
     }
   
 

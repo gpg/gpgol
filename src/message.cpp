@@ -146,60 +146,43 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
 /* Common Code used by OnReadComplete and OnOpenComplete to display a
    modified message.   Returns true if the message was encrypted.  */
 bool
-message_display_handler (LPEXCHEXTCALLBACK eecb, HWND hwnd)
+message_display_handler (LPMESSAGE message, LPDISPATCH inspector, HWND hwnd)
 {
   int err;
-  HRESULT hr;
-  LPMESSAGE message = NULL;
-  LPMDB mdb = NULL;
   int ishtml, wasprotected = false;
   char *body;
 
-  hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
-  if (SUCCEEDED (hr))
+  if (mapi_get_message_type (message) == MSGTYPE_GPGOL_CLEAR_SIGNED)
     {
-      if (mapi_get_message_type (message) == MSGTYPE_GPGOL_CLEAR_SIGNED)
+      /* We used to display the clearsigned data in the processed
+         form, that is without the PGP lines and without the dash
+         escaping.  However, this poses the problem that the user does
+         not notice that he is viewing a mail which was signed using a
+         deprecated method and - far worse - it might update the
+         PR_BODY and thus all signature information will get lost.  Of
+         course we could save the body away first like we do it with
+         encrypted mails, but that is too much overhead and GpgOL will
+         always be required to show such a message, which contrdicts
+         the very reason of clearsigned messages.  */
+      log_debug ("%s:%s: skipping display update for ClearSigned\n",
+                 SRCNAME, __func__);
+    }
+  else
+    {
+      err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
+                                            &ishtml, &wasprotected);
+      if (!err && body)
         {
-          /* We used to display the clearsigned data in the processed
-             form, that is without the PGP lines and without the dash
-             escaping.  However, this poses the problem that the user
-             does not notice that he is viewing a mail which was
-             signed using a deprecated method and - far worse - it
-             might update the PR_BODY and thus all signature
-             information will get lost.  Of course we could save the
-             body away first like we do it with encrypted mails, but
-             that is too much overhead and GpgOL will always be
-             required to show such a message, which contrdicts the
-             very reason of clearsigned messages.  */
-          log_debug ("%s:%s: skipping display update for ClearSigned\n",
-                     SRCNAME, __func__);
+          update_display (hwnd, inspector, wasprotected, ishtml, body);
         }
       else
         {
-          err = mapi_get_gpgol_body_attachment (message, &body, NULL, 
-                                                &ishtml, &wasprotected);
-          if (!err && body)
-            {
-              /* put_outlook_property (eecb, "GpgOLStatus",            */
-              /*                       mapi_get_sig_status (message)); */
-              
-              update_display (hwnd, eecb, wasprotected, ishtml, body);
-            }
-          else
-            {
-              /* put_outlook_property (eecb, "GpgOLStatus", "?"); */
-              update_display (hwnd, NULL, 0, 0, 
-                              _("[Crypto operation failed - "
-                                "can't show the body of the message]"));
-            }
-          xfree (body);
+          update_display (hwnd, NULL, 0, 0, 
+                          _("[Crypto operation failed - "
+                            "can't show the body of the message]"));
         }
+      xfree (body);
     }
-  else
-    log_debug_w32 (hr, "%s:%s: error getting message", SRCNAME, __func__);
-
-  ul_release (message, __func__, __LINE__);
-  ul_release (mdb, __func__, __LINE__);
 
   return !!wasprotected;
 }

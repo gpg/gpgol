@@ -26,8 +26,10 @@
 #include "mymapitags.h"
 #include "myexchext.h"
 #include "common.h"
+#include "oomhelp.h"
 #include "mapihelp.h"
 #include "message.h"
+
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -240,55 +242,121 @@ gpgol_message_revert (LPMESSAGE message, LONG do_save, ULONG save_flags)
 EXTERN_C LONG __stdcall
 gpgol_folder_revert (LPDISPATCH mapifolderobj)
 {
-#if 0
   HRESULT hr;
-  LPMAPIFOLDER folder = NULL;
+  LPDISPATCH disp;
+  LPUNKNOWN unknown;
+  LPMDB mdb;
+  LPMAPIFOLDER folder;
   LONG proptype;
+  char *store_entryid;
+  size_t store_entryidlen;
+  LPMAPISESSION session;
   LPMAPITABLE contents;
   SizedSPropTagArray (1L, proparr_entryid) = { 1L, {PR_ENTRYID} };
   LPSRowSet rows;
   ULONG mtype;
   LPMESSAGE message;
-  
 
   log_debug ("%s:%s: Enter", SRCNAME, __func__);
   
-  hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&folder);
-  if (FAILED (hr) )
+  unknown = get_oom_iunknown (mapifolderobj, "MAPIOBJECT");
+  if (!unknown)
     {
-      log_error ("%s:%s: error getting object: hr=%#lx\n", 
-                 SRCNAME, __func__, hr);
+      log_error ("%s:%s: error getting MAPI object", SRCNAME, __func__);
       return -1;
     }
-  mapi_get_int_prop ( folder, PR_OBJECT_TYPE, &proptype);
-  if (proptype != MAPI_FOLDER)
+  folder = NULL;
+  hr = unknown->QueryInterface (IID_IMAPIFolder, (void**)&folder);
+  unknown->Release ();
+  if (hr != S_OK || !folder)
     {
-      log_error ("%s:%s: not called for a folder but an object of type %ld\n", 
-                 SRCNAME, __func__, (long)proptype);
-      ul_release (folder, __func__, __LINE__);
-      ul_release (mdb, __func__, __LINE__);
+      log_error ("%s:%s: error getting IMAPIFolder: hr=%#lx",
+                 SRCNAME, __func__, hr);
       return -1;
     }
 
+  mapi_get_int_prop ( folder, PR_OBJECT_TYPE, &proptype);
+  if (proptype != MAPI_FOLDER)
+    {
+      log_error ("%s:%s: not called for a folder but an object of type %ld", 
+                 SRCNAME, __func__, (long)proptype);
+      ul_release (folder, __func__, __LINE__);
+      return -1;
+    }
+
+  disp = get_oom_object (mapifolderobj, "Session");
+  if (!disp)
+    {
+      log_error ("%s:%s: session object not found", SRCNAME, __func__);
+      ul_release (folder, __func__, __LINE__);
+      return -1;
+    }
+  unknown = get_oom_iunknown (disp, "MAPIOBJECT");
+  disp->Release ();
+  if (!unknown)
+    {
+      log_error ("%s:%s: error getting Session.MAPIOBJECT", SRCNAME, __func__);
+      ul_release (folder, __func__, __LINE__);
+      return -1;
+    }
+  session = NULL;
+  hr = unknown->QueryInterface (IID_IMAPISession, (void**)&session);
+  unknown->Release ();
+  if (hr != S_OK || !session)
+    {
+      log_error ("%s:%s: error getting IMAPISession: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      ul_release (folder, __func__, __LINE__);
+      return -1;
+    }
+      
+  /* Open the message store.  */
+  store_entryid = mapi_get_binary_prop ((LPMESSAGE)folder, PR_STORE_ENTRYID,
+                                        &store_entryidlen);
+  if (!store_entryid)
+    {
+      log_error ("%s:%s: PR_STORE_ENTRYID missing\n",  SRCNAME, __func__);
+      session->Release ();
+      ul_release (folder, __func__, __LINE__);
+      return -1;
+    }
+  mdb = NULL;
+  hr = session->OpenMsgStore (0, store_entryidlen, (LPENTRYID)store_entryid,
+                              NULL,  MAPI_BEST_ACCESS | MDB_NO_DIALOG, 
+                              &mdb);
+  xfree (store_entryid);
+  if (FAILED (hr) || !mdb)
+    {
+      log_error ("%s:%s: OpenMsgStore failed: hr=%#lx\n", 
+                 SRCNAME, __func__, hr);
+      session->Release ();
+      ul_release (folder, __func__, __LINE__);
+      return -1;
+    }
+
+  /* Get the contents.  */
   contents = NULL;
   hr = folder->GetContentsTable ((ULONG)0, &contents);
-  if (FAILED (hr) )
+  if (FAILED (hr) || !contents)
     {
       log_error ("%s:%s: error getting contents table: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      ul_release (folder, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
+      session->Release ();
+      ul_release (folder, __func__, __LINE__);
       return -1;
     }
-  
+
+
   hr = contents->SetColumns ((LPSPropTagArray)&proparr_entryid, 0);
   if (FAILED (hr) )
     {
       log_error ("%s:%s: error setting contents table column: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
       contents->Release ();
-      ul_release (folder, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
+      session->Release ();
+      ul_release (folder, __func__, __LINE__);
       return -1;
     }
 
@@ -318,7 +386,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
           hr = mdb->OpenEntry (entrylen, entry,
                                &IID_IMessage, MAPI_BEST_ACCESS, 
                                &mtype, (IUnknown**)&message);
-          if (hr)
+          if (hr || !message)
             {
               log_debug ("%s:%s: failed to open entry of this row: hr=%#lx"
                          " - skipped\n",  SRCNAME, __func__, hr);
@@ -351,8 +419,8 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
     }
 
   contents->Release ();
-  ul_release (folder, __func__, __LINE__);
   ul_release (mdb, __func__, __LINE__);
-#endif
+  session->Release ();
+  ul_release (folder, __func__, __LINE__);
   return 0;
 }

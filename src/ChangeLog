@@ -1,3 +1,27 @@
+2009-11-03  Werner Koch  <wk@g10code.com>
+
+	* inspectors.cpp (deregister_inspector): Delete the buttons.
+	(set_one_button): New.
+	(set_inspector_composer_flags): Also set toolbar buttons.
+	* oomhelp.cpp (del_oom_button): New.
+
+2009-11-02  Werner Koch  <wk@g10code.com>
+
+	* mailitem.cpp, mailitem.h: New.
+
+	* inspectors.cpp (get_message_from_button): New.
+	(get_inspector_from_instid): New.
+	(proc_inspector_button_click): Implement missing commands.
+
+	* message.cpp (message_display_handler): Change to take an
+	LPMESSAGE argument.
+	* display.cpp (update_display): Replace the eecb arg by an
+	inspector object.
+	* message-events.cpp (OnReadComplete): Adjust for changes.
+
+	* oomhelp.cpp (get_oom_iunknown): New.
+	* revert.cpp (gpgol_folder_revert): Change to work without an eecb.
+
 2009-10-30  Werner Koch  <wk@g10code.com>
 
 	* oomhelp.cpp (get_oom_control_bytag): Fix silly bug.

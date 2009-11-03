@@ -578,6 +578,40 @@ get_oom_string (LPDISPATCH pDisp, const char *name)
 }
 
 
+/* Get the object property NAME of the object PDISP.  Returns NULL if
+   not found or if it is not an object perty.  */
+LPUNKNOWN
+get_oom_iunknown (LPDISPATCH pDisp, const char *name)
+{
+  HRESULT hr;      
+  DISPID dispid;
+  
+  dispid = lookup_oom_dispid (pDisp, name);
+  if (dispid != DISPID_UNKNOWN)
+    {
+      DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+      VARIANT rVariant;
+
+      VariantInit (&rVariant);
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                          DISPATCH_PROPERTYGET, &dispparams,
+                          &rVariant, NULL, NULL);
+      if (hr != S_OK)
+        log_debug ("%s:%s: Property '%s' not found: %#lx",
+                   SRCNAME, __func__, name, hr);
+      else if (rVariant.vt != VT_UNKNOWN)
+        log_debug ("%s:%s: Property `%s' is not of class IUnknown (vt=%d)",
+                   SRCNAME, __func__, name, rVariant.vt);
+      else
+        return rVariant.punkVal;
+
+      VariantClear (&rVariant);
+    }
+
+  return NULL;
+}
+
+
 /* Return the control object described by the tag property with value
    TAG. The object POBJ must support the FindControl method.  Returns
    NULL if not found.  */
@@ -677,11 +711,37 @@ add_oom_button (LPDISPATCH pObj)
                      &rVariant, NULL, NULL);
   if (hr != S_OK || rVariant.vt != VT_DISPATCH || !rVariant.pdispVal)
     {
-      log_debug ("%s:%s: Adding Control failed: %#lx - vt=%d",
+      log_error ("%s:%s: Adding Control failed: %#lx - vt=%d",
                  SRCNAME, __func__, hr, rVariant.vt);
       VariantClear (&rVariant);
       return NULL;
     }
   return rVariant.pdispVal;
+}
+
+
+/* Add a new button to an object which supports the add method.
+   Returns the new object or NULL on error.  */
+void
+del_oom_button (LPDISPATCH pObj)
+{
+  HRESULT hr;      
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  VARIANT aVariant[5];
+
+  dispid = lookup_oom_dispid (pObj, "Delete");
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_BOOL;  /* Temporary */
+  dispparams.rgvarg[0].boolVal = VARIANT_FALSE;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+  hr = pObj->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                     DISPATCH_METHOD, &dispparams,
+                     NULL, NULL, NULL);
+  if (hr != S_OK)
+    log_error ("%s:%s: Deleting Control failed: %#lx",
+               SRCNAME, __func__, hr);
 }
 

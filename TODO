@@ -15,5 +15,3 @@
   presented file names and decrypt them only on OpenSzFile.  Need to
   find some documentation first.
 
-* We need to use the micalg as returned by the UI-server.
-

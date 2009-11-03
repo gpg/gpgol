@@ -135,18 +135,33 @@ GpgolItemEvents::OnOpen (LPEXCHEXTCALLBACK eecb)
 STDMETHODIMP 
 GpgolItemEvents::OnOpenComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
 {
+  HRESULT hr;
+  
   log_debug ("%s:%s: received, flags=%#lx", SRCNAME, __func__, flags);
 
   /* If the message has been processed by us (i.e. in OnOpen), we now
      use our own display code.  */
   if (!flags && m_processed)
     {
+      LPMDB mdb = NULL;
+      LPMESSAGE message = NULL;
       HWND hwnd = NULL;
 
       if (FAILED (eecb->GetWindow (&hwnd)))
         hwnd = NULL;
-      if (message_display_handler (eecb, hwnd))
-        m_wasencrypted = true;
+      hr = eecb->GetObject (&mdb, (LPMAPIPROP *)&message);
+      if (hr != S_OK || !message) 
+        log_error ("%s:%s: error getting message: hr=%#lx",
+                   SRCNAME, __func__, hr);
+      else
+        {
+          if (message_display_handler (message, hwnd))
+            m_wasencrypted = true;
+        }
+      if (message)
+        message->Release ();
+      if (mdb)
+        mdb->Release ();
     }
   
   return S_FALSE;

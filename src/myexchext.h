@@ -105,9 +105,6 @@ DEFINE_OLEGUID(IID_IExchExtModelessCallback,  0x00020d1a, 0, 0);
 DEFINE_OLEGUID(IID_IOutlookExtCallback,       0x0006720d, 0, 0);
 DEFINE_OLEGUID(IID_IOutlookExtItemEvents,     0x0006723A, 0, 0);
 
-DEFINE_OLEGUID(IID_IOOMMailItem,              0x00063034, 0, 0);
-DEFINE_OLEGUID(IID_IOOMItemEvents,            0x0006302B, 0, 0);
-
 
 /* Type definitions. */
 

@@ -37,7 +37,6 @@
 #include "olflange.h"
 #include "message.h"
 #include "engine.h"
-#include "revert.h"
 #include "ext-commands.h"
 #include "explorers.h"
 #include "inspectors.h"
@@ -283,8 +282,7 @@ GpgolExtCommands::InstallCommands (
           if (force_encrypt)
             encrypt = true;
           
-          /* FIXME:  ove that to the inspector activation.  */
-          //set_crypto_flags (eecb, sign, encrypt);
+          set_crypto_flags (eecb, sign, encrypt);
         }
       xfree (draft_info);
     }

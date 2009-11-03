@@ -71,6 +71,7 @@ gpgol_SOURCES = \
 	oomhelp.cpp oomhelp.h eventsink.h \
 	explorers.cpp explorers.h \
 	inspectors.cpp inspectors.h \
+	mailitem.cpp mailitem.h \
 	cmdbarcontrols.cpp cmdbarcontrols.h \
 	w32-gettext.c w32-gettext.h 
 
