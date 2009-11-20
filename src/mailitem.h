@@ -57,14 +57,19 @@ DECLARE_INTERFACE_(IOOMItemEvents, IDispatch)
      via the IDispatch interface.  */
   /* dispid=0xf001 */
   STDMETHOD(Read)(THIS_ );
+
   /* dispid=0xf002 */
   STDMETHOD(Write)(THIS_ PBOOL cancel);
+
   /* dispid=0xf003 */
   STDMETHOD(Open)(THIS_ PBOOL cancel);
+
   /* dispid=0xf004 */
   STDMETHOD(Close)(THIS_ PBOOL cancel);
+
   /* dispid=0xf005 */
-  //STDMETHOD(Send)(THIS_ PBOOL cancel);
+  STDMETHOD(Send)(THIS_ PBOOL cancel);
+
   /* dispid=0xf006 */
   //STDMETHOD(CustomAction)(THIS_ LPDISPATCH action, LPDISPATCH response,
   //                        PBOOL cancel);
@@ -72,8 +77,11 @@ DECLARE_INTERFACE_(IOOMItemEvents, IDispatch)
   //STDMETHOD(CustomPropertyChange)(THIS_ VARIANT name);
   /* dispid=0xf009 */
   //STDMETHOD(PropertyChange)(THIS_ VARIANT name);
-  /* dispid=0xf00a */
+
+  /* dispid=0xf00a 
+     OL2003: Called between the ECE OnCheckNames and OnCheckNamesComplete.  */
   //STDMETHOD(BeforeCheckName)(THIS_ PBOOL cancel);
+
   /* dispid=0xf00b */
   //STDMETHOD(AttachmentAdd)(THIS_ LPDISPATCH att);
   /* dispid=0xf00c */

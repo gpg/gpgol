@@ -252,42 +252,42 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK eecb)
 
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
-  need_crypto = (!get_crypto_flags (eecb, &sign, &encrypt)
-                 && (sign || encrypt));
+  // need_crypto = (!get_crypto_flags (eecb, &sign, &encrypt)
+  //                && (sign || encrypt));
     
-  /* If we are going to encrypt, check that the BodyFormat is
-     something we support.  This helps avoiding surprise by sending
-     out unencrypted messages. */
-  if (need_crypto && !opt.disable_gpgol)
-    {
-      obj = get_eecb_object (eecb);
-      if (!obj)
-        bodyfmt = -1;
-      else
-        {
-          bodyfmt = get_oom_int (obj, "BodyFormat");
-          obj->Release ();
-        }
+  // /* If we are going to encrypt, check that the BodyFormat is
+  //    something we support.  This helps avoiding surprise by sending
+  //    out unencrypted messages. */
+  // if (need_crypto && !opt.disable_gpgol)
+  //   {
+  //     obj = get_eecb_object (eecb);
+  //     if (!obj)
+  //       bodyfmt = -1;
+  //     else
+  //       {
+  //         bodyfmt = get_oom_int (obj, "BodyFormat");
+  //         obj->Release ();
+  //       }
 
-      if (bodyfmt == 1)
-        m_want_html = 0;
-      else if (bodyfmt == 2)
-        m_want_html = 1;
-      else
-        {
-          log_debug ("%s:%s: BodyFormat is %d", SRCNAME, __func__, bodyfmt);
-          if (FAILED(eecb->GetWindow (&hWnd)))
-            hWnd = NULL;
-          MessageBox (hWnd,
-                      _("Sorry, we can only encrypt plain text messages and\n"
-                      "no RTF messages. Please make sure that only the text\n"
-                      "format has been selected."),
-                      "GpgOL", MB_ICONERROR|MB_OK);
+  //     if (bodyfmt == 1)
+  //       m_want_html = 0;
+  //     else if (bodyfmt == 2)
+  //       m_want_html = 1;
+  //     else
+  //       {
+  //         log_debug ("%s:%s: BodyFormat is %d", SRCNAME, __func__, bodyfmt);
+  //         if (FAILED(eecb->GetWindow (&hWnd)))
+  //           hWnd = NULL;
+  //         MessageBox (hWnd,
+  //                     _("Sorry, we can only encrypt plain text messages and\n"
+  //                     "no RTF messages. Please make sure that only the text\n"
+  //                     "format has been selected."),
+  //                     "GpgOL", MB_ICONERROR|MB_OK);
 
-          m_bWriteFailed = TRUE;	
-          return E_FAIL;
-        }
-    }
+  //         m_bWriteFailed = TRUE;	
+  //         return E_FAIL;
+  //       }
+  //   }
   
   
   return S_FALSE;
@@ -316,58 +316,58 @@ GpgolMessageEvents::OnWriteComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
   log_debug ("%s:%s: received\n", SRCNAME, __func__);
 
 
-  if (flags & (EEME_FAILED|EEME_COMPLETE_FAILED))
-    return S_FALSE; /* We don't need to rollback anything in case
-                       other extensions flagged a failure. */
+  // if (flags & (EEME_FAILED|EEME_COMPLETE_FAILED))
+  //   return S_FALSE; /* We don't need to rollback anything in case
+  //                      other extensions flagged a failure. */
 
-  if (opt.disable_gpgol)
-    return S_FALSE;
+  // if (opt.disable_gpgol)
+  //   return S_FALSE;
           
-  if (!m_bOnSubmitActive) /* The user is just saving the message. */
-    return S_FALSE;
+  // if (!m_bOnSubmitActive) /* The user is just saving the message. */
+  //   return S_FALSE;
   
-  if (m_bWriteFailed)     /* Operation failed already. */
-    return S_FALSE;
+  // if (m_bWriteFailed)     /* Operation failed already. */
+  //   return S_FALSE;
 
-  /* Try to get the current window. */
-  if (FAILED(eecb->GetWindow (&hWnd)))
-    hWnd = NULL;
+  // /* Try to get the current window. */
+  // if (FAILED(eecb->GetWindow (&hWnd)))
+  //   hWnd = NULL;
 
-  /* Get the object and call the encryption or signing function.  */
-  HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
-  if (SUCCEEDED (hr))
-    {
-      protocol_t proto = PROTOCOL_UNKNOWN; /* Let the UI server select
-                                              the protocol.  */
-      bool sign, encrypt;
+  // /* Get the object and call the encryption or signing function.  */
+  // HRESULT hr = eecb->GetObject (&pMDB, (LPMAPIPROP *)&msg);
+  // if (SUCCEEDED (hr))
+  //   {
+  //     protocol_t proto = PROTOCOL_UNKNOWN; /* Let the UI server select
+  //                                             the protocol.  */
+  //     bool sign, encrypt;
 
-      if (get_crypto_flags (eecb, &sign, &encrypt))
-        rc = -1;
-      else if (encrypt && sign)
-        rc = message_sign_encrypt (msg, proto, hWnd);
-      else if (encrypt && !sign)
-        rc = message_encrypt (msg, proto, hWnd);
-      else if (!encrypt && sign)
-        rc = message_sign (msg, proto, hWnd);
-      else
-        {
-          /* In case this is a forward message which is not to be
-             signed or encrypted we need to remove a possible body
-             attachment.  */
-          if (mapi_delete_gpgol_body_attachment (msg))
-            mapi_save_changes (msg, KEEP_OPEN_READWRITE);
-          rc = 0;
-        }
+  //     if (get_crypto_flags (eecb, &sign, &encrypt))
+  //       rc = -1;
+  //     else if (encrypt && sign)
+  //       rc = message_sign_encrypt (msg, proto, hWnd);
+  //     else if (encrypt && !sign)
+  //       rc = message_encrypt (msg, proto, hWnd);
+  //     else if (!encrypt && sign)
+  //       rc = message_sign (msg, proto, hWnd);
+  //     else
+  //       {
+  //         /* In case this is a forward message which is not to be
+  //            signed or encrypted we need to remove a possible body
+  //            attachment.  */
+  //         if (mapi_delete_gpgol_body_attachment (msg))
+  //           mapi_save_changes (msg, KEEP_OPEN_READWRITE);
+  //         rc = 0;
+  //       }
       
-      if (rc)
-        {
-          hrReturn = E_FAIL;
-          m_bWriteFailed = TRUE;	
-        }
-    }
+  //     if (rc)
+  //       {
+  //         hrReturn = E_FAIL;
+  //         m_bWriteFailed = TRUE;	
+  //       }
+  //   }
   
-  ul_release (msg, __func__, __LINE__);
-  ul_release (pMDB, __func__, __LINE__);
+  // ul_release (msg, __func__, __LINE__);
+  // ul_release (pMDB, __func__, __LINE__);
   
   return hrReturn;
 }

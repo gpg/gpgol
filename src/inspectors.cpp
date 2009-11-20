@@ -424,7 +424,7 @@ STDMETHODIMP_(void)
 GpgolInspectorEvents::Activate (void)
 {
   LPOOMINSPECTOR inspector;
-  // LPDISPATCH obj, obj2;
+  LPDISPATCH obj, obj2;
 
   log_debug ("%s:%s: Called (this=%p)", SRCNAME, __func__, this);
   
@@ -448,14 +448,14 @@ GpgolInspectorEvents::Activate (void)
     {
       m_first_activate_seen = true;
       add_inspector_controls (inspector);
-      // obj = get_oom_object (inspector, "get_CurrentItem");
-      // if (obj)
-      //   {
-      //     obj2 = install_GpgolItemEvents_sink (obj);
-      //     if (obj2)
-      //       obj2->Release ();
-      //     obj->Release ();
-      //   }
+      obj = get_oom_object (inspector, "get_CurrentItem");
+      if (obj)
+        {
+          obj2 = install_GpgolItemEvents_sink (obj);
+          if (obj2)
+            obj2->Release ();
+          obj->Release ();
+        }
     }
   
   update_crypto_info (inspector);
