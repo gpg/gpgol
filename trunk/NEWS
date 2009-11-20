@@ -1,0 +1,417 @@
+Noteworthy changes for version 1.1.0
+===================================================
+
+ * Replaced most ECE code by direct OOM code.  This was required to
+   support better icons; i.e. icons not limited to a 16 color palette.
+
+ * New icons.
+
+ * Removed protocol selection.  The UI-server is now expected to select
+   the protocol (i.e. the auto selection modus is now the only one).
+
+
+Noteworthy changes for version 1.0.1 (2009-09-28)
+===================================================
+
+ * No more event loop peeking to avoid problem with Office programs.
+
+ * S/MIME support is now enabled by default.
+
+
+Noteworthy changes for version 1.0.0 (2009-06-18)
+=================================================
+
+ * Show a notice about potential problems.
+
+ * After about 2 years of development, the 1.0 version is now due.
+
+
+Noteworthy changes for version 0.10.19 (2009-02-27)
+===================================================
+
+ * Save the crypto settings in a message draft.
+
+ * Unnamed attachments are now shown with a suffix matching its MIME
+   type.
+
+
+Noteworthy changes for version 0.10.18 (2009-01-28)
+===================================================
+
+ * Handle OL created S/MIME messages.
+
+
+Noteworthy changes for version 0.10.17 (2008-11-14)
+===================================================
+
+ * Minor cleanups.
+
+ * All operations are now somewhat faster.
+
+
+Noteworthy changes for version 0.10.16 (2008-11-11)
+===================================================
+
+ * Fixed a regression in the last release with opaque signatures.
+
+ * Fixed PGP cleartext signature verification.
+
+ * Encryption of attachments is now much faster.
+
+
+Noteworthy changes for version 0.10.15 (2008-08-06)
+===================================================
+
+ * New option to present the body of a message as an attachment.  This
+   is useful to make sure that the body will never show up as
+   plaintext in the message store.
+
+ * New menu item to remove all GpgOL created flags and attachments
+   from all messages in a folder.
+
+ * Icons are now installed for messages processed by GpgOL.  For now
+   only for the German version of Outlook.
+
+
+Noteworthy changes for version 0.10.14 (2008-05-28)
+===================================================
+
+ * Minor fixes.
+
+
+Noteworthy changes for version 0.10.13 (2008-05-06)
+===================================================
+
+ * Properly handle the disposition of text attachments.
+
+
+Noteworthy changes for version 0.10.12 (2008-04-16)
+===================================================
+
+ * Added icons. 
+
+ * Minor usuability changes.
+
+
+Noteworthy changes for version 0.10.11 (2008-04-04)
+===================================================
+
+ * Fixed a performance problem with signed+encrypted.
+
+
+Noteworthy changes for version 0.10.10 (2008-04-02)
+===================================================
+
+ * Visual cleanups.
+
+ * Changes to the I/O dispatcher.
+
+
+Noteworthy changes for version 0.10.9 (2008-03-19)
+==================================================
+
+ * Decrypt opaque signed and encrypted S/MIME mails.
+
+ * Handle old-style PGP message with attachments.  Note that the
+   signature verification currently may indicate a bad signature.
+
+
+Noteworthy changes for version 0.10.8 (2008-03-18)
+==================================================
+
+ * Fixed a segv introduced with 0.10.6.
+
+
+Noteworthy changes for version 0.10.7 (2008-03-11)
+==================================================
+
+ * Changed the way sign+encrypt works to help the UI-server.
+
+
+Noteworthy changes for version 0.10.6 (2008-03-10)
+==================================================
+
+ * More tweaks to allow processing of opaque encrypted or signed
+   S/MIME.
+
+ * Shows an error message when trying to decrypt/verify messages not
+   signed or encrypted.
+
+ * Soft line breaks in QP encoded messages are now correctly
+   processed.
+
+ * The sender's address is send to the UI server to allow it to select
+   an appropriate signing key.
+
+ * Automatic protocol selection works now also with signing.
+
+ * Processing large messages is faster.
+
+
+Noteworthy changes for version 0.10.5 (2008-02-18)
+==================================================
+
+ * PGP inline encrypted mails are not anymore deleted after the first
+   decryption.
+
+
+Noteworthy changes for version 0.10.4 (2008-02-06)
+==================================================
+
+ * Sign and encrypt works now.
+
+ * Texts with embedded attachments are now concatenated.
+
+ * Encrypted message are now viewable in the sent messages folder.
+
+
+Noteworthy changes for version 0.10.3 (2007-12-10)
+==================================================
+
+ * Minor fixes.
+
+
+Noteworthy changes for version 0.10.2 (2007-11-12)
+==================================================
+
+ * New menu items to select the default protocol.
+
+ * Code cleanups.
+
+
+Noteworthy changes for version 0.10.1 (2007-10-22)
+==================================================
+
+ * Auto start the server.
+
+ * Code cleanups. 
+
+ * Made all dialogs language neutral.
+
+ * The manual has some notes about the Registry usage and new MAPI
+   properties.
+
+
+Noteworthy changes for version 0.10.0 (2007-10-11)
+==================================================
+
+* Basically a complete rewrite.  A lot of things are still missing but
+  if might be useful to see the direction the development takes.
+
+
+Noteworthy changes for version 0.9.91 (2006-10-13)
+==================================================
+
+* Fixed a crash in the recipients dialog.
+
+
+Noteworthy changes for version 0.9.90 (2006-08-28)
+==================================================
+
+* Fix problem that message would be sent in clear
+  text if the user cancelled the operation.
+
+* Cosmetic updates for some dialogs.
+
+* Do not show the 'select signer dialog' when only
+  one secret key is available in the keyring.
+
+* Fixes for the automatic key selection algorithm
+  used in the recipient key dialog.
+  
+
+Noteworthy changes for version 0.9.10 (2006-04-25)
+==================================================
+
+* Fixes for Umlaut problems.
+
+
+Noteworthy changes for version 0.9.9 (2006-04-24)
+=================================================
+
+* Some cosmetic changes.
+
+* Encryption to the default key works again.
+
+
+Noteworthy changes for version 0.9.8 (2006-03-28)
+=================================================
+
+* PGP/MIME signature verification may now work in some cases.
+
+* New option to prefer displaying of the HTML part.
+
+
+Noteworthy changes for version 0.9.7 (2006-03-21)
+=================================================
+
+* Minor changes
+
+Noteworthy changes for version 0.9.6 (2006-01-26)
+=================================================
+
+* Cosmetic fixes.
+
+
+Noteworthy changes for version 0.9.5 (2005-12-07)
+=================================================
+
+* Fixed problems related to use on non-admin accounts.
+
+* Print a warning if used with OL prior to OL2003 SP2.
+
+
+Noteworthy changes for version 0.9.4 (2005-12-06)
+=================================================
+
+* Added translation framework.  Provided German translation.
+
+* New option to enable automatic decryption in the preview window.
+
+* Removed deprecated options to configure gpg path and homedir.
+
+* Default key from the option dialog works.
+
+* Support for HTML mails.
+
+
+Noteworthy changes for version 0.9.3 (2005-09-29)
+=================================================
+
+* Fixed bugs introduced with the last release.
+
+* PGP/MIME decryption works now correctly with Latin-1 and utf-8.
+
+* No more pop-ups to ask whether to save changes after just decrypting
+  a message.
+
+* Fixed a couple of bugs possibly leading to crashes.
+
+
+Noteworthy changes for version 0.9.2 (2005-09-22)
+=================================================
+
+* Saving attachments from PGP/MIME encrypted messages works.
+
+
+Noteworthy changes for version 0.9.1 (2005-09-19)
+=================================================
+
+* Bug fixes
+
+
+Noteworthy changes for version 0.9.0 (2005-09-04)
+=================================================
+
+* Major rewrite. Renamed the package to GPGol.  Note, that there used
+  to be intermediate versions unter the name OutlGPG
+
+* The package as been renamed to GPGol and consist of only one DLL
+  named "gpgol.dll".  Installation of gpgme.dll and libgpg-error.dll
+  is required.
+
+* It may by now only be build using the Mingw32 toolchain.
+
+* GPGol now uses the standard GPGME.
+
+
+Noteworthy changes for version 0.6.1 (unreleased)
+=================================================
+
+* Fix the problem that the user can just reply with
+  the encrypted text.
+
+* Fixes for a lot of minor problems with NT5 based
+  systems and for Outlook version 2003.
+
+* Support for handling HTML mails.
+  This includes the encryption of the contents and
+  the proper decryption without losing the special
+  (html) text attributes like colors.
+
+* Support for '%ENV%' strings for the log file.
+
+
+Noteworthy changes for version 0.5.5 (2005-07-12)
+=================================================
+
+* Support to sign all outgoing attachments.
+
+* Support for logging.
+
+* Fixed some memory leaks.
+
+
+Noteworthy changes for version 0.5.4 (2005-07-03)
+=================================================
+
+* Support for securing attachments.
+  This means the all attachments will be encrypted
+  if encryption has been selected for the message.
+
+* A new option to allow to save decrypted attachments
+  to the disk.
+
+* Several bug fixes all over the place.
+
+
+Noteworthy changes for version 0.5.3 (2005-06-16)
+=================================================
+
+* Allow to set a default key which is used automatically
+  for encryption.
+
+* Handle old V3 keys in the signature verification dialog.
+
+* Issue and error if the encrypt process returned invalid
+  recipients.
+
+
+Noteworthy changes for version 0.5.2 (2005-06-05)
+=================================================
+
+* Differ between possible decryption failures.
+  - General errors.
+  - No secret key available.
+
+* Add a 'encrypt-to' listbox to the decryption dialog
+  to know the recipients the message was encrypted for.
+
+* Add some checks to report problems with permissions
+  related to the Registry.
+
+* Fixed a format string problem which was possible for
+  crashes when the signature has been expired.
+
+Noteworthy changes for version 0.5.1 (2005-05-29)
+=================================================
+
+* Issue a warning if the user cancels the sign or
+  encryption procedure.
+
+* Support to read and write X- headers for messages.
+
+* Fixed a problem which crashes Outlook if the keyManager
+  exe did not exist but was set in the registry.
+
+
+Noteworthy changes for version 0.4.0 (2005-05-10)
+=================================================
+
+* Verify dialog is automatically shown whenever needed. Plus it
+  contains a hint-label whenever the signature is special. For
+  example the signature has expire or it was issued by a key which
+  is not trustworthy.
+
+* Offer a GPG configuration dialog to set the path to GPG, the home
+  directory and an optional field to specify a key manager.
+
+* Common dialogs for the following procedures:
+  - verify a clearsign signature
+  - decrypt a message (and verify a signature)
+  - encrypt a message (and sign the plaintext)
+  - clearsign a message
+
+* Provide a class to encapsulate MAPI messages and high-level functions
+  for all crypto operations.
+  

@@ -1,0 +1,573 @@
+\input texinfo
+@documentencoding ISO-8859-1
+@setfilename gpgol.info
+@include version.texi
+@settitle The GpgOL Technical Manual
+
+@dircategory GnuPG Plugin
+@direntry
+* gpgol: (gpgol).              An Outlook Plugin for GnuPG.
+@end direntry
+
+@macro clnt
+  @sc{c:} @c
+@end macro
+@macro srvr
+  @sc{s:} @c
+@end macro
+
+
+
+@c Unify some of the indices.
+@syncodeindex tp fn
+@syncodeindex pg fn
+
+@copying
+This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} (version
+@value{VERSION}, @value{UPDATED-MONTH}).
+
+@iftex
+Published by g10 Code GmbH@*
+Hüttenstr. 61@*
+40699 Erkrath, Germany
+@end iftex
+
+Copyright @copyright{} 2007, 2008 g10 Code GmbH
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version. The text of the license can be found in the
+section entitled ``Copying''.
+@end quotation
+@end copying
+
+@c
+@c Titlepage
+@c
+@setchapternewpage odd
+@titlepage 
+@title The GpgOL Technical Manual
+@subtitle Version @value{VERSION}
+@subtitle @value{UPDATED-MONTH}
+
+@sp 3
+
+@sp 3
+
+@author Werner Koch (@email{wk@@gnupg.org})
+
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@ifnothtml
+@contents
+@page
+@end ifnothtml
+
+@c @ifhtml
+@c @center @image{logo}
+@c @end ifhtml
+
+@ifnottex
+@node Top
+@top 
+
+@insertcopying
+
+@noindent
+This file documents @acronym{GpgOL}; a GnuPG plugin for Microsoft's
+Outlook MUA.
+@end ifnottex
+
+
+@menu
+* Introduction::                How to use this manual.
+* Assuan Protocol::             Description of the UI server protocol.
+* MAPI Properties::             MAPI Properties used by GpgOL.
+* Registry Settings::           How GpgOL uses the Registry.
+* MAPI Providers::              What MAPI Storage or Transport providers
+                                can do to help GpgOL.
+
+Appendices
+
+* Copying::                     The GNU General Public License says how you
+                                can copy and share this manual.
+
+Indices
+
+* Concept Index::               Index of concepts and programs.
+* Function and Data Index::     Index of functions, variables and data types.
+
+@end menu
+
+@ifhtml
+@page
+@summarycontents
+@contents
+@end ifhtml
+
+@c
+@c  I N T R O
+@c
+@node Introduction
+@chapter Introduction
+
+To debug GpgOL you should set the Registry entry
+@code{HKCU\Software\Gnu\GpgOL:enableDebug} to the string value @code{1}:
+
+@cartouche
+@example
+[HKEY_CURRENT_USER\Software\GNU\GpgOL]
+"enableDebug"="1"
+@end example
+@end cartouche
+
+This allows easy setting of a debug file by using the extended options
+menu and enables a few extra menu items.
+
+
+@c
+@c  P R O T O C O L  D E S C R I P T I O N
+@c
+@node Assuan Protocol
+@chapter Description of the UI Server Protocol
+
+All cryptographic operations are done by a server and the server is
+responsible for all dialogs.  If a a server is not available,
+@acronym{GpgOL} does not work.
+
+This protocol used between @acronym{GpgOL} and the User Interface Server
+(UI server) is specified in the `GPGME Reference Manual', under the
+heading `The GnuPG UI Server Protocol'.
+
+
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c  M A P I  P r o p e r t i e s
+@c
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@node MAPI Properties
+@chapter MAPI Properties used by GpgOL
+
+GpgOL uses a some custom MAPI properties in the named properties range.
+Thus their actual numbers are determined at runtime and only the names
+should be used.  The GUID assigned to these properties is
+@code{31805ab8-3e92-11dc-879c-00061b031004}.
+
+@table @code
+
+@item GpgOL Msg Class
+This is a STRING8 property used as a override for PR_MESSAGE_CLASS.
+GpgOL uses this internally for creating messages.
+
+@item GpgOL Old Msg Class
+This is a STRING8 property which saves the original PR_MESSAGE_CLASS
+before GpgOL changes it.
+
+@item GpgOL Attach Type
+This is a property of type LONG and used to further describe the
+attachments created by GpgOL.  These values are used:
+
+  @table @asis
+  @item ATTACHTYPE_MOSS = 1
+  The attachment contains the original MOSS message.  That is either an
+  S/MIME or a PGP/MIME message in its original RFC-2822 format (but only
+  with the relevant MIME parts of the main header).
+
+  @item ATTACHTYPE_FROMMOSS = 2
+  The attachment has been created from the original MOSS attachment.  It
+  will automagically be recreated as needed.  If the attachment has
+  been created from an encrypted message, it is saved re-encrypted under
+  a non-permanent session key.  This session key is valid as long as the
+  current Outlook porcess exists.
+
+  @item ATTACHTYPE_MOSSTEMPL = 3
+  The attachment has been created in the course of sending a message.
+
+  @item ATTACHTYPE_PGPBODY = 4
+  The attachment contains the original PGP message body of PGP inline
+  encrypted messages.  We need to save this away because it may happen
+  that in the course of displaying the plaintext Outlook overwrites the
+  actual body due to internal syncronization.
+  @end table
+
+@item GpgOL Sig Status
+This is a property of type STRING8 and used to cache the result of the
+last signature verification.  It is used with the actual message and
+consists of a single character, a space and a human readable string
+(utf-8 encoded).  The first character is used as a machine processable
+flag indicating the status.  These values are defined:
+
+  @table @code
+  @item #
+  The message is not of interest to us.  GpgOL may flag any message with
+  this signature status to avoid extra processing for messages already
+  known not to need any processing by GpgOL.
+
+  @item @@
+  The message has been created and signed or encrypted by GpgOL. 
+ 
+  @item ?
+  The signature status has not been checked.  This is for example used
+  if the public key to be used for the verification could not be found.
+
+  @item !
+  The signature verified okay and is deemed to be fully valid.
+
+  @item ~
+  The signature was not fully verified.  This often means that the full
+  result information of the signature verification needs to be
+  considered to decide the actual validity.  Used for example if the
+  signing key has expired
+
+  @item -
+  The signature is bad.  Either this means the message has been tampered
+  with or an intermediate message relay has accidently changed
+  the message (e.g. due to recoding).
+  
+  @end table
+
+@item GpgOL Protect IV
+This binary property is used to store the initialization vector of an
+re-encrypted attachment.  The existence of this property indicates that
+the attachment has been encrypted under the non-permanent session key.
+
+@item GpgOL Charset
+This is a property of type STRING8 and used to describe the character
+set of an attachment or of the body.  If this propery is missing the
+default of UTF-8 is assumed.
+
+@item GpgOL Last Decrypted
+This binary property is used on the message to save a session marker to
+tell GpgOL whether the message as already been decrypted.  If this
+property does not exists or the session marker does not macth the one of
+the current session, GpgOL needs to decrypt it again.
+
+@item GpgOL MIME Info
+This property is of type STRING8 and used to store the MIME structure of
+the orginal message.  The content are lines of colon delimited fields.
+The specification has not yet been finished.
+
+@item GpgOL Draft Info
+This is a property of type STRING8 used to preserve crypto settings in a
+draft message.  For details see the function
+@code{mapi_set_gpgol_draft_info}.
+
+@end table
+
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c  R e g i s t r y  S  e t t i n g s
+@c
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@node Registry Settings
+@chapter How GpgOL uses the Registry
+
+This is a list of registry entries GpgOL knows about. 
+
+@table @code
+
+@item HKLM\Software\GNU\GnuPG:Install Directory
+This is used by GnuPG to describe the directory where GnupG has been
+installed.  GpgOL requires this to get the location of the localedir
+which is used to show translated strings (@file{gpgol.mo}).  It is
+further used to check whether GnuPG has been installed at all.
+
+@item HKCU\Software\GNU\GnuPG:UI Server
+If the UI server could not be connected, GpgOL tries to start the one
+given in this entry.  It is assumed that the UI server is stored in the
+@code{Install Directory} (as described above).  This Registry entry
+gives the actual command name relative to this directory.  If the key
+does not exist, is is first searched below @code{HKLM} and then it
+defaults to @code{kleopatra.exe}.
+
+@item HKCU\Software\GNU\GpgOL:enableDebug
+Setting this key to the string @code{1} enables a few extra features in
+the UI, useful only for debugging.  Setting it to values larger than 1
+make the log file output more verbose; these are actually bit flags
+according to the following table (which may change with any release):
+@table @code
+@item 2 (0x0002) (ioworker)
+Tell what the Assuan I/O scheduler is doing.
+@item 4 (0x0004) (ioworker-extra)
+Even more verbose Assuan I/O scheduler reporting. 
+@item 8  (0x0008) (filter)
+Tell what the filter I/O system is doing.
+@item 16 (0x0010) (filter-extra)
+Tell how the filter I/O locks the resources.
+@item 32 (0x0020) (memory)
+Tell about resource allocation.
+@item 64 (0x0040) (commands)
+Tell about command events.
+@item 128 (0x0080) (mime-parser)
+Tell what the MIME parser is doing
+@item 256 (0x0100) (mime-data)
+Print data lines while parsing MIME.
+@end table
+You may use the regular C-syntax for entering the value.  As an
+alternative you may use the names of the flags, separated by space or
+comma.
+
+
+@itemx HKCU\Software\GNU\GpgOL:logFile
+If the value is not empty, GpgOL takes this as a log file and appends
+debug information to this file.  The file may get very large.
+
+@itemx HKCU\Software\GNU\GpgOL:compatFlags
+This is a string consisting of @code{0} and @code{1} to enable certain
+compatibility flags.  Not generally useful; use the source for a
+description.
+
+@item HKCU\Software\GNU\GpgOL:enableSmime   
+@itemx HKCU\Software\GNU\GpgOL:defaultProtocol
+@itemx HKCU\Software\GNU\GpgOL:encryptDefault
+@itemx HKCU\Software\GNU\GpgOL:signDefault   
+@itemx HKCU\Software\GNU\GpgOL:previewDecrypt
+@itemx HKCU\Software\GNU\GpgOL:storePasswdTime
+@itemx HKCU\Software\GNU\GpgOL:encodingFormat 
+@itemx HKCU\Software\GNU\GpgOL:defaultKey   
+@itemx HKCU\Software\GNU\GpgOL:enableDefaultKey
+@itemx HKCU\Software\GNU\GpgOL:preferHtml 
+These registry keys store the values from the configuration dialog.
+
+@item HKCU\Software\GNU\GpgOL:svnRevision
+When leaving GpgOL's options dialog, the SVN revision number of the current
+version will be stored in this entry.  This is used to display a note
+after software upgrades.
+
+
+@end table
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c  MAPI Providers
+@c
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@node MAPI Providers
+@chapter What MAPI Storage or Transport providers can do to help GpgOL
+
+GpgOL uses some tricks to make decryption of OpenPGP message better fit
+into the Outlook framework.  This is due to a lack of proper Plugin API
+for Outllok and because some features of Outlook --- meant as a security
+measure --- hinder a better implementation.  That is not to say that
+Outlook will be less secure when used with GpgOL --- to the opposite:
+Due to encryption and digital signature reading and sending mail with
+GpgOL support can be much more secure than using Outlook as is.
+
+There are some points where custom MAPI storage or transport
+providers can help GpgOL to gain better performance and to make it more
+secure.
+
+@section MAPI Message Class Renaming
+
+To implement S/MIME processing using its own engine, GpgOL needs to
+inhibit Outlook from doing the S/MIME before the message is passed to
+the ECE hooks.  As usual this is done by changing the message class
+(PR_MESSAGE_CLASS).  For new message this happens right away at the
+OnDelivery hook; for already existing messages GpgOL tries to detect
+the case at several other places (which is less reliable but in general
+works).
+
+@noindent
+The renaming is very straightforward:
+
+@itemize @bullet
+@item 
+If the message class is just @code{IPM.Note} extra tests are done to
+figure out a suitable message class.  This yields one of these new
+message classes:
+
+@table @code
+@item IPM.Note.GpgOL.OpaqueSigned
+@item IPM.Note.GpgOL.OpaqueEncrypted
+@item IPM.Note.GpgOL.ClearSigned
+@item IPM.Note.GpgOL.PGPMessage
+@end table
+
+@item
+If the message class is either @code{IPM.Note.SMIME} or that one
+followed by a dot and a subclass, the @code{SMIME} string is replaced
+by @code{GpgOL}.
+
+@item
+If the message class is @code{IPM.Note.Secure.CexSig} or
+@code{IPM.Note.Secure.CexEnc} the class is changed depending on other
+information to one of:
+
+@table @code
+@item IPM.Note.GpgOL.OpaqueSigned
+@item IPM.Note.GpgOL.OpaqueEncrypted
+@item IPM.Note.GpgOL.MultipartSigned
+@item IPM.Note.GpgOL
+@item IPM.Note.GpgOL.ClearSigned
+@item IPM.Note.GpgOL.PGPMessage
+@end table
+
+@end itemize
+
+To revert these message class changes one need to replace any message
+class prefix of @code{IPM.Note.GpgOL} by @code{IPM.Note.SMIME}.  There
+are two caveats however:
+
+@itemize
+
+@item
+GpgOL copies or flags the original MOSS attachment as created by
+Outlook to a new attachment with the attach type set to ATTACHTYPE_MOSS.
+If such an attachment exists it should be converted back to the original
+attachment (or used to convert the message back to RFC-822).  It might
+however not exist and in this case there should be only one attachment
+at all as created by Outlook, so no further changes are required.
+
+@item 
+Inline PGP encrypted mails (@code{IPM.Note.GpgOL.PGPMessage}) might have
+a wrong PR_BODY. This condition can be detected by the existance of an
+attachment named @file{gpgolPGP.dat}, flagged as hidden and with the
+attach type ATTACHTYPE_PGPBODY (See above under MAPI Properties).  If
+such an attachment exists, it should be copied to PR_BODY and may then
+be deleted. 
+@end itemize
+
+@noindent
+Note that reverting original CryptoEx message classes (@code{CexSig}
+etc.) back is not possible.  They are identical to GpgOL messages.
+
+
+@section MAPI Attachment Processing
+
+GpgOL creates a couple of attachments for the purpose of storing a
+parsed mail and to allow Outlook to display attachments in the usual way
+without sending them as plaintext to the storage.  The attachments are
+only stored on the local disk while being opened from the attachment's
+context menu for viewing.  Almost all these attachments are ephemeral and
+may be deleted when not displayed.  GpgOL re-creates them by parsing the
+original message if neeeded.  In fact they are always re-created after
+Outlook as been started again.  This is because the attachments holding
+the plaintext are symmetrical encrypted with an ephemeral session key,
+only valid as long as Outlook runs.
+
+FIXME:  Needs more documentation.
+
+
+@section MAPI PR_BODY Processing
+
+GpgOL does not use the PR_BODY property.  This is because internal
+Outlook syncronisation may change that property after the plaintext of a
+message has been displayed.  In general this is not a problem because
+the messages processed by GpgOL do not use that property (the orginal
+S/MIME and PGP/MIME message is stored in attachments).  However, there
+is one exception: Inline PGP message (in contrast to the modern PGP/MIME
+messages) are conveyed in the PR_BODY.  To avoid changing that orginal
+mail, GpgOL copies such a body to a new attachment named
+@file{gpgolPGP.dat}, flags it as hidden and sets the attach type to
+ATTACHTYPE_PGPBODY (See above under MAPI Properties).  That attachment
+may never be deleted!
+
+Due to internal OL syncronisation, plaintext data may end up in PR_BODY,
+GpgOL tries hard to delete PR_BODY so that it nevers shows up in the
+MAPI storage.  However this is hard and here a storage provider can help
+by deleting PR_BODY under one of these conditions:
+
+@itemize @bullet
+
+@item
+If the message class is either @code{IPM.Note.GpgOL.MultipartEncrypted}
+or @code{IPM.Note.GpgOL.OpaqueEncrypted} and in addition the message has
+a property @code{GpgOL Last Decrypted} (with any value), delete the
+properties @code{PR_BODY} and @code{PR_BODY_HTML}.
+
+@item
+If the message class is @code{IPM.Note.GpgOL.PGPMessage} and an
+attachment of ATTACHTYPE_PGPBODY with a filename @file{gpgolPGP.dat}
+exists, delete the properties @code{PR_BODY} and @code{PR_BODY_HTML}.
+
+@end itemize
+
+Instead of deleting it should be sufficient to make sure
+that such PR_BODYs are not updated and don't make it to the disk or a
+strage server. 
+
+Implementing such a feature would really help with end-to-end encryption
+where the security policy requires that the plaintext of an encrypted
+message will never be stored on a disk or leave the local machine.
+
+
+@section Filtering GpgOL internal properties
+
+To avoid attacks by importing TNEF data with certain GpgOL internal
+properties, a MAPI provider may want to filter them out when receiving a
+message from an external location.  It is not yet clear whether this is
+really needed.
+
+FIXME.
+
+
+
+
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c   A P P E N D I X
+@c 
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+@include gpl.texi
+
+@c
+@c  I N D E X E S
+@c
+@node Concept Index
+@unnumbered Concept Index
+@printindex cp
+@node Function and Data Index
+@unnumbered Function and Data Index
+@printindex fn
+
+@bye
+
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@c
+@c E D I T O R ' S   A T T I C
+@c 
+@c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+What about the message class mangling?
+
+* On receiving a new message GpgOL checks the MAPI message class
+  property of the message and if this is an S/MIME message class
+  ("IPM.Note.SMIME"), it is changed to a GpgOL specific one
+  ("IPM.Note.GpgOL").  This change is required so that OL does not not
+  apply its own S/MIME handler to the message but leaves it unchanged in
+  the message store.
+
+* For ease of implementation the same thing applies to PGP messgaes,
+  although OL would not touch these messages.
+
+* When reading a message GpgOL quickly checks the message class and if
+  it is "IPM.Note.GpgOL" it will hook itself into the code path and
+  decrypt/verify the message.
+
+* Messages already in the message store before GpgOL was installed are
+  handled differently: Here an Outlook specific event is used to change
+  the message class when browsing the messages folder.  This code path
+  is not fully ready as it requires the installation of an ECF(ile)
+  which has to be done manually as of now.
+
+* If GpgOL is deinstalled, the existing S/MIME messages can't be
+  decrypted or verified by Outlook's internal S/MIME support.
+  Multipart/signed messages are still readable, though.  We plan to add
+  a little tool for changing the GpgOL message classes back to
+  "IPM.Note.SMIME" which in turn allows using internal S/MIME support
+  again.
+
+
+
+@c Local Variables:
+@c coding: latin-1
+@c End:

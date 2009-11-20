@@ -1,0 +1,2465 @@
+2009-11-03  Werner Koch  <wk@g10code.com>
+
+	* inspectors.cpp (deregister_inspector): Delete the buttons.
+	(set_one_button): New.
+	(set_inspector_composer_flags): Also set toolbar buttons.
+	(toggle_button): Use set_one_button.
+	(get_button_by_instid_and_tag): Remove.
+
+	* oomhelp.cpp (del_oom_button): New.
+
+2009-11-02  Werner Koch  <wk@g10code.com>
+
+	* mailitem.cpp, mailitem.h: New.
+
+	* inspectors.cpp (get_message_from_button): New.
+	(get_inspector_from_instid): New.
+	(proc_inspector_button_click): Implement missing commands.
+
+	* message.cpp (message_display_handler): Change to take an
+	LPMESSAGE argument.
+	* display.cpp (update_display): Replace the eecb arg by an
+	inspector object.
+	* message-events.cpp (OnReadComplete): Adjust for changes.
+
+	* oomhelp.cpp (get_oom_iunknown): New.
+	* revert.cpp (gpgol_folder_revert): Change to work without an eecb.
+
+2009-10-30  Werner Koch  <wk@g10code.com>
+
+	* oomhelp.cpp (get_oom_control_bytag): Fix silly bug.
+
+	* inspectors.cpp (get_inspector_composer_flags): New.
+	(set_inspector_composer_flags): New.
+	* oomhelp.cpp (get_eecb_object): New.
+	* message-events.cpp (get_inspector): New.
+	(get_crypto_flags): New.
+	(OnWrite, OnWriteComplete): Use new functions instead of the class
+	members.  Use the new oom property functions.
+	* ext-commands.cpp (get_inspector, get_crypto_flags): New.
+	(DoCommand): Use new function.
+	(set_crypto_flags): New.
+	(InstallCommands): Use set_crypto_flags.
+	(add_menu, check_menu, add_toolbar, struct toolbar_info_s): Remove.
+	(QueryButtonInfo): Remove all code.
+	(InstallCommands): Make use of get_eecb_object and put_oom_string.
+	(DoCommand): Use get_eecb_object.
+	* olflange.h (IExchExt): Remove m_protoSelection, m_gpgSign,
+	m_gpgEncrypt and all related code.
+	* olflange.cpp (Install): Use get_oom_string.
+	* display.cpp (update_display): Ditto.
+	* ol-ext-callback.h, ol-ext-callback.cpp: Remove.
+
+2009-10-29  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp: Remove m_nCmdDebugN, m_nCmdRevertFolder,
+	m_nCmdSign, m_nCmdEncrypt and all related code.  Now handled in
+	inspectors.cpp.
+
+2009-10-28  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp: Remove m_nCmdCryptoState and all related code;
+	now handled in inspectors.cpp.  Remove m_nCmdKeyManager and all
+	related code; now handled in cmdbarcontrols.cpp.
+
+	* oomhelp.cpp, oomhelp.h, eventsink.h: New.
+	* myexchext.h: Move generic COM+ stuff to oomhelp.h.
+	* explorers.cpp, explorers.h: New.
+	* inspectors.cpp, inspectors.h: New.
+	* cmdbarcontrols.cpp cmdbarcontrols.h: New.
+	* olflange.cpp (install_sinks): New.
+	(Install): Call install_sinks.
+	* main.c (DllMain): Call initialize_inspectors.
+
+	* common.c (fatal_error): New.
+
+2009-10-20  Werner Koch  <wk@g10code.com>
+
+	* myexchext.h (IID_IConnectionPoint)
+	(IID_IConnectionPointContainer): Define.  There are missing in
+	current wine  From ReactOS.
+
+2009-10-19  Werner Koch  <wk@g10code.com>
+
+	* message-events.cpp (show_event_object): Move to ..
+	* ol-ext-callback.cpp (show_event_object): .. here.
+	(show_preview_pane): Revert dispparms order to make it work.
+
+	* common.c (mem2str): New.
+
+2009-10-07  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (InstallCommands): Comment out the protocol
+	selection.
+	(DoCommand, Help, QueryHelpText, QueryButtonInfo): Ditto.
+	(update_protocol_menu): Comment out.
+	* main.c (write_options): Do not write the default protocol.
+	(read_options): Always set it to auto.
+	* dialogs.rc: Remove openpgp-by-default and smime-by-default check
+	boxes.
+	* olflange-dlgs.cpp (set_labels): Likewise.
+	(GPGOptionsDlgProc): Likewise.
+
+2009-09-25  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): Enable Smime by default.
+
+2009-08-28  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (do_mime_sign): Comment cleanup.
+
+2009-08-27  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_get_sender): Add hack for Kleopatra.
+
+2009-08-21  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (async_worker_thread): Disable the use of
+	MsgWaitForMultipleObjects.
+	* common.h (struct compat): Add USE_MWFMO.
+	* main.c (read_options): Read that flag.
+
+2009-08-19  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (ul_release): Add arg LNR.  Change all callers.
+	* ol-ext-callback.cpp (ul_release): Add args FUNC and LNR.  Change
+	all callers.
+	* item-events.cpp (ul_release): ditto.
+	* session-events.cpp (ul_release): Ditto.
+
+2009-07-21  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (create_gpgol_tag, get_internetcharsetbody_tag) 
+	(mapi_set_header): Release data returned from GetIDsFromNames.
+
+	* engine.h (ENGINE_FLAG_SIGN_FOLLOWS): New macro.
+	* engine.c (engine_encrypt_prepare): Add arg flags.  Change callers.
+	* engine-assuan.c (op_assuan_encrypt): Ditto.  send PREP_ENCRYPT
+	if the sign-follows flag is used.
+	* mimemaker.c (mime_sign_encrypt): Pass new flag.
+
+2009-06-18  Werner Koch  <wk@g10code.com>
+
+	* common.h (struct opt): Add ANNOUNCE_NUMBER.
+	* main.c (write_options, read_options): Store and load that number.
+
+2009-02-26  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (start_attachment): Try to figure out a good file
+	name suffix for the FILENAME property.
+
+	* ext-commands.cpp (InstallCommands): Disable decrypt button for
+	non GpgOl messages.
+
+	* engine.c (engine_encrypt_prepare): Add arg SENDER.
+	* engine-assuan.c (op_assuan_encrypt): Ditto.
+	* mimemaker.c (do_mime_sign): Free sender string.
+	(mime_encrypt): Pass the sender address to the engine.
+	(mime_sign_encrypt): Ditto.
+
+2009-02-25  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgoldraftinfo_tag): New.
+	(mapi_get_gpgol_draft_info, mapi_set_gpgol_draft_info): New.
+	* ext-commands.cpp (DoCommand): Save encryption selection.
+	(InstallCommands): Get encryption selection from the draft info.
+	* mimemaker.c (finalize_message): Delete the property.
+
+2009-01-28  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (t2body): Take care of x-pkcs7-mime as used by
+	native OL signed messages.
+	(mime_decrypt): Ditto.
+
+2009-01-16  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (attach_thread_input_wndw_proc) 
+	(attach_thread_input): Enable code.
+	(async_worker_thread): Replace WFMO by MsgWaitForMultipleObjects
+	and add message dispatcher loops.
+
+2008-11-27  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_get_sender): Extract the CN name if available.
+
+2008-11-26  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (InstallCommands): Don't show status icon for
+	non-gpgol messages.
+
+	* config-dialog.c (start_key_manager): Remove.
+	* ext-commands.cpp (DoCommand): Do not use start_key_manager as a
+	fallback.
+
+	* olflange.cpp (GpgolExt): Show new version warning only once.
+
+	* dialogs.rc: Do not display the logo.  Move version info around.
+	* dialogs.h (IDC_G10CODE_STRING): New.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Active product page by a
+	click on IDC_G10CODE_STRING.
+	(set_labels): Remove the build date from the Version field.
+
+2008-11-14  Werner Koch  <wk@g10code.com>
+
+	* dialogs.rc: Remove preview-decrypt check button.
+	* olflange-dlgs.cpp (set_labels): Ditto.
+
+2008-11-13  Werner Koch  <wk@g10code.com>
+
+	* engine.c (FILTER_BUFFER_SIZE): Increase from 4k to 128k.
+	(switch_threads, clear_switch_threads): Remove.
+	(engine_filter): Pulse event only if anything happened.  Break
+	loop if input data has been put completely into the buffer.  Add a
+	short delay for an idle loop.
+	* engine-assuan.c (work_item_s): Increase buffer from 1k to 8k.
+	(switch_threads, clear_switch_threads): Remove.
+
+2008-11-10  Werner Koch  <wk@g10code.com>
+
+	* engine.c (engine_init): Allow the user to try again if the
+	server did not come up.
+	* engine-assuan.c (connect_uiserver, op_assuan_init): Add a hack
+	to reset the retry counter.
+
+2008-11-03  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (do_mime_sign): Add arg SESSION_NUMBER and pass it
+	to the sign operation.  Set session title.
+	(mime_sign): Create a new session number.
+	(mime_sign_encrypt): Pass a session number and title to the engine.
+	(mime_encrypt): Ditto.
+	* engine-assuan.c (op_assuan_encrypt, op_assuan_sign): Send
+	session info.
+
+2008-10-29  Werner Koch  <wk@g10code.com>
+
+	* engine.c (engine_filter): Collect more data in the in buffer.
+	* mimemaker.c (write_b64): Buffer up to 2k of output.
+
+2008-10-27  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (mime_encrypt): Check for an empty message before
+	creating the filter.  Return a suitable error code.
+	(do_mime_sign): Ditto.
+	(mime_sign_encrypt): Ditto.
+	(mime_sign): Return an error code.
+	* message.cpp (sign_encrypt): Show an error message for empty
+	messages.
+	(message_sign): Ditto.
+
+	* olflange.cpp (install_forms): Add gpgol-cs.
+
+	* mapihelp.cpp (get_internetcharsetbody_tag): New.
+	(mapi_get_body_as_stream): Try the new tag first.
+	(get_msgcls_from_pgp_lines): Ditto.  Remove the simple access
+	method.
+
+2008-10-24  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (struct mime_context): Add flag MAY_BE_OPAQUE_SIGNED.
+	(t2body): Set that flag.
+	(is_cms_signed_data): New.
+	(mime_decrypt): Try to verify if the content is opaque signed
+	without proper MIME headers.
+
+2008-10-23  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_delete_gpgol_body_attachment): New.
+	* message-events.cpp (OnWriteComplete): Remove a body attachment.
+
+	* message.cpp (message_display_handler): Do not display PGP
+	clearsigned messages.
+	(message_display_handler): Do not update GpgOLStatus; it is not
+	used anyway.
+	(pgp_mime_from_clearsigned): Fix bogus trailing white space
+	removal code.  Insert an empty line.
+	* mimeparser.c (mime_verify): Add arg MIMEHACK.
+	(message_verify): Use it.
+
+2008-10-17  Werner Koch  <wk@g10code.com>
+
+	* recipient-dialog.c (load_rsetbox): Remove superfluous check on
+	negativness for an unsigned variable.
+
+	* mimeparser.c (mime_verify_opaque): Remove extra semicolon which
+	shortcuted most of the code.  Why didn't gcc notice that?  Bug
+	was introduced on 2008-06-12.
+
+	* engine-assuan.c (create_io_pipe, send_options) 
+	(op_assuan_encrypt, op_assuan_sign, op_assuan_decrypt) 
+	(op_assuan_verify): Replace use of long in snprint by int to
+	workaround a bug in mingw32. Doesn't matter on w32 anyway.
+
+2008-10-16  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (start_attachment): Take care not to set the file
+	name "smime.p7m".
+
+	* mapihelp.cpp (is_really_cms_encrypted): Extend to detect unknown
+	message types.
+	(mapi_change_message_class): Adjust for this change.
+	(mapi_change_message_class): Factor code out to ...
+	(change_message_class_ipm_note) 
+	(change_message_class_ipm_note_smime) 
+	(change_message_class_ipm_note_smime_multipartsigned) 
+	(change_message_class_ipm_note_secure_cex): New.
+	(get_first_attach_mime_tag): New.
+	(change_message_class_ipm_note_secure_cex): Use it here for CexSig.
+	(has_smime_filename): Also look at the long filename.
+
+2008-10-15  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (op_assuan_sign): Send the new --protocol option
+	to the server.
+
+2008-09-30  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_change_message_class): Special handling for
+	MultipartSigned if S/MIME support is disabled.
+
+2008-08-06  Werner Koch  <wk@g10code.com>
+
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Disable S/MIME notice.
+
+2008-08-05  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (InstallCommands): Display protocolicons only
+	for OL2007.
+	* olflange.cpp (get_ol_main_version): New.
+
+	* message.cpp (message_decrypt): Save a signature verification
+	result.
+	* mimeparser.c (mime_decrypt): Implement verification of included
+	signatures.  This feature got lost during the removal of nested
+	crypto operations.
+
+2008-08-04  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (install_forms): New.
+	(GpgolExt): Install forms if needed.
+	* common.c (get_data_dir): New.
+	* common.h (struct): Add field FORMS_REVISION.
+	* main.c (read_options, write_options): Read and write that option.
+
+2008-07-31  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.h (class GpgolExtCommands): Add m_nCmdRevertFolder.
+	* ext-commands.cpp (GpgolExtCommands, InstallCommands): Ditto.
+	(DoCommand): Implement RevertFolder command.
+
+	* common.h (struct): Add variable DISABLE_GPGOL.
+	* session-events.cpp (OnDelivery): Make use of that variable.
+	* message.cpp (message_incoming_handler): Ditto.
+	* user-events.cpp (OnSelectionChange): Ditto
+	* message-events.cpp (OnRead, OnReadComplete, OnWrite) 
+	(OnWriteComplete): Ditto
+	* mapihelp.cpp (mapi_get_int_prop): New.
+
+	* olflange.cpp (Install): Improve version check.
+
+	* revert.cpp, revert.h: New. 
+	* mapihelp.cpp (mapi_attachment_to_body): New.
+	(mapi_get_old_message_class): New.
+	(mapi_change_message_class): Do not release newvalue when saving
+	the old class.
+	* olflange.cpp (parse_version_number, parse_version_string) 
+	(compare_versions, gpgol_check_version): New.
+	* ext-commands.cpp (DoCommand): Support a "revert message class"
+	debug command.
+
+2008-06-27  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgololdmsgclass_tag): New.
+	(mapi_change_message_class): Save old message class.
+
+2008-06-19  Werner Koch  <wk@g10code.com>
+
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Change S/MIME enabled
+	message icon.
+	* olflange.cpp (GpgolExt): Ditto for the new version installed
+	notice.
+
+2008-06-12  Werner Koch  <wk@g10code.com>
+
+	* dialogs.rc: Add button for calling the engine's configuration.
+	* dialogs.h (IDC_GPG_CONF): New.
+	* engine.c (engine_start_confdialog): New.
+	* engine-assuan.c (op_assuan_start_confdialog): New.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Act upon the button.
+
+	* mapihelp.cpp (mapi_get_from_address): New.
+	* engine.c (engine_decrypt_start, engine_verify_start): Add new
+	arg FROM_ADDRESS.
+	* engine-assuan.c (op_assuan_verify, op_assuan_decrypt): Ditto.
+	* mimeparser.c (mime_verify, mime_verify_opaque, mime_decrypt):
+	Pass FROM_ADDRESS to the backend.
+
+	* olflange.cpp (DllUnregisterServer): Delete CLSIDs.
+
+2008-06-05  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (mime_decrypt): Set session number and title.
+	(mime_verify_opaque, mime_verify): Ditto.
+	* mapihelp.cpp (mapi_get_subject): New.
+	* engine.c (engine_set_session_number, engine_set_session_title) 
+	(engine_set_sender_address): New.
+	(struct engine_filter_s): Add fields session_number, session_title
+	and sender_address.
+	(engine_private_get_session_number): New. 
+	(engine_private_get_session_title): New.
+	(release_filter): Release them.
+	(engine_new_session_number): New.
+	* engine-assuan.c (send_session_info): New
+	(op_assuan_decrypt, op_assuan_verify): Call it.
+	(op_assuan_sign): Use the end-of-option option for the SENDER command.
+
+2008-05-28  Werner Koch  <wk@g10code.com>
+
+	* dialogs.h (IDC_BODY_AS_ATTACHMENT): New.
+	* dialogs.rc: Add body-as-attachemnt checkbox to the otpion
+	dialog.
+	* olflange-dlgs.cpp (set_labels, GPGOptionsDlgProc): Add it.
+	* main.c (write_options, read_options): Handle bodyAsAttachment
+	registry key.
+	* mimeparser.c (start_attachment): Do not set the hidden flag if
+	the new option is used.
+	* mapihelp.cpp (mapi_test_attach_hidden): New.
+	(mapi_get_gpgol_body_attachment): Make use of that flag.
+
+2008-05-23  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (struct sink_s): Add field ENC_COUNTER.
+	(write_buffer_for_cb): Update that.
+	(mime_encrypt): Bail out if no data has been encrypted.
+	(mime_sign_encrypt): Ditto.
+
+2008-05-07  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (t2body): Fix last change.
+
+2008-05-02  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (t2body): Detect non-inline text parts.
+	* rfc822parse.c (rfc822parse_query_parameter): Add special mode
+	for an ATTR of NULL.
+
+2008-04-16  Werner Koch  <wk@g10code.com>
+
+	* message-events.h (class GpgolMessageEvents): Add M_GOTINSPECTOR.
+	* message.cpp (message_incoming_handler): Change return type.
+
+	* ext-commands.cpp (check_toolbar, check_menu_toolbar): New.
+	(update_protocol_menu): Explicitly update the toolbar.
+
+2008-04-15  Werner Koch  <wk@g10code.com>
+
+	* Outlook.gpl: New.
+
+2008-04-14  Werner Koch  <wk@g10code.com>
+
+	* display.cpp (is_inspector_display): New.
+	(find_message_window): Rewrote.
+
+	* message-events.cpp (OnRead): Use it.
+	* message.cpp (message_incoming_handler): Add arg FORCE.
+	* message-events.cpp (OnRead): Pass false for FORCE.
+	* item-events.cpp (OnOpen): Ditto.
+	* ext-commands.cpp (DoCommand): Let CmdCryptoState process and
+	display the current message again.
+	(GpgolExtCommands): Remove m_nCmdCheckSig and m_nCmdDecrypt.
+
+2008-04-10  Werner Koch  <wk@g10code.com>
+
+	* ol-ext-callback.cpp (is_preview_pane_visible)
+	(show_preview_pane): New.
+
+	* display.cpp (update_display): Add arg IS_SENSITIVE and do not
+	use the OOM method if this is set.
+
+	* mapihelp.h (mapi_save_changes): New. Use if everywhere.
+	(mapi_delete_body_props): Use it to delete body parts.
+	* mapihelp.cpp (mapi_do_save_changes): New.
+	* mimemaker.c (finalize_message): Do no delete body parts because
+	mapi_save_changes does this now.
+
+	* mimeparser.c (finish_message): Remove the body property in
+	protect mode.
+
+2008-04-04  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (worker_start_read, worker_check_read): Factor
+	common code out to ..
+	(write_to_callback): .. new.
+	(async_worker_thread): Better comments and minor changes.
+	(enqueue_callback): Add arg INACTIVE.
+	(set_items_active): New.
+	(start_command): Set items active.
+	(op_assuan_encrypt): Create input and output items as inactive.
+	(async_worker_thread): Handle the inactive flag.
+
+	* common.c (gpgol_spawn_detached): Do not inherit handles.
+
+2008-04-02  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (destroy_command): Add arg FORCE.
+	(op_assuan_encrypt_bottom): Call destroy_command.
+
+	* mimeparser.c (struct mime_context): Use parser_error to return
+	gpg error codes.
+
+	* main.c (read_options): Allow names for debug flags.
+	* common.c (trim_spaces): New.
+
+2008-03-31  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (struct work_item_s): Add SWITCH_COUNTER.
+	(switch_threads, clear_switch_threads): New.
+	(worker_start_write): Use it.
+	* engine.c (struct engine_filter_s): Add SWITCH_COUNTER.
+	(switch_threads, clear_switch_threads): New.
+	(filter_gpgme_read_cb): Use it.
+
+	* ext-commands.h (class GpgolExtCommands): Add m_nCmdCryptoState.
+	* ext-commands.cpp (InstallCommands): Add a toolbar crypto state
+	button.
+	(DoCommand): Show a message when trying to select the disabled
+	S/MIME protocol.
+
+	* message.cpp (message_sign, message_verify, message_decrypt) 
+	(sign_encrypt): Display message boxes only in debug mode.
+
+	* olflange-dlgs.cpp: Remove G-Data 2001 copyright because all that
+	old code has gone.
+
+	* dialogs.rc (IDD_EXT_OPTIONS): Remove option to select the key
+	manager.
+	(IDD_GPG_OPTIONS): Remove caching time, reorder options, add group
+	boxes.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Clean up accordingly.
+	* config-dialog.c (config_dlg_proc): Ditto.
+	(get_open_file_name, does_file_exist, error_box): Remove.
+
+	* ext-commands.cpp: Rename nCmdShowInfo to nCmdDebug0 and enable
+	it only in debug mode.
+
+2008-03-26  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (cleanup): Implement.
+	(op_gpgme_init): Save thread handle.
+	(waiter_thread): Check shutdown flags.
+
+	* engine-assuan.c (get_uiserver_name): Fallback to GPA.
+
+2008-03-19  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_change_message_class): Look into
+	multipart/mixed for PGP messages.
+
+	* mapihelp.cpp (mapi_get_attach): Add arg UNPROTECT and changed
+	all callers.
+	* common.h (DBG_MIME_PARSER, DBG_MIME_DATA): New.
+	* mimeparser.c (debug_mime_parser, debug_mime_data): New to
+	replace DEBUG_PARSER.
+	(struct mime_context): Add field is_opaque_signed. 
+	(t2body): Set it.
+	(mime_decrypt): Handle an embedded opaque signed S/MIME part.
+	(mime_verify_opaque): Add arg INBUFER, INBUFFERLEN and
+	START_PART_COUNTER.
+
+2008-03-18  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (message_cb): Clear all mimestruct fields.  Fixes
+	segv introduced 2008-03-07.
+
+	* engine-assuan.c (async_worker_thread): Handle broken pipe.
+
+2008-03-13  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (message_cb): Skip the OPEN event in non-MIME mode.
+
+	* rfc822parse.c (rfc822parse_open): Reset ERRNO.
+
+2008-03-11  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (op_assuan_encrypt): Factor some code out to ..
+	(op_assuan_encrypt_bottom): .. new.
+	(engine_assuan_encstate_s): New.
+	* engine.c (engine_encrypt_start): Split some code into ..
+	(engine_encrypt_prepare): .. new.
+	(engine_cancel): Cancel prepared encryption.
+	* mimemaker.c (mime_encrypt): Use engine_encrypt_prepare and _start.
+	(mime_sign_encrypt): Likewise, but do the _start only after
+	completing the signing.
+
+2008-03-10  Werner Koch  <wk@g10code.com>
+
+	* engine.c (FILTER_BUFFER_SIZE): Increase to 4k.
+	(engine_filter, engine_wait, engine_wait): Replace Sleep by
+	SwitchToThread.
+	* engine-assuan.c (struct work_item_s): Increase buffer to 1k.
+	(worker_start_write, async_worker_thread): Replace Sleep by
+	SwitchToThread.
+
+2008-03-07  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_get_sender): New.
+	* mymapitags.h (PR_PRIMARY_SEND_ACCT): New.
+	* mimemaker.c (do_mime_sign): Pass the sender to the engine.
+
+	* common.h (opt): Add field SVN_REVISION.
+	* main.c (read_options, write_options): Set it.
+	* olflange.cpp (GpgolExt): Print a warning on program update.
+
+	* engine.c (struct engine_filter_s): Add field ADD_EXTRA_LF.
+	(engine_request_exra_lf): New.
+	(engine_wait): Implement that.
+	* mimeparser.c (mime_decrypt): Add arg SIMPLE_PGP and call
+	engine_request_exra_lf.
+	(struct mime_context): Add field NO_MAIL_HEADER.
+	(message_cb): Implement it.
+	* message.cpp (message_decrypt): Set that flag for old style PGP.
+
+	* common.h (DBG_COMMANDS, debug_commands): New.
+	* ext-commands.cpp: Use it.
+
+2008-03-06  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (do_mime_sign): Figure out the protocol to use.
+	* engine.c (engine_sign_start): Add new args SENDER and R_PROTOCOL.
+	* engine-assuan.c (op_assuan_sign): Ditto.  Send SENDER command.
+
+2008-03-05  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): Insert the debug registry key.
+	(write_options): More debug output.
+
+2008-02-28  Werner Koch  <wk@g10code.com>
+
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Fix initial setting of
+	openpgp and smime state.  I wish C would haved used := for
+	assignments.
+
+2008-02-26  Werner Koch  <wk@g10code.com>
+
+	* common.c (qp_decode): Add arg S_LBRK.
+	* mimeparser.c (plaintext_handler, ciphertext_handler): Handle
+	soft line breaks.
+
+	* mapihelp.cpp (mapi_change_message_class): Handle opaque S/MIME
+	messages without an smime-type parameter.
+
+2008-02-25  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (message_verify): Show message boxes for non-signed
+	messages.
+	(message_decrypt): Likewise.
+
+2008-02-19  Marcus Brinkmann  <marcus@g10code.de>
+
+	* engine-assuan.c (get_uiserver_name): Change default uiserver
+	path and remove work-around.
+
+2008-02-18  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (pgp_body_to_attachment): New.
+	(message_decrypt): Use it.
+	(message_wipe_body_cruft): Also wipe already processed PGP
+	encrypted messages.  Factor common code out to ...
+	(do_wipe_body): .. new.
+	* mapihelp.h (ATTACHTYPE_PGPBODY): New.
+
+2008-02-15  Werner Koch  <wk@g10code.com>
+
+	* olflange-dlgs.cpp: Remove code for IDC_ENCRYPT_WITH_STANDARD_KEY
+	and IDC_ENCRYPT_TO.
+	* dialogs.rc: Ditto.
+
+2008-02-13  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgolcharset_tag, mapi_get_gpgol_charset) 
+	(mapi_set_gpgol_charset): New. 
+	(mapi_get_gpgol_body_attachment): Transcode from Latin-1.
+	* mimeparser.c (start_attachment): Set the charset property.
+	(struct mime_context): Remove is_utf8 field.
+
+2008-02-11  Werner Koch  <wk@g10code.com>
+
+	* common.h (tlvinfo_t): New.
+	* common.c (parse_tlv): New.  Based on code from libksba.
+	* mapihelp.cpp (has_smime_filename): New.
+	(is_really_cms_encrypted): New.
+	(mapi_change_message_class): Use this here to work around a
+	CryptoEx bug.
+
+2008-02-08  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_change_message_class): Improve detecion of
+	CryptoEx messages.
+
+2008-02-07  Werner Koch  <wk@g10code.com>
+
+	* engine.c (engine_verify_start): Enable opaque signature for the
+	assuan backend.
+	* engine-assuan.c (op_assuan_verify): New arg OUTDATA.  Add
+	support for opaque signatures.
+
+	* mimeparser.c (mime_verify_opaque): New.
+	* message.cpp (message_verify): Handle opaque signed S/MIME.
+
+	* message.cpp (message_wipe_body_cruft): Delete only encrypted
+	messages.
+
+2008-02-06  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (mime_decrypt): New arg IS_RFC822.
+	* message.cpp (message_decrypt): Add code to see whether to use
+	the new arg.
+
+2008-02-01  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (ciphertext_handler, ciphermessage_cb)
+	(ciphermessage_t2body): New.
+	(mime_decrypt): Use an rfc822 parser to pass the message to the
+	engine.
+
+	* mapihelp.cpp (mapi_get_attach_as_stream): Add arg R_ATTACH.
+	(mapi_set_attach_hidden): New.
+
+2008-01-31  Werner Koch  <wk@g10code.com>
+
+	* message.cpp (message_verify): Check that the body attachment is
+	available before shortcutting the verification.
+	* user-events.cpp (OnSelectionChange): Change SMIME message
+	class.
+	* mapihelp.cpp (mapi_change_message_class): Add arg
+	SYNC_OVERRIDE. Changed all callers to pass false.
+	(mapi_test_sig_status): Take care of sent messages.
+	(mapi_get_gpgol_body_attachment): Change args to allow use as
+	testing fucntion too.  Adjusted caller.
+
+2008-01-29  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (do_mime_sign): Set CTE for SMIME.
+	(delete_all_attachments): Remove extra semicolon accidently
+	inserted with revision 916.
+
+2008-01-18  Marcus Brinkmann  <marcus@g10code.de>
+
+	* mimeparser.c (mime_verify): New variable sig_len, and pass it on
+	to engine_verify_start.
+	* engine.h (engine_verify_start): Add new argument sig_len.
+	* engine.c (engine_verify_start): Add new argument sig_len and
+	pass it on to op_assuan_verify and op_gpgme_verify.
+	* engine-assuan.h (op_asssuan_verify): Add new argument sig_len.
+	* engine-gpgme.c (op_gpgme_verify): New argument sig_len and use
+	it instead of string length of signature.
+	* engine-assuan.c (op_assuan_verify): Likewise.
+
+2008-01-11  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (finalize_message): Add args PROTOCOL and ENCRYPT
+	and use them to set the override message class.
+	(mime_sign, mime_encrypt, mime_sign_encrypt): Pass this info via
+	the new args.
+	(do_mime_sign): Set micalg to sha1 for CMS.
+
+	* message.cpp (message_decrypt): Add hack fro seldgenerated messages.
+
+2008-01-10  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_gpgolmsgclass_tag, mapi_set_gpgol_msg_class):
+	New.
+	(mapi_change_message_class, mapi_get_message_type): Try override
+	first.
+
+	* message.cpp (message_incoming_handler): Remove arg MSGTYE and
+	let the function retrieve it.  Changed all callers.  Retry after a
+	sucessful message class change.
+	* olflange.cpp (getMsgtype): Remove.  The caching might lead to
+	problems and makes it all more complex.  Changed all callers to
+	use mapi_get_message_type.
+	
+	* mimemaker.c (create_top_encryption_header) <SMIME>: Write empty
+	line after header.
+
+2008-01-09  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (finish_saved_body): New.
+	(finish_attachment): Keep the body attachment open.
+	(mime_decrypt, mime_verify): Close the saved body data.
+	(t2body): Continue body attachments.
+
+	* message.cpp (message_verify): Save changes.
+
+	* mapihelp.cpp (mapi_change_message_class): Handle case of
+	PGP/MIME signed with IPM.Note.  Save only of really needed, use
+	FORCE_SAVE and keep it open for read and write.
+
+2008-01-07  Marcus Brinkmann  <marcus@g10code.de>
+
+	* engine-assuan.c (replace_dollar_s): Remove obsolete function.
+	(get_quoted_socket_name): Remove obsolete function.
+	(get_uiserver_name): Invoke GUI server with --daemon.  Fix buglet
+	in assignment.
+	(destroy_command): Change return type to void to suppress compiler
+	warning.
+
+2008-01-04  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (send_options): Call AllowSetForegroundWindow.
+
+	* main.c (read_options): Allo other values than 1 for enableDebug.
+	* common.h (DBG_IOWORKER, DBG_IOWORKER_EXTRA, DBG_FILTER) 
+	(DBG_FILTER): New.
+	* engine.c (debug_filter): Turn it into a macro.
+	(debug_filter_extra): New macro, used instead of checking the
+	value of debug_filter.
+	* engine-assuan.c (debug_ioworker, debug_ioworker_extra): new.
+	Use them all over the file to enable debugging.
+	* engine.c (engine_encrypt_start): Add arg HWND.
+	(engine_sign_start, engine_decrypt_start, engine_verify_start) 
+	(engine_start_keymanager): Ditto.
+
+	* mimemaker.c (mime_encrypt, mime_sign_encrypt, mime_sign) 
+	(do_mime_sign): Add arg HWND and pass it to the engine.
+	* mimeparser.c (mime_verify, mime_decrypt): Pass HWND.
+	* message.cpp (message_sign, sign_encrypt): Pass HWND.
+	(message_incoming_handler, message_verify, message_decrypt): Add
+	arg HWND and pass it on.
+	* message-events.cpp (OnRead): Pass HWND to message function.
+	* ext-commands.cpp (DoCommand):  Ditto.
+
+2008-01-03  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (mime_sign_encrypt): Fix result test of do_mime_sign.
+	(write_tempsign_attachment): Remove.
+	(do_mime_sign): Change last ark to a sink_t.
+	(mime_sign_encrypt): Rework to use a temporary stream instead of a
+	temporary attachment.
+	(create_mapi_attachment): Remove arg TEMPSIGN.
+
+2007-12-18  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (get_msgcls_from_pgp_lines): Limit check to the
+	first 1 k and stop testing after the first PGP armor line.
+	(mapi_get_message_type): Return MSGTYPE_SMIME.
+	(mapi_change_message_class): Take care of CryptoEx signatures.
+	* mapihelp.h (MSGTYPE_SMIME): New.
+	* message.cpp (message_incoming_handler): Check message class for
+	unknown and unchecked messages.  Take care MSGTYPE_SMIME.
+	* ext-commands.cpp (DoCommand): Add debug command change message class.
+
+2007-12-07  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (InstallCommands): Removed toolbar button fro
+	decrypt as this is not anymore needed.  Fixes bug#860.
+	(QueryHelpText): Ditto.
+
+2007-11-12  Werner Koch  <wk@g10code.com>
+
+	* olflange.h (class GpgolExt): Rename m_gpgSelectSmime to
+	m_protoSelection.
+	* message-events.cpp (OnWriteComplete): Use it accordingly.
+	* main.c (write_options, read_options): Load and save it.
+	* dialogs.rc: Add new check box for OpenPGP default protocol.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Adjust for above chnages.
+
+2007-11-09  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): New option ENABLE_DEBUG to be enabled
+	only using the Registry.
+	(read_options): Show warning for certain option combinations.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Hide the Advanced options
+	button unless in debug mode.
+
+	* mapihelp.cpp (get_gpgollastdecrypted_tag): New.
+	(mapi_test_last_decrypted): New.
+	(mapi_has_last_decrypted): new.
+	* mimeparser.c (finish_message): Update the Last Decrypted property.
+	* message.cpp (message_decrypt): Use it here.
+	(message_wipe_body_cruft): New.
+
+	* main.c (do_log_window_hierarchy): Factor some code out to ..
+	(do_log_window_info): .. this.
+	(log_window_hierarchy): Log parent window info.
+	(get_64bit_session_marker): New.
+	(initialize_session_key): Init session marker.
+
+	* Makefile.am (gpgol_SOURCES): Remove item-events.cpp 
+	* olflange.cpp (GpgolExt): Disable the GpgOLItemEvents as they can
+	only be used with the undocumented ECF file.
+
+2007-10-29  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c (create_top_signing_header): Add arg FIRST.
+	(mime_sign): Factor allmost all code out to ..
+	(do_mime_sign): .. new function.
+	(create_mapi_attachment): Add arg TEMPSIGN.
+	(delete_all_attachments): Adjust for that.
+	(mime_encrypt): Factor some code out to ..
+	(create_top_encryption_header): .. new.
+	(write_tempsign_attachment): New.
+	(mime_sign_encrypt): Implement.
+
+2007-10-22  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (connect_uiserver): Try to start the server.
+	(get_uiserver_name, replace_dollar_s, get_quoted_socket_name): New.
+
+	* main.c (REGKEY): Remove.
+	* common.h (GNUPG_REGKEY): New.
+	* common.c (default_homedir): Use it in place of a hard coded one.
+	(get_locale_dir): Ditto.
+	(gpgol_spawn_detached): New.
+
+2007-10-18  Werner Koch  <wk@g10code.com>
+
+	* common.c (get_system_check_bitmap): New.
+
+	* decrypt.bmp, encrypt.bmp, sign.bmp, key_mana.bmp: Change
+	background color to pink and voila Outlook presents them
+	transparent.
+
+	* logo.bmp: Cleaned up to use just one color.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Do not use LoadImage.
+
+2007-10-16  Werner Koch  <wk@g10code.com>
+
+	* myexchext.h (EECMDID_): Add a few more of these constants.
+	* ext-commands.cpp (check_menu): New.
+	(toolbar_add_menu): Rename to ..
+	(add_menu): .. this.
+	(toolbar_from_tbe): Remove.
+	(add_toolbar): New.
+	(InstallCommands): Use new toolbar helper.
+	(QueryButtonInfo): Changed to use new toolbar helper.
+	(~GpgolExtCommands): New.
+
+	* engine.c (engine_encrypt_start): Add arg R_PROTOCOL.
+	* engine-assuan.c (op_assuan_encrypt): Add arg R_USED_PROTOCOL and
+	ask the server for it.
+	* mimemaker.c (sink_encryption_write_b64): New.
+	(mime_encrypt): Add S/MIME support.
+
+2007-10-15  Werner Koch  <wk@g10code.com>
+
+	* engine-assuan.c (op_assuan_start_keymanager): New.
+	* engine.c (engine_start_keymanager): New.
+	* ext-commands.cpp (DoCommand): Call it.
+
+2007-10-12  Werner Koch  <wk@g10code.com>
+
+	* gpgol-rsrcs.rc: Remove.
+	* dialogs.rc: Renamed from olflange-rsrcs.rc.
+	* dialogs.h: Rename for olflange-ids.h.  Changed all includers.
+	* Makefile.am: Adjust accordingly.
+
+	* verify-dialog.c (verify_dialog_box): Do not distinguish
+	languages.
+	(verify_dlg_set_labels): New.
+	(verify_dlg_proc): Call it.
+
+	* passphrase-dialog.c (passphrase_callback_box): Do not
+	distinguish languages.
+	(decrypt_key_dlg_set_labels): New.
+	(decrypt_key_dlg_proc): Call it.
+	(decrypt_key_ext_dlg_set_labels): New.
+	(decrypt_key_ext_dlg_proc): Call it.
+
+	* recipient-dialog.c (recipient_dialog_box): Do not distinguish
+	languages.
+	(recipient_dialog_box2): Ditto.
+	(recipient_dlg_set_labels): New.
+	(recipient_dlg_proc): Call it.
+
+2007-10-11  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.cpp (toolbar_add_menu): USe "@" to indicate a
+	separator and "" to ski the entry.  Changed callers.
+
+	* common.h (struct): Remove AUTO_SIGN_ATTACH.  Add ENABLE_SMIME.
+	* main.c (read_options, write_options): Save the new option.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Implement new option and
+	print warning.
+	* mapihelp.cpp (mapi_change_message_class): Take care of enable_smime.
+	
+	* olflange-ids.h: Renumbered.
+	* olflange-rsrcs.rc: Keep only the english dialog and changed all
+	text to dummy texts.
+	* olflange-dlgs.cpp (set_labels): New.
+	(GPGOptionsDlgProc): Call it.
+	* property-sheets.cpp (GetPages): Do not distinguish languages.
+	* config-dialog.c (config_dialog_box): Ditto.
+	(config_dlg_set_labels): New.
+	* gpgol-rsrcs.rc (IDD_OPT): Move to olflange-rsrcs.rc and rename
+	to IDD_EXT_OPTIONS.
+	(IDD_OPT_DE): Remove.
+
+2007-10-10  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): Remove saveDecryptedAttachment.  Add
+	smimeDefault.
+
+2007-10-08  Werner Koch  <wk@g10code.com>
+
+	* main.c (do_log): Remove trailing LF from w32 error message and
+	also print the numeric error code.
+
+2007-09-25  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Link against libassuan.
+
+	* util.h (DIM, DIMof): New.
+
+	* engine.c (filter_gpgme_read_cb): Implement nonblock feature.
+	(filter_gpgme_write_cb): Ditto.
+
+2007-09-24  Werner Koch  <wk@g10code.com>
+
+	* common.c (standard_homedir, default_homedir): New. 
+	(w32_shgetfolderpath): Make static.
+
+2007-09-21  Werner Koch  <wk@g10code.com>
+
+	* mimeparser.c (build_mimeinfo): New.
+	(finish_message): Store the mime structure.
+	* mapihelp.cpp (mapi_get_message_class): New.
+	(mapi_get_sig_status): New.
+	(get_gpgolprotectiv_tag, get_gpgolsigstatus_tag) 
+	(get_gpgolattachtype_tag): Factored code out to ...
+	(create_gpgol_tag): .. New.
+	(get_gpgolmimeinfo_tag): New.
+	(mapi_get_mime_info): New.
+
+2007-09-20  Werner Koch  <wk@g10code.com>
+
+	* user-events.cpp, user-events.h:  New.
+	* olflange.h (class GpgolExt): Add member for it.
+	* olflange.cpp (QueryInterface): Hook it in.
+
+2007-09-19  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_has_sig_status): Return true if any sig
+	status is present.
+	(mapi_test_sig_status): New. Take semantics of the former
+	mapi_has_sig_status.  Changed all callers.
+	(mapi_change_message_class): Set sign status to n/a for other
+	message classed.
+	* mimemaker.c (finalize_message): Mark created messages.
+	(write_buffer_for_cb): Rename from write_buffer_voidarg and return
+	number of bytes written.
+	(collect_signature): Return number of bytes written.
+	
+	* mapihelp.h (struct mapi_attach_item_s): New member
+	PRIVATE_MAPITABLE.
+	* mapihelp.cpp (mapi_create_attach_table) 
+	(mapi_release_attach_table): Keep the mapi table oben and put
+	PR_ATATCH_NUM into the MAPIPOS member.
+	(mapi_get_gpgol_body_attachment): Use PR_ATATCH_NUM.
+
+	* mimeparser.c (finish_message): New.
+	(mime_decrypt, mime_verify): Call it.
+
+2007-09-17  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp: Print gpgme version.
+
+2007-09-14  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c: Rewrote most of it.
+
+2007-09-13  Werner Koch  <wk@g10code.com>
+
+	* common.c (xrealloc): New.
+
+2007-09-11  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_encrypt_data): New.
+
+2007-09-08  Werner Koch  <wk@g10code.com>
+
+	* engine.c: New.
+	* engine.h: Rewrite.  Factor existing stuff out to ..
+	* engine-gpgme.h: .. new.
+	* engine-assuan.h, engine-assuan.c: New.
+
+2007-09-07  Werner Koch  <wk@g10code.com>
+
+	* common.c (qp_decode): Handle softe line breaks. 
+
+2007-09-06  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_get_body): New.
+
+	* mimeparser.c (protocol_t): Move to .. common.h.
+
+2007-09-05  Werner Koch  <wk@g10code.com>
+
+	* mimemaker.c, mimemaker.h: New.
+
+2007-08-31  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.cpp (mapi_set_header): New.
+	* message.cpp (pgp_mime_from_clearsigned): New.
+	(message_verify): Use it.
+	* main.c: Call srand ().
+	* util.h (trailing_ws_p): New.
+	* common.c (generate_boundary): New.
+
+2007-08-30  Werner Koch  <wk@g10code.com>
+
+	* message-events.h (class GpgolMessageEvents): Rename M_IS_SMIME
+	to M_PROCESSED.
+	* message-events.cpp (OnRead, OnReadComplete): Ditto.
+	(OnReadComplete): Remove preview decryption stuff.
+	(OnWriteComplete): Remove GpgMsg based code.
+	* ext-commands.cpp (DoCommand): Ditto
+	(InstallCommands): Do not init the watcher.
+	* olflange.cpp (GpgolExt): Do not init the watcher.
+	(GpgolExt): Do not clanup the watcher.
+	* main.c (DllMain): Ditto.
+	* gpgmsg.cpp, gpgmsg.hh: Remove.
+	* watcher.cpp: Remove
+	* pgpmime.c, pgpmime.h: Remove.
+
+	* mapihelp.h (MSGTYPE_GPGOL_CLEAR_SIGNED)
+	(MSGTYPE_GPGOL_PGP_MESSAGE): New.
+	* mapihelp.cpp (mapi_get_message_type): Map them.
+	(get_msgcls_from_pgp_lines): New.
+	(mapi_change_message_class): Detect old old style PGP messages.
+	(mapi_get_body_as_stream): New.
+	* message.cpp (message_verify, message_decrypt): Handle them.
+	* message-events.cpp (OnRead): Ditto.
+
+2007-08-29  Werner Koch  <wk@g10code.com>
+
+	* ext-commands.h (class GpgolExtCommands): Add members
+	M_NCMDKEYMANAGER and M_NCMDDECRYPT.
+	* ext-commands.cpp (GpgolExtCommands): Initialize it.
+	(InstallCommands): Use them here instead of reusing another variable.
+	(DoCommand, Help, QueryHelpText, QueryButtonInfo): Restructured
+	for better readibility.
+
+2007-08-21  Werner Koch  <wk@g10code.com>
+
+	* w32-gettext.c (SUBLANG_BENGALI_BANGLADESH): Fix to 2 as per MSDN.
+	(SUBLANG_PUNJABI_PAKISTAN): Remove as it is not in MSDN.
+	(SUBLANG_ROMANIAN_MOLDOVA): Remove as it is not in MSDN.
+	(SUBLANG_ROMANIAN_ROMANIA): Change to value 1 as per MSDN.
+
+2007-08-13  Marcus Brinkmann  <marcus@g10code.de>
+
+	* Makefile.am (gpgol_SOURCES): Add common.h.
+
+2007-08-06  Werner Koch  <wk@g10code.com>
+
+	Lots of changes to support S/MIME and to revamp most of the old
+	code.  More changes to follow.  The list of changes below is not
+	complete as it does not identfy all newly written code.
+	
+	* mimeparser.c: New. Based on pgpmime.c 
+
+	* display.cpp (update_display): Removed unused arg MSG.
+	(update_display): Set the body to an empty string even if it is
+	not HTML.
+
+	* olflange.cpp (Install): Print OL version only once.
+
+	* verify-dialog.c (verify_dialog_box): Add arg PROTOCOL.
+	(load_sigbox): Ditto.
+	(verify_dlg_proc): Changed title acccording to used protocol.
+
+	* Makefile.am (gpgol_LDADD): Add libadvapi due to our use of
+	CryptGenRandom.
+
+	* main.c (get_crypt_random, initialize_session_key): New. 
+	(DllMain): Initialize the session key.
+	(get_128bit_session_key, create_initialization_vector): New.
+
+	* serpent.c: New.  Taken from libgcrypt 1.3.0 and stripped down to
+	fit our needs.  Add CFB encryption API.
+	* serpent.h: New.
+
+	* mapihelp.cpp (mapi_mark_moss_attach): New.
+	* mymapitags.h (PR_ATTACHMENT_HIDDEN): New.
+
+	* display.cpp (open_inspector): New.
+
+	* mapihelp.cpp (mapi_get_binary_prop): New.
+
+	* engine-gpgme.c (op_verify_detached_sig_gpgme): Add arg
+	PROTOCOL.  Changed all callers to pass the OPENPGP protocol.
+
+	* common.c (b64_decode): Renamed from base64_decode and use new
+	type for the context.
+	(b64_init): New.
+	* pgpmime.c (qp_decode, base64_decode): Move to common.c and make
+	public.
+
+	* common.h (STRICT): Remove.
+	* intern.h: Rename to common.h.
+
+2007-07-20  Werner Koch  <wk@g10code.com>
+
+	* myexchext.h (IOutlookExtItemEvents.): New.
+	* item-events.h, item-events.cpp: New.
+	* olflange.cpp (GpgolExt, QueryInterface): Hook it in.
+
+2007-07-19  Werner Koch  <wk@g10code.com>
+
+	* attached-file-events.cpp: Renamed from attach.c.
+	* attached-file-events.h: Renamed from attach.h.  Removed some
+	inlines to the impl file.
+
+	* Makefile.am (gpgol_LDADD): Add libole32.
+
+2007-07-18  Werner Koch  <wk@g10code.com>
+
+	* mapihelp.c (log_mapi_property): Support STRIGN8 and UNICODE.
+
+	* myexchext.h (IExchExtUserEvents, IExchExtSessionEvents): New
+	declarations.
+	* session-events.cpp, session-events.h: New.
+	* olflange.cpp (GpgolExt, QueryInterface): Hook session-events in.
+
+	* olflange.cpp (DllRegisterServer): Register only for interfaces
+	we really use.
+	(ext_context_name): New. Factored out from several places.
+	(Install): Initialize for Session context.
+
+	Renamed all CGPGExchExt* classes to Gpgol*.
+	
+	* olflange.h, olflange.cpp: Factor most code out to ..
+	* ext-commands.cpp, ext-commands.h, message-events.cpp
+	* message-events.h, property-sheets.cpp, property-sheets.h
+	* ol-ext-callback.cpp, ol-ext-callback.h: .. New.
+
+2007-07-17  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Add ws2_32.
+
+	* main.c (log_window_hierarchy, do_log_window_hierarchy): New.
+	* olflange.cpp (show_window_hierarchy): Replace by
+	log_window_hierarchy.
+	(g_initdll): Make static.
+	(InstallCommands): Factor some code out to ..
+	(toolbar_from_tbe, toolbar_add_menu): .. new.
+
+	* mapihelp.c, mapihelp.h: New. 
+	* olflange.cpp (show_mapi_property): Factor out to mapihelp.c
+	and rename to log_mapi_property.
+
+2007-04-10  Werner Koch  <wk@g10code.com>
+
+	* display.cpp (find_message_window): Add arg LEVEL for debugging.
+	Ignore MsoCommand* Windows.  Fixes bug 735.
+
+2006-10-14  Timo Schulz  <ts@g10code.de>
+
+	* recipient-dialog.c (lv_get_item_param): New.
+	(copy_item): Use it here to copy the opaque param.
+	(recipient_dlg_proc): And here to avoid the hidden column.
+	(initialize_rsetbox): Localize column names.
+
+	* olflange.cpp (get_outlook_property): Free returned BSTR.
+	(InstallCommands): Likewise.
+	
+2009-09-06  Timo Schulz  <ts@g10code.de>
+
+	* recipient-dialog.c (recipient_dialog2): Do not free
+	key array here.
+	
+2008-08-21  Timo Schulz  <ts@g10code.de>
+
+	* engine-gpgme.c (op_lookup_keys): Only add useable keys
+	and add all invalid keys to unknown.
+	* recipient-dialog.c (copy_item): Rewritten.
+	(initialize_keybox): Add comment to clarify use of fnd_keys.
+	(recipient_dialog_box): Simplified.
+	(find_item): Support partial search.
+	
+2006-08-19  Timo Schulz  <ts@g10code.de>
+
+	* olflange-rsrcs.rc: Correct some dialog sizes.
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Automatically
+	select the secret key if only one is available.
+	* config-dialog.c (GPGOptionsDlgProc): Passphrase cache
+	time is now requested in minutes but still internally
+	stored as seconds.
+	
+2006-08-15  Timo Schulz  <ts@g10code.de>
+
+	* decrypt.bmp, encrypt.bmp: Restore format.
+	* olflange.cpp (OnWriteComplete): Correct exit code handling.
+	* recipient-dialog.c (initialize_rsetbox): Correct column width.
+	(recipient_dlg_proc): Do not show the cancel error any longer.
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Likewise.
+	(decrypt_key_ext_dlg_proc): Ditto.
+	* olgpgcore.def: Deleted unused file.
+	
+2006-06-14  Timo Schulz  <ts@g10code.com>
+
+	* gpgol-rscs.rc (IDD_OPT): The English version of the dialog
+	has no log file item. Add it.
+	
+2006-05-22  Timo Schulz  <ts@g10code.com>
+
+	* verify-dialog.c (load_sigbox): A sigsum of 0 also indicates
+	a valid (good) signature.
+	
+2006-04-25  Werner Koch  <wk@g10code.com>
+
+	* xmalloc.h: New.  Moved prototypes from util.h 
+	* w32-gettext.h:  Include it.
+	* common.c (utf8_to_wincp): Removed and replaced all callers by
+	utf8_to_native.
+	* common.c (wchar_to_utf8, utf8_to_wchar): Moved to ..
+	* w32-gettext.c: .. here.
+	(utf8_to_native): Make sure that we always return
+	a string and never NULL.
+	(native_to_utf8): New.
+	(native_to_wchar): New.
+	* gpgmsg.cpp (decrypt): Use native_to_utf8 for i18n strings
+	expected to be utf-8.
+	* pgpmime.c (pgpmime_decrypt, pgpmime_verify): Ditto.
+
+2006-04-24  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (decrypt): New arg INFO_ONLY.
+	* olflange.cpp (OnReadComplete): Add code to call decrypt but with
+	INFO_ONLY if preview decryption has not been requested.
+	* main.c (read_options): New compatibility option no_preview_info.
+
+	* gpgmsg.cpp (getRecipients): Don't add the default key here.
+	(encrypt_and_sign): But do it here.
+	* engine-gpgme.c (op_get_one_key): New.
+
+2006-04-22  Timo Schulz  <ts@g10code.com>
+
+	* common.c (utf8_to_wincp): Corrected utf8 decoding.
+	* passphrase-dialog.c (load_recipbox): Likewise.
+	* olflange-dlg.cpp (GPGOptionsDlgProc): Activate the
+	'confirm' button when the dialog state has been changed.
+	* olflange-rsrcs.rc (IDD_GPG_OPTIONS_DE): Change description.
+	
+2006-03-28  Werner Koch  <wk@g10code.com>
+
+	* olflange-rsrcs.rc (IDD_GPG_OPTIONS_DE): Add new control box.
+	(IDD_GPG_OPTIONS): Updated to match German version.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Ditto.
+	* gpgmsg.cpp (decrypt): Implemented PREFER_HTML option.
+	(get_long_attach_data): New.
+
+2006-03-27  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_verify_detached_sig_gpgme): New.
+
+	* pgpmime.c (pgpmime_verify): New. First take on a PGP/MIME
+	signature verification.
+
+	* gpgmsg.cpp (is_pgpmime): Renamed to is_pgpmime_enc.
+	(class GpgMsgImpl): Niew members media_type. media_subtype and
+	ct_protocol.
+	(get_msg_content_type): New.
+	(decrypt): Show a warning for PGP/MIME signed messages.
+
+2006-03-26  Werner Koch  <wk@g10code.com>
+
+	* intern.h: New option PREFER_HTML.
+	* main.c (write_options, read_options): Ditto.
+
+2006-03-20  Werner Koch <wk@g10code.com>
+
+	* olflange.cpp (Install): Also check major part of build version.
+	
+2006-03-17  Timo Schulz  <ts@g10code.com>
+
+	* w32-gettext.c (utf8_to_native): Make it global.
+	* config-dialog.c (get_open_file_name): Make sure the selected
+	file really exists.
+	* passphrase-dialog.c (decrypt_dlg_proc): UTF8 conversion.
+	(passphrase_callback_box): Likewise.
+	* recipient-dialog.c (recipient_dlg_proc): Likewise.
+	* verify-dialog.c (load_akalist): Likewise.
+	(load_sigbox): Likewise.
+	* common.c (utf8_to_wincp): New.
+
+2006-03-15  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (Install): Print gpgol version for debugging.
+
+2006-03-14  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_dlg_proc): When used
+	as a signing key selection dialog, use a different title.
+	* gpgol-rsrcs.rc: Use German titles for German dialog versions.
+	
+2006-02-23  Werner Koch  <wk@g10code.com>
+
+	* main.c (read_options): Set default caching time to 10 minutes.
+
+2006-01-16  Werner Koch  <wk@g10code.com>
+
+	* verify-dialog.c (load_sigbox): Give a hint in case of a bad
+	signature.
+
+	* gpgol-rsrcs.rc (IDD_ENC_DE): Add an informational header.
+
+2005-12-07  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (Install): Check the version and print a warning.
+
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Simplified the default
+	key code.
+
+	* config-dialog.c (store_config_value): Create key if it does not
+	exists.
+	(load_config_value_ext): Removed.
+
+2005-12-06  Werner Koch  <wk@g10code.com>
+
+	* config-dialog.c (start_key_manager): Don't pass the options to
+	access.
+
+2005-12-06  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (getRecipients): Add the default key to the list of
+	recipients.
+	* recipient-dialog.c (recipient_dlg_proc): Add the already found
+	keys to the selected ones.
+
+	* olflange.cpp (OnWriteComplete): Need to disable the deleting of
+	HTML bodys.
+
+2005-12-05  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Add -loleaut32.
+	* engine-gpgme.c (op_verify_detached_sig_mem): New.
+	* olflange.cpp (OnWriteComplete): Pass HTML flag to sign call.
+	(put_outlook_property): Need to use a BSTR for the sake of putting
+	HTMLBody.
+	* gpgmsg.cpp (sign): Add arg WANT_HTML.
+	(free_attach_info): New.  Use it in the destructor.
+	(createHtmlAttachment): New.
+	(encrypt_and_sign, sign): Use it here.
+	(writeAttestation): Don't write an empty attestation.
+
+2005-12-02  Werner Koch  <wk@g10code.com>
+
+	* verify-dialog.c (verify_dialog_box): Actually allow for German
+	dialog.
+	* recipient-dialog.c (recipient_dialog_box) 
+	(recipient_dialog_box2): Ditto.
+	* passphrase-dialog.c (signer_dialog_box) 
+	(passphrase_callback_box): Ditto.
+
+	* intern.h (struct): New field PREVIEW_DECRYPT.  Use it instead os
+	the old compatibility flags.
+	* main.c (write_options, read_options): Store/load preview decrypt.
+	* config-dialog.c (config_dlg_proc): Removed homedir and gpgbinary
+	options as they are deprecated. Put logfile entry here.
+	* olflange-dlgs.cpp (GPGOptionsDlgProc): Remove logfile entry. Add
+	preview-decrypt checkbox.
+	* olflange.cpp (InstallCommands): Remove experimental preview
+	command.
+
+	* w32-gettext.c (gettext_localename): New.
+	* config-dialog.c (config_dialog_box): Use it here to match the
+	gettext behaviour.
+	(GetPages): Ditto.
+
+2005-12-01  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_decrypt_stream_to_gpgme, decrypt_stream) 
+	(op_decrypt): Add arg PREVIEW_MODE.
+	* pgpmime.c (pgpmime_decrypt): New arg PREVIEW_MODE.
+	(struct pgpmime_context): New field PREVIEW.
+	(message_cb, plaintext_handler): Handle preview mode.
+	* gpgmsg.cpp (class GpgMsgImpl): Renamed SILENT to PREVIEW.
+	(setSilent): Renamed to ..
+	(setPreview): .. this.
+	(decrypt): Handle preview mode.  Display a string while decrypting
+	PGP/MIME messages.
+
+	* display.cpp (update_display): New arg TEXT.
+	* gpgmsg.cpp (class GpgMsgImpl): Removed BODY_PLAIN and BODY.
+	(getDisplayText): Removed.
+	(loadBody): Changes to return the allocated body.
+	(getOrigText): Removed.
+	(getMessageType): Rewritten to take the body text as argument.
+	(decrypt): Pass plaintext directly to update_display.  Free
+	plaintext.
+	(sign, encrypt_and_sign): Likewise.
+
+	* olflange.cpp (OnWriteComplete): Always delete PR_BODY on error.
+
+2005-11-30  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp: Made more strings translatable.
+	* olflange.cpp: Replaced all LoadStrings by gettext calls.
+	* olflange-ids.h: Removed the IDS_ constants.
+	* olflange-rsrcs.rc: Removed the stringtables.
+
+	* common.c (get_root_key, read_w32_registry_string): New.  Taken
+	for libgpg-error.
+	* main.c (i18n_init): New.
+	(DllMain): Call it.
+	(get_locale_dir, drop_locale_dir): New.
+
+	* w32-gettext.c, w32-gettext.h: New.  Taken form libgpg-error.
+	Slightly modified due to the fact that gpgol is W32-only.
+	* util.h (_, N_): Define standard i18n macros.
+
+	* display.cpp (set_message_body): Do not delete a RTF property.
+
+	* util.h (SRCNAME): New.  Changed all __FILE__ to this.
+	* main.c (log_srcname): New.
+
+2005-11-20  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (loadBody): For HTML try to read the HTMLBody from
+	the OOM as a last resort.
+	* olflange.cpp (get_outlook_property): New.
+	(put_outlook_property_int): New.
+
+2005-11-15  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (gpgol_LDADD): Remove -lintl for now.
+
+	* olflange.cpp (OnWriteComplete): Make sure that we don't sent out
+	unencrypted stuff on error.
+	* display.cpp (set_message_body): Add arg IS_HTML.
+	(update_display): Ditto.
+
+	* gpgmsg.cpp (loadBody): New arg WANT_HTML.
+	(getOrigText): Ditto.
+
+	* olflange.h (class CGPGExchExtMessageEvents): Add M_WANT_HTML.
+	* olflange.cpp (OnWrite): Set it.
+	(OnWriteComplete): Pass its value to the encrypt functions.
+
+2005-11-10  Werner Koch  <wk@g10code.com>
+
+	* config-dialog.c (start_key_manager): Changed invocation of
+	default keymanager.
+
+2005-10-21  Marcus Brinkmann  <marcus@g10code.de>
+
+	* Makefile.am (libgpgme.a, libgpgme.a): New targets.
+	(gpgol_DEPENDENCIES): Add libgpgme.a and libgpg-error.a.
+	(clean-local): Likewise.
+	(gpgol_LDADD): Link to these local versions statically.
+
+2005-10-20  Marcus Brinkmann  <marcus@g10code.de>
+
+	* mapi32.def: New file.
+	* Makefile.am (gpgol_DEPENDENCIES): New variable.
+	(libmapi32.a): New target.
+	(gpgol_LDADD): Replace mapi32.dll with "-L . -lmapi32".
+	(clean-local): New target.
+
+2005-10-19  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (sign, encrypt_and_sign): Don't set the body first to
+	empty. If this is really required we should do this in
+	set_message_body.
+	(sign): Save changes. Set content type to text/plain.
+	(encrypt_and_sign): Save changes also for empty bodies.
+
+2005-10-06  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (writeAttestation): Use gpgme_free for BUFFER.
+	* engine-gpgme.c (data_to_file): Ditto.
+
+2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
+
+	* Makefile.am (gpgol_DEPENDENCIES): New variable.
+	(libmapi32.a): New target.
+	(gpgol_LDADD): Replace mapi32.dll with "-L . -lmapi32".
+
+	* Makefile.am (gpgol_LDADD): Prefix gpgol.def and mapi32.dll with
+	$(srcdir).
+
+	* Makefile.am (.rc.o): Invoke windres with "-I .".
+
+	* Makefile.am (.rc.o): Invoke windres with -I $(srcdir).
+
+	* Makefile.am (gpgol_SOURCES): Add util.h.
+
+2005-09-29  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (encrypt_and_sign): Pass signing key to encryption
+	function.
+
+	* passphrase-dialog.c (signer_dialog_box): New arg encrypting. 
+
+	* gpgmsg.cpp (encrypt_and_sign): Set content type.
+
+	* engine-gpgme.c (op_lookup_keys): Fixed multiple key detection.
+
+2005-09-28  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (DoCommand): Catch close command and resend to
+	avoid the "save changes?".
+
+	* display.cpp (update_display): Take care of utf-8 issues.
+	* common.c (latin1_to_utf8): New.
+	* pgpmime.c (latin1_data_write): New.
+	(plaintext_handler): Use it here.
+	(message_cb): Detect utf-8 encoding.
+
+	* main.c (read_options): Make sure that compat flags are always
+	properly initialized.
+
+	* display.cpp (find_message_window): First try to find the window
+	by class name.
+
+	* common.c (wchar_to_utf8_2): New.
+
+2005-09-27  Werner Koch  <wk@g10code.com>
+
+	* pgpmime.c (pgpmime_decrypt): Pass a pseduo filename to the
+	decryption function.
+
+	* verify-dialog.c (load_sigbox): Get key direct from gpgme.
+	* passphrase-dialog.c (load_secbox, load_recipbox): Reworked.
+	(decrypt_key_dlg_proc, decrypt_key_ext_dlg_proc): Reworked.
+	(count_keys, release_keyarray): New.
+	(signer_dialog_box, passphrase_callback_box): Adjusted to above
+	changes.
+	* engine-gpgme.c (op_deinit): Remove keycache cleanup.
+	* Makefile.am (gpgol_SOURCES): Removed keycache.c, keycache.h.
+	* keycache.c, keycache.h: Removed.
+
+	* recipient-dialog.c (recipient_dialog_box) 
+	(recipient_dialog_box2): Rewritten and changed interface.
+	(load_rsetbox): Removed keycache stuff and rewrote to make use of
+	the keyarray.
+	(copy_item, initialize_keybox, recipient_dlg_proc): Ditto.
+	(keycache_to_key_array): Removed.
+	* engine-gpgme.c (op_lookup_keys): Rewritten, changed interface.
+	* gpgmsg.cpp (count_recipients): Renamed to ..
+	(count_strings): .. this.
+	(count_keys): New.
+	(free_recipient_array): Renamed to ..
+	(free_string_array): .. this.
+	(encrypt_and_sign): Adjusted for changes in op_lookup_keys and
+	recipient_dialog_box2.
+
+2005-09-26  Werner Koch  <wk@g10code.com>
+
+	* passphrase-dialog.c (get_pubkey_algo_str): Add DSA and old Elgamal.
+
+	* gpgmsg.cpp (gatherAttachmentInfo): Ignore attachments we can't
+	open.
+
+	* main.c (write_options): Print message on error.  Rearranged to
+	make use of a table for all options.
+
+2005-09-23  Werner Koch  <wk@g10code.com>
+
+	* recipient-dialog.c (recipient_dlg_proc): Removed
+	IDC_ENC_OPTARMOR stuff; it was not used.
+	(load_rsetbox): Fixed detection of encryption capability.
+
+	* gpgol-ids.h, gpgol-rsrcs.rc: Ditto.
+	
+2005-09-22  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (decrypt_stream): Use gpgme_op_decrypt_verify.
+
+	* gpgmsg.cpp (gatherAttachmentInfo): Ignore attestations when
+	checking for pgp/mime.
+
+	* pgpmime.c (pgpmime_decrypt): Added arg HWND.
+	(message_cb, plaintext_handler): Write attachments.
+	* pgpmime.c (base64_decode): New.
+	* rfc822parse.c (parse_field): Treat Content-Disposition special.
+
+	* gpgmsg.cpp (get_save_filename): Moved to ..
+	* common.c (get_save_filename): .. here.
+
+2005-09-20  Timo Schulz  <ts@g10code.com>
+
+	* attach.c: New.
+	* attach.h: New.
+	* olflange.cpp (CGPGExchExt): Allocate class for
+	attached file events.
+	(QueryInterface): Return interface pointer for
+	attached file events.
+	* passphrase-dialog.c (load_secbox): Use new GPGME
+	interface.
+	(get_pubkey_algo_str): New.
+	* verify-dialog.c (load_sigbox): Likewise.
+	* recipient-dialog.c (load_recipbox): Likewise.
+
+2005-09-19  Werner Koch  <wk@g10code.com>
+
+	* msgcache.c (flush_if_needed): New.
+	(msgcache_put): use it.
+	* intern.h (opt): New compatibility flags AUTO_DECRYPT and
+	NO_ATTESTATION.
+	* olflange.cpp (InstallCommands): Use watcher stuff only when this
+	option has been enabled.
+	* gpgmsg.cpp (decrypt): Take care of NO_ATTESTATION.
+	* main.c (DllMain): Removed debug output; this should not be
+	used before initialization!
+	* watcher.cpp: Include config.h.  Removed weird line endings.
+	* gpgmsg.cpp (encrypt_and_sign): Call SaveChanges.
+
+2005-09-15  Timo Schulz  <ts@g10code.com>
+
+	* util.h: Provider watcher prototypes.
+	* watcher.cpp (watcher_init_hook): New.
+	(watcher_free_hook): New.
+	(watcher_set_callback_ctx): New.
+	(cbt_proc): New.
+	* display.cpp (find_message_window): Removed GpgMsg param.
+	Changed all callers.
+	
+2005-09-15  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (OnWriteComplete): Take care of EEME_FAILED.
+	(OnWrite): Check that we are encrypting only plain text messages.
+
+	* myexchext.h: Add flags used by OnReadComplete.
+
+2005-09-14  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (writeAttestation): Add a content type.
+	(gatherAttachmentInfo): Detect whether we already have an attestation.
+	(decrypt): Don't create duplicate attestations.
+	(writeAttestation): Translate LF to CRLF.
+
+2005-09-13  Werner Koch  <wk@g10code.com>
+
+	* pgpmime.c (pgpmime_decrypt): New arg ATTESTATION.
+	* engine-gpgme.c (add_verify_attestation): New.
+	(op_decrypt, op_verify_detached_sig, op_verify_detached_sig)
+	(op_verify_detached_sig): Add new arg ATTESTATION.  Changed all
+	callers.
+	(at_sig_summary, at_sig_validity, add_verify_attestation): New.
+	The code has been taken and modified from Mutt's crypt-gpgme.c and
+	entirely been writen by g10 Code.
+	(at_fingerprint): Ditto.
+
+	* gpgmsg.cpp (class GpgMsgImpl): New member ATTESTATION.  Use it
+	in all calls to the functions above.
+
+	* gpgmsg.cpp (decryptAttachment, decrypt): Save plaintext back
+	into the MAPI if desired.
+
+2004-09-08  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (lod_recipbox): Use gpgme directly
+	to resolve the keyids to userids.
+	* usermap.c, usermap.h: Removed.
+	* HashTable.cpp, HashTable.h: Removed.
+
+2005-09-07  Timo Schulz  <ts@g10code.com>
+
+	* common.c: Removed unused code.
+	* intern.h: Likewise.
+
+2005-09-07  Timo Schulz  <ts@g10code.com>
+
+	* olflange.cpp (ul_release): New. Wrapper with error checking
+	around UlRelease.
+	(InstallCommands): Separate test for type and if string is empty.
+	
+2005-09-06  Werner Koch  <wk@g10code.com>
+
+	* engine-gpgme.c (op_decrypt_stream): Factored most code out to ..
+	(decrypt_stream): .. new.
+	(op_decrypt_stream_to_buffer): Simplified accordingly.  Fixed
+	possible buffer overflow when trying to make it a string. 
+	(op_decrypt_stream_to_gpgme): New.
+
+	* pgpmime.c, pgpmime.h: New.
+	* rfc822parse.h, rfc822parse.c: New.  Taken from GnuPG 1.9.
+
+2005-09-06  Timo Schulz  <ts@g10code.com>
+
+	* config-dialog.c (get_open_file_name): Correctly terminated filter.
+	New parameter for the title. Changed all callers.
+	(get_folder): Likewise.
+	
+2005-09-01  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp (get_pgp_armor_type): New.
+	(gatherAttachmentInfo):  Enhanced to detect text/plain pgp.
+	(verify): Removed.
+	(decrypt): Do clearsig verification here.
+
+	* gpgmsg.cpp (decrypt): Kludge to workaround OL not updating a
+	window.
+	* msgcache.c (msgcache_get_from_mapi): New.
+	* display.cpp (find_message_window): Don't use the GpgMsg function
+	to to the string compare.
+	* gpgmsg.cpp (matchesString): Removed.
+
+	* msgcache.c (msgcache_set_active): Removed.
+	(msgcache_get): Rewritten.
+	(msgcache_put): Now uses PR_CONVERSATION_INDEX as key.  Update
+	existing entries.
+
+	* olflange.cpp (OnRead): Removed msgcache_set_active.
+	(InstallCommands): Now uses the ConversationIndex to match the
+	reply with the message.
+
+2005-08-31  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp (DllRegisterServer): Define a CLSID and set the
+	ThreadingModel.
+
+2005-08-30  Werner Koch  <wk@g10code.com>
+
+	Renamed from "outlgpg" to "gpgol".
+
+	More or less finished this major rewrite.
+
+2005-08-26  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp, MapiGPGME.h: Removed.
+	* display.cpp, display.h: New. 
+
+2005-08-23  Werner Koch  <wk@g10code.com>
+
+	* msgcache.c, msgcache.h: New.
+
+2005-08-22  Werner Koch  <wk@g10code.com>
+
+	* olflange.cpp: Major cleanups and partly rewrites.
+
+2005-08-18  Werner Koch  <wk@g10code.com>
+
+	* gpgmsg.cpp, gpgmsg.hh: New.
+	
+2005-08-17  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (setMessageAccess): Removed as it was only used at
+	one place.
+	(setRTFBody): Use the above code here directly..
+	(setWindow, setMessage): Removed.  We can't use that because there
+	is only one instance of this class.
+	(decrypt): Add args HWND and MSG.  Changed caller.
+	(getBody): Changed to ..
+	(get_body): .. plain function and add new arg MSG.  Changed all
+	callers.
+	(isHtmlMessage): Likewise changed to ..
+	(is_html_message): .. plain function and add new arg MSG.
+	(doCmd): Removed.
+
+	* common.c (utf8_to_wchar): New.
+
+	* MapiGPGME.cpp (passphraseCallback): Removed.
+	(getPassphrase, clearPassphrase, storePassphrase): Removed.
+	(add_html_line_endings): Rewritten.
+
+	* engine-gpgme.c (op_sign_encrypt_start): Removed because it is
+	not used anywhere.
+	(op_sign): Renamed to ..
+	(do_sign): .. this and made local.
+
+2005-08-16  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (signAttachment): Simplified.
+	* engine-gpgme.c (op_sign_file): Add arg TTL.
+	(op_sign_file_ext): Removed.
+	(op_sign_file_next): Renamed to ..
+	(do_sign_file): .. this and made local.
+	(do_sign_file): Updated to use new passphrase callback
+	semantics.
+	(op_decrypt_file): Ditto.
+	(free_recipients): Need to use gpgme_key_release and not just
+	free.
+
+	* engine-gpgme.c (do_decrypt): Factored some code out to ..
+	(update_passphrase_cache): .. new.
+	(op_sign_encrypt_file): Updated to use new passphrase callback
+	semantics.
+
+	* MapiGPGME.cpp (getBody): Properly distinguish property types.
+	(delete_buf): Removed macro.  We now use malloc for the body
+	string.  Changed other places to use delete directly for clarity.
+	(fail_if_null): Removed.  Replaced by direct tests and a call to
+	out_of_core.
+	(setDefaultKey): Now use malloc/free instead of new/delete.
+	Changed at other places too.
+	(getDefaultKey): Changed to return a const char *.
+
+	* common.c (wchar_to_utf8): New.
+	(out_of_core): Made global and call abort after displaying the
+	message box.
+
+2005-08-14  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (log_debug_w32): New.
+	(do_log): New arg W32ERR.  Make sure to print a trailing LF.
+
+	* passphrase-dialog.c (passphrase_callback_box): Revamped.
+	(free_decrypt_key): Wipe out a passphrase.  Remove superfluous
+	variable clearing.
+	* util.h (wipememory2, wipememory): New.
+	(wipestring): New.
+	* engine-gpgme.c (op_decrypt): Renamed to ..
+	(do_decrypt): .. this and made local.
+	(clear_error_if_cancel): Removed as we inlined the code.
+	(do_decrypt): Cleaned up.
+	* main.c (DllMain): Initialize passcaching subsystem.
+	* passcache.c, passcache.h: New.
+	* intern.h: Include it here.
+	* util.h: New.
+
+	* olflange.cpp (DllRegisterServer): Remove key for the old
+	versions of this plugin.
+
+	Merged olgpgmain.dll and olgpgcore.dll into outlgpg.dll.
+	
+	* Makefile.am: Renamed target to outlgpg. Added required files.
+	* olflange.cpp, olflange.h: Renamed from GPGExch.cpp and
+	GPGExch.h.  Removed all the MFC cruft as it is not required - it
+	was only used to get hands on the hInstance of the DLL; chnaged
+	that to use the glob_hinst which gets set by DllMain.
+	* outlgpg.def: New.
+	* olflange-def.h: New.
+	* olflange-dlgs.cpp: Renamed from GPGOptionsDlgs.cpp.
+	* olflange-ids.h: Renamed from ../olflange/resource.h
+	* olflange-rsrcs.rc: Renamed from ..olflange/olgpgmaindlgs.rc and
+	stripped off unneedded stuff.
+	* olgpgcoredlgs.rc: Renamed to ..
+	* outlgpg-rsrcs.rc: .. this and stripped of cruft.
+	* olgpgcoredlgs.h: Renamed to ..
+	* outlgpg-ids.h: .. this.
+	* versioninfo.rc.in: New.
+	
+2005-08-12  Timo Schulz  <ts@g10code.com>
+
+	* config-dialog.c (sotre_extension_value, load_extension_value):
+	Adjust registry key.
+
+2005-08-12  Werner Koch  <wk@g10code.com>
+
+	* intern.h: Moved keycache prototypes to keycache.h.
+	* MapiGPGME.cpp (lock_log, unlock_log): New.
+	* engine-gpgme.c (op_init): Check GPGME version.
+	* main.c (outlook_gpg_get_version): Removed as it is now derived
+	from config.h.
+	(DllMain): Initializes gpgme and mapigpgme.
+	* MapiGPGME.cpp (initialize_mapi_gpgme): New.
+
+	* config-dialog.c (store_extension_value, load_extension_value):
+	Changed key to "OutlGPG".
+
+	* MapiGPGME.h (class MapiGPGME): New methods versionString and
+	showVersion.  Breaks ABI but it doesn't matter as we are also
+	going to change the name of the project.
+
+	* Makefile.am: Renamed target to olgpgcore.
+	* resource.h: Renamed to ...
+	* olgpgcoredlgs.h: .. and removed cruft from generator.
+	* gpgmedlgs.rc: Renamed to ..
+	* olgpgcoredlgs.rc: ... and removed cruft.
+	* libgpgmedlgs.def: Renamed to ..
+	* olgpgcore.def: .. this.
+	
+2005-08-11  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (log_debug): New.  Rewrote the whole log stuff.
+	It is not anymore per instance.
+	(logDebug): New version with va_list arg.
+
+	* MapiGPGME.cpp (passphraseCallback): Use gpgme_error_t becuase
+	C++ enforces enum types.
+
+	* engine-gpgme.c (op_lookup_keys): s/id/names/.  id is a reved
+	word Obj-C and it is good style not to use it in plain C code.
+	(op_sign_file_next): Use gpgme_passphrase_cb_t in declaration.
+	(op_decrypt_next): Ditto.
+
+	* MapiGPGME.cpp (count_recipients): Renamed from countRecipients
+	method, made local and changed both callers.
+	(log_key_info): Changed output format.  New arg PREFIX. Changed
+	callers.
+	(add_html_line_endings): Renamed from addHtmlLineEndings method
+	and made local.
+	(logDebug): Open in text mode.  Removed all superfluous "\r" from
+	callers.
+
+2005-08-09  Timo Schulz  <ts@g10code.com>
+
+	* main.c (outlook_gpg_get_version): New.
+	Use same version as the Outlook GPG plugin.
+
+	* MapiGPGME.cpp [!__MINGW32__]: Changed sequence of include files.
+
+2005-08-09  Werner Koch  <wk@g10code.com>
+
+	* MapiGPGME.cpp (userid_from_key, keyid_from_key): New. Changed
+	all calls to the deprecated gpgme_key_get_string_attr function by
+	these.
+
+	* MapiGPGME.h, MapiGPGME.cpp: Splitted into interace and
+	implementation.
+	* HashTable.h (class HashTable): No need to dll export anything.
+
+2005-08-08  Werner Koch  <wk@g10code.com>
+
+	* common.c (w32_shgetfolderpath): Added.
+	* config-dialog.c (load_config_value_ext): use it here.
+
+2005-07-21  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (decrypt): Only return if no valid PGP
+	data was found and the message has no attachments.
+	* engine-gpgme.c (op_encrypt): Use --textmode to fix 
+	problems when the recipient OS has different line endings.
+	For example Win32->Linux.
+
+2005-07-20  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (addHtmlLineEndings): New.
+	(encrypt):Use it here.
+	(signEncrypt): Likewise. Free memory in case of errors.
+	(decrypt): Free memory in case of the verify procedure.
+	Issue a warning when the text of the mail could not be
+	updated.
+	(isMessageEncrypted): New.
+	(countAttachments): Check for null pointers.
+	(clearPassphrase): Likewise.
+	* config-dialog.c (store_config_value): Support '%val%' input.
+	* verify-dialog.c (load_akalist): Return the number of user-ids
+	which were added.
+	* passphrase-dialog.c (load_secbox): Make sure we really start
+	to add the item data at the begin.
+	* intern.h: Fixed GCC compiler problem.
+
+2005-07-19  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (encrypt): Handle cancel.
+	(encryptAttachments): If no attachments exist, close the table.
+	(decryptAttachments): Likewise.
+	(signAttachments): Likewise.
+	(isHtmlBody): New.
+	(isHtmlMessage): New.
+	(setBody): Html support.
+	(encrypt): Figure out if message is html and encode the right body.
+	(signEncrypt): Likewise.
+	(verify): Always use the non-html body for GPG input.
+	(decrypt): Likewise.
+
+	* engine-gpgme.c (recipient_dialog_box2): Set cancel flag.
+	(op_sign_start): Handle cancel.
+	(recipient_dlg_proc): Make sure there is at least one selected
+	key. Disable armor checkbox.
+
+2005-07-19  Timo Schulz  <twoaday@g10code.com>
+
+	* MapiGPGME.cpp (~MapiGPGME): After releasing the
+	memory, set all pointers to NULL. It seems that NT5
+	bases operating systems are more pedantic with such
+	issues than 9X based systems.
+	(freeUnknownKeys): Likewise.
+	(freeRecipients): Likewise.
+	(encrypt): Outlook 2003 returns a body string which
+	is not NULL but \0 with a length of 0. Handle it.
+	(sign): Likewise.
+	(signEncrypt): Likewise.
+
+	* engine-gpgme.c (free_recipients): New.
+	(op_encrypt_start): Handle cancel and free memory.
+
+
+2005-07-18  Timo Schulz  <ts@g10code.com>
+
+	* gpgmedlgs.rc: Native language support for German.
+
+2005-07-14  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp: Add some missing MAPI constants.
+	(passphrase_callback_box): Repair cancel button.
+	(decrypt): If the user cancels the operation, do not
+	alter the message text.
+	* config-dialog.c (expand_path): New. From WinPT.
+	(load_config_value): Support for REG_EXPAND_SZ.
+	Suggested by Sebastian.
+
+2005-07-13  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (sign): Ignore empty bodies.
+	(signEncrypt): Likewise. Free recipient memory.
+	(encrypt): Modify code so it really works.
+	(attachPublicKey): New.
+	* engine-gpgme.c (op_export_keys): New.
+
+2005-07-12  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (displayError): New.
+	(writeOptions): Use it here. Simplify the code.
+	(signAttachments): New.
+	(sign): Sign attachments. Noted by Ralf.
+	(processAttachment): Support for sign-only.
+
+2005-07-08  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (setEnableLogging): New.
+	(getEnableLogging): New.
+	(logDebug): Move all logging code to this function.
+	(readOptions): Automatically enable logging if the
+	'LogFile' registry entry is valid.
+	(prepareLogging): New.
+	(readOptions): Properly handle ""-strings.
+	* config-dialog.c (does_file_exist): Allow to have
+	parameters like '--keymanager' and cut them off before
+	checking the existence.
+	(start_key_manager): Free memory.
+	(config_dlg_proc): Initialize pointer to 'NULL'.
+	(SHFree): New. Special function to handle shell memory.
+	(get_folder): Free memory.
+	(does_folder_exist): New.
+
+2005-07-06  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp: s/ATTR_/ATT_.
+	(saveDecryptedAttachment): Cut off the prefix.
+	(clearConfig): New.
+	(clearObject): New.
+	(MapiGPGME): Use it here.
+
+	Use ATT_PREFIX instead of a hardcoded string.
+
+	* engine-gpgme.c
+	(op_sign_file_next): New.
+	(op_sign_file): Call op_sign_file2.
+	(op_sign_file_ext): New.	
+
+2005-07-05  Timo Schulz  <ts@g10code.de>
+
+	* MapiGPGME.cpp (readOptions, writeOptions):
+	Support for the new 'auto sign attachment' flag.
+	(signAttachment): New.
+	(setSignAttachments): New.
+	(getSignAttachments): New.
+	* engine-gpgme.c (op_sign_file): Enable armor.
+
+2005-07-03  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Implement
+	the decryption part and only use it if the 'save
+	decrypted attachment' flag is set.
+	(saveDecryptedAttachment): New.
+	(writeOptions): Save 'decrypt attachment' flag.
+	(readOptions): Load it here.
+	(cleanupTempFiles): Check handle.
+	(encrypt): If the message has no body skip the
+	procedure.
+	(op_decrypt_file): Set recipient callback.
+	(decryptAttachments): We do not alter the attachment
+	so there is no need to release it again.
+
+	Replace all 'free' with 'xfree'.
+
+2005-07-01  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Check that
+	the file has a valid PGP extension before we try
+	to decrypt the attachment.
+	(checkAttachmentExtension): Check if the file
+	extension is a vliad PGP extension.
+
+
+2005-06-30  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Use a unique
+	temp name to make a cleanup at the end easier.
+	(cleanupTempFiles): Delete possible left over
+	temp files.
+	(~MapiGPGME): Use it here.
+
+2005-06-22  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (processAttachment): Close attachment
+	before we delete it.
+	(streamOnFile): Directly use the attachment.
+	(streamFromFile): Likewise.
+	(closeAttachment): Renamed to..
+	(releaseAttachment): ..this.
+
+2005-06-21  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (getMessageType): Support all types.
+	(streamOnFile): More straight forward now.
+	(encryptAttachments): Get the attachment table first.
+	(getAttachPathname): New.
+	(processAttachment): Add new parameter for the position
+	of the attachment.
+	(streamFromFile): New.
+	(generateTempname): New.
+	* engine-gpgme.c (op_sign_encrypt_file): New.
+
+2005-06-17  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (MapiGPGME): Initialize all attachment
+	components to zero. Thanks to Sebstian for pointing this out.
+
+2005-06-16  Timo Schulz  <ts@g10code.com>
+
+	* engine-gpgme.c (check_encrypt_result): New. Check if
+	the encrypt procedure returned some invalid recipients.
+	(op_encrypt): Use it here.
+	(op_encrypt_file): Likewise.
+	(op_sign_encrypt): Likewise.
+	* missing.h: Removed unused constants.
+	* verify-dialog.c (load_sigbox): Handle v3 RSA keys.
+	* passphrase-dialog.c (load_secbox): Make sure the index 
+	from the first loop matche the second. Which means skip
+	all invalid keys also.
+
+2005-06-13  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (writeOptions): New Option 'defaultKey'.
+	(readOptions): Likewise. Force overwrite 'addDefaultKey'.	
+
+2005-06-07  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Add a
+	reference to the key object so it will be still valid
+	after the dialog is destroyed.
+	* MapiGPGME.cpp (freeUnknownKeys): Do not try to free
+	the context if no keys are available. Fixed a segv.
+	(signEncrypt): The new code now gets a persistent pointer
+	to the key.
+	* engine-gpgme.c (op_sign_encrypt): Load the right
+	dialog to request the passphrase.
+
+2005-06-05  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (load_recipbox): Check ctx if null.
+	(passphrase_callback_box): Different dialogs for sign
+	and decrypt.
+	(signer_dialog_box): Do not zero the context too early.
+	* keycache.c (enum_gpg_seckeys): Also reload if ctx
+	is NULL.
+	* MapiGPGME.cpp (signEncrypt): Return if the user
+	cancelled the signer selection dialog.	 
+	* recipient-dialog.c (recipient_dlg_proc): Check 'Text Mode'
+	button.
+	* keycache.c (enum_gpg_keys, enum_gpg_seckeys): Fully
+	reset the keycache initializing it again. Thanks to Ralf.
+
+2005-06-04  Timo Schulz  <ts@g10code.com>
+
+	* verify-dialog.c (load_sigbox): Only issue a warning
+	if the key exists but is not valid.
+	Get pkalgo from the signature.
+	Fixed format string problem s/%d/%s.	
+	* config-dialog.c (load_config_value): Close reg handle.
+	(config_dlg_proc): Show error if the values could not
+	be written to the registry.
+
+2005-06-03  Timo Schulz  <ts@g10code.com>
+
+	* mapuser.c (new_usermap): New.
+	(free_usermap): New.
+	* engine-gpgme.c (op_decrypt): Return 'No_Seckey' if
+	appropriate and not just 'Decrypt_Failed'.
+	Set the gpgme_ctx_t object in the callback to allow
+	to list the 'encrypt_to' entries.
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Make sure
+	we only warn when there is a valid callback context.
+	(load_secbox): New parameter 'ctlid'. Changed all callers.
+	(load_recipbox): New. Use usermap to lookup user-id's.
+	(decrypt_key_ext_dlg_proc): New dialog procedure for
+	the callback mode.
+	* HashTable.cpp (HashTable_new): New. C-interface.
+	(HashTable_free): Likewise.
+	(HashTable_get): Likewise.
+	(HashTable_put): Likewise.
+	(HashTable_get_i): Likewise.
+	(HashTable_size): Likewise.
+
+2005-05-29  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Warning
+	if the user cancels the signing process.
+	Make the passphrase field invisible if the key is used
+	in selection mode.
+	(recipient_dlg_proc): Likewise.
+	(signer_dialog_box): Return -1 if the user cancelled the
+	dialog.
+	* engine-gpgme.c (op_sign): Set flags to '1' to indicate
+	signing process.
+	* config-dialog.c (does_file_exist): Use appropriate
+	length for xmalloc. Noted by Sebastian.
+
+2005-05-24  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (setXHeader): New.
+	(getXHeader): New.
+	* engine-gpgme.c (op_sign_file): Implemented.
+
+2005-05-22  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (createAttachment): New.
+	(deleteAttachment): New.
+	(encryptAttachments): New.
+	(encrypt): Also encrypt the attachments if possible.
+	(signEncrypt): Likewise.
+	(setEncodingFormat): New.
+	(getEncodingFormat): New.
+	(readOptions, writeOptions): Store encoding format.
+	(MapiGPGME): The default encoding is 'CLASSIC'.
+
+2005-05-21  Timo Schulz  <ts@g10code.com>
+
+	* HashTable.h: Export functions.
+	* MapiGPGME.cpp (freeAttachments): New.
+	(getAttachments): New.
+	(openAttachment): New.
+	(closeAttachment): New.
+	(processAttachment): New.
+	(hasAttachments): New.
+	(countAttachments): New.
+	(doCmdFile): New. Can handle files.
+	(doCmdAttach): New. Can handle attachment action types.
+	(signEncrypt): Release locusr key.
+	* engine-gpgme.c (op_sign_file): New. Dummy.
+	(op_sign_encrypt_file): New. Dummy.
+
+2005-05-11  Timo Schulz  <ts@g10code.com>
+
+	* common.c (cache_item_new): New.
+	(cache_item_free): New.
+	* engine-gpgme.c (op_decrypt_start_ext): Return an cache item and
+	not just the passphrase. Changed all caller.
+	* MapiGPGME.cpp (passphraseCallback): Support caching.
+	(decrypt): Likewise.
+	(storePassphrase): Likewise.
+	(getPassphrase): Likewise.
+	* HashTable.cpp: New.
+
+2005-05-10  Timo Schulz  <ts@g10code.com>
+
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Reset 'hide state'.
+	Show some text when the user entered a wrong passphrase.
+	* MapiGPGME.cpp (findMessageWindow): New.
+	(setRTFBody): New.
+	(decrypt): Just change the window text, not the MAPI object.
+	Call verify() if this is a clearsigned message.
+	(getMessageType): New.
+	(getAttachmentExtension): New.
+	(verify): Extract text and set it.
+	* engine-gpgme.c (op_decrypt): Spawn verify dialog if the text
+	was also signed.
+	(op_decrypt_file): New.
+	* verify-dialog.c (load_sigbox): Avoid key cache and give more
+	information.	
+	* passphrase-dialog.c (decrypt_key_dlg_proc): Handle 'x' clicks.
+	* logging.c (log_debug): Disable it for release versions.
+
+2005-05-08  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (readOptions): Handle logfile.
+	(writeOptions): Likewise.
+	(storePassphrase): New.
+	(clearPassphrase): New.
+	(passphraseCallback): New. Needs to be static...
+	(decrypt): Store passphrase if requested.
+	(~MapiGPGME): Free memory.
+	(streamOnFile): New.
+	(getAttachMethod): New.
+	(getAttachFilename): New.
+	(setAttachMethod): New.
+	(getAttachFilename): New.
+	(getMessageHasAttachments): New.
+	(getMessageFlags): New.
+
+	* engine-gpgme.c (op_decrypt): New. Factoured out
+	code from...
+	(op_decrypt_start): ..here. Now call op_decrypt
+	with standard parameters.
+	(op_decrypt_next): Allow to use a pre-defined 
+	passphrase callback. Needed for caching.
+
+2005-05-02  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (fail_if_null, delete_buf): New
+	(doCmd): New.
+	(setBody): If the body to set is empty, do nothing.
+	(freeKeyArray): New.
+	(readOptions): New.
+	(writeOptions): New.
+	Implement all getters and setters for the config code.
+
+	* keycache.c: Now that we use a DLL, we create a
+	shared data segment for static data.
+	(load_keycache_objects): New.
+
+2005-05-01  Timo Schulz  <ts@g10code.com>
+
+	* MapiGPGME.cpp (rtfSync): New.
+	* logging.c (log_debug): New.
+	* common.c (xfree): New.
+	* engine-gpgme.c (op_lookup_keys): Corrected offsets.
+
+2005-04-29  Timo Schulz  <ts@g10code.com>
+
+	* engine-gpgme.c (op_encrypt_file): New.
+
+2005-04-27  Timo Schulz  <ts@g10code.com>
+
+	* config-dialog.c (config_dialog_box): Add dialog
+	item to select a GUI key manager.
+	Check that the entered files really exist.
+	(config_dlg_proc): Likewise.
+	(does_file_exist): New.
+
+2005-04-24  Timo Schulz  <ts@g10code.com>
+
+	* main.c (DllMain): New. With a static library it was not
+	possible to have a separate resource file. Thus we use a
+	DLL now which contains all needed dialogs.
+	* common.c (set_global_hinstance): New.
+	* libgpgmedlgs.def: New.
+
+2005-04-18  Timo Schulz  <ts@g10code.com>
+
+	* recipient-dialog.c (recipient_dialog_box2): New
+	way to show pre-selected keys.
+	(copy_item): New paramenter for the pos.
+	(find_item): Do not select the item.
+
+	* gpgmedlgs.rc (IDD_ENC): New label to describe
+	the listbox.
+
+2005-04-15  Timo Schulz  <ts@g10code.com>
+
+	* common.c (xmalloc, xcalloc, xstrdup): New.
+	(out_of_core): New.
+	* recipient-dialog.c (initialize_keybox): New.
+	(find_item): New.
+	* MapiGPGME.cpp (freeUnknownKeys): New.
+	(signEncrypt): Show dialog to select a key if no
+	default key was set.
+
+	* Replace all std-c alloc functions with x equivalents.
+
+2005-04-13  Timo Schulz  <ts@g10code.com>
+
+	* engine-gpgme.c (do_init): Alloc keycache objects.
+	(do_deinit): Cleanup the mess.
+	(op_lookup_keys): New. Allow to find keys via the email.
+
+	* GPGME.cpp (MapiGPGME): New. MAPI interface.
+
+2005-04-07  Timo Schulz  <ts@g10code.com>
+
+	* verify-dialog.c (load_akalist): New.
+	(load_sigbox): Handle bad signatures.
+	* keycache.c (enum_gpg_keys): Allow to reset the
+	enum context.
+	* config-dialog.c (get_open_file_name): Use MAX_PATH.
+	(get_folder): Likewise.
+	* recipient-dialog.c (load_rsetbox): Modify code to
+	add the last keycache item.
+	* passphrase-dialog.c (load_secbox): Likewise.

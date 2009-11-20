@@ -1,0 +1,33 @@
+                         GpgOL Version 0.10.x
+                       =======================
+       Copyright (C) 2004, 2005, 2007, 2008, 2009 g10 Code GmbH
+
+
+GpgOL is a GnuPG plugin for MS Outlook.
+
+WARNING:  This version requires the latest Kleopatra or GPA software.
+
+
+.          Top directory with build scripts and information files.
+
+src/       Code to build the actual core of the plugin.  The resulting
+           DLL will be named "gpgol.dll".  It is to be build using
+           the Mingw toolchain.
+
+To install this plugin, copy "gpgol.dll" to some directory (e.g. where
+gpg lives), make sure that the libgpg-error.dll and gpgme.dll are
+available in a directory where Windows searches for DLLs
+(e.g. c:\winnt\system32), stop Outlook, run the command "regsvr32
+gpgol.dll" and start Outlook. You should then find a new tab named
+"GnuPG" in Outlook's option menu.
+
+If you are missing icons in the toolbar, checkout the toolbar's
+customize button - you will find the new icons there.
+
+Bug reporting: First click on the logo on the GnuPG options tab to
+check whether a newer version has been released - try this first.  If
+this does not help, check out the mailing lists and also the bug
+archive at http://bugs.gnupg.org (use username and password "guest",
+select "query" and there category "gpgol") if you did not found any
+information there please send a report, including all relevant version
+numbers to the address given at the top of this AUTHORS file.

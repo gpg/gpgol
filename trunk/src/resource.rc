@@ -1,0 +1,7 @@
+/* Simple wrapper to create one resource file from several RC
+   files. */
+
+#include "dialogs.rc"
+#include "versioninfo.rc"
+
+

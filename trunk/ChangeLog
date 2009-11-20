@@ -1,0 +1,269 @@
+2009-11-02  Werner Koch  <wk@g10code.com>
+
+	* forms/Makefile.am (cfg_english): New.
+
+2009-10-30  Werner Koch  <wk@g10code.com>
+
+	* forms/Makefile.am (icons): Udpate all icons.
+
+2009-10-08  Werner Koch  <wk@g10code.com>
+
+	* configure.ac (CFLAGS): Add -fno-strict-aliasing.
+
+2009-09-28  Werner Koch  <wk@g10code.com>
+
+	Release 1.0.1.
+
+2009-08-28  Werner Koch  <wk@g10code.com>
+
+	* configure.ac [GCC]: Test for -Wno-pointer-sign.
+
+2009-06-18  Werner Koch  <wk@g10code.com>
+
+	Release 1.0.0.
+
+2009-02-27  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.19.
+
+2009-01-28  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.18.
+
+	* po/de.po: s/Unterschrift/Signatur/.
+
+2008-11-14  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.17.
+
+2008-11-11  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.16.
+
+2008-10-27  Werner Koch  <wk@g10code.com>
+
+	* forms/gpgol-cs_de.cfg: New.
+
+2008-08-06  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.15.
+
+	* forms/sign-l.ico, forms/sign-s.ico: New.
+	* forms/encr-l.ico, forms/encr-s.ico: New
+
+2008-08-04  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (SUBDIRS): Add forms.
+	* forms/Makefile.am: New.
+	* forms/gpgol_de.cfg, forms/gpgol-ms_de.cfg: New.
+	
+2008-06-04  Werner Koch  <wk@g10code.com>
+
+	* doc/gpgol.texi (Assuan Protocol): Remove protocol specs.  They
+	are now part of the GPGME manual.
+
+2008-05-28  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.14.
+
+2008-05-06  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.13.
+
+2008-04-16  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.12.
+
+2008-04-04  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.11.
+
+2008-04-02  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.10.
+
+2008-04-01  Werner Koch  <wk@g10code.com>
+
+	* configure.ac (AC_INIT): Fix quoting.
+
+2008-03-19  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.9.
+
+2008-03-18  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.8.
+
+2008-03-11  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.7.
+
+2008-03-10  Werner Koch  <wk@g10code.com>
+
+	* Release 0.10.6.
+
+2008-03-07  Werner Koch  <wk@g10code.com>
+
+	* configure.ac (SVN_REVISION): New AC_DEFINE.
+
+2008-03-06  Werner Koch  <wk@g10code.com>
+
+	* doc/gpgol.texi (SIGN): Extend the SIGNER command to allow
+	suggestion of a protocol.
+
+2008-02-18  Werner Koch  <wk@g10code.com>
+
+	Release 0.10.5 development version.
+
+2008-02-15  Werner Koch  <wk@g10code.com>
+
+	* po/de.po: Describe more explicit on how to start the UI-server.
+
+2008-02-06  Werner Koch  <wk@g10code.com>
+
+	Released 0.10.4 development version.
+
+2007-12-10  Werner Koch  <wk@g10code.com>
+
+	Released 0.10.3 development version.
+
+2007-11-12  Werner Koch  <wk@g10code.com>
+
+	Released 0.10.2 development version.
+
+2007-10-22  Werner Koch  <wk@g10code.com>
+
+	Released 0.10.1 development version.
+
+2007-10-12  Werner Koch  <wk@g10code.com>
+
+	* po/POTFILES.in: Add more files.
+
+2007-10-11  Werner Koch  <wk@g10code.com>
+
+	Released 0.10.0 development version.
+
+2007-10-05  Werner Koch  <wk@g10code.com>
+
+	* doc/: New. 
+	* doc/Makefile.am: New.
+	* doc/gpgol.texi: New.
+	* doc/gpl.texi: New.
+
+2007-09-25  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Check for libassuan.
+
+2007-09-17  Werner Koch  <wk@g10code.com>
+
+	* autogen.sh (FORCE): Add --force option.
+
+2007-08-13  Marcus Brinkmann  <marcus@g10code.de>
+
+	* configure.ac (svn_revision): Update to latest version from gnupg.
+
+2006-12-13  Werner Koch  <wk@g10code.com>
+
+	* po/LINGUAS: Added sv.
+
+2006-12-13  Daniel Nylander <po@danielnylander.se>  (wk)
+	
+	* po/sv.po: New. 
+
+2006-10-13  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.91.
+
+2006-08-28  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.90.
+
+2006-04-25  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.10.
+
+2006-04-24  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.9.
+
+	* configure.ac: Use M4 macros to get the actual SVN revision.
+
+2006-03-28  Werner Koch  <wk@g10code.com>
+
+
+2006-03-21  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.7.
+
+2006-01-26  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.6.
+
+2005-12-07  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.5.
+
+2005-12-06  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.4.
+
+2005-12-02  Werner Koch  <wk@g10code.com>
+
+	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): New.
+
+2005-11-30  Werner Koch  <wk@g10code.com>
+
+	* po/de.po: New.
+
+	* po/: New; created by autopoint.
+	* po/Makevars: New.
+	* m4/Makefile.am: Add new m4 files.
+	* autogen.sh: Detect gettext.
+	* configure.ac: Check for gettext.
+
+2005-11-15  Werner Koch  <wk@g10code.com>
+
+	* configure.ac (BUILD_TIMESTAMP): Include SVN revision.
+	(AM_INIT_AUTOMAKE): Fixed invocation.
+
+2005-10-21  Marcus Brinkmann  <marcus@g10code.de>
+
+	* m4/gpg-error.m4: New file.
+	* configure.ac: Also check for gpg-error.
+
+2005-10-11  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Use MS style bitfields.
+
+2005-10-06  Marcus Brinkmann  <marcus@g10code.de>
+
+	* configure.ac: Change AC_CONFIG_SRCDIR argument to src/gpgol.def.
+
+2005-09-29  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.3.
+
+2005-09-22  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.2.
+
+2005-09-19  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.1.
+
+2005-09-04  Werner Koch  <wk@g10code.com>
+
+	Released 0.9.0. 
+
+2005-08-30  Werner Koch  <wk@g10code.com>
+
+	Renamed project to gpgol.
+
+2005-08-14  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Build src/versioninfo.rc.
+
+2005-08-10  Werner Koch  <wk@g10code.com>
+
+	* configure.ac: Check for and define DLLTOOL.
+

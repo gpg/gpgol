@@ -1,0 +1,17 @@
+* Find out why sometimes the new body cannot set to a MAPI object. In
+  this case the body is empty but the W32 API said it was correctly set.
+  This might be due to the length of the object.  HrGetOneProp has
+  such limitations and thus it would be reasonable to assume that the
+  same holds true for HrSetOneProp.  We might want to use OpenProperty
+  for longer texts.
+
+* Allow for symmetric encryption.
+
+* Please consider adding a few more options like key signing rules
+  like Enigmail has.
+
+* We should not write a decrypted file without user consent.  A
+  possible solution in attach-file-events.c is to keep track of
+  presented file names and decrypt them only on OpenSzFile.  Need to
+  find some documentation first.
+
