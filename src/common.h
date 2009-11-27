@@ -170,6 +170,7 @@ typedef struct b64_state_s b64_state_t;
 #define DBG_MIME_PARSER    (1<<7)
 #define DBG_MIME_DATA      (1<<8)
 #define DBG_OOM            (1<<9)
+#define DBG_OOM_EXTRA      (1<<10)
 
 /* Macros to used in conditionals to enable debug output.  */
 #define debug_commands    (opt.enable_debug & DBG_COMMANDS)

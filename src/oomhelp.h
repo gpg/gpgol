@@ -63,6 +63,7 @@ DEFINE_GUID(IID_IPictureDisp,
 
 DEFINE_OLEGUID(IID_IUnknown,                  0x00000000, 0, 0);
 DEFINE_OLEGUID(IID_IDispatch,                 0x00020400, 0, 0);
+DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 
 
 #ifdef __cplusplus

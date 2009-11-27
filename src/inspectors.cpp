@@ -134,6 +134,9 @@ struct inspector_info_s
   /* The inspector object.  */
   LPOOMINSPECTOR inspector;
 
+  /* The Window handle of the inspector.  */
+  HWND hwnd;
+
   /* A list of all the buttons.  */
   button_list_t buttons;
 
@@ -223,14 +226,45 @@ move_to_button_list (button_list_t *listaddr,
 }
 
 
+static HWND
+find_ole_window (LPOOMINSPECTOR inspector)
+{
+  HRESULT hr;
+  LPOLEWINDOW olewndw = NULL;
+  HWND hwnd = NULL;
+
+  hr = inspector->QueryInterface (IID_IOleWindow, (void**)&olewndw);
+  if (hr != S_OK || !olewndw)
+    {
+      log_error ("%s:%s: IOleWindow not found: hr=%#lx", SRCNAME, __func__, hr);
+      return NULL;
+    }
+
+  hr = olewndw->GetWindow (&hwnd);
+  if (hr != S_OK || !hwnd)
+    {
+      log_error ("%s:%s: IOleWindow->GetWindow failed: hr=%#lx", 
+                 SRCNAME, __func__, hr);
+      hwnd = NULL;
+    }
+  olewndw->Release ();
+  log_debug ("%s:%s: inspector %p has hwnd=%p",
+             SRCNAME, __func__, inspector, hwnd);
+  return hwnd;
+}
+
+
+
 /* Register the inspector object INSPECTOR with its event SINK.  */
 static void
 register_inspector (LPGPGOLINSPECTOREVENTS sink, LPOOMINSPECTOR inspector)
 {
   inspector_info_t item;
+  HWND hwnd;
 
   log_debug ("%s:%s: Called (sink=%p, inspector=%p)",
              SRCNAME, __func__, sink, inspector);
+  hwnd = find_ole_window (inspector);
   item = (inspector_info_t)xcalloc (1, sizeof *item);
   lock_all_inspectors ();
 
@@ -239,6 +273,8 @@ register_inspector (LPGPGOLINSPECTOREVENTS sink, LPOOMINSPECTOR inspector)
 
   inspector->AddRef ();
   item->inspector = inspector;
+
+  item->hwnd = hwnd;
 
   item->next = all_inspectors;
   all_inspectors = item;
@@ -379,6 +415,30 @@ get_inspector_from_instid (int instid)
 }
 
 
+/* Search through all objects and find the inspector which has a
+   the window handle HWND.  Returns NULL if not found.  */
+LPDISPATCH
+get_inspector_from_hwnd (HWND hwnd)
+{
+  LPDISPATCH result = NULL;
+  inspector_info_t iinfo;
+
+  lock_all_inspectors ();
+
+  for (iinfo = all_inspectors; iinfo; iinfo = iinfo->next)
+    if (iinfo->hwnd == hwnd)
+        {
+          result = iinfo->inspector;
+          if (result)
+            result->AddRef ();
+          break;
+        }
+  
+  unlock_all_inspectors ();
+  return result;
+}
+
+
 /* The method called by outlook for each new inspector.  Note that
    Outlook sometimes reuses Inspectro objects thus this event is not
    an indication for a newly opened Inspector.  */
@@ -424,9 +484,10 @@ STDMETHODIMP_(void)
 GpgolInspectorEvents::Activate (void)
 {
   LPOOMINSPECTOR inspector;
-  LPDISPATCH obj, obj2;
+  LPDISPATCH obj;
 
-  log_debug ("%s:%s: Called (this=%p)", SRCNAME, __func__, this);
+  log_debug ("%s:%s: Called (this=%p, inspector=%p)", 
+             SRCNAME, __func__, this, m_object);
   
   /* Note: It is easier to use the registered inspector object than to
      find the inspector object in the ALL_INSPECTORS list.  The
@@ -451,9 +512,9 @@ GpgolInspectorEvents::Activate (void)
       obj = get_oom_object (inspector, "get_CurrentItem");
       if (obj)
         {
-          obj2 = install_GpgolItemEvents_sink (obj);
-          if (obj2)
-            obj2->Release ();
+          // LPDISPATCH obj2 = install_GpgolItemEvents_sink (obj);
+          // if (obj2)
+          //   obj2->Release ();
           obj->Release ();
         }
     }

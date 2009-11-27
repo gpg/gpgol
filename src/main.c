@@ -561,6 +561,8 @@ read_options (void)
             opt.enable_debug |= DBG_MIME_DATA;
           else if (!strcmp (p, "oom"))
             opt.enable_debug |= DBG_OOM;
+          else if (!strcmp (p, "oom-extra"))
+            opt.enable_debug |= DBG_OOM_EXTRA;
           else
             log_debug ("invalid debug flag `%s' ignored", p);
         }
@@ -574,7 +576,7 @@ read_options (void)
     }
   xfree (val); val = NULL;
   if (opt.enable_debug)
-    log_debug ("enabled debug flags:%s%s%s%s%s%s%s%s%s\n",
+    log_debug ("enabled debug flags:%s%s%s%s%s%s%s%s%s%s\n",
                (opt.enable_debug & DBG_IOWORKER)? " ioworker":"",
                (opt.enable_debug & DBG_IOWORKER_EXTRA)? " ioworker-extra":"",
                (opt.enable_debug & DBG_FILTER)? " filter":"",
@@ -583,7 +585,8 @@ read_options (void)
                (opt.enable_debug & DBG_COMMANDS)? " commands":"",
                (opt.enable_debug & DBG_MIME_PARSER)? " mime-parser":"",
                (opt.enable_debug & DBG_MIME_DATA)? " mime-data":"",
-               (opt.enable_debug & DBG_OOM)? " oom":""
+               (opt.enable_debug & DBG_OOM)? " oom":"",
+               (opt.enable_debug & DBG_OOM_EXTRA)? " oom-extra":""
                );
 
 

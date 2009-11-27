@@ -134,6 +134,7 @@ int set_inspector_composer_flags (LPDISPATCH inspector,
                                   bool sign, bool encrypt);
 
 
+LPDISPATCH get_inspector_from_hwnd (HWND hwnd);
 
 
 #endif /*INSPECTORS_H*/

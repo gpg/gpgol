@@ -116,7 +116,13 @@ get_inspector (LPEXCHEXTCALLBACK eecb)
   if (obj)
     {
       /* This should be MailItem; use the getInspector method.  */
-      inspector = get_oom_object (obj, "GetInspector");
+      //inspector = get_oom_object (obj, "GetInspector");
+      char *tmp = get_object_name (obj);
+      
+      log_debug ("%s:%s: object is at %p (%s)",
+                 SRCNAME, __func__, obj, tmp? tmp:"");
+      xfree (tmp);
+        
       obj->Release ();
     }
   return inspector;

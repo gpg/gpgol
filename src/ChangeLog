@@ -1,3 +1,20 @@
+2009-11-27  Werner Koch  <wk@g10code.com>
+
+	* message-events.cpp (get_crypto_flags): Replace EECB arg by HWND.
+	(OnRead): Pass HWND to get_crypto_flags. Change all callers.
+	(get_inspector): Remove.
+	(get_crypto_flags, OnReadComplete): Use get_inspector_from_hwnd.
+
+	* oomhelp.h (IID_IOleWindow): Define.
+	* inspectors.cpp (find_ole_window): New.
+	(struct inspector_info_s): Add field HWND.
+	(register_inspector): Store it..
+	(get_inspector_from_hwnd): New.
+
+	* common.h (DBG_OOM_EXTRA): New.
+	* main.c (read_options): Read new debug flag.
+	* eventsink.h (debug_oom_extra): Use it.
+
 2009-11-03  Werner Koch  <wk@g10code.com>
 
 	* inspectors.cpp (deregister_inspector): Delete the buttons.

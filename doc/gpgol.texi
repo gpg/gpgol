@@ -310,7 +310,9 @@ Tell what the MIME parser is doing
 @item 256 (0x0100) (mime-data)
 Print data lines while parsing MIME.
 @item 512 (0x0200) (oom)
-Verbose object allocation reporting.
+Outlook Object Model reporting.
+@item 1024 (0x0400) (oom-extra)
+Verbose OOM allocation and advising reporting.
 @end table
 You may use the regular C-syntax for entering the value.  As an
 alternative you may use the names of the flags, separated by space or

@@ -25,6 +25,7 @@
 #define EVENTSINK_H
 
 #define debug_oom        (opt.enable_debug & DBG_OOM)
+#define debug_oom_extra  (opt.enable_debug & DBG_OOM_EXTRA)
 
 
 #define BEGIN_EVENT_SINK(subcls,parentcls)                               \
@@ -43,7 +44,7 @@ class subcls : public parentcls                                          \
   inline STDMETHODIMP_(ULONG) AddRef (void)                              \
     {                                                                    \
       ++m_ref;                                                           \
-      if (debug_oom)                                                     \
+      if (debug_oom_extra)                                               \
         log_debug ("%s:" #subcls ":%s: m_ref now %lu",                   \
                    SRCNAME,__func__, m_ref);                             \
       return m_ref;                                                      \
@@ -51,7 +52,7 @@ class subcls : public parentcls                                          \
   inline STDMETHODIMP_(ULONG) Release (void)                             \
     {                                                                    \
       ULONG count = --m_ref;                                             \
-      if (debug_oom)                                                     \
+      if (debug_oom_extra)                                               \
         log_debug ("%s:" #subcls ":%s: mref now %lu",                    \
                    SRCNAME,__func__,count);                              \
       if (!count)                                                        \
@@ -200,7 +201,7 @@ void detach_ ## subcls ## _sink (LPDISPATCH obj)                         \
   HRESULT hr;                                                            \
   subcls *sink;                                                          \
                                                                          \
-  if (debug_oom)                                                         \
+  if (debug_oom_extra)                                                   \
     log_debug ("%s:%s:%s: Called", SRCNAME, #subcls, __func__);          \
   hr = obj->QueryInterface (iidcls, (void**)&sink);                      \
   if (hr != S_OK || !sink)                                               \
@@ -211,13 +212,13 @@ void detach_ ## subcls ## _sink (LPDISPATCH obj)                         \
     }                                                                    \
   if (sink->m_pCP)                                                       \
     {                                                                    \
-      if (debug_oom)                                                     \
+      if (debug_oom_extra)                                               \
         log_debug ("%s:%s:%s: Unadvising", SRCNAME, #subcls, __func__);  \
       hr = sink->m_pCP->Unadvise (sink->m_cookie);                       \
       if (hr != S_OK)                                                    \
         log_error ("%s:%s:%s: Unadvice failed: hr=%#lx",                 \
                    SRCNAME, #subcls, __func__, hr);                      \
-      if (debug_oom)                                                     \
+      if (debug_oom_extra)                                               \
         log_debug ("%s:%s:%s: Releasing connt point",                    \
                    SRCNAME, #subcls, __func__);                          \
       sink->m_pCP->Release ();                                           \
@@ -225,7 +226,7 @@ void detach_ ## subcls ## _sink (LPDISPATCH obj)                         \
     }                                                                    \
   if (sink->m_object)                                                    \
     {                                                                    \
-      if (debug_oom)                                                     \
+      if (debug_oom_extra)                                               \
         log_debug ("%s:%s:%s: Releasing actual object",                  \
                    SRCNAME, #subcls, __func__);                          \
       sink->m_object->Release ();                                        \
