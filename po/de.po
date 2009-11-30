@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-11-03 11:39+0100\n"
+"POT-Creation-Date: 2009-11-30 17:18+0100\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -56,7 +56,7 @@ msgstr ""
 "Die GnuPG Benutzeroberfläche \"Kleopatra\" konnte nicht gefunden oder "
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
-#: src/engine.c:395 src/engine.c:405 src/main.c:692 src/main.c:698
+#: src/engine.c:395 src/engine.c:405 src/main.c:695 src/main.c:701
 #: src/message.cpp:303
 msgid "GpgOL"
 msgstr "GpgOL"
@@ -215,12 +215,12 @@ msgstr "*** Anfang Notation (Signatur von: "
 msgid "*** End Notation ***\n"
 msgstr "*** Ende Notation ***\n"
 
-#: src/main.c:691
+#: src/main.c:694
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Notiz: Diese Kompatibilitätsflags werden verwendet: %s"
 
-#: src/main.c:697
+#: src/main.c:700
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -255,7 +255,7 @@ msgstr ""
 "[Aufgrund eines Verarbeitungsfehlers in GpgOL ist der Inhalt dieser "
 "Nachricht nicht sichtbar.]"
 
-#: src/message-events.cpp:282
+#: src/message-events.cpp:284
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"

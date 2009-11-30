@@ -107,23 +107,21 @@ GpgolExtCommands::QueryInterface (REFIID riid, LPVOID FAR * ppvObj)
 /* Note: Duplicated from message-events.cpp.  Eventually we should get
    rid of this module.  */
 static LPDISPATCH
-get_inspector (LPEXCHEXTCALLBACK eecb)
+get_inspector (LPEXCHEXTCALLBACK eecb, HWND hwnd)
 {
   LPDISPATCH obj;
-  LPDISPATCH inspector = NULL;
+  LPDISPATCH inspector;
   
-  obj = get_eecb_object (eecb);
-  if (obj)
+  inspector = get_inspector_from_hwnd (hwnd);
+  if (!inspector)
     {
-      /* This should be MailItem; use the getInspector method.  */
-      //inspector = get_oom_object (obj, "GetInspector");
-      char *tmp = get_object_name (obj);
-      
-      log_debug ("%s:%s: object is at %p (%s)",
-                 SRCNAME, __func__, obj, tmp? tmp:"");
-      xfree (tmp);
-        
-      obj->Release ();
+      obj = get_eecb_object (eecb);
+      if (obj)
+        {
+          /* This should be MailItem; use the getInspector method.  */
+          inspector = get_oom_object (obj, "GetInspector");
+          obj->Release ();
+        }
     }
   return inspector;
 }
@@ -132,12 +130,13 @@ get_inspector (LPEXCHEXTCALLBACK eecb)
 /* Note: Duplicated from message-events.cpp.  Eventually we should get
    rid of this module.  */
 static int
-get_crypto_flags (LPEXCHEXTCALLBACK eecb, bool *r_sign, bool *r_encrypt)
+get_crypto_flags (LPEXCHEXTCALLBACK eecb, HWND hwnd,
+                  bool *r_sign, bool *r_encrypt)
 {
   LPDISPATCH inspector;
   int rc;
 
-  inspector = get_inspector (eecb);
+  inspector = get_inspector (eecb, hwnd);
   if (!inspector)
     {
       log_error ("%s:%s: inspector not found", SRCNAME, __func__);
@@ -153,11 +152,11 @@ get_crypto_flags (LPEXCHEXTCALLBACK eecb, bool *r_sign, bool *r_encrypt)
 
 
 static void
-set_crypto_flags (LPEXCHEXTCALLBACK eecb, bool sign, bool encrypt)
+set_crypto_flags (LPEXCHEXTCALLBACK eecb, HWND hwnd, bool sign, bool encrypt)
 {
   LPDISPATCH inspector;
 
-  inspector = get_inspector (eecb);
+  inspector = get_inspector (eecb, hwnd);
   if (!inspector)
     log_error ("%s:%s: inspector not found", SRCNAME, __func__);
   else
@@ -173,7 +172,7 @@ set_crypto_flags (LPEXCHEXTCALLBACK eecb, bool sign, bool encrypt)
 STDMETHODIMP 
 GpgolExtCommands::InstallCommands (
 	LPEXCHEXTCALLBACK eecb, // The Exchange Callback Interface.
-	HWND hWnd,               // The window handle to the main window
+	HWND hwnd,               // The window handle to the main window
                                  // of context.
 	HMENU hMenu,             // The menu handle to main menu of context.
 	UINT FAR *pnCommandIDBase,  // The base command id.
@@ -182,11 +181,14 @@ GpgolExtCommands::InstallCommands (
 	ULONG lFlags)            // reserved
 {
   HRESULT hr;
-  m_hWnd = hWnd;
+  m_hWnd = hwnd;
   LPDISPATCH obj;
 
   (void)hMenu;
-  
+  (void)pnCommandIDBase;
+  (void)pTBEArray;
+  (void)nTBECnt;
+
   if (debug_commands)
     log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__, 
                ext_context_name (m_lContext), lFlags);
@@ -288,7 +290,7 @@ GpgolExtCommands::InstallCommands (
           if (force_encrypt)
             encrypt = true;
           
-          set_crypto_flags (eecb, sign, encrypt);
+          set_crypto_flags (eecb, hwnd,sign, encrypt);
         }
       xfree (draft_info);
     }
@@ -398,7 +400,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       
       log_debug ("%s:%s: command SaveMessage called\n", SRCNAME, __func__);
 
-      if (get_crypto_flags (eecb, &sign, &encrypt))
+      if (get_crypto_flags (eecb, hwnd, &sign, &encrypt))
         buf[0] = buf[1] = '?';
       else
         {
@@ -412,7 +414,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       if (SUCCEEDED (hr))
         mapi_set_gpgol_draft_info (message, buf);
       else
-        log_debug ("%s:%s: getObject failed: hr=%#lx\n",SRCNAME, __func__, hr);
+        log_error ("%s:%s: getObject failed: hr=%#lx\n",SRCNAME, __func__, hr);
       ul_release (message, __func__, __LINE__);
       ul_release (mdb, __func__, __LINE__);
       return S_FALSE; /* Pass on to next handler.  */
@@ -466,6 +468,10 @@ STDMETHODIMP
 GpgolExtCommands::QueryHelpText(UINT nCommandID, ULONG lFlags,
                                 LPTSTR pszText,  UINT nCharCnt)    
 {
+  (void)nCommandID;
+  (void)lFlags;
+  (void)pszText;
+  (void)nCharCnt;
 
   return S_FALSE;
 }
@@ -486,6 +492,10 @@ GpgolExtCommands::QueryButtonInfo (ULONG toolbarid, UINT buttonid,
                                    LPTSTR description, UINT description_size,
                                    ULONG flags)          
 {
+  (void)toolbarid;
+  (void)buttonid;
+  (void)pTBB;
+  (void)description;
   (void)description_size;
   (void)flags;
 

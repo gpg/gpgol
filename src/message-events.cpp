@@ -203,7 +203,29 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
                    SRCNAME, __func__, hr);
       else
         {
-          LPDISPATCH inspector = get_inspector_from_hwnd (hwnd);
+          LPDISPATCH inspector;
+          LPDISPATCH obj;
+
+          inspector = get_inspector_from_hwnd (hwnd);
+          if (!inspector)
+            {
+              /* No inspector available.  We now force the creation of
+                 a new inspector by using the GetInspector method for
+                 the current MailItem.  In theory we could do this
+                 always but we better try the *from_hwnd method first
+                 as this will not create a new inspector in OL2007 if
+                 one already exists.  Not a real problem for OnRead
+                 but we had this problem in OnWrite.  */
+              obj = get_eecb_object (eecb);
+              if (obj)
+                {
+                  inspector = get_oom_object (obj, "GetInspector");
+                  if (opt.enable_debug & DBG_OOM)
+                    log_debug ("%s:%s: %p->GetInspector returned %p",
+                               SRCNAME, __func__, obj, inspector);
+                  obj->Release ();
+                }
+            }
           message_display_handler (message, inspector, hwnd);
           if (inspector)
             inspector->Release ();

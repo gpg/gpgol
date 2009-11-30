@@ -272,6 +272,7 @@ update_display (HWND hwnd, LPDISPATCH inspector, int is_sensitive,
     {
       log_error ("%s:%s: window handle not found for parent %p\n",
                  SRCNAME, __func__, hwnd);
+      log_window_hierarchy (hwnd, "this is the window hierachy:");
       return -1;
     }
 }
