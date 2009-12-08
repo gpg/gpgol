@@ -395,7 +395,7 @@ send_one_option (assuan_context_t ctx, const char *name, const char *value)
 }
 
 
-static int
+static gpg_error_t
 getinfo_pid_cb (void *opaque, const void *buffer, size_t length)
 {
   pid_t *pid = opaque;
@@ -1533,7 +1533,7 @@ get_protocol_name (protocol_t protocol)
 
 /* Callback used to get the protocool status line form a PREP_ENCRYPT
    or SENDER command.  */
-static assuan_error_t
+static gpg_error_t
 prep_foo_status_cb (void *opaque, const char *line)
 {
   protocol_t *protocol = opaque;

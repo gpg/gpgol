@@ -1,3 +1,8 @@
+2009-12-08  Marcus Brinkmann  <marcus@g10code.de>
+
+	* engine-assuan.c (getinfo_pid_cb, prep_foo_status_cb): Change
+	return type to gpg_error_t.
+
 2009-11-30  Werner Koch  <wk@g10code.com>
 
 	* message-events.cpp (OnReadComplete): Use GetInspector if none was
