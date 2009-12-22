@@ -1,0 +1,131 @@
+                       How to Change the Icons
+                      =========================
+
+We have two kinds of icons: Those integrated as resources in gpgol.dll
+and those installed via the forms extensions from external files.
+
+  1. Resource icons
+  =================
+
+  Before we changed GpgOL to include the icons via the OOM we used the
+  ECE semi-documented way of installing icons.  This required a
+  special palette (file Outlook.gpl) and the pink background colour as
+  the transparency hack. Now we are using the OOM and things are much
+  easier. 
+
+  Icons are included by the resource compiler which reads the file
+  dialogs.rc to create the resource.  This is all integtraged into the
+  Makefile.  A sample entry in dialogs.rc looks like this:
+
+    IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "key-manager-16.bmp"
+    IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"     
+    IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"      
+    IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"      
+    //IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE        
+    //IDB_KEY_MANAGER_64M       BITMAP  DISCARDABLE        
+
+  This is the icon for the certificate manager.  We provide two
+  resolutions: 16x16 and 32x32 pixel.  I have not yet encountered the
+  32x32 thus most other icons are only available in the 16x16 variant.
+  The IDB_foo identifiers are defined in dialogs.h; see the comments
+  at the top of that file for details.
+
+  For compatibility with OL2003 we can't use PNGs directly but we need
+  to provide bitmaps and a mask for transparency.
+
+  These steps are required to create a new 16x16 icon using The Gimp:
+
+  1. Take a 16x16 PNG version of the icon and load it into the Gimp.
+     This PNG should have a transparent background.  If not, you may
+     use Gimp to wipe the background out.
+
+  2. Select Select->By_Color, click on the transparent area. Use
+     "Bucket Fill" to fill with white (0xffffff).
+
+  3. Run Image->Flatten_Image.
+
+  4. Select Image->Mode->Indexed, click "Generate optimum palette with
+     255 colors", click "Convert".
+
+  5. Select File->SaveAs and enter a file name with suffix ".bmp".
+     The name should be like "foo-16.bmp".  Do _not_ select
+     "Run-Length Encoded".  Click "Save".
+
+  6. Undo all or reload the image.  Note that if you don't undo step 2
+     you may skip step 7.
+
+  7. Select Select->By_Color, click on the transparent area.  Use
+     "Bucket Fill" to fill with white (0xffffff).
+ 
+  8. Select Select->Invert.  Use "Bucket Fill" to fill the now
+     selected non-transparent area with black (0x000000).  "Fill whole
+     selection" comes handy here.  Make sure that you have a only
+     black and white and no other colored pixels.
+
+  9. Run Image->Flatten_Image.
+
+  10. Select Image->Mode->Indexed, click "Use black and white (1-bit)
+      palette", click "Convert".
+
+  11. Select File->SaveAs and enter a file name with suffix ".bmp".
+      This is the mask thus the name should be like "foo-16m.bmp".  Do
+      _not_ select "Run-Length Encoded".  Click "Save".
+
+  12. Done.
+
+  If required, do this also for 32x32 and 64x64.
+
+
+  2. Forms icons
+  ===============
+
+  The forms icons which are displayed in the explorer are not a
+  resource of the DLL but installed separately. We have two versions
+  of them: A small one and a large one.  Both use a canvas size of
+  32x32 but the small icon covers only the upper left 16x16 quadrant.
+
+  These steps are required to create the small and the large icon.
+
+  1. Load a 16x16 PNG version of the icon into The Gimp.
+
+  2. Select Image->Canvas_Size and enter a size of 32x32 pixel.  Keep
+     offset at (0,0), don't use resize layers, click on "Resize".
+
+  3. Select File->SaveAs and enter a file name with the suffix ".ico".
+     Click "Save" and you will be asked for the type.  From the
+     drop-down box choose "8 bpp, 1-bit alpha, 256-slot palette", no
+     compression.  Click "Save".
+
+  4. Load a 32x32 PNG version of the icon into The Gimp.
+   
+  5. Select File->SaveAs and enter a file name with the suffix ".ico".
+     Click "Save" and you will be asked for the type.  From the
+     drop-down box choose "8 bpp, 1-bit alpha, 256-slot palette", no
+     compression.  Click "Save".
+
+  6. Done.
+
+
+That's all.  The output of the file(1) command should show something
+like this:
+
+  forms/encr-l.ico: ms-windows icon resource - 1 icon
+  forms/encr-s.ico: ms-windows icon resource - 1 icon
+  forms/sign-l.ico: ms-windows icon resource - 1 icon
+  forms/sign-s.ico: ms-windows icon resource - 1 icon
+  src/decrypt-16.bmp:         PC bitmap data, Windows 3.x format, 16 x 16 x 8
+  src/decrypt-16m.bmp:        PC bitmap data, Windows 3.x format, 16 x 16 x 1
+  src/decrypt-verify-16.bmp:  PC bitmap data, Windows 3.x format, 16 x 16 x 8
+  src/decrypt-verify-16m.bmp: PC bitmap data, Windows 3.x format, 16 x 16 x 1
+  src/encrypt-16.bmp:         PC bitmap data, Windows 3.x format, 16 x 16 x 8
+  src/encrypt-16m.bmp:        PC bitmap data, Windows 3.x format, 16 x 16 x 1
+  src/key-manager-16.bmp:     PC bitmap data, Windows 3.x format, 16 x 16 x 8
+  src/key-manager-16m.bmp:    PC bitmap data, Windows 3.x format, 16 x 16 x 1
+  src/key-manager-32.bmp:     PC bitmap data, Windows 3.x format, 32 x 32 x 8
+  src/key-manager-32m.bmp:    PC bitmap data, Windows 3.x format, 32 x 32 x 1
+  src/logo.bmp:               PC bitmap data, Windows 3.x format, 138 x 64 x 1
+  src/sign-16.bmp:            PC bitmap data, Windows 3.x format, 16 x 16 x 8
+  src/sign-16m.bmp:           PC bitmap data, Windows 3.x format, 16 x 16 x 1
+  src/verify-16.bmp:          PC bitmap data, Windows 3.x format, 16 x 16 x 8
+  src/verify-16m.bmp:         PC bitmap data, Windows 3.x format, 16 x 16 x 1
+

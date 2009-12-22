@@ -1,3 +1,8 @@
+2009-12-22  Werner Koch  <wk@g10code.com>
+
+	* forms/encr-l.ico, forms/encr-s.ico: Update.
+	* forms/sign-l.ico, forms/encr-l.ico: Update.
+
 2009-11-02  Werner Koch  <wk@g10code.com>
 
 	* forms/Makefile.am (cfg_english): New.

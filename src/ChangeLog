@@ -1,3 +1,25 @@
+2009-12-22  Werner Koch  <wk@g10code.com>
+
+	* key-manager-16.bmp, key-manager-16m.bmp: Update.
+	* key-manager-32.bmp, key-manager-32m.bmp: Update.
+	* key-manager-64.bmp, key-manager-64m.bmp: New.
+	* verify-16.bmp, verify-16m.bmp: Update.
+	* verify-32.bmp, verify-32m.bmp: New.
+	* sign-16.bmp, sign-16m.bmp: Update.
+	* sign-32.bmp, sign-32m.bmp: New.
+	* encrypt-16.bmp, encrypt-16m.bmp: Update.
+	* encrypt-32.bmp, encrypt-32m.bmp: New.
+	* decrypt-16.bmp, decrypt-16m.bmp: Update.
+	* decrypt-32.bmp, decrypt-32m.bmp: New.
+	* decrypt-verify-16.bmp, decrypt-verify-16m.bmp: Update.
+	* decrypt-verify-32.bmp, decrypt-verify-32m.bmp: New.
+	* Makefile.am (EXTRA_DIST): Add new bitmaps.
+	* dialogs.rc: Add new bitmaps.
+
+2009-12-01  Werner Koch  <wk@g10code.com>
+
+	* README.icons: New.
+
 2009-12-08  Marcus Brinkmann  <marcus@g10code.de>
 
 	* engine-assuan.c (getinfo_pid_cb, prep_foo_status_cb): Change

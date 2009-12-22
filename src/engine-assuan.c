@@ -1836,7 +1836,7 @@ op_assuan_sign (protocol_t protocol,
 
   /* We always send the SENDER command because it allows us to figure
      out the protocol to use.  In case the UI server fails to send the
-     protocol we fall back to OpenPGP.  The --protocol option isused
+     protocol we fall back to OpenPGP.  The --protocol option is used
      to given the server a hint on what protocol we would prefer. */
   suggested_protocol = PROTOCOL_UNKNOWN;
   if (!sender)
