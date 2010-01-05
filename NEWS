@@ -1,5 +1,5 @@
-Noteworthy changes for version 1.1.0
-===================================================
+Noteworthy changes for version 1.1.0 (2010-01-05)
+=================================================
 
  * Replaced most ECE code by direct OOM code.  This was required to
    support better icons; i.e. icons not limited to a 16 color palette.
@@ -7,11 +7,11 @@ Noteworthy changes for version 1.1.0
  * New icons.
 
  * Removed protocol selection.  The UI-server is now expected to select
-   the protocol (i.e. the auto selection modus is now the only one).
+   the protocol (i.e. the auto selection mode is now the only one).
 
 
 Noteworthy changes for version 1.0.1 (2009-09-28)
-===================================================
+=================================================
 
  * No more event loop peeking to avoid problem with Office programs.
 
