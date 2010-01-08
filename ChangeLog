@@ -1,6 +1,10 @@
+2010-01-08  Werner Koch  <wk@g10code.com>
+
+	* forms/encr-s.ico, forms/sign-s.ico: Fix them.
+
 2010-01-05  Werner Koch  <wk@g10code.com>
 
-	Release 1.1.0. 
+	Release 1.1.0.
 
 2009-12-22  Werner Koch  <wk@g10code.com>
 

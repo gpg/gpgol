@@ -89,7 +89,7 @@ and those installed via the forms extensions from external files.
   1. Load a 16x16 PNG version of the icon into The Gimp.
 
   2. Select Image->Canvas_Size and enter a size of 32x32 pixel.  Keep
-     offset at (0,0), don't use resize layers, click on "Resize".
+     offset at (0,0), select "Resize layers: All layers", click on "Resize".
 
   3. Select File->SaveAs and enter a file name with the suffix ".ico".
      Click "Save" and you will be asked for the type.  From the
