@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-11-30 17:18+0100\n"
+"POT-Creation-Date: 2010-01-12 19:34+0100\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -57,7 +57,7 @@ msgstr ""
 "rechtzeitig gestartet werden.  Sie sollten es noch einmal versuchen."
 
 #: src/engine.c:395 src/engine.c:405 src/main.c:695 src/main.c:701
-#: src/message.cpp:303
+#: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -255,7 +255,7 @@ msgstr ""
 "[Aufgrund eines Verarbeitungsfehlers in GpgOL ist der Inhalt dieser "
 "Nachricht nicht sichtbar.]"
 
-#: src/message-events.cpp:284
+#: src/message-events.cpp:284 src/mailitem.cpp:164
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -632,82 +632,94 @@ msgstr "PGP/MIME Prüfungsresultat"
 msgid "S/MIME Verification Result"
 msgstr "S/MIME Prüfungsresultat"
 
-#~ msgid "GpgOL Decrypt/Verify"
-#~ msgstr "GpgOL Enschlüsseln/Prüfen"
+#: src/inspectors.cpp:687
+msgid "&encrypt message with GnuPG"
+msgstr "Nachricht verschlüsseln"
 
-#~ msgid ""
-#~ "This is a signed and encrypted message.\n"
-#~ "Click for more information. "
-#~ msgstr ""
-#~ "Dies ist eine signierte und verschlüsselte Nachricht.\n"
-#~ "Klicken Sie hier um weitere Informationen zu erhalten. "
+#: src/inspectors.cpp:701
+msgid "&sign message with GnuPG"
+msgstr "Nachricht signieren"
 
-#~ msgid ""
-#~ "This is an encrypted message.\n"
-#~ "Click for more information. "
-#~ msgstr ""
-#~ "Dies ist eine verschlüsselte Nachricht.\n"
-#~ "Klicken Sie hier um weitere Informationen zu erhalten. "
+#: src/inspectors.cpp:727
+msgid "GpgOL Decrypt/Verify"
+msgstr "GpgOL Enschlüsseln/Prüfen"
 
-#~ msgid ""
-#~ "This is a signed message.\n"
-#~ "Click for more information. "
-#~ msgstr ""
-#~ "Dies ist eine signierte Nachricht.\n"
-#~ "Klicken Sie hier um weitere Informationen zu erhalten. "
+#: src/inspectors.cpp:788
+msgid "Encrypt message with GnuPG"
+msgstr "Nachricht verschlüsseln"
 
-#~ msgid "&encrypt message with GnuPG"
-#~ msgstr "Nachricht verschlüsseln"
+#: src/inspectors.cpp:804
+msgid "Sign message with GnuPG"
+msgstr "Nachricht signieren"
 
-#~ msgid "&sign message with GnuPG"
-#~ msgstr "Nachricht signieren"
+#: src/inspectors.cpp:921
+msgid ""
+"This is a signed and encrypted message.\n"
+"Click for more information. "
+msgstr ""
+"Dies ist eine signierte und verschlüsselte Nachricht.\n"
+"Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#~ msgid "Remove GpgOL flags from this folder"
-#~ msgstr "GpgOL Eigenschaften aus diesem Ordner entfernen"
+#: src/inspectors.cpp:927
+msgid ""
+"This is a signed message.\n"
+"Click for more information. "
+msgstr ""
+"Dies ist eine signierte Nachricht.\n"
+"Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#~ msgid ""
-#~ "You are about to start the process of reversing messages created by GpgOL "
-#~ "to prepare deinstalling of GpgOL. Running this command will put GpgOL "
-#~ "into a disabled state so that messages are not anymore processed by "
-#~ "GpgOL.\n"
-#~ "\n"
-#~ "You should convert all folders one after the other with this command, "
-#~ "close Outlook and then deinstall GpgOL.\n"
-#~ "\n"
-#~ "Note that if you start Outlook again with GpgOL still being installed, "
-#~ "GpgOL will again process messages."
-#~ msgstr ""
-#~ "Sie sind dabei, eine Deinstallation von GpgOL vorzubereiten.  Hierzu wird "
-#~ "GpgOL ausgeschaltet, so das Nachrichten nicht mehr durch GpgOL angezeigt "
-#~ "werden.\n"
-#~ "\n"
-#~ "Sie sollten nacheinander dieses Kommandos für alle Ordner aufrufen, "
-#~ "danach Outlook schliessen und GpgOL deinstallieren.\n"
-#~ "\n"
-#~ "Bitte beachten Sie, daß nach einem erneuten Start von Outlook - mit "
-#~ "weiterhin installiertem GpgOL - Nachrichten wieder wie gewohnt von GpgOL "
-#~ "angezeigt werden."
+#: src/inspectors.cpp:933
+msgid ""
+"This is an encrypted message.\n"
+"Click for more information. "
+msgstr ""
+"Dies ist eine verschlüsselte Nachricht.\n"
+"Klicken Sie hier um weitere Informationen zu erhalten. "
 
-#~ msgid "Do you want to revert this folder?"
-#~ msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
+#: src/explorers.cpp:126
+msgid "GnuPG Certificate &Manager"
+msgstr "GnuPG Zertifikats&verwaltung"
+
+#: src/explorers.cpp:140
+msgid "Remove GpgOL flags from this folder"
+msgstr "GpgOL Eigenschaften aus diesem Ordner entfernen"
+
+#: src/explorers.cpp:167
+msgid "Open the certificate manager"
+msgstr "Die Zertifikatsverwaltung öffnen"
+
+#: src/explorers.cpp:194
+msgid ""
+"You are about to start the process of reversing messages created by GpgOL to "
+"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
+"disabled state so that messages are not anymore processed by GpgOL.\n"
+"\n"
+"You should convert all folders one after the other with this command, close "
+"Outlook and then deinstall GpgOL.\n"
+"\n"
+"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
+"will again process messages."
+msgstr ""
+"Sie sind dabei, eine Deinstallation von GpgOL vorzubereiten.  Hierzu wird "
+"GpgOL ausgeschaltet, so das Nachrichten nicht mehr durch GpgOL angezeigt "
+"werden.\n"
+"\n"
+"Sie sollten nacheinander dieses Kommandos für alle Ordner aufrufen, danach "
+"Outlook schliessen und GpgOL deinstallieren.\n"
+"\n"
+"Bitte beachten Sie, daß nach einem erneuten Start von Outlook - mit "
+"weiterhin installiertem GpgOL - Nachrichten wieder wie gewohnt von GpgOL "
+"angezeigt werden."
+
+#: src/explorers.cpp:208
+msgid "Do you want to revert this folder?"
+msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
 #~ msgid "Select this option to encrypt the message."
 #~ msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
 #~ msgid "Select this option to sign the message."
 #~ msgstr "Wählen Sie diese Option zum Signieren der Nachricht."
-
-#~ msgid "Encrypt message with GnuPG"
-#~ msgstr "Nachricht verschlüsseln"
-
-#~ msgid "Sign message with GnuPG"
-#~ msgstr "Nachricht signieren"
-
-#~ msgid "GnuPG Certificate &Manager"
-#~ msgstr "GnuPG Zertifikats&verwaltung"
-
-#~ msgid "Open the certificate manager"
-#~ msgstr "Die Zertifikatsverwaltung öffnen"
 
 #~ msgid "Select this option to open the certificate manager"
 #~ msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."

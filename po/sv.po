@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2009-11-30 17:18+0100\n"
+"POT-Creation-Date: 2010-01-12 19:34+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -55,7 +55,7 @@ msgid ""
 msgstr ""
 
 #: src/engine.c:395 src/engine.c:405 src/main.c:695 src/main.c:701
-#: src/message.cpp:303
+#: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
 msgid "GpgOL"
 msgstr ""
 
@@ -236,7 +236,7 @@ msgid ""
 msgstr ""
 
 # A bit unclear in the original text
-#: src/message-events.cpp:284
+#: src/message-events.cpp:284 src/mailitem.cpp:164
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -564,31 +564,84 @@ msgstr "Resultat från validering"
 msgid "S/MIME Verification Result"
 msgstr "Resultat från validering"
 
+#: src/inspectors.cpp:687
 #, fuzzy
-#~ msgid "&encrypt message with GnuPG"
-#~ msgstr "Signera meddelandet med GPG"
+msgid "&encrypt message with GnuPG"
+msgstr "Signera meddelandet med GPG"
 
+#: src/inspectors.cpp:701
 #, fuzzy
-#~ msgid "&sign message with GnuPG"
-#~ msgstr "Signera meddelandet med GPG"
+msgid "&sign message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:727
+msgid "GpgOL Decrypt/Verify"
+msgstr ""
+
+#: src/inspectors.cpp:788
+#, fuzzy
+msgid "Encrypt message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:804
+#, fuzzy
+msgid "Sign message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:921
+msgid ""
+"This is a signed and encrypted message.\n"
+"Click for more information. "
+msgstr ""
+
+#: src/inspectors.cpp:927
+msgid ""
+"This is a signed message.\n"
+"Click for more information. "
+msgstr ""
+
+#: src/inspectors.cpp:933
+msgid ""
+"This is an encrypted message.\n"
+"Click for more information. "
+msgstr ""
+
+#: src/explorers.cpp:126
+#, fuzzy
+msgid "GnuPG Certificate &Manager"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/explorers.cpp:140
+msgid "Remove GpgOL flags from this folder"
+msgstr ""
+
+#: src/explorers.cpp:167
+#, fuzzy
+msgid "Open the certificate manager"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/explorers.cpp:194
+msgid ""
+"You are about to start the process of reversing messages created by GpgOL to "
+"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
+"disabled state so that messages are not anymore processed by GpgOL.\n"
+"\n"
+"You should convert all folders one after the other with this command, close "
+"Outlook and then deinstall GpgOL.\n"
+"\n"
+"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
+"will again process messages."
+msgstr ""
+
+#: src/explorers.cpp:208
+msgid "Do you want to revert this folder?"
+msgstr ""
 
 #~ msgid "Select this option to encrypt the message."
 #~ msgstr "Välj det här alternativet för att kryptera meddelandet."
 
 #~ msgid "Select this option to sign the message."
 #~ msgstr "Välj det här alternativet för att signera meddelandet."
-
-#, fuzzy
-#~ msgid "Encrypt message with GnuPG"
-#~ msgstr "Signera meddelandet med GPG"
-
-#, fuzzy
-#~ msgid "Sign message with GnuPG"
-#~ msgstr "Signera meddelandet med GPG"
-
-#, fuzzy
-#~ msgid "GnuPG Certificate &Manager"
-#~ msgstr "GPG-nyckel&hanterare"
 
 #, fuzzy
 #~ msgid "Select this option to open the certificate manager"
@@ -628,10 +681,6 @@ msgstr "Resultat från validering"
 #, fuzzy
 #~ msgid "Select this option to decrypt and verify the message."
 #~ msgstr "Välj det här alternativet för att kryptera meddelandet."
-
-#, fuzzy
-#~ msgid "Select Certificate Manager"
-#~ msgstr "GPG-nyckel&hanterare"
 
 #, fuzzy
 #~ msgid "Select this option to show information on the crypto status"

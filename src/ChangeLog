@@ -1,3 +1,10 @@
+2010-01-12  Werner Koch  <wk@g10code.com>
+
+	* decrypt-verify-16.bmp, decrypt-verify-16m.bmp: Update.
+	* decrypt-verify-32.bmp, decrypt-verify-32m.bmp: Update.
+	* verify-16.bmp, verify-16m.bmp: Update.
+	* verify-32m.bmp, verify-32.bmp: Update.
+
 2010-01-08  Werner Koch  <wk@g10code.com>
 
 	* README.icons: Fix instructions for forms icons.

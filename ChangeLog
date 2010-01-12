@@ -1,3 +1,7 @@
+2010-01-12  Werner Koch  <wk@g10code.com>
+
+	* po/POTFILES.in (explorers.cpp, inspectors.cpp, mailitem.cpp): New.
+
 2010-01-08  Werner Koch  <wk@g10code.com>
 
 	* forms/encr-s.ico, forms/sign-s.ico: Fix them.
