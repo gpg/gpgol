@@ -1,3 +1,8 @@
+2010-01-13  Werner Koch  <wk@g10code.com>
+
+	* README.icons: Change instructions to better cope with alpha
+	channels.
+
 2010-01-12  Werner Koch  <wk@g10code.com>
 
 	* decrypt-verify-16.bmp, decrypt-verify-16m.bmp: Update.

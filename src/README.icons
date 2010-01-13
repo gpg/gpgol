@@ -39,39 +39,35 @@ and those installed via the forms extensions from external files.
      This PNG should have a transparent background.  If not, you may
      use Gimp to wipe the background out.
 
-  2. Select Select->By_Color, click on the transparent area. Use
-     "Bucket Fill" to fill with white (0xffffff).
+  2. Select Select->By_Color, click on the transparent area.
+     Change the background color to white (0xffffff) and run
+     Layer->Transparency->Remove_Alpha_Channel.
 
-  3. Run Image->Flatten_Image.
-
-  4. Select Image->Mode->Indexed, click "Generate optimum palette with
+  3. Select Image->Mode->Indexed, click "Generate optimum palette with
      255 colors", click "Convert".
 
-  5. Select File->SaveAs and enter a file name with suffix ".bmp".
+  4. Select File->SaveAs and enter a file name with suffix ".bmp".
      The name should be like "foo-16.bmp".  Do _not_ select
      "Run-Length Encoded".  Click "Save".
 
-  6. Undo all or reload the image.  Note that if you don't undo step 2
-     you may skip step 7.
+  5. Undo all or reload the image.  Note that if you don't undo step 2
+     you may skip step 6.
 
-  7. Select Select->By_Color, click on the transparent area.  Use
-     "Bucket Fill" to fill with white (0xffffff).
+  6. Select Select->By_Color, click on the transparent area.
+     Change the background color to white (0xffffff) and run
+     Layer->Transparency->Remove_Alpha_Channel.
  
-  8. Select Select->Invert.  Use "Bucket Fill" to fill the now
+  7. Select Select->Invert.  Use "Bucket Fill" to fill the now
      selected non-transparent area with black (0x000000).  "Fill whole
      selection" comes handy here.  Make sure that you have a only
      black and white and no other colored pixels.
 
-  9. Run Image->Flatten_Image.
-
-  10. Select Image->Mode->Indexed, click "Use black and white (1-bit)
+  8. Select Image->Mode->Indexed, click "Use black and white (1-bit)
       palette", click "Convert".
 
-  11. Select File->SaveAs and enter a file name with suffix ".bmp".
+  9. Select File->SaveAs and enter a file name with suffix ".bmp".
       This is the mask thus the name should be like "foo-16m.bmp".  Do
       _not_ select "Run-Length Encoded".  Click "Save".
-
-  12. Done.
 
   If required, do this also for 32x32 and 64x64.
 
