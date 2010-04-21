@@ -1,5 +1,5 @@
 /* engine-assuan.c - Crypto engine using an Assuan server
- *	Copyright (C) 2007, 2008, 2009 g10 Code GmbH
+ *	Copyright (C) 2007, 2008, 2009, 2010 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -463,8 +463,15 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
   *r_ctx = NULL;
   *r_pid = (pid_t)(-1);
   *r_cmdid = 0;
+  err = assuan_new (&ctx);
+  if (err)
+    {
+      InterlockedExchange (&retry_counter, 0);
+      return 0;
+    }
+      
  retry:
-  err = assuan_socket_connect (&ctx, get_socket_name (), -1);
+  err = assuan_socket_connect (ctx, get_socket_name (), -1, 0);
   if (err)
     {
       /* Let only one thread start an UI server but all allow threads
@@ -519,7 +526,7 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
     }
   else if ((err = send_options (ctx, hwnd, r_pid)))
     {
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   else
     {
@@ -583,7 +590,7 @@ op_assuan_init (void)
   if (!err)
     {
       err = assuan_transact (ctx, "NOP", NULL, NULL, NULL, NULL, NULL, NULL);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   if (err)
     return err;
@@ -1729,7 +1736,7 @@ op_assuan_encrypt (protocol_t protocol,
       close_pipe (inpipe);
       close_pipe (outpipe);
       xfree (cld);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   else
     engine_private_set_cancel (filter, ctx);
@@ -1767,7 +1774,7 @@ op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
       close_pipe (encstate->outpipe);
       if (cancel)
         destroy_command (encstate->cmdid, 1);
-      assuan_disconnect (encstate->ctx);
+      assuan_release (encstate->ctx);
       encstate->ctx = NULL;
     }
   else
@@ -1897,7 +1904,7 @@ op_assuan_sign (protocol_t protocol,
       close_pipe (inpipe);
       close_pipe (outpipe);
       xfree (cld);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   else
     engine_private_set_cancel (filter, ctx);
@@ -1995,7 +2002,7 @@ op_assuan_decrypt (protocol_t protocol,
       close_pipe (inpipe);
       close_pipe (outpipe);
       xfree (cld);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   else
     engine_private_set_cancel (filter, ctx);
@@ -2152,7 +2159,7 @@ op_assuan_verify (gpgme_protocol_t protocol,
       close_pipe (outpipe);
       gpgme_data_release (sigdata);
       xfree (cld);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   else
     engine_private_set_cancel (filter, ctx);
@@ -2175,7 +2182,7 @@ op_assuan_start_keymanager (void *hwnd)
     {
       err = assuan_transact (ctx, "START_KEYMANAGER",
                              NULL, NULL, NULL, NULL, NULL, NULL);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   return err;
 }
@@ -2196,7 +2203,7 @@ op_assuan_start_confdialog (void *hwnd)
     {
       err = assuan_transact (ctx, "START_CONFDIALOG",
                              NULL, NULL, NULL, NULL, NULL, NULL);
-      assuan_disconnect (ctx);
+      assuan_release (ctx);
     }
   return err;
 }
