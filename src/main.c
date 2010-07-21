@@ -159,6 +159,9 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
   if (reason == DLL_PROCESS_ATTACH)
     {
       set_global_hinstance (hinst);
+
+      gpg_err_init ();
+
       /* The next call initializes subsystems of gpgme and should be
          done as early as possible.  The actual return value (the
          version string) is not used here.  It may be called at any
@@ -181,6 +184,7 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     }
   else if (reason == DLL_PROCESS_DETACH)
     {
+      gpg_err_deinit (0);
     }
   
   return TRUE;

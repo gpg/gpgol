@@ -17,7 +17,7 @@ min_automake_version="1.9.4"
 # Set my_issvn to "yes" for non-released code.  Remember to run an
 # "svn up" and "autogen.sh" right before creating a distribution.
 m4_define([my_version], [1.1.2])
-m4_define([my_issvn], [yes])
+m4_define([my_issvn], [no])
 
 m4_define([svn_revision], m4_esyscmd([echo -n $( (svn info 2>/dev/null \
             || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q;}')]))
@@ -25,7 +25,7 @@ AC_INIT([gpgol],
         [my_version[]m4_if(my_issvn,[yes],[-svn[]svn_revision])],
         [bug-gpgol@g10code.com])
 
-NEED_GPG_ERROR_VERSION=1.4
+NEED_GPG_ERROR_VERSION=1.9
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.1.0
 NEED_LIBASSUAN_API=2
