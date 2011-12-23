@@ -1,18 +1,18 @@
 /* attached-file-events.cpp - GpgolAttachedFileEvents implementation
  *	Copyright (C) 2005, 2007 g10 Code GmbH
- * 
+ *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -85,17 +85,18 @@ decrypt_and_write_file (LPSTREAM stream, const char *filename, symenc_t symenc)
         }
     }
   while (nread == COPYBUFFERSIZE);
-  
+
   xfree (buf);
+  buf = NULL;
   if (fclose (fpout))
     {
-      log_error ("%s:%s: fclose failed: %s", 
+      log_error ("%s:%s: fclose failed: %s",
                  SRCNAME, __func__, strerror (errno));
       MessageBox (NULL,
                   _("Error writing attachment."),
                   "GpgOL", MB_ICONERROR|MB_OK);
       goto leave;
-    } 
+    }
 
   rc = S_OK;
 
@@ -113,14 +114,14 @@ decrypt_and_write_file (LPSTREAM stream, const char *filename, symenc_t symenc)
 
 /* Our constructor.  */
 GpgolAttachedFileEvents::GpgolAttachedFileEvents (GpgolExt *pParentInterface)
-{ 
+{
   m_pExchExt = pParentInterface;
   m_ref = 0;
 }
 
 
 /* The QueryInterfac.  */
-STDMETHODIMP 
+STDMETHODIMP
 GpgolAttachedFileEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
 {
   *ppvObj = NULL;
@@ -138,28 +139,28 @@ GpgolAttachedFileEvents::QueryInterface (REFIID riid, LPVOID FAR *ppvObj)
     }
   return E_NOINTERFACE;
 }
- 
+
 
 /* Fixme: We need to figure out what this exactly does.  There is no
    public information available exepct for the MAPI book which is out
-   of print.  
+   of print.
 
    This seems to be called if one adds a new attachment to a the composer.
 */
-STDMETHODIMP 
-GpgolAttachedFileEvents::OnReadPattFromSzFile 
+STDMETHODIMP
+GpgolAttachedFileEvents::OnReadPattFromSzFile
   (LPATTACH att, LPTSTR file, ULONG flags)
 {
-  log_debug ("%s:%s: att=%p file=`%s' flags=%lx\n", 
+  log_debug ("%s:%s: att=%p file=`%s' flags=%lx\n",
 	     SRCNAME, __func__, att, file, flags);
   return S_FALSE;
 }
-  
- 
+
+
 /* This seems to be called if one clicks on Save in the context menu.
    And also sometimes before an Open click. */
-STDMETHODIMP 
-GpgolAttachedFileEvents::OnWritePattToSzFile 
+STDMETHODIMP
+GpgolAttachedFileEvents::OnWritePattToSzFile
   (LPATTACH att, LPTSTR file, ULONG flags)
 {
   HRESULT hr;
@@ -172,7 +173,7 @@ GpgolAttachedFileEvents::OnWritePattToSzFile
   ULONG nread;
   int rc;
 
-  log_debug ("%s:%s: att=%p file=`%s' flags=%lx\n", 
+  log_debug ("%s:%s: att=%p file=`%s' flags=%lx\n",
 	     SRCNAME, __func__, att, file, flags);
   if (!att)
     return E_FAIL;
@@ -191,7 +192,7 @@ GpgolAttachedFileEvents::OnWritePattToSzFile
       return E_ABORT;
     }
 
-  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream,
                           0, 0, (LPUNKNOWN*) &stream);
   if (FAILED (hr))
     {
@@ -238,7 +239,7 @@ GpgolAttachedFileEvents::QueryDisallowOpenPatt (LPATTACH att)
 }
 
 
-STDMETHODIMP 
+STDMETHODIMP
 GpgolAttachedFileEvents::OnOpenPatt (LPATTACH att)
 {
   log_debug ("%s:%s: att=%p\n", SRCNAME, __func__, att);
@@ -247,7 +248,7 @@ GpgolAttachedFileEvents::OnOpenPatt (LPATTACH att)
 
 
 /* This seems to be called if one clicks on Open in the context menu.  */
-STDMETHODIMP 
+STDMETHODIMP
 GpgolAttachedFileEvents::OnOpenSzFile (LPTSTR file, ULONG flags)
 {
   log_debug ("%s:%s: file=`%s' flags=%lx\n", SRCNAME, __func__, file, flags);
