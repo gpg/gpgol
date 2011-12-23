@@ -2,17 +2,17 @@
  *	Copyright (C) 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -30,7 +30,7 @@
 
 #define COBJMACROS
 #include <windows.h>
-#include <objidl.h> 
+#include <objidl.h>
 
 #include "mymapi.h"
 #include "mymapitags.h"
@@ -49,9 +49,9 @@ static const char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
 
 /* The base-64 list used for base64 encoding. */
-static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ" 
-                                       "abcdefghijklmnopqrstuvwxyz" 
-                                       "0123456789+/"); 
+static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz"
+                                       "0123456789+/");
 
 /* The object we use instead of IStream.  It allows us to have a
    callback method for output and thus for processing stuff
@@ -154,7 +154,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (hr)
     {
       log_error ("%s:%s: can't create attachment: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       return NULL;
     }
 
@@ -164,7 +164,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (hr)
     {
       log_error ("%s:%s: can't set attach method: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto failure;
     }
 
@@ -172,11 +172,11 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
     goto failure;
   prop.Value.l = ATTACHTYPE_MOSSTEMPL;
-  hr = HrSetOneProp ((LPMAPIPROP)att, &prop);	
+  hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
   if (hr)
     {
       log_error ("%s:%s: can't set %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Attach Type", hr); 
+                 SRCNAME, __func__, "GpgOL Attach Type", hr);
       goto failure;
     }
 
@@ -188,7 +188,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (hr)
     {
       log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto failure;
     }
 
@@ -209,17 +209,17 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (hr)
     {
       log_error ("%s:%s: can't set attach mime tag: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto failure;
     }
-  
+
   punk = NULL;
   hr = IAttach_OpenProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream, 0,
                              (MAPI_CREATE|MAPI_MODIFY), &punk);
-  if (FAILED (hr)) 
+  if (FAILED (hr))
     {
       log_error ("%s:%s: can't create output stream: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto failure;
     }
   sink->cb_data = (LPSTREAM)punk;
@@ -233,7 +233,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
 
 
 /* Write data to a sink_t.  */
-static int 
+static int
 write_buffer (sink_t sink, const void *data, size_t datalen)
 {
   if (!sink || !sink->writefnc)
@@ -258,7 +258,7 @@ write_buffer_for_cb (void *opaque, const void *data, size_t datalen)
 
 /* Write the string TEXT to the IStream STREAM.  Returns 0 on sucsess,
    prints an error message and returns -1 on error.  */
-static int 
+static int
 write_string (sink_t sink, const char *text)
 {
   return write_buffer (sink, text, strlen (text));
@@ -275,7 +275,7 @@ write_multistring (sink_t sink, const char *text1, ...)
   va_list arg_ptr;
   int rc;
   const char *s;
-  
+
   va_start (arg_ptr, text1);
   s = text1;
   do
@@ -335,7 +335,7 @@ write_b64 (sink_t sink, const void *data, size_t datalen)
                                        |((inbuf[2]>>6)&03))&077];
           outbuf[outlen++] = bintoasc[inbuf[2]&077];
           idx = 0;
-          if (++quads >= (64/4)) 
+          if (++quads >= (64/4))
             {
               quads = 0;
               outbuf[outlen++] = '\r';
@@ -360,19 +360,17 @@ write_b64 (sink_t sink, const void *data, size_t datalen)
           outbuf[outlen++] = '=';
           outbuf[outlen++] = '=';
         }
-      else 
-        { 
+      else
+        {
           outbuf[outlen++] = bintoasc[(((*inbuf<<4)&060)
                                     |((inbuf[1]>>4)&017))&077];
           outbuf[outlen++] = bintoasc[((inbuf[1]<<2)&074)&077];
           outbuf[outlen++] = '=';
         }
-      if ((rc = write_buffer (sink, outbuf, 4)))
-        return rc;
       ++quads;
     }
 
-  if (quads) 
+  if (quads)
     {
       outbuf[outlen++] = '\r';
       outbuf[outlen++] = '\n';
@@ -416,7 +414,7 @@ write_qp (sink_t sink, const void *data, size_t datalen)
                 outidx = 0;                                           \
               }                                                       \
           } while (0)
-              
+
   log_debug ("  writing qp of length %d\n", (int)datalen);
   outidx = 0;
   for (p = data; datalen; p++, datalen--)
@@ -523,8 +521,8 @@ write_plain (sink_t sink, const void *data, size_t datalen)
             }
         }
       else if (!outidx && *p == '.'
-               && ( (datalen > 2 && p[1] == '\r' && p[2] == '\n') 
-                    || (datalen > 1 && p[1] == '\n') 
+               && ( (datalen > 2 && p[1] == '\r' && p[2] == '\n')
+                    || (datalen > 1 && p[1] == '\n')
                     || datalen == 1))
         {
           /* Better protect a line with just a single dot.  We do
@@ -538,7 +536,7 @@ write_plain (sink_t sink, const void *data, size_t datalen)
              have been used.  */
           log_error ("%s:%s: BUG: line longer than exepcted",
                      SRCNAME, __func__);
-          return -1; 
+          return -1;
         }
       else
         outbuf[outidx++] = *p;
@@ -569,7 +567,7 @@ infer_content_type (const char *data, size_t datalen, const char *filename,
     char b64;
     const char *suffix;
     const char *ct;
-  } suffix_table[] = 
+  } suffix_table[] =
     {
       { 1, "3gp",   "video/3gpp" },
       { 1, "abw",   "application/x-abiword" },
@@ -748,8 +746,8 @@ infer_content_encoding (const void *data, size_t datalen)
         lowbin++;
       else if (len == 1 && datalen > 2
                && *p == '-' && p[1] == '-' && p[2] == ' '
-               && ( (datalen > 4 && p[3] == '\r' && p[4] == '\n') 
-                    || (datalen > 3 && p[3] == '\n') 
+               && ( (datalen > 4 && p[3] == '\r' && p[4] == '\n')
+                    || (datalen > 3 && p[3] == '\n')
                     || datalen == 3))
         {
           /* This is a "-- \r\n" line, thus it indicates the usual
@@ -781,7 +779,7 @@ infer_content_encoding (const void *data, size_t datalen)
      identical we use that value to behave closely to it. */
   if (ntotal && ((float)(lowbin+highbin))/ntotal < 0.20)
     return 1; /* Use quoted printable.  */
-  
+
   return 2;   /* Use base64.  */
 }
 
@@ -809,7 +807,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
          that there might be slashes or backslashes.  */
       const char *s1 = strrchr (filename, '/');
       const char *s2 = strrchr (filename, '\\');
-      
+
       if (!s1)
         s1 = s2;
       else if (s1 && s2 && s2 > s1)
@@ -824,7 +822,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
     }
 
   log_debug ("Writing part of length %d%s filename=`%s'\n",
-             (int)datalen, is_mapibody? " (body)":"", 
+             (int)datalen, is_mapibody? " (body)":"",
              filename?filename:"[none]");
 
   ct = infer_content_type (data, datalen, filename, is_mapibody, &use_b64);
@@ -874,7 +872,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                 use_qp? "quoted-printable\r\n":"7bit\r\n"),
                                NULL)))
     return rc;
-  
+
   if (filename)
     if ((rc=write_multistring (sink,
                                "Content-Disposition: attachment;\r\n"
@@ -882,11 +880,11 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                NULL)))
       return rc;
 
-  
+
   /* Write delimiter.  */
   if ((rc = write_string (sink, "\r\n")))
     return rc;
-  
+
   /* Write the content.  */
   if (use_b64)
     rc = write_b64 (sink, data, datalen);
@@ -905,7 +903,7 @@ static int
 count_usable_attachments (mapi_attach_item_t *table)
 {
   int idx, count = 0;
-  
+
   if (table)
     for (idx=0; !table[idx].end_of_table; idx++)
       if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
@@ -917,8 +915,8 @@ count_usable_attachments (mapi_attach_item_t *table)
 /* Write out all attachments from TABLE separated by BOUNDARY to SINK.
    This function needs to be syncronized with count_usable_attachments.  */
 static int
-write_attachments (sink_t sink, 
-                   LPMESSAGE message, mapi_attach_item_t *table, 
+write_attachments (sink_t sink,
+                   LPMESSAGE message, mapi_attach_item_t *table,
                    const char *boundary)
 {
   int idx, rc;
@@ -964,7 +962,7 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
         if (hr)
           {
             log_error ("%s:%s: DeleteAttach failed: hr=%#lx\n",
-                       SRCNAME, __func__, hr); 
+                       SRCNAME, __func__, hr);
             return -1;
           }
       }
@@ -1001,7 +999,7 @@ close_mapi_attachment (LPATTACH *attach, sink_t sink)
   if (hr)
     {
       log_error ("%s:%s: SaveChanges of the attachment failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       return -1;
     }
   IAttach_Release (*attach);
@@ -1045,7 +1043,7 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
 
   /* Set the message class.  */
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
-  prop.Value.lpszA = "IPM.Note.SMIME.MultipartSigned"; 
+  prop.Value.lpszA = "IPM.Note.SMIME.MultipartSigned";
   hr = IMessage_SetProps (message, 1, &prop, NULL);
   if (hr)
     {
@@ -1063,8 +1061,8 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
      property. This override is at least required for encrypted
      messages.  */
   if (mapi_set_gpgol_msg_class (message,
-                                (encrypt? 
-                                 (protocol == PROTOCOL_SMIME? 
+                                (encrypt?
+                                 (protocol == PROTOCOL_SMIME?
                                   "IPM.Note.GpgOL.OpaqueEncrypted" :
                                   "IPM.Note.GpgOL.MultipartEncrypted") :
                                  "IPM.Note.GpgOL.MultipartSigned")))
@@ -1098,7 +1096,7 @@ sink_hashing_write (sink_t hashsink, const void *data, size_t datalen)
       log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
       return -1;
     }
-  
+
   rc = engine_filter (filter, data, datalen);
   if (!rc && data && datalen)
     write_buffer (hashsink->extrasink, data, datalen);
@@ -1150,8 +1148,8 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
    attachment table at R_ATT_TABLE or sets this to NULL on error.  If
    TMPSINK is set no attachment will be created but the output
    written to that sink.  */
-static int 
-do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol, 
+static int
+do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
               mapi_attach_item_t **r_att_table, sink_t tmpsink,
               unsigned int session_number)
 {
@@ -1243,7 +1241,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
      attachment or more than one attachment.  */
   if ((body && n_att_usable) || n_att_usable > 1)
     generate_boundary (inner_boundary);
-  else 
+  else
     *inner_boundary = 0;
 
   /* Write the boundary so that it is not included in the hashing.  */
@@ -1259,7 +1257,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
      header, thus we do the same to avoid running all through an
      IConverterSession first. */
   if (*inner_boundary
-      && (rc=write_multistring (hashsink, 
+      && (rc=write_multistring (hashsink,
                                 "Content-Type: multipart/mixed;\r\n",
                                 "\tboundary=\"", inner_boundary, "\"\r\n",
                                 "\r\n",  /* <-- extra line */
@@ -1291,7 +1289,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
     goto failure;
   filter = NULL; /* Not valid anymore.  */
   hashsink->cb_data = NULL; /* Not needed anymore.  */
-  
+
 
   /* Write signature attachment.  */
   if ((rc = write_boundary (sink, boundary, 0)))
@@ -1334,7 +1332,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
 
   /* Write the signature.  We add an extra CR,LF which should not harm
      and a terminating 0. */
-  collect_signature (&sigbuffer, "\r\n", 3); 
+  collect_signature (&sigbuffer, "\r\n", 3);
   if ((rc = write_string (sink, sigbuffer.buf)))
     goto failure;
 
@@ -1411,13 +1409,13 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
    PGP or S/MIME) signed message.  On failure the function tries to
    keep the original message intact but there is no 100% guarantee for
    it. */
-int 
+int
 mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
 {
   int result = -1;
   mapi_attach_item_t *att_table;
 
-  result = do_mime_sign (message, hwnd, protocol, &att_table, 0, 
+  result = do_mime_sign (message, hwnd, protocol, &att_table, 0,
                          engine_new_session_number ());
   if (!result)
     {
@@ -1483,8 +1481,8 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
               outbuf[2] = '=';
               outbuf[3] = '=';
             }
-          else 
-            { 
+          else
+            {
               outbuf[1] = bintoasc[(((*inbuf<<4)&060)|
                                     ((inbuf[1]>>4)&017))&077];
               outbuf[2] = bintoasc[((inbuf[1]<<2)&074)&077];
@@ -1493,7 +1491,7 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
           outbuflen = 4;
           quads++;
         }
-      
+
       if (quads)
         {
           outbuf[outbuflen++] = '\r';
@@ -1521,7 +1519,7 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
                                     |((inbuf[2]>>6)&03))&077];
               outbuf[3] = bintoasc[inbuf[2]&077];
               outbuflen = 4;
-              if (++quads >= (64/4)) 
+              if (++quads >= (64/4))
                 {
                   quads = 0;
                   outbuf[4] = '\r';
@@ -1537,7 +1535,7 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
   encsink->b64.idx = idx;
   memcpy (encsink->b64.inbuf, inbuf, idx);
   encsink->b64.quads = quads;
-  
+
   return 0;
 }
 #endif /*Not used.*/
@@ -1585,7 +1583,7 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
                               "Version: 1\r\n", NULL);
       if (rc)
         return rc;
-      
+
       /* And start the second part.  */
       rc = write_boundary (sink, boundary, 0);
       if (rc)
@@ -1600,8 +1598,8 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
 
 
 /* Encrypt the MESSAGE.  */
-int 
-mime_encrypt (LPMESSAGE message, HWND hwnd, 
+int
+mime_encrypt (LPMESSAGE message, HWND hwnd,
               protocol_t protocol, char **recipients)
 {
   int result = -1;
@@ -1679,12 +1677,12 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   /* Create a new sink for encrypting the following stuff.  */
   encsink->cb_data = filter;
   encsink->writefnc = sink_encryption_write;
-  
+
   if ((body && n_att_usable) || n_att_usable > 1)
     {
       /* A body and at least one attachment or more than one attachment  */
       generate_boundary (inner_boundary);
-      if ((rc=write_multistring (encsink, 
+      if ((rc=write_multistring (encsink,
                                  "Content-Type: multipart/mixed;\r\n",
                                  "\tboundary=\"", inner_boundary, "\"\r\n",
                                  NULL)))
@@ -1694,7 +1692,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
     *inner_boundary = 0;
 
   if (body)
-    rc = write_part (encsink, body, strlen (body), 
+    rc = write_part (encsink, body, strlen (body),
                      *inner_boundary? inner_boundary : NULL, NULL, 1);
   if (!rc && n_att_usable)
     rc = write_attachments (encsink, message, att_table,
@@ -1727,7 +1725,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   /* Write the final boundary (for OpenPGP) and finish the attachment.  */
   if (*boundary && (rc = write_boundary (sink, boundary, 1)))
     goto failure;
-  
+
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
@@ -1749,8 +1747,8 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 
 
 /* Sign and Encrypt the MESSAGE.  */
-int 
-mime_sign_encrypt (LPMESSAGE message, HWND hwnd, 
+int
+mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
                    protocol_t protocol, char **recipients)
 {
   int result = -1;
@@ -1809,15 +1807,15 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   }
 
 
-  /* Create a temporary sink to construct the signed data.  */ 
+  /* Create a temporary sink to construct the signed data.  */
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                          (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
                           | STGM_CREATE | STGM_READWRITE),
-                         NULL, "GPG", &tmpstream); 
-  if (FAILED (hr)) 
+                         NULL, "GPG", &tmpstream);
+  if (FAILED (hr))
     {
       log_error ("%s:%s: can't create temp file: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       rc = -1;
       goto failure;
     }
@@ -1841,7 +1839,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   }
 
   sender = mapi_get_sender (message);
-  if ((rc=engine_encrypt_prepare (filter, hwnd, 
+  if ((rc=engine_encrypt_prepare (filter, hwnd,
                                   protocol, ENGINE_FLAG_SIGN_FOLLOWS,
                                   sender, recipients, &protocol)))
     goto failure;
@@ -1856,7 +1854,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      we need to fix up that ugly micalg parameter after having created
      the signature.  Note that the protocol to use is taken from the
      encryption operation. */
-  if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink, 
+  if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink,
                     session_number))
     goto failure;
 
@@ -1903,7 +1901,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
         hr = IStream_Read (tmpstream, buffer, sizeof buffer, &nread);
         if (hr)
           {
-            log_error ("%s:%s: IStream::Read failed: hr=%#lx", 
+            log_error ("%s:%s: IStream::Read failed: hr=%#lx",
                        SRCNAME, __func__, hr);
             rc = gpg_error (GPG_ERR_EIO);
             goto failure;
@@ -1913,7 +1911,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
         rc = write_buffer (encsink, buffer, nread);
         if (rc)
           {
-            log_error ("%s:%s: writing tmpstream to encsink failed: %s", 
+            log_error ("%s:%s: writing tmpstream to encsink failed: %s",
                        SRCNAME, __func__, gpg_strerror (rc));
             goto failure;
           }
@@ -1935,11 +1933,11 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
       log_debug ("%s:%s: nothing received from engine", SRCNAME, __func__);
       goto failure;
     }
-  
+
   /* Write the final boundary (for OpenPGP) and finish the attachment.  */
   if (*boundary && (rc = write_boundary (sink, boundary, 1)))
     goto failure;
-  
+
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
@@ -1950,7 +1948,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
 
  failure:
   if (result)
-    log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc, 
+    log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
   if (tmpstream)
