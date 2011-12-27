@@ -732,7 +732,7 @@ write_options (void)
     {"defaultKey",               2, 0, opt.default_key},
     {"enableDefaultKey",         0, opt.enable_default_key},
     {"preferHtml",               0, opt.prefer_html},
-    {"gitCommit",                1, opt.git_commit},
+    {"gitCommit",                4, opt.git_commit},
     {"formsRevision",            1, opt.forms_revision},
     {"announceNumber",           1, opt.announce_number},
     {"bodyAsAttachment",         0, opt.body_as_attachment},
@@ -777,6 +777,13 @@ write_options (void)
 /*                      table[i].name, buf); */
 /*           rc = store_extension_value (table[i].name, buf); */
 /*           break;   */
+
+        case 4:
+          sprintf (buf, "0x%x", table[i].value);
+          log_debug ("storing option `%s' value=`%s'\n",
+                     table[i].name, buf);
+          rc = store_extension_value (table[i].name, buf);
+          break;
 
         default:
           rc = -1;
