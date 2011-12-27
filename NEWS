@@ -1,3 +1,14 @@
+Noteworthy changes for version 1.1.3 (2011-12-27)
+=================================================
+
+ * Fix data corruption bug for certain attachments.  Bug#1352.
+
+ * Fix crash on opening attachments with OL2007.  Bug #1110.
+
+ * Use the GIT commit ids instead of SVN revision numbers for version
+   checks and to construct the Windows file version.
+
+
 Noteworthy changes for version 1.1.2 (2010-07-21)
 =================================================
 
@@ -102,7 +113,7 @@ Noteworthy changes for version 0.10.13 (2008-05-06)
 Noteworthy changes for version 0.10.12 (2008-04-16)
 ===================================================
 
- * Added icons. 
+ * Added icons.
 
  * Minor usuability changes.
 
@@ -198,7 +209,7 @@ Noteworthy changes for version 0.10.1 (2007-10-22)
 
  * Auto start the server.
 
- * Code cleanups. 
+ * Code cleanups.
 
  * Made all dialogs language neutral.
 
@@ -232,7 +243,7 @@ Noteworthy changes for version 0.9.90 (2006-08-28)
 
 * Fixes for the automatic key selection algorithm
   used in the recipient key dialog.
-  
+
 
 Noteworthy changes for version 0.9.10 (2006-04-25)
 ==================================================
@@ -428,4 +439,4 @@ Noteworthy changes for version 0.4.0 (2005-05-10)
 
 * Provide a class to encapsulate MAPI messages and high-level functions
   for all crypto operations.
-  
+
