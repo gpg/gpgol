@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2010-07-21 11:04+0200\n"
+"POT-Creation-Date: 2011-12-27 12:49+0100\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -23,11 +23,11 @@ msgstr "Fehler bei der Erstellung der Datei für das Attachment."
 msgid "Error reading attachment."
 msgstr "Fehler beim Lesen des Attachments."
 
-#: src/attached-file-events.cpp:82 src/attached-file-events.cpp:95
+#: src/attached-file-events.cpp:82 src/attached-file-events.cpp:96
 msgid "Error writing attachment."
 msgstr "Fehler beim Schreiben des Attachments."
 
-#: src/attached-file-events.cpp:216
+#: src/attached-file-events.cpp:217
 msgid ""
 "Sorry, we are not able to decrypt this attachment.\n"
 "\n"

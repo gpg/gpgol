@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2010-07-21 11:04+0200\n"
+"POT-Creation-Date: 2011-12-27 12:49+0100\n"
 "PO-Revision-Date: 2010-07-18 20:41-0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@mail.telepac.pt>\n"
 "Language-Team: Portuguese <marcoagpinto@mail.telepac.pt>\n"
@@ -26,11 +26,11 @@ msgstr "Erro ao criar ficheiro para anexo."
 msgid "Error reading attachment."
 msgstr "Erro ao ler anexo."
 
-#: src/attached-file-events.cpp:82 src/attached-file-events.cpp:95
+#: src/attached-file-events.cpp:82 src/attached-file-events.cpp:96
 msgid "Error writing attachment."
 msgstr "Erro ao escrever anexo."
 
-#: src/attached-file-events.cpp:216
+#: src/attached-file-events.cpp:217
 msgid ""
 "Sorry, we are not able to decrypt this attachment.\n"
 "\n"
