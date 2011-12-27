@@ -1,6 +1,6 @@
 # doc - Automake template
 # Copyright (C) 2007 g10 Code GmbH
-# 
+#
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
@@ -13,7 +13,9 @@
 
 DISTCLEANFILES = gpgol.cps
 
+EXTRA_DIST = HACKING
+
 info_TEXINFOS = gpgol.texi
-gpgol_TEXINFOS = gpl.texi 
+gpgol_TEXINFOS = gpl.texi
 
 
