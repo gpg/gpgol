@@ -16,14 +16,18 @@ min_automake_version="1.9.4"
 # Remember to change the version number immediately *after* a release.
 # Set my_issvn to "yes" for non-released code.  Remember to run an
 # "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [1.1.2])
-m4_define([my_issvn], [no])
+m4_define([my_version], [1.1.3])
+m4_define([my_isgit], [yes])
 
-m4_define([svn_revision], m4_esyscmd([echo -n $( (svn info 2>/dev/null \
-            || echo 'Revision: 0')|sed -n '/^Revision:/ {s/[^0-9]//gp;q;}')]))
-AC_INIT([gpgol], 
-        [my_version[]m4_if(my_issvn,[yes],[-svn[]svn_revision])],
-        [bug-gpgol@g10code.com])
+m4_define([git_commit], m4_esyscmd([git branch -v 2>/dev/null \
+          | awk '/^\* / {printf "%s",$3}']))
+m4_define([my_full_version],
+          [my_version[]m4_if(my_isgit,[yes],[-git[]git_commit])])
+
+AC_INIT([gpgol],[my_full_version],[bug-gpgol@g10code.com])
+
+# Bump up this value if you changed any form.
+GPGOL_FORMS_REVISION=335
 
 NEED_GPG_ERROR_VERSION=1.9
 NEED_GPGME_API=1
@@ -32,7 +36,8 @@ NEED_LIBASSUAN_API=2
 NEED_LIBASSUAN_VERSION=2.0.0
 
 
-SVN_REVISION=svn_revision
+GIT_COMMIT=0x[]git_commit
+GIT_COMMIT_DECIMAL="$((0x$(echo git_commit | head -c 4)))"
 PACKAGE=$PACKAGE_NAME
 PACKAGE_GT=${PACKAGE_NAME}
 VERSION=$PACKAGE_VERSION
@@ -58,7 +63,9 @@ AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "$PACKAGE_BUGREPORT",
                                         [Bug report address])
 AC_DEFINE_UNQUOTED(NEED_GPGME_VERSION, "$NEED_GPGME_VERSION",
                                        [Required version of GPGME])
-AC_DEFINE_UNQUOTED(SVN_REVISION, ${SVN_REVISION}, [Current SVN revision])
+AC_DEFINE_UNQUOTED(GIT_COMMIT, ${GIT_COMMIT}, [Current GIT commit])
+AC_DEFINE_UNQUOTED(GPGOL_FORMS_REVISION, ${GPGOL_FORMS_REVISION},
+                                          [Current Forms revision])
 
 
 BUILD_TIMESTAMP=`date --iso-8601=minutes`
@@ -66,14 +73,14 @@ AC_SUBST(BUILD_TIMESTAMP)
 changequote(,)dnl
 BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1./;s/\./,/g'`
 changequote([,])dnl
-BUILD_FILEVERSION="${BUILD_FILEVERSION}${SVN_REVISION}"
+BUILD_FILEVERSION="${BUILD_FILEVERSION}${GIT_COMMIT_DECIMAL}"
 AC_SUBST(BUILD_FILEVERSION)
 
 
 AH_BOTTOM([
 /* Some global constants. */
 
-/* Force using of NLS for W32 even if no libintl has been found.  This is 
+/* Force using of NLS for W32 even if no libintl has been found.  This is
    okay because we have our own gettext implementation for W32.  */
 #if defined(HAVE_W32_SYSTEM) && !defined(ENABLE_NLS)
 #define ENABLE_NLS 1
@@ -230,7 +237,7 @@ die=no
 if test "$have_gpg_error" = "no"; then
    die=yes
    AC_MSG_NOTICE([[
-***  
+***
 *** You need libgpg-error to build this program.
 **  This library is for example available at
 ***   ftp://ftp.gnupg.org/pub/gcrypt/libgpg-error
@@ -240,7 +247,7 @@ fi
 if test "$have_gpgme" = "no"; then
    die=yes
    AC_MSG_NOTICE([[
-***  
+***
 *** You need gpgme to build this program.
 **  This library is for example available at
 ***   ftp://ftp.gnupg.org/gcrypt/gpgme/
@@ -268,7 +275,7 @@ fi
 
 AC_CONFIG_FILES([ Makefile
 src/Makefile
-src/versioninfo.rc        
+src/versioninfo.rc
 forms/Makefile
 doc/Makefile
 po/Makefile.in

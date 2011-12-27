@@ -8,7 +8,7 @@
  * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
- *  
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -24,7 +24,7 @@
 #include <gpgme.h>
 
 #include "util.h"
- 
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,11 +63,11 @@ typedef enum
     GPG_FMT_NONE = 0,       /* do not encrypt attachments */
     GPG_FMT_CLASSIC = 1,    /* encrypt attachments without any encoding */
     GPG_FMT_PGP_PEF = 2     /* use the PGP partioned encoding format (PEF) */
-  } 
+  }
 gpgol_format_t;
 
 /* Type of a message. */
-typedef enum 
+typedef enum
   {
     OPENPGP_NONE = 0,
     OPENPGP_MSG,
@@ -90,7 +90,7 @@ struct passphrase_cb_s
   gpgme_ctx_t ctx;
   char keyid[16+1];
   char *user_id;
-  char *pass;    
+  char *pass;
   int opts;
   int ttl;  /* TTL of the passphrase. */
   unsigned int decrypt_cmd:1; /* 1 = show decrypt dialog, otherwise secret key
@@ -103,7 +103,7 @@ struct passphrase_cb_s
 #ifdef __cplusplus
 extern
 #endif
-struct 
+struct
 {
   int enable_debug;	     /* Enable extra debug options.  Values
                                 larger than 1 increases the debug log
@@ -121,7 +121,7 @@ struct
   int body_as_attachment;    /* Present encrypted message as attachment.  */
 
   /* The compatibility flags. */
-  struct 
+  struct
   {
     unsigned int no_msgcache:1;
     unsigned int no_pgpmime:1;
@@ -131,12 +131,12 @@ struct
     unsigned int auto_decrypt: 1;   /* Try to decrypt when clicked. */
     unsigned int no_attestation: 1; /* Don't create an attestation. */
     unsigned int use_mwfmo: 1;      /* Use MsgWaitForMultipleObjects.  */
-  } compat; 
+  } compat;
 
-  /* The SVN revision as stored in the registry.  */
-  int svn_revision; 
+  /* The current git commit id.  */
+  unsigned int git_commit;
 
-  /* The SVN revision of the binary used to install the forms.  */
+  /* The forms revision number of the binary.  */
   int forms_revision;
 
   /* The stored number of the binary which showed the last announcement.  */
@@ -162,9 +162,9 @@ typedef struct b64_state_s b64_state_t;
 /* Bit values used for extra log file verbosity.  Value 1 is reserved
    to enable debug menu options.  */
 #define DBG_IOWORKER       (1<<1)
-#define DBG_IOWORKER_EXTRA (1<<2) 
+#define DBG_IOWORKER_EXTRA (1<<2)
 #define DBG_FILTER         (1<<3)
-#define DBG_FILTER_EXTRA   (1<<4) 
+#define DBG_FILTER_EXTRA   (1<<4)
 #define DBG_MEMORY         (1<<5)
 #define DBG_COMMANDS       (1<<6)
 #define DBG_MIME_PARSER    (1<<7)
@@ -179,8 +179,8 @@ typedef struct b64_state_s b64_state_t;
 /* Type and constants used with parse_tlv.  */
 struct tlvinfo_s
 {
-  int cls;            /* The class of the tag.  */             
-  int tag;            /* The tag.  */           
+  int cls;            /* The class of the tag.  */
+  int tag;            /* The tag.  */
   int is_cons;        /* True if it is a constructed object.  */
   int is_ndef;        /* True if the object has an indefinite length.  */
   size_t length;      /* The length of the value.  */
@@ -227,7 +227,7 @@ unsigned int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
 
 /*-- passphrase-dialog.c --*/
 int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting);
-gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint, 
+gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint,
 			     const char *pass_info,
 			     int prev_was_bad, int fd);
 void free_decrypt_key (struct passphrase_cb_s *ctx);
@@ -239,8 +239,8 @@ int store_extension_value (const char *key, const char *val);
 int load_extension_value (const char *key, char **val);
 
 /*-- verify-dialog.c --*/
-int verify_dialog_box (gpgme_protocol_t protocol, 
-                       gpgme_verify_result_t res, 
+int verify_dialog_box (gpgme_protocol_t protocol,
+                       gpgme_verify_result_t res,
                        const char *filename);
 
 

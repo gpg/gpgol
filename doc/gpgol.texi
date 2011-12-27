@@ -47,7 +47,7 @@ section entitled ``Copying''.
 @c Titlepage
 @c
 @setchapternewpage odd
-@titlepage 
+@titlepage
 @title The GpgOL Technical Manual
 @subtitle Version @value{VERSION}
 @subtitle @value{UPDATED-MONTH}
@@ -74,7 +74,7 @@ section entitled ``Copying''.
 
 @ifnottex
 @node Top
-@top 
+@top
 
 @insertcopying
 
@@ -210,8 +210,8 @@ flag indicating the status.  These values are defined:
   known not to need any processing by GpgOL.
 
   @item @@
-  The message has been created and signed or encrypted by GpgOL. 
- 
+  The message has been created and signed or encrypted by GpgOL.
+
   @item ?
   The signature status has not been checked.  This is for example used
   if the public key to be used for the verification could not be found.
@@ -229,7 +229,7 @@ flag indicating the status.  These values are defined:
   The signature is bad.  Either this means the message has been tampered
   with or an intermediate message relay has accidently changed
   the message (e.g. due to recoding).
-  
+
   @end table
 
 @item GpgOL Protect IV
@@ -269,7 +269,7 @@ draft message.  For details see the function
 @node Registry Settings
 @chapter How GpgOL uses the Registry
 
-This is a list of registry entries GpgOL knows about. 
+This is a list of registry entries GpgOL knows about.
 
 @table @code
 
@@ -296,7 +296,7 @@ according to the following table (which may change with any release):
 @item 2 (0x0002) (ioworker)
 Tell what the Assuan I/O scheduler is doing.
 @item 4 (0x0004) (ioworker-extra)
-Even more verbose Assuan I/O scheduler reporting. 
+Even more verbose Assuan I/O scheduler reporting.
 @item 8  (0x0008) (filter)
 Tell what the filter I/O system is doing.
 @item 16 (0x0010) (filter-extra)
@@ -328,20 +328,23 @@ This is a string consisting of @code{0} and @code{1} to enable certain
 compatibility flags.  Not generally useful; use the source for a
 description.
 
-@item HKCU\Software\GNU\GpgOL:enableSmime   
+@item HKCU\Software\GNU\GpgOL:enableSmime
 @itemx HKCU\Software\GNU\GpgOL:defaultProtocol
 @itemx HKCU\Software\GNU\GpgOL:encryptDefault
-@itemx HKCU\Software\GNU\GpgOL:signDefault   
+@itemx HKCU\Software\GNU\GpgOL:signDefault
 @itemx HKCU\Software\GNU\GpgOL:previewDecrypt
 @itemx HKCU\Software\GNU\GpgOL:storePasswdTime
-@itemx HKCU\Software\GNU\GpgOL:encodingFormat 
-@itemx HKCU\Software\GNU\GpgOL:defaultKey   
+@itemx HKCU\Software\GNU\GpgOL:encodingFormat
+@itemx HKCU\Software\GNU\GpgOL:defaultKey
 @itemx HKCU\Software\GNU\GpgOL:enableDefaultKey
-@itemx HKCU\Software\GNU\GpgOL:preferHtml 
+@itemx HKCU\Software\GNU\GpgOL:preferHtml
 These registry keys store the values from the configuration dialog.
 
 @item HKCU\Software\GNU\GpgOL:svnRevision
-When leaving GpgOL's options dialog, the SVN revision number of the current
+Obsolete since 1.1.3.
+
+@item HKCU\Software\GNU\GpgOL:gitCommit
+When leaving GpgOL's options dialog, the GIT commit id of the current
 version will be stored in this entry.  This is used to display a note
 after software upgrades.
 
@@ -382,7 +385,7 @@ works).
 The renaming is very straightforward:
 
 @itemize @bullet
-@item 
+@item
 If the message class is just @code{IPM.Note} extra tests are done to
 figure out a suitable message class.  This yields one of these new
 message classes:
@@ -429,13 +432,13 @@ attachment (or used to convert the message back to RFC-822).  It might
 however not exist and in this case there should be only one attachment
 at all as created by Outlook, so no further changes are required.
 
-@item 
+@item
 Inline PGP encrypted mails (@code{IPM.Note.GpgOL.PGPMessage}) might have
 a wrong PR_BODY. This condition can be detected by the existance of an
 attachment named @file{gpgolPGP.dat}, flagged as hidden and with the
 attach type ATTACHTYPE_PGPBODY (See above under MAPI Properties).  If
 such an attachment exists, it should be copied to PR_BODY and may then
-be deleted. 
+be deleted.
 @end itemize
 
 @noindent
@@ -495,7 +498,7 @@ exists, delete the properties @code{PR_BODY} and @code{PR_BODY_HTML}.
 
 Instead of deleting it should be sufficient to make sure
 that such PR_BODYs are not updated and don't make it to the disk or a
-strage server. 
+strage server.
 
 Implementing such a feature would really help with end-to-end encryption
 where the security policy requires that the plaintext of an encrypted
@@ -518,7 +521,7 @@ FIXME.
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 @c
 @c   A P P E N D I X
-@c 
+@c
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 @include gpl.texi
@@ -538,7 +541,7 @@ FIXME.
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 @c
 @c E D I T O R ' S   A T T I C
-@c 
+@c
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 What about the message class mangling?

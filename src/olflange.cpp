@@ -1,19 +1,19 @@
 /* olflange.cpp - Connect GpgOL to Outlook
  *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
  *	Copyright (C) 2004, 2005, 2007, 2008 g10 Code GmbH
- * 
+ *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -55,10 +55,10 @@
 
 /* The GUID for this plugin.  */
 #define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
-DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da, 
+DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
             0xc6, 0x87, 0x00, 0x0d, 0x60, 0x80, 0xe7, 0x35);
 
-/* For documentation: The GUID used for our custom properties: 
+/* For documentation: The GUID used for our custom properties:
    {31805ab8-3e92-11dc-879c-00061b031004}
  */
 
@@ -111,16 +111,16 @@ get_ol_main_version (void)
 
 
 /* Wrapper around UlRelease with error checking. */
-// static void 
+// static void
 // ul_release (LPVOID punk, const char *func)
 // {
 //   ULONG res;
-  
+
 //   if (!punk)
 //     return;
 //   res = UlRelease (punk);
 //   if (opt.enable_debug & DBG_MEMORY)
-//     log_debug ("%s:%s: UlRelease(%p) had %lu references\n", 
+//     log_debug ("%s:%s: UlRelease(%p) had %lu references\n",
 //                SRCNAME, func, punk, res);
 // }
 
@@ -128,9 +128,9 @@ get_ol_main_version (void)
 
 /* Registers this module as an Exchange extension. This basically updates
    some Registry entries. */
-STDAPI 
+STDAPI
 DllRegisterServer (void)
-{    
+{
   HKEY hkey, hkey2;
   CHAR szKeyBuf[MAX_PATH+1024];
   CHAR szEntry[MAX_PATH+512];
@@ -162,31 +162,31 @@ DllRegisterServer (void)
      c  EECONTEXT_PROPERTYSHEETS
      d  EECONTEXT_ADVANCEDCRITERIA
      e  EECONTEXT_TASK
-                   ___123456789abcde___ */                 
-  lstrcat (szEntry, ";11000111111100"); 
+                   ___123456789abcde___ */
+  lstrcat (szEntry, ";11000111111100");
   /* Interfaces to we want to hook into:
      pos  interface
-     1    IExchExtCommands            
-     2    IExchExtUserEvents          
-     3    IExchExtSessionEvents       
-     4    IExchExtMessageEvents       
-     5    IExchExtAttachedFileEvents  
-     6    IExchExtPropertySheets      
-     7    IExchExtAdvancedCriteria    
-     -    IExchExt              
+     1    IExchExtCommands
+     2    IExchExtUserEvents
+     3    IExchExtSessionEvents
+     4    IExchExtMessageEvents
+     5    IExchExtAttachedFileEvents
+     6    IExchExtPropertySheets
+     7    IExchExtAdvancedCriteria
+     -    IExchExt
      -    IExchExtModeless
      -    IExchExtModelessCallback
                    ___1234567___ */
-  lstrcat (szEntry, ";11111101"); 
-  ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL, 
+  lstrcat (szEntry, ";11111101");
+  ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL,
                        REG_OPTION_NON_VOLATILE,
                        KEY_ALL_ACCESS, NULL, &hkey, NULL);
-  if (ec != ERROR_SUCCESS) 
+  if (ec != ERROR_SUCCESS)
     {
       log_debug ("DllRegisterServer failed\n");
       return E_ACCESSDENIED;
     }
-    
+
   dwTemp = lstrlen (szEntry) + 1;
   RegSetValueEx (hkey, "GpgOL", 0, REG_SZ, (BYTE*) szEntry, dwTemp);
 
@@ -213,7 +213,7 @@ DllRegisterServer (void)
   RegSetValueEx (hkey, "Outlook Setup Extension",
                  0, REG_SZ, (BYTE*) szEntry, dwTemp);
   RegCloseKey (hkey);
-    
+
   hkey = NULL;
   lstrcpy (szKeyBuf, "Software\\GNU\\GpgOL");
   RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
@@ -225,7 +225,7 @@ DllRegisterServer (void)
   strcpy (szKeyBuf, "CLSID\\" CLSIDSTR_GPGOL );
   ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
                   REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
-  if (ec != ERROR_SUCCESS) 
+  if (ec != ERROR_SUCCESS)
     {
       fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
       return E_ACCESSDENIED;
@@ -238,7 +238,7 @@ DllRegisterServer (void)
   strcpy (szKeyBuf, "InprocServer32");
   ec = RegCreateKeyEx (hkey, szKeyBuf, 0, NULL, REG_OPTION_NON_VOLATILE,
                        KEY_ALL_ACCESS, NULL, &hkey2, NULL);
-  if (ec != ERROR_SUCCESS) 
+  if (ec != ERROR_SUCCESS)
     {
       fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
       RegCloseKey (hkey);
@@ -262,7 +262,7 @@ DllRegisterServer (void)
 
 
 /* Unregisters this module as an Exchange extension. */
-STDAPI 
+STDAPI
 DllUnregisterServer (void)
 {
   HKEY hkey;
@@ -272,20 +272,20 @@ DllUnregisterServer (void)
 
   strcpy (buf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
   /* Create and open key and subkey. */
-  res = RegCreateKeyEx (HKEY_LOCAL_MACHINE, buf, 0, NULL, 
-			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 
+  res = RegCreateKeyEx (HKEY_LOCAL_MACHINE, buf, 0, NULL,
+			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS,
 			NULL, &hkey, NULL);
-  if (res != ERROR_SUCCESS) 
+  if (res != ERROR_SUCCESS)
     {
       log_debug ("DllUnregisterServer: access denied.\n");
       return E_ACCESSDENIED;
     }
   RegDeleteValue (hkey, "GpgOL");
-  
-  /* Set outlook update flag.  */  
+
+  /* Set outlook update flag.  */
   strcpy (buf, "4.0;Outxxx.dll;7;000000000000000;0000000000;OutXXX");
   ntemp = strlen (buf) + 1;
-  RegSetValueEx (hkey, "Outlook Setup Extension", 0, 
+  RegSetValueEx (hkey, "Outlook Setup Extension", 0,
 		 REG_SZ, (BYTE*) buf, ntemp);
   RegCloseKey (hkey);
 
@@ -294,7 +294,7 @@ DllUnregisterServer (void)
   RegDeleteKey (HKEY_CLASSES_ROOT, buf);
   strcpy (buf, "CLSID\\" CLSIDSTR_GPGOL);
   RegDeleteKey (HKEY_CLASSES_ROOT, buf);
-  
+
   return S_OK;
 }
 
@@ -354,7 +354,7 @@ compare_versions (const char *my_version, const char *req_version)
 
   if (my_major > rq_major
 	|| (my_major == rq_major && my_minor > rq_minor)
-      || (my_major == rq_major && my_minor == rq_minor 
+      || (my_major == rq_major && my_minor == rq_minor
 	  && my_micro > rq_micro)
       || (my_major == rq_major && my_minor == rq_minor
 	  && my_micro == rq_micro
@@ -396,7 +396,7 @@ ExchEntryPoint (void)
    context.  Does the DLL initialization if it has not been done
    before. */
 GpgolExt::GpgolExt (void)
-{ 
+{
   m_lRef = 1;
   m_lContext = 0;
   m_hWndExchange = 0;
@@ -424,9 +424,9 @@ GpgolExt::GpgolExt (void)
   if (!g_initdll)
     {
       read_options ();
-      log_debug ("%s:%s: this is GpgOL %s\n", 
+      log_debug ("%s:%s: this is GpgOL %s\n",
                  SRCNAME, __func__, PACKAGE_VERSION);
-      log_debug ("%s:%s:   using GPGME %s\n", 
+      log_debug ("%s:%s:   using GPGME %s\n",
                  SRCNAME, __func__, gpgme_check_version (NULL));
       engine_init ();
       g_initdll = TRUE;
@@ -439,7 +439,7 @@ GpgolExt::GpgolExt (void)
           /* Note: If you want to change the announcment, you need to
              increment the ANNOUNCE_NUMBER above.  The number assures
              that a user will see this message only once.  */
-          MessageBox 
+          MessageBox
             (NULL,
              _("Welcome to GpgOL 1.0\n"
                "\n"
@@ -459,14 +459,14 @@ GpgolExt::GpgolExt (void)
                "that sending encrypted or signed mails using an Exchange "
                "based account does not work.  Using GpgOL along with "
                "other Outlook plugins may in some cases not work."
-               "\n"),     
+               "\n"),
              "GpgOL", MB_ICONINFORMATION|MB_OK);
           /* Show this warning only once.  */
           opt.announce_number = ANNOUNCE_NUMBER;
           write_options ();
         }
 
-      if ( SVN_REVISION > opt.svn_revision )
+      if ( GIT_COMMIT != opt.git_commit )
         {
           MessageBox (NULL,
                     _("You have installed a new version of GpgOL.\n"
@@ -477,24 +477,24 @@ GpgolExt::GpgolExt (void)
                       " Extras->Options->GpgOL.\n"),
                       "GpgOL", MB_ICONINFORMATION|MB_OK);
           /* Show this warning only once.  */
-          opt.svn_revision = SVN_REVISION;
+          opt.git_commit = GIT_COMMIT;
           write_options ();
         }
-      if ( SVN_REVISION > opt.forms_revision )
+      if ( GPGOL_FORMS_REVISION > opt.forms_revision )
         install_forms ();
     }
 }
 
 
 /*  Uninitializes the DLL in the session context. */
-GpgolExt::~GpgolExt (void) 
+GpgolExt::~GpgolExt (void)
 {
   log_debug ("%s:%s: cleaning up GpgolExt object; context=%s\n",
              SRCNAME, __func__, ext_context_name (m_lContext));
-    
+
 //   if (m_pOutlookExtItemEvents)
 //     m_pOutlookExtItemEvents->Release ();
-  
+
   if (m_lContext == EECONTEXT_SESSION)
     {
       if (g_initdll)
@@ -503,9 +503,9 @@ GpgolExt::~GpgolExt (void)
           write_options ();
           g_initdll = FALSE;
           log_debug ("%s:%s: DLL closed down\n", SRCNAME, __func__);
-	}	
+	}
     }
-  
+
 
 }
 
@@ -515,33 +515,33 @@ GpgolExt::~GpgolExt (void)
    interface and PPVOBJ will get the address of the object pointer if
    this class defines the requested interface.  Return value: S_OK if
    the interface is supported, otherwise E_NOINTERFACE. */
-STDMETHODIMP 
+STDMETHODIMP
 GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 {
   HRESULT hr = S_OK;
-  
+
   *ppvObj = NULL;
-  
-  if ((riid == IID_IUnknown) || (riid == IID_IExchExt)) 
+
+  if ((riid == IID_IUnknown) || (riid == IID_IExchExt))
     {
       *ppvObj = (LPUNKNOWN) this;
     }
-  else if (riid == IID_IExchExtCommands) 
+  else if (riid == IID_IExchExtCommands)
     {
       *ppvObj = (LPUNKNOWN)m_pExchExtCommands;
       m_pExchExtCommands->SetContext (m_lContext);
     }
-  else if (riid == IID_IExchExtUserEvents) 
+  else if (riid == IID_IExchExtUserEvents)
     {
       *ppvObj = (LPUNKNOWN) m_pExchExtUserEvents;
       m_pExchExtUserEvents->SetContext (m_lContext);
     }
-  else if (riid == IID_IExchExtSessionEvents) 
+  else if (riid == IID_IExchExtSessionEvents)
     {
       *ppvObj = (LPUNKNOWN) m_pExchExtSessionEvents;
       m_pExchExtSessionEvents->SetContext (m_lContext);
     }
-  else if (riid == IID_IExchExtMessageEvents) 
+  else if (riid == IID_IExchExtMessageEvents)
     {
       *ppvObj = (LPUNKNOWN) m_pExchExtMessageEvents;
       m_pExchExtMessageEvents->SetContext (m_lContext);
@@ -549,8 +549,8 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
   else if (riid == IID_IExchExtAttachedFileEvents)
     {
       *ppvObj = (LPUNKNOWN)m_pExchExtAttachedFileEvents;
-    }  
-  else if (riid == IID_IExchExtPropertySheets) 
+    }
+  else if (riid == IID_IExchExtPropertySheets)
     {
       if (m_lContext != EECONTEXT_PROPERTYSHEETS)
 	return E_NOINTERFACE;
@@ -559,15 +559,15 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
 //   else if (riid == IID_IOutlookExtItemEvents)
 //     {
 //       *ppvObj = (LPUNKNOWN)m_pOutlookExtItemEvents;
-//     }  
+//     }
   else
     hr = E_NOINTERFACE;
-  
+
   /* On success we need to bump up the reference counter for the
      requested object. */
   if (*ppvObj)
     ((LPUNKNOWN)*ppvObj)->AddRef();
-  
+
   return hr;
 }
 
@@ -579,7 +579,7 @@ GpgolExt::QueryInterface(REFIID riid, LPVOID *ppvObj)
    context code at time of being called. LFLAGS carries flags to
    indicate whether the extension should be installed modal.
 */
-STDMETHODIMP 
+STDMETHODIMP
 GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 {
   static int version_shown;
@@ -593,7 +593,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 
   log_debug ("%s:%s: context=%s flags=0x%lx\n", SRCNAME, __func__,
              ext_context_name (lContext), lFlags);
-  
+
   /* Check version.  This install method is called by Outlook even
      before the OOM interface is available, thus we need to keep on
      checking for the olversion until we get one.  Only then we can
@@ -623,13 +623,13 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                  (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) >> 16,
                  (lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK));
       log_debug ("%s:%s:                 actual version 0x%lx (%u.%u.%u.%u)\n",
-                 SRCNAME, __func__, lActualVersion, 
+                 SRCNAME, __func__, lActualVersion,
                  (unsigned int)((lActualVersion >> 24) & 0xff),
                  (unsigned int)((lActualVersion >> 16) & 0xff),
              (unsigned int)((lActualVersion >> 8) & 0xff),
                  (unsigned int)(lActualVersion & 0xff));
       log_debug ("%s:%s:                virtual version 0x%lx (%u.%u.%u.%u)\n",
-                 SRCNAME, __func__, lVirtualVersion, 
+                 SRCNAME, __func__, lVirtualVersion,
                  (unsigned int)((lVirtualVersion >> 24) & 0xff),
                  (unsigned int)((lVirtualVersion >> 16) & 0xff),
              (unsigned int)((lVirtualVersion >> 8) & 0xff),
@@ -641,7 +641,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
           version_shown = 1;
         }
     }
-  
+
   if (EECBGV_BUILDVERSION_MAJOR
       != (lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK))
     {
@@ -649,7 +649,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
                  SRCNAME, __func__, lBuildVersion);
       return S_FALSE;
     }
-  
+
   /* The version numbers as returned by GetVersion are the same for
      OL2003 as well as for recent OL2002.  My guess is that this
      version comes from the Exchange Client Extension API and that has
@@ -661,11 +661,11 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
     {
       static int shown;
       HWND hwnd;
-      
+
       if (!shown)
         {
           shown = 1;
-          
+
           if (FAILED(pEECB->GetWindow (&hwnd)))
             hwnd = NULL;
           MessageBox (hwnd,
@@ -685,7 +685,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
     {
       install_sinks (pEECB);
     }
-  
+
 
   /* Check context. */
   if (   lContext == EECONTEXT_PROPERTYSHEETS
@@ -700,7 +700,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
     {
       return S_OK;
     }
-  
+
   log_debug ("%s:%s: can't handle this context\n", SRCNAME, __func__);
   return S_FALSE;
 }
@@ -711,7 +711,7 @@ install_forms (void)
 {
   HRESULT hr;
   LPMAPIFORMCONTAINER formcontainer = NULL;
-  static char const *forms[] = 
+  static char const *forms[] =
     {
       "gpgol",
       "gpgol-ms",
@@ -730,11 +730,11 @@ install_forms (void)
     {
     case LANG_ENGLISH: langsuffix = "en"; break;
     case LANG_GERMAN:  langsuffix = "de"; break;
-    default: 
+    default:
       log_debug ("%s:%s: No forms available for primary language %d\n",
                  SRCNAME, __func__, (int)langid);
       /* Don't try again.  */
-      opt.forms_revision = SVN_REVISION;
+      opt.forms_revision = GPGOL_FORMS_REVISION;
       write_options ();
       return;
     }
@@ -776,7 +776,7 @@ install_forms (void)
 
   if (!any_error)
     {
-      opt.forms_revision = SVN_REVISION;
+      opt.forms_revision = GPGOL_FORMS_REVISION;
       write_options ();
     }
 }
@@ -815,7 +815,7 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
           /* Fixme: Register the event sink object somewhere.  */
           disp->Release ();
         }
-      
+
       /* It seems that when installing this sink the first explorer
          has already been created and thus we don't see a NewInspector
          event.  Thus we create the controls direct.  */
@@ -838,10 +838,10 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
           /* Fixme: Register the event sink object somewhere.  */
           disp->Release ();
         }
-      
+
       rootobj->Release ();
     }
-  
+
   log_debug ("%s:%s: Leave", SRCNAME, __func__);
 }
 
@@ -856,7 +856,7 @@ get_eecb_object (LPEXCHEXTCALLBACK eecb)
   LPUNKNOWN pObj = NULL;
   LPDISPATCH pDisp = NULL;
   LPDISPATCH result = NULL;
-  
+
   hr = eecb->QueryInterface (IID_IOutlookExtCallback, (LPVOID*)&pCb);
   if (hr == S_OK && pCb)
     {

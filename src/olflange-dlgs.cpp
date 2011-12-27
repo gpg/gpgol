@@ -1,18 +1,18 @@
 /* olflange-dlgs.cpp - New dialogs for Outlook.
  *	Copyright (C) 2004, 2005, 2006, 2007, 2008 g10 Code GmbH
- * 
+ *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -62,30 +62,30 @@ set_labels (HWND dlg)
   for (i=0; labels[i].itemid; i++)
     SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
 
-}  
-    
+}
+
 
 /* GPGOptionsDlgProc -
    Handles the notifications sent for managing the options property page. */
-bool 
+bool
 GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  BOOL bMsgResult = FALSE;    
+  BOOL bMsgResult = FALSE;
   static LPNMHDR pnmhdr;
 //   static BOOL openpgp_state = FALSE;
 //   static BOOL smime_state = FALSE;
-  
-  switch (uMsg) 
+
+  switch (uMsg)
     {
     case WM_INITDIALOG:
       {
 //         openpgp_state = (opt.default_protocol == PROTOCOL_OPENPGP);
 //         smime_state = (opt.default_protocol == PROTOCOL_SMIME);
-        
-        EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
+
+        EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT),
                       !!opt.enable_smime);
         set_labels (hDlg);
-        ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS), 
+        ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
                     opt.enable_debug? SW_SHOW : SW_HIDE);
       }
       return TRUE;
@@ -97,7 +97,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         RECT rect_banner = {0,0,0,0};
         RECT rect_dlg = {0,0,0,0};
         HWND bitmap;
-        
+
         GetWindowRect (hDlg, &rect_dlg);
         bitmap = GetDlgItem (hDlg, IDC_G10CODE_STRING);
         if (bitmap)
@@ -107,13 +107,13 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         rect_banner.right  -= rect_dlg.left;
         rect_banner.top    -= rect_dlg.top;
         rect_banner.bottom -= rect_dlg.top;
-        
+
         if (x >= rect_banner.left && x <= rect_banner.right
             && y >= rect_banner.top && y <= rect_banner.bottom)
           {
             ShellExecute (NULL, "open",
                           "http://www.g10code.com/p-gpgol.html",
-                          NULL, NULL, SW_SHOWNORMAL);	
+                          NULL, NULL, SW_SHOWNORMAL);
           }
       }
       break;
@@ -135,14 +135,14 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    }
 	}
       if (HIWORD (wParam) == BN_CLICKED &&
-	  LOWORD (wParam) == IDC_ENABLE_SMIME) 
+	  LOWORD (wParam) == IDC_ENABLE_SMIME)
 	{
 	  opt.enable_smime = !opt.enable_smime;
-	  EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT), 
+	  EnableWindow (GetDlgItem (hDlg, IDC_SMIME_DEFAULT),
                         opt.enable_smime);
 	}
 //       if (HIWORD (wParam) == BN_CLICKED &&
-// 	  LOWORD (wParam) == IDC_OPENPGP_DEFAULT) 
+// 	  LOWORD (wParam) == IDC_OPENPGP_DEFAULT)
 // 	{
 // 	  openpgp_state = !openpgp_state;
 //           if (openpgp_state)
@@ -152,7 +152,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //             }
 // 	}
 //       if (HIWORD (wParam) == BN_CLICKED &&
-// 	  LOWORD (wParam) == IDC_SMIME_DEFAULT) 
+// 	  LOWORD (wParam) == IDC_SMIME_DEFAULT)
 // 	{
 // 	  smime_state = !smime_state;
 //           if (smime_state)
@@ -166,28 +166,28 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       else if (LOWORD (wParam) == IDC_GPG_CONF)
         engine_start_confdialog (hDlg);
       break;
-	
+
     case WM_NOTIFY:
       pnmhdr = ((LPNMHDR) lParam);
-      switch (pnmhdr->code) 
+      switch (pnmhdr->code)
         {
 	case PSN_KILLACTIVE:
           bMsgResult = FALSE;  /*(Allow this page to receive PSN_APPLY. */
           break;
 
-	case PSN_SETACTIVE: 
+	case PSN_SETACTIVE:
           SendDlgItemMessage (hDlg, IDC_ENABLE_SMIME, BM_SETCHECK,
                               !!opt.enable_smime, 0L);
-          
-          SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK, 
+
+          SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK,
                               !!opt.encrypt_default, 0L);
-          SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK, 
+          SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK,
                               !!opt.sign_default, 0L);
-//           SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK, 
+//           SendDlgItemMessage (hDlg, IDC_OPENPGP_DEFAULT, BM_SETCHECK,
 //                                 openpgp_state, 0L);
-//           SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK, 
+//           SendDlgItemMessage (hDlg, IDC_SMIME_DEFAULT, BM_SETCHECK,
 //                               smime_state, 0L);
-          
+
 //           SendDlgItemMessage (hDlg, IDC_PREVIEW_DECRYPT, BM_SETCHECK,
 //                               !!opt.preview_decrypt, 0L);
           SendDlgItemMessage (hDlg, IDC_PREFER_HTML, BM_SETCHECK,
@@ -195,44 +195,44 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           SendDlgItemMessage (hDlg, IDC_BODY_AS_ATTACHMENT, BM_SETCHECK,
 				!!opt.body_as_attachment, 0L);
           bMsgResult = FALSE;  /* Accepts activation. */
-          break; 
-		
-	case PSN_APPLY:	
+          break;
+
+	case PSN_APPLY:
           opt.enable_smime = !!SendDlgItemMessage
             (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
-          
+
           opt.encrypt_default = !!SendDlgItemMessage
             (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
-          opt.sign_default = !!SendDlgItemMessage 
+          opt.sign_default = !!SendDlgItemMessage
             (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
-          
+
 //           if (openpgp_state)
 //             opt.default_protocol = PROTOCOL_OPENPGP;
 //           else if (smime_state && opt.enable_smime)
 //             opt.default_protocol = PROTOCOL_SMIME;
 //           else
             opt.default_protocol = PROTOCOL_UNKNOWN;
-            
+
 //           opt.preview_decrypt = !!SendDlgItemMessage
 //             (hDlg, IDC_PREVIEW_DECRYPT, BM_GETCHECK, 0, 0L);
           opt.prefer_html = !!SendDlgItemMessage
             (hDlg, IDC_PREFER_HTML, BM_GETCHECK, 0, 0L);
           opt.body_as_attachment = !!SendDlgItemMessage
             (hDlg, IDC_BODY_AS_ATTACHMENT, BM_GETCHECK, 0, 0L);
-          
+
           /* Make sure that no new-version-installed warning will pop
              up on the next start.  Not really needed as the warning
              dialog set this too, but it doesn't harm to do it again. */
-          opt.svn_revision = SVN_REVISION;
-          
+          opt.git_commit = GIT_COMMIT;
+
           write_options ();
           bMsgResult = PSNRET_NOERROR;
-          break; 
-          
-	case PSN_HELP: 
+          break;
+
+	case PSN_HELP:
           {
             const char cpynotice[] = "Copyright (C) 2009 g10 Code GmbH";
-            const char en_notice[] = 
+            const char en_notice[] =
       "GpgOL is a plugin for Outlook to allow encryption and\n"
       "signing of messages using the OpenPGP and S/MIME standard.\n"
       "It uses the GnuPG software (http://www.gnupg.org). Latest\n"
@@ -258,7 +258,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             char header[300];
             char *buffer;
             size_t nbuffer;
-            
+
             snprintf (header, sizeof header, _("This is GpgOL version %s"),
                       PACKAGE_VERSION);
             notice = _(notice_key);
@@ -272,11 +272,11 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             xfree (buffer);
           }
           bMsgResult = TRUE;
-          break; 
-          
+          break;
+
 	default:
           bMsgResult = FALSE;
-          break;	    
+          break;
 	}
 
       SetWindowLong (hDlg, DWL_MSGRESULT, bMsgResult);
@@ -284,7 +284,7 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     default:
       bMsgResult = FALSE;
-      break;		
+      break;
     }
 
   return bMsgResult;

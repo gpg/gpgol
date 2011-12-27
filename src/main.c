@@ -5,9 +5,9 @@
  *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 
+ * as published by the Free Software Foundation; either version 2.1
  * of the License, or (at your option) any later version.
- *  
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -74,7 +74,7 @@ static int
 initialize_main (void)
 {
   SECURITY_ATTRIBUTES sa;
-  
+
   memset (&sa, 0, sizeof sa);
   sa.bInheritHandle = FALSE;
   sa.lpSecurityDescriptor = NULL;
@@ -86,15 +86,15 @@ initialize_main (void)
 /* Return nbytes of cryptographic strong random.  Caller needs to free
    the returned buffer.  */
 static char *
-get_crypt_random (size_t nbytes) 
+get_crypt_random (size_t nbytes)
 {
   HCRYPTPROV prov;
   char *buffer;
 
-  if (!CryptAcquireContext (&prov, NULL, NULL, PROV_RSA_FULL, 
+  if (!CryptAcquireContext (&prov, NULL, NULL, PROV_RSA_FULL,
                             (CRYPT_VERIFYCONTEXT|CRYPT_SILENT)) )
     return NULL;
-  
+
   buffer = xmalloc (nbytes);
   if (!CryptGenRandom (prov, nbytes, buffer))
     {
@@ -186,7 +186,7 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     {
       gpg_err_deinit (0);
     }
-  
+
   return TRUE;
 }
 
@@ -218,7 +218,7 @@ create_initialization_vector (size_t nbytes)
 
 
 /* Acquire the mutex for logging.  Returns 0 on success. */
-static int 
+static int
 lock_log (void)
 {
   int code = WaitForSingleObject (log_mutex, INFINITE);
@@ -245,7 +245,7 @@ do_log (const char *fmt, va_list a, int w32err, int err,
 
   if (lock_log ())
     return;
-  
+
   if (!logfp)
     logfp = fopen (logfile, "a+");
   if (!logfp)
@@ -253,19 +253,19 @@ do_log (const char *fmt, va_list a, int w32err, int err,
       unlock_log ();
       return;
     }
-  
-  fprintf (logfp, "%05lu/%lu/", 
+
+  fprintf (logfp, "%05lu/%lu/",
            ((unsigned long)GetTickCount () % 100000),
            (unsigned long)GetCurrentThreadId ());
   if (err == 1)
     fputs ("ERROR/", logfp);
   vfprintf (logfp, fmt, a);
-  if (w32err) 
+  if (w32err)
     {
       char tmpbuf[256];
-      
-      FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, w32err, 
-                     MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT), 
+
+      FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, w32err,
+                     MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
                      tmpbuf, sizeof (tmpbuf)-1, NULL);
       fputs (": ", logfp);
       if (*tmpbuf && tmpbuf[strlen (tmpbuf)-1] == '\n')
@@ -290,61 +290,61 @@ do_log (const char *fmt, va_list a, int w32err, int err,
 }
 
 
-void 
+void
 log_debug (const char *fmt, ...)
 {
   va_list a;
-  
+
   va_start (a, fmt);
   do_log (fmt, a, 0, 0, NULL, 0);
   va_end (a);
 }
 
-void 
+void
 log_error (const char *fmt, ...)
 {
   va_list a;
-  
+
   va_start (a, fmt);
   do_log (fmt, a, 0, 1, NULL, 0);
   va_end (a);
 }
 
-void 
+void
 log_vdebug (const char *fmt, va_list a)
 {
   do_log (fmt, a, 0, 0, NULL, 0);
 }
 
 
-void 
+void
 log_debug_w32 (int w32err, const char *fmt, ...)
 {
   va_list a;
 
   if (w32err == -1)
     w32err = GetLastError ();
-  
+
   va_start (a, fmt);
   do_log (fmt, a, w32err, 0, NULL, 0);
   va_end (a);
 }
 
-void 
+void
 log_error_w32 (int w32err, const char *fmt, ...)
 {
   va_list a;
 
   if (w32err == -1)
     w32err = GetLastError ();
-  
+
   va_start (a, fmt);
   do_log (fmt, a, w32err, 1, NULL, 0);
   va_end (a);
 }
 
 
-void 
+void
 log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
 {
   va_list a;
@@ -370,7 +370,7 @@ do_log_window_info (HWND window, int level)
   GetWindowThreadProcessId (window, &pid);
   if (pid != GetCurrentProcessId ())
     return;
- 
+
   memset (buf, 0, sizeof (buf));
   GetWindowText (window, buf, sizeof (buf)-1);
   nname = GetClassName (window, name, sizeof (name)-1);
@@ -399,7 +399,7 @@ do_log_window_hierarchy (HWND parent, int level)
     {
       do_log_window_info (child, level);
       do_log_window_hierarchy (child, level+1);
-      child = GetNextWindow (child, GW_HWNDNEXT);	
+      child = GetNextWindow (child, GW_HWNDNEXT);
     }
 
   return NULL;
@@ -448,7 +448,7 @@ set_log_file (const char *name)
           logfp = NULL;
         }
       xfree (logfile);
-      if (!name || *name == '\"' || !*name) 
+      if (!name || *name == '\"' || !*name)
         logfile = NULL;
       else
         logfile = xstrdup (name);
@@ -489,7 +489,7 @@ get_locale_dir (void)
 				      "Install Directory");
   if (!instdir)
     return NULL;
-  
+
   /* Build the key: "<instdir>/share/locale".  */
 #define SLDIR "\\share\\locale"
   dname = malloc (strlen (instdir) + strlen (SLDIR) + 1);
@@ -502,9 +502,9 @@ get_locale_dir (void)
   strcpy (p, instdir);
   p += strlen (instdir);
   strcpy (p, SLDIR);
-  
+
   free (instdir);
-  
+
   return dname;
 }
 
@@ -528,7 +528,7 @@ read_options (void)
   load_extension_value ("logFile", &val);
   set_log_file (val);
   xfree (val); val = NULL;
-  
+
   /* Parse the debug flags.  */
   load_extension_value ("enableDebug", &val);
   opt.enable_debug = 0;
@@ -597,7 +597,7 @@ read_options (void)
   load_extension_value ("enableSmime", &val);
   opt.enable_smime = (!val || atoi (val));
   xfree (val); val = NULL;
-  
+
 /*   load_extension_value ("defaultProtocol", &val); */
 /*   switch ((!val || *val == '0')? 0 : atol (val)) */
 /*     { */
@@ -643,8 +643,8 @@ read_options (void)
   opt.prefer_html = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
-  load_extension_value ("svnRevision", &val);
-  opt.svn_revision = val? atol (val) : 0;
+  load_extension_value ("gitCommit", &val);
+  opt.git_commit = val? strtoul (val, NULL, 16) : 0;
   xfree (val); val = NULL;
 
   load_extension_value ("formsRevision", &val);
@@ -690,7 +690,7 @@ read_options (void)
   if (!warnings_shown)
     {
       char tmpbuf[512];
-          
+
       warnings_shown = 1;
       if (val && *val)
         {
@@ -714,7 +714,7 @@ read_options (void)
 int
 write_options (void)
 {
-  struct 
+  struct
   {
     const char *name;
     int  mode;
@@ -732,7 +732,7 @@ write_options (void)
     {"defaultKey",               2, 0, opt.default_key},
     {"enableDefaultKey",         0, opt.enable_default_key},
     {"preferHtml",               0, opt.prefer_html},
-    {"svnRevision",              1, opt.svn_revision},
+    {"gitCommit",                1, opt.git_commit},
     {"formsRevision",            1, opt.forms_revision},
     {"announceNumber",           1, opt.announce_number},
     {"bodyAsAttachment",         0, opt.body_as_attachment},
@@ -742,7 +742,7 @@ write_options (void)
   int rc, i;
   const char *string;
 
-  for (i=0; table[i].name; i++) 
+  for (i=0; table[i].name; i++)
     {
       switch (table[i].mode)
         {
@@ -785,6 +785,6 @@ write_options (void)
       if (rc)
         log_error ("error storing option `%s': rc = %d\n", table[i].name, rc);
     }
-  
+
   return 0;
 }
