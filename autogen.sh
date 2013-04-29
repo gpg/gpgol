@@ -62,7 +62,10 @@ if test "$1" = "--build-w32"; then
 
     # See whether we have the Debian cross compiler package or the
     # old mingw32/cpd system
-    if i586-mingw32msvc-gcc --version >/dev/null 2>&1 ; then
+    if i686-w64-mingw32-gcc --version >/dev/null 2>&1 ; then
+        host=i686-w64-mingw32
+        crossbindir="crossbindir-is-not-anymore-needed"
+    elif i586-mingw32msvc-gcc --version >/dev/null 2>&1 ; then
         host=i586-mingw32msvc
         crossbindir=/usr/$host/bin
     else
@@ -88,8 +91,8 @@ if test "$1" = "--build-w32"; then
         fi
     fi
 
-    ./configure --enable-maintainer-mode --prefix=${w32root}  \
-             --host=i586-mingw32msvc --build=${build} \
+    $tsdir/configure --enable-maintainer-mode --prefix=${w32root}  \
+             --host=${host} --build=${build} \
              --with-gpg-error-prefix=${w32root} \
 	     --with-gpgme-prefix=${w32root} \
 	     --with-libassuan-prefix=${w32root}

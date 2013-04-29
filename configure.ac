@@ -16,8 +16,8 @@ min_automake_version="1.9.4"
 # Remember to change the version number immediately *after* a release.
 # Set my_issvn to "yes" for non-released code.  Remember to run an
 # "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [1.1.3])
-m4_define([my_isgit], [no])
+m4_define([my_version], [1.1.4])
+m4_define([my_isgit], [yes])
 
 m4_define([git_commit], m4_esyscmd([git branch -v 2>/dev/null \
           | awk '/^\* / {printf "%s",$3}']))

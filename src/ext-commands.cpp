@@ -21,7 +21,11 @@
 #include <config.h>
 #endif
 
-#define _WIN32_IE 0x400 /* Need TBIF_COMMAND et al.  */
+/* Need TBIF_COMMAND et al. (0x0400 would be sufficient but elsewhere
+   we require 0x600 anyway). */
+#ifndef _WIN32_IE
+# define _WIN32_IE 0x0600
+#endif
 #include <windows.h>
 
 #include "mymapi.h"

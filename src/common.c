@@ -18,6 +18,7 @@
  */
 
 #include <config.h>
+#define OEMRESOURCE    /* Required for OBM_CHECKBOXES.  */
 #include <windows.h>
 #include <shlobj.h>
 #ifndef CSIDL_APPDATA
