@@ -437,6 +437,7 @@ GpgolRibbonExtender::decryptAttachments(LPRIBBONCONTROL ctrl)
 {
   BSTR idStr = NULL;
   LPDISPATCH context = NULL;
+  LPDISPATCH attachmentSelection;
   int attachmentCount;
   HRESULT hr = 0;
   int i = 0;
@@ -463,10 +464,18 @@ GpgolRibbonExtender::decryptAttachments(LPRIBBONCONTROL ctrl)
       SysFreeString (idStr);
     }
 
-  attachmentCount = get_oom_int (context, "Count");
-  log_debug ("Count: %i ", attachmentCount);
+  attachmentSelection = get_oom_object (context, "AttachmentSelection");
+  if (!attachmentSelection)
+    {
+      /* We can be called from a context menu, in that case we
+         directly have an AttachmentSelection context. Otherwise
+         we have an Explorer context with an Attachment Selection property. */
+      attachmentSelection = context;
+    }
 
-  actExplorer = (LPOLEWINDOW) get_oom_object(context,
+  attachmentCount = get_oom_int (attachmentSelection, "Count");
+
+  actExplorer = (LPOLEWINDOW) get_oom_object(attachmentSelection,
                                              "Application.ActiveExplorer");
   if (actExplorer)
     actExplorer->GetWindow (&curWindow);
@@ -491,7 +500,15 @@ GpgolRibbonExtender::decryptAttachments(LPRIBBONCONTROL ctrl)
       DISPID saveID;
 
       snprintf (buf, sizeof (buf), "Item(%i)", i);
-      attachmentObj = get_oom_object (context, buf);
+      attachmentObj = get_oom_object (attachmentSelection, buf);
+      if (!attachmentObj)
+        {
+          /* Should be impossible */
+          filenames[i-1] = NULL;
+          log_error ("%s:%s: could not find Item %i;",
+                     SRCNAME, __func__, i);
+          break;
+        }
       filename = get_oom_string (attachmentObj, "FileName");
 
       saveID = lookup_oom_dispid (attachmentObj, "SaveAsFile");
@@ -526,7 +543,11 @@ GpgolRibbonExtender::decryptAttachments(LPRIBBONCONTROL ctrl)
   for (i = 0; i < attachmentCount; i++)
     xfree (filenames[i]);
 
-  return err ? E_FAIL : S_OK;
+  log_debug ("%s:%s: Leaving. Err: %i",
+             SRCNAME, __func__, err);
+
+  return S_OK; /* If we return an error outlook will show that our
+                  callback function failed in an ugly window. */
 }
 
 STDMETHODIMP
@@ -592,6 +613,14 @@ loadXMLResource (int id)
   return SysAllocString (reinterpret_cast<OLECHAR*>(xmlData));
 }
 
+/* Returns the XML markup for the various RibbonID's
+
+   The custom ui syntax is documented at:
+   http://msdn.microsoft.com/en-us/library/dd926139%28v=office.12%29.aspx
+
+   The outlook specific elements are documented at:
+   http://msdn.microsoft.com/en-us/library/office/ee692172%28v=office.14%29.aspx
+*/
 STDMETHODIMP
 GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
@@ -620,12 +649,25 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"     </group>"
         L"    </tab>"
         L"   </tabs>"
+        L"  <contextualTabs>"
+        L"    <tabSet idMso=\"TabSetAttachments\">"
+        L"        <tab idMso=\"TabAttachments\">"
+        L"            <group label=\"GnuPG\" id=\"gnupgLabel\">"
+        L"                <button id=\"gpgol_contextual_decrypt\""
+        L"                    size=\"large\""
+        L"                    label=\"Save and decrypt\""
+        L"                    imageMso=\"HappyFace\""
+        L"                    onAction=\"AttachmentDecryptCallback\" />"
+        L"            </group>"
+        L"        </tab>"
+        L"    </tabSet>"
+        L"  </contextualTabs>"
         L" </ribbon>"
         L" <contextMenus>"
         L" <contextMenu idMso=\"ContextMenuAttachments\">"
-            L"<button id=\"gpgol_decrypt\""
-                L" label=\"Save and decrypt\""
-                L" onAction=\"AttachmentDecryptCallback\"/>"
+        L"   <button id=\"gpgol_decrypt\""
+        L"    label=\"Save and decrypt\""
+        L"    onAction=\"AttachmentDecryptCallback\"/>"
         L" </contextMenu>"
         L" </contextMenus>"
         L"</customUI>"
