@@ -79,7 +79,8 @@ gpgol_SOURCES = \
 	inspectors.cpp inspectors.h \
 	mailitem.cpp mailitem.h \
 	cmdbarcontrols.cpp cmdbarcontrols.h \
-	w32-gettext.c w32-gettext.h 
+	w32-gettext.c w32-gettext.h \
+	gpgoladdin.cpp gpgoladdin.h
 
 
 #treeview_SOURCES = treeview.c
@@ -110,7 +111,8 @@ clean-local:
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgme -lassuan -lgpg-error \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
-        -lole32 -loleaut32 -lws2_32 -ladvapi32
+	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
+	-luuid
 
 resource.o: resource.rc versioninfo.rc dialogs.rc 
 

@@ -6,6 +6,8 @@ EXPORTS
     ExchEntryPoint = ExchEntryPoint@0            @1
     DllRegisterServer = DllRegisterServer@0      @2	PRIVATE
     DllUnregisterServer = DllUnregisterServer@0  @3	PRIVATE
+    DllGetClassObject = DllGetClassObject@12     @4 PRIVATE
+    DllCanUnloadNow = DllCanUnloadNow@0          @5 PRIVATE
 
     gpgol_check_version = gpgol_check_version@4     @11
     gpgol_message_revert = gpgol_message_revert@12  @12

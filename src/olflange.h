@@ -20,11 +20,33 @@
 #ifndef OLFLANGE_H
 #define OLFLANGE_H
 
+#include "mymapi.h"
+#include "mymapitags.h"
+#include "myexchext.h"
 #include "mapihelp.h"
+
+#include "olflange-def.h"
+
+/* The GUID for this plugin.  */
+#define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
+DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
+            0xc6, 0x87, 0x00, 0x0d, 0x60, 0x80, 0xe7, 0x35);
+
+/* For documentation: The GUID used for our custom properties:
+   {31805ab8-3e92-11dc-879c-00061b031004}
+ */
+
+/* The ProgID used by us */
+#define GPGOL_PROGID "GNU.GpgOL"
+/* User friendly add in name */
+#define GPGOL_PRETTY "GpgOL - The GnuPG Outlook Plugin"
+/* Short description of the addin */
+#define GPGOL_DESCRIPTION "Cryptography for Outlook"
+
 
 
 /*
- GpgolExt 
+ GpgolExt
 
  The GpgolExt class is the main exchange extension class. The other 
  extensions will be created in the constructor of this class.
@@ -71,5 +93,10 @@ EXTERN_C const char * __stdcall gpgol_check_version (const char *req_version);
 
 EXTERN_C int get_ol_main_version (void);
 
+void install_sinks (LPEXCHEXTCALLBACK eecb);
+
+void install_forms (void);
+
+LPDISPATCH get_eecb_object (LPEXCHEXTCALLBACK eecb);
 
 #endif /*OLFLANGE_H*/
