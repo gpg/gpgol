@@ -999,4 +999,51 @@ parse_tlv (char const **buffer, size_t *size, tlvinfo_t *ti)
   return 0;
 }
 
+/* Percent-escape the string STR by replacing colons with '%3a'.  If
+   EXTRA is not NULL all characters in it are also escaped. */
+char *
+percent_escape (const char *str, const char *extra)
+{
+  int i, j;
+  char *ptr;
 
+  if (!str)
+    return NULL;
+
+  for (i=j=0; str[i]; i++)
+    if (str[i] == ':' || str[i] == '%' || (extra && strchr (extra, str[i])))
+      j++;
+  ptr = (char *) malloc (i + 2 * j + 1);
+  i = 0;
+  while (*str)
+    {
+      /* FIXME: Work around a bug in Kleo.  */
+      if (*str == ':')
+        {
+          ptr[i++] = '%';
+          ptr[i++] = '3';
+          ptr[i++] = 'a';
+        }
+      else
+        {
+          if (*str == '%')
+            {
+              ptr[i++] = '%';
+              ptr[i++] = '2';
+              ptr[i++] = '5';
+            }
+          else if (extra && strchr (extra, *str))
+            {
+              ptr[i++] = '%';
+              ptr[i++] = tohex_lower ((*str >> 4) & 15);
+              ptr[i++] = tohex_lower (*str & 15);
+            }
+          else
+            ptr[i++] = *str;
+        }
+      str++;
+    }
+  ptr[i] = '\0';
+
+  return ptr;
+}

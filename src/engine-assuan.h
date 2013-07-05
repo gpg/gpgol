@@ -64,6 +64,8 @@ int op_assuan_start_keymanager (void *hwnd);
 
 int op_assuan_start_confdialog (void *hwnd);
 
+int op_assuan_start_decrypt_files (void *hwnd, char **filenames);
+
 
 #ifdef __cplusplus
 }

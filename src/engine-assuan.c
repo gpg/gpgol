@@ -33,6 +33,7 @@
 #include "common.h"
 #include "engine.h"
 #include "engine-assuan.h"
+#include "util.h"
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -2202,6 +2203,38 @@ op_assuan_start_confdialog (void *hwnd)
   if (!err)
     {
       err = assuan_transact (ctx, "START_CONFDIALOG",
+                             NULL, NULL, NULL, NULL, NULL, NULL);
+      assuan_release (ctx);
+    }
+  return err;
+}
+
+/* Send a decrypt files command to the server.
+   Filenames should be a null terminated array of char*
+*/
+int
+op_assuan_start_decrypt_files (void *hwnd, char **filenames)
+{
+  gpg_error_t err;
+  assuan_context_t ctx;
+  ULONG cmdid;
+  pid_t pid;
+  char line[1024];
+
+  err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  if (!err)
+    {
+      while (*filenames != NULL)
+        {
+          snprintf(line, sizeof(line), "FILE %s",
+                   percent_escape(*filenames, NULL));
+          err = assuan_transact (ctx, line,
+                                 NULL, NULL, NULL, NULL, NULL, NULL);
+          if (err)
+            return err;
+          filenames++;
+        }
+      err = assuan_transact (ctx, "DECRYPT_FILES",
                              NULL, NULL, NULL, NULL, NULL, NULL);
       assuan_release (ctx);
     }
