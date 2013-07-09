@@ -2234,7 +2234,7 @@ op_assuan_start_decrypt_files (void *hwnd, char **filenames)
             return err;
           filenames++;
         }
-      err = assuan_transact (ctx, "DECRYPT_FILES",
+      err = assuan_transact (ctx, "DECRYPT_FILES --nohup",
                              NULL, NULL, NULL, NULL, NULL, NULL);
       assuan_release (ctx);
     }
