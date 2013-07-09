@@ -105,6 +105,26 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
   return dispid;
 }
 
+void
+dump_excepinfo (EXCEPINFO err)
+{
+  log_debug ("%s:%s: Dumping exception: \n"
+             "              wCode: 0x%x\n"
+             "              wReserved: 0x%x\n"
+             "              desc: %S\n"
+             "              help: %S\n"
+             "              helpCtx: 0x%x\n"
+             "              deferredFill: 0x%x\n"
+             "              scode: 0x%x\n"
+             "%s:%s: Dump done." ,
+             SRCNAME, __func__, (unsigned int) err.wCode,
+             (unsigned int) err.wReserved,
+             err.bstrSource, err.bstrDescription, err.bstrHelpFile,
+             (unsigned int) err.dwHelpContext,
+             (unsigned int) err.pfnDeferredFillIn,
+             (unsigned int) err.scode,
+             SRCNAME, __func__);
+}
 
 /* Return the OOM object's IDispatch interface described by FULLNAME.
    Returns NULL if not found.  PSTART is the object where the search
@@ -135,6 +155,8 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
       DISPID dispid;
       char *p, *pend;
       int dispmethod;
+      unsigned int argErr = 0;
+      EXCEPINFO execpinfo;
 
       if (pDisp)
         {
@@ -257,14 +279,16 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
       VariantInit (&vtResult);
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                           dispmethod, &dispparams,
-                          &vtResult, NULL, NULL);
+                          &vtResult, &execpinfo, &argErr);
       if (parmstr)
         SysFreeString (parmstr);
       if (hr != S_OK || vtResult.vt != VT_DISPATCH)
         {
-          log_debug ("%s:%s:       error: '%s' p=%p vt=%d hr=0x%x",
+          log_debug ("%s:%s:       error: '%s' p=%p vt=%d hr=0x%x argErr=0x%x",
                      SRCNAME, __func__,
-                     name, vtResult.pdispVal, vtResult.vt, (unsigned int)hr);
+                     name, vtResult.pdispVal, vtResult.vt, (unsigned int)hr,
+                     (unsigned int)argErr);
+          dump_excepinfo (execpinfo);
           VariantClear (&vtResult);
           if (parmstr)
             SysFreeString (parmstr);
