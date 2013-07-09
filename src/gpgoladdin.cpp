@@ -44,15 +44,11 @@
 #include "olflange.h"
 
 #include "gpgol-ids.h"
+#include "ribbon-callbacks.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
-
-/* Id's of our callbacks */
-#define ID_CMD_DECRYPT_VERIFY   1
-#define ID_CMD_DECRYPT          2
-#define ID_CMD_VERIFY           3
 
 ULONG addinLocks = 0;
 
@@ -417,10 +413,17 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
          different parameters and just match the name (the first element)
          and we give it one of our own dispIds's that are later handled in
          the invoke part */
-      if (!wcscmp (rgszNames[i], L"AttachmentDecryptCallback"))
+      if (!wcscmp (rgszNames[i], L"attachmentDecryptCallback"))
         {
           found = true;
           rgDispId[i] = ID_CMD_DECRYPT;
+          break;
+        }
+      if (!wcscmp (rgszNames[i], L"encryptSelection"))
+        {
+          found = true;
+          rgDispId[i] = ID_CMD_ENCRYPT_SELECTION;
+          break;
         }
     }
 
@@ -430,124 +433,6 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
     }
 
   return found ? S_OK : E_NOINTERFACE;
-}
-
-HRESULT
-GpgolRibbonExtender::decryptAttachments(LPRIBBONCONTROL ctrl)
-{
-  BSTR idStr = NULL;
-  LPDISPATCH context = NULL;
-  LPDISPATCH attachmentSelection;
-  int attachmentCount;
-  HRESULT hr = 0;
-  int i = 0;
-  HWND curWindow;
-  LPOLEWINDOW actExplorer;
-  int err;
-
-  /* We got the vtable right so we can save us the invoke and
-     property lookup hassle and call it directly */
-  hr = ctrl->get_Id (&idStr);
-  hr |= ctrl->get_Context (&context);
-
-  if (FAILED(hr))
-    {
-      log_debug ("%s:%s:Context / ID lookup failed. hr: %x",
-                 SRCNAME, __func__, (unsigned int) hr);
-      SysFreeString (idStr);
-      return E_FAIL;
-    }
-  else
-    {
-      log_debug ("%s:%s: contextId: %S, contextObj: %s",
-                 SRCNAME, __func__, idStr, get_object_name (context));
-      SysFreeString (idStr);
-    }
-
-  attachmentSelection = get_oom_object (context, "AttachmentSelection");
-  if (!attachmentSelection)
-    {
-      /* We can be called from a context menu, in that case we
-         directly have an AttachmentSelection context. Otherwise
-         we have an Explorer context with an Attachment Selection property. */
-      attachmentSelection = context;
-    }
-
-  attachmentCount = get_oom_int (attachmentSelection, "Count");
-
-  actExplorer = (LPOLEWINDOW) get_oom_object(attachmentSelection,
-                                             "Application.ActiveExplorer");
-  if (actExplorer)
-    actExplorer->GetWindow (&curWindow);
-  else
-    {
-      log_debug ("%s:%s: Could not find active window",
-                 SRCNAME, __func__);
-      curWindow = NULL;
-    }
-
-  char *filenames[attachmentCount + 1];
-  filenames[attachmentCount] = NULL;
-  /* Yes the items start at 1! */
-  for (i = 1; i <= attachmentCount; i++)
-    {
-      char buf[16];
-      char *filename;
-      wchar_t *wcsOutFilename;
-      DISPPARAMS saveParams;
-      VARIANT aVariant[1];
-      LPDISPATCH attachmentObj;
-      DISPID saveID;
-
-      snprintf (buf, sizeof (buf), "Item(%i)", i);
-      attachmentObj = get_oom_object (attachmentSelection, buf);
-      if (!attachmentObj)
-        {
-          /* Should be impossible */
-          filenames[i-1] = NULL;
-          log_error ("%s:%s: could not find Item %i;",
-                     SRCNAME, __func__, i);
-          break;
-        }
-      filename = get_oom_string (attachmentObj, "FileName");
-
-      saveID = lookup_oom_dispid (attachmentObj, "SaveAsFile");
-
-      saveParams.rgvarg = aVariant;
-      saveParams.rgvarg[0].vt = VT_BSTR;
-      filenames[i-1] = get_save_filename (NULL, filename);
-      xfree (filename);
-
-      wcsOutFilename = utf8_to_wchar2 (filenames[i-1],
-                                       strlen(filenames[i-1]));
-      saveParams.rgvarg[0].bstrVal = SysAllocString (wcsOutFilename);
-      saveParams.cArgs = 1;
-      saveParams.cNamedArgs = 0;
-
-      hr = attachmentObj->Invoke (saveID, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                                  DISPATCH_METHOD, &saveParams,
-                                  NULL, NULL, NULL);
-      SysFreeString (saveParams.rgvarg[0].bstrVal);
-      if (FAILED(hr))
-        {
-          int j;
-          log_debug ("%s:%s: Saving to file failed. hr: %x",
-                     SRCNAME, __func__, (unsigned int) hr);
-          for (j = 0; j < i; j++)
-            xfree (filenames[j]);
-          return hr;
-        }
-    }
-  err = op_assuan_start_decrypt_files (curWindow, filenames);
-
-  for (i = 0; i < attachmentCount; i++)
-    xfree (filenames[i]);
-
-  log_debug ("%s:%s: Leaving. Err: %i",
-             SRCNAME, __func__, err);
-
-  return S_OK; /* If we return an error outlook will show that our
-                  callback function failed in an ugly window. */
 }
 
 STDMETHODIMP
@@ -570,8 +455,9 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_CMD_DECRYPT:
         /* We can assume that this points to an implementation of
            IRibbonControl as we know the callback dispid. */
-        return decryptAttachments ((LPRIBBONCONTROL)
-                                   parms->rgvarg[0].pdispVal);
+        return decryptAttachments (parms->rgvarg[0].pdispVal);
+      case ID_CMD_ENCRYPT_SELECTION:
+        return encryptSelection (parms->rgvarg[0].pdispVal);
     }
 
   log_debug ("%s:%s: leave", SRCNAME, __func__);
@@ -624,15 +510,55 @@ loadXMLResource (int id)
 STDMETHODIMP
 GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
+  /* TODO use callback for label's and Icons, load xml from resource */
   log_debug ("%s:%s: GetCustomUI for id: %S", SRCNAME, __func__, RibbonID);
 
   if (!RibbonXml)
     return E_POINTER;
 
-  /*if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
-    {*/
+  if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
+    {
+      *RibbonXml = SysAllocString (
+        L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        L"<contextMenus>"
+        L"<contextMenu idMso=\"ContextMenuText\">"
+        L" <button id=\"encryptButton\""
+        L"         label=\"Encrypt Text\""
+        L"         onAction=\"encryptSelection\"/>"
+        L" </contextMenu>"
+        L"</contextMenus>"
+        L"</customUI>"
+/*
+        L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+L"<contextMenus>"
+L"    <contextMenu idMso=\"ContextMenuMailItem\">"
+L"        <button id=\"MyContextMenuMailItem\""
+L"            label=\"Encrypt selection\""
+L"            onAction=\"encryptSelection\"/>"
+L"    </contextMenu>"
+L"</contextMenus>"
+        L"</customUI>"*/
+      );
+    }
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
+    {
+      *RibbonXml = SysAllocString (
+        L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        L"<contextMenus>"
+        L"<contextMenu idMso=\"ContextMenuText\">"
+        L" <button id=\"encryptButton\""
+        L"         label=\"Encrypt Text\""
+        L"         onAction=\"encryptSelection\"/>"
+        L" </contextMenu>"
+        L"</contextMenus>"
+        L"</customUI>"
+      );
+
+    }
+
+  else /*if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer")) */
+    {
      // *RibbonXml = loadXMLResource (IDR_XML_EXPLORER);
-  /* TODO use callback for label's and Icons, load xml from resource */
       *RibbonXml = SysAllocString (
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         L" <ribbon>"
@@ -657,7 +583,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"                    size=\"large\""
         L"                    label=\"Save and decrypt\""
         L"                    imageMso=\"HappyFace\""
-        L"                    onAction=\"AttachmentDecryptCallback\" />"
+        L"                    onAction=\"attachmentDecryptCallback\" />"
         L"            </group>"
         L"        </tab>"
         L"    </tabSet>"
@@ -667,12 +593,12 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" <contextMenu idMso=\"ContextMenuAttachments\">"
         L"   <button id=\"gpgol_decrypt\""
         L"    label=\"Save and decrypt\""
-        L"    onAction=\"AttachmentDecryptCallback\"/>"
+        L"    onAction=\"attachmentDecryptCallback\"/>"
         L" </contextMenu>"
         L" </contextMenus>"
         L"</customUI>"
         );
-  /*  } */
+    }
 
   return S_OK;
 }

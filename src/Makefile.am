@@ -80,7 +80,8 @@ gpgol_SOURCES = \
 	mailitem.cpp mailitem.h \
 	cmdbarcontrols.cpp cmdbarcontrols.h \
 	w32-gettext.c w32-gettext.h \
-	gpgoladdin.cpp gpgoladdin.h
+	gpgoladdin.cpp gpgoladdin.h \
+	ribbon-callbacks.cpp ribbon-callbacks.h
 
 
 #treeview_SOURCES = treeview.c

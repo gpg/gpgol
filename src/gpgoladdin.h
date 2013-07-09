@@ -144,9 +144,6 @@ public:
 private:
   ULONG m_lRef;
 
-  /* Callback implementations */
-  HRESULT decryptAttachments (LPRIBBONCONTROL ctrl);
-
 };
 
 class GpgolAddin : public IDTExtensibility2
