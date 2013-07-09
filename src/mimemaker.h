@@ -26,12 +26,33 @@ extern "C" {
 #endif
 #endif
 
+/* The object we use instead of IStream.  It allows us to have a
+   callback method for output and thus for processing stuff
+   recursively.  */
+struct sink_s;
+typedef struct sink_s *sink_t;
+struct sink_s
+{
+  void *cb_data;
+  sink_t extrasink;
+  int (*writefnc)(sink_t sink, const void *data, size_t datalen);
+  unsigned long enc_counter; /* Used by write_buffer_for_cb.  */
+/*   struct { */
+/*     int idx; */
+/*     unsigned char inbuf[4]; */
+/*     int quads; */
+/*   } b64; */
+};
+
 int mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol);
 int mime_encrypt (LPMESSAGE message, HWND hwnd,
                   protocol_t protocol, char **recipients);
 int mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
                        protocol_t protocol, char **recipients);
-
+int sink_std_write (sink_t sink, const void *data, size_t datalen);
+int sink_encryption_write (sink_t encsink, const void *data, size_t datalen);
+int write_buffer_for_cb (void *opaque, const void *data, size_t datalen);
+int write_buffer (sink_t sink, const void *data, size_t datalen);
 
 #ifdef __cplusplus
 }
