@@ -50,6 +50,9 @@
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
 
+#define ICON_SIZE_LARGE  32
+#define ICON_SIZE_NORMAL 16
+
 ULONG addinLocks = 0;
 
 /* This is the main entry point for the addin
@@ -390,6 +393,16 @@ GpgolRibbonExtender::GetTypeInfo (UINT iTypeInfo, LCID lcid,
    http://blogs.msdn.com/b/andreww/archive/2007/03/09/
 why-is-it-so-hard-to-shim-iribbonextensibility.aspx
    */
+
+#define ID_MAPPER(name,id)                      \
+  if (!wcscmp (rgszNames[i], name))             \
+    {                                           \
+      found = true;                             \
+      rgDispId[i] = id;                         \
+      break;                                    \
+    }                                           \
+
+
 STDMETHODIMP
 GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
                                     UINT cNames, LCID lcid,
@@ -407,24 +420,19 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
   for (unsigned int i = 0; i < cNames; i++)
     {
       log_debug ("%s:%s: GetIDsOfNames for: %S",
-                 SRCNAME, __func__, rgszNames[0]);
+                 SRCNAME, __func__, rgszNames[i]);
       /* How this is supposed to work with cNames > 1 is unknown,
          but we can just say that we won't support callbacks with
          different parameters and just match the name (the first element)
          and we give it one of our own dispIds's that are later handled in
          the invoke part */
-      if (!wcscmp (rgszNames[i], L"attachmentDecryptCallback"))
-        {
-          found = true;
-          rgDispId[i] = ID_CMD_DECRYPT;
-          break;
-        }
-      if (!wcscmp (rgszNames[i], L"encryptSelection"))
-        {
-          found = true;
-          rgDispId[i] = ID_CMD_ENCRYPT_SELECTION;
-          break;
-        }
+      ID_MAPPER (L"attachmentDecryptCallback", ID_CMD_DECRYPT)
+      ID_MAPPER (L"encryptSelection", ID_CMD_ENCRYPT_SELECTION)
+      ID_MAPPER (L"decryptSelection", ID_CMD_DECRYPT_SELECTION)
+      ID_MAPPER (L"btnCertManager", ID_BTN_CERTMANAGER)
+      ID_MAPPER (L"btnDecrypt", ID_BTN_DECRYPT)
+      ID_MAPPER (L"btnDecryptLarge", ID_BTN_DECRYPT_LARGE)
+      ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
     }
 
   if (cNames > 1)
@@ -458,6 +466,16 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return decryptAttachments (parms->rgvarg[0].pdispVal);
       case ID_CMD_ENCRYPT_SELECTION:
         return encryptSelection (parms->rgvarg[0].pdispVal);
+      case ID_CMD_DECRYPT_SELECTION:
+        return decryptSelection (parms->rgvarg[0].pdispVal);
+      case ID_BTN_CERTMANAGER:
+        return getIcon (ID_BTN_CERTMANAGER, ICON_SIZE_LARGE, result);
+      case ID_BTN_ENCRYPT:
+        return getIcon (ID_BTN_ENCRYPT, ICON_SIZE_NORMAL, result);
+      case ID_BTN_DECRYPT:
+        return getIcon (ID_BTN_DECRYPT, ICON_SIZE_NORMAL, result);
+      case ID_BTN_DECRYPT_LARGE:
+        return getIcon (ID_BTN_DECRYPT_LARGE, ICON_SIZE_LARGE, result);
     }
 
   log_debug ("%s:%s: leave", SRCNAME, __func__);
@@ -524,20 +542,15 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"<contextMenu idMso=\"ContextMenuText\">"
         L" <button id=\"encryptButton\""
         L"         label=\"Encrypt Text\""
+        L"         getImage=\"btnEncrypt\""
         L"         onAction=\"encryptSelection\"/>"
+        L" <button id=\"decryptButton\""
+        L"         label=\"Decrypt Selection\""
+        L"         getImage=\"btnDecrypt\""
+        L"         onAction=\"decryptSelection\"/>"
         L" </contextMenu>"
         L"</contextMenus>"
         L"</customUI>"
-/*
-        L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
-L"<contextMenus>"
-L"    <contextMenu idMso=\"ContextMenuMailItem\">"
-L"        <button id=\"MyContextMenuMailItem\""
-L"            label=\"Encrypt selection\""
-L"            onAction=\"encryptSelection\"/>"
-L"    </contextMenu>"
-L"</contextMenus>"
-        L"</customUI>"*/
       );
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
@@ -568,7 +581,7 @@ L"</contextMenus>"
         L"     <group id=\"general\""
         L"            label=\"Allgemein\">"
         L"       <button id=\"CustomButton\""
-        L"               imageMso=\"HappyFace\""
+        L"               getImage=\"btnCertManager\""
         L"               size=\"large\""
         L"               label=\"Zertifikatsverwaltung\""
         L"               onAction=\"startCertManager\"/>"
@@ -582,7 +595,7 @@ L"</contextMenus>"
         L"                <button id=\"gpgol_contextual_decrypt\""
         L"                    size=\"large\""
         L"                    label=\"Save and decrypt\""
-        L"                    imageMso=\"HappyFace\""
+        L"                    getImage=\"btnDecryptLarge\""
         L"                    onAction=\"attachmentDecryptCallback\" />"
         L"            </group>"
         L"        </tab>"
@@ -592,8 +605,9 @@ L"</contextMenus>"
         L" <contextMenus>"
         L" <contextMenu idMso=\"ContextMenuAttachments\">"
         L"   <button id=\"gpgol_decrypt\""
-        L"    label=\"Save and decrypt\""
-        L"    onAction=\"attachmentDecryptCallback\"/>"
+        L"           label=\"Save and decrypt\""
+        L"           getImage=\"btnDecrypt\""
+        L"           onAction=\"attachmentDecryptCallback\"/>"
         L" </contextMenu>"
         L" </contextMenus>"
         L"</customUI>"

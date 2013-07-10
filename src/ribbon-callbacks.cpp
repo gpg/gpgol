@@ -22,6 +22,7 @@
 #endif
 
 #include <windows.h>
+#include <olectl.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -42,6 +43,7 @@
 #include "engine-assuan.h"
 #include "mapihelp.h"
 #include "mimemaker.h"
+#include "filetype.h"
 
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
@@ -311,6 +313,7 @@ encryptSelection (LPDISPATCH ctrl)
   engine_cancel (filter);
   if (tmpstream)
     tmpstream->Release();
+  xfree (text);
   xfree (senderAddr);
 
   return S_OK;
@@ -414,4 +417,258 @@ decryptAttachments (LPDISPATCH ctrl)
 
   return S_OK; /* If we return an error outlook will show that our
                   callback function failed in an ugly window. */
+}
+
+HRESULT
+decryptSelection (LPDISPATCH ctrl)
+{
+  LPDISPATCH context;
+  LPDISPATCH selection;
+  LPDISPATCH wordEditor;
+  LPDISPATCH wordApplication;
+
+  struct sink_s decsinkmem;
+  sink_t decsink = &decsinkmem;
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+
+  LPSTREAM tmpstream = NULL;
+  engine_filter_t filter = NULL;
+  LPOLEWINDOW actExplorer;
+  HWND curWindow;
+  char* text = NULL;
+  int rc = 0;
+  unsigned int session_number;
+  HRESULT hr;
+  STATSTG tmpStat;
+
+  protocol_t protocol;
+
+  hr = getContext (ctrl, &context);
+  if (FAILED(hr))
+      return hr;
+
+  memset (decsink, 0, sizeof *decsink);
+  memset (sink, 0, sizeof *sink);
+
+  actExplorer = (LPOLEWINDOW) get_oom_object(context,
+                                             "Application.ActiveExplorer");
+  if (actExplorer)
+    actExplorer->GetWindow (&curWindow);
+  else
+    {
+      log_debug ("%s:%s: Could not find active window",
+                 SRCNAME, __func__);
+      curWindow = NULL;
+    }
+
+  wordEditor = get_oom_object (context, "WordEditor");
+  wordApplication = get_oom_object (wordEditor, "get_Application");
+  selection = get_oom_object (wordApplication, "get_Selection");
+
+  if (!wordEditor || !wordApplication || !selection)
+    {
+      MessageBox (NULL,
+                  _("Internal error in GpgOL.\n"
+                    "Could not find all objects."),
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+      log_error ("%s:%s: Could not find all objects.",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+
+  text = get_oom_string (selection, "Text");
+
+  if (!text || strlen (text) <= 1)
+    {
+      /* TODO more usable if we just use all text in this case? */
+      MessageBox (NULL,
+                  _("Please select the data you wish to decrypt."),
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+      return S_OK;
+    }
+
+  /* Determine the protocol based on the content */
+  protocol = is_cms_data (text, strlen (text)) ? PROTOCOL_SMIME :
+    PROTOCOL_OPENPGP;
+
+  hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
+                         (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
+                          | STGM_CREATE | STGM_READWRITE),
+                         NULL, "GPG", &tmpstream);
+
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't create temp file: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      rc = -1;
+      goto failure;
+    }
+
+  sink->cb_data = tmpstream;
+  sink->writefnc = sink_std_write;
+
+  session_number = engine_new_session_number ();
+  if (engine_create_filter (&filter, write_buffer_for_cb, sink))
+    goto failure;
+
+  decsink->cb_data = filter;
+  decsink->writefnc = sink_encryption_write;
+
+  engine_set_session_number (filter, session_number);
+  engine_set_session_title (filter, _("Decrypt Selection"));
+
+  if ((rc=engine_decrypt_start (filter, curWindow,
+                                protocol,
+                                1, NULL)))
+    {
+      log_error ("%s:%s: engine decrypt start failed: %s",
+                 SRCNAME, __func__, gpg_strerror (rc));
+      goto failure;
+    }
+
+  /* Write the text in the decryption sink. */
+  rc = write_buffer (decsink, text, strlen (text));
+
+  /* Flush the decryption sink and wait for the encryption to get
+     ready.  */
+  if ((rc = write_buffer (decsink, NULL, 0)))
+    goto failure;
+  if ((rc = engine_wait (filter)))
+    goto failure;
+  filter = NULL; /* Not valid anymore.  */
+  decsink->cb_data = NULL; /* Not needed anymore.  */
+
+  if (!sink->enc_counter)
+    {
+      log_debug ("%s:%s: nothing received from engine", SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Check the size of the decrypted data */
+  tmpstream->Stat (&tmpStat, 0);
+
+  if (tmpStat.cbSize.QuadPart > UINT_MAX)
+    {
+      MessageBox (curWindow, _("GpgOL"),
+                  _("Selected text too long."),
+                  MB_ICONINFORMATION|MB_OK);
+      log_error ("%s:%s: No one should write so large mails.",
+                 SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Copy the encrypted stream to the message editor.  */
+  {
+    LARGE_INTEGER off;
+    ULONG nread;
+    char buffer[(unsigned int)tmpStat.cbSize.QuadPart];
+
+    off.QuadPart = 0;
+    hr = tmpstream->Seek (off, STREAM_SEEK_SET, NULL);
+    if (hr)
+      {
+        log_error ("%s:%s: seeking back to the begin failed: hr=%#lx",
+                   SRCNAME, __func__, hr);
+        rc = gpg_error (GPG_ERR_EIO);
+        goto failure;
+      }
+    hr = tmpstream->Read (buffer, sizeof buffer, &nread);
+    if (hr)
+      {
+        log_error ("%s:%s: IStream::Read failed: hr=%#lx",
+                   SRCNAME, __func__, hr);
+        rc = gpg_error (GPG_ERR_EIO);
+        goto failure;
+      }
+    if (strlen (buffer) > 1)
+      {
+        /* Now replace the selection with the encrypted text */
+        put_oom_string (selection, "Text", buffer);
+      }
+    else
+      {
+        /* Just to be save not to overwrite the selection with
+           an empty buffer */
+        log_error ("%s:%s: unexpected problem ", SRCNAME, __func__);
+        goto failure;
+      }
+  }
+
+ failure:
+  if (rc)
+    log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
+               gpg_strerror (rc), gpg_strsource (rc));
+  engine_cancel (filter);
+  xfree (text);
+  if (tmpstream)
+    tmpstream->Release();
+
+  return S_OK;
+}
+
+HRESULT
+getIcon (int id, int size, VARIANT* result)
+{
+  PICTDESC pdesc;
+  LPDISPATCH pPict;
+  HRESULT hr;
+  UINT fuload;
+
+  memset (&pdesc, 0, sizeof pdesc);
+  pdesc.cbSizeofstruct = sizeof pdesc;
+  pdesc.picType = PICTYPE_BITMAP;
+
+/*
+   In the future we might want to use PNGs here to have
+   full Alpha Channel support for the icons
+
+   Here is an example how this could look like with gdiplus:
+
+   GdiplusStartupInput gdiplusStartupInput;
+   ULONG_PTR gdiplusToken;
+   Bitmap* pbitmap;
+
+   GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH);
+
+   gdiplusStartupInput.DebugEventCallback = NULL;
+   gdiplusStartupInput.SuppressBackgroundThread = FALSE;
+   gdiplusStartupInput.SuppressExternalCodecs = FALSE;
+   gdiplusStartupInput.GdiplusVersion = 1;
+   GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+
+   pbitmap = Bitmap::FromFile (L"c:\\foo.png", FALSE);
+   if (!pbitmap || pbitmap->GetHBITMAP (0, &pdesc.bmp.hbitmap))
+     {
+       log_error ("%s:%s: failed to load file.",
+                  SRCNAME, __func__);
+     }
+*/
+
+  fuload = LR_CREATEDIBSECTION | LR_SHARED;
+
+  pdesc.bmp.hbitmap = (HBITMAP) LoadImage (glob_hinst,
+                                           MAKEINTRESOURCE (id),
+                                           IMAGE_BITMAP, size, size, fuload);
+
+  /* Wrap the image into an OLE object.  */
+  hr = OleCreatePictureIndirect (&pdesc, IID_IPictureDisp,
+                                 TRUE, (void **) &pPict);
+  if (hr != S_OK || !pPict)
+    {
+      log_error ("%s:%s: OleCreatePictureIndirect failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      return -1;
+    }
+
+  result->pdispVal = pPict;
+  result->vt = VT_DISPATCH;
+
+  /*
+  GdiplusShutdown (gdiplusToken);
+  */
+
+  return S_OK;
 }
