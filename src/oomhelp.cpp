@@ -111,6 +111,7 @@ dump_excepinfo (EXCEPINFO err)
   log_debug ("%s:%s: Dumping exception: \n"
              "              wCode: 0x%x\n"
              "              wReserved: 0x%x\n"
+             "              source: %S\n"
              "              desc: %S\n"
              "              help: %S\n"
              "              helpCtx: 0x%x\n"
