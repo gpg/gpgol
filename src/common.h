@@ -175,27 +175,6 @@ typedef struct b64_state_s b64_state_t;
 /* Macros to used in conditionals to enable debug output.  */
 #define debug_commands    (opt.enable_debug & DBG_COMMANDS)
 
-
-/* Type and constants used with parse_tlv.  */
-struct tlvinfo_s
-{
-  int cls;            /* The class of the tag.  */
-  int tag;            /* The tag.  */
-  int is_cons;        /* True if it is a constructed object.  */
-  int is_ndef;        /* True if the object has an indefinite length.  */
-  size_t length;      /* The length of the value.  */
-  size_t nhdr;        /* The number of octets in the header (tag,length). */
-};
-typedef struct tlvinfo_s tlvinfo_t;
-#define MY_ASN_CLASS_UNIVERSAL   0
-#define MY_ASN_CLASS_APPLICATION 1
-#define MY_ASN_CLASS_CONTEXT     2
-#define MY_ASN_CLASS_PRIVATE     3
-#define MY_ASN_TAG_OBJECT_ID     6
-#define MY_ASN_TAG_SEQUENCE     16
-
-
-
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
@@ -216,9 +195,6 @@ size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
 char *generate_boundary (char *buffer);
 
 int gpgol_spawn_detached (const char *cmdline);
-
-int parse_tlv (char const **buffer, size_t *size, tlvinfo_t *ti);
-
 
 /*-- recipient-dialog.c --*/
 unsigned int recipient_dialog_box (gpgme_key_t **ret_rset);

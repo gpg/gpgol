@@ -81,7 +81,9 @@ gpgol_SOURCES = \
 	cmdbarcontrols.cpp cmdbarcontrols.h \
 	w32-gettext.c w32-gettext.h \
 	gpgoladdin.cpp gpgoladdin.h \
-	ribbon-callbacks.cpp ribbon-callbacks.h
+	ribbon-callbacks.cpp ribbon-callbacks.h \
+	parsetlv.c parsetlv.h \
+	filetype.c filetype.h
 
 
 #treeview_SOURCES = treeview.c

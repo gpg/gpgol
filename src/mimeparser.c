@@ -42,6 +42,7 @@
 #include "mapihelp.h"
 #include "serpent.h"
 #include "mimeparser.h"
+#include "parsetlv.h"
 
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -234,12 +235,12 @@ is_cms_signed_data (const char *buffer, size_t length)
           
   if (parse_tlv (&p, &n, &ti))
     return 0;
-  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_SEQUENCE
+  if (!(ti.cls == ASN1_CLASS_UNIVERSAL && ti.tag == ASN1_TAG_SEQUENCE
         && ti.is_cons) )
     return 0;
   if (parse_tlv (&p, &n, &ti))
     return 0;
-  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_OBJECT_ID
+  if (!(ti.cls == ASN1_CLASS_UNIVERSAL && ti.tag == ASN1_TAG_OBJECT_ID
         && !ti.is_cons && ti.length) || ti.length > n)
     return 0;
   if (ti.length == 9 && !memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02", 9))
