@@ -436,7 +436,8 @@ decryptSelection (LPDISPATCH ctrl)
   engine_filter_t filter = NULL;
   LPOLEWINDOW actExplorer;
   HWND curWindow;
-  char* text = NULL;
+  char* selectedText = NULL;
+  int selectedLen = 0;
   int rc = 0;
   unsigned int session_number;
   HRESULT hr;
@@ -478,9 +479,9 @@ decryptSelection (LPDISPATCH ctrl)
       return S_OK;
     }
 
-  text = get_oom_string (selection, "Text");
+  selectedText = get_oom_string (selection, "Text");
 
-  if (!text || strlen (text) <= 1)
+  if (!selectedText || (selectedLen = strlen (selectedText)) <= 1)
     {
       /* TODO more usable if we just use all text in this case? */
       MessageBox (NULL,
@@ -490,8 +491,10 @@ decryptSelection (LPDISPATCH ctrl)
       return S_OK;
     }
 
+  fix_linebreaks (selectedText, &selectedLen);
+
   /* Determine the protocol based on the content */
-  protocol = is_cms_data (text, strlen (text)) ? PROTOCOL_SMIME :
+  protocol = is_cms_data (selectedText, selectedLen) ? PROTOCOL_SMIME :
     PROTOCOL_OPENPGP;
 
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
@@ -530,7 +533,7 @@ decryptSelection (LPDISPATCH ctrl)
     }
 
   /* Write the text in the decryption sink. */
-  rc = write_buffer (decsink, text, strlen (text));
+  rc = write_buffer (decsink, selectedText, selectedLen);
 
   /* Flush the decryption sink and wait for the encryption to get
      ready.  */
@@ -602,7 +605,7 @@ decryptSelection (LPDISPATCH ctrl)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
-  xfree (text);
+  xfree (selectedText);
   if (tmpstream)
     tmpstream->Release();
 
