@@ -433,6 +433,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"attachmentDecryptCallback", ID_CMD_DECRYPT)
       ID_MAPPER (L"encryptSelection", ID_CMD_ENCRYPT_SELECTION)
       ID_MAPPER (L"decryptSelection", ID_CMD_DECRYPT_SELECTION)
+      ID_MAPPER (L"startCertManager", ID_CMD_CERT_MANAGER)
       ID_MAPPER (L"btnCertManager", ID_BTN_CERTMANAGER)
       ID_MAPPER (L"btnDecrypt", ID_BTN_DECRYPT)
       ID_MAPPER (L"btnDecryptLarge", ID_BTN_DECRYPT_LARGE)
@@ -472,6 +473,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return encryptSelection (parms->rgvarg[0].pdispVal);
       case ID_CMD_DECRYPT_SELECTION:
         return decryptSelection (parms->rgvarg[0].pdispVal);
+      case ID_CMD_CERT_MANAGER:
+        return startCertManager (parms->rgvarg[0].pdispVal);
       case ID_BTN_CERTMANAGER:
         return getIcon (ID_BTN_CERTMANAGER, ICON_SIZE_LARGE, result);
       case ID_BTN_ENCRYPT:

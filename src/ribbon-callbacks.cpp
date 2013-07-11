@@ -692,3 +692,29 @@ getIcon (int id, int size, VARIANT* result)
 
   return S_OK;
 }
+
+HRESULT
+startCertManager (LPDISPATCH ctrl)
+{
+  HRESULT hr;
+  LPDISPATCH context;
+  HWND curWindow;
+  LPOLEWINDOW actExplorer;
+
+  hr = getContext (ctrl, &context);
+  if (FAILED(hr))
+      return hr;
+
+  actExplorer = (LPOLEWINDOW) get_oom_object(context,
+                                             "Application.ActiveExplorer");
+  if (actExplorer)
+    actExplorer->GetWindow (&curWindow);
+  else
+    {
+      log_debug ("%s:%s: Could not find active window",
+                 SRCNAME, __func__);
+      curWindow = NULL;
+    }
+
+  engine_start_keymanager (curWindow);
+}
