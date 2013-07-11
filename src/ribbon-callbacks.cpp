@@ -209,7 +209,7 @@ encryptSelection (LPDISPATCH ctrl)
       }
 
     if ((rc=engine_encrypt_prepare (filter, curWindow,
-                                    protocol,
+                                    PROTOCOL_UNKNOWN,
                                     0 /* ENGINE_FLAG_SIGN_FOLLOWS */,
                                     senderAddr, recipientAddrs, &protocol)))
       {
@@ -295,7 +295,18 @@ encryptSelection (LPDISPATCH ctrl)
     if (strlen (buffer) > 1)
       {
         /* Now replace the selection with the encrypted text */
-        put_oom_string (selection, "Text", buffer);
+        if (protocol == PROTOCOL_SMIME)
+          {
+            unsigned int enclosedSize = strlen (buffer) + 34 + 31 + 1;
+            char enclosedData[enclosedSize];
+            snprintf (enclosedData, sizeof enclosedData,
+                      "-----BEGIN ENCRYPTED MESSAGE-----\n"
+                      "%s"
+                      "-----END ENCRYPTED MESSAGE-----\n", buffer);
+            put_oom_string (selection, "Text", enclosedData);
+          }
+        else
+          put_oom_string (selection, "Text", buffer);
       }
     else
       {
