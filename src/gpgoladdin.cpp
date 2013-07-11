@@ -243,6 +243,10 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
                              SAFEARRAY** custom)
 {
   (void)custom;
+  (void)RemoveMode;
+  /* Deleting the extension causes everything to be cleaned up */
+  delete m_gpgolext;
+
   return S_OK;
 }
 

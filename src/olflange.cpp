@@ -577,7 +577,7 @@ GpgolExt::~GpgolExt (void)
 //   if (m_pOutlookExtItemEvents)
 //     m_pOutlookExtItemEvents->Release ();
 
-  if (m_lContext == EECONTEXT_SESSION)
+  if (m_lContext == EECONTEXT_SESSION || !m_lContext)
     {
       if (g_initdll)
         {
