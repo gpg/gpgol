@@ -969,3 +969,29 @@ percent_escape (const char *str, const char *extra)
 
   return ptr;
 }
+
+/* Fix linebreaks.
+   This either removes the \r if it is followed by a \n
+   or replaces it by a \n. This is neccessary because
+   Micrsoft Word buffers appearently use only the \r
+   to indicate line breaks.
+*/
+void
+fix_linebreaks (char *str, int *len)
+{
+  char *src;
+  char *dst;
+
+  src = str;
+  dst = str;
+  while (*src)
+    {
+      if (src[0] == '\r' && src[1] == '\n')
+        src++;
+      else if (src[0] == '\r')
+        src[0] = '\n';
+      *(dst++) = *(src++);
+    }
+  *dst = '\0';
+  *len = dst - str;
+}
