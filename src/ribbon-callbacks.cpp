@@ -261,9 +261,6 @@ encryptSelection (LPDISPATCH ctrl)
 
   if (tmpStat.cbSize.QuadPart > UINT_MAX)
     {
-      MessageBox (curWindow, _("GpgOL"),
-                  "Selected text too long.",
-                  MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: No one should write so large mails.",
                  SRCNAME, __func__);
       goto failure;
@@ -569,9 +566,6 @@ decryptSelection (LPDISPATCH ctrl)
 
   if (tmpStat.cbSize.QuadPart > UINT_MAX)
     {
-      MessageBox (curWindow, _("GpgOL"),
-                  "Selected text too long.",
-                  MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: No one should write so large mails.",
                  SRCNAME, __func__);
       goto failure;
@@ -602,8 +596,14 @@ decryptSelection (LPDISPATCH ctrl)
       }
     if (strlen (buffer) > 1)
       {
-        /* Now replace the selection with the encrypted text */
-        put_oom_string (selection, "Text", buffer);
+        /* Now replace the selection with the encrypted or show it
+        somehow.*/
+        if (put_oom_string (selection, "Text", buffer))
+          {
+            MessageBox (NULL, buffer,
+                        _("Plain text"),
+                        MB_ICONINFORMATION|MB_OK);
+          }
       }
     else
       {

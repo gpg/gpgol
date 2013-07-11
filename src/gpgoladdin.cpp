@@ -505,7 +505,6 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 
   log_debug ("%s:%s: GetCustomUI for id: %S", SRCNAME, __func__, RibbonID);
 
-
   if (!RibbonXml)
     return E_POINTER;
 
@@ -532,17 +531,16 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
       swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         L"<contextMenus>"
-        L"<contextMenu idMso=\"ContextMenuText\">"
-        L" <button id=\"encryptButton\""
+        L"<contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
+        L" <button id=\"decryptReadButton\""
         L"         label=\"%S\""
-        L"         onAction=\"encryptSelection\"/>"
+        L"         onAction=\"decryptSelection\"/>"
         L" </contextMenu>"
         L"</contextMenus>"
-        L"</customUI>", _("Encrypt"));
+        L"</customUI>", _("Decrypt"));
     }
-  else /*if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer")) */
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
     {
-     // *RibbonXml = loadXMLResource (IDR_XML_EXPLORER);
       swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         L" <ribbon>"
@@ -574,6 +572,15 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"  </contextualTabs>"
         L" </ribbon>"
         L" <contextMenus>"
+        /*
+           There appears to be no way to access the word editor
+           / get the selected text from that Context.
+        L" <contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
+        L" <button id=\"decryptReadButton1\""
+        L"         label=\"%S\""
+        L"         onAction=\"decryptSelection\"/>"
+        L" </contextMenu>"
+        */
         L" <contextMenu idMso=\"ContextMenuAttachments\">"
         L"   <button id=\"gpgol_decrypt\""
         L"           label=\"%S\""
@@ -583,7 +590,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" </contextMenus>"
         L"</customUI>",
         _("GpgOL"), _("General"), _("Start Certificate Manager"),
-        _("GpgOL"), _("Save and decrypt"), _("Save and decrypt"));
+        _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
+        _("Save and decrypt"));
     }
 
   if (wcslen (buffer))
