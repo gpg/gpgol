@@ -387,6 +387,9 @@ decryptAttachments (LPDISPATCH ctrl)
         filenames[i-1] = get_save_filename (NULL, filename);
         xfree (filename);
 
+        if (!filenames [i-1])
+          continue;
+
         wcsOutFilename = utf8_to_wchar2 (filenames[i-1],
                                          strlen(filenames[i-1]));
         saveParams.rgvarg[0].bstrVal = SysAllocString (wcsOutFilename);
