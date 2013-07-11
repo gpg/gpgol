@@ -625,6 +625,9 @@ getIcon (int id, int size, VARIANT* result)
    In the future we might want to use PNGs here to have
    full Alpha Channel support for the icons
 
+   Some explanation about images and transparency in Ribbons:
+   http://blogs.msdn.com/b/jensenh/archive/2006/11/27/ribbonx-image-faq.aspx
+
    Here is an example how this could look like with gdiplus:
 
    GdiplusStartupInput gdiplusStartupInput;
