@@ -114,8 +114,8 @@ encryptSelection (LPDISPATCH ctrl)
       !sender || !recipients)
     {
       MessageBox (NULL,
-                  _("Internal error in GpgOL.\n"
-                    "Could not find all objects."),
+                  "Internal error in GpgOL.\n"
+                  "Could not find all objects.",
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: Could not find all objects.",
@@ -129,7 +129,7 @@ encryptSelection (LPDISPATCH ctrl)
     {
       /* TODO more usable if we just use all text in this case? */
       MessageBox (NULL,
-                  _("Please select some text for encryption."),
+                  _("Please select text to encrypt."),
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
       return S_OK;
@@ -159,7 +159,7 @@ encryptSelection (LPDISPATCH ctrl)
   if (!recipientsCnt)
     {
       MessageBox (NULL,
-                  _("Please enter the recipent of the encrypted text first."),
+                  _("Please add at least one recipent."),
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
       return S_OK;
@@ -262,7 +262,7 @@ encryptSelection (LPDISPATCH ctrl)
   if (tmpStat.cbSize.QuadPart > UINT_MAX)
     {
       MessageBox (curWindow, _("GpgOL"),
-                  _("Selected text too long."),
+                  "Selected text too long.",
                   MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: No one should write so large mails.",
                  SRCNAME, __func__);
@@ -470,8 +470,8 @@ decryptSelection (LPDISPATCH ctrl)
   if (!wordEditor || !wordApplication || !selection)
     {
       MessageBox (NULL,
-                  _("Internal error in GpgOL.\n"
-                    "Could not find all objects."),
+                  "Internal error in GpgOL.\n"
+                    "Could not find all objects.",
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: Could not find all objects.",
@@ -521,7 +521,7 @@ decryptSelection (LPDISPATCH ctrl)
   decsink->writefnc = sink_encryption_write;
 
   engine_set_session_number (filter, session_number);
-  engine_set_session_title (filter, _("Decrypt Selection"));
+  engine_set_session_title (filter, _("Decrypt"));
 
   if ((rc=engine_decrypt_start (filter, curWindow,
                                 protocol,
@@ -556,7 +556,7 @@ decryptSelection (LPDISPATCH ctrl)
   if (tmpStat.cbSize.QuadPart > UINT_MAX)
     {
       MessageBox (curWindow, _("GpgOL"),
-                  _("Selected text too long."),
+                  "Selected text too long.",
                   MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: No one should write so large mails.",
                  SRCNAME, __func__);
