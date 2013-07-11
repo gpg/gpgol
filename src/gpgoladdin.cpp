@@ -487,39 +487,6 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
   return DISP_E_MEMBERNOTFOUND;
 }
 
-BSTR
-loadXMLResource (int id)
-{
-  /* XXX I do not know how to get the handle of the currently
-     executed code as we never had a chance in DllMain to save
-     that handle. */
-
-  /* FIXME this does not work as intended */
-  HMODULE hModule = GetModuleHandle("gpgol.dll");
-
-  HRSRC hRsrc = FindResourceEx (hModule, MAKEINTRESOURCE(id), TEXT("XML"),
-                                MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
-
-  if (!hRsrc)
-    {
-      log_error_w32 (-1, "%s:%s: FindResource(%d) failed\n",
-                     SRCNAME, __func__, id);
-      return NULL;
-    }
-
-  HGLOBAL hGlobal = LoadResource(hModule, hRsrc);
-
-  if (!hGlobal)
-    {
-      log_error_w32 (-1, "%s:%s: LoadResource(%d) failed\n",
-                     SRCNAME, __func__, id);
-      return NULL;
-    }
-
-  LPVOID xmlData = LockResource (hGlobal);
-
-  return SysAllocString (reinterpret_cast<OLECHAR*>(xmlData));
-}
 
 /* Returns the XML markup for the various RibbonID's
 
@@ -532,62 +499,62 @@ loadXMLResource (int id)
 STDMETHODIMP
 GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
-  /* TODO use callback for label's and Icons, load xml from resource */
+  wchar_t buffer[4096];
+
+  memset(buffer, 0, sizeof buffer);
+
   log_debug ("%s:%s: GetCustomUI for id: %S", SRCNAME, __func__, RibbonID);
+
 
   if (!RibbonXml)
     return E_POINTER;
 
   if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
     {
-      *RibbonXml = SysAllocString (
+      swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         L"<contextMenus>"
         L"<contextMenu idMso=\"ContextMenuText\">"
         L" <button id=\"encryptButton\""
-        L"         label=\"Encrypt Text\""
+        L"         label=\"%S\""
         L"         getImage=\"btnEncrypt\""
         L"         onAction=\"encryptSelection\"/>"
         L" <button id=\"decryptButton\""
-        L"         label=\"Decrypt Selection\""
+        L"         label=\"%S\""
         L"         getImage=\"btnDecrypt\""
         L"         onAction=\"decryptSelection\"/>"
         L" </contextMenu>"
         L"</contextMenus>"
-        L"</customUI>"
-      );
+        L"</customUI>", _("Encrypt"), _("Decrypt"));
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
     {
-      *RibbonXml = SysAllocString (
+      swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         L"<contextMenus>"
         L"<contextMenu idMso=\"ContextMenuText\">"
         L" <button id=\"encryptButton\""
-        L"         label=\"Encrypt Text\""
+        L"         label=\"%S\""
         L"         onAction=\"encryptSelection\"/>"
         L" </contextMenu>"
         L"</contextMenus>"
-        L"</customUI>"
-      );
-
+        L"</customUI>", _("Encrypt"));
     }
-
   else /*if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer")) */
     {
      // *RibbonXml = loadXMLResource (IDR_XML_EXPLORER);
-      *RibbonXml = SysAllocString (
+      swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         L" <ribbon>"
         L"   <tabs>"
         L"    <tab id=\"gpgolTab\""
-        L"         label=\"GnuPG\">"
+        L"         label=\"%S\">"
         L"     <group id=\"general\""
-        L"            label=\"Allgemein\">"
+        L"            label=\"%S\">"
         L"       <button id=\"CustomButton\""
         L"               getImage=\"btnCertManager\""
         L"               size=\"large\""
-        L"               label=\"Zertifikatsverwaltung\""
+        L"               label=\"%S\""
         L"               onAction=\"startCertManager\"/>"
         L"     </group>"
         L"    </tab>"
@@ -595,10 +562,10 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"  <contextualTabs>"
         L"    <tabSet idMso=\"TabSetAttachments\">"
         L"        <tab idMso=\"TabAttachments\">"
-        L"            <group label=\"GnuPG\" id=\"gnupgLabel\">"
+        L"            <group label=\"%S\" id=\"gnupgLabel\">"
         L"                <button id=\"gpgol_contextual_decrypt\""
         L"                    size=\"large\""
-        L"                    label=\"Save and decrypt\""
+        L"                    label=\"%S\""
         L"                    getImage=\"btnDecryptLarge\""
         L"                    onAction=\"attachmentDecryptCallback\" />"
         L"            </group>"
@@ -609,14 +576,20 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" <contextMenus>"
         L" <contextMenu idMso=\"ContextMenuAttachments\">"
         L"   <button id=\"gpgol_decrypt\""
-        L"           label=\"Save and decrypt\""
+        L"           label=\"%S\""
         L"           getImage=\"btnDecrypt\""
         L"           onAction=\"attachmentDecryptCallback\"/>"
         L" </contextMenu>"
         L" </contextMenus>"
-        L"</customUI>"
-        );
+        L"</customUI>",
+        _("GpgOL"), _("General"), _("Start Certificate Manager"),
+        _("GpgOL"), _("Save and decrypt"), _("Save and decrypt"));
     }
+
+  if (wcslen (buffer))
+    *RibbonXml = SysAllocString (buffer);
+  else
+    *RibbonXml = NULL;
 
   return S_OK;
 }
