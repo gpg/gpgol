@@ -447,6 +447,8 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnDecrypt", ID_BTN_DECRYPT)
       ID_MAPPER (L"btnDecryptLarge", ID_BTN_DECRYPT_LARGE)
       ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
+      ID_MAPPER (L"btnEncryptLarge", ID_BTN_ENCRYPT_LARGE)
+      ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
     }
 
   if (cNames > 1)
@@ -488,6 +490,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
       case ID_BTN_DECRYPT_LARGE:
+      case ID_BTN_ENCRYPT_LARGE:
+      case ID_BTN_ENCSIGN_LARGE:
         return getIcon (dispid, result);
     }
 
@@ -521,19 +525,63 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     {
       swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
-        L"<contextMenus>"
-        L"<contextMenu idMso=\"ContextMenuText\">"
-        L" <button id=\"encryptButton\""
-        L"         label=\"%S\""
-        L"         getImage=\"btnEncrypt\""
-        L"         onAction=\"encryptSelection\"/>"
-        L" <button id=\"decryptButton\""
-        L"         label=\"%S\""
-        L"         getImage=\"btnDecrypt\""
-        L"         onAction=\"decryptSelection\"/>"
+        L" <ribbon>"
+        L"   <tabs>"
+        L"    <tab id=\"gpgolTab\""
+        L"         label=\"%S\">"
+        L"     <group id=\"general\""
+        L"            label=\"%S\">"
+        L"       <button id=\"CustomButton\""
+        L"               getImage=\"btnCertManager\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"startCertManager\"/>"
+        L"     </group>"
+        L"     <group id=\"textGroup\""
+        L"            label=\"%S\">"
+        L"       <button id=\"fullTextEncrypt\""
+        L"               getImage=\"btnEncryptLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"encryptBody\"/>"
+        L"       <button id=\"fullTextDecrypt\""
+        L"               getImage=\"btnDecryptLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"decryptBody\"/>"
+        L"     </group>"
+        L"     <group id=\"attachmentGroup\""
+        L"            label=\"%S\">"
+        L"       <button id=\"encryptSignFile\""
+        L"               getImage=\"btnEncryptFileLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"attachEncryptFile\"/>"
+        L"     </group>"
+        L"    </tab>"
+        L"   </tabs>"
+        L" </ribbon>"
+        L" <contextMenus>"
+        L"  <contextMenu idMso=\"ContextMenuText\">"
+        L"    <button id=\"encryptButton\""
+        L"            label=\"%S\""
+        L"            getImage=\"btnEncrypt\""
+        L"            onAction=\"encryptSelection\"/>"
+        L"    <button id=\"decryptButton\""
+        L"            label=\"%S\""
+        L"            getImage=\"btnDecrypt\""
+        L"            onAction=\"decryptSelection\"/>"
         L" </contextMenu>"
         L"</contextMenus>"
-        L"</customUI>", _("Encrypt"), _("Decrypt"));
+        L"</customUI>", _("GpgOL"), _("General"),
+        _("Start Certificate Manager"),
+        _("Textbody"),
+        _("Encrypt"),
+        _("Decrypt"),
+        _("Attachments"),
+        _("Encrypted file"),
+        _("Encrypt"), _("Decrypt")
+        );
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
     {
