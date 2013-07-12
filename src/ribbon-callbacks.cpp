@@ -503,8 +503,8 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   engine_filter_t filter = NULL;
   LPOLEWINDOW actExplorer;
   HWND curWindow;
-  char* plaintext = NULL;
-  int plaintextLen = 0;
+  char* encData = NULL;
+  int encDataLen = 0;
   int rc = 0;
   unsigned int session_number;
   HRESULT hr;
@@ -531,12 +531,16 @@ decryptInspector (LPDISPATCH ctrl, int flags)
     }
   RELDISP (actExplorer);
 
-  wordEditor = get_oom_object (context, "WordEditor");
-  wordApplication = get_oom_object (wordEditor, "get_Application");
-  selection = get_oom_object (wordApplication, "get_Selection");
+  if ( !flags & DECRYPT_INSPECTOR_BODY)
+    {
+      wordEditor = get_oom_object (context, "WordEditor");
+      wordApplication = get_oom_object (wordEditor, "get_Application");
+      selection = get_oom_object (wordApplication, "get_Selection");
+    }
   mailItem = get_oom_object (context, "CurrentItem");
 
-  if (!wordEditor || !wordApplication || !selection || !mailItem)
+  if ((!wordEditor || !wordApplication || !selection || !mailItem) &&
+      (!flags & DECRYPT_INSPECTOR_BODY))
     {
       MessageBox (NULL,
                   "Internal error in GpgOL.\n"
@@ -548,11 +552,27 @@ decryptInspector (LPDISPATCH ctrl, int flags)
       goto failure;
     }
 
+  if (!mailItem)
+    {
+      /* This happens when we try to decrypt the body of a mail in the
+         explorer context. */
+      mailItem = get_oom_object (context, "Selection.Item(1)");
+
+      if (!mailItem)
+        {
+          MessageBox (NULL,
+                      _("Please select a Mail."),
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+          goto failure;
+        }
+    }
+
   if (flags & DECRYPT_INSPECTOR_SELECTION)
     {
-      plaintext = get_oom_string (selection, "Text");
+      encData = get_oom_string (selection, "Text");
 
-      if (!plaintext || (plaintextLen = strlen (plaintext)) <= 1)
+      if (!encData || (encDataLen = strlen (encData)) <= 1)
         {
           MessageBox (NULL,
                       _("Please select the data you wish to decrypt."),
@@ -563,9 +583,9 @@ decryptInspector (LPDISPATCH ctrl, int flags)
     }
   else if (flags & DECRYPT_INSPECTOR_BODY)
     {
-      plaintext = get_oom_string (mailItem, "Body");
+      encData = get_oom_string (mailItem, "Body");
 
-      if (!plaintext || (plaintextLen = strlen (plaintext)) <= 1)
+      if (!encData || (encDataLen = strlen (encData)) <= 1)
         {
           MessageBox (NULL,
                       _("Nothing to decrypt."),
@@ -575,10 +595,10 @@ decryptInspector (LPDISPATCH ctrl, int flags)
         }
     }
 
-  fix_linebreaks (plaintext, &plaintextLen);
+  fix_linebreaks (encData, &encDataLen);
 
   /* Determine the protocol based on the content */
-  protocol = is_cms_data (plaintext, plaintextLen) ? PROTOCOL_SMIME :
+  protocol = is_cms_data (encData, encDataLen) ? PROTOCOL_SMIME :
     PROTOCOL_OPENPGP;
 
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
@@ -617,7 +637,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
     }
 
   /* Write the text in the decryption sink. */
-  rc = write_buffer (decsink, plaintext, plaintextLen);
+  rc = write_buffer (decsink, encData, encDataLen);
 
   /* Flush the decryption sink and wait for the encryption to get
      ready.  */
@@ -669,7 +689,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
       }
     if (strlen (buffer) > 1)
       {
-        /* Now replace the crypto data with the plaintext or show it
+        /* Now replace the crypto data with the encData or show it
         somehow.*/
         int err;
         if (flags & DECRYPT_INSPECTOR_SELECTION)
@@ -706,7 +726,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   RELDISP (selection);
   RELDISP (wordEditor);
   RELDISP (wordApplication);
-  xfree (plaintext);
+  xfree (encData);
   if (tmpstream)
     tmpstream->Release();
 
@@ -866,5 +886,6 @@ encryptSelection (LPDISPATCH ctrl)
 HRESULT
 addEncSignedAttachment (LPDISPATCH ctrl)
 {
+  /* TODO */
   return S_OK;
 }
