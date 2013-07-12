@@ -147,13 +147,10 @@ STDMETHODIMP GpgolAddinFactory::CreateInstance (LPUNKNOWN punk, REFIID riid,
 
    The ref count is set by the factory after creation.
 */
-GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0), m_addin(0)
+GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
+  m_addin(0), m_disabled(false)
 {
-  /* Create the COM Extension Object that handles the startup and
-     endinge initialization
-  */
-  m_gpgolext = new GpgolExt();
-
+  read_options ();
   /* RibbonExtender is it's own object to avoid the pitfalls of
      multiple inheritance
   */
@@ -165,10 +162,13 @@ GpgolAddin::~GpgolAddin (void)
   log_debug ("%s:%s: cleaning up GpgolAddin object;",
              SRCNAME, __func__);
 
-  engine_deinit ();
-  write_options ();
-  delete m_gpgolext;
   delete m_ribbonExtender;
+
+  if (!m_disabled)
+    {
+      engine_deinit ();
+      write_options ();
+    }
 
   log_debug ("%s:%s: Object deleted\n", SRCNAME, __func__);
 }
@@ -179,6 +179,9 @@ GpgolAddin::QueryInterface (REFIID riid, LPVOID* ppvObj)
   HRESULT hr = S_OK;
 
   *ppvObj = NULL;
+
+  if (m_disabled)
+    return E_NOINTERFACE;
 
   if ((riid == IID_IUnknown) || (riid == IID_IDTExtensibility2) ||
       (riid == IID_IDispatch))
@@ -191,15 +194,12 @@ GpgolAddin::QueryInterface (REFIID riid, LPVOID* ppvObj)
     }
   else
     {
-      hr = m_gpgolext->QueryInterface (riid, ppvObj);
+      hr = E_NOINTERFACE;
 #if 0
-      if (FAILED(hr))
-        {
-          LPOLESTR sRiid = NULL;
-          StringFromIID(riid, &sRiid);
-          log_debug ("%s:%s: queried for unimplmented interface: %S",
-                     SRCNAME, __func__, sRiid);
-        }
+      LPOLESTR sRiid = NULL;
+      StringFromIID(riid, &sRiid);
+      log_debug ("%s:%s: queried for unimplmented interface: %S",
+                 SRCNAME, __func__, sRiid);
 #endif
     }
 
@@ -214,22 +214,32 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
                           LPDISPATCH AddInInst, SAFEARRAY ** custom)
 {
   (void)custom;
-  TRACEPOINT();
+  char* version;
 
-  if (!m_application)
+  log_debug ("%s:%s: this is GpgOL %s\n",
+             SRCNAME, __func__, PACKAGE_VERSION);
+  log_debug ("%s:%s:   in Outlook %s\n",
+             SRCNAME, __func__, gpgme_check_version (NULL));
+
+  m_application = Application;
+  m_application->AddRef();
+  m_addin = AddInInst;
+
+  version = get_oom_string (Application, "Version");
+
+  log_debug ("%s:%s:   using GPGME %s\n",
+             SRCNAME, __func__, version);
+
+  if (!version || !strlen (version) || strncmp (version, "14", 2))
     {
-      m_application = Application;
-      m_application->AddRef();
-      m_addin = AddInInst;
-    }
-  else
-    {
-      /* This should not happen but happened during development when
-         the vtable was incorrect and the wrong function was called */
-      log_debug ("%s:%s: Application already set. Ignoring new value.",
+      m_disabled = true;
+      log_debug ("%s:%s: Disabled addin for unsupported version.",
                  SRCNAME, __func__);
+
+      xfree (version);
       return S_OK;
     }
+  engine_init ();
 
   if (ConnectMode != ext_cm_Startup)
     {
@@ -244,9 +254,8 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
 {
   (void)custom;
   (void)RemoveMode;
-  /* Deleting the extension causes everything to be cleaned up */
-  delete m_gpgolext;
 
+  write_options();
   return S_OK;
 }
 

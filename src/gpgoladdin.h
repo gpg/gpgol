@@ -185,11 +185,11 @@ public:
 
 private:
   ULONG m_lRef;
-  GpgolExt* m_gpgolext;
   GpgolRibbonExtender* m_ribbonExtender;
 
   LPDISPATCH m_application;
   LPDISPATCH m_addin;
+  bool m_disabled;
 
 };
 
