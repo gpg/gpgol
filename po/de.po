@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2011-12-27 12:49+0100\n"
+"POT-Creation-Date: 2013-07-12 07:18+0000\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -40,7 +41,7 @@ msgstr ""
 "um die gesamte Nachricht nochmal zu entschlüsseln.  Danach können\n"
 "Sie das Attachment wieder öffenen."
 
-#: src/common.c:216
+#: src/common.c:217
 msgid "GpgOL - Save decrypted attachment"
 msgstr "GpgOL - Sichern der entschlüsselten Anlage"
 
@@ -58,6 +59,9 @@ msgstr ""
 
 #: src/engine.c:395 src/engine.c:405 src/main.c:699 src/main.c:705
 #: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
+#: src/gpgoladdin.cpp:593 src/gpgoladdin.cpp:594 src/ribbon-callbacks.cpp:119
+#: src/ribbon-callbacks.cpp:133 src/ribbon-callbacks.cpp:163
+#: src/ribbon-callbacks.cpp:486 src/ribbon-callbacks.cpp:500
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -233,11 +237,11 @@ msgstr ""
 "\n"
 "geschrieben."
 
-#: src/mapihelp.cpp:1527 src/mapihelp.cpp:1535 src/mapihelp.cpp:1543
+#: src/mapihelp.cpp:1528 src/mapihelp.cpp:1536 src/mapihelp.cpp:1544
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
-#: src/mapihelp.cpp:2152
+#: src/mapihelp.cpp:2153
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -247,7 +251,7 @@ msgstr ""
 "Outlook Sitzung entschlüsselt wurde.  Verwenden Sie den Menüpunkt "
 "\"entschlüsseln/überprüfen\" um den Inhalt wieder sichtbar zu machen.]"
 
-#: src/mapihelp.cpp:3004
+#: src/mapihelp.cpp:3005
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -344,15 +348,15 @@ msgstr "Verschlüsselungsfehler (%s)"
 msgid "Signing failed (%s)"
 msgstr "Signaturerstellungsfehler (%s)"
 
-#: src/mimeparser.c:1203
+#: src/mimeparser.c:1204
 msgid "Error writing to stream"
 msgstr "Dateischreibfehler"
 
-#: src/mimeparser.c:1204
+#: src/mimeparser.c:1205
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
-#: src/olflange-dlgs.cpp:43
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:593
 msgid "General"
 msgstr "Allgemein"
 
@@ -420,46 +424,11 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
 
-#: src/olflange.cpp:444
-msgid ""
-"Welcome to GpgOL 1.0\n"
-"\n"
-"GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
-"support to Outlook 2003 and 2007.\n"
-"\n"
-"Although we tested this software extensively, we can't give you any "
-"guarantee that it will work as expected. The programming interface we are "
-"using has not been properly documented by Microsoft and thus the "
-"functionality of GpgOL may cease to work with an update of your Windows "
-"system.\n"
-"\n"
-"WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START TO USE GPGOL ON "
-"ANY SENSITIVE DATA!\n"
-"\n"
-"There are some known problems, the most severe being that sending encrypted "
-"or signed mails using an Exchange based account does not work.  Using GpgOL "
-"along with other Outlook plugins may in some cases not work.\n"
-msgstr ""
-"Willkommen zu GpgOL 1.0 !\n"
-"\n"
-"GpgOL erweitert Outlook 2003 und 2007 um integrierte OpenPGP und S/MIME "
-"Verschlüsselung und digitale Signaturen.\n"
-"\n"
-"Obgleich wir diese Software ausgiebig getestet haben, können wir leider "
-"nicht garantieren, daß sie einwandfrei funktionieren wird.  Die benutzte "
-"Programmierschnittstelle zu Outlook ist von Microsoft nur sehr ungenügend "
-"dokumentiert worden.  Möglicherweise könnte die korrekte Funktion von GpgOL "
-"durch ein Update von Windows beeinträchtig werden.\n"
-"\n"
-"WIR RATEN DRINGEND DAZU, TESTS DER VERSCHLÜSSELUNG DURCHZUFÜHREN, BEVOR "
-"GPGOL FÜR SENSIBLE DATEN BENUTZT WIRD!\n"
-"\n"
-"Es sind einige Problem bekannt: Insbesondere funktioniert das Senden von "
-"verschlüsselten oder signierten Nachrichten über ein Exchange basiertes "
-"Konto nicht.  Wird GpgOL zusammen mit anderen Outlook Plugins benutzt, kann "
-"es möglicherweise nicht richtig arbeiten.\n"
+#: src/olflange.cpp:526
+msgid "Welcome to GpgOL "
+msgstr "Willkommen zu GpgOL "
 
-#: src/olflange.cpp:472
+#: src/olflange.cpp:554
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -473,7 +442,7 @@ msgstr ""
 "die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
 "Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
 
-#: src/olflange.cpp:672
+#: src/olflange.cpp:754
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -715,6 +684,90 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
+#: src/gpgoladdin.cpp:528
+msgid "Encrypt"
+msgstr "Verschlüsseln"
+
+#: src/gpgoladdin.cpp:528 src/gpgoladdin.cpp:541 src/ribbon-callbacks.cpp:535
+msgid "Decrypt"
+msgstr "Entschlüsseln"
+
+#: src/gpgoladdin.cpp:593
+msgid "Start Certificate Manager"
+msgstr "Zertifikatsverwaltung starten"
+
+#: src/gpgoladdin.cpp:594 src/gpgoladdin.cpp:595
+msgid "Save and decrypt"
+msgstr "Speichern und Entschlüsseln"
+
+#: src/ribbon-callbacks.cpp:132
+msgid "Please select text to encrypt."
+msgstr "Bitte selektieren Sie den zu verschlüsselnden Text."
+
+#: src/ribbon-callbacks.cpp:162
+msgid "Please add at least one recipent."
+msgstr "Bitte fügen Sie mindestens einen Empfänger hinzu."
+
+#: src/ribbon-callbacks.cpp:499
+msgid "Please select the data you wish to decrypt."
+msgstr "Bitte selektieren Sie die zu entschlüsselnden Daten."
+
+#: src/ribbon-callbacks.cpp:604
+msgid "Plain text"
+msgstr "Klartext"
+
+#~ msgid ""
+#~ "Internal error in GpgOL.\n"
+#~ "Could not find all objects."
+#~ msgstr ""
+#~ "Interner Fehler in GpgOL.\n"
+#~ "Nicht alle Objekte konnten gefunden werden."
+
+#~ msgid "Selected text too long."
+#~ msgstr "Ausgewählter Text ist zu lang"
+
+#, fuzzy
+#~ msgid "Decrypt Selection"
+#~ msgstr "Entschlüsselung"
+
+#~ msgid ""
+#~ "Welcome to GpgOL 1.0\n"
+#~ "\n"
+#~ "GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
+#~ "support to Outlook 2003 and 2007.\n"
+#~ "\n"
+#~ "Although we tested this software extensively, we can't give you any "
+#~ "guarantee that it will work as expected. The programming interface we are "
+#~ "using has not been properly documented by Microsoft and thus the "
+#~ "functionality of GpgOL may cease to work with an update of your Windows "
+#~ "system.\n"
+#~ "\n"
+#~ "WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START TO USE GPGOL "
+#~ "ON ANY SENSITIVE DATA!\n"
+#~ "\n"
+#~ "There are some known problems, the most severe being that sending "
+#~ "encrypted or signed mails using an Exchange based account does not work.  "
+#~ "Using GpgOL along with other Outlook plugins may in some cases not work.\n"
+#~ msgstr ""
+#~ "Willkommen zu GpgOL 1.0 !\n"
+#~ "\n"
+#~ "GpgOL erweitert Outlook 2003 und 2007 um integrierte OpenPGP und S/MIME "
+#~ "Verschlüsselung und digitale Signaturen.\n"
+#~ "\n"
+#~ "Obgleich wir diese Software ausgiebig getestet haben, können wir leider "
+#~ "nicht garantieren, daß sie einwandfrei funktionieren wird.  Die benutzte "
+#~ "Programmierschnittstelle zu Outlook ist von Microsoft nur sehr ungenügend "
+#~ "dokumentiert worden.  Möglicherweise könnte die korrekte Funktion von "
+#~ "GpgOL durch ein Update von Windows beeinträchtig werden.\n"
+#~ "\n"
+#~ "WIR RATEN DRINGEND DAZU, TESTS DER VERSCHLÜSSELUNG DURCHZUFÜHREN, BEVOR "
+#~ "GPGOL FÜR SENSIBLE DATEN BENUTZT WIRD!\n"
+#~ "\n"
+#~ "Es sind einige Problem bekannt: Insbesondere funktioniert das Senden von "
+#~ "verschlüsselten oder signierten Nachrichten über ein Exchange basiertes "
+#~ "Konto nicht.  Wird GpgOL zusammen mit anderen Outlook Plugins benutzt, "
+#~ "kann es möglicherweise nicht richtig arbeiten.\n"
+
 #~ msgid "Select this option to encrypt the message."
 #~ msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
 
@@ -818,9 +871,6 @@ msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 #~ msgid "Path to certificate manager binary"
 #~ msgstr "Dateiname der Zertifikatsverwaltung"
 
-#~ msgid "Select Certificate Manager"
-#~ msgstr "GnuPG Zertifikats&verwaltung"
-
 #~ msgid "Passphrase"
 #~ msgstr "Passphrase"
 
@@ -883,9 +933,6 @@ msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
 #~ msgid "No valid OpenPGP data found."
 #~ msgstr "Keine gültigen OpenPGP Daten gefunden"
-
-#~ msgid "Decryption"
-#~ msgstr "Entschlüsselung"
 
 #~ msgid ""
 #~ "[This is a PGP/MIME message]\r\n"
