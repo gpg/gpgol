@@ -559,14 +559,17 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               label=\"%S\""
         L"               onAction=\"decryptBody\"/>"
         L"     </group>"
+        /*
+           TODO: Implement
         L"     <group id=\"attachmentGroup\""
         L"            label=\"%S\">"
         L"       <button id=\"encryptSignFile\""
         L"               getImage=\"btnEncryptFileLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
-        L"               onAction=\"attachEncryptFile\"/>"
+        L"               onAction=\"addEncSignedAttachment\"/>"
         L"     </group>"
+        */
         L"    </tab>"
         L"   </tabs>"
         L" </ribbon>"
@@ -587,8 +590,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         _("Textbody"),
         _("Encrypt"),
         _("Decrypt"),
+        /*
+           TODO: Implement
         _("Attachments"),
         _("Encrypted file"),
+        */
         _("Encrypt"), _("Decrypt")
         );
     }
@@ -596,6 +602,29 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     {
       swprintf (buffer,
         L"<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        L" <ribbon>"
+        L"   <tabs>"
+        L"    <tab id=\"gpgolTab\""
+        L"         label=\"%S\">"
+        L"     <group id=\"general\""
+        L"            label=\"%S\">"
+        L"       <button id=\"CustomButton\""
+        L"               getImage=\"btnCertManager\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"startCertManager\"/>"
+        L"     </group>"
+        L"     <group id=\"textGroup\""
+        L"            label=\"%S\">"
+        L"       <button id=\"fullTextDecrypt\""
+        L"               getImage=\"btnDecryptLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"decryptBody\"/>"
+        L"     </group>"
+        L"    </tab>"
+        L"   </tabs>"
+        L" </ribbon>"
         L"<contextMenus>"
         L"<contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
         L" <button id=\"decryptReadButton\""
@@ -603,7 +632,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"         onAction=\"decryptSelection\"/>"
         L" </contextMenu>"
         L"</contextMenus>"
-        L"</customUI>", _("Decrypt"));
+        L"</customUI>", _("GpgOL"), _("General"),
+        _("Start Certificate Manager"),
+        _("Textbody"),
+        _("Decrypt"),
+        _("Decrypt"));
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
     {
@@ -621,6 +654,18 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               label=\"%S\""
         L"               onAction=\"startCertManager\"/>"
         L"     </group>"
+        /* This would be totally nice but Outlook
+           saves the decrypted text aftewards automatically.
+           Yay,..
+        L"     <group id=\"textGroup\""
+        L"            label=\"%S\">"
+        L"       <button id=\"fullTextDecrypt\""
+        L"               getImage=\"btnDecryptLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"decryptBody\"/>"
+        L"     </group>"
+        */
         L"    </tab>"
         L"   </tabs>"
         L"  <contextualTabs>"
@@ -656,6 +701,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" </contextMenus>"
         L"</customUI>",
         _("GpgOL"), _("General"), _("Start Certificate Manager"),
+        /*_("Mail Body"), _("Decrypt"),*/
         _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
         _("Save and decrypt"));
     }
