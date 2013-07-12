@@ -449,6 +449,9 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
       ID_MAPPER (L"btnEncryptLarge", ID_BTN_ENCRYPT_LARGE)
       ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
+      ID_MAPPER (L"encryptBody", ID_CMD_ENCRYPT_BODY)
+      ID_MAPPER (L"decryptBody", ID_CMD_DECRYPT_BODY)
+      ID_MAPPER (L"addEncSignedAttachment", ID_CMD_ATT_ENCSIGN_FILE)
     }
 
   if (cNames > 1)
@@ -486,6 +489,12 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return decryptSelection (parms->rgvarg[0].pdispVal);
       case ID_CMD_CERT_MANAGER:
         return startCertManager (parms->rgvarg[0].pdispVal);
+      case ID_CMD_ENCRYPT_BODY:
+        return encryptBody (parms->rgvarg[0].pdispVal);
+      case ID_CMD_DECRYPT_BODY:
+        return decryptBody (parms->rgvarg[0].pdispVal);
+      case ID_CMD_ATT_ENCSIGN_FILE:
+        return addEncSignedAttachment (parms->rgvarg[0].pdispVal);
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:

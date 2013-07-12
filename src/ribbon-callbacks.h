@@ -30,6 +30,10 @@
 #define ID_CMD_ENCRYPT_SELECTION 3
 #define ID_CMD_DECRYPT_SELECTION 4
 #define ID_CMD_CERT_MANAGER      5
+#define ID_CMD_ENCRYPT_BODY      6
+#define ID_CMD_DECRYPT_BODY      8
+#define ID_CMD_ATT_ENCSIGN_FILE  9
+
 #define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -40,6 +44,9 @@
 HRESULT decryptAttachments (LPDISPATCH ctrl);
 HRESULT encryptSelection (LPDISPATCH ctrl);
 HRESULT decryptSelection (LPDISPATCH ctrl);
+HRESULT decryptBody (LPDISPATCH ctrl);
+HRESULT encryptBody (LPDISPATCH ctrl);
+HRESULT addEncSignedAttachment (LPDISPATCH ctrl);
 HRESULT getIcon (int id, VARIANT* result);
 HRESULT startCertManager (LPDISPATCH ctrl);
 #endif

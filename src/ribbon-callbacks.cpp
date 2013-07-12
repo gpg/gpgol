@@ -46,6 +46,9 @@
 #include "mimemaker.h"
 #include "filetype.h"
 
+/* Helper to release dispatcher */
+#define RELDISP(dispatcher) if (dispatcher) dispatcher->Release()
+
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
 HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
@@ -56,9 +59,17 @@ HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
   return context ? S_OK : E_FAIL;
 }
 
+#define ENCRYPT_INSPECTOR_SELECTION  1
+#define ENCRYPT_INSPECTOR_BODY       2
+
+/* encryptInspector
+   Encrypts text in an IInspector context. Depending on
+   the flags either the active selection or the full body
+   is encrypted.
+*/
 
 HRESULT
-encryptSelection (LPDISPATCH ctrl)
+encryptInspector (LPDISPATCH ctrl, int flags)
 {
   LPDISPATCH context = NULL;
   LPDISPATCH selection;
@@ -75,7 +86,7 @@ encryptSelection (LPDISPATCH ctrl)
   char* senderAddr = NULL;
   LPSTREAM tmpstream = NULL;
   engine_filter_t filter = NULL;
-  char* text = NULL;
+  char* plaintext = NULL;
   int rc = 0;
   HRESULT hr;
   int recipientsCnt;
@@ -124,16 +135,32 @@ encryptSelection (LPDISPATCH ctrl)
       return S_OK;
     }
 
-  text = get_oom_string (selection, "Text");
-
-  if (!text || strlen (text) <= 1)
+  if (flags & ENCRYPT_INSPECTOR_SELECTION)
     {
-      /* TODO more usable if we just use all text in this case? */
-      MessageBox (NULL,
-                  _("Please select text to encrypt."),
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
-      return S_OK;
+      plaintext = get_oom_string (selection, "Text");
+
+      if (!plaintext || strlen (plaintext) <= 1)
+        {
+          /* TODO more usable if we just use all text in this case? */
+          MessageBox (NULL,
+                      _("Please select text to encrypt."),
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+          goto failure;
+        }
+    }
+  else if (flags & ENCRYPT_INSPECTOR_BODY)
+    {
+      plaintext = get_oom_string (mailItem, "Body");
+      if (!plaintext || strlen (plaintext) <= 1)
+        {
+          /* TODO more usable if we just use all text in this case? */
+          MessageBox (NULL,
+                      _("Textbody empty."),
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+          goto failure;
+        }
     }
 
   /* Create a temporary sink to construct the encrypted data.  */
@@ -163,7 +190,7 @@ encryptSelection (LPDISPATCH ctrl)
                   _("Please add at least one recipent."),
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
-      return S_OK;
+      goto failure;
     }
 
   {
@@ -233,7 +260,7 @@ encryptSelection (LPDISPATCH ctrl)
       }
 
     /* Write the text in the encryption sink. */
-    rc = write_buffer (encsink, text, strlen (text));
+    rc = write_buffer (encsink, plaintext, strlen (plaintext));
 
     if (rc)
       {
@@ -298,13 +325,24 @@ encryptSelection (LPDISPATCH ctrl)
             unsigned int enclosedSize = strlen (buffer) + 34 + 31 + 1;
             char enclosedData[enclosedSize];
             snprintf (enclosedData, sizeof enclosedData,
-                      "-----BEGIN ENCRYPTED MESSAGE-----\n"
+                      "-----BEGIN ENCRYPTED MESSAGE-----\r\n"
                       "%s"
-                      "-----END ENCRYPTED MESSAGE-----\n", buffer);
-            put_oom_string (selection, "Text", enclosedData);
+                      "-----END ENCRYPTED MESSAGE-----\r\n", buffer);
+            if (flags & ENCRYPT_INSPECTOR_SELECTION)
+              put_oom_string (selection, "Text", enclosedData);
+            else if (flags & ENCRYPT_INSPECTOR_BODY)
+              put_oom_string (mailItem, "Body", enclosedData);
+
           }
         else
-          put_oom_string (selection, "Text", buffer);
+          {
+            if (flags & ENCRYPT_INSPECTOR_SELECTION)
+              put_oom_string (selection, "Text", buffer);
+            else if (flags & ENCRYPT_INSPECTOR_BODY)
+              {
+                put_oom_string (mailItem, "Body", buffer);
+              }
+          }
       }
     else
       {
@@ -320,9 +358,14 @@ encryptSelection (LPDISPATCH ctrl)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
-  if (tmpstream)
-    tmpstream->Release();
-  xfree (text);
+  RELDISP(wordEditor);
+  RELDISP(application);
+  RELDISP(selection);
+  RELDISP(sender);
+  RELDISP(recipients);
+  RELDISP(mailItem);
+  RELDISP(tmpstream);
+  xfree (plaintext);
   xfree (senderAddr);
 
   return S_OK;
@@ -642,7 +685,6 @@ getIcon (int id, VARIANT* result)
   PICTDESC pdesc;
   LPDISPATCH pPict;
   HRESULT hr;
-  UINT fuload;
   Gdiplus::GdiplusStartupInput gdiplusStartupInput;
   Gdiplus::Bitmap* pbitmap;
   ULONG_PTR gdiplusToken;
@@ -752,4 +794,28 @@ startCertManager (LPDISPATCH ctrl)
     }
 
   engine_start_keymanager (curWindow);
+}
+HRESULT
+decryptBody (LPDISPATCH ctrl)
+{
+  return S_OK;
+}
+
+HRESULT
+encryptBody (LPDISPATCH ctrl)
+{
+  return encryptInspector (ctrl, ENCRYPT_INSPECTOR_BODY);
+}
+
+HRESULT
+encryptSelection (LPDISPATCH ctrl)
+{
+  return encryptInspector (ctrl, ENCRYPT_INSPECTOR_SELECTION);
+}
+
+
+HRESULT
+addEncSignedAttachment (LPDISPATCH ctrl)
+{
+  return S_OK;
 }
