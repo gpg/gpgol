@@ -197,13 +197,28 @@ get_system_check_bitmap (int checked)
 char *
 get_save_filename (HWND root, const char *srcname)
 {
-  char filter[] = "All Files (*.*)\0*.*\0\0";
+  char filter[21] = "All Files (*.*)\0*.*\0\0";
   char fname[MAX_PATH+1];
+  char filterBuf[32];
+  char* extSep;
   OPENFILENAME ofn;
 
   memset (fname, 0, sizeof (fname));
+  memset (filterBuf, 0, sizeof (filterBuf));
   strncpy (fname, srcname, MAX_PATH-1);
   fname[MAX_PATH] = 0;
+
+  if ((extSep = strrchr (srcname, '.')) && strlen (extSep) <= 4)
+    {
+      /* Windows removes the file extension by default so we
+         need to set the first filter to the file extension.
+      */
+      strcpy (filterBuf, extSep);
+      strcpy (filterBuf + strlen (filterBuf) + 1, extSep);
+      memcpy (filterBuf + strlen (extSep) * 2 + 2, filter, 21);
+    }
+  else
+    memcpy (filterBuf, filter, 21);
 
 
   memset (&ofn, 0, sizeof (ofn));
@@ -214,8 +229,8 @@ get_save_filename (HWND root, const char *srcname)
   ofn.lpstrFileTitle = NULL;
   ofn.nMaxFileTitle = 0;
   ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-  ofn.lpstrTitle = _("GpgOL - Save decrypted attachment");
-  ofn.lpstrFilter = filter;
+  ofn.lpstrTitle = _("GpgOL - Save attachment");
+  ofn.lpstrFilter = filterBuf;
 
   if (GetSaveFileName (&ofn))
     return xstrdup (fname);
