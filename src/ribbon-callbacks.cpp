@@ -25,6 +25,7 @@
 #include <olectl.h>
 #include <stdio.h>
 #include <string.h>
+#include <gdiplus.h>
 
 #include <objidl.h>
 
@@ -626,52 +627,89 @@ decryptSelection (LPDISPATCH ctrl)
   return S_OK;
 }
 
+
+/* getIcon
+   Loads a PNG image from the resurce converts it into a Bitmap
+   and Wraps it in an PictureDispatcher that is returned as result.
+
+   Based on documentation from:
+   http://www.codeproject.com/Articles/3537/Loading-JPG-PNG-resources-using-GDI
+*/
+
 HRESULT
-getIcon (int id, int size, VARIANT* result)
+getIcon (int id, VARIANT* result)
 {
   PICTDESC pdesc;
   LPDISPATCH pPict;
   HRESULT hr;
   UINT fuload;
+  Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+  Gdiplus::Bitmap* pbitmap;
+  ULONG_PTR gdiplusToken;
+  HRSRC hResource;
+  DWORD imageSize;
+  const void* pResourceData;
+  HGLOBAL hBuffer;
 
   memset (&pdesc, 0, sizeof pdesc);
   pdesc.cbSizeofstruct = sizeof pdesc;
   pdesc.picType = PICTYPE_BITMAP;
 
-/*
-   In the future we might want to use PNGs here to have
-   full Alpha Channel support for the icons
+  /* Initialize GDI */
+  gdiplusStartupInput.DebugEventCallback = NULL;
+  gdiplusStartupInput.SuppressBackgroundThread = FALSE;
+  gdiplusStartupInput.SuppressExternalCodecs = FALSE;
+  gdiplusStartupInput.GdiplusVersion = 1;
+  GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
 
-   Some explanation about images and transparency in Ribbons:
-   http://blogs.msdn.com/b/jensenh/archive/2006/11/27/ribbonx-image-faq.aspx
+  /* Get the image from the resource file */
+  hResource = FindResource (glob_hinst, MAKEINTRESOURCE(id), RT_RCDATA);
+  if (!hResource)
+    {
+      log_error ("%s:%s: failed to find image: %i",
+                 SRCNAME, __func__, id);
+      return E_FAIL;
+    }
 
-   Here is an example how this could look like with gdiplus:
+  imageSize = SizeofResource (glob_hinst, hResource);
+  if (!imageSize)
+    return E_FAIL;
 
-   GdiplusStartupInput gdiplusStartupInput;
-   ULONG_PTR gdiplusToken;
-   Bitmap* pbitmap;
+  pResourceData = LockResource (LoadResource(glob_hinst, hResource));
 
-   GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH);
+  if (!pResourceData)
+    {
+      log_error ("%s:%s: failed to load image: %i",
+                 SRCNAME, __func__, id);
+      return E_FAIL;
+    }
 
-   gdiplusStartupInput.DebugEventCallback = NULL;
-   gdiplusStartupInput.SuppressBackgroundThread = FALSE;
-   gdiplusStartupInput.SuppressExternalCodecs = FALSE;
-   gdiplusStartupInput.GdiplusVersion = 1;
-   GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+  hBuffer = GlobalAlloc (GMEM_MOVEABLE, imageSize);
 
-   pbitmap = Bitmap::FromFile (L"c:\\foo.png", FALSE);
-   if (!pbitmap || pbitmap->GetHBITMAP (0, &pdesc.bmp.hbitmap))
-     {
-       log_error ("%s:%s: failed to load file.",
-                  SRCNAME, __func__);
-     }
-*/
+  if (hBuffer)
+    {
+      void* pBuffer = GlobalLock (hBuffer);
+      if (pBuffer)
+        {
+          IStream* pStream = NULL;
+          CopyMemory (pBuffer, pResourceData, imageSize);
 
-  fuload = LR_CREATEDIBSECTION | LR_SHARED;
+          if (CreateStreamOnHGlobal (hBuffer, FALSE, &pStream) == S_OK)
+            {
+              pbitmap = Gdiplus::Bitmap::FromStream (pStream);
+              pStream->Release();
+              if (!pbitmap || pbitmap->GetHBITMAP (0, &pdesc.bmp.hbitmap))
+                {
+                  log_error ("%s:%s: failed to get PNG.",
+                             SRCNAME, __func__);
+                }
+            }
+        }
+      GlobalUnlock (pBuffer);
+    }
+  GlobalFree (hBuffer);
 
-  pdesc.bmp.hbitmap = (HBITMAP) LoadImage (glob_hinst,
-                                           MAKEINTRESOURCE (id),
-                                           IMAGE_BITMAP, size, size, fuload);
+  Gdiplus::GdiplusShutdown (gdiplusToken);
 
   /* Wrap the image into an OLE object.  */
   hr = OleCreatePictureIndirect (&pdesc, IID_IPictureDisp,
@@ -686,9 +724,6 @@ getIcon (int id, int size, VARIANT* result)
   result->pdispVal = pPict;
   result->vt = VT_DISPATCH;
 
-  /*
-  GdiplusShutdown (gdiplusToken);
-  */
 
   return S_OK;
 }

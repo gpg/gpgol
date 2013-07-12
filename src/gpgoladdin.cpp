@@ -485,13 +485,10 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_CMD_CERT_MANAGER:
         return startCertManager (parms->rgvarg[0].pdispVal);
       case ID_BTN_CERTMANAGER:
-        return getIcon (ID_BTN_CERTMANAGER, ICON_SIZE_LARGE, result);
       case ID_BTN_ENCRYPT:
-        return getIcon (ID_BTN_ENCRYPT, ICON_SIZE_NORMAL, result);
       case ID_BTN_DECRYPT:
-        return getIcon (ID_BTN_DECRYPT, ICON_SIZE_NORMAL, result);
       case ID_BTN_DECRYPT_LARGE:
-        return getIcon (ID_BTN_DECRYPT_LARGE, ICON_SIZE_LARGE, result);
+        return getIcon (dispid, result);
     }
 
   log_debug ("%s:%s: leave", SRCNAME, __func__);
