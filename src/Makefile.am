@@ -30,6 +30,9 @@ EXTRA_DIST = \
 	verify-32.bmp  verify-32m.bmp \
 	decrypt-verify-16.bmp decrypt-verify-16m.bmp \
 	decrypt-verify-32.bmp decrypt-verify-32m.bmp \
+	encrypt-16.png encrypt-48.png \
+	key-manager-64.png \
+	decrypt-16.png decrypt-48.png \
 	logo.bmp README.icons
 
 EXEEXT = .dll

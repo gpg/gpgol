@@ -11,24 +11,30 @@ and those installed via the forms extensions from external files.
   ECE semi-documented way of installing icons.  This required a
   special palette (file Outlook.gpl) and the pink background colour as
   the transparency hack. Now we are using the OOM and things are much
-  easier. 
+  easier.
+
+  For Outlook 2010 and later versions we use PNG's directly with full
+  alpha channel support. They are converted to bitmaps in
+  ribbon-callbacks getIcon function.
 
   Icons are included by the resource compiler which reads the file
   dialogs.rc to create the resource.  This is all integtraged into the
   Makefile.  A sample entry in dialogs.rc looks like this:
 
     IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "key-manager-16.bmp"
-    IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"     
-    IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"      
-    IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"      
-    //IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE        
-    //IDB_KEY_MANAGER_64M       BITMAP  DISCARDABLE        
+    IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"
+    IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"
+    IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"
+    //IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE
+    //IDB_KEY_MANAGER_64M       BITMAP  DISCARDABLE
+    IDI_KEY_MANAGER_64_PNG    RCDATA               "key-manager-64.png"
 
   This is the icon for the certificate manager.  We provide two
   resolutions: 16x16 and 32x32 pixel.  I have not yet encountered the
   32x32 thus most other icons are only available in the 16x16 variant.
   The IDB_foo identifiers are defined in dialogs.h; see the comments
   at the top of that file for details.
+  PNG icons have to be added with the type RCDATA.
 
   For compatibility with OL2003 we can't use PNGs directly but we need
   to provide bitmaps and a mask for transparency.

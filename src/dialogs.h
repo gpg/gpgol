@@ -134,6 +134,11 @@
 #define IDC_VRY_AKALIST                 4420
 #define IDC_VRY_HINT                    4421
 
-
+/* Ids for PNG Images */
+#define IDI_ENCRYPT_16_PNG              6000
+#define IDI_ENCRYPT_48_PNG              6001
+#define IDI_DECRYPT_16_PNG              6010
+#define IDI_DECRYPT_48_PNG              6011
+#define IDI_KEY_MANAGER_64_PNG          6020
 
 #endif /*DIALOGS_H*/
