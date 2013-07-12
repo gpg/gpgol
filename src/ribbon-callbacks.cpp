@@ -477,12 +477,21 @@ decryptAttachments (LPDISPATCH ctrl)
                   callback function failed in an ugly window. */
 }
 
+#define DECRYPT_INSPECTOR_SELECTION  1
+#define DECRYPT_INSPECTOR_BODY       2
+
+/* decryptInspector
+   decrypts the content of an inspector. Controled by flags
+   similary to the encryptInspector.
+*/
+
 HRESULT
-decryptSelection (LPDISPATCH ctrl)
+decryptInspector (LPDISPATCH ctrl, int flags)
 {
   LPDISPATCH context;
   LPDISPATCH selection;
   LPDISPATCH wordEditor;
+  LPDISPATCH mailItem;
   LPDISPATCH wordApplication;
 
   struct sink_s decsinkmem;
@@ -494,8 +503,8 @@ decryptSelection (LPDISPATCH ctrl)
   engine_filter_t filter = NULL;
   LPOLEWINDOW actExplorer;
   HWND curWindow;
-  char* selectedText = NULL;
-  int selectedLen = 0;
+  char* plaintext = NULL;
+  int plaintextLen = 0;
   int rc = 0;
   unsigned int session_number;
   HRESULT hr;
@@ -525,8 +534,9 @@ decryptSelection (LPDISPATCH ctrl)
   wordEditor = get_oom_object (context, "WordEditor");
   wordApplication = get_oom_object (wordEditor, "get_Application");
   selection = get_oom_object (wordApplication, "get_Selection");
+  mailItem = get_oom_object (context, "CurrentItem");
 
-  if (!wordEditor || !wordApplication || !selection)
+  if (!wordEditor || !wordApplication || !selection || !mailItem)
     {
       MessageBox (NULL,
                   "Internal error in GpgOL.\n"
@@ -538,22 +548,37 @@ decryptSelection (LPDISPATCH ctrl)
       goto failure;
     }
 
-  selectedText = get_oom_string (selection, "Text");
-
-  if (!selectedText || (selectedLen = strlen (selectedText)) <= 1)
+  if (flags & DECRYPT_INSPECTOR_SELECTION)
     {
-      /* TODO more usable if we just use all text in this case? */
-      MessageBox (NULL,
-                  _("Please select the data you wish to decrypt."),
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
-      goto failure;
+      plaintext = get_oom_string (selection, "Text");
+
+      if (!plaintext || (plaintextLen = strlen (plaintext)) <= 1)
+        {
+          MessageBox (NULL,
+                      _("Please select the data you wish to decrypt."),
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+          goto failure;
+        }
+    }
+  else if (flags & DECRYPT_INSPECTOR_BODY)
+    {
+      plaintext = get_oom_string (mailItem, "Body");
+
+      if (!plaintext || (plaintextLen = strlen (plaintext)) <= 1)
+        {
+          MessageBox (NULL,
+                      _("Nothing to decrypt."),
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+          goto failure;
+        }
     }
 
-  fix_linebreaks (selectedText, &selectedLen);
+  fix_linebreaks (plaintext, &plaintextLen);
 
   /* Determine the protocol based on the content */
-  protocol = is_cms_data (selectedText, selectedLen) ? PROTOCOL_SMIME :
+  protocol = is_cms_data (plaintext, plaintextLen) ? PROTOCOL_SMIME :
     PROTOCOL_OPENPGP;
 
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
@@ -592,7 +617,7 @@ decryptSelection (LPDISPATCH ctrl)
     }
 
   /* Write the text in the decryption sink. */
-  rc = write_buffer (decsink, selectedText, selectedLen);
+  rc = write_buffer (decsink, plaintext, plaintextLen);
 
   /* Flush the decryption sink and wait for the encryption to get
      ready.  */
@@ -644,9 +669,19 @@ decryptSelection (LPDISPATCH ctrl)
       }
     if (strlen (buffer) > 1)
       {
-        /* Now replace the selection with the encrypted or show it
+        /* Now replace the crypto data with the plaintext or show it
         somehow.*/
-        if (put_oom_string (selection, "Text", buffer))
+        int err;
+        if (flags & DECRYPT_INSPECTOR_SELECTION)
+          {
+            err = put_oom_string (selection, "Text", buffer);
+          }
+        else if (flags & DECRYPT_INSPECTOR_BODY)
+          {
+            err = put_oom_string (mailItem, "Body", buffer);
+          }
+
+        if (err)
           {
             MessageBox (NULL, buffer,
                         _("Plain text"),
@@ -667,10 +702,11 @@ decryptSelection (LPDISPATCH ctrl)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
+  RELDISP (mailItem);
   RELDISP (selection);
   RELDISP (wordEditor);
   RELDISP (wordApplication);
-  xfree (selectedText);
+  xfree (plaintext);
   if (tmpstream)
     tmpstream->Release();
 
@@ -773,7 +809,6 @@ getIcon (int id, VARIANT* result)
   result->pdispVal = pPict;
   result->vt = VT_DISPATCH;
 
-
   return S_OK;
 }
 
@@ -799,6 +834,7 @@ startCertManager (LPDISPATCH ctrl)
                  SRCNAME, __func__);
       curWindow = NULL;
     }
+  RELDISP (actExplorer);
 
   engine_start_keymanager (curWindow);
 }
@@ -806,7 +842,13 @@ startCertManager (LPDISPATCH ctrl)
 HRESULT
 decryptBody (LPDISPATCH ctrl)
 {
-  return S_OK;
+  return decryptInspector (ctrl, DECRYPT_INSPECTOR_BODY);
+}
+
+HRESULT
+decryptSelection (LPDISPATCH ctrl)
+{
+  return decryptInspector (ctrl, DECRYPT_INSPECTOR_SELECTION);
 }
 
 HRESULT
