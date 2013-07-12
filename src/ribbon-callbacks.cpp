@@ -319,6 +319,14 @@ encryptInspector (LPDISPATCH ctrl, int flags)
         /* Now replace the selection with the encrypted text */
         if (protocol == PROTOCOL_SMIME)
           {
+            char* lastlinebreak = strrchr (buffer, '\n');
+            if (lastlinebreak && (lastlinebreak - buffer) > 1)
+              {
+                /*XXX there is some strange data in the buffer
+                  after the last linebreak investigate this and
+                  fix it! */
+                lastlinebreak[1] = '\0';
+              }
             unsigned int enclosedSize = strlen (buffer) + 34 + 31 + 1;
             char enclosedData[enclosedSize];
             snprintf (enclosedData, sizeof enclosedData,
