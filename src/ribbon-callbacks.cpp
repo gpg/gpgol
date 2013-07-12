@@ -539,7 +539,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
     }
   RELDISP (actExplorer);
 
-  if ( !flags & DECRYPT_INSPECTOR_BODY)
+  if (!(flags & DECRYPT_INSPECTOR_BODY))
     {
       wordEditor = get_oom_object (context, "WordEditor");
       wordApplication = get_oom_object (wordEditor, "get_Application");
@@ -548,7 +548,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   mailItem = get_oom_object (context, "CurrentItem");
 
   if ((!wordEditor || !wordApplication || !selection || !mailItem) &&
-      (!flags & DECRYPT_INSPECTOR_BODY))
+      !(flags & DECRYPT_INSPECTOR_BODY))
     {
       MessageBox (NULL,
                   "Internal error in GpgOL.\n"
