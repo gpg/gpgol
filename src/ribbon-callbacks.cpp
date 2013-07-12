@@ -114,6 +114,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
                  SRCNAME, __func__);
       curWindow = NULL;
     }
+  RELDISP (actExplorer);
 
   wordEditor = get_oom_object (context, "WordEditor");
   application = get_oom_object (wordEditor, "get_Application");
@@ -132,7 +133,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
                   MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: Could not find all objects.",
                  SRCNAME, __func__);
-      return S_OK;
+      goto failure;
     }
 
   if (flags & ENCRYPT_INSPECTOR_SELECTION)
@@ -230,11 +231,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
     encsink->writefnc = sink_encryption_write;
 
     engine_set_session_number (filter, session_number);
-      {
-        char *tmp = get_oom_string (mailItem, "Subject");
-        engine_set_session_title (filter, tmp);
-        xfree (tmp);
-      }
+    engine_set_session_title (filter, _("GpgOL"));
 
     if ((rc=engine_encrypt_prepare (filter, curWindow,
                                     PROTOCOL_UNKNOWN,
@@ -406,6 +403,9 @@ decryptAttachments (LPDISPATCH ctrl)
                  SRCNAME, __func__);
       curWindow = NULL;
     }
+
+  RELDISP (actExplorer);
+
   {
     char *filenames[attachmentCount + 1];
     filenames[attachmentCount] = NULL;
@@ -452,6 +452,7 @@ decryptAttachments (LPDISPATCH ctrl)
                                     DISPATCH_METHOD, &saveParams,
                                     NULL, NULL, NULL);
         SysFreeString (saveParams.rgvarg[0].bstrVal);
+        RELDISP (attachmentObj);
         if (FAILED(hr))
           {
             int j;
@@ -459,9 +460,11 @@ decryptAttachments (LPDISPATCH ctrl)
                        SRCNAME, __func__, (unsigned int) hr);
             for (j = 0; j < i; j++)
               xfree (filenames[j]);
+            RELDISP (attachmentSelection);
             return hr;
           }
       }
+    RELDISP (attachmentSelection);
     err = op_assuan_start_decrypt_files (curWindow, filenames);
     for (i = 0; i < attachmentCount; i++)
       xfree (filenames[i]);
@@ -517,6 +520,7 @@ decryptSelection (LPDISPATCH ctrl)
                  SRCNAME, __func__);
       curWindow = NULL;
     }
+  RELDISP (actExplorer);
 
   wordEditor = get_oom_object (context, "WordEditor");
   wordApplication = get_oom_object (wordEditor, "get_Application");
@@ -531,7 +535,7 @@ decryptSelection (LPDISPATCH ctrl)
                   MB_ICONINFORMATION|MB_OK);
       log_error ("%s:%s: Could not find all objects.",
                  SRCNAME, __func__);
-      return S_OK;
+      goto failure;
     }
 
   selectedText = get_oom_string (selection, "Text");
@@ -543,7 +547,7 @@ decryptSelection (LPDISPATCH ctrl)
                   _("Please select the data you wish to decrypt."),
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
-      return S_OK;
+      goto failure;
     }
 
   fix_linebreaks (selectedText, &selectedLen);
@@ -576,7 +580,7 @@ decryptSelection (LPDISPATCH ctrl)
   decsink->writefnc = sink_encryption_write;
 
   engine_set_session_number (filter, session_number);
-  engine_set_session_title (filter, _("Decrypt"));
+  engine_set_session_title (filter, _("GpgOL"));
 
   if ((rc=engine_decrypt_start (filter, curWindow,
                                 protocol,
@@ -663,6 +667,9 @@ decryptSelection (LPDISPATCH ctrl)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
+  RELDISP (selection);
+  RELDISP (wordEditor);
+  RELDISP (wordApplication);
   xfree (selectedText);
   if (tmpstream)
     tmpstream->Release();
@@ -795,6 +802,7 @@ startCertManager (LPDISPATCH ctrl)
 
   engine_start_keymanager (curWindow);
 }
+
 HRESULT
 decryptBody (LPDISPATCH ctrl)
 {
@@ -812,7 +820,6 @@ encryptSelection (LPDISPATCH ctrl)
 {
   return encryptInspector (ctrl, ENCRYPT_INSPECTOR_SELECTION);
 }
-
 
 HRESULT
 addEncSignedAttachment (LPDISPATCH ctrl)
