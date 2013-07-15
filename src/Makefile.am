@@ -30,6 +30,10 @@ EXTRA_DIST = \
 	verify-32.bmp  verify-32m.bmp \
 	decrypt-verify-16.bmp decrypt-verify-16m.bmp \
 	decrypt-verify-32.bmp decrypt-verify-32m.bmp \
+	encrypt-16.png encrypt-48.png \
+	key-manager-64.png \
+	decrypt-16.png decrypt-48.png \
+	encrypt-sign-file-48.png \
 	logo.bmp README.icons
 
 EXEEXT = .dll
@@ -79,7 +83,11 @@ gpgol_SOURCES = \
 	inspectors.cpp inspectors.h \
 	mailitem.cpp mailitem.h \
 	cmdbarcontrols.cpp cmdbarcontrols.h \
-	w32-gettext.c w32-gettext.h 
+	w32-gettext.c w32-gettext.h \
+	gpgoladdin.cpp gpgoladdin.h \
+	ribbon-callbacks.cpp ribbon-callbacks.h \
+	parsetlv.c parsetlv.h \
+	filetype.c filetype.h
 
 
 #treeview_SOURCES = treeview.c
@@ -110,7 +118,8 @@ clean-local:
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgme -lassuan -lgpg-error \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
-        -lole32 -loleaut32 -lws2_32 -ladvapi32
+	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
+	-luuid -lgdiplus
 
 resource.o: resource.rc versioninfo.rc dialogs.rc 
 

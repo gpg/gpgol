@@ -24,4 +24,6 @@ src/w32-gettext.c
 src/inspectors.cpp
 src/explorers.cpp
 src/mailitem.cpp
+src/gpgoladdin.cpp
+src/ribbon-callbacks.cpp
 

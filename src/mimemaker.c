@@ -53,24 +53,6 @@ static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                        "abcdefghijklmnopqrstuvwxyz"
                                        "0123456789+/");
 
-/* The object we use instead of IStream.  It allows us to have a
-   callback method for output and thus for processing stuff
-   recursively.  */
-struct sink_s;
-typedef struct sink_s *sink_t;
-struct sink_s
-{
-  void *cb_data;
-  sink_t extrasink;
-  int (*writefnc)(sink_t sink, const void *data, size_t datalen);
-  unsigned long enc_counter; /* Used by write_buffer_for_cb.  */
-/*   struct { */
-/*     int idx; */
-/*     unsigned char inbuf[4]; */
-/*     int quads; */
-/*   } b64; */
-};
-
 
 /* Object used to collect data in a memory buffer.  */
 struct databuf_s
@@ -90,7 +72,7 @@ static int write_multistring (sink_t sink, const char *text1,
 
 
 /* Standard write method used with a sink_t object.  */
-static int
+int
 sink_std_write (sink_t sink, const void *data, size_t datalen)
 {
   HRESULT hr;
@@ -233,7 +215,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
 
 
 /* Write data to a sink_t.  */
-static int
+int
 write_buffer (sink_t sink, const void *data, size_t datalen)
 {
   if (!sink || !sink->writefnc)
@@ -247,7 +229,7 @@ write_buffer (sink_t sink, const void *data, size_t datalen)
 /* Same as above but used for passing as callback function.  This
    fucntion does not return an error code but the number of bytes
    written.  */
-static int
+int
 write_buffer_for_cb (void *opaque, const void *data, size_t datalen)
 {
   sink_t sink = opaque;
@@ -1430,7 +1412,7 @@ mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
 
 
 /* Sink write method used by mime_encrypt.  */
-static int
+int
 sink_encryption_write (sink_t encsink, const void *data, size_t datalen)
 {
   engine_filter_t filter = encsink->cb_data;

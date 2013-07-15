@@ -25,6 +25,9 @@
 #include <windows.h>
 
 #ifndef INITGUID
+/* Include every header that defines a GUID below this
+   macro. Otherwise the GUID's will only be declared and
+   not defined. */
 #define INITGUID
 #endif
 
@@ -41,6 +44,7 @@
 
 #include "olflange-def.h"
 #include "olflange.h"
+#include "gpgoladdin.h"
 #include "ext-commands.h"
 #include "user-events.h"
 #include "session-events.h"
@@ -53,29 +57,13 @@
 #include "mailitem.h"
 #include "cmdbarcontrols.h"
 
-/* The GUID for this plugin.  */
-#define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
-DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
-            0xc6, 0x87, 0x00, 0x0d, 0x60, 0x80, 0xe7, 0x35);
-
-/* For documentation: The GUID used for our custom properties:
-   {31805ab8-3e92-11dc-879c-00061b031004}
- */
-
-
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
                         } while (0)
 
-
 static bool g_initdll = FALSE;
 
-static void install_forms (void);
-static void install_sinks (LPEXCHEXTCALLBACK eecb);
-
-
 static char *olversion;
-
 
 
 /* Return a string for the context NO.  This never return NULL. */
@@ -126,8 +114,11 @@ get_ol_main_version (void)
 
 
 
-/* Registers this module as an Exchange extension. This basically updates
-   some Registry entries. */
+/* Registers this module as an Exchange extension and as an addin for
+   outlook 2010. This basically updates some Registry entries.
+   Documentation to be found at:
+   http://msdn.microsoft.com/en-us/library/bb386106%28v=vs.110%29.aspx
+   */
 STDAPI
 DllRegisterServer (void)
 {
@@ -221,8 +212,9 @@ DllRegisterServer (void)
   if (hkey != NULL)
     RegCloseKey (hkey);
 
+  /* Register the CLSID in the registry */
   hkey = NULL;
-  strcpy (szKeyBuf, "CLSID\\" CLSIDSTR_GPGOL );
+  strcpy (szKeyBuf, "CLSID\\" CLSIDSTR_GPGOL);
   ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
                   REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
   if (ec != ERROR_SUCCESS)
@@ -231,10 +223,11 @@ DllRegisterServer (void)
       return E_ACCESSDENIED;
     }
 
-  strcpy (szEntry, "GpgOL - The GnuPG Outlook Plugin");
+  strcpy (szEntry, GPGOL_PRETTY);
   dwTemp = strlen (szEntry) + 1;
   RegSetValueEx (hkey, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
 
+  /* Set the Inproc server value */
   strcpy (szKeyBuf, "InprocServer32");
   ec = RegCreateKeyEx (hkey, szKeyBuf, 0, NULL, REG_OPTION_NON_VOLATILE,
                        KEY_ALL_ACCESS, NULL, &hkey2, NULL);
@@ -248,9 +241,86 @@ DllRegisterServer (void)
   dwTemp = strlen (szEntry) + 1;
   RegSetValueEx (hkey2, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
 
-  strcpy (szEntry, "Neutral");
+  /* Set the threading model used */
+  strcpy (szEntry, "Both");
   dwTemp = strlen (szEntry) + 1;
   RegSetValueEx (hkey2, "ThreadingModel", 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  /* Set the Prog ID */
+  strcpy (szKeyBuf, "ProgID");
+  ec = RegCreateKeyEx (hkey, szKeyBuf, 0, NULL, REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS, NULL, &hkey2, NULL);
+  if (ec != ERROR_SUCCESS)
+    {
+      fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
+      RegCloseKey (hkey);
+      return E_ACCESSDENIED;
+    }
+  strcpy (szEntry, GPGOL_PROGID);
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey2, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  /* Make the Prog ID known. This is basically the same as above
+   * but necessary so we can refer to the Prog ID as an Outlook
+   * Extension
+   */
+  hkey = NULL;
+  strcpy (szKeyBuf, GPGOL_PROGID);
+  ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
+                  REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+  if (ec != ERROR_SUCCESS)
+    {
+      fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
+      return E_ACCESSDENIED;
+    }
+
+  strcpy (szEntry, GPGOL_PRETTY);
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  /* Point from the Prog ID entry to the CSLID */
+
+  strcpy (szKeyBuf, "CLSID");
+  ec = RegCreateKeyEx (hkey, szKeyBuf, 0, NULL, REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS, NULL, &hkey2, NULL);
+  if (ec != ERROR_SUCCESS)
+    {
+      fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
+      RegCloseKey (hkey);
+      return E_ACCESSDENIED;
+    }
+  strcpy (szEntry, CLSIDSTR_GPGOL);
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey2, NULL, 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  /* Register ourself as an extension for outlook >= 14 */
+
+  strcpy (szKeyBuf, "Software\\Microsoft\\Office\\Outlook\\Addins\\" GPGOL_PROGID);
+  ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL,
+                  REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+  if (ec != ERROR_SUCCESS)
+    {
+      fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
+      return E_ACCESSDENIED;
+    }
+
+  /* Load connected and load Bootload */
+  dwTemp = 0x01 | 0x02;
+  RegSetValueEx (hkey, "LoadBehavior", 0, REG_DWORD, (BYTE*)&dwTemp, 4);
+
+  /* We are not commandline save */
+  dwTemp = 0;
+  RegSetValueEx (hkey, "CommandLineSafe", 0, REG_DWORD, (BYTE*)&dwTemp, 4);
+
+  /* A friendly name (visible in outlook) */
+  strcpy (szEntry, GPGOL_PRETTY);
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey, "FriendlyName", 0, REG_SZ, (BYTE*)szEntry, dwTemp);
+
+  /* A short description (visible in outlook) */
+  strcpy (szEntry, GPGOL_DESCRIPTION);
+  dwTemp = strlen (szEntry) + 1;
+  RegSetValueEx (hkey, "Description", 0, REG_SZ, (BYTE*)szEntry, dwTemp);
 
   RegCloseKey (hkey2);
   RegCloseKey (hkey);
@@ -261,7 +331,7 @@ DllRegisterServer (void)
 }
 
 
-/* Unregisters this module as an Exchange extension. */
+/* Unregisters this module as an Exchange extension / Addin. */
 STDAPI
 DllUnregisterServer (void)
 {
@@ -292,8 +362,20 @@ DllUnregisterServer (void)
   /* Delete CLSIDs. */
   strcpy (buf, "CLSID\\" CLSIDSTR_GPGOL "\\InprocServer32");
   RegDeleteKey (HKEY_CLASSES_ROOT, buf);
+  strcpy (buf, "CLSID\\" CLSIDSTR_GPGOL "\\ProgID");
+  RegDeleteKey (HKEY_CLASSES_ROOT, buf);
   strcpy (buf, "CLSID\\" CLSIDSTR_GPGOL);
   RegDeleteKey (HKEY_CLASSES_ROOT, buf);
+
+  /* Delete ProgID */
+  strcpy (buf, GPGOL_PROGID "\\CLSID");
+  RegDeleteKey (HKEY_CLASSES_ROOT, buf);
+  strcpy (buf, GPGOL_PROGID);
+  RegDeleteKey (HKEY_CLASSES_ROOT, buf);
+
+  /* Delete Addin entry */
+  strcpy (buf, "Software\\Microsoft\\Office\\Outlook\\Addins\\" GPGOL_PROGID);
+  RegDeleteKey (HKEY_LOCAL_MACHINE, buf);
 
   return S_OK;
 }
@@ -439,28 +521,28 @@ GpgolExt::GpgolExt (void)
           /* Note: If you want to change the announcment, you need to
              increment the ANNOUNCE_NUMBER above.  The number assures
              that a user will see this message only once.  */
-          MessageBox
-            (NULL,
-             _("Welcome to GpgOL 1.0\n"
-               "\n"
-               "GpgOL adds integrated OpenPGP and S/MIME encryption "
-               "and digital signing support to Outlook 2003 and 2007.\n"
-               "\n"
-               "Although we tested this software extensively, we can't "
-               "give you any guarantee that it will work as expected. "
-               "The programming interface we are using has not been properly "
-               "documented by Microsoft and thus the functionality of GpgOL "
-               "may cease to work with an update of your Windows system.\n"
-               "\n"
-               "WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START "
-               "TO USE GPGOL ON ANY SENSITIVE DATA!\n"
-               "\n"
-               "There are some known problems, the most severe being "
-               "that sending encrypted or signed mails using an Exchange "
-               "based account does not work.  Using GpgOL along with "
-               "other Outlook plugins may in some cases not work."
-               "\n"),
-             "GpgOL", MB_ICONINFORMATION|MB_OK);
+          char buffer[4096];
+
+          snprintf (buffer, sizeof buffer, "%s\n\n%s%s",
+            _("Welcome to GpgOL "), VERSION,
+            _("GpgOL adds integrated OpenPGP and S/MIME encryption "
+              "and digital signing support to Outlook 2003 and 2007.\n"
+              "\n"
+              "Although we tested this software extensively, we can't "
+              "give you any guarantee that it will work as expected. "
+              "The programming interface we are using has not been properly "
+              "documented by Microsoft and thus the functionality of GpgOL "
+              "may cease to work with an update of your Windows system.\n"
+              "\n"
+              "WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START "
+              "TO USE GPGOL ON ANY SENSITIVE DATA!\n"
+              "\n"
+              "There are some known problems, the most severe being "
+              "that sending encrypted or signed mails using an Exchange "
+              "based account does not work.  Using GpgOL along with "
+              "other Outlook plugins may in some cases not work."
+              "\n"));
+          MessageBox (NULL, buffer, "GpgOL", MB_ICONINFORMATION|MB_OK);
           /* Show this warning only once.  */
           opt.announce_number = ANNOUNCE_NUMBER;
           write_options ();
@@ -495,7 +577,7 @@ GpgolExt::~GpgolExt (void)
 //   if (m_pOutlookExtItemEvents)
 //     m_pOutlookExtItemEvents->Release ();
 
-  if (m_lContext == EECONTEXT_SESSION)
+  if (m_lContext == EECONTEXT_SESSION || !m_lContext)
     {
       if (g_initdll)
         {
@@ -706,7 +788,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
 }
 
 
-static void
+void
 install_forms (void)
 {
   HRESULT hr;
@@ -782,8 +864,7 @@ install_forms (void)
 }
 
 
-
-static void
+void
 install_sinks (LPEXCHEXTCALLBACK eecb)
 {
   static int done;
@@ -802,6 +883,12 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
   eecb->QueryInterface (IID_IOutlookExtCallback, (LPVOID*)&pCb);
   if (pCb)
     pCb->GetObject (&rootobj);
+  else
+    {
+      /* If we did not get an ExtCallback interface we might
+         as well try to find Application.Explorers directly */
+      rootobj = eecb;
+    }
   if (rootobj)
     {
       LPDISPATCH disp;

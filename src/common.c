@@ -197,13 +197,28 @@ get_system_check_bitmap (int checked)
 char *
 get_save_filename (HWND root, const char *srcname)
 {
-  char filter[] = "All Files (*.*)\0*.*\0\0";
+  char filter[21] = "All Files (*.*)\0*.*\0\0";
   char fname[MAX_PATH+1];
+  char filterBuf[32];
+  char* extSep;
   OPENFILENAME ofn;
 
   memset (fname, 0, sizeof (fname));
+  memset (filterBuf, 0, sizeof (filterBuf));
   strncpy (fname, srcname, MAX_PATH-1);
   fname[MAX_PATH] = 0;
+
+  if ((extSep = strrchr (srcname, '.')) && strlen (extSep) <= 4)
+    {
+      /* Windows removes the file extension by default so we
+         need to set the first filter to the file extension.
+      */
+      strcpy (filterBuf, extSep);
+      strcpy (filterBuf + strlen (filterBuf) + 1, extSep);
+      memcpy (filterBuf + strlen (extSep) * 2 + 2, filter, 21);
+    }
+  else
+    memcpy (filterBuf, filter, 21);
 
 
   memset (&ofn, 0, sizeof (ofn));
@@ -214,8 +229,8 @@ get_save_filename (HWND root, const char *srcname)
   ofn.lpstrFileTitle = NULL;
   ofn.nMaxFileTitle = 0;
   ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-  ofn.lpstrTitle = _("GpgOL - Save decrypted attachment");
-  ofn.lpstrFilter = filter;
+  ofn.lpstrTitle = _("GpgOL - Save attachment");
+  ofn.lpstrFilter = filterBuf;
 
   if (GetSaveFileName (&ofn))
     return xstrdup (fname);
@@ -921,82 +936,77 @@ gpgol_spawn_detached (const char *cmdline)
 
 
 
-
-/* Simple but pretty complete ASN.1 BER parser.  Parse the data at the
-   address of BUFFER with a length given at the address of SIZE.  On
-   success return 0 and update BUFFER and SIZE to point to the value.
-   Do not update them on error.  The information about the object are
-   stored in the caller allocated TI structure.  */
-int
-parse_tlv (char const **buffer, size_t *size, tlvinfo_t *ti)
+/* Percent-escape the string STR by replacing colons with '%3a'.  If
+   EXTRA is not NULL all characters in it are also escaped. */
+char *
+percent_escape (const char *str, const char *extra)
 {
-  int c;
-  unsigned long tag;
-  const unsigned char *buf = (const unsigned char *)(*buffer);
-  size_t length = *size;
+  int i, j;
+  char *ptr;
 
-  ti->cls = 0;
-  ti->tag = 0;
-  ti->is_cons = 0;
-  ti->is_ndef = 0;
-  ti->length = 0;
-  ti->nhdr = 0;
+  if (!str)
+    return NULL;
 
-  if (!length)
-    return -1;
-  c = *buf++; length--; ++ti->nhdr;
-
-  ti->cls = (c & 0xc0) >> 6;
-  ti->is_cons = !!(c & 0x20);
-  tag = c & 0x1f;
-
-  if (tag == 0x1f)
+  for (i=j=0; str[i]; i++)
+    if (str[i] == ':' || str[i] == '%' || (extra && strchr (extra, str[i])))
+      j++;
+  ptr = (char *) malloc (i + 2 * j + 1);
+  i = 0;
+  while (*str)
     {
-      tag = 0;
-      do
+      /* FIXME: Work around a bug in Kleo.  */
+      if (*str == ':')
         {
-          tag <<= 7;
-          if (!length)
-            return -1;
-          c = *buf++; length--; ++ti->nhdr;
-          tag |= c & 0x7f;
+          ptr[i++] = '%';
+          ptr[i++] = '3';
+          ptr[i++] = 'a';
         }
-      while (c & 0x80);
-    }
-  ti->tag = tag;
-
-  if (!length)
-    return -1;
-  c = *buf++; length--; ++ti->nhdr;
-
-  if ( !(c & 0x80) )
-    ti->length = c;
-  else if (c == 0x80)
-    ti->is_ndef = 1;
-  else if (c == 0xff)
-    return -1;
-  else
-    {
-      unsigned long len = 0;
-      int count = (c & 0x7f);
-
-      if (count > sizeof (len) || count > sizeof (size_t))
-        return -1;
-
-      for (; count; count--)
+      else
         {
-          len <<= 8;
-          if (!length)
-            return -1;
-          c = *buf++; length--; ++ti->nhdr;
-          len |= c & 0xff;
+          if (*str == '%')
+            {
+              ptr[i++] = '%';
+              ptr[i++] = '2';
+              ptr[i++] = '5';
+            }
+          else if (extra && strchr (extra, *str))
+            {
+              ptr[i++] = '%';
+              ptr[i++] = tohex_lower ((*str >> 4) & 15);
+              ptr[i++] = tohex_lower (*str & 15);
+            }
+          else
+            ptr[i++] = *str;
         }
-      ti->length = len;
+      str++;
     }
-  
-  *buffer = buf;
-  *size = length;
-  return 0;
+  ptr[i] = '\0';
+
+  return ptr;
 }
 
+/* Fix linebreaks.
+   This either removes the \r if it is followed by a \n
+   or replaces it by a \n. This is neccessary because
+   Micrsoft Word buffers appearently use only the \r
+   to indicate line breaks.
+*/
+void
+fix_linebreaks (char *str, int *len)
+{
+  char *src;
+  char *dst;
 
+  src = str;
+  dst = str;
+  while (*src)
+    {
+      if (src[0] == '\r' && src[1] == '\n')
+        src++;
+      else if (src[0] == '\r')
+        src[0] = '\n';
+      *(dst++) = *(src++);
+    }
+  *dst = '\0';
+  *len = dst - str;
+}

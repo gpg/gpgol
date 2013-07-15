@@ -1,6 +1,6 @@
 /* gpgol-ids.h
 
-  Resource IDs  used by gpgol-rsrcs.rc. 
+  Resource IDs  used by gpgol resource files
 */
 
 #ifndef GPGOL_IDS_H
@@ -32,6 +32,7 @@
 #define IDC_OPT_HOMEDIR                 1027
 #define IDC_OPT_SELHOMEDIR              1028
 
+#define IDR_XML_EXPLORER                203
 
 #endif /*GPGOL_IDS_H*/
 

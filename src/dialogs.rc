@@ -24,38 +24,43 @@
 
 
 IDB_ENCRYPT_16            BITMAP  DISCARDABLE  "encrypt-16.bmp"
-IDB_ENCRYPT_16M           BITMAP  DISCARDABLE  "encrypt-16m.bmp"      
+IDB_ENCRYPT_16M           BITMAP  DISCARDABLE  "encrypt-16m.bmp"
 IDB_ENCRYPT_32            BITMAP  DISCARDABLE  "encrypt-32.bmp"
-IDB_ENCRYPT_32M           BITMAP  DISCARDABLE  "encrypt-32m.bmp"      
+IDB_ENCRYPT_32M           BITMAP  DISCARDABLE  "encrypt-32m.bmp"
+IDI_ENCRYPT_16_PNG        RCDATA               "encrypt-16.png"
+IDI_ENCRYPT_48_PNG        RCDATA               "encrypt-48.png"
 
 IDB_SIGN_16               BITMAP  DISCARDABLE  "sign-16.bmp"
-IDB_SIGN_16M              BITMAP  DISCARDABLE  "sign-16m.bmp"      
-IDB_SIGN_32               BITMAP  DISCARDABLE  "sign-32.bmp"      
-IDB_SIGN_32M              BITMAP  DISCARDABLE  "sign-32m.bmp"      
+IDB_SIGN_16M              BITMAP  DISCARDABLE  "sign-16m.bmp"
+IDB_SIGN_32               BITMAP  DISCARDABLE  "sign-32.bmp"
+IDB_SIGN_32M              BITMAP  DISCARDABLE  "sign-32m.bmp"
 
 IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "key-manager-16.bmp"
-IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"     
-IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"      
-IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"      
-IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE  "key-manager-64.bmp"      
+IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"
+IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"
+IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"
+IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE  "key-manager-64.bmp"
 IDB_KEY_MANAGER_64M       BITMAP  DISCARDABLE  "key-manager-64m.bmp"
+IDI_KEY_MANAGER_64_PNG    RCDATA               "key-manager-64.png"
 
 IDB_DECRYPT_16            BITMAP  DISCARDABLE  "decrypt-16.bmp"
-IDB_DECRYPT_16M           BITMAP  DISCARDABLE  "decrypt-16m.bmp"     
+IDB_DECRYPT_16M           BITMAP  DISCARDABLE  "decrypt-16m.bmp"
 IDB_DECRYPT_32            BITMAP  DISCARDABLE  "decrypt-32.bmp"
 IDB_DECRYPT_32M           BITMAP  DISCARDABLE  "decrypt-32m.bmp"
+IDI_DECRYPT_16_PNG        RCDATA               "decrypt-16.png"
+IDI_DECRYPT_48_PNG        RCDATA               "decrypt-48.png"
 
-IDB_VERIFY_16             BITMAP  DISCARDABLE  "verify-16.bmp"          
-IDB_VERIFY_16M            BITMAP  DISCARDABLE  "verify-16m.bmp"     
-IDB_VERIFY_32             BITMAP  DISCARDABLE  "verify-32.bmp"      
-IDB_VERIFY_32M            BITMAP  DISCARDABLE  "verify-32m.bmp"      
+IDB_VERIFY_16             BITMAP  DISCARDABLE  "verify-16.bmp"
+IDB_VERIFY_16M            BITMAP  DISCARDABLE  "verify-16m.bmp"
+IDB_VERIFY_32             BITMAP  DISCARDABLE  "verify-32.bmp"
+IDB_VERIFY_32M            BITMAP  DISCARDABLE  "verify-32m.bmp"
 
 IDB_DECRYPT_VERIFY_16     BITMAP  DISCARDABLE  "decrypt-verify-16.bmp" 
 IDB_DECRYPT_VERIFY_16M    BITMAP  DISCARDABLE  "decrypt-verify-16m.bmp"
 IDB_DECRYPT_VERIFY_32     BITMAP  DISCARDABLE  "decrypt-verify-32.bmp"
 IDB_DECRYPT_VERIFY_32M    BITMAP  DISCARDABLE  "decrypt-verify-32m.bmp"
 
-
+IDI_ENCSIGN_FILE_48_PNG   RCDATA               "encrypt-sign-file-48.png"
 
 IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
 

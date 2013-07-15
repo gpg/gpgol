@@ -30,6 +30,7 @@
 #include "rfc822parse.h"
 #include "serpent.h"
 #include "mapihelp.h"
+#include "parsetlv.h"
 
 #ifndef CRYPT_E_STREAM_INSUFFICIENT_DATA
 #define CRYPT_E_STREAM_INSUFFICIENT_DATA 0x80091011
@@ -761,12 +762,12 @@ is_really_cms_encrypted (LPMESSAGE message)
   n = nread;
   if (parse_tlv (&p, &n, &ti))
     goto leave;
-  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_SEQUENCE
+  if (!(ti.cls == ASN1_CLASS_UNIVERSAL && ti.tag == ASN1_TAG_SEQUENCE
         && ti.is_cons) )
     goto leave;
   if (parse_tlv (&p, &n, &ti))
     goto leave;
-  if (!(ti.cls == MY_ASN_CLASS_UNIVERSAL && ti.tag == MY_ASN_TAG_OBJECT_ID
+  if (!(ti.cls == ASN1_CLASS_UNIVERSAL && ti.tag == ASN1_TAG_OBJECT_ID
         && !ti.is_cons && ti.length) || ti.length > n)
     goto leave;
   /* Now is this enveloped data (1.2.840.113549.1.7.3)

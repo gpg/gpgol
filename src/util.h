@@ -47,6 +47,7 @@ extern "C" {
               while(*_vptr) { *_vptr=0; _vptr++; } \
                   } while(0)
 
+#include <windows.h>
 
 /* i18n stuff */
 #include "w32-gettext.h"
@@ -70,7 +71,9 @@ char *trim_spaces (char *string);
 char *trim_trailing_spaces (char *string);
 char *read_w32_registry_string (const char *root, const char *dir,
                                 const char *name);
+char *percent_escape (const char *str, const char *extra);
 
+void fix_linebreaks (char *str, int *len);
 
 /*-- main.c --*/
 const void *get_128bit_session_key (void);
@@ -123,6 +126,7 @@ int write_options (void);
 
 #define tohex(n) ((n) < 10 ? ((n) + '0') : (((n) - 10) + 'A'))
 
+#define tohex_lower(n) ((n) < 10 ? ((n) + '0') : (((n) - 10) + 'a'))
 /***** Inline functions.  ****/
 
 /* Return true if LINE consists only of white space (up to and

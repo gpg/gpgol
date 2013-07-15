@@ -7,10 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2011-12-27 12:49+0100\n"
+"POT-Creation-Date: 2013-07-15 08:09+0000\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -39,9 +40,9 @@ msgid ""
 "entire message again.  Then open this attachment."
 msgstr ""
 
-#: src/common.c:216
+#: src/common.c:232
 #, fuzzy
-msgid "GpgOL - Save decrypted attachment"
+msgid "GpgOL - Save attachment"
 msgstr "GPG - Spara dekrypterad bilaga"
 
 #: src/config-dialog.c:137
@@ -56,6 +57,13 @@ msgstr ""
 
 #: src/engine.c:395 src/engine.c:405 src/main.c:699 src/main.c:705
 #: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
+#: src/gpgoladdin.cpp:588 src/gpgoladdin.cpp:635 src/gpgoladdin.cpp:703
+#: src/gpgoladdin.cpp:705 src/ribbon-callbacks.cpp:132
+#: src/ribbon-callbacks.cpp:148 src/ribbon-callbacks.cpp:161
+#: src/ribbon-callbacks.cpp:192 src/ribbon-callbacks.cpp:234
+#: src/ribbon-callbacks.cpp:556 src/ribbon-callbacks.cpp:573
+#: src/ribbon-callbacks.cpp:587 src/ribbon-callbacks.cpp:600
+#: src/ribbon-callbacks.cpp:636
 msgid "GpgOL"
 msgstr ""
 
@@ -218,18 +226,18 @@ msgid ""
 "\"%s\""
 msgstr ""
 
-#: src/mapihelp.cpp:1527 src/mapihelp.cpp:1535 src/mapihelp.cpp:1543
+#: src/mapihelp.cpp:1528 src/mapihelp.cpp:1536 src/mapihelp.cpp:1544
 msgid "[no subject]"
 msgstr ""
 
-#: src/mapihelp.cpp:2152
+#: src/mapihelp.cpp:2153
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
 
-#: src/mapihelp.cpp:3004
+#: src/mapihelp.cpp:3005
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -311,16 +319,17 @@ msgstr "Kryptering misslyckades"
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
 
-#: src/mimeparser.c:1203
+#: src/mimeparser.c:1204
 #, fuzzy
 msgid "Error writing to stream"
 msgstr "Fel vid skrivning av fil"
 
-#: src/mimeparser.c:1204
+#: src/mimeparser.c:1205
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 
-#: src/olflange-dlgs.cpp:43
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:588 src/gpgoladdin.cpp:635
+#: src/gpgoladdin.cpp:703
 msgid "General"
 msgstr ""
 
@@ -367,10 +376,12 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr ""
 
-#: src/olflange.cpp:444
+#: src/olflange.cpp:526
+msgid "Welcome to GpgOL "
+msgstr ""
+
+#: src/olflange.cpp:528
 msgid ""
-"Welcome to GpgOL 1.0\n"
-"\n"
 "GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
 "support to Outlook 2003 and 2007.\n"
 "\n"
@@ -388,7 +399,7 @@ msgid ""
 "along with other Outlook plugins may in some cases not work.\n"
 msgstr ""
 
-#: src/olflange.cpp:472
+#: src/olflange.cpp:554
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -397,7 +408,7 @@ msgid ""
 ">Options->GpgOL.\n"
 msgstr ""
 
-#: src/olflange.cpp:672
+#: src/olflange.cpp:754
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -637,6 +648,66 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr ""
 
+#: src/gpgoladdin.cpp:589 src/gpgoladdin.cpp:636 src/gpgoladdin.cpp:703
+#, fuzzy
+msgid "Start Certificate Manager"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/gpgoladdin.cpp:590 src/gpgoladdin.cpp:637
+msgid "Textbody"
+msgstr ""
+
+#: src/gpgoladdin.cpp:591 src/gpgoladdin.cpp:598
+#, fuzzy
+msgid "Encrypt"
+msgstr "Kryptering"
+
+#: src/gpgoladdin.cpp:592 src/gpgoladdin.cpp:598 src/gpgoladdin.cpp:638
+#: src/gpgoladdin.cpp:639
+#, fuzzy
+msgid "Decrypt"
+msgstr "Dekryptering"
+
+#: src/gpgoladdin.cpp:705 src/gpgoladdin.cpp:706
+msgid "Save and decrypt"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:147
+#, fuzzy
+msgid "Please select text to encrypt."
+msgstr "Välj åtminstone en mottagarnyckel."
+
+#: src/ribbon-callbacks.cpp:160
+msgid "Textbody empty."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:191
+#, fuzzy
+msgid "Please add at least one recipent."
+msgstr "Välj åtminstone en mottagarnyckel."
+
+#: src/ribbon-callbacks.cpp:572
+#, fuzzy
+msgid "Please select a Mail."
+msgstr "Välj åtminstone en mottagarnyckel."
+
+#: src/ribbon-callbacks.cpp:586
+#, fuzzy
+msgid "Please select the data you wish to decrypt."
+msgstr "Välj åtminstone en mottagarnyckel."
+
+#: src/ribbon-callbacks.cpp:599
+msgid "Nothing to decrypt."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:715
+msgid "Plain text"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Decrypt Selection"
+#~ msgstr "Dekryptering"
+
 #~ msgid "Select this option to encrypt the message."
 #~ msgstr "Välj det här alternativet för att kryptera meddelandet."
 
@@ -714,9 +785,6 @@ msgstr ""
 
 #~ msgid "No valid OpenPGP data found."
 #~ msgstr "Inget giltigt OpenPGP-data hittades."
-
-#~ msgid "Decryption"
-#~ msgstr "Dekryptering"
 
 #~ msgid ""
 #~ "[This is a PGP/MIME message]\r\n"
