@@ -523,9 +523,9 @@ GpgolExt::GpgolExt (void)
              that a user will see this message only once.  */
           MessageBox
             (NULL,
-             _("Welcome to GpgOL " VERSION "\n"
+             _("Welcome to GpgOL ") VERSION "\n"
                "\n"
-               "GpgOL adds integrated OpenPGP and S/MIME encryption "
+               _("GpgOL adds integrated OpenPGP and S/MIME encryption "
                "and digital signing support to Outlook 2003 and 2007.\n"
                "\n"
                "Although we tested this software extensively, we can't "
