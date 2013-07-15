@@ -624,6 +624,19 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"     </group>"
         L"    </tab>"
         L"   </tabs>"
+        L"  <contextualTabs>"
+        L"    <tabSet idMso=\"TabSetAttachments\">"
+        L"        <tab idMso=\"TabAttachments\">"
+        L"            <group label=\"%S\" id=\"gnupgLabel\">"
+        L"                <button id=\"gpgol_contextual_decrypt\""
+        L"                    size=\"large\""
+        L"                    label=\"%S\""
+        L"                    getImage=\"btnDecryptLarge\""
+        L"                    onAction=\"attachmentDecryptCallback\" />"
+        L"            </group>"
+        L"        </tab>"
+        L"    </tabSet>"
+        L"  </contextualTabs>"
         L" </ribbon>"
         L"<contextMenus>"
         L"<contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
@@ -631,10 +644,17 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"         label=\"%S\""
         L"         onAction=\"decryptSelection\"/>"
         L" </contextMenu>"
+        L" <contextMenu idMso=\"ContextMenuAttachments\">"
+        L"   <button id=\"gpgol_decrypt\""
+        L"           label=\"%S\""
+        L"           getImage=\"btnDecrypt\""
+        L"           onAction=\"attachmentDecryptCallback\"/>"
+        L" </contextMenu>"
         L"</contextMenus>"
-        L"</customUI>", _("GpgOL"), _("General"),
-        _("Start Certificate Manager"),
-        _("Textbody"),
+        L"</customUI>",
+        _("GpgOL"), _("General"), _("Start Certificate Manager"),
+        _("Textbody"), _("Decrypt"),
+        _("GpgOL"), _("Save and decrypt"),
         _("Decrypt"),
         _("Decrypt"));
     }
