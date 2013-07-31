@@ -559,8 +559,6 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               label=\"%S\""
         L"               onAction=\"decryptBody\"/>"
         L"     </group>"
-        /*
-           TODO: Implement
         L"     <group id=\"attachmentGroup\""
         L"            label=\"%S\">"
         L"       <button id=\"encryptSignFile\""
@@ -569,7 +567,6 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               label=\"%S\""
         L"               onAction=\"addEncSignedAttachment\"/>"
         L"     </group>"
-        */
         L"    </tab>"
         L"   </tabs>"
         L" </ribbon>"
@@ -590,11 +587,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         _("Textbody"),
         _("Encrypt"),
         _("Decrypt"),
-        /*
-           TODO: Implement
         _("Attachments"),
-        _("Encrypted file"),
-        */
+        _("Add Encrypted file"),
         _("Encrypt"), _("Decrypt")
         );
     }
