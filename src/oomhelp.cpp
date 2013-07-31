@@ -789,3 +789,38 @@ get_oom_context_window (LPDISPATCH context)
   return ret;
 }
 
+/* Gets a malloced NULL terminated array of recipent strings from
+   an OOM recipients Object. */
+char **
+get_oom_recipients (LPDISPATCH recipients)
+{
+  int recipientsCnt = get_oom_int (recipients, "Count");
+  char **recipientAddrs = NULL;
+  int i;
+
+  if (!recipientsCnt)
+    {
+      return NULL;
+    }
+
+  /* Get the recipients */
+  recipientAddrs = (char**) xmalloc((recipientsCnt + 1) * sizeof(char*));
+  recipientAddrs[recipientsCnt] = NULL;
+  for (i = 1; i <= recipientsCnt; i++)
+    {
+      char buf[16];
+      LPDISPATCH recipient;
+      snprintf (buf, sizeof (buf), "Item(%i)", i);
+      recipient = get_oom_object (recipients, buf);
+      if (!recipient)
+        {
+          /* Should be impossible */
+          recipientAddrs[i-1] = NULL;
+          log_error ("%s:%s: could not find Item %i;",
+                     SRCNAME, __func__, i);
+          break;
+        }
+      recipientAddrs[i-1] = get_oom_string (recipient, "Address");
+    }
+  return recipientAddrs;
+}

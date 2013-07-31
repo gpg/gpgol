@@ -121,6 +121,10 @@ void del_oom_button (LPDISPATCH button);
 /* Get the HWND of the active window in the current context */
 HWND get_oom_context_window (LPDISPATCH context);
 
+/* Get the address of the recipients as string list */
+char **
+get_oom_recipients (LPDISPATCH recipients);
+
 #ifdef __cplusplus
 }
 #endif

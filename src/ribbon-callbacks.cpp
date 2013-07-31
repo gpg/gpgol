@@ -81,12 +81,12 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   struct sink_s sinkmem;
   sink_t sink = &sinkmem;
   char* senderAddr = NULL;
+  char** recipientAddrs = NULL;
   LPSTREAM tmpstream = NULL;
   engine_filter_t filter = NULL;
   char* plaintext = NULL;
   int rc = 0;
   HRESULT hr;
-  int recipientsCnt;
   HWND curWindow;
   protocol_t protocol;
   unsigned int session_number;
@@ -128,7 +128,6 @@ encryptInspector (LPDISPATCH ctrl, int flags)
 
       if (!plaintext || strlen (plaintext) <= 1)
         {
-          /* TODO more usable if we just use all text in this case? */
           MessageBox (NULL,
                       _("Please select text to encrypt."),
                       _("GpgOL"),
@@ -141,7 +140,6 @@ encryptInspector (LPDISPATCH ctrl, int flags)
       plaintext = get_oom_string (mailItem, "Body");
       if (!plaintext || strlen (plaintext) <= 1)
         {
-          /* TODO more usable if we just use all text in this case? */
           MessageBox (NULL,
                       _("Textbody empty."),
                       _("GpgOL"),
@@ -169,9 +167,9 @@ encryptInspector (LPDISPATCH ctrl, int flags)
 
   senderAddr = get_oom_string (sender, "Address");
 
-  recipientsCnt = get_oom_int (recipients, "Count");
+  recipientAddrs = get_oom_recipients (recipients);
 
-  if (!recipientsCnt)
+  if (!recipientAddrs || !(*recipientAddrs))
     {
       MessageBox (NULL,
                   _("Please add at least one recipent."),
@@ -180,92 +178,64 @@ encryptInspector (LPDISPATCH ctrl, int flags)
       goto failure;
     }
 
-  {
-    /* Get the recipients */
-    char *recipientAddrs[recipientsCnt + 1];
-    recipientAddrs[recipientsCnt] = NULL;
-    for (i = 1; i <= recipientsCnt; i++)
-      {
-        char buf[16];
-        LPDISPATCH recipient;
-        snprintf (buf, sizeof (buf), "Item(%i)", i);
-        recipient = get_oom_object (recipients, buf);
-        if (!recipient)
-          {
-            /* Should be impossible */
-            recipientAddrs[i-1] = NULL;
-            log_error ("%s:%s: could not find Item %i;",
-                       SRCNAME, __func__, i);
-            break;
-          }
-        recipientAddrs[i-1] = get_oom_string (recipient, "Address");
-      }
+  /* Now lets prepare our encryption */
+  session_number = engine_new_session_number ();
 
-    /* Not lets prepare our encryption */
-    session_number = engine_new_session_number ();
+  /* Prepare the encryption sink */
 
-    /* Prepare the encryption sink */
-
-    if (engine_create_filter (&filter, write_buffer_for_cb, sink))
-      {
-        for (i = 0; i < recipientsCnt; i++)
-          xfree (recipientAddrs[i]);
-        goto failure;
-      }
-
-    encsink->cb_data = filter;
-    encsink->writefnc = sink_encryption_write;
-
-    engine_set_session_number (filter, session_number);
-    engine_set_session_title (filter, _("GpgOL"));
-
-    if ((rc=engine_encrypt_prepare (filter, curWindow,
-                                    PROTOCOL_UNKNOWN,
-                                    0 /* ENGINE_FLAG_SIGN_FOLLOWS */,
-                                    senderAddr, recipientAddrs, &protocol)))
-      {
-        for (i = 0; i < recipientsCnt; i++)
-          xfree (recipientAddrs[i]);
-        log_error ("%s:%s: engine encrypt prepare failed : %s",
-                   SRCNAME, __func__, gpg_strerror (rc));
-        goto failure;
-      }
-    for (i = 0; i < recipientsCnt; i++)
-      xfree (recipientAddrs[i]);
-
-    /* lets go */
-
-    if ((rc=engine_encrypt_start (filter, 0)))
-      {
-        log_error ("%s:%s: engine encrypt start failed: %s",
-                   SRCNAME, __func__, gpg_strerror (rc));
-        goto failure;
-      }
-
-    /* Write the text in the encryption sink. */
-    rc = write_buffer (encsink, plaintext, strlen (plaintext));
-
-    if (rc)
-      {
-        log_error ("%s:%s: writing tmpstream to encsink failed: %s",
-                   SRCNAME, __func__, gpg_strerror (rc));
-        goto failure;
-      }
-    /* Flush the encryption sink and wait for the encryption to get
-       ready.  */
-    if ((rc = write_buffer (encsink, NULL, 0)))
+  if (engine_create_filter (&filter, write_buffer_for_cb, sink))
+    {
       goto failure;
-    if ((rc = engine_wait (filter)))
-      goto failure;
-    filter = NULL; /* Not valid anymore.  */
-    encsink->cb_data = NULL; /* Not needed anymore.  */
+    }
 
-    if (!sink->enc_counter)
-      {
-        log_debug ("%s:%s: nothing received from engine", SRCNAME, __func__);
-        goto failure;
-      }
-  }
+  encsink->cb_data = filter;
+  encsink->writefnc = sink_encryption_write;
+
+  engine_set_session_number (filter, session_number);
+  engine_set_session_title (filter, _("GpgOL"));
+
+  if ((rc=engine_encrypt_prepare (filter, curWindow,
+                                  PROTOCOL_UNKNOWN,
+                                  0 /* ENGINE_FLAG_SIGN_FOLLOWS */,
+                                  senderAddr, recipientAddrs, &protocol)))
+    {
+      log_error ("%s:%s: engine encrypt prepare failed : %s",
+                 SRCNAME, __func__, gpg_strerror (rc));
+      goto failure;
+    }
+
+  /* lets go */
+
+  if ((rc=engine_encrypt_start (filter, 0)))
+    {
+      log_error ("%s:%s: engine encrypt start failed: %s",
+                 SRCNAME, __func__, gpg_strerror (rc));
+      goto failure;
+    }
+
+  /* Write the text in the encryption sink. */
+  rc = write_buffer (encsink, plaintext, strlen (plaintext));
+
+  if (rc)
+    {
+      log_error ("%s:%s: writing tmpstream to encsink failed: %s",
+                 SRCNAME, __func__, gpg_strerror (rc));
+      goto failure;
+    }
+  /* Flush the encryption sink and wait for the encryption to get
+     ready.  */
+  if ((rc = write_buffer (encsink, NULL, 0)))
+    goto failure;
+  if ((rc = engine_wait (filter)))
+    goto failure;
+  filter = NULL; /* Not valid anymore.  */
+  encsink->cb_data = NULL; /* Not needed anymore.  */
+
+  if (!sink->enc_counter)
+    {
+      log_debug ("%s:%s: nothing received from engine", SRCNAME, __func__);
+      goto failure;
+    }
 
   /* Check the size of the encrypted data */
   tmpstream->Stat (&tmpStat, 0);
@@ -344,7 +314,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
       }
   }
 
- failure:
+failure:
   if (rc)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
@@ -358,6 +328,11 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   RELDISP(tmpstream);
   xfree (plaintext);
   xfree (senderAddr);
+  while (recipientAddrs && *recipientAddrs)
+  {
+    xfree (*recipientAddrs++);
+  }
+  xfree (recipientAddrs);
 
   return S_OK;
 }
@@ -610,7 +585,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   /* Write the text in the decryption sink. */
   rc = write_buffer (decsink, encData, encDataLen);
 
-  /* Flush the decryption sink and wait for the encryption to get
+  /* Flush the decryption sink and wait for the decryption to get
      ready.  */
   if ((rc = write_buffer (decsink, NULL, 0)))
     goto failure;
@@ -635,7 +610,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
       goto failure;
     }
 
-  /* Copy the encrypted stream to the message editor.  */
+  /* Copy the decrypted stream to the message editor.  */
   {
     LARGE_INTEGER off;
     ULONG nread;
@@ -660,7 +635,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
       }
     if (strlen (buffer) > 1)
       {
-        /* Now replace the crypto data with the encData or show it
+        /* Now replace the crypto data with the decrypted data or show it
         somehow.*/
         int err;
         if (flags & DECRYPT_INSPECTOR_SELECTION)
