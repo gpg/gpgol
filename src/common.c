@@ -189,6 +189,43 @@ get_system_check_bitmap (int checked)
   return result;
 }
 
+/* Return the path to a file that should be worked with.
+   Returns a malloced string (UTF-8) on success.
+   HWND is the current Window.
+   Title is a UTF-8 encoded string containing the
+   dialog title and may be NULL.
+   On error (i.e. cancel) NULL is returned. */
+char *
+get_open_filename (HWND root, const char *title)
+{
+  OPENFILENAMEW ofn;
+  wchar_t fname[MAX_PATH+1];
+  wchar_t *wTitle = NULL;
+
+  if (title)
+    {
+      wTitle = utf8_to_wchar2 (title, strlen(title));
+    }
+  memset (fname, 0, sizeof (fname));
+
+  /* Set up the ofn structure */
+  memset (&ofn, 0, sizeof (ofn));
+  ofn.lStructSize = sizeof (ofn);
+  ofn.hwndOwner = root;
+  ofn.lpstrFile = fname;
+  ofn.nMaxFile = MAX_PATH;
+  ofn.lpstrTitle = wTitle;
+  ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+  if (GetOpenFileNameW (&ofn))
+    {
+      xfree (wTitle);
+      return wchar_to_utf8_2 (fname, MAX_PATH);
+    }
+  xfree (wTitle);
+  return NULL;
+}
+
 
 /* Return a filename to be used for saving an attachment. Returns a
    malloced string on success. HWND is the current Window and SRCNAME

@@ -180,6 +180,7 @@ void set_global_hinstance (HINSTANCE hinst);
 void center_window (HWND childwnd, HWND style);
 HBITMAP get_system_check_bitmap (int checked);
 char *get_save_filename (HWND root, const char *srcname);
+char *get_open_filename (HWND root, const char *title);
 char *utf8_to_wincp (const char *string);
 
 const char *default_homedir (void);
