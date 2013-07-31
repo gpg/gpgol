@@ -770,3 +770,22 @@ del_oom_button (LPDISPATCH pObj)
                SRCNAME, __func__, hr);
 }
 
+/* Gets the current contexts HWND. Returns NULL on error */
+HWND
+get_oom_context_window (LPDISPATCH context)
+{
+  LPOLEWINDOW actExplorer;
+  HWND ret = NULL;
+  actExplorer = (LPOLEWINDOW) get_oom_object(context,
+                                             "Application.ActiveExplorer");
+  if (actExplorer)
+    actExplorer->GetWindow (&ret);
+  else
+    {
+      log_debug ("%s:%s: Could not find active window",
+                 SRCNAME, __func__);
+    }
+  RELDISP (actExplorer);
+  return ret;
+}
+

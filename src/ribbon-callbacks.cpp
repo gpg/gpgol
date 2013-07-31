@@ -46,9 +46,6 @@
 #include "mimemaker.h"
 #include "filetype.h"
 
-/* Helper to release dispatcher */
-#define RELDISP(dispatcher) if (dispatcher) dispatcher->Release()
-
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
 HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
@@ -91,7 +88,6 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   HRESULT hr;
   int recipientsCnt;
   HWND curWindow;
-  LPOLEWINDOW actExplorer;
   protocol_t protocol;
   unsigned int session_number;
   int i;
@@ -104,17 +100,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   memset (encsink, 0, sizeof *encsink);
   memset (sink, 0, sizeof *sink);
 
-  actExplorer = (LPOLEWINDOW) get_oom_object(context,
-                                             "Application.ActiveExplorer");
-  if (actExplorer)
-    actExplorer->GetWindow (&curWindow);
-  else
-    {
-      log_debug ("%s:%s: Could not find active window",
-                 SRCNAME, __func__);
-      curWindow = NULL;
-    }
-  RELDISP (actExplorer);
+  curWindow = get_oom_context_window (context);
 
   wordEditor = get_oom_object (context, "WordEditor");
   application = get_oom_object (wordEditor, "get_Application");
@@ -385,7 +371,6 @@ decryptAttachments (LPDISPATCH ctrl)
   HRESULT hr = 0;
   int i = 0;
   HWND curWindow;
-  LPOLEWINDOW actExplorer;
   int err;
 
   hr = getContext(ctrl, &context);
@@ -401,18 +386,7 @@ decryptAttachments (LPDISPATCH ctrl)
 
   attachmentCount = get_oom_int (attachmentSelection, "Count");
 
-  actExplorer = (LPOLEWINDOW) get_oom_object(attachmentSelection,
-                                             "Application.ActiveExplorer");
-  if (actExplorer)
-    actExplorer->GetWindow (&curWindow);
-  else
-    {
-      log_debug ("%s:%s: Could not find active window",
-                 SRCNAME, __func__);
-      curWindow = NULL;
-    }
-
-  RELDISP (actExplorer);
+  curWindow = get_oom_context_window (context);
 
   {
     char *filenames[attachmentCount + 1];
@@ -509,7 +483,6 @@ decryptInspector (LPDISPATCH ctrl, int flags)
 
   LPSTREAM tmpstream = NULL;
   engine_filter_t filter = NULL;
-  LPOLEWINDOW actExplorer;
   HWND curWindow;
   char* encData = NULL;
   int encDataLen = 0;
@@ -527,17 +500,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   memset (decsink, 0, sizeof *decsink);
   memset (sink, 0, sizeof *sink);
 
-  actExplorer = (LPOLEWINDOW) get_oom_object(context,
-                                             "Application.ActiveExplorer");
-  if (actExplorer)
-    actExplorer->GetWindow (&curWindow);
-  else
-    {
-      log_debug ("%s:%s: Could not find active window",
-                 SRCNAME, __func__);
-      curWindow = NULL;
-    }
-  RELDISP (actExplorer);
+  curWindow = get_oom_context_window (context);
 
   if (!(flags & DECRYPT_INSPECTOR_BODY))
     {
@@ -846,23 +809,12 @@ startCertManager (LPDISPATCH ctrl)
   HRESULT hr;
   LPDISPATCH context;
   HWND curWindow;
-  LPOLEWINDOW actExplorer;
 
   hr = getContext (ctrl, &context);
   if (FAILED(hr))
       return hr;
 
-  actExplorer = (LPOLEWINDOW) get_oom_object(context,
-                                             "Application.ActiveExplorer");
-  if (actExplorer)
-    actExplorer->GetWindow (&curWindow);
-  else
-    {
-      log_debug ("%s:%s: Could not find active window",
-                 SRCNAME, __func__);
-      curWindow = NULL;
-    }
-  RELDISP (actExplorer);
+  curWindow = get_oom_context_window (context);
 
   engine_start_keymanager (curWindow);
 }

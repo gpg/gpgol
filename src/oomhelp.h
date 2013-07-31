@@ -22,6 +22,8 @@
 
 #include <unknwn.h>
 
+/* Helper to release dispatcher */
+#define RELDISP(dispatcher) if (dispatcher) dispatcher->Release()
 
 #define MSOCONTROLBUTTON    1
 #define MSOCONTROLEDIT      2
@@ -116,6 +118,8 @@ LPDISPATCH add_oom_button (LPDISPATCH pObj);
 /* Delete a button.  */
 void del_oom_button (LPDISPATCH button);
 
+/* Get the HWND of the active window in the current context */
+HWND get_oom_context_window (LPDISPATCH context);
 
 #ifdef __cplusplus
 }
