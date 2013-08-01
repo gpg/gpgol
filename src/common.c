@@ -1023,10 +1023,11 @@ percent_escape (const char *str, const char *extra)
 }
 
 /* Fix linebreaks.
-   This either removes the \r if it is followed by a \n
-   or replaces it by a \n. This is neccessary because
-   Micrsoft Word buffers appearently use only the \r
-   to indicate line breaks.
+   This replaces all consecutive \r or \n characters
+   by a single \n.
+   There can be extremly weird combinations of linebreaks
+   like \r\r\n\r\r\n at the end of each line when
+   getting the body of a mail message.
 */
 void
 fix_linebreaks (char *str, int *len)
@@ -1038,11 +1039,17 @@ fix_linebreaks (char *str, int *len)
   dst = str;
   while (*src)
     {
-      if (src[0] == '\r' && src[1] == '\n')
-        src++;
-      else if (src[0] == '\r')
-        src[0] = '\n';
-      *(dst++) = *(src++);
+      if (*src == '\r' || *src == '\n')
+        {
+          do
+            src++;
+          while (*src == '\r' || *src == '\n');
+          *(dst++) = '\n';
+        }
+      else
+        {
+          *(dst++) = *(src++);
+        }
     }
   *dst = '\0';
   *len = dst - str;
