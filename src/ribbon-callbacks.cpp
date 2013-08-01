@@ -445,11 +445,11 @@ decryptAttachments (LPDISPATCH ctrl)
 HRESULT
 decryptInspector (LPDISPATCH ctrl, int flags)
 {
-  LPDISPATCH context;
-  LPDISPATCH selection;
-  LPDISPATCH wordEditor;
-  LPDISPATCH mailItem;
-  LPDISPATCH wordApplication;
+  LPDISPATCH context = NULL;
+  LPDISPATCH selection = NULL;
+  LPDISPATCH wordEditor = NULL;
+  LPDISPATCH mailItem = NULL;
+  LPDISPATCH wordApplication = NULL;
 
   struct sink_s decsinkmem;
   sink_t decsink = &decsinkmem;
