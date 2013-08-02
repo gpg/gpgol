@@ -93,6 +93,8 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   int i;
   STATSTG tmpStat;
 
+  log_debug ("%s:%s: enter", SRCNAME, __func__);
+
   hr = getContext (ctrl, &context);
   if (FAILED(hr))
       return hr;
@@ -328,11 +330,13 @@ failure:
   RELDISP(tmpstream);
   xfree (plaintext);
   xfree (senderAddr);
-  while (recipientAddrs && *recipientAddrs)
-  {
-    xfree (*recipientAddrs++);
-  }
-  xfree (recipientAddrs);
+  if (recipientAddrs)
+    {
+      for (i=0; recipientAddrs && recipientAddrs[i]; i++)
+        xfree (recipientAddrs[i]);
+      xfree (recipientAddrs);
+    }
+  log_debug ("%s:%s: leave", SRCNAME, __func__);
 
   return S_OK;
 }
