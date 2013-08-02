@@ -69,12 +69,12 @@ HRESULT
 encryptInspector (LPDISPATCH ctrl, int flags)
 {
   LPDISPATCH context = NULL;
-  LPDISPATCH selection;
-  LPDISPATCH wordEditor;
-  LPDISPATCH application;
-  LPDISPATCH mailItem;
-  LPDISPATCH sender;
-  LPDISPATCH recipients;
+  LPDISPATCH selection = NULL;
+  LPDISPATCH wordEditor = NULL;
+  LPDISPATCH application = NULL;
+  LPDISPATCH mailItem = NULL;
+  LPDISPATCH sender = NULL;
+  LPDISPATCH recipients = NULL;
 
   struct sink_s encsinkmem;
   sink_t encsink = &encsinkmem;
