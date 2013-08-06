@@ -122,8 +122,11 @@ void del_oom_button (LPDISPATCH button);
 HWND get_oom_context_window (LPDISPATCH context);
 
 /* Get the address of the recipients as string list */
-char **
-get_oom_recipients (LPDISPATCH recipients);
+char ** get_oom_recipients (LPDISPATCH recipients);
+
+/* Add an attachment to a dispatcher */
+int
+add_oom_attachment (LPDISPATCH disp, wchar_t* inFile);
 
 #ifdef __cplusplus
 }

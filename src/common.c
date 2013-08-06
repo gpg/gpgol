@@ -1054,3 +1054,116 @@ fix_linebreaks (char *str, int *len)
   *dst = '\0';
   *len = dst - str;
 }
+
+/* Get a pretty name for the file at path path. File extension
+   will be set to work for the protocol as provided in protocol.
+   Returns NULL on success.
+   Caller must free result. */
+wchar_t *
+get_pretty_attachment_name (wchar_t *path, protocol_t protocol)
+{
+  wchar_t* pretty;
+  wchar_t* buf;
+
+  if (!path || !wcslen (path))
+    {
+      log_error("%s:%s: No path given", SRCNAME, __func__);
+      return NULL;
+    }
+
+  pretty = (wchar_t*) xmalloc ((MAX_PATH + 1) * sizeof (wchar_t));
+  memset (pretty, 0, (MAX_PATH + 1) * sizeof (wchar_t));
+
+  buf = wcsrchr (path, '\\') + 1;
+
+  if (!buf || !*buf)
+    {
+      log_error("%s:%s: No filename found in path", SRCNAME, __func__);
+      xfree (pretty);
+      return NULL;
+    }
+
+  wcscpy (pretty, buf);
+
+  buf = pretty + wcslen(pretty);
+  if (protocol == PROTOCOL_SMIME)
+    {
+      *(buf++) = '.';
+      *(buf++) = 'p';
+      *(buf++) = '7';
+      *(buf++) = 'm';
+
+    }
+  else
+    {
+      *(buf++) = '.';
+      *(buf++) = 'g';
+      *(buf++) = 'p';
+      *(buf++) = 'g';
+    }
+
+  return pretty;
+}
+
+/* Open a file in a temporary directory, take name as a
+   suggestion and put the open Handle in outHandle.
+   Returns the actually used file name in case there
+   were other files with that name. */
+wchar_t*
+get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
+{
+  wchar_t tmpPath[MAX_PATH];
+  wchar_t *outName;
+  wchar_t *fileExt = NULL;
+  int tries = 1;
+
+  if (!name || !wcslen(name))
+    {
+      log_error ("%s:%s: Needs a name.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+
+  /* We should probably use the unicode variants here
+     but this would mean adding OpenStreamOnFileW to
+     out mapi */
+
+  if (!GetTempPathW (MAX_PATH, tmpPath))
+    {
+      log_error ("%s:%s: Could not get tmp path.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+
+  outName = (wchar_t*) xmalloc ((MAX_PATH + 1) * sizeof(wchar_t));
+  memset (outName, 0, (MAX_PATH + 1) * sizeof (wchar_t));
+
+  snwprintf (outName, MAX_PATH, L"%s%s", tmpPath, name);
+  fileExt = wcschr (wcschr(outName, '\\'), '.');
+
+  while ((*outHandle = CreateFileW (outName,
+                                    GENERIC_WRITE | GENERIC_READ,
+                                    0, /* We do not share this */
+                                    NULL,
+                                    CREATE_NEW,
+                                    FILE_ATTRIBUTE_TEMPORARY,
+                                    NULL)) == INVALID_HANDLE_VALUE)
+    {
+      wchar_t fnameBuf[MAX_PATH];
+      wchar_t origName[MAX_PATH];
+      snwprintf (origName, MAX_PATH, L"%s%s", tmpPath, name);
+      fileExt = wcschr (wcsrchr(origName, '\\'), '.');
+      wcsncpy (fnameBuf, origName, fileExt - origName);
+      snwprintf (outName, MAX_PATH, L"%s%i%s", fnameBuf, tries++, fileExt);
+      if (tries > 100)
+        {
+          /* You have to know when to give up,.. */
+          log_error ("%s:%s: Could not get a name out of 100 tries",
+                     SRCNAME, __func__);
+          xfree (outName);
+          return NULL;
+        }
+    }
+
+  return outName;
+}

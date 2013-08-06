@@ -824,3 +824,75 @@ get_oom_recipients (LPDISPATCH recipients)
     }
   return recipientAddrs;
 }
+
+/* Add an attachment to the outlook dispatcher disp
+   that has an Attachment property.
+   inFile is the path to the attachment. Name is the
+   name that should be used in outlook. */
+int
+add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
+{
+  LPDISPATCH attachments = get_oom_object (disp, "Attachments");
+
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  VARIANT vtResult;
+  VARIANT aVariant[4];
+  HRESULT hr;
+  BSTR inFileB = NULL;
+  unsigned int argErr = 0;
+  EXCEPINFO execpinfo;
+
+  if (!inFileW || !wcslen (inFileW))
+    {
+      log_error ("%s:%s: no filename provided", SRCNAME, __func__);
+      return -1;
+    }
+
+  dispid = lookup_oom_dispid (attachments, "Add");
+
+  if (dispid == DISPID_UNKNOWN)
+  {
+    log_error ("%s:%s: could not find attachment dispatcher",
+               SRCNAME, __func__);
+    return -1;
+  }
+
+  inFileB = SysAllocString (inFileW);
+
+  dispparams.rgvarg = aVariant;
+
+  /* Contrary to the documentation the Source is the last
+     parameter and not the first. Additionally DisplayName
+     is documented but gets ignored by Outlook since Outlook
+     2003 */
+
+  dispparams.rgvarg[0].vt = VT_BSTR; /* DisplayName */
+  dispparams.rgvarg[0].bstrVal = NULL;
+  dispparams.rgvarg[1].vt = VT_INT;  /* Position */
+  dispparams.rgvarg[1].intVal = 1;
+  dispparams.rgvarg[2].vt = VT_INT;  /* Type */
+  dispparams.rgvarg[2].intVal = 1;
+  dispparams.rgvarg[3].vt = VT_BSTR; /* Source */
+  dispparams.rgvarg[3].bstrVal = inFileB;
+  dispparams.cArgs = 4;
+  dispparams.cNamedArgs = 0;
+  VariantInit (&vtResult);
+  hr = attachments->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                            DISPATCH_METHOD, &dispparams,
+                            &vtResult, &execpinfo, &argErr);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: invoking Add p=%p vt=%d hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__,
+                 vtResult.pdispVal, vtResult.vt, (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+    }
+
+  SysFreeString (inFileB);
+  VariantClear (&vtResult);
+  RELDISP (attachments);
+
+  return hr == S_OK ? 0 : -1;
+}

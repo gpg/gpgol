@@ -95,6 +95,29 @@ sink_std_write (sink_t sink, const void *data, size_t datalen)
   return 0;
 }
 
+/* Write method used with a sink_t that contains a file object.  */
+int
+sink_file_write (sink_t sink, const void *data, size_t datalen)
+{
+  HANDLE hFile = sink->cb_data;
+  DWORD written = NULL;
+
+  if (!hFile || hFile == INVALID_HANDLE_VALUE)
+    {
+      log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
+      return -1;
+    }
+  if (!data)
+    return 0;  /* Flush - nothing to do here.  */
+
+  if (!WriteFile (hFile, data, datalen, &written, NULL))
+    {
+      log_error ("%s:%s: Write failed: ", SRCNAME, __func__);
+      return -1;
+    }
+  return 0;
+}
+
 
 /* Make sure that PROTOCOL is usable or return a suitable protocol.
    On error PROTOCOL_UNKNOWN is returned.  */

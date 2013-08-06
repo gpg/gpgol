@@ -44,8 +44,9 @@ typedef struct engine_keyinfo_s *engine_keyinfo_t;
 struct engine_filter_s;
 typedef struct engine_filter_s *engine_filter_t;
 
-/* Flag values used by the engine functions.  */ 
-#define ENGINE_FLAG_SIGN_FOLLOWS 1  /* Expect a sign+encrypt operation.  */
+/* Flag values used by the engine functions.  */
+#define ENGINE_FLAG_SIGN_FOLLOWS  1  /* Expect a sign+encrypt operation.  */
+#define ENGINE_FLAG_BINARY_OUTPUT 2  /* Create binary output */
 
 
 

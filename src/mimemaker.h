@@ -50,6 +50,7 @@ int mime_encrypt (LPMESSAGE message, HWND hwnd,
 int mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
                        protocol_t protocol, char **recipients);
 int sink_std_write (sink_t sink, const void *data, size_t datalen);
+int sink_file_write (sink_t sink, const void *data, size_t datalen);
 int sink_encryption_write (sink_t encsink, const void *data, size_t datalen);
 int write_buffer_for_cb (void *opaque, const void *data, size_t datalen);
 int write_buffer (sink_t sink, const void *data, size_t datalen);

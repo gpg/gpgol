@@ -1704,7 +1704,11 @@ op_assuan_encrypt (protocol_t protocol,
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-  snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
+  if (flags & ENGINE_FLAG_BINARY_OUTPUT)
+    snprintf (line, sizeof line, "OUTPUT FD=%d --binary",
+              (unsigned int)outpipe[1]);
+  else
+    snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;

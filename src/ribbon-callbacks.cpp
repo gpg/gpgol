@@ -825,6 +825,216 @@ encryptSelection (LPDISPATCH ctrl)
 HRESULT
 addEncSignedAttachment (LPDISPATCH ctrl)
 {
-  /* TODO */
+  LPDISPATCH context = NULL;
+  LPDISPATCH mailItem = NULL;
+  LPDISPATCH sender = NULL;
+  LPDISPATCH recipients = NULL;
+  HRESULT hr;
+  char* senderAddr = NULL;
+  char** recipientAddrs = NULL;
+
+  HWND curWindow;
+  char *fileToEncrypt = NULL;
+  wchar_t *fileToEncryptW = NULL;
+  wchar_t *encryptedFile = NULL;
+  wchar_t *attachName = NULL;
+  HANDLE hFile = NULL;
+  HANDLE hEncFile = NULL;
+
+  unsigned int session_number;
+  struct sink_s encsinkmem;
+  sink_t encsink = &encsinkmem;
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  engine_filter_t filter = NULL;
+  protocol_t protocol;
+  STATSTG tmpStat;
+  int rc = 0;
+  int i = 0;
+  LPSTREAM tmpstream = NULL;
+
+  memset (encsink, 0, sizeof *encsink);
+  memset (sink, 0, sizeof *sink);
+
+  hr = getContext (ctrl, &context);
+  if (FAILED(hr))
+      return hr;
+
+  /* First do the check for recipients as this is likely
+     to fail */
+  mailItem = get_oom_object (context, "CurrentItem");
+  sender = get_oom_object (mailItem, "Session.CurrentUser");
+  recipients = get_oom_object (mailItem, "Recipients");
+  recipientAddrs = get_oom_recipients (recipients);
+
+  if (!recipientAddrs || !(*recipientAddrs))
+    {
+      MessageBox (NULL,
+                  _("Please add at least one recipent."),
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+      goto failure;
+    }
+
+  /* Get a file handle to read from */
+  fileToEncrypt = get_open_filename (NULL, _("Select file to encrypt"));
+
+  if (!fileToEncrypt)
+    {
+      log_debug ("No file selected");
+      goto failure;
+    }
+
+  fileToEncryptW = utf8_to_wchar2 (fileToEncrypt, strlen(fileToEncrypt));
+  xfree (fileToEncrypt);
+
+  hFile = CreateFileW (fileToEncryptW,
+                       GENERIC_READ,
+                       FILE_SHARE_READ,
+                       NULL,
+                       OPEN_EXISTING,
+                       FILE_ATTRIBUTE_NORMAL,
+                       NULL);
+  if (hFile == INVALID_HANDLE_VALUE)
+    {
+      /* Should not happen as the Open File dialog
+         should have prevented this.
+         Maybe this also happens when a file is
+         not readable. In that case we might want
+         to switch to a localized error naming the file. */
+      MessageBox (NULL,
+                  "Internal error in GpgOL.\n"
+                  "Could not open File.",
+                  _("GpgOL"),
+                  MB_ICONERROR|MB_OK);
+      return S_OK;
+    }
+
+  /* Now do the encryption preperations */
+
+  if (!mailItem || !sender || !recipients)
+    {
+      MessageBox (NULL,
+                  "Internal error in GpgOL.\n"
+                  "Could not find all objects.",
+                  _("GpgOL"),
+                  MB_ICONERROR|MB_OK);
+      log_error ("%s:%s: Could not find all objects.",
+                 SRCNAME, __func__);
+      goto failure;
+    }
+
+  senderAddr = get_oom_string (sender, "Address");
+
+  session_number = engine_new_session_number ();
+
+  /* Prepare the encryption sink */
+  if ((rc = engine_create_filter (&filter, write_buffer_for_cb, sink)))
+    {
+      goto failure;
+    }
+
+  encsink->cb_data = filter;
+  encsink->writefnc = sink_encryption_write;
+
+  engine_set_session_number (filter, session_number);
+  engine_set_session_title (filter, _("GpgOL"));
+  if ((rc=engine_encrypt_prepare (filter, curWindow,
+                                  PROTOCOL_UNKNOWN,
+                                  ENGINE_FLAG_BINARY_OUTPUT,
+                                  senderAddr, recipientAddrs, &protocol)))
+    {
+      log_error ("%s:%s: engine encrypt prepare failed : %s",
+                 SRCNAME, __func__, gpg_strerror (rc));
+      goto failure;
+    }
+
+  attachName = get_pretty_attachment_name (fileToEncryptW, protocol);
+
+  if (!attachName)
+    {
+      log_error ("%s:%s: Could not get a decent attachment name",
+                 SRCNAME, __func__);
+      goto failure;
+    }
+
+  encryptedFile = get_tmp_outfile (attachName, &hEncFile);
+  sink->cb_data = hEncFile;
+  sink->writefnc = sink_file_write;
+
+  if ((rc=engine_encrypt_start (filter, 0)))
+    {
+      log_error ("%s:%s: engine encrypt start failed: %s",
+                 SRCNAME, __func__, gpg_strerror (rc));
+      goto failure;
+    }
+
+  /* Read the file in chunks and write them to the encryption
+     buffer */
+  {
+    char buf[4096];
+    DWORD bytesRead = 0;
+    do
+      {
+        if (!ReadFile (hFile, buf, sizeof buf, &bytesRead, NULL))
+          {
+            rc = -1;
+            log_error ("%s:%s: Could not read source file: %s",
+                       SRCNAME, __func__);
+            goto failure;
+          }
+        if ((rc = write_buffer (encsink, bytesRead ? buf : NULL, bytesRead)))
+          {
+            rc = -1;
+            log_error ("%s:%s: Could not wirte out buffer",
+                       SRCNAME, __func__);
+            goto failure;
+          }
+      }
+    while (bytesRead);
+  }
+  /* Lets hope the user did not select a huge file. We are hanging
+     here until encryption is completed.. */
+  if ((rc = engine_wait (filter)))
+    goto failure;
+
+  filter = NULL; /* Not valid anymore.  */
+  encsink->cb_data = NULL; /* Not needed anymore.  */
+
+  if (!sink->enc_counter)
+    {
+      log_error ("%s:%s: nothing received from engine", SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Now we have an encrypted file behind encryptedFile. Let's add it */
+  add_oom_attachment (mailItem, encryptedFile);
+
+failure:
+  if (filter)
+    engine_cancel (filter);
+
+  if (hEncFile)
+    {
+      CloseHandle (hEncFile);
+      DeleteFileW (encryptedFile);
+    }
+  xfree (senderAddr);
+  xfree (encryptedFile);
+  xfree (fileToEncryptW);
+  xfree (attachName);
+  RELDISP (mailItem);
+  RELDISP (sender);
+  RELDISP (recipients);
+
+  if (hFile)
+    CloseHandle (hFile);
+  if (recipientAddrs)
+    {
+      for (i=0; recipientAddrs && recipientAddrs[i]; i++)
+        xfree (recipientAddrs[i]);
+      xfree (recipientAddrs);
+    }
+
   return S_OK;
 }
