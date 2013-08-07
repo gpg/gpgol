@@ -1143,7 +1143,7 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
 
   while ((*outHandle = CreateFileW (outName,
                                     GENERIC_WRITE | GENERIC_READ,
-                                    0, /* We do not share this */
+                                    FILE_SHARE_READ,
                                     NULL,
                                     CREATE_NEW,
                                     FILE_ATTRIBUTE_TEMPORARY,
