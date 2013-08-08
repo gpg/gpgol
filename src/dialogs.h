@@ -141,5 +141,6 @@
 #define IDI_DECRYPT_48_PNG              6011
 #define IDI_KEY_MANAGER_64_PNG          6020
 #define IDI_ENCSIGN_FILE_48_PNG         6030
+#define IDI_SIGN_48_PNG                 6040
 
 #endif /*DIALOGS_H*/

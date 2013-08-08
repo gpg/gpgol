@@ -1805,11 +1805,12 @@ sign_closure (closure_data_t cld)
    called with FILTER as the first argument.  SENDER is the sender's
    mail address (a mailbox).  The used protocol will be stored at
    R_USED_PROTOCOL on return. */
-int 
-op_assuan_sign (protocol_t protocol, 
+int
+op_assuan_sign (protocol_t protocol,
                 gpgme_data_t indata, gpgme_data_t outdata,
                 engine_filter_t filter, void *hwnd,
-                const char *sender, protocol_t *r_used_protocol)
+                const char *sender, protocol_t *r_used_protocol,
+                int flags)
 {
   gpg_error_t err;
   closure_data_t cld;
@@ -1894,8 +1895,11 @@ op_assuan_sign (protocol_t protocol,
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
                     cmdid, NULL, 1 /* Wait on success */, 0); 
 
-  snprintf (line, sizeof line, "SIGN --protocol=%s --detached",
-            protocol_name);
+  if (flags & ENGINE_FLAG_DETACHED)
+    snprintf (line, sizeof line, "SIGN --protocol=%s --detached",
+              protocol_name);
+  else
+    snprintf (line, sizeof line, "SIGN --protocol=%s", protocol_name);
   err = start_command (ctx, cld, cmdid, line);
   cld = NULL; /* Now owned by start_command.  */
   if (err)

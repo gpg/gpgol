@@ -451,9 +451,11 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
       ID_MAPPER (L"btnEncryptLarge", ID_BTN_ENCRYPT_LARGE)
       ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
+      ID_MAPPER (L"btnSignLarge", ID_BTN_SIGN_LARGE)
       ID_MAPPER (L"encryptBody", ID_CMD_ENCRYPT_BODY)
       ID_MAPPER (L"decryptBody", ID_CMD_DECRYPT_BODY)
       ID_MAPPER (L"addEncSignedAttachment", ID_CMD_ATT_ENCSIGN_FILE)
+      ID_MAPPER (L"signBody", ID_CMD_SIGN_BODY)
     }
 
   if (cNames > 1)
@@ -497,12 +499,15 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return decryptBody (parms->rgvarg[0].pdispVal);
       case ID_CMD_ATT_ENCSIGN_FILE:
         return addEncSignedAttachment (parms->rgvarg[0].pdispVal);
+      case ID_CMD_SIGN_BODY:
+        return signBody (parms->rgvarg[0].pdispVal);
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
       case ID_BTN_DECRYPT_LARGE:
       case ID_BTN_ENCRYPT_LARGE:
       case ID_BTN_ENCSIGN_LARGE:
+      case ID_BTN_SIGN_LARGE:
         return getIcon (dispid, result);
     }
 
@@ -560,6 +565,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               size=\"large\""
         L"               label=\"%S\""
         L"               onAction=\"decryptBody\"/>"
+        L"       <button id=\"fullTextSign\""
+        L"               getImage=\"btnSignLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"signBody\"/>"
         L"     </group>"
         L"     <group id=\"attachmentGroup\""
         L"            label=\"%S\">"
@@ -589,8 +599,9 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         _("Textbody"),
         _("Encrypt"),
         _("Decrypt"),
+        _("Sign"),
         _("Attachments"),
-        _("Add Encrypted file"),
+        _("Encrypted file and Signature"),
         _("Encrypt"), _("Decrypt")
         );
     }

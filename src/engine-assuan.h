@@ -37,7 +37,7 @@ int  op_assuan_init (void);
 void op_assuan_deinit (void);
 void engine_assuan_cancel (void *cancel_data);
 
-int op_assuan_encrypt (protocol_t protocol, 
+int op_assuan_encrypt (protocol_t protocol,
                        gpgme_data_t indata, gpgme_data_t outdata,
                        engine_filter_t notify_data, void *hwnd,
                        unsigned int flags,
@@ -46,15 +46,16 @@ int op_assuan_encrypt (protocol_t protocol,
                        struct engine_assuan_encstate_s **r_encstate);
 int op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
                               int cancel);
-int op_assuan_sign (protocol_t protocol, 
+int op_assuan_sign (protocol_t protocol,
                     gpgme_data_t indata, gpgme_data_t outdata,
                     engine_filter_t filter, void *hwnd,
-                    const char *sender, protocol_t *r_used_protocol);
+                    const char *sender, protocol_t *r_used_protocol,
+                    int flags);
 int op_assuan_decrypt (protocol_t protocol,
-                       gpgme_data_t indata, gpgme_data_t outdata, 
+                       gpgme_data_t indata, gpgme_data_t outdata,
                        engine_filter_t filter, void *hwnd,
                        int with_verify, const char *from_address);
-int op_assuan_verify (gpgme_protocol_t protocol, 
+int op_assuan_verify (gpgme_protocol_t protocol,
                       gpgme_data_t data, const char *signature, size_t sig_len,
                       gpgme_data_t outdata,
                       engine_filter_t filter, void *hwnd,

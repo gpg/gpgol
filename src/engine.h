@@ -47,6 +47,7 @@ typedef struct engine_filter_s *engine_filter_t;
 /* Flag values used by the engine functions.  */
 #define ENGINE_FLAG_SIGN_FOLLOWS  1  /* Expect a sign+encrypt operation.  */
 #define ENGINE_FLAG_BINARY_OUTPUT 2  /* Create binary output */
+#define ENGINE_FLAG_DETACHED      4  /* Create detached signature */
 
 
 
@@ -81,6 +82,9 @@ int engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
 int engine_encrypt_start (engine_filter_t filter, int cancel);
 int engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
                        const char *sender, protocol_t *r_protocol);
+int engine_sign_opaque_start (engine_filter_t filter, HWND hwnd,
+                              protocol_t protocol, const char *sender,
+                              protocol_t *r_protocol);
 
 int engine_decrypt_start (engine_filter_t filter, HWND hwnd,
                           protocol_t protocol, int with_verify,

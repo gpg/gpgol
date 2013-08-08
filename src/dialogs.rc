@@ -34,6 +34,7 @@ IDB_SIGN_16               BITMAP  DISCARDABLE  "sign-16.bmp"
 IDB_SIGN_16M              BITMAP  DISCARDABLE  "sign-16m.bmp"
 IDB_SIGN_32               BITMAP  DISCARDABLE  "sign-32.bmp"
 IDB_SIGN_32M              BITMAP  DISCARDABLE  "sign-32m.bmp"
+IDI_SIGN_48_PNG           RCDATA               "sign-48.png"
 
 IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "key-manager-16.bmp"
 IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"

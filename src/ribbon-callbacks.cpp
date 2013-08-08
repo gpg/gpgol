@@ -56,17 +56,126 @@ HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
   return context ? S_OK : E_FAIL;
 }
 
-#define ENCRYPT_INSPECTOR_SELECTION  1
-#define ENCRYPT_INSPECTOR_BODY       2
+#define OP_ENCRYPT     1 /* Encrypt the data */
+#define OP_SIGN        2 /* Sign the data */
+#define DATA_BODY      4 /* Use text body as data */
+#define DATA_SELECTION 8 /* Use selection as data */
 
-/* encryptInspector
-   Encrypts text in an IInspector context. Depending on
-   the flags either the active selection or the full body
-   is encrypted.
+/* Read hfile in chunks of 4KB and writes them to the sink */
+static int
+copyFileToSink (HANDLE hFile, sink_t sink)
+{
+  char buf[4096];
+  DWORD bytesRead = 0;
+  do
+    {
+      if (!ReadFile (hFile, buf, sizeof buf, &bytesRead, NULL))
+        {
+          log_error ("%s:%s: Could not read source file.",
+                     SRCNAME, __func__);
+          return -1;
+        }
+      if (write_buffer (sink, bytesRead ? buf : NULL, bytesRead))
+        {
+          log_error ("%s:%s: Could not write out buffer",
+                     SRCNAME, __func__);
+          return -1;
+        }
+    }
+  while (bytesRead);
+  return 0;
+}
+
+static int
+attachSignature (LPDISPATCH mailItem, char *subject, HANDLE hFileToSign,
+                 protocol_t protocol, unsigned int session_number,
+                 HWND curWindow, wchar_t *originalFilename, char *sender)
+{
+  wchar_t *sigName = NULL;
+  wchar_t *sigFileName = NULL;
+  HANDLE hSigFile = NULL;
+  int rc = 0;
+  struct sink_s encsinkmem;
+  sink_t encsink = &encsinkmem;
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  engine_filter_t filter = NULL;
+
+  memset (encsink, 0, sizeof *encsink);
+  memset (sink, 0, sizeof *sink);
+
+  /* Prepare a fresh filter */
+  if ((rc = engine_create_filter (&filter, write_buffer_for_cb, sink)))
+    {
+      goto failure;
+    }
+  encsink->cb_data = filter;
+  encsink->writefnc = sink_encryption_write;
+  engine_set_session_number (filter, session_number);
+  engine_set_session_title (filter, subject ? subject :_("GpgOL"));
+
+  if (engine_sign_start (filter, curWindow, protocol, sender, &protocol))
+    goto failure;
+
+  sigName = get_pretty_attachment_name (originalFilename, protocol, 1);
+
+  /* If we are unlucky the number of temporary file artifacts might
+     differ for the signature and the encrypted file but we have
+     to live with that. */
+  sigFileName = get_tmp_outfile (sigName, &hSigFile);
+  sink->cb_data = hSigFile;
+  sink->writefnc = sink_file_write;
+
+  if (!sigFileName)
+    {
+      log_error ("%s:%s: Could not get a decent attachment name",
+                 SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Reset the file to sign handle to the beginning of the file and
+     copy it to the signature buffer */
+  SetFilePointer (hFileToSign, 0, NULL, 0);
+  if ((rc=copyFileToSink (hFileToSign, encsink)))
+    goto failure;
+
+  /* Lets hope the user did not select a huge file. We are hanging
+     here until encryption is completed.. */
+  if ((rc = engine_wait (filter)))
+    goto failure;
+
+  filter = NULL; /* Not valid anymore.  */
+  encsink->cb_data = NULL; /* Not needed anymore.  */
+
+  if (!sink->enc_counter)
+    {
+      log_error ("%s:%s: nothing received from engine", SRCNAME, __func__);
+      goto failure;
+    }
+
+  /* Now we have an encrypted file behind encryptedFile. Let's add it */
+  add_oom_attachment (mailItem, sigFileName);
+
+failure:
+  xfree (sigFileName);
+  xfree (sigName);
+  if (hSigFile)
+    {
+      CloseHandle (hSigFile);
+      DeleteFileW (sigFileName);
+    }
+  return rc;
+}
+
+/* do_composer_action
+   Encrypts / Signs text in an IInspector context.
+   Depending on the flags either the
+   active selection or the full body is encrypted.
+   Combine OP_ENCRYPT and OP_SIGN if you want both.
 */
 
 HRESULT
-encryptInspector (LPDISPATCH ctrl, int flags)
+do_composer_action (LPDISPATCH ctrl, int flags)
 {
   LPDISPATCH context = NULL;
   LPDISPATCH selection = NULL;
@@ -124,7 +233,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
       goto failure;
     }
 
-  if (flags & ENCRYPT_INSPECTOR_SELECTION)
+  if (flags & DATA_SELECTION)
     {
       plaintext = get_oom_string (selection, "Text");
 
@@ -137,7 +246,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
           goto failure;
         }
     }
-  else if (flags & ENCRYPT_INSPECTOR_BODY)
+  else if (flags & DATA_BODY)
     {
       plaintext = get_oom_string (mailItem, "Body");
       if (!plaintext || strlen (plaintext) <= 1)
@@ -167,19 +276,6 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   sink->cb_data = tmpstream;
   sink->writefnc = sink_std_write;
 
-  senderAddr = get_oom_string (sender, "Address");
-
-  recipientAddrs = get_oom_recipients (recipients);
-
-  if (!recipientAddrs || !(*recipientAddrs))
-    {
-      MessageBox (NULL,
-                  _("Please add at least one recipent."),
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
-      goto failure;
-    }
-
   /* Now lets prepare our encryption */
   session_number = engine_new_session_number ();
 
@@ -196,23 +292,51 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   engine_set_session_number (filter, session_number);
   engine_set_session_title (filter, _("GpgOL"));
 
-  if ((rc=engine_encrypt_prepare (filter, curWindow,
-                                  PROTOCOL_UNKNOWN,
-                                  0 /* ENGINE_FLAG_SIGN_FOLLOWS */,
-                                  senderAddr, recipientAddrs, &protocol)))
+  senderAddr = get_oom_string (sender, "Address");
+
+  if (flags & OP_ENCRYPT)
     {
-      log_error ("%s:%s: engine encrypt prepare failed : %s",
-                 SRCNAME, __func__, gpg_strerror (rc));
-      goto failure;
+      recipientAddrs = get_oom_recipients (recipients);
+
+      if (!recipientAddrs || !(*recipientAddrs))
+        {
+          MessageBox (NULL,
+                      _("Please add at least one recipent."),
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+          goto failure;
+        }
+
+      if ((rc=engine_encrypt_prepare (filter, curWindow,
+                                      PROTOCOL_UNKNOWN,
+                                      (flags & OP_SIGN) ?
+                                      ENGINE_FLAG_SIGN_FOLLOWS : 0,
+                                      senderAddr, recipientAddrs,
+                                      &protocol)))
+        {
+          log_error ("%s:%s: engine encrypt prepare failed : %s",
+                     SRCNAME, __func__, gpg_strerror (rc));
+          goto failure;
+        }
+
+      if ((rc=engine_encrypt_start (filter, 0)))
+        {
+          log_error ("%s:%s: engine encrypt start failed: %s",
+                     SRCNAME, __func__, gpg_strerror (rc));
+          goto failure;
+        }
     }
-
-  /* lets go */
-
-  if ((rc=engine_encrypt_start (filter, 0)))
+  else
     {
-      log_error ("%s:%s: engine encrypt start failed: %s",
-                 SRCNAME, __func__, gpg_strerror (rc));
-      goto failure;
+      /* We could do some kind of clearsign / sign text as attachment here
+      but it is error prone */
+      if ((rc=engine_sign_opaque_start (filter, curWindow, PROTOCOL_UNKNOWN,
+                                        senderAddr, &protocol)))
+        {
+          log_error ("%s:%s: engine sign start failed: %s",
+                     SRCNAME, __func__, gpg_strerror (rc));
+          goto failure;
+        }
     }
 
   /* Write the text in the encryption sink. */
@@ -286,17 +410,17 @@ encryptInspector (LPDISPATCH ctrl, int flags)
                       "-----BEGIN ENCRYPTED MESSAGE-----\r\n"
                       "%s"
                       "-----END ENCRYPTED MESSAGE-----\r\n", buffer);
-            if (flags & ENCRYPT_INSPECTOR_SELECTION)
+            if (flags & DATA_SELECTION)
               put_oom_string (selection, "Text", enclosedData);
-            else if (flags & ENCRYPT_INSPECTOR_BODY)
+            else if (flags & DATA_BODY)
               put_oom_string (mailItem, "Body", enclosedData);
 
           }
         else
           {
-            if (flags & ENCRYPT_INSPECTOR_SELECTION)
+            if (flags & DATA_SELECTION)
               put_oom_string (selection, "Text", buffer);
-            else if (flags & ENCRYPT_INSPECTOR_BODY)
+            else if (flags & DATA_BODY)
               {
                 put_oom_string (mailItem, "Body", buffer);
               }
@@ -438,7 +562,7 @@ decryptAttachments (LPDISPATCH ctrl)
 
 /* decryptInspector
    decrypts the content of an inspector. Controled by flags
-   similary to the encryptInspector.
+   similary to the do_composer_action.
 */
 
 HRESULT
@@ -459,6 +583,8 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   engine_filter_t filter = NULL;
   HWND curWindow;
   char* encData = NULL;
+  char* senderAddr = NULL;
+  char* subject = NULL;
   int encDataLen = 0;
   int rc = 0;
   unsigned int session_number;
@@ -542,6 +668,9 @@ decryptInspector (LPDISPATCH ctrl, int flags)
 
   fix_linebreaks (encData, &encDataLen);
 
+  subject = get_oom_string (mailItem, "Subject");
+  senderAddr = get_oom_string (mailItem, "SenderEmailAddress");
+
   /* Determine the protocol based on the content */
   protocol = is_cms_data (encData, encDataLen) ? PROTOCOL_SMIME :
     PROTOCOL_OPENPGP;
@@ -570,7 +699,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   decsink->writefnc = sink_encryption_write;
 
   engine_set_session_number (filter, session_number);
-  engine_set_session_title (filter, _("GpgOL"));
+  engine_set_session_title (filter, subject ? subject : _("GpgOL"));
 
   if ((rc=engine_decrypt_start (filter, curWindow,
                                 protocol,
@@ -638,7 +767,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
       {
         /* Now replace the crypto data with the decrypted data or show it
         somehow.*/
-        int err;
+        int err = 0;
         if (flags & DECRYPT_INSPECTOR_SELECTION)
           {
             err = put_oom_string (selection, "Text", buffer);
@@ -674,6 +803,8 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   RELDISP (wordEditor);
   RELDISP (wordApplication);
   xfree (encData);
+  xfree (senderAddr);
+  xfree (subject);
   if (tmpstream)
     tmpstream->Release();
 
@@ -779,48 +910,10 @@ getIcon (int id, VARIANT* result)
   return S_OK;
 }
 
-HRESULT
-startCertManager (LPDISPATCH ctrl)
-{
-  HRESULT hr;
-  LPDISPATCH context;
-  HWND curWindow;
-
-  hr = getContext (ctrl, &context);
-  if (FAILED(hr))
-      return hr;
-
-  curWindow = get_oom_context_window (context);
-
-  engine_start_keymanager (curWindow);
-}
-
-HRESULT
-decryptBody (LPDISPATCH ctrl)
-{
-  return decryptInspector (ctrl, DECRYPT_INSPECTOR_BODY);
-}
-
-HRESULT
-decryptSelection (LPDISPATCH ctrl)
-{
-  return decryptInspector (ctrl, DECRYPT_INSPECTOR_SELECTION);
-}
-
-HRESULT
-encryptBody (LPDISPATCH ctrl)
-{
-  return encryptInspector (ctrl, ENCRYPT_INSPECTOR_BODY);
-}
-
-HRESULT
-encryptSelection (LPDISPATCH ctrl)
-{
-  return encryptInspector (ctrl, ENCRYPT_INSPECTOR_SELECTION);
-}
-
-HRESULT
-addEncSignedAttachment (LPDISPATCH ctrl)
+/* Adds an encrypted attachment if the flag OP_SIGN is set
+   a detached signature of the encrypted file is also added. */
+static HRESULT
+attachEncryptedFile (LPDISPATCH ctrl, int flags)
 {
   LPDISPATCH context = NULL;
   LPDISPATCH mailItem = NULL;
@@ -829,6 +922,7 @@ addEncSignedAttachment (LPDISPATCH ctrl)
   HRESULT hr;
   char* senderAddr = NULL;
   char** recipientAddrs = NULL;
+  char* subject = NULL;
 
   HWND curWindow;
   char *fileToEncrypt = NULL;
@@ -845,10 +939,8 @@ addEncSignedAttachment (LPDISPATCH ctrl)
   sink_t sink = &sinkmem;
   engine_filter_t filter = NULL;
   protocol_t protocol;
-  STATSTG tmpStat;
   int rc = 0;
   int i = 0;
-  LPSTREAM tmpstream = NULL;
 
   memset (encsink, 0, sizeof *encsink);
   memset (sink, 0, sizeof *sink);
@@ -923,7 +1015,11 @@ addEncSignedAttachment (LPDISPATCH ctrl)
 
   senderAddr = get_oom_string (sender, "Address");
 
+  curWindow = get_oom_context_window (context);
+
   session_number = engine_new_session_number ();
+
+  subject = get_oom_string (mailItem, "Subject");
 
   /* Prepare the encryption sink */
   if ((rc = engine_create_filter (&filter, write_buffer_for_cb, sink)))
@@ -935,7 +1031,7 @@ addEncSignedAttachment (LPDISPATCH ctrl)
   encsink->writefnc = sink_encryption_write;
 
   engine_set_session_number (filter, session_number);
-  engine_set_session_title (filter, _("GpgOL"));
+  engine_set_session_title (filter, subject ? subject :_("GpgOL"));
   if ((rc=engine_encrypt_prepare (filter, curWindow,
                                   PROTOCOL_UNKNOWN,
                                   ENGINE_FLAG_BINARY_OUTPUT,
@@ -946,7 +1042,7 @@ addEncSignedAttachment (LPDISPATCH ctrl)
       goto failure;
     }
 
-  attachName = get_pretty_attachment_name (fileToEncryptW, protocol);
+  attachName = get_pretty_attachment_name (fileToEncryptW, protocol, 0);
 
   if (!attachName)
     {
@@ -966,32 +1062,11 @@ addEncSignedAttachment (LPDISPATCH ctrl)
       goto failure;
     }
 
-  /* Read the file in chunks and write them to the encryption
-     buffer */
-  {
-    char buf[4096];
-    DWORD bytesRead = 0;
-    do
-      {
-        if (!ReadFile (hFile, buf, sizeof buf, &bytesRead, NULL))
-          {
-            rc = -1;
-            log_error ("%s:%s: Could not read source file: %s",
-                       SRCNAME, __func__);
-            goto failure;
-          }
-        if ((rc = write_buffer (encsink, bytesRead ? buf : NULL, bytesRead)))
-          {
-            rc = -1;
-            log_error ("%s:%s: Could not wirte out buffer",
-                       SRCNAME, __func__);
-            goto failure;
-          }
-      }
-    while (bytesRead);
-  }
+  if ((rc=copyFileToSink (hFile, encsink)))
+    goto failure;
+
   /* Lets hope the user did not select a huge file. We are hanging
-     here until encryption is completed.. */
+   here until encryption is completed.. */
   if ((rc = engine_wait (filter)))
     goto failure;
 
@@ -1007,6 +1082,12 @@ addEncSignedAttachment (LPDISPATCH ctrl)
   /* Now we have an encrypted file behind encryptedFile. Let's add it */
   add_oom_attachment (mailItem, encryptedFile);
 
+  if (flags & OP_SIGN)
+    {
+      attachSignature (mailItem, subject, hEncFile, protocol, session_number,
+                       curWindow, fileToEncryptW, senderAddr);
+    }
+
 failure:
   if (filter)
     engine_cancel (filter);
@@ -1020,6 +1101,7 @@ failure:
   xfree (encryptedFile);
   xfree (fileToEncryptW);
   xfree (attachName);
+  xfree (subject);
   RELDISP (mailItem);
   RELDISP (sender);
   RELDISP (recipients);
@@ -1034,4 +1116,56 @@ failure:
     }
 
   return S_OK;
+}
+
+HRESULT
+startCertManager (LPDISPATCH ctrl)
+{
+  HRESULT hr;
+  LPDISPATCH context;
+  HWND curWindow;
+
+  hr = getContext (ctrl, &context);
+  if (FAILED(hr))
+      return hr;
+
+  curWindow = get_oom_context_window (context);
+
+  engine_start_keymanager (curWindow);
+  return S_OK;
+}
+
+HRESULT
+decryptBody (LPDISPATCH ctrl)
+{
+  return decryptInspector (ctrl, DECRYPT_INSPECTOR_BODY);
+}
+
+HRESULT
+decryptSelection (LPDISPATCH ctrl)
+{
+  return decryptInspector (ctrl, DECRYPT_INSPECTOR_SELECTION);
+}
+
+HRESULT
+encryptBody (LPDISPATCH ctrl)
+{
+  return do_composer_action (ctrl, OP_ENCRYPT | DATA_BODY);
+}
+
+HRESULT
+encryptSelection (LPDISPATCH ctrl)
+{
+  return do_composer_action (ctrl, OP_ENCRYPT | DATA_SELECTION);
+}
+
+HRESULT
+addEncSignedAttachment (LPDISPATCH ctrl)
+{
+  return attachEncryptedFile (ctrl, OP_SIGN);
+}
+
+HRESULT signBody (LPDISPATCH ctrl)
+{
+  return do_composer_action (ctrl, DATA_BODY | OP_SIGN);
 }

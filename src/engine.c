@@ -906,7 +906,8 @@ engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
   if (filter->use_assuan)
     {
       err = op_assuan_sign (protocol, filter->indata, filter->outdata,
-                            filter, hwnd, sender, &used_protocol);
+                            filter, hwnd, sender, &used_protocol,
+                            ENGINE_FLAG_DETACHED);
       if (!err)
         *r_protocol = used_protocol;
     }
@@ -918,6 +919,30 @@ engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
         *r_protocol = (protocol == GPGME_PROTOCOL_UNKNOWN?
                        GPGME_PROTOCOL_OpenPGP : protocol);
     }
+  return err;
+}
+
+/* Start an inline signing operation. Same as engine_sign_start but
+   without the detatched option. */
+int
+engine_sign_opaque_start (engine_filter_t filter, HWND hwnd,
+                          protocol_t protocol, const char *sender,
+                          protocol_t *r_protocol)
+{
+  gpg_error_t err;
+  protocol_t used_protocol;
+
+  if (filter->use_assuan)
+    {
+      err = op_assuan_sign (protocol, filter->indata, filter->outdata,
+                            filter, hwnd, sender, &used_protocol,
+                            0);
+      if (!err)
+        *r_protocol = used_protocol;
+    }
+  else
+    return gpg_error (GPG_ERR_NOT_SUPPORTED);
+
   return err;
 }
 

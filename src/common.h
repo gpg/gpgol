@@ -193,7 +193,8 @@ size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
 /* Get a temporary filename with and its name */
 wchar_t *get_tmp_outfile (wchar_t *name, HANDLE *outHandle);
 
-wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol);
+wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
+                                     int signature);
 
 /* The length of the boundary - the buffer needs to be allocated one
    byte larger. */

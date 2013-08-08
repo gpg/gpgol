@@ -1056,11 +1056,14 @@ fix_linebreaks (char *str, int *len)
 }
 
 /* Get a pretty name for the file at path path. File extension
-   will be set to work for the protocol as provided in protocol.
+   will be set to work for the protocol as provided in protocol and
+   depends on the signature setting. Set signature to 0 if the
+   extension should not be a signature extension.
    Returns NULL on success.
    Caller must free result. */
 wchar_t *
-get_pretty_attachment_name (wchar_t *path, protocol_t protocol)
+get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
+                            int signature)
 {
   wchar_t* pretty;
   wchar_t* buf;
@@ -1086,20 +1089,39 @@ get_pretty_attachment_name (wchar_t *path, protocol_t protocol)
   wcscpy (pretty, buf);
 
   buf = pretty + wcslen(pretty);
-  if (protocol == PROTOCOL_SMIME)
+  if (signature)
     {
-      *(buf++) = '.';
-      *(buf++) = 'p';
-      *(buf++) = '7';
-      *(buf++) = 'm';
-
+      if (protocol == PROTOCOL_SMIME)
+        {
+          *(buf++) = '.';
+          *(buf++) = 'p';
+          *(buf++) = '7';
+          *(buf++) = 's';
+        }
+      else
+        {
+          *(buf++) = '.';
+          *(buf++) = 's';
+          *(buf++) = 'i';
+          *(buf++) = 'g';
+        }
     }
   else
     {
-      *(buf++) = '.';
-      *(buf++) = 'g';
-      *(buf++) = 'p';
-      *(buf++) = 'g';
+      if (protocol == PROTOCOL_SMIME)
+        {
+          *(buf++) = '.';
+          *(buf++) = 'p';
+          *(buf++) = '7';
+          *(buf++) = 'm';
+        }
+      else
+        {
+          *(buf++) = '.';
+          *(buf++) = 'g';
+          *(buf++) = 'p';
+          *(buf++) = 'g';
+        }
     }
 
   return pretty;
