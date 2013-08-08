@@ -1149,8 +1149,11 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
                                     FILE_ATTRIBUTE_TEMPORARY,
                                     NULL)) == INVALID_HANDLE_VALUE)
     {
-      wchar_t fnameBuf[MAX_PATH];
-      wchar_t origName[MAX_PATH];
+      wchar_t fnameBuf[MAX_PATH + 1];
+      wchar_t origName[MAX_PATH + 1];
+      memset (fnameBuf, 0, MAX_PATH + 1);
+      memset (origName, 0, MAX_PATH + 1);
+
       snwprintf (origName, MAX_PATH, L"%s%s", tmpPath, name);
       fileExt = wcschr (wcsrchr(origName, '\\'), '.');
       wcsncpy (fnameBuf, origName, fileExt - origName);
