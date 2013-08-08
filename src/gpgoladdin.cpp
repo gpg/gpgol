@@ -455,6 +455,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"encryptBody", ID_CMD_ENCRYPT_BODY)
       ID_MAPPER (L"decryptBody", ID_CMD_DECRYPT_BODY)
       ID_MAPPER (L"addEncSignedAttachment", ID_CMD_ATT_ENCSIGN_FILE)
+      ID_MAPPER (L"addEncAttachment", ID_CMD_ATT_ENC_FILE)
       ID_MAPPER (L"signBody", ID_CMD_SIGN_BODY)
     }
 
@@ -499,6 +500,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return decryptBody (parms->rgvarg[0].pdispVal);
       case ID_CMD_ATT_ENCSIGN_FILE:
         return addEncSignedAttachment (parms->rgvarg[0].pdispVal);
+      case ID_CMD_ATT_ENC_FILE:
+        return addEncAttachment (parms->rgvarg[0].pdispVal);
       case ID_CMD_SIGN_BODY:
         return signBody (parms->rgvarg[0].pdispVal);
       case ID_BTN_CERTMANAGER:
@@ -573,6 +576,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"     </group>"
         L"     <group id=\"attachmentGroup\""
         L"            label=\"%S\">"
+        L"       <button id=\"encryptedFile\""
+        L"               getImage=\"btnEncryptLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"addEncAttachment\"/>"
         L"       <button id=\"encryptSignFile\""
         L"               getImage=\"btnEncryptFileLarge\""
         L"               size=\"large\""
@@ -601,6 +609,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         _("Decrypt"),
         _("Sign"),
         _("Attachments"),
+        _("Encrypted file"),
         _("Encrypted file and Signature"),
         _("Encrypt"), _("Decrypt")
         );

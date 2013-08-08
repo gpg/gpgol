@@ -1165,6 +1165,12 @@ addEncSignedAttachment (LPDISPATCH ctrl)
   return attachEncryptedFile (ctrl, OP_SIGN);
 }
 
+HRESULT
+addEncAttachment (LPDISPATCH ctrl)
+{
+  return attachEncryptedFile (ctrl, 0);
+}
+
 HRESULT signBody (LPDISPATCH ctrl)
 {
   return do_composer_action (ctrl, DATA_BODY | OP_SIGN);
