@@ -55,6 +55,7 @@ IDB_VERIFY_16             BITMAP  DISCARDABLE  "verify-16.bmp"
 IDB_VERIFY_16M            BITMAP  DISCARDABLE  "verify-16m.bmp"
 IDB_VERIFY_32             BITMAP  DISCARDABLE  "verify-32.bmp"
 IDB_VERIFY_32M            BITMAP  DISCARDABLE  "verify-32m.bmp"
+IDI_VERIFY_48_PNG         RCDATA               "verify-48.png"
 
 IDB_DECRYPT_VERIFY_16     BITMAP  DISCARDABLE  "decrypt-verify-16.bmp" 
 IDB_DECRYPT_VERIFY_16M    BITMAP  DISCARDABLE  "decrypt-verify-16m.bmp"

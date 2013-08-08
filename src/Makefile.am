@@ -34,7 +34,7 @@ EXTRA_DIST = \
 	key-manager-64.png \
 	decrypt-16.png decrypt-48.png \
 	encrypt-sign-file-48.png \
-	sign-48.png \
+	sign-48.png verify-48.png \
 	logo.bmp README.icons
 
 EXEEXT = .dll

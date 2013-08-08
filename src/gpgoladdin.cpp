@@ -452,11 +452,13 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnEncryptLarge", ID_BTN_ENCRYPT_LARGE)
       ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
       ID_MAPPER (L"btnSignLarge", ID_BTN_SIGN_LARGE)
+      ID_MAPPER (L"btnVerifyLarge", ID_BTN_VERIFY_LARGE)
       ID_MAPPER (L"encryptBody", ID_CMD_ENCRYPT_BODY)
       ID_MAPPER (L"decryptBody", ID_CMD_DECRYPT_BODY)
       ID_MAPPER (L"addEncSignedAttachment", ID_CMD_ATT_ENCSIGN_FILE)
       ID_MAPPER (L"addEncAttachment", ID_CMD_ATT_ENC_FILE)
       ID_MAPPER (L"signBody", ID_CMD_SIGN_BODY)
+      ID_MAPPER (L"verifyBody", ID_CMD_VERIFY_BODY)
     }
 
   if (cNames > 1)
@@ -504,6 +506,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return addEncAttachment (parms->rgvarg[0].pdispVal);
       case ID_CMD_SIGN_BODY:
         return signBody (parms->rgvarg[0].pdispVal);
+      case ID_CMD_VERIFY_BODY:
+        return verifyBody (parms->rgvarg[0].pdispVal);
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
@@ -511,6 +515,7 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_BTN_ENCRYPT_LARGE:
       case ID_BTN_ENCSIGN_LARGE:
       case ID_BTN_SIGN_LARGE:
+      case ID_BTN_VERIFY_LARGE:
         return getIcon (dispid, result);
     }
 
@@ -637,6 +642,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               size=\"large\""
         L"               label=\"%S\""
         L"               onAction=\"decryptBody\"/>"
+        L"       <button id=\"fullTextVerify\""
+        L"               getImage=\"btnVerifyLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"verifyBody\"/>"
         L"     </group>"
         L"    </tab>"
         L"   </tabs>"
@@ -671,6 +681,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"</customUI>",
         _("GpgOL"), _("General"), _("Start Certificate Manager"),
         _("Textbody"), _("Decrypt"),
+        _("Verify"),
         _("GpgOL"), _("Save and decrypt"),
         _("Decrypt"),
         _("Decrypt"));

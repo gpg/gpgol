@@ -58,6 +58,8 @@ HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
 
 #define OP_ENCRYPT     1 /* Encrypt the data */
 #define OP_SIGN        2 /* Sign the data */
+#define OP_DECRYPT     1 /* Decrypt the data */
+#define OP_VERIFY      2 /* Verify the data */
 #define DATA_BODY      4 /* Use text body as data */
 #define DATA_SELECTION 8 /* Use selection as data */
 
@@ -557,16 +559,13 @@ decryptAttachments (LPDISPATCH ctrl)
                   callback function failed in an ugly window. */
 }
 
-#define DECRYPT_INSPECTOR_SELECTION  1
-#define DECRYPT_INSPECTOR_BODY       2
-
-/* decryptInspector
+/* do_reader_action
    decrypts the content of an inspector. Controled by flags
    similary to the do_composer_action.
 */
 
 HRESULT
-decryptInspector (LPDISPATCH ctrl, int flags)
+do_reader_action (LPDISPATCH ctrl, int flags)
 {
   LPDISPATCH context = NULL;
   LPDISPATCH selection = NULL;
@@ -602,7 +601,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
 
   curWindow = get_oom_context_window (context);
 
-  if (!(flags & DECRYPT_INSPECTOR_BODY))
+  if (!(flags & DATA_BODY))
     {
       wordEditor = get_oom_object (context, "WordEditor");
       wordApplication = get_oom_object (wordEditor, "get_Application");
@@ -611,7 +610,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   mailItem = get_oom_object (context, "CurrentItem");
 
   if ((!wordEditor || !wordApplication || !selection || !mailItem) &&
-      !(flags & DECRYPT_INSPECTOR_BODY))
+      !(flags & DATA_BODY))
     {
       MessageBox (NULL,
                   "Internal error in GpgOL.\n"
@@ -639,7 +638,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
         }
     }
 
-  if (flags & DECRYPT_INSPECTOR_SELECTION)
+  if (flags & DATA_SELECTION)
     {
       encData = get_oom_string (selection, "Text");
 
@@ -652,7 +651,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
           goto failure;
         }
     }
-  else if (flags & DECRYPT_INSPECTOR_BODY)
+  else if (flags & DATA_BODY)
     {
       encData = get_oom_string (mailItem, "Body");
 
@@ -701,13 +700,27 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   engine_set_session_number (filter, session_number);
   engine_set_session_title (filter, subject ? subject : _("GpgOL"));
 
-  if ((rc=engine_decrypt_start (filter, curWindow,
-                                protocol,
-                                1, NULL)))
+  if (flags & OP_DECRYPT)
     {
-      log_error ("%s:%s: engine decrypt start failed: %s",
-                 SRCNAME, __func__, gpg_strerror (rc));
-      goto failure;
+      if ((rc=engine_decrypt_start (filter, curWindow,
+                                    protocol,
+                                    1, NULL)))
+        {
+          log_error ("%s:%s: engine decrypt start failed: %s",
+                     SRCNAME, __func__, gpg_strerror (rc));
+          goto failure;
+        }
+    }
+  else if (flags & OP_VERIFY)
+    {
+      log_debug ("Starting verify");
+      if ((rc=engine_verify_start (filter, curWindow,
+                                   NULL, 0, protocol, senderAddr)))
+        {
+          log_error ("%s:%s: engine verify start failed: %s",
+                     SRCNAME, __func__, gpg_strerror (rc));
+          goto failure;
+        }
     }
 
   /* Write the text in the decryption sink. */
@@ -768,11 +781,11 @@ decryptInspector (LPDISPATCH ctrl, int flags)
         /* Now replace the crypto data with the decrypted data or show it
         somehow.*/
         int err = 0;
-        if (flags & DECRYPT_INSPECTOR_SELECTION)
+        if (flags & DATA_SELECTION)
           {
             err = put_oom_string (selection, "Text", buffer);
           }
-        else if (flags & DECRYPT_INSPECTOR_BODY)
+        else if (flags & DATA_BODY)
           {
             err = put_oom_string (mailItem, "Body", buffer);
           }
@@ -780,7 +793,8 @@ decryptInspector (LPDISPATCH ctrl, int flags)
         if (err)
           {
             MessageBox (NULL, buffer,
-                        _("Plain text"),
+                        flags & OP_DECRYPT ? _("Plain text") :
+                        _("Signed text"),
                         MB_ICONINFORMATION|MB_OK);
           }
       }
@@ -1138,13 +1152,13 @@ startCertManager (LPDISPATCH ctrl)
 HRESULT
 decryptBody (LPDISPATCH ctrl)
 {
-  return decryptInspector (ctrl, DECRYPT_INSPECTOR_BODY);
+  return do_reader_action (ctrl, OP_DECRYPT | DATA_BODY);
 }
 
 HRESULT
 decryptSelection (LPDISPATCH ctrl)
 {
-  return decryptInspector (ctrl, DECRYPT_INSPECTOR_SELECTION);
+  return do_reader_action (ctrl, OP_DECRYPT | DATA_SELECTION);
 }
 
 HRESULT
@@ -1174,4 +1188,9 @@ addEncAttachment (LPDISPATCH ctrl)
 HRESULT signBody (LPDISPATCH ctrl)
 {
   return do_composer_action (ctrl, DATA_BODY | OP_SIGN);
+}
+
+HRESULT verifyBody (LPDISPATCH ctrl)
+{
+  return do_reader_action (ctrl, DATA_BODY | OP_VERIFY);
 }
