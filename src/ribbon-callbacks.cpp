@@ -89,7 +89,7 @@ copyFileToSink (HANDLE hFile, sink_t sink)
 static int
 attachSignature (LPDISPATCH mailItem, char *subject, HANDLE hFileToSign,
                  protocol_t protocol, unsigned int session_number,
-                 HWND curWindow, wchar_t *originalFilename, char *sender)
+                 HWND curWindow, wchar_t *fileNameToSign, char *sender)
 {
   wchar_t *sigName = NULL;
   wchar_t *sigFileName = NULL;
@@ -117,7 +117,7 @@ attachSignature (LPDISPATCH mailItem, char *subject, HANDLE hFileToSign,
   if (engine_sign_start (filter, curWindow, protocol, sender, &protocol))
     goto failure;
 
-  sigName = get_pretty_attachment_name (originalFilename, protocol, 1);
+  sigName = get_pretty_attachment_name (fileNameToSign, protocol, 1);
 
   /* If we are unlucky the number of temporary file artifacts might
      differ for the signature and the encrypted file but we have
@@ -1085,7 +1085,7 @@ attachEncryptedFile (LPDISPATCH ctrl, int flags)
   if (flags & OP_SIGN)
     {
       attachSignature (mailItem, subject, hEncFile, protocol, session_number,
-                       curWindow, fileToEncryptW, senderAddr);
+                       curWindow, encryptedFile, senderAddr);
     }
 
 failure:
