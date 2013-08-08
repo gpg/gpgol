@@ -253,7 +253,10 @@ encryptInspector (LPDISPATCH ctrl, int flags)
   {
     LARGE_INTEGER off;
     ULONG nread;
-    char buffer[(unsigned int)tmpStat.cbSize.QuadPart];
+
+    char buffer[(unsigned int)tmpStat.cbSize.QuadPart + 1];
+
+    memset (buffer, 0, sizeof buffer);
 
     off.QuadPart = 0;
     hr = tmpstream->Seek (off, STREAM_SEEK_SET, NULL);
@@ -264,7 +267,7 @@ encryptInspector (LPDISPATCH ctrl, int flags)
         rc = gpg_error (GPG_ERR_EIO);
         goto failure;
       }
-    hr = tmpstream->Read (buffer, sizeof buffer, &nread);
+    hr = tmpstream->Read (buffer, sizeof (buffer) - 1, &nread);
     if (hr)
       {
         log_error ("%s:%s: IStream::Read failed: hr=%#lx",
@@ -274,14 +277,6 @@ encryptInspector (LPDISPATCH ctrl, int flags)
       }
     if (strlen (buffer) > 1)
       {
-        char* lastlinebreak = strrchr (buffer, '\n');
-        if (lastlinebreak && (lastlinebreak - buffer) > 1)
-          {
-            /*XXX there is some strange data in the buffer
-              after the last linebreak investigate this and
-              fix it! */
-            lastlinebreak[1] = '\0';
-          }
         /* Now replace the selection with the encrypted text */
         if (protocol == PROTOCOL_SMIME)
           {
@@ -618,7 +613,9 @@ decryptInspector (LPDISPATCH ctrl, int flags)
   {
     LARGE_INTEGER off;
     ULONG nread;
-    char buffer[(unsigned int)tmpStat.cbSize.QuadPart];
+    char buffer[(unsigned int)tmpStat.cbSize.QuadPart + 1];
+
+    memset (buffer, 0, sizeof buffer);
 
     off.QuadPart = 0;
     hr = tmpstream->Seek (off, STREAM_SEEK_SET, NULL);
@@ -629,7 +626,7 @@ decryptInspector (LPDISPATCH ctrl, int flags)
         rc = gpg_error (GPG_ERR_EIO);
         goto failure;
       }
-    hr = tmpstream->Read (buffer, sizeof buffer, &nread);
+    hr = tmpstream->Read (buffer, sizeof (buffer) - 1, &nread);
     if (hr)
       {
         log_error ("%s:%s: IStream::Read failed: hr=%#lx",
