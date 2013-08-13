@@ -403,8 +403,22 @@ do_composer_action (LPDISPATCH ctrl, int flags)
       }
     if (strlen (buffer) > 1)
       {
-        /* Now replace the selection with the encrypted text */
-        if (protocol == PROTOCOL_SMIME)
+        if (flags & OP_SIGN)
+          {
+            /* When signing we append the signature after the body */
+            unsigned int combinedSize = strlen (buffer) +
+              strlen (plaintext) + 5;
+            char combinedBody[combinedSize];
+            memset (combinedBody, 0, combinedSize);
+            snprintf (combinedBody, combinedSize, "%s\r\n\r\n%s", plaintext,
+                      buffer);
+            if (flags & DATA_SELECTION)
+              put_oom_string (selection, "Text", combinedBody);
+            else if (flags & DATA_BODY)
+              put_oom_string (mailItem, "Body", combinedBody);
+
+          }
+        else if (protocol == PROTOCOL_SMIME)
           {
             unsigned int enclosedSize = strlen (buffer) + 34 + 31 + 1;
             char enclosedData[enclosedSize];
