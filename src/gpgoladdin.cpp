@@ -555,7 +555,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     _("Encrypts a file and adds it as an attachment to the "
       "message. ");
   const char *encryptSignFileTTip =
-    _("Add a file and it's signature as an encrypted attachment");
+    _("Add a file as an encrypted attachment with a signature");
   const char *encryptSignFileSTip =
     _("Encrypts a file, signs it and adds both the encrypted file "
       "and the signature as attachments to the message. ");
@@ -565,9 +565,9 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     _("Look for PGP or S/MIME encrypted data in the message text "
       "and decrypt it.");
   const char *signTextTTip =
-    _("Add a signature with the embedded message");
+    _("Add a signature of the message");
   const char *signTextSTip =
-    _("Append a signed copy of the message text in an opaque signature. "
+    _("Appends a signed copy of the message text in an opaque signature. "
       "An opaque signature ensures that the signed text is not modified by "
       "embedding it in the signature itself. "
       "The combination of the signed message text and your signature is "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2013-07-15 08:09+0000\n"
+"POT-Creation-Date: 2013-08-13 09:16+0000\n"
 "PO-Revision-Date: 2009-06-18 19:18+0200\n"
 "Last-Translator: Werner Koch <wk@gnupg.org>\n"
 "Language-Team: de\n"
@@ -41,7 +41,7 @@ msgstr ""
 "um die gesamte Nachricht nochmal zu entschlüsseln.  Danach können\n"
 "Sie das Attachment wieder öffenen."
 
-#: src/common.c:232
+#: src/common.c:269
 msgid "GpgOL - Save attachment"
 msgstr "GpgOL - Anlage Speichern"
 
@@ -59,13 +59,15 @@ msgstr ""
 
 #: src/engine.c:395 src/engine.c:405 src/main.c:699 src/main.c:705
 #: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
-#: src/gpgoladdin.cpp:588 src/gpgoladdin.cpp:635 src/gpgoladdin.cpp:703
-#: src/gpgoladdin.cpp:705 src/ribbon-callbacks.cpp:132
-#: src/ribbon-callbacks.cpp:148 src/ribbon-callbacks.cpp:161
-#: src/ribbon-callbacks.cpp:192 src/ribbon-callbacks.cpp:234
-#: src/ribbon-callbacks.cpp:556 src/ribbon-callbacks.cpp:573
-#: src/ribbon-callbacks.cpp:587 src/ribbon-callbacks.cpp:600
-#: src/ribbon-callbacks.cpp:636
+#: src/gpgoladdin.cpp:663 src/gpgoladdin.cpp:740 src/gpgoladdin.cpp:745
+#: src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:816 src/ribbon-callbacks.cpp:117
+#: src/ribbon-callbacks.cpp:231 src/ribbon-callbacks.cpp:246
+#: src/ribbon-callbacks.cpp:258 src/ribbon-callbacks.cpp:295
+#: src/ribbon-callbacks.cpp:307 src/ribbon-callbacks.cpp:632
+#: src/ribbon-callbacks.cpp:649 src/ribbon-callbacks.cpp:663
+#: src/ribbon-callbacks.cpp:676 src/ribbon-callbacks.cpp:726
+#: src/ribbon-callbacks.cpp:1002 src/ribbon-callbacks.cpp:1036
+#: src/ribbon-callbacks.cpp:1048 src/ribbon-callbacks.cpp:1073
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -360,8 +362,8 @@ msgstr "Dateischreibfehler"
 msgid "I/O-Error"
 msgstr "Ein-/Ausgabefehler"
 
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:588 src/gpgoladdin.cpp:635
-#: src/gpgoladdin.cpp:703
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:663 src/gpgoladdin.cpp:740
+#: src/gpgoladdin.cpp:813
 msgid "General"
 msgstr "Allgemein"
 
@@ -429,7 +431,7 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr "Dies ist GpgOL Version %s"
 
-#: src/olflange.cpp:526
+#: src/olflange.cpp:527
 msgid "Welcome to GpgOL "
 msgstr "Willkommen zu GpgOL "
 
@@ -724,54 +726,157 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
-#: src/gpgoladdin.cpp:589 src/gpgoladdin.cpp:636 src/gpgoladdin.cpp:703
+#: src/gpgoladdin.cpp:541
+msgid "Start the Certificate Management Software"
+msgstr "Starten der Zertifikatsverwaltung"
+
+#: src/gpgoladdin.cpp:543
+msgid ""
+"Open GPA or Kleopatra to manage your certificates. You can use this you to "
+"generate your own certificates. "
+msgstr ""
+"Öffnet GPA oder Kleopatra um Zertifikate zu verwalten. Dies kann genutzt "
+"werden um eigene Zertifikate zu generieren."
+
+#: src/gpgoladdin.cpp:547
+msgid "Encrypt the text of the message"
+msgstr "Verschlüsselt den Text der Nachricht"
+
+#: src/gpgoladdin.cpp:549
+msgid ""
+"Choose the certificates for which the message should be encrypted and "
+"replace the text with the encrypted message."
+msgstr ""
+"Auswählen der Empfängerzertifikate und ersetzen des Nachrichtentexts durch "
+"die verschlüsselte Nachricht."
+
+#: src/gpgoladdin.cpp:553
+msgid "Add a file as an encrypted attachment"
+msgstr "Hinzufügen einer Datei als verschlüsselter Anhang"
+
+#: src/gpgoladdin.cpp:555
+msgid "Encrypts a file and adds it as an attachment to the message. "
+msgstr "Verschlüsselt eine Datei und fügt diese als Anhang hinzu"
+
+#: src/gpgoladdin.cpp:558
+msgid "Add a file as an encrypted attachment with a signature"
+msgstr "Hinzufügen einer Datei als verschlüsselter Anhang mit Signatur"
+
+#: src/gpgoladdin.cpp:560
+msgid ""
+"Encrypts a file, signs it and adds both the encrypted file and the signature "
+"as attachments to the message. "
+msgstr ""
+"Verschlüsselt eine Datei, signiert diese und fügt die Signatur und die "
+"Verschlüsselte Datei als Anhang an."
+
+#: src/gpgoladdin.cpp:563
+msgid "Decrypt the message"
+msgstr "Entschlüsseln der Nachricht."
+
+#: src/gpgoladdin.cpp:565
+msgid ""
+"Look for PGP or S/MIME encrypted data in the message text and decrypt it."
+msgstr ""
+"Sucht nach PGP oder S/MIME verschlüsselten Daten im Nachrichtentext und "
+"entschlüsselt diese."
+
+#: src/gpgoladdin.cpp:568
+msgid "Add a signature of the message"
+msgstr "Hinzufügen einer Signierten Nachricht"
+
+#: src/gpgoladdin.cpp:570
+msgid ""
+"Appends a signed copy of the message text in an opaque signature. An opaque "
+"signature ensures that the signed text is not modified by embedding it in "
+"the signature itself. The combination of the signed message text and your "
+"signature is added below the plain text. The message will not be encrypted!"
+msgstr ""
+"Fügt eine signierte Kopie des Nachrichtentexts als opake Signatur an. Eine "
+"opake Signatur stellt sicher das der signierte Text nicht verfälscht wird "
+"indem es den Text in die Signatur einbettet. Die Kombination aus Signatur "
+"und Nachricht wird unterhalb des Textes angefügt. Die Nachricht wird "
+"hierdurch nicht verschlüsselt!"
+
+#: src/gpgoladdin.cpp:664 src/gpgoladdin.cpp:741 src/gpgoladdin.cpp:814
 msgid "Start Certificate Manager"
 msgstr "Zertifikatsverwaltung starten"
 
-#: src/gpgoladdin.cpp:590 src/gpgoladdin.cpp:637
+#: src/gpgoladdin.cpp:665 src/gpgoladdin.cpp:742
 msgid "Textbody"
 msgstr "Textkörper"
 
-#: src/gpgoladdin.cpp:591 src/gpgoladdin.cpp:598
+#: src/gpgoladdin.cpp:666 src/gpgoladdin.cpp:673
 msgid "Encrypt"
 msgstr "Verschlüsseln"
 
-#: src/gpgoladdin.cpp:592 src/gpgoladdin.cpp:598 src/gpgoladdin.cpp:638
-#: src/gpgoladdin.cpp:639
+#: src/gpgoladdin.cpp:667 src/gpgoladdin.cpp:673 src/gpgoladdin.cpp:743
+#: src/gpgoladdin.cpp:746 src/gpgoladdin.cpp:747
 msgid "Decrypt"
 msgstr "Entschlüsseln"
 
-#: src/gpgoladdin.cpp:705 src/gpgoladdin.cpp:706
+#: src/gpgoladdin.cpp:668
+msgid "Sign"
+msgstr "Signieren"
+
+#: src/gpgoladdin.cpp:669 src/gpgoladdin.cpp:744
+msgid "Verify"
+msgstr "Signatur prüfen"
+
+#: src/gpgoladdin.cpp:670
+msgid "Attachments"
+msgstr "Anhänge"
+
+#: src/gpgoladdin.cpp:671
+msgid "Encrypted file"
+msgstr "Verschlüsselte Datei"
+
+#: src/gpgoladdin.cpp:672
+msgid "Encrypted file and Signature"
+msgstr "Verschlüsselte Datei mit Signatur"
+
+#: src/gpgoladdin.cpp:745 src/gpgoladdin.cpp:816 src/gpgoladdin.cpp:817
 msgid "Save and decrypt"
 msgstr "Speichern und Entschlüsseln"
 
-#: src/ribbon-callbacks.cpp:147
+#: src/ribbon-callbacks.cpp:245
 msgid "Please select text to encrypt."
 msgstr "Bitte selektieren Sie den zu verschlüsselnden Text."
 
-#: src/ribbon-callbacks.cpp:160
+#: src/ribbon-callbacks.cpp:257
 msgid "Textbody empty."
 msgstr "Textkörper leer."
 
-#: src/ribbon-callbacks.cpp:191
+#: src/ribbon-callbacks.cpp:306 src/ribbon-callbacks.cpp:1001
 msgid "Please add at least one recipent."
 msgstr "Bitte fügen Sie mindestens einen Empfänger hinzu."
 
-#: src/ribbon-callbacks.cpp:572
+#: src/ribbon-callbacks.cpp:648
 msgid "Please select a Mail."
-msgstr "Bitte wäheln Sie eine Mail aus."
+msgstr "Bitte wählen Sie eine Mail aus."
 
-#: src/ribbon-callbacks.cpp:586
+#: src/ribbon-callbacks.cpp:662
 msgid "Please select the data you wish to decrypt."
 msgstr "Bitte selektieren Sie die zu entschlüsselnden Daten."
 
-#: src/ribbon-callbacks.cpp:599
+#: src/ribbon-callbacks.cpp:675
 msgid "Nothing to decrypt."
 msgstr "Nichts zu entschlüsseln."
 
-#: src/ribbon-callbacks.cpp:715
+#: src/ribbon-callbacks.cpp:821
 msgid "Plain text"
 msgstr "Klartext"
+
+#: src/ribbon-callbacks.cpp:822
+msgid "Signed text"
+msgstr "Signierter Text"
+
+#: src/ribbon-callbacks.cpp:1008
+msgid "Select file to encrypt"
+msgstr "Auswählen der zu verschlüsselnden Datei"
+
+#~ msgid "Add a file and it's signature as an encrypted attachment"
+#~ msgstr "Hinzufügen einer Datei als verschlüsselter Anhang mit Signatur"
 
 #~ msgid ""
 #~ "Internal error in GpgOL.\n"
@@ -1028,9 +1133,6 @@ msgstr "Klartext"
 #~ "@LIST@\n"
 #~ "Möchten Sie diese entschlüsseln und abspeichern?"
 
-#~ msgid "Attachment Decryption"
-#~ msgstr "Entschlüsselung eines Anhangs"
-
 #~ msgid "Attachment Encryption Failure"
 #~ msgstr "Verschlüsselungsfehler eines Anhangs"
 
@@ -1060,9 +1162,6 @@ msgstr "Klartext"
 
 #~ msgid "GPG &sign message"
 #~ msgstr "Mit GPG unter&schreiben"
-
-#~ msgid "Decrypt and verify the message."
-#~ msgstr "Entschlüsseln und Prüfen der Nachricht."
 
 #~ msgid "Open GPG Key Manager"
 #~ msgstr "Die GPG Schlüsselverwaltung öffnen"

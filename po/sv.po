@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2013-07-15 08:09+0000\n"
+"POT-Creation-Date: 2013-08-13 09:16+0000\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -40,7 +40,7 @@ msgid ""
 "entire message again.  Then open this attachment."
 msgstr ""
 
-#: src/common.c:232
+#: src/common.c:269
 #, fuzzy
 msgid "GpgOL - Save attachment"
 msgstr "GPG - Spara dekrypterad bilaga"
@@ -57,13 +57,15 @@ msgstr ""
 
 #: src/engine.c:395 src/engine.c:405 src/main.c:699 src/main.c:705
 #: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
-#: src/gpgoladdin.cpp:588 src/gpgoladdin.cpp:635 src/gpgoladdin.cpp:703
-#: src/gpgoladdin.cpp:705 src/ribbon-callbacks.cpp:132
-#: src/ribbon-callbacks.cpp:148 src/ribbon-callbacks.cpp:161
-#: src/ribbon-callbacks.cpp:192 src/ribbon-callbacks.cpp:234
-#: src/ribbon-callbacks.cpp:556 src/ribbon-callbacks.cpp:573
-#: src/ribbon-callbacks.cpp:587 src/ribbon-callbacks.cpp:600
-#: src/ribbon-callbacks.cpp:636
+#: src/gpgoladdin.cpp:663 src/gpgoladdin.cpp:740 src/gpgoladdin.cpp:745
+#: src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:816 src/ribbon-callbacks.cpp:117
+#: src/ribbon-callbacks.cpp:231 src/ribbon-callbacks.cpp:246
+#: src/ribbon-callbacks.cpp:258 src/ribbon-callbacks.cpp:295
+#: src/ribbon-callbacks.cpp:307 src/ribbon-callbacks.cpp:632
+#: src/ribbon-callbacks.cpp:649 src/ribbon-callbacks.cpp:663
+#: src/ribbon-callbacks.cpp:676 src/ribbon-callbacks.cpp:726
+#: src/ribbon-callbacks.cpp:1002 src/ribbon-callbacks.cpp:1036
+#: src/ribbon-callbacks.cpp:1048 src/ribbon-callbacks.cpp:1073
 msgid "GpgOL"
 msgstr ""
 
@@ -328,8 +330,8 @@ msgstr "Fel vid skrivning av fil"
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
 
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:588 src/gpgoladdin.cpp:635
-#: src/gpgoladdin.cpp:703
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:663 src/gpgoladdin.cpp:740
+#: src/gpgoladdin.cpp:813
 msgid "General"
 msgstr ""
 
@@ -376,7 +378,7 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr ""
 
-#: src/olflange.cpp:526
+#: src/olflange.cpp:527
 msgid "Welcome to GpgOL "
 msgstr ""
 
@@ -648,61 +650,155 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr ""
 
-#: src/gpgoladdin.cpp:589 src/gpgoladdin.cpp:636 src/gpgoladdin.cpp:703
+#: src/gpgoladdin.cpp:541
+#, fuzzy
+msgid "Start the Certificate Management Software"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/gpgoladdin.cpp:543
+msgid ""
+"Open GPA or Kleopatra to manage your certificates. You can use this you to "
+"generate your own certificates. "
+msgstr ""
+
+#: src/gpgoladdin.cpp:547
+#, fuzzy
+msgid "Encrypt the text of the message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:549
+msgid ""
+"Choose the certificates for which the message should be encrypted and "
+"replace the text with the encrypted message."
+msgstr ""
+
+#: src/gpgoladdin.cpp:553
+msgid "Add a file as an encrypted attachment"
+msgstr ""
+
+#: src/gpgoladdin.cpp:555
+msgid "Encrypts a file and adds it as an attachment to the message. "
+msgstr ""
+
+#: src/gpgoladdin.cpp:558
+msgid "Add a file as an encrypted attachment with a signature"
+msgstr ""
+
+#: src/gpgoladdin.cpp:560
+msgid ""
+"Encrypts a file, signs it and adds both the encrypted file and the signature "
+"as attachments to the message. "
+msgstr ""
+
+#: src/gpgoladdin.cpp:563
+#, fuzzy
+msgid "Decrypt the message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:565
+msgid ""
+"Look for PGP or S/MIME encrypted data in the message text and decrypt it."
+msgstr ""
+
+#: src/gpgoladdin.cpp:568
+#, fuzzy
+msgid "Add a signature of the message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:570
+msgid ""
+"Appends a signed copy of the message text in an opaque signature. An opaque "
+"signature ensures that the signed text is not modified by embedding it in "
+"the signature itself. The combination of the signed message text and your "
+"signature is added below the plain text. The message will not be encrypted!"
+msgstr ""
+
+#: src/gpgoladdin.cpp:664 src/gpgoladdin.cpp:741 src/gpgoladdin.cpp:814
 #, fuzzy
 msgid "Start Certificate Manager"
 msgstr "GPG-nyckel&hanterare"
 
-#: src/gpgoladdin.cpp:590 src/gpgoladdin.cpp:637
+#: src/gpgoladdin.cpp:665 src/gpgoladdin.cpp:742
 msgid "Textbody"
 msgstr ""
 
-#: src/gpgoladdin.cpp:591 src/gpgoladdin.cpp:598
+#: src/gpgoladdin.cpp:666 src/gpgoladdin.cpp:673
 #, fuzzy
 msgid "Encrypt"
 msgstr "Kryptering"
 
-#: src/gpgoladdin.cpp:592 src/gpgoladdin.cpp:598 src/gpgoladdin.cpp:638
-#: src/gpgoladdin.cpp:639
+#: src/gpgoladdin.cpp:667 src/gpgoladdin.cpp:673 src/gpgoladdin.cpp:743
+#: src/gpgoladdin.cpp:746 src/gpgoladdin.cpp:747
 #, fuzzy
 msgid "Decrypt"
 msgstr "Dekryptering"
 
-#: src/gpgoladdin.cpp:705 src/gpgoladdin.cpp:706
+#: src/gpgoladdin.cpp:668
+msgid "Sign"
+msgstr ""
+
+#: src/gpgoladdin.cpp:669 src/gpgoladdin.cpp:744
+msgid "Verify"
+msgstr ""
+
+#: src/gpgoladdin.cpp:670
+#, fuzzy
+msgid "Attachments"
+msgstr "Dekryptering av bilaga"
+
+#: src/gpgoladdin.cpp:671
+#, fuzzy
+msgid "Encrypted file"
+msgstr "Kryptering"
+
+#: src/gpgoladdin.cpp:672
+msgid "Encrypted file and Signature"
+msgstr ""
+
+#: src/gpgoladdin.cpp:745 src/gpgoladdin.cpp:816 src/gpgoladdin.cpp:817
 msgid "Save and decrypt"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:147
+#: src/ribbon-callbacks.cpp:245
 #, fuzzy
 msgid "Please select text to encrypt."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:160
+#: src/ribbon-callbacks.cpp:257
 msgid "Textbody empty."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:191
+#: src/ribbon-callbacks.cpp:306 src/ribbon-callbacks.cpp:1001
 #, fuzzy
 msgid "Please add at least one recipent."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:572
+#: src/ribbon-callbacks.cpp:648
 #, fuzzy
 msgid "Please select a Mail."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:586
+#: src/ribbon-callbacks.cpp:662
 #, fuzzy
 msgid "Please select the data you wish to decrypt."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:599
+#: src/ribbon-callbacks.cpp:675
 msgid "Nothing to decrypt."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:715
+#: src/ribbon-callbacks.cpp:821
 msgid "Plain text"
 msgstr ""
+
+#: src/ribbon-callbacks.cpp:822
+msgid "Signed text"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:1008
+#, fuzzy
+msgid "Select file to encrypt"
+msgstr "Välj åtminstone en mottagarnyckel."
 
 #, fuzzy
 #~ msgid "Decrypt Selection"
@@ -862,9 +958,6 @@ msgstr ""
 #~ "@LIST@\n"
 #~ "Vill du dekryptera och spara dem?"
 
-#~ msgid "Attachment Decryption"
-#~ msgstr "Dekryptering av bilaga"
-
 #~ msgid "Attachment Encryption Failure"
 #~ msgstr "Kryptering av bilaga misslyckades"
 
@@ -891,9 +984,6 @@ msgstr ""
 
 #~ msgid "GPG &sign message"
 #~ msgstr "GPG-&signera meddelandet"
-
-#~ msgid "Decrypt and verify the message."
-#~ msgstr "Dekryptera och validera meddelandet."
 
 #~ msgid "Open GPG Key Manager"
 #~ msgstr "Öppna GPG-nyckelhanteraren"
