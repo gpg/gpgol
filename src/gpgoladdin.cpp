@@ -536,7 +536,43 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
 STDMETHODIMP
 GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
-  wchar_t buffer[4096];
+  wchar_t buffer[8192];
+  const char *certManagerTTip =
+    _("Start the Certificate Management Software");
+  const char *certManagerSTip =
+    _("Open GPA or Kleopatra to manage your certificates. "
+      "You can use this you to generate your "
+      "own certificates. ");
+  const char *encryptTextTTip =
+    _("Encrypt the text of the message");
+  const char *encryptTextSTip =
+    _("Choose the certificates for which the message "
+      "should be encrypted and replace the text "
+      "with the encrypted message.");
+  const char *encryptFileTTip =
+    _("Add a file as an encrypted attachment");
+  const char *encryptFileSTip =
+    _("Encrypts a file and adds it as an attachment to the "
+      "message. ");
+  const char *encryptSignFileTTip =
+    _("Add a file and it's signature as an encrypted attachment");
+  const char *encryptSignFileSTip =
+    _("Encrypts a file, signs it and adds both the encrypted file "
+      "and the signature as attachments to the message. ");
+  const char *decryptTextTTip=
+    _("Decrypt the message");
+  const char *decryptTextSTip =
+    _("Look for PGP or S/MIME encrypted data in the message text "
+      "and decrypt it.");
+  const char *signTextTTip =
+    _("Add a signature with the embedded message");
+  const char *signTextSTip =
+    _("Append a signed copy of the message text in an opaque signature. "
+      "An opaque signature ensures that the signed text is not modified by "
+      "embedding it in the signature itself. "
+      "The combination of the signed message text and your signature is "
+      "added below the plain text. "
+      "The message will not be encrypted!");
 
   memset(buffer, 0, sizeof buffer);
 
@@ -559,6 +595,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               getImage=\"btnCertManager\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"startCertManager\"/>"
         L"     </group>"
         L"     <group id=\"textGroup\""
@@ -567,17 +605,28 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               getImage=\"btnEncryptLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"encryptBody\"/>"
         L"       <button id=\"fullTextDecrypt\""
         L"               getImage=\"btnDecryptLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"decryptBody\"/>"
         L"       <button id=\"fullTextSign\""
         L"               getImage=\"btnSignLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"signBody\"/>"
+        L"       <button id=\"fullTextVerify\""
+        L"               getImage=\"btnVerifyLarge\""
+        L"               size=\"large\""
+        L"               label=\"%S\""
+        L"               onAction=\"verifyBody\"/>"
         L"     </group>"
         L"     <group id=\"attachmentGroup\""
         L"            label=\"%S\">"
@@ -585,11 +634,15 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               getImage=\"btnEncryptLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"addEncAttachment\"/>"
         L"       <button id=\"encryptSignFile\""
         L"               getImage=\"btnEncryptFileLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"addEncSignedAttachment\"/>"
         L"     </group>"
         L"    </tab>"
@@ -608,14 +661,15 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" </contextMenu>"
         L"</contextMenus>"
         L"</customUI>", _("GpgOL"), _("General"),
-        _("Start Certificate Manager"),
+        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
         _("Textbody"),
-        _("Encrypt"),
-        _("Decrypt"),
-        _("Sign"),
+        _("Encrypt"), encryptTextTTip, encryptTextSTip,
+        _("Decrypt"), decryptTextTTip, decryptTextSTip,
+        _("Sign"), signTextTTip, signTextSTip,
+        _("Verify"),
         _("Attachments"),
-        _("Encrypted file"),
-        _("Encrypted file and Signature"),
+        _("Encrypted file"), encryptFileTTip, encryptFileSTip,
+        _("Encrypted file and Signature"), encryptSignFileTTip, encryptSignFileSTip,
         _("Encrypt"), _("Decrypt")
         );
     }
@@ -633,6 +687,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               getImage=\"btnCertManager\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"startCertManager\"/>"
         L"     </group>"
         L"     <group id=\"textGroup\""
@@ -641,6 +697,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               getImage=\"btnDecryptLarge\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"decryptBody\"/>"
         L"       <button id=\"fullTextVerify\""
         L"               getImage=\"btnVerifyLarge\""
@@ -679,8 +737,10 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" </contextMenu>"
         L"</contextMenus>"
         L"</customUI>",
-        _("GpgOL"), _("General"), _("Start Certificate Manager"),
-        _("Textbody"), _("Decrypt"),
+        _("GpgOL"), _("General"),
+        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        _("Textbody"),
+        _("Decrypt"), decryptTextTTip, decryptTextSTip,
         _("Verify"),
         _("GpgOL"), _("Save and decrypt"),
         _("Decrypt"),
@@ -700,6 +760,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L"               getImage=\"btnCertManager\""
         L"               size=\"large\""
         L"               label=\"%S\""
+        L"               screentip=\"%S\""
+        L"               supertip=\"%S\""
         L"               onAction=\"startCertManager\"/>"
         L"     </group>"
         /* This would be totally nice but Outlook
@@ -748,7 +810,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         L" </contextMenu>"
         L" </contextMenus>"
         L"</customUI>",
-        _("GpgOL"), _("General"), _("Start Certificate Manager"),
+        _("GpgOL"), _("General"),
+        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
         /*_("Mail Body"), _("Decrypt"),*/
         _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
         _("Save and decrypt"));
