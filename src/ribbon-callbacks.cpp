@@ -682,7 +682,18 @@ do_reader_action (LPDISPATCH ctrl, int flags)
   fix_linebreaks (encData, &encDataLen);
 
   subject = get_oom_string (mailItem, "Subject");
-  senderAddr = get_oom_string (mailItem, "SenderEmailAddress");
+  if (get_oom_bool (mailItem, "Sent"))
+    {
+      senderAddr = get_oom_string (mailItem, "SenderEmailAddress");
+    }
+  else
+    {
+      /* If the message has not been sent we might be composing
+         in this case use the current address */
+      LPDISPATCH sender = get_oom_object (mailItem, "Session.CurrentUser");
+      senderAddr = get_oom_string (sender, "Address");
+      RELDISP (sender);
+    }
 
   /* Determine the protocol based on the content */
   protocol = is_cms_data (encData, encDataLen) ? PROTOCOL_SMIME :
