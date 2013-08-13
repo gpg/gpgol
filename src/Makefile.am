@@ -116,6 +116,8 @@ libassuan.a:
 clean-local:
 	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a
 
+gpgol_LDFLAGS = -static-libgcc -static-libstdc++
+
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgme -lassuan -lgpg-error \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
