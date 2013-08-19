@@ -13,18 +13,27 @@
 AC_PREREQ(2.59)
 min_automake_version="1.9.4"
 
-# Remember to change the version number immediately *after* a release.
-# Set my_issvn to "yes" for non-released code.  Remember to run an
-# "svn up" and "autogen.sh" right before creating a distribution.
-m4_define([my_version], [1.1.4])
-m4_define([my_isgit], [yes])
+# To build a release you need to create a tag with the version number
+# (git tag -s gpgol-k.n.m) and run "./autogen.sh --force".  Please
+# bump the version number immediately *after* the release and do
+# another commit and push so that the git magic is able to work.
+m4_define([mym4_version], [1.1.4])
 
-m4_define([git_commit], m4_esyscmd([git branch -v 2>/dev/null \
-          | awk '/^\* / {printf "%s",$3}']))
-m4_define([my_full_version],
-          [my_version[]m4_if(my_isgit,[yes],[-git[]git_commit])])
+# Below is m4 magic to extract and compute the git revision number,
+# the decimalized short revision number, a beta version string and a
+# flag indicating a development version (mym4_isgit).  Note that the
+# m4 processing is done by autoconf and not during the configure run.
+m4_define([mym4_revision],
+          m4_esyscmd([git rev-parse --short HEAD | tr -d '\n\r']))
+m4_define([mym4_revision_dec],
+          m4_esyscmd_s([echo $((0x$(echo ]mym4_revision[|head -c 4)))]))
+m4_define([mym4_betastring],
+          m4_esyscmd_s([git describe --match 'gpgol-[0-9].[0-9].*[0-9]' \
+                         --long | awk -F- '$3!=0{print"-beta"$3}']))
+m4_define([mym4_isgit],m4_if(mym4_betastring,[],[no],[yes]))
+m4_define([mym4_full_version],[mym4_version[]mym4_betastring])
 
-AC_INIT([gpgol],[my_full_version],[bug-gpgol@g10code.com])
+AC_INIT([gpgol],[mym4_full_version], [http://bugs.gnupg.org])
 
 # Bump up this value if you changed any form.
 GPGOL_FORMS_REVISION=335
@@ -36,8 +45,8 @@ NEED_LIBASSUAN_API=2
 NEED_LIBASSUAN_VERSION=2.0.0
 
 
-GIT_COMMIT=0x[]git_commit
-GIT_COMMIT_DECIMAL="$((0x$(echo git_commit | head -c 4)))"
+GIT_COMMIT=0x[]mym4_revision
+GIT_COMMIT_DECIMAL=0x[]mym4_revision_dec
 PACKAGE=$PACKAGE_NAME
 PACKAGE_GT=${PACKAGE_NAME}
 VERSION=$PACKAGE_VERSION
