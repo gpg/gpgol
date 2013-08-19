@@ -212,7 +212,7 @@ if test "$GCC" = yes; then
         AC_MSG_CHECKING([if gcc supports -Wno-missing-field-initializers])
         _gcc_cflags_save=$CFLAGS
         CFLAGS="-Wno-missing-field-initializers"
-        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),_gcc_mfi=yes,_gcc_mfi=no)
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],_gcc_mfi=yes,_gcc_mfi=no)
         AC_MSG_RESULT($_gcc_mfi)
         CFLAGS=$_gcc_cflags_save;
         if test x"$_gcc_mfi" = xyes ; then
@@ -224,7 +224,7 @@ if test "$GCC" = yes; then
     AC_MSG_CHECKING([if gcc supports -Wno-pointer-sign])
     _gcc_cflags_save=$CFLAGS
     CFLAGS="-Wno-pointer-sign"
-    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),_gcc_psign=yes,_gcc_psign=no)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],_gcc_psign=yes,_gcc_psign=no)
     AC_MSG_RESULT($_gcc_psign)
     CFLAGS=$_gcc_cflags_save;
     if test x"$_gcc_psign" = xyes ; then
