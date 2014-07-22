@@ -1,6 +1,8 @@
 Noteworthy changes for version 1.2.1 (unreleased)
 =================================================
 
+ * Fixed recipient lookup problems when using exchange or active
+ directory.
 
 Noteworthy changes for version 1.2.0 (2013-08-19)
 =================================================

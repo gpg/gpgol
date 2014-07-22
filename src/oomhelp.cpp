@@ -789,6 +789,78 @@ get_oom_context_window (LPDISPATCH context)
   return ret;
 }
 
+
+/* Get a property string by using the PropertyAccessor of pDisp
+ * returns NULL on error or a newly allocated result. */
+char *
+get_pa_string (LPDISPATCH pDisp, const char *property)
+{
+  LPDISPATCH propertyAccessor;
+  VARIANT rVariant,
+          cVariant[1];
+  BSTR b_property;
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  HRESULT hr;
+  EXCEPINFO execpinfo;
+  wchar_t *w_property;
+  unsigned int argErr = 0;
+  char *result = NULL;
+
+  propertyAccessor = get_oom_object (pDisp, "PropertyAccessor");
+  if (!propertyAccessor)
+    {
+      log_error ("%s:%s: Failed to look up property accessor.",
+                 SRCNAME, __func__);
+      /* Fall back to address field on error. */
+      return NULL;
+    }
+
+  dispid = lookup_oom_dispid (propertyAccessor, "GetProperty");
+
+  if (dispid == DISPID_UNKNOWN)
+  {
+    log_error ("%s:%s: could not find GetProperty DISPID",
+               SRCNAME, __func__);
+    return NULL;
+  }
+
+  /* Prepare the parameter */
+  w_property = utf8_to_wchar (property);
+  b_property = SysAllocString (w_property);
+  xfree (w_property);
+
+  cVariant[0].vt = VT_BSTR;
+  cVariant[0].bstrVal = b_property;
+  dispparams.rgvarg = cVariant;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+  VariantInit (&rVariant);
+
+  hr = propertyAccessor->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                                 DISPATCH_METHOD, &dispparams,
+                                 &rVariant, &execpinfo, &argErr);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: invoking GetPrperty p=%p vt=%d hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__,
+                 rVariant.pdispVal, rVariant.vt, (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+    }
+  else if (rVariant.vt != VT_BSTR)
+    log_debug ("%s:%s: Property `%s' is not a string (vt=%d)",
+               SRCNAME, __func__, property, rVariant.vt);
+  else if (rVariant.bstrVal)
+    result = wchar_to_utf8 (rVariant.bstrVal);
+
+  SysFreeString (b_property);
+  RELDISP (propertyAccessor);
+  VariantClear (&rVariant);
+
+  return result;
+}
+
 /* Gets a malloced NULL terminated array of recipent strings from
    an OOM recipients Object. */
 char **
@@ -820,7 +892,26 @@ get_oom_recipients (LPDISPATCH recipients)
                      SRCNAME, __func__, i);
           break;
         }
-      recipientAddrs[i-1] = get_oom_string (recipient, "Address");
+      else
+        {
+          char *address,
+               *resolved;
+          address = get_oom_string (recipient, "Address");
+          log_debug ("%s:%s: Looking up smtp address for %s;",
+                     SRCNAME, __func__, address);
+          resolved = get_pa_string (recipient, PR_SMTP_ADDRESS);
+          if (resolved)
+            {
+              xfree (address);
+              recipientAddrs[i-1] = resolved;
+              log_debug ("%s:%s: Resolved address is %s;",
+                         SRCNAME, __func__, resolved);
+              continue;
+            }
+          log_debug ("%s:%s: Failed to look up SMTP Address;",
+                     SRCNAME, __func__);
+          recipientAddrs[i-1] = address;
+        }
     }
   return recipientAddrs;
 }
