@@ -131,6 +131,10 @@ char ** get_oom_recipients (LPDISPATCH recipients);
 int
 add_oom_attachment (LPDISPATCH disp, wchar_t* inFile);
 
+/* Look up a string with the propertyAccessor interface */
+char *
+get_pa_string (LPDISPATCH pDisp, const char *property);
+
 #ifdef __cplusplus
 }
 #endif

@@ -807,6 +807,9 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
   unsigned int argErr = 0;
   char *result = NULL;
 
+  log_debug ("%s:%s: Looking up property: %s;",
+             SRCNAME, __func__, property);
+
   propertyAccessor = get_oom_object (pDisp, "PropertyAccessor");
   if (!propertyAccessor)
     {
@@ -858,6 +861,8 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
   RELDISP (propertyAccessor);
   VariantClear (&rVariant);
 
+  log_debug ("%s:%s: Lookup result: %s;",
+             SRCNAME, __func__, result);
   return result;
 }
 
@@ -897,15 +902,11 @@ get_oom_recipients (LPDISPATCH recipients)
           char *address,
                *resolved;
           address = get_oom_string (recipient, "Address");
-          log_debug ("%s:%s: Looking up smtp address for %s;",
-                     SRCNAME, __func__, address);
           resolved = get_pa_string (recipient, PR_SMTP_ADDRESS);
           if (resolved)
             {
               xfree (address);
               recipientAddrs[i-1] = resolved;
-              log_debug ("%s:%s: Resolved address is %s;",
-                         SRCNAME, __func__, resolved);
               continue;
             }
           log_debug ("%s:%s: Failed to look up SMTP Address;",
