@@ -684,7 +684,19 @@ do_reader_action (LPDISPATCH ctrl, int flags)
   subject = get_oom_string (mailItem, "Subject");
   if (get_oom_bool (mailItem, "Sent"))
     {
-      senderAddr = get_oom_string (mailItem, "SenderEmailAddress");
+      char *addrType = get_oom_string (mailItem, "SenderEmailType");
+      if (addrType && strcmp("SMTP", addrType) == 0)
+        {
+          senderAddr = get_oom_string (mailItem, "SenderEmailAddress");
+        }
+      else
+        {
+          /* Not SMTP, fall back to try getting the property. */
+          LPDISPATCH sender = get_oom_object (mailItem, "Sender");
+          senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS);
+          RELDISP (sender);
+        }
+      xfree (addrType);
     }
   else
     {
