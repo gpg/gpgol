@@ -1,8 +1,9 @@
-Noteworthy changes for version 1.2.1 (unreleased)
+Noteworthy changes for version 1.2.1 (2014-08-13)
 =================================================
 
- * Fixed recipient / sender lookup problems when using exchange or
- active directory.
+ * Fixed recipient/sender lookup problems when using Exchange or
+   Active Directory.
+
 
 Noteworthy changes for version 1.2.0 (2013-08-19)
 =================================================
