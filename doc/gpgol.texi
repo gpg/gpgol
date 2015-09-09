@@ -319,11 +319,11 @@ alternative you may use the names of the flags, separated by space or
 comma.
 
 
-@itemx HKCU\Software\GNU\GpgOL:logFile
+@item HKCU\Software\GNU\GpgOL:logFile
 If the value is not empty, GpgOL takes this as a log file and appends
 debug information to this file.  The file may get very large.
 
-@itemx HKCU\Software\GNU\GpgOL:compatFlags
+@item HKCU\Software\GNU\GpgOL:compatFlags
 This is a string consisting of @code{0} and @code{1} to enable certain
 compatibility flags.  Not generally useful; use the source for a
 description.
