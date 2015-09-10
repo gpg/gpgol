@@ -56,19 +56,19 @@ DECLARE_INTERFACE_(IOOMItemEvents, IDispatch)
      vtable layout.  However it doesn't matter because we only use it
      via the IDispatch interface.  */
   /* dispid=0xf001 */
-  STDMETHOD(Read)(THIS_ );
+  STDMETHOD(Read)(THIS_ ) PURE;
 
   /* dispid=0xf002 */
-  STDMETHOD(Write)(THIS_ PBOOL cancel);
+  STDMETHOD(Write)(THIS_ PBOOL cancel) PURE;
 
   /* dispid=0xf003 */
-  STDMETHOD(Open)(THIS_ PBOOL cancel);
+  STDMETHOD(Open)(THIS_ PBOOL cancel) PURE;
 
   /* dispid=0xf004 */
-  STDMETHOD(Close)(THIS_ PBOOL cancel);
+  STDMETHOD(Close)(THIS_ PBOOL cancel) PURE;
 
   /* dispid=0xf005 */
-  STDMETHOD(Send)(THIS_ PBOOL cancel);
+  STDMETHOD(Send)(THIS_ PBOOL cancel) PURE;
 
   /* dispid=0xf006 */
   //STDMETHOD(CustomAction)(THIS_ LPDISPATCH action, LPDISPATCH response,

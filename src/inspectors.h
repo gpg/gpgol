@@ -79,7 +79,7 @@ DECLARE_INTERFACE_(IOOMInspectorEvents, IDispatch)
 
   /*** IOOM_Inspector methods ***/
   /* dispid=0xf001 */
-  STDMETHOD_(void, Activate)(THIS_);
+  STDMETHOD_(void, Activate)(THIS_) PURE;
   /* dispid=0xfa11 */
   STDMETHODIMP(BeforeMaximize)(THIS_ PBOOL);
   /* dispid=0xfa12 */
@@ -89,9 +89,9 @@ DECLARE_INTERFACE_(IOOMInspectorEvents, IDispatch)
   /* dispid=0xfa14 */
   STDMETHODIMP(BeforeSize)(THIS_ PBOOL);
   /* dispid=0xf008 */
-  STDMETHOD_(void, Close)(THIS_);
+  STDMETHOD_(void, Close)(THIS_) PURE;
   /* dispid=0xf006 */
-  STDMETHOD_(void, Deactivate)(THIS_);
+  STDMETHOD_(void, Deactivate)(THIS_) PURE;
 };
 
 
