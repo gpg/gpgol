@@ -31,6 +31,7 @@ class GpgolMessageEvents : public IExchExtMessageEvents
   /* Constructor. */
  public:
   GpgolMessageEvents (GpgolExt* pParentInterface);
+  virtual ~GpgolMessageEvents () {}
   
   /* Attributes.  */
  private:

@@ -33,6 +33,7 @@ class GpgolPropertySheets : public IExchExtPropertySheets
   // constructor
 public:
   GpgolPropertySheets(GpgolExt* pParentInterface);
+  virtual ~GpgolPropertySheets () {}
 
   // attibutes
 private:

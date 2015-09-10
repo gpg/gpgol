@@ -118,7 +118,7 @@ class GpgolRibbonExtender : public IRibbonExtensibility
 {
 public:
   GpgolRibbonExtender(void);
-  ~GpgolRibbonExtender();
+  virtual ~GpgolRibbonExtender();
 
   /* IUnknown */
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID* ppvObj);
@@ -150,7 +150,7 @@ class GpgolAddin : public IDTExtensibility2
 {
 public:
   GpgolAddin(void);
-  ~GpgolAddin();
+  virtual ~GpgolAddin();
 
 public:
 
@@ -197,7 +197,7 @@ class GpgolAddinFactory: public IClassFactory
 {
 public:
   GpgolAddinFactory(): m_lRef(0){}
-  ~GpgolAddinFactory(){}
+  virtual ~GpgolAddinFactory(){}
 
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID* ppvObj);
   inline STDMETHODIMP_(ULONG) AddRef() { ++m_lRef;  return m_lRef; };

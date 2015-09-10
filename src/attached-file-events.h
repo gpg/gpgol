@@ -31,6 +31,7 @@ class GpgolAttachedFileEvents : public IExchExtAttachedFileEvents
 {
  public:
   GpgolAttachedFileEvents (GpgolExt *pParentInterface);
+  virtual ~GpgolAttachedFileEvents () {}
 
  private:
   GpgolExt *m_pExchExt;

@@ -32,6 +32,7 @@ class GpgolItemEvents : public IOutlookExtItemEvents
 {
  public:
   GpgolItemEvents (GpgolExt *pParentInterface);
+  virtual ~GpgolItemEvents () {}
 
  private:
   GpgolExt *m_pExchExt;

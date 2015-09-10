@@ -33,7 +33,7 @@ class subcls : public parentcls                                          \
 {                                                                        \
  public:                                                                 \
   subcls (void);                                                         \
-  ~subcls (void);                                                        \
+  virtual ~subcls (void);                                                \
   LPDISPATCH m_object;                                                   \
   LPCONNECTIONPOINT m_pCP;                                               \
   DWORD m_cookie;                                                        \

@@ -31,6 +31,7 @@ class GpgolUserEvents : public IExchExtUserEvents
   /* Constructor. */
 public:
   GpgolUserEvents (GpgolExt *pParentInterface);
+  virtual ~GpgolUserEvents () {}
 
   /* Attributes. */
 private:

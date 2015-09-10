@@ -31,6 +31,7 @@ class GpgolSessionEvents : public IExchExtSessionEvents
   /* Constructor. */
 public:
   GpgolSessionEvents (GpgolExt *pParentInterface);
+  virtual ~GpgolSessionEvents () {}
 
   /* Attributes. */
 private:
