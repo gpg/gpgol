@@ -1,5 +1,5 @@
 /* gpgoladdin.h - Connect GpgOL to Outlook as an addin
- *    Copyright (C) 2013 Intevation GmbH
+ *    Copyright (C) 2013, 2015 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -21,6 +21,8 @@
 #define GPGOLADDIN_H
 
 #include <windows.h>
+
+#include "comhelp.h"
 
 class GpgolAddinRibbonExt;
 class GpgolExt;
@@ -60,12 +62,16 @@ DEFINE_GUID(IID_IDTExtensibility2, 0xB65AD801, 0xABAF, 0x11D0, 0xBB, 0x8B,
 #define INTERFACE IDTExtensibility2
 DECLARE_INTERFACE_(IDTExtensibility2, IDispatch)
 {
+  DECLARE_IUNKNOWN_METHODS;
+  DECLARE_IDISPATCH_METHODS;
+  /*** IDTExtensibility2 methods ***/
+
   STDMETHOD(OnConnection)(LPDISPATCH, ext_ConnectMode, LPDISPATCH,
-                          SAFEARRAY**);
-  STDMETHOD(OnDisconnection)(ext_DisconnectMode, SAFEARRAY**);
-  STDMETHOD(OnAddInsUpdate)(SAFEARRAY **);
-  STDMETHOD(OnStartupComplete)(SAFEARRAY**);
-  STDMETHOD(OnBeginShutdown)(SAFEARRAY**);
+                          SAFEARRAY**) PURE;
+  STDMETHOD(OnDisconnection)(ext_DisconnectMode, SAFEARRAY**) PURE;
+  STDMETHOD(OnAddInsUpdate)(SAFEARRAY **) PURE;
+  STDMETHOD(OnStartupComplete)(SAFEARRAY**) PURE;
+  STDMETHOD(OnBeginShutdown)(SAFEARRAY**) PURE;
 };
 
 DEFINE_GUID(IID_IRibbonExtensibility, 0x000C0396, 0x0000, 0x0000, 0xC0, 0x00,
@@ -78,7 +84,11 @@ typedef struct IRibbonExtensibility *LRIBBONEXTENSIBILITY;
 #define INTERFACE IRibbonExtensibility
 DECLARE_INTERFACE_(IRibbonExtensibility, IDispatch)
 {
-  STDMETHOD(GetCustomUI)(BSTR RibbonID, BSTR * RibbonXml);
+  DECLARE_IUNKNOWN_METHODS;
+  DECLARE_IDISPATCH_METHODS;
+
+  /*** IRibbonExtensibility methods ***/
+  STDMETHOD(GetCustomUI)(BSTR RibbonID, BSTR * RibbonXml) PURE;
 };
 
 DEFINE_GUID(IID_IRibbonCallback, 0xCE895442, 0x9981, 0x4315, 0xAA, 0x85,
@@ -89,10 +99,13 @@ typedef struct IRibbonCallback *LRIBBONCALLBACK;
 
 #undef INTERFACE
 #define INTERFACE IRibbonCallback
-DECLARE_INTERFACE(IRibbonCallback)
+DECLARE_INTERFACE_(IRibbonCallback, IUnknown)
 {
-  STDMETHOD(OnRibbonLoad)(IUnknown* pRibbonUIUnk);
-  STDMETHOD(ButtonClicked)(IDispatch* ribbon);
+  DECLARE_IUNKNOWN_METHODS;
+
+  /*** IRibbonCallback methods ***/
+  STDMETHOD(OnRibbonLoad)(IUnknown* pRibbonUIUnk) PURE;
+  STDMETHOD(ButtonClicked)(IDispatch* ribbon) PURE;
 };
 
 DEFINE_GUID(IID_IRibbonControl, 0x000C0395, 0x0000, 0x0000, 0xC0, 0x00,
@@ -105,9 +118,12 @@ typedef struct IRibbonControl *LPRIBBONCONTROL;
 #define INTERFACE IRibbonControl
 DECLARE_INTERFACE_(IRibbonControl, IDispatch)
 {
-  STDMETHOD(get_Id)(BSTR* id);
-  STDMETHOD(get_Context)(IDispatch** context);
-  STDMETHOD(get_Tag)(BSTR* Tag);
+  DECLARE_IUNKNOWN_METHODS;
+  DECLARE_IDISPATCH_METHODS;
+
+  STDMETHOD(get_Id)(BSTR* id) PURE;
+  STDMETHOD(get_Context)(IDispatch** context) PURE;
+  STDMETHOD(get_Tag)(BSTR* Tag) PURE;
 };
 
 
