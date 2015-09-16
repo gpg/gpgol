@@ -89,7 +89,8 @@ gpgol_SOURCES = \
 	ribbon-callbacks.cpp ribbon-callbacks.h \
 	parsetlv.c parsetlv.h \
 	filetype.c filetype.h \
-	eventsinks.h eventsinks.cpp
+	eventsinks.h application-events.cpp \
+	mailitem-events.cpp
 
 
 #treeview_SOURCES = treeview.c
