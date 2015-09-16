@@ -22,6 +22,7 @@
 #define OOMHELP_H
 
 #include <unknwn.h>
+#include "mymapi.h"
 
 /* Helper to release dispatcher */
 #define RELDISP(dispatcher) if (dispatcher) dispatcher->Release()
@@ -151,6 +152,16 @@ get_pa_string (LPDISPATCH pDisp, const char *property);
    it appears to be. */
 LPDISPATCH
 get_object_by_id (LPDISPATCH pDisp, REFIID id);
+
+/* Obtain the Base MAPI Message of a MailItem.
+   The parameter should be a pointer to a MailItem.
+   returns NULL on error.
+
+   The returned Message needs to be released by the
+   caller.
+*/
+LPMESSAGE
+get_oom_base_message (LPDISPATCH mailItem);
 
 #ifdef __cplusplus
 }

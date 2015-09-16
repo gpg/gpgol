@@ -1002,3 +1002,48 @@ get_object_by_id (LPDISPATCH pDisp, REFIID id)
     return NULL;
   return disp;
 }
+
+LPMESSAGE
+get_oom_base_message (LPDISPATCH pDisp)
+{
+  HRESULT hr;
+  LPDISPATCH secureItem = NULL;
+  LPUNKNOWN mapiObject = NULL;
+  LPMESSAGE message = NULL;
+  LPMAPISECUREMESSAGE secureMessage = NULL;
+
+  mapiObject = get_oom_iunknown (pDisp, "MapiObject");
+  if (!mapiObject)
+    {
+      log_error ("%s:%s: Failed to obtain MailItem.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+
+  secureItem = get_object_by_id ((LPDISPATCH) mapiObject,
+                                 IID_IMAPISecureMessage);
+  mapiObject->Release ();
+  if (!secureItem)
+    {
+      log_error ("%s:%s: Failed to obtain SecureItem.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+
+  secureMessage = (LPMAPISECUREMESSAGE) secureItem;
+
+  /* The call to GetBaseMessage is pretty much a jump
+     in the dark. So it would not be surprising to get
+     crashes here in the future. */
+  log_oom_extra("%s:%s: About to call GetBaseMessage.",
+                SRCNAME, __func__);
+  hr = secureMessage->GetBaseMessage (&message);
+  secureMessage->Release ();
+  if (hr != S_OK)
+    {
+      log_error_w32 (hr, "Failed to GetBaseMessage.");
+      return NULL;
+    }
+
+  return message;
+}
