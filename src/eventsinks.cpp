@@ -66,12 +66,14 @@ EVENT_SINK_INVOKE(ApplicationEvents)
         {
           LPDISPATCH mailItem;
           LPDISPATCH mailEventSink;
-          if (parms->cArgs == 0)
+          /* The mailItem should be the first argument */
+          if (parms->cArgs != 1 || parms->rgvarg[0].vt != VT_DISPATCH)
             {
-              log_error ("%s:%s: Itemload without arguments.",
+              log_error ("%s:%s: ItemLoad with unexpected Arguments.",
                          SRCNAME, __func__);
               break;
             }
+
           mailItem = get_object_by_id (parms->rgvarg[0].pdispVal,
                                        IID_MailItem);
           if (!mailItem)
