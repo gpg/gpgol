@@ -147,52 +147,17 @@ EVENT_SINK_INVOKE(MailItemEvents)
     {
       case BeforeRead:
         {
-          LPUNKNOWN mailItem = NULL;
-          HRESULT hr;
-          LPDISPATCH secureItem = NULL;
-          LPMESSAGE message = NULL;
-          LPMAPISECUREMESSAGE secureMessage = NULL;
-
-          mailItem = get_oom_iunknown (m_object, "MapiObject");
-          if (!mailItem)
-            {
-              log_error ("%s:%s: Failed to obtain MailItem.",
-                         SRCNAME, __func__);
-            }
-
-          secureItem = get_object_by_id ((LPDISPATCH)mailItem,
-                                         IID_IMAPISecureMessage);
-          if (!secureItem)
-            {
-              log_error ("%s:%s: Failed to obtain SecureItem.",
-                         SRCNAME, __func__);
-              mailItem->Release();
-              break;
-            }
-
-          secureMessage = (LPMAPISECUREMESSAGE) secureItem;
-
-          /* The call to GetBaseMessage is pretty much a jump
-             in the dark. So it would not be surprising to get
-             crashes here in the future. */
-          log_oom_extra("%s:%s: About to call GetBaseMessage.",
-                        SRCNAME, __func__);
-          hr = secureMessage->GetBaseMessage (&message);
-          if ( hr == S_OK)
+          LPMESSAGE message = get_oom_base_message (m_object);
+          if (message)
             {
               int ret;
               log_oom_extra ("%s:%s: GetBaseMessage OK.",
                              SRCNAME, __func__);
-              ret = message_incoming_handler(message, NULL, false);
+              ret = message_incoming_handler (message, NULL, false);
               log_debug ("%s:%s: incoming handler status: %i",
                          SRCNAME, __func__, ret);
+              message->Release ();
             }
-          else
-            {
-              log_error_w32 (hr, "Failed to GetBaseMessage.");
-            }
-          secureMessage->Release ();
-          mailItem->Release ();
           break;
         }
       case ReadComplete:
@@ -200,7 +165,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
           break;
         }
       default:
-        log_oom_extra ("%s:%s: Unhandled Event: %lx \n",
+        log_debug ("%s:%s: Unhandled Event: %lx \n",
                        SRCNAME, __func__, dispid);
     }
   return S_OK;
