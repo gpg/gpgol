@@ -164,6 +164,32 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           break;
         }
+      case AfterWrite:
+        {
+          LPMESSAGE message = get_oom_base_message (m_object);
+          if (message)
+            {
+              int ret;
+              log_debug ("%s:%s: Sign / Encrypting message",
+                         SRCNAME, __func__);
+              ret = message_sign_encrypt (message, PROTOCOL_UNKNOWN, NULL);
+              log_debug ("%s:%s: Sign / Encryption status: %i",
+                         SRCNAME, __func__, ret);
+              message->Release ();
+              if (ret)
+                {
+                  // VARIANT_BOOL *cancel = parms->rgvarg[0].pboolVal;
+                  // *cancel = VARIANT_TRUE;
+                  /* TODO inform the user that sending was canceled */
+                }
+            }
+          else
+            {
+              log_error ("%s:%s: Failed to get base message.",
+                         SRCNAME, __func__);
+              break;
+            }
+        }
       default:
         log_debug ("%s:%s: Unhandled Event: %lx \n",
                        SRCNAME, __func__, dispid);
