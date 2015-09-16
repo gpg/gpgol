@@ -88,7 +88,8 @@ gpgol_SOURCES = \
 	gpgoladdin.cpp gpgoladdin.h \
 	ribbon-callbacks.cpp ribbon-callbacks.h \
 	parsetlv.c parsetlv.h \
-	filetype.c filetype.h
+	filetype.c filetype.h \
+	eventsinks.h eventsinks.cpp
 
 
 #treeview_SOURCES = treeview.c

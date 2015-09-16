@@ -1,5 +1,6 @@
 /* oomhelp.cpp - Helper functions for the Outlook Object Model
  *	Copyright (C) 2009 g10 Code GmbH
+ *	Copyright (C) 2015 Intevation GmbH
  * 
  * This file is part of GpgOL.
  * 
@@ -987,4 +988,17 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
   RELDISP (attachments);
 
   return hr == S_OK ? 0 : -1;
+}
+
+LPDISPATCH
+get_object_by_id (LPDISPATCH pDisp, REFIID id)
+{
+  LPDISPATCH disp = NULL;
+
+  if (!pDisp)
+    return NULL;
+
+  if (pDisp->QueryInterface (id, (void **)&disp) != S_OK)
+    return NULL;
+  return disp;
 }

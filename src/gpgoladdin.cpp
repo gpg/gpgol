@@ -45,6 +45,7 @@
 
 #include "gpgol-ids.h"
 #include "ribbon-callbacks.h"
+#include "eventsinks.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -148,7 +149,7 @@ STDMETHODIMP GpgolAddinFactory::CreateInstance (LPUNKNOWN punk, REFIID riid,
    The ref count is set by the factory after creation.
 */
 GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
-  m_addin(0), m_disabled(false)
+  m_addin(0), m_applicationEventSink(0), m_disabled(false)
 {
   read_options ();
   /* RibbonExtender is it's own object to avoid the pitfalls of
@@ -163,6 +164,7 @@ GpgolAddin::~GpgolAddin (void)
              SRCNAME, __func__);
 
   delete m_ribbonExtender;
+  delete m_applicationEventSink;
 
   if (!m_disabled)
     {
@@ -276,12 +278,7 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 
   if (m_application)
     {
-      /*
-         An install_sinks here works this but we
-         don't implement all the old extension feature
-         in the addin yet.
-         install_sinks ((LPEXCHEXTCALLBACK)m_application);
-      */
+      m_applicationEventSink = install_ApplicationEvents_sink(m_application);
       return S_OK;
     }
   /* Should not happen as OnConnection should be called before */

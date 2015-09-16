@@ -1,5 +1,6 @@
 /* eventsink.h - Macros to implement an OLE event sink
- *	Copyright (C) 2009 g10 Code GmbH
+ *     Copyright (C) 2009 g10 Code GmbH
+ *     Copyright (C) 2015 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -21,11 +22,10 @@
    for our purpose but far from optimal; e.g. we should not simply
    provide stubs but do real sub-classing by modifying the vtables.  */
 
+/* See eventsinks.cpp for example usage */
+
 #ifndef EVENTSINK_H
 #define EVENTSINK_H
-
-#define debug_oom        (opt.enable_debug & DBG_OOM)
-#define debug_oom_extra  (opt.enable_debug & DBG_OOM_EXTRA)
 
 
 #define BEGIN_EVENT_SINK(subcls,parentcls)                               \
@@ -84,14 +84,19 @@ STDMETHODIMP subcls::Invoke (DISPID dispid, REFIID riid, LCID lcid,      \
                 EXCEPINFO *exepinfo, UINT *argerr)                       \
 /* End of macro EVENT_SINK_INVOKE.  */
 
+#define USE_INVOKE_ARGS                                                  \
+  (void)riid; (void)lcid; (void) flags; (void)parms; (void)result;       \
+  (void)exepinfo; (void)argerr;
+/* End of macro USE_INVOKE_ARGS. */
+
 #define EVENT_SINK_DEFAULT_DTOR_CODE(subcls)                             \
 {                                                                        \
   if (debug_oom)                                                         \
     log_debug ("%s:" #subcls ":%s: tdor", SRCNAME, __func__);            \
   if (m_pCP)                                                             \
-    log_error ("%s:%s: Unadvise missing", SRCNAME, __func__);            \
+    m_pCP->Unadvise(m_cookie);                                           \
   if (m_object)                                                          \
-    log_error ("%s:%s: Object not released", SRCNAME,__func__);          \
+    m_object->Release();                                                 \
 }                                                                        \
 /* End of macro EVENT_SINK_DTOR_DEFAULT_CODE.  */
 

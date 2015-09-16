@@ -1,6 +1,7 @@
 /* oomhelp.h - Defs for helper functions for the Outlook Object Model
- *	Copyright (C) 2009 g10 Code GmbH
- * 
+ *     Copyright (C) 2009 g10 Code GmbH
+ *     Copyright (C) 2015 Intevation GmbH
+ *
  * This file is part of GpgOL.
  * 
  * GpgOL is free software; you can redistribute it and/or
@@ -62,6 +63,14 @@ DEFINE_GUID(IID_IConnectionPointContainer,
 DEFINE_GUID(IID_IPictureDisp,
             0x7bf80981, 0xbf32, 0x101a,
             0x8b, 0xbb, 0x00, 0xaa, 0x00, 0x30, 0x0c, 0xab);
+DEFINE_GUID(IID_ApplicationEvents, 0x0006304E, 0x0000, 0x0000,
+            0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+DEFINE_GUID(IID_MailItemEvents, 0x0006302B, 0x0000, 0x0000,
+            0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+DEFINE_GUID(IID_MailItem, 0x00063034, 0x0000, 0x0000,
+            0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+DEFINE_GUID(IID_IMAPISecureMessage, 0x253cc320, 0xeab6, 0x11d0,
+            0x82, 0x22, 0, 0x60, 0x97, 0x93, 0x87, 0xea);
 
 DEFINE_OLEGUID(IID_IUnknown,                  0x00000000, 0, 0);
 DEFINE_OLEGUID(IID_IDispatch,                 0x00020400, 0, 0);
@@ -134,6 +143,14 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFile);
 /* Look up a string with the propertyAccessor interface */
 char *
 get_pa_string (LPDISPATCH pDisp, const char *property);
+
+/* Queries the interface of the dispatcher for the id
+   id. Returns NULL on error. The returned Object
+   must be released.
+   Mainly useful to check if an object is what
+   it appears to be. */
+LPDISPATCH
+get_object_by_id (LPDISPATCH pDisp, REFIID id);
 
 #ifdef __cplusplus
 }

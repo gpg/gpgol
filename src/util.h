@@ -80,6 +80,8 @@ const void *get_128bit_session_key (void);
 const void *get_64bit_session_marker (void);
 void *create_initialization_vector (size_t nbytes);
 
+#define debug_oom        (opt.enable_debug & DBG_OOM)
+#define debug_oom_extra  (opt.enable_debug & DBG_OOM_EXTRA)
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_error (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_vdebug (const char *fmt, va_list a);
@@ -91,6 +93,9 @@ void log_hexdump (const void *buf, size_t buflen, const char *fmt,
                   ...)  __attribute__ ((format (printf,3,4)));
 void log_window_hierarchy (HWND window, const char *fmt, 
                            ...) __attribute__ ((format (printf,2,3)));
+
+#define log_oom if (opt.enable_debug & DBG_OOM) log_debug
+#define log_oom_extra if (opt.enable_debug & DBG_OOM_EXTRA) log_debug
 
 const char *log_srcname (const char *s);
 #define SRCNAME log_srcname (__FILE__)

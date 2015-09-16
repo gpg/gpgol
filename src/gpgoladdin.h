@@ -22,10 +22,10 @@
 
 #include <windows.h>
 
-#include "comhelp.h"
+#include "mymapi.h"
 
 class GpgolAddinRibbonExt;
-class GpgolExt;
+class ApplicationEventListener;
 
 /* Enums for the IDTExtensibility2 interface*/
 typedef enum
@@ -205,6 +205,7 @@ private:
 
   LPDISPATCH m_application;
   LPDISPATCH m_addin;
+  LPDISPATCH m_applicationEventSink;
   bool m_disabled;
 
 };

@@ -20,6 +20,8 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "myexchext.h"
+#include "mapihelp.h"
 
 int message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force);
 bool message_display_handler (LPMESSAGE message, LPDISPATCH inspector, 

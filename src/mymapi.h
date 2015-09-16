@@ -2,6 +2,7 @@
  * Copyright (C) 1998 Justin Bradford
  * Copyright (C) 2000 François Gouget
  * Copyright (C) 2005, 2007 g10 Code GmbH
+ * Copyright (C) 2015 Intevation GmbH
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,8 +38,6 @@
 
 #ifndef MAPI_H
 #define MAPI_H
-
-#include "comhelp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -872,6 +871,22 @@ typedef struct IMAPIFormContainer *LPMAPIFORMCONTAINER;
                              LPMDB mdb, ULONG FAR *r_flags,                   \
                              ULONG FAR *n_entryid, LPBYTE FAR *entryid) PURE
 
+/* In difference to the MY_ macros the DECLARE_ macros are not undefined
+   in this header. */
+
+/*** IUnknown methods ***/
+#define DECLARE_IUNKNOWN_METHODS                                              \
+  STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID*) PURE;                       \
+  STDMETHOD_(ULONG,AddRef)(THIS) PURE;                                        \
+  STDMETHOD_(ULONG,Release)(THIS) PURE
+
+/*** IDispatch methods ***/
+#define DECLARE_IDISPATCH_METHODS                                             \
+  STDMETHOD(GetTypeInfoCount)(THIS_ UINT*) PURE;                              \
+  STDMETHOD(GetTypeInfo)(THIS_ UINT, LCID, LPTYPEINFO*) PURE;                 \
+  STDMETHOD(GetIDsOfNames)(THIS_ REFIID, LPOLESTR*, UINT, LCID, DISPID*) PURE;\
+  STDMETHOD(Invoke)(THIS_ DISPID, REFIID, LCID, WORD,                         \
+                    DISPPARAMS*, VARIANT*, EXCEPINFO*, UINT*) PURE
 
 
 
@@ -1165,6 +1180,24 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER,LPFREEBUFFER,
                                 ULONG,LPSTR,LPSTR,LPSTREAM*);
 #endif
 
+/* IMAPISecureMessage */
+struct IMAPISecureMessage;
+typedef struct IMAPISecureMessage *LPMAPISECUREMESSAGE;
+
+#undef INTERFACE
+#define INTERFACE IMAPISecureMessage
+
+DECLARE_INTERFACE_(IMAPISecureMessage, IUnknown)
+{
+  DECLARE_IUNKNOWN_METHODS;
+
+  STDMETHOD(Unknown1)(void) PURE;
+  STDMETHOD(Unknown2)(void) PURE;
+  STDMETHOD(Unknown3)(void) PURE;
+  STDMETHOD(Unknown4)(void) PURE;
+  STDMETHOD(Unknown5)(void) PURE;
+  STDMETHOD(GetBaseMessage)(LPMESSAGE FAR *) PURE;
+};
 
 STDAPI MAPIOpenLocalFormContainer (LPMAPIFORMCONTAINER FAR *ppfcnt);
 
