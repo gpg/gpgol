@@ -196,12 +196,23 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           if (m_send_seen)
             {
+              m_send_seen = false;
               return handle_after_write();
             }
         }
+      case Write:
+        {
+          if (m_wasencrypted && m_processed && !m_send_seen)
+            {
+              log_debug ("%s:%s: Wiping plaintext from body of Message: %lx \n",
+                         SRCNAME, __func__, m_object, dispid);
+              put_oom_string (m_object, "HTMLBody", "");
+              put_oom_string (m_object, "Body", "");
+            }
+        }
       default:
-        log_debug ("%s:%s: Unhandled Event: %lx \n",
-                       SRCNAME, __func__, dispid);
+        log_debug ("%s:%s: Message:%lx Unhandled Event: %lx \n",
+                       SRCNAME, __func__, m_object, dispid);
     }
   return S_OK;
 }
