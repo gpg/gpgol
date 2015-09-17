@@ -1004,25 +1004,28 @@ get_object_by_id (LPDISPATCH pDisp, REFIID id)
 }
 
 LPMESSAGE
-get_oom_base_message (LPDISPATCH pDisp)
+get_oom_message (LPDISPATCH mailitem)
 {
-  HRESULT hr;
-  LPDISPATCH secureItem = NULL;
-  LPUNKNOWN mapiObject = NULL;
-  LPMESSAGE message = NULL;
-  LPMAPISECUREMESSAGE secureMessage = NULL;
-
-  mapiObject = get_oom_iunknown (pDisp, "MapiObject");
-  if (!mapiObject)
+  LPUNKNOWN mapi_obj = get_oom_iunknown (mailitem, "MapiObject");
+  if (!mapi_obj)
     {
-      log_error ("%s:%s: Failed to obtain MailItem.",
+      log_error ("%s:%s: Failed to obtain MAPI Message.",
                  SRCNAME, __func__);
       return NULL;
     }
+  return (LPMESSAGE) mapi_obj;
+}
 
-  secureItem = get_object_by_id ((LPDISPATCH) mapiObject,
+static LPMESSAGE
+get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
+{
+  HRESULT hr;
+  LPDISPATCH secureItem = NULL;
+  LPMESSAGE message = NULL;
+  LPMAPISECUREMESSAGE secureMessage = NULL;
+
+  secureItem = get_object_by_id (mapi_message,
                                  IID_IMAPISecureMessage);
-  mapiObject->Release ();
   if (!secureItem)
     {
       log_error ("%s:%s: Failed to obtain SecureItem.",
@@ -1046,4 +1049,20 @@ get_oom_base_message (LPDISPATCH pDisp)
     }
 
   return message;
+}
+
+LPMESSAGE
+get_oom_base_message (LPDISPATCH mailitem)
+{
+  LPMESSAGE mapi_message = get_oom_message (mailitem);
+  LPMESSAGE ret = NULL;
+  if (!mapi_message)
+    {
+      log_error ("%s:%s: Failed to obtain mapi_message.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+  ret = get_oom_base_message_from_mapi ((LPDISPATCH)mapi_message);
+  mapi_message->Release ();
+  return ret;
 }

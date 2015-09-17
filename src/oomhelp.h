@@ -153,6 +153,14 @@ get_pa_string (LPDISPATCH pDisp, const char *property);
 LPDISPATCH
 get_object_by_id (LPDISPATCH pDisp, REFIID id);
 
+/* Obtain the MAPI Message corresponding to the
+   Mailitem. Returns NULL on error.
+
+   The returned Message needs to be released by the
+   caller */
+LPMESSAGE
+get_oom_message (LPDISPATCH mailitem);
+
 /* Obtain the Base MAPI Message of a MailItem.
    The parameter should be a pointer to a MailItem.
    returns NULL on error.
@@ -161,7 +169,7 @@ get_object_by_id (LPDISPATCH pDisp, REFIID id);
    caller.
 */
 LPMESSAGE
-get_oom_base_message (LPDISPATCH mailItem);
+get_oom_base_message (LPDISPATCH mailitem);
 
 #ifdef __cplusplus
 }
