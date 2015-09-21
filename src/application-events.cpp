@@ -80,6 +80,8 @@ EVENT_SINK_INVOKE(ApplicationEvents)
                          SRCNAME, __func__);
               break;
             }
+          log_oom ("%s:%s: Installing event sink on mailitem: %p",
+                   SRCNAME, __func__, mailItem);
           mailEventSink = install_MailItemEvents_sink (mailItem);
           /* TODO figure out what we need to do with the event sink.
              Does it need to be Released at some point? What happens
