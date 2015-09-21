@@ -27,6 +27,10 @@
 #include "attachment.h"
 #include "mapihelp.h"
 
+/* TODO Add a proper / l10n encrypted thing message. */
+static const char * ENCRYPTED_MESSAGE_BODY = \
+"This message is encrypted. Please install or activate GpgOL"\
+" to decrypt this message.";
 
 typedef enum
   {
@@ -245,8 +249,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               log_debug ("%s:%s: Message %p removing plaintext from Message.",
                          SRCNAME, __func__, m_object);
-              if (put_oom_string (m_object, "HTMLBody", "") ||
-                  put_oom_string (m_object, "Body", "") ||
+              if (put_oom_string (m_object, "HTMLBody",
+                                  ENCRYPTED_MESSAGE_BODY) ||
+                  put_oom_string (m_object, "Body", ENCRYPTED_MESSAGE_BODY) ||
                   protect_attachments (m_object))
                 {
                   /* An error cleaning the mail should not happen normally.
