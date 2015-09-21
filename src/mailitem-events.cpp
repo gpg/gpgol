@@ -24,6 +24,9 @@
 #include "message.h"
 #include "oomhelp.h"
 #include "ocidl.h"
+#include "attachment.h"
+#include "mapihelp.h"
+
 
 typedef enum
   {
@@ -63,6 +66,7 @@ private:
   bool m_send_seen,   /* The message is about to be submitted */
        m_want_html,    /* Encryption of HTML is desired. */
        m_processed,    /* The message has been porcessed by us.  */
+       m_needs_wipe,   /* We have added plaintext to the mesage. */
        m_was_encrypted; /* The original message was encrypted.  */
 
   HRESULT handle_before_read();
@@ -79,9 +83,15 @@ MailItemEvents::MailItemEvents() :
     m_want_html(false),
     m_processed(false)
 {
-/* The event sink default dtor closes this for us. */
-EVENT_SINK_DEFAULT_DTOR(MailItemEvents)
+}
 
+MailItemEvents::~MailItemEvents()
+{
+  if (m_pCP)
+    m_pCP->Unadvise(m_cookie);
+  if (m_object)
+    m_object->Release();
+}
 
 HRESULT
 MailItemEvents::handle_read()
@@ -113,6 +123,12 @@ MailItemEvents::handle_read()
 
   xfree (body);
 
+  if (unprotect_attachments (m_object))
+    {
+      log_error ("%s:%s: Failed to unprotect attachments. \n",
+                 SRCNAME, __func__);
+    }
+
   return S_OK;
 }
 
@@ -139,7 +155,9 @@ MailItemEvents::handle_before_read()
   log_debug ("%s:%s: incoming handler status: %i",
              SRCNAME, __func__, err);
   message->Release ();
+  return S_OK;
 }
+
 
 HRESULT
 MailItemEvents::handle_after_write()
@@ -170,6 +188,14 @@ MailItemEvents::handle_after_write()
   return S_OK;
 }
 
+/* The main Invoke function. The return value of this
+   function does not appear to have any effect on outlook
+   although I have read in an example somewhere that you
+   should return S_OK so that outlook continues to handle
+   the event I have not yet seen any effect by returning
+   error values here and no MSDN documentation about the
+   return values.
+*/
 EVENT_SINK_INVOKE(MailItemEvents)
 {
   USE_INVOKE_ARGS
@@ -183,7 +209,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           if (m_processed)
             {
-              return handle_read();
+              m_needs_wipe = m_was_encrypted;
+              handle_read();
             }
           return S_OK;
         }
@@ -202,16 +229,39 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Write:
         {
-          if (m_wasencrypted && m_processed && !m_send_seen)
+          /* This is a bit strange. We sometimes get multiple write events
+             without a read in between. When we access the message in
+             the second event it fails and if we cancel the event outlook
+             crashes. So we have keep the m_needs_wipe state variable
+             to keep track of that. */
+          if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
+           {
+             /* This happens in the weird case */
+             log_oom ("%s:%s: Uncancellable write event.",
+                      SRCNAME, __func__);
+             break;
+           }
+          if (m_processed && m_needs_wipe && !m_send_seen)
             {
-              log_debug ("%s:%s: Wiping plaintext from body of Message: %lx \n",
-                         SRCNAME, __func__, m_object, dispid);
-              put_oom_string (m_object, "HTMLBody", "");
-              put_oom_string (m_object, "Body", "");
+              log_debug ("%s:%s: Message %p removing plaintext from Message.",
+                         SRCNAME, __func__, m_object);
+              if (put_oom_string (m_object, "HTMLBody", "") ||
+                  put_oom_string (m_object, "Body", "") ||
+                  protect_attachments (m_object))
+                {
+                  /* An error cleaning the mail should not happen normally.
+                     But just in case there is an error we cancel the
+                     write here. */
+                  log_debug ("%s:%s: Failed to remove plaintext.",
+                             SRCNAME, __func__);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  return E_ABORT;
+                }
+              m_needs_wipe = false;
             }
         }
       default:
-        log_debug ("%s:%s: Message:%lx Unhandled Event: %lx \n",
+        log_oom_extra ("%s:%s: Message:%p Unhandled Event: %lx \n",
                        SRCNAME, __func__, m_object, dispid);
     }
   return S_OK;

@@ -50,9 +50,13 @@ typedef enum
     ATTACHTYPE_FROMMOSS = 2,     /* Attachment created from MOSS.  */
     ATTACHTYPE_MOSSTEMPL = 3,    /* Attachment has been created in the
                                     course of sending a message */ 
-    ATTACHTYPE_PGPBODY = 4       /* Attachment contains the original
+    ATTACHTYPE_PGPBODY = 4,      /* Attachment contains the original
                                     PGP message body of PGP inline
                                     encrypted messages.  */
+    ATTACHTYPE_FROMMOSS_DEC = 5  /* A FROMMOSS attachment that has been
+                                    temporarily decrypted and needs to be
+                                    encrypted before it is written back
+                                    into storage. */
   }
 attachtype_t;
 
@@ -167,6 +171,7 @@ int   mapi_delete_gpgol_body_attachment (LPMESSAGE message);
 
 int   mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item);
 
+attachtype_t get_gpgolattachtype (LPATTACH obj, ULONG tag);
 #ifdef __cplusplus
 }
 #endif

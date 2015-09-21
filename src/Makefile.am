@@ -71,7 +71,6 @@ gpgol_SOURCES = \
 	mapihelp.cpp mapihelp.h     \
 	mymapi.h  mymapitags.h      \
 	serpent.c serpent.h         \
-        vasprintf.c                 \
 	ext-commands.cpp ext-commands.h       \
 	user-events.cpp     user-events.h     \
 	session-events.cpp  session-events.h  \
@@ -90,7 +89,8 @@ gpgol_SOURCES = \
 	parsetlv.c parsetlv.h \
 	filetype.c filetype.h \
 	eventsinks.h application-events.cpp \
-	mailitem-events.cpp
+	mailitem-events.cpp \
+	attachment.h attachment.cpp
 
 
 #treeview_SOURCES = treeview.c

@@ -1852,7 +1852,7 @@ get_attach_mime_tag (LPATTACH obj)
 
 /* Return the GpgOL Attach Type for attachment OBJ.  Tag needs to be
    the tag of that property. */
-static attachtype_t
+attachtype_t
 get_gpgolattachtype (LPATTACH obj, ULONG tag)
 {
   HRESULT hr;
