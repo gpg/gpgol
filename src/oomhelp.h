@@ -171,6 +171,16 @@ get_oom_message (LPDISPATCH mailitem);
 LPMESSAGE
 get_oom_base_message (LPDISPATCH mailitem);
 
+/* Invoke a method of an outlook object.
+   returns true on success false otherwise.
+
+   rVariant should either point to a propery initialized
+   variant (initinalized wiht VariantInit) to hold
+   the return value or a pointer to NULL.
+   */
+int
+invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant);
+
 #ifdef __cplusplus
 }
 #endif

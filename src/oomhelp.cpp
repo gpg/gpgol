@@ -1068,3 +1068,28 @@ get_oom_base_message (LPDISPATCH mailitem)
   mapi_message->Release ();
   return ret;
 }
+
+int
+invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
+{
+  HRESULT hr;
+  DISPID dispid;
+
+  dispid = lookup_oom_dispid (pDisp, name);
+  if (dispid != DISPID_UNKNOWN)
+    {
+      DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+
+      hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                          DISPATCH_METHOD, &dispparams,
+                          rVariant, NULL, NULL);
+      if (hr != S_OK)
+        {
+          log_debug ("%s:%s: Method '%s' invokation failed: %#lx",
+                     SRCNAME, __func__, name, hr);
+          return false;
+        }
+    }
+
+  return true;
+}
