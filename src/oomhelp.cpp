@@ -466,6 +466,7 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
   DISPPARAMS dispparams;
   VARIANT aVariant[1];
   BSTR bstring;
+  EXCEPINFO execpinfo;
 
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid == DISPID_UNKNOWN)
@@ -490,12 +491,13 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
   dispparams.cNamedArgs = 1;
   hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                       DISPATCH_PROPERTYPUT, &dispparams,
-                      NULL, NULL, NULL);
+                      NULL, &execpinfo, NULL);
   SysFreeString (bstring);
   if (hr != S_OK)
     {
       log_debug ("%s:%s: Putting '%s' failed: %#lx", 
                  SRCNAME, __func__, name, hr);
+      dump_excepinfo (execpinfo);
       return -1;
     }
   return 0;
