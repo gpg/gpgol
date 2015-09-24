@@ -109,7 +109,7 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
 void
 dump_excepinfo (EXCEPINFO err)
 {
-  log_debug ("%s:%s: Dumping exception: \n"
+  log_debug ("%s:%s: Exception: \n"
              "              wCode: 0x%x\n"
              "              wReserved: 0x%x\n"
              "              source: %S\n"
@@ -117,8 +117,7 @@ dump_excepinfo (EXCEPINFO err)
              "              help: %S\n"
              "              helpCtx: 0x%x\n"
              "              deferredFill: 0x%x\n"
-             "              scode: 0x%x\n"
-             "%s:%s: Dump done." ,
+             "              scode: 0x%x\n",
              SRCNAME, __func__, (unsigned int) err.wCode,
              (unsigned int) err.wReserved,
              err.bstrSource, err.bstrDescription, err.bstrHelpFile,
@@ -1078,15 +1077,17 @@ invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid != DISPID_UNKNOWN)
     {
+      EXCEPINFO execpinfo;
       DISPPARAMS dispparams = {NULL, NULL, 0, 0};
 
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                           DISPATCH_METHOD, &dispparams,
-                          rVariant, NULL, NULL);
+                          rVariant, &execpinfo, NULL);
       if (hr != S_OK)
         {
           log_debug ("%s:%s: Method '%s' invokation failed: %#lx",
                      SRCNAME, __func__, name, hr);
+          dump_excepinfo (execpinfo);
           return false;
         }
     }
