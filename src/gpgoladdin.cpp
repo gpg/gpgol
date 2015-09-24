@@ -46,6 +46,7 @@
 #include "gpgol-ids.h"
 #include "ribbon-callbacks.h"
 #include "eventsinks.h"
+#include "windowmessages.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -275,6 +276,12 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 {
   (void)custom;
   TRACEPOINT();
+
+  if (!create_responder_window())
+    {
+      log_error ("%s:%s: Failed to create the responder window;",
+                 SRCNAME, __func__);
+    }
 
   if (m_application)
     {
