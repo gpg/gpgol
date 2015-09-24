@@ -26,6 +26,8 @@
 #include "ocidl.h"
 #include "attachment.h"
 #include "mapihelp.h"
+#include "gpgoladdin.h"
+#include "windowmessages.h"
 
 /* TODO Add a proper / l10n encrypted thing message. */
 static const char * ENCRYPTED_MESSAGE_BODY = \
@@ -71,11 +73,11 @@ private:
        m_want_html,    /* Encryption of HTML is desired. */
        m_processed,    /* The message has been porcessed by us.  */
        m_needs_wipe,   /* We have added plaintext to the mesage. */
-       m_was_encrypted; /* The original message was encrypted.  */
+       m_was_encrypted, /* The original message was encrypted.  */
+       m_crypt_successful; /* We successfuly performed crypto on the item. */
 
   HRESULT handle_before_read();
   HRESULT handle_read();
-  HRESULT handle_after_write();
 };
 
 MailItemEvents::MailItemEvents() :
@@ -85,7 +87,8 @@ MailItemEvents::MailItemEvents() :
     m_ref(1),
     m_send_seen(false),
     m_want_html(false),
-    m_processed(false)
+    m_processed(false),
+    m_crypt_successful(false)
 {
 }
 
@@ -151,7 +154,7 @@ MailItemEvents::handle_before_read()
     }
   log_oom_extra ("%s:%s: GetBaseMessage OK.",
                  SRCNAME, __func__);
-  err = message_incoming_handler (message, get_oom_context_window (m_object),
+  err = message_incoming_handler (message, NULL,
                                   false);
   m_processed = (err == 1) || (err == 2);
   m_was_encrypted = err == 2;
@@ -163,33 +166,51 @@ MailItemEvents::handle_before_read()
 }
 
 
-HRESULT
-MailItemEvents::handle_after_write()
+static int
+sign_encrypt_item (LPDISPATCH mailitem)
 {
-  int err;
-  LPMESSAGE message = get_oom_base_message (m_object);
+  int err = -1;
+  LPMESSAGE message = get_oom_base_message (mailitem);
   if (!message)
     {
       log_error ("%s:%s: Failed to get base message.",
                  SRCNAME, __func__);
-      return S_OK;
+      return err;
     }
   log_debug ("%s:%s: Sign / Encrypting message",
              SRCNAME, __func__);
   /* TODO check for message flags to determine */
   err = message_sign_encrypt (message, PROTOCOL_UNKNOWN,
-                              get_oom_context_window (m_object));
+                              NULL);
   log_debug ("%s:%s: Sign / Encryption status: %i",
              SRCNAME, __func__, err);
   message->Release ();
-  if (err)
+  return err;
+}
+
+
+DWORD WINAPI
+request_send (LPVOID arg)
+{
+  int not_sent = 1;
+  int tries = 0;
+  do
     {
-      // TODO: I think we can still cancel the send
-      // on the MAPI level in case of errors
-      // but we have to get at the messagestore to
-      // do that.
+      /* Outlook needs to handle the message some more to unblock
+         calls to Send. Lets give it 50ms before we send it again. */
+      Sleep (50);
+      log_debug ("%s:%s: requesting send for: %p",
+                 SRCNAME, __func__, arg);
+      not_sent = do_in_ui_thread (REQUEST_SEND_MAIL, arg);
+      tries++;
+    } while (not_sent && tries < 50);
+  if (tries == 50)
+    {
+      // Hum should not happen but I rather avoid
+      // an endless loop in that case.
+      // TODO show error message.
     }
-  return S_OK;
+  return 0;
 }
 
 /* The main Invoke function. The return value of this
@@ -220,16 +241,41 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Send:
         {
-          m_send_seen = true;
-          return S_OK;
-        }
-      case AfterWrite:
-        {
-          if (m_send_seen)
+          /* This is the only event where we can cancel the send of an
+             mailitem. But it is too early for us to encrypt as the MAPI
+             structures are not yet filled (and we don't seem to have a way
+             to trigger this and it is likely to be impossible)
+
+             So the first send event is canceled but we save that we have
+             seen it in m_send_seen. We then trigger a Save of that item.
+             The Save causes the Item to be written and we have a chance
+             to Encrypt it in the AfterWrite event.
+
+             If this encryption is successful and we see a send again
+             we let it pass as then the encrypted data is sent.
+
+             The value of m_send_seen is set to false in this case as
+             we consumed the original send that we canceled. */
+          if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
+           {
+             log_debug ("%s:%s: Uncancellable send event.",
+                        SRCNAME, __func__);
+             break;
+           }
+          if (m_crypt_successful)
             {
-              m_send_seen = false;
-              return handle_after_write();
+               log_debug ("%s:%s: Message %p sucessfully encrypted. May go.",
+                          SRCNAME, __func__, m_object);
+               m_send_seen = false;
+               break;
             }
+          m_send_seen = true;
+          log_debug ("%s:%s: Message %p cancelling send to let us do crypto.",
+                     SRCNAME, __func__, m_object);
+          *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+          invoke_oom_method (m_object, "Save", NULL);
+
+          return S_OK;
         }
       case Write:
         {
@@ -264,6 +310,26 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               m_needs_wipe = false;
             }
+          break;
+        }
+      case AfterWrite:
+        {
+          if (m_send_seen)
+            {
+              m_send_seen = false;
+              m_crypt_successful = !sign_encrypt_item (m_object);
+              if (m_crypt_successful)
+                {
+                  /* We can't trigger a Send event in the current state.
+                     Appearently Outlook locks some methods in some events.
+                     So we Create a new thread that will sleep a bit before
+                     it requests to send the item again. */
+                  CreateThread (NULL, 0, request_send, (LPVOID) m_object, 0,
+                                NULL);
+                }
+              return S_OK;
+            }
+          break;
         }
       default:
         log_oom_extra ("%s:%s: Message:%p Unhandled Event: %lx \n",
