@@ -77,6 +77,7 @@ do_crypt_stream (LPSTREAM stream, symenc_t symenc, bool encrypt)
      at 16 because of the GpgOL message. */
   LARGE_INTEGER readpos = {0},
                 writepos = {0};
+  ULARGE_INTEGER new_size = {0};
 
   if (!encrypt)
     {
@@ -128,6 +129,14 @@ do_crypt_stream (LPSTREAM stream, symenc_t symenc, bool encrypt)
         stream->Seek(readpos, STREAM_SEEK_SET, NULL);
       }
     while (nread == COPYBUFFERSIZE);
+
+  new_size.QuadPart = writepos.QuadPart;
+  hr = stream->SetSize (new_size);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: Failed to update size", SRCNAME, __func__);
+      goto done;
+    }
   rc = 0;
 
 done:
