@@ -172,6 +172,10 @@ int   mapi_delete_gpgol_body_attachment (LPMESSAGE message);
 int   mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item);
 
 attachtype_t get_gpgolattachtype (LPATTACH obj, ULONG tag);
+
+int get_gpgol_draft_info_flags (LPMESSAGE message);
+
+int set_gpgol_draft_info_flags (LPMESSAGE message, int flags);
 #ifdef __cplusplus
 }
 #endif

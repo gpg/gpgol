@@ -167,9 +167,10 @@ MailItemEvents::handle_before_read()
 
 
 static int
-sign_encrypt_item (LPDISPATCH mailitem)
+do_crypto_on_item (LPDISPATCH mailitem)
 {
-  int err = -1;
+  int err = -1,
+      flags = 0;
   LPMESSAGE message = get_oom_base_message (mailitem);
   if (!message)
     {
@@ -177,12 +178,30 @@ sign_encrypt_item (LPDISPATCH mailitem)
                  SRCNAME, __func__);
       return err;
     }
-  log_debug ("%s:%s: Sign / Encrypting message",
-             SRCNAME, __func__);
-  /* TODO check for message flags to determine */
-  err = message_sign_encrypt (message, PROTOCOL_UNKNOWN,
-                              NULL);
-  log_debug ("%s:%s: Sign / Encryption status: %i",
+  flags = get_gpgol_draft_info_flags (message);
+  if (flags == 3)
+    {
+      log_debug ("%s:%s: Sign / Encrypting message",
+                 SRCNAME, __func__);
+      err = message_sign_encrypt (message, PROTOCOL_UNKNOWN,
+                                  NULL);
+    }
+  else if (flags == 2)
+    {
+      err = message_sign (message, PROTOCOL_UNKNOWN,
+                          NULL);
+    }
+  else if (flags == 1)
+    {
+      err = message_encrypt (message, PROTOCOL_UNKNOWN,
+                             NULL);
+    }
+  else
+    {
+      log_debug ("%s:%s: Unknown flags for crypto: %i",
+                 SRCNAME, __func__, flags);
+    }
+  log_debug ("%s:%s: Status: %i",
              SRCNAME, __func__, err);
   message->Release ();
   return err;
@@ -211,6 +230,22 @@ request_send (LPVOID arg)
       // TODO show error message.
     }
   return 0;
+}
+
+static bool
+needs_crypto (LPDISPATCH mailitem)
+{
+  LPMESSAGE message = get_oom_message (mailitem);
+  bool ret;
+  if (!message)
+    {
+      log_error ("%s:%s: Failed to get message.",
+                 SRCNAME, __func__);
+      return false;
+    }
+  ret = get_gpgol_draft_info_flags (message);
+  message->Release ();
+  return ret;
 }
 
 /* The main Invoke function. The return value of this
@@ -262,9 +297,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
                         SRCNAME, __func__);
              break;
            }
-          if (m_crypt_successful)
+          if (!needs_crypto (m_object) || m_crypt_successful)
             {
-               log_debug ("%s:%s: Message %p sucessfully encrypted. May go.",
+               log_debug ("%s:%s: Passing send event for message %p.",
                           SRCNAME, __func__, m_object);
                m_send_seen = false;
                break;
@@ -317,7 +352,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (m_send_seen)
             {
               m_send_seen = false;
-              m_crypt_successful = !sign_encrypt_item (m_object);
+              m_crypt_successful = !do_crypto_on_item (m_object);
               if (m_crypt_successful)
                 {
                   /* We can't trigger a Send event in the current state.

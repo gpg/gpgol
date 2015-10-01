@@ -1231,3 +1231,95 @@ HRESULT verifyBody (LPDISPATCH ctrl)
 {
   return do_reader_action (ctrl, DATA_BODY | OP_VERIFY);
 }
+
+static void
+message_flag_status (HWND window, int flags)
+{
+  const char * message;
+  if (flags & OP_ENCRYPT && flags & OP_SIGN)
+    {
+      message = _("The message will be signed & encrypted.");
+    }
+  else if (flags & OP_ENCRYPT)
+    {
+      message = _("The message will be encrypted.");
+    }
+  else if (flags & OP_SIGN)
+    {
+      message = _("The message will be signed.");
+    }
+  else
+    {
+      message = _("The message will be sent plain and without a signature.");
+    }
+  MessageBox (NULL,
+              message,
+              _("GpgOL"),
+              MB_ICONINFORMATION|MB_OK);
+}
+
+static HRESULT
+mark_mime_action (LPDISPATCH ctrl, int flags)
+{
+  HRESULT hr;
+  HRESULT rc = E_FAIL;
+  HWND cur_window;
+  LPDISPATCH context = NULL,
+             mailitem = NULL;
+  LPMESSAGE message = NULL;
+  int oldflags,
+      newflags;
+
+  log_debug ("%s:%s: enter", SRCNAME, __func__);
+  hr = getContext (ctrl, &context);
+  if (FAILED(hr))
+      return hr;
+  cur_window = get_oom_context_window (context);
+
+  mailitem = get_oom_object (context, "CurrentItem");
+
+  if (!mailitem)
+    {
+      log_error ("%s:%s: Failed to get mailitem.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  message = get_oom_message (mailitem);
+
+  if (!message)
+    {
+      log_error ("%s:%s: Failed to get message.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  oldflags = get_gpgol_draft_info_flags (message);
+
+  newflags = oldflags xor flags;
+
+  if (set_gpgol_draft_info_flags (message, newflags))
+    {
+      log_error ("%s:%s: Failed to set draft flags.",
+                 SRCNAME, __func__);
+    }
+
+  message_flag_status (cur_window, newflags);
+
+done:
+  RELDISP (context);
+  RELDISP (mailitem);
+  RELDISP (message);
+
+  return rc;
+}
+
+HRESULT mime_sign (LPDISPATCH ctrl)
+{
+  return mark_mime_action (ctrl, OP_SIGN);
+}
+
+HRESULT mime_encrypt (LPDISPATCH ctrl)
+{
+  return mark_mime_action (ctrl, OP_ENCRYPT);
+}

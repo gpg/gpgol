@@ -2638,6 +2638,49 @@ mapi_get_mime_info (LPMESSAGE msg)
 }
 
 
+/* Helper around mapi_get_gpgol_draft_info to avoid
+   the string handling.
+   Return values are:
+   0 -> Do nothing
+   1 -> Encrypt
+   2 -> Sign
+   3 -> Encrypt & Sign*/
+int
+get_gpgol_draft_info_flags (LPMESSAGE message)
+{
+  char *buf = mapi_get_gpgol_draft_info (message);
+  int ret = 0;
+  if (!buf)
+    {
+      return 0;
+    }
+  if (buf[0] == 'E')
+    {
+      ret |= 1;
+    }
+  if (buf[1] == 'S')
+    {
+      ret |= 2;
+    }
+  xfree (buf);
+  return ret;
+}
+
+/* Sets the draft info flags. Protocol is always Auto.
+   flags should be the same as defined by
+   get_gpgol_draft_info_flags
+*/
+int
+set_gpgol_draft_info_flags (LPMESSAGE message, int flags)
+{
+  char buf[4];
+  buf[3] = '\0';
+  buf[2] = 'A'; /* Protocol */
+  buf[1] = flags & 2 ? 'S' : 's';
+  buf[0] = flags & 1 ? 'E' : 'e';
+
+  return mapi_set_gpgol_draft_info (message, buf);
+}
 
 
 /* Helper for mapi_get_msg_content_type() */

@@ -36,6 +36,8 @@
 #define ID_CMD_SIGN_BODY        10
 #define ID_CMD_ATT_ENC_FILE     11
 #define ID_CMD_VERIFY_BODY      12
+#define ID_CMD_MIME_SIGN        13
+#define ID_CMD_MIME_ENCRYPT     14
 
 #define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
@@ -57,4 +59,9 @@ HRESULT getIcon (int id, VARIANT* result);
 HRESULT startCertManager (LPDISPATCH ctrl);
 HRESULT signBody (LPDISPATCH ctrl);
 HRESULT verifyBody (LPDISPATCH ctrl);
+
+/* Mark the mail to be mime encrypted on send. */
+HRESULT mime_encrypt (LPDISPATCH ctrl);
+/* Mark the mail to be mime signed on send. */
+HRESULT mime_sign (LPDISPATCH ctrl);
 #endif
