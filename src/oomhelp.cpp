@@ -1088,9 +1088,9 @@ invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
           log_debug ("%s:%s: Method '%s' invokation failed: %#lx",
                      SRCNAME, __func__, name, hr);
           dump_excepinfo (execpinfo);
-          return false;
+          return -1;
         }
     }
 
-  return true;
+  return 0;
 }
