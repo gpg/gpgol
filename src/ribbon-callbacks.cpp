@@ -1306,6 +1306,8 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
 
   message_flag_status (cur_window, newflags);
 
+  rc = S_OK;
+
 done:
   RELDISP (context);
   RELDISP (mailitem);
