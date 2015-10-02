@@ -17,6 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
 #include "common.h"
 #include "eventsink.h"
 #include "eventsinks.h"
@@ -211,23 +212,15 @@ do_crypto_on_item (LPDISPATCH mailitem)
 DWORD WINAPI
 request_send (LPVOID arg)
 {
-  int not_sent = 1;
-  int tries = 0;
-  do
+  log_debug ("%s:%s: requesting send for: %p",
+             SRCNAME, __func__, arg);
+  if (do_in_ui_thread (REQUEST_SEND_MAIL, arg))
     {
-      /* Outlook needs to handle the message some more to unblock
-         calls to Send. Lets give it 50ms before we send it again. */
-      Sleep (50);
-      log_debug ("%s:%s: requesting send for: %p",
-                 SRCNAME, __func__, arg);
-      not_sent = do_in_ui_thread (REQUEST_SEND_MAIL, arg);
-      tries++;
-    } while (not_sent && tries < 50);
-  if (tries == 50)
-    {
-      // Hum should not happen but I rather avoid
-      // an endless loop in that case.
-      // TODO show error message.
+      MessageBox (NULL,
+                  "Error while requesting send of message.\n"
+                  "Please press the send button again.",
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
     }
   return 0;
 }
