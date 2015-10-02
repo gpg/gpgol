@@ -359,6 +359,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           break;
         }
+      case Unload:
+        {
+          log_debug ("%s:%s: Unloading event handler for msg: %p.",
+                     SRCNAME, __func__, m_object);
+          detach_MailItemEvents_sink (this);
+          delete this;
+          log_debug ("%s:%s: Unloaded.",
+                     SRCNAME, __func__);
+          return S_OK;
+        }
       default:
         log_oom_extra ("%s:%s: Message:%p Unhandled Event: %lx \n",
                        SRCNAME, __func__, m_object, dispid);
