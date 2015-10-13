@@ -123,8 +123,7 @@ dump_excepinfo (EXCEPINFO err)
              err.bstrSource, err.bstrDescription, err.bstrHelpFile,
              (unsigned int) err.dwHelpContext,
              (unsigned int) err.pfnDeferredFillIn,
-             (unsigned int) err.scode,
-             SRCNAME, __func__);
+             (unsigned int) err.scode);
 }
 
 /* Return the OOM object's IDispatch interface described by FULLNAME.

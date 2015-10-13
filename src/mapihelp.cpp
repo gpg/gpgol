@@ -620,7 +620,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
 
   /* The first ~1k of the body of the message is now available in the
      utf-8 string BODY.  Walk over it to figure out its type.  */
-  for (p=body; p && *p; p = (p=strchr (p+1, '\n')? (p+1):NULL))
+  for (p=body; p && *p; p = ((p=strchr (p+1, '\n')) ? (p+1) : NULL))
     {
       if (!strncmp (p, "-----BEGIN PGP ", 15))
         {
