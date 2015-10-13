@@ -85,8 +85,8 @@ STDMETHODIMP subcls::Invoke (DISPID dispid, REFIID riid, LCID lcid,      \
 /* End of macro EVENT_SINK_INVOKE.  */
 
 #define USE_INVOKE_ARGS                                                  \
-  (void)riid; (void)lcid; (void) flags; (void)parms; (void)result;       \
-  (void)exepinfo; (void)argerr;
+  (void)riid; (void)lcid; (void)flags; (void)parms; (void)result;       \
+  (void)exepinfo; (void)argerr; (void)dispid;
 /* End of macro USE_INVOKE_ARGS. */
 
 #define EVENT_SINK_DEFAULT_DTOR_CODE(subcls)                             \

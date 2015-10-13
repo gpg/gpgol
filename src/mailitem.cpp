@@ -118,7 +118,7 @@ GpgolItemEvents::Read (void)
 STDMETHODIMP
 GpgolItemEvents::Write (PBOOL cancel_default)
 {
-  bool sign, encrypt, need_crypto, want_html;
+  bool sign, encrypt, need_crypto;
   HWND hwnd = NULL;  /* Fixme.  */
  
   log_debug ("%s:%s: Called (this=%p) (send_seen=%d)",
@@ -153,11 +153,7 @@ GpgolItemEvents::Write (PBOOL cancel_default)
 
       bodyfmt = get_oom_int (m_object, "BodyFormat");
 
-      if (bodyfmt == 1)
-        want_html = 0;
-      else if (bodyfmt == 2)
-        want_html = 1;
-      else
+      if (bodyfmt != 1 && bodyfmt != 2)
         {
           log_debug ("%s:%s: BodyFormat is %d", SRCNAME, __func__, bodyfmt);
           MessageBox (hwnd,

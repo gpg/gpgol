@@ -46,6 +46,7 @@
 #include "gpgol-ids.h"
 #include "ribbon-callbacks.h"
 #include "eventsinks.h"
+#include "eventsink.h"
 #include "windowmessages.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
@@ -120,6 +121,7 @@ STDMETHODIMP GpgolAddinFactory::QueryInterface (REFIID riid, LPVOID* ppvObj)
 STDMETHODIMP GpgolAddinFactory::CreateInstance (LPUNKNOWN punk, REFIID riid,
                                                 LPVOID* ppvObj)
 {
+  (void)punk;
   *ppvObj = NULL;
 
   GpgolAddin* obj = new GpgolAddin();
@@ -341,6 +343,7 @@ GpgolAddin::Invoke (DISPID dispid, REFIID riid, LCID lcid,
                     WORD flags, DISPPARAMS *parms, VARIANT *result,
                     EXCEPINFO *exepinfo, UINT *argerr)
 {
+  USE_INVOKE_ARGS
   TRACEPOINT(); /* Should not happen */
   return DISP_E_MEMBERNOTFOUND;
 }
@@ -483,6 +486,7 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
                              WORD flags, DISPPARAMS *parms, VARIANT *result,
                              EXCEPINFO *exepinfo, UINT *argerr)
 {
+  USE_INVOKE_ARGS
   log_debug ("%s:%s: enter with dispid: %x",
              SRCNAME, __func__, (int)dispid);
 

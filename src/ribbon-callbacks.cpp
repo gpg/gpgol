@@ -1234,7 +1234,7 @@ HRESULT verifyBody (LPDISPATCH ctrl)
 }
 
 static void
-message_flag_status (HWND window, int flags)
+message_flag_status (int flags)
 {
   const char * message;
   if (flags & OP_ENCRYPT && flags & OP_SIGN)
@@ -1264,7 +1264,6 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
 {
   HRESULT hr;
   HRESULT rc = E_FAIL;
-  HWND cur_window;
   LPDISPATCH context = NULL,
              mailitem = NULL;
   LPMESSAGE message = NULL;
@@ -1275,7 +1274,6 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
   hr = getContext (ctrl, &context);
   if (FAILED(hr))
       return hr;
-  cur_window = get_oom_context_window (context);
 
   mailitem = get_oom_object (context, "CurrentItem");
 
@@ -1305,7 +1303,7 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
                  SRCNAME, __func__);
     }
 
-  message_flag_status (cur_window, newflags);
+  message_flag_status (newflags);
 
   rc = S_OK;
 
