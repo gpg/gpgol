@@ -942,6 +942,10 @@ write_attachments (sink_t sink,
             return -1;
           rc = write_part (sink, buffer, buflen, boundary,
                            table[idx].filename, 0);
+          if (rc)
+            {
+              log_error ("Write part returned err: %i", rc);
+            }
           xfree (buffer);
         }
   return 0;
