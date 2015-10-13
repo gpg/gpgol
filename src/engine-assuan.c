@@ -25,11 +25,9 @@
 #include <time.h>
 #include <errno.h>
 #include <assert.h>
-#define WIN32_LEAN_AND_MEAN 
-#define WINVER 0x0500  /* Required for AllowSetForegroundWindow.  */
-#include <windows.h>
 
 #include <assuan.h>
+#include <windows.h>
 #include "common.h"
 #include "engine.h"
 #include "engine-assuan.h"
@@ -1230,6 +1228,7 @@ async_worker_thread (void *dummy)
 
       LeaveCriticalSection (&work_queue_lock);
     }
+  return 0;
 }
 
 
@@ -1502,7 +1501,7 @@ start_command (assuan_context_t ctx, closure_data_t cld,
     return gpg_error (GPG_ERR_GENERAL);	/* Ooops.  */
 
   cld->cmdid = cmdid;
-  cld->status_cbs.write = status_in_cb;
+  cld->status_cbs.write = (gpgme_data_write_cb_t) status_in_cb;
   cld->assctx = ctx;
   /* Fixme: We might want to have reference counting for CLD to cope
      with the problem that the gpgme data object uses CLD which might
