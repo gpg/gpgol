@@ -571,8 +571,8 @@ engine_create_filter (engine_filter_t *r_filter,
   engine_filter_t filter;
 
   filter = create_filter ();
-  filter->cb_inbound.read = filter_gpgme_read_cb;
-  filter->cb_outbound.write = filter_gpgme_write_cb;
+  filter->cb_inbound.read = (gpgme_data_read_cb_t) filter_gpgme_read_cb;
+  filter->cb_outbound.write = (gpgme_data_write_cb_t) filter_gpgme_write_cb;
   filter->outfnc = outfnc? outfnc : dummy_outfnc;
   filter->outfncdata = outfncdata;
 
