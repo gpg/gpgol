@@ -31,6 +31,7 @@
 #include "serpent.h"
 #include "mapihelp.h"
 #include "parsetlv.h"
+#include "gpgolstr.h"
 
 #ifndef CRYPT_E_STREAM_INSUFFICIENT_DATA
 #define CRYPT_E_STREAM_INSUFFICIENT_DATA 0x80091011
@@ -110,11 +111,12 @@ log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
 
 /* Helper to create a named property. */
 static ULONG 
-create_gpgol_tag (LPMESSAGE message, wchar_t *name, const char *func)
+create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
 {
   HRESULT hr;
   LPSPropTagArray proparr = NULL;
-  MAPINAMEID mnid, *pmnid;	
+  MAPINAMEID mnid, *pmnid;
+  GpgOLStr propname(name);
   /* {31805ab8-3e92-11dc-879c-00061b031004}: GpgOL custom properties.  */
   GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
                                             0x1b, 0x03, 0x10, 0x04}};
@@ -123,7 +125,7 @@ create_gpgol_tag (LPMESSAGE message, wchar_t *name, const char *func)
   memset (&mnid, 0, sizeof mnid);
   mnid.lpguid = &guid;
   mnid.ulKind = MNID_STRING;
-  mnid.Kind.lpwstrName = name;
+  mnid.Kind.lpwstrName = propname;
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
   if (FAILED (hr))
@@ -254,12 +256,13 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   /* {4E3A7680-B77A-11D0-9DA5-00C04FD65685} */
   GUID guid = {0x4E3A7680, 0xB77A, 0x11D0, {0x9D, 0xA5, 0x00, 0xC0,
                                             0x4F, 0xD6, 0x56, 0x85}};
+  GpgOLStr propname (L"Internet Charset Body");
   int result;
 
   memset (&mnid, 0, sizeof mnid);
   mnid.lpguid = &guid;
   mnid.ulKind = MNID_STRING;
-  mnid.Kind.lpwstrName = L"Internet Charset Body";
+  mnid.Kind.lpwstrName = propname;
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, 0, &proparr);
   if (FAILED (hr))

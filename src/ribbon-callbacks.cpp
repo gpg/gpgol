@@ -45,6 +45,7 @@
 #include "mapihelp.h"
 #include "mimemaker.h"
 #include "filetype.h"
+#include "gpgolstr.h"
 
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
@@ -265,7 +266,7 @@ do_composer_action (LPDISPATCH ctrl, int flags)
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                          (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
                           | STGM_CREATE | STGM_READWRITE),
-                         NULL, "GPG", &tmpstream);
+                         NULL, GpgOLStr("GPG"), &tmpstream);
 
   if (FAILED (hr))
     {
@@ -714,7 +715,7 @@ do_reader_action (LPDISPATCH ctrl, int flags)
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                          (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
                           | STGM_CREATE | STGM_READWRITE),
-                         NULL, "GPG", &tmpstream);
+                         NULL, GpgOLStr("GPG"), &tmpstream);
 
   if (FAILED (hr))
     {

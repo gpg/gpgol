@@ -31,6 +31,7 @@
 #include "mimemaker.h"
 #include "display.h"
 #include "message.h"
+#include "gpgolstr.h"
 
 #define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
                                      SRCNAME, __func__, __LINE__); \
@@ -687,6 +688,7 @@ pgp_body_to_attachment (LPMESSAGE message)
   SPropValue prop;
   LPSTREAM outstream = NULL;
   LPUNKNOWN punk;
+  GpgOLStr body_filename (PGPBODYFILENAME);
 
   instream = mapi_get_body_as_stream (message);
   if (!instream)
@@ -733,7 +735,7 @@ pgp_body_to_attachment (LPMESSAGE message)
     }
 
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = PGPBODYFILENAME;
+  prop.Value.lpszA = body_filename;
   hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
   if (hr)
     {

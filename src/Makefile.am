@@ -91,7 +91,8 @@ gpgol_SOURCES = \
 	eventsinks.h application-events.cpp \
 	mailitem-events.cpp \
 	attachment.h attachment.cpp \
-	windowmessages.h windowmessages.cpp
+	windowmessages.h windowmessages.cpp \
+	gpgolstr.h gpgolstr.cpp
 
 
 #treeview_SOURCES = treeview.c

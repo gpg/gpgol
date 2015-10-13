@@ -31,6 +31,7 @@
 #include "mapihelp.h"
 #include "olflange-def.h"
 #include "display.h"
+#include "gpgolstr.h"
 
 
 /* Check wether the string BODY is HTML formatted. */
@@ -456,12 +457,12 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
   message2->Release(); message2 = NULL;
 
   hr = session->ShowForm (0,
-                          mdb, mfolder, 
+                          mdb, mfolder,
                           NULL,  token,
-                          NULL,  
+                          NULL,
                           0,
                           0,  0,
-                          0,  "IPM.Note");
+                          0, GpgOLStr("IPM.Note"));
   log_debug ("%s:%s: ShowForm result: hr=%#lx\n", 
              SRCNAME, __func__, hr);
   
