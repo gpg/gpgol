@@ -30,7 +30,6 @@
 
 #include "common.h"
 #include "engine.h"
-#include "engine-gpgme.h"
 #include "engine-assuan.h"
 
 
@@ -43,10 +42,6 @@
 
 #define debug_filter        (opt.enable_debug & DBG_FILTER)
 #define debug_filter_extra  (opt.enable_debug & DBG_FILTER_EXTRA)
-
-/* This variable indicates whether the assuan engine is used.  */
-static int use_assuan;
-
 
 /* Definition of the key object.  */
 struct engine_keyinfo_s
@@ -62,7 +57,6 @@ struct engine_keyinfo_s
    accessed by one thread. */
 struct engine_filter_s
 {
-  int use_assuan;          /* The same as the global USE_ASSUAN.  */
 
   struct {
     CRITICAL_SECTION lock; /* The lock for the this object. */
@@ -177,11 +171,7 @@ create_filter (void)
 
   /* If we are using the assuan engine we need to make the gpgme read
      callback non blocking.  */
-  if (use_assuan)
-    {
-      filter->use_assuan = 1;
-      filter->in.nonblock = 1;
-    }
+  filter->in.nonblock = 1;
 
   return filter;
 }
@@ -381,10 +371,6 @@ engine_init (void)
 {
   gpg_error_t err;
 
-  err = op_gpgme_basic_init ();
-  if (err)
-    return err;
-
   do
     err = op_assuan_init ();
   while (err
@@ -394,20 +380,6 @@ engine_init (void)
                           "want to try again."),
                         _("GpgOL"),
                         MB_ICONQUESTION|MB_RETRYCANCEL) == IDRETRY);
-  if (err)
-    {
-      use_assuan = 0;
-      MessageBox (NULL,
-                  _("The user interface server is not available or does "
-                    "not work.  Using an internal user interface.\n\n"
-                    "This is limited to the PGP/MIME protocol and "
-                    "thus S/MIME protected message are not readable."),
-                  _("GpgOL"), MB_ICONWARNING|MB_OK);
-      err = op_gpgme_init ();
-    }
-  else
-    use_assuan = 1;
-
   return err;
 }
 
@@ -417,7 +389,6 @@ void
 engine_deinit (void)
 {
   op_assuan_deinit ();
-  op_gpgme_deinit ();
 }
 
 /* Helper function to return a new session number.  */
@@ -807,10 +778,7 @@ engine_cancel (engine_filter_t filter)
     {
       log_debug ("%s:%s: filter %p: sending cancel command to backend",
                  SRCNAME, __func__, filter);
-      if (filter->use_assuan)
-        engine_assuan_cancel (cancel_data);
-      else
-        engine_gpgme_cancel (cancel_data);
+      engine_assuan_cancel (cancel_data);
       if (WaitForSingleObject (filter->in.ready_event, INFINITE)
           != WAIT_OBJECT_0)
         log_error_w32 (-1, "%s:%s: filter %p: WFSO failed", 
@@ -856,18 +824,12 @@ engine_encrypt_prepare (engine_filter_t filter, HWND hwnd,
   protocol_t used_protocol;
 
   *r_protocol = req_protocol;
-  if (filter->use_assuan)
-    {
-      err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
-                               filter, hwnd, flags, sender, recipients,
-                               &used_protocol, &filter->encstate);
-      if (!err)
-        *r_protocol = used_protocol;
-    }
-  else
-    err = op_gpgme_encrypt (req_protocol, filter->indata, filter->outdata,
-                            filter, hwnd, recipients);
-      
+  err = op_assuan_encrypt (req_protocol, filter->indata, filter->outdata,
+                           filter, hwnd, flags, sender, recipients,
+                           &used_protocol, &filter->encstate);
+  if (!err)
+    *r_protocol = used_protocol;
+
   return err;
 }
 
@@ -877,14 +839,9 @@ engine_encrypt_start (engine_filter_t filter, int cancel)
 {
   gpg_error_t err;
 
-  if (filter->use_assuan)
-    {
-      err = op_assuan_encrypt_bottom (filter->encstate, cancel);
-      filter->encstate = NULL;
-    }
-  else
-    err = 0; /* This is a dummy here.  */
-      
+  err = op_assuan_encrypt_bottom (filter->encstate, cancel);
+  filter->encstate = NULL;
+
   return err;
 }
 
@@ -903,22 +860,12 @@ engine_sign_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
   gpg_error_t err;
   protocol_t used_protocol;
 
-  if (filter->use_assuan)
-    {
-      err = op_assuan_sign (protocol, filter->indata, filter->outdata,
-                            filter, hwnd, sender, &used_protocol,
-                            ENGINE_FLAG_DETACHED);
-      if (!err)
-        *r_protocol = used_protocol;
-    }
-  else
-    {
-      err = op_gpgme_sign (protocol, filter->indata, filter->outdata,
-                           filter, hwnd);
-      if (!err)
-        *r_protocol = (protocol == GPGME_PROTOCOL_UNKNOWN?
-                       GPGME_PROTOCOL_OpenPGP : protocol);
-    }
+  err = op_assuan_sign (protocol, filter->indata, filter->outdata,
+                        filter, hwnd, sender, &used_protocol,
+                        ENGINE_FLAG_DETACHED);
+  if (!err)
+    *r_protocol = used_protocol;
+
   return err;
 }
 
@@ -932,16 +879,11 @@ engine_sign_opaque_start (engine_filter_t filter, HWND hwnd,
   gpg_error_t err;
   protocol_t used_protocol;
 
-  if (filter->use_assuan)
-    {
-      err = op_assuan_sign (protocol, filter->indata, filter->outdata,
-                            filter, hwnd, sender, &used_protocol,
-                            0);
-      if (!err)
-        *r_protocol = used_protocol;
-    }
-  else
-    return gpg_error (GPG_ERR_NOT_SUPPORTED);
+  err = op_assuan_sign (protocol, filter->indata, filter->outdata,
+                        filter, hwnd, sender, &used_protocol,
+                        0);
+  if (!err)
+    *r_protocol = used_protocol;
 
   return err;
 }
@@ -961,12 +903,8 @@ engine_decrypt_start (engine_filter_t filter, HWND hwnd, protocol_t protocol,
 {
   gpg_error_t err;
 
-  if (filter->use_assuan)
-    err = op_assuan_decrypt (protocol, filter->indata, filter->outdata,
-                            filter, hwnd, with_verify, from_address);
-  else
-    err = op_gpgme_decrypt (protocol, filter->indata, filter->outdata,
-                            filter, hwnd, with_verify);
+  err = op_assuan_decrypt (protocol, filter->indata, filter->outdata,
+                          filter, hwnd, with_verify, from_address);
   return err;
 }
 
@@ -987,23 +925,13 @@ engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
 {
   gpg_error_t err;
 
-  if (!signature && !filter->use_assuan)
-    {
-      log_error ("%s:%s: opaque signatures are not supported "
-                 "by the internal backend\n",
-                 SRCNAME, __func__);
-      return gpg_error (GPG_ERR_NOT_SUPPORTED);
-    }
-
-  if (filter->use_assuan && !signature)
+  if (!signature)
     err = op_assuan_verify (protocol, filter->indata, NULL, 0,
-			    filter->outdata, filter, hwnd, from_address);
-  else if (filter->use_assuan)
-    err = op_assuan_verify (protocol, filter->indata, signature, sig_len,
-			    NULL, filter, hwnd, from_address);
+                            filter->outdata, filter, hwnd, from_address);
   else
-    err = op_gpgme_verify (protocol, filter->indata, signature, sig_len,
-                           filter, hwnd);
+    err = op_assuan_verify (protocol, filter->indata, signature, sig_len,
+                            NULL, filter, hwnd, from_address);
+
   return err;
 }
 
@@ -1012,18 +940,12 @@ engine_verify_start (engine_filter_t filter, HWND hwnd, const char *signature,
 int
 engine_start_keymanager (HWND hwnd)
 {
-  if (use_assuan)
-    return op_assuan_start_keymanager (hwnd);
-  else
-    return gpg_error (GPG_ERR_NOT_SUPPORTED);
+  return op_assuan_start_keymanager (hwnd);
 }
 
 /* Fire up the config dialog.  Returns 0 on success.  */
 int
 engine_start_confdialog (HWND hwnd)
 {
-  if (use_assuan)
-    return op_assuan_start_confdialog (hwnd);
-  else
-    return gpg_error (GPG_ERR_NOT_SUPPORTED);
+  return op_assuan_start_confdialog (hwnd);
 }
