@@ -201,10 +201,10 @@ if test "$GCC" = yes; then
     CFLAGS="$CFLAGS -Wall -mms-bitfields -fno-strict-aliasing"
     CXXFLAGS="$CXXFLAGS -Wall -mms-bitfields -fno-strict-aliasing"
     if test "$USE_MAINTAINER_MODE" = "yes"; then
-        CFLAGS="$CFLAGS -Wcast-align -Wshadow -Wstrict-prototypes"
+        CFLAGS="$CFLAGS -Werror -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wno-format-y2k -Wformat-security"
         CFLAGS="$CFLAGS -W -Wno-sign-compare"
-        CXXFLAGS="$CXXFLAGS -Wcast-align -Wshadow"
+        CXXFLAGS="$CXXFLAGS -Werror -Wcast-align -Wshadow"
         CXXFLAGS="$CXXFLAGS -Wno-format-y2k -Wformat-security"
         CXXFLAGS="$CXXFLAGS -W -Wno-sign-compare"
         AC_MSG_CHECKING([if gcc supports -Wno-missing-field-initializers])
