@@ -167,7 +167,7 @@ GpgolAddin::~GpgolAddin (void)
              SRCNAME, __func__);
 
   delete m_ribbonExtender;
-  delete m_applicationEventSink;
+  m_applicationEventSink->Release ();
 
   if (!m_disabled)
     {
