@@ -183,8 +183,6 @@ USE_NLS=yes
 AC_HEADER_STDC
 AC_CHECK_HEADERS(string.h unistd.h langinfo.h termio.h locale.h)
 
-AC_CHECK_FUNCS(stpcpy)
-
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE

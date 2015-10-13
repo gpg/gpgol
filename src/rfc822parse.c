@@ -154,9 +154,8 @@ capitalize_header_name (unsigned char *name)
 }
 
 
-#ifndef HAVE_STPCPY
 static char *
-stpcpy (char *a,const char *b)
+my_stpcpy (char *a,const char *b)
 {
   while (*b)
     *a++ = *b++;
@@ -164,7 +163,6 @@ stpcpy (char *a,const char *b)
 
   return (char*)a;
 }
-#endif
 
 /* If a callback has been registerd, call it for the event of type
    EVENT. */
@@ -548,11 +546,11 @@ rfc822parse_get_field (rfc822parse_t msg, const char *name, int which,
   buf = p = malloc (n);
   if (buf)
     {
-      p = stpcpy (p, h->line);
+      p = my_stpcpy (p, h->line);
       *p++ = '\n';
       for (h2 = h->next; h2 && h2->cont; h2 = h2->next)
         {
-          p = stpcpy (p, h2->line);
+          p = my_stpcpy (p, h2->line);
           *p++ = '\n';
         }
       p[-1] = 0;
