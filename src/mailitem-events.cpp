@@ -107,21 +107,24 @@ MailItemEvents::handle_read()
   int err;
   int is_html, was_protected = 0;
   char *body = NULL;
-  LPMESSAGE message = get_oom_message (m_object);
-  if (!message)
+  /* Outlook somehow is confused about the attachment
+     table of our sent mails. The securemessage interface
+     gives us access to the real attach table but the attachment
+     table of the message itself is broken. */
+  LPMESSAGE base_message = get_oom_base_message (m_object);
+  if (!base_message)
     {
-      log_error ("%s:%s: Failed to get message \n",
+      log_error ("%s:%s: Failed to get base message \n",
                  SRCNAME, __func__);
       return S_OK;
     }
-  err = mapi_get_gpgol_body_attachment (message, &body, NULL,
+  err = mapi_get_gpgol_body_attachment (base_message, &body, NULL,
                                         &is_html, &was_protected);
-  message->Release ();
   if (err || !body)
     {
       log_error ("%s:%s: Failed to get body attachment of \n",
                  SRCNAME, __func__);
-      return S_OK;
+      goto done;
     }
   if (put_oom_string (m_object, is_html ? "HTMLBody" : "Body", body))
     {
@@ -130,13 +133,21 @@ MailItemEvents::handle_read()
     }
 
   xfree (body);
-
+  /* TODO: unprotect attachments does not work for sent mails
+     as the attachment table of the mapiitem is invalid.
+     We need to somehow get outlook to use the attachment table
+     of the base message and and then decrypt those.
+     This will probably mean removing all attachments for the
+     message and adding the attachments from the base message then
+     we can call unprotect_attachments as usual. */
   if (unprotect_attachments (m_object))
     {
       log_error ("%s:%s: Failed to unprotect attachments. \n",
                  SRCNAME, __func__);
     }
 
+done:
+  RELDISP (base_message);
   return S_OK;
 }
 
