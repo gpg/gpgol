@@ -31,10 +31,6 @@
 #define IDB_DECRYPT_VERIFY_16           0x1500
 #define IDB_DECRYPT_VERIFY_16M          0x1510
 
-/* Special */
-#define IDB_BANNER                      0x3900  /* The g10 Code logo.  */
-
-
 
 /* Ids for the extended options dialog.  */
 #define IDD_EXT_OPTIONS                 0x4110

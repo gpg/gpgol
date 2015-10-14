@@ -50,8 +50,6 @@ IDB_DECRYPT_VERIFY_16M    BITMAP  DISCARDABLE  "decrypt-verify-16m.bmp"
 
 IDI_ENCSIGN_FILE_48_PNG   RCDATA               "encrypt-sign-file-48.png"
 
-IDB_BANNER              BITMAP  DISCARDABLE     "logo.bmp"
-
 
 
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274
