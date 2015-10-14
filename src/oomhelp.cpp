@@ -375,15 +375,15 @@ put_oom_icon (LPDISPATCH pDisp, int resource_id, int size)
 {
   int rc;
 
-  /* Fixme: For now we assume a system pixel size of 16.  What we
-     actually should do is to get the current value and then find the
-     best matching icon.  */
-  resource_id += 16;
+  /* This code is only relevant for Outlook < 2010.
+    Ideally it should grab the system pixel size and use an
+    icon of the appropiate size (e.g. 32 or 64px)
+  */
 
   rc = put_picture_or_mask (pDisp, resource_id, size, 0);
   if (!rc)
-    rc = put_picture_or_mask (pDisp, resource_id+1, size, 1);
-  
+    rc = put_picture_or_mask (pDisp, resource_id + 16, size, 1);
+
   return rc;
 }
 

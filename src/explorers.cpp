@@ -124,7 +124,7 @@ add_explorer_controls (LPOOMEXPLORER explorer)
           put_oom_bool (button, "BeginGroup", true);
           put_oom_int (button, "Style", msoButtonIconAndCaption );
           put_oom_string (button, "Caption", _("GnuPG Certificate &Manager"));
-          put_oom_icon (button, IDB_KEY_MANAGER, 16);
+          put_oom_icon (button, IDB_KEY_MANAGER_16, 16);
           
           install_GpgolCommandBarButtonEvents_sink (button);
           /* Fixme:  Save the returned object for an Unadvice.  */
@@ -165,7 +165,7 @@ add_explorer_controls (LPOOMEXPLORER explorer)
           put_oom_int (button, "Style", msoButtonIcon );
           put_oom_string (button, "TooltipText",
                           _("Open the certificate manager"));
-          put_oom_icon (button, IDB_KEY_MANAGER, 16);
+          put_oom_icon (button, IDB_KEY_MANAGER_16, 16);
           
           install_GpgolCommandBarButtonEvents_sink (button);
           /* Fixme:  store the event sink object somewhere.  */

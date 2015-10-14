@@ -685,7 +685,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
               put_oom_int (button, "Style", msoButtonIconAndCaption );
               put_oom_string (button, "Caption",
                               _("&encrypt message with GnuPG"));
-              put_oom_icon (button, IDB_ENCRYPT, 16);
+              put_oom_icon (button, IDB_ENCRYPT_16, 16);
               put_oom_int (button, "State",
                            opt.encrypt_default? msoButtonDown: msoButtonUp);
               
@@ -699,7 +699,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
               tag = add_tag (button, "GpgOL_Inspector_Sign");
               put_oom_int (button, "Style", msoButtonIconAndCaption );
               put_oom_string (button, "Caption", _("&sign message with GnuPG"));
-              put_oom_icon (button, IDB_SIGN, 16);
+              put_oom_icon (button, IDB_SIGN_16, 16);
               put_oom_int (button, "State",
                            opt.sign_default? msoButtonDown: msoButtonUp);
               
@@ -725,7 +725,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           tag = add_tag (button, "GpgOL_Inspector_Verify");
           put_oom_int (button, "Style", msoButtonIconAndCaption );
           put_oom_string (button, "Caption", _("GpgOL Decrypt/Verify"));
-          put_oom_icon (button, IDB_DECRYPT_VERIFY, 16);
+          put_oom_icon (button, IDB_DECRYPT_VERIFY_16, 16);
           
           obj = install_GpgolCommandBarButtonEvents_sink (button);
           move_to_button_list (&buttonlist, obj, button, tag);
@@ -786,7 +786,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           tag = add_tag (button, "GpgOL_Inspector_Encrypt@t");
           put_oom_int (button, "Style", msoButtonIcon );
           put_oom_string (button, "Caption", _("Encrypt message with GnuPG"));
-          put_oom_icon (button, IDB_ENCRYPT, 16);
+          put_oom_icon (button, IDB_ENCRYPT_16, 16);
           put_oom_int (button, "State", msoButtonMixed );
           put_oom_int (button, "State",
                        opt.encrypt_default? msoButtonDown: msoButtonUp);
@@ -802,7 +802,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           tag = add_tag (button, "GpgOL_Inspector_Sign@t");
           put_oom_int (button, "Style", msoButtonIcon);
           put_oom_string (button, "Caption", _("Sign message with GnuPG"));
-          put_oom_icon (button, IDB_SIGN, 16);
+          put_oom_icon (button, IDB_SIGN_16, 16);
           put_oom_int (button, "State", msoButtonDown);
           put_oom_int (button, "State",
                        opt.sign_default? msoButtonDown: msoButtonUp);
@@ -920,19 +920,19 @@ update_crypto_info (LPDISPATCH inspector)
             {
               tooltip =  _("This is a signed and encrypted message.\n"
                            "Click for more information. ");
-              iconrc = IDB_DECRYPT_VERIFY;
+              iconrc = IDB_DECRYPT_VERIFY_16;
             }
           else if (is_signed)
             {
               tooltip =  _("This is a signed message.\n"
                            "Click for more information. ");
-              iconrc = IDB_VERIFY;
+              iconrc = IDB_VERIFY_16;
             }
           else if (is_encrypted)
             {
               tooltip =  _("This is an encrypted message.\n"
                            "Click for more information. ");
-              iconrc = IDB_DECRYPT;
+              iconrc = IDB_DECRYPT_16;
             }
           
           message->Release ();
