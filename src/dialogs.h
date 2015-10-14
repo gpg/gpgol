@@ -8,28 +8,25 @@
 
 
 /* Ids used for bitmaps. There is some magic in the identifiers: In
-   the code we only use the first ID value and add 16 to find the mask.
-   The last 4 bits should always be 0 to avoid problems with ld's resource merge
-   code which only uses the first 28 bits as the "name" of the resource
-   and tries to merge resource entries with the same name.
+   the code we only use the first ID value and add 1 to find the mask.
    */
 #define IDB_ENCRYPT_16                  0x1000
-#define IDB_ENCRYPT_16M                 0x1010
+#define IDB_ENCRYPT_16M                 0x1001
 
-#define IDB_SIGN_16                     0x1100
-#define IDB_SIGN_16M                    0x1110
+#define IDB_SIGN_16                     0x1010
+#define IDB_SIGN_16M                    0x1011
 
-#define IDB_KEY_MANAGER_16              0x1200
-#define IDB_KEY_MANAGER_16M             0x1210
+#define IDB_KEY_MANAGER_16              0x1020
+#define IDB_KEY_MANAGER_16M             0x1021
 
-#define IDB_DECRYPT_16                  0x1300
-#define IDB_DECRYPT_16M                 0x1310
+#define IDB_DECRYPT_16                  0x1030
+#define IDB_DECRYPT_16M                 0x1031
 
-#define IDB_VERIFY_16                   0x1400
-#define IDB_VERIFY_16M                  0x1410
+#define IDB_VERIFY_16                   0x1040
+#define IDB_VERIFY_16M                  0x1041
 
-#define IDB_DECRYPT_VERIFY_16           0x1500
-#define IDB_DECRYPT_VERIFY_16M          0x1510
+#define IDB_DECRYPT_VERIFY_16           0x1050
+#define IDB_DECRYPT_VERIFY_16M          0x1051
 
 
 /* Ids for the extended options dialog.  */

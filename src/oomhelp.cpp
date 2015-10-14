@@ -382,7 +382,7 @@ put_oom_icon (LPDISPATCH pDisp, int resource_id, int size)
 
   rc = put_picture_or_mask (pDisp, resource_id, size, 0);
   if (!rc)
-    rc = put_picture_or_mask (pDisp, resource_id + 16, size, 1);
+    rc = put_picture_or_mask (pDisp, resource_id + 1, size, 1);
 
   return rc;
 }

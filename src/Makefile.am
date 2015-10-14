@@ -28,7 +28,7 @@ EXTRA_DIST = \
 	decrypt-16.png decrypt-48.png \
 	encrypt-sign-file-48.png \
 	sign-48.png verify-48.png \
-	README.icons
+	dialogs.rc README.icons
 
 EXEEXT = .dll
 
@@ -42,7 +42,7 @@ gpgol_SOURCES = \
 	olflange.cpp olflange.h     \
 	olflange-def.h              \
 	olflange-dlgs.cpp           \
-	dialogs.rc dialogs.h        \
+	dialogs.h                   \
 	myexchext.h                 \
 	display.cpp display.h       \
 	message.cpp message.h       \
@@ -120,7 +120,7 @@ gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
 	-luuid -lgdiplus
 
-resource.o: resource.rc versioninfo.rc dialogs.rc 
+resource.o: resource.rc versioninfo.rc dialogs.rc dialogs.h
 
 .rc.o:
 	$(WINDRES) -I $(srcdir) -I . `test -f '$<' || echo '$(srcdir)/'`$< $@
