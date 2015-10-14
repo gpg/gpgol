@@ -4,7 +4,6 @@ src/common.c
 src/config-dialog.c
 src/display.cpp
 src/engine.c
-src/engine-gpgme.c
 src/engine-assuan.c
 src/ext-commands.cpp
 src/main.c
