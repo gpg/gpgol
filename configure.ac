@@ -234,7 +234,17 @@ fi
 
 AC_SUBST(W32LIBS)
 
-
+#
+# This should be a temporary option that will eventually become the
+# default.
+#
+AC_ARG_ENABLE(mime-send,
+            AC_HELP_STRING([--enable-mime-send], [Enable experimental send support for mime messages]),
+            mime_send=$enableval, mime_send=no)
+if test "$mime_send" != "no"; then
+  AC_DEFINE(MIME_SEND, 1,
+   [Sending Mime messages will be supported.])
+fi
 
 #
 # Print errors here so that they are visible all

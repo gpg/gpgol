@@ -541,6 +541,7 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
   return DISP_E_MEMBERNOTFOUND;
 }
 
+#ifdef MIME_SEND
 /* Returns the XML markup for the various RibbonID's
 
    The custom ui syntax is documented at:
@@ -632,3 +633,304 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 
   return S_OK;
 }
+
+#else /* MIME_SEND */
+
+/* This is the old pre-mime adding UI code. It will be removed once we have a
+   stable version that can also send mime messages.
+*/
+STDMETHODIMP
+GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
+{
+  char *buffer = NULL;
+  const char *certManagerTTip =
+    _("Start the Certificate Management Software");
+  const char *certManagerSTip =
+    _("Open GPA or Kleopatra to manage your certificates. "
+      "You can use this you to generate your "
+      "own certificates. ");
+  const char *encryptTextTTip =
+    _("Encrypt the text of the message");
+  const char *encryptTextSTip =
+    _("Choose the certificates for which the message "
+      "should be encrypted and replace the text "
+      "with the encrypted message.");
+  const char *encryptFileTTip =
+    _("Add a file as an encrypted attachment");
+  const char *encryptFileSTip =
+    _("Encrypts a file and adds it as an attachment to the "
+      "message. ");
+  const char *encryptSignFileTTip =
+    _("Add a file as an encrypted attachment with a signature");
+  const char *encryptSignFileSTip =
+    _("Encrypts a file, signs it and adds both the encrypted file "
+      "and the signature as attachments to the message. ");
+  const char *decryptTextTTip=
+    _("Decrypt the message");
+  const char *decryptTextSTip =
+    _("Look for PGP or S/MIME encrypted data in the message text "
+      "and decrypt it.");
+  const char *signTextTTip =
+    _("Add a signature of the message");
+  const char *signTextSTip =
+    _("Appends a signed copy of the message text in an opaque signature. "
+      "An opaque signature ensures that the signed text is not modified by "
+      "embedding it in the signature itself. "
+      "The combination of the signed message text and your signature is "
+      "added below the plain text. "
+      "The message will not be encrypted!");
+
+  log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
+
+  if (!RibbonXml)
+    return E_POINTER;
+
+  if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
+    {
+      asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        " <ribbon>"
+        "   <tabs>"
+        "    <tab id=\"gpgolTab\""
+        "         label=\"%s\">"
+        "     <group id=\"general\""
+        "            label=\"%s\">"
+        "       <button id=\"CustomButton\""
+        "               getImage=\"btnCertManager\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"startCertManager\"/>"
+        "     </group>"
+        "     <group id=\"textGroup\""
+        "            label=\"%s\">"
+        "       <button id=\"fullTextEncrypt\""
+        "               getImage=\"btnEncryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"encryptBody\"/>"
+        "       <button id=\"fullTextDecrypt\""
+        "               getImage=\"btnDecryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"decryptBody\"/>"
+        "       <button id=\"fullTextSign\""
+        "               getImage=\"btnSignLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"signBody\"/>"
+        "       <button id=\"fullTextVerify\""
+        "               getImage=\"btnVerifyLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               onAction=\"verifyBody\"/>"
+        "     </group>"
+        "     <group id=\"attachmentGroup\""
+        "            label=\"%s\">"
+        "       <button id=\"encryptedFile\""
+        "               getImage=\"btnEncryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"addEncAttachment\"/>"
+        "       <button id=\"encryptSignFile\""
+        "               getImage=\"btnEncryptFileLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"addEncSignedAttachment\"/>"
+        "     </group>"
+        "    </tab>"
+        "   </tabs>"
+        " </ribbon>"
+        " <contextMenus>"
+        "  <contextMenu idMso=\"ContextMenuText\">"
+        "    <button id=\"encryptButton\""
+        "            label=\"%s\""
+        "            getImage=\"btnEncrypt\""
+        "            onAction=\"encryptSelection\"/>"
+        "    <button id=\"decryptButton\""
+        "            label=\"%s\""
+        "            getImage=\"btnDecrypt\""
+        "            onAction=\"decryptSelection\"/>"
+        " </contextMenu>"
+        "</contextMenus>"
+        "</customUI>", _("GpgOL"), _("General"),
+        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        _("Textbody"),
+        _("Encrypt"), encryptTextTTip, encryptTextSTip,
+        _("Decrypt"), decryptTextTTip, decryptTextSTip,
+        _("Sign"), signTextTTip, signTextSTip,
+        _("Verify"),
+        _("Attachments"),
+        _("Encrypted file"), encryptFileTTip, encryptFileSTip,
+        _("Encrypted file and Signature"), encryptSignFileTTip, encryptSignFileSTip,
+        _("Encrypt"), _("Decrypt")
+        );
+    }
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
+    {
+      asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        " <ribbon>"
+        "   <tabs>"
+        "    <tab id=\"gpgolTab\""
+        "         label=\"%s\">"
+        "     <group id=\"general\""
+        "            label=\"%s\">"
+        "       <button id=\"CustomButton\""
+        "               getImage=\"btnCertManager\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"startCertManager\"/>"
+        "     </group>"
+        "     <group id=\"textGroup\""
+        "            label=\"%s\">"
+        "       <button id=\"fullTextDecrypt\""
+        "               getImage=\"btnDecryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"decryptBody\"/>"
+        "       <button id=\"fullTextVerify\""
+        "               getImage=\"btnVerifyLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               onAction=\"verifyBody\"/>"
+        "     </group>"
+        "    </tab>"
+        "   </tabs>"
+        "  <contextualTabs>"
+        "    <tabSet idMso=\"TabSetAttachments\">"
+        "        <tab idMso=\"TabAttachments\">"
+        "            <group label=\"%s\" id=\"gnupgLabel\">"
+        "                <button id=\"gpgol_contextual_decrypt\""
+        "                    size=\"large\""
+        "                    label=\"%s\""
+        "                    getImage=\"btnDecryptLarge\""
+        "                    onAction=\"attachmentDecryptCallback\" />"
+        "            </group>"
+        "        </tab>"
+        "    </tabSet>"
+        "  </contextualTabs>"
+        " </ribbon>"
+        "<contextMenus>"
+        "<contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
+        "   <button id=\"decryptReadButton\""
+        "           label=\"%s\""
+        "           getImage=\"btnDecrypt\""
+        "           onAction=\"decryptSelection\"/>"
+        " </contextMenu>"
+        " <contextMenu idMso=\"ContextMenuAttachments\">"
+        "   <button id=\"gpgol_decrypt\""
+        "           label=\"%s\""
+        "           getImage=\"btnDecrypt\""
+        "           onAction=\"attachmentDecryptCallback\"/>"
+        " </contextMenu>"
+        "</contextMenus>"
+        "</customUI>",
+        _("GpgOL"), _("General"),
+        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        _("Textbody"),
+        _("Decrypt"), decryptTextTTip, decryptTextSTip,
+        _("Verify"),
+        _("GpgOL"), _("Save and decrypt"),
+        _("Decrypt"),
+        _("Decrypt"));
+    }
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
+    {
+      asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        " <ribbon>"
+        "   <tabs>"
+        "    <tab id=\"gpgolTab\""
+        "         label=\"%s\">"
+        "     <group id=\"general\""
+        "            label=\"%s\">"
+        "       <button id=\"CustomButton\""
+        "               getImage=\"btnCertManager\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"startCertManager\"/>"
+        "     </group>"
+        /* This would be totally nice but Outlook
+           saves the decrypted text aftewards automatically.
+           Yay,..
+        "     <group id=\"textGroup\""
+        "            label=\"%s\">"
+        "       <button id=\"fullTextDecrypt\""
+        "               getImage=\"btnDecryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               onAction=\"decryptBody\"/>"
+        "     </group>"
+        */
+        "    </tab>"
+        "   </tabs>"
+        "  <contextualTabs>"
+        "    <tabSet idMso=\"TabSetAttachments\">"
+        "        <tab idMso=\"TabAttachments\">"
+        "            <group label=\"%s\" id=\"gnupgLabel\">"
+        "                <button id=\"gpgol_contextual_decrypt\""
+        "                    size=\"large\""
+        "                    label=\"%s\""
+        "                    getImage=\"btnDecryptLarge\""
+        "                    onAction=\"attachmentDecryptCallback\" />"
+        "            </group>"
+        "        </tab>"
+        "    </tabSet>"
+        "  </contextualTabs>"
+        " </ribbon>"
+        " <contextMenus>"
+        /*
+           There appears to be no way to access the word editor
+           / get the selected text from that Context.
+        " <contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
+        " <button id=\"decryptReadButton1\""
+        "         label=\"%s\""
+        "         onAction=\"decryptSelection\"/>"
+        " </contextMenu>"
+        */
+        " <contextMenu idMso=\"ContextMenuAttachments\">"
+        "   <button id=\"gpgol_decrypt\""
+        "           label=\"%s\""
+        "           getImage=\"btnDecrypt\""
+        "           onAction=\"attachmentDecryptCallback\"/>"
+        " </contextMenu>"
+        " </contextMenus>"
+        "</customUI>",
+        _("GpgOL"), _("General"),
+        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        /*_("Mail Body"), _("Decrypt"),*/
+        _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
+        _("Save and decrypt"));
+    }
+
+  if (buffer)
+    {
+      wchar_t *wbuf = utf8_to_wchar2 (buffer, strlen(buffer));
+      xfree (buffer);
+      *RibbonXml = SysAllocString (wbuf);
+      xfree (wbuf);
+    }
+  else
+    *RibbonXml = NULL;
+
+  return S_OK;
+}
+#endif /* MIME_SEND */
