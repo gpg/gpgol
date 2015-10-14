@@ -522,9 +522,9 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_CMD_VERIFY_BODY:
         return verifyBody (parms->rgvarg[0].pdispVal);
       case ID_CMD_MIME_SIGN:
-        return mime_sign (parms->rgvarg[0].pdispVal);
+        return mime_sign (parms->rgvarg[1].pdispVal);
       case ID_CMD_MIME_ENCRYPT:
-        return mime_encrypt (parms->rgvarg[0].pdispVal);
+        return mime_encrypt (parms->rgvarg[1].pdispVal);
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
@@ -594,14 +594,14 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "     </group>"
         "     <group id=\"textGroup\""
         "            label=\"%s\">"
-        "       <button id=\"mimeEncrypt\""
+        "       <toggleButton id=\"mimeEncrypt\""
         "               getImage=\"btnEncryptLarge\""
         "               size=\"large\""
         "               label=\"%s\""
         "               screentip=\"%s\""
         "               supertip=\"%s\""
         "               onAction=\"encryptMime\"/>"
-        "       <button id=\"mimeSign\""
+        "       <toggleButton id=\"mimeSign\""
         "               getImage=\"btnSignLarge\""
         "               size=\"large\""
         "               label=\"%s\""

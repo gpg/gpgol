@@ -1233,32 +1233,6 @@ HRESULT verifyBody (LPDISPATCH ctrl)
   return do_reader_action (ctrl, DATA_BODY | OP_VERIFY);
 }
 
-static void
-message_flag_status (int flags)
-{
-  const char * message;
-  if (flags & OP_ENCRYPT && flags & OP_SIGN)
-    {
-      message = _("The message will be signed & encrypted.");
-    }
-  else if (flags & OP_ENCRYPT)
-    {
-      message = _("The message will be encrypted.");
-    }
-  else if (flags & OP_SIGN)
-    {
-      message = _("The message will be signed.");
-    }
-  else
-    {
-      message = _("The message will be sent plain and without a signature.");
-    }
-  MessageBox (NULL,
-              message,
-              _("GpgOL"),
-              MB_ICONINFORMATION|MB_OK);
-}
-
 static HRESULT
 mark_mime_action (LPDISPATCH ctrl, int flags)
 {
@@ -1302,8 +1276,6 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
       log_error ("%s:%s: Failed to set draft flags.",
                  SRCNAME, __func__);
     }
-
-  message_flag_status (newflags);
 
   rc = S_OK;
 
