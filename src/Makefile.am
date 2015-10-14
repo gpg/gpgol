@@ -18,18 +18,11 @@ bin_PROGRAMS = gpgol
 EXTRA_DIST = \
 	versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
 	encrypt-16.bmp encrypt-16m.bmp \
-	encrypt-32.bmp encrypt-32m.bmp \
 	sign-16.bmp sign-16m.bmp \
-	sign-32.bmp sign-32m.bmp \
 	key-manager-16.bmp key-manager-16m.bmp \
-	key-manager-32.bmp key-manager-32m.bmp \
-	key-manager-64.bmp key-manager-64m.bmp \
 	decrypt-16.bmp decrypt-16m.bmp \
-	decrypt-32.bmp decrypt-32m.bmp \
 	verify-16.bmp  verify-16m.bmp \
-	verify-32.bmp  verify-32m.bmp \
 	decrypt-verify-16.bmp decrypt-verify-16m.bmp \
-	decrypt-verify-32.bmp decrypt-verify-32m.bmp \
 	encrypt-16.png encrypt-48.png \
 	key-manager-64.png \
 	decrypt-16.png decrypt-48.png \
