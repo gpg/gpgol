@@ -280,6 +280,8 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
   (void)custom;
   TRACEPOINT();
 
+  install_forms ();
+
   if (!create_responder_window())
     {
       log_error ("%s:%s: Failed to create the responder window;",
