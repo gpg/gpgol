@@ -166,7 +166,7 @@ GpgolAddin::~GpgolAddin (void)
   log_debug ("%s:%s: cleaning up GpgolAddin object;",
              SRCNAME, __func__);
 
-  delete m_ribbonExtender;
+  m_ribbonExtender->Release ();
   m_applicationEventSink->Release ();
 
   if (!m_disabled)
