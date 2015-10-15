@@ -52,6 +52,10 @@
 #define ICON_SIZE_LARGE  32
 #define ICON_SIZE_NORMAL 16
 
+/* We use UTF-8 internally. */
+#undef _
+#define _(a) utf8_gettext (a)
+
 ULONG addinLocks = 0;
 
 /* This is the main entry point for the addin

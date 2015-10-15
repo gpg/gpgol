@@ -1554,7 +1554,7 @@ native_to_utf8 (const char *string)
 
 
 static const char*
-get_string (struct loaded_domain *domain, u32 idx)
+get_string (struct loaded_domain *domain, u32 idx, int utf8)
 {
   struct overflow_space_s *os;
   char *p;
@@ -1568,7 +1568,7 @@ get_string (struct loaded_domain *domain, u32 idx)
       domain->mapped[idx] = 1;
 
       plen = strlen (p);
-      buf = utf8_to_native (p);
+      buf = utf8 ? strdup (p) : utf8_to_native (p);
       buflen = strlen (buf);
       if (buflen <= plen)
         strcpy (p, buf);
@@ -1690,14 +1690,13 @@ bindtextdomain (const char *domainname, const char *dirname)
   return (char*)dirname;
 }
 
-
-const char *
-gettext (const char *msgid)
+static const char *
+internal_gettext (const char *msgid, int utf8)
 {
   struct loaded_domain *domain;
   size_t act = 0;
   size_t top, bottom;
-  
+
   if (!(domain = the_domain))
     goto not_found;
 
@@ -1712,38 +1711,38 @@ gettext (const char *msgid)
       u32 nstr = SWAPIT (domain->must_swap, domain->hash_tab[idx]);
 
       if (!nstr)
-	/* Hash table entry is empty.  */
-	goto not_found;
+        /* Hash table entry is empty.  */
+        goto not_found;
 
       if (SWAPIT (domain->must_swap,
-		  domain->orig_tab[nstr - 1].length) == len
-	  && !strcmp (msgid,
-		      domain->data
-		      + SWAPIT (domain->must_swap,
-				domain->orig_tab[nstr - 1].offset)))
-	return get_string (domain, nstr - 1);
-      
-	for(;;)
-	  {
-	    if (idx >= domain->hash_size - incr)
-	      idx -= domain->hash_size - incr;
-	    else
-	      idx += incr;
+                  domain->orig_tab[nstr - 1].length) == len
+          && !strcmp (msgid,
+                      domain->data
+                      + SWAPIT (domain->must_swap,
+                                domain->orig_tab[nstr - 1].offset)))
+        return get_string (domain, nstr - 1, utf8);
 
-	    nstr = SWAPIT (domain->must_swap, domain->hash_tab[idx]);
-	    if (!nstr)
-	      /* Hash table entry is empty.  */
-	      goto not_found;
+        for(;;)
+          {
+            if (idx >= domain->hash_size - incr)
+              idx -= domain->hash_size - incr;
+            else
+              idx += incr;
 
-	    if (SWAPIT (domain->must_swap,
-			domain->orig_tab[nstr - 1].length) == len
-		&& !strcmp (msgid,
-			    domain->data
-			    + SWAPIT (domain->must_swap,
-				      domain->orig_tab[nstr - 1].offset)))
-	      return get_string (domain, nstr-1);
-	  }
-	/* NOTREACHED */
+            nstr = SWAPIT (domain->must_swap, domain->hash_tab[idx]);
+            if (!nstr)
+              /* Hash table entry is empty.  */
+              goto not_found;
+
+            if (SWAPIT (domain->must_swap,
+                        domain->orig_tab[nstr - 1].length) == len
+                && !strcmp (msgid,
+                            domain->data
+                            + SWAPIT (domain->must_swap,
+                                      domain->orig_tab[nstr - 1].offset)))
+              return get_string (domain, nstr-1, utf8);
+          }
+        /* NOTREACHED */
     }
 
   /* Now we try the default method: binary search in the sorted array
@@ -1756,17 +1755,31 @@ gettext (const char *msgid)
 
       act = (bottom + top) / 2;
       cmp_val = strcmp(msgid, domain->data
-		       + SWAPIT (domain->must_swap,
-				 domain->orig_tab[act].offset));
+                       + SWAPIT (domain->must_swap,
+                                 domain->orig_tab[act].offset));
       if (cmp_val < 0)
-	top = act;
+        top = act;
       else if (cmp_val > 0)
-	bottom = act + 1;
+        bottom = act + 1;
       else
-	return get_string (domain, act);
+        return get_string (domain, act, utf8);
     }
  not_found:
   return msgid;
+}
+
+/** Get the localized string for msgid in the native 8 bit codepage. */
+const char *
+gettext (const char *msgid)
+{
+  return internal_gettext (msgid, 0);
+}
+
+/** Get the localized string for msgid as utf8 encoded value. */
+const char *
+utf8_gettext (const char *msgid)
+{
+  return internal_gettext (msgid, 1);
 }
 
 
