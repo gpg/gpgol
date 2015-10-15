@@ -890,6 +890,12 @@ getIcon (int id, VARIANT* result)
   pdesc.cbSizeofstruct = sizeof pdesc;
   pdesc.picType = PICTYPE_BITMAP;
 
+  if (!result)
+    {
+      log_error ("getIcon called without result variant.");
+      return E_POINTER;
+    }
+
   /* Initialize GDI */
   gdiplusStartupInput.DebugEventCallback = NULL;
   gdiplusStartupInput.SuppressBackgroundThread = FALSE;
