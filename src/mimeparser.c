@@ -45,10 +45,6 @@
 #include "parsetlv.h"
 
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 #define debug_mime_parser (opt.enable_debug & (DBG_MIME_PARSER|DBG_MIME_DATA))
 #define debug_mime_data (opt.enable_debug & DBG_MIME_DATA)
 

@@ -41,11 +41,6 @@
 #endif
 
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
-
 static int get_attach_method (LPATTACH obj);
 static int has_smime_filename (LPATTACH obj);
 static char *get_attach_mime_tag (LPATTACH obj);

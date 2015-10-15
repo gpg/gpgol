@@ -36,11 +36,6 @@
 #include "olflange.h"
 #include "user-events.h"
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
-
 /* Wrapper around UlRelease with error checking. */
 static void 
 ul_release (LPVOID punk, const char *func, int lnr)

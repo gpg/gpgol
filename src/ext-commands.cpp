@@ -45,11 +45,6 @@
 #include "explorers.h"
 #include "inspectors.h"
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
-
 /* Keep copies of some bitmaps.  */
 static int bitmaps_initialized;
 static HBITMAP my_check_bitmap, my_uncheck_bitmap;

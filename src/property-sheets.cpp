@@ -38,13 +38,6 @@
 #include "property-sheets.h"
 
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
-
-
-
 GpgolPropertySheets::GpgolPropertySheets (GpgolExt* pParentInterface)
 { 
     m_pExchExt = pParentInterface;

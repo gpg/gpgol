@@ -32,10 +32,6 @@
 #include "serpent.h"
 #include "attached-file-events.h"
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 #define COPYBUFFERSIZE 4096
 
 /* Copy STREAM to a new file FILENAME while decrypting it using the

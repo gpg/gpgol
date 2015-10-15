@@ -36,10 +36,6 @@
 #define FILTER_BUFFER_SIZE (128*1024)
 
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                       SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 #define debug_filter        (opt.enable_debug & DBG_FILTER)
 #define debug_filter_extra  (opt.enable_debug & DBG_FILTER_EXTRA)
 

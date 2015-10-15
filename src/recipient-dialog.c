@@ -36,12 +36,6 @@
 #include "gpgol-ids.h"
 #include "dialogs.h"
 
-
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
-
 struct recipient_cb_s 
 {
   char **unknown_keys;  /* A string array with the names of the

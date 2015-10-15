@@ -33,11 +33,6 @@
 #include "engine-assuan.h"
 #include "util.h"
 
-
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                       SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 /* Debug macros.  */
 #define debug_ioworker        (opt.enable_debug & DBG_IOWORKER)
 #define debug_ioworker_extra  (opt.enable_debug & DBG_IOWORKER_EXTRA)

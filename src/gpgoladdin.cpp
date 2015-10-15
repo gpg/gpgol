@@ -49,10 +49,6 @@
 #include "eventsink.h"
 #include "windowmessages.h"
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 #define ICON_SIZE_LARGE  32
 #define ICON_SIZE_NORMAL 16
 
@@ -278,7 +274,7 @@ STDMETHODIMP
 GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 {
   (void)custom;
-  TRACEPOINT();
+  TRACEPOINT;
 
   install_forms ();
 
@@ -303,7 +299,7 @@ STDMETHODIMP
 GpgolAddin::OnBeginShutdown (SAFEARRAY * * custom)
 {
   (void)custom;
-  TRACEPOINT();
+  TRACEPOINT;
   return S_OK;
 }
 
@@ -311,7 +307,7 @@ STDMETHODIMP
 GpgolAddin::GetTypeInfoCount (UINT *r_count)
 {
   *r_count = 0;
-  TRACEPOINT(); /* Should not happen */
+  TRACEPOINT; /* Should not happen */
   return S_OK;
 }
 
@@ -322,7 +318,7 @@ GpgolAddin::GetTypeInfo (UINT iTypeInfo, LCID lcid,
   (void)iTypeInfo;
   (void)lcid;
   (void)r_typeinfo;
-  TRACEPOINT(); /* Should not happen */
+  TRACEPOINT; /* Should not happen */
   return S_OK;
 }
 
@@ -336,7 +332,7 @@ GpgolAddin::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
   (void)cNames;
   (void)lcid;
   (void)rgDispId;
-  TRACEPOINT(); /* Should not happen */
+  TRACEPOINT; /* Should not happen */
   return E_NOINTERFACE;
 }
 
@@ -346,7 +342,7 @@ GpgolAddin::Invoke (DISPID dispid, REFIID riid, LCID lcid,
                     EXCEPINFO *exepinfo, UINT *argerr)
 {
   USE_INVOKE_ARGS
-  TRACEPOINT(); /* Should not happen */
+  TRACEPOINT; /* Should not happen */
   return DISP_E_MEMBERNOTFOUND;
 }
 
@@ -395,7 +391,7 @@ STDMETHODIMP
 GpgolRibbonExtender::GetTypeInfoCount (UINT *r_count)
 {
   *r_count = 0;
-  TRACEPOINT(); /* Should not happen */
+  TRACEPOINT; /* Should not happen */
   return S_OK;
 }
 
@@ -406,7 +402,7 @@ GpgolRibbonExtender::GetTypeInfo (UINT iTypeInfo, LCID lcid,
   (void)iTypeInfo;
   (void)lcid;
   (void)r_typeinfo;
-  TRACEPOINT(); /* Should not happen */
+  TRACEPOINT; /* Should not happen */
   return S_OK;
 }
 

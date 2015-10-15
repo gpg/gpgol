@@ -57,10 +57,6 @@
 #include "mailitem.h"
 #include "cmdbarcontrols.h"
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 static bool g_initdll = FALSE;
 
 static char *olversion;

@@ -35,10 +35,6 @@
 #include "display.h"
 #include "item-events.h"
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 
 /* Wrapper around UlRelease with error checking. */
 static void 

@@ -33,10 +33,6 @@
 #include "dialogs.h"
 
 
-#define TRACEPOINT() do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                        } while (0)
-
 /* Object to maintai8n state in the dialogs. */
 struct dialog_context_s
 {
