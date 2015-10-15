@@ -30,10 +30,34 @@
 #include "gpgoladdin.h"
 #include "windowmessages.h"
 
-/* TODO Add a proper / l10n encrypted thing message. */
-static const char * ENCRYPTED_MESSAGE_BODY = \
-"This message is encrypted. Please install or activate GpgOL"\
-" to decrypt this message.";
+
+/* TODO: Localize this once it is less bound to change.
+   TODO: Use a dedicated message for failed decryption. */
+#define HTML_TEMPLATE  \
+"<html><head></head><body>" \
+"<table border=\"0\" width=\"100%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">" \
+"<tr>" \
+"<td bgcolor=\"#0080ff\">" \
+"<p><span style=\"font-weight:600; background-color:#0080ff;\"><center>This message is encrypted</center><span></p></td></tr>" \
+"<tr>" \
+"<td bgcolor=\"#e0f0ff\">" \
+"<center>" \
+"<br/>You can decrypt this message with GnuPG" \
+"<br/>Open this message to decrypt it." \
+"<br/>Opening any attachments while this message is shown will only give you access to encrypted data. </center>" \
+"<br/><br/>If you have GpgOL (The GnuPG Outlook plugin installed) this message should have been automatically decrypted." \
+"<br/>Reasons that you still see this message can be: " \
+"<ul>" \
+"<li>Decryption failed: <ul><li> Refer to the Decrypt / Verify popup window for details.</li></ul></li>" \
+"<li>Outlook tried to save the decrypted content:" \
+" <ul> "\
+" <li>To protect your data GpgOL encrypts a message when it is saved by Outlook.</li>" \
+" <li>You will need to restart Outlook to allow GpgOL to decrypt this message again.</li>" \
+" </ul>" \
+"<li>GpgOL is not activated: <ul><li>Check under Options -> Add-Ins -> COM-Add-Ins to see if this is the case.</li></ul></li>" \
+"</ul>"\
+"</td></tr>" \
+"</table></body></html>"
 
 typedef enum
   {
@@ -124,6 +148,7 @@ MailItemEvents::handle_read()
     {
       log_error ("%s:%s: Failed to get body attachment of \n",
                  SRCNAME, __func__);
+      put_oom_string (m_object, "HTMLBody", HTML_TEMPLATE);
       goto done;
     }
   if (put_oom_string (m_object, is_html ? "HTMLBody" : "Body", body))
@@ -335,8 +360,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Message %p removing plaintext from Message.",
                          SRCNAME, __func__, m_object);
               if (put_oom_string (m_object, "HTMLBody",
-                                  ENCRYPTED_MESSAGE_BODY) ||
-                  put_oom_string (m_object, "Body", ENCRYPTED_MESSAGE_BODY) ||
+                                  HTML_TEMPLATE) ||
                   protect_attachments (m_object))
                 {
                   /* An error cleaning the mail should not happen normally.
