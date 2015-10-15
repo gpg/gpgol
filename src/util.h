@@ -100,9 +100,8 @@ void log_window_hierarchy (HWND window, const char *fmt,
 const char *log_srcname (const char *s);
 #define SRCNAME log_srcname (__FILE__)
 
-#define TRACEPOINT do { log_debug ("%s:%s:%d: tracepoint\n", \
-                                     SRCNAME, __func__, __LINE__); \
-                      } while (0)
+#define TRACEPOINT log_debug ("%s:%s:%d: tracepoint\n", \
+                              SRCNAME, __func__, __LINE__);
 
 const char *get_log_file (void);
 void set_log_file (const char *name);
