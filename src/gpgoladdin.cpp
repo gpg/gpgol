@@ -644,6 +644,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 STDMETHODIMP
 GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
+  TRACEPOINT
   char *buffer = NULL;
   const char *certManagerTTip =
     _("Start the Certificate Management Software");
@@ -681,14 +682,17 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
       "The combination of the signed message text and your signature is "
       "added below the plain text. "
       "The message will not be encrypted!");
+  TRACEPOINT
 
   log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
 
   if (!RibbonXml)
     return E_POINTER;
 
+  TRACEPOINT
   if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
     {
+      TRACEPOINT
       asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
@@ -781,6 +785,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
     {
+      TRACEPOINT
       asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
@@ -854,6 +859,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
     {
+      TRACEPOINT
       asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
@@ -922,17 +928,23 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
         _("Save and decrypt"));
     }
+  TRACEPOINT
 
   if (buffer)
     {
+      TRACEPOINT
       wchar_t *wbuf = utf8_to_wchar2 (buffer, strlen(buffer));
       xfree (buffer);
+      TRACEPOINT
       *RibbonXml = SysAllocString (wbuf);
+      TRACEPOINT
       xfree (wbuf);
+      TRACEPOINT
     }
   else
     *RibbonXml = NULL;
 
+  TRACEPOINT
   return S_OK;
 }
 #endif /* MIME_SEND */
