@@ -65,23 +65,26 @@ EVENT_SINK_INVOKE(ApplicationEvents)
           LPDISPATCH mailItem;
           LPDISPATCH mailEventSink;
           /* The mailItem should be the first argument */
-          if (parms->cArgs != 1 || parms->rgvarg[0].vt != VT_DISPATCH)
+          if (!parms || parms->cArgs != 1 ||
+              parms->rgvarg[0].vt != VT_DISPATCH)
             {
               log_error ("%s:%s: ItemLoad with unexpected Arguments.",
                          SRCNAME, __func__);
               break;
             }
 
+          log_debug ("%s:%s: ItemLoad event. Getting object.",
+                     SRCNAME, __func__);
           mailItem = get_object_by_id (parms->rgvarg[0].pdispVal,
                                        IID_MailItem);
           if (!mailItem)
             {
-              log_error ("%s:%s: ItemLoad event without mailitem.",
+              log_debug ("%s:%s: ItemLoad event without mailitem.",
                          SRCNAME, __func__);
               break;
             }
-          log_oom ("%s:%s: Installing event sink on mailitem: %p",
-                   SRCNAME, __func__, mailItem);
+          log_debug ("%s:%s: Installing event sink on mailitem: %p",
+                     SRCNAME, __func__, mailItem);
           mailEventSink = install_MailItemEvents_sink (mailItem);
           /* TODO figure out what we need to do with the event sink.
              Does it need to be Released at some point? What happens
@@ -89,6 +92,11 @@ EVENT_SINK_INVOKE(ApplicationEvents)
           if (!mailEventSink)
             {
               log_error ("%s:%s: Failed to install MailItemEvents sink.",
+                         SRCNAME, __func__);
+            }
+          else
+            {
+              log_debug ("%s:%s: MailItem event handler installed.",
                          SRCNAME, __func__);
             }
           mailItem->Release ();
