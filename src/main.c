@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 #include <ctype.h>
+#include <winnls.h>
 
 #include "mymapi.h"
 #include "mymapitags.h"
@@ -254,9 +255,26 @@ do_log (const char *fmt, va_list a, int w32err, int err,
       return;
     }
 
-  fprintf (logfp, "%05lu/%lu/",
-           ((unsigned long)GetTickCount () % 100000),
-           (unsigned long)GetCurrentThreadId ());
+  char time_str[9];
+  SYSTEMTIME utc_time;
+  GetSystemTime (&utc_time);
+  if (GetTimeFormatA (LOCALE_INVARIANT,
+                      TIME_FORCE24HOURFORMAT | LOCALE_USE_CP_ACP,
+                      &utc_time,
+                      "HH:mm:ss",
+                      time_str,
+                      9))
+    {
+      fprintf (logfp, "%s/%lu/",
+               time_str,
+               (unsigned long)GetCurrentThreadId ());
+    }
+  else
+    {
+      fprintf (logfp, "unknown/%lu/",
+               (unsigned long)GetCurrentThreadId ());
+    }
+
   if (err == 1)
     fputs ("ERROR/", logfp);
   vfprintf (logfp, fmt, a);
