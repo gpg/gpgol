@@ -46,6 +46,7 @@
 #include "mimemaker.h"
 #include "filetype.h"
 #include "gpgolstr.h"
+#include "message.h"
 
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
@@ -574,6 +575,26 @@ decryptAttachments (LPDISPATCH ctrl)
                   callback function failed in an ugly window. */
 }
 
+/* MIME erify mail helper. Returns 0 if it
+  was not called with a MIME crypto message or on error. */
+static int
+verify_mime (LPDISPATCH mailitem)
+{
+  int ret = 0;
+
+  LPMESSAGE message = get_oom_base_message (mailitem);
+  if (!message)
+    {
+      log_error ("%s:%s: Failed to get the base message",
+                 SRCNAME, __func__);
+      return 0;
+    }
+  ret = message_incoming_handler (message, NULL, true /*force */);
+  message->Release ();
+
+  return ret;
+}
+
 /* do_reader_action
    decrypts the content of an inspector. Controled by flags
    similary to the do_composer_action.
@@ -651,6 +672,23 @@ do_reader_action (LPDISPATCH ctrl, int flags)
                       MB_ICONINFORMATION|MB_OK);
           goto failure;
         }
+    }
+
+  if (verify_mime (mailItem))
+    {
+      log_debug ("%s:%s: This was a mime message.",
+                 SRCNAME, __func__);
+
+      if (flags & OP_DECRYPT)
+        {
+          MessageBox (NULL,
+                      "This message is in MIME format. Due to technical restrictions "
+                      "it can only be decrypted once per session. To decrypt it again "
+                      "please restart Outlook and open the message.",
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+        }
+      goto failure;
     }
 
   if (flags & DATA_SELECTION)
