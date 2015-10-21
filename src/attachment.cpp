@@ -294,6 +294,13 @@ do_crypt (LPDISPATCH mailitem, bool protect)
         }
       mapi_attachment = (LPATTACH) get_oom_iunknown (attachment,
                                                      "MapiObject");
+      if (!mapi_attachment)
+        {
+          log_debug ("%s:%s: Failed to get MapiObject of attachment: %p",
+                     SRCNAME, __func__, attachment);
+          attachment->Release ();
+          continue;
+        }
 
       att_type = get_gpgolattachtype (mapi_attachment, tag_id);
       if ((protect && att_type == ATTACHTYPE_FROMMOSS_DEC) ||
