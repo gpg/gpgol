@@ -36,6 +36,9 @@
 #include "mailitem.h"
 #include "revert.h"
 
+#undef _
+#define _(a) utf8_gettext (a)
+
 
 /* Event sink for an Inspectors collection object.  */
 BEGIN_EVENT_SINK(GpgolInspectorsEvents, IOOMInspectorsEvents)
