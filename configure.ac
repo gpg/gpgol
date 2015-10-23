@@ -11,7 +11,7 @@
 
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
-min_automake_version="1.9.4"
+min_automake_version="1.14"
 
 # To build a release you need to create a tag with the version number
 # (git tag -s gpgol-k.n.m) and run "./autogen.sh --force".  Please
@@ -51,6 +51,7 @@ PACKAGE=$PACKAGE_NAME
 PACKAGE_GT=${PACKAGE_NAME}
 VERSION=$PACKAGE_VERSION
 
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR(src/gpgol.def)
 AM_CONFIG_HEADER(config.h)
 AC_CANONICAL_TARGET()
@@ -174,7 +175,7 @@ AM_PATH_LIBASSUAN("$NEED_LIBASSUAN_API:$NEED_LIBASSUAN_VERSION",
 
 
 # Note, that autogen.sh greps for the next line.
-AM_GNU_GETTEXT_VERSION(0.12.1)
+AM_GNU_GETTEXT_VERSION([0.12.1])
 AM_GNU_GETTEXT([external])
 # We always want NLs, despite what the above macro figures out.
 USE_NLS=yes

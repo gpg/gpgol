@@ -21,7 +21,7 @@ DISTCHECK_CONFIGURE_FLAGS = --host=i586-mingw32msvc --build=i686-pc-linux-gnu \
                             --with-libassuan-prefix=@prefix@
 
 # Note: Do not put ChangeLog-2011 here - it exists only in the repo.
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = autogen.sh autogen.rc
 
 
 SUBDIRS = src forms po m4 doc
