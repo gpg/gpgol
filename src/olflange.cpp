@@ -686,6 +686,7 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
           if (disp)
             {
               olversion = get_oom_string (disp, "Version");
+              g_ol_version_major = atoi (olversion);
               disp->Release ();
             }
           obj->Release ();

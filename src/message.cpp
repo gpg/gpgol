@@ -1112,7 +1112,9 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 static char **
 get_recipients (LPMESSAGE message)
 {
-  static SizedSPropTagArray (1L, PropRecipientNum) = {1L, {PR_EMAIL_ADDRESS}};
+  ULONG addr_prop = g_ol_version_major > 13 ? PR_SMTP_ADDRESS :
+                                              PR_EMAIL_ADDRESS;
+  static SizedSPropTagArray (1L, PropRecipientNum) = {1L, {addr_prop}};
   HRESULT hr;
   LPMAPITABLE lpRecipientTable = NULL;
   LPSRowSet lpRecipientRows = NULL;

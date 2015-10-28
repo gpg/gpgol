@@ -296,7 +296,7 @@ do_composer_action (LPDISPATCH ctrl, int flags)
   engine_set_session_number (filter, session_number);
   engine_set_session_title (filter, _("GpgOL"));
 
-  senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS);
+  senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
 
   if (flags & OP_ENCRYPT)
     {
@@ -732,7 +732,7 @@ do_reader_action (LPDISPATCH ctrl, int flags)
         {
           /* Not SMTP, fall back to try getting the property. */
           LPDISPATCH sender = get_oom_object (mailItem, "Sender");
-          senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS);
+          senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
           RELDISP (sender);
         }
       xfree (addrType);
@@ -742,7 +742,7 @@ do_reader_action (LPDISPATCH ctrl, int flags)
       /* If the message has not been sent we might be composing
          in this case use the current address */
       LPDISPATCH sender = get_oom_object (mailItem, "Session.CurrentUser");
-      senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS);
+      senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
       RELDISP (sender);
     }
 
@@ -1127,7 +1127,7 @@ attachEncryptedFile (LPDISPATCH ctrl, int flags)
       goto failure;
     }
 
-  senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS);
+  senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
 
   curWindow = get_oom_context_window (context);
 

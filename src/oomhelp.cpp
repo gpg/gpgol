@@ -903,7 +903,7 @@ get_oom_recipients (LPDISPATCH recipients)
           char *address,
                *resolved;
           address = get_oom_string (recipient, "Address");
-          resolved = get_pa_string (recipient, PR_SMTP_ADDRESS);
+          resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
           if (resolved)
             {
               xfree (address);

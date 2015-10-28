@@ -235,6 +235,8 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
   log_debug ("%s:%s:   using GPGME %s\n",
              SRCNAME, __func__, version);
 
+  g_ol_version_major = atoi (version);
+
   if (!version || !strlen (version) ||
       (strncmp (version, "14", 2) &&
        strncmp (version, "15", 2) &&

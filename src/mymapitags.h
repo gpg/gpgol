@@ -838,6 +838,9 @@
 #define PR_INITIAL_DETAILS_PANE               PROP_TAG( PT_LONG,        0x3F08)
 #define PR_MSG_EDITOR_FORMAT                  PROP_TAG( PT_LONG,        0x5903)
 #define PR_ATTACHMENT_HIDDEN                  PROP_TAG( PT_BOOLEAN,     0x7ffe)
+#define PR_SMTP_ADDRESS                       PROP_TAG( PT_TSTRING,     0x39fe)
+#define PR_SMTP_ADDRESS_W                     PROP_TAG( PT_UNICODE,     0x39fe)
+#define PR_SMTP_ADDRESS_A                     PROP_TAG( PT_STRING8,     0x39fe)
 
 #define PROP_ID_SECURE_MIN                0x67F0
 #define PROP_ID_SECURE_MAX                0x67FF

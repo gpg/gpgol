@@ -53,6 +53,9 @@ static char *the_session_marker;
 static char *get_locale_dir (void);
 static void drop_locale_dir (char *locale_dir);
 
+/* The major version of Outlook we are attached to */
+int g_ol_version_major;
+
 
 
 /* Initialization of gloabl options.  These are merely the defaults

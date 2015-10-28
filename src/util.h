@@ -170,7 +170,7 @@ _gpgol_stpcpy (char *a, const char *b)
 #define stpcpy(a,b) _gpgol_stpcpy ((a), (b))
 #endif /*!HAVE_STPCPY*/
 
-
+extern int g_ol_version_major;
 
 #ifdef __cplusplus
 }

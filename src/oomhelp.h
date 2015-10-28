@@ -77,8 +77,8 @@ DEFINE_OLEGUID(IID_IUnknown,                  0x00000000, 0, 0);
 DEFINE_OLEGUID(IID_IDispatch,                 0x00020400, 0, 0);
 DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 
-#ifndef PR_SMTP_ADDRESS
-#define PR_SMTP_ADDRESS "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+#ifndef PR_SMTP_ADDRESS_DASL
+#define PR_SMTP_ADDRESS_DASL "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
 #endif
 
 #ifdef __cplusplus
