@@ -44,11 +44,14 @@ struct sink_s
 /*   } b64; */
 };
 
-int mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol);
+int mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
+               const char *sender);
 int mime_encrypt (LPMESSAGE message, HWND hwnd,
-                  protocol_t protocol, char **recipients);
+                  protocol_t protocol, char **recipients,
+                  const char *sender);
 int mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
-                       protocol_t protocol, char **recipients);
+                       protocol_t protocol, char **recipients,
+                       const char *sender);
 int sink_std_write (sink_t sink, const void *data, size_t datalen);
 int sink_file_write (sink_t sink, const void *data, size_t datalen);
 int sink_encryption_write (sink_t encsink, const void *data, size_t datalen);

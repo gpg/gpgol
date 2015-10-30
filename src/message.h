@@ -34,9 +34,12 @@ int message_verify (LPMESSAGE message, msgtype_t msgtype, int force,
                     HWND hwnd);
 int message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, 
                      HWND hwnd);
-int message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd);
-int message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd);
-int message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd);
+int message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd,
+                  const char *sender = NULL);
+int message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
+                     const char *sender = NULL);
+int message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
+                          const char *sender = NULL);
 
 
 #endif /*MESSAGE_H*/

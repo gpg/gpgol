@@ -63,7 +63,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
     m_needs_wipe(false),
-    m_crypt_successful(false)
+    m_crypt_successful(false),
+    m_sender(NULL)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -222,17 +223,17 @@ Mail::do_crypto ()
       log_debug ("%s:%s: Sign / Encrypting message",
                  SRCNAME, __func__);
       err = message_sign_encrypt (message, PROTOCOL_UNKNOWN,
-                                  NULL);
+                                  NULL, get_sender ());
     }
   else if (flags == 2)
     {
       err = message_sign (message, PROTOCOL_UNKNOWN,
-                          NULL);
+                          NULL, get_sender ());
     }
   else if (flags == 1)
     {
       err = message_encrypt (message, PROTOCOL_UNKNOWN,
-                             NULL);
+                             NULL, get_sender ());
     }
   else
     {
@@ -279,4 +280,39 @@ Mail::wipe ()
     }
   m_needs_wipe = false;
   return 0;
+}
+
+int
+Mail::update_sender ()
+{
+  LPDISPATCH sender = NULL;
+  sender = get_oom_object (m_mailitem, "Session.CurrentUser");
+
+  xfree (m_sender);
+
+  if (!sender)
+    {
+      log_error ("%s:%s: Failed to get sender object.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+
+  if (!m_sender)
+    {
+      log_error ("%s:%s: Failed to get smtp address of sender.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  return 0;
+}
+
+const char *
+Mail::get_sender ()
+{
+  if (!m_sender)
+    {
+      update_sender();
+    }
+  return m_sender;
 }

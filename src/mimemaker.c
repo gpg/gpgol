@@ -1155,7 +1155,7 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
 static int
 do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
               mapi_attach_item_t **r_att_table, sink_t tmpsink,
-              unsigned int session_number)
+              unsigned int session_number, const char *sender)
 {
   int result = -1;
   int rc;
@@ -1172,7 +1172,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   char top_header[BOUNDARYSIZE+200];
   engine_filter_t filter = NULL;
   struct databuf_s sigbuffer;
-  char *sender = NULL;
+  char *my_sender = NULL;
 
   *r_att_table = NULL;
 
@@ -1222,8 +1222,11 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
       }
     }
 
-  sender = mapi_get_sender (message);
-  if (engine_sign_start (filter, hwnd, protocol, sender, &protocol))
+  if (sender)
+    my_sender = xstrdup (sender);
+  else
+    my_sender = mapi_get_sender (message);
+  if (engine_sign_start (filter, hwnd, protocol, my_sender, &protocol))
     goto failure;
 
   protocol = check_protocol (protocol);
@@ -1402,7 +1405,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   else
     *r_att_table = att_table;
   xfree (sigbuffer.buf);
-  xfree (sender);
+  xfree (my_sender);
   return result;
 }
 
@@ -1414,13 +1417,14 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
    keep the original message intact but there is no 100% guarantee for
    it. */
 int
-mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol)
+mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
+           const char *sender)
 {
   int result = -1;
   mapi_attach_item_t *att_table;
 
   result = do_mime_sign (message, hwnd, protocol, &att_table, 0,
-                         engine_new_session_number ());
+                         engine_new_session_number (), sender);
   if (!result)
     {
       if (!finalize_message (message, att_table, protocol, 0))
@@ -1604,7 +1608,8 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
 /* Encrypt the MESSAGE.  */
 int
 mime_encrypt (LPMESSAGE message, HWND hwnd,
-              protocol_t protocol, char **recipients)
+              protocol_t protocol, char **recipients,
+              const char *sender)
 {
   int result = -1;
   int rc;
@@ -1619,7 +1624,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   char *body = NULL;
   int n_att_usable;
   engine_filter_t filter = NULL;
-  char *sender = NULL;
+  char *my_sender = NULL;
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -1662,9 +1667,12 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
     xfree (tmp);
   }
 
-  sender = mapi_get_sender (message);
+  if (sender)
+    my_sender = xstrdup (sender);
+  else
+    my_sender = mapi_get_sender (message);
   if (engine_encrypt_prepare (filter, hwnd, protocol, 0,
-                              sender, recipients, &protocol))
+                              my_sender, recipients, &protocol))
     goto failure;
   if (engine_encrypt_start (filter, 0))
     goto failure;
@@ -1743,7 +1751,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   cancel_mapi_attachment (&attach, sink);
   xfree (body);
   mapi_release_attach_table (att_table);
-  xfree (sender);
+  xfree (my_sender);
   return result;
 }
 
@@ -1753,7 +1761,8 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 /* Sign and Encrypt the MESSAGE.  */
 int
 mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
-                   protocol_t protocol, char **recipients)
+                   protocol_t protocol, char **recipients,
+                   const char *sender)
 {
   int result = -1;
   int rc = 0;
@@ -1770,7 +1779,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   mapi_attach_item_t *att_table = NULL;
   engine_filter_t filter = NULL;
   unsigned int session_number;
-  char *sender = NULL;
+  char *my_sender = NULL;
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -1842,10 +1851,13 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
     xfree (tmp);
   }
 
-  sender = mapi_get_sender (message);
+  if (sender)
+    my_sender = xstrdup (sender);
+  else
+    my_sender = mapi_get_sender (message);
   if ((rc=engine_encrypt_prepare (filter, hwnd,
                                   protocol, ENGINE_FLAG_SIGN_FOLLOWS,
-                                  sender, recipients, &protocol)))
+                                  my_sender, recipients, &protocol)))
     goto failure;
 
   protocol = check_protocol (protocol);
@@ -1859,7 +1871,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      the signature.  Note that the protocol to use is taken from the
      encryption operation. */
   if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink,
-                    session_number))
+                    session_number, sender))
     goto failure;
 
   /* Now send the actual ENCRYPT command.  This split up between
@@ -1958,6 +1970,6 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   if (tmpstream)
     IStream_Release (tmpstream);
   mapi_release_attach_table (att_table);
-  xfree (sender);
+  xfree (my_sender);
   return result;
 }

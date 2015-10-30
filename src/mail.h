@@ -96,12 +96,30 @@ public:
    * @returns 0 on success; */
   int wipe ();
 
+  /** @brief update the sender address.
+   *
+   * For Exchange 2013 at least we don't have any other way to get the
+   * senders SMTP address then through the object model. So we have to
+   * store the sender address for later events that do not allow us to
+   * access the OOM but enable us to work with the underlying MAPI structure.
+   *
+   * @returns 0 on success */
+  int update_sender ();
+
+  /** @brief get sender SMTP address (UTF-8 encoded).
+   *
+   * If the sender address has not been set through update_sender this
+   * calls update_sender before returning the sender.
+   *
+   * @returns A reference to the utf8 sender address. Or NULL. */
+  const char *get_sender ();
+
 private:
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
-  char * m_sender_addr;
   bool m_processed,    /* The message has been porcessed by us.  */
        m_needs_wipe,   /* We have added plaintext to the mesage. */
        m_crypt_successful; /* We successfuly performed crypto on the item. */
+  char *m_sender;
 };
 #endif // MAIL_H

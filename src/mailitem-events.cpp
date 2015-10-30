@@ -173,6 +173,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                m_send_seen = false;
                break;
             }
+          m_mail->update_sender ();
           m_send_seen = true;
           log_debug ("%s:%s: Message %p cancelling send to let us do crypto.",
                      SRCNAME, __func__, m_object);

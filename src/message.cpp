@@ -1213,7 +1213,8 @@ release_recipient_array (char **recipients)
 
 
 static int
-sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
+sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag,
+              const char *sender)
 {
   gpg_error_t err;
   char **recipients;
@@ -1229,9 +1230,11 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
   else
     {
       if (signflag)
-        err = mime_sign_encrypt (message, hwnd, protocol, recipients);
+        err = mime_sign_encrypt (message, hwnd, protocol, recipients,
+                                 sender);
       else
-        err = mime_encrypt (message, hwnd, protocol, recipients);
+        err = mime_encrypt (message, hwnd, protocol, recipients,
+                            sender);
       if (gpg_err_code (err) == GPG_ERR_NO_DATA)
         {
           MessageBox (hwnd, _("Encrypting or signing an empty message "
@@ -1254,11 +1257,12 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag)
 
 /* Sign the MESSAGE.  */
 int 
-message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd)
+message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd,
+              const char *sender)
 {
   gpg_error_t err;
 
-  err = mime_sign (message, hwnd, protocol);
+  err = mime_sign (message, hwnd, protocol, sender);
   if (gpg_err_code (err) == GPG_ERR_NO_DATA)
     {
       MessageBox (hwnd, _("Encrypting or signing an empty message "
@@ -1280,17 +1284,19 @@ message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd)
 
 /* Encrypt the MESSAGE.  */
 int 
-message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd)
+message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
+                 const char *sender)
 {
-  return sign_encrypt (message, protocol, hwnd, 0);
+  return sign_encrypt (message, protocol, hwnd, 0, sender);
 }
 
 
 /* Sign+Encrypt the MESSAGE.  */
 int 
-message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd)
+message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
+                      const char *sender)
 {
-  return sign_encrypt (message, protocol, hwnd, 1);
+  return sign_encrypt (message, protocol, hwnd, 1, sender);
 }
 
 
