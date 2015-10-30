@@ -22,42 +22,11 @@
 #include "eventsink.h"
 #include "eventsinks.h"
 #include "mymapi.h"
-#include "message.h"
 #include "oomhelp.h"
 #include "ocidl.h"
-#include "attachment.h"
-#include "mapihelp.h"
-#include "gpgoladdin.h"
 #include "windowmessages.h"
+#include "mail.h"
 
-
-/* TODO: Localize this once it is less bound to change.
-   TODO: Use a dedicated message for failed decryption. */
-#define HTML_TEMPLATE  \
-"<html><head></head><body>" \
-"<table border=\"0\" width=\"100%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">" \
-"<tr>" \
-"<td bgcolor=\"#0080ff\">" \
-"<p><span style=\"font-weight:600; background-color:#0080ff;\"><center>This message is encrypted</center><span></p></td></tr>" \
-"<tr>" \
-"<td bgcolor=\"#e0f0ff\">" \
-"<center>" \
-"<br/>You can decrypt this message with GnuPG" \
-"<br/>Open this message to decrypt it." \
-"<br/>Opening any attachments while this message is shown will only give you access to encrypted data. </center>" \
-"<br/><br/>If you have GpgOL (The GnuPG Outlook plugin installed) this message should have been automatically decrypted." \
-"<br/>Reasons that you still see this message can be: " \
-"<ul>" \
-"<li>Decryption failed: <ul><li> Refer to the Decrypt / Verify popup window for details.</li></ul></li>" \
-"<li>Outlook tried to save the decrypted content:" \
-" <ul> "\
-" <li>To protect your data GpgOL encrypts a message when it is saved by Outlook.</li>" \
-" <li>You will need to restart Outlook to allow GpgOL to decrypt this message again.</li>" \
-" </ul>" \
-"<li>GpgOL is not activated: <ul><li>Check under Options -> Add-Ins -> COM-Add-Ins to see if this is the case.</li></ul></li>" \
-"</ul>"\
-"</td></tr>" \
-"</table></body></html>"
 
 typedef enum
   {
@@ -94,15 +63,8 @@ BEGIN_EVENT_SINK(MailItemEvents, IDispatch)
 /* We are still in the class declaration */
 
 private:
-  bool m_send_seen,   /* The message is about to be submitted */
-       m_want_html,    /* Encryption of HTML is desired. */
-       m_processed,    /* The message has been porcessed by us.  */
-       m_needs_wipe,   /* We have added plaintext to the mesage. */
-       m_was_encrypted, /* The original message was encrypted.  */
-       m_crypt_successful; /* We successfuly performed crypto on the item. */
-
-  HRESULT handle_before_read();
-  HRESULT handle_read();
+  Mail * m_mail; /* The mail object related to this mailitem */
+  bool m_send_seen;   /* The message is about to be submitted */
 };
 
 MailItemEvents::MailItemEvents() :
@@ -110,10 +72,8 @@ MailItemEvents::MailItemEvents() :
     m_pCP(NULL),
     m_cookie(0),
     m_ref(1),
-    m_send_seen(false),
-    m_want_html(false),
-    m_processed(false),
-    m_crypt_successful(false)
+    m_mail(NULL),
+    m_send_seen (false)
 {
 }
 
@@ -125,127 +85,7 @@ MailItemEvents::~MailItemEvents()
     m_object->Release();
 }
 
-HRESULT
-MailItemEvents::handle_read()
-{
-  int err;
-  int is_html, was_protected = 0;
-  char *body = NULL;
-  /* Outlook somehow is confused about the attachment
-     table of our sent mails. The securemessage interface
-     gives us access to the real attach table but the attachment
-     table of the message itself is broken. */
-  LPMESSAGE base_message = get_oom_base_message (m_object);
-  if (!base_message)
-    {
-      log_error ("%s:%s: Failed to get base message \n",
-                 SRCNAME, __func__);
-      return S_OK;
-    }
-  err = mapi_get_gpgol_body_attachment (base_message, &body, NULL,
-                                        &is_html, &was_protected);
-  if (err || !body)
-    {
-      log_error ("%s:%s: Failed to get body attachment of \n",
-                 SRCNAME, __func__);
-      put_oom_string (m_object, "HTMLBody", HTML_TEMPLATE);
-      goto done;
-    }
-  if (put_oom_string (m_object, is_html ? "HTMLBody" : "Body", body))
-    {
-      log_error ("%s:%s: Failed to modify body of item. \n",
-                 SRCNAME, __func__);
-    }
-
-  xfree (body);
-  /* TODO: unprotect attachments does not work for sent mails
-     as the attachment table of the mapiitem is invalid.
-     We need to somehow get outlook to use the attachment table
-     of the base message and and then decrypt those.
-     This will probably mean removing all attachments for the
-     message and adding the attachments from the base message then
-     we can call unprotect_attachments as usual. */
-  if (unprotect_attachments (m_object))
-    {
-      log_error ("%s:%s: Failed to unprotect attachments. \n",
-                 SRCNAME, __func__);
-    }
-
-done:
-  RELDISP (base_message);
-  return S_OK;
-}
-
-/* Before read is the time where we can access the underlying
-   base message. So this is where we create our attachment. */
-HRESULT
-MailItemEvents::handle_before_read()
-{
-  int err;
-  LPMESSAGE message = get_oom_base_message (m_object);
-  if (!message)
-    {
-      log_error ("%s:%s: Failed to get base message.",
-                 SRCNAME, __func__);
-      return S_OK;
-    }
-  log_oom_extra ("%s:%s: GetBaseMessage OK.",
-                 SRCNAME, __func__);
-  err = message_incoming_handler (message, NULL,
-                                  false);
-  m_processed = (err == 1) || (err == 2);
-  m_was_encrypted = err == 2;
-
-  log_debug ("%s:%s: incoming handler status: %i",
-             SRCNAME, __func__, err);
-  message->Release ();
-  return S_OK;
-}
-
-
-static int
-do_crypto_on_item (LPDISPATCH mailitem)
-{
-  int err = -1,
-      flags = 0;
-  LPMESSAGE message = get_oom_base_message (mailitem);
-  if (!message)
-    {
-      log_error ("%s:%s: Failed to get base message.",
-                 SRCNAME, __func__);
-      return err;
-    }
-  flags = get_gpgol_draft_info_flags (message);
-  if (flags == 3)
-    {
-      log_debug ("%s:%s: Sign / Encrypting message",
-                 SRCNAME, __func__);
-      err = message_sign_encrypt (message, PROTOCOL_UNKNOWN,
-                                  NULL);
-    }
-  else if (flags == 2)
-    {
-      err = message_sign (message, PROTOCOL_UNKNOWN,
-                          NULL);
-    }
-  else if (flags == 1)
-    {
-      err = message_encrypt (message, PROTOCOL_UNKNOWN,
-                             NULL);
-    }
-  else
-    {
-      log_debug ("%s:%s: Unknown flags for crypto: %i",
-                 SRCNAME, __func__, flags);
-    }
-  log_debug ("%s:%s: Status: %i",
-             SRCNAME, __func__, err);
-  message->Release ();
-  return err;
-}
-
-
-DWORD WINAPI
+static DWORD WINAPI
 request_send (LPVOID arg)
 {
   log_debug ("%s:%s: requesting send for: %p",
@@ -261,21 +101,6 @@ request_send (LPVOID arg)
   return 0;
 }
 
-static bool
-needs_crypto (LPDISPATCH mailitem)
-{
-  LPMESSAGE message = get_oom_message (mailitem);
-  bool ret;
-  if (!message)
-    {
-      log_error ("%s:%s: Failed to get message.",
-                 SRCNAME, __func__);
-      return false;
-    }
-  ret = get_gpgol_draft_info_flags (message);
-  message->Release ();
-  return ret;
-}
 
 /* The main Invoke function. The return value of this
    function does not appear to have any effect on outlook
@@ -288,20 +113,35 @@ needs_crypto (LPDISPATCH mailitem)
 EVENT_SINK_INVOKE(MailItemEvents)
 {
   USE_INVOKE_ARGS
+  if (!m_mail)
+    {
+      m_mail = Mail::get_mail_for_item (m_object);
+      if (!m_mail)
+        {
+          log_error ("%s:%s: mail event without mail object known. Bug.",
+                     SRCNAME, __func__);
+          return S_OK;
+        }
+    }
   switch(dispid)
     {
       case BeforeRead:
         {
-          return handle_before_read();
+          if (m_mail->process_message ())
+            {
+              log_error ("%s:%s: Process message failed.",
+                         SRCNAME, __func__);
+            }
+          break;
         }
       case Read:
         {
-          if (m_processed)
+          if (m_mail->insert_plaintext ())
             {
-              m_needs_wipe = m_was_encrypted;
-              handle_read();
+              log_error ("%s:%s: Failed to insert plaintext into oom.",
+                         SRCNAME, __func__);
             }
-          return S_OK;
+          break;
         }
       case Send:
         {
@@ -326,7 +166,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                         SRCNAME, __func__);
              break;
            }
-          if (!needs_crypto (m_object) || m_crypt_successful)
+          if (m_mail->crypto_successful ())
             {
                log_debug ("%s:%s: Passing send event for message %p.",
                           SRCNAME, __func__, m_object);
@@ -355,23 +195,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
                       SRCNAME, __func__);
              break;
            }
-          if (m_processed && m_needs_wipe && !m_send_seen)
+
+          if (m_mail->wipe ())
             {
-              log_debug ("%s:%s: Message %p removing plaintext from Message.",
-                         SRCNAME, __func__, m_object);
-              if (put_oom_string (m_object, "HTMLBody",
-                                  HTML_TEMPLATE) ||
-                  protect_attachments (m_object))
-                {
-                  /* An error cleaning the mail should not happen normally.
-                     But just in case there is an error we cancel the
-                     write here. */
-                  log_debug ("%s:%s: Failed to remove plaintext.",
-                             SRCNAME, __func__);
-                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                  return E_ABORT;
-                }
-              m_needs_wipe = false;
+              /* An error cleaning the mail should not happen normally.
+                 But just in case there is an error we cancel the
+                 write here. */
+              log_debug ("%s:%s: Failed to remove plaintext.",
+                         SRCNAME, __func__);
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              return E_ABORT;
             }
           break;
         }
@@ -380,8 +213,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (m_send_seen)
             {
               m_send_seen = false;
-              m_crypt_successful = !do_crypto_on_item (m_object);
-              if (m_crypt_successful)
+              m_mail->do_crypto ();
+              if (m_mail->crypto_successful ())
                 {
                   /* We can't trigger a Send event in the current state.
                      Appearently Outlook locks some methods in some events.
@@ -396,12 +229,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Unload:
         {
-          log_debug ("%s:%s: Unloading event handler for msg: %p.",
+          log_debug ("%s:%s: Removing Mail for message: %p.",
                      SRCNAME, __func__, m_object);
-          detach_MailItemEvents_sink (this);
-          delete this;
-          log_debug ("%s:%s: Unloaded.",
-                     SRCNAME, __func__);
+          delete m_mail;
           return S_OK;
         }
       default:

@@ -167,7 +167,7 @@ GpgolAddin::~GpgolAddin (void)
              SRCNAME, __func__);
 
   m_ribbonExtender->Release ();
-  m_applicationEventSink->Release ();
+  m_applicationEventSink->Release() ;
 
   if (!m_disabled)
     {

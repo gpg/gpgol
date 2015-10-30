@@ -84,7 +84,8 @@ gpgol_SOURCES = \
 	mailitem-events.cpp \
 	attachment.h attachment.cpp \
 	windowmessages.h windowmessages.cpp \
-	gpgolstr.h gpgolstr.cpp
+	gpgolstr.h gpgolstr.cpp \
+	mail.h mail.cpp
 
 
 #treeview_SOURCES = treeview.c

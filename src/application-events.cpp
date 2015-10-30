@@ -23,10 +23,10 @@
    in their invoke methods.
 */
 #include "eventsink.h"
-#include "eventsinks.h"
 #include "ocidl.h"
 #include "common.h"
 #include "oomhelp.h"
+#include "mail.h"
 
 /* Application Events */
 BEGIN_EVENT_SINK(ApplicationEvents, IDispatch)
@@ -63,7 +63,6 @@ EVENT_SINK_INVOKE(ApplicationEvents)
       case ItemLoad:
         {
           LPDISPATCH mailItem;
-          LPDISPATCH mailEventSink;
           /* The mailItem should be the first argument */
           if (!parms || parms->cArgs != 1 ||
               parms->rgvarg[0].vt != VT_DISPATCH)
@@ -83,23 +82,9 @@ EVENT_SINK_INVOKE(ApplicationEvents)
                          SRCNAME, __func__);
               break;
             }
-          log_debug ("%s:%s: Installing event sink on mailitem: %p",
+          log_debug ("%s:%s: Creating mail object for item: %p",
                      SRCNAME, __func__, mailItem);
-          mailEventSink = install_MailItemEvents_sink (mailItem);
-          /* TODO figure out what we need to do with the event sink.
-             Does it need to be Released at some point? What happens
-             on unload? */
-          if (!mailEventSink)
-            {
-              log_error ("%s:%s: Failed to install MailItemEvents sink.",
-                         SRCNAME, __func__);
-            }
-          else
-            {
-              log_debug ("%s:%s: MailItem event handler installed.",
-                         SRCNAME, __func__);
-            }
-          mailItem->Release ();
+          new Mail (mailItem);
           break;
         }
       default:
