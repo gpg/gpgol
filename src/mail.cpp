@@ -114,6 +114,7 @@ Mail::~Mail()
   std::map<LPDISPATCH, Mail *>::iterator it;
 
   detach_MailItemEvents_sink (m_event_sink);
+  m_event_sink->Release ();
 
   it = g_mail_map.find(m_mailitem);
   if (it != g_mail_map.end())
