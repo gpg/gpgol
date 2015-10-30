@@ -1112,9 +1112,8 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 static char **
 get_recipients (LPMESSAGE message)
 {
-  ULONG addr_prop = g_ol_version_major > 13 ? PR_SMTP_ADDRESS :
-                                              PR_EMAIL_ADDRESS;
-  static SizedSPropTagArray (1L, PropRecipientNum) = {1L, {addr_prop}};
+  static SizedSPropTagArray (2L, PropRecipientNum) = {2L, {PR_SMTP_ADDRESS,
+                                                           PR_EMAIL_ADDRESS}};
   HRESULT hr;
   LPMAPITABLE lpRecipientTable = NULL;
   LPSRowSet lpRecipientRows = NULL;
@@ -1148,28 +1147,40 @@ get_recipients (LPMESSAGE message)
 
   for (rowidx=0, rsetidx=0; rowidx < lpRecipientRows->cRows; rowidx++)
     {
-      if (!lpRecipientRows->aRow[rowidx].cValues)
-        continue;
-      row = lpRecipientRows->aRow[rowidx].lpProps;
-
-      switch (PROP_TYPE (row->ulPropTag))
+      bool found_one = false;
+      for (int colidx = 0; colidx < lpRecipientRows->aRow[rowidx].cValues;
+           colidx++)
         {
-        case PT_UNICODE:
-          if ((rset[rsetidx] = wchar_to_utf8 (row->Value.lpszW)))
-            rsetidx++;
-          else
-            log_debug ("%s:%s: error converting recipient to utf8\n",
-                       SRCNAME, __func__);
-          break;
-      
-        case PT_STRING8: /* Assume ASCII. */
-          rset[rsetidx++] = xstrdup (row->Value.lpszA);
-          break;
-          
-        default:
-          log_debug ("%s:%s: proptag=0x%08lx not supported\n",
-                     SRCNAME, __func__, row->ulPropTag);
-          break;
+          row = lpRecipientRows->aRow[rowidx].lpProps;
+
+          switch (PROP_TYPE (row->ulPropTag))
+            {
+            case PT_UNICODE:
+              if ((rset[rsetidx] = wchar_to_utf8 (row->Value.lpszW)))
+                {
+                  rsetidx++;
+                  found_one = true;
+                }
+              else
+                log_debug ("%s:%s: error converting recipient to utf8\n",
+                           SRCNAME, __func__);
+              break;
+
+            case PT_STRING8: /* Assume ASCII. */
+              rset[rsetidx++] = xstrdup (row->Value.lpszA);
+              found_one = true;
+              break;
+
+            default:
+              log_debug ("%s:%s: proptag=0x%08lx not supported\n",
+                         SRCNAME, __func__, row->ulPropTag);
+              break;
+            }
+          if (found_one)
+            {
+              break;
+            }
+
         }
     }
 
