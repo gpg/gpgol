@@ -1474,18 +1474,34 @@ mapi_get_from_address (LPMESSAGE message)
   HRESULT hr;
   LPSPropValue propval = NULL;
   char *buf;
-  
+  ULONG try_props[3] = {PidTagSenderSmtpAddress_W,
+                        PR_SENT_REPRESENTING_SMTP_ADDRESS_W,
+                        PR_SENDER_EMAIL_ADDRESS_W};
+
   if (!message)
     return xstrdup ("[no message]"); /* Ooops.  */
 
-  hr = HrGetOneProp ((LPMAPIPROP)message, PR_SENDER_EMAIL_ADDRESS_W, &propval);
+  for (int i = 0; i < 3; i++)
+    {
+      /* We try to get different properties first as they contain
+         the SMTP address of the sender. EMAIL address can be
+         some LDAP stuff for exchange. */
+      hr = HrGetOneProp ((LPMAPIPROP)message, try_props[i],
+                         &propval);
+      if (!FAILED (hr))
+        {
+          break;
+        }
+    }
+   /* This is the last result that should always work but not necessarily
+      contain an SMTP Address. */
   if (FAILED (hr))
     {
       log_debug ("%s:%s: HrGetOneProp failed: hr=%#lx\n",
                  SRCNAME, __func__, hr);
       return NULL;
     }
-    
+
   if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
     {
       log_debug ("%s:%s: HrGetOneProp returns invalid type %lu\n",

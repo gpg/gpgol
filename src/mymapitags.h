@@ -841,6 +841,10 @@
 #define PR_SMTP_ADDRESS                       PROP_TAG( PT_TSTRING,     0x39fe)
 #define PR_SMTP_ADDRESS_W                     PROP_TAG( PT_UNICODE,     0x39fe)
 #define PR_SMTP_ADDRESS_A                     PROP_TAG( PT_STRING8,     0x39fe)
+#define PR_SENT_REPRESENTING_SMTP_ADDRESS     PROP_TAG( PT_TSTRING,     0x5d02)
+#define PR_SENT_REPRESENTING_SMTP_ADDRESS_A   PROP_TAG( PT_STRING8,     0x5d02)
+#define PR_SENT_REPRESENTING_SMTP_ADDRESS_W   PROP_TAG( PT_UNICODE,     0x5d02)
+#define PidTagSenderSmtpAddress_W             PROP_TAG( PT_UNICODE,     0x5d01)
 
 #define PROP_ID_SECURE_MIN                0x67F0
 #define PROP_ID_SECURE_MAX                0x67FF
