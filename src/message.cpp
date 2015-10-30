@@ -1008,11 +1008,11 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
             }
 
 
-          if ((part1_idx == -1 || part2_idx == -1)
+          if (part1_idx == -1 || (part2_idx == -1
               && !table[0].end_of_table && table[1].end_of_table
               && table[0].attach_type == ATTACHTYPE_MOSS
               && table[0].filename 
-              && !strcmp (table[0].filename, MIMEATTACHFILENAME))
+              && !strcmp (table[0].filename, MIMEATTACHFILENAME)))
             {
               /* This is likely a PGP/MIME created by us.  Due to the
                  way we created that message, the MAPI derived content
