@@ -48,6 +48,7 @@
 #include "eventsinks.h"
 #include "eventsink.h"
 #include "windowmessages.h"
+#include "mail.h"
 
 #define ICON_SIZE_LARGE  32
 #define ICON_SIZE_NORMAL 16
@@ -163,11 +164,13 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
 
 GpgolAddin::~GpgolAddin (void)
 {
-  log_debug ("%s:%s: cleaning up GpgolAddin object;",
+  log_debug ("%s:%s: Releasing Extender;",
              SRCNAME, __func__);
-
   m_ribbonExtender->Release ();
-  m_applicationEventSink->Release() ;
+
+  log_debug ("%s:%s: Releasing Application Event Sink;",
+             SRCNAME, __func__);
+  m_applicationEventSink->Release();
 
   if (!m_disabled)
     {
@@ -264,6 +267,23 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
 {
   (void)custom;
   (void)RemoveMode;
+  log_debug ("%s:%s: cleaning up GpgolAddin object;",
+             SRCNAME, __func__);
+
+  /* Doing the wipe in the dtor is too late. Outlook
+     does not allow us any OOM calls then and only returns
+     "Unexpected error" in that case. Weird. */
+
+  if (Mail::wipe_all_mails ())
+    {
+      MessageBox (NULL,
+                  _("Failed to remove plaintext from at least one message.\n\n"
+                    "Until GpgOL is activated again it is possible that the "
+                    "plaintext of messages decrypted in this Session is saved "
+                    "or transfered back to your mailserver."),
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+    }
 
   write_options();
   return S_OK;

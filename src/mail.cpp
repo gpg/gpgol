@@ -337,3 +337,20 @@ Mail::get_sender ()
     }
   return m_sender;
 }
+
+
+int
+Mail::wipe_all_mails ()
+{
+  int err = 0;
+  std::map<LPDISPATCH, Mail *>::iterator it;
+  for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
+    {
+      if (it->second->wipe ())
+        {
+          log_error ("Failed to wipe mail: %p ", it->first);
+          err++;
+        }
+    }
+  return err;
+}

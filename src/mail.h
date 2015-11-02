@@ -54,6 +54,16 @@ public:
   */
   static Mail* get_mail_for_item (LPDISPATCH mailitem);
 
+  /** @brief wipe the plaintext from all known Mail objects.
+    *
+    * This is intended as a "cleanup" call to be done on unload
+    * to avoid leaking plaintext in case we are deactivated while
+    * some mails still have their plaintext inserted.
+    *
+    * @returns the number of errors that occured.
+    */
+  static int wipe_all_mails ();
+
   /** @brief Reference to the mailitem. Do not Release! */
   LPDISPATCH item () { return m_mailitem; }
 
