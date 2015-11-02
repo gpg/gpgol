@@ -114,6 +114,15 @@ public:
    * @returns A reference to the utf8 sender address. Or NULL. */
   const char *get_sender ();
 
+  /** @brief Is this a crypto mail handled by gpgol.
+  *
+  * Calling this is only valid after a message has been processed.
+  *
+  * @returns true if the mail was either signed or encrypted and we processed
+  * it.
+  */
+  bool is_crypto_mail () { return m_processed; }
+
 private:
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;

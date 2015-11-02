@@ -228,6 +228,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           break;
         }
+      case Close:
+        {
+          if (m_mail->is_crypto_mail ())
+            {
+              invoke_oom_method (m_object, "Save", NULL);
+            }
+        }
       case Unload:
         {
           log_debug ("%s:%s: Removing Mail for message: %p.",
