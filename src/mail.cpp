@@ -161,6 +161,13 @@ Mail::insert_plaintext ()
       return 0;
     }
 
+  if (m_needs_wipe)
+    {
+      log_error ("%s:%s: Insert plaintext called for msg that needs wipe: %p",
+                 SRCNAME, __func__, m_mailitem);
+      return 0;
+    }
+
   /* Outlook somehow is confused about the attachment
      table of our sent mails. The securemessage interface
      gives us access to the real attach table but the attachment
@@ -175,6 +182,9 @@ Mail::insert_plaintext ()
   err = mapi_get_gpgol_body_attachment (base_message, &body, NULL,
                                         &is_html, &was_protected);
   m_needs_wipe = was_protected;
+
+  log_debug ("%s:%s: Setting plaintext for msg: %p",
+             SRCNAME, __func__, m_mailitem);
   if (err || !body)
     {
       log_error ("%s:%s: Failed to get body attachment. Err: %i",
@@ -285,6 +295,8 @@ Mail::wipe ()
                       HTML_TEMPLATE) ||
       protect_attachments (m_mailitem))
     {
+      log_debug ("%s:%s: Failed to wipe mailitem: %p.",
+                 SRCNAME, __func__, m_mailitem);
       return -1;
     }
   m_needs_wipe = false;
