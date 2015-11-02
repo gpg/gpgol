@@ -99,6 +99,14 @@ Mail::process_message ()
     }
   log_oom_extra ("%s:%s: GetBaseMessage OK.",
                  SRCNAME, __func__);
+  /* Change the message class here. It is important that
+     we change the message class in the before read event
+     regardless if it is already set to one of GpgOL's message
+     classes. Changing the message class (even if we set it
+     to the same value again that it already has) causes
+     Outlook to reconsider what it "knows" about a message
+     and reread data from the underlying base message. */
+  mapi_change_message_class (message, 1);
   err = message_incoming_handler (message, NULL,
                                   false);
   m_processed = (err == 1) || (err == 2);
