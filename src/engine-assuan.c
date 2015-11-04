@@ -629,7 +629,7 @@ op_assuan_init (void)
         return gpg_error (GPG_ERR_GENERAL);
       }
     mytid = GetCurrentThreadId ();
-    th = CreateThread (NULL, 256*1024, async_worker_thread, (void*)mytid,
+    th = CreateThread (NULL, 256*1024, async_worker_thread, &mytid,
                        0, &tid);
     if (th == INVALID_HANDLE_VALUE)
       log_error ("failed to launch the async_worker_thread");
@@ -904,11 +904,12 @@ async_worker_thread (void *dummy)
      Wordview, we can't use MsgWaitForMultipleObjects and the event
      loops.  For test purposes a compatibiliy option allows to revert
      to the old behaviour. */
-  int msgwait = opt.compat.use_mwfmo; 
+  int msgwait = opt.compat.use_mwfmo;
+  DWORD orig_thread = *(DWORD*)dummy;
 
   
   if (msgwait)
-    attach_thread_input ( (DWORD)dummy );
+    attach_thread_input ( orig_thread );
 
   for (;;)
     {
