@@ -1118,7 +1118,7 @@ get_recipients (LPMESSAGE message)
   LPMAPITABLE lpRecipientTable = NULL;
   LPSRowSet lpRecipientRows = NULL;
   unsigned int rowidx;
-  LPSPropValue row;
+  SPropValue_s val;
   char **rset;
   int rsetidx;
 
@@ -1151,12 +1151,12 @@ get_recipients (LPMESSAGE message)
       for (int colidx = 0; colidx < lpRecipientRows->aRow[rowidx].cValues;
            colidx++)
         {
-          row = lpRecipientRows->aRow[rowidx].lpProps;
+          val = lpRecipientRows->aRow[rowidx].lpProps[colidx];
 
-          switch (PROP_TYPE (row->ulPropTag))
+          switch (PROP_TYPE (val.ulPropTag))
             {
             case PT_UNICODE:
-              if ((rset[rsetidx] = wchar_to_utf8 (row->Value.lpszW)))
+              if ((rset[rsetidx] = wchar_to_utf8 (val.Value.lpszW)))
                 {
                   rsetidx++;
                   found_one = true;
@@ -1167,13 +1167,13 @@ get_recipients (LPMESSAGE message)
               break;
 
             case PT_STRING8: /* Assume ASCII. */
-              rset[rsetidx++] = xstrdup (row->Value.lpszA);
+              rset[rsetidx++] = xstrdup (val.Value.lpszA);
               found_one = true;
               break;
 
             default:
               log_debug ("%s:%s: proptag=0x%08lx not supported\n",
-                         SRCNAME, __func__, row->ulPropTag);
+                         SRCNAME, __func__, val.ulPropTag);
               break;
             }
           if (found_one)
