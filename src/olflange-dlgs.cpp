@@ -279,7 +279,13 @@ GPGOptionsDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           break;
 	}
 
+#ifndef WIN64
+      /* SetWindowLong is not portable according to msdn
+         it should be replaced by SetWindowLongPtr. But
+         as this here is code for Outlook < 2010 we don't
+         care as there is no 64bit version for that. */
       SetWindowLong (hDlg, DWL_MSGRESULT, bMsgResult);
+#endif
       break;
 
     default:

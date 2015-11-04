@@ -182,6 +182,7 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 void
 config_dialog_box (HWND parent)
 {
+#ifndef WIN64
   int resid;
 
   resid = IDD_EXT_OPTIONS;
@@ -189,6 +190,10 @@ config_dialog_box (HWND parent)
   if (!parent)
     parent = GetDesktopWindow ();
   DialogBoxParam (glob_hinst, (LPCTSTR)resid, parent, config_dlg_proc, 0);
+#else
+  (void)parent;
+  (void)config_dlg_proc;
+#endif
 }
 
 
