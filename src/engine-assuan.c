@@ -139,7 +139,33 @@ static HANDLE work_queue_event;
 /*-- prototypes --*/
 static DWORD WINAPI async_worker_thread (void *dummy);
 
+static unsigned int
+handle_to_int (HANDLE handle)
+{
+  /* According to MSDN
+     https://msdn.microsoft.com/en-us/library/
+     windows/desktop/aa384203%28v=vs.85%29.aspx:
 
+     64-bit versions of Windows use 32-bit handles for
+     interoperability. When sharing a handle between 32-bit
+     and 64-bit applications, only the lower 32 bits are significant,
+     so it is safe to truncate the handle (when passing it from 64-bit
+     to 32-bit) or sign-extend the handle (when passing it from 32-bit
+     to 64-bit). Handles that can be shared include handles to user
+     objects such as windows (HWND), handles to GDI objects such as pens
+     and brushes (HBRUSH and HPEN), and handles to named objects such
+     as mutexes, semaphores, and file handles.
+
+     So this hack is safe.
+   */
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+#endif
+  return (unsigned int) handle;
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif
+}
 
 
 /* Return the next command id.  Command Ids are used to group
@@ -425,11 +451,12 @@ send_options (assuan_context_t ctx, void *hwnd, pid_t *r_pid)
     }
 
   if (*r_pid != (pid_t)(-1) && !AllowSetForegroundWindow (*r_pid))
-    log_error_w32 (-1, "AllowSetForegroundWindow(%u) failed", *r_pid);
+    log_error_w32 (-1, "AllowSetForegroundWindow("SIZE_T_FORMAT") failed",
+                   *r_pid);
 
   if (!err && hwnd)
     {
-      snprintf (numbuf, sizeof numbuf, "%x", (unsigned int)hwnd);
+      snprintf (numbuf, sizeof numbuf, "%x", handle_to_int (hwnd));
       err = send_one_option (ctx, "window-id", numbuf);
     }
 
@@ -1694,15 +1721,15 @@ op_assuan_encrypt (protocol_t protocol,
      duplicate the handle into the server process and the server then
      uses this handle.  Eventually we should put this code into
      assuan_sendfd.  */
-  snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)inpipe[0]);
+  snprintf (line, sizeof line, "INPUT FD=%d", handle_to_int (inpipe[0]));
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
   if (flags & ENGINE_FLAG_BINARY_OUTPUT)
     snprintf (line, sizeof line, "OUTPUT FD=%d --binary",
-              (unsigned int)outpipe[1]);
+              handle_to_int (outpipe[1]));
   else
-    snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
+    snprintf (line, sizeof line, "OUTPUT FD=%d", handle_to_int (outpipe[1]));
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
@@ -1875,11 +1902,11 @@ op_assuan_sign (protocol_t protocol,
   *r_used_protocol = protocol;
   log_debug ("%s:%s: using protocol %s", SRCNAME, __func__, protocol_name);
 
-  snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)inpipe[0]);
+  snprintf (line, sizeof line, "INPUT FD=%d", handle_to_int (inpipe[0]));
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-  snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
+  snprintf (line, sizeof line, "OUTPUT FD=%d", handle_to_int (outpipe[1]));
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
@@ -1976,11 +2003,11 @@ op_assuan_decrypt (protocol_t protocol,
         goto leave;
     }
 
-  snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)inpipe[0]);
+  snprintf (line, sizeof line, "INPUT FD=%d", handle_to_int (inpipe[0]));
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
-  snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
+  snprintf (line, sizeof line, "OUTPUT FD=%d", handle_to_int (outpipe[1]));
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
@@ -2116,11 +2143,12 @@ op_assuan_verify (gpgme_protocol_t protocol,
 
   if (!opaque_mode)
     {
-      snprintf (line, sizeof line, "MESSAGE FD=%d", (unsigned int)msgpipe[0]);
+      snprintf (line, sizeof line, "MESSAGE FD=%d",
+                handle_to_int (msgpipe[0]));
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
-      snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)sigpipe[0]);
+      snprintf (line, sizeof line, "INPUT FD=%d", handle_to_int (sigpipe[0]));
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
@@ -2131,11 +2159,11 @@ op_assuan_verify (gpgme_protocol_t protocol,
     }
   else 
     {
-      snprintf (line, sizeof line, "INPUT FD=%d", (unsigned int)msgpipe[0]);
+      snprintf (line, sizeof line, "INPUT FD=%d", handle_to_int (msgpipe[0]));
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
-      snprintf (line, sizeof line, "OUTPUT FD=%d", (unsigned int)outpipe[1]);
+      snprintf (line, sizeof line, "OUTPUT FD=%d", handle_to_int (outpipe[1]));
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
         goto leave;
