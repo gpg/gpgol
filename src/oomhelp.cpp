@@ -116,13 +116,13 @@ dump_excepinfo (EXCEPINFO err)
              "              desc: %S\n"
              "              help: %S\n"
              "              helpCtx: 0x%x\n"
-             "              deferredFill: 0x%x\n"
+             "              deferredFill: %p\n"
              "              scode: 0x%x\n",
              SRCNAME, __func__, (unsigned int) err.wCode,
              (unsigned int) err.wReserved,
              err.bstrSource, err.bstrDescription, err.bstrHelpFile,
              (unsigned int) err.dwHelpContext,
-             (unsigned int) err.pfnDeferredFillIn,
+             err.pfnDeferredFillIn,
              (unsigned int) err.scode);
 }
 
