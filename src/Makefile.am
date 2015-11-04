@@ -55,11 +55,7 @@ gpgol_SOURCES = \
 	rfc822parse.c rfc822parse.h \
         common.h common.c util.h    \
 	xmalloc.h		    \
-	passcache.c passcache.h     \
         config-dialog.c	            \
-        passphrase-dialog.c         \
-        recipient-dialog.c          \
-        verify-dialog.c             \
 	mapihelp.cpp mapihelp.h     \
 	mymapi.h  mymapitags.h      \
 	serpent.c serpent.h         \

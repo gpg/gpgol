@@ -28,7 +28,6 @@
 #include "mymapitags.h"
 
 #include "common.h"
-#include "passcache.h"
 #include "msgcache.h"
 #include "mymapi.h"
 
@@ -64,9 +63,6 @@ int g_ol_version_major;
 static void
 init_options (void)
 {
-  opt.passwd_ttl = 10; /* Seconds. Use a small value, so that no
-                          multiple prompts for attachment encryption
-                          are issued. */
   opt.enc_format = GPG_FMT_CLASSIC;
 }
 
@@ -177,8 +173,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
         return FALSE;
       i18n_init ();
       if (initialize_session_key ())
-        return FALSE;
-      if (initialize_passcache ())
         return FALSE;
       if (initialize_msgcache ())
         return FALSE;
@@ -646,12 +640,6 @@ read_options (void)
   opt.enable_default_key = val == NULL || *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
 
-  if (load_extension_value ("storePasswdTime", &val) )
-    opt.passwd_ttl = 600; /* Initial default. */
-  else
-    opt.passwd_ttl = val == NULL || *val == '0'? 0 : atol (val);
-  xfree (val); val = NULL;
-
   load_extension_value ("encodingFormat", &val);
   opt.enc_format = val == NULL? GPG_FMT_CLASSIC  : atol (val);
   xfree (val); val = NULL;
@@ -747,7 +735,6 @@ write_options (void)
     {"encryptDefault",           0, opt.encrypt_default},
     {"signDefault",              0, opt.sign_default},
     {"previewDecrypt",           0, opt.preview_decrypt},
-    {"storePasswdTime",          1, opt.passwd_ttl},
     {"encodingFormat",           1, opt.enc_format},
     {"logFile",                  2, 0, logfile},
     {"defaultKey",               2, 0, opt.default_key},
