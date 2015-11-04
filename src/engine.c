@@ -445,7 +445,7 @@ engine_filter (engine_filter_t filter, const void *indata, size_t indatalen)
       while (filter->out.length)
         {
           if (debug_filter)
-            log_debug ("%s:%s: pushing %d bytes to the outfnc\n",
+            log_debug ("%s:%s: pushing "SIZE_T_FORMAT" bytes to the outfnc\n",
                        SRCNAME, __func__, filter->out.length); 
           nbytes = filter->outfnc (filter->outfncdata, 
                                    filter->out.buffer, filter->out.length);
@@ -678,7 +678,7 @@ engine_wait (engine_filter_t filter)
           if (filter->out.length)
             {
               if (debug_filter_extra)
-                log_debug ("%s:%s: still %d pending bytes for outfnc\n",
+                log_debug ("%s:%s: still "SIZE_T_FORMAT" pending bytes for outfnc\n",
                            SRCNAME, __func__, filter->out.length);
               more = 1;
             }

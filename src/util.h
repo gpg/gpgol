@@ -172,6 +172,13 @@ _gpgol_stpcpy (char *a, const char *b)
 
 extern int g_ol_version_major;
 
+#ifdef WIN64
+#define SIZE_T_FORMAT "%I64u"
+#else
+#define SIZE_T_FORMAT "%u"
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
