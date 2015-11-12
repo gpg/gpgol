@@ -164,10 +164,6 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
 
 GpgolAddin::~GpgolAddin (void)
 {
-  log_debug ("%s:%s: Releasing Extender;",
-             SRCNAME, __func__);
-  m_ribbonExtender->Release ();
-
   log_debug ("%s:%s: Releasing Application Event Sink;",
              SRCNAME, __func__);
   m_applicationEventSink->Release();
