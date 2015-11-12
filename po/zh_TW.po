@@ -7,30 +7,30 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2015-08-15 20:53+0800\n"
+"POT-Creation-Date: 2015-11-12 12:50+0100\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
+"Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
+"Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.4\n"
-"Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"Language: zh_TW\n"
 
-#: src/attached-file-events.cpp:58
+#: src/attached-file-events.cpp:54
 msgid "Error creating file for attachment."
 msgstr "生成附件時出錯。"
 
-#: src/attached-file-events.cpp:71
+#: src/attached-file-events.cpp:67
 msgid "Error reading attachment."
 msgstr "讀取附件時出錯。"
 
-#: src/attached-file-events.cpp:82 src/attached-file-events.cpp:96
+#: src/attached-file-events.cpp:78 src/attached-file-events.cpp:92
 msgid "Error writing attachment."
 msgstr "寫入附件時出錯。"
 
-#: src/attached-file-events.cpp:217
+#: src/attached-file-events.cpp:213
 msgid ""
 "Sorry, we are not able to decrypt this attachment.\n"
 "\n"
@@ -50,170 +50,33 @@ msgstr "GpgOL - 儲存附件"
 msgid "Debug output (for analysing problems)"
 msgstr "偵錯輸出（用來分析問題）"
 
-#: src/engine.c:392
+#: src/engine.c:374
 msgid ""
 "The user interface server is not available or could not be started in time.  "
 "You may want to try again."
 msgstr "使用者介面伺服器現在不可用或沒有及時啟動。你可以再試一次。"
 
-#: src/engine.c:395 src/engine.c:405 src/main.c:699 src/main.c:705
-#: src/message.cpp:303 src/explorers.cpp:204 src/explorers.cpp:209
-#: src/gpgoladdin.cpp:663 src/gpgoladdin.cpp:740 src/gpgoladdin.cpp:745
-#: src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:816 src/ribbon-callbacks.cpp:117
-#: src/ribbon-callbacks.cpp:231 src/ribbon-callbacks.cpp:246
-#: src/ribbon-callbacks.cpp:258 src/ribbon-callbacks.cpp:295
-#: src/ribbon-callbacks.cpp:307 src/ribbon-callbacks.cpp:632
-#: src/ribbon-callbacks.cpp:649 src/ribbon-callbacks.cpp:663
-#: src/ribbon-callbacks.cpp:676 src/ribbon-callbacks.cpp:738
-#: src/ribbon-callbacks.cpp:1014 src/ribbon-callbacks.cpp:1048
-#: src/ribbon-callbacks.cpp:1060 src/ribbon-callbacks.cpp:1085
+#: src/engine.c:377 src/main.c:708 src/main.c:714 src/message.cpp:300
+#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:281
+#: src/gpgoladdin.cpp:637 src/gpgoladdin.cpp:792 src/gpgoladdin.cpp:870
+#: src/gpgoladdin.cpp:875 src/gpgoladdin.cpp:944 src/gpgoladdin.cpp:947
+#: src/ribbon-callbacks.cpp:119 src/ribbon-callbacks.cpp:233
+#: src/ribbon-callbacks.cpp:248 src/ribbon-callbacks.cpp:260
+#: src/ribbon-callbacks.cpp:297 src/ribbon-callbacks.cpp:309
+#: src/ribbon-callbacks.cpp:654 src/ribbon-callbacks.cpp:671
+#: src/ribbon-callbacks.cpp:688 src/ribbon-callbacks.cpp:702
+#: src/ribbon-callbacks.cpp:715 src/ribbon-callbacks.cpp:777
+#: src/ribbon-callbacks.cpp:1077 src/ribbon-callbacks.cpp:1111
+#: src/ribbon-callbacks.cpp:1123 src/ribbon-callbacks.cpp:1148
 msgid "GpgOL"
 msgstr "GpgOL"
 
-#: src/engine.c:401
-msgid ""
-"The user interface server is not available or does not work.  Using an "
-"internal user interface.\n"
-"\n"
-"This is limited to the PGP/MIME protocol and thus S/MIME protected message "
-"are not readable."
-msgstr ""
-"使用者介面伺服器現在不可用或無法工作。正在使用內建使用者介面。\n"
-"\n"
-"目前用途限制為 PGP/MIME 協議，因此受 S/MIME 保護的訊息不可讀。"
-
-#: src/engine-gpgme.c:368
-msgid ""
-"The configured default encryption certificate is not available or does not "
-"unambigiously specify one. Please fix this in the option dialog.\n"
-"\n"
-"This message won't be be encrypted to this certificate!"
-msgstr ""
-"配置指定的預設加密證書不可用或指定不清晰。請在選項對話方塊中修復。\n"
-"\n"
-"這個訊息將不會為這張證書加密！"
-
-#: src/engine-gpgme.c:372
-msgid "Encryption"
-msgstr "加密"
-
-#: src/engine-gpgme.c:788
-msgid "Fingerprint: "
-msgstr "指紋："
-
-#: src/engine-gpgme.c:845
-msgid "This signature is valid\n"
-msgstr "簽名有效\n"
-
-#: src/engine-gpgme.c:847
-msgid "signature state is \"green\"\n"
-msgstr "簽名狀態：綠\n"
-
-#: src/engine-gpgme.c:849
-msgid "signature state is \"red\"\n"
-msgstr "簽名狀態：紅\n"
-
-#: src/engine-gpgme.c:853
-msgid "Warning: One of the certificates has been revoked\n"
-msgstr "警告：這些證書中的一個已被吊銷\n"
-
-#: src/engine-gpgme.c:863
-msgid "Warning: The certificate used to create the signature expired at: "
-msgstr "警告：用於生成此簽名的證書已在此時過期："
-
-#: src/engine-gpgme.c:869
-msgid "Warning: At least one certification certificate has expired\n"
-msgstr "警告：至少一個證明證書已經過期\n"
-
-#: src/engine-gpgme.c:875
-msgid "Warning: The signature expired at: "
-msgstr "警告：這份簽名已在此時過期："
-
-#: src/engine-gpgme.c:881
-msgid "Can't verify due to a missing certificate\n"
-msgstr "由於缺失證書無法驗證\n"
-
-#: src/engine-gpgme.c:885
-msgid "The CRL is not available\n"
-msgstr "證書吊銷列表（CRL）不可用\n"
-
-#: src/engine-gpgme.c:891
-msgid "Available CRL is too old\n"
-msgstr ""
-"可用的證書吊銷列表（CRL）太老\n"
-"\n"
-
-#: src/engine-gpgme.c:896
-msgid "A policy requirement was not met\n"
-msgstr "簽名策略需求未達到\n"
-
-#: src/engine-gpgme.c:902
-msgid "A system error occured"
-msgstr "系統出錯"
-
-#: src/engine-gpgme.c:939
-msgid ""
-"WARNING: We have NO indication whether this certificate belongs to the "
-"person named as shown above\n"
-msgstr "警告：沒有證據表明這個證書屬於以上所述的人\n"
-
-#: src/engine-gpgme.c:946
-msgid ""
-"WARNING: The certificate does NOT BELONG to the person named as shown above\n"
-msgstr "警告：這個證書不屬於以上所述的人\n"
-
-#: src/engine-gpgme.c:950
-msgid ""
-"WARNING: It is NOT certain that the certificate belongs to the person named "
-"as shown above\n"
-msgstr "警告：不能確認此證書屬於以上所述的人\n"
-
-#: src/engine-gpgme.c:983
-msgid "Verification started at: "
-msgstr "簽名驗證於此時開始："
-
-#: src/engine-gpgme.c:988
-msgid "Verification result for: "
-msgstr "簽名驗證結果："
-
-#: src/engine-gpgme.c:989
-msgid "[unnamed part]"
-msgstr "[無名部分]"
-
-#: src/engine-gpgme.c:1007 src/engine-gpgme.c:1037
-msgid "Good signature from: "
-msgstr "完好的簽名，來自於："
-
-#: src/engine-gpgme.c:1014
-msgid "                aka: "
-msgstr "              亦即："
-
-#: src/engine-gpgme.c:1018 src/engine-gpgme.c:1040
-msgid "            created: "
-msgstr "            創建於："
-
-#: src/engine-gpgme.c:1027
-msgid "*BAD* signature claimed to be from: "
-msgstr "已損壞的簽名，聲稱來自於："
-
-#: src/engine-gpgme.c:1050
-msgid "Error checking signature"
-msgstr "檢查簽名時發生錯誤"
-
-#: src/engine-gpgme.c:1066
-msgid "*** Begin Notation (signature by: "
-msgstr "*** 註記開始（來自："
-
-#: src/engine-gpgme.c:1086
-msgid "*** End Notation ***\n"
-msgstr "*** 註記結束 ***\n"
-
-#: src/main.c:698
+#: src/main.c:707
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "註釋：使用相容性參數：%s"
 
-#: src/main.c:704
+#: src/main.c:713
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -224,11 +87,11 @@ msgstr ""
 "\n"
 "\"%s\""
 
-#: src/mapihelp.cpp:1528 src/mapihelp.cpp:1536 src/mapihelp.cpp:1544
+#: src/mapihelp.cpp:1542 src/mapihelp.cpp:1550 src/mapihelp.cpp:1558
 msgid "[no subject]"
 msgstr "[無主題]"
 
-#: src/mapihelp.cpp:2153
+#: src/mapihelp.cpp:2167
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -237,13 +100,13 @@ msgstr ""
 "[內容不可見，因為此訊息已被另一個 Outlook 會話解密。使用解密/驗證”命令使其可"
 "見]"
 
-#: src/mapihelp.cpp:3005
+#: src/mapihelp.cpp:3062
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
 msgstr "[內容不可見，因為 GpgOL 處理錯誤]"
 
-#: src/message-events.cpp:284 src/mailitem.cpp:164
+#: src/message-events.cpp:279 src/mailitem.cpp:160
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -253,11 +116,11 @@ msgstr ""
 "無富文字的訊息。請保證只有文字格式\n"
 "被選中。"
 
-#: src/message.cpp:181
+#: src/message.cpp:178
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr "[密碼學操作失敗——無法顯示訊息主體]"
 
-#: src/message.cpp:283
+#: src/message.cpp:280
 #, c-format
 msgid ""
 "Signature status: %s\n"
@@ -270,33 +133,33 @@ msgstr ""
 "MIME 結構：\n"
 "%s"
 
-#: src/message.cpp:291
+#: src/message.cpp:288
 msgid "GpgOL - Message Information"
 msgstr "GpgOL - 訊息資訊"
 
-#: src/message.cpp:523
+#: src/message.cpp:520
 msgid "Signature verification of an encrypted message is not possible."
 msgstr "不可驗證一個加密訊息的簽名。"
 
-#: src/message.cpp:534
+#: src/message.cpp:531
 msgid "Signature verification of this message class is not possible."
 msgstr "不可驗證一個此類訊息。"
 
-#: src/message.cpp:537
+#: src/message.cpp:534
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
 msgstr "不可驗證此 S/MIME 訊息。請保證 S/MIME 處理已啟用。"
 
-#: src/message.cpp:541
+#: src/message.cpp:538
 msgid "This message has no signature."
 msgstr "此訊息沒有簽名。"
 
-#: src/message.cpp:839
+#: src/message.cpp:837
 msgid "This message is not encrypted."
 msgstr "此訊息未被加密。"
 
-#: src/message.cpp:1066
+#: src/message.cpp:1064
 #, c-format
 msgid ""
 "Decryption failed\n"
@@ -305,34 +168,34 @@ msgstr ""
 "解密失敗\n"
 "（%s）"
 
-#: src/message.cpp:1213
+#: src/message.cpp:1225
 msgid "No recipients to encrypt to are given"
 msgstr "沒有指定要加密給的收件人"
 
-#: src/message.cpp:1226 src/message.cpp:1253
+#: src/message.cpp:1240 src/message.cpp:1268
 msgid "Encrypting or signing an empty message is not possible."
 msgstr "不可加密或簽名空訊息。"
 
-#: src/message.cpp:1235
+#: src/message.cpp:1249
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "加密失敗 (%s)"
 
-#: src/message.cpp:1262
+#: src/message.cpp:1277
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "簽名失敗 (%s)"
 
-#: src/mimeparser.c:1204
+#: src/mimeparser.c:1200
 msgid "Error writing to stream"
 msgstr "寫入流時出錯。"
 
-#: src/mimeparser.c:1205
+#: src/mimeparser.c:1201
 msgid "I/O-Error"
 msgstr "輸入輸出錯誤"
 
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:663 src/gpgoladdin.cpp:740
-#: src/gpgoladdin.cpp:813
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:637 src/gpgoladdin.cpp:792
+#: src/gpgoladdin.cpp:870 src/gpgoladdin.cpp:944
 msgid "General"
 msgstr "通用"
 
@@ -391,11 +254,11 @@ msgstr ""
 msgid "This is GpgOL version %s"
 msgstr "這裡是 GpgOL 版本 %s"
 
-#: src/olflange.cpp:527
+#: src/olflange.cpp:523
 msgid "Welcome to GpgOL "
 msgstr "歡迎來到 GpgOL "
 
-#: src/olflange.cpp:528
+#: src/olflange.cpp:524
 msgid ""
 "GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
 "support to Outlook 2003 and 2007.\n"
@@ -416,14 +279,15 @@ msgstr ""
 "GpgOL 為 Outlook 2003 和 2007 加入 OpenPGP 和 S/MIME 加密和數字簽名功能。\n"
 "\n"
 "儘管我們對這個軟體進行了大量測試，我們不能保證它將如期望中的那樣執行。微軟並"
-"沒有為 Outlook 的程式設計介面提供文件，因此 GpgOL 可能會因系統升級出現問題。\n"
+"沒有為 Outlook 的程式設計介面提供文件，因此 GpgOL 可能會因系統升級出現問"
+"題。\n"
 "\n"
 "**我們強烈建議你在使用 GpgOL 加密任何敏感資料前執行加密測試！**\n"
 "\n"
 "目前已知有一些問題，最嚴重的是使用基於 Exchange 的傳送加密或簽名郵件不可用。"
 "將本外掛與其他外掛共用也可能會導致問題。\n"
 
-#: src/olflange.cpp:554
+#: src/olflange.cpp:550
 msgid ""
 "You have installed a new version of GpgOL.\n"
 "\n"
@@ -433,9 +297,10 @@ msgid ""
 msgstr ""
 "你安裝了 GpgOL 的新版本。\n"
 "\n"
-"請開啟“選項”對話方塊並確認設定符合你的需要。設定可在附加->選項->GpgOL 找到。\n"
+"請開啟“選項”對話方塊並確認設定符合你的需要。設定可在附加->選項->GpgOL 找"
+"到。\n"
 
-#: src/olflange.cpp:754
+#: src/olflange.cpp:751
 msgid ""
 "This version of Outlook is too old!\n"
 "\n"
@@ -451,169 +316,27 @@ msgstr ""
 "\n"
 "請在嘗試傳送訊息之前升級到至少 SP2 的版本。"
 
-#: src/passphrase-dialog.c:85
-msgid "No certificate hint given."
-msgstr "沒有給定證書提示。"
-
-#: src/passphrase-dialog.c:313 src/passphrase-dialog.c:464
-msgid "Enter passphrase to unlock the secret key"
-msgstr "輸入密碼來解密此私鑰。"
-
-#: src/passphrase-dialog.c:314 src/passphrase-dialog.c:465
-msgid "Hide typing"
-msgstr "隱藏輸入"
-
-#: src/passphrase-dialog.c:315 src/passphrase-dialog.c:466
-#: src/recipient-dialog.c:385
-msgid "&Cancel"
-msgstr "取消（&C）"
-
-#: src/passphrase-dialog.c:350 src/passphrase-dialog.c:499
-msgid "Invalid passphrase; please try again..."
-msgstr "無效的密碼；請再試一次"
-
-#: src/passphrase-dialog.c:379
-msgid "Select Signing Key"
-msgstr "選擇簽名金鑰"
-
-#: src/passphrase-dialog.c:463
-msgid "Encrypted to the following certificates:"
-msgstr "為以下證書加密："
-
-#: src/recipient-dialog.c:88
-msgid "Name"
-msgstr "姓名"
-
-#: src/recipient-dialog.c:93
-msgid "E-Mail"
-msgstr "郵件地址"
-
-#: src/recipient-dialog.c:98
-msgid "Key-Info"
-msgstr "金鑰資訊"
-
-#: src/recipient-dialog.c:103
-msgid "Key ID"
-msgstr "金鑰 ID"
-
-#: src/recipient-dialog.c:108
-msgid "Validity"
-msgstr "有效性"
-
-#: src/recipient-dialog.c:383
-msgid "Selected recipients:"
-msgstr "當前收件人："
-
-#: src/recipient-dialog.c:384
-msgid "Recipient which were NOT found"
-msgstr "未找到的收件人"
-
-#: src/recipient-dialog.c:444
-msgid "Please select at least one recipient certificate."
-msgstr "請至少選擇一個收件人證書。"
-
-#: src/recipient-dialog.c:445
-msgid "Recipient Dialog"
-msgstr "收件人對話方塊"
-
-#: src/verify-dialog.c:124
-msgid "BAD signature!"
-msgstr "損壞的簽名！"
-
-#: src/verify-dialog.c:126
-msgid "Good signature"
-msgstr "完好的簽名"
-
-#: src/verify-dialog.c:128
-msgid "Good signature from revoked certificate"
-msgstr "完好的簽名，但證書已吊銷"
-
-#: src/verify-dialog.c:130
-msgid "Good signature from expired certificate"
-msgstr "完好的簽名，但證書已過期"
-
-#: src/verify-dialog.c:132
-msgid "Good expired signature"
-msgstr "完好的簽名，已過期"
-
-#: src/verify-dialog.c:135
-msgid "Could not check signature: missing certificate"
-msgstr "無法檢查簽名：缺失證書"
-
-#: src/verify-dialog.c:139
-msgid "Verification error"
-msgstr "驗證出錯"
-
-#: src/verify-dialog.c:156
-msgid "User-ID not found"
-msgstr "找不到使用者標識"
-
-#: src/verify-dialog.c:168
-msgid "This may be due to a wrong option setting"
-msgstr "這可能是因為選項配置錯誤"
-
-#: src/verify-dialog.c:174
-#, c-format
-msgid "Signature expired on %s"
-msgstr "這份簽名已於 %s 過期"
-
-#: src/verify-dialog.c:186
-msgid "Signature issued by a certificate we do NOT trust."
-msgstr "簽名來自不信任的證書"
-
-#: src/verify-dialog.c:193
-msgid "Signature issued by a non-valid certificate."
-msgstr "簽名來自無效證書"
-
-#: src/verify-dialog.c:209
-msgid "Signature made"
-msgstr "簽名建立於"
-
-#: src/verify-dialog.c:210
-msgid "using"
-msgstr "使用"
-
-#: src/verify-dialog.c:211
-msgid "cert-ID"
-msgstr "證書 ID"
-
-#: src/verify-dialog.c:212
-msgid "from"
-msgstr "來自"
-
-#: src/verify-dialog.c:213
-msgid "also known as"
-msgstr "亦即"
-
-#: src/verify-dialog.c:244
-msgid "PGP/MIME Verification Result"
-msgstr "PGP/MIME 簽名驗證結果"
-
-#: src/verify-dialog.c:247
-msgid "S/MIME Verification Result"
-msgstr "S/MIME 簽名驗證結果"
-
-#: src/inspectors.cpp:687
+#: src/inspectors.cpp:690
 msgid "&encrypt message with GnuPG"
 msgstr "使用 GnuPG 加密（&E）"
 
-#: src/inspectors.cpp:701
+#: src/inspectors.cpp:704
 msgid "&sign message with GnuPG"
 msgstr "使用 GnuPG 簽名（&S）"
 
-#: src/inspectors.cpp:727
+#: src/inspectors.cpp:730
 msgid "GpgOL Decrypt/Verify"
 msgstr "GpgOL 解密/驗證"
 
-#: src/inspectors.cpp:788
+#: src/inspectors.cpp:791
 msgid "Encrypt message with GnuPG"
 msgstr "使用 GnuPG 加密"
 
-#: src/inspectors.cpp:804
+#: src/inspectors.cpp:807
 msgid "Sign message with GnuPG"
 msgstr "使用 GnuPG 簽名"
 
-#: src/inspectors.cpp:921
+#: src/inspectors.cpp:924
 msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
@@ -621,7 +344,7 @@ msgstr ""
 "此訊息已加密並簽名。\n"
 "點選此處獲得更多資訊。"
 
-#: src/inspectors.cpp:927
+#: src/inspectors.cpp:930
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
@@ -629,7 +352,7 @@ msgstr ""
 "此訊息已簽名。\n"
 "點選此處獲得更多資訊。"
 
-#: src/inspectors.cpp:933
+#: src/inspectors.cpp:936
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
@@ -661,8 +384,8 @@ msgid ""
 "Note that if you start Outlook again with GpgOL still being installed, GpgOL "
 "will again process messages."
 msgstr ""
-"你即將開始開始解開所有 GpgOL 建立的訊息的流程來準備解除安裝 GpgOL。執行此命令將禁"
-"用 GpgOL，因此訊息不會再被其處理。\n"
+"你即將開始開始解開所有 GpgOL 建立的訊息的流程來準備解除安裝 GpgOL。執行此命令"
+"將禁用 GpgOL，因此訊息不會再被其處理。\n"
 "\n"
 "你應該使用此命令逐個轉換所有資料夾，關閉 Outlook 然後解除安裝 GpgOL。\n"
 "\n"
@@ -672,58 +395,101 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "你想要撤銷這個資料夾嗎？"
 
-#: src/gpgoladdin.cpp:541
+#: src/gpgoladdin.cpp:277
+msgid ""
+"Failed to remove plaintext from at least one message.\n"
+"\n"
+"Until GpgOL is activated again it is possible that the plaintext of messages "
+"decrypted in this Session is saved or transfered back to your mailserver."
+msgstr ""
+
+#: src/gpgoladdin.cpp:580 src/gpgoladdin.cpp:669
 msgid "Start the Certificate Management Software"
 msgstr "啟動證書管理服務"
 
-#: src/gpgoladdin.cpp:543
+#: src/gpgoladdin.cpp:582 src/gpgoladdin.cpp:671
 msgid ""
 "Open GPA or Kleopatra to manage your certificates. You can use this you to "
 "generate your own certificates. "
 msgstr "開啟 GPA 或 Kleopatra 來管理你的證書。你可以用它來生成你自己的證書。"
 
-#: src/gpgoladdin.cpp:547
+#: src/gpgoladdin.cpp:586
+#, fuzzy
+msgid "Encrypt the message."
+msgstr "解密訊息"
+
+#: src/gpgoladdin.cpp:588
+msgid "Encrypts the message and all attachments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:590
+#, fuzzy
+msgid "Sign the message."
+msgstr "解密訊息"
+
+#: src/gpgoladdin.cpp:592
+msgid "Sign the message and all attchments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:638 src/gpgoladdin.cpp:793 src/gpgoladdin.cpp:871
+#: src/gpgoladdin.cpp:945
+msgid "Start Certificate Manager"
+msgstr "執行金鑰管理器"
+
+#: src/gpgoladdin.cpp:639
+msgid "GnuPG"
+msgstr ""
+
+#: src/gpgoladdin.cpp:640 src/gpgoladdin.cpp:795 src/gpgoladdin.cpp:802
+msgid "Encrypt"
+msgstr "加密"
+
+#: src/gpgoladdin.cpp:641 src/gpgoladdin.cpp:797
+msgid "Sign"
+msgstr "簽名"
+
+#: src/gpgoladdin.cpp:675
 msgid "Encrypt the text of the message"
 msgstr "加密訊息文字"
 
-#: src/gpgoladdin.cpp:549
+#: src/gpgoladdin.cpp:677
 msgid ""
 "Choose the certificates for which the message should be encrypted and "
 "replace the text with the encrypted message."
 msgstr "選擇這個訊息要被加密到的證書，然後用加密後的訊息替換文字。"
 
-#: src/gpgoladdin.cpp:553
+#: src/gpgoladdin.cpp:681
 msgid "Add a file as an encrypted attachment"
 msgstr "新增一個加密的附件"
 
-#: src/gpgoladdin.cpp:555
+#: src/gpgoladdin.cpp:683
 msgid "Encrypts a file and adds it as an attachment to the message. "
 msgstr "加密一個檔案，然後把加密結果加入附件。"
 
-#: src/gpgoladdin.cpp:558
+#: src/gpgoladdin.cpp:686
 msgid "Add a file as an encrypted attachment with a signature"
 msgstr "新增加密並簽名的附件"
 
-#: src/gpgoladdin.cpp:560
+#: src/gpgoladdin.cpp:688
 msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
 msgstr "加密並簽名一個檔案，然後把加密結果和簽名加入附件。"
 
-#: src/gpgoladdin.cpp:563
+#: src/gpgoladdin.cpp:691
 msgid "Decrypt the message"
 msgstr "解密訊息"
 
-#: src/gpgoladdin.cpp:565
+#: src/gpgoladdin.cpp:693
 msgid ""
 "Look for PGP or S/MIME encrypted data in the message text and decrypt it."
 msgstr "在訊息文字中尋找 PGP 或 S/MIME 資料並解密。"
 
-#: src/gpgoladdin.cpp:568
+#: src/gpgoladdin.cpp:696
 msgid "Add a signature of the message"
 msgstr "為此訊息添加簽名"
 
-#: src/gpgoladdin.cpp:570
+#: src/gpgoladdin.cpp:698
 msgid ""
 "Appends a signed copy of the message text in an opaque signature. An opaque "
 "signature ensures that the signed text is not modified by embedding it in "
@@ -733,79 +499,282 @@ msgstr ""
 "向不透明簽名新增一份訊息文字。不透明簽名能保證文字不被改變，因為它內含一份籤"
 "名。簽名後的訊息文字和你的簽名將被加在純文字後。此訊息不會被加密！"
 
-#: src/gpgoladdin.cpp:664 src/gpgoladdin.cpp:741 src/gpgoladdin.cpp:814
-msgid "Start Certificate Manager"
-msgstr "執行金鑰管理器"
-
-#: src/gpgoladdin.cpp:665 src/gpgoladdin.cpp:742
+#: src/gpgoladdin.cpp:794 src/gpgoladdin.cpp:872
 msgid "Textbody"
 msgstr "文字內容"
 
-#: src/gpgoladdin.cpp:666 src/gpgoladdin.cpp:673
-msgid "Encrypt"
-msgstr "加密"
-
-#: src/gpgoladdin.cpp:667 src/gpgoladdin.cpp:673 src/gpgoladdin.cpp:743
-#: src/gpgoladdin.cpp:746 src/gpgoladdin.cpp:747
+#: src/gpgoladdin.cpp:796 src/gpgoladdin.cpp:802 src/gpgoladdin.cpp:873
+#: src/gpgoladdin.cpp:876 src/gpgoladdin.cpp:877
 msgid "Decrypt"
 msgstr "解密"
 
-#: src/gpgoladdin.cpp:668
-msgid "Sign"
-msgstr "簽名"
-
-#: src/gpgoladdin.cpp:669 src/gpgoladdin.cpp:744
+#: src/gpgoladdin.cpp:798 src/gpgoladdin.cpp:874
 msgid "Verify"
 msgstr "驗證"
 
-#: src/gpgoladdin.cpp:670
+#: src/gpgoladdin.cpp:799
 msgid "Attachments"
 msgstr "附件"
 
-#: src/gpgoladdin.cpp:671
+#: src/gpgoladdin.cpp:800
 msgid "Encrypted file"
 msgstr "加密過的檔案"
 
-#: src/gpgoladdin.cpp:672
+#: src/gpgoladdin.cpp:801
 msgid "Encrypted file and Signature"
 msgstr "加密過的檔案和簽名"
 
-#: src/gpgoladdin.cpp:745 src/gpgoladdin.cpp:816 src/gpgoladdin.cpp:817
+#: src/gpgoladdin.cpp:875 src/gpgoladdin.cpp:947 src/gpgoladdin.cpp:948
 msgid "Save and decrypt"
 msgstr "儲存並解密"
 
-#: src/ribbon-callbacks.cpp:245
+#: src/ribbon-callbacks.cpp:247
 msgid "Please select text to encrypt."
 msgstr "選擇要加密的文字。"
 
-#: src/ribbon-callbacks.cpp:257
+#: src/ribbon-callbacks.cpp:259
 msgid "Textbody empty."
 msgstr "文字內容空。"
 
-#: src/ribbon-callbacks.cpp:306 src/ribbon-callbacks.cpp:1013
+#: src/ribbon-callbacks.cpp:308 src/ribbon-callbacks.cpp:1076
 msgid "Please add at least one recipent."
 msgstr "請新增至少一個收件人。"
 
-#: src/ribbon-callbacks.cpp:648
+#: src/ribbon-callbacks.cpp:670
 msgid "Please select a Mail."
 msgstr "請選擇一封郵件。"
 
-#: src/ribbon-callbacks.cpp:662
+#: src/ribbon-callbacks.cpp:701
 msgid "Please select the data you wish to decrypt."
 msgstr "選擇要解密的資料。"
 
-#: src/ribbon-callbacks.cpp:675
+#: src/ribbon-callbacks.cpp:714
 msgid "Nothing to decrypt."
 msgstr "沒有可以解密的目標。"
 
-#: src/ribbon-callbacks.cpp:833
+#: src/ribbon-callbacks.cpp:872
 msgid "Plain text"
 msgstr "純文字"
 
-#: src/ribbon-callbacks.cpp:834
+#: src/ribbon-callbacks.cpp:873
 msgid "Signed text"
 msgstr "簽名過的文字"
 
-#: src/ribbon-callbacks.cpp:1020
+#: src/ribbon-callbacks.cpp:1083
 msgid "Select file to encrypt"
 msgstr "選擇要加密的檔案"
+
+#~ msgid ""
+#~ "The user interface server is not available or does not work.  Using an "
+#~ "internal user interface.\n"
+#~ "\n"
+#~ "This is limited to the PGP/MIME protocol and thus S/MIME protected "
+#~ "message are not readable."
+#~ msgstr ""
+#~ "使用者介面伺服器現在不可用或無法工作。正在使用內建使用者介面。\n"
+#~ "\n"
+#~ "目前用途限制為 PGP/MIME 協議，因此受 S/MIME 保護的訊息不可讀。"
+
+#~ msgid ""
+#~ "The configured default encryption certificate is not available or does "
+#~ "not unambigiously specify one. Please fix this in the option dialog.\n"
+#~ "\n"
+#~ "This message won't be be encrypted to this certificate!"
+#~ msgstr ""
+#~ "配置指定的預設加密證書不可用或指定不清晰。請在選項對話方塊中修復。\n"
+#~ "\n"
+#~ "這個訊息將不會為這張證書加密！"
+
+#~ msgid "Encryption"
+#~ msgstr "加密"
+
+#~ msgid "Fingerprint: "
+#~ msgstr "指紋："
+
+#~ msgid "This signature is valid\n"
+#~ msgstr "簽名有效\n"
+
+#~ msgid "signature state is \"green\"\n"
+#~ msgstr "簽名狀態：綠\n"
+
+#~ msgid "signature state is \"red\"\n"
+#~ msgstr "簽名狀態：紅\n"
+
+#~ msgid "Warning: One of the certificates has been revoked\n"
+#~ msgstr "警告：這些證書中的一個已被吊銷\n"
+
+#~ msgid "Warning: The certificate used to create the signature expired at: "
+#~ msgstr "警告：用於生成此簽名的證書已在此時過期："
+
+#~ msgid "Warning: At least one certification certificate has expired\n"
+#~ msgstr "警告：至少一個證明證書已經過期\n"
+
+#~ msgid "Warning: The signature expired at: "
+#~ msgstr "警告：這份簽名已在此時過期："
+
+#~ msgid "Can't verify due to a missing certificate\n"
+#~ msgstr "由於缺失證書無法驗證\n"
+
+#~ msgid "The CRL is not available\n"
+#~ msgstr "證書吊銷列表（CRL）不可用\n"
+
+#~ msgid "Available CRL is too old\n"
+#~ msgstr ""
+#~ "可用的證書吊銷列表（CRL）太老\n"
+#~ "\n"
+
+#~ msgid "A policy requirement was not met\n"
+#~ msgstr "簽名策略需求未達到\n"
+
+#~ msgid "A system error occured"
+#~ msgstr "系統出錯"
+
+#~ msgid ""
+#~ "WARNING: We have NO indication whether this certificate belongs to the "
+#~ "person named as shown above\n"
+#~ msgstr "警告：沒有證據表明這個證書屬於以上所述的人\n"
+
+#~ msgid ""
+#~ "WARNING: The certificate does NOT BELONG to the person named as shown "
+#~ "above\n"
+#~ msgstr "警告：這個證書不屬於以上所述的人\n"
+
+#~ msgid ""
+#~ "WARNING: It is NOT certain that the certificate belongs to the person "
+#~ "named as shown above\n"
+#~ msgstr "警告：不能確認此證書屬於以上所述的人\n"
+
+#~ msgid "Verification started at: "
+#~ msgstr "簽名驗證於此時開始："
+
+#~ msgid "Verification result for: "
+#~ msgstr "簽名驗證結果："
+
+#~ msgid "[unnamed part]"
+#~ msgstr "[無名部分]"
+
+#~ msgid "Good signature from: "
+#~ msgstr "完好的簽名，來自於："
+
+#~ msgid "                aka: "
+#~ msgstr "              亦即："
+
+#~ msgid "            created: "
+#~ msgstr "            創建於："
+
+#~ msgid "*BAD* signature claimed to be from: "
+#~ msgstr "已損壞的簽名，聲稱來自於："
+
+#~ msgid "Error checking signature"
+#~ msgstr "檢查簽名時發生錯誤"
+
+#~ msgid "*** Begin Notation (signature by: "
+#~ msgstr "*** 註記開始（來自："
+
+#~ msgid "*** End Notation ***\n"
+#~ msgstr "*** 註記結束 ***\n"
+
+#~ msgid "No certificate hint given."
+#~ msgstr "沒有給定證書提示。"
+
+#~ msgid "Enter passphrase to unlock the secret key"
+#~ msgstr "輸入密碼來解密此私鑰。"
+
+#~ msgid "Hide typing"
+#~ msgstr "隱藏輸入"
+
+#~ msgid "&Cancel"
+#~ msgstr "取消（&C）"
+
+#~ msgid "Invalid passphrase; please try again..."
+#~ msgstr "無效的密碼；請再試一次"
+
+#~ msgid "Select Signing Key"
+#~ msgstr "選擇簽名金鑰"
+
+#~ msgid "Encrypted to the following certificates:"
+#~ msgstr "為以下證書加密："
+
+#~ msgid "Name"
+#~ msgstr "姓名"
+
+#~ msgid "E-Mail"
+#~ msgstr "郵件地址"
+
+#~ msgid "Key-Info"
+#~ msgstr "金鑰資訊"
+
+#~ msgid "Key ID"
+#~ msgstr "金鑰 ID"
+
+#~ msgid "Validity"
+#~ msgstr "有效性"
+
+#~ msgid "Selected recipients:"
+#~ msgstr "當前收件人："
+
+#~ msgid "Recipient which were NOT found"
+#~ msgstr "未找到的收件人"
+
+#~ msgid "Please select at least one recipient certificate."
+#~ msgstr "請至少選擇一個收件人證書。"
+
+#~ msgid "Recipient Dialog"
+#~ msgstr "收件人對話方塊"
+
+#~ msgid "BAD signature!"
+#~ msgstr "損壞的簽名！"
+
+#~ msgid "Good signature"
+#~ msgstr "完好的簽名"
+
+#~ msgid "Good signature from revoked certificate"
+#~ msgstr "完好的簽名，但證書已吊銷"
+
+#~ msgid "Good signature from expired certificate"
+#~ msgstr "完好的簽名，但證書已過期"
+
+#~ msgid "Good expired signature"
+#~ msgstr "完好的簽名，已過期"
+
+#~ msgid "Could not check signature: missing certificate"
+#~ msgstr "無法檢查簽名：缺失證書"
+
+#~ msgid "Verification error"
+#~ msgstr "驗證出錯"
+
+#~ msgid "User-ID not found"
+#~ msgstr "找不到使用者標識"
+
+#~ msgid "This may be due to a wrong option setting"
+#~ msgstr "這可能是因為選項配置錯誤"
+
+#~ msgid "Signature expired on %s"
+#~ msgstr "這份簽名已於 %s 過期"
+
+#~ msgid "Signature issued by a certificate we do NOT trust."
+#~ msgstr "簽名來自不信任的證書"
+
+#~ msgid "Signature issued by a non-valid certificate."
+#~ msgstr "簽名來自無效證書"
+
+#~ msgid "Signature made"
+#~ msgstr "簽名建立於"
+
+#~ msgid "using"
+#~ msgstr "使用"
+
+#~ msgid "cert-ID"
+#~ msgstr "證書 ID"
+
+#~ msgid "from"
+#~ msgstr "來自"
+
+#~ msgid "also known as"
+#~ msgstr "亦即"
+
+#~ msgid "PGP/MIME Verification Result"
+#~ msgstr "PGP/MIME 簽名驗證結果"
+
+#~ msgid "S/MIME Verification Result"
+#~ msgstr "S/MIME 簽名驗證結果"
