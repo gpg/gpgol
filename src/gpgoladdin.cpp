@@ -164,15 +164,16 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
 
 GpgolAddin::~GpgolAddin (void)
 {
+  if (m_disabled)
+    {
+      return;
+    }
   log_debug ("%s:%s: Releasing Application Event Sink;",
              SRCNAME, __func__);
-  m_applicationEventSink->Release();
+  RELDISP (m_applicationEventSink);
 
-  if (!m_disabled)
-    {
-      engine_deinit ();
-      write_options ();
-    }
+  engine_deinit ();
+  write_options ();
 
   log_debug ("%s:%s: Object deleted\n", SRCNAME, __func__);
 }
