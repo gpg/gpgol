@@ -48,6 +48,8 @@
 #include "gpgolstr.h"
 #include "message.h"
 
+#define OPAQUE_SIGNED_MARKER "-----BEGIN PGP MESSAGE-----"
+
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
 HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
@@ -674,23 +676,6 @@ do_reader_action (LPDISPATCH ctrl, int flags)
         }
     }
 
-  if (verify_mime (mailItem))
-    {
-      log_debug ("%s:%s: This was a mime message.",
-                 SRCNAME, __func__);
-
-      if (flags & OP_DECRYPT)
-        {
-          MessageBox (NULL,
-                      "This message is in MIME format. Due to technical restrictions "
-                      "it can only be decrypted once per session. To decrypt it again "
-                      "please restart Outlook and open the message.",
-                      _("GpgOL"),
-                      MB_ICONINFORMATION|MB_OK);
-        }
-      goto failure;
-    }
-
   if (flags & DATA_SELECTION)
     {
       encData = get_oom_string (selection, "Text");
@@ -719,6 +704,27 @@ do_reader_action (LPDISPATCH ctrl, int flags)
     }
 
   fix_linebreaks (encData, &encDataLen);
+
+  /* We check if the data we work on was opaque signed. This is
+     true for signed stuff created by ribbon-callbacks and not a
+     decent MIME implementation. So in that case we don't use
+     verify_mime */
+  if (!strstr (encData, OPAQUE_SIGNED_MARKER) && verify_mime (mailItem))
+    {
+      log_debug ("%s:%s: This was a mime message.",
+                 SRCNAME, __func__);
+
+      if (flags & OP_DECRYPT)
+        {
+          MessageBox (NULL,
+                      "This message is in MIME format. Due to technical restrictions "
+                      "it can only be decrypted once per session. To decrypt it again "
+                      "please restart Outlook and open the message.",
+                      _("GpgOL"),
+                      MB_ICONINFORMATION|MB_OK);
+        }
+      goto failure;
+    }
 
   subject = get_oom_string (mailItem, "Subject");
   if (get_oom_bool (mailItem, "Sent"))
