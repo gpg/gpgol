@@ -16,7 +16,7 @@ unused_sources = item-events.cpp
 bin_PROGRAMS = gpgol 
 #treeview
 EXTRA_DIST = \
-	versioninfo.rc.in $(unused_sources) Outlook.gpl \
+	versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
 	encrypt-16.bmp encrypt-16m.bmp \
 	sign-16.bmp sign-16m.bmp \
 	key-manager-16.bmp key-manager-16m.bmp \
@@ -86,11 +86,16 @@ gpgol_SOURCES = \
 
 #treeview_SOURCES = treeview.c
 
-# We create our own virtual copies to the _static_
+# W32API 3.2 comes with an unusable libmapi32.a.  We build our own
+# version.  Note the omission of -k (--kill-at) from the DLLTOOL
+# command line.  We also create our own virtual copies to the _static_
 # versions of GPGME and gpg-error, because we want to link to them
 # statically, and not dynamically (otherwise Outlook would not find
 # them).
-gpgol_DEPENDENCIES = libgpg-error.a libgpgme.a libassuan.a
+gpgol_DEPENDENCIES = libmapi32.a libgpg-error.a libgpgme.a libassuan.a
+
+libmapi32.a: mapi32.def
+	$(DLLTOOL) --output-lib $@ --def $<
 
 libgpg-error.a:
 	ln -s $$($(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a .
