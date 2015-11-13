@@ -904,18 +904,16 @@ change_message_class_ipm_note (LPMESSAGE message)
             }
           xfree (proto);
         }
-      else if (!strcmp (ct, "text/plain"))
+      else if (!strcmp (ct, "text/plain") ||
+               !strcmp (ct, "multipart/mixed") ||
+               !strcmp (ct, "multipart/alternative"))
         {
-          newvalue = get_msgcls_from_pgp_lines (message);
-        }
-      else if (!strcmp (ct, "multipart/mixed"))
-        {
-          /* It is quite common to have a multipart/mixed mail with
-             separate encrypted PGP parts.  Look at the body to
+          /* It is quite common to have a multipart/mixed or alternative
+             mail with separate encrypted PGP parts.  Look at the body to
              decide.  */
           newvalue = get_msgcls_from_pgp_lines (message);
         }
-      
+
       xfree (ct);
     }
   else
@@ -1091,7 +1089,9 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
             }
         }
       
-      if (!newvalue && !strcmp (ct, "text/plain"))
+      if (!newvalue && (!strcmp (ct, "text/plain") ||
+                        !strcmp (ct, "multipart/alternative") ||
+                        !strcmp (ct, "multipart/mixed")))
         {
           newvalue = get_msgcls_from_pgp_lines (message);
         }
