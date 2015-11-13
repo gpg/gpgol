@@ -50,6 +50,8 @@
 #include "windowmessages.h"
 #include "mail.h"
 
+#include <gpg-error.h>
+
 #define ICON_SIZE_LARGE  32
 #define ICON_SIZE_NORMAL 16
 
@@ -598,7 +600,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 
   if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
     {
-      asprintf (&buffer,
+      gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
         "   <tabs>"
@@ -712,7 +714,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
     {
       TRACEPOINT
-      asprintf (&buffer,
+      gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
         "   <tabs>"
@@ -805,7 +807,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
     {
       TRACEPOINT
-      asprintf (&buffer,
+      gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
         "   <tabs>"
@@ -879,7 +881,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
     {
       TRACEPOINT
-      asprintf (&buffer,
+      gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
         " <ribbon>"
         "   <tabs>"

@@ -27,6 +27,7 @@
 #include "mapihelp.h"
 
 #include <objidlbase.h>
+#include <gpg-error.h>
 
 #define COPYBUFFERSIZE 4096
 
@@ -280,7 +281,7 @@ do_crypt (LPDISPATCH mailitem, bool protect)
       LPATTACH mapi_attachment;
       attachtype_t att_type;
 
-      if (asprintf (&item_str, "Item(%i)", i) == -1)
+      if (gpgrt_asprintf (&item_str, "Item(%i)", i) == -1)
         {
           log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
           goto done;
