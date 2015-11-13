@@ -26,7 +26,6 @@
 #include "mymapitags.h"
 #include "mapihelp.h"
 
-#include <objidlbase.h>
 #include <gpg-error.h>
 
 #define COPYBUFFERSIZE 4096
