@@ -61,6 +61,8 @@
 
 ULONG addinLocks = 0;
 
+bool can_unload = false;
+
 /* This is the main entry point for the addin
    Outlook uses this function to query for an Object implementing
    the IClassFactory interface.
@@ -92,7 +94,13 @@ STDAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID* ppvObj)
 
 STDAPI DllCanUnloadNow()
 {
-    return addinLocks == 0 ? S_OK : S_FALSE;
+  /* This is called regularly to check if memory can be freed
+     by unloading the dll. The following unload will not call
+     any addin methods like disconnect etc. It will just
+     unload the Library. Any callbacks will become invalid.
+     So we _only_ say it's ok to unload if we were disconnected.
+     For the epic story behind the next line see GnuPG-Bug-Id 1837 */
+  return can_unload ? S_OK : S_FALSE;
 }
 
 /* Class factory */
@@ -228,6 +236,7 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
   log_debug ("%s:%s:   in Outlook %s\n",
              SRCNAME, __func__, gpgme_check_version (NULL));
 
+  can_unload = false;
   m_application = Application;
   m_application->AddRef();
   m_addin = AddInInst;
@@ -285,6 +294,7 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
     }
 
   write_options();
+  can_unload = true;
   return S_OK;
 }
 
