@@ -37,6 +37,7 @@
 #include "mymapitags.h"
 
 #include "rfc822parse.h"
+#include "rfc2047parse.h"
 #include "common.h"
 #include "engine.h"
 #include "mapihelp.h"
@@ -419,12 +420,17 @@ start_attachment (mime_context_t ctx, int is_body)
      functions.  */
   if (ctx->mimestruct_cur && ctx->mimestruct_cur->filename)
     {
-      prop.ulPropTag = PR_ATTACH_LONG_FILENAME_A;
+      prop.ulPropTag = PR_ATTACH_LONG_FILENAME_W;
+      wchar_t * utf16_str = NULL;
       if (!strcmp (ctx->mimestruct_cur->filename, "smime.p7m"))
-        prop.Value.lpszA = "x-smime.p7m";
+        prop.Value.lpszW = L"x-smime.p7m";
       else
-        prop.Value.lpszA = ctx->mimestruct_cur->filename;
+        {
+          utf16_str = utf8_to_wchar (ctx->mimestruct_cur->filename);
+          prop.Value.lpszW = utf16_str;
+        }
       hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+      xfree (utf16_str);
       if (hr)
         {
           log_error ("%s:%s: can't set attach long filename: hr=%#lx\n",
@@ -757,8 +763,6 @@ finish_message (LPMESSAGE message, gpg_error_t err, int protect_mode,
   return mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
 }
 
-
-
 /* Process the transition to body event. 
 
    This means we have received the empty line indicating the body and
@@ -799,7 +803,7 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
     {
       s = rfc822parse_query_parameter (field, "filename", 0);
       if (s)
-        filename = xstrdup (s);
+        filename = rfc2047_parse (s);
       s = rfc822parse_query_parameter (field, NULL, 1);
       if (s && strcmp (s, "inline"))
         not_inline_text = 1;
