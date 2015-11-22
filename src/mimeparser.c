@@ -831,6 +831,15 @@ t2body (mime_context_t ctx, rfc822parse_t msg)
   if (s)
     charset = xstrdup (s);
 
+  if (!filename)
+    {
+      /* Check for Content-Type name if Content-Disposition filename
+         was not found */
+      s = rfc822parse_query_parameter (field, "name", 0);
+      if (s)
+        filename = rfc2047_parse (s);
+    }
+
   /* Update our idea of the entire MIME structure.  */
   {
     mimestruct_item_t ms;
