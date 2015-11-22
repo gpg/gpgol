@@ -33,6 +33,7 @@
 
 #include <stdbool.h>
 #include "common.h"
+#include "mlang-charset.h"
 
 #include "gmime-table-private.h"
 
@@ -61,7 +62,7 @@ static unsigned char gmime_base64_rank[256] = {
 
 typedef struct _rfc2047_token {
     struct _rfc2047_token *next;
-    const char *charset;
+    char *charset;
     const char *text;
     size_t length;
     char encoding;
@@ -86,8 +87,9 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 {
   rfc2047_token *token;
   const char *payload;
-  const char *charset;
+  char *charset;
   const char *inptr;
+  const char *tmpchar;
   char *buf, *lang;
   char encoding;
   size_t n;
@@ -98,9 +100,9 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 
   /* skip over '=?' */
   inptr = word + 2;
-  charset = inptr;
+  tmpchar = inptr;
 
-  if (*charset == '?' || *charset == '*') {
+  if (*tmpchar == '?' || *tmpchar == '*') {
       /* this would result in an empty charset */
       return NULL;
   }
@@ -110,9 +112,9 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
     return NULL;
 
   /* copy the charset into a buffer */
-  n = (size_t) (inptr - charset);
-  buf = _alloca (n + 1);
-  memcpy (buf, charset, n);
+  n = (size_t) (inptr - tmpchar);
+  buf = malloc (n + 1);
+  memcpy (buf, tmpchar, n);
   buf[n] = '\0';
   charset = buf;
 
@@ -156,12 +158,21 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
     return NULL;
 
   token = rfc2047_token_new (payload, inptr - payload);
-  /* TODO lookup charset.*/
-  log_debug ("%s:%s: Charset name: %p", SRCNAME, __func__, charset);
-  token->charset = "UTF-8";/* g_mime_charset_iconv_name (charset); */
+  token->charset = charset;
   token->encoding = encoding;
 
   return token;
+}
+
+static void
+rfc2047_token_free (rfc2047_token * tok)
+{
+  if (!tok)
+    {
+      return;
+    }
+  xfree (tok->charset);
+  xfree (tok);
 }
 
 static rfc2047_token *
@@ -248,7 +259,7 @@ non_rfc2047:
                   tail->next = lwsp;
                   tail = lwsp;
               } else if (lwsp != NULL) {
-                  xfree (lwsp);
+                  rfc2047_token_free (lwsp);
               }
 
               tail->next = token;
@@ -305,7 +316,7 @@ rfc2047_token_list_free (rfc2047_token * tokens)
   while (cur)
     {
       rfc2047_token *next = cur->next;
-      xfree (cur);
+      rfc2047_token_free (cur);
       cur = next;
     }
 }
@@ -506,13 +517,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
   char encoding;
   unsigned int save;
   int state;
-#if 0
-  TODO Conversion
-  size_t ninval;
-  iconv_t cd;
   char *str;
-#endif
-
 
   decoded = xmalloc (buflen + 1);
   memset (decoded, 0, buflen + 1);
@@ -565,42 +570,28 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
           /* convert the raw decoded text into UTF-8 */
           if (!strcasecmp (charset, "UTF-8")) {
               strncat (decoded, (char *) outptr, outlen);
-          }
-#if 0
-  /* TODO handle other charsets */
-          else if ((cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
-              w(g_warning ("Cannot convert from %s to UTF-8, header display may "
-                           "be corrupt: %s", charset[0] ? charset : "unspecified charset",
-                           g_strerror (errno)));
-
-              str = g_mime_utils_decode_8bit ((char *) outptr, outlen);
-              g_string_append (decoded, str);
-              g_free (str);
           } else {
-              str = g_malloc (outlen + 1);
-              len = outlen;
+              str = ansi_charset_to_utf8 (charset, outptr, outlen);
 
-              len = charset_convert (cd, (char *) outptr, outlen, &str, &len, &ninval);
-              g_mime_iconv_close (cd);
-
-              g_string_append_len (decoded, str, len);
-              g_free (str);
-
-#if w(!)0
-              if (ninval > 0) {
-                  g_warning ("Failed to completely convert \"%.*s\" to UTF-8, display may be "
-                             "corrupt: %s", outlen, (char *) outptr, g_strerror (errno));
-              }
-#endif
+              if (!str)
+                {
+                  log_error ("%s:%s: Failed conversion from: %s for word: %s.",
+                             SRCNAME, __func__, charset, outptr);
+                }
+              else
+                {
+                  strcat (decoded, str);
+                  xfree (str);
+                }
           }
-      } else if (token->is_8bit) {
-          /* *sigh* I hate broken mailers... */
-          str = g_mime_utils_decode_8bit (token->text, token->length);
-          g_string_append (decoded, str);
-          g_free (str);
-#endif
       } else {
           strncat (decoded, token->text, token->length);
+      }
+      if (token && token->is_8bit)
+      {
+        /* We don't support this. */
+        log_error ("%s:%s: Unknown 8bit encoding detected.",
+                   SRCNAME, __func__);
       }
 
       token = next;
@@ -636,16 +627,6 @@ g_mime_utils_header_decode_phrase (const char *phrase)
   decoded = rfc2047_decode_tokens (tokens, len);
   rfc2047_token_list_free (tokens);
 
-  if (decoded && strlen(decoded))
-    {
-      return decoded;
-    }
-  else
-    {
-      xfree (decoded);
-      return strdup (phrase);
-    }
-
   return decoded;
 }
 
@@ -662,10 +643,6 @@ rfc2047_parse (const char *input)
   log_debug ("%s:%s: Input: \"%s\"",
              SRCNAME, __func__, input);
 
-  if (!strncmp (input, "=?", 2))
-    {
-      return strdup (input);
-    }
   decoded = g_mime_utils_header_decode_phrase (input);
 
   log_debug ("%s:%s: Decoded: \"%s\"",
