@@ -82,7 +82,8 @@ gpgol_SOURCES = \
 	windowmessages.h windowmessages.cpp \
 	gpgolstr.h gpgolstr.cpp \
 	mail.h mail.cpp \
-	rfc2047parse.h rfc2047parse.c
+	rfc2047parse.h rfc2047parse.c \
+	mlang-charset.cpp mlang-charset.h
 
 
 #treeview_SOURCES = treeview.c
