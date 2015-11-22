@@ -895,6 +895,49 @@ b64_decode (b64_state_t *state, char *buffer, size_t length)
 }
 
 
+/* Base 64 encode the input. If input is null returns NULL otherwise
+   a pointer to the malloced encoded string. */
+char *
+b64_encode (const char *input, size_t length)
+{
+  size_t out_len = 4 * ((length + 2) / 3);
+  char *ret;
+  int i, j;
+
+  if (!length || !input)
+    {
+      return NULL;
+    }
+  ret = xmalloc (out_len);
+
+  for (i = 0, j = 0; i < length;)
+    {
+      unsigned int a = i < length ? (unsigned char)input[i++] : 0;
+      unsigned int b = i < length ? (unsigned char)input[i++] : 0;
+      unsigned int c = i < length ? (unsigned char)input[i++] : 0;
+
+      unsigned int triple = (a << 0x10) + (b << 0x08) + c;
+
+      ret[j++] = bintoasc[(triple >> 3 * 6) & 0x3F];
+      ret[j++] = bintoasc[(triple >> 2 * 6) & 0x3F];
+      ret[j++] = bintoasc[(triple >> 1 * 6) & 0x3F];
+      ret[j++] = bintoasc[(triple >> 0 * 6) & 0x3F];
+    }
+
+  if (length % 3)
+    {
+      ret [j - 1] = '=';
+    }
+  if (length % 3 == 1)
+    {
+      ret [j - 2] = '=';
+    }
+
+  ret[++j] = '\0';
+  log_debug("Encoded to: %s ", ret);
+  return ret;
+}
+
 /* Create a boundary.  Note that mimemaker.c knows about the structure
    of the boundary (i.e. that it starts with "=-=") so that it can
    protect against accidently used boundaries within the content.  */

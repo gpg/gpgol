@@ -189,6 +189,7 @@ char *get_data_dir (void);
 size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
 void b64_init (b64_state_t *state);
 size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
+char * b64_encode (const char *input, size_t length);
 
 /* Get a temporary filename with and its name */
 wchar_t *get_tmp_outfile (wchar_t *name, HANDLE *outHandle);
