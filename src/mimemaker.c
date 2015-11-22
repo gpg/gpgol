@@ -784,9 +784,28 @@ infer_content_encoding (const void *data, size_t datalen)
 }
 
 
-
-
-
+/* Convert an utf8 input string to RFC2047 base64 encoding which
+   is the subset of RFC2047 outlook likes.
+   Return value needs to be freed.
+   */
+static char *
+utf8_to_rfc2047b (const char *input)
+{
+  char *ret;
+  if (!input)
+    {
+      return NULL;
+    }
+  char *b64_encoded = b64_encode (input, strlen (input));
+  if (gpgrt_asprintf (&ret, "=?UTF-8?B?%s?=", b64_encoded) == -1)
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      xfree (b64_encoded);
+      return NULL;
+    }
+  xfree (b64_encoded);
+  return ret;
+}
 
 /* Write a MIME part to SINK.  First the BOUNDARY is written (unless
    it is NULL) then the DATA is analyzed and appropriate headers are
@@ -800,6 +819,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
   int rc;
   const char *ct;
   int use_b64, use_qp, is_text;
+  char *encoded_filename;
 
   if (filename)
     {
@@ -858,9 +878,10 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                NULL)))
       return rc;
 
-  if (filename)
+  encoded_filename = utf8_to_rfc2047b (filename);
+  if (encoded_filename)
     if ((rc=write_multistring (sink,
-                               "\tname=\"", filename, "\"\r\n",
+                               "\tname=\"", encoded_filename, "\"\r\n",
                                NULL)))
       return rc;
 
@@ -873,13 +894,14 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                NULL)))
     return rc;
 
-  if (filename)
+  if (encoded_filename)
     if ((rc=write_multistring (sink,
                                "Content-Disposition: attachment;\r\n"
-                               "\tfilename=\"", filename, "\"\r\n",
+                               "\tfilename=\"", encoded_filename, "\"\r\n",
                                NULL)))
       return rc;
 
+  xfree(encoded_filename);
 
   /* Write delimiter.  */
   if ((rc = write_string (sink, "\r\n")))
