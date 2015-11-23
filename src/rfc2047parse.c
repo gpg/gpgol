@@ -38,7 +38,7 @@
 #include "gmime-table-private.h"
 
 /* mabye we need this at some point later? */
-#define G_MIME_RFC2047_WORKAROUNDS false;
+#define G_MIME_RFC2047_WORKAROUNDS 1
 
 
 static unsigned char gmime_base64_rank[256] = {
