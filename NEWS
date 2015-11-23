@@ -1,6 +1,18 @@
 Noteworthy changes for version 1.3.0 (unreleased)
 =================================================
 
+ * Outlook 2010 and later now handle recieved MIME mails.
+
+ * A class of random crashes in Outlook 2010 and later has been
+   fixed. Bug#1837
+
+ * Attachments of mime mails with non ASCII characters are
+   now handled correctly.
+
+ * Outlook 2016 is now supported.
+
+ * Added translations for Chinese and French.
+
 
 Noteworthy changes for version 1.2.1 (2014-08-13)
 =================================================
