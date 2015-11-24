@@ -13,9 +13,10 @@
 
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = dist-bzip2
-# Because we can only build the w32 version e need to help automake here a bit.
-DISTCHECK_CONFIGURE_FLAGS = --host=i586-mingw32msvc --build=i686-pc-linux-gnu \
-                            --prefix=@prefix@ \
+# Because we can only build the w32 version we need to help automake here a bit.
+DISTCHECK_CONFIGURE_FLAGS = --host=@host@  --build=@build@ \
+                            SYSROOT=@prefix@ \
+                            PKG_CONFIG_LIBDIR=@prefix@ \
                             --with-gpg-error-prefix=@prefix@ \
                             --with-gpgme-prefix=@prefix@ \
                             --with-libassuan-prefix=@prefix@
