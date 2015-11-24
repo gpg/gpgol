@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2015-11-12 12:50+0100\n"
+"POT-Creation-Date: 2015-11-23 18:51+0100\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -57,17 +57,17 @@ msgid ""
 msgstr "使用者介面伺服器現在不可用或沒有及時啟動。你可以再試一次。"
 
 #: src/engine.c:377 src/main.c:708 src/main.c:714 src/message.cpp:300
-#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:281
-#: src/gpgoladdin.cpp:637 src/gpgoladdin.cpp:792 src/gpgoladdin.cpp:870
-#: src/gpgoladdin.cpp:875 src/gpgoladdin.cpp:944 src/gpgoladdin.cpp:947
-#: src/ribbon-callbacks.cpp:119 src/ribbon-callbacks.cpp:233
-#: src/ribbon-callbacks.cpp:248 src/ribbon-callbacks.cpp:260
-#: src/ribbon-callbacks.cpp:297 src/ribbon-callbacks.cpp:309
-#: src/ribbon-callbacks.cpp:654 src/ribbon-callbacks.cpp:671
-#: src/ribbon-callbacks.cpp:688 src/ribbon-callbacks.cpp:702
-#: src/ribbon-callbacks.cpp:715 src/ribbon-callbacks.cpp:777
-#: src/ribbon-callbacks.cpp:1077 src/ribbon-callbacks.cpp:1111
-#: src/ribbon-callbacks.cpp:1123 src/ribbon-callbacks.cpp:1148
+#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:292
+#: src/gpgoladdin.cpp:649 src/gpgoladdin.cpp:804 src/gpgoladdin.cpp:882
+#: src/gpgoladdin.cpp:887 src/gpgoladdin.cpp:956 src/gpgoladdin.cpp:959
+#: src/ribbon-callbacks.cpp:121 src/ribbon-callbacks.cpp:235
+#: src/ribbon-callbacks.cpp:250 src/ribbon-callbacks.cpp:262
+#: src/ribbon-callbacks.cpp:299 src/ribbon-callbacks.cpp:311
+#: src/ribbon-callbacks.cpp:656 src/ribbon-callbacks.cpp:673
+#: src/ribbon-callbacks.cpp:687 src/ribbon-callbacks.cpp:700
+#: src/ribbon-callbacks.cpp:723 src/ribbon-callbacks.cpp:783
+#: src/ribbon-callbacks.cpp:1083 src/ribbon-callbacks.cpp:1117
+#: src/ribbon-callbacks.cpp:1129 src/ribbon-callbacks.cpp:1154
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -87,11 +87,11 @@ msgstr ""
 "\n"
 "\"%s\""
 
-#: src/mapihelp.cpp:1542 src/mapihelp.cpp:1550 src/mapihelp.cpp:1558
+#: src/mapihelp.cpp:1552 src/mapihelp.cpp:1560 src/mapihelp.cpp:1568
 msgid "[no subject]"
 msgstr "[無主題]"
 
-#: src/mapihelp.cpp:2167
+#: src/mapihelp.cpp:2177
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -100,7 +100,7 @@ msgstr ""
 "[內容不可見，因為此訊息已被另一個 Outlook 會話解密。使用解密/驗證”命令使其可"
 "見]"
 
-#: src/mapihelp.cpp:3062
+#: src/mapihelp.cpp:3072
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -186,16 +186,16 @@ msgstr "加密失敗 (%s)"
 msgid "Signing failed (%s)"
 msgstr "簽名失敗 (%s)"
 
-#: src/mimeparser.c:1200
+#: src/mimeparser.c:1213
 msgid "Error writing to stream"
 msgstr "寫入流時出錯。"
 
-#: src/mimeparser.c:1201
+#: src/mimeparser.c:1214
 msgid "I/O-Error"
 msgstr "輸入輸出錯誤"
 
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:637 src/gpgoladdin.cpp:792
-#: src/gpgoladdin.cpp:870 src/gpgoladdin.cpp:944
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:649 src/gpgoladdin.cpp:804
+#: src/gpgoladdin.cpp:882 src/gpgoladdin.cpp:956
 msgid "General"
 msgstr "通用"
 
@@ -395,7 +395,7 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "你想要撤銷這個資料夾嗎？"
 
-#: src/gpgoladdin.cpp:277
+#: src/gpgoladdin.cpp:288
 msgid ""
 "Failed to remove plaintext from at least one message.\n"
 "\n"
@@ -403,93 +403,93 @@ msgid ""
 "decrypted in this Session is saved or transfered back to your mailserver."
 msgstr ""
 
-#: src/gpgoladdin.cpp:580 src/gpgoladdin.cpp:669
+#: src/gpgoladdin.cpp:592 src/gpgoladdin.cpp:681
 msgid "Start the Certificate Management Software"
 msgstr "啟動證書管理服務"
 
-#: src/gpgoladdin.cpp:582 src/gpgoladdin.cpp:671
+#: src/gpgoladdin.cpp:594 src/gpgoladdin.cpp:683
 msgid ""
 "Open GPA or Kleopatra to manage your certificates. You can use this you to "
 "generate your own certificates. "
 msgstr "開啟 GPA 或 Kleopatra 來管理你的證書。你可以用它來生成你自己的證書。"
 
-#: src/gpgoladdin.cpp:586
+#: src/gpgoladdin.cpp:598
 #, fuzzy
 msgid "Encrypt the message."
 msgstr "解密訊息"
 
-#: src/gpgoladdin.cpp:588
+#: src/gpgoladdin.cpp:600
 msgid "Encrypts the message and all attachments before sending."
 msgstr ""
 
-#: src/gpgoladdin.cpp:590
+#: src/gpgoladdin.cpp:602
 #, fuzzy
 msgid "Sign the message."
 msgstr "解密訊息"
 
-#: src/gpgoladdin.cpp:592
+#: src/gpgoladdin.cpp:604
 msgid "Sign the message and all attchments before sending."
 msgstr ""
 
-#: src/gpgoladdin.cpp:638 src/gpgoladdin.cpp:793 src/gpgoladdin.cpp:871
-#: src/gpgoladdin.cpp:945
+#: src/gpgoladdin.cpp:650 src/gpgoladdin.cpp:805 src/gpgoladdin.cpp:883
+#: src/gpgoladdin.cpp:957
 msgid "Start Certificate Manager"
 msgstr "執行金鑰管理器"
 
-#: src/gpgoladdin.cpp:639
+#: src/gpgoladdin.cpp:651
 msgid "GnuPG"
 msgstr ""
 
-#: src/gpgoladdin.cpp:640 src/gpgoladdin.cpp:795 src/gpgoladdin.cpp:802
+#: src/gpgoladdin.cpp:652 src/gpgoladdin.cpp:807 src/gpgoladdin.cpp:814
 msgid "Encrypt"
 msgstr "加密"
 
-#: src/gpgoladdin.cpp:641 src/gpgoladdin.cpp:797
+#: src/gpgoladdin.cpp:653 src/gpgoladdin.cpp:809
 msgid "Sign"
 msgstr "簽名"
 
-#: src/gpgoladdin.cpp:675
+#: src/gpgoladdin.cpp:687
 msgid "Encrypt the text of the message"
 msgstr "加密訊息文字"
 
-#: src/gpgoladdin.cpp:677
+#: src/gpgoladdin.cpp:689
 msgid ""
 "Choose the certificates for which the message should be encrypted and "
 "replace the text with the encrypted message."
 msgstr "選擇這個訊息要被加密到的證書，然後用加密後的訊息替換文字。"
 
-#: src/gpgoladdin.cpp:681
+#: src/gpgoladdin.cpp:693
 msgid "Add a file as an encrypted attachment"
 msgstr "新增一個加密的附件"
 
-#: src/gpgoladdin.cpp:683
+#: src/gpgoladdin.cpp:695
 msgid "Encrypts a file and adds it as an attachment to the message. "
 msgstr "加密一個檔案，然後把加密結果加入附件。"
 
-#: src/gpgoladdin.cpp:686
+#: src/gpgoladdin.cpp:698
 msgid "Add a file as an encrypted attachment with a signature"
 msgstr "新增加密並簽名的附件"
 
-#: src/gpgoladdin.cpp:688
+#: src/gpgoladdin.cpp:700
 msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
 msgstr "加密並簽名一個檔案，然後把加密結果和簽名加入附件。"
 
-#: src/gpgoladdin.cpp:691
+#: src/gpgoladdin.cpp:703
 msgid "Decrypt the message"
 msgstr "解密訊息"
 
-#: src/gpgoladdin.cpp:693
+#: src/gpgoladdin.cpp:705
 msgid ""
 "Look for PGP or S/MIME encrypted data in the message text and decrypt it."
 msgstr "在訊息文字中尋找 PGP 或 S/MIME 資料並解密。"
 
-#: src/gpgoladdin.cpp:696
+#: src/gpgoladdin.cpp:708
 msgid "Add a signature of the message"
 msgstr "為此訊息添加簽名"
 
-#: src/gpgoladdin.cpp:698
+#: src/gpgoladdin.cpp:710
 msgid ""
 "Appends a signed copy of the message text in an opaque signature. An opaque "
 "signature ensures that the signed text is not modified by embedding it in "
@@ -499,68 +499,68 @@ msgstr ""
 "向不透明簽名新增一份訊息文字。不透明簽名能保證文字不被改變，因為它內含一份籤"
 "名。簽名後的訊息文字和你的簽名將被加在純文字後。此訊息不會被加密！"
 
-#: src/gpgoladdin.cpp:794 src/gpgoladdin.cpp:872
+#: src/gpgoladdin.cpp:806 src/gpgoladdin.cpp:884
 msgid "Textbody"
 msgstr "文字內容"
 
-#: src/gpgoladdin.cpp:796 src/gpgoladdin.cpp:802 src/gpgoladdin.cpp:873
-#: src/gpgoladdin.cpp:876 src/gpgoladdin.cpp:877
+#: src/gpgoladdin.cpp:808 src/gpgoladdin.cpp:814 src/gpgoladdin.cpp:885
+#: src/gpgoladdin.cpp:888 src/gpgoladdin.cpp:889
 msgid "Decrypt"
 msgstr "解密"
 
-#: src/gpgoladdin.cpp:798 src/gpgoladdin.cpp:874
+#: src/gpgoladdin.cpp:810 src/gpgoladdin.cpp:886
 msgid "Verify"
 msgstr "驗證"
 
-#: src/gpgoladdin.cpp:799
+#: src/gpgoladdin.cpp:811
 msgid "Attachments"
 msgstr "附件"
 
-#: src/gpgoladdin.cpp:800
+#: src/gpgoladdin.cpp:812
 msgid "Encrypted file"
 msgstr "加密過的檔案"
 
-#: src/gpgoladdin.cpp:801
+#: src/gpgoladdin.cpp:813
 msgid "Encrypted file and Signature"
 msgstr "加密過的檔案和簽名"
 
-#: src/gpgoladdin.cpp:875 src/gpgoladdin.cpp:947 src/gpgoladdin.cpp:948
+#: src/gpgoladdin.cpp:887 src/gpgoladdin.cpp:959 src/gpgoladdin.cpp:960
 msgid "Save and decrypt"
 msgstr "儲存並解密"
 
-#: src/ribbon-callbacks.cpp:247
+#: src/ribbon-callbacks.cpp:249
 msgid "Please select text to encrypt."
 msgstr "選擇要加密的文字。"
 
-#: src/ribbon-callbacks.cpp:259
+#: src/ribbon-callbacks.cpp:261
 msgid "Textbody empty."
 msgstr "文字內容空。"
 
-#: src/ribbon-callbacks.cpp:308 src/ribbon-callbacks.cpp:1076
+#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1082
 msgid "Please add at least one recipent."
 msgstr "請新增至少一個收件人。"
 
-#: src/ribbon-callbacks.cpp:670
+#: src/ribbon-callbacks.cpp:672
 msgid "Please select a Mail."
 msgstr "請選擇一封郵件。"
 
-#: src/ribbon-callbacks.cpp:701
+#: src/ribbon-callbacks.cpp:686
 msgid "Please select the data you wish to decrypt."
 msgstr "選擇要解密的資料。"
 
-#: src/ribbon-callbacks.cpp:714
+#: src/ribbon-callbacks.cpp:699
 msgid "Nothing to decrypt."
 msgstr "沒有可以解密的目標。"
 
-#: src/ribbon-callbacks.cpp:872
+#: src/ribbon-callbacks.cpp:878
 msgid "Plain text"
 msgstr "純文字"
 
-#: src/ribbon-callbacks.cpp:873
+#: src/ribbon-callbacks.cpp:879
 msgid "Signed text"
 msgstr "簽名過的文字"
 
-#: src/ribbon-callbacks.cpp:1083
+#: src/ribbon-callbacks.cpp:1089
 msgid "Select file to encrypt"
 msgstr "選擇要加密的檔案"
 
