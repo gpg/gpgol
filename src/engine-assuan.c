@@ -32,6 +32,7 @@
 #include "engine.h"
 #include "engine-assuan.h"
 #include "util.h"
+#include "exechelp.h"
 
 /* Debug macros.  */
 #define debug_ioworker        (opt.enable_debug & DBG_IOWORKER)
@@ -469,92 +470,93 @@ static gpg_error_t
 connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
                   void *hwnd)
 {
-  static ULONG retry_counter;
-  ULONG retry_count;
-  gpg_error_t err;
-  assuan_context_t ctx;
-
-  if (!r_ctx && !r_pid && !r_cmdid && !hwnd)
-    {
-      InterlockedExchange (&retry_counter, 0);
-      return 0;
-    }
-
+  gpg_error_t rc;
+  const char *socket_name = NULL;
+  lock_spawn_t lock;
 
   *r_ctx = NULL;
   *r_pid = (pid_t)(-1);
   *r_cmdid = 0;
-  err = assuan_new (&ctx);
-  if (err)
-    {
-      InterlockedExchange (&retry_counter, 0);
-      return 0;
-    }
-      
- retry:
-  err = assuan_socket_connect (ctx, get_socket_name (), -1, 0);
-  if (err)
-    {
-      /* Let only one thread start an UI server but all allow threads
-         to check for a connection.  Note that this is not really
-         correct as the maximum waiting time decreases with the number
-         of threads.  However, it is unlikely that we have more than 2
-         or 3 threads here - if at all more than one.  */
-      retry_count = InterlockedExchangeAdd (&retry_counter, 1);
-      if (retry_count < FIREUP_RETRIES)
-        {
-          if (!retry_count)
-            {
-              char *uiserver = get_uiserver_name ();
-              if (!uiserver)
-                {
-                  log_error ("%s:%s: UI server not installed",
-                             SRCNAME, __func__);
-                  InterlockedExchange (&retry_counter, FIREUP_RETRIES);
-                  retry_count = FIREUP_RETRIES;
-                }
-              else
-                {
-                  log_debug ("%s:%s: UI server not running, starting `%s'",
-                             SRCNAME, __func__, uiserver);
-                  if (gpgol_spawn_detached (uiserver))
-                    {
-                      /* Error; try again to connect in case the
-                         server has been started in the meantime.
-                         Make sure that we don't get here a second
-                         time.  */
-                      InterlockedExchange (&retry_counter, FIREUP_RETRIES);
-                    }
-                  xfree (uiserver);
-                }
-            }
-          if (retry_count < FIREUP_RETRIES)
-            {
-              log_debug ("%s:%s: waiting for UI server to come up",
-                         SRCNAME, __func__);
-              Sleep (1000);
-              goto retry;
-            }
-        }
-      else
-        {
-          /* Avoid a retry counter overflow by limiting to the limit.  */
-          InterlockedExchange (&retry_counter, FIREUP_RETRIES);
-        }
 
-      log_error ("%s:%s: error connecting `%s': %s\n", SRCNAME, __func__,
-                 get_socket_name (), gpg_strerror (err));
-    }
-  else if ((err = send_options (ctx, hwnd, r_pid)))
+  socket_name = get_socket_name();
+  if (!socket_name || !*socket_name)
     {
-      assuan_release (ctx);
+      log_error ("%s:%s: Invalid socket name",
+                 SRCNAME, __func__);
+      return gpg_error (GPG_ERR_INV_ARG);
     }
-  else
+
+  rc = assuan_new (r_ctx);
+  if (rc)
     {
-      *r_cmdid = create_command_id ();
-      *r_ctx = ctx;
+      log_error ("%s:%s: Could not allocate context",
+                 SRCNAME, __func__);
+      return rc;
     }
-  return err;
+
+  rc = assuan_socket_connect (*r_ctx, socket_name, -1, 0);
+  if (rc)
+    {
+      int count;
+
+      log_debug ("%s:%s: UI server not running at: \"%s\", starting it",
+                 SRCNAME, __func__, socket_name);
+
+      /* Now try to connect again with the spawn lock taken.  */
+      if (!(rc = gpgol_lock_spawning (&lock))
+          && assuan_socket_connect (*r_ctx, socket_name, -1, 0))
+        {
+          char *uiserver = get_uiserver_name ();
+          if (!uiserver)
+            {
+              log_error ("%s:%s: UI server not installed",
+                         SRCNAME, __func__);
+              assuan_release (*r_ctx);
+              *r_ctx = NULL;
+              return GPG_ERR_GENERAL;
+            }
+          rc = gpgol_spawn_detached (uiserver);
+          xfree (uiserver);
+          if (!rc)
+            {
+              /* Give it a bit of time to start up and try a couple of
+                 times.  */
+              for (count = 0; count < 10; count++)
+                {
+                  Sleep (1000);
+                  rc = assuan_socket_connect (*r_ctx, socket_name, -1, 0);
+                  if (!rc)
+                    break;
+                }
+            }
+
+        }
+      gpgol_unlock_spawning (&lock);
+    }
+
+  if (rc)
+    {
+      log_error ("%s:%s: UI Server failed to start",
+                 SRCNAME, __func__);
+      assuan_release (*r_ctx);
+      *r_ctx = NULL;
+      return rc;
+    }
+#if 0
+ // Something for later
+      if (debug_flags & DEBUG_ASSUAN)
+        assuan_set_log_stream (*ctx, debug_file);
+#endif
+  rc = send_options (*r_ctx, hwnd, r_pid);
+  if (rc)
+    {
+      assuan_release (*r_ctx);
+      *r_ctx = NULL;
+      return rc;
+    }
+  *r_cmdid = create_command_id ();
+
+  return 0;
 }
 
 
