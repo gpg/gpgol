@@ -37,7 +37,8 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
   HRESULT err;
   DWORD enc;
   DWORD mode = 0;
-  unsigned int wlen = 0;
+  unsigned int wlen = 0,
+               uinlen = 0;
   wchar_t *buf;
   char *ret;
 
@@ -51,6 +52,15 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
       return NULL;
     }
 
+  if (inlen > UINT_MAX)
+    {
+      log_error ("%s:%s: Inlen too long. Bug.",
+                 SRCNAME, __func__);
+      multilang->Release();
+      return NULL;
+    }
+
+  uinlen = (unsigned int) inlen;
 
   mime_info.uiCodePage = 0;
   mime_info.uiInternetEncoding = 0;
@@ -69,7 +79,7 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
 
   /** Get the size of the result */
   err = multilang->ConvertStringToUnicode(&mode, enc, input,
-                                          &inlen, NULL, &wlen);
+                                          &uinlen, NULL, &wlen);
   if (FAILED (err))
     {
       log_error ("%s:%s: Failed conversion.",
@@ -79,7 +89,7 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
   }
   buf = (wchar_t*) xmalloc(sizeof(wchar_t) * (wlen + 1));
 
-  err = multilang->ConvertStringToUnicode(&mode, enc, input, &inlen,
+  err = multilang->ConvertStringToUnicode(&mode, enc, input, &uinlen,
                                           buf, &wlen);
   multilang->Release ();
   if (FAILED (err))
