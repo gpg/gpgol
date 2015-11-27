@@ -157,7 +157,7 @@ if test "$have_w32_system" = yes; then
 fi
 AM_CONDITIONAL(HAVE_W32_SYSTEM, test "$have_w32_system" = yes)
 
-
+AM_CONDITIONAL(BUILD_W64, test "$host" = "x86_64-w64-mingw32")
 
 #
 # Checks for libraries.

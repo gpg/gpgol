@@ -29,6 +29,7 @@ FPropCompareProp@12
 FPropContainsProp@12
 FPropExists@8
 FreePadrlist@4
+FreeProws
 FreeProws@4
 FtAdcFt@20
 FtAddFt@16
@@ -51,9 +52,12 @@ HrDecomposeEID@28
 HrDecomposeMsgID@24
 HrDispatchNotifications@4
 HrEntryIDFromSz@12
+HrGetOneProp
 HrGetOneProp@12
 HrIStorageFromStream@16
+HrQueryAllRows
 HrQueryAllRows@24
+HrSetOneProp
 HrSetOneProp@8
 HrSzFromEntryID@12
 HrThisThreadAdviseSink@8
@@ -155,6 +159,7 @@ UNKOBJ_ScSzFromIdsAlloc@20
 UlAddRef@4
 UlFromSzHex@4
 UlPropSize@4
+UlRelease
 UlRelease@4
 WrapCompressedRTFStream
 WrapCompressedRTFStream@12

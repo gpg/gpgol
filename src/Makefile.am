@@ -97,8 +97,12 @@ gpgol_SOURCES = \
 # them).
 gpgol_DEPENDENCIES = libmapi32.a libgpg-error.a libgpgme.a libassuan.a
 
+if BUILD_W64
+  DLLTOOLFLAGS64=--as-flags=--64 -m i386:x86-64
+endif
+
 libmapi32.a: mapi32.def
-	$(DLLTOOL) --output-lib $@ --def $<
+	$(DLLTOOL) $(DLLTOOLFLAGS64) --output-lib $@ --def $<
 
 libgpg-error.a:
 	ln -s $$($(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a .
