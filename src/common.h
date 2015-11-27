@@ -34,9 +34,19 @@ extern "C" {
 #endif
 
 /* The Registry key used by GnuPg and closley related software.  */
-#define GNUPG_REGKEY  "Software\\GNU\\GnuPG"
-
-
+#ifndef NEW_STYLE_REG_KEYS /* Gpg4win 3 changed the key */
+# ifdef WIN64
+#  define GNUPG_REGKEY  "Software\\Wow6432Node\\GNU\\GnuPG"
+# else
+#  define GNUPG_REGKEY  "Software\\GNU\\GnuPG"
+# endif
+# else
+# ifdef WIN64
+#  define GNUPG_REGKEY  "Software\\Wow6432Node\\Gpg4win"
+# else
+#  define GNUPG_REGKEY  "Software\\Gpg4win"
+# endif
+#endif
 /* Identifiers for the protocol.  We use different one than those use
    by gpgme.  FIXME: We might want to define an unknown protocol to
    non-null and define such a value also in gpgme. */
