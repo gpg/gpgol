@@ -597,27 +597,10 @@ int
 op_assuan_init (void)
 {
   static int init_done;
-  gpgme_error_t err;
-  assuan_context_t ctx;
-  pid_t pid;
-  ULONG cmdid;
 
   if (init_done)
     return 0;
-  
-  /* Reset the retry counter.  */
-  connect_uiserver (NULL, NULL, NULL, NULL);
 
-  /* Run a test connection to see whether the UI server is available.  */
-  err = connect_uiserver (&ctx, &pid, &cmdid, NULL);
-  if (!err)
-    {
-      err = assuan_transact (ctx, "NOP", NULL, NULL, NULL, NULL, NULL, NULL);
-      assuan_release (ctx);
-    }
-  if (err)
-    return err;
-  
   /* Fire up the pipe worker thread. */
   {
     HANDLE th;
