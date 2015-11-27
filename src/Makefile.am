@@ -84,7 +84,8 @@ gpgol_SOURCES = \
 	mail.h mail.cpp \
 	rfc2047parse.h rfc2047parse.c \
 	mlang-charset.cpp mlang-charset.h \
-	gmime-table-private.h
+	gmime-table-private.h \
+	exechelp.c exechelp.h
 
 
 #treeview_SOURCES = treeview.c

@@ -965,57 +965,6 @@ generate_boundary (char *buffer)
 }
 
 
-/* Fork and exec the program given in CMDLINE with /dev/null as
-   stdin, stdout and stderr.  Returns 0 on success.  */
-int
-gpgol_spawn_detached (const char *cmdline)
-{
-  int rc;
-  SECURITY_ATTRIBUTES sec_attr;
-  PROCESS_INFORMATION pi = { NULL, 0, 0, 0 };
-  STARTUPINFO si;
-  int cr_flags;
-  char *cmdline_copy;
-
-  memset (&sec_attr, 0, sizeof sec_attr);
-  sec_attr.nLength = sizeof sec_attr;
-  
-  memset (&si, 0, sizeof si);
-  si.cb = sizeof (si);
-  si.dwFlags = STARTF_USESHOWWINDOW;
-  si.wShowWindow = SW_SHOW;
-
-  cr_flags = (CREATE_DEFAULT_ERROR_MODE
-              | GetPriorityClass (GetCurrentProcess ())
-	      | CREATE_NEW_PROCESS_GROUP
-              | DETACHED_PROCESS); 
-
-  cmdline_copy = xstrdup (cmdline);
-  rc = CreateProcess (NULL,          /* No appliactionname, use CMDLINE.  */
-                      cmdline_copy,  /* Command line arguments.  */
-                      &sec_attr,     /* Process security attributes.  */
-                      &sec_attr,     /* Thread security attributes.  */
-                      FALSE,          /* Inherit handles.  */
-                      cr_flags,      /* Creation flags.  */
-                      NULL,          /* Environment.  */
-                      NULL,          /* Use current drive/directory.  */
-                      &si,           /* Startup information. */
-                      &pi            /* Returns process information.  */
-                      );
-  xfree (cmdline_copy);
-  if (!rc)
-    {
-      log_error_w32 (-1, "%s:%s: CreateProcess failed", SRCNAME, __func__);
-      return -1;
-    }
-
-  CloseHandle (pi.hThread); 
-  CloseHandle (pi.hProcess);
-  return 0;
-}
-
-
-
 /* Percent-escape the string STR by replacing colons with '%3a'.  If
    EXTRA is not NULL all characters in it are also escaped. */
 char *

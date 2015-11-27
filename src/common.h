@@ -202,8 +202,6 @@ wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
 #define BOUNDARYSIZE 20
 char *generate_boundary (char *buffer);
 
-int gpgol_spawn_detached (const char *cmdline);
-
 /*-- recipient-dialog.c --*/
 unsigned int recipient_dialog_box (gpgme_key_t **ret_rset);
 unsigned int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
