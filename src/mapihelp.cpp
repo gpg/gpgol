@@ -544,16 +544,6 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   ULONG tag;
   int   is_binary = 0;
 
-  if (g_ol_version_major >= 14)
-    {
-      /* XXX For now we want to ignore clearsigned and PGP/Inline
-         signed code as we still have the old body based interface
-         for those. And before we handle them we should tackle
-         some interoperability issues arising from our current
-         handling (e.g. fix the wipe to restore the PGP body) */
-      return NULL;
-    }
-
   hr = 0;
   if (!get_internetcharsetbody_tag (message, &tag) )
     {
