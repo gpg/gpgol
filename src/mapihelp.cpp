@@ -619,7 +619,10 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
     {
       if (!strncmp (p, "-----BEGIN PGP ", 15))
         {
-          if (!strncmp (p+15, "SIGNED MESSAGE-----", 19)
+          /* Enabling clearsigned detection for Outlook 2010 and later
+             would result in data loss as the signature is not reverted. */
+          if (g_ol_version_major < 14
+              && !strncmp (p+15, "SIGNED MESSAGE-----", 19)
               && trailing_ws_p (p+15+19))
             msgcls = xstrdup ("IPM.Note.GpgOL.ClearSigned");
           else if (!strncmp (p+15, "MESSAGE-----", 12)
