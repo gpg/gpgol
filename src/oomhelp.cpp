@@ -790,34 +790,97 @@ get_oom_context_window (LPDISPATCH context)
   return ret;
 }
 
-
-/* Get a property string by using the PropertyAccessor of pDisp
- * returns NULL on error or a newly allocated result. */
-char *
-get_pa_string (LPDISPATCH pDisp, const char *property)
+int set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
 {
   LPDISPATCH propertyAccessor;
-  VARIANT rVariant,
-          cVariant[1];
-  BSTR b_property;
+  VARIANT cVariant[2];
+  VARIANT rVariant;
   DISPID dispid;
   DISPPARAMS dispparams;
   HRESULT hr;
   EXCEPINFO execpinfo;
+  BSTR b_property;
   wchar_t *w_property;
   unsigned int argErr = 0;
-  char *result = NULL;
 
-  log_debug ("%s:%s: Looking up property: %s;",
-             SRCNAME, __func__, property);
+  log_oom ("%s:%s: Looking up property: %s;",
+             SRCNAME, __func__, dasl_id);
 
   propertyAccessor = get_oom_object (pDisp, "PropertyAccessor");
   if (!propertyAccessor)
     {
       log_error ("%s:%s: Failed to look up property accessor.",
                  SRCNAME, __func__);
-      /* Fall back to address field on error. */
-      return NULL;
+      return -1;
+    }
+
+  dispid = lookup_oom_dispid (propertyAccessor, "SetProperty");
+
+  if (dispid == DISPID_UNKNOWN)
+  {
+    log_error ("%s:%s: could not find SetProperty DISPID",
+               SRCNAME, __func__);
+    return -1;
+  }
+
+  /* Prepare the parameter */
+  w_property = utf8_to_wchar (dasl_id);
+  b_property = SysAllocString (w_property);
+  xfree (w_property);
+
+  cVariant[1].vt = VT_BSTR;
+  cVariant[1].bstrVal = b_property;
+  VariantCopy (&cVariant[0], value);
+  dispparams.rgvarg = cVariant;
+  dispparams.cArgs = 2;
+  dispparams.cNamedArgs = 0;
+  VariantInit (&rVariant);
+
+  hr = propertyAccessor->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                                 DISPATCH_METHOD, &dispparams,
+                                 &rVariant, &execpinfo, &argErr);
+  SysFreeString (b_property);
+  RELDISP (propertyAccessor);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: invoking SetProperty p=%p vt=%d"
+                 " hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__,
+                 rVariant.pdispVal, rVariant.vt, (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+      VariantClear (&rVariant);
+      return -1;
+    }
+  return 0;
+}
+
+/* Get a MAPI property through OOM using the PropertyAccessor
+ * interface and the DASL Uid. Returns -1 on error.
+ * Variant has to be cleared with VariantClear.
+ * rVariant must be a pointer to a Variant.
+ */
+int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
+{
+  LPDISPATCH propertyAccessor;
+  VARIANT cVariant[1];
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  HRESULT hr;
+  EXCEPINFO execpinfo;
+  BSTR b_property;
+  wchar_t *w_property;
+  unsigned int argErr = 0;
+
+  log_oom ("%s:%s: Looking up property: %s;",
+             SRCNAME, __func__, dasl_id);
+
+  propertyAccessor = get_oom_object (pDisp, "PropertyAccessor");
+  if (!propertyAccessor)
+    {
+      log_error ("%s:%s: Failed to look up property accessor.",
+                 SRCNAME, __func__);
+      return -1;
     }
 
   dispid = lookup_oom_dispid (propertyAccessor, "GetProperty");
@@ -826,11 +889,11 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
   {
     log_error ("%s:%s: could not find GetProperty DISPID",
                SRCNAME, __func__);
-    return NULL;
+    return -1;
   }
 
   /* Prepare the parameter */
-  w_property = utf8_to_wchar (property);
+  w_property = utf8_to_wchar (dasl_id);
   b_property = SysAllocString (w_property);
   xfree (w_property);
 
@@ -839,32 +902,97 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
   dispparams.rgvarg = cVariant;
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
-  VariantInit (&rVariant);
+  VariantInit (rVariant);
 
   hr = propertyAccessor->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                                  DISPATCH_METHOD, &dispparams,
-                                 &rVariant, &execpinfo, &argErr);
-  if (hr != S_OK)
-    {
-      log_debug ("%s:%s: error: invoking GetPrperty p=%p vt=%d hr=0x%x argErr=0x%x",
-                 SRCNAME, __func__,
-                 rVariant.pdispVal, rVariant.vt, (unsigned int)hr,
-                 (unsigned int)argErr);
-      dump_excepinfo (execpinfo);
-    }
-  else if (rVariant.vt != VT_BSTR)
-    log_debug ("%s:%s: Property `%s' is not a string (vt=%d)",
-               SRCNAME, __func__, property, rVariant.vt);
-  else if (rVariant.bstrVal)
-    result = wchar_to_utf8 (rVariant.bstrVal);
-
+                                 rVariant, &execpinfo, &argErr);
   SysFreeString (b_property);
   RELDISP (propertyAccessor);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: invoking GetProperty p=%p vt=%d"
+                 " hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__,
+                 rVariant->pdispVal, rVariant->vt, (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+      VariantClear (rVariant);
+      return -1;
+    }
+  return 0;
+}
+
+/* Get a property string by using the PropertyAccessor of pDisp
+ * returns NULL on error or a newly allocated result. */
+char *
+get_pa_string (LPDISPATCH pDisp, const char *property)
+{
+  VARIANT rVariant;
+  char *result = NULL;
+
+  if (get_pa_variant (pDisp, property, &rVariant))
+    {
+      return NULL;
+    }
+
+  if (rVariant.vt == VT_BSTR && rVariant.bstrVal)
+    {
+      result = wchar_to_utf8 (rVariant.bstrVal);
+    }
+  else if (rVariant.vt & VT_ARRAY && !(rVariant.vt & VT_BYREF))
+    {
+      LONG uBound, lBound;
+      VARTYPE vt;
+      char *data;
+      SafeArrayGetVartype(rVariant.parray, &vt);
+
+      if (SafeArrayGetUBound (rVariant.parray, 1, &uBound) != S_OK ||
+          SafeArrayGetLBound (rVariant.parray, 1, &lBound) != S_OK ||
+          vt != VT_UI1)
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          VariantClear (&rVariant);
+          return NULL;
+        }
+
+      result = (char *)xmalloc (uBound - lBound + 1);
+      data = (char *) rVariant.parray->pvData;
+      memcpy (result, data + lBound, uBound - lBound);
+      result[uBound - lBound] = '\0';
+    }
+  else
+    {
+      log_debug ("%s:%s: Property `%s' is not a string (vt=%d)",
+                 SRCNAME, __func__, property, rVariant.vt);
+    }
+
   VariantClear (&rVariant);
 
-  log_debug ("%s:%s: Lookup result: %s;",
-             SRCNAME, __func__, result);
   return result;
+}
+
+int
+get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt)
+{
+  VARIANT rVariant;
+
+  if (get_pa_variant (pDisp, property, &rVariant))
+    {
+      return -1;
+    }
+
+  if (rVariant.vt != VT_I4)
+    {
+      log_debug ("%s:%s: Property `%s' is not a int (vt=%d)",
+                 SRCNAME, __func__, property, rVariant.vt);
+      return -1;
+    }
+
+  *rInt = rVariant.lVal;
+
+  VariantClear (&rVariant);
+  return 0;
 }
 
 /* Gets a malloced NULL terminated array of recipent strings from

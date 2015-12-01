@@ -78,8 +78,21 @@ DEFINE_OLEGUID(IID_IDispatch,                 0x00020400, 0, 0);
 DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 
 #ifndef PR_SMTP_ADDRESS_DASL
-#define PR_SMTP_ADDRESS_DASL "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+#define PR_SMTP_ADDRESS_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
 #endif
+
+#define PR_MESSAGE_CLASS_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x001A001F"
+#define GPGOL_ATTACHTYPE_DASL \
+  "http://schemas.microsoft.com/mapi/string/" \
+  "{31805AB8-3E92-11DC-879C-00061B031004}/GpgOL Attach Type/0x00000003"
+#define PR_ATTACH_DATA_BIN_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x37010102"
+#define PR_BODY_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x1000001F"
+#define PR_ATTACHMENT_HIDDEN_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
 
 #ifdef __cplusplus
 extern "C" {
@@ -144,6 +157,23 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFile);
 /* Look up a string with the propertyAccessor interface */
 char *
 get_pa_string (LPDISPATCH pDisp, const char *property);
+
+/* Look up a long with the propertyAccessor interface.
+ returns -1 on error.*/
+int
+get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt);
+
+/* Set a variant with the propertyAccessor interface */
+int
+set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value);
+
+/* Look up a variant with the propertyAccessor interface */
+int
+get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant);
+
+/* Look up a LONG with the propertyAccessor interface */
+LONG
+get_pa_long (LPDISPATCH pDisp, const char *dasl_id);
 
 /* Queries the interface of the dispatcher for the id
    id. Returns NULL on error. The returned Object
