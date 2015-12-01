@@ -64,6 +64,15 @@ public:
     */
   static int wipe_all_mails ();
 
+  /** @brief revert all known Mail objects.
+    *
+    * Similar to wipe but works on MAPI to revert our attachment
+    * dance and restore an original MIME mail.
+    *
+    * @returns the number of errors that occured.
+    */
+  static int revert_all_mails ();
+
   /** @brief Reference to the mailitem. Do not Release! */
   LPDISPATCH item () { return m_mailitem; }
 
@@ -101,10 +110,15 @@ public:
   /** @brief Message should be encrypted and or signed. */
   bool needs_crypto ();
 
-  /** @brief wipe the plaintext from the message and ecnrypt attachments.
+  /** @brief wipe the plaintext from the message and encrypt attachments.
    *
    * @returns 0 on success; */
   int wipe ();
+
+  /** @brief revert the message to the original mail before our changes.
+   *
+   * @returns 0 on success; */
+  int revert ();
 
   /** @brief update the sender address.
    *

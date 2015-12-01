@@ -26,6 +26,7 @@
 #include "attachment.h"
 #include "mapihelp.h"
 #include "message.h"
+#include "revert.h"
 
 #include <map>
 
@@ -338,6 +339,21 @@ Mail::get_sender ()
   return m_sender;
 }
 
+int
+Mail::revert_all_mails ()
+{
+  int err = 0;
+  std::map<LPDISPATCH, Mail *>::iterator it;
+  for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
+    {
+      if (it->second->revert ())
+        {
+          log_error ("Failed to wipe mail: %p ", it->first);
+          err++;
+        }
+    }
+  return err;
+}
 
 int
 Mail::wipe_all_mails ()
@@ -353,4 +369,26 @@ Mail::wipe_all_mails ()
         }
     }
   return err;
+}
+
+int
+Mail::revert ()
+{
+  int err;
+  if (!m_processed)
+    {
+      return 0;
+    }
+
+  err = gpgol_mailitem_revert (m_mailitem);
+
+  if (err == -1)
+    {
+      log_error ("%s:%s: Message revert failed falling back to wipe.",
+                 SRCNAME, __func__);
+      return wipe ();
+    }
+  /* We need to reprocess the mail next time around. */
+  m_processed = false;
+  return 0;
 }

@@ -101,7 +101,6 @@ request_send (LPVOID arg)
   return 0;
 }
 
-
 /* The main Invoke function. The return value of this
    function does not appear to have any effect on outlook
    although I have read in an example somewhere that you
@@ -197,7 +196,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
              break;
            }
 
-          if (m_mail->wipe ())
+          if (m_mail->revert ())
             {
               /* An error cleaning the mail should not happen normally.
                  But just in case there is an error we cancel the
