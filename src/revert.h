@@ -24,6 +24,8 @@ EXTERN_C LONG __stdcall gpgol_message_revert (LPMESSAGE message,
                                               LONG do_save,
                                               ULONG save_flags);
 
+EXTERN_C LONG __stdcall gpgol_mailitem_revert (LPDISPATCH mailitem);
+
 EXTERN_C LONG __stdcall gpgol_folder_revert (LPDISPATCH mapifolderobj);
 
 

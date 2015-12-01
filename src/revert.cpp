@@ -233,6 +233,231 @@ gpgol_message_revert (LPMESSAGE message, LONG do_save, ULONG save_flags)
   return rc;
 }
 
+/* Helper method for mailitem_revert to add changes on the mapi side
+   and save them. */
+static int finalize_mapi (LPMESSAGE message, char *msgcls)
+{
+  char * oldmsgcls = NULL;
+  HRESULT hr;
+  SPropValue prop;
+  SPropTagArray proparray;
+  ULONG tag_id;
+  if (mapi_save_changes (message, FORCE_SAVE | KEEP_OPEN_READWRITE))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      return -1;
+    }
+  oldmsgcls = mapi_get_old_message_class (message);
+  if (!oldmsgcls)
+    {
+      /* No saved message class, mangle the actual class.  */
+      if (!strcmp (msgcls, "IPM.Note.GpgOL.ClearSigned")
+          || !strcmp (msgcls, "IPM.Note.GpgOL.PGPMessage") )
+        msgcls[8] = 0;
+      else
+        memcpy (msgcls+9, "SMIME", 5);
+      oldmsgcls = msgcls;
+      msgcls = NULL;
+    }
+  /* Change the message class. */
+  prop.ulPropTag = PR_MESSAGE_CLASS_A;
+  prop.Value.lpszA = oldmsgcls;
+  hr = message->SetProps (1, &prop, NULL);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set message class to `%s': hr=%#lx\n",
+                 SRCNAME, __func__, oldmsgcls, hr);
+      return -1;
+    }
+  if (get_gpgollastdecrypted_tag (message, &tag_id))
+    {
+      log_error ("%s:%s: can't getlastdecrypted tag",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  proparray.cValues = 1;
+  proparray.aulPropTag[0] = tag_id;
+  hr = message->DeleteProps (&proparray, NULL);
+  if (hr)
+    {
+      log_error ("%s:%s: failed to delete lastdecrypted tag",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  return 0;
+}
+
+/* Similar to gpgol_message_revert but works on OOM and is
+   used by the Ol > 2010 implementation.
+   Doing this through OOM was necessary as the MAPI structures
+   in the write event are not in sync with the OOM side.
+   Trying to revert in the AfterWrite where MAPI is synced
+   led to an additional save_changes after the wipe and
+   so an additional sync.
+   Updating the BODY through MAPI did not appear to work
+   at all. Not sure why this is the case.
+   Using the property accessor methods instead of
+   MAPI properties might also not be necessary.
+
+   Returns 0 on success, -1 on error. On error this
+   function might leave plaintext in the mail.    */
+EXTERN_C LONG __stdcall
+gpgol_mailitem_revert (LPDISPATCH mailitem)
+{
+  LPDISPATCH attachments = NULL;
+  LPMESSAGE message = NULL;
+  char *item_str;
+  char *msgcls = NULL;
+  int i;
+  int count = 0;
+  LONG result = -1;
+  msgtype_t msgtype;
+
+  /* Check whether we need to care about this message.  */
+  msgcls = get_pa_string (mailitem, PR_MESSAGE_CLASS_W_DASL);
+  log_debug ("%s:%s: message class is `%s'\n",
+             SRCNAME, __func__, msgcls? msgcls:"[none]");
+  if ( !( !strncmp (msgcls, "IPM.Note.GpgOL", 14)
+          && (!msgcls[14] || msgcls[14] == '.') ) )
+    {
+      xfree (msgcls);
+      log_error ("%s:%s: Message processed but not our class. Bug.",
+                 SRCNAME, __func__);
+      return 0;  /* Not one of our message classes.  */
+    }
+
+  message = get_oom_base_message (mailitem);
+  attachments = get_oom_object (mailitem, "Attachments");
+
+  if (!message)
+    {
+      log_error ("%s:%s: No message object.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  if (!attachments)
+    {
+      log_error ("%s:%s: No attachments object.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+  msgtype = mapi_get_message_type (message);
+
+  if (msgtype != MSGTYPE_GPGOL_PGP_MESSAGE)
+    {
+      log_error ("%s:%s: Revert not supported for msgtype: %i",
+                 SRCNAME, __func__, msgtype);
+      goto done;
+    }
+
+  count = get_oom_int (attachments, "Count");
+
+  if (count < 1)
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  /* Yes the items start at 1! */
+  for (i = 1; i <= count; i++)
+    {
+      LPDISPATCH attachment;
+      attachtype_t att_type;
+
+      if (gpgrt_asprintf (&item_str, "Item(%i)", i) == -1)
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          goto done;
+        }
+
+      attachment = get_oom_object (attachments, item_str);
+      xfree (item_str);
+      if (!attachment)
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          goto done;
+        }
+
+      if (get_pa_int (attachment, GPGOL_ATTACHTYPE_DASL, (int*) &att_type))
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          goto done;
+        }
+
+      switch (att_type)
+        {
+          case ATTACHTYPE_PGPBODY:
+            {
+              /* Restore Body */
+              char *body = get_pa_string (attachment, PR_ATTACH_DATA_BIN_DASL);
+              if (!body)
+                {
+                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+                  RELDISP (attachment);
+                  goto done;
+                }
+              log_debug ("%s:%s: Restoring pgp-body.",
+                         SRCNAME, __func__);
+              if (put_oom_string (mailitem, "Body", body))
+                {
+                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+                  xfree (body);
+                  RELDISP (attachment);
+                  goto done;
+                }
+              xfree (body);
+            } /* No break we also want to delete that. */
+          case ATTACHTYPE_FROMMOSS:
+          case ATTACHTYPE_FROMMOSS_DEC:
+            {
+              if (invoke_oom_method (attachment, "Delete", NULL))
+                {
+                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+                  RELDISP (attachment);
+                  goto done;
+                }
+              i--;
+              count--;
+              break;
+            }
+          case ATTACHTYPE_MOSS:
+            {
+              VARIANT value;
+              VariantInit (&value);
+              value.vt = VT_BOOL;
+              value.boolVal = VARIANT_FALSE;
+              if (set_pa_variant (attachment, PR_ATTACHMENT_HIDDEN_DASL,
+                                  &value))
+                {
+                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+                  RELDISP (attachment);
+                  goto done;
+                }
+              put_oom_string (mailitem, "Body", "");
+              break;
+            }
+          default:
+            log_error ("%s:%s: Unknown attachment type: %i",
+                       SRCNAME, __func__, att_type);
+        }
+      RELDISP (attachment);
+    }
+
+  if (finalize_mapi (message, msgcls))
+    {
+      log_error ("%s:%s: Finalize failed.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+  result = 0;
+done:
+  RELDISP (message);
+  xfree (msgcls);
+  RELDISP (attachments);
+
+  return result;
+}
 
 /* Revert all messages in the MAPIFOLDEROBJ.  */
 EXTERN_C LONG __stdcall
