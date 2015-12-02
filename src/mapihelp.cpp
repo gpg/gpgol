@@ -1228,7 +1228,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
           newvalue = change_message_class_ipm_note_smime_multipartsigned
             (message);
         }
-      else if (opt.enable_smime && sync_override && have_override
+      else if (sync_override && have_override
                && !strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14]||s[14] =='.'))
         {
           /* In case the original message class is not yet an GpgOL
