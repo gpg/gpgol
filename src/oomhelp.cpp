@@ -139,8 +139,8 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
   LPDISPATCH pObj = pStart;
   LPDISPATCH pDisp = NULL;
 
-  log_debug ("%s:%s: looking for %p->`%s'",
-             SRCNAME, __func__, pStart, fullname);
+  log_oom ("%s:%s: looking for %p->`%s'",
+           SRCNAME, __func__, pStart, fullname);
 
   while (pObj)
     {
@@ -171,7 +171,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         return NULL;  /* The object has no IDispatch interface.  */
       if (!*fullname)
         {
-          log_debug ("%s:%s:         got %p",SRCNAME, __func__, pDisp);
+          log_oom ("%s:%s:         got %p",SRCNAME, __func__, pDisp);
           return pDisp; /* Ready.  */
         }
       
