@@ -93,7 +93,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/proptag/0x1000001F"
 #define PR_ATTACHMENT_HIDDEN_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
-
+#define PR_ATTACH_MIME_TAG_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x370E001F"
 #ifdef __cplusplus
 extern "C" {
 #if 0

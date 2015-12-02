@@ -29,6 +29,7 @@
 #include "oomhelp.h"
 #include "mapihelp.h"
 #include "message.h"
+#include "mimemaker.h"
 
 
 /* Wrapper around UlRelease with error checking. */
@@ -235,40 +236,12 @@ gpgol_message_revert (LPMESSAGE message, LONG do_save, ULONG save_flags)
 
 /* Helper method for mailitem_revert to add changes on the mapi side
    and save them. */
-static int finalize_mapi (LPMESSAGE message, char *msgcls)
+static int finalize_mapi (LPMESSAGE message)
 {
-  char * oldmsgcls = NULL;
   HRESULT hr;
-  SPropValue prop;
   SPropTagArray proparray;
   ULONG tag_id;
-  if (mapi_save_changes (message, FORCE_SAVE | KEEP_OPEN_READWRITE))
-    {
-      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-      return -1;
-    }
-  oldmsgcls = mapi_get_old_message_class (message);
-  if (!oldmsgcls)
-    {
-      /* No saved message class, mangle the actual class.  */
-      if (!strcmp (msgcls, "IPM.Note.GpgOL.ClearSigned")
-          || !strcmp (msgcls, "IPM.Note.GpgOL.PGPMessage") )
-        msgcls[8] = 0;
-      else
-        memcpy (msgcls+9, "SMIME", 5);
-      oldmsgcls = msgcls;
-      msgcls = NULL;
-    }
-  /* Change the message class. */
-  prop.ulPropTag = PR_MESSAGE_CLASS_A;
-  prop.Value.lpszA = oldmsgcls;
-  hr = message->SetProps (1, &prop, NULL);
-  if (hr)
-    {
-      log_error ("%s:%s: can't set message class to `%s': hr=%#lx\n",
-                 SRCNAME, __func__, oldmsgcls, hr);
-      return -1;
-    }
+
   if (get_gpgollastdecrypted_tag (message, &tag_id))
     {
       log_error ("%s:%s: can't getlastdecrypted tag",
@@ -284,6 +257,15 @@ static int finalize_mapi (LPMESSAGE message, char *msgcls)
                  SRCNAME, __func__);
       return -1;
     }
+
+  /* Save the changes. */
+  if (mapi_save_changes (message,
+                         FORCE_SAVE | KEEP_OPEN_READWRITE))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      return -1;
+    }
+
   return 0;
 }
 
@@ -312,6 +294,11 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
   int count = 0;
   LONG result = -1;
   msgtype_t msgtype;
+  int body_restored = 0;
+  LPDISPATCH *to_delete = NULL;
+  int del_cnt = 0;
+  LPDISPATCH to_restore = NULL;
+  int mosstmpl_found = 0;
 
   /* Check whether we need to care about this message.  */
   msgcls = get_pa_string (mailitem, PR_MESSAGE_CLASS_W_DASL);
@@ -323,7 +310,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
       xfree (msgcls);
       log_error ("%s:%s: Message processed but not our class. Bug.",
                  SRCNAME, __func__);
-      return 0;  /* Not one of our message classes.  */
+      return -1;
     }
 
   message = get_oom_base_message (mailitem);
@@ -344,20 +331,15 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
     }
   msgtype = mapi_get_message_type (message);
 
-  if (msgtype != MSGTYPE_GPGOL_PGP_MESSAGE)
+  if (msgtype != MSGTYPE_GPGOL_PGP_MESSAGE &&
+      msgtype != MSGTYPE_GPGOL_MULTIPART_ENCRYPTED)
     {
       log_error ("%s:%s: Revert not supported for msgtype: %i",
                  SRCNAME, __func__, msgtype);
       goto done;
     }
-
   count = get_oom_int (attachments, "Count");
-
-  if (count < 1)
-    {
-      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-      goto done;
-    }
+  to_delete = (LPDISPATCH*) xmalloc (count * sizeof (LPDISPATCH));
 
   /* Yes the items start at 1! */
   for (i = 1; i <= count; i++)
@@ -406,55 +388,126 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
                   RELDISP (attachment);
                   goto done;
                 }
+              body_restored = 1;
               xfree (body);
+              to_delete[del_cnt++] = attachment;
+              break;
             } /* No break we also want to delete that. */
+          case ATTACHTYPE_MOSS:
+            {
+              char *mime_tag = get_pa_string (attachment,
+                                              PR_ATTACH_MIME_TAG_DASL);
+              if (mime_tag && !strcmp (mime_tag, "application/octet-stream"))
+                {
+                  to_restore = attachment;
+                }
+              else
+                {
+                  log_oom ("%s:%s: Skipping attachment with tag: %s", SRCNAME,
+                           __func__, mime_tag);
+                }
+              xfree (mime_tag);
+              to_delete[del_cnt++] = attachment;
+              break;
+            }
           case ATTACHTYPE_FROMMOSS:
           case ATTACHTYPE_FROMMOSS_DEC:
             {
-              if (invoke_oom_method (attachment, "Delete", NULL))
-                {
-                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-                  RELDISP (attachment);
-                  goto done;
-                }
-              i--;
-              count--;
+              to_delete[del_cnt++] = attachment;
               break;
             }
-          case ATTACHTYPE_MOSS:
+          case ATTACHTYPE_MOSSTEMPL:
+            /* This is a newly created attachment containing a MIME structure
+               other clients could handle */
             {
-              VARIANT value;
-              VariantInit (&value);
-              value.vt = VT_BOOL;
-              value.boolVal = VARIANT_FALSE;
-              if (set_pa_variant (attachment, PR_ATTACHMENT_HIDDEN_DASL,
-                                  &value))
-                {
-                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-                  RELDISP (attachment);
-                  goto done;
-                }
-              put_oom_string (mailitem, "Body", "");
+              mosstmpl_found = 1;
               break;
             }
           default:
             log_error ("%s:%s: Unknown attachment type: %i",
                        SRCNAME, __func__, att_type);
         }
-      RELDISP (attachment);
     }
 
-  if (finalize_mapi (message, msgcls))
+  if (to_restore && !mosstmpl_found)
+    {
+      log_debug ("%s:%s: Restoring from MOSS.", SRCNAME, __func__);
+      if (restore_msg_from_moss (message, to_restore, msgtype,
+                                 msgcls))
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__,
+                     __LINE__);
+        }
+      else
+        {
+          to_restore = NULL;
+        }
+    }
+  if (to_restore || mosstmpl_found)
+    {
+      HRESULT hr;
+      SPropValue prop;
+      /* Message was either restored or the only attachment is the
+         mosstmplate in which case we need to activate the
+         MultipartSigned magic.*/
+      prop.ulPropTag = PR_MESSAGE_CLASS_A;
+      // TODO handle disabled S/MIME and smime messages.
+      prop.Value.lpszA =
+        (char*) "IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned";
+      hr = HrSetOneProp (message, &prop);
+      if (hr)
+        {
+          log_error ("%s:%s: error setting the message class: hr=%#lx\n",
+                     SRCNAME, __func__, hr);
+          goto done;
+        }
+    }
+
+  result = 0;
+done:
+
+  /* Do the deletion body wipe even on error. */
+
+  for (i = 0; i < del_cnt; i++)
+    {
+      LPDISPATCH attachment = to_delete[i];
+
+      if (attachment == to_restore)
+        {
+          /* If restoring failed to restore is still set. In that case
+             do not delete the MOSS attachment to avoid data loss. */
+          continue;
+        }
+      /* Delete the attachments that are marked to delete */
+      if (invoke_oom_method (attachment, "Delete", NULL))
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          result = -1;
+        }
+    }
+  if (!body_restored && put_oom_string (mailitem, "Body", ""))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      result = -1;
+    }
+
+  for (i = 0; i < del_cnt; i++)
+    {
+      RELDISP (to_delete[i]);
+    }
+
+  xfree (to_delete);
+  RELDISP (attachments);
+  xfree (msgcls);
+
+  if (!result && finalize_mapi (message))
     {
       log_error ("%s:%s: Finalize failed.",
                  SRCNAME, __func__);
-      goto done;
+      result = -1;
     }
-  result = 0;
-done:
+
   RELDISP (message);
-  xfree (msgcls);
-  RELDISP (attachments);
 
   return result;
 }

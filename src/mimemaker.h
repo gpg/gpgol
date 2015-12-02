@@ -58,6 +58,15 @@ int sink_encryption_write (sink_t encsink, const void *data, size_t datalen);
 int write_buffer_for_cb (void *opaque, const void *data, size_t datalen);
 int write_buffer (sink_t sink, const void *data, size_t datalen);
 
+/** @brief Try to restore a message from the moss attachment.
+  *
+  * Try to turn the moss attachment back into a Mail that other
+  * MUAs could handle. Uses all the tricks available to archive
+  * that. Returns 0 on success.
+  */
+int restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
+                           msgtype_t type, char *msgcls);
+
 #ifdef __cplusplus
 }
 #endif

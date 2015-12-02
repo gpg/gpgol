@@ -1,5 +1,6 @@
 /* mimemaker.c - Construct MIME message out of a MAPI
- *	Copyright (C) 2007, 2008 g10 Code GmbH
+ *    Copyright (C) 2007, 2008 g10 Code GmbH
+ *    Copyright (C) 2015 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -39,6 +40,7 @@
 #include "engine.h"
 #include "mapihelp.h"
 #include "mimemaker.h"
+#include "oomhelp.h"
 
 static const char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -1994,4 +1996,78 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   mapi_release_attach_table (att_table);
   xfree (my_sender);
   return result;
+}
+
+int
+restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
+                       msgtype_t type, char *msgcls)
+{
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  char *orig = NULL;
+  int err = -1;
+  char boundary[BOUNDARYSIZE+1];
+
+  LPATTACH new_attach = create_mapi_attachment (message,
+                                                sink);
+  log_debug ("Restore message from moss called.");
+  if (!new_attach)
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+  // TODO MORE
+  if (type == MSGTYPE_SMIME)
+    {
+      create_top_encryption_header (sink, PROTOCOL_SMIME, boundary);
+    }
+  else
+    {
+      create_top_encryption_header (sink, PROTOCOL_OPENPGP, boundary);
+    }
+
+  orig = get_pa_string (moss_att, PR_ATTACH_DATA_BIN_DASL);
+
+  if (!orig)
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  if (write_string (sink, orig))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  if (*boundary && write_boundary (sink, boundary, 1))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  if (close_mapi_attachment (&new_attach, sink))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  /* Set a special property so that we are later able to identify
+     messages signed or encrypted by us.  */
+  if (mapi_set_sig_status (message, "@"))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  if (mapi_set_gpgol_msg_class (message, msgcls))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      goto done;
+    }
+
+  err = 0;
+done:
+  xfree (orig);
+  return err;
 }
