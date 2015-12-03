@@ -308,17 +308,17 @@ int
 Mail::update_sender ()
 {
   LPDISPATCH sender = NULL;
-  sender = get_oom_object (m_mailitem, "Session.CurrentUser");
+  sender = get_oom_object (m_mailitem, "SendUsingAccount");
 
   xfree (m_sender);
 
   if (!sender)
     {
-      log_error ("%s:%s: Failed to get sender object.",
+      log_debug ("%s:%s: Failed to get sender Account object.",
                  SRCNAME, __func__);
       return -1;
     }
-  m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+  m_sender = get_oom_string (sender, "SmtpAddress");
 
   if (!m_sender)
     {
