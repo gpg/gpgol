@@ -793,19 +793,45 @@ infer_content_encoding (const void *data, size_t datalen)
 static char *
 utf8_to_rfc2047b (const char *input)
 {
-  char *ret;
+  char *ret,
+       *encoded;
+  int inferred_encoding = 0;
   if (!input)
     {
       return NULL;
     }
-  char *b64_encoded = b64_encode (input, strlen (input));
-  if (gpgrt_asprintf (&ret, "=?UTF-8?B?%s?=", b64_encoded) == -1)
+  inferred_encoding = infer_content_encoding (input, strlen (input));
+  if (!inferred_encoding)
     {
-      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-      xfree (b64_encoded);
-      return NULL;
+      return xstrdup (input);
     }
-  xfree (b64_encoded);
+  log_debug ("%s:%s: Encoding attachment filename. With: %s ",
+             SRCNAME, __func__, inferred_encoding == 2 ? "Base64" : "QP");
+
+  if (inferred_encoding == 2)
+    {
+      encoded = b64_encode (input, strlen (input));
+      if (gpgrt_asprintf (&ret, "=?utf-8?B?%s?=", encoded) == -1)
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          xfree (encoded);
+          return NULL;
+        }
+    }
+  else
+    {
+      /* There is a Bug here. If you encode 4 Byte UTF-8 outlook can't
+         handle it itself. And sends out a message with ?? inserted in
+         that place. This triggers an invalid signature. */
+      encoded = qp_encode (input, strlen (input), NULL);
+      if (gpgrt_asprintf (&ret, "=?utf-8?Q?%s?=", encoded) == -1)
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          xfree (encoded);
+          return NULL;
+        }
+    }
+  xfree (encoded);
   return ret;
 }
 

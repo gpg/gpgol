@@ -197,6 +197,7 @@ const char *default_homedir (void);
 char *get_data_dir (void);
 
 size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
+char *qp_encode (const char *input, size_t length, size_t* outlen);
 void b64_init (b64_state_t *state);
 size_t b64_decode (b64_state_t *state, char *buffer, size_t length);
 char * b64_encode (const char *input, size_t length);

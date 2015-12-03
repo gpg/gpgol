@@ -818,6 +818,51 @@ qp_decode (char *buffer, size_t length, int *r_slbrk)
   return d - buffer;
 }
 
+/* Return the a quoted printable encoded version of the
+   input string. If outlen is not null the size of the
+   quoted printable string is returned. String will be
+   malloced and zero terminated. Aborts if the output
+   is more then three times the size of the input.
+   This is only basic and does not handle mutliline data. */
+char *
+qp_encode (const char *input, size_t inlen, size_t *r_outlen)
+{
+  size_t max_len = inlen * 3 +1;
+  char *outbuf = xmalloc (max_len);
+  size_t outlen = 0;
+  const unsigned char *p;
+
+  memset (outbuf, 0, max_len);
+
+  for (p = input; inlen; p++, inlen--)
+    {
+      if (*p >= '!' && *p <= '~' && *p != '=')
+        {
+          outbuf[outlen++] = *p;
+        }
+      else if (*p == ' ')
+        {
+          /* Outlook does it this way */
+          outbuf[outlen++] = '_';
+        }
+      else
+        {
+          outbuf[outlen++] = '=';
+          outbuf[outlen++] = tohex ((*p>>4)&15);
+          outbuf[outlen++] = tohex (*p&15);
+        }
+      if (outlen == max_len -1)
+        {
+          log_error ("Quoted printable too long. Bug.");
+          r_outlen = NULL;
+          return NULL;
+        }
+    }
+  if (r_outlen)
+    *r_outlen = outlen;
+  return outbuf;
+}
+
 
 /* Initialize the Base 64 decoder state.  */
 void b64_init (b64_state_t *state)
@@ -909,6 +954,7 @@ b64_encode (const char *input, size_t length)
       return NULL;
     }
   ret = xmalloc (out_len);
+  memset (ret, 0, out_len);
 
   for (i = 0, j = 0; i < length;)
     {
@@ -933,8 +979,6 @@ b64_encode (const char *input, size_t length)
       ret [j - 2] = '=';
     }
 
-  ret[++j] = '\0';
-  log_debug("Encoded to: %s ", ret);
   return ret;
 }
 
