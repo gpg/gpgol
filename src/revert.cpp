@@ -310,6 +310,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
   int del_cnt = 0;
   LPDISPATCH to_restore = NULL;
   int mosstmpl_found = 0;
+  int is_smime = 0;
 
   /* Check whether we need to care about this message.  */
   msgcls = get_pa_string (mailitem, PR_MESSAGE_CLASS_W_DASL);
@@ -344,12 +345,37 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
 
   if (msgtype != MSGTYPE_GPGOL_PGP_MESSAGE &&
       msgtype != MSGTYPE_GPGOL_MULTIPART_ENCRYPTED &&
-      msgtype != MSGTYPE_GPGOL_MULTIPART_SIGNED)
+      msgtype != MSGTYPE_GPGOL_MULTIPART_SIGNED &&
+      msgtype != MSGTYPE_GPGOL_OPAQUE_ENCRYPTED &&
+      msgtype != MSGTYPE_GPGOL_OPAQUE_SIGNED)
     {
       log_error ("%s:%s: Revert not supported for msgtype: %i",
                  SRCNAME, __func__, msgtype);
       goto done;
     }
+
+  is_smime = msgtype == MSGTYPE_GPGOL_OPAQUE_ENCRYPTED ||
+             msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED;
+
+  /* Check if it is an smime mail. Multipart signed can
+     also be true. */
+  if (!is_smime && msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
+    {
+      char *proto;
+      char *ct = mapi_get_message_content_type (message, &proto, NULL);
+      if (ct && proto)
+        {
+          is_smime = (!strcmp (proto, "application/pkcs7-signature") ||
+                      !strcmp (proto, "application/x-pkcs7-signature"));
+        }
+      else
+        {
+          log_error ("Protocol in multipart signed mail.");
+        }
+      xfree (proto);
+      xfree (ct);
+    }
+
   count = get_oom_int (attachments, "Count");
   to_delete = (LPDISPATCH*) xmalloc (count * sizeof (LPDISPATCH));
 
@@ -375,8 +401,17 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
 
       if (get_pa_int (attachment, GPGOL_ATTACHTYPE_DASL, (int*) &att_type))
         {
-          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-          goto done;
+          if (!is_smime && msgtype != MSGTYPE_GPGOL_OPAQUE_SIGNED)
+            {
+              /* The Opaque signed attachment does not have a gpgol type
+                 for some reason. So we fake this here */
+              att_type = ATTACHTYPE_MOSSTEMPL;
+            }
+          else
+            {
+              log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+              goto done;
+            }
         }
 
       switch (att_type)
@@ -429,6 +464,12 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
                      This means treating it as a MOSSTMPL */
                   mosstmpl_found = 1;
                 }
+              else if (is_smime)
+                {
+                  /* Same here. No restoration but just rebuilding from the
+                     attachment. */
+                  mosstmpl_found = 1;
+                }
               else
                 {
                   log_oom ("%s:%s: Skipping attachment with tag: %s", SRCNAME,
@@ -448,6 +489,11 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
             /* This is a newly created attachment containing a MIME structure
                other clients could handle */
             {
+              if (mosstmpl_found)
+                {
+                  log_error ("More then one mosstempl.");
+                  goto done;
+                }
               mosstmpl_found = 1;
               break;
             }
@@ -479,31 +525,69 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
          mosstmplate in which case we need to activate the
          MultipartSigned magic.*/
       prop.ulPropTag = PR_MESSAGE_CLASS_A;
-      // TODO handle disabled S/MIME and smime messages.
-      if (msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
+      if (is_smime)
+        {
+#if 0
+          /* FIXME this does not appear to work somehow. */
+          if (opt.enable_smime)
+            {
+              prop.Value.lpszA =
+                (char*) "IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned";
+              hr = HrSetOneProp (message, &prop);
+            }
+          else
+#endif
+            {
+              ULONG tag;
+              if (msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
+                prop.Value.lpszA = (char*) "IPM.Note.SMIME.MultipartSigned";
+              else
+                prop.Value.lpszA = (char*) "IPM.Note.SMIME";
+              hr = HrSetOneProp (message, &prop);
+
+              if (!get_gpgolmsgclass_tag (message, &tag))
+                {
+                  SPropTagArray proparray;
+                  proparray.cValues = 1;
+                  proparray.aulPropTag[0] = tag;
+                  hr = message->DeleteProps (&proparray, NULL);
+                  if (hr)
+                    {
+                      log_error ("%s:%s: deleteprops smime failed: hr=%#lx\n",
+                                 SRCNAME, __func__, hr);
+
+                    }
+                }
+            }
+        }
+      else if (msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
         {
           prop.Value.lpszA =
             (char*) "IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned";
+          hr = HrSetOneProp (message, &prop);
         }
       else
         {
           prop.Value.lpszA =
             (char*) "IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned";
+          hr = HrSetOneProp (message, &prop);
         }
-      hr = HrSetOneProp (message, &prop);
       if (hr)
         {
           log_error ("%s:%s: error setting the message class: hr=%#lx\n",
                      SRCNAME, __func__, hr);
           goto done;
         }
-      /* Backup the real message class */
-      if (mapi_set_gpgol_msg_class (message, msgcls))
-        {
-          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-          goto done;
-        }
 
+      /* Backup the real message class */
+      if (!is_smime || opt.enable_smime)
+        {
+          if (mapi_set_gpgol_msg_class (message, msgcls))
+            {
+              log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+              goto done;
+            }
+        }
     }
 
   result = 0;

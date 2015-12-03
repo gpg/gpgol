@@ -103,6 +103,7 @@ int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
+int get_gpgolmsgclass_tag (LPMESSAGE message, ULONG *r_tag);
 
 int mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
                           const char *dbg_file, const char *dbg_func);
