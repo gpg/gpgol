@@ -2034,6 +2034,8 @@ restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
   int err = -1;
   char boundary[BOUNDARYSIZE+1];
 
+  (void)msgcls;
+
   LPATTACH new_attach = create_mapi_attachment (message,
                                                 sink);
   log_debug ("Restore message from moss called.");
@@ -2047,9 +2049,15 @@ restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
     {
       create_top_encryption_header (sink, PROTOCOL_SMIME, boundary);
     }
-  else
+  else if (type == MSGTYPE_GPGOL_MULTIPART_ENCRYPTED)
     {
       create_top_encryption_header (sink, PROTOCOL_OPENPGP, boundary);
+    }
+  else
+    {
+      log_error ("%s:%s: Unsupported messagetype: %i",
+                 SRCNAME, __func__, type);
+      goto done;
     }
 
   orig = get_pa_string (moss_att, PR_ATTACH_DATA_BIN_DASL);
@@ -2081,12 +2089,6 @@ restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
   /* Set a special property so that we are later able to identify
      messages signed or encrypted by us.  */
   if (mapi_set_sig_status (message, "@"))
-    {
-      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-      goto done;
-    }
-
-  if (mapi_set_gpgol_msg_class (message, msgcls))
     {
       log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
       goto done;

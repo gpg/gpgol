@@ -332,7 +332,8 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
   msgtype = mapi_get_message_type (message);
 
   if (msgtype != MSGTYPE_GPGOL_PGP_MESSAGE &&
-      msgtype != MSGTYPE_GPGOL_MULTIPART_ENCRYPTED)
+      msgtype != MSGTYPE_GPGOL_MULTIPART_ENCRYPTED &&
+      msgtype != MSGTYPE_GPGOL_MULTIPART_SIGNED)
     {
       log_error ("%s:%s: Revert not supported for msgtype: %i",
                  SRCNAME, __func__, msgtype);
@@ -397,17 +398,33 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
             {
               char *mime_tag = get_pa_string (attachment,
                                               PR_ATTACH_MIME_TAG_DASL);
-              if (mime_tag && !strcmp (mime_tag, "application/octet-stream"))
+              if (!mime_tag)
                 {
+                  log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+                }
+              else if (msgtype == MSGTYPE_GPGOL_MULTIPART_ENCRYPTED &&
+                       !strcmp (mime_tag, "application/octet-stream"))
+                {
+                  /* This is the body attachment of a multipart encrypted
+                     message. Rebuild the message. */
                   to_restore = attachment;
+                  to_delete[del_cnt++] = attachment;
+                }
+              else if (msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED &&
+                       mime_tag && !strcmp (mime_tag, "multipart/signed"))
+                {
+                  /* This is the MIME formatted MOSS attachment of a multipart
+                     signed message. Rebuild the MIME structure from that.
+                     This means treating it as a MOSSTMPL */
+                  mosstmpl_found = 1;
                 }
               else
                 {
                   log_oom ("%s:%s: Skipping attachment with tag: %s", SRCNAME,
                            __func__, mime_tag);
+                  to_delete[del_cnt++] = attachment;
                 }
               xfree (mime_tag);
-              to_delete[del_cnt++] = attachment;
               break;
             }
           case ATTACHTYPE_FROMMOSS:
@@ -452,8 +469,16 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
          MultipartSigned magic.*/
       prop.ulPropTag = PR_MESSAGE_CLASS_A;
       // TODO handle disabled S/MIME and smime messages.
-      prop.Value.lpszA =
-        (char*) "IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned";
+      if (msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
+        {
+          prop.Value.lpszA =
+            (char*) "IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned";
+        }
+      else
+        {
+          prop.Value.lpszA =
+            (char*) "IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned";
+        }
       hr = HrSetOneProp (message, &prop);
       if (hr)
         {
@@ -461,6 +486,13 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
                      SRCNAME, __func__, hr);
           goto done;
         }
+      /* Backup the real message class */
+      if (mapi_set_gpgol_msg_class (message, msgcls))
+        {
+          log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+          goto done;
+        }
+
     }
 
   result = 0;
