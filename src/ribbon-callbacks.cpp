@@ -919,7 +919,6 @@ do_reader_action (LPDISPATCH ctrl, int flags)
 HRESULT
 getIcon (int id, VARIANT* result)
 {
-  TRACEPOINT
   PICTDESC pdesc;
   LPDISPATCH pPict;
   HRESULT hr;
@@ -935,7 +934,6 @@ getIcon (int id, VARIANT* result)
   pdesc.cbSizeofstruct = sizeof pdesc;
   pdesc.picType = PICTYPE_BITMAP;
 
-  TRACEPOINT
   if (!result)
     {
       log_error ("getIcon called without result variant.");
@@ -950,7 +948,6 @@ getIcon (int id, VARIANT* result)
   GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
 
   /* Get the image from the resource file */
-  TRACEPOINT
   hResource = FindResource (glob_hinst, MAKEINTRESOURCE(id), RT_RCDATA);
   if (!hResource)
     {
@@ -959,12 +956,10 @@ getIcon (int id, VARIANT* result)
       return E_FAIL;
     }
 
-  TRACEPOINT
   imageSize = SizeofResource (glob_hinst, hResource);
   if (!imageSize)
     return E_FAIL;
 
-  TRACEPOINT
   pResourceData = LockResource (LoadResource(glob_hinst, hResource));
 
   if (!pResourceData)
@@ -974,47 +969,36 @@ getIcon (int id, VARIANT* result)
       return E_FAIL;
     }
 
-  TRACEPOINT
   hBuffer = GlobalAlloc (GMEM_MOVEABLE, imageSize);
 
-  TRACEPOINT
   if (hBuffer)
     {
       void* pBuffer = GlobalLock (hBuffer);
       if (pBuffer)
         {
-          TRACEPOINT
           IStream* pStream = NULL;
           CopyMemory (pBuffer, pResourceData, imageSize);
 
-          TRACEPOINT
           if (CreateStreamOnHGlobal (hBuffer, FALSE, &pStream) == S_OK)
             {
-              TRACEPOINT
               pbitmap = Gdiplus::Bitmap::FromStream (pStream);
               pStream->Release();
               if (!pbitmap || pbitmap->GetHBITMAP (0, &pdesc.bmp.hbitmap))
                 {
-                  TRACEPOINT
                   log_error ("%s:%s: failed to get PNG.",
                              SRCNAME, __func__);
                 }
             }
         }
-      TRACEPOINT
       GlobalUnlock (pBuffer);
     }
-  TRACEPOINT
   GlobalFree (hBuffer);
 
-  TRACEPOINT
   Gdiplus::GdiplusShutdown (gdiplusToken);
-  TRACEPOINT
 
   /* Wrap the image into an OLE object.  */
   hr = OleCreatePictureIndirect (&pdesc, IID_IPictureDisp,
                                  TRUE, (void **) &pPict);
-  TRACEPOINT
   if (hr != S_OK || !pPict)
     {
       log_error ("%s:%s: OleCreatePictureIndirect failed: hr=%#lx\n",
@@ -1022,10 +1006,8 @@ getIcon (int id, VARIANT* result)
       return -1;
     }
 
-  TRACEPOINT
   result->pdispVal = pPict;
   result->vt = VT_DISPATCH;
-  TRACEPOINT
 
   return S_OK;
 }
