@@ -206,6 +206,7 @@ private:
   LPDISPATCH m_application;
   LPDISPATCH m_addin;
   LPDISPATCH m_applicationEventSink;
+  LPDISPATCH m_ribbon_control;
   bool m_disabled;
 
 };
@@ -243,5 +244,8 @@ private:
 };
 
 STDAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID* ppvObj);
+
+/* Invalidates the UI XML to trigger a reload of the UI Elements. */
+void gpgoladdin_invalidate_ui ();
 
 #endif /*GPGOLADDIN_H*/

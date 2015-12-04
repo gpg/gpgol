@@ -1,5 +1,5 @@
 /* gpgoladdin.cpp - Connect GpgOL to Outlook as an addin
- *    Copyright (C) 2013 Intevation GmbH
+ *    Copyright (C) 2013, 2015 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -51,6 +51,7 @@
 #include "mail.h"
 
 #include <gpg-error.h>
+#include <list>
 
 #define ICON_SIZE_LARGE  32
 #define ICON_SIZE_NORMAL 16
@@ -62,6 +63,8 @@
 ULONG addinLocks = 0;
 
 bool can_unload = false;
+
+static std::list<LPDISPATCH> g_ribbon_uis;
 
 /* This is the main entry point for the addin
    Outlook uses this function to query for an Object implementing
@@ -504,6 +507,9 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       /* MIME support: */
       ID_MAPPER (L"encryptMime", ID_CMD_MIME_ENCRYPT)
       ID_MAPPER (L"signMime", ID_CMD_MIME_SIGN)
+      ID_MAPPER (L"getEncryptPressed", ID_GET_ENCRYPT_PRESSED)
+      ID_MAPPER (L"getSignPressed", ID_GET_SIGN_PRESSED)
+      ID_MAPPER (L"ribbonLoaded", ID_ON_LOAD);
     }
 
   if (cNames > 1)
@@ -558,6 +564,16 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return mime_sign (parms->rgvarg[1].pdispVal);
       case ID_CMD_MIME_ENCRYPT:
         return mime_encrypt (parms->rgvarg[1].pdispVal);
+      case ID_GET_ENCRYPT_PRESSED:
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, 1, result);
+      case ID_GET_SIGN_PRESSED:
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, 2, result);
+      case ID_ON_LOAD:
+          {
+            log_debug ("A new Ribbon control was born: %p",
+                       parms->rgvarg[0].pdispVal);
+            g_ribbon_uis.push_back (parms->rgvarg[0].pdispVal);
+          }
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
@@ -611,11 +627,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
     {
       gpgrt_asprintf (&buffer,
-        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
+        " onLoad=\"ribbonLoaded\">"
         " <ribbon>"
         "   <tabs>"
-        "    <tab id=\"gpgolTab\""
-        "         label=\"%s\">"
+        "    <tab idMso=\"TabNewMailMessage\">"
         "     <group id=\"general\""
         "            label=\"%s\">"
         "       <button id=\"CustomButton\""
@@ -625,30 +641,28 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "               screentip=\"%s\""
         "               supertip=\"%s\""
         "               onAction=\"startCertManager\"/>"
-        "     </group>"
-        "     <group id=\"textGroup\""
-        "            label=\"%s\">"
         "       <toggleButton id=\"mimeEncrypt\""
         "               getImage=\"btnEncryptLarge\""
         "               size=\"large\""
         "               label=\"%s\""
         "               screentip=\"%s\""
         "               supertip=\"%s\""
-        "               onAction=\"encryptMime\"/>"
+        "               onAction=\"encryptMime\""
+        "               getPressed=\"getEncryptPressed\"/>"
         "       <toggleButton id=\"mimeSign\""
         "               getImage=\"btnSignLarge\""
         "               size=\"large\""
         "               label=\"%s\""
         "               screentip=\"%s\""
         "               supertip=\"%s\""
-        "               onAction=\"signMime\"/>"
+        "               onAction=\"signMime\""
+        "               getPressed=\"getSignPressed\"/>"
         "     </group>"
         "    </tab>"
         "   </tabs>"
         " </ribbon>"
-        "</customUI>", _("GpgOL"), _("General"),
+        "</customUI>", _("GpgOL"),
         _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
-        _("GnuPG"),
         _("Encrypt"), encryptTTip, encryptSTip,
         _("Sign"), signTTip, signSTip
         );
@@ -967,3 +981,27 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   return S_OK;
 }
 #endif /* MIME_SEND */
+
+
+/* RibbonUi elements are created on demand but they are reused
+   in different inspectors. So far and from all documentation
+   I could find RibbonUi elments are never
+   deleted. When they are created the onLoad callback is called
+   to register them.
+   The callbacks registered in the XML description are only
+   executed on Load. So to have different information depending
+   on the available mails we have to invalidate the UI ourself.
+   This means that the callbacks will be reevaluated and the UI
+   Updated. Sadly we don't know which ribbon_ui needs updates
+   so we have to invalidate everything.
+*/
+void gpgoladdin_invalidate_ui ()
+{
+  std::list<LPDISPATCH>::iterator it;
+
+  for (it = g_ribbon_uis.begin(); it != g_ribbon_uis.end(); ++it)
+    {
+      log_debug ("Invalidating ribbon: %p", *it);
+      invoke_oom_method (*it, "Invalidate", NULL);
+    }
+}

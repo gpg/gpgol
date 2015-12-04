@@ -1308,7 +1308,7 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
       goto done;
     }
 
-  message = get_oom_message (mailitem);
+  message = get_oom_base_message (mailitem);
 
   if (!message)
     {
@@ -1345,4 +1345,63 @@ HRESULT mime_sign (LPDISPATCH ctrl)
 HRESULT mime_encrypt (LPDISPATCH ctrl)
 {
   return mark_mime_action (ctrl, OP_ENCRYPT);
+}
+
+/* Get the state of encrypt / sign toggle buttons.
+  flag values: 1 get the state of the encrypt button.
+               2 get the state of the sign button. */
+HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result)
+{
+  HRESULT hr;
+  LPDISPATCH context = NULL,
+             mailitem = NULL;
+  LPMESSAGE message = NULL;
+
+  /* First the usual defensive check about our parameters */
+  if (!ctrl || !result)
+    {
+      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
+      return E_FAIL;
+    }
+
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
+
+  hr = getContext (ctrl, &context);
+
+  if (hr)
+    {
+      log_error ("%s:%s:%i : hresult %lx", SRCNAME, __func__, __LINE__,
+                 hr);
+      return E_FAIL;
+    }
+
+  mailitem = get_oom_object (context, "CurrentItem");
+
+  if (!mailitem)
+    {
+      log_error ("%s:%s: Failed to get mailitem.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  message = get_oom_base_message (mailitem);
+
+  if (!message)
+    {
+      log_error ("%s:%s: No message found.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  *(result->pboolVal) = get_gpgol_draft_info_flags (message) & flags ?
+                                                        VARIANT_TRUE :
+                                                        VARIANT_FALSE;
+
+done:
+  RELDISP (context);
+  RELDISP (mailitem);
+  RELDISP (message);
+
+  return S_OK;
 }
