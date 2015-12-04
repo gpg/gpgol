@@ -315,7 +315,17 @@ mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
 
   if (!only_del_body || any)
     {
-      hr = message->SaveChanges (flags);
+      int i;
+      for (i = 0, hr = 0; hr && i < 10; i++)
+        {
+          hr = message->SaveChanges (flags);
+          if (hr)
+            {
+              log_debug ("%s:%s: Failed try to save.",
+                         SRCNAME, __func__);
+              Sleep (1000);
+            }
+        }
       if (hr)
         {
           log_error ("%s:%s: SaveChanges(%lu) failed: hr=%#lx\n",

@@ -241,8 +241,6 @@ static int finalize_mapi (LPMESSAGE message)
   HRESULT hr;
   SPropTagArray proparray;
   ULONG tag_id;
-  int save_tries;
-  int rc;
 
   if (get_gpgollastdecrypted_tag (message, &tag_id))
     {
@@ -260,24 +258,7 @@ static int finalize_mapi (LPMESSAGE message)
       return -1;
     }
 
-  /* Save the changes. */
-  for (save_tries = 0, rc = 1; rc && save_tries < 10; save_tries++)
-    {
-      rc = mapi_save_changes (message, FORCE_SAVE);
-      if (rc)
-        {
-          log_debug ("Failed try to save.");
-          Sleep (1000);
-        }
-    }
-  if (save_tries == 5)
-    {
-      log_error ("%s:%s: Saving restored message failed.",
-                 SRCNAME, __func__);
-      return -1;
-    }
-
-  return 0;
+  return mapi_save_changes (message, FORCE_SAVE);
 }
 
 /* Similar to gpgol_message_revert but works on OOM and is
