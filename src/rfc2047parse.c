@@ -31,6 +31,10 @@
  *  of the License, or (at your option) any later version.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdbool.h>
 #include "common.h"
 #include "mlang-charset.h"
