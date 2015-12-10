@@ -232,6 +232,7 @@ Mail::do_crypto ()
 {
   int err = -1,
       flags = 0;
+  protocol_t proto = opt.enable_smime ? PROTOCOL_UNKNOWN : PROTOCOL_OPENPGP;
   if (!needs_crypto())
     {
       return 0;
@@ -248,17 +249,17 @@ Mail::do_crypto ()
     {
       log_debug ("%s:%s: Sign / Encrypting message",
                  SRCNAME, __func__);
-      err = message_sign_encrypt (message, PROTOCOL_UNKNOWN,
+      err = message_sign_encrypt (message, proto,
                                   NULL, get_sender ());
     }
   else if (flags == 2)
     {
-      err = message_sign (message, PROTOCOL_UNKNOWN,
+      err = message_sign (message, proto,
                           NULL, get_sender ());
     }
   else if (flags == 1)
     {
-      err = message_encrypt (message, PROTOCOL_UNKNOWN,
+      err = message_encrypt (message, proto,
                              NULL, get_sender ());
     }
   else
