@@ -31,8 +31,6 @@
 #include "gpgol-ids.h"
 #include "dialogs.h"
 
-/* Registry path to GnuPG */
-#define REGPATH "Software\\GNU\\GnuPG"
 
 /* Registry path to store plugin settings */
 #define GPGOL_REGPATH "Software\\GNU\\GpgOL"
