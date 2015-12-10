@@ -174,6 +174,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_error ("%s:%s: Failed to insert plaintext into oom.",
                          SRCNAME, __func__);
             }
+          if (!opt.enable_smime && m_mail->is_smime ())
+            {
+              /* We want to save the mail when it's an smime mail and smime
+                 is disabled to revert it. */
+              m_mail->set_needs_save (true);
+            }
           break;
         }
 #if 0
@@ -263,8 +269,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
              break;
            }
 
-          if ((!opt.enable_smime && m_mail->is_smime ()) &&
-              (m_mail->is_crypto_mail () && !m_mail->needs_save ()))
+          if (m_mail->is_crypto_mail () && !m_mail->needs_save ())
             {
               /* We cancel the write event to stop outlook from excessively
                  syncing our changes.
