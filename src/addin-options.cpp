@@ -69,7 +69,6 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           set_labels (hDlg);
           ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
                       opt.enable_debug ? SW_SHOW : SW_HIDE);
-          log_debug ("Init Window");
         }
       return 1;
       case WM_LBUTTONDOWN:
@@ -119,11 +118,6 @@ options_dialog_box (HWND parent)
 
   if (!parent)
     parent = GetDesktopWindow ();
-  err = DialogBoxParam (glob_hinst, MAKEINTRESOURCE (resid), parent,
-                        options_window_proc, 0);
-  if (err <= 0)
-    {
-      log_debug ("Failed with: return code: %x last err %lx", err, GetLastError());
-    }
-  log_debug ("Opened Options?");
+  DialogBoxParam (glob_hinst, MAKEINTRESOURCE (resid), parent,
+                  options_window_proc, 0);
 }
