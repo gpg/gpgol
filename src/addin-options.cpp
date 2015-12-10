@@ -112,7 +112,6 @@ void
 options_dialog_box (HWND parent)
 {
   int resid;
-  INT_PTR err;
 
   resid = IDD_ADDIN_OPTIONS;
 
