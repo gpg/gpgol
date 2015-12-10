@@ -26,6 +26,7 @@
 #include "ocidl.h"
 #include "windowmessages.h"
 #include "mail.h"
+#include "mapihelp.h"
 
 const wchar_t * save_props[] = {
   L"Categories",
@@ -131,6 +132,32 @@ EVENT_SINK_INVOKE(MailItemEvents)
     }
   switch(dispid)
     {
+      case Open:
+        {
+          LPMESSAGE message;
+          int draft_flags;
+          if (!opt.encrypt_default && !opt.sign_default)
+            {
+              return S_OK;
+            }
+          message = get_oom_base_message (m_object);
+          if (!message)
+            {
+              log_error ("%s:%s: Failed to get message.",
+                         SRCNAME, __func__);
+              break;
+            }
+          if (opt.encrypt_default)
+            {
+              draft_flags = 1;
+            }
+          if (opt.sign_default)
+            {
+              draft_flags += 2;
+            }
+          set_gpgol_draft_info_flags (message, draft_flags);
+          RELDISP (message);
+        }
       case BeforeRead:
         {
           if (m_mail->process_message ())
