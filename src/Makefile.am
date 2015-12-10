@@ -85,7 +85,8 @@ gpgol_SOURCES = \
 	rfc2047parse.h rfc2047parse.c \
 	mlang-charset.cpp mlang-charset.h \
 	gmime-table-private.h \
-	exechelp.c exechelp.h
+	exechelp.c exechelp.h \
+	addin-options.cpp addin-options.h
 
 
 #treeview_SOURCES = treeview.c

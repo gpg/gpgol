@@ -78,6 +78,7 @@
 
 /* Ids used for the main config dialog.  */
 #define IDD_GPG_OPTIONS                 0x5000
+#define IDD_ADDIN_OPTIONS               0x5001
 #define IDC_TIME_PHRASES                0x5010
 #define IDC_ENCRYPT_DEFAULT             0x5020
 #define IDC_SIGN_DEFAULT                0x5030
@@ -85,6 +86,7 @@
 #define IDC_OPENPGP_DEFAULT             0x5050
 #define IDC_SMIME_DEFAULT               0x5060
 #define IDC_GPG_OPTIONS                 0x5070
+#define IDC_ADDIN_OPTIONS               0x5071
 #define IDC_BITMAP                      0x5080
 #define IDC_VERSION_INFO                0x5090
 #define IDC_ENCRYPT_TO                  0x50A0
@@ -97,6 +99,8 @@
 #define IDC_BODY_AS_ATTACHMENT          0x5110
 #define IDC_GPG_CONF                    0x5120
 #define IDC_G10CODE_STRING              0x5130
+#define IDC_GPG4WIN_STRING              0x5131
+#define IDC_START_CERTMAN               0x5132
 
 /* Ids for PNG Images */
 #define IDI_ENCRYPT_16_PNG              0x6000
