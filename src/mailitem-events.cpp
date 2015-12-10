@@ -27,6 +27,13 @@
 #include "windowmessages.h"
 #include "mail.h"
 
+const wchar_t * save_props[] = {
+  L"Categories",
+  L"FlagRequest",
+  L"TaskCompletedDate",
+  L"FlagStatus",
+  NULL };
+
 
 typedef enum
   {
@@ -142,6 +149,39 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           break;
         }
+#if 0
+      case PropertyChange:
+        {
+          wchar_t *prop_name;
+          const wchar_t **cur;
+          if (!m_mail->is_crypto_mail ())
+            {
+              break;
+            }
+          if (!parms || parms->cArgs != 1 ||
+              parms->rgvarg[0].vt != VT_BSTR ||
+              !parms->rgvarg[0].bstrVal)
+            {
+              log_error ("%s:%s: Unexpected params.",
+                         SRCNAME, __func__);
+              break;
+            }
+
+          prop_name = parms->rgvarg[0].bstrVal;
+
+          for (cur = save_props; *cur; cur++)
+            {
+              if (!wcscmp (prop_name, *cur))
+                {
+                  m_mail->set_needs_save (true);
+                  break;
+                }
+            }
+          log_oom ("%s:%s: Message %p propchange: %ls.",
+                   SRCNAME, __func__, m_object, prop_name);
+          return S_OK;
+        }
+#endif
       case Send:
         {
           /* This is the only event where we can cancel the send of an
@@ -191,10 +231,25 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
            {
              /* This happens in the weird case */
-             log_oom ("%s:%s: Uncancellable write event.",
-                      SRCNAME, __func__);
+             log_debug ("%s:%s: Uncancellable write event.",
+                        SRCNAME, __func__);
              break;
            }
+
+          if ((!opt.enable_smime && m_mail->is_smime ()) &&
+              (m_mail->is_crypto_mail () && !m_mail->needs_save ()))
+            {
+              /* We cancel the write event to stop outlook from excessively
+                 syncing our changes.
+                 if smime support is disabled and we still have an smime
+                 mail we also don't want to cancel the write event
+                 to enable reverting this mails.
+                 */
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              log_oom ("%s:%s: Canceling write event.",
+                         SRCNAME, __func__);
+              return S_OK;
+            }
 
           if (m_mail->revert ())
             {
@@ -204,8 +259,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Failed to remove plaintext.",
                          SRCNAME, __func__);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-              return E_ABORT;
             }
+          m_mail->set_needs_save (false);
           break;
         }
       case AfterWrite:
@@ -231,6 +286,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           if (m_mail->is_crypto_mail ())
             {
+              m_mail->set_needs_save (true);
               invoke_oom_method (m_object, "Save", NULL);
             }
         }

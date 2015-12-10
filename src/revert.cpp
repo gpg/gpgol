@@ -30,7 +30,7 @@
 #include "mapihelp.h"
 #include "message.h"
 #include "mimemaker.h"
-
+#include "mail.h"
 
 /* Wrapper around UlRelease with error checking. */
 static void 
@@ -292,6 +292,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
   LPDISPATCH to_restore = NULL;
   int mosstmpl_found = 0;
   int is_smime = 0;
+  Mail *mail = NULL;
 
   /* Check whether we need to care about this message.  */
   msgcls = get_pa_string (mailitem, PR_MESSAGE_CLASS_W_DASL);
@@ -305,6 +306,16 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
                  SRCNAME, __func__);
       return -1;
     }
+
+  mail = Mail::get_mail_for_item (mailitem);
+  if (!mail)
+    {
+      xfree (msgcls);
+      log_error ("%s:%s: No mail object for mailitem. Bug.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  is_smime = mail->is_smime ();
 
   message = get_oom_base_message (mailitem);
   attachments = get_oom_object (mailitem, "Attachments");
@@ -335,27 +346,6 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
       goto done;
     }
 
-  is_smime = msgtype == MSGTYPE_GPGOL_OPAQUE_ENCRYPTED ||
-             msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED;
-
-  /* Check if it is an smime mail. Multipart signed can
-     also be true. */
-  if (!is_smime && msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
-    {
-      char *proto;
-      char *ct = mapi_get_message_content_type (message, &proto, NULL);
-      if (ct && proto)
-        {
-          is_smime = (!strcmp (proto, "application/pkcs7-signature") ||
-                      !strcmp (proto, "application/x-pkcs7-signature"));
-        }
-      else
-        {
-          log_error ("Protocol in multipart signed mail.");
-        }
-      xfree (proto);
-      xfree (ct);
-    }
 
   count = get_oom_int (attachments, "Count");
   to_delete = (LPDISPATCH*) xmalloc (count * sizeof (LPDISPATCH));

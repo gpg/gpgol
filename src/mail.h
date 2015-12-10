@@ -147,12 +147,31 @@ public:
   */
   bool is_crypto_mail () { return m_processed; }
 
+  /** @brief This mail needs to be actually written.
+  *
+  * @returns true if the next write event should not be canceled.
+  */
+  bool needs_save () { return m_needs_save; }
+
+  /** @brief set the needs save state.
+  */
+  void set_needs_save (bool val) { m_needs_save = val; }
+
+  /** @brief is this mail an S/MIME mail.
+    *
+    * @returns true for smime messages.
+    */
+  bool is_smime ();
+
 private:
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
   bool m_processed,    /* The message has been porcessed by us.  */
        m_needs_wipe,   /* We have added plaintext to the mesage. */
-       m_crypt_successful; /* We successfuly performed crypto on the item. */
+       m_needs_save,   /* A property was changed but not by us. */
+       m_crypt_successful, /* We successfuly performed crypto on the item. */
+       m_is_smime, /* This is an smime mail. */
+       m_is_smime_checked; /* it was checked if this is an smime mail */
   char *m_sender;
 };
 #endif // MAIL_H

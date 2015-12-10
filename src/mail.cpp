@@ -64,7 +64,10 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
     m_needs_wipe(false),
+    m_needs_save(false),
     m_crypt_successful(false),
+    m_is_smime(false),
+    m_is_smime_checked(false),
     m_sender(NULL)
 {
   if (get_mail_for_item (mailitem))
@@ -391,4 +394,51 @@ Mail::revert ()
   /* We need to reprocess the mail next time around. */
   m_processed = false;
   return 0;
+}
+
+bool
+Mail::is_smime ()
+{
+  msgtype_t msgtype;
+  LPMESSAGE message;
+
+  if (m_is_smime_checked)
+    {
+      return m_is_smime;
+    }
+
+  message = get_oom_message (m_mailitem);
+
+  if (!message)
+    {
+      log_error ("%s:%s: No message?",
+                 SRCNAME, __func__);
+      return false;
+    }
+
+  msgtype = mapi_get_message_type (message);
+  m_is_smime = msgtype == MSGTYPE_GPGOL_OPAQUE_ENCRYPTED ||
+               msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED;
+
+  /* Check if it is an smime mail. Multipart signed can
+     also be true. */
+  if (!m_is_smime && msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
+    {
+      char *proto;
+      char *ct = mapi_get_message_content_type (message, &proto, NULL);
+      if (ct && proto)
+        {
+          m_is_smime = (!strcmp (proto, "application/pkcs7-signature") ||
+                        !strcmp (proto, "application/x-pkcs7-signature"));
+        }
+      else
+        {
+          log_error ("Protocol in multipart signed mail.");
+        }
+      xfree (proto);
+      xfree (ct);
+    }
+  RELDISP (message);
+  m_is_smime_checked  = true;
+  return m_is_smime;
 }
