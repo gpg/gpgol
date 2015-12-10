@@ -49,6 +49,7 @@
 #include "eventsink.h"
 #include "windowmessages.h"
 #include "mail.h"
+#include "addin-options.h"
 
 #include <gpg-error.h>
 #include <list>
@@ -510,6 +511,9 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getEncryptPressed", ID_GET_ENCRYPT_PRESSED)
       ID_MAPPER (L"getSignPressed", ID_GET_SIGN_PRESSED)
       ID_MAPPER (L"ribbonLoaded", ID_ON_LOAD);
+      ID_MAPPER (L"openOptions", ID_CMD_OPEN_OPTIONS)
+      ID_MAPPER (L"getSigStatus", ID_GET_SIG_STATUS)
+      ID_MAPPER (L"getEncStatus", ID_GET_ENC_STATUS)
     }
 
   if (cNames > 1)
@@ -568,11 +572,19 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return get_crypt_pressed (parms->rgvarg[0].pdispVal, 1, result);
       case ID_GET_SIGN_PRESSED:
         return get_crypt_pressed (parms->rgvarg[0].pdispVal, 2, result);
+      case ID_GET_ENC_STATUS:
+        return get_crypt_status (parms->rgvarg[0].pdispVal, 1, result);
+      case ID_GET_SIG_STATUS:
+        return get_crypt_status (parms->rgvarg[0].pdispVal, 2, result);
       case ID_ON_LOAD:
           {
-            log_debug ("A new Ribbon control was born: %p",
-                       parms->rgvarg[0].pdispVal);
             g_ribbon_uis.push_back (parms->rgvarg[0].pdispVal);
+            return S_OK;
+          }
+      case ID_CMD_OPEN_OPTIONS:
+          {
+            options_dialog_box (NULL);
+            return S_OK;
           }
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
@@ -604,12 +616,12 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
   char * buffer = NULL;
 
-  const char *certManagerTTip =
+/*  const char *certManagerTTip =
     _("Start the Certificate Management Software");
   const char *certManagerSTip =
     _("Open GPA or Kleopatra to manage your certificates. "
       "You can use this you to generate your "
-      "own certificates. ");
+      "own certificates. ");*/
   const char *encryptTTip =
     _("Encrypt the message.");
   const char *encryptSTip =
@@ -618,7 +630,18 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
     _("Sign the message.");
   const char *signSTip =
     _("Sign the message and all attchments before sending.");
-
+  const char *optsSTip =
+    _("Open the settings dialog for GpgOL");
+#if 0
+  const char *encryptedTTip =
+    "If this is toggled the message was encrypted. (this is development UI)";
+  const char *encryptedSTip =
+    "TODO insert more details here";
+  const char *signedTTip =
+    "If this is toggled the message was signed. (this is development UI)";
+  const char *signedSTip =
+    "TODO insert more details here";
+#endif
   log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
 
   if (!RibbonXml || !RibbonID)
@@ -634,13 +657,6 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "    <tab idMso=\"TabNewMailMessage\">"
         "     <group id=\"general\""
         "            label=\"%s\">"
-        "       <button id=\"CustomButton\""
-        "               getImage=\"btnCertManager\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"startCertManager\"/>"
         "       <toggleButton id=\"mimeEncrypt\""
         "               getImage=\"btnEncryptLarge\""
         "               size=\"large\""
@@ -657,14 +673,73 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "               supertip=\"%s\""
         "               onAction=\"signMime\""
         "               getPressed=\"getSignPressed\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
         "     </group>"
         "    </tab>"
         "   </tabs>"
         " </ribbon>"
         "</customUI>", _("GpgOL"),
-        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
-        _("Sign"), signTTip, signSTip
+        _("Sign"), signTTip, signSTip,
+        optsSTip
+        );
+    }
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
+    {
+      gpgrt_asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
+        " onLoad=\"ribbonLoaded\">"
+#if 0
+        " <ribbon>"
+        "   <tabs>"
+        "    <tab idMso=\"TabReadMessage\">"
+        "     <group id=\"general\""
+        "            label=\"%s\">"
+        "       <toggleButton id=\"idEncrypted\""
+        "               getImage=\"btnCryptStatus\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               getEnabled=\"getEncStatus\"/>"
+        "       <button id=\"idSigned\""
+        "               getImage=\"btnSignLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"verifyBody\""
+        "               getEnabled=\"getSigStatus\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
+        "     </group>"
+        "    </tab>"
+        "   </tabs>"
+        " </ribbon>"
+#endif
+        "<contextMenus>"
+        " <contextMenu idMso=\"ContextMenuAttachments\">"
+        "   <button id=\"gpgol_decrypt\""
+        "           label=\"%s\""
+        "           getImage=\"btnDecrypt\""
+        "           onAction=\"attachmentDecryptCallback\"/>"
+        " </contextMenu>"
+        "</contextMenus>"
+        "</customUI>",
+#if 0
+        _("GpgOL"),
+        _("Encrypted"), encryptedTTip, encryptedSTip,
+        _("Signed"), signedTTip, signedSTip,
+        optsSTip,
+#endif
+        _("Decrypt")
         );
     }
 

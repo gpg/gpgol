@@ -1405,3 +1405,79 @@ done:
 
   return S_OK;
 }
+
+/* Get the encrypt / sign status of this mail. */
+HRESULT get_crypt_status (LPDISPATCH ctrl, int flags, VARIANT *result)
+{
+  HRESULT hr;
+  LPDISPATCH context = NULL,
+             mailitem = NULL;
+  LPMESSAGE message = NULL;
+  char *sigstat;
+
+  /* First the usual defensive check about our parameters */
+  if (!ctrl || !result)
+    {
+      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
+      return E_FAIL;
+    }
+
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
+
+  hr = getContext (ctrl, &context);
+
+  if (hr)
+    {
+      log_error ("%s:%s:%i : hresult %lx", SRCNAME, __func__, __LINE__,
+                 hr);
+      return E_FAIL;
+    }
+
+  mailitem = get_oom_object (context, "CurrentItem");
+
+  if (!mailitem)
+    {
+      log_error ("%s:%s: Failed to get mailitem.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  message = get_oom_base_message (mailitem);
+
+  if (!message)
+    {
+      log_error ("%s:%s: No message found.",
+                 SRCNAME, __func__);
+      goto done;
+    }
+
+  sigstat = mapi_get_sig_status (message);
+  /* sigstat will never be NULL */
+  if (flags & OP_SIGN)
+    {
+      *(result->pboolVal) = *sigstat == '!' ? VARIANT_TRUE : VARIANT_FALSE;
+    }
+  else if (flags & OP_ENCRYPT)
+    {
+      msgtype_t type = mapi_get_message_type (message);
+      /* FIXME: This reports encrypted for Opaque signed messages ! */
+      if (type == MSGTYPE_GPGOL_OPAQUE_ENCRYPTED ||
+          type == MSGTYPE_GPGOL_PGP_MESSAGE ||
+          type == MSGTYPE_GPGOL_MULTIPART_ENCRYPTED)
+        {
+          *(result->pboolVal) = VARIANT_TRUE;
+        }
+      else
+        {
+          *(result->pboolVal) = VARIANT_FALSE;
+        }
+    }
+
+done:
+  RELDISP (context);
+  RELDISP (mailitem);
+  RELDISP (message);
+
+  return S_OK;
+}

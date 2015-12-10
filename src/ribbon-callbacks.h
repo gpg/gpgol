@@ -41,6 +41,9 @@
 #define ID_GET_SIGN_PRESSED     15
 #define ID_GET_ENCRYPT_PRESSED  16
 #define ID_ON_LOAD              17
+#define ID_CMD_OPEN_OPTIONS     18
+#define ID_GET_SIG_STATUS       19
+#define ID_GET_ENC_STATUS       20
 
 #define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
@@ -69,6 +72,8 @@ HRESULT mime_encrypt (LPDISPATCH ctrl);
 HRESULT mime_sign (LPDISPATCH ctrl);
 /* Get the toggle state of a crypt button. Flag value 1: encrypt, 2: sign */
 HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result);
+/* Get the general crypto status / if the buttons should be toggled. */
+HRESULT get_crypt_status (LPDISPATCH ctrl, int flags, VARIANT *result);
 /* Callback to get our own control reference */
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 #endif

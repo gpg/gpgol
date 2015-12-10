@@ -27,6 +27,7 @@
 #include "mapihelp.h"
 #include "message.h"
 #include "revert.h"
+#include "gpgoladdin.h"
 
 #include <map>
 
@@ -219,6 +220,8 @@ Mail::insert_plaintext ()
       err = -1;
     }
 
+  /* Invalidate UI to set the correct sig status. */
+  gpgoladdin_invalidate_ui ();
 done:
   RELDISP (base_message);
   return err;
