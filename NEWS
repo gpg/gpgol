@@ -1,6 +1,32 @@
-Noteworthy changes for version 1.3.1 (unreleased)
+Noteworthy changes for version 2.0.0 (unreleased)
 =================================================
 
+ * (OL > 2007) Encrypt / Sign is now done while sending. Including all
+   attachments and using a standard format. (MIME Support)
+
+ * 64 Bit versions of Outlook are now supported.
+
+ * (OL > 2007) GpgOL now automatically decrypts / verifies messages.
+
+ * (OL > 2007) Settings dialog added. (accessible over the new
+   mail ribbon)
+
+ * (OL > 2007) S/MIME Support is disabled by default. Enable it
+   in the settings.
+
+ * (OL > 2007) GpgOL no longer needs its own tab due to reduced
+   UI complexity. Sign/Encrypt has been added to New Mail tab.
+
+ * (OL > 2007) Reduced amount of syncing done by Outlook while
+   looking at decrypted MIME mails.
+
+ * (OL > 2007) If S/MIME is disabled GpgOL reverts the changes
+   it made while reading an S/MIME mail so that Outlook can
+   handle them again.
+
+ * (OL > 2007) If GpgOL can't prevent syncing changes through
+   IMAP or Exchange it tries to restore the original mail so
+   that other clients can also read them.
 
 Noteworthy changes for version 1.3.0 (2015-11-24)
 =================================================
