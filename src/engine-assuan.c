@@ -1682,7 +1682,7 @@ op_assuan_encrypt (protocol_t protocol,
           goto leave;
         }
     }
-  else if ((flags & ENGINE_FLAG_SIGN_FOLLOWS))
+  else
     {
       if ( !protocol_name )
         {
@@ -1690,7 +1690,9 @@ op_assuan_encrypt (protocol_t protocol,
           goto leave;
         }
 
-      snprintf (line, sizeof line, "PREP_ENCRYPT --protocol=%s --expect-sign",
+      snprintf (line, sizeof line, (flags & ENGINE_FLAG_SIGN_FOLLOWS)
+                ? "PREP_ENCRYPT --protocol=%s --expect-sign"
+                : "PREP_ENCRYPT --protocol=%s",
                 protocol_name);
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
       if (err)
