@@ -1283,8 +1283,8 @@ HRESULT verifyBody (LPDISPATCH ctrl)
   return do_reader_action (ctrl, DATA_BODY | OP_VERIFY);
 }
 
-static HRESULT
-mark_mime_action (LPDISPATCH ctrl, int flags)
+HRESULT
+mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
 {
   HRESULT hr;
   HRESULT rc = E_FAIL;
@@ -1299,7 +1299,8 @@ mark_mime_action (LPDISPATCH ctrl, int flags)
   if (FAILED(hr))
       return hr;
 
-  mailitem = get_oom_object (context, "CurrentItem");
+  mailitem = get_oom_object (context, is_explorer ? "ActiveInlineResponse" :
+                                                    "CurrentItem");
 
   if (!mailitem)
     {
@@ -1337,25 +1338,22 @@ done:
   return rc;
 }
 
-HRESULT mime_sign (LPDISPATCH ctrl)
-{
-  return mark_mime_action (ctrl, OP_SIGN);
-}
-
-HRESULT mime_encrypt (LPDISPATCH ctrl)
-{
-  return mark_mime_action (ctrl, OP_ENCRYPT);
-}
-
 /* Get the state of encrypt / sign toggle buttons.
   flag values: 1 get the state of the encrypt button.
-               2 get the state of the sign button. */
-HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result)
+               2 get the state of the sign button.
+  If is_explorer is set to true
+               */
+HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
+                           bool is_explorer)
 {
   HRESULT hr;
   LPDISPATCH context = NULL,
              mailitem = NULL;
   LPMESSAGE message = NULL;
+
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
+  *(result->pboolVal) = VARIANT_FALSE;
 
   /* First the usual defensive check about our parameters */
   if (!ctrl || !result)
@@ -1363,9 +1361,6 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result)
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
       return E_FAIL;
     }
-
-  result->vt = VT_BOOL | VT_BYREF;
-  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
 
   hr = getContext (ctrl, &context);
 
@@ -1376,7 +1371,8 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result)
       return E_FAIL;
     }
 
-  mailitem = get_oom_object (context, "CurrentItem");
+  mailitem = get_oom_object (context, is_explorer ? "ActiveInlineResponse" :
+                                                    "CurrentItem");
 
   if (!mailitem)
     {

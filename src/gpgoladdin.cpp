@@ -510,6 +510,10 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"signMime", ID_CMD_MIME_SIGN)
       ID_MAPPER (L"getEncryptPressed", ID_GET_ENCRYPT_PRESSED)
       ID_MAPPER (L"getSignPressed", ID_GET_SIGN_PRESSED)
+      ID_MAPPER (L"encryptMimeEx", ID_CMD_MIME_ENCRYPT_EX)
+      ID_MAPPER (L"signMimeEx", ID_CMD_MIME_SIGN_EX)
+      ID_MAPPER (L"getEncryptPressedEx", ID_GET_ENCRYPT_PRESSED_EX)
+      ID_MAPPER (L"getSignPressedEx", ID_GET_SIGN_PRESSED_EX)
       ID_MAPPER (L"ribbonLoaded", ID_ON_LOAD);
       ID_MAPPER (L"openOptions", ID_CMD_OPEN_OPTIONS)
       ID_MAPPER (L"getSigStatus", ID_GET_SIG_STATUS)
@@ -565,17 +569,31 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_CMD_VERIFY_BODY:
         return verifyBody (parms->rgvarg[0].pdispVal);
       case ID_CMD_MIME_SIGN:
-        return mime_sign (parms->rgvarg[1].pdispVal);
+        return mark_mime_action (parms->rgvarg[1].pdispVal, OP_SIGN, false);
       case ID_CMD_MIME_ENCRYPT:
-        return mime_encrypt (parms->rgvarg[1].pdispVal);
+        return mark_mime_action (parms->rgvarg[1].pdispVal, OP_ENCRYPT,
+                                 false);
       case ID_GET_ENCRYPT_PRESSED:
-        return get_crypt_pressed (parms->rgvarg[0].pdispVal, 1, result);
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_ENCRYPT,
+                                  result, false);
       case ID_GET_SIGN_PRESSED:
-        return get_crypt_pressed (parms->rgvarg[0].pdispVal, 2, result);
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_SIGN,
+                                  result, false);
+      case ID_CMD_MIME_SIGN_EX:
+        return mark_mime_action (parms->rgvarg[1].pdispVal, OP_SIGN, true);
+      case ID_CMD_MIME_ENCRYPT_EX:
+        return mark_mime_action (parms->rgvarg[1].pdispVal, OP_ENCRYPT, true);
+      case ID_GET_ENCRYPT_PRESSED_EX:
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_ENCRYPT,
+                                  result, true);
+      case ID_GET_SIGN_PRESSED_EX:
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_SIGN,
+                                  result, true);
       case ID_GET_ENC_STATUS:
-        return get_crypt_status (parms->rgvarg[0].pdispVal, 1, result);
+        return get_crypt_status (parms->rgvarg[0].pdispVal, OP_ENCRYPT,
+                                 result);
       case ID_GET_SIG_STATUS:
-        return get_crypt_status (parms->rgvarg[0].pdispVal, 2, result);
+        return get_crypt_status (parms->rgvarg[0].pdispVal, OP_SIGN, result);
       case ID_ON_LOAD:
           {
             g_ribbon_uis.push_back (parms->rgvarg[0].pdispVal);
@@ -742,6 +760,53 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         _("Decrypt")
         );
     }
+#if 0
+  /* We don't use this code currently because calling the send
+     event for Inline Response mailitems fails. */
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
+    {
+      gpgrt_asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
+        " onLoad=\"ribbonLoaded\">"
+        " <ribbon>"
+        "   <contextualTabs>"
+        "   <tabSet idMso=\"TabComposeTools\">"
+        "    <tab idMso=\"TabMessage\">"
+        "     <group id=\"general\""
+        "            label=\"%s\">"
+        "       <toggleButton id=\"mimeEncryptEx\""
+        "               getImage=\"btnEncryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"encryptMimeEx\""
+        "               getPressed=\"getEncryptPressedEx\"/>"
+        "       <toggleButton id=\"mimeSignEx\""
+        "               getImage=\"btnSignLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"signMimeEx\""
+        "               getPressed=\"getSignPressedEx\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
+        "     </group>"
+        "    </tab>"
+        "   </tabSet>"
+        "   </contextualTabs>"
+        " </ribbon>"
+        "</customUI>", _("GpgOL"),
+        _("Encrypt"), encryptTTip, encryptSTip,
+        _("Sign"), signTTip, signSTip,
+        optsSTip
+        );
+    }
+#endif
 
   if (buffer)
     {

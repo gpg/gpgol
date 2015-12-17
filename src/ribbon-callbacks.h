@@ -44,6 +44,10 @@
 #define ID_CMD_OPEN_OPTIONS     18
 #define ID_GET_SIG_STATUS       19
 #define ID_GET_ENC_STATUS       20
+#define ID_CMD_MIME_SIGN_EX     21
+#define ID_CMD_MIME_ENCRYPT_EX  22
+#define ID_GET_SIGN_PRESSED_EX  23
+#define ID_GET_ENCRYPT_PRESSED_EX 24
 
 #define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
@@ -53,6 +57,9 @@
 #define ID_BTN_ENCSIGN_LARGE     IDI_ENCSIGN_FILE_48_PNG
 #define ID_BTN_SIGN_LARGE        IDI_SIGN_48_PNG
 #define ID_BTN_VERIFY_LARGE      IDI_VERIFY_48_PNG
+
+#define OP_ENCRYPT     1 /* Encrypt the data */
+#define OP_SIGN        2 /* Sign the data */
 
 HRESULT decryptAttachments (LPDISPATCH ctrl);
 HRESULT encryptSelection (LPDISPATCH ctrl);
@@ -66,12 +73,10 @@ HRESULT startCertManager (LPDISPATCH ctrl);
 HRESULT signBody (LPDISPATCH ctrl);
 HRESULT verifyBody (LPDISPATCH ctrl);
 
-/* Mark the mail to be mime encrypted on send. */
-HRESULT mime_encrypt (LPDISPATCH ctrl);
-/* Mark the mail to be mime signed on send. */
-HRESULT mime_sign (LPDISPATCH ctrl);
 /* Get the toggle state of a crypt button. Flag value 1: encrypt, 2: sign */
-HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result);
+HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result, bool is_explorer);
+/* Mark the mail to be mime encrypted on send. Flags as above */
+HRESULT mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer);
 /* Get the general crypto status / if the buttons should be toggled. */
 HRESULT get_crypt_status (LPDISPATCH ctrl, int flags, VARIANT *result);
 /* Callback to get our own control reference */
