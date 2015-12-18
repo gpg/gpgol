@@ -318,22 +318,35 @@ Mail::update_sender ()
   sender = get_oom_object (m_mailitem, "SendUsingAccount");
 
   xfree (m_sender);
+  m_sender = NULL;
 
-  if (!sender)
+  if (sender)
     {
-      log_debug ("%s:%s: Failed to get sender Account object.",
-                 SRCNAME, __func__);
-      return -1;
+      m_sender = get_oom_string (sender, "SmtpAddress");
+      RELDISP (sender);
+      return 0;
     }
-  m_sender = get_oom_string (sender, "SmtpAddress");
+  /* Fallback to Sender object */
+  sender = get_oom_object (m_mailitem, "Sender");
+  if (sender)
+    {
+      m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+      RELDISP (sender);
+      return 0;
+    }
+  /* We don't have s sender object or SendUsingAccount,
+     well, in that case fall back to the current user. */
+  sender = get_oom_object (m_mailitem, "Session.CurrentUser");
+  if (sender)
+    {
+      m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+      RELDISP (sender);
+      return 0;
+    }
 
-  if (!m_sender)
-    {
-      log_error ("%s:%s: Failed to get smtp address of sender.",
-                 SRCNAME, __func__);
-      return -1;
-    }
-  return 0;
+  log_error ("%s:%s: All fallbacks failed.",
+             SRCNAME, __func__);
+  return -1;
 }
 
 const char *
