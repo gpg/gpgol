@@ -67,6 +67,8 @@ bool can_unload = false;
 
 static std::list<LPDISPATCH> g_ribbon_uis;
 
+static GpgolAddin * addin_instance = NULL;
+
 /* This is the main entry point for the addin
    Outlook uses this function to query for an Object implementing
    the IClassFactory interface.
@@ -139,7 +141,7 @@ STDMETHODIMP GpgolAddinFactory::CreateInstance (LPUNKNOWN punk, REFIID riid,
   (void)punk;
   *ppvObj = NULL;
 
-  GpgolAddin* obj = new GpgolAddin();
+  GpgolAddin* obj = GpgolAddin::get_instance();
   if (NULL == obj)
     return E_OUTOFMEMORY;
 
@@ -188,6 +190,8 @@ GpgolAddin::~GpgolAddin (void)
 
   engine_deinit ();
   write_options ();
+
+  addin_instance = NULL;
 
   log_debug ("%s:%s: Object deleted\n", SRCNAME, __func__);
 }
@@ -1144,4 +1148,14 @@ void gpgoladdin_invalidate_ui ()
       log_debug ("Invalidating ribbon: %p", *it);
       invoke_oom_method (*it, "Invalidate", NULL);
     }
+}
+
+GpgolAddin *
+GpgolAddin::get_instance ()
+{
+  if (!addin_instance)
+    {
+      addin_instance = new GpgolAddin ();
+    }
+  return addin_instance;
 }

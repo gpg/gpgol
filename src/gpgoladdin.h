@@ -199,6 +199,10 @@ public:
   STDMETHODIMP OnStartupComplete (SAFEARRAY** custom);
   STDMETHODIMP OnBeginShutdown (SAFEARRAY** custom);
 
+public:
+  static GpgolAddin * get_instance ();
+  LPDISPATCH get_application () { return m_application; }
+
 private:
   ULONG m_lRef;
   GpgolRibbonExtender* m_ribbonExtender;
