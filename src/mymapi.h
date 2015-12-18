@@ -149,7 +149,7 @@ typedef struct MapiMessage_s *lpMapiMessage;
 
 #define MAPI_DEFERRED_ERRORS          0x00000008ul
 #define MAPI_BEST_ACCESS              0x00000010ul
-
+#define MAPI_CACHE_ONLY               0x00004000ul
 
 #define MDB_NO_DIALOG                 0x00000001ul
 #define MDB_WRITE                     0x00000004ul

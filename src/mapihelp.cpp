@@ -1516,9 +1516,20 @@ resolve_ex_from_address (LPMESSAGE message)
     }
 
   hr = session->OpenEntry (entryidlen,  (LPENTRYID)sender_entryid,
-                           &IID_IMailUser, MAPI_BEST_ACCESS,
+                           &IID_IMailUser,
+                           MAPI_BEST_ACCESS | MAPI_CACHE_ONLY,
                            &utype, (IUnknown**)&user);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: Failed to open cached entry. Fallback to uncached.",
+                 SRCNAME, __func__);
+      hr = session->OpenEntry (entryidlen,  (LPENTRYID)sender_entryid,
+                               &IID_IMailUser,
+                               MAPI_BEST_ACCESS,
+                               &utype, (IUnknown**)&user);
+    }
   RELDISP (session);
+
   if (FAILED (hr))
     {
       log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
