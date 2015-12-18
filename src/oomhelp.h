@@ -23,6 +23,7 @@
 
 #include <unknwn.h>
 #include "mymapi.h"
+#include "myexchext.h"
 
 /* Helper to release dispatcher */
 #define RELDISP(dispatcher) if (dispatcher) dispatcher->Release()
@@ -211,6 +212,11 @@ get_oom_base_message (LPDISPATCH mailitem);
    */
 int
 invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant);
+
+/* Try to obtain the mapisession through the Application.
+  returns NULL on error.*/
+LPMAPISESSION
+get_oom_mapi_session (void);
 
 #ifdef __cplusplus
 }

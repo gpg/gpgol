@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "oomhelp.h"
+#include "gpgoladdin.h"
 
 
 /* Return a malloced string with the utf-8 encoded name of the object
@@ -1220,4 +1221,45 @@ invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
     }
 
   return 0;
+}
+
+LPMAPISESSION
+get_oom_mapi_session ()
+{
+  LPDISPATCH application = GpgolAddin::get_instance ()->get_application ();
+  LPDISPATCH oom_session = NULL;
+  LPMAPISESSION session = NULL;
+  LPUNKNOWN mapiobj = NULL;
+  HRESULT hr;
+
+  if (!application)
+    {
+      log_debug ("%s:%s: Not implemented for Ol < 14", SRCNAME, __func__);
+      return NULL;
+    }
+
+  oom_session = get_oom_object (application, "Session");
+  if (!oom_session)
+    {
+      log_error ("%s:%s: session object not found", SRCNAME, __func__);
+      return NULL;
+    }
+  mapiobj = get_oom_iunknown (oom_session, "MAPIOBJECT");
+  oom_session->Release ();
+
+  if (!mapiobj)
+    {
+      log_error ("%s:%s: error getting Session.MAPIOBJECT", SRCNAME, __func__);
+      return NULL;
+    }
+  session = NULL;
+  hr = mapiobj->QueryInterface (IID_IMAPISession, (void**)&session);
+  mapiobj->Release ();
+  if (hr != S_OK || !session)
+    {
+      log_error ("%s:%s: error getting IMAPISession: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      return NULL;
+    }
+  return session;
 }
