@@ -32,6 +32,7 @@
 #include "mapihelp.h"
 #include "parsetlv.h"
 #include "gpgolstr.h"
+#include "oomhelp.h"
 
 #ifndef CRYPT_E_STREAM_INSUFFICIENT_DATA
 #define CRYPT_E_STREAM_INSUFFICIENT_DATA 0x80091011
@@ -1479,6 +1480,71 @@ mapi_get_sender (LPMESSAGE message)
   return buf;
 }
 
+static char *
+resolve_ex_from_address (LPMESSAGE message)
+{
+  HRESULT hr;
+  char *sender_entryid;
+  size_t entryidlen;
+  LPMAPISESSION session;
+  ULONG utype;
+  LPUNKNOWN user;
+  LPSPropValue propval = NULL;
+  char *buf;
+
+  if (g_ol_version_major < 14)
+    {
+      log_debug ("%s:%s: Not implemented for Ol < 14", SRCNAME, __func__);
+      return NULL;
+    }
+
+  sender_entryid = mapi_get_binary_prop (message, PR_SENDER_ENTRYID,
+                                         &entryidlen);
+  if (!sender_entryid)
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      return NULL;
+    }
+
+  session = get_oom_mapi_session ();
+
+  if (!session)
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      xfree (sender_entryid);
+      return NULL;
+    }
+
+  hr = session->OpenEntry (entryidlen,  (LPENTRYID)sender_entryid,
+                           &IID_IMailUser, MAPI_BEST_ACCESS,
+                           &utype, (IUnknown**)&user);
+  RELDISP (session);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      return NULL;
+    }
+
+  hr = HrGetOneProp ((LPMAPIPROP)user, PR_SMTP_ADDRESS_W, &propval);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
+      return NULL;
+    }
+
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE)
+    {
+      log_debug ("%s:%s: HrGetOneProp returns invalid type %lu\n",
+                 SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
+      MAPIFreeBuffer (propval);
+      return NULL;
+    }
+  buf = wchar_to_utf8 (propval->Value.lpszW);
+  MAPIFreeBuffer (propval);
+
+  return buf;
+}
+
 /* Return the from address of the message as a malloced UTF-8 string.
    Returns NULL if that address is not available.  */
 char *
@@ -1529,6 +1595,22 @@ mapi_get_from_address (LPMESSAGE message)
     {
       log_error ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
       return NULL;
+    }
+
+  if (strstr (buf, "/o="))
+    {
+      char *buf2;
+      /* If both SMTP Address properties are not set
+         we need to fallback to resolve the address
+         through the address book */
+      log_debug ("%s:%s: resolving exchange address.",
+                 SRCNAME, __func__);
+      buf2 = resolve_ex_from_address (message);
+      if (buf2)
+        {
+          xfree (buf);
+          return buf2;
+        }
     }
 
   return buf;
