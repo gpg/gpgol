@@ -563,6 +563,12 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
       if (!hr)
         is_binary = 1;
     }
+  else
+    {
+      log_debug ("%s:%s: Failed to get body tag.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
   if (hr)
     {
       tag = PR_BODY;
@@ -575,7 +581,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
                  SRCNAME, __func__, tag, hr);
       return NULL;
     }
-  
+
   hr = stream->Stat (&statInfo, STATFLAG_NONAME);
   if (hr)
     {
