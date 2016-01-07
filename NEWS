@@ -28,6 +28,11 @@ Noteworthy changes for version 2.0.0 (unreleased)
    IMAP or Exchange it tries to restore the original mail so
    that other clients can also read them.
 
+ * (OL > 2007) Improved lookup of Exchange Sender address.
+
+ * (OL > 2007) Fixed crash when Exchange Active Sync (Outlook.com)
+   is used.
+
 Noteworthy changes for version 1.3.0 (2015-11-24)
 =================================================
 
