@@ -247,14 +247,6 @@ if test "$mime_send" != "no"; then
    [Sending Mime messages will be supported.])
 fi
 
-AC_ARG_ENABLE(gpg4win-3-reg-keys,
-            AC_HELP_STRING([--enable-gpg4win-3-reg-keys], [Use the gpg4win-3 style registry keys]),
-            new_keys=$enableval, new_keys=no)
-if test "$new_keys" != "no"; then
-  AC_DEFINE(NEW_STYLE_REG_KEYS, 1,
-   [The registry keys of Gpg4win-3 will be used])
-fi
-
 #
 # Print errors here so that they are visible all
 # together and the user can acquire them all together.

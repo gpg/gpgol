@@ -500,8 +500,7 @@ get_locale_dir (void)
   char *p;
   char *dname;
 
-  instdir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
-				      "Install Directory");
+  instdir = get_gpg4win_dir();
   if (!instdir)
     return NULL;
 

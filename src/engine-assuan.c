@@ -346,56 +346,70 @@ get_uiserver_name (void)
 {
   char *name = NULL;
   char *dir, *uiserver, *p;
-  int extra_arglen = 0;
+  int extra_arglen = 9;
 
-  dir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
-                                  "Install Directory");
-  if (dir)
+  const char * server_names[] = {"bin\\kleopatra.exe",
+                                 "kleopatra.exe",
+                                 "bin\\gpa.exe",
+                                 "gpa.exe",
+                                 NULL};
+  const char *tmp = NULL;
+
+  dir = get_gpg4win_dir ();
+  if (!dir)
     {
-      uiserver = read_w32_registry_string (NULL, GNUPG_REGKEY, 
+      log_error ("Failed to find gpg4win dir");
+      return NULL;
+    }
+  uiserver = read_w32_registry_string (NULL, GPG4WIN_REGKEY_3,
+                                       "UI Server");
+  if (!uiserver)
+    {
+      uiserver = read_w32_registry_string (NULL, GPG4WIN_REGKEY_2,
                                            "UI Server");
-      if (!uiserver)
-        {
-          uiserver = xstrdup ("kleopatra.exe");
-          extra_arglen = 9; /* Space required for " --daemon".  */
-        }
-
+    }
+  if (uiserver)
+    {
       name = xmalloc (strlen (dir) + strlen (uiserver) + extra_arglen + 2);
       strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);
       for (p = name; *p; p++)
         if (*p == '/')
           *p = '\\';
       xfree (uiserver);
-      if (extra_arglen && access (name, F_OK))
-        {
-          /* Kleopatra is not installed: Try GPA instead but if it is
-             also not available return the Kleopatra filename.  */
-          const char gpaserver[] = "gpa.exe";
-          char *name2;
-          
-          name2 = xmalloc (strlen (dir) + strlen (gpaserver) + extra_arglen+2);
-          strcpy (stpcpy (stpcpy (name2, dir), "\\"), gpaserver);
-          for (p = name2; *p; p++)
-            if (*p == '/')
-              *p = '\\';
-          if (access (name2, F_OK ))
-            xfree (name2);
-          else
-            {
-              xfree (name);
-              name = name2;
-            }
-        }
-      xfree (dir);
-
-      /* Append the arg for Kleopatra.  */
-      if (name && extra_arglen)
-        strcat (name, " --daemon");
     }
-  
-  return name;
+  if (name && !access (name, F_OK))
+    {
+      /* Set through registry and is accessible */
+      xfree(dir);
+      return name;
+    }
+  /* Fallbacks */
+  for (tmp = *server_names; *tmp; tmp++)
+    {
+      if (name)
+        {
+          xfree (name);
+        }
+      name = xmalloc (strlen (dir) + strlen (tmp) + extra_arglen + 2);
+      strcpy (stpcpy (stpcpy (name, dir), "\\"), tmp);
+      for (p = name; *p; p++)
+        if (*p == '/')
+          *p = '\\';
+      if (!access (name, F_OK))
+        {
+          /* Found a viable candidate */
+          if (strstr (name, "kleopatra.exe"))
+            {
+              strcat (name, " --daemon");
+            }
+          xfree (dir);
+          return name;
+        }
+    }
+  xfree (dir);
+  log_error ("Failed to find a viable UIServer");
+  return NULL;
 }
-
 
 
 static gpg_error_t

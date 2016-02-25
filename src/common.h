@@ -36,19 +36,16 @@ extern "C" {
 #endif
 #endif
 
-/* The Registry key used by GnuPg and closley related software.  */
-#ifndef NEW_STYLE_REG_KEYS /* Gpg4win 3 changed the key */
-# ifdef WIN64
-#  define GNUPG_REGKEY  "Software\\Wow6432Node\\GNU\\GnuPG"
-# else
-#  define GNUPG_REGKEY  "Software\\GNU\\GnuPG"
-# endif
-# else
-# ifdef WIN64
-#  define GNUPG_REGKEY  "Software\\Wow6432Node\\Gpg4win"
-# else
-#  define GNUPG_REGKEY  "Software\\Gpg4win"
-# endif
+/* The Registry key used by Gpg4win.  */
+#ifdef WIN64
+# define GPG4WIN_REGKEY_2  "Software\\Wow6432Node\\GNU\\GnuPG"
+#else
+# define GPG4WIN_REGKEY_2  "Software\\GNU\\GnuPG"
+#endif
+#ifdef WIN64
+# define GPG4WIN_REGKEY_3  "Software\\Wow6432Node\\Gpg4win"
+#else
+# define GPG4WIN_REGKEY_3  "Software\\Gpg4win"
 #endif
 /* Identifiers for the protocol.  We use different one than those use
    by gpgme.  FIXME: We might want to define an unknown protocol to
@@ -198,6 +195,7 @@ char *utf8_to_wincp (const char *string);
 
 const char *default_homedir (void);
 char *get_data_dir (void);
+char *get_gpg4win_dir (void);
 
 size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
 char *qp_encode (const char *input, size_t length, size_t* outlen);

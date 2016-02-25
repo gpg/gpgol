@@ -710,7 +710,11 @@ default_homedir (void)
         {
           char *tmp;
 
-          tmp = read_w32_registry_string (NULL, GNUPG_REGKEY, "HomeDir");
+          tmp = read_w32_registry_string (NULL, GPG4WIN_REGKEY_3, "HomeDir");
+          if (!tmp)
+            {
+              tmp = read_w32_registry_string (NULL, GPG4WIN_REGKEY_2, "HomeDir");
+            }
           if (tmp && !*tmp)
             {
               free (tmp);
@@ -736,8 +740,7 @@ get_data_dir (void)
   char *p;
   char *dname;
 
-  instdir = read_w32_registry_string ("HKEY_LOCAL_MACHINE", GNUPG_REGKEY,
-				      "Install Directory");
+  instdir = get_gpg4win_dir();
   if (!instdir)
     return NULL;
   
@@ -1227,4 +1230,33 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
     }
 
   return outName;
+}
+
+/** Get the Gpg4win Install directory.
+ *
+ * Looks first for the Gpg4win 3.x registry key. Then for the Gpg4win
+ * 2.x registry key. And checks that the directory can be read.
+ *
+ * @returns NULL if no dir could be found. Otherwise a malloced string.
+ */
+char *
+get_gpg4win_dir()
+{
+  const char *g4win_keys[] = {GPG4WIN_REGKEY_3,
+                              GPG4WIN_REGKEY_2,
+                              NULL};
+  const char *key;
+  for (key = *g4win_keys; *key; key++)
+    {
+      char *tmp = read_w32_registry_string (NULL, key, "Install Directory");
+      if (!tmp)
+        {
+          continue;
+        }
+      if (!access(tmp, R_OK))
+        {
+          return tmp;
+        }
+    }
+  return NULL;
 }
