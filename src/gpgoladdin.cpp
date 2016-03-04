@@ -655,9 +655,9 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
   const char *signTTip =
     _("Sign the message.");
   const char *signSTip =
-    _("Sign the message and all attchments before sending.");
+    _("Sign the message and all attachments before sending.");
   const char *optsSTip =
-    _("Open the settings dialog for GpgOL");
+    _("Open the settings dialog for GpgOL.");
 #if 0
   const char *encryptedTTip =
     "If this is toggled the message was encrypted. (this is development UI)";
@@ -873,7 +873,7 @@ GetCustomUI_old (BSTR RibbonID, BSTR * RibbonXml)
       "added below the plain text. "
       "The message will not be encrypted!");
   const char *optsSTip =
-    _("Open the settings dialog for GpgOL");
+    _("Open the settings dialog for GpgOL.");
 
   log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
 
