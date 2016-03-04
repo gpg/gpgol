@@ -7,17 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2016-03-04 14:18+0100\n"
-"PO-Revision-Date: 2010-07-18 20:41-0000\n"
+"POT-Creation-Date: 2015-11-23 18:51+0100\n"
+"PO-Revision-Date: 2016-02-02 17:33+0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@mail.telepac.pt>\n"
 "Language-Team: Portuguese <marcoagpinto@mail.telepac.pt>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Portuguese\n"
-"X-Poedit-Country: PORTUGAL\n"
-"X-Poedit-SourceCharset: iso-8859-1\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Generator: Poedit 1.8.6\n"
 
 #: src/attached-file-events.cpp:54
 msgid "Error creating file for attachment."
@@ -38,17 +37,16 @@ msgid ""
 "Please use the decrypt/verify button to decrypt the\n"
 "entire message again.  Then open this attachment."
 msgstr ""
-"Desculpa, não conseguimos desencriptar este anexo.\n"
+"Desculpa, nÃ£o conseguimos desencriptar este anexo.\n"
 "\n"
-"Por favor usa o botão Desencriptar/Verificar para desencriptar\n"
+"Por favor usa o botÃ£o desencriptar/verificar para desencriptar\n"
 "a mensagem completa novamente. Depois abre este anexo."
 
 #: src/common.c:269
-#, fuzzy
 msgid "GpgOL - Save attachment"
-msgstr "GpgOL - Gravar anexo desencriptado"
+msgstr "GpgOL - Gravar anexo"
 
-#: src/config-dialog.c:135
+#: src/config-dialog.c:137
 msgid "Debug output (for analysing problems)"
 msgstr "Debug output (para analisar problemas)"
 
@@ -57,31 +55,30 @@ msgid ""
 "The user interface server is not available or could not be started in time.  "
 "You may want to try again."
 msgstr ""
-"O servidor de interface do utilizador não está disponível ou não pôde ser "
-"iniciado a tempo. Podes querer tentar novamente. "
+"O servidor de interface do utilizador nÃ£o estÃ¡ disponÃ­vel ou nÃ£o pÃ´de ser "
+"iniciado a tempo. Podes querer tentar novamente."
 
-#: src/engine.c:377 src/main.c:714 src/main.c:720 src/message.cpp:300
-#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:305
-#: src/gpgoladdin.cpp:711 src/gpgoladdin.cpp:763 src/gpgoladdin.cpp:811
-#: src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051 src/gpgoladdin.cpp:1057
-#: src/gpgoladdin.cpp:1130 src/gpgoladdin.cpp:1134
+#: src/engine.c:377 src/main.c:708 src/main.c:714 src/message.cpp:300
+#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:292
+#: src/gpgoladdin.cpp:649 src/gpgoladdin.cpp:804 src/gpgoladdin.cpp:882
+#: src/gpgoladdin.cpp:887 src/gpgoladdin.cpp:956 src/gpgoladdin.cpp:959
 #: src/ribbon-callbacks.cpp:121 src/ribbon-callbacks.cpp:235
 #: src/ribbon-callbacks.cpp:250 src/ribbon-callbacks.cpp:262
 #: src/ribbon-callbacks.cpp:299 src/ribbon-callbacks.cpp:311
 #: src/ribbon-callbacks.cpp:656 src/ribbon-callbacks.cpp:673
 #: src/ribbon-callbacks.cpp:687 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:723 src/ribbon-callbacks.cpp:783
-#: src/ribbon-callbacks.cpp:1065 src/ribbon-callbacks.cpp:1099
-#: src/ribbon-callbacks.cpp:1111 src/ribbon-callbacks.cpp:1136
+#: src/ribbon-callbacks.cpp:1083 src/ribbon-callbacks.cpp:1117
+#: src/ribbon-callbacks.cpp:1129 src/ribbon-callbacks.cpp:1154
 msgid "GpgOL"
 msgstr "GpgOL"
 
-#: src/main.c:713
+#: src/main.c:707
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Nota: A usar flags de compatibilidade: %s"
 
-#: src/main.c:719
+#: src/main.c:713
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -92,26 +89,26 @@ msgstr ""
 "\n"
 "\"%s\""
 
-#: src/mapihelp.cpp:1659 src/mapihelp.cpp:1667 src/mapihelp.cpp:1675
+#: src/mapihelp.cpp:1552 src/mapihelp.cpp:1560 src/mapihelp.cpp:1568
 msgid "[no subject]"
 msgstr "[sem assunto]"
 
-#: src/mapihelp.cpp:2284
+#: src/mapihelp.cpp:2177
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
-"[O conteúdo desta mensagem não é visível porque foi desencriptado noutra "
-"sessão do Outlook. Usa o comando \"Desencriptar/Verificar\" para torná-lo "
-"visível]"
+"[O conteÃºdo desta mensagem nÃ£o Ã© visÃ­vel porque foi desencriptado noutra "
+"sessÃ£o do Outlook. Usa o comando \"desencriptar/verificar\" para tornÃ¡-lo "
+"visÃ­vel]"
 
-#: src/mapihelp.cpp:3179
+#: src/mapihelp.cpp:3072
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
 msgstr ""
-"[O conteúdo desta mensagem não é visível devido a um erro de processamento "
+"[O conteÃºdo desta mensagem nÃ£o Ã© visÃ­vel devido a um erro de processamento "
 "no GpgOL.]"
 
 #: src/message-events.cpp:279 src/mailitem.cpp:160
@@ -120,14 +117,14 @@ msgid ""
 "no RTF messages. Please make sure that only the text\n"
 "format has been selected."
 msgstr ""
-"Desculpa, só podemos encriptar mensagens de texto pleno e\n"
-"não mensagens RTF. Por favor certifica-te que apenas o formato\n"
-"texto foi seleccionado."
+"Desculpa, sÃ³ podemos encriptar mensagens de texto simples e\n"
+"nÃ£o mensagens RTF. Por favor certifica-te que apenas o formato\n"
+"de texto foi seleccionado."
 
 #: src/message.cpp:178
 msgid "[Crypto operation failed - can't show the body of the message]"
 msgstr ""
-"[A operação Crypto falhou - Não é possível mostrar o corpo da mensagem]"
+"[A operaÃ§Ã£o Crypto falhou - NÃ£o Ã© possÃ­vel mostrar o corpo da mensagem]"
 
 #: src/message.cpp:280
 #, c-format
@@ -144,31 +141,31 @@ msgstr ""
 
 #: src/message.cpp:288
 msgid "GpgOL - Message Information"
-msgstr "GpgOL - Informação da Mensagem"
+msgstr "GpgOL - InformaÃ§Ã£o da Mensagem"
 
 #: src/message.cpp:520
 msgid "Signature verification of an encrypted message is not possible."
-msgstr "A verificação da assinatura de uma mensagem encriptada não é possível."
+msgstr "A verificaÃ§Ã£o da assinatura de uma mensagem encriptada nÃ£o Ã© possÃ­vel."
 
 #: src/message.cpp:531
 msgid "Signature verification of this message class is not possible."
-msgstr "A verificação da assinatura desta classe de mensagem não é possível."
+msgstr "A verificaÃ§Ã£o da assinatura desta classe de mensagem nÃ£o Ã© possÃ­vel."
 
 #: src/message.cpp:534
 msgid ""
 "Signature verification of this S/MIME message is not possible.  Please check "
 "that S/MIME processing has been enabled."
 msgstr ""
-"A verificação da assinatura desta mensagem S/MIME não é possível. Por favor "
+"A verificaÃ§Ã£o da assinatura desta mensagem S/MIME nÃ£o Ã© possÃ­vel. Por favor "
 "verifica se o processamento S/MIME foi activado."
 
 #: src/message.cpp:538
 msgid "This message has no signature."
-msgstr "Esta mensagem não tem assinatura."
+msgstr "Esta mensagem nÃ£o tem assinatura."
 
 #: src/message.cpp:837
 msgid "This message is not encrypted."
-msgstr "Esta mensagem não está encriptada."
+msgstr "Esta mensagem nÃ£o estÃ¡ encriptada."
 
 #: src/message.cpp:1064
 #, c-format
@@ -176,21 +173,21 @@ msgid ""
 "Decryption failed\n"
 "(%s)"
 msgstr ""
-"A desencriptação falhou\n"
+"A desencriptaÃ§Ã£o falhou\n"
 "(%s)"
 
 #: src/message.cpp:1225
 msgid "No recipients to encrypt to are given"
-msgstr "Não foram seleccionados destinatários para a encriptação"
+msgstr "NÃ£o foram seleccionados destinatÃ¡rios para a encriptaÃ§Ã£o"
 
 #: src/message.cpp:1240 src/message.cpp:1268
 msgid "Encrypting or signing an empty message is not possible."
-msgstr "Encriptar ou assinar uma mensagem em branco não é possível."
+msgstr "Encriptar ou assinar uma mensagem vazia nÃ£o Ã© possÃ­vel."
 
 #: src/message.cpp:1249
 #, c-format
 msgid "Encryption failed (%s)"
-msgstr "A encriptação falhou (%s)"
+msgstr "A encriptaÃ§Ã£o falhou (%s)"
 
 #: src/message.cpp:1277
 #, c-format
@@ -205,14 +202,14 @@ msgstr "Erro ao escrever no stream"
 msgid "I/O-Error"
 msgstr "I/O-Erro"
 
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051
-#: src/gpgoladdin.cpp:1130
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:649 src/gpgoladdin.cpp:804
+#: src/gpgoladdin.cpp:882 src/gpgoladdin.cpp:956
 msgid "General"
 msgstr "Geral"
 
 #: src/olflange-dlgs.cpp:44
 msgid "Enable the S/MIME support"
-msgstr "Activa o suporte S/MIME"
+msgstr "Activar o suporte S/MIME"
 
 #: src/olflange-dlgs.cpp:46
 msgid "Message sending"
@@ -220,7 +217,7 @@ msgstr "Envio de mensagem"
 
 #: src/olflange-dlgs.cpp:47
 msgid "&Encrypt new messages by default"
-msgstr "Encriptar novas mensagens por defeito"
+msgstr "&Encriptar novas mensagens por defeito"
 
 #: src/olflange-dlgs.cpp:48
 msgid "&Sign new messages by default"
@@ -232,7 +229,7 @@ msgstr "Mensagem a receber"
 
 #: src/olflange-dlgs.cpp:52
 msgid "Show HTML view if possible"
-msgstr "Mostrar vista HTML se possível"
+msgstr "Mostrar vista HTML se possÃ­vel"
 
 #: src/olflange-dlgs.cpp:53
 msgid "Present encrypted message as attachment"
@@ -246,35 +243,34 @@ msgstr "Motor Crypto"
 #: src/olflange-dlgs.cpp:256
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
-"O GpgOL é um plugin para o Outlook que permite a encriptação e\n"
+"O GpgOL Ã© um plugin para o Outlook que permite a encriptaÃ§Ã£o e\n"
 "assinatura de mensagens usando o standard OpenPGP e S/MIME.\n"
-"Utiliza o software GnuPG (http://www.gnupg.org). A mais recente\n"
-"informação de lançamento é acessível ao clicar no logo.\n"
+"Ele usa o software GnuPG (http://www.gnupg.org). A mais recente\n"
+"informaÃ§Ã£o de lanÃ§amento Ã© acessÃ­vel ao clicar no logÃ³tipo.\n"
 "\n"
-"O GpgOL é software livre; podes redistribuí-lo e/ou\n"
-"modificá-lo nos termos da GNU Lesser General Public\n"
-"License como publicado pela Free Software Foundation; quer\n"
-"a versão 2.1 da licença, ou (à tua escolha) qualquer versão posterior.\n"
+"O GpgOL Ã© software livre; podes redistribuÃ­-lo e/ou\n"
+"modificÃ¡-lo nos termos da GNU Lesser General Public\n"
+"License como estÃ¡ publicado pela Free Software Foundation; quer\n"
+"a versÃ£o 2.1 da LicenÃ§a, ou (Ã  tua escolha) qualquer versÃ£o posterior.\n"
 "\n"
-"O GpgOL é distribuído na esperança de ser útil,\n"
-"mas SEM QUALQUER GARANTIA; nem mesmo a garantia implícita de\n"
-"COMERCIALIZAÇÃO ou APTIDÃO PARA UMA FINALIDADE PARTICULAR. Vê a\n"
+"O GpgOL Ã© distribuÃ­do na esperanÃ§a que possa ser Ãºtil,\n"
+"mas SEM QUALQUER GARANTIA; nem mesmo a garantia implÃ­cita de\n"
+"MERCANTIBILIDADE ou APTIDÃƒO PARA UMA FINALIDADE PARTICULAR. VÃª a\n"
 "GNU Lesser General Public License para mais detalhes.\n"
 "\n"
-"Deves ter recebido uma cópia da GNU Lesser General Public License\n"
-"junto com este programa; se não, vê <http://www.gnu.org/licenses/>."
+"Deves ter recebido uma cÃ³pia da GNU Lesser General Public License\n"
+"juntamente com este programa; se nÃ£o, vÃª <http://www.gnu.org/licenses/>."
 
 #: src/olflange-dlgs.cpp:262
 #, c-format
 msgid "This is GpgOL version %s"
-msgstr "Esta é a versão do GpgOL %s"
+msgstr "Esta Ã© a versÃ£o do GpgOL %s"
 
 #: src/olflange.cpp:523
 msgid "Welcome to GpgOL "
-msgstr ""
+msgstr "Bem-vindo ao GpgOL"
 
 #: src/olflange.cpp:524
-#, fuzzy
 msgid ""
 "GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
 "support to Outlook 2003 and 2007.\n"
@@ -292,23 +288,21 @@ msgid ""
 "or signed mails using an Exchange based account does not work.  Using GpgOL "
 "along with other Outlook plugins may in some cases not work.\n"
 msgstr ""
-"Bem-vindo ao GpgOL 1.0\n"
+"O GpgOL adiciona suporte integrado de encriptaÃ§Ã£o e assinatura digital "
+"OpenPGP e S/MIME ao Outlook 2003 e 2007.\n"
 "\n"
-"O GpgOL adiciona suporte de encriptação e assinatura digital OpenPGP e S/"
-"MIME integrado ao Outlook 2003 e 2007.\n"
+"Embora testÃ¡mos este software extensivamente, nÃ£o podemos dar qualquer "
+"garantia que funcione da forma esperada. A interface de programaÃ§Ã£o em uso "
+"nÃ£o foi propriamente documentada pela Microsoft e daÃ­ a funcionalidade do "
+"GpgOL pode cessar com uma actualizaÃ§Ã£o do teu sistema Windows.\n"
 "\n"
-"Embora testámos este software extensivamente, não podemos dar qualquer "
-"garantia que funcione da forma esperada. O interface de programação em uso "
-"não foi propriamente documentado pela Microsoft e daí a funcionalidade do "
-"GpgOL pode deixar de funcionar com uma actualização do teu sistema Windows.\n"
+"ACONSELHAMOS FORTEMENTE A EXECUTAR TESTES DE ENCRIPTAÃ‡ÃƒO ANTES DE COMEÃ‡AR A "
+"USAR O GPGOL EM DADOS SENSÃVEIS!\n"
 "\n"
-"ACONSELHAMOS FORTEMENTE A EXECUTAR TESTES DE ENCRIPTAÇÃO ANTES DE COMEÇARES "
-"A USAR O GPGOL EM DADOS SENSÍVEIS!\n"
-"\n"
-"Existem alguns problemas conhecidos, os mais graves são o não funcionamento "
-"de enviar e-mails encriptados ou assinados usando uma conta com base no "
-"Exchange. Usar o GpgOL com outros plugins do Outlook poderá não funcionar em "
-"alguns casos.\n"
+"Existem alguns problemas conhecidos, sendo os mais graves o nÃ£o "
+"funcionamento em enviar e-mails encriptados ou assinados usando uma conta "
+"com base no Exchange. Usar o GpgOL com outros plugins do Outlook poderÃ¡ nÃ£o "
+"funcionar em alguns casos.\n"
 
 #: src/olflange.cpp:550
 msgid ""
@@ -318,11 +312,11 @@ msgid ""
 "your needs.  The option dialog can be found in the main menu at: Extras-"
 ">Options->GpgOL.\n"
 msgstr ""
-"Instalaste uma versão nova do GpgOL.\n"
+"Instalaste uma versÃ£o nova do GpgOL.\n"
 "\n"
-"Por favor abre o diálogo de opções e confirma se as definições estão "
-"correctas para as tuas necessidades. O diálogo de opções pode ser encontrado "
-"em: Extras->Opções->GpgOL\n"
+"Por favor abre o diÃ¡logo de opÃ§Ãµes e confirma se as definiÃ§Ãµes estÃ£o "
+"correctas para as tuas necessidades. O diÃ¡logo de opÃ§Ãµes pode ser encontrado "
+"em: Extras->OpÃ§Ãµes->GpgOL\n"
 
 #: src/olflange.cpp:751
 msgid ""
@@ -333,12 +327,12 @@ msgid ""
 "\n"
 "Please update at least to SP2 before trying to send a message"
 msgstr ""
-"Esta versão do Outlook é muito antiga!\n"
+"Esta versÃ£o do Outlook Ã© muito antiga!\n"
 "\n"
-"Pelo menos as versões do Outlook 2003 mais antigas que o SP2 exibem crashes "
-"ao enviar as mensagens e estas podem ficar presas na fila de saída.\n"
+"Pelo menos as versÃµes do Outlook 2003 mais antigas que o SP2 exibem crashes "
+"ao enviar as mensagens e estas podem ficar presas na fila de saÃ­da.\n"
 "\n"
-"Por favor actualiza pelos menos para o SP2 antes de tentares enviar uma "
+"Por favor actualiza pelo menos para o SP2 antes de tentares enviar uma "
 "mensagem."
 
 #: src/inspectors.cpp:690
@@ -366,24 +360,24 @@ msgid ""
 "This is a signed and encrypted message.\n"
 "Click for more information. "
 msgstr ""
-"Esta é uma mensagem assinada e encriptada.\n"
-"Clica para mais informação. "
+"Esta Ã© uma mensagem assinada e encriptada.\n"
+"Clica para mais informaÃ§Ã£o. "
 
 #: src/inspectors.cpp:930
 msgid ""
 "This is a signed message.\n"
 "Click for more information. "
 msgstr ""
-"Esta é uma mensagem assinada.\n"
-"Clica para mais informação. "
+"Esta Ã© uma mensagem assinada.\n"
+"Clica para mais informaÃ§Ã£o. "
 
 #: src/inspectors.cpp:936
 msgid ""
 "This is an encrypted message.\n"
 "Click for more information. "
 msgstr ""
-"Esta é uma mensagem encriptada.\n"
-"Clica para mais informação. "
+"Esta Ã© uma mensagem encriptada.\n"
+"Clica para mais informaÃ§Ã£o. "
 
 #: src/explorers.cpp:126
 msgid "GnuPG Certificate &Manager"
@@ -409,213 +403,203 @@ msgid ""
 "Note that if you start Outlook again with GpgOL still being installed, GpgOL "
 "will again process messages."
 msgstr ""
-"Estás prestes a iniciar o processo de reverter mensagens criadas pelo GpgOL "
-"para preparar a desinstalação do GpgOL. Executar este comando colocará o "
-"GpgOL num estado desactivado de forma a que as mensagens não sejam mais "
+"EstÃ¡s prestes a iniciar o processo de reverter mensagens criadas pelo GpgOL "
+"para preparar a desinstalaÃ§Ã£o do GpgOL. Executar este comando colocarÃ¡ o "
+"GpgOL num estado desactivado para que as mensagens nÃ£o sejam mais "
 "processadas pelo GpgOL.\n"
 "\n"
-"Deves converter todas as pastas uma após a outra com este comando, fechar o "
+"Deves converter todas as pastas uma apÃ³s a outra com este comando, fechar o "
 "Outlook e depois desinstalar o GpgOL.\n"
 "\n"
 "Nota que se iniciares o Outlook novamente com o GpgOL ainda a ser instalado, "
-"o GpgOL voltará a processar as mensagens."
+"o GpgOL voltarÃ¡ a processar as mensagens."
 
 #: src/explorers.cpp:208
 msgid "Do you want to revert this folder?"
 msgstr "Queres reverter esta pasta?"
 
-#: src/gpgoladdin.cpp:301
+#: src/gpgoladdin.cpp:288
 msgid ""
 "Failed to remove plaintext from at least one message.\n"
 "\n"
 "Until GpgOL is activated again it is possible that the plaintext of messages "
 "decrypted in this Session is saved or transfered back to your mailserver."
 msgstr ""
+"Falha a remover o texto simples de pelo menos uma mensagem.\n"
+"\n"
+"AtÃ© o GpgOL ser activado novamente, Ã© possÃ­vel que o texto simples das "
+"mensagens desencriptadas nesta sessÃ£o seja gravado ou transferido de volta "
+"para o teu servidor de correio."
 
-#: src/gpgoladdin.cpp:652
-#, fuzzy
-msgid "Encrypt the message."
-msgstr "Entschlüsseln und Prüfen der Nachricht."
-
-#: src/gpgoladdin.cpp:654
-msgid "Encrypts the message and all attachments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:656
-#, fuzzy
-msgid "Sign the message."
-msgstr "Entschlüsseln und Prüfen der Nachricht."
-
-#: src/gpgoladdin.cpp:658
-msgid "Sign the message and all attchments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
-msgid "Open the settings dialog for GpgOL"
-msgstr ""
-
-#: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972
-#: src/gpgoladdin.cpp:979
-#, fuzzy
-msgid "Encrypt"
-msgstr "Encriptação"
-
-#: src/gpgoladdin.cpp:713 src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:974
-msgid "Sign"
-msgstr ""
-
-#: src/gpgoladdin.cpp:764
-#, fuzzy
-msgid "Encrypted"
-msgstr "Encriptação"
-
-#: src/gpgoladdin.cpp:765
-#, fuzzy
-msgid "Signed"
-msgstr "Assinatura criada"
-
-#: src/gpgoladdin.cpp:768 src/gpgoladdin.cpp:973 src/gpgoladdin.cpp:979
-#: src/gpgoladdin.cpp:1055 src/gpgoladdin.cpp:1058 src/gpgoladdin.cpp:1059
-#, fuzzy
-msgid "Decrypt"
-msgstr "Entschlüsselung"
-
-#: src/gpgoladdin.cpp:840
-#, fuzzy
+#: src/gpgoladdin.cpp:592 src/gpgoladdin.cpp:681
 msgid "Start the Certificate Management Software"
-msgstr "GnuPG Zertifikats&verwaltung"
+msgstr "Iniciar o Software de GestÃ£o de Certificados"
 
-#: src/gpgoladdin.cpp:842
+#: src/gpgoladdin.cpp:594 src/gpgoladdin.cpp:683
 msgid ""
 "Open GPA or Kleopatra to manage your certificates. You can use this you to "
 "generate your own certificates. "
 msgstr ""
+"Abre o GPA ou Kleopatra para gerir os teus certificados. Podes usar isto "
+"para gerar os teus prÃ³prios certificados."
 
-#: src/gpgoladdin.cpp:846
-#, fuzzy
+#: src/gpgoladdin.cpp:598
+msgid "Encrypt the message."
+msgstr "Encriptar a mensagem."
+
+#: src/gpgoladdin.cpp:600
+msgid "Encrypts the message and all attachments before sending."
+msgstr "Encripta a mensagem e todos os anexos antes de enviar."
+
+#: src/gpgoladdin.cpp:602
+msgid "Sign the message."
+msgstr "Assinar a mensagem."
+
+#: src/gpgoladdin.cpp:604
+msgid "Sign the message and all attchments before sending."
+msgstr "Assinar a mensagem e todos os anexos antes de enviar."
+
+#: src/gpgoladdin.cpp:650 src/gpgoladdin.cpp:805 src/gpgoladdin.cpp:883
+#: src/gpgoladdin.cpp:957
+msgid "Start Certificate Manager"
+msgstr "Iniciar o Gestor de Certificados"
+
+#: src/gpgoladdin.cpp:651
+msgid "GnuPG"
+msgstr "GnuPG"
+
+#: src/gpgoladdin.cpp:652 src/gpgoladdin.cpp:807 src/gpgoladdin.cpp:814
+msgid "Encrypt"
+msgstr "Encriptar"
+
+#: src/gpgoladdin.cpp:653 src/gpgoladdin.cpp:809
+msgid "Sign"
+msgstr "Assinar"
+
+#: src/gpgoladdin.cpp:687
 msgid "Encrypt the text of the message"
-msgstr "Entschlüsseln und Prüfen der Nachricht."
+msgstr "Encriptar o texto da mensagem"
 
-#: src/gpgoladdin.cpp:848
+#: src/gpgoladdin.cpp:689
 msgid ""
 "Choose the certificates for which the message should be encrypted and "
 "replace the text with the encrypted message."
 msgstr ""
+"Escolhe os certificados para que a mensagem deve ser encriptada e substitui "
+"o texto com a mensagem encriptada."
 
-#: src/gpgoladdin.cpp:852
-#, fuzzy
+#: src/gpgoladdin.cpp:693
 msgid "Add a file as an encrypted attachment"
-msgstr "Apresentar mensagem encriptada como anexo"
+msgstr "Adicionar um ficheiro como anexo encriptado"
 
-#: src/gpgoladdin.cpp:854
+#: src/gpgoladdin.cpp:695
 msgid "Encrypts a file and adds it as an attachment to the message. "
-msgstr ""
+msgstr "Encripta um ficheiro e adiciona-o como um anexo Ã  mensagem."
 
-#: src/gpgoladdin.cpp:857
-#, fuzzy
+#: src/gpgoladdin.cpp:698
 msgid "Add a file as an encrypted attachment with a signature"
-msgstr "Apresentar mensagem encriptada como anexo"
+msgstr "Adicionar um ficheiro como anexo encriptado com uma assinatura"
 
-#: src/gpgoladdin.cpp:859
+#: src/gpgoladdin.cpp:700
 msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
 msgstr ""
+"Encripta um ficheiro, assina-o e adiciona quer o ficheiro encriptado e a "
+"assinatura como anexos Ã  mensagem."
 
-#: src/gpgoladdin.cpp:862
-#, fuzzy
+#: src/gpgoladdin.cpp:703
 msgid "Decrypt the message"
-msgstr "Entschlüsseln und Prüfen der Nachricht."
+msgstr "Desencriptar a mensagem"
 
-#: src/gpgoladdin.cpp:864
+#: src/gpgoladdin.cpp:705
 msgid ""
 "Look for PGP or S/MIME encrypted data in the message text and decrypt it."
 msgstr ""
+"Procura por dados encriptados PGP ou S/MIME no texto da mensagem e "
+"desencripta-os."
 
-#: src/gpgoladdin.cpp:867
-#, fuzzy
+#: src/gpgoladdin.cpp:708
 msgid "Add a signature of the message"
-msgstr "Entschlüsseln und Prüfen der Nachricht."
+msgstr "Adicionar uma assinatura da mensagem"
 
-#: src/gpgoladdin.cpp:869
+#: src/gpgoladdin.cpp:710
 msgid ""
 "Appends a signed copy of the message text in an opaque signature. An opaque "
 "signature ensures that the signed text is not modified by embedding it in "
 "the signature itself. The combination of the signed message text and your "
 "signature is added below the plain text. The message will not be encrypted!"
 msgstr ""
+"Acrescenta uma cÃ³pia assinada do texto da mensagem numa assinatura opaca. "
+"Uma assinatura opaca garante que o texto assinado nÃ£o Ã© modificado ao "
+"incorporÃ¡-lo na prÃ³pria assinatura. A combinaÃ§Ã£o do texto da mensagem "
+"assinada e a tua assinatura Ã© acrescentada por baixo do texto simples. A "
+"mensagem nÃ£o serÃ¡ encriptada!"
 
-#: src/gpgoladdin.cpp:969 src/gpgoladdin.cpp:1052 src/gpgoladdin.cpp:1131
-#, fuzzy
-msgid "Start Certificate Manager"
-msgstr "GnuPG Zertifikats&verwaltung"
-
-#: src/gpgoladdin.cpp:971 src/gpgoladdin.cpp:1054
+#: src/gpgoladdin.cpp:806 src/gpgoladdin.cpp:884
 msgid "Textbody"
-msgstr ""
+msgstr "Corpo do texto"
 
-#: src/gpgoladdin.cpp:975 src/gpgoladdin.cpp:1056
+#: src/gpgoladdin.cpp:808 src/gpgoladdin.cpp:814 src/gpgoladdin.cpp:885
+#: src/gpgoladdin.cpp:888 src/gpgoladdin.cpp:889
+msgid "Decrypt"
+msgstr "Desencriptar"
+
+#: src/gpgoladdin.cpp:810 src/gpgoladdin.cpp:886
 msgid "Verify"
-msgstr ""
+msgstr "Verificar"
 
-#: src/gpgoladdin.cpp:976
-#, fuzzy
+#: src/gpgoladdin.cpp:811
 msgid "Attachments"
-msgstr "Entschlüsselung eines Anhangs"
+msgstr "Anexos"
 
-#: src/gpgoladdin.cpp:977
-#, fuzzy
+#: src/gpgoladdin.cpp:812
 msgid "Encrypted file"
-msgstr "Encriptação"
+msgstr "Ficheiro encriptado"
 
-#: src/gpgoladdin.cpp:978
+#: src/gpgoladdin.cpp:813
 msgid "Encrypted file and Signature"
-msgstr ""
+msgstr "Ficheiro encriptado e assinatura"
 
-#: src/gpgoladdin.cpp:1057 src/gpgoladdin.cpp:1134 src/gpgoladdin.cpp:1135
+#: src/gpgoladdin.cpp:887 src/gpgoladdin.cpp:959 src/gpgoladdin.cpp:960
 msgid "Save and decrypt"
-msgstr ""
+msgstr "Gravar e desencriptar"
 
 #: src/ribbon-callbacks.cpp:249
-#, fuzzy
 msgid "Please select text to encrypt."
-msgstr "Por favor selecciona pelo menos um certificado de destinatário."
+msgstr "Por favor selecciona texto a encriptar."
 
 #: src/ribbon-callbacks.cpp:261
 msgid "Textbody empty."
-msgstr ""
+msgstr "Corpo do texto vazio."
 
-#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1064
-#, fuzzy
+#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1082
 msgid "Please add at least one recipent."
-msgstr "Por favor selecciona pelo menos um certificado de destinatário."
+msgstr "Por favor adiciona pelo menos um destinatÃ¡rio."
 
 #: src/ribbon-callbacks.cpp:672
-#, fuzzy
 msgid "Please select a Mail."
-msgstr "Por favor selecciona pelo menos um certificado de destinatário."
+msgstr "Por favor selecciona um mail."
 
 #: src/ribbon-callbacks.cpp:686
-#, fuzzy
 msgid "Please select the data you wish to decrypt."
-msgstr "Por favor selecciona pelo menos um certificado de destinatário."
+msgstr "Por favor selecciona os dados que desejas desencriptar."
 
 #: src/ribbon-callbacks.cpp:699
 msgid "Nothing to decrypt."
-msgstr ""
+msgstr "Nada a desencriptar."
 
 #: src/ribbon-callbacks.cpp:878
 msgid "Plain text"
-msgstr ""
+msgstr "Texto simples"
 
 #: src/ribbon-callbacks.cpp:879
 msgid "Signed text"
-msgstr ""
+msgstr "Texto assinado"
 
-#: src/ribbon-callbacks.cpp:1071
-#, fuzzy
+#: src/ribbon-callbacks.cpp:1089
 msgid "Select file to encrypt"
-msgstr "Por favor selecciona pelo menos um certificado de destinatário."
+msgstr "Selecciona ficheiro a encriptar"
 
 #~ msgid ""
 #~ "The user interface server is not available or does not work.  Using an "
@@ -624,11 +608,11 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "This is limited to the PGP/MIME protocol and thus S/MIME protected "
 #~ "message are not readable."
 #~ msgstr ""
-#~ "O servidor de interface do utilizador não está disponível ou não "
+#~ "O servidor de interface do utilizador nÃ£o estÃ¡ disponÃ­vel ou nÃ£o "
 #~ "funciona. A usar um interface de utilizador interno.\n"
 #~ "\n"
-#~ "Isto está limitado ao protocolo PGP/MIME e daí as mensagens protegidas S/"
-#~ "MIME não são legíveis."
+#~ "Isto estÃ¡ limitado ao protocolo PGP/MIME e daÃ­ as mensagens protegidas S/"
+#~ "MIME nÃ£o sÃ£o legÃ­veis."
 
 #~ msgid ""
 #~ "The configured default encryption certificate is not available or does "
@@ -636,26 +620,26 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "\n"
 #~ "This message won't be be encrypted to this certificate!"
 #~ msgstr ""
-#~ "O certificado de encriptação configurado por defeito não está disponível "
-#~ "ou não especifica um inequivocamente. Por favor corrige isto no diálogo "
-#~ "de opções\n"
+#~ "O certificado de encriptaÃ§Ã£o configurado por defeito nÃ£o estÃ¡ disponÃ­vel "
+#~ "ou nÃ£o especifica um inequivocamente. Por favor corrige isto no diÃ¡logo "
+#~ "de opÃ§Ãµes\n"
 #~ "\n"
-#~ "Esta mensagem não será encriptada para este certificado!"
+#~ "Esta mensagem nÃ£o serÃ¡ encriptada para este certificado!"
 
 #~ msgid "Encryption"
-#~ msgstr "Encriptação"
+#~ msgstr "EncriptaÃ§Ã£o"
 
 #~ msgid "Fingerprint: "
 #~ msgstr "Fingerprint: "
 
 #~ msgid "This signature is valid\n"
-#~ msgstr "Esta assinatura é válida\n"
+#~ msgstr "Esta assinatura Ã© vÃ¡lida\n"
 
 #~ msgid "signature state is \"green\"\n"
-#~ msgstr "Status da assinatura é \"verde\"\n"
+#~ msgstr "Status da assinatura Ã© \"verde\"\n"
 
 #~ msgid "signature state is \"red\"\n"
-#~ msgstr "Status da assinatura é \"vermelho\"\n"
+#~ msgstr "Status da assinatura Ã© \"vermelho\"\n"
 
 #~ msgid "Warning: One of the certificates has been revoked\n"
 #~ msgstr "Aviso: Um dos certificados foi revogado\n"
@@ -664,22 +648,22 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "Aviso: O certificado usado para criar a assinatura expirou a: "
 
 #~ msgid "Warning: At least one certification certificate has expired\n"
-#~ msgstr "Aviso: Pelo menos um certificado de certificação expirou\n"
+#~ msgstr "Aviso: Pelo menos um certificado de certificaÃ§Ã£o expirou\n"
 
 #~ msgid "Warning: The signature expired at: "
 #~ msgstr "Aviso: A assinatura expirou a: "
 
 #~ msgid "Can't verify due to a missing certificate\n"
-#~ msgstr "Não é possível verificar devido a um certificado em falta\n"
+#~ msgstr "NÃ£o Ã© possÃ­vel verificar devido a um certificado em falta\n"
 
 #~ msgid "The CRL is not available\n"
-#~ msgstr "O CRL não está disponível\n"
+#~ msgstr "O CRL nÃ£o estÃ¡ disponÃ­vel\n"
 
 #~ msgid "Available CRL is too old\n"
-#~ msgstr "O CRL disponível é demasiado antigo\n"
+#~ msgstr "O CRL disponÃ­vel Ã© demasiado antigo\n"
 
 #~ msgid "A policy requirement was not met\n"
-#~ msgstr "Um requisito de política não foi satisfeito\n"
+#~ msgstr "Um requisito de polÃ­tica nÃ£o foi satisfeito\n"
 
 #~ msgid "A system error occured"
 #~ msgstr "Ocorreu um erro de sistema"
@@ -688,27 +672,27 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "WARNING: We have NO indication whether this certificate belongs to the "
 #~ "person named as shown above\n"
 #~ msgstr ""
-#~ "AVISO: NÃO temos indicação se este certificado pertence ao nome da pessoa "
+#~ "AVISO: NÃƒO temos indicaÃ§Ã£o se este certificado pertence ao nome da pessoa "
 #~ "como mostrado acima\n"
 
 #~ msgid ""
 #~ "WARNING: The certificate does NOT BELONG to the person named as shown "
 #~ "above\n"
 #~ msgstr ""
-#~ "AVISO: O certificado NÃO PERTENCE ao nome da pessoa como mostrado acima\n"
+#~ "AVISO: O certificado NÃƒO PERTENCE ao nome da pessoa como mostrado acima\n"
 
 #~ msgid ""
 #~ "WARNING: It is NOT certain that the certificate belongs to the person "
 #~ "named as shown above\n"
 #~ msgstr ""
-#~ "AVISO: NÃO é certo que o certificado pertença ao nome da pessoa como "
+#~ "AVISO: NÃƒO Ã© certo que o certificado pertenÃ§a ao nome da pessoa como "
 #~ "mostrado acima\n"
 
 #~ msgid "Verification started at: "
-#~ msgstr "Verificação começou a: "
+#~ msgstr "VerificaÃ§Ã£o comeÃ§ou a: "
 
 #~ msgid "Verification result for: "
-#~ msgstr "Resultado de verificação para: "
+#~ msgstr "Resultado de verificaÃ§Ã£o para: "
 
 #~ msgid "[unnamed part]"
 #~ msgstr "[parte sem nome]"
@@ -723,19 +707,19 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "                  criada: "
 
 #~ msgid "*BAD* signature claimed to be from: "
-#~ msgstr "*MÁ* assinatura alegada ser de: "
+#~ msgstr "*MÃ* assinatura alegada ser de: "
 
 #~ msgid "Error checking signature"
 #~ msgstr "Erro ao verificar assinatura"
 
 #~ msgid "*** Begin Notation (signature by: "
-#~ msgstr "*** Início de notação (assinatura por: "
+#~ msgstr "*** InÃ­cio de notaÃ§Ã£o (assinatura por: "
 
 #~ msgid "*** End Notation ***\n"
-#~ msgstr "*** Fim de Notação ***\n"
+#~ msgstr "*** Fim de NotaÃ§Ã£o ***\n"
 
 #~ msgid "No certificate hint given."
-#~ msgstr "Não foi dada nenhuma dica do certificado."
+#~ msgstr "NÃ£o foi dada nenhuma dica do certificado."
 
 #~ msgid "Enter passphrase to unlock the secret key"
 #~ msgstr "Introduz a palavra-passe para desbloquear a chave secreta"
@@ -747,7 +731,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "Cancelar"
 
 #~ msgid "Invalid passphrase; please try again..."
-#~ msgstr "Palavra-passe inválida; por favor tenta novamente..."
+#~ msgstr "Palavra-passe invÃ¡lida; por favor tenta novamente..."
 
 #~ msgid "Select Signing Key"
 #~ msgstr "Selecciona chave de assinatura"
@@ -771,19 +755,19 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "Validade"
 
 #~ msgid "Selected recipients:"
-#~ msgstr "Destinatários seleccionados:"
+#~ msgstr "DestinatÃ¡rios seleccionados:"
 
 #~ msgid "Recipient which were NOT found"
-#~ msgstr "Destinatários NÃO encontrados"
+#~ msgstr "DestinatÃ¡rios NÃƒO encontrados"
 
 #~ msgid "Please select at least one recipient certificate."
-#~ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
+#~ msgstr "Por favor selecciona pelo menos um certificado de destinatÃ¡rio."
 
 #~ msgid "Recipient Dialog"
-#~ msgstr "Diálogo de destinatário"
+#~ msgstr "DiÃ¡logo de destinatÃ¡rio"
 
 #~ msgid "BAD signature!"
-#~ msgstr "MÁ assinatura!"
+#~ msgstr "MÃ assinatura!"
 
 #~ msgid "Good signature"
 #~ msgstr "Boa assinatura"
@@ -798,25 +782,28 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "Boa assinatura expirada"
 
 #~ msgid "Could not check signature: missing certificate"
-#~ msgstr "Assinatura não pôde ser verificada: falta certificado"
+#~ msgstr "Assinatura nÃ£o pÃ´de ser verificada: falta certificado"
 
 #~ msgid "Verification error"
-#~ msgstr "Erro de verificação"
+#~ msgstr "Erro de verificaÃ§Ã£o"
 
 #~ msgid "User-ID not found"
-#~ msgstr "User-ID não encontrado"
+#~ msgstr "User-ID nÃ£o encontrado"
 
 #~ msgid "This may be due to a wrong option setting"
-#~ msgstr "Isto pode dever-se a uma configuração errada de opções"
+#~ msgstr "Isto pode dever-se a uma configuraÃ§Ã£o errada de opÃ§Ãµes"
 
 #~ msgid "Signature expired on %s"
 #~ msgstr "Assinatura expirou a %s"
 
 #~ msgid "Signature issued by a certificate we do NOT trust."
-#~ msgstr "Assinatura emitida por um certificado que NÃO confiamos."
+#~ msgstr "Assinatura emitida por um certificado que NÃƒO confiamos."
 
 #~ msgid "Signature issued by a non-valid certificate."
-#~ msgstr "Assinatura emitida por um certificado inválido."
+#~ msgstr "Assinatura emitida por um certificado invÃ¡lido."
+
+#~ msgid "Signature made"
+#~ msgstr "Assinatura criada"
 
 #~ msgid "using"
 #~ msgstr "usando"
@@ -828,29 +815,29 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "de"
 
 #~ msgid "also known as"
-#~ msgstr "também conhecido por"
+#~ msgstr "tambÃ©m conhecido por"
 
 #~ msgid "PGP/MIME Verification Result"
-#~ msgstr "PGP/MIME Resultado de Verificação"
+#~ msgstr "PGP/MIME Resultado de VerificaÃ§Ã£o"
 
 #~ msgid "S/MIME Verification Result"
-#~ msgstr "S/MIME Resultado de Verificação"
+#~ msgstr "S/MIME Resultado de VerificaÃ§Ã£o"
 
 #, fuzzy
 #~ msgid "Decrypt Selection"
-#~ msgstr "Entschlüsselung"
+#~ msgstr "EntschlÃ¼sselung"
 
 #~ msgid "Select this option to encrypt the message."
-#~ msgstr "Wählen Sie diese Option zum Verschlüsseln der Nachricht."
+#~ msgstr "WÃ¤hlen Sie diese Option zum VerschlÃ¼sseln der Nachricht."
 
 #~ msgid "Select this option to sign the message."
-#~ msgstr "Wählen Sie diese Option zum Signieren der Nachricht."
+#~ msgstr "WÃ¤hlen Sie diese Option zum Signieren der Nachricht."
 
 #~ msgid "Select this option to open the certificate manager"
-#~ msgstr "Wählen Sie diese Option zum die Zertifikatsverwaltung zu öffenen."
+#~ msgstr "WÃ¤hlen Sie diese Option zum die Zertifikatsverwaltung zu Ã¶ffenen."
 
 #~ msgid "Open the GpgOL certificate manager"
-#~ msgstr "Zertifikatsverwaltung von GpgOL öffnen"
+#~ msgstr "Zertifikatsverwaltung von GpgOL Ã¶ffnen"
 
 #~ msgid ">GnuPG protocol"
 #~ msgstr ">GnuPG Protokoll"
@@ -871,10 +858,10 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "MIME support\".  The option dialog can be found in the main menu at: "
 #~ "Extras->Options->GpgOL.\n"
 #~ msgstr ""
-#~ "Unterstützung für S/MIME ist nicht eingeschaltet.\n"
+#~ "UnterstÃ¼tzung fÃ¼r S/MIME ist nicht eingeschaltet.\n"
 #~ "\n"
-#~ "Um die S/MIME Unterstützung einzuschalten, öffnen Sie bitte das Fenster "
-#~ "mit den Einstellungen um dort die Option \"S/MIME Unterstützung "
+#~ "Um die S/MIME UnterstÃ¼tzung einzuschalten, Ã¶ffnen Sie bitte das Fenster "
+#~ "mit den Einstellungen um dort die Option \"S/MIME UnterstÃ¼tzung "
 #~ "einschalten\" zu aktivieren.  Sie finden die Einstellungen im Hauptmenu "
 #~ "unter:  Extras->Optionen->GpgOL.\n"
 
@@ -882,22 +869,22 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "Die Zertifikatsverwaltung konnte nicht aufgerufen werden"
 
 #~ msgid "Select this option to automatically select the protocol."
-#~ msgstr "Wählen Sie diese Option zum das Protokoll automatisch auszuwählen."
+#~ msgstr "WÃ¤hlen Sie diese Option zum das Protokoll automatisch auszuwÃ¤hlen."
 
 #~ msgid "Select this option to select the PGP/MIME protocol."
-#~ msgstr "Wählen Sie diese Option zum das PGP/MIME Protokoll auszuwählen."
+#~ msgstr "WÃ¤hlen Sie diese Option zum das PGP/MIME Protokoll auszuwÃ¤hlen."
 
 #~ msgid "Select this option to select the S/MIME protocol."
-#~ msgstr "Wählen Sie diese Option zum das S/MIME Protokoll auszuwählen."
+#~ msgstr "WÃ¤hlen Sie diese Option zum das S/MIME Protokoll auszuwÃ¤hlen."
 
 #~ msgid "Automatically select the protocol for sign/encrypt"
-#~ msgstr "Wählen Sie diese Option um das Protokoll automatisch auszuwählen."
+#~ msgstr "WÃ¤hlen Sie diese Option um das Protokoll automatisch auszuwÃ¤hlen."
 
 #~ msgid "Use PGP/MIME for sign/encrypt"
-#~ msgstr "PGP/MIME zum signieren/verschlüsseln verwenden."
+#~ msgstr "PGP/MIME zum signieren/verschlÃ¼sseln verwenden."
 
 #~ msgid "Use S/MIME for sign/encrypt"
-#~ msgstr "S/MIME zum signieren/verschlüsseln verwenden."
+#~ msgstr "S/MIME zum signieren/verschlÃ¼sseln verwenden."
 
 #~ msgid "Use PGP/MIME by default"
 #~ msgstr "PGP/MIME per Voreinstellung verwenden"
@@ -914,31 +901,31 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "mitigate this problem will be provided when GpgOL arrives at production "
 #~ "quality status."
 #~ msgstr ""
-#~ "Sie haben die S/MIME Unterstützung von GpgOL eingeschaltet.\n"
+#~ "Sie haben die S/MIME UnterstÃ¼tzung von GpgOL eingeschaltet.\n"
 #~ "\n"
 #~ "Neue S/MIME Nachrichten werden jetzt nur noch mittels GpgOL sichtbar sein "
-#~ "und nicht mehr über Outlooks interne S/MIME Unterstützung.  Diese "
+#~ "und nicht mehr Ã¼ber Outlooks interne S/MIME UnterstÃ¼tzung.  Diese "
 #~ "Nachrichten werden auch dann nicht mehr mit Outlook lesbar sein, wenn "
-#~ "GpgOL deinstalliert wurde.  Mit dem Erscheinen der endgültigen Version "
+#~ "GpgOL deinstalliert wurde.  Mit dem Erscheinen der endgÃ¼ltigen Version "
 #~ "von GpgOL wird aber ein Werkzeug bereitgestellt werden, welches dieses "
-#~ "Problem lösen kann."
+#~ "Problem lÃ¶sen kann."
 
 #~ msgid "Also decrypt in preview window"
-#~ msgstr "Auch im Vorschaufenster entschlüsseln"
+#~ msgstr "Auch im Vorschaufenster entschlÃ¼sseln"
 
 #~ msgid "&Decrypt and verify message"
-#~ msgstr "Entschlüsseln/Prüfen der Nachricht"
+#~ msgstr "EntschlÃ¼sseln/PrÃ¼fen der Nachricht"
 
 #~ msgid "&Verify signature"
-#~ msgstr "&Unterschrift prüfen"
+#~ msgstr "&Unterschrift prÃ¼fen"
 
 #~ msgid "Select this option to decrypt and verify the message."
 #~ msgstr ""
-#~ "Wählen Sie diese Option um die Nachricht zu entschlüsseln bzw. zu "
+#~ "WÃ¤hlen Sie diese Option um die Nachricht zu entschlÃ¼sseln bzw. zu "
 #~ "verifizieren."
 
 #~ msgid "Check the signature now and display the result"
-#~ msgstr "Die digitale Unterschrift jetzt prüfen und das Resultat anzeigen"
+#~ msgstr "Die digitale Unterschrift jetzt prÃ¼fen und das Resultat anzeigen"
 
 #~ msgid "Path to certificate manager binary"
 #~ msgstr "Dateiname der Zertifikatsverwaltung"
@@ -947,7 +934,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "Passphrase"
 
 #~ msgid "Cache &passphrase for"
-#~ msgstr "Passphrase speichern für"
+#~ msgstr "Passphrase speichern fÃ¼r"
 
 #~ msgid "minutes"
 #~ msgstr "Minuten"
@@ -960,7 +947,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 
 #~ msgid "Select this option to show information on the crypto status"
 #~ msgstr ""
-#~ "Wählen Sie diese Option um Informationen über den Krypto-Status der "
+#~ "WÃ¤hlen Sie diese Option um Informationen Ã¼ber den Krypto-Status der "
 #~ "Nachricht anzuzeigen."
 
 #~ msgid "Show S/MIME status info"
@@ -978,18 +965,18 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "%s"
 
 #~ msgid "Also encrypt message with the default certificate"
-#~ msgstr "Nachricht ebenfalls an das voreingestellte Zertifikat verschlüsseln"
+#~ msgstr "Nachricht ebenfalls an das voreingestellte Zertifikat verschlÃ¼sseln"
 
 #~ msgid "The default certificate may not contain any spaces."
 #~ msgstr ""
-#~ "Der Bezeichner für das Standardzertifikat darf keine Leerzeichen "
+#~ "Der Bezeichner fÃ¼r das Standardzertifikat darf keine Leerzeichen "
 #~ "enthalten."
 
 #~ msgid "Select GPG Key Manager"
-#~ msgstr "Das Schlüsselverwaltungsprogramm festlegen"
+#~ msgstr "Das SchlÃ¼sselverwaltungsprogramm festlegen"
 
 #~ msgid "Encrypt message with GPG"
-#~ msgstr "Nachricht mit GnuPG verschlüsseln"
+#~ msgstr "Nachricht mit GnuPG verschlÃ¼sseln"
 
 #~ msgid "Sign message with GPG"
 #~ msgstr "Nachricht mit GnuPG unterschreiben"
@@ -998,13 +985,13 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "S/MIME verwenden"
 
 #~ msgid "Use the S/MIME protocol"
-#~ msgstr "S/MIME Unterstützung einschalten"
+#~ msgstr "S/MIME UnterstÃ¼tzung einschalten"
 
 #~ msgid "Debug-1 (open_inspector)"
-#~ msgstr "Debug-1 (Inspektor Fenster öffnen)"
+#~ msgstr "Debug-1 (Inspektor Fenster Ã¶ffnen)"
 
 #~ msgid "No valid OpenPGP data found."
-#~ msgstr "Keine gültigen OpenPGP Daten gefunden"
+#~ msgstr "Keine gÃ¼ltigen OpenPGP Daten gefunden"
 
 #~ msgid ""
 #~ "[This is a PGP/MIME message]\r\n"
@@ -1013,7 +1000,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr ""
 #~ "[Dies ist eine PGP/MIME Nachricht]\n"
 #~ "\n"
-#~ "[Benutzen Sie den \"Entschlüsselungs\"-Button im großen\n"
+#~ "[Benutzen Sie den \"EntschlÃ¼sselungs\"-Button im groÃŸen\n"
 #~ "Nachrichtenfenster um den Inhalt anzuzeigen.]"
 
 #~ msgid ""
@@ -1024,24 +1011,24 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr ""
 #~ "Hinweis: Dies is eine PGP/MIME signierte Nachricht.  Das GpgOL Plugin\n"
 #~ "ist nicht immer in der Lage, eine solche Nachricht zu verifizieren.\n"
-#~ "Der Grund hierzu liegt in der fehlenden Unterstützung von Outlook.\n"
+#~ "Der Grund hierzu liegt in der fehlenden UnterstÃ¼tzung von Outlook.\n"
 #~ "\n"
 #~ "(Dieser Hinweis wird nur einmalig pro Sitzung angezeigt)"
 
 #~ msgid "Verification"
-#~ msgstr "Überprüfung"
+#~ msgstr "ÃœberprÃ¼fung"
 
 #~ msgid "[This is a PGP/MIME message]"
 #~ msgstr "[PGP/MIME Nachricht]"
 
 #~ msgid "Problem decrypting PGP/MIME message"
-#~ msgstr "Problem bei Entschlüsseln einer PGP/MIME Nachricht"
+#~ msgstr "Problem bei EntschlÃ¼sseln einer PGP/MIME Nachricht"
 
 #~ msgid "Verification Failure"
-#~ msgstr "Überprüfungsfehler"
+#~ msgstr "ÃœberprÃ¼fungsfehler"
 
 #~ msgid "Decryption Failure"
-#~ msgstr "Entschlüsselungsfehler"
+#~ msgstr "EntschlÃ¼sselungsfehler"
 
 #~ msgid ""
 #~ "The message text cannot be displayed.\n"
@@ -1051,10 +1038,10 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "Do you want to save the decrypted message?"
 #~ msgstr ""
 #~ "Der Text der Nachricht kann nicht angezeigt werden.\n"
-#~ "Sie sollten die entschlüsselte Nachricht abspeichern und\n"
-#~ "sie dann wieder zum Betrachten öffnen.\n"
+#~ "Sie sollten die entschlÃ¼sselte Nachricht abspeichern und\n"
+#~ "sie dann wieder zum Betrachten Ã¶ffnen.\n"
 #~ "\n"
-#~ "Möchten Sie die entschlüsselte Nachricht abspeichern?"
+#~ "MÃ¶chten Sie die entschlÃ¼sselte Nachricht abspeichern?"
 
 #~ msgid ""
 #~ "Signed attachments found.\n"
@@ -1062,13 +1049,13 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "@LIST@\n"
 #~ "Do you want to verify the signatures?"
 #~ msgstr ""
-#~ "Es wurden unterschriebene Anhänge gefunden.\n"
+#~ "Es wurden unterschriebene AnhÃ¤nge gefunden.\n"
 #~ "\n"
 #~ "@LIST@\n"
-#~ "Möchten Sie diese Unterschriften überprüfen?"
+#~ "MÃ¶chten Sie diese Unterschriften Ã¼berprÃ¼fen?"
 
 #~ msgid "Attachment Verification"
-#~ msgstr "Überprüfung der Anhänge"
+#~ msgstr "ÃœberprÃ¼fung der AnhÃ¤nge"
 
 #~ msgid ""
 #~ "Encrypted attachments found.\n"
@@ -1076,19 +1063,19 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "@LIST@\n"
 #~ "Do you want to decrypt and save them?"
 #~ msgstr ""
-#~ "Es wurde verschlüsselte Anhange gefunden.\n"
+#~ "Es wurde verschlÃ¼sselte Anhange gefunden.\n"
 #~ "\n"
 #~ "@LIST@\n"
-#~ "Möchten Sie diese entschlüsseln und abspeichern?"
+#~ "MÃ¶chten Sie diese entschlÃ¼sseln und abspeichern?"
 
 #~ msgid "Attachment Encryption Failure"
-#~ msgstr "Verschlüsselungsfehler eines Anhangs"
+#~ msgstr "VerschlÃ¼sselungsfehler eines Anhangs"
 
 #~ msgid "Attachment Verification Failure"
-#~ msgstr "Überprüfungsfehler eines Anhangs"
+#~ msgstr "ÃœberprÃ¼fungsfehler eines Anhangs"
 
 #~ msgid "Attachment Decryption Failure"
-#~ msgstr "Entschlüsselungsfehler eines Anhangs"
+#~ msgstr "EntschlÃ¼sselungsfehler eines Anhangs"
 
 #~ msgid "Attachment Signing Failure"
 #~ msgstr "Unterschrifterstellungsfehler eines Anhangs"
@@ -1097,22 +1084,22 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ msgstr "[PGP/MIME Nachricht]"
 
 #~ msgid "[PGP/MIME message without plain text body]"
-#~ msgstr "[PGP/MIME Nachricht ohne reinen Textkörper]"
+#~ msgstr "[PGP/MIME Nachricht ohne reinen TextkÃ¶rper]"
 
 #~ msgid "[PGP/MIME signed message without a plain text body]"
-#~ msgstr "[PGP/MIME signierte Nachricht ohne reinen Textkörper]"
+#~ msgstr "[PGP/MIME signierte Nachricht ohne reinen TextkÃ¶rper]"
 
 #~ msgid "[PGP/MIME signature]"
 #~ msgstr "[PGP/MIME Signatur]"
 
 #~ msgid "GPG &encrypt message"
-#~ msgstr "Mit GPG &verschlüsseln"
+#~ msgstr "Mit GPG &verschlÃ¼sseln"
 
 #~ msgid "GPG &sign message"
 #~ msgstr "Mit GPG unter&schreiben"
 
 #~ msgid "Open GPG Key Manager"
-#~ msgstr "Die GPG Schlüsselverwaltung öffnen"
+#~ msgstr "Die GPG SchlÃ¼sselverwaltung Ã¶ffnen"
 
 #~ msgid ""
 #~ "If you cancel this dialog, the message will be sent in cleartext!\n"
@@ -1122,7 +1109,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "Wenn Sie diesen Dialog abbrechen, wird die Nachricht im Klartext "
 #~ "ausgesendet!\n"
 #~ "\n"
-#~ "Möchten Sie wirklich abbrechen?"
+#~ "MÃ¶chten Sie wirklich abbrechen?"
 
 #~ msgid ""
 #~ "If you cancel this dialog, the message will be sent without signing.\n"
@@ -1132,10 +1119,10 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "Wenn Sie diesen Dialog abbrechen, so wird die Nachricht ohne Unterschrift "
 #~ "versendet.\n"
 #~ "\n"
-#~ "Möchten Sie wirklich abbrechen?"
+#~ "MÃ¶chten Sie wirklich abbrechen?"
 
 #~ msgid "Secret Key Dialog"
-#~ msgstr "Auswahl des geheimen Schlüssels"
+#~ msgstr "Auswahl des geheimen SchlÃ¼ssels"
 
 #~ msgid ""
 #~ "If you cancel this dialog, the message will be sent without signing.\n"
@@ -1144,7 +1131,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "Wenn Sie diesen Dialog abbrechen, so wird die Nachricht ohne Unterschrift "
 #~ "versendet.\n"
 #~ "\n"
-#~ "Möchten Sie wirklich abbrechen?"
+#~ "MÃ¶chten Sie wirklich abbrechen?"
 
 #~ msgid ""
 #~ "If you cancel this dialog, the message will be sent in cleartext.\n"
@@ -1154,7 +1141,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 #~ "Wenn Sie diesen Dialog abbrechen, so wird die NAchricht im Klartext "
 #~ "versendet!\n"
 #~ "\n"
-#~ "Möchten Sie wirklich abbrechen?"
+#~ "MÃ¶chten Sie wirklich abbrechen?"
 
 #~ msgid "[No attestation computed (e.g. messages was not signed)"
 #~ msgstr ""
