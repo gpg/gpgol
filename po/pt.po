@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2015-11-23 18:51+0100\n"
+"POT-Creation-Date: 2016-03-04 14:18+0100\n"
 "PO-Revision-Date: 2010-07-18 20:41-0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@mail.telepac.pt>\n"
 "Language-Team: Portuguese <marcoagpinto@mail.telepac.pt>\n"
@@ -48,7 +48,7 @@ msgstr ""
 msgid "GpgOL - Save attachment"
 msgstr "GpgOL - Gravar anexo desencriptado"
 
-#: src/config-dialog.c:137
+#: src/config-dialog.c:135
 msgid "Debug output (for analysing problems)"
 msgstr "Debug output (para analisar problemas)"
 
@@ -60,27 +60,28 @@ msgstr ""
 "O servidor de interface do utilizador não está disponível ou não pôde ser "
 "iniciado a tempo. Podes querer tentar novamente. "
 
-#: src/engine.c:377 src/main.c:708 src/main.c:714 src/message.cpp:300
-#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:292
-#: src/gpgoladdin.cpp:649 src/gpgoladdin.cpp:804 src/gpgoladdin.cpp:882
-#: src/gpgoladdin.cpp:887 src/gpgoladdin.cpp:956 src/gpgoladdin.cpp:959
+#: src/engine.c:377 src/main.c:714 src/main.c:720 src/message.cpp:300
+#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:305
+#: src/gpgoladdin.cpp:711 src/gpgoladdin.cpp:763 src/gpgoladdin.cpp:811
+#: src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051 src/gpgoladdin.cpp:1057
+#: src/gpgoladdin.cpp:1130 src/gpgoladdin.cpp:1134
 #: src/ribbon-callbacks.cpp:121 src/ribbon-callbacks.cpp:235
 #: src/ribbon-callbacks.cpp:250 src/ribbon-callbacks.cpp:262
 #: src/ribbon-callbacks.cpp:299 src/ribbon-callbacks.cpp:311
 #: src/ribbon-callbacks.cpp:656 src/ribbon-callbacks.cpp:673
 #: src/ribbon-callbacks.cpp:687 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:723 src/ribbon-callbacks.cpp:783
-#: src/ribbon-callbacks.cpp:1083 src/ribbon-callbacks.cpp:1117
-#: src/ribbon-callbacks.cpp:1129 src/ribbon-callbacks.cpp:1154
+#: src/ribbon-callbacks.cpp:1065 src/ribbon-callbacks.cpp:1099
+#: src/ribbon-callbacks.cpp:1111 src/ribbon-callbacks.cpp:1136
 msgid "GpgOL"
 msgstr "GpgOL"
 
-#: src/main.c:707
+#: src/main.c:713
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Nota: A usar flags de compatibilidade: %s"
 
-#: src/main.c:713
+#: src/main.c:719
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -91,11 +92,11 @@ msgstr ""
 "\n"
 "\"%s\""
 
-#: src/mapihelp.cpp:1552 src/mapihelp.cpp:1560 src/mapihelp.cpp:1568
+#: src/mapihelp.cpp:1659 src/mapihelp.cpp:1667 src/mapihelp.cpp:1675
 msgid "[no subject]"
 msgstr "[sem assunto]"
 
-#: src/mapihelp.cpp:2177
+#: src/mapihelp.cpp:2284
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -105,7 +106,7 @@ msgstr ""
 "sessão do Outlook. Usa o comando \"Desencriptar/Verificar\" para torná-lo "
 "visível]"
 
-#: src/mapihelp.cpp:3072
+#: src/mapihelp.cpp:3179
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -204,8 +205,8 @@ msgstr "Erro ao escrever no stream"
 msgid "I/O-Error"
 msgstr "I/O-Erro"
 
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:649 src/gpgoladdin.cpp:804
-#: src/gpgoladdin.cpp:882 src/gpgoladdin.cpp:956
+#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051
+#: src/gpgoladdin.cpp:1130
 msgid "General"
 msgstr "Geral"
 
@@ -423,7 +424,7 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "Queres reverter esta pasta?"
 
-#: src/gpgoladdin.cpp:288
+#: src/gpgoladdin.cpp:301
 msgid ""
 "Failed to remove plaintext from at least one message.\n"
 "\n"
@@ -431,101 +432,112 @@ msgid ""
 "decrypted in this Session is saved or transfered back to your mailserver."
 msgstr ""
 
-#: src/gpgoladdin.cpp:592 src/gpgoladdin.cpp:681
+#: src/gpgoladdin.cpp:652
+#, fuzzy
+msgid "Encrypt the message."
+msgstr "Entschlüsseln und Prüfen der Nachricht."
+
+#: src/gpgoladdin.cpp:654
+msgid "Encrypts the message and all attachments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:656
+#, fuzzy
+msgid "Sign the message."
+msgstr "Entschlüsseln und Prüfen der Nachricht."
+
+#: src/gpgoladdin.cpp:658
+msgid "Sign the message and all attchments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
+msgid "Open the settings dialog for GpgOL"
+msgstr ""
+
+#: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972
+#: src/gpgoladdin.cpp:979
+#, fuzzy
+msgid "Encrypt"
+msgstr "Encriptação"
+
+#: src/gpgoladdin.cpp:713 src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:974
+msgid "Sign"
+msgstr ""
+
+#: src/gpgoladdin.cpp:764
+#, fuzzy
+msgid "Encrypted"
+msgstr "Encriptação"
+
+#: src/gpgoladdin.cpp:765
+#, fuzzy
+msgid "Signed"
+msgstr "Assinatura criada"
+
+#: src/gpgoladdin.cpp:768 src/gpgoladdin.cpp:973 src/gpgoladdin.cpp:979
+#: src/gpgoladdin.cpp:1055 src/gpgoladdin.cpp:1058 src/gpgoladdin.cpp:1059
+#, fuzzy
+msgid "Decrypt"
+msgstr "Entschlüsselung"
+
+#: src/gpgoladdin.cpp:840
 #, fuzzy
 msgid "Start the Certificate Management Software"
 msgstr "GnuPG Zertifikats&verwaltung"
 
-#: src/gpgoladdin.cpp:594 src/gpgoladdin.cpp:683
+#: src/gpgoladdin.cpp:842
 msgid ""
 "Open GPA or Kleopatra to manage your certificates. You can use this you to "
 "generate your own certificates. "
 msgstr ""
 
-#: src/gpgoladdin.cpp:598
-#, fuzzy
-msgid "Encrypt the message."
-msgstr "Entschlüsseln und Prüfen der Nachricht."
-
-#: src/gpgoladdin.cpp:600
-msgid "Encrypts the message and all attachments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:602
-#, fuzzy
-msgid "Sign the message."
-msgstr "Entschlüsseln und Prüfen der Nachricht."
-
-#: src/gpgoladdin.cpp:604
-msgid "Sign the message and all attchments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:650 src/gpgoladdin.cpp:805 src/gpgoladdin.cpp:883
-#: src/gpgoladdin.cpp:957
-#, fuzzy
-msgid "Start Certificate Manager"
-msgstr "GnuPG Zertifikats&verwaltung"
-
-#: src/gpgoladdin.cpp:651
-msgid "GnuPG"
-msgstr ""
-
-#: src/gpgoladdin.cpp:652 src/gpgoladdin.cpp:807 src/gpgoladdin.cpp:814
-#, fuzzy
-msgid "Encrypt"
-msgstr "Encriptação"
-
-#: src/gpgoladdin.cpp:653 src/gpgoladdin.cpp:809
-msgid "Sign"
-msgstr ""
-
-#: src/gpgoladdin.cpp:687
+#: src/gpgoladdin.cpp:846
 #, fuzzy
 msgid "Encrypt the text of the message"
 msgstr "Entschlüsseln und Prüfen der Nachricht."
 
-#: src/gpgoladdin.cpp:689
+#: src/gpgoladdin.cpp:848
 msgid ""
 "Choose the certificates for which the message should be encrypted and "
 "replace the text with the encrypted message."
 msgstr ""
 
-#: src/gpgoladdin.cpp:693
+#: src/gpgoladdin.cpp:852
 #, fuzzy
 msgid "Add a file as an encrypted attachment"
 msgstr "Apresentar mensagem encriptada como anexo"
 
-#: src/gpgoladdin.cpp:695
+#: src/gpgoladdin.cpp:854
 msgid "Encrypts a file and adds it as an attachment to the message. "
 msgstr ""
 
-#: src/gpgoladdin.cpp:698
+#: src/gpgoladdin.cpp:857
 #, fuzzy
 msgid "Add a file as an encrypted attachment with a signature"
 msgstr "Apresentar mensagem encriptada como anexo"
 
-#: src/gpgoladdin.cpp:700
+#: src/gpgoladdin.cpp:859
 msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
 msgstr ""
 
-#: src/gpgoladdin.cpp:703
+#: src/gpgoladdin.cpp:862
 #, fuzzy
 msgid "Decrypt the message"
 msgstr "Entschlüsseln und Prüfen der Nachricht."
 
-#: src/gpgoladdin.cpp:705
+#: src/gpgoladdin.cpp:864
 msgid ""
 "Look for PGP or S/MIME encrypted data in the message text and decrypt it."
 msgstr ""
 
-#: src/gpgoladdin.cpp:708
+#: src/gpgoladdin.cpp:867
 #, fuzzy
 msgid "Add a signature of the message"
 msgstr "Entschlüsseln und Prüfen der Nachricht."
 
-#: src/gpgoladdin.cpp:710
+#: src/gpgoladdin.cpp:869
 msgid ""
 "Appends a signed copy of the message text in an opaque signature. An opaque "
 "signature ensures that the signed text is not modified by embedding it in "
@@ -533,35 +545,34 @@ msgid ""
 "signature is added below the plain text. The message will not be encrypted!"
 msgstr ""
 
-#: src/gpgoladdin.cpp:806 src/gpgoladdin.cpp:884
+#: src/gpgoladdin.cpp:969 src/gpgoladdin.cpp:1052 src/gpgoladdin.cpp:1131
+#, fuzzy
+msgid "Start Certificate Manager"
+msgstr "GnuPG Zertifikats&verwaltung"
+
+#: src/gpgoladdin.cpp:971 src/gpgoladdin.cpp:1054
 msgid "Textbody"
 msgstr ""
 
-#: src/gpgoladdin.cpp:808 src/gpgoladdin.cpp:814 src/gpgoladdin.cpp:885
-#: src/gpgoladdin.cpp:888 src/gpgoladdin.cpp:889
-#, fuzzy
-msgid "Decrypt"
-msgstr "Entschlüsselung"
-
-#: src/gpgoladdin.cpp:810 src/gpgoladdin.cpp:886
+#: src/gpgoladdin.cpp:975 src/gpgoladdin.cpp:1056
 msgid "Verify"
 msgstr ""
 
-#: src/gpgoladdin.cpp:811
+#: src/gpgoladdin.cpp:976
 #, fuzzy
 msgid "Attachments"
 msgstr "Entschlüsselung eines Anhangs"
 
-#: src/gpgoladdin.cpp:812
+#: src/gpgoladdin.cpp:977
 #, fuzzy
 msgid "Encrypted file"
 msgstr "Encriptação"
 
-#: src/gpgoladdin.cpp:813
+#: src/gpgoladdin.cpp:978
 msgid "Encrypted file and Signature"
 msgstr ""
 
-#: src/gpgoladdin.cpp:887 src/gpgoladdin.cpp:959 src/gpgoladdin.cpp:960
+#: src/gpgoladdin.cpp:1057 src/gpgoladdin.cpp:1134 src/gpgoladdin.cpp:1135
 msgid "Save and decrypt"
 msgstr ""
 
@@ -574,7 +585,7 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 msgid "Textbody empty."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1082
+#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1064
 #, fuzzy
 msgid "Please add at least one recipent."
 msgstr "Por favor selecciona pelo menos um certificado de destinatário."
@@ -601,7 +612,7 @@ msgstr ""
 msgid "Signed text"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:1089
+#: src/ribbon-callbacks.cpp:1071
 #, fuzzy
 msgid "Select file to encrypt"
 msgstr "Por favor selecciona pelo menos um certificado de destinatário."
@@ -806,9 +817,6 @@ msgstr "Por favor selecciona pelo menos um certificado de destinatário."
 
 #~ msgid "Signature issued by a non-valid certificate."
 #~ msgstr "Assinatura emitida por um certificado inválido."
-
-#~ msgid "Signature made"
-#~ msgstr "Assinatura criada"
 
 #~ msgid "using"
 #~ msgstr "usando"
