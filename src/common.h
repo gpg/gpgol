@@ -29,6 +29,12 @@
 #include <config.h>
 #endif
 
+#ifdef MIME_SEND
+# define MIME_UI_DEFAULT 1
+#else
+# define MIME_UI_DEFAULT 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #if 0
@@ -129,6 +135,7 @@ struct
   int preview_decrypt;       /* Decrypt in preview window. */
   int prefer_html;           /* Prefer html in html/text alternatives. */
   int body_as_attachment;    /* Present encrypted message as attachment.  */
+  int mime_ui;               /* Only for Addin. Use the PGP/MIME ui */
 
   /* The compatibility flags. */
   struct

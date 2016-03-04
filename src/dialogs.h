@@ -101,6 +101,7 @@
 #define IDC_G10CODE_STRING              0x5130
 #define IDC_GPG4WIN_STRING              0x5131
 #define IDC_START_CERTMAN               0x5132
+#define IDC_MIME_UI                     0x5133
 
 /* Ids for PNG Images */
 #define IDI_ENCRYPT_16_PNG              0x6000

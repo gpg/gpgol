@@ -555,6 +555,11 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   ULONG tag;
   int   is_binary = 0;
 
+  if (!opt.mime_ui)
+    {
+      return NULL;
+    }
+
   hr = 0;
   if (!get_internetcharsetbody_tag (message, &tag) )
     {

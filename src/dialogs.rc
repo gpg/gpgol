@@ -20,6 +20,8 @@
 
 #include "dialogs.h"
 
+#include "config.h"
+
 #include "afxres.h"
 
 
@@ -296,24 +298,33 @@ CAPTION "GpgOL"
 FONT 8, "MS Shell Dlg"
 BEGIN
     /* General options box.  */
+#ifdef MIME_SEND
     GROUPBOX        "general-options", IDC_G_GENERAL,
                     9, 9, 250, 25
-
+#else
+    GROUPBOX        "general-options", IDC_G_GENERAL,
+                    9, 9, 250, 35
+#endif
     CONTROL         "enable-smime", IDC_ENABLE_SMIME,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 19, 215, 10
+#ifndef MIME_SEND
+    CONTROL         "enable-mime-ui", IDC_MIME_UI,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 29, 215, 10
+#endif
 
     /* Send options box.  */
     GROUPBOX        "send-options", IDC_G_SEND,
-                    9, 40, 250, 38
+                    9, 50, 250, 38
 
     CONTROL         "encrypt-by-default", IDC_ENCRYPT_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 50, 215, 10
+                    24, 60, 215, 10
 
     CONTROL         "sign-by-default", IDC_SIGN_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 61, 215, 10
+                    24, 71, 215, 10
 
     /* Stuff at the lower left corner.  */
     LTEXT           "GpgOL by Gpg4win", IDC_GPG4WIN_STRING,

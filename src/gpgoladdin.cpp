@@ -65,6 +65,10 @@ ULONG addinLocks = 0;
 
 bool can_unload = false;
 
+/* Invalidating the interface does not take a nice effect so we store
+   this option in a global variable. */
+bool use_mime_ui = false;
+
 static std::list<LPDISPATCH> g_ribbon_uis;
 
 static GpgolAddin * addin_instance = NULL;
@@ -172,6 +176,7 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
   m_addin(0), m_applicationEventSink(0), m_disabled(false)
 {
   read_options ();
+  use_mime_ui = opt.mime_ui;
   /* RibbonExtender is it's own object to avoid the pitfalls of
      multiple inheritance
   */
@@ -624,7 +629,6 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
   return DISP_E_MEMBERNOTFOUND;
 }
 
-#ifdef MIME_SEND
 /* Returns the XML markup for the various RibbonID's
 
    The custom ui syntax is documented at:
@@ -633,8 +637,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
    The outlook specific elements are documented at:
    http://msdn.microsoft.com/en-us/library/office/ee692172%28v=office.14%29.aspx
 */
-STDMETHODIMP
-GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
+static STDMETHODIMP
+GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
 {
   char * buffer = NULL;
 
@@ -664,7 +668,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   const char *signedSTip =
     "TODO insert more details here";
 #endif
-  log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
+  log_debug ("%s:%s: GetCustomUI_MIME for id: %ls", SRCNAME, __func__, RibbonID);
 
   if (!RibbonXml || !RibbonID)
     return E_POINTER;
@@ -825,13 +829,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   return S_OK;
 }
 
-#else /* MIME_SEND */
-
 /* This is the old pre-mime adding UI code. It will be removed once we have a
    stable version that can also send mime messages.
 */
-STDMETHODIMP
-GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
+static STDMETHODIMP
+GetCustomUI_old (BSTR RibbonID, BSTR * RibbonXml)
 {
   char *buffer = NULL;
   const char *certManagerTTip =
@@ -870,6 +872,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
       "The combination of the signed message text and your signature is "
       "added below the plain text. "
       "The message will not be encrypted!");
+  const char *optsSTip =
+    _("Open the settings dialog for GpgOL");
 
   log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
 
@@ -879,7 +883,8 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
   if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
     {
       gpgrt_asprintf (&buffer,
-        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
+        " onLoad=\"ribbonLoaded\">"
         " <ribbon>"
         "   <tabs>"
         "    <tab id=\"gpgolTab\""
@@ -893,6 +898,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "               screentip=\"%s\""
         "               supertip=\"%s\""
         "               onAction=\"startCertManager\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
         "     </group>"
         "     <group id=\"textGroup\""
         "            label=\"%s\">"
@@ -957,6 +967,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "</contextMenus>"
         "</customUI>", _("GpgOL"), _("General"),
         _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        optsSTip,
         _("Textbody"),
         _("Encrypt"), encryptTextTTip, encryptTextSTip,
         _("Decrypt"), decryptTextTTip, decryptTextSTip,
@@ -985,6 +996,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "               screentip=\"%s\""
         "               supertip=\"%s\""
         "               onAction=\"startCertManager\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
         "     </group>"
         "     <group id=\"textGroup\""
         "            label=\"%s\">"
@@ -1034,6 +1050,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "</customUI>",
         _("GpgOL"), _("General"),
         _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        optsSTip,
         _("Textbody"),
         _("Decrypt"), decryptTextTTip, decryptTextSTip,
         _("Verify"),
@@ -1058,6 +1075,11 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "               screentip=\"%s\""
         "               supertip=\"%s\""
         "               onAction=\"startCertManager\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
         "     </group>"
         /* This would be totally nice but Outlook
            saves the decrypted text aftewards automatically.
@@ -1107,6 +1129,7 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
         "</customUI>",
         _("GpgOL"), _("General"),
         _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
+        optsSTip,
         /*_("Mail Body"), _("Decrypt"),*/
         _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
         _("Save and decrypt"));
@@ -1124,8 +1147,19 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 
   return S_OK;
 }
-#endif /* MIME_SEND */
 
+STDMETHODIMP
+GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
+{
+  if (use_mime_ui)
+    {
+      return GetCustomUI_MIME (RibbonID, RibbonXml);
+    }
+  else
+    {
+      return GetCustomUI_old (RibbonID, RibbonXml);
+    }
+}
 
 /* RibbonUi elements are created on demand but they are reused
    in different inspectors. So far and from all documentation

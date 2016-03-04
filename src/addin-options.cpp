@@ -35,6 +35,9 @@ set_labels (HWND dlg)
   static struct { int itemid; const char *label; } labels[] = {
     { IDC_G_GENERAL,        N_("General")},
     { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
+#ifndef MIME_SEND
+    { IDC_MIME_UI,          N_("Enable simplified interface (experimental)")},
+#endif
 
     { IDC_G_SEND,           N_("Message sending")},
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
@@ -52,6 +55,15 @@ set_labels (HWND dlg)
 }
 
 
+/** Enable or disable options that are only relvant for mime ui */
+static void
+enable_disable_opts (HWND hDlg)
+{
+  BOOL enable = opt.mime_ui ? TRUE : FALSE;
+  EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_DEFAULT), enable);
+  EnableWindow (GetDlgItem (hDlg, IDC_SIGN_DEFAULT), enable);
+}
+
 static INT_PTR CALLBACK
 options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -66,6 +78,11 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                               !!opt.encrypt_default, 0L);
           SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK,
                               !!opt.sign_default, 0L);
+#ifndef MIME_SEND
+          SendDlgItemMessage (hDlg, IDC_MIME_UI, BM_SETCHECK,
+                              !!opt.mime_ui, 0L);
+#endif
+          enable_disable_opts (hDlg);
           set_labels (hDlg);
           ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
                       opt.enable_debug ? SW_SHOW : SW_HIDE);
@@ -79,16 +96,30 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         switch (LOWORD (wParam))
           {
             case IDOK:
-              opt.enable_smime = !!SendDlgItemMessage
-                (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
+              {
+                opt.enable_smime = !!SendDlgItemMessage
+                  (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
 
-              opt.encrypt_default = !!SendDlgItemMessage
-                (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
-              opt.sign_default = !!SendDlgItemMessage
-                (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
-              write_options ();
-              EndDialog (hDlg, TRUE);
-              break;
+                opt.encrypt_default = !!SendDlgItemMessage
+                  (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
+                opt.sign_default = !!SendDlgItemMessage
+                  (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
+#ifndef MIME_SEND
+                int mime_ui_old = opt.mime_ui;
+                opt.mime_ui = !!SendDlgItemMessage
+                  (hDlg, IDC_MIME_UI, BM_GETCHECK, 0, 0L);
+                if (opt.mime_ui != mime_ui_old)
+                  {
+                    MessageBox (NULL,
+                                _("Changing the interface requires a restart of Outlook."),
+                                _("GpgOL"),
+                                MB_ICONINFORMATION|MB_OK);
+                  }
+#endif
+                write_options ();
+                EndDialog (hDlg, TRUE);
+                break;
+              }
             case IDC_GPG_CONF:
               engine_start_confdialog (hDlg);
               break;

@@ -667,6 +667,13 @@ read_options (void)
   opt.body_as_attachment = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
+#ifdef MIME_SEND
+  opt.mime_ui = 1;
+#else
+  load_extension_value ("mimeUI", &val);
+  opt.mime_ui = val == NULL || *val != '1'? 0 : 1;
+  xfree (val); val = NULL;
+#endif
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
      the switch below for a description. */
@@ -743,6 +750,7 @@ write_options (void)
     {"formsRevision",            1, opt.forms_revision},
     {"announceNumber",           1, opt.announce_number},
     {"bodyAsAttachment",         0, opt.body_as_attachment},
+    {"mimeUI", MIME_UI_DEFAULT, opt.mime_ui},
     {NULL, 0}
   };
   char buf[32];

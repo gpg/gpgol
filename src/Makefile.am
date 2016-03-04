@@ -129,4 +129,4 @@ gpgol_LDADD = $(srcdir)/gpgol.def  \
 resource.o: resource.rc versioninfo.rc dialogs.rc dialogs.h
 
 .rc.o:
-	$(WINDRES) -I $(srcdir) -I . `test -f '$<' || echo '$(srcdir)/'`$< $@
+	$(WINDRES) -I $(srcdir) -I . -I .. `test -f '$<' || echo '$(srcdir)/'`$< $@
