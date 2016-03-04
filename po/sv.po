@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2016-03-04 14:18+0100\n"
+"POT-Creation-Date: 2016-03-04 14:31+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -355,14 +355,6 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr ""
 
-#: src/gpgoladdin.cpp:301
-msgid ""
-"Failed to remove plaintext from at least one message.\n"
-"\n"
-"Until GpgOL is activated again it is possible that the plaintext of messages "
-"decrypted in this Session is saved or transfered back to your mailserver."
-msgstr ""
-
 #: src/gpgoladdin.cpp:652
 #, fuzzy
 msgid "Encrypt the message."
@@ -378,11 +370,11 @@ msgid "Sign the message."
 msgstr "Dekryptera och validera meddelandet."
 
 #: src/gpgoladdin.cpp:658
-msgid "Sign the message and all attchments before sending."
+msgid "Sign the message and all attachments before sending."
 msgstr ""
 
 #: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
-msgid "Open the settings dialog for GpgOL"
+msgid "Open the settings dialog for GpgOL."
 msgstr ""
 
 #: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972

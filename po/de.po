@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2016-03-04 14:18+0100\n"
+"POT-Creation-Date: 2016-03-04 14:31+0100\n"
 "PO-Revision-Date: 2016-03-04 14:27+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: American English <kde-i18n-doc@kde.org>\n"
@@ -435,14 +435,6 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "Möchten Sie diesen Ordner von GpgOL befreien?"
 
-#: src/gpgoladdin.cpp:301
-msgid ""
-"Failed to remove plaintext from at least one message.\n"
-"\n"
-"Until GpgOL is activated again it is possible that the plaintext of messages "
-"decrypted in this Session is saved or transfered back to your mailserver."
-msgstr ""
-
 #: src/gpgoladdin.cpp:652
 msgid "Encrypt the message."
 msgstr "Die Nachricht verschlüsseln."
@@ -456,11 +448,13 @@ msgid "Sign the message."
 msgstr "Die Nachricht signieren."
 
 #: src/gpgoladdin.cpp:658
-msgid "Sign the message and all attchments before sending."
-msgstr ""
+#, fuzzy
+msgid "Sign the message and all attachments before sending."
+msgstr "Verschlüsselt die Nachricht und alle Anhänge beim Mailversand."
 
 #: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
-msgid "Open the settings dialog for GpgOL"
+#, fuzzy
+msgid "Open the settings dialog for GpgOL."
 msgstr "Die Einstellungen von GpgOL öffnen."
 
 #: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972
