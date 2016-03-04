@@ -295,13 +295,13 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
      does not allow us any OOM calls then and only returns
      "Unexpected error" in that case. Weird. */
 
-  if (Mail::wipe_all_mails ())
+  if (Mail::revert_all_mails ())
     {
       MessageBox (NULL,
-                  _("Failed to remove plaintext from at least one message.\n\n"
-                    "Until GpgOL is activated again it is possible that the "
-                    "plaintext of messages decrypted in this Session is saved "
-                    "or transfered back to your mailserver."),
+                  "Failed to remove plaintext from at least one message.\n\n"
+                  "Until GpgOL is activated again it is possible that the "
+                  "plaintext of messages decrypted in this Session is saved "
+                  "or transfered back to your mailserver.",
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
     }
