@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2016-03-04 14:31+0100\n"
-"PO-Revision-Date: 2016-03-04 14:27+0100\n"
+"PO-Revision-Date: 2016-03-04 14:33+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: American English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -448,14 +448,12 @@ msgid "Sign the message."
 msgstr "Die Nachricht signieren."
 
 #: src/gpgoladdin.cpp:658
-#, fuzzy
 msgid "Sign the message and all attachments before sending."
-msgstr "Verschlüsselt die Nachricht und alle Anhänge beim Mailversand."
+msgstr "Verschlüsselt die Nachricht und alle Anhänge beim Mailversand. "
 
 #: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
-#, fuzzy
 msgid "Open the settings dialog for GpgOL."
-msgstr "Die Einstellungen von GpgOL öffnen."
+msgstr "Die Einstellungen von GpgOL öffnen. "
 
 #: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972
 #: src/gpgoladdin.cpp:979
