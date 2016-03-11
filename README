@@ -22,6 +22,11 @@ available in a directory where Windows searches for DLLs
 gpgol.dll" and start Outlook. You should then find a new tab named
 "GnuPG" in Outlook's option menu.
 
+You will need an UiServer (either GPA or Kleopatra) in a location
+pointed to by the standard gpg4win registry keys. It is suggested
+you install gpg4win and then replace the gpgol.dll with your
+compiled binary.
+
 If you are missing icons in the toolbar, checkout the toolbar's
 customize button - you will find the new icons there.
 
