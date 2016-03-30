@@ -43,6 +43,16 @@ gen-ChangeLog:
 	  mv $(distdir)/cl-t $(distdir)/ChangeLog;			\
 	fi
 
-
-
-
+distcheck-hook:
+	set -e; ( \
+	pref="#+macro: gpgol_" ;\
+	reldate="$$(date -u +%Y-%m-%d)" ;\
+        echo "$${pref}ver  $(PACKAGE_VERSION)"  ;\
+        echo "$${pref}date $${reldate}" ;\
+        list='$(DIST_ARCHIVES)'; for i in $$list; do \
+	  case "$$i" in *.tar.bz2) \
+            echo "$${pref}size $$(wc -c <$$i|awk '{print int($$1/1024)}')k" ;\
+	    echo "$${pref}sha1 $$(sha1sum <$$i|cut -d' ' -f1)" ;\
+	    echo "$${pref}sha2 $$(sha256sum <$$i|cut -d' ' -f1)" ;;\
+	  esac;\
+	done ) | tee $(distdir).swdb
