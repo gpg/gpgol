@@ -348,10 +348,10 @@ get_uiserver_name (void)
   char *dir, *uiserver, *p;
   int extra_arglen = 9;
 
-  const char * server_names[] = {"bin\\kleopatra.exe",
-                                 "kleopatra.exe",
-                                 "bin\\gpa.exe",
+  const char * server_names[] = {"kleopatra.exe",
+                                 "bin\\kleopatra.exe",
                                  "gpa.exe",
+                                 "bin\\gpa.exe",
                                  NULL};
   const char *tmp = NULL;
 

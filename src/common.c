@@ -1245,10 +1245,10 @@ get_gpg4win_dir()
   const char *g4win_keys[] = {GPG4WIN_REGKEY_3,
                               GPG4WIN_REGKEY_2,
                               NULL};
-  const char *key;
-  for (key = *g4win_keys; *key; key++)
+  const char **key;
+  for (key = g4win_keys; *key; key++)
     {
-      char *tmp = read_w32_registry_string (NULL, key, "Install Directory");
+      char *tmp = read_w32_registry_string (NULL, *key, "Install Directory");
       if (!tmp)
         {
           continue;
@@ -1256,6 +1256,11 @@ get_gpg4win_dir()
       if (!access(tmp, R_OK))
         {
           return tmp;
+        }
+      else
+        {
+          log_debug ("Failed to access: %s\n", tmp);
+          xfree (tmp);
         }
     }
   return NULL;
