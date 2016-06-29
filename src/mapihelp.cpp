@@ -1226,7 +1226,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
         {
           newvalue = change_message_class_ipm_note (message);
         }
-      else if (!strcmp (s, "IPM.Note.SMIME"))
+      else if (opt.enable_smime && !strcmp (s, "IPM.Note.SMIME"))
         {
           newvalue = change_message_class_ipm_note_smime (message);
         }
