@@ -353,7 +353,7 @@ get_uiserver_name (void)
                                  "gpa.exe",
                                  "bin\\gpa.exe",
                                  NULL};
-  const char *tmp = NULL;
+  const char **tmp = NULL;
 
   dir = get_gpg4win_dir ();
   if (!dir)
@@ -384,14 +384,14 @@ get_uiserver_name (void)
       return name;
     }
   /* Fallbacks */
-  for (tmp = *server_names; *tmp; tmp++)
+  for (tmp = server_names; *tmp; tmp++)
     {
       if (name)
         {
           xfree (name);
         }
-      name = xmalloc (strlen (dir) + strlen (tmp) + extra_arglen + 2);
-      strcpy (stpcpy (stpcpy (name, dir), "\\"), tmp);
+      name = xmalloc (strlen (dir) + strlen (*tmp) + extra_arglen + 2);
+      strcpy (stpcpy (stpcpy (name, dir), "\\"), *tmp);
       for (p = name; *p; p++)
         if (*p == '/')
           *p = '\\';
