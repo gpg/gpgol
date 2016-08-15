@@ -92,7 +92,7 @@ STDMETHODIMP subcls::Invoke (DISPID dispid, REFIID riid, LCID lcid,      \
 #define EVENT_SINK_DEFAULT_DTOR_CODE(subcls)                             \
 {                                                                        \
   if (debug_oom)                                                         \
-    log_debug ("%s:" #subcls ":%s: tdor", SRCNAME, __func__);            \
+    log_debug ("%s:" #subcls ":%s: dtor", SRCNAME, __func__);            \
   if (m_pCP)                                                             \
     m_pCP->Unadvise(m_cookie);                                           \
   if (m_object)                                                          \
