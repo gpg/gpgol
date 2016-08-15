@@ -99,7 +99,7 @@ send_msg_to_ui_thread (wm_ctx_t *ctx)
 int
 do_in_ui_thread (gpgol_wmsg_type type, void *data)
 {
-  wm_ctx_t ctx = {0};
+  wm_ctx_t ctx = {NULL, UNKNOWN, 0};
   ctx.wmsg_type = type;
   ctx.data = data;
   if (send_msg_to_ui_thread (&ctx))

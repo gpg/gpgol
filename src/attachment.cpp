@@ -75,9 +75,9 @@ do_crypt_stream (LPSTREAM stream, symenc_t symenc, bool encrypt)
      stream returns E_NOT_IMPLMENTED for that :-)
      So we manually track the read and writepos. Read is offset
      at 16 because of the GpgOL message. */
-  LARGE_INTEGER readpos = {0},
-                writepos = {0};
-  ULARGE_INTEGER new_size = {0};
+  LARGE_INTEGER readpos = {0, 0},
+                writepos = {0, 0};
+  ULARGE_INTEGER new_size = {0, 0};
 
   if (!encrypt)
     {

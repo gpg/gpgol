@@ -736,22 +736,22 @@ write_options (void)
     int  value;
     char *s_val;
   } table[] = {
-    {"enableSmime",              0, opt.enable_smime},
+    {"enableSmime",              0, opt.enable_smime, NULL},
 /*     {"defaultProtocol",          3, opt.default_protocol}, */
-    {"encryptDefault",           0, opt.encrypt_default},
-    {"signDefault",              0, opt.sign_default},
-    {"previewDecrypt",           0, opt.preview_decrypt},
-    {"encodingFormat",           1, opt.enc_format},
+    {"encryptDefault",           0, opt.encrypt_default, NULL},
+    {"signDefault",              0, opt.sign_default, NULL},
+    {"previewDecrypt",           0, opt.preview_decrypt, NULL},
+    {"encodingFormat",           1, opt.enc_format, NULL},
     {"logFile",                  2, 0, logfile},
     {"defaultKey",               2, 0, opt.default_key},
-    {"enableDefaultKey",         0, opt.enable_default_key},
-    {"preferHtml",               0, opt.prefer_html},
-    {"gitCommit",                4, opt.git_commit},
-    {"formsRevision",            1, opt.forms_revision},
-    {"announceNumber",           1, opt.announce_number},
-    {"bodyAsAttachment",         0, opt.body_as_attachment},
-    {"mimeUI", MIME_UI_DEFAULT, opt.mime_ui},
-    {NULL, 0}
+    {"enableDefaultKey",         0, opt.enable_default_key, NULL},
+    {"preferHtml",               0, opt.prefer_html, NULL},
+    {"gitCommit",                4, opt.git_commit, NULL},
+    {"formsRevision",            1, opt.forms_revision, NULL},
+    {"announceNumber",           1, opt.announce_number, NULL},
+    {"bodyAsAttachment",         0, opt.body_as_attachment, NULL},
+    {"mimeUI", MIME_UI_DEFAULT, opt.mime_ui, NULL},
+    {NULL, 0, 0, NULL}
   };
   char buf[32];
   int rc, i;
