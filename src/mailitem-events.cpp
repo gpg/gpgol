@@ -160,18 +160,18 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case BeforeRead:
         {
-          if (m_mail->process_message ())
+          if (m_mail->pre_process_message ())
             {
-              log_error ("%s:%s: Process message failed.",
+              log_error ("%s:%s: Pre process message failed.",
                          SRCNAME, __func__);
             }
           break;
         }
       case Read:
         {
-          if (m_mail->insert_plaintext ())
+          if (m_mail->decrypt_verify ())
             {
-              log_error ("%s:%s: Failed to insert plaintext into oom.",
+              log_error ("%s:%s: Decrypt message failed.",
                          SRCNAME, __func__);
             }
           if (!opt.enable_smime && m_mail->is_smime ())
@@ -300,7 +300,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (m_send_seen)
             {
               m_send_seen = false;
-              m_mail->do_crypto ();
+              m_mail->encrypt_sign ();
               if (m_mail->crypto_successful ())
                 {
                   /* We can't trigger a Send event in the current state.

@@ -1,7 +1,7 @@
 /* @file mail.h
  * @brief High level class to work with Outlook Mailitems.
  *
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015, 2016 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -22,6 +22,7 @@
 #define MAIL_H
 
 #include "oomhelp.h"
+#include "mapihelp.h"
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -76,25 +77,22 @@ public:
   /** @brief Reference to the mailitem. Do not Release! */
   LPDISPATCH item () { return m_mailitem; }
 
-  /** @brief Process the message. Ususally to be called from BeforeRead.
+  /** @brief Pre process the message. Ususally to be called from BeforeRead.
    *
    * This function assumes that the base message interface can be accessed
-   * and calles the MAPI Message handling which creates the GpgOL style
-   * attachments and sets up the message class etc.
-   *
-   * Sets the was_encrypted / processed variables.
+   * and calles the MAPI Message handling which changes the message class
+   * to enable our own handling.
    *
    * @returns 0 on success.
    */
-  int process_message ();
+  int pre_process_message ();
 
-  /** @brief Replace the body with the plaintext and session decrypts
-   * attachments.
+  /** @brief Decrypt / Verify the mail.
    *
-   * Sets the needs_wipe variable.
+   * Sets the needs_wipe and was_encrypted variable.
    *
    * @returns 0 on success. */
-  int insert_plaintext ();
+  int decrypt_verify ();
 
   /** @brief do crypto operations as selected by the user.
    *
@@ -102,7 +100,7 @@ public:
    * draft info flags.
    *
    * @returns 0 on success. */
-  int do_crypto ();
+  int encrypt_sign ();
 
   /** @brief Necessary crypto operations were completed successfully. */
   bool crypto_successful () { return !needs_crypto() || m_crypt_successful; }
@@ -163,6 +161,15 @@ public:
     */
   bool is_smime ();
 
+protected:
+  /** @brief do the actual decryption for mime messages.
+    *
+    * @returns true on error. */
+  int decrypt_mime();
+
+  /** @brief decryption helper. */
+  int decrypt();
+
 private:
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
@@ -173,5 +180,6 @@ private:
        m_is_smime, /* This is an smime mail. */
        m_is_smime_checked; /* it was checked if this is an smime mail */
   char *m_sender;
+  msgtype_t m_type; /* Our messagetype as set in mapi */
 };
 #endif // MAIL_H

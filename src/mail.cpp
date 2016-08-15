@@ -1,7 +1,7 @@
 /* @file mail.h
  * @brief High level class to work with Outlook Mailitems.
  *
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015, 2016 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -28,6 +28,7 @@
 #include "message.h"
 #include "revert.h"
 #include "gpgoladdin.h"
+#include "mymapitags.h"
 
 #include <map>
 
@@ -61,6 +62,19 @@ static std::map<LPDISPATCH, Mail*> g_mail_map;
 "</td></tr>" \
 "</table></body></html>"
 
+#define WAIT_TEMPLATE \
+"<html><head></head><body>" \
+"<table border=\"0\" width=\"100%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">" \
+"<tr>" \
+"<td bgcolor=\"#0080ff\">" \
+"<p><span style=\"font-weight:600; background-color:#0080ff;\"><center>This message is encrypted</center><span></p></td></tr>" \
+"<tr>" \
+"<td bgcolor=\"#e0f0ff\">" \
+"<center>" \
+"<br/>Please wait while the message is decrypted by GpgOL..." \
+"</td></tr>" \
+"</table></body></html>"
+
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
@@ -69,7 +83,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypt_successful(false),
     m_is_smime(false),
     m_is_smime_checked(false),
-    m_sender(NULL)
+    m_sender(NULL),
+    m_type(MSGTYPE_UNKNOWN)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -89,37 +104,6 @@ Mail::Mail (LPDISPATCH mailitem) :
       return;
     }
   g_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
-}
-
-int
-Mail::process_message ()
-{
-  int err;
-  LPMESSAGE message = get_oom_base_message (m_mailitem);
-  if (!message)
-    {
-      log_error ("%s:%s: Failed to get base message.",
-                 SRCNAME, __func__);
-      return 0;
-    }
-  log_oom_extra ("%s:%s: GetBaseMessage OK.",
-                 SRCNAME, __func__);
-  /* Change the message class here. It is important that
-     we change the message class in the before read event
-     regardless if it is already set to one of GpgOL's message
-     classes. Changing the message class (even if we set it
-     to the same value again that it already has) causes
-     Outlook to reconsider what it "knows" about a message
-     and reread data from the underlying base message. */
-  mapi_change_message_class (message, 1);
-  err = message_incoming_handler (message, NULL,
-                                  false);
-  m_processed = (err == 1) || (err == 2);
-
-  log_debug ("%s:%s: incoming handler status: %i",
-             SRCNAME, __func__, err);
-  gpgol_release (message);
-  return 0;
 }
 
 Mail::~Mail()
@@ -155,80 +139,148 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
 }
 
 int
-Mail::insert_plaintext ()
+Mail::pre_process_message ()
 {
-  int err = 0;
-  int is_html, was_protected = 0;
-  char *body = NULL;
-
-  if (!m_processed)
+  LPMESSAGE message = get_oom_base_message (m_mailitem);
+  if (!message)
     {
+      log_error ("%s:%s: Failed to get base message.",
+                 SRCNAME, __func__);
       return 0;
     }
+  log_oom_extra ("%s:%s: GetBaseMessage OK.",
+                 SRCNAME, __func__);
+  /* Change the message class here. It is important that
+     we change the message class in the before read event
+     regardless if it is already set to one of GpgOL's message
+     classes. Changing the message class (even if we set it
+     to the same value again that it already has) causes
+     Outlook to reconsider what it "knows" about a message
+     and reread data from the underlying base message. */
+  mapi_change_message_class (message, 1);
+  /* TODO: Unify this so mapi_change_message_class returns
+     a useful value already. */
+  m_type = mapi_get_message_type (message);
+  gpgol_release (message);
+  return 0;
+}
 
+/** Get the cipherstream of the mailitem. */
+static LPSTREAM
+get_cipherstream (LPDISPATCH mailitem)
+{
+  LPDISPATCH attachments = get_oom_object (mailitem, "Attachments");
+  LPDISPATCH attachment = NULL;
+  LPATTACH mapi_attachment = NULL;
+  LPSTREAM stream = NULL;
+
+  if (!attachments)
+    {
+      log_debug ("%s:%s: Failed to get attachments.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+
+  int count = get_oom_int (attachments, "Count");
+  if (count < 1)
+    {
+      log_debug ("%s:%s: Invalid attachment count: %i.",
+                 SRCNAME, __func__, count);
+      gpgol_release (attachments);
+      return NULL;
+    }
+  if (count > 1)
+    {
+      log_debug ("%s:%s: More then one attachment count: %i. Continuing anway.",
+                 SRCNAME, __func__, count);
+    }
+  /* We assume the crypto attachment is the first item. */
+  attachment = get_oom_object (attachments, "Item(1)");
+  gpgol_release (attachments);
+  attachments = NULL;
+
+  mapi_attachment = (LPATTACH) get_oom_iunknown (attachment,
+                                                 "MapiObject");
+  gpgol_release (attachment);
+  if (!mapi_attachment)
+    {
+      log_debug ("%s:%s: Failed to get MapiObject of attachment: %p",
+                 SRCNAME, __func__, attachment);
+    }
+  if (FAILED (mapi_attachment->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream,
+                                             0, MAPI_MODIFY, (LPUNKNOWN*) &stream)))
+    {
+      log_debug ("%s:%s: Failed to open stream for mapi_attachment: %p",
+                 SRCNAME, __func__, mapi_attachment);
+      gpgol_release (mapi_attachment);
+    }
+  return stream;
+}
+
+/** The decryption for mime messages.
+  We get the original attachment table and decrypt the first
+  attachment. Then we replace the body and attachment table
+  with the new contents. */
+int
+Mail::decrypt_mime()
+{
+  LPSTREAM cipherstream = get_cipherstream(m_mailitem);
+
+  if (!cipherstream)
+    {
+      log_debug ("%s:%s: Failed to get cipherstream.",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  char tmpbuf[33];
+
+  if (put_oom_string (m_mailitem, "HTMLBody", WAIT_TEMPLATE))
+    {
+      log_error ("%s:%s: Failed to modify body of item.",
+                 SRCNAME, __func__);
+    }
+  return 0;
+}
+
+int
+Mail::decrypt()
+{
+  return 0;
+}
+
+int
+Mail::decrypt_verify()
+{
   if (m_needs_wipe)
     {
-      log_error ("%s:%s: Insert plaintext called for msg that needs wipe: %p",
+      log_error ("%s:%s: Decrypt verify called for msg that needs wipe: %p",
                  SRCNAME, __func__, m_mailitem);
       return 0;
     }
 
-  /* Outlook somehow is confused about the attachment
-     table of our sent mails. The securemessage interface
-     gives us access to the real attach table but the attachment
-     table of the message itself is broken. */
-  LPMESSAGE base_message = get_oom_base_message (m_mailitem);
-  if (!base_message)
+  switch (m_type)
     {
-      log_error ("%s:%s: Failed to get base message",
-                 SRCNAME, __func__);
-      return 0;
+      case MSGTYPE_UNKNOWN:
+        /* Not a message for us. Ignore. */
+        return 0;
+      case MSGTYPE_GPGOL:
+        log_debug ("%s:%s: ignoring unknown message of original SMIME class\n",
+                   SRCNAME, __func__);
+        break;
+      case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
+        return decrypt_mime();
+      default:
+        log_debug ("%s:%s: Unhandled message class. \n",
+                   SRCNAME, __func__);
     }
-  err = mapi_get_gpgol_body_attachment (base_message, &body, NULL,
-                                        &is_html, &was_protected);
-  m_needs_wipe = was_protected;
-
-  log_debug ("%s:%s: Setting plaintext for msg: %p",
-             SRCNAME, __func__, m_mailitem);
-  if (err || !body)
-    {
-      log_error ("%s:%s: Failed to get body attachment. Err: %i",
-                 SRCNAME, __func__, err);
-      put_oom_string (m_mailitem, "HTMLBody", HTML_TEMPLATE);
-      err = -1;
-      goto done;
-    }
-  if (put_oom_string (m_mailitem, is_html ? "HTMLBody" : "Body", body))
-    {
-      log_error ("%s:%s: Failed to modify body of item.",
-                 SRCNAME, __func__);
-      err = -1;
-    }
-
-  xfree (body);
-  /* TODO: unprotect attachments does not work for sent mails
-     as the attachment table of the mapiitem is invalid.
-     We need to somehow get outlook to use the attachment table
-     of the base message and and then decrypt those.
-     This will probably mean removing all attachments for the
-     message and adding the attachments from the base message then
-     we can call unprotect_attachments as usual. */
-  if (unprotect_attachments (m_mailitem))
-    {
-      log_error ("%s:%s: Failed to unprotect attachments.",
-                 SRCNAME, __func__);
-      err = -1;
-    }
-
   /* Invalidate UI to set the correct sig status. */
   gpgoladdin_invalidate_ui ();
-done:
-  gpgol_release (base_message);
-  return err;
+  return 0;
 }
 
 int
-Mail::do_crypto ()
+Mail::encrypt_sign ()
 {
   int err = -1,
       flags = 0;
