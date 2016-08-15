@@ -191,7 +191,7 @@ GpgolAddin::~GpgolAddin (void)
     }
   log_debug ("%s:%s: Releasing Application Event Sink;",
              SRCNAME, __func__);
-  RELDISP (m_applicationEventSink);
+  gpgol_release (m_applicationEventSink);
 
   engine_deinit ();
   write_options ();

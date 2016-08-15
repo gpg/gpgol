@@ -394,7 +394,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
               if (!body)
                 {
                   log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-                  RELDISP (attachment);
+                  gpgol_release (attachment);
                   goto done;
                 }
               log_debug ("%s:%s: Restoring pgp-body.",
@@ -403,7 +403,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
                 {
                   log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
                   xfree (body);
-                  RELDISP (attachment);
+                  gpgol_release (attachment);
                   goto done;
                 }
               body_restored = 1;
@@ -591,11 +591,11 @@ done:
 
   for (i = 0; i < del_cnt; i++)
     {
-      RELDISP (to_delete[i]);
+      gpgol_release (to_delete[i]);
     }
 
   xfree (to_delete);
-  RELDISP (attachments);
+  gpgol_release (attachments);
   xfree (msgcls);
 
   if (!result && finalize_mapi (message))
@@ -605,7 +605,7 @@ done:
       result = -1;
     }
 
-  RELDISP (message);
+  gpgol_release (message);
 
   return result;
 }

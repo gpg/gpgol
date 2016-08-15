@@ -156,7 +156,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               draft_flags += 2;
             }
           set_gpgol_draft_info_flags (message, draft_flags);
-          RELDISP (message);
+          gpgol_release (message);
         }
       case BeforeRead:
         {

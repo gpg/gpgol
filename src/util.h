@@ -96,6 +96,15 @@ void log_window_hierarchy (HWND window, const char *fmt,
 
 #define log_oom if (opt.enable_debug & DBG_OOM) log_debug
 #define log_oom_extra if (opt.enable_debug & DBG_OOM_EXTRA) log_debug
+#define gpgol_release(X) \
+  if (X && opt.enable_debug & DBG_OOM_EXTRA) \
+    { \
+      log_debug ("Releasing: %p \n", X); \
+      log_debug ("%s:%s: Object: %p released ref: %lu \n", \
+                 SRCNAME, __func__, X, X->Release()); \
+    } \
+  else if (X) \
+    X->Release();
 
 const char *log_srcname (const char *s);
 #define SRCNAME log_srcname (__FILE__)

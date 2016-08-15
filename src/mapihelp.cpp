@@ -1539,7 +1539,7 @@ resolve_ex_from_address (LPMESSAGE message)
                                MAPI_BEST_ACCESS,
                                &utype, (IUnknown**)&user);
     }
-  RELDISP (session);
+  gpgol_release (session);
 
   if (FAILED (hr))
     {

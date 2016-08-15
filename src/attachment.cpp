@@ -237,7 +237,7 @@ do_crypt_mapi (LPATTACH att, bool encrypt)
 done:
   if (symenc)
     symenc_close (symenc);
-  RELDISP (stream);
+  gpgol_release (stream);
 
   return rc;
 }
@@ -322,8 +322,8 @@ do_crypt (LPDISPATCH mailitem, bool protect)
 
 done:
 
-  RELDISP (message);
-  RELDISP (attachments);
+  gpgol_release (message);
+  gpgol_release (attachments);
   return err;
 }
 

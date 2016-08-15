@@ -460,13 +460,13 @@ failure:
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
-  RELDISP(wordEditor);
-  RELDISP(application);
-  RELDISP(selection);
-  RELDISP(sender);
-  RELDISP(recipients);
-  RELDISP(mailItem);
-  RELDISP(tmpstream);
+  gpgol_release(wordEditor);
+  gpgol_release(application);
+  gpgol_release(selection);
+  gpgol_release(sender);
+  gpgol_release(recipients);
+  gpgol_release(mailItem);
+  gpgol_release(tmpstream);
   xfree (plaintext);
   xfree (senderAddr);
   if (recipientAddrs)
@@ -552,7 +552,7 @@ decryptAttachments (LPDISPATCH ctrl)
                                     DISPATCH_METHOD, &saveParams,
                                     NULL, NULL, NULL);
         SysFreeString (saveParams.rgvarg[0].bstrVal);
-        RELDISP (attachmentObj);
+        gpgol_release (attachmentObj);
         if (FAILED(hr))
           {
             int j;
@@ -560,11 +560,11 @@ decryptAttachments (LPDISPATCH ctrl)
                        SRCNAME, __func__, (unsigned int) hr);
             for (j = 0; j < i; j++)
               xfree (filenames[j]);
-            RELDISP (attachmentSelection);
+            gpgol_release (attachmentSelection);
             return hr;
           }
       }
-    RELDISP (attachmentSelection);
+    gpgol_release (attachmentSelection);
     err = op_assuan_start_decrypt_files (curWindow, filenames);
     for (i = 0; i < attachmentCount; i++)
       xfree (filenames[i]);
@@ -739,7 +739,7 @@ do_reader_action (LPDISPATCH ctrl, int flags)
           /* Not SMTP, fall back to try getting the property. */
           LPDISPATCH sender = get_oom_object (mailItem, "Sender");
           senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-          RELDISP (sender);
+          gpgol_release (sender);
         }
       xfree (addrType);
     }
@@ -749,7 +749,7 @@ do_reader_action (LPDISPATCH ctrl, int flags)
          in this case use the current address */
       LPDISPATCH sender = get_oom_object (mailItem, "Session.CurrentUser");
       senderAddr = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      RELDISP (sender);
+      gpgol_release (sender);
     }
 
   /* Determine the protocol based on the content */
@@ -894,10 +894,10 @@ do_reader_action (LPDISPATCH ctrl, int flags)
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
-  RELDISP (mailItem);
-  RELDISP (selection);
-  RELDISP (wordEditor);
-  RELDISP (wordApplication);
+  gpgol_release (mailItem);
+  gpgol_release (selection);
+  gpgol_release (wordEditor);
+  gpgol_release (wordApplication);
   xfree (encData);
   xfree (senderAddr);
   xfree (subject);
@@ -1204,9 +1204,9 @@ failure:
   xfree (fileToEncryptW);
   xfree (attachName);
   xfree (subject);
-  RELDISP (mailItem);
-  RELDISP (sender);
-  RELDISP (recipients);
+  gpgol_release (mailItem);
+  gpgol_release (sender);
+  gpgol_release (recipients);
 
   if (hFile)
     CloseHandle (hFile);
@@ -1331,9 +1331,9 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
   rc = S_OK;
 
 done:
-  RELDISP (context);
-  RELDISP (mailitem);
-  RELDISP (message);
+  gpgol_release (context);
+  gpgol_release (mailitem);
+  gpgol_release (message);
 
   return rc;
 }
@@ -1395,9 +1395,9 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
                                                         VARIANT_FALSE;
 
 done:
-  RELDISP (context);
-  RELDISP (mailitem);
-  RELDISP (message);
+  gpgol_release (context);
+  gpgol_release (mailitem);
+  gpgol_release (message);
 
   return S_OK;
 }
@@ -1471,9 +1471,9 @@ HRESULT get_crypt_status (LPDISPATCH ctrl, int flags, VARIANT *result)
     }
 
 done:
-  RELDISP (context);
-  RELDISP (mailitem);
-  RELDISP (message);
+  gpgol_release (context);
+  gpgol_release (mailitem);
+  gpgol_release (message);
 
   return S_OK;
 }

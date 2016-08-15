@@ -85,7 +85,7 @@ Mail::Mail (LPDISPATCH mailitem) :
          and just release the Mail item. */
       log_error ("%s:%s: Failed to install MailItemEvents sink.",
                  SRCNAME, __func__);
-      mailitem->Release ();
+      gpgol_release(mailitem);
       return;
     }
   g_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
@@ -118,7 +118,7 @@ Mail::process_message ()
 
   log_debug ("%s:%s: incoming handler status: %i",
              SRCNAME, __func__, err);
-  message->Release ();
+  gpgol_release (message);
   return 0;
 }
 
@@ -127,7 +127,7 @@ Mail::~Mail()
   std::map<LPDISPATCH, Mail *>::iterator it;
 
   detach_MailItemEvents_sink (m_event_sink);
-  m_event_sink->Release ();
+  gpgol_release(m_event_sink);
 
   it = g_mail_map.find(m_mailitem);
   if (it != g_mail_map.end())
@@ -135,7 +135,7 @@ Mail::~Mail()
       g_mail_map.erase (it);
     }
 
-  m_mailitem->Release ();
+  gpgol_release(m_mailitem);
 }
 
 Mail *
@@ -223,7 +223,7 @@ Mail::insert_plaintext ()
   /* Invalidate UI to set the correct sig status. */
   gpgoladdin_invalidate_ui ();
 done:
-  RELDISP (base_message);
+  gpgol_release (base_message);
   return err;
 }
 
@@ -269,7 +269,7 @@ Mail::do_crypto ()
     }
   log_debug ("%s:%s: Status: %i",
              SRCNAME, __func__, err);
-  message->Release ();
+  gpgol_release (message);
   m_crypt_successful = !err;
   return err;
 }
@@ -286,7 +286,7 @@ Mail::needs_crypto ()
       return false;
     }
   ret = get_gpgol_draft_info_flags (message);
-  message->Release ();
+  gpgol_release(message);
   return ret;
 }
 
@@ -323,7 +323,7 @@ Mail::update_sender ()
   if (sender)
     {
       m_sender = get_oom_string (sender, "SmtpAddress");
-      RELDISP (sender);
+      gpgol_release (sender);
       return 0;
     }
   /* Fallback to Sender object */
@@ -331,7 +331,7 @@ Mail::update_sender ()
   if (sender)
     {
       m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      RELDISP (sender);
+      gpgol_release (sender);
       return 0;
     }
   /* We don't have s sender object or SendUsingAccount,
@@ -340,7 +340,7 @@ Mail::update_sender ()
   if (sender)
     {
       m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      RELDISP (sender);
+      gpgol_release (sender);
       return 0;
     }
 
@@ -455,7 +455,7 @@ Mail::is_smime ()
       xfree (proto);
       xfree (ct);
     }
-  RELDISP (message);
+  gpgol_release (message);
   m_is_smime_checked  = true;
   return m_is_smime;
 }

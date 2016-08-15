@@ -787,7 +787,7 @@ get_oom_context_window (LPDISPATCH context)
       log_debug ("%s:%s: Could not find active window",
                  SRCNAME, __func__);
     }
-  RELDISP (actExplorer);
+  gpgol_release (actExplorer);
   return ret;
 }
 
@@ -841,7 +841,7 @@ int set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
                                  DISPATCH_METHOD, &dispparams,
                                  &rVariant, &execpinfo, &argErr);
   SysFreeString (b_property);
-  RELDISP (propertyAccessor);
+  gpgol_release (propertyAccessor);
   if (hr != S_OK)
     {
       log_debug ("%s:%s: error: invoking SetProperty p=%p vt=%d"
@@ -909,7 +909,7 @@ int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
                                  DISPATCH_METHOD, &dispparams,
                                  rVariant, &execpinfo, &argErr);
   SysFreeString (b_property);
-  RELDISP (propertyAccessor);
+  gpgol_release (propertyAccessor);
   if (hr != S_OK)
     {
       log_debug ("%s:%s: error: invoking GetProperty p=%p vt=%d"
@@ -1114,7 +1114,7 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
 
   SysFreeString (inFileB);
   VariantClear (&vtResult);
-  RELDISP (attachments);
+  gpgol_release (attachments);
 
   return hr == S_OK ? 0 : -1;
 }
