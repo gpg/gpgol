@@ -201,6 +201,16 @@ fi
 if test "$GCC" = yes; then
     CFLAGS="$CFLAGS -Wall -mms-bitfields -fno-strict-aliasing"
     CXXFLAGS="$CXXFLAGS -Wall -mms-bitfields -fno-strict-aliasing"
+    # Hardening flags
+    # Stack protection
+    # -fstack-protector-all -Wstack-protector --param ssp-buffer-size=4
+    # causes gpgol not to be loaded by Outlook due to a runtime error.
+    # This needs to be analysed but could be an incompatibility between
+    # gcc's stack protection and COM / Outlook system calls.
+    HARDENING="-Wl,--dynamicbase -Wl,--nxcompat -fno-exceptions -D_FORTIFY_SOURCE=2 -O0"
+    CFLAGS="$CFLAGS $HARDENING"
+    CXXFLAGS="$CXXFLAGS $HARDENING"
+
     if test "$USE_MAINTAINER_MODE" = "yes"; then
         CFLAGS="$CFLAGS -Werror -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wformat-security"
