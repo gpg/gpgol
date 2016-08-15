@@ -135,7 +135,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
       case Open:
         {
           LPMESSAGE message;
-          int draft_flags;
+          int draft_flags = 0;
           if (!opt.encrypt_default && !opt.sign_default)
             {
               return S_OK;
