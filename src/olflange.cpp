@@ -571,7 +571,7 @@ GpgolExt::~GpgolExt (void)
              SRCNAME, __func__, ext_context_name (m_lContext));
 
 //   if (m_pOutlookExtItemEvents)
-//     m_pOutlookExtItemEvents->Release ();
+//     gpgol_release (m_pOutlookExtItemEvents);
 
   if (m_lContext == EECONTEXT_SESSION || !m_lContext)
     {
@@ -687,9 +687,9 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
             {
               olversion = get_oom_string (disp, "Version");
               g_ol_version_major = atoi (olversion);
-              disp->Release ();
+              gpgol_release (disp);
             }
-          obj->Release ();
+          gpgol_release (obj);
         }
     }
   pEECB->GetVersion (&lBuildVersion, EECBGV_GETBUILDVERSION);
@@ -897,7 +897,7 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
         {
           install_GpgolExplorersEvents_sink (disp);
           /* Fixme: Register the event sink object somewhere.  */
-          disp->Release ();
+          gpgol_release (disp);
         }
 
       /* It seems that when installing this sink the first explorer
@@ -910,7 +910,7 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
       else
         {
           add_explorer_controls ((LPOOMEXPLORER)disp);
-          disp->Release ();
+          gpgol_release (disp);
         }
 
       disp = get_oom_object ((LPDISPATCH)rootobj, "Application.Inspectors");
@@ -920,10 +920,10 @@ install_sinks (LPEXCHEXTCALLBACK eecb)
         {
           install_GpgolInspectorsEvents_sink (disp);
           /* Fixme: Register the event sink object somewhere.  */
-          disp->Release ();
+          gpgol_release (disp);
         }
 
-      rootobj->Release ();
+      gpgol_release (rootobj);
     }
 
   log_debug ("%s:%s: Leave", SRCNAME, __func__);
@@ -951,9 +951,9 @@ get_eecb_object (LPEXCHEXTCALLBACK eecb)
           hr = pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
           if (hr == S_OK && pDisp)
             result = pDisp;
-          pObj->Release ();
+          gpgol_release (pObj);
         }
-      pCb->Release ();
+      gpgol_release (pCb);
     }
   return result;
 }

@@ -19,7 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "util.h"
+#include "config.h"
+#include "common.h"
 #define INITGUID
 #include <initguid.h>
 DEFINE_GUID (IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,
@@ -56,7 +57,7 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
     {
       log_error ("%s:%s: Inlen too long. Bug.",
                  SRCNAME, __func__);
-      multilang->Release();
+      gpgol_release (multilang);
       return NULL;
     }
 
@@ -71,7 +72,7 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
     {
       log_error ("%s:%s: Failed to find charset for: %s",
                  SRCNAME, __func__, charset);
-      multilang->Release ();
+      gpgol_release (multilang);
       return NULL;
     }
   enc = (mime_info.uiInternetEncoding == 0) ? mime_info.uiCodePage :
@@ -84,14 +85,14 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
     {
       log_error ("%s:%s: Failed conversion.",
                  SRCNAME, __func__);
-      multilang->Release ();
+      gpgol_release (multilang);
       return NULL;
   }
   buf = (wchar_t*) xmalloc(sizeof(wchar_t) * (wlen + 1));
 
   err = multilang->ConvertStringToUnicode(&mode, enc, input, &uinlen,
                                           buf, &wlen);
-  multilang->Release ();
+  gpgol_release (multilang);
   if (FAILED (err))
     {
       log_error ("%s:%s: Failed conversion 2.",

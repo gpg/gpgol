@@ -31,7 +31,7 @@ is_preview_pane_visible (LPEXCHEXTCALLBACK eecb)
   hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                       DISPATCH_METHOD, &dispparams,
                       &rVariant, NULL, NULL);
-  pDisp->Release();
+  gpgol_release (pDisp);
   pDisp = NULL;
   if (hr == S_OK && rVariant.vt != VT_BOOL)
     {
@@ -84,7 +84,7 @@ show_preview_pane (LPEXCHEXTCALLBACK eecb, int visible)
   hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                       DISPATCH_METHOD, &dispparams,
                       NULL, NULL, NULL);
-  pDisp->Release();
+  gpgol_release (pDisp);
   pDisp = NULL;
   if (hr != S_OK)
     log_debug ("%s:%s: invoking ShowPane(%d) failed: %#lx",

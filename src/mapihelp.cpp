@@ -491,7 +491,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
       if (hr)
         {
           log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
-          stream->Release ();
+          gpgol_release (stream);
           return NULL;
         }
       
@@ -504,7 +504,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
         {
           log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
           xfree (body);
-          stream->Release ();
+          gpgol_release (stream);
           return NULL;
         }
       body[nread] = 0;
@@ -513,10 +513,10 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
         {
           log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
           xfree (body);
-          stream->Release ();
+          gpgol_release (stream);
           return NULL;
         }
-      stream->Release ();
+      gpgol_release (stream);
       
       {
         char *tmp;
@@ -591,7 +591,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   if (hr)
     {
       log_debug ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
-      stream->Release ();
+      gpgol_release (stream);
       return NULL;
     }
   
@@ -606,7 +606,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
     {
       log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
       xfree (body);
-      stream->Release ();
+      gpgol_release (stream);
       return NULL;
     }
   body[nread] = 0;
@@ -616,10 +616,10 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
       log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
       
       xfree (body);
-      stream->Release ();
+      gpgol_release (stream);
       return NULL;
     }
-  stream->Release ();
+  gpgol_release (stream);
 
   if (!is_binary)
     {
@@ -717,14 +717,14 @@ is_really_cms_encrypted (LPMESSAGE message)
     {
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return -1;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (n_attach != 1)
     {
       FreeProws (mapirows);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       log_debug ("%s:%s: not just one attachment", SRCNAME, __func__);
       return -1;
     }
@@ -805,11 +805,11 @@ is_really_cms_encrypted (LPMESSAGE message)
   
  leave:
   if (stream)
-    stream->Release ();
+    gpgol_release (stream);
   if (att)
-    att->Release ();
+    gpgol_release (att);
   FreeProws (mapirows);
-  mapitable->Release ();
+  gpgol_release (mapitable);
   return result;
 }
 
@@ -842,14 +842,14 @@ get_first_attach_mime_tag (LPMESSAGE message)
     {
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return NULL;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (n_attach != 1)
     {
       FreeProws (mapirows);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       log_debug ("%s:%s: not just one attachment", SRCNAME, __func__);
       return NULL;
     }
@@ -887,9 +887,9 @@ get_first_attach_mime_tag (LPMESSAGE message)
   
  leave:
   if (att)
-    att->Release ();
+    gpgol_release (att);
   FreeProws (mapirows);
-  mapitable->Release ();
+  gpgol_release (mapitable);
   return result;
 }
 
@@ -1789,10 +1789,10 @@ mapi_to_mime (LPMESSAGE message, const char *filename)
           hr = 0;
         }
 
-      stream->Release ();
+      gpgol_release (stream);
     }
 
-  session->Release ();
+  gpgol_release (session);
   return hr;
 }
 
@@ -2037,7 +2037,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
     {
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return NULL;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
@@ -2047,7 +2047,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
   if (!n_attach)
     {
       FreeProws (mapirows);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return NULL;
     }
 
@@ -2098,7 +2098,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
             }
         }
       table[pos].attach_type = get_gpgolattachtype (att, moss_tag);
-      att->Release ();
+      gpgol_release (att);
     }
   table[0].private_mapitable = mapitable;
   FreeProws (mapirows);
@@ -2139,7 +2139,7 @@ mapi_release_attach_table (mapi_attach_item_t *table)
 
   mapitable = (LPMAPITABLE)table[0].private_mapitable;
   if (mapitable)
-    mapitable->Release ();
+    gpgol_release (mapitable);
   for (pos=0; !table[pos].end_of_table; pos++)
     {
       xfree (table[pos].filename);
@@ -2177,7 +2177,7 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
   if (item->method != ATTACH_BY_VALUE)
     {
       log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
-      att->Release ();
+      gpgol_release (att);
       return NULL;
     }
 
@@ -2187,14 +2187,14 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
     {
       log_error ("%s:%s: can't open data stream of attachment: hr=%#lx",
                  SRCNAME, __func__, hr);
-      att->Release ();
+      gpgol_release (att);
       return NULL;
     }
 
   if (r_attach)
     *r_attach = att;
   else
-    att->Release ();
+    gpgol_release (att);
 
   return stream;
 }
@@ -2251,7 +2251,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
   if ( hr != S_OK )
     {
       log_error ("%s:%s: Stat failed: hr=%#lx", SRCNAME, __func__, hr);
-      stream->Release ();
+      gpgol_release (stream);
       return NULL;
     }
       
@@ -2263,7 +2263,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
     {
       log_error ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
       xfree (buffer);
-      stream->Release ();
+      gpgol_release (stream);
       return NULL;
     }
   if (nread != statInfo.cbSize.QuadPart)
@@ -2272,7 +2272,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
       xfree (buffer);
       buffer = NULL;
     }
-  stream->Release ();
+  gpgol_release (stream);
 
   if (buffer && symenc)
     {
@@ -2331,12 +2331,12 @@ mapi_get_attach (LPMESSAGE message, int unprotect,
   if (item->method != ATTACH_BY_VALUE)
     {
       log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
-      att->Release ();
+      gpgol_release (att);
       return NULL;
     }
 
   buffer = attach_to_buffer (att, r_nbytes, unprotect, NULL);
-  att->Release ();
+  gpgol_release (att);
 
   return buffer;
 }
@@ -2396,7 +2396,7 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
   retval = 0;
     
  leave:
-  att->Release ();
+  gpgol_release (att);
   return retval;
 }
 
@@ -3089,14 +3089,14 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
     {
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return -1;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (!n_attach)
     {
       FreeProws (mapirows);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       log_debug ("%s:%s: No attachments at all", SRCNAME, __func__);
       return -1;
     }
@@ -3162,15 +3162,15 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
                   body = charset;
                 }
             }
-          att->Release ();
+          gpgol_release (att);
           if (r_ishtml)
             *r_ishtml = (bodytype == 2);
           break;
         }
-      att->Release ();
+      gpgol_release (att);
     }
   FreeProws (mapirows);
-  mapitable->Release ();
+  gpgol_release (mapitable);
   if (!found)
     {
       log_error ("%s:%s: no suitable body attachment found", SRCNAME,__func__);
@@ -3219,14 +3219,14 @@ mapi_delete_gpgol_body_attachment (LPMESSAGE message)
     {
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return 0;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (!n_attach)
     {
       FreeProws (mapirows);
-      mapitable->Release ();
+      gpgol_release (mapitable);
       return 0; /* No Attachments.  */
     }
 
@@ -3256,7 +3256,7 @@ mapi_delete_gpgol_body_attachment (LPMESSAGE message)
       if (has_gpgol_body_name (att)
           && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
         {
-          att->Release ();
+          gpgol_release (att);
           hr = message->DeleteAttach (mapirows->aRow[pos].lpProps[0].Value.l,
                                       0, NULL, 0);
           if (hr)
@@ -3271,10 +3271,10 @@ mapi_delete_gpgol_body_attachment (LPMESSAGE message)
             }
           break;
         }
-      att->Release ();
+      gpgol_release (att);
     }
   FreeProws (mapirows);
-  mapitable->Release ();
+  gpgol_release (mapitable);
   return found;
 }
 
@@ -3354,12 +3354,12 @@ mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item)
     {
       if (result)
         outstream->Revert ();
-      outstream->Release ();
+      gpgol_release (outstream);
     }
   if (instream)
-    instream->Release ();
+    gpgol_release (instream);
   if (att)
-    att->Release ();
+    gpgol_release (att);
   return result;
 }
 

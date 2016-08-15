@@ -298,7 +298,7 @@ do_crypt (LPDISPATCH mailitem, bool protect)
         {
           log_debug ("%s:%s: Failed to get MapiObject of attachment: %p",
                      SRCNAME, __func__, attachment);
-          attachment->Release ();
+          gpgol_release (attachment);
           continue;
         }
 
@@ -310,13 +310,13 @@ do_crypt (LPDISPATCH mailitem, bool protect)
             {
               log_error ("%s:%s: Error: Session crypto failed.",
                          SRCNAME, __func__);
-              mapi_attachment->Release ();
-              attachment->Release ();
+              gpgol_release (mapi_attachment);
+              gpgol_release (attachment);
               goto done;
             }
         }
-      mapi_attachment->Release ();
-      attachment->Release ();
+      gpgol_release (mapi_attachment);
+      gpgol_release (attachment);
     }
   err = 0;
 

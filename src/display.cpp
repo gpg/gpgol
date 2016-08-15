@@ -263,7 +263,7 @@ update_display (HWND hwnd, LPDISPATCH inspector, int is_sensitive,
               put_oom_string (item, "Body", "");
             }
           rc = put_oom_string (item, is_html? "HTMLBody":"Body", text);
-          item->Release ();
+          gpgol_release (item);
         }
       else
         rc = -1;
@@ -361,7 +361,7 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
   if (!entryid)
     {
       log_error ("%s:%s: PR_ENTRYID missing\n",  SRCNAME, __func__);
-      session->Release ();
+      gpgol_release (session);
       return -1;
     }
   log_hexdump (entryid, entryidlen, "orig entryid=");
@@ -370,7 +370,7 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
   if (!store_entryid)
     {
       log_error ("%s:%s: PR_STORE_ENTRYID missing\n",  SRCNAME, __func__);
-      session->Release ();
+      gpgol_release (session);
       xfree (entryid);
       return -1;
     }
@@ -379,7 +379,7 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
   if (!parent_entryid)
     {
       log_error ("%s:%s: PR_PARENT_ENTRYID missing\n",  SRCNAME, __func__);
-      session->Release ();
+      gpgol_release (session);
       xfree (store_entryid);
       xfree (entryid);
       return -1;
@@ -393,7 +393,7 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
     {
       log_error ("%s:%s: OpenMsgStore failed: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      session->Release ();
+      gpgol_release (session);
       xfree (parent_entryid);
       xfree (store_entryid);
       xfree (entryid);
@@ -408,11 +408,11 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
     {
       log_error ("%s:%s: OpenEntry failed: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      session->Release ();
+      gpgol_release (session);
       xfree (parent_entryid);
       xfree (store_entryid);
       xfree (entryid);
-      mdb->Release ();
+      gpgol_release (mdb);
       return -1;
     }
   log_debug ("%s:%s: mdb::OpenEntry succeeded type=%lx\n", 
@@ -426,12 +426,12 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
     {
       log_error ("%s:%s: OpenEntry[folder] failed: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      session->Release ();
+      gpgol_release (session);
       xfree (parent_entryid);
       xfree (store_entryid);
       xfree (entryid);
-      mdb->Release ();
-      mfolder->Release ();
+      gpgol_release (mdb);
+      gpgol_release (mfolder);
       return -1;
     }
   log_debug ("%s:%s: mdb::OpenEntry[message] succeeded type=%lx\n", 
@@ -443,18 +443,18 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
     {
       log_error ("%s:%s: PrepareForm failed: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      session->Release ();
+      gpgol_release (session);
       xfree (parent_entryid);
       xfree (store_entryid);
       xfree (entryid);
-      mdb->Release ();
-      mfolder->Release ();
-      message2->Release ();
+      gpgol_release (mdb);
+      gpgol_release (mfolder);
+      gpgol_release (message2);
       return -1;
     }
 
   /* Message2 is now represented by TOKEN; we need to release it.  */
-  message2->Release(); message2 = NULL;
+  gpgol_release (message2); message2 = NULL;
 
   hr = session->ShowForm (0,
                           mdb, mfolder,
@@ -466,12 +466,12 @@ open_inspector (LPEXCHEXTCALLBACK peecb, LPMESSAGE message)
   log_debug ("%s:%s: ShowForm result: hr=%#lx\n", 
              SRCNAME, __func__, hr);
   
-  session->Release ();
+  gpgol_release (session);
   xfree (parent_entryid);
   xfree (store_entryid);
   xfree (entryid);
-  mdb->Release ();
-  mfolder->Release ();
+  gpgol_release (mdb);
+  gpgol_release (mfolder);
   return FAILED(hr)? -1:0;
 }
 

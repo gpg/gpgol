@@ -71,9 +71,9 @@ get_object_name (LPUNKNOWN obj)
 
  leave:
   if (tinfo)
-    tinfo->Release ();
+    gpgol_release (tinfo);
   if (disp)
-    disp->Release ();
+    gpgol_release (disp);
 
   return name;
 }
@@ -161,12 +161,12 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
 
       if (pDisp)
         {
-          pDisp->Release ();
+          gpgol_release (pDisp);
           pDisp = NULL;
         }
       pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
       if (pObj != pStart)
-        pObj->Release ();
+        gpgol_release (pObj);
       pObj = NULL;
       if (!pDisp)
         return NULL;  /* The object has no IDispatch interface.  */
@@ -184,7 +184,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         dot = strchr (fullname, '.');
         if (dot == fullname)
           {
-            pDisp->Release ();
+            gpgol_release (pDisp);
             return NULL;  /* Empty name part: error.  */
           }
         else if (dot)
@@ -232,7 +232,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
                 }
               if (!parmstr)
                 {
-                  pDisp->Release ();
+                  gpgol_release (pDisp);
                   return NULL; /* Error:  Out of memory.  */
                 }
               n_parms = 1;
@@ -248,7 +248,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         {
           if (parmstr)
             SysFreeString (parmstr);
-          pDisp->Release ();
+          gpgol_release (pDisp);
           return NULL;  /* Name not found.  */
         }
 
@@ -293,7 +293,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           VariantClear (&vtResult);
           if (parmstr)
             SysFreeString (parmstr);
-          pDisp->Release ();
+          gpgol_release (pDisp);
           return NULL;  /* Invoke failed.  */
         }
 
@@ -690,7 +690,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
   if (hr == S_OK && rVariant.vt == VT_DISPATCH && rVariant.pdispVal)
     {
       rVariant.pdispVal->QueryInterface (IID_IDispatch, (LPVOID*)&result);
-      rVariant.pdispVal->Release ();
+      gpgol_release (rVariant.pdispVal);
       if (!result)
         log_debug ("%s:%s: Object with tag `%s' has no dispatch intf.",
                    SRCNAME, __func__, tag);
@@ -1170,7 +1170,7 @@ get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
   log_oom_extra("%s:%s: About to call GetBaseMessage.",
                 SRCNAME, __func__);
   hr = secureMessage->GetBaseMessage (&message);
-  secureMessage->Release ();
+  gpgol_release (secureMessage);
   if (hr != S_OK)
     {
       log_error_w32 (hr, "Failed to GetBaseMessage.");
@@ -1192,7 +1192,7 @@ get_oom_base_message (LPDISPATCH mailitem)
       return NULL;
     }
   ret = get_oom_base_message_from_mapi ((LPDISPATCH)mapi_message);
-  mapi_message->Release ();
+  gpgol_release (mapi_message);
   return ret;
 }
 
@@ -1245,7 +1245,7 @@ get_oom_mapi_session ()
       return NULL;
     }
   mapiobj = get_oom_iunknown (oom_session, "MAPIOBJECT");
-  oom_session->Release ();
+  gpgol_release (oom_session);
 
   if (!mapiobj)
     {
@@ -1254,7 +1254,7 @@ get_oom_mapi_session ()
     }
   session = NULL;
   hr = mapiobj->QueryInterface (IID_IMAPISession, (void**)&session);
-  mapiobj->Release ();
+  gpgol_release (mapiobj);
   if (hr != S_OK || !session)
     {
       log_error ("%s:%s: error getting IMAPISession: hr=%#lx",

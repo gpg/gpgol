@@ -182,7 +182,7 @@ GpgolItemEvents::Write (PBOOL cancel_default)
               log_error ("%s:%s: error getting IMESSAGE: hr=%#lx",
                          SRCNAME, __func__, hr);
             }
-          unknown->Release ();
+          gpgol_release (unknown);
         }
 
       if (!message)

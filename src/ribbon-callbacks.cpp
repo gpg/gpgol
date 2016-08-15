@@ -592,7 +592,7 @@ verify_mime (LPDISPATCH mailitem)
       return 0;
     }
   ret = message_incoming_handler (message, NULL, true /*force */);
-  message->Release ();
+  gpgol_release (message);
 
   return ret;
 }
@@ -902,7 +902,7 @@ do_reader_action (LPDISPATCH ctrl, int flags)
   xfree (senderAddr);
   xfree (subject);
   if (tmpstream)
-    tmpstream->Release();
+    gpgol_release (tmpstream);
 
   return S_OK;
 }
@@ -982,7 +982,7 @@ getIcon (int id, VARIANT* result)
           if (CreateStreamOnHGlobal (hBuffer, FALSE, &pStream) == S_OK)
             {
               pbitmap = Gdiplus::Bitmap::FromStream (pStream);
-              pStream->Release();
+              gpgol_release (pStream);
               if (!pbitmap || pbitmap->GetHBITMAP (0, &pdesc.bmp.hbitmap))
                 {
                   log_error ("%s:%s: failed to get PNG.",

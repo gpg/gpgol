@@ -90,7 +90,7 @@ MailItemEvents::~MailItemEvents()
   if (m_pCP)
     m_pCP->Unadvise(m_cookie);
   if (m_object)
-    m_object->Release();
+    gpgol_release (m_object);
 }
 
 static DWORD WINAPI

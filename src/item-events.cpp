@@ -155,9 +155,9 @@ GpgolItemEvents::OnOpenComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
             m_wasencrypted = true;
         }
       if (message)
-        message->Release ();
+        gpgol_release (message);
       if (mdb)
-        mdb->Release ();
+        gpgol_release (mdb);
     }
   
   return S_FALSE;

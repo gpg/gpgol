@@ -250,7 +250,7 @@ find_ole_window (LPOOMINSPECTOR inspector)
                  SRCNAME, __func__, hr);
       hwnd = NULL;
     }
-  olewndw->Release ();
+  gpgol_release (olewndw);
   log_debug ("%s:%s: inspector %p has hwnd=%p",
              SRCNAME, __func__, inspector, hwnd);
   return hwnd;
@@ -324,18 +324,18 @@ deregister_inspector (LPGPGOLINSPECTOREVENTS sink)
       if (ol->sink)
         {
           detach_GpgolCommandBarButtonEvents_sink (ol->sink);
-          ol->sink->Release ();
+          gpgol_release (ol->sink);
         }
       if (ol->button)
         {
           del_oom_button (ol->button);
-          ol->button->Release ();
+          gpgol_release (ol->button);
         }
       xfree (ol);
     }
 
-  r->inspector->Release ();
-  r->eventsink->Release ();
+  gpgol_release (r->inspector);
+  gpgol_release (r->eventsink);
 
   xfree (r);
 }
@@ -462,9 +462,9 @@ GpgolInspectorsEvents::NewInspector (LPOOMINSPECTOR inspector)
   if (obj)
     {
       register_inspector ((LPGPGOLINSPECTOREVENTS)obj, inspector);
-      obj->Release ();
+      gpgol_release (obj);
     }
-  inspector->Release ();
+  gpgol_release (inspector);
   return S_OK;
 }
 
@@ -517,13 +517,13 @@ GpgolInspectorEvents::Activate (void)
         {
           // LPDISPATCH obj2 = install_GpgolItemEvents_sink (obj);
           // if (obj2)
-          //   obj2->Release ();
-          obj->Release ();
+          //   gpgol_release (obj2);
+          gpgol_release (obj);
         }
     }
   
   update_crypto_info (inspector);
-  inspector->Release ();
+  gpgol_release (inspector);
 }
 
 
@@ -550,7 +550,7 @@ is_inspector_in_composer_mode (LPDISPATCH inspector)
          the class is 43.  */
       in_composer = (!get_oom_bool (obj, "Sent") 
                      && get_oom_int (obj, "Class") == 43);
-      obj->Release ();
+      gpgol_release (obj);
     }
   else
     in_composer = false;
@@ -576,7 +576,7 @@ get_inspector_composer_flags (LPDISPATCH inspector,
   else
     {
       *r_sign = get_oom_int (button, "State") == msoButtonDown;
-      button->Release ();
+      gpgol_release (button);
     }
 
   button = get_button (inspector, "GpgOL_Inspector_Encrypt");
@@ -588,7 +588,7 @@ get_inspector_composer_flags (LPDISPATCH inspector,
   else
     {
       *r_encrypt = get_oom_int (button, "State") == msoButtonDown;
-      button->Release ();
+      gpgol_release (button);
     }
   
   if (!rc)
@@ -614,7 +614,7 @@ set_one_button (LPDISPATCH inspector, const char *tag, bool down)
     {
       if (put_oom_int (button, "State", down? msoButtonDown : msoButtonUp))
         rc = -1;
-      button->Release ();
+      gpgol_release (button);
     }
   return rc;
 }
@@ -710,7 +710,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
               move_to_button_list (&buttonlist, obj, button, tag);
             }
           
-          controls->Release ();
+          gpgol_release (controls);
         }
     }
   
@@ -770,7 +770,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           move_to_button_list (&buttonlist, obj, button, tag);
         }
 
-      controls->Release ();
+      gpgol_release (controls);
     }
 
 
@@ -824,7 +824,7 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
           move_to_button_list (&buttonlist, obj, button, tag);
         }
 
-      controls->Release ();
+      gpgol_release (controls);
     }
 
 
@@ -844,9 +844,9 @@ add_inspector_controls (LPOOMINSPECTOR inspector)
         {
           ol2 = ol->next;
           if (ol->sink)
-            ol->sink->Release ();
+            gpgol_release (ol->sink);
           if (ol->button)
-            ol->button->Release ();
+            gpgol_release (ol->button);
           xfree (ol);
         }
     }
@@ -892,9 +892,9 @@ update_crypto_info (LPDISPATCH inspector)
                   log_error ("%s:%s: error getting IMESSAGE: hr=%#lx",
                              SRCNAME, __func__, hr);
                 }
-              unknown->Release ();
+              gpgol_release (unknown);
             }
-          obj->Release ();
+          gpgol_release (obj);
         }
       if (message)
         {
@@ -938,7 +938,7 @@ update_crypto_info (LPDISPATCH inspector)
               iconrc = IDB_DECRYPT_16;
             }
           
-          message->Release ();
+          gpgol_release (message);
         }
     }
 
@@ -946,7 +946,7 @@ update_crypto_info (LPDISPATCH inspector)
   if (iconrc != -1)
     put_oom_icon (button, iconrc, 16);
   put_oom_bool (button, "Visible", (iconrc != -1));
-  button->Release ();
+  gpgol_release (button);
 }
 
 
@@ -982,14 +982,14 @@ get_message_from_button (unsigned long instid, LPDISPATCH *r_inspector)
                   log_error ("%s:%s: error getting IMESSAGE: hr=%#lx",
                              SRCNAME, __func__, hr);
                 }
-              unknown->Release ();
+              gpgol_release (unknown);
             }
-          obj->Release ();
+          gpgol_release (obj);
         }
       if (r_inspector)
         *r_inspector = inspector;
       else
-        inspector->Release ();
+        gpgol_release (inspector);
     }
   return message;
 }
@@ -1028,7 +1028,7 @@ toggle_button (LPDISPATCH button, const char *tag, int instid)
   
   log_debug ("%s:%s: setting `%s' state to %d", SRCNAME, __func__, tag2, state);
   set_one_button (inspector, tag2, state);
-  inspector->Release ();
+  gpgol_release (inspector);
 }
 
 
@@ -1059,12 +1059,12 @@ proc_inspector_button_click (LPDISPATCH button, const char *tag, int instid)
         {
           if (message_incoming_handler (message, hwnd, true))
             message_display_handler (message, inspector, hwnd);
-          message->Release ();
+          gpgol_release (message);
         }
       if (inspector)
         {
           update_crypto_info (inspector);
-          inspector->Release ();
+          gpgol_release (inspector);
         }
     }
   else if (!tagcmp (tag, "GpgOL_Inspector_Debug-0"))
@@ -1075,7 +1075,7 @@ proc_inspector_button_click (LPDISPATCH button, const char *tag, int instid)
       if (message)
         {
           message_show_info (message, hwnd);
-          message->Release ();
+          gpgol_release (message);
         }
     }
   else if (!tagcmp (tag, "GpgOL_Inspector_Debug-1"))
@@ -1092,7 +1092,7 @@ proc_inspector_button_click (LPDISPATCH button, const char *tag, int instid)
         {
           /* We sync here. */
           mapi_change_message_class (message, 1);
-          message->Release ();
+          gpgol_release (message);
         }
     }
   else if (!tagcmp (tag, "GpgOL_Inspector_Debug-3"))
@@ -1106,7 +1106,7 @@ proc_inspector_button_click (LPDISPATCH button, const char *tag, int instid)
                                          KEEP_OPEN_READWRITE|FORCE_SAVE);
           log_debug ("%s:%s: gpgol_message_revert returns %d\n", 
                      SRCNAME, __func__, rc);
-          message->Release ();
+          gpgol_release (message);
         }
     }
 

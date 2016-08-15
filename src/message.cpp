@@ -563,7 +563,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
         return -1;
       
       inbuf = pgp_mime_from_clearsigned (rawstream, &inbuflen);
-      rawstream->Release ();
+      gpgol_release (rawstream);
       if (!inbuf)
         return -1;
       protocol = PROTOCOL_OPENPGP;
@@ -654,7 +654,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
       MessageBox (NULL, buf, "GpgOL", MB_ICONINFORMATION|MB_OK);
     }
   if (opaquestream)
-    opaquestream->Release ();
+    gpgol_release (opaquestream);
   xfree (inbuf);
                     
   if (err)
@@ -778,7 +778,7 @@ pgp_body_to_attachment (LPMESSAGE message)
                  SRCNAME, __func__, hr);
       goto leave;
     }
-  outstream->Release ();
+  gpgol_release (outstream);
   outstream = NULL;
   hr = newatt->SaveChanges (0);
   if (hr)
@@ -787,7 +787,7 @@ pgp_body_to_attachment (LPMESSAGE message)
                  SRCNAME, __func__, hr); 
       goto leave;
     }
-  newatt->Release ();
+  gpgol_release (newatt);
   newatt = NULL;
   hr = mapi_save_changes (message, KEEP_OPEN_READWRITE);
 
@@ -795,11 +795,11 @@ pgp_body_to_attachment (LPMESSAGE message)
   if (outstream)
     {
       outstream->Revert ();
-      outstream->Release ();
+      gpgol_release (outstream);
     }
   if (newatt)
-    newatt->Release ();
-  instream->Release ();
+    gpgol_release (newatt);
+  gpgol_release (instream);
   return hr? -1:0;
 }
 
@@ -1090,13 +1090,13 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
         }
       
     }
-  cipherstream->Release ();
+  gpgol_release (cipherstream);
   retval = 0;
 
 
  leave:
   if (saved_attach)
-    saved_attach->Release ();
+    gpgol_release (saved_attach);
   mapi_release_attach_table (table);
   return retval;
 }
@@ -1139,7 +1139,7 @@ get_recipients (LPMESSAGE message)
     {
       log_debug_w32 (-1, "%s:%s: HrQueryAllRows failed", SRCNAME, __func__);
       if (lpRecipientTable)
-        lpRecipientTable->Release();
+        gpgol_release (lpRecipientTable);
       return NULL;
     }
 
@@ -1185,7 +1185,7 @@ get_recipients (LPMESSAGE message)
     }
 
   if (lpRecipientTable)
-    lpRecipientTable->Release();
+    gpgol_release (lpRecipientTable);
   if (lpRecipientRows)
     FreeProws(lpRecipientRows);	
   

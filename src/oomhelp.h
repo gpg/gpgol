@@ -25,9 +25,6 @@
 #include "mymapi.h"
 #include "myexchext.h"
 
-/* Helper to release dispatcher */
-#define RELDISP(dispatcher) if (dispatcher) dispatcher->Release()
-
 #define MSOCONTROLBUTTON    1
 #define MSOCONTROLEDIT      2
 #define MSOCONTROLDROPDOWN  3

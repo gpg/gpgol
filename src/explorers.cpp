@@ -95,11 +95,11 @@ add_explorer_controls (LPOOMEXPLORER explorer)
       return;
     }
   button = get_oom_control_bytag (obj, "GpgOL_Start_Key_Manager");
-  obj->Release ();
+  gpgol_release (obj);
   obj = NULL;
   if (button)
     {
-      button->Release ();
+      gpgol_release (button);
       log_debug ("%s:%s: Leave (Controls are already added)",
                  SRCNAME, __func__);
       return;
@@ -128,7 +128,7 @@ add_explorer_controls (LPOOMEXPLORER explorer)
           
           install_GpgolCommandBarButtonEvents_sink (button);
           /* Fixme:  Save the returned object for an Unadvice.  */
-          button->Release ();
+          gpgol_release (button);
         }
 
       button = add_oom_button (controls);
@@ -141,10 +141,10 @@ add_explorer_controls (LPOOMEXPLORER explorer)
           
           install_GpgolCommandBarButtonEvents_sink (button);
           /* Fixme:  Save the returned object for an Unadvice.  */
-          button->Release ();
+          gpgol_release (button);
         }
 
-      controls->Release ();
+      gpgol_release (controls);
       controls = NULL;
     }
 
@@ -169,9 +169,9 @@ add_explorer_controls (LPOOMEXPLORER explorer)
           
           install_GpgolCommandBarButtonEvents_sink (button);
           /* Fixme:  store the event sink object somewhere.  */
-          button->Release ();
+          gpgol_release (button);
         }
-      controls->Release ();
+      gpgol_release (controls);
     }
   
   log_debug ("%s:%s: Leave", SRCNAME, __func__);
@@ -217,7 +217,7 @@ run_explorer_revert_folder (LPDISPATCH button)
           if (obj)
             {
               gpgol_folder_revert (obj);
-              obj->Release ();
+              gpgol_release (obj);
             }
         }
     }

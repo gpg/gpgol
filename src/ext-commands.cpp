@@ -119,7 +119,7 @@ get_inspector (LPEXCHEXTCALLBACK eecb, HWND hwnd)
         {
           /* This should be MailItem; use the getInspector method.  */
           inspector = get_oom_object (obj, "GetInspector");
-          obj->Release ();
+          gpgol_release (obj);
         }
     }
   return inspector;
@@ -144,7 +144,7 @@ get_crypto_flags (LPEXCHEXTCALLBACK eecb, HWND hwnd,
   else
     {
       rc = get_inspector_composer_flags (inspector, r_sign, r_encrypt);
-      inspector->Release ();
+      gpgol_release (inspector);
     }
   return rc;
 }
@@ -161,7 +161,7 @@ set_crypto_flags (LPEXCHEXTCALLBACK eecb, HWND hwnd, bool sign, bool encrypt)
   else
     {
       set_inspector_composer_flags (inspector, sign, encrypt);
-      inspector->Release ();
+      gpgol_release (inspector);
     }
 }
 
@@ -256,7 +256,7 @@ GpgolExtCommands::InstallCommands (
                   msgcache_unref (refhandle);
                   xfree (key);
                 }
-              obj->Release ();
+              gpgol_release (obj);
             }
         }
       
@@ -345,7 +345,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
           hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                               DISPATCH_METHOD, &dispparams,
                               NULL, NULL, NULL);
-          pDisp->Release();
+          gpgol_release (pDisp);
           pDisp = NULL;
           if (hr == S_OK)
             {
@@ -360,7 +360,7 @@ GpgolExtCommands::DoCommand (LPEXCHEXTCALLBACK eecb, UINT nCommandID)
       else
         {
           if (pDisp)
-            pDisp->Release ();
+            gpgol_release (pDisp);
           log_debug ("%s:%s: invoking Close failed: no Close method)",
                      SRCNAME, __func__);
         }

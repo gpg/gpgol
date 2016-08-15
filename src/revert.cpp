@@ -146,7 +146,7 @@ message_revert (LPMESSAGE message)
             else
               result = 2;
 
-            att->Release ();
+            gpgol_release (att);
             att = NULL;
           }
         break;
@@ -639,7 +639,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
     }
   folder = NULL;
   hr = unknown->QueryInterface (IID_IMAPIFolder, (void**)&folder);
-  unknown->Release ();
+  gpgol_release (unknown);
   if (hr != S_OK || !folder)
     {
       log_error ("%s:%s: error getting IMAPIFolder: hr=%#lx",
@@ -664,7 +664,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
       return -1;
     }
   unknown = get_oom_iunknown (disp, "MAPIOBJECT");
-  disp->Release ();
+  gpgol_release (disp);
   if (!unknown)
     {
       log_error ("%s:%s: error getting Session.MAPIOBJECT", SRCNAME, __func__);
@@ -673,7 +673,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
     }
   session = NULL;
   hr = unknown->QueryInterface (IID_IMAPISession, (void**)&session);
-  unknown->Release ();
+  gpgol_release (unknown);
   if (hr != S_OK || !session)
     {
       log_error ("%s:%s: error getting IMAPISession: hr=%#lx",
@@ -688,7 +688,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
   if (!store_entryid)
     {
       log_error ("%s:%s: PR_STORE_ENTRYID missing\n",  SRCNAME, __func__);
-      session->Release ();
+      gpgol_release (session);
       ul_release (folder, __func__, __LINE__);
       return -1;
     }
@@ -701,7 +701,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
     {
       log_error ("%s:%s: OpenMsgStore failed: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      session->Release ();
+      gpgol_release (session);
       ul_release (folder, __func__, __LINE__);
       return -1;
     }
@@ -714,7 +714,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
       log_error ("%s:%s: error getting contents table: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
       ul_release (mdb, __func__, __LINE__);
-      session->Release ();
+      gpgol_release (session);
       ul_release (folder, __func__, __LINE__);
       return -1;
     }
@@ -725,9 +725,9 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
     {
       log_error ("%s:%s: error setting contents table column: hr=%#lx\n", 
                  SRCNAME, __func__, hr);
-      contents->Release ();
+      gpgol_release (contents);
       ul_release (mdb, __func__, __LINE__);
-      session->Release ();
+      gpgol_release (session);
       ul_release (folder, __func__, __LINE__);
       return -1;
     }
@@ -776,7 +776,7 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
             log_debug ("%s:%s: this row has now message object (type=%d)"
                        " - skipped\n",  SRCNAME, __func__, (int)mtype);
 
-          message->Release ();
+          gpgol_release (message);
         }
       FreeProws (rows);
       rows = NULL;
@@ -790,9 +790,9 @@ gpgol_folder_revert (LPDISPATCH mapifolderobj)
       rows = NULL;
     }
 
-  contents->Release ();
+  gpgol_release (contents);
   ul_release (mdb, __func__, __LINE__);
-  session->Release ();
+  gpgol_release (session);
   ul_release (folder, __func__, __LINE__);
   return 0;
 }

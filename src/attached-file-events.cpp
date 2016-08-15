@@ -202,7 +202,7 @@ GpgolAttachedFileEvents::OnWritePattToSzFile
   if (hr)
     {
       log_debug ("%s:%s: Read failed: hr=%#lx", SRCNAME, __func__, hr);
-      stream->Release ();
+      gpgol_release (stream);
       symenc_close (symenc);
       return E_ABORT;
     }
@@ -214,14 +214,14 @@ GpgolAttachedFileEvents::OnWritePattToSzFile
                     "Please use the decrypt/verify button to decrypt the\n"
                     "entire message again.  Then open this attachment."),
                   "GpgOL", MB_ICONERROR|MB_OK);
-      stream->Release ();
+      gpgol_release (stream);
       symenc_close (symenc);
       return E_ABORT;
     }
 
   rc = decrypt_and_write_file (stream, file, symenc);
 
-  stream->Release ();
+  gpgol_release (stream);
   symenc_close (symenc);
   return rc;
 }

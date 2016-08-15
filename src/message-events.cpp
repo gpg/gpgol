@@ -109,7 +109,7 @@ get_crypto_flags (HWND hwnd, bool *r_sign, bool *r_encrypt)
   else
     {
       rc = get_inspector_composer_flags (inspector, r_sign, r_encrypt);
-      inspector->Release ();
+      gpgol_release (inspector);
     }
   return rc;
 }
@@ -218,17 +218,17 @@ GpgolMessageEvents::OnReadComplete (LPEXCHEXTCALLBACK eecb, ULONG flags)
                   if (opt.enable_debug & DBG_OOM)
                     log_debug ("%s:%s: %p->GetInspector returned %p",
                                SRCNAME, __func__, obj, inspector);
-                  obj->Release ();
+                  gpgol_release (obj);
                 }
             }
           message_display_handler (message, inspector, hwnd);
           if (inspector)
-            inspector->Release ();
+            gpgol_release (inspector);
         }
       if (message)
-        message->Release ();
+        gpgol_release (message);
       if (mdb)
-        mdb->Release ();
+        gpgol_release (mdb);
     }
   
 
@@ -265,7 +265,7 @@ GpgolMessageEvents::OnWrite (LPEXCHEXTCALLBACK eecb)
       else
         {
           bodyfmt = get_oom_int (obj, "BodyFormat");
-          obj->Release ();
+          gpgol_release (obj);
         }
 
       if (bodyfmt == 1)

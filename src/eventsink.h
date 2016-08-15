@@ -96,7 +96,7 @@ STDMETHODIMP subcls::Invoke (DISPID dispid, REFIID riid, LCID lcid,      \
   if (m_pCP)                                                             \
     m_pCP->Unadvise(m_cookie);                                           \
   if (m_object)                                                          \
-    m_object->Release();                                                 \
+    gpgol_release (m_object);                                                 \
 }                                                                        \
 /* End of macro EVENT_SINK_DTOR_DEFAULT_CODE.  */
 
@@ -179,18 +179,18 @@ LPDISPATCH install_ ## subcls ## _sink (LPDISPATCH object)               \
     {                                                                    \
       log_error ("%s:%s:%s: ConnectionPoint not found: hr=%#lx",         \
                  SRCNAME,#subcls,  __func__, hr);                        \
-      pCPC->Release ();                                                  \
+      gpgol_release (pCPC);                                                  \
       return NULL;                                                       \
     }                                                                    \
   sink = new subcls; /* Note: Advise does another AddRef.  */            \
   hr = pCP->Advise ((LPUNKNOWN)sink, &cookie);                           \
-  pCPC->Release ();                                                      \
+  gpgol_release (pCPC);                                                      \
   if (hr != S_OK)                                                        \
     {                                                                    \
       log_error ("%s:%s:%s: Advice failed: hr=%#lx",                     \
                  SRCNAME, #subcls, __func__, hr);                        \
-      pCP->Release ();                                                   \
-      sink->Release ();                                                  \
+      gpgol_release (pCP);                                                   \
+      gpgol_release (sink);                                                  \
       return NULL;                                                       \
     }                                                                    \
   if (debug_oom)                                                         \
@@ -226,7 +226,7 @@ void detach_ ## subcls ## _sink (LPDISPATCH obj)                         \
       if (debug_oom_extra)                                               \
         log_debug ("%s:%s:%s: Releasing connt point",                    \
                    SRCNAME, #subcls, __func__);                          \
-      sink->m_pCP->Release ();                                           \
+      gpgol_release (sink->m_pCP);                                           \
       sink->m_pCP = NULL;                                                \
     }                                                                    \
   if (sink->m_object)                                                    \
@@ -234,10 +234,10 @@ void detach_ ## subcls ## _sink (LPDISPATCH obj)                         \
       if (debug_oom_extra)                                               \
         log_debug ("%s:%s:%s: Releasing actual object",                  \
                    SRCNAME, #subcls, __func__);                          \
-      sink->m_object->Release ();                                        \
+      gpgol_release (sink->m_object);                                        \
       sink->m_object = NULL;                                             \
     }                                                                    \
-  sink->Release ();                                                      \
+  gpgol_release (sink);                                                      \
 }                                                                        \
 /* End of macro END_EVENT_SINK.  */
 
