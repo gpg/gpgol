@@ -29,8 +29,12 @@
 #include "revert.h"
 #include "gpgoladdin.h"
 #include "mymapitags.h"
+#include "mailparser.h"
+#include "gpgolstr.h"
 
 #include <map>
+#include <vector>
+#include <memory>
 
 static std::map<LPDISPATCH, Mail*> g_mail_map;
 
@@ -204,8 +208,8 @@ get_cipherstream (LPDISPATCH mailitem)
       log_debug ("%s:%s: More then one attachment count: %i. Continuing anway.",
                  SRCNAME, __func__, count);
     }
-  /* We assume the crypto attachment is the first item. */
-  attachment = get_oom_object (attachments, "Item(1)");
+  /* We assume the crypto attachment is the second item. */
+  attachment = get_oom_object (attachments, "Item(2)");
   gpgol_release (attachments);
   attachments = NULL;
 
@@ -227,41 +231,53 @@ get_cipherstream (LPDISPATCH mailitem)
   return stream;
 }
 
-/** The decryption for mime messages.
-  We get the original attachment table and decrypt the first
-  attachment. Then we replace the body and attachment table
-  with the new contents. */
-int
-Mail::decrypt_mime()
+/** Helper to check if the body should be used for decrypt verify
+  or if the mime Attachment should be used. */
+static bool
+use_body(msgtype_t type)
 {
-  LPSTREAM cipherstream = get_cipherstream(m_mailitem);
-
-  if (!cipherstream)
+  switch (type)
     {
-      log_debug ("%s:%s: Failed to get cipherstream.",
-                 SRCNAME, __func__);
-      return 1;
+      case MSGTYPE_GPGOL_PGP_MESSAGE:
+      case MSGTYPE_GPGOL_CLEAR_SIGNED:
+        return true;
+      default:
+        return false;
     }
-
-  char tmpbuf[33];
-
-  if (put_oom_string (m_mailitem, "HTMLBody", WAIT_TEMPLATE))
-    {
-      log_error ("%s:%s: Failed to modify body of item.",
-                 SRCNAME, __func__);
-    }
-  return 0;
 }
 
-int
-Mail::decrypt()
+/** Helper to update the attachments of a mail object in oom.
+  does not modify the underlying mapi structure. */
+static bool
+add_attachments(LPDISPATCH mail,
+                std::vector<std::shared_ptr<Attachment> > attachments)
 {
-  return 0;
+  for (auto att: attachments)
+    {
+      wchar_t* wchar_name = utf8_to_wchar (att->get_display_name().c_str());
+      log_debug("DisplayName %s", att->get_display_name().c_str());
+      HANDLE hFile;
+      wchar_t* wchar_file = get_tmp_outfile (GpgOLStr("gpgol-attach-"), &hFile);
+      if (add_oom_attachment (mail, wchar_file, wchar_name))
+        {
+          log_debug ("Failed to add attachment.");
+        }
+      CloseHandle (hFile);
+      DeleteFileW (wchar_file);
+      xfree (wchar_file);
+      xfree (wchar_name);
+    }
+  return false;
 }
 
 int
 Mail::decrypt_verify()
 {
+  if (m_type == MSGTYPE_UNKNOWN || m_type == MSGTYPE_GPGOL)
+    {
+      /* Not a message for us. */
+      return 0;
+    }
   if (m_needs_wipe)
     {
       log_error ("%s:%s: Decrypt verify called for msg that needs wipe: %p",
@@ -269,21 +285,69 @@ Mail::decrypt_verify()
       return 0;
     }
 
-  switch (m_type)
+  m_processed = true;
+  /* Do the actual parsing */
+  std::unique_ptr<MailParser> parser;
+  if (!use_body (m_type))
     {
-      case MSGTYPE_UNKNOWN:
-        /* Not a message for us. Ignore. */
-        return 0;
-      case MSGTYPE_GPGOL:
-        log_debug ("%s:%s: ignoring unknown message of original SMIME class\n",
-                   SRCNAME, __func__);
-        break;
-      case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
-        return decrypt_mime();
-      default:
-        log_debug ("%s:%s: Unhandled message class. \n",
-                   SRCNAME, __func__);
+      auto cipherstream = get_cipherstream (m_mailitem);
+
+      if (!cipherstream)
+        {
+          /* TODO Error message? */
+          log_debug ("%s:%s: Failed to get cipherstream.",
+                     SRCNAME, __func__);
+          return 1;
+        }
+
+      parser = std::unique_ptr<MailParser>(new MailParser (cipherstream, m_type));
+      gpgol_release (cipherstream);
     }
+  else
+    {
+      parser = std::unique_ptr<MailParser>();
+    }
+
+  const std::string err = parser->parse();
+  if (!err.empty())
+    {
+      /* TODO Show error message. */
+      log_error ("%s:%s: Failed to parse message: %s",
+                 SRCNAME, __func__, err.c_str());
+      return 1;
+    }
+
+  m_needs_wipe = true;
+  /* Update the body */
+  const auto html = parser->get_utf8_html_body();
+  if (!html->empty())
+    {
+      if (put_oom_string (m_mailitem, "HTMLBody", html->c_str()))
+        {
+          log_error ("%s:%s: Failed to modify html body of item.",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+  else
+    {
+      const auto body = parser->get_utf8_text_body();
+      if (put_oom_string (m_mailitem, "Body", body->c_str()))
+        {
+          log_error ("%s:%s: Failed to modify body of item.",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+
+  /* Update attachments */
+  if (add_attachments (m_mailitem, parser->get_attachments()))
+    {
+      log_error ("%s:%s: Failed to update attachments.",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
   /* Invalidate UI to set the correct sig status. */
   gpgoladdin_invalidate_ui ();
   return 0;
@@ -519,4 +583,10 @@ Mail::is_smime ()
   gpgol_release (message);
   m_is_smime_checked  = true;
   return m_is_smime;
+}
+
+std::string
+Mail::get_subject()
+{
+  return std::string(get_oom_string (m_mailitem, "Subject"));
 }

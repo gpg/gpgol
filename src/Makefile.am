@@ -86,7 +86,8 @@ gpgol_SOURCES = \
 	mlang-charset.cpp mlang-charset.h \
 	gmime-table-private.h \
 	exechelp.c exechelp.h \
-	addin-options.cpp addin-options.h
+	addin-options.cpp addin-options.h \
+	mailparser.cpp mailparser.h
 
 
 #treeview_SOURCES = treeview.c

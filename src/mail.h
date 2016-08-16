@@ -24,6 +24,8 @@
 #include "oomhelp.h"
 #include "mapihelp.h"
 
+#include <string>
+
 /** @brief Data wrapper around a mailitem.
  *
  * This class is intended to bundle all that we know about
@@ -136,6 +138,11 @@ public:
    * @returns A reference to the utf8 sender address. Or NULL. */
   const char *get_sender ();
 
+  /** @brief get the subject string (UTF-8 encoded).
+    *
+    * @returns the subject or an empty string. */
+  std::string get_subject ();
+
   /** @brief Is this a crypto mail handled by gpgol.
   *
   * Calling this is only valid after a message has been processed.
@@ -160,15 +167,6 @@ public:
     * @returns true for smime messages.
     */
   bool is_smime ();
-
-protected:
-  /** @brief do the actual decryption for mime messages.
-    *
-    * @returns true on error. */
-  int decrypt_mime();
-
-  /** @brief decryption helper. */
-  int decrypt();
 
 private:
   LPDISPATCH m_mailitem;
