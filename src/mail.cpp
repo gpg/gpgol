@@ -352,8 +352,7 @@ Mail::wipe ()
   log_debug ("%s:%s: Removing plaintext from mailitem: %p.",
              SRCNAME, __func__, m_mailitem);
   if (put_oom_string (m_mailitem, "HTMLBody",
-                      HTML_TEMPLATE) ||
-      protect_attachments (m_mailitem))
+                      HTML_TEMPLATE))
     {
       log_debug ("%s:%s: Failed to wipe mailitem: %p.",
                  SRCNAME, __func__, m_mailitem);

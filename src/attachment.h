@@ -21,32 +21,44 @@
 #define ATTACHMENT_H
 
 #include <windows.h>
+#include "oomhelp.h"
+#include "mapihelp.h"
+#include <string>
 
-/** Protect attachments so that it can be stored
-  by outlook. This means to symetrically encrypt the
-  data with the session key.
+/** Helper class for attachment actions. */
+class Attachment
+{
+public:
+  /** Creates and opens a new temporary stream. */
+  Attachment();
 
-  This will change the messagetype back to
-  ATTACHTYPE_FROMMOSS it is only supposed to be
-  called on attachments with the Attachmentype
-  ATTACHTYPE_FROMMOSS_DEC.
+  /** Deletes the attachment and the underlying temporary file. */
+  ~Attachment();
 
-  The dispatch paramenter should be a mailitem.
+  /** Get an assoicated ISteam ptr or NULL. */
+  LPSTREAM get_stream();
 
-  Returns 0 on success.
-*/
-int
-protect_attachments (LPDISPATCH mailitem);
+  /** Writes data to the attachment stream.
+   * Calling this method automatically commits the stream.
+   *
+   * Returns 0 on success. */
+  int write(const char *data, size_t size);
 
-/** Remove the symetric session encryption of the attachments.
+  /** Set the display name */
+  void set_display_name(const char *name);
+  std::string get_display_name() const;
 
-  The dispatch paramenter should be a mailitem.
+  std::string get_tmp_file_name() const;
 
-  This will change the messsagetype to
-  ATTACHTYPE_FROMMOSS_DEC it should only be called
-  with attachments of the type ATTACHTYPE_FROMMOSS.
+  void set_attach_type(attachtype_t type);
 
-  Returns 0 on success. */
-int
-unprotect_attachments (LPDISPATCH mailitem);
+  void set_hidden(bool value);
+private:
+  LPSTREAM m_stream;
+  std::string m_utf8FileName;
+  std::string m_utf8DisplayName;
+  attachtype_t m_type;
+  bool m_hidden;
+};
+
 #endif // ATTACHMENT_H
