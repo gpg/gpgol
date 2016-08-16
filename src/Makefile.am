@@ -33,7 +33,7 @@ EXTRA_DIST = \
 EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
-AM_CXXFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
+AM_CXXFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared -std=c++11
 
 gpgol_SOURCES = \
 	main.c  gpgol.def           \

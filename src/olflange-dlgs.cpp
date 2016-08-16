@@ -54,7 +54,7 @@ set_labels (HWND dlg)
 
     { IDC_GPG_OPTIONS,      "Debug..."},
     { IDC_GPG_CONF,         N_("Crypto Engine")},
-    { IDC_VERSION_INFO,  "Version "VERSION},
+    { IDC_VERSION_INFO,  "Version " VERSION},
     { 0, NULL}
   };
   int i;
