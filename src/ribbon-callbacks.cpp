@@ -160,7 +160,7 @@ attachSignature (LPDISPATCH mailItem, char *subject, HANDLE hFileToSign,
     }
 
   /* Now we have an encrypted file behind encryptedFile. Let's add it */
-  add_oom_attachment (mailItem, sigFileName);
+  add_oom_attachment (mailItem, sigFileName, nullptr);
 
 failure:
   xfree (sigFileName);
@@ -1182,7 +1182,7 @@ attachEncryptedFile (LPDISPATCH ctrl, int flags)
     }
 
   /* Now we have an encrypted file behind encryptedFile. Let's add it */
-  add_oom_attachment (mailItem, encryptedFile);
+  add_oom_attachment (mailItem, encryptedFile, nullptr);
 
   if (flags & OP_SIGN)
     {

@@ -151,7 +151,8 @@ char ** get_oom_recipients (LPDISPATCH recipients);
 
 /* Add an attachment to a dispatcher */
 int
-add_oom_attachment (LPDISPATCH disp, wchar_t* inFile);
+add_oom_attachment (LPDISPATCH disp, const wchar_t* inFile,
+                    const wchar_t *displayName);
 
 /* Look up a string with the propertyAccessor interface */
 char *

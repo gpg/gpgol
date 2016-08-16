@@ -1052,7 +1052,8 @@ get_oom_recipients (LPDISPATCH recipients)
    inFile is the path to the attachment. Name is the
    name that should be used in outlook. */
 int
-add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
+add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
+                    const wchar_t* displayName)
 {
   LPDISPATCH attachments = get_oom_object (disp, "Attachments");
 
@@ -1061,15 +1062,10 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
   VARIANT vtResult;
   VARIANT aVariant[4];
   HRESULT hr;
-  BSTR inFileB = NULL;
+  BSTR inFileB = nullptr,
+       dispNameB = nullptr;
   unsigned int argErr = 0;
   EXCEPINFO execpinfo;
-
-  if (!inFileW || !wcslen (inFileW))
-    {
-      log_error ("%s:%s: no filename provided", SRCNAME, __func__);
-      return -1;
-    }
 
   dispid = lookup_oom_dispid (attachments, "Add");
 
@@ -1080,7 +1076,14 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
     return -1;
   }
 
-  inFileB = SysAllocString (inFileW);
+  if (inFileW)
+    {
+      inFileB = SysAllocString (inFileW);
+    }
+  if (displayName)
+    {
+      dispNameB = SysAllocString (displayName);
+    }
 
   dispparams.rgvarg = aVariant;
 
@@ -1088,9 +1091,8 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
      parameter and not the first. Additionally DisplayName
      is documented but gets ignored by Outlook since Outlook
      2003 */
-
   dispparams.rgvarg[0].vt = VT_BSTR; /* DisplayName */
-  dispparams.rgvarg[0].bstrVal = NULL;
+  dispparams.rgvarg[0].bstrVal = dispNameB;
   dispparams.rgvarg[1].vt = VT_INT;  /* Position */
   dispparams.rgvarg[1].intVal = 1;
   dispparams.rgvarg[2].vt = VT_INT;  /* Type */
@@ -1112,7 +1114,10 @@ add_oom_attachment (LPDISPATCH disp, wchar_t* inFileW)
       dump_excepinfo (execpinfo);
     }
 
-  SysFreeString (inFileB);
+  if (inFileB)
+    SysFreeString (inFileB);
+  if (dispNameB)
+    SysFreeString (dispNameB);
   VariantClear (&vtResult);
   gpgol_release (attachments);
 
