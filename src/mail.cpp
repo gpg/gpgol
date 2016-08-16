@@ -161,6 +161,16 @@ Mail::pre_process_message ()
   /* TODO: Unify this so mapi_change_message_class returns
      a useful value already. */
   m_type = mapi_get_message_type (message);
+
+  /* Create moss attachments here so that they are properly
+     hidden when the item is read into the model. */
+  if (mapi_mark_or_create_moss_attach (message, m_type))
+    {
+      log_error ("%s:%s: Failed to find moss attachment.",
+                 SRCNAME, __func__);
+      m_type = MSGTYPE_UNKNOWN;
+    }
+
   gpgol_release (message);
   return 0;
 }
