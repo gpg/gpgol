@@ -673,137 +673,6 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
 }
 
 
-/* Copy the MAPI body to a PGPBODY type attachment. */
-static int
-pgp_body_to_attachment (LPMESSAGE message)
-{
-  HRESULT hr;
-  LPSTREAM instream;
-  ULONG newpos;
-  LPATTACH newatt = NULL;
-  SPropValue prop;
-  LPSTREAM outstream = NULL;
-  LPUNKNOWN punk;
-  GpgOLStr body_filename (PGPBODYFILENAME);
-
-  instream = mapi_get_body_as_stream (message);
-  if (!instream)
-    return -1;
-  
-  hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
-  if (hr)
-    {
-      log_error ("%s:%s: can't create attachment: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-
-  prop.ulPropTag = PR_ATTACH_METHOD;
-  prop.Value.ul = ATTACH_BY_VALUE;
-  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
-  if (hr)
-    {
-      log_error ("%s:%s: can't set attach method: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-
-  /* Mark that attachment so that we know why it has been created.  */
-  if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
-    goto leave;
-  prop.Value.l = ATTACHTYPE_PGPBODY;
-  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);	
-  if (hr)
-    {
-      log_error ("%s:%s: can't set %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Attach Type", hr); 
-      goto leave;
-    }
-
-  prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
-  prop.Value.b = TRUE;
-  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
-  if (hr)
-    {
-      log_error ("%s:%s: can't set hidden attach flag: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-
-  prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = body_filename;
-  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
-  if (hr)
-    {
-      log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-
-  punk = (LPUNKNOWN)outstream;
-  hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
-                             MAPI_CREATE|MAPI_MODIFY, &punk);
-  if (FAILED (hr)) 
-    {
-      log_error ("%s:%s: can't create output stream: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-  outstream = (LPSTREAM)punk;
-
-  /* Insert a blank line so that our mime parser skips over the mail
-     headers.  */
-  hr = outstream->Write ("\r\n", 2, NULL);
-  if (hr)
-    {
-      log_error ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
-      goto leave;
-    }
-
-  {
-    ULARGE_INTEGER cb;
-    cb.QuadPart = 0xffffffffffffffffll;
-    hr = instream->CopyTo (outstream, cb, NULL, NULL);
-  }
-  if (hr)
-    {
-      log_error ("%s:%s: can't copy streams: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-  hr = outstream->Commit (0);
-  if (hr)
-    {
-      log_error ("%s:%s: Commiting output stream failed: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      goto leave;
-    }
-  gpgol_release (outstream);
-  outstream = NULL;
-  hr = newatt->SaveChanges (0);
-  if (hr)
-    {
-      log_error ("%s:%s: SaveChanges of the attachment failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-  gpgol_release (newatt);
-  newatt = NULL;
-  hr = mapi_save_changes (message, KEEP_OPEN_READWRITE);
-
- leave:
-  if (outstream)
-    {
-      outstream->Revert ();
-      gpgol_release (outstream);
-    }
-  if (newatt)
-    gpgol_release (newatt);
-  gpgol_release (instream);
-  return hr? -1:0;
-}
-
-
 /* Decrypt MESSAGE, check signature and update the attachments as
    required.  MSGTYPE should be the type of the message so that the
    function can decide what to do.  With FORCE set the decryption is
@@ -875,7 +744,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
       if (part1_idx == -1)
         {
           mapi_release_attach_table (table);
-          if (pgp_body_to_attachment (message))
+          if (mapi_body_to_attachment (message))
             table = NULL;
           else
             table = mapi_create_attach_table (message, 0);

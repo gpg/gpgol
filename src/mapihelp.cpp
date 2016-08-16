@@ -3363,4 +3363,239 @@ mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item)
   return result;
 }
 
+/* Copy the MAPI body to a PGPBODY type attachment. */
+int
+mapi_body_to_attachment (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSTREAM instream;
+  ULONG newpos;
+  LPATTACH newatt = NULL;
+  SPropValue prop;
+  LPSTREAM outstream = NULL;
+  LPUNKNOWN punk;
+  GpgOLStr body_filename (PGPBODYFILENAME);
 
+  instream = mapi_get_body_as_stream (message);
+  if (!instream)
+    return -1;
+
+  hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
+  if (hr)
+    {
+      log_error ("%s:%s: can't create attachment: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_METHOD;
+  prop.Value.ul = ATTACH_BY_VALUE;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set attach method: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  /* Mark that attachment so that we know why it has been created.  */
+  if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
+    goto leave;
+  prop.Value.l = ATTACHTYPE_PGPBODY;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set %s property: hr=%#lx\n",
+                 SRCNAME, __func__, "GpgOL Attach Type", hr);
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
+  prop.Value.b = TRUE;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set hidden attach flag: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  prop.ulPropTag = PR_ATTACH_FILENAME_A;
+  prop.Value.lpszA = body_filename;
+  hr = HrSetOneProp ((LPMAPIPROP)newatt, &prop);
+  if (hr)
+    {
+      log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  punk = (LPUNKNOWN)outstream;
+  hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                             MAPI_CREATE|MAPI_MODIFY, &punk);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't create output stream: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  outstream = (LPSTREAM)punk;
+
+  /* Insert a blank line so that our mime parser skips over the mail
+     headers.  */
+  hr = outstream->Write ("\r\n", 2, NULL);
+  if (hr)
+    {
+      log_error ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
+      goto leave;
+    }
+
+  {
+    ULARGE_INTEGER cb;
+    cb.QuadPart = 0xffffffffffffffffll;
+    hr = instream->CopyTo (outstream, cb, NULL, NULL);
+  }
+  if (hr)
+    {
+      log_error ("%s:%s: can't copy streams: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  hr = outstream->Commit (0);
+  if (hr)
+    {
+      log_error ("%s:%s: Commiting output stream failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  gpgol_release (outstream);
+  outstream = NULL;
+  hr = newatt->SaveChanges (0);
+  if (hr)
+    {
+      log_error ("%s:%s: SaveChanges of the attachment failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      goto leave;
+    }
+  gpgol_release (newatt);
+  newatt = NULL;
+  hr = mapi_save_changes (message, KEEP_OPEN_READWRITE);
+
+ leave:
+  if (outstream)
+    {
+      outstream->Revert ();
+      gpgol_release (outstream);
+    }
+  if (newatt)
+    gpgol_release (newatt);
+  gpgol_release (instream);
+  return hr? -1:0;
+}
+
+int
+mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
+{
+  int i;
+  if (msgtype == MSGTYPE_UNKNOWN ||
+      msgtype == MSGTYPE_GPGOL)
+    {
+      return 0;
+    }
+
+  /* First check if we already have one marked. */
+  mapi_attach_item_t *table = mapi_create_attach_table (message, 0);
+  for (i = 0; table && !table[i].end_of_table; i++)
+    {
+      if (table[i].attach_type == ATTACHTYPE_PGPBODY ||
+          table[i].attach_type == ATTACHTYPE_MOSS ||
+          table[i].attach_type == ATTACHTYPE_MOSSTEMPL)
+        {
+          /* Found existing moss attachment */
+          mapi_release_attach_table (table);
+          return 0;
+        }
+    }
+
+  if (msgtype == MSGTYPE_GPGOL_CLEAR_SIGNED ||
+      msgtype == MSGTYPE_GPGOL_PGP_MESSAGE)
+    {
+      /* Inline message we need to create body attachment so that we
+         are able to restore the content. */
+      return mapi_body_to_attachment (message);
+    }
+  if (!table)
+    {
+      log_debug ("%s:%s: Neither pgp inline nor an attachment table.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  /* MIME Mails check for S/MIME first. */
+  for (i = 0; !table[i].end_of_table; i++)
+    {
+      if (table[i].content_type
+          && (!strcmp (table[i].content_type, "application/pkcs7-mime")
+              || !strcmp (table[i].content_type,
+                          "application/x-pkcs7-mime"))
+          && table[i].filename
+          && !strcmp (table[i].filename, "smime.p7m"))
+        break;
+    }
+  if (!table[i].end_of_table)
+    {
+      mapi_mark_moss_attach (message, table + i);
+      mapi_release_attach_table (table);
+      return 0;
+    }
+
+  /* PGP/MIME or S/MIME stuff.  */
+  /* Multipart/encrypted message: We expect 2 attachments.
+     The first one with the version number and the second one
+     with the ciphertext.  As we don't know wether we are
+     called the first time, we first try to find these
+     attachments by looking at all attachments.  Only if this
+     fails we identify them by their order (i.e. the first 2
+     attachments) and mark them as part1 and part2.  */
+  for (i = 0; !table[i].end_of_table; i++); /* Count entries */
+  if (i >= 2)
+    {
+      int part1_idx = -1,
+          part2_idx = -1;
+      /* At least 2 attachments but none are marked.  Thus we
+         assume that this is the first time we see this
+         message and we will set the mark now if we see
+         appropriate content types. */
+      if (table[0].content_type
+          && !strcmp (table[0].content_type,
+                      "application/pgp-encrypted"))
+        part1_idx = 0;
+      if (table[1].content_type
+          && !strcmp (table[1].content_type,
+                      "application/octet-stream"))
+        part2_idx = 1;
+      if (part1_idx != -1 && part2_idx != -1)
+        {
+          mapi_mark_moss_attach (message, table+part1_idx);
+          mapi_mark_moss_attach (message, table+part2_idx);
+          mapi_release_attach_table (table);
+          return 0;
+        }
+    }
+
+  if (!table[0].end_of_table && table[1].end_of_table)
+    {
+      /* No MOSS flag found in the table but there is only one
+         attachment.  Due to the message type we know that this is
+         the original MOSS message.  We mark this attachment as
+         hidden, so that it won't get displayed.  We further mark
+         it as our original MOSS attachment so that after parsing
+         we have a mean to find it again (see above).  */
+      mapi_mark_moss_attach (message, table + 0);
+      mapi_release_attach_table (table);
+      return 0;
+    }
+
+   mapi_release_attach_table (table);
+   return -1; /* No original attachment - this should not happen.  */
+}
