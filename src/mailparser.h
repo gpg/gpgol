@@ -24,11 +24,14 @@
 
 #include "oomhelp.h"
 #include "mapihelp.h"
-#include "gpgme.h"
 
 #include <string>
 #include <vector>
 #include <memory>
+
+#include <gpgme++/decryptionresult.h>
+#include <gpgme++/verificationresult.h>
+#include <gpgme++/data.h>
 
 class Attachment;
 
@@ -65,17 +68,11 @@ private:
   std::shared_ptr<std::string> m_htmlbody;
 
   /* State variables */
-  LPSTREAM m_stream;
+  GpgME::Data m_input;
   msgtype_t m_type;
   bool m_error;
-  bool m_in_data;
-  gpgme_data_t signed_data;/* NULL or the data object used to collect
-                              the signed data. It would be better to
-                              just hash it but there is no support in
-                              gpgme for this yet. */
-  gpgme_data_t sig_data;  /* NULL or data object to collect the
-                             signature attachment which should be a
-                             signature then.  */
+  GpgME::DecryptionResult m_decrypt_result;
+  GpgME::VerificationResult m_verify_result;
 };
 
 #endif /* MAILPARSER_H */

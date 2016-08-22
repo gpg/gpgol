@@ -162,6 +162,13 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 
       gpg_err_init ();
 
+      /* Set the installation directory for GpgME so that
+         it can find tools like gpgme-w32-spawn correctly. */
+      char *instdir;
+      gpgrt_asprintf (&instdir, "%s\\bin", get_gpg4win_dir ());
+      gpgme_set_global_flag ("w32-inst-dir", instdir);
+      xfree (instdir);
+
       /* The next call initializes subsystems of gpgme and should be
          done as early as possible.  The actual return value (the
          version string) is not used here.  It may be called at any

@@ -25,7 +25,9 @@
 #include "mapihelp.h"
 #include "gpgolstr.h"
 
+#include <climits>
 #include <gpg-error.h>
+#include <gpgme++/error.h>
 
 Attachment::Attachment()
 {
@@ -40,6 +42,15 @@ Attachment::Attachment()
                  SRCNAME, __func__, hr);
       m_stream = NULL;
     }
+}
+
+Attachment::Attachment(LPSTREAM stream)
+{
+  if (stream)
+    {
+      stream->AddRef ();
+    }
+  m_stream = stream;
 }
 
 Attachment::~Attachment()
@@ -60,12 +71,6 @@ Attachment::get_display_name() const
   return m_utf8DisplayName;
 }
 
-std::string
-Attachment::get_tmp_file_name() const
-{
-  return m_utf8FileName;
-}
-
 void
 Attachment::set_display_name(const char *name)
 {
@@ -78,26 +83,129 @@ Attachment::set_attach_type(attachtype_t type)
   m_type = type;
 }
 
-void
-Attachment::set_hidden(bool value)
+bool
+Attachment::isSupported(GpgME::DataProvider::Operation op) const
 {
-  m_hidden = value;
+  return op == GpgME::DataProvider::Read ||
+         op == GpgME::DataProvider::Write ||
+         op == GpgME::DataProvider::Seek ||
+         op == GpgME::DataProvider::Release;
 }
 
-int
-Attachment::write(const char *data, size_t size)
+ssize_t
+Attachment::read(void *buffer, size_t bufSize)
 {
-  if (!data || !size)
+  if (!bufSize)
     {
       return 0;
     }
-  if (!m_stream && m_stream->Write (data, size, NULL) != S_OK)
+  if (!buffer || bufSize >= ULONG_MAX)
     {
-      return 1;
+      log_error ("%s:%s: Read invalid",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EINVAL);
+      return -1;
+    }
+  if (!m_stream)
+    {
+      log_error ("%s:%s: Read on null stream.",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EIO);
+      return -1;
+    }
+
+  ULONG cb = static_cast<size_t> (bufSize);
+  ULONG bRead = 0;
+  HRESULT hr = m_stream->Read (buffer, cb, &bRead);
+  if (hr != S_OK && hr != S_FALSE)
+    {
+      log_error ("%s:%s: Read failed",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EIO);
+      return -1;
+    }
+  return static_cast<size_t>(bRead);
+}
+
+ssize_t
+Attachment::write(const void *data, size_t size)
+{
+  if (!size)
+    {
+      return 0;
+    }
+  if (!data || size >= ULONG_MAX)
+    {
+      GpgME::Error::setSystemError (GPG_ERR_EINVAL);
+      return -1;
+    }
+  if (!m_stream)
+    {
+      log_error ("%s:%s: Write on NULL stream. ",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EIO);
+      return -1;
+    }
+  ULONG written = 0;
+  if (m_stream->Write (data, static_cast<ULONG>(size), &written) != S_OK)
+    {
+      GpgME::Error::setSystemError (GPG_ERR_EIO);
+      log_error ("%s:%s: Write failed.",
+                 SRCNAME, __func__);
+      return -1;
     }
   if (m_stream->Commit (0) != S_OK)
     {
-      return 1;
+      log_error ("%s:%s: Commit failed. ",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EIO);
+      return -1;
     }
-  return 0;
+  return static_cast<ssize_t> (written);
+}
+
+off_t Attachment::seek(off_t offset, int whence)
+{
+  DWORD dwOrigin;
+  switch (whence)
+    {
+      case SEEK_SET:
+          dwOrigin = STREAM_SEEK_SET;
+          break;
+      case SEEK_CUR:
+          dwOrigin = STREAM_SEEK_CUR;
+          break;
+      case SEEK_END:
+          dwOrigin = STREAM_SEEK_END;
+          break;
+      default:
+          GpgME::Error::setSystemError (GPG_ERR_EINVAL);
+          return (off_t) - 1;
+   }
+  if (!m_stream)
+    {
+      log_error ("%s:%s: Seek on null stream.",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EIO);
+      return (off_t) - 1;
+    }
+  LARGE_INTEGER move = {0, 0};
+  move.QuadPart = offset;
+  ULARGE_INTEGER result;
+  HRESULT hr = m_stream->Seek (move, dwOrigin, &result);
+
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: Seek failed. ",
+                 SRCNAME, __func__);
+      GpgME::Error::setSystemError (GPG_ERR_EINVAL);
+      return (off_t) - 1;
+    }
+  return result.QuadPart;
+}
+
+void Attachment::release()
+{
+  /* No op. */
+  log_debug ("%s:%s", SRCNAME, __func__);
 }

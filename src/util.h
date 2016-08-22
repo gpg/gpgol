@@ -96,6 +96,8 @@ void log_window_hierarchy (HWND window, const char *fmt,
 
 #define log_oom if (opt.enable_debug & DBG_OOM) log_debug
 #define log_oom_extra if (opt.enable_debug & DBG_OOM_EXTRA) log_debug
+#define log_mime_parser if (opt.enable_debug & DBG_MIME_PARSER) log_debug
+
 #define gpgol_release(X) \
 { \
   if (X && opt.enable_debug & DBG_OOM_EXTRA) \

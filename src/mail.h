@@ -25,6 +25,9 @@
 #include "mapihelp.h"
 
 #include <string>
+#include <future>
+
+class MailParser;
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -56,6 +59,13 @@ public:
     could be found.
   */
   static Mail* get_mail_for_item (LPDISPATCH mailitem);
+
+  /** @brief looks for existing Mail objects.
+
+    @returns A reference to an existing mailitem or NULL in case none
+    could be found. Can be used to check if a mail object was destroyed.
+  */
+  static bool is_mail_valid (const Mail *mail);
 
   /** @brief wipe the plaintext from all known Mail objects.
     *
@@ -168,6 +178,22 @@ public:
     */
   bool is_smime ();
 
+  /** @brief closes the inspector for this mail
+    *
+    * @returns true on success.
+  */
+  int close_inspector ();
+
+  /** @brief get the associated parser.
+    only valid while the actual parsing happens. */
+  MailParser *parser () { return m_parser; }
+
+  /** To be called from outside once the paser was done.
+   In Qt this would be a slot that is called once it is finished
+   we hack around that a bit by calling it from our windowmessages
+   handler.
+  */
+  void parsing_done ();
 private:
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
@@ -177,7 +203,9 @@ private:
        m_crypt_successful, /* We successfuly performed crypto on the item. */
        m_is_smime, /* This is an smime mail. */
        m_is_smime_checked; /* it was checked if this is an smime mail */
+  int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */
+  MailParser *m_parser;
 };
 #endif // MAIL_H

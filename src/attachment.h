@@ -1,6 +1,6 @@
-/* attachment.h - Functions for attachment handling
+/* attachment.h - Wrapper class for attachments
  *    Copyright (C) 2005, 2007 g10 Code GmbH
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015, 2016 Intevation GmbH
  *
  * This file is part of GpgOL.
  *
@@ -25,12 +25,17 @@
 #include "mapihelp.h"
 #include <string>
 
+#include <gpgme++/interfaces/dataprovider.h>
+
 /** Helper class for attachment actions. */
-class Attachment
+class Attachment : public GpgME::DataProvider
 {
 public:
   /** Creates and opens a new temporary stream. */
   Attachment();
+
+  /** Creates the attachment wrapper for an existing stream. */
+  Attachment(LPSTREAM stream);
 
   /** Deletes the attachment and the underlying temporary file. */
   ~Attachment();
@@ -38,27 +43,23 @@ public:
   /** Get an assoicated ISteam ptr or NULL. */
   LPSTREAM get_stream();
 
-  /** Writes data to the attachment stream.
-   * Calling this method automatically commits the stream.
-   *
-   * Returns 0 on success. */
-  int write(const char *data, size_t size);
-
   /** Set the display name */
   void set_display_name(const char *name);
   std::string get_display_name() const;
 
-  std::string get_tmp_file_name() const;
-
   void set_attach_type(attachtype_t type);
 
-  void set_hidden(bool value);
+  /* Dataprovider interface */
+  bool isSupported(Operation) const;
+  ssize_t read(void *buffer, size_t bufSize);
+  ssize_t write(const void *buffer, size_t bufSize);
+  off_t seek(off_t offset, int whence);
+  void release();
+
 private:
   LPSTREAM m_stream;
-  std::string m_utf8FileName;
   std::string m_utf8DisplayName;
   attachtype_t m_type;
-  bool m_hidden;
 };
 
 #endif // ATTACHMENT_H

@@ -1,7 +1,28 @@
+/* @file windowmessages.h
+ * @brief Helper class to work with the windowmessage handler thread.
+ *
+ *    Copyright (C) 2015, 2016 Intevation GmbH
+ *
+ * This file is part of GpgOL.
+ *
+ * GpgOL is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * GpgOL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
 #include "windowmessages.h"
 
 #include "util.h"
 #include "oomhelp.h"
+#include "mail.h"
 
 #include <stdio.h>
 
@@ -39,10 +60,21 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               ctx->err = request_send_mail ((LPDISPATCH) ctx->data);
               break;
             }
+          case (PARSING_DONE):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_mail_valid (mail))
+                {
+                  log_debug ("%s:%s: Parsing done for mail which is gone.",
+                             SRCNAME, __func__);
+                }
+              mail->parsing_done();
+            }
+          break;
           default:
             log_debug ("Unknown msg");
         }
-        return 0;
+        return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
   return DefWindowProc(hWnd, message, wParam, lParam);

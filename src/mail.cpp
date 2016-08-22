@@ -31,6 +31,7 @@
 #include "mymapitags.h"
 #include "mailparser.h"
 #include "gpgolstr.h"
+#include "windowmessages.h"
 
 #include <map>
 #include <vector>
@@ -87,6 +88,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypt_successful(false),
     m_is_smime(false),
     m_is_smime_checked(false),
+    m_moss_position(0),
     m_sender(NULL),
     m_type(MSGTYPE_UNKNOWN)
 {
@@ -142,6 +144,19 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
   return it->second;
 }
 
+bool
+Mail::is_mail_valid (const Mail *mail)
+{
+  auto it = g_mail_map.begin();
+  while (it != g_mail_map.end())
+    {
+      if (it->second == mail)
+        return true;
+      ++it;
+    }
+  return false;
+}
+
 int
 Mail::pre_process_message ()
 {
@@ -168,7 +183,8 @@ Mail::pre_process_message ()
 
   /* Create moss attachments here so that they are properly
      hidden when the item is read into the model. */
-  if (mapi_mark_or_create_moss_attach (message, m_type))
+  m_moss_position = mapi_mark_or_create_moss_attach (message, m_type);
+  if (!m_moss_position)
     {
       log_error ("%s:%s: Failed to find moss attachment.",
                  SRCNAME, __func__);
@@ -181,7 +197,7 @@ Mail::pre_process_message ()
 
 /** Get the cipherstream of the mailitem. */
 static LPSTREAM
-get_cipherstream (LPDISPATCH mailitem)
+get_cipherstream (LPDISPATCH mailitem, int pos)
 {
   LPDISPATCH attachments = get_oom_object (mailitem, "Attachments");
   LPDISPATCH attachment = NULL;
@@ -203,13 +219,9 @@ get_cipherstream (LPDISPATCH mailitem)
       gpgol_release (attachments);
       return NULL;
     }
-  if (count > 1)
-    {
-      log_debug ("%s:%s: More then one attachment count: %i. Continuing anway.",
-                 SRCNAME, __func__, count);
-    }
   /* We assume the crypto attachment is the second item. */
-  attachment = get_oom_object (attachments, "Item(2)");
+  const auto item_str = std::string("Item(") + std::to_string(pos) + ")";
+  attachment = get_oom_object (attachments, item_str.c_str());
   gpgol_release (attachments);
   attachments = NULL;
 
@@ -229,21 +241,6 @@ get_cipherstream (LPDISPATCH mailitem)
       gpgol_release (mapi_attachment);
     }
   return stream;
-}
-
-/** Helper to check if the body should be used for decrypt verify
-  or if the mime Attachment should be used. */
-static bool
-use_body(msgtype_t type)
-{
-  switch (type)
-    {
-      case MSGTYPE_GPGOL_PGP_MESSAGE:
-      case MSGTYPE_GPGOL_CLEAR_SIGNED:
-        return true;
-      default:
-        return false;
-    }
 }
 
 /** Helper to update the attachments of a mail object in oom.
@@ -270,6 +267,19 @@ add_attachments(LPDISPATCH mail,
   return false;
 }
 
+static DWORD WINAPI
+do_parsing (LPVOID arg)
+{
+  log_debug ("%s:%s: starting parsing for: %p",
+             SRCNAME, __func__, arg);
+
+  Mail *mail = (Mail *)arg;
+  auto parser = mail->parser();
+  parser->parse();
+  do_in_ui_thread (PARSING_DONE, arg);
+  return 0;
+}
+
 int
 Mail::decrypt_verify()
 {
@@ -282,75 +292,75 @@ Mail::decrypt_verify()
     {
       log_error ("%s:%s: Decrypt verify called for msg that needs wipe: %p",
                  SRCNAME, __func__, m_mailitem);
-      return 0;
-    }
-
-  m_processed = true;
-  /* Do the actual parsing */
-  std::unique_ptr<MailParser> parser;
-  if (!use_body (m_type))
-    {
-      auto cipherstream = get_cipherstream (m_mailitem);
-
-      if (!cipherstream)
-        {
-          /* TODO Error message? */
-          log_debug ("%s:%s: Failed to get cipherstream.",
-                     SRCNAME, __func__);
-          return 1;
-        }
-
-      parser = std::unique_ptr<MailParser>(new MailParser (cipherstream, m_type));
-      gpgol_release (cipherstream);
-    }
-  else
-    {
-      parser = std::unique_ptr<MailParser>();
-    }
-
-  const std::string err = parser->parse();
-  if (!err.empty())
-    {
-      /* TODO Show error message. */
-      log_error ("%s:%s: Failed to parse message: %s",
-                 SRCNAME, __func__, err.c_str());
       return 1;
     }
 
+  m_processed = true;
+  /* Inser placeholder */
+  if (put_oom_string (m_mailitem, "HTMLBody", WAIT_TEMPLATE))
+    {
+      log_error ("%s:%s: Failed to modify html body of item.",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  /* Do the actual parsing */
+  auto cipherstream = get_cipherstream (m_mailitem, m_moss_position);
+
+  if (!cipherstream)
+    {
+      /* TODO Error message? */
+      log_debug ("%s:%s: Failed to get cipherstream.",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  m_parser = new MailParser (cipherstream, m_type);
+  gpgol_release (cipherstream);
+
+  CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
+                NULL);
+  return 0;
+}
+
+void Mail::parsing_done()
+{
   m_needs_wipe = true;
   /* Update the body */
-  const auto html = parser->get_utf8_html_body();
+  const auto html = m_parser->get_utf8_html_body();
   if (!html->empty())
     {
       if (put_oom_string (m_mailitem, "HTMLBody", html->c_str()))
         {
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
-          return 1;
+          return;
         }
     }
   else
     {
-      const auto body = parser->get_utf8_text_body();
+      const auto body = m_parser->get_utf8_text_body();
       if (put_oom_string (m_mailitem, "Body", body->c_str()))
         {
           log_error ("%s:%s: Failed to modify body of item.",
                      SRCNAME, __func__);
-          return 1;
+          return;
         }
     }
 
   /* Update attachments */
-  if (add_attachments (m_mailitem, parser->get_attachments()))
+  if (add_attachments (m_mailitem, m_parser->get_attachments()))
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
-      return 1;
+      return;
     }
 
   /* Invalidate UI to set the correct sig status. */
+  delete m_parser;
+  m_parser = nullptr;
   gpgoladdin_invalidate_ui ();
-  return 0;
+  return;
 }
 
 int
@@ -493,7 +503,7 @@ Mail::revert_all_mails ()
     {
       if (it->second->revert ())
         {
-          log_error ("Failed to wipe mail: %p ", it->first);
+          log_error ("Failed to revert mail: %p ", it->first);
           err++;
         }
     }
@@ -519,14 +529,13 @@ Mail::wipe_all_mails ()
 int
 Mail::revert ()
 {
-  int err;
+  int err = 0;
   if (!m_processed)
     {
       return 0;
     }
 
   err = gpgol_mailitem_revert (m_mailitem);
-
   if (err == -1)
     {
       log_error ("%s:%s: Message revert failed falling back to wipe.",
@@ -589,4 +598,42 @@ std::string
 Mail::get_subject()
 {
   return std::string(get_oom_string (m_mailitem, "Subject"));
+}
+
+int
+Mail::close_inspector ()
+{
+  LPDISPATCH inspector = get_oom_object (m_mailitem, "GetInspector");
+  HRESULT hr;
+  DISPID dispid;
+  if (!inspector)
+    {
+      log_debug ("%s:%s: No inspector.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  dispid = lookup_oom_dispid (inspector, "Close");
+  if (dispid != DISPID_UNKNOWN)
+    {
+      VARIANT aVariant[1];
+      DISPPARAMS dispparams;
+
+      dispparams.rgvarg = aVariant;
+      dispparams.rgvarg[0].vt = VT_INT;
+      dispparams.rgvarg[0].intVal = 1;
+      dispparams.cArgs = 1;
+      dispparams.cNamedArgs = 0;
+
+      hr = inspector->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                              DISPATCH_METHOD, &dispparams,
+                              NULL, NULL, NULL);
+      if (hr != S_OK)
+        {
+          log_debug ("%s:%s: Failed to close inspector: %#lx",
+                     SRCNAME, __func__, hr);
+          return -1;
+        }
+    }
+  return 0;
 }
