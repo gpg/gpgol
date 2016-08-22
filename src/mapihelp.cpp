@@ -3505,16 +3505,32 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
 
   /* First check if we already have one marked. */
   mapi_attach_item_t *table = mapi_create_attach_table (message, 0);
+  int part1 = 0,
+      part2 = 0;
   for (i = 0; table && !table[i].end_of_table; i++)
     {
       if (table[i].attach_type == ATTACHTYPE_PGPBODY ||
           table[i].attach_type == ATTACHTYPE_MOSS ||
           table[i].attach_type == ATTACHTYPE_MOSSTEMPL)
         {
-          /* Found existing moss attachment */
-          mapi_release_attach_table (table);
-          return 0;
+          if (!part1)
+            {
+              part1 = i + 1;
+            }
+          else if (!part2)
+            {
+              /* If we have two MOSS attachments we use
+                 the second one. */
+              part2 = i + 1;
+              break;
+            }
         }
+    }
+  if (part1 || part2)
+    {
+      /* Found existing moss attachment */
+      mapi_release_attach_table (table);
+      return part2;
     }
 
   if (msgtype == MSGTYPE_GPGOL_CLEAR_SIGNED ||
@@ -3522,13 +3538,19 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
     {
       /* Inline message we need to create body attachment so that we
          are able to restore the content. */
-      return mapi_body_to_attachment (message);
+      if (mapi_body_to_attachment (message))
+        {
+          log_error ("%s:%s: Failed to create body attachment.",
+                     SRCNAME, __func__);
+          return 0;
+        }
+      return 1;
     }
   if (!table)
     {
       log_debug ("%s:%s: Neither pgp inline nor an attachment table.",
                  SRCNAME, __func__);
-      return -1;
+      return 0;
     }
 
   /* MIME Mails check for S/MIME first. */
@@ -3546,7 +3568,7 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
     {
       mapi_mark_moss_attach (message, table + i);
       mapi_release_attach_table (table);
-      return 0;
+      return i + 1;
     }
 
   /* PGP/MIME or S/MIME stuff.  */
@@ -3579,7 +3601,7 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
           mapi_mark_moss_attach (message, table+part1_idx);
           mapi_mark_moss_attach (message, table+part2_idx);
           mapi_release_attach_table (table);
-          return 0;
+          return 2;
         }
     }
 
@@ -3593,9 +3615,9 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
          we have a mean to find it again (see above).  */
       mapi_mark_moss_attach (message, table + 0);
       mapi_release_attach_table (table);
-      return 0;
+      return 1;
     }
 
    mapi_release_attach_table (table);
-   return -1; /* No original attachment - this should not happen.  */
+   return 0; /* No original attachment - this should not happen.  */
 }
