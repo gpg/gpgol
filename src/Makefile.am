@@ -34,6 +34,7 @@ EXEEXT = .dll
 
 AM_CFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
 AM_CXXFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared -std=c++11
+AM_CXXFLAGS += $(GPGMEPP_CXXFLAGS)
 
 gpgol_SOURCES = \
 	main.c  gpgol.def           \
@@ -98,7 +99,7 @@ gpgol_SOURCES = \
 # versions of GPGME and gpg-error, because we want to link to them
 # statically, and not dynamically (otherwise Outlook would not find
 # them).
-gpgol_DEPENDENCIES = libmapi32.a libgpg-error.a libgpgme.a libassuan.a
+gpgol_DEPENDENCIES = libmapi32.a libgpg-error.a libgpgme.a libassuan.a libgpgmepp.a
 
 if BUILD_W64
   DLLTOOLFLAGS64=--as-flags=--64 -m i386:x86-64
@@ -116,13 +117,16 @@ libgpgme.a:
 libassuan.a:
 	ln -s $$($(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a .
 
+libgpgmepp.a:
+	ln -s $$($(LIBASSUAN_CONFIG) --prefix)/lib/libgpgmepp.a .
+
 clean-local:
-	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a
+	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a libgpgmepp.a
 
 gpgol_LDFLAGS = -static-libgcc -static-libstdc++
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
-	-L . -lgpgme -lassuan -lgpg-error \
+	-L . -lgpgmepp -lgpgme -lassuan -lgpg-error \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
 	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
 	-luuid -lgdiplus

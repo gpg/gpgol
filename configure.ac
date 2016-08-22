@@ -166,6 +166,7 @@ AM_CONDITIONAL(BUILD_W64, test "$host" = "x86_64-w64-mingw32")
 
 AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
                have_gpgme=yes,have_gpgme=no)
+AM_PATH_GPGMEPP(have_gpgmepp=yes,have_gpgmepp=no)
 AM_PATH_GPG_ERROR("$NEED_GPG_ERROR_VERSION",
                   have_gpg_error=yes,have_gpg_error=no)
 AC_DEFINE(GPG_ERR_SOURCE_DEFAULT, GPG_ERR_SOURCE_USER_2,
@@ -270,6 +271,14 @@ if test "$have_gpgme" = "no"; then
 **  This library is for example available at
 ***   ftp://ftp.gnupg.org/gcrypt/gpgme/
 *** (at least version $NEED_GPGME_VERSION is required.)
+***]])
+fi
+if test "$have_gpgmepp" = "no"; then
+   die=yes
+   AC_MSG_NOTICE([[
+***
+*** You need the C++ language binding for gpgme to build this program.
+** Ensure that GPGME was compiled with --enabled-languages=cpp
 ***]])
 fi
 if test "$have_libassuan" = "no"; then

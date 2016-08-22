@@ -98,6 +98,31 @@ AC_DEFUN([AM_PATH_GPGME],
   AC_SUBST(GPGME_LIBS)
 ])
 
+dnl AM_PATH_GPGMEPP([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND ]]])
+dnl Test for libgpgme and define GPGME_CFLAGS and GPGME_LIBS.
+dnl
+AC_DEFUN([AM_PATH_GPGMEPP],
+[ AC_REQUIRE([_AM_PATH_GPGME_CONFIG])dnl
+  AC_MSG_CHECKING(for GPGME C++ Bindings)
+  ok=no
+  if $GPGME_CONFIG --have-lang=cpp 2>/dev/null ; then
+     ok=yes
+  fi
+  if test $ok = yes; then
+    GPGMEPP_CXXFLAGS="-I `$GPGME_CONFIG --prefix`/include/gpgme++"
+    GPGMEPP_CXXFLAGS="${GPGMEPP_CXXFLAGS} -DGPGMEPP_STATIC_DEFINE"
+    AC_MSG_RESULT(yes)
+    ifelse([$1], , :, [$1])
+  else
+    GPGMEPP_CFLAGS=""
+    GPGMEPP_LIBS=""
+    AC_MSG_RESULT(no)
+    ifelse([$2], , :, [$2])
+  fi
+  AC_SUBST(GPGMEPP_CXXFLAGS)
+  AC_SUBST(GPGMEPP_LIBS)
+])
+
 dnl AM_PATH_GPGME_PTH([MINIMUM-VERSION,
 dnl                   [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND ]]])
 dnl Test for libgpgme and define GPGME_PTH_CFLAGS and GPGME_PTH_LIBS.
