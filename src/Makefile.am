@@ -88,7 +88,7 @@ gpgol_SOURCES = \
 	gmime-table-private.h \
 	exechelp.c exechelp.h \
 	addin-options.cpp addin-options.h \
-	mailparser.cpp mailparser.h \
+	parsecontroller.cpp parsecontroller.h \
 	mimedataprovider.cpp mimedataprovider.h
 
 

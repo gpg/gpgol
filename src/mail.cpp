@@ -29,7 +29,7 @@
 #include "revert.h"
 #include "gpgoladdin.h"
 #include "mymapitags.h"
-#include "mailparser.h"
+#include "parsecontroller.h"
 #include "gpgolstr.h"
 #include "windowmessages.h"
 
@@ -315,7 +315,7 @@ Mail::decrypt_verify()
       return 1;
     }
 
-  m_parser = new MailParser (cipherstream, m_type);
+  m_parser = new ParseController (cipherstream, m_type);
   gpgol_release (cipherstream);
 
   CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,

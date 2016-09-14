@@ -1,4 +1,4 @@
-/* @file mailparser.cpp
+/* @file parsecontroller.cpp
  * @brief Parse a mail and decrypt / verify accordingly
  *
  *    Copyright (C) 2016 Intevation GmbH
@@ -21,7 +21,7 @@
 #include "config.h"
 #include "common.h"
 
-#include "mailparser.h"
+#include "parsecontroller.h"
 #include "attachment.h"
 #include "mimedataprovider.h"
 
@@ -32,7 +32,7 @@
 
 using namespace GpgME;
 
-MailParser::MailParser(LPSTREAM instream, msgtype_t type):
+ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_inputprovider  (new MimeDataProvider(instream)),
     m_outputprovider (new MimeDataProvider()),
     m_type (type),
@@ -42,7 +42,7 @@ MailParser::MailParser(LPSTREAM instream, msgtype_t type):
                    SRCNAME, __func__, instream);
 }
 
-MailParser::~MailParser()
+ParseController::~ParseController()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
   delete m_inputprovider;
@@ -83,7 +83,7 @@ operation_for_type(msgtype_t type, bool *decrypt,
 }
 
 std::string
-MailParser::parse()
+ParseController::parse()
 {
   // Wrap the input stream in an attachment / GpgME Data
   Protocol protocol;
@@ -140,7 +140,7 @@ MailParser::parse()
 }
 
 const std::string
-MailParser::get_html_body() const
+ParseController::get_html_body() const
 {
   if (m_outputprovider)
     {
@@ -153,7 +153,7 @@ MailParser::get_html_body() const
 }
 
 const std::string
-MailParser::get_body() const
+ParseController::get_body() const
 {
   if (m_outputprovider)
     {
@@ -166,7 +166,7 @@ MailParser::get_body() const
 }
 
 std::vector<std::shared_ptr<Attachment> >
-MailParser::get_attachments() const
+ParseController::get_attachments() const
 {
   if (m_outputprovider)
     {

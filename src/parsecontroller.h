@@ -1,5 +1,5 @@
-/* @file mailparser.h
- * @brief Parse a mail and decrypt / verify accordingly
+/* @file parsecontroller.h
+ * @brief Controll the parsing and decrypt / verify of a mail
  *
  *    Copyright (C) 2016 Intevation GmbH
  *
@@ -19,8 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MAILPARSER_H
-#define MAILPARSER_H
+#ifndef PARSECONTROLLER_H
+#define PARSECONTROLLER_H
 
 #include "oomhelp.h"
 #include "mapihelp.h"
@@ -36,19 +36,19 @@
 class Attachment;
 class MimeDataProvider;
 
-class MailParser
+class ParseController
 {
 public:
-  /** Construct a new MailParser for the stream instream.
+  /** Construct a new ParseController for the stream instream.
     instream is expected to point to a mime mail.
     Adds a reference to the stream and releases it on
     destruction. */
-  MailParser(LPSTREAM instream, msgtype_t type);
-  ~MailParser();
+  ParseController(LPSTREAM instream, msgtype_t type);
+  ~ParseController();
 
-  /** Construct a new MailParser for an inline message where
+  /** Construct a new ParseController for an inline message where
     the content is pointet to by body.
-  MailParser(const char *body, msgtype_t type);
+  ParseController(const char *body, msgtype_t type);
   */
   /** Main entry point. Parses the Mail returns an
     * empty string on success or an error message on failure. */
@@ -73,4 +73,4 @@ private:
   GpgME::VerificationResult m_verify_result;
 };
 
-#endif /* MAILPARSER_H */
+#endif /* PARSECONTROLLER_H */

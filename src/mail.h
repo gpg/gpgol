@@ -27,7 +27,7 @@
 #include <string>
 #include <future>
 
-class MailParser;
+class ParseController;
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -186,7 +186,7 @@ public:
 
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
-  MailParser *parser () { return m_parser; }
+  ParseController *parser () { return m_parser; }
 
   /** To be called from outside once the paser was done.
    In Qt this would be a slot that is called once it is finished
@@ -206,6 +206,6 @@ private:
   int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */
-  MailParser *m_parser;
+  ParseController *m_parser;
 };
 #endif // MAIL_H
