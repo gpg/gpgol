@@ -22,12 +22,13 @@
 #ifndef PARSECONTROLLER_H
 #define PARSECONTROLLER_H
 
-#include "oomhelp.h"
-#include "mapihelp.h"
-
 #include <string>
 #include <vector>
 #include <memory>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <gpgme++/decryptionresult.h>
 #include <gpgme++/verificationresult.h>
@@ -36,14 +37,22 @@
 class Attachment;
 class MimeDataProvider;
 
+#ifdef HAVE_W32_SYSTEM
+#include "oomhelp.h"
+#endif
+
 class ParseController
 {
 public:
+#ifdef HAVE_W32_SYSTEM
   /** Construct a new ParseController for the stream instream.
     instream is expected to point to a mime mail.
     Adds a reference to the stream and releases it on
     destruction. */
   ParseController(LPSTREAM instream, msgtype_t type);
+#endif
+  ParseController(FILE *instream, msgtype_t type);
+
   ~ParseController();
 
   /** Construct a new ParseController for an inline message where

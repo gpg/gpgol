@@ -466,6 +466,7 @@ MimeDataProvider::MimeDataProvider() :
   m_mime_ctx->mimestruct_tail = &m_mime_ctx->mimestruct;
 }
 
+#ifdef HAVE_W32_SYSTEM
 MimeDataProvider::MimeDataProvider(LPSTREAM stream):
   MimeDataProvider()
 {
@@ -482,6 +483,15 @@ MimeDataProvider::MimeDataProvider(LPSTREAM stream):
   collect_data (stream);
   log_mime_parser ("%s:%s Data collected.", SRCNAME, __func__);
   gpgol_release (stream);
+}
+#endif
+
+MimeDataProvider::MimeDataProvider(FILE *stream):
+  MimeDataProvider()
+{
+  log_mime_parser ("%s:%s Collecting data from file.", SRCNAME, __func__);
+  collect_data (stream);
+  log_mime_parser ("%s:%s Data collected.", SRCNAME, __func__);
 }
 
 MimeDataProvider::~MimeDataProvider()
@@ -671,6 +681,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
   return not_taken;
 }
 
+#ifdef HAVE_W32_SYSTEM
 void
 MimeDataProvider::collect_data(LPSTREAM stream)
 {
@@ -690,6 +701,38 @@ MimeDataProvider::collect_data(LPSTREAM stream)
                            SRCNAME, __func__);
           return;
         }
+      log_mime_parser ("%s:%s: Read %lu bytes.",
+                       SRCNAME, __func__, bRead);
+
+      m_rawbuf += std::string (buf, bRead);
+      size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
+                                              m_rawbuf.size());
+
+      if (not_taken == m_rawbuf.size())
+        {
+          log_error ("%s:%s: Collect failed to consume anything.\n"
+                     "Buffer too small?",
+                     SRCNAME, __func__);
+          return;
+        }
+      log_mime_parser ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
+                       SRCNAME, __func__, m_rawbuf.size() - not_taken);
+      m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
+    }
+}
+#endif
+
+void
+MimeDataProvider::collect_data(FILE *stream)
+{
+  if (!stream)
+    {
+      return;
+    }
+  char buf[BUFSIZE];
+  size_t bRead;
+  while ((bRead = stream->Read (buf, BUFSIZE, 1, stream)) > 0)
+    {
       log_mime_parser ("%s:%s: Read %lu bytes.",
                        SRCNAME, __func__, bRead);
 

@@ -66,10 +66,9 @@ public:
   /* Read and parse the stream. Does not hold a reference
      to the stream but releases it after read. */
   MimeDataProvider(LPSTREAM stream);
-#else
+#endif
   /* Test instrumentation. */
   MimeDataProvider(FILE *stream);
-#endif
   ~MimeDataProvider();
 
   /* Dataprovider interface */
@@ -107,8 +106,12 @@ public:
   const std::vector <std::shared_ptr<Attachment> > get_attachments() const
     {return m_attachments;}
 private:
-  /* Collect the crypto data from mime. */
+#ifdef HAVE_W32_SYSTEM
+  /* Collect the data from mapi. */
   void collect_data(LPSTREAM stream);
+#endif
+  /* Collect data from a file. */
+  void collect_data(FILE *stream);
   /* Collect a single line. */
   size_t collect_input_lines(const char *input, size_t size);
   /* A detached signature found in the input */

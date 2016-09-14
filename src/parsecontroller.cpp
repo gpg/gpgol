@@ -32,7 +32,19 @@
 
 using namespace GpgME;
 
+#ifdef HAVE_W32_SYSTEM
 ParseController::ParseController(LPSTREAM instream, msgtype_t type):
+    m_inputprovider  (new MimeDataProvider(instream)),
+    m_outputprovider (new MimeDataProvider()),
+    m_type (type),
+    m_error (false)
+{
+  log_mime_parser ("%s:%s: Creating parser for stream: %p",
+                   SRCNAME, __func__, instream);
+}
+#endif
+
+ParseController::ParseController(FILE *instream, msgtype_t type):
     m_inputprovider  (new MimeDataProvider(instream)),
     m_outputprovider (new MimeDataProvider()),
     m_type (type),
