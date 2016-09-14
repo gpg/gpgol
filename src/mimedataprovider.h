@@ -26,19 +26,38 @@
 #include "rfc822parse.h"
 
 #include <string>
+struct mime_context;
+typedef struct mime_context *mime_context_t;
+class Attachment;
 
 /** This class does simple one level mime parsing to find crypto
   data.
 
   Use the mimedataprovider on a body or attachment stream. It
   will do the conversion from MIME to PGP / CMS data on the fly.
+  Similarly when writing it will split up the data into a body /
+  html body and attachments.
 
-  The raw mime data from the underlying stream is "collected" and
-  parsed into Crypto data which is then buffered in "databuf".
+  A detached signature will be made available through the
+  signature function.
+
+  When reading the raw mime data from the underlying stream is
+  "collected" and parsed into crypto data which is then
+  buffered in an internal gpgme data stucture.
+
+  For historicial reasons this class both provides reading
+  and writing to be able to reuse the same mimeparser code.
+  Similarly using the C-Style parsing code is for historic
+  reason because as this class was created to have a data
+  container unrelated of the Outlook Object model (after
+  creation) the mimeparser code already existed and was
+  stable.
 */
 class MimeDataProvider : public GpgME::DataProvider
 {
 public:
+  /* Create an empty dataprovider, useful for writing to. */
+  MimeDataProvider();
   /* Read and parse the stream. Does not hold a reference
      to the stream but releases it after read. */
   MimeDataProvider(LPSTREAM stream);
@@ -51,33 +70,53 @@ public:
     the conversion code interanally to convert mime
     data into PGP/CMS Data that GpgME can work with. */
   ssize_t read(void *buffer, size_t bufSize);
-  ssize_t write(const void *buffer, size_t bufSize) {
-      (void)buffer; (void)bufSize; return -1;
-  }
+
+  ssize_t write(const void *buffer, size_t bufSize);
+
   /* Seek the underlying stream. This discards the internal
      buffers as the offset is not mapped. Should not really
      be used but can be used to reset the DataProvider. */
   off_t seek(off_t offset, int whence);
+
   /* Noop */
   void release() {}
 
-  /* The the data of the signature part. */
-  const GpgME::Data &get_signature_data();
+  /* The the data of the signature part.
+
+     If not null then this is a pointer to the signature
+     data that is valid for the lifetime of this object.
+  */
+  GpgME::Data *signature() const;
+
+  /* Add an attachment to the list */
+  std::shared_ptr<Attachment> create_attachment();
+
+  mime_context_t mime_context() {return m_mime_ctx;}
+
+  const std::string get_body() const {return m_body;}
+  const std::string get_html_body() const {return m_html_body;}
+  const std::vector <std::shared_ptr<Attachment> > get_attachments() const
+    {return m_attachments;}
 private:
   /* Collect the crypto data from mime. */
   void collect_data(LPSTREAM stream);
   /* Collect a single line. */
   size_t collect_input_lines(const char *input, size_t size);
-  /* Move actual data into the databuffer. */
-  void decode_and_collect(char *line, size_t pos);
-  enum Encoding {None, Base64, Quoted};
+  /* A detached signature found in the input */
   std::string m_sig_data;
-  GpgME::Data m_data;
-  GpgME::Data m_signature;
+  /* The data to be passed to the crypto operation */
+  GpgME::Data m_crypto_data;
+  /* The plaintext body. */
+  std::string m_body;
+  /* The plaintext html body. */
+  std::string m_html_body;
+  /* A detachted signature found in the mail */
+  GpgME::Data *m_signature;
+  /* Internal helper to read line based */
   std::string m_rawbuf;
-  bool m_collect;
-  rfc822parse_t m_parser;
-  Encoding m_current_encoding;
-  b64_state_t m_base64_context;
+  /* The mime context */
+  mime_context_t m_mime_ctx;
+  /* List of attachments. */
+  std::vector<std::shared_ptr<Attachment> > m_attachments;
 };
 #endif // MIMEDATAPROVIDER_H

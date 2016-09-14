@@ -34,6 +34,7 @@
 #include <gpgme++/data.h>
 
 class Attachment;
+class MimeDataProvider;
 
 class MailParser
 {
@@ -53,22 +54,19 @@ public:
     * empty string on success or an error message on failure. */
   std::string parse();
 
-  /** Get the Body converted to utf8. Call parse first. */
-  std::shared_ptr<std::string> get_utf8_text_body();
+  /** Get the Body. Call parse first. */
+  const std::string get_body() const;
 
-  /** Get an alternative? HTML Body converted to utf8. Call parse first. */
-  std::shared_ptr<std::string> get_utf8_html_body();
+  /** Get an alternative? HTML Body. Call parse first. */
+  const std::string get_html_body() const;
 
   /** Get the decrypted / verified attachments. Call parse first.
   */
-  std::vector<std::shared_ptr<Attachment> > get_attachments();
+  std::vector<std::shared_ptr<Attachment> > get_attachments() const;
 private:
-  std::vector<std::shared_ptr<Attachment> > m_attachments;
-  std::shared_ptr<std::string> m_body;
-  std::shared_ptr<std::string> m_htmlbody;
-
   /* State variables */
-  GpgME::Data m_input;
+  MimeDataProvider *m_inputprovider;
+  MimeDataProvider *m_outputprovider;
   msgtype_t m_type;
   bool m_error;
   GpgME::DecryptionResult m_decrypt_result;

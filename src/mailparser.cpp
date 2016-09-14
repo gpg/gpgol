@@ -33,9 +33,8 @@
 using namespace GpgME;
 
 MailParser::MailParser(LPSTREAM instream, msgtype_t type):
-    m_body (std::shared_ptr<std::string>(new std::string())),
-    m_htmlbody (std::shared_ptr<std::string>(new std::string())),
-    m_input (Data(new MimeDataProvider(instream))),
+    m_inputprovider  (new MimeDataProvider(instream)),
+    m_outputprovider (new MimeDataProvider()),
     m_type (type),
     m_error (false)
 {
@@ -46,6 +45,8 @@ MailParser::MailParser(LPSTREAM instream, msgtype_t type):
 MailParser::~MailParser()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
+  delete m_inputprovider;
+  delete m_outputprovider;
 }
 
 static void
@@ -91,29 +92,37 @@ MailParser::parse()
   auto ctx = Context::createForProtocol (protocol);
   ctx->setArmor(true);
 
+  Data output(m_outputprovider);
+  Data input(m_inputprovider);
+  log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s",
+             SRCNAME, __func__,
+             decrypt, verify,
+             protocol == OpenPGP ? "OpenPGP" :
+             protocol == CMS ? "CMS" : "Unknown");
   if (decrypt)
     {
-      Data output;
-      log_debug ("%s:%s: Decrypting with protocol: %s",
-                 SRCNAME, __func__,
-                 protocol == OpenPGP ? "OpenPGP" :
-                 protocol == CMS ? "CMS" : "Unknown");
-      auto combined_result = ctx->decryptAndVerify(m_input, output);
+      auto combined_result = ctx->decryptAndVerify(input, output);
       m_decrypt_result = combined_result.first;
       m_verify_result = combined_result.second;
-      if (m_decrypt_result.error())
-        {
-          MessageBox (NULL, "Decryption failed.", "Failed", MB_OK);
-        }
-      char buf[2048];
-      size_t bRead;
-      output.seek (0, SEEK_SET);
-      while ((bRead = output.read (buf, 2048)) > 0)
-        {
-          (*m_body).append(buf, bRead);
-        }
-      log_debug ("Body is: %s", m_body->c_str());
     }
+  else
+    {
+      const auto sig = m_inputprovider->signature();
+      /* Ignore the first two bytes if we did not decrypt. */
+      input.seek (2, SEEK_SET);
+      if (sig)
+        {
+          sig->seek (0, SEEK_SET);
+          m_verify_result = ctx->verifyDetachedSignature(*sig, input);
+        }
+      else
+        {
+          m_verify_result = ctx->verifyOpaqueSignature(input, output);
+        }
+    }
+  log_debug ("%s:%s: decrypt err: %i verify err: %i",
+             SRCNAME, __func__, m_decrypt_result.error().code(),
+             m_verify_result.error().code());
 
   if (opt.enable_debug)
     {
@@ -121,27 +130,50 @@ MailParser::parse()
        ss << m_decrypt_result << '\n' << m_verify_result;
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
     }
+  /*
   Attachment *att = new Attachment ();
   att->write ("Hello attachment", strlen ("Hello attachment"));
   att->set_display_name ("The Attachment.txt");
   m_attachments.push_back (std::shared_ptr<Attachment>(att));
+  */
   return std::string();
 }
 
-std::shared_ptr<std::string>
-MailParser::get_utf8_html_body()
+const std::string
+MailParser::get_html_body() const
 {
-  return m_htmlbody;
+  if (m_outputprovider)
+    {
+      return m_outputprovider->get_html_body();
+    }
+  else
+    {
+      return std::string();
+    }
 }
 
-std::shared_ptr<std::string>
-MailParser::get_utf8_text_body()
+const std::string
+MailParser::get_body() const
 {
-  return m_body;
+  if (m_outputprovider)
+    {
+      return m_outputprovider->get_body();
+    }
+  else
+    {
+      return std::string();
+    }
 }
 
 std::vector<std::shared_ptr<Attachment> >
-MailParser::get_attachments()
+MailParser::get_attachments() const
 {
-  return m_attachments;
+  if (m_outputprovider)
+    {
+      return m_outputprovider->get_attachments();
+    }
+  else
+    {
+      return std::vector<std::shared_ptr<Attachment> >();
+    }
 }

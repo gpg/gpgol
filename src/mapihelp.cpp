@@ -3530,7 +3530,9 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
     {
       /* Found existing moss attachment */
       mapi_release_attach_table (table);
-      return part2;
+      if (part2)
+        return part2;
+      return part1;
     }
 
   if (msgtype == MSGTYPE_GPGOL_CLEAR_SIGNED ||

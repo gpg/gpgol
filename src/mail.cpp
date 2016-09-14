@@ -327,10 +327,10 @@ void Mail::parsing_done()
 {
   m_needs_wipe = true;
   /* Update the body */
-  const auto html = m_parser->get_utf8_html_body();
-  if (!html->empty())
+  const auto html = m_parser->get_html_body();
+  if (!html.empty())
     {
-      if (put_oom_string (m_mailitem, "HTMLBody", html->c_str()))
+      if (put_oom_string (m_mailitem, "HTMLBody", html.c_str()))
         {
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
@@ -339,8 +339,8 @@ void Mail::parsing_done()
     }
   else
     {
-      const auto body = m_parser->get_utf8_text_body();
-      if (put_oom_string (m_mailitem, "Body", body->c_str()))
+      const auto body = m_parser->get_body();
+      if (put_oom_string (m_mailitem, "Body", body.c_str()))
         {
           log_error ("%s:%s: Failed to modify body of item.",
                      SRCNAME, __func__);
