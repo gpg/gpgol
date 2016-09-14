@@ -19,11 +19,15 @@
 #ifndef MIMEDATAPROVIDER_H
 #define MIMEDATAPROVIDER_H
 
+#include "config.h"
+
 #include <gpgme++/interfaces/dataprovider.h>
 #include <gpgme++/data.h>
-#include "oomhelp.h"
-#include "mapihelp.h"
 #include "rfc822parse.h"
+
+#ifdef HAVE_W32_SYSTEM
+#include "mapihelp.h"
+#endif
 
 #include <string>
 struct mime_context;
@@ -58,9 +62,14 @@ class MimeDataProvider : public GpgME::DataProvider
 public:
   /* Create an empty dataprovider, useful for writing to. */
   MimeDataProvider();
+#ifdef HAVE_W32_SYSTEM
   /* Read and parse the stream. Does not hold a reference
      to the stream but releases it after read. */
   MimeDataProvider(LPSTREAM stream);
+#else
+  /* Test instrumentation. */
+  MimeDataProvider(FILE *stream);
+#endif
   ~MimeDataProvider();
 
   /* Dataprovider interface */

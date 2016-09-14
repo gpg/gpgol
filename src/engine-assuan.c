@@ -31,7 +31,6 @@
 #include "common.h"
 #include "engine.h"
 #include "engine-assuan.h"
-#include "util.h"
 #include "exechelp.h"
 
 /* Debug macros.  */

@@ -69,7 +69,7 @@
 #include "mymapitags.h"
 
 #include "msgcache.h"
-#include "util.h"
+#include "common.h"
 
 
 /* We limit the size of the cache to this value. The cache might take

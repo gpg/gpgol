@@ -19,7 +19,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "util.h"
+#include "common.h"
 #ifdef __cplusplus
 extern "C" {
 #if 0

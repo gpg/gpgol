@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "gpgolstr.h"
-#include "util.h"
+#include "common.h"
 
 GpgOLStr::GpgOLStr(const char *str) :
   m_utf8str(NULL), m_widestr(NULL)

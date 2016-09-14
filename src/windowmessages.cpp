@@ -20,7 +20,7 @@
  */
 #include "windowmessages.h"
 
-#include "util.h"
+#include "common.h"
 #include "oomhelp.h"
 #include "mail.h"
 

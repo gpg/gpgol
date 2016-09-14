@@ -26,6 +26,11 @@ extern "C" {
 }
 #endif
 #endif
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <oomhelp.h>
 
 /* The list of message types we support in GpgOL.  */
 typedef enum 

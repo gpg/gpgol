@@ -25,14 +25,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "util.h"
+#include "common.h"
 #include "gpgoladdin.h"
 
 #include "mymapi.h"
 #include "mymapitags.h"
 #include "myexchext.h"
 
-#include "common.h"
 #include "display.h"
 #include "msgcache.h"
 #include "engine.h"

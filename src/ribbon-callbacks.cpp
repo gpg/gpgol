@@ -31,7 +31,7 @@
 
 #include "ribbon-callbacks.h"
 #include "gpgoladdin.h"
-#include "util.h"
+#include "common.h"
 
 #include "mymapi.h"
 #include "mymapitags.h"

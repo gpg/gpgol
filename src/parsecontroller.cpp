@@ -19,7 +19,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "config.h"
-#include "common.h"
+#include "common_indep.h"
 
 #include "parsecontroller.h"
 #include "attachment.h"

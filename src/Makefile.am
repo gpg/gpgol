@@ -54,7 +54,8 @@ gpgol_SOURCES = \
 	engine.c engine.h           \
         engine-assuan.c engine-assuan.h \
 	rfc822parse.c rfc822parse.h \
-        common.h common.c util.h    \
+    common.h common.c \
+    common_indep.h common_indep.c \
 	xmalloc.h		    \
         config-dialog.c	            \
 	mapihelp.cpp mapihelp.h     \
