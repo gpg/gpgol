@@ -20,28 +20,18 @@
 #ifndef ATTACHMENT_H
 #define ATTACHMENT_H
 
-#include <windows.h>
-#include "oomhelp.h"
-#include "mapihelp.h"
 #include <string>
 
 #include <gpgme++/interfaces/dataprovider.h>
+#include <gpgme++/data.h>
 
 /** Helper class for attachment actions. */
 class Attachment : public GpgME::DataProvider
 {
 public:
-  /** Creates and opens a new temporary stream. */
+  /** Creates and opens a new in memory attachment. */
   Attachment();
-
-  /** Creates the attachment wrapper for an existing stream. */
-  Attachment(LPSTREAM stream);
-
-  /** Deletes the attachment and the underlying temporary file. */
   ~Attachment();
-
-  /** Get an assoicated ISteam ptr or NULL. */
-  LPSTREAM get_stream();
 
   /** Set the display name */
   void set_display_name(const char *name);
@@ -57,7 +47,7 @@ public:
   void release();
 
 private:
-  LPSTREAM m_stream;
+  GpgME::Data m_data;
   std::string m_utf8DisplayName;
   attachtype_t m_type;
 };
