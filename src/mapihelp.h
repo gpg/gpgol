@@ -32,66 +32,6 @@ extern "C" {
 
 #include <oomhelp.h>
 
-/* The list of message types we support in GpgOL.  */
-typedef enum 
-  {
-    MSGTYPE_UNKNOWN = 0,
-    MSGTYPE_SMIME,         /* Original SMIME class. */
-    MSGTYPE_GPGOL,
-    MSGTYPE_GPGOL_MULTIPART_SIGNED,
-    MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
-    MSGTYPE_GPGOL_OPAQUE_SIGNED,
-    MSGTYPE_GPGOL_OPAQUE_ENCRYPTED,
-    MSGTYPE_GPGOL_CLEAR_SIGNED,
-    MSGTYPE_GPGOL_PGP_MESSAGE
-  }
-msgtype_t;
-
-typedef enum
-  {
-    ATTACHTYPE_UNKNOWN = 0,
-    ATTACHTYPE_MOSS = 1,         /* The original MOSS message (ie. a
-                                    S/MIME or PGP/MIME message. */
-    ATTACHTYPE_FROMMOSS = 2,     /* Attachment created from MOSS.  */
-    ATTACHTYPE_MOSSTEMPL = 3,    /* Attachment has been created in the
-                                    course of sending a message */ 
-    ATTACHTYPE_PGPBODY = 4,      /* Attachment contains the original
-                                    PGP message body of PGP inline
-                                    encrypted messages.  */
-    ATTACHTYPE_FROMMOSS_DEC = 5  /* A FROMMOSS attachment that has been
-                                    temporarily decrypted and needs to be
-                                    encrypted before it is written back
-                                    into storage. */
-  }
-attachtype_t;
-
-/* An object to collect information about one MAPI attachment.  */
-struct mapi_attach_item_s
-{
-  int end_of_table;     /* True if this is the last plus one entry of
-                           the table. */
-  void *private_mapitable; /* Only for use by mapi_release_attach_table. */
-
-  int mapipos;          /* The position which needs to be passed to
-                           MAPI to open the attachment.  -1 means that
-                           there is no valid attachment.  */
-   
-  int method;           /* MAPI attachment method. */
-  char *filename;       /* Malloced filename of this attachment or NULL. */
-
-  /* Malloced string with the MIME attrib or NULL.  Parameters are
-     stripped off thus a compare against "type/subtype" is
-     sufficient. */
-  char *content_type; 
-
-  /* If not NULL the parameters of the content_type. */
-  const char *content_type_parms; 
-
-  /* The attachment type from Property GpgOL Attach Type.  */
-  attachtype_t attach_type;
-};
-typedef struct mapi_attach_item_s mapi_attach_item_t;
-
 /* The filename of the attachment we create as the result of sign or
    encrypt operations.  Don't change this name as some tests rely on
    it.  */
