@@ -1,3 +1,5 @@
+#ifndef SRC_RFC2047PARSE_H
+#define SRC_RFC2047PARSE_H
 /* @file rfc2047parse.h
  * @brief Parser for filenames encoded according to rfc2047
  *
@@ -19,6 +21,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#if 0
+}
+#endif
+#endif
+
 /** @brief Try to parse a string according to rfc2047.
   *
   * On error the error is logged and a copy of the original
@@ -29,3 +38,7 @@
   */
 char *
 rfc2047_parse (const char *input);
+#ifdef __cplusplus
+}
+#endif
+#endif // SRC_RFC2047PARSE_H
