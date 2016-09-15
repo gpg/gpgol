@@ -111,7 +111,20 @@ ParseController::parse()
   ctx->setArmor(true);
 
   Data output(m_outputprovider);
-  Data input(m_inputprovider);
+
+  Data input;
+  if (m_type == MSGTYPE_GPGOL_CLEAR_SIGNED ||
+      m_type == MSGTYPE_GPGOL_PGP_MESSAGE)
+    {
+      /* For clearsigned and PGP Message take the body.
+         This does not copy the data. */
+      input = Data (m_inputprovider->get_body().c_str(),
+                    m_inputprovider->get_body().size(), false);
+    }
+  else
+    {
+      input = Data (m_inputprovider);
+    }
   log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s",
              SRCNAME, __func__,
              decrypt, verify,
