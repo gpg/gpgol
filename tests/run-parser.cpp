@@ -28,8 +28,13 @@ show_usage (int ex)
 {
   fputs ("usage: run-parser [options] FILE\n\n"
          "Options:\n"
-         "  --verbose        run in verbose mode\n"
-         "  --type           GPGOL_MESSAGETYPE\n"
+         "  --verbose             run in verbose mode\n"
+         "  --multipart-signed    multipart/signed\n"
+         "  --multipart-encrypted multipart/encrypted\n"
+         "  --opaque-signed       SMIME opaque signed\n"
+         "  --opaque-encrypted    SMIME opaque encrypted\n"
+         "  --clear-signed        clearsigned\n"
+         "  --pgp-message         inline pgp message\n"
          , stderr);
   exit (ex);
 }
@@ -37,7 +42,7 @@ show_usage (int ex)
 int main(int argc, char **argv)
 {
   int last_argc = -1;
-  int msgtype = 0;
+  msgtype_t msgtype = MSGTYPE_UNKNOWN;
   FILE *fp_in = NULL;
 
   gpgme_check_version (NULL);
@@ -58,13 +63,38 @@ int main(int argc, char **argv)
       else if (!strcmp (*argv, "--verbose"))
         {
           opt.enable_debug |= DBG_MIME_PARSER;
+          opt.enable_debug |= 1;
           set_log_file ("stderr");
           argc--; argv++;
         }
-      else if (!strcmp (*argv, "--type"))
+      else if (!strcmp (*argv, "--multipart-signed"))
         {
-          msgtype = atoi (*(argv + 1));
+          msgtype = MSGTYPE_GPGOL_MULTIPART_SIGNED;
           argc--; argv++;
+        }
+      else if (!strcmp (*argv, "--multipart-encrypted"))
+        {
+          msgtype = MSGTYPE_GPGOL_MULTIPART_ENCRYPTED;
+          argc--; argv++;
+        }
+      else if (!strcmp (*argv, "--opaque-signed"))
+        {
+          msgtype = MSGTYPE_GPGOL_OPAQUE_SIGNED;
+          argc--; argv++;
+        }
+      else if (!strcmp (*argv, "--opaque-encrypted"))
+        {
+          msgtype = MSGTYPE_GPGOL_OPAQUE_ENCRYPTED;
+          argc--; argv++;
+        }
+      else if (!strcmp (*argv, "--clear-signed"))
+        {
+          msgtype = MSGTYPE_GPGOL_CLEAR_SIGNED;
+          argc--; argv++;
+        }
+      else if (!strcmp (*argv, "--pgp-message"))
+        {
+          msgtype = MSGTYPE_GPGOL_PGP_MESSAGE;
           argc--; argv++;
         }
     }
@@ -73,12 +103,12 @@ int main(int argc, char **argv)
 
   fp_in = fopen (argv[0], "rb");
 
-  ParseController parser(fp_in, (msgtype_t)msgtype);
-  parser.parse();
-  std::cout << "Decrypt result:\n" << parser.decrypt_result();
-  std::cout << "Verify result:\n" << parser.verify_result();
-  std::cout << "BEGIN BODY\n" << parser.get_body() << "\nEND BODY";
-  std::cout << "BEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
+  ParseController parser(fp_in, msgtype);
+  std::cout << "Parse result: " << parser.parse()
+            << "\nDecrypt result:\n" << parser.decrypt_result()
+            << "\nVerify result:\n" << parser.verify_result()
+            << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
+            << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
   for (auto attach: parser.get_attachments())
     {
       std::cout << "Attachment: " << attach->get_display_name();
