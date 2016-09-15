@@ -24,8 +24,11 @@ DISTCHECK_CONFIGURE_FLAGS = --host=@host@  --build=@build@ \
 # Note: Do not put ChangeLog-2011 here - it exists only in the repo.
 EXTRA_DIST = autogen.sh autogen.rc
 
-
+if HAVE_W32_SYSTEM
 SUBDIRS = src forms po m4 doc
+else
+SUBDIRS = tests
+endif
 
 dist-hook: gen-ChangeLog
 	echo "$(VERSION)" > $(distdir)/VERSION

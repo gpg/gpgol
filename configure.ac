@@ -135,11 +135,13 @@ case "${host}" in
         have_w32_system=yes
         ;;
     *)
-    AC_MSG_ERROR([[
+    AC_MSG_NOTICE([[
 ***
-*** This software my only be build for W32 systems.  Use
+*** This software is only useful for W32 systems.  Use
 ***     ./autogen.sh --build-w32
 *** to prepare it for such a build.
+***
+*** For your current host only tests will be built!
 ***]])
        ;;
 esac
@@ -185,6 +187,9 @@ USE_NLS=yes
 AC_HEADER_STDC
 AC_CHECK_HEADERS(string.h unistd.h langinfo.h termio.h locale.h)
 
+# Check for functions
+AC_REPLACE_FUNCS(stpcpy)
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
@@ -208,7 +213,11 @@ if test "$GCC" = yes; then
     # causes gpgol not to be loaded by Outlook due to a runtime error.
     # This needs to be analysed but could be an incompatibility between
     # gcc's stack protection and COM / Outlook system calls.
-    HARDENING="-Wl,--dynamicbase -Wl,--nxcompat -fno-exceptions -D_FORTIFY_SOURCE=2 -O0"
+    if test "$have_w32_system" = yes; then
+        HARDENING="-Wl,--dynamicbase -Wl,--nxcompat -fno-exceptions -D_FORTIFY_SOURCE=2 -O0"
+    else
+        HARDENING="-fPIC"
+    fi
     CFLAGS="$CFLAGS $HARDENING"
     CXXFLAGS="$CXXFLAGS $HARDENING"
 
@@ -307,5 +316,7 @@ forms/Makefile
 doc/Makefile
 po/Makefile.in
 m4/Makefile
+tests/Makefile
 ])
+
 AC_OUTPUT
