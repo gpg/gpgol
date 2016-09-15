@@ -529,6 +529,7 @@ MimeDataProvider::~MimeDataProvider()
       m_mime_ctx->mimestruct = tmp;
     }
   rfc822parse_close (m_mime_ctx->msg);
+  m_mime_ctx->current_attachment = NULL;
   xfree (m_mime_ctx);
   if (m_signature)
     {
