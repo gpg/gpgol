@@ -515,6 +515,7 @@ MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
 {
   return op == GpgME::DataProvider::Read ||
          op == GpgME::DataProvider::Seek ||
+         op == GpgME::DataProvider::Write ||
          op == GpgME::DataProvider::Release;
 }
 
@@ -738,7 +739,7 @@ MimeDataProvider::collect_data(FILE *stream)
     }
   char buf[BUFSIZE];
   size_t bRead;
-  while ((bRead = fread (buf, BUFSIZE, 1, stream)) > 0)
+  while ((bRead = fread (buf, 1, BUFSIZE, stream)) > 0)
     {
       log_mime_parser ("%s:%s: Read " SIZE_T_FORMAT " bytes.",
                        SRCNAME, __func__, bRead);
@@ -769,7 +770,7 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
     if (not_taken == m_rawbuf.size())
       {
         log_error ("%s:%s: Write failed to consume anything.\n"
-                   "Buffer too small?",
+                   "Buffer too small? or no newlines in text?",
                    SRCNAME, __func__);
         return bufSize;
       }
@@ -819,4 +820,32 @@ MimeDataProvider::create_attachment()
 
   return attach;
   /* TODO handle encoding */
+}
+
+const std::string &MimeDataProvider::get_body()
+{
+  if (m_rawbuf.size())
+    {
+      /* If there was some data left in the rawbuf this could
+         mean that some plaintext was not finished with a linefeed.
+         In that case we append it to the bodies. */
+      m_body += m_rawbuf;
+      m_html_body += m_rawbuf;
+      m_rawbuf.clear();
+    }
+  return m_body;
+}
+
+const std::string &MimeDataProvider::get_html_body()
+{
+  if (m_rawbuf.size())
+    {
+      /* If there was some data left in the rawbuf this could
+         mean that some plaintext was not finished with a linefeed.
+         In that case we append it to the bodies. */
+      m_body += m_rawbuf;
+      m_html_body += m_rawbuf;
+      m_rawbuf.clear();
+    }
+  return m_html_body;
 }

@@ -101,8 +101,8 @@ public:
 
   mime_context_t mime_context() {return m_mime_ctx;}
 
-  const std::string get_body() const {return m_body;}
-  const std::string get_html_body() const {return m_html_body;}
+  const std::string &get_body();
+  const std::string &get_html_body();
   const std::vector <std::shared_ptr<Attachment> > get_attachments() const
     {return m_attachments;}
 private:
