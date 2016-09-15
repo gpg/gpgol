@@ -19,7 +19,6 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "config.h"
-#include "common_indep.h"
 
 #include "parsecontroller.h"
 #include "attachment.h"
@@ -102,6 +101,13 @@ ParseController::parse()
   bool decrypt, verify;
   operation_for_type (m_type, &decrypt, &verify, &protocol);
   auto ctx = Context::createForProtocol (protocol);
+  if (!ctx)
+    {
+      log_error ("%s:%s:Failed to create context. Installation broken.",
+                 SRCNAME, __func__);
+      // TODO proper error handling
+      return std::string("Bad installation");
+    }
   ctx->setArmor(true);
 
   Data output(m_outputprovider);
