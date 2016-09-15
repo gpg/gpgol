@@ -30,16 +30,6 @@
 #include "common.h"
 #include "msgcache.h"
 #include "mymapi.h"
-
-/* The malloced name of the logfile and the logging stream.  If
-   LOGFILE is NULL, no logging is done. */
-static char *logfile;
-static FILE *logfp;
-
-/* For certain operations we need to acquire a log on the logging
-   functions.  This lock is controlled by this Mutex. */
-static HANDLE log_mutex;
-
 /* The session key used to temporary encrypt attachments.  It is
    initialized at startup.  */
 static char *the_session_key;
@@ -66,6 +56,9 @@ init_options (void)
   opt.enc_format = GPG_FMT_CLASSIC;
 }
 
+/* For certain operations we need to acquire a log on the logging
+   functions.  This lock is controlled by this Mutex. */
+HANDLE log_mutex;
 
 /* Early initialization of this module.  This is done right at startup
    with only one thread running.  Should be called only once. Returns
@@ -195,8 +188,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
   return TRUE;
 }
 
-
-
 /* Return the static session key we are using for temporary encrypting
    attachments.  The session key is guaranteed to be available.  */
 const void *
@@ -220,285 +211,6 @@ create_initialization_vector (size_t nbytes)
 {
   return get_crypt_random (nbytes);
 }
-
-
-/* Acquire the mutex for logging.  Returns 0 on success. */
-static int
-lock_log (void)
-{
-  int code = WaitForSingleObject (log_mutex, INFINITE);
-  return code != WAIT_OBJECT_0;
-}
-
-/* Release the mutex for logging. No error return is done because this
-   is a fatal error anyway and we have no means for proper
-   notification. */
-static void
-unlock_log (void)
-{
-  ReleaseMutex (log_mutex);
-}
-
-
-
-static void
-do_log (const char *fmt, va_list a, int w32err, int err,
-        const void *buf, size_t buflen)
-{
-  if (!logfile)
-    return;
-
-  if (lock_log ())
-    return;
-
-  if (!logfp)
-    logfp = fopen (logfile, "a+");
-  if (!logfp)
-    {
-      unlock_log ();
-      return;
-    }
-
-  char time_str[9];
-  SYSTEMTIME utc_time;
-  GetSystemTime (&utc_time);
-  if (GetTimeFormatA (LOCALE_INVARIANT,
-                      TIME_FORCE24HOURFORMAT | LOCALE_USE_CP_ACP,
-                      &utc_time,
-                      "HH:mm:ss",
-                      time_str,
-                      9))
-    {
-      fprintf (logfp, "%s/%lu/",
-               time_str,
-               (unsigned long)GetCurrentThreadId ());
-    }
-  else
-    {
-      fprintf (logfp, "unknown/%lu/",
-               (unsigned long)GetCurrentThreadId ());
-    }
-
-  if (err == 1)
-    fputs ("ERROR/", logfp);
-  vfprintf (logfp, fmt, a);
-  if (w32err)
-    {
-      char tmpbuf[256];
-
-      FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM, NULL, w32err,
-                     MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-                     tmpbuf, sizeof (tmpbuf)-1, NULL);
-      fputs (": ", logfp);
-      if (*tmpbuf && tmpbuf[strlen (tmpbuf)-1] == '\n')
-        tmpbuf[strlen (tmpbuf)-1] = 0;
-      if (*tmpbuf && tmpbuf[strlen (tmpbuf)-1] == '\r')
-        tmpbuf[strlen (tmpbuf)-1] = 0;
-      fprintf (logfp, "%s (%d)", tmpbuf, w32err);
-    }
-  if (buf)
-    {
-      const unsigned char *p = (const unsigned char*)buf;
-
-      for ( ; buflen; buflen--, p++)
-        fprintf (logfp, "%02X", *p);
-      putc ('\n', logfp);
-    }
-  else if ( *fmt && fmt[strlen (fmt) - 1] != '\n')
-    putc ('\n', logfp);
-
-  fflush (logfp);
-  unlock_log ();
-}
-
-
-void
-log_debug (const char *fmt, ...)
-{
-  va_list a;
-
-  va_start (a, fmt);
-  do_log (fmt, a, 0, 0, NULL, 0);
-  va_end (a);
-}
-
-void
-log_error (const char *fmt, ...)
-{
-  va_list a;
-
-  va_start (a, fmt);
-  do_log (fmt, a, 0, 1, NULL, 0);
-  va_end (a);
-}
-
-void
-log_vdebug (const char *fmt, va_list a)
-{
-  do_log (fmt, a, 0, 0, NULL, 0);
-}
-
-
-void
-log_debug_w32 (int w32err, const char *fmt, ...)
-{
-  va_list a;
-
-  if (w32err == -1)
-    w32err = GetLastError ();
-
-  va_start (a, fmt);
-  do_log (fmt, a, w32err, 0, NULL, 0);
-  va_end (a);
-}
-
-void
-log_error_w32 (int w32err, const char *fmt, ...)
-{
-  va_list a;
-
-  if (w32err == -1)
-    w32err = GetLastError ();
-
-  va_start (a, fmt);
-  do_log (fmt, a, w32err, 1, NULL, 0);
-  va_end (a);
-}
-
-
-void
-log_hexdump (const void *buf, size_t buflen, const char *fmt, ...)
-{
-  va_list a;
-
-  va_start (a, fmt);
-  do_log (fmt, a, 0, 2, buf, buflen);
-  va_end (a);
-}
-
-
-static void
-do_log_window_info (HWND window, int level)
-{
-  char buf[1024+1];
-  char name[200];
-  int nname;
-  char *pname;
-  DWORD pid;
-
-  if (!window)
-    return;
-
-  GetWindowThreadProcessId (window, &pid);
-  if (pid != GetCurrentProcessId ())
-    return;
-
-  memset (buf, 0, sizeof (buf));
-  GetWindowText (window, buf, sizeof (buf)-1);
-  nname = GetClassName (window, name, sizeof (name)-1);
-  if (nname)
-    pname = name;
-  else
-    pname = NULL;
-
-  if (level == -1)
-    log_debug ("  parent=%p/%lu (%s) `%s'", window, (unsigned long)pid,
-               pname? pname:"", buf);
-  else
-    log_debug ("    %*shwnd=%p/%lu (%s) `%s'", level*2, "", window,
-               (unsigned long)pid, pname? pname:"", buf);
-}
-
-
-/* Helper to log_window_hierarchy.  */
-static HWND
-do_log_window_hierarchy (HWND parent, int level)
-{
-  HWND child;
-
-  child = GetWindow (parent, GW_CHILD);
-  while (child)
-    {
-      do_log_window_info (child, level);
-      do_log_window_hierarchy (child, level+1);
-      child = GetNextWindow (child, GW_HWNDNEXT);
-    }
-
-  return NULL;
-}
-
-
-/* Print a debug message using the format string FMT followed by the
-   window hierarchy of WINDOW.  */
-void
-log_window_hierarchy (HWND window, const char *fmt, ...)
-{
-  va_list a;
-
-  va_start (a, fmt);
-  do_log (fmt, a, 0, 0, NULL, 0);
-  va_end (a);
-  if (window)
-    {
-      do_log_window_info (window, -1);
-      do_log_window_hierarchy (window, 0);
-    }
-}
-
-
-const char *
-log_srcname (const char *file)
-{
-  const char *s = strrchr (file, '/');
-  return s? s+1:file;
-}
-
-const char *
-get_log_file (void)
-{
-  return logfile? logfile : "";
-}
-
-void
-set_log_file (const char *name)
-{
-  if (!lock_log ())
-    {
-      if (logfp)
-        {
-          fclose (logfp);
-          logfp = NULL;
-        }
-      xfree (logfile);
-      if (!name || *name == '\"' || !*name)
-        logfile = NULL;
-      else
-        logfile = xstrdup (name);
-      unlock_log ();
-    }
-}
-
-
-
-void
-set_default_key (const char *name)
-{
-  if (!lock_log ())
-    {
-      if (!name || *name == '\"' || !*name)
-        {
-          xfree (opt.default_key);
-          opt.default_key = NULL;
-        }
-      else
-        {
-          xfree (opt.default_key);
-          opt.default_key = xstrdup (name);;
-        }
-      unlock_log ();
-    }
-}
-
 
 static char *
 get_locale_dir (void)
@@ -720,10 +432,10 @@ read_options (void)
                     _("Note: Using compatibility flags: %s"), val);
           MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
         }
-      if (logfile && !opt.enable_debug)
+      if (get_log_file () && !opt.enable_debug)
         {
           snprintf (tmpbuf, sizeof tmpbuf,
-                    _("Note: Writing debug logs to\n\n\"%s\""), logfile);
+                    _("Note: Writing debug logs to\n\n\"%s\""), get_log_file ());
           MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
         }
     }
@@ -749,7 +461,7 @@ write_options (void)
     {"signDefault",              0, opt.sign_default, NULL},
     {"previewDecrypt",           0, opt.preview_decrypt, NULL},
     {"encodingFormat",           1, opt.enc_format, NULL},
-    {"logFile",                  2, 0, logfile},
+    {"logFile",                  2, 0, (char*) get_log_file ()},
     {"defaultKey",               2, 0, opt.default_key},
     {"enableDefaultKey",         0, opt.enable_default_key, NULL},
     {"preferHtml",               0, opt.prefer_html, NULL},

@@ -106,8 +106,6 @@ int initialize_inspectors (void);
 
 /*-- common.c --*/
 
-#include "xmalloc.h"
-
 void fatal_error (const char *format, ...);
 
 char *wchar_to_utf8_2 (const wchar_t *string, size_t len);

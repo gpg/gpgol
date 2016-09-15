@@ -27,6 +27,13 @@
 
 #include <gpgme.h>
 
+#include "xmalloc.h"
+
+#ifdef HAVE_W32_SYSTEM
+/* Not so independenent ;-) need this for logging HANDLE */
+# include <windows.h>
+#endif
+
 /* The Registry key used by Gpg4win.  */
 #ifdef WIN64
 # define GPG4WIN_REGKEY_2  "Software\\Wow6432Node\\GNU\\GnuPG"
@@ -352,7 +359,9 @@ tagcmp (const char *a, const char *b)
   return strncmp (a, b, strlen (b));
 }
 
-
+#ifdef HAVE_W32_SYSTEM
+extern HANDLE log_mutex;
+#endif
 /*****  Missing functions.  ****/
 
 #ifndef HAVE_STPCPY
@@ -370,7 +379,11 @@ _gpgol_stpcpy (char *a, const char *b)
 #ifdef WIN64
 #define SIZE_T_FORMAT "%I64u"
 #else
-#define SIZE_T_FORMAT "%u"
+# ifdef HAVE_W32_SYSTEM
+#  define SIZE_T_FORMAT "%u"
+# else
+#  define SIZE_T_FORMAT "%lu"
+# endif
 #endif
 
 /* The length of the boundary - the buffer needs to be allocated one
