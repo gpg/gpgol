@@ -30,6 +30,8 @@
 #include <config.h>
 #endif
 
+#include "common_indep.h"
+
 #include <gpgme++/decryptionresult.h>
 #include <gpgme++/verificationresult.h>
 #include <gpgme++/data.h>
@@ -72,6 +74,12 @@ public:
   /** Get the decrypted / verified attachments. Call parse first.
   */
   std::vector<std::shared_ptr<Attachment> > get_attachments() const;
+
+  const GpgME::DecryptionResult decrypt_result() const
+  { return m_decrypt_result; }
+  const GpgME::VerificationResult verify_result() const
+  { return m_verify_result; }
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;
