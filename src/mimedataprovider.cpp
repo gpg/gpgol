@@ -520,7 +520,16 @@ MimeDataProvider::MimeDataProvider(FILE *stream):
 MimeDataProvider::~MimeDataProvider()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
-  free (m_mime_ctx);
+  while (m_mime_ctx->mimestruct)
+    {
+      mimestruct_item_t tmp = m_mime_ctx->mimestruct->next;
+      xfree (m_mime_ctx->mimestruct->filename);
+      xfree (m_mime_ctx->mimestruct->charset);
+      xfree (m_mime_ctx->mimestruct);
+      m_mime_ctx->mimestruct = tmp;
+    }
+  rfc822parse_close (m_mime_ctx->msg);
+  xfree (m_mime_ctx);
   if (m_signature)
     {
       delete m_signature;
