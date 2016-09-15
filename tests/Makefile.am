@@ -20,15 +20,14 @@
 
 GPG = gpg
 
-TESTS_ENVIRONMENT = GNUPGHOME=$(abs_srcdir)/tests/gnupg_home
-
-TESTS = initial.test t-parser
+TESTS = t-parser
 
 AM_LDFLAGS = @GPGME_LIBS@ -lgpgmepp
 
 AM_CFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS)
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
-			  $(LIBASSUAN_CFLAGS) -std=c++11
+			  $(LIBASSUAN_CFLAGS) -std=c++11 -DDATADIR=\"$(abs_srcdir)/data\" \
+			  -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\"
 
 parser_SRC= ../src/parsecontroller.cpp \
 			../src/parsecontroller.h \
@@ -43,5 +42,3 @@ t_parser_SOURCES = t-parser.cpp $(parser_SRC)
 run_parser_SOURCES = run-parser.cpp $(parser_SRC)
 
 noinst_PROGRAMS = t-parser run-parser
-
-export GNUPGHOME := $(abs_srcdir)/tests/gnupg_home

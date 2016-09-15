@@ -45,6 +45,7 @@ int main(int argc, char **argv)
   msgtype_t msgtype = MSGTYPE_UNKNOWN;
   FILE *fp_in = NULL;
 
+  putenv ((char*) "GNUPGHOME=" GPGHOMEDIR);
   gpgme_check_version (NULL);
 
   if (argc)
@@ -104,8 +105,8 @@ int main(int argc, char **argv)
   fp_in = fopen (argv[0], "rb");
 
   ParseController parser(fp_in, msgtype);
-  std::cout << "Parse result: " << parser.parse()
-            << "\nDecrypt result:\n" << parser.decrypt_result()
+  std::cout << "Parse result: " << parser.parse();
+  std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
             << "\nVerify result:\n" << parser.verify_result()
             << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
             << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
