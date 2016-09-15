@@ -132,6 +132,7 @@ ParseController::parse()
              protocol == CMS ? "CMS" : "Unknown");
   if (decrypt)
     {
+      input.seek (0, SEEK_SET);
       auto combined_result = ctx->decryptAndVerify(input, output);
       m_decrypt_result = combined_result.first;
       m_verify_result = combined_result.second;

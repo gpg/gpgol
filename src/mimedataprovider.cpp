@@ -72,8 +72,9 @@ struct mime_context
                                                      attachment */
   int collect_body;       /* True if we are collcting the body */
   int collect_html_body;  /* True if we are collcting the html body */
-  int collect_signeddata; /* True if we are collecting the signed data. */
+  int collect_crypto_data; /* True if we are collecting the signed data. */
   int collect_signature;  /* True if we are collecting a signature.  */
+  int is_encrypted;       /* True if we are working on an encrypted mail. */
   int start_hashing;      /* Flag used to start collecting signed data. */
   int hashing_level;      /* MIME level where we started hashing. */
   int is_qp_encoded;      /* Current part is QP encoded. */
@@ -274,6 +275,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           /* Need to start the hashing after the next boundary. */
           ctx->start_hashing = 1;
         }
+      else if (!strcmp (ctsub, "encrypted") &&
+               (s = rfc822parse_query_parameter (field, "protocol", 0)))
+        {
+           if (!strcmp (s, "application/pgp-encrypted"))
+             ctx->protocol = PROTOCOL_OPENPGP;
+           /* We expect an encrypted mime part. */
+           ctx->is_encrypted = 1;
+        }
     }
   else if (!strcmp (ctmain, "text"))
     {
@@ -294,6 +303,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
          in verify mode because we don't want to write a full MUA.  */
       ctx->collect_signature = 1;
       log_mime_parser ("Collecting signature now");
+    }
+  else if (ctx->nesting_level == 1 && ctx->is_encrypted
+           && !strcmp (ctmain, "application")
+           && (ctx->protocol == PROTOCOL_OPENPGP
+               && !strcmp (ctsub, "octet-stream")))
+    {
+      log_mime_parser ("Collecting encrypted data from now on");
+      ctx->collect_crypto_data = 1;
     }
   else /* Other type. */
     {
@@ -413,7 +430,7 @@ message_cb (void *opaque, rfc822parse_event_t event,
         {
           ctx->start_hashing = 2;
           ctx->hashing_level = ctx->nesting_level;
-          ctx->collect_signeddata = 1;
+          ctx->collect_crypto_data = 1;
         }
     }
 
@@ -449,7 +466,7 @@ message_cb (void *opaque, rfc822parse_event_t event,
       if (ctx->start_hashing == 2 && ctx->hashing_level == ctx->nesting_level)
         {
           ctx->start_hashing = 3; /* Avoid triggering it again. */
-          ctx->collect_signeddata = 0;
+          ctx->collect_crypto_data = 0;
         }
       break;
 
@@ -582,21 +599,22 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
 
           /* If we are currently in a collecting state actually
              collect that line */
-          if (m_mime_ctx->collect_signeddata)
+          if (m_mime_ctx->collect_crypto_data && m_mime_ctx->start_hashing)
             {
               /* Save the signed data.  Note that we need to delay
                  the CR/LF because the last line ending belongs to the
                  next boundary. */
-              if (m_mime_ctx->collect_signeddata == 2)
+              if (m_mime_ctx->collect_crypto_data == 2)
                 {
                   m_crypto_data.write ("\r\n", 2);
                 }
-              log_debug ("Writing signeddata: %s pos: " SIZE_T_FORMAT,
-                         linebuf, pos);
+              log_mime_parser ("Writing raw crypto data: %.*s",
+                               (int)pos, linebuf);
               m_crypto_data.write (linebuf, pos);
-              m_mime_ctx->collect_signeddata = 2;
+              m_mime_ctx->collect_crypto_data = 2;
             }
-          if (m_mime_ctx->in_data && m_mime_ctx->collect_attachment)
+          if (m_mime_ctx->in_data && m_mime_ctx->collect_attachment
+              && !m_mime_ctx->collect_crypto_data)
             {
               /* We are inside of an attachment part.  Write it out. */
               if (m_mime_ctx->collect_attachment == 1)  /* Skip the first line. */
@@ -612,19 +630,27 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
 
               if (m_mime_ctx->collect_body)
                 {
-                  m_body += std::string(linebuf, len);
-                  if (!m_mime_ctx->is_base64_encoded && !slbrk)
+                  if (m_mime_ctx->collect_body == 2)
                     {
-                      m_body += "\r\n";
+                      m_body += std::string(linebuf, len);
+                      if (!m_mime_ctx->is_base64_encoded && !slbrk)
+                        {
+                          m_body += "\r\n";
+                        }
                     }
+                  m_mime_ctx->collect_body = 2;
                 }
               else if (m_mime_ctx->collect_html_body)
                 {
-                  m_html_body += std::string(linebuf, len);
-                  if (!m_mime_ctx->is_base64_encoded && !slbrk)
+                  if (m_mime_ctx->collect_html_body == 2)
                     {
-                      m_body += "\r\n";
+                      m_html_body += std::string(linebuf, len);
+                      if (!m_mime_ctx->is_base64_encoded && !slbrk)
+                        {
+                          m_body += "\r\n";
+                        }
                     }
+                  m_mime_ctx->collect_html_body = 2;
                 }
               else if (m_mime_ctx->current_attachment && len)
                 {
@@ -677,6 +703,8 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                 len = b64_decode (&m_mime_ctx->base64, linebuf, pos);
               else
                 len = pos;
+              log_debug ("Writing crypto data: %.*s",
+                         (int)pos, linebuf);
               if (len)
                 m_crypto_data.write(linebuf, len);
               if (!m_mime_ctx->is_base64_encoded && !slbrk)
