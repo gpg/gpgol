@@ -38,6 +38,12 @@ struct
     NULL,
     NULL,
     0 },
+  { DATADIR "/openpgp-encrypted.mbox",
+    MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
+    DATADIR "/openpgp-encrypted.plain",
+    NULL,
+    NULL,
+    0 },
   { NULL, MSGTYPE_UNKNOWN, NULL, NULL, 0 }
 };
 
