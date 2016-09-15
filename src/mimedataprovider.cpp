@@ -17,13 +17,19 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "config.h"
-#include "common.h"
+#include "common_indep.h"
+#include "xmalloc.h"
+#include <string.h>
 
 #include "mimedataprovider.h"
 #include "parsetlv.h"
 #include "rfc822parse.h"
 #include "rfc2047parse.h"
 #include "attachment.h"
+
+#ifndef HAVE_W32_SYSTEM
+#define stricmp strcasecmp
+#endif
 
 /* The maximum length of a line we are able to process.  RFC822 allows
    only for 1000 bytes; thus 2000 seems to be a reasonable value. */
@@ -584,7 +590,8 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                 {
                   m_crypto_data.write ("\r\n", 2);
                 }
-              log_debug ("Writing signeddata: %s pos: %i", linebuf, pos);
+              log_debug ("Writing signeddata: %s pos: " SIZE_T_FORMAT,
+                         linebuf, pos);
               m_crypto_data.write (linebuf, pos);
               m_mime_ctx->collect_signeddata = 2;
             }
@@ -731,9 +738,9 @@ MimeDataProvider::collect_data(FILE *stream)
     }
   char buf[BUFSIZE];
   size_t bRead;
-  while ((bRead = stream->Read (buf, BUFSIZE, 1, stream)) > 0)
+  while ((bRead = fread (buf, BUFSIZE, 1, stream)) > 0)
     {
-      log_mime_parser ("%s:%s: Read %lu bytes.",
+      log_mime_parser ("%s:%s: Read " SIZE_T_FORMAT " bytes.",
                        SRCNAME, __func__, bRead);
 
       m_rawbuf += std::string (buf, bRead);
