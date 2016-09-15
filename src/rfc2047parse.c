@@ -36,8 +36,12 @@
 #endif
 
 #include <stdbool.h>
-#include "common.h"
-#include "mlang-charset.h"
+#include "common_indep.h"
+#include <ctype.h>
+
+#ifdef HAVE_W32_SYSTEM
+# include "mlang-charset.h"
+#endif
 
 #include "gmime-table-private.h"
 
@@ -205,7 +209,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
         lwsp = NULL;
 
       word = inptr;
-      ascii = TRUE;
+      ascii = true;
       if (is_atom (*inptr)) {
           if (enable_rfc2047_workarounds) {
               /* Make an extra effort to detect and
@@ -237,7 +241,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
                   if (*inptr == '\0') {
                       /* didn't find an end marker... */
                       inptr = word + 2;
-                      ascii = TRUE;
+                      ascii = true;
 
                       goto non_rfc2047;
                   }
@@ -269,7 +273,7 @@ non_rfc2047:
               tail->next = token;
               tail = token;
 
-              encoded = TRUE;
+              encoded = true;
           } else {
               /* append the lwsp and atom tokens */
               if (lwsp != NULL) {
@@ -282,7 +286,7 @@ non_rfc2047:
               tail->next = token;
               tail = token;
 
-              encoded = FALSE;
+              encoded = false;
           }
       } else {
           /* append the lwsp token */
@@ -291,7 +295,7 @@ non_rfc2047:
               tail = lwsp;
           }
 
-          ascii = TRUE;
+          ascii = true;
           while (*inptr && !is_lwsp (*inptr) && !is_atom (*inptr)) {
               ascii = ascii && is_ascii (*inptr);
               inptr++;
@@ -304,7 +308,7 @@ non_rfc2047:
           tail->next = token;
           tail = token;
 
-          encoded = FALSE;
+          encoded = false;
       }
   }
 
@@ -575,8 +579,13 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
           if (!strcasecmp (charset, "UTF-8")) {
               strncat (decoded, (char *) outptr, outlen);
           } else {
+#ifdef HAVE_W32_SYSTEM
               str = ansi_charset_to_utf8 (charset, outptr, outlen);
-
+#else
+              log_debug ("%s:%s: Conversion not available on non W32 systems",
+                         SRCNAME, __func__);
+              str = strndup (outptr, outlen);
+#endif
               if (!str)
                 {
                   log_error ("%s:%s: Failed conversion from: %s for word: %s.",
