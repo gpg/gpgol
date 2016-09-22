@@ -223,6 +223,32 @@ ParseController::get_body() const
     }
 }
 
+const std::string
+ParseController::get_body_charset() const
+{
+  if (m_outputprovider)
+    {
+      return m_outputprovider->get_body_charset();
+    }
+  else
+    {
+      return std::string();
+    }
+}
+
+const std::string
+ParseController::get_html_charset() const
+{
+  if (m_outputprovider)
+    {
+      return m_outputprovider->get_body_charset();
+    }
+  else
+    {
+      return std::string();
+    }
+}
+
 std::vector<std::shared_ptr<Attachment> >
 ParseController::get_attachments() const
 {

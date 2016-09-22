@@ -68,6 +68,15 @@ public:
   /** Get the Body. Call parse first. */
   const std::string get_body() const;
 
+  /** Get the charset of the body. Call parse first.
+    *
+    * That is a bit of a clunky API to make testing
+    * without outlook easier as we use mlang for Charset
+    * conversion which is not available on GNU/Linux.
+  */
+  const std::string get_body_charset() const;
+  const std::string get_html_charset() const;
+
   /** Get an alternative? HTML Body. Call parse first. */
   const std::string get_html_body() const;
 
