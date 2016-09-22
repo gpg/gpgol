@@ -68,6 +68,13 @@ struct
     NULL,
     1,
     "us-ascii"},
+  { DATADIR "/smime-opaque-sign.mbox",
+    MSGTYPE_GPGOL_OPAQUE_SIGNED,
+    DATADIR "/smime-opaque-sign.plain",
+    NULL,
+    NULL,
+    0,
+    "utf-8"},
   { NULL, MSGTYPE_UNKNOWN, NULL, NULL, NULL, 0, NULL }
 };
 
