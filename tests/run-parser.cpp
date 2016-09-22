@@ -104,14 +104,17 @@ int main(int argc, char **argv)
 
   fp_in = fopen (argv[0], "rb");
 
-  ParseController parser(fp_in, msgtype);
-  std::cout << "Parse result: " << parser.parse();
-  std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
-            << "\nVerify result:\n" << parser.verify_result()
-            << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
-            << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
-  for (auto attach: parser.get_attachments())
     {
-      std::cout << "Attachment: " << attach->get_display_name();
+      ParseController parser(fp_in, msgtype);
+      std::cout << "Parse result: " << parser.parse();
+      std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
+                << "\nVerify result:\n" << parser.verify_result()
+                << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
+                << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
+      for (auto attach: parser.get_attachments())
+        {
+          std::cout << "Attachment: " << attach->get_display_name();
+        }
     }
+  fclose (fp_in);
 }
