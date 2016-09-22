@@ -31,20 +31,30 @@ struct
   const char *expected_html_body_file;
   const char *expected_return;
   int attachment_cnt;
+  const char *expected_charset;
 } test_data[] = {
   { DATADIR "/inlinepgpencrypted.mbox",
     MSGTYPE_GPGOL_PGP_MESSAGE,
     DATADIR "/inlinepgpencrypted.plain",
     NULL,
     NULL,
-    0 },
+    0,
+    NULL},
   { DATADIR "/openpgp-encrypted.mbox",
     MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
     DATADIR "/openpgp-encrypted.plain",
     NULL,
     NULL,
-    0 },
-  { NULL, MSGTYPE_UNKNOWN, NULL, NULL, 0 }
+    0,
+    NULL},
+  { DATADIR "/openpgp-signed-no-attach.mbox",
+    MSGTYPE_GPGOL_MULTIPART_SIGNED,
+    DATADIR "/openpgp-signed-no-attach.plain",
+    NULL,
+    NULL,
+    0,
+    "iso-8859-1"},
+  { NULL, MSGTYPE_UNKNOWN, NULL, NULL, NULL, 0, NULL }
 };
 
 
@@ -130,6 +140,16 @@ int main()
             {
               fprintf (stderr, "Attachment count mismatch. Actual: %i Expected: %i\n",
                        actual, test_data[i].attachment_cnt);
+              exit(1);
+            }
+        }
+      if (test_data[i].expected_charset)
+        {
+          if (parser.get_body_charset() != test_data[i].expected_charset)
+            {
+              fprintf (stderr, "Charset mismatch. Actual: %s Expected: %s\n",
+                      parser.get_body_charset().c_str(),
+                      test_data[i].expected_charset);
               exit(1);
             }
         }
