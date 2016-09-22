@@ -136,22 +136,48 @@ ParseController::parse()
       auto combined_result = ctx->decryptAndVerify(input, output);
       m_decrypt_result = combined_result.first;
       m_verify_result = combined_result.second;
+      if (!m_decrypt_result.error () &&
+          m_verify_result.signatures ().empty() &&
+          m_outputprovider->signature ())
+        {
+          /* There is a signature in the output. So we have
+             to verify it now as an extra step. */
+          input = Data (m_outputprovider);
+          delete m_inputprovider;
+          m_inputprovider = m_outputprovider;
+          m_outputprovider = new MimeDataProvider();
+          output = Data(m_outputprovider);
+          verify = true;
+        }
+      else
+        {
+          verify = false;
+        }
     }
-  else
+  if (verify)
     {
       const auto sig = m_inputprovider->signature();
-      /* Ignore the first two bytes if we did not decrypt. */
-      input.seek (2, SEEK_SET);
+      input.seek (0, SEEK_SET);
       if (sig)
         {
           sig->seek (0, SEEK_SET);
           m_verify_result = ctx->verifyDetachedSignature(*sig, input);
+          /* Copy the input to output to do a mime parsing. */
+          char buf[4096];
+          input.seek (0, SEEK_SET);
+          output.seek (0, SEEK_SET);
+          size_t nread;
+          while ((nread = input.read (buf, 4096)) > 0)
+            {
+              output.write (buf, nread);
+            }
         }
       else
         {
           m_verify_result = ctx->verifyOpaqueSignature(input, output);
         }
     }
+  delete ctx;
   log_debug ("%s:%s: decrypt err: %i verify err: %i",
              SRCNAME, __func__, m_decrypt_result.error().code(),
              m_verify_result.error().code());
