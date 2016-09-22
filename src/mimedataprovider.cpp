@@ -80,8 +80,6 @@ struct mime_context
   int is_qp_encoded;      /* Current part is QP encoded. */
   int is_base64_encoded;  /* Current part is base 64 encoded. */
   int is_body;            /* The current part belongs to the body.  */
-  int is_opaque_signed;   /* Flag indicating opaque signed S/MIME. */
-  int may_be_opaque_signed;/* Hack, see code.  */
   protocol_t protocol;    /* The detected crypto protocol.  */
 
   int part_counter;       /* Counts the number of processed parts. */
@@ -323,17 +321,8 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
         {
           const char *smtype = rfc822parse_query_parameter (field,
                                                             "smime-type", 0);
-          if (smtype && !strcmp (smtype, "signed-data"))
-            ctx->is_opaque_signed++;
-          else
-            {
-              /* CryptoEx is notorious in setting wrong MIME header.
-                 Mark that so we can test later if possible. */
-              ctx->may_be_opaque_signed++;
-            }
+          ctx->collect_crypto_data = 1;
         }
-
-      ctx->collect_attachment = 1;
     }
   rfc822parse_release_field (field); /* (Content-type) */
   ctx->in_data = 1;
@@ -343,11 +332,10 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   if (is_text && not_inline_text)
     ctx->collect_attachment = 1;
 
-  log_mime_parser ("%s:%s: this body: nesting=%d partno=%d is_text=%d, is_opq=%d"
+  log_mime_parser ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
                    " charset=\"%s\"\n",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
-                   ctx->is_opaque_signed,
                    ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"");
 
   /* If this is a text part, decide whether we treat it as our body. */
