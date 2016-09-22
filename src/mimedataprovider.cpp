@@ -623,8 +623,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
               m_crypto_data.write (linebuf, pos);
               m_mime_ctx->collect_crypto_data = 2;
             }
-          if (m_mime_ctx->in_data && m_mime_ctx->collect_attachment
-              && !m_mime_ctx->collect_crypto_data)
+          if (m_mime_ctx->in_data && m_mime_ctx->collect_attachment)
             {
               /* We are inside of an attachment part.  Write it out. */
               if (m_mime_ctx->collect_attachment == 1)  /* Skip the first line. */
@@ -701,7 +700,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                     m_signature->write("\r\n", 2);
                 }
             }
-          else if (m_mime_ctx->in_data)
+          else if (m_mime_ctx->in_data && !m_mime_ctx->start_hashing)
             {
               /* We are inside the data.  That should be the actual
                  ciphertext in the given encoding. */
