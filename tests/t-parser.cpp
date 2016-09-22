@@ -54,6 +54,13 @@ struct
     NULL,
     0,
     "iso-8859-1"},
+  { DATADIR "/openpgp-encrypted+signed.mbox",
+    MSGTYPE_GPGOL_MULTIPART_SIGNED,
+    DATADIR "/openpgp-encrypted+signed.plain",
+    NULL,
+    NULL,
+    0,
+    "us-ascii"},
   { NULL, MSGTYPE_UNKNOWN, NULL, NULL, NULL, 0, NULL }
 };
 
