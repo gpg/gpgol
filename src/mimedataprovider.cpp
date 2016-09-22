@@ -647,6 +647,11 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                           m_body += "\r\n";
                         }
                     }
+                  if (m_body_charset.empty())
+                    {
+                      m_body_charset = m_mime_ctx->mimestruct_cur->charset ?
+                                       m_mime_ctx->mimestruct_cur->charset : "";
+                    }
                   m_mime_ctx->collect_body = 2;
                 }
               else if (m_mime_ctx->collect_html_body)
@@ -656,8 +661,13 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                       m_html_body += std::string(linebuf, len);
                       if (!m_mime_ctx->is_base64_encoded && !slbrk)
                         {
-                          m_body += "\r\n";
+                          m_html_body += "\r\n";
                         }
+                    }
+                  if (m_html_charset.empty())
+                    {
+                      m_html_charset = m_mime_ctx->mimestruct_cur->charset ?
+                                       m_mime_ctx->mimestruct_cur->charset : "";
                     }
                   m_mime_ctx->collect_html_body = 2;
                 }
@@ -885,4 +895,14 @@ const std::string &MimeDataProvider::get_html_body()
       m_rawbuf.clear();
     }
   return m_html_body;
+}
+
+const std::string &MimeDataProvider::get_html_charset() const
+{
+  return m_html_charset;
+}
+
+const std::string &MimeDataProvider::get_body_charset() const
+{
+  return m_body_charset;
 }

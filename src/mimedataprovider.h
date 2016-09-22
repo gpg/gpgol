@@ -101,10 +101,15 @@ public:
 
   mime_context_t mime_context() {return m_mime_ctx;}
 
+  /* Checks if there is body data left in the buffer e.g. for inline messages
+     that did not end with a linefeed and adds it to body / returns the body. */
   const std::string &get_body();
+  /* Similar for html body */
   const std::string &get_html_body();
   const std::vector <std::shared_ptr<Attachment> > get_attachments() const
     {return m_attachments;}
+  const std::string &get_html_charset() const;
+  const std::string &get_body_charset() const;
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */
@@ -130,5 +135,9 @@ private:
   mime_context_t m_mime_ctx;
   /* List of attachments. */
   std::vector<std::shared_ptr<Attachment> > m_attachments;
+  /* Charset of html */
+  std::string m_html_charset;
+  /* Charset of body */
+  std::string m_body_charset;
 };
 #endif // MIMEDATAPROVIDER_H
