@@ -82,6 +82,8 @@ int main()
         }
       ParseController parser (input, test_data[i].type);
 
+      fclose(input);
+
       auto result = parser.parse();
 
       auto decResult = parser.decrypt_result();
@@ -114,13 +116,15 @@ int main()
               exit(1);
             }
           char bodybuf[16000];
-          fread (bodybuf, 1, 16000, expected_body);
+          auto read = fread (bodybuf, 1, 16000, expected_body);
+          bodybuf[read] = '\0';
           if (parser.get_body() != bodybuf)
             {
               fprintf (stderr, "Body was: \n\"%s\"\nExpected:\n\"%s\"\n",
                        parser.get_body().c_str(), bodybuf);
               exit(1);
             }
+          fclose (expected_body);
         }
       if (test_data[i].expected_html_body_file)
         {
@@ -132,13 +136,15 @@ int main()
               exit(1);
             }
           char bodybuf[16000];
-          fread (bodybuf, 1, 16000, expected_html_body);
+          auto read = fread (bodybuf, 1, 16000, expected_html_body);
+          bodybuf[read] = '\0';
           if (parser.get_html_body() != bodybuf)
             {
               fprintf (stderr, "HTML was: \n\"%s\"\nExpected:\n\"%s\"\n",
                        parser.get_html_body().c_str(), bodybuf);
               exit(1);
             }
+          fclose (expected_html_body);
         }
       if (test_data[i].attachment_cnt)
         {
