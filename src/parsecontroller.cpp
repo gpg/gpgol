@@ -93,6 +93,15 @@ operation_for_type(msgtype_t type, bool *decrypt,
     }
 }
 
+static bool
+is_opaque_signed (Data &data)
+{
+  data.seek (0, SEEK_SET);
+  auto id = data.type();
+  data.seek (0, SEEK_SET);
+  return id == Data::CMSSigned;
+}
+
 std::string
 ParseController::parse()
 {
@@ -136,9 +145,10 @@ ParseController::parse()
       auto combined_result = ctx->decryptAndVerify(input, output);
       m_decrypt_result = combined_result.first;
       m_verify_result = combined_result.second;
-      if (!m_decrypt_result.error () &&
+      if ((!m_decrypt_result.error () &&
           m_verify_result.signatures ().empty() &&
-          m_outputprovider->signature ())
+          m_outputprovider->signature ()) ||
+          is_opaque_signed (output))
         {
           /* There is a signature in the output. So we have
              to verify it now as an extra step. */
