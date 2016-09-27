@@ -75,6 +75,20 @@ struct
     NULL,
     0,
     "utf-8"},
+  { DATADIR "/smime-encrypted.mbox",
+    MSGTYPE_GPGOL_OPAQUE_ENCRYPTED,
+    DATADIR "/smime-encrypted.plain",
+    NULL,
+    NULL,
+    0,
+    "us-ascii"},
+  { DATADIR "/smime-opaque-signed-encrypted-attachment.mbox",
+    MSGTYPE_GPGOL_OPAQUE_ENCRYPTED,
+    DATADIR "/smime-opaque-signed-encrypted-attachment.plain",
+    NULL,
+    NULL,
+    1,
+    "us-ascii"},
   { NULL, MSGTYPE_UNKNOWN, NULL, NULL, NULL, 0, NULL }
 };
 
