@@ -319,8 +319,6 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           && (!strcmp (ctsub, "pkcs7-mime")
               || !strcmp (ctsub, "x-pkcs7-mime")))
         {
-          const char *smtype = rfc822parse_query_parameter (field,
-                                                            "smime-type", 0);
           ctx->collect_crypto_data = 1;
         }
     }
