@@ -87,6 +87,12 @@ struct
     NULL,
     1,
     "us-ascii"},
+  { DATADIR "/openpgp-encrypted-attachment-gpgol.mbox",
+    MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
+    DATADIR "/openpgp-encrypted-attachment-gpgol.plain",
+    NULL,
+    1,
+    "utf-8"},
   { NULL, MSGTYPE_UNKNOWN, NULL, NULL, 0, NULL }
 };
 
@@ -163,15 +169,12 @@ int main()
             }
           fclose (expected_html_body);
         }
-      if (test_data[i].attachment_cnt)
+      int actual = (int)parser.get_attachments().size();
+      if (actual != test_data[i].attachment_cnt)
         {
-          int actual = (int)parser.get_attachments().size();
-          if (actual != test_data[i].attachment_cnt)
-            {
-              fprintf (stderr, "Attachment count mismatch. Actual: %i Expected: %i\n",
-                       actual, test_data[i].attachment_cnt);
-              exit(1);
-            }
+          fprintf (stderr, "Attachment count mismatch. Actual: %i Expected: %i\n",
+                   actual, test_data[i].attachment_cnt);
+          exit(1);
         }
       if (test_data[i].expected_charset)
         {
