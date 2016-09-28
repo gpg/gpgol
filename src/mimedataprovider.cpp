@@ -67,7 +67,6 @@ struct mime_context
   int body_seen;      /* True if we have seen a part we consider the
                          body of the message.  */
 
-  int collect_attachment; /* True if we are collecting an attachment */
   std::shared_ptr<Attachment> current_attachment; /* A pointer to the current
                                                      attachment */
   int collect_body;       /* True if we are collcting the body */
@@ -325,38 +324,37 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   rfc822parse_release_field (field); /* (Content-type) */
   ctx->in_data = 1;
 
-  /* Need to start an attachment if we have seen a content disposition
-     other then the inline type. */
-  if (is_text && not_inline_text)
-    ctx->collect_attachment = 1;
-
   log_mime_parser ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
-                   " charset=\"%s\"\n",
+                   " charset=\"%s\"\n body_seen=%d not_inline_text=%d",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
-                   ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"");
+                   ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"",
+                   ctx->body_seen, not_inline_text);
 
-  /* If this is a text part, decide whether we treat it as our body. */
-  if (is_text && !not_inline_text)
+  /* If this is a text part, decide whether we treat it as one
+     of our bodies.
+     */
+  if ((is_text && !not_inline_text))
     {
-      ctx->collect_attachment = 1;
-      ctx->body_seen = 1;
       if (is_text == 2)
         {
+          ctx->body_seen = 2;
           ctx->collect_html_body = 1;
           ctx->collect_body = 0;
         }
       else
         {
+          ctx->body_seen = 1;
           ctx->collect_body = 1;
           ctx->collect_html_body = 0;
         }
     }
-  else if (ctx->collect_attachment)
+  else if (!ctx->collect_crypto_data && ctx->nesting_level >= 1)
     {
-      /* Now that if we have an attachment prepare a new MAPI
-         attachment.  */
+      /* Treat it as an attachment.  */
       ctx->current_attachment = provider->create_attachment();
+      ctx->collect_body = 0;
+      ctx->collect_html_body = 0;
     }
 
   return 0;
@@ -387,7 +385,6 @@ message_cb (void *opaque, rfc822parse_event_t event,
                            SRCNAME, __func__);
           ctx->start_hashing = 1;
           ctx->collect_crypto_data = 1;
-          ctx->body_seen = 1;
           /* Create a fake MIME structure.  */
           /* Fixme: We might want to take it from the enclosing message.  */
           {
@@ -448,7 +445,6 @@ message_cb (void *opaque, rfc822parse_event_t event,
     case RFC822PARSE_LAST_BOUNDARY:
       ctx->any_boundary = 1;
       ctx->in_data = 0;
-      ctx->collect_attachment = 0;
       ctx->collect_body = 0;
 
       if (ctx->start_hashing == 2 && ctx->hashing_level == ctx->nesting_level)
@@ -615,11 +611,12 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
               m_crypto_data.write (linebuf, pos);
               m_mime_ctx->collect_crypto_data = 2;
             }
-          if (m_mime_ctx->in_data && m_mime_ctx->collect_attachment)
+          if (m_mime_ctx->in_data && !m_mime_ctx->collect_signature &&
+              !m_mime_ctx->collect_crypto_data)
             {
               /* We are inside of an attachment part.  Write it out. */
-              if (m_mime_ctx->collect_attachment == 1)  /* Skip the first line. */
-                m_mime_ctx->collect_attachment = 2;
+              if (m_mime_ctx->in_data == 1)  /* Skip the first line. */
+                m_mime_ctx->in_data = 2;
 
               int slbrk = 0;
               if (m_mime_ctx->is_qp_encoded)
