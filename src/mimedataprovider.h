@@ -61,14 +61,19 @@ class MimeDataProvider : public GpgME::DataProvider
 {
 public:
   /* Create an empty dataprovider, useful for writing to. */
-  MimeDataProvider();
+  MimeDataProvider(bool no_headers = false);
 #ifdef HAVE_W32_SYSTEM
   /* Read and parse the stream. Does not hold a reference
-     to the stream but releases it after read. */
-  MimeDataProvider(LPSTREAM stream);
+     to the stream but releases it after read.
+
+     If no_headers is set to true, assume that there are no
+     headers and immediately start collecting crypto data.
+     Eg. When decrypting a MOSS Attachment.
+     */
+  MimeDataProvider(LPSTREAM stream, bool no_headers = false);
 #endif
   /* Test instrumentation. */
-  MimeDataProvider(FILE *stream);
+  MimeDataProvider(FILE *stream, bool no_headers = false);
   ~MimeDataProvider();
 
   /* Dataprovider interface */

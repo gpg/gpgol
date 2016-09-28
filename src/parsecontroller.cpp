@@ -29,28 +29,60 @@
 
 #include <sstream>
 
+#ifdef HAVE_W32_SYSTEM
+#include "common.h"
+/* We use UTF-8 internally. */
+#undef _
+# define _(a) utf8_gettext (a)
+#else
+# define _(a) a
+#endif
+
+
+
+const char decrypt_template[] = {
+"<html><head></head><body>"
+"<table border=\"0\" width=\"100%%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">"
+"<tr>"
+"<td bgcolor=\"#0080ff\">"
+"<p><span style=\"font-weight:600; background-color:#0080ff;\"><center>%s %s</center><span></p></td></tr>"
+"<tr>"
+"<td bgcolor=\"#e0f0ff\">"
+"<center>"
+"<br/>%s"
+"</td></tr>"
+"</table></body></html>"};
+
 using namespace GpgME;
+
+static bool
+expect_no_headers (msgtype_t type)
+{
+  return type != MSGTYPE_GPGOL_MULTIPART_SIGNED &&
+         type != MSGTYPE_GPGOL_OPAQUE_SIGNED &&
+         type != MSGTYPE_GPGOL_OPAQUE_ENCRYPTED;
+}
 
 #ifdef HAVE_W32_SYSTEM
 ParseController::ParseController(LPSTREAM instream, msgtype_t type):
-    m_inputprovider  (new MimeDataProvider(instream)),
+    m_inputprovider  (new MimeDataProvider(instream,
+                          expect_no_headers(type))),
     m_outputprovider (new MimeDataProvider()),
-    m_type (type),
-    m_error (false)
+    m_type (type)
 {
-  log_mime_parser ("%s:%s: Creating parser for stream: %p",
-                   SRCNAME, __func__, instream);
+  log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
+                   SRCNAME, __func__, instream, type);
 }
 #endif
 
 ParseController::ParseController(FILE *instream, msgtype_t type):
-    m_inputprovider  (new MimeDataProvider(instream)),
+    m_inputprovider  (new MimeDataProvider(instream,
+                          expect_no_headers(type))),
     m_outputprovider (new MimeDataProvider()),
-    m_type (type),
-    m_error (false)
+    m_type (type)
 {
-  log_mime_parser ("%s:%s: Creating parser for stream: %p",
-                   SRCNAME, __func__, instream);
+  log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
+                   SRCNAME, __func__, instream, type);
 }
 
 ParseController::~ParseController()

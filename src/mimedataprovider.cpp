@@ -375,15 +375,18 @@ message_cb (void *opaque, rfc822parse_event_t event,
   debug_message_event (event);
   if (ctx->no_mail_header)
     {
-      /* Assume that this is not a regular mail but plain text. */
       if (event == RFC822PARSE_OPEN)
-        return 0; /*  We need to skip the OPEN event.  */
+        {
+          /* We ignore the open event */
+          return 0;
+        }
+      /* Assume that this is not a regular mail but plain text. */
       if (!ctx->body_seen)
         {
           log_mime_parser ("%s:%s: assuming this is plain text without headers\n",
                            SRCNAME, __func__);
-          ctx->in_data = 1;
-          ctx->collect_attachment = 2; /* 2 so we don't skip the first line. */
+          ctx->start_hashing = 1;
+          ctx->collect_crypto_data = 1;
           ctx->body_seen = 1;
           /* Create a fake MIME structure.  */
           /* Fixme: We might want to take it from the enclosing message.  */
@@ -402,7 +405,6 @@ message_cb (void *opaque, rfc822parse_event_t event,
             ms->filename = NULL;
             ms->charset = NULL;
           }
-          ctx->collect_body = 1;
         }
       return 0;
     }
@@ -467,17 +469,21 @@ message_cb (void *opaque, rfc822parse_event_t event,
   return retval;
 }
 
-MimeDataProvider::MimeDataProvider() :
+MimeDataProvider::MimeDataProvider(bool no_headers) :
   m_signature(nullptr)
 {
   m_mime_ctx = (mime_context_t) xcalloc (1, sizeof *m_mime_ctx);
   m_mime_ctx->msg = rfc822parse_open (message_cb, this);
   m_mime_ctx->mimestruct_tail = &m_mime_ctx->mimestruct;
+  if (no_headers)
+    {
+      m_mime_ctx->no_mail_header = 1;
+    }
 }
 
 #ifdef HAVE_W32_SYSTEM
-MimeDataProvider::MimeDataProvider(LPSTREAM stream):
-  MimeDataProvider()
+MimeDataProvider::MimeDataProvider(LPSTREAM stream, bool no_headers):
+  MimeDataProvider(no_headers)
 {
   if (stream)
     {
@@ -495,8 +501,8 @@ MimeDataProvider::MimeDataProvider(LPSTREAM stream):
 }
 #endif
 
-MimeDataProvider::MimeDataProvider(FILE *stream):
-  MimeDataProvider()
+MimeDataProvider::MimeDataProvider(FILE *stream, bool no_headers):
+  MimeDataProvider(no_headers)
 {
   log_mime_parser ("%s:%s Collecting data from file.", SRCNAME, __func__);
   collect_data (stream);
