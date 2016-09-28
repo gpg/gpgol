@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     {
       ParseController parser(fp_in, msgtype);
-      std::cout << "Parse result: " << parser.parse();
+      std::cout << "Parse error: " << parser.get_formatted_error ();
       std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
                 << "\nVerify result:\n" << parser.verify_result()
                 << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"

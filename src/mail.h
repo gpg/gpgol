@@ -195,6 +195,8 @@ public:
   */
   void parsing_done ();
 private:
+  void update_body ();
+
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
   bool m_processed,    /* The message has been porcessed by us.  */

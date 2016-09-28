@@ -134,7 +134,64 @@ is_opaque_signed (Data &data)
   return id == Data::CMSSigned;
 }
 
-std::string
+static std::string
+format_recipients(GpgME::DecryptionResult result)
+{
+  std::string msg;
+  for (const auto recipient: result.recipients())
+    {
+      msg += std::string("<br/>0x") + recipient.keyID() + "</a>";
+    }
+  return msg;
+}
+
+static std::string
+format_error(GpgME::DecryptionResult result, Protocol protocol)
+{
+  char *buf;
+  bool no_sec = false;
+  std::string msg;
+
+  if (result.error ().isCanceled () ||
+      result.error ().code () == GPG_ERR_NO_SECKEY)
+    {
+       msg = _("Decryption canceled or timed out.");
+    }
+
+  if (result.error ().code () == GPG_ERR_DECRYPT_FAILED)
+    {
+      no_sec = true;
+      for (const auto &recipient: result.recipients ()) {
+        no_sec &= (recipient.status ().code () == GPG_ERR_NO_SECKEY);
+      }
+    }
+
+  if (no_sec)
+    {
+      msg = _("No secret key found to decrypt the message."
+              "It is encrypted for following keys:");
+      msg += format_recipients (result);
+    }
+  else
+    {
+      msg = _("Could not decrypt the data.");
+    }
+
+  if (gpgrt_asprintf (&buf, decrypt_template,
+                      protocol == OpenPGP ? "OpenPGP" : "S/MIME",
+                      _("Encrypted message (decryption not possible)"),
+                      msg.c_str()) == -1)
+    {
+      log_error ("%s:%s:Failed to Format error.",
+                 SRCNAME, __func__);
+      return "Failed to Format error.";
+    }
+  msg = buf;
+  return msg;
+}
+
+
+void
 ParseController::parse()
 {
   // Wrap the input stream in an attachment / GpgME Data
@@ -146,26 +203,28 @@ ParseController::parse()
     {
       log_error ("%s:%s:Failed to create context. Installation broken.",
                  SRCNAME, __func__);
-      // TODO proper error handling
-      return std::string("Bad installation");
+      char *buf;
+      const char *proto = protocol == OpenPGP ? "OpenPGP" : "S/MIME";
+      if (gpgrt_asprintf (&buf, decrypt_template,
+                          proto,
+                          _("Encrypted message (decryption not possible)"),
+                          _("Failed to find GnuPG please ensure that GnuPG or "
+                            "Gpg4win is properly installed.")) == -1)
+        {
+          log_error ("%s:%s:Failed format error.",
+                     SRCNAME, __func__);
+          /* Should never happen */
+          m_error = std::string("Bad installation");
+        }
+      m_error = buf;
+      xfree (buf);
+      return;
     }
   ctx->setArmor(true);
 
   Data output(m_outputprovider);
 
-  Data input;
-  if (m_type == MSGTYPE_GPGOL_CLEAR_SIGNED ||
-      m_type == MSGTYPE_GPGOL_PGP_MESSAGE)
-    {
-      /* For clearsigned and PGP Message take the body.
-         This does not copy the data. */
-      input = Data (m_inputprovider->get_body().c_str(),
-                    m_inputprovider->get_body().size(), false);
-    }
-  else
-    {
-      input = Data (m_inputprovider);
-    }
+  Data input (m_inputprovider);
   log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s",
              SRCNAME, __func__,
              decrypt, verify,
@@ -194,6 +253,10 @@ ParseController::parse()
       else
         {
           verify = false;
+        }
+      if (m_decrypt_result.error())
+        {
+          m_error = format_error (m_decrypt_result, protocol);
         }
     }
   if (verify)
@@ -230,13 +293,7 @@ ParseController::parse()
        ss << m_decrypt_result << '\n' << m_verify_result;
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
     }
-  /*
-  Attachment *att = new Attachment ();
-  att->write ("Hello attachment", strlen ("Hello attachment"));
-  att->set_display_name ("The Attachment.txt");
-  m_attachments.push_back (std::shared_ptr<Attachment>(att));
-  */
-  return std::string();
+  return;
 }
 
 const std::string

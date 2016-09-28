@@ -43,6 +43,9 @@ class MimeDataProvider;
 #include "oomhelp.h"
 #endif
 
+/* A template for decryption errors / status message. */
+extern const char decrypt_template[];
+
 class ParseController
 {
 public:
@@ -57,13 +60,9 @@ public:
 
   ~ParseController();
 
-  /** Construct a new ParseController for an inline message where
-    the content is pointet to by body.
-  ParseController(const char *body, msgtype_t type);
-  */
-  /** Main entry point. Parses the Mail returns an
-    * empty string on success or an error message on failure. */
-  std::string parse();
+  /** Main entry point. After execution getters will become
+  valid. */
+  void parse();
 
   /** Get the Body. Call parse first. */
   const std::string get_body() const;
@@ -89,12 +88,15 @@ public:
   const GpgME::VerificationResult verify_result() const
   { return m_verify_result; }
 
+  const std::string get_formatted_error() const
+  { return m_error; }
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;
   MimeDataProvider *m_outputprovider;
   msgtype_t m_type;
-  bool m_error;
+  std::string m_error;
   GpgME::DecryptionResult m_decrypt_result;
   GpgME::VerificationResult m_verify_result;
 };

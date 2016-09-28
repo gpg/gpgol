@@ -29,7 +29,6 @@ struct
   msgtype_t type;
   const char *expected_body_file;
   const char *expected_html_body_file;
-  const char *expected_return;
   int attachment_cnt;
   const char *expected_charset;
 } test_data[] = {
@@ -37,13 +36,11 @@ struct
     MSGTYPE_GPGOL_PGP_MESSAGE,
     DATADIR "/inlinepgpencrypted.plain",
     NULL,
-    NULL,
     0,
     NULL},
   { DATADIR "/openpgp-encrypted.mbox",
     MSGTYPE_GPGOL_MULTIPART_ENCRYPTED,
     DATADIR "/openpgp-encrypted.plain",
-    NULL,
     NULL,
     0,
     NULL},
@@ -51,13 +48,11 @@ struct
     MSGTYPE_GPGOL_MULTIPART_SIGNED,
     DATADIR "/openpgp-signed-no-attach.plain",
     NULL,
-    NULL,
     0,
     "iso-8859-1"},
   { DATADIR "/openpgp-encrypted+signed.mbox",
     MSGTYPE_GPGOL_MULTIPART_SIGNED,
     DATADIR "/openpgp-encrypted+signed.plain",
-    NULL,
     NULL,
     0,
     "us-ascii"},
@@ -65,13 +60,11 @@ struct
     MSGTYPE_GPGOL_MULTIPART_SIGNED,
     DATADIR "/openpgp-encrypted-attachment.plain",
     NULL,
-    NULL,
     1,
     "us-ascii"},
   { DATADIR "/smime-opaque-sign.mbox",
     MSGTYPE_GPGOL_OPAQUE_SIGNED,
     DATADIR "/smime-opaque-sign.plain",
-    NULL,
     NULL,
     0,
     "utf-8"},
@@ -79,17 +72,15 @@ struct
     MSGTYPE_GPGOL_OPAQUE_ENCRYPTED,
     DATADIR "/smime-encrypted.plain",
     NULL,
-    NULL,
     0,
     "us-ascii"},
   { DATADIR "/smime-opaque-signed-encrypted-attachment.mbox",
     MSGTYPE_GPGOL_OPAQUE_ENCRYPTED,
     DATADIR "/smime-opaque-signed-encrypted-attachment.plain",
     NULL,
-    NULL,
     1,
     "us-ascii"},
-  { NULL, MSGTYPE_UNKNOWN, NULL, NULL, NULL, 0, NULL }
+  { NULL, MSGTYPE_UNKNOWN, NULL, NULL, 0, NULL }
 };
 
 
@@ -112,7 +103,7 @@ int main()
 
       fclose(input);
 
-      auto result = parser.parse();
+      parser.parse();
 
       auto decResult = parser.decrypt_result();
       auto verifyResult = parser.verify_result();
@@ -125,15 +116,6 @@ int main()
           exit(1);
         }
 
-      if (test_data[i].expected_return)
-        {
-          if (result != test_data[i].expected_return)
-            {
-              fprintf (stderr, "Failed to get expected return. Return was: %s\n",
-                       result.c_str());
-              exit(1);
-            }
-        }
       if (test_data[i].expected_body_file)
         {
           auto expected_body = fopen (test_data[i].expected_body_file, "rb");

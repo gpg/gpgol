@@ -67,19 +67,6 @@ static std::map<LPDISPATCH, Mail*> g_mail_map;
 "</td></tr>" \
 "</table></body></html>"
 
-#define WAIT_TEMPLATE \
-"<html><head></head><body>" \
-"<table border=\"0\" width=\"100%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">" \
-"<tr>" \
-"<td bgcolor=\"#0080ff\">" \
-"<p><span style=\"font-weight:600; background-color:#0080ff;\"><center>This message is encrypted</center><span></p></td></tr>" \
-"<tr>" \
-"<td bgcolor=\"#e0f0ff\">" \
-"<center>" \
-"<br/>Please wait while the message is decrypted by GpgOL..." \
-"</td></tr>" \
-"</table></body></html>"
-
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
@@ -296,20 +283,32 @@ Mail::decrypt_verify()
     }
 
   m_processed = true;
-  /* Inser placeholder */
-  if (put_oom_string (m_mailitem, "HTMLBody", WAIT_TEMPLATE))
+  /* Insert placeholder */
+  char *placeholder_buf;
+  if (gpgrt_asprintf (&placeholder_buf, decrypt_template,
+                      is_smime() ? "S/MIME" : "OpenPGP",
+                      _("Encrypted message"),
+                      _("Please wait while the message is being decrypted...")) == -1)
     {
-      log_error ("%s:%s: Failed to modify html body of item.",
+      log_error ("%s:%s: Failed to format placeholder.",
                  SRCNAME, __func__);
       return 1;
     }
+
+  if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
+    {
+      log_error ("%s:%s: Failed to modify html body of item.",
+                 SRCNAME, __func__);
+      xfree (placeholder_buf);
+      return 1;
+    }
+  xfree (placeholder_buf);
 
   /* Do the actual parsing */
   auto cipherstream = get_cipherstream (m_mailitem, m_moss_position);
 
   if (!cipherstream)
     {
-      /* TODO Error message? */
       log_debug ("%s:%s: Failed to get cipherstream.",
                  SRCNAME, __func__);
       return 1;
@@ -323,10 +322,20 @@ Mail::decrypt_verify()
   return 0;
 }
 
-void Mail::parsing_done()
+void
+Mail::update_body()
 {
-  m_needs_wipe = true;
-  /* Update the body */
+  const auto error = m_parser->get_formatted_error ();
+  if (!error.empty())
+    {
+      if (put_oom_string (m_mailitem, "HTMLBody",
+                          error.c_str ()))
+        {
+          log_error ("%s:%s: Failed to modify html body of item.",
+                     SRCNAME, __func__);
+        }
+      return;
+    }
   const auto html = m_parser->get_html_body();
   if (!html.empty())
     {
@@ -347,6 +356,14 @@ void Mail::parsing_done()
           return;
         }
     }
+}
+
+void
+Mail::parsing_done()
+{
+  m_needs_wipe = true;
+  /* Update the body */
+  update_body();
 
   /* Update attachments */
   if (add_attachments (m_mailitem, m_parser->get_attachments()))
