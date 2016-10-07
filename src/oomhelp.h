@@ -163,7 +163,24 @@ get_pa_string (LPDISPATCH pDisp, const char *property);
 int
 get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt);
 
-/* Set a variant with the propertyAccessor interface */
+/* Set a variant with the propertyAccessor interface.
+
+   This is tested to work at least vor BSTR variants. Trying
+   to set PR_ATTACH_DATA_BIN_DASL with this failed with
+   hresults 0x80020005 type mismatch or 0x80020008 vad
+   variable type for:
+   VT_ARRAY | VT_UI1 | VT_BYREF
+   VT_SAFEARRAY | VT_UI1 | VT_BYREF
+   VT_BSTR | VT_BYREF
+   VT_BSTR
+   VT_ARRAY | VT_UI1
+   VT_SAFEARRAY | VT_UI1
+
+   No idea whats wrong there. Needs more experiments. The
+   Type is only documented as "Binary". Outlookspy also
+   fails with the same error when trying to modify the
+   property.
+*/
 int
 set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value);
 

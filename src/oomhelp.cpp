@@ -811,7 +811,8 @@ get_oom_context_window (LPDISPATCH context)
   return ret;
 }
 
-int set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
+int
+set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
 {
   LPDISPATCH propertyAccessor;
   VARIANT cVariant[2];
@@ -823,6 +824,8 @@ int set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
   BSTR b_property;
   wchar_t *w_property;
   unsigned int argErr = 0;
+
+  init_excepinfo (&execpinfo);
 
   log_oom ("%s:%s: Looking up property: %s;",
              SRCNAME, __func__, dasl_id);
@@ -849,9 +852,12 @@ int set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
   b_property = SysAllocString (w_property);
   xfree (w_property);
 
+  /* Variant 0 carries the data. */
+  VariantCopy (&cVariant[0], value);
+
+  /* Variant 1 is the DASL as found out by experiments. */
   cVariant[1].vt = VT_BSTR;
   cVariant[1].bstrVal = b_property;
-  VariantCopy (&cVariant[0], value);
   dispparams.rgvarg = cVariant;
   dispparams.cArgs = 2;
   dispparams.cNamedArgs = 0;
@@ -861,6 +867,7 @@ int set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
                                  DISPATCH_METHOD, &dispparams,
                                  &rVariant, &execpinfo, &argErr);
   SysFreeString (b_property);
+  VariantClear (&cVariant[0]);
   gpgol_release (propertyAccessor);
   if (hr != S_OK)
     {
