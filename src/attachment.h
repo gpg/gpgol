@@ -22,11 +22,10 @@
 
 #include <string>
 
-#include <gpgme++/interfaces/dataprovider.h>
 #include <gpgme++/data.h>
 
 /** Helper class for attachment actions. */
-class Attachment : public GpgME::DataProvider
+class Attachment
 {
 public:
   /** Creates and opens a new in memory attachment. */
@@ -39,12 +38,8 @@ public:
 
   void set_attach_type(attachtype_t type);
 
-  /* Dataprovider interface */
-  bool isSupported(Operation) const;
-  ssize_t read(void *buffer, size_t bufSize);
-  ssize_t write(const void *buffer, size_t bufSize);
-  off_t seek(off_t offset, int whence);
-  void release();
+  /* get the underlying data structure */
+  GpgME::Data& get_data();
 
 private:
   GpgME::Data m_data;

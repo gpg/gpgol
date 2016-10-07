@@ -662,10 +662,10 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                 }
               else if (m_mime_ctx->current_attachment && len)
                 {
-                  m_mime_ctx->current_attachment->write(linebuf, len);
+                  m_mime_ctx->current_attachment->get_data().write(linebuf, len);
                   if (!m_mime_ctx->is_base64_encoded && !slbrk)
                     {
-                      m_mime_ctx->current_attachment->write("\r\n", 2);
+                      m_mime_ctx->current_attachment->get_data().write("\r\n", 2);
                     }
                 }
               else

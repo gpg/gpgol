@@ -51,34 +51,8 @@ Attachment::set_attach_type(attachtype_t type)
   m_type = type;
 }
 
-bool
-Attachment::isSupported(GpgME::DataProvider::Operation op) const
+GpgME::Data &
+Attachment::get_data()
 {
-  return op == GpgME::DataProvider::Read ||
-         op == GpgME::DataProvider::Write ||
-         op == GpgME::DataProvider::Seek ||
-         op == GpgME::DataProvider::Release;
-}
-
-ssize_t
-Attachment::read(void *buffer, size_t bufSize)
-{
-  return m_data.read (buffer, bufSize);
-}
-
-ssize_t
-Attachment::write(const void *data, size_t size)
-{
-  return m_data.write (data, size);
-}
-
-off_t Attachment::seek(off_t offset, int whence)
-{
-  return m_data.seek (offset, whence);
-}
-
-void Attachment::release()
-{
-  /* No op. */
-  log_debug ("%s:%s", SRCNAME, __func__);
+  return m_data;
 }
