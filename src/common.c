@@ -758,7 +758,7 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
 
   while ((*outHandle = CreateFileW (outName,
                                     GENERIC_WRITE | GENERIC_READ,
-                                    FILE_SHARE_READ,
+                                    FILE_SHARE_READ | FILE_SHARE_DELETE,
                                     NULL,
                                     CREATE_NEW,
                                     FILE_ATTRIBUTE_TEMPORARY,

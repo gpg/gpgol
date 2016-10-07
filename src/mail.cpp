@@ -39,6 +39,8 @@
 
 static std::map<LPDISPATCH, Mail*> g_mail_map;
 
+#define COPYBUFSIZE (8 * 1024)
+
 /* TODO: Localize this once it is less bound to change.
    TODO: Use a dedicated message for failed decryption. */
 #define HTML_TEMPLATE  \
@@ -182,15 +184,11 @@ Mail::pre_process_message ()
   return 0;
 }
 
-/** Get the cipherstream of the mailitem. */
-static LPSTREAM
-get_cipherstream (LPDISPATCH mailitem, int pos)
+static LPDISPATCH
+get_attachment (LPDISPATCH mailitem, int pos)
 {
+  LPDISPATCH attachment;
   LPDISPATCH attachments = get_oom_object (mailitem, "Attachments");
-  LPDISPATCH attachment = NULL;
-  LPATTACH mapi_attachment = NULL;
-  LPSTREAM stream = NULL;
-
   if (!attachments)
     {
       log_debug ("%s:%s: Failed to get attachments.",
@@ -198,6 +196,7 @@ get_cipherstream (LPDISPATCH mailitem, int pos)
       return NULL;
     }
 
+  const auto item_str = std::string("Item(") + std::to_string(pos) + ")";
   int count = get_oom_int (attachments, "Count");
   if (count < 1)
     {
@@ -206,11 +205,19 @@ get_cipherstream (LPDISPATCH mailitem, int pos)
       gpgol_release (attachments);
       return NULL;
     }
-  /* We assume the crypto attachment is the second item. */
-  const auto item_str = std::string("Item(") + std::to_string(pos) + ")";
   attachment = get_oom_object (attachments, item_str.c_str());
   gpgol_release (attachments);
-  attachments = NULL;
+
+  return attachment;
+}
+
+/** Get the cipherstream of the mailitem. */
+static LPSTREAM
+get_attachment_stream (LPDISPATCH mailitem, int pos)
+{
+  LPDISPATCH attachment = get_attachment (mailitem, pos);
+  LPATTACH mapi_attachment = NULL;
+  LPSTREAM stream = NULL;
 
   mapi_attachment = (LPATTACH) get_oom_iunknown (attachment,
                                                  "MapiObject");
@@ -230,28 +237,177 @@ get_cipherstream (LPDISPATCH mailitem, int pos)
   return stream;
 }
 
+#if 0
+
+This should work. But Outlook says no. See the comment in set_pa_variant
+about this. I left the code here as an example how to work with
+safearrays and how this probably should work.
+
+static int
+copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
+{
+  VARIANT var;
+  VariantInit (&var);
+
+  /* Get the size */
+  off_t size = attach->get_data ().seek (0, SEEK_END);
+  attach->get_data ().seek (0, SEEK_SET);
+
+  if (!size)
+    {
+      TRACEPOINT;
+      return 1;
+    }
+
+  if (!get_pa_variant (target, PR_ATTACH_DATA_BIN_DASL, &var))
+    {
+      log_debug("Have variant. type: %x", var.vt);
+    }
+  else
+    {
+      log_debug("failed to get variant.");
+    }
+
+  /* Set the type to an array of unsigned chars (OLE SAFEARRAY) */
+  var.vt = VT_ARRAY | VT_UI1;
+
+  /* Set up the bounds structure */
+  SAFEARRAYBOUND rgsabound[1];
+  rgsabound[0].cElements = static_cast<unsigned long> (size);
+  rgsabound[0].lLbound = 0;
+
+  /* Create an OLE SAFEARRAY */
+  var.parray = SafeArrayCreate (VT_UI1, 1, rgsabound);
+  if (var.parray == NULL)
+    {
+      TRACEPOINT;
+      VariantClear(&var);
+      return 1;
+    }
+
+  void *buffer = NULL;
+  /* Get a safe pointer to the array */
+  if (SafeArrayAccessData(var.parray, &buffer) != S_OK)
+    {
+      TRACEPOINT;
+      VariantClear(&var);
+      return 1;
+    }
+
+  /* Copy data to it */
+  size_t nread = attach->get_data ().read (buffer, static_cast<size_t> (size));
+
+  if (nread != static_cast<size_t> (size))
+    {
+      TRACEPOINT;
+      VariantClear(&var);
+      return 1;
+    }
+
+  /*/ Unlock the variant data */
+  if (SafeArrayUnaccessData(var.parray) != S_OK)
+    {
+      TRACEPOINT;
+      VariantClear(&var);
+      return 1;
+    }
+
+  if (set_pa_variant (target, PR_ATTACH_DATA_BIN_DASL, &var))
+    {
+      TRACEPOINT;
+      VariantClear(&var);
+      return 1;
+    }
+
+  VariantClear(&var);
+  return 0;
+}
+#endif
+
+static int
+copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
+{
+  char copybuf[COPYBUFSIZE];
+  size_t nread;
+
+  /* Security considerations: Writing the data to a temporary
+     file is necessary as neither MAPI manipulation works in the
+     read event to transmit the data nor Property Accessor
+     works (see above). From a security standpoint there is a
+     short time where the temporary files are on disk. Tempdir
+     should be protected so that only the user can read it. Thus
+     we have a local attack that could also take the data out
+     of Outlook. FILE_SHARE_READ is necessary so that outlook
+     can read the file.
+
+     A bigger concern is that the file is manipulated
+     by another software to fake the signature state. So
+     we keep the write exlusive to us.
+
+     We delete the file before closing the write file handle.
+  */
+
+  /* Make sure we start at the beginning */
+  att->get_data ().seek (0, SEEK_SET);
+  while ((nread = att->get_data ().read (copybuf, COPYBUFSIZE)))
+    {
+      DWORD nwritten;
+      if (!WriteFile (hFile, copybuf, nread, &nwritten, NULL))
+        {
+          log_error ("%s:%s: Failed to write in tmp attachment.",
+                     SRCNAME, __func__);
+          return 1;
+        }
+      if (nread != nwritten)
+        {
+          log_error ("%s:%s: Write truncated.",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+  return 0;
+}
+
 /** Helper to update the attachments of a mail object in oom.
   does not modify the underlying mapi structure. */
-static bool
+static int
 add_attachments(LPDISPATCH mail,
                 std::vector<std::shared_ptr<Attachment> > attachments)
 {
+  int err = 0;
   for (auto att: attachments)
     {
       wchar_t* wchar_name = utf8_to_wchar (att->get_display_name().c_str());
-      log_debug("DisplayName %s", att->get_display_name().c_str());
       HANDLE hFile;
-      wchar_t* wchar_file = get_tmp_outfile (GpgOLStr("gpgol-attach-"), &hFile);
+      wchar_t* wchar_file = get_tmp_outfile (GpgOLStr (att->get_display_name().c_str()),
+                                             &hFile);
+      if (copy_attachment_to_file (att, hFile))
+        {
+          log_error ("%s:%s: Failed to copy attachment %s to temp file",
+                     SRCNAME, __func__, att->get_display_name().c_str());
+          err = 1;
+        }
       if (add_oom_attachment (mail, wchar_file, wchar_name))
         {
-          log_debug ("Failed to add attachment.");
+          log_error ("%s:%s: Failed to add attachment: %s",
+                     SRCNAME, __func__, att->get_display_name().c_str());
+          err = 1;
+        }
+      if (!DeleteFileW (wchar_file))
+        {
+          log_error ("%s:%s: Failed to delete tmp attachment for: %s",
+                     SRCNAME, __func__, att->get_display_name().c_str());
+          err = 1;
         }
       CloseHandle (hFile);
-      DeleteFileW (wchar_file);
       xfree (wchar_file);
       xfree (wchar_name);
+      if (err)
+        {
+          return err;
+        }
     }
-  return false;
+  return 0;
 }
 
 static DWORD WINAPI
@@ -305,7 +461,7 @@ Mail::decrypt_verify()
   xfree (placeholder_buf);
 
   /* Do the actual parsing */
-  auto cipherstream = get_cipherstream (m_mailitem, m_moss_position);
+  auto cipherstream = get_attachment_stream (m_mailitem, m_moss_position);
 
   if (!cipherstream)
     {
