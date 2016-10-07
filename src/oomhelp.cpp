@@ -107,6 +107,24 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
   return dispid;
 }
 
+static void
+init_excepinfo (EXCEPINFO *err)
+{
+  if (!err)
+    {
+      return;
+    }
+  err->wCode = 0;
+  err->wReserved = 0;
+  err->bstrSource = nullptr;
+  err->bstrDescription = nullptr;
+  err->bstrHelpFile = nullptr;
+  err->dwHelpContext = 0;
+  err->pvReserved = nullptr;
+  err->pfnDeferredFillIn = nullptr;
+  err->scode = 0;
+}
+
 void
 dump_excepinfo (EXCEPINFO err)
 {
@@ -121,7 +139,9 @@ dump_excepinfo (EXCEPINFO err)
              "              scode: 0x%x\n",
              SRCNAME, __func__, (unsigned int) err.wCode,
              (unsigned int) err.wReserved,
-             err.bstrSource, err.bstrDescription, err.bstrHelpFile,
+             err.bstrSource ? err.bstrSource : L"null",
+             err.bstrDescription ? err.bstrDescription : L"null",
+             err.bstrHelpFile ? err.bstrDescription : L"null",
              (unsigned int) err.dwHelpContext,
              err.pfnDeferredFillIn,
              (unsigned int) err.scode);
