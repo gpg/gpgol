@@ -67,6 +67,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Parsing done for mail which is gone.",
                              SRCNAME, __func__);
+                  break;
                 }
               mail->parsing_done();
             }
