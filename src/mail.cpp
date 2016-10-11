@@ -114,6 +114,7 @@ Mail::~Mail()
       g_mail_map.erase (it);
     }
 
+  xfree (m_sender);
   gpgol_release(m_mailitem);
 }
 
