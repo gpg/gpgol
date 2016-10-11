@@ -414,11 +414,17 @@ add_attachments(LPDISPATCH mail,
 static DWORD WINAPI
 do_parsing (LPVOID arg)
 {
-  log_debug ("%s:%s: starting parsing for: %p",
+  log_debug ("%s:%s: starting the parser for: %p",
              SRCNAME, __func__, arg);
 
   Mail *mail = (Mail *)arg;
   auto parser = mail->parser();
+  if (!parser)
+    {
+      log_error ("%s:%s: no parser found for mail: %p",
+                 SRCNAME, __func__, arg);
+      return -1;
+    }
   parser->parse();
   do_in_ui_thread (PARSING_DONE, arg);
   return 0;
