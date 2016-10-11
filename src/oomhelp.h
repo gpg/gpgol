@@ -233,6 +233,24 @@ invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant);
 LPMAPISESSION
 get_oom_mapi_session (void);
 
+/* Ensure a category of the name name exists in
+  the session for the Mail mail.
+
+  Creates the category with the specified color if required.
+
+  returns 0 on success. */
+void
+ensure_category_exists (LPDISPATCH mail, const char *category, int color);
+
+/* Add a category to a mail if it is not already added. */
+int
+add_category (LPDISPATCH mail, const char *category);
+
+/* Remove a category from a mail if it was added. */
+int
+remove_category (LPDISPATCH mail, const char *category);
+
+
 #ifdef __cplusplus
 }
 #endif

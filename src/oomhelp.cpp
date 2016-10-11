@@ -24,6 +24,7 @@
 
 #include <windows.h>
 #include <olectl.h>
+#include <string>
 
 #include "myexchext.h"
 #include "common.h"
@@ -1294,4 +1295,220 @@ get_oom_mapi_session ()
       return NULL;
     }
   return session;
+}
+
+static int
+create_category (LPDISPATCH categories, const char *category, int color)
+{
+  VARIANT cVariant[3];
+  VARIANT rVariant;
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  HRESULT hr;
+  EXCEPINFO execpinfo;
+  BSTR b_name;
+  wchar_t *w_name;
+  unsigned int argErr = 0;
+
+  init_excepinfo (&execpinfo);
+
+  if (!categories || !category)
+    {
+      TRACEPOINT;
+      return 1;
+    }
+
+  dispid = lookup_oom_dispid (categories, "Add");
+  if (dispid == DISPID_UNKNOWN)
+  {
+    log_error ("%s:%s: could not find Add DISPID",
+               SRCNAME, __func__);
+    return -1;
+  }
+
+  /* Do the string dance */
+  w_name = utf8_to_wchar (category);
+  b_name = SysAllocString (w_name);
+  xfree (w_name);
+
+  /* Variants are in reverse order
+     ShortcutKey -> 0 / Int
+     Color -> 1 / Int
+     Name -> 2 / Bstr */
+  VariantInit (&cVariant[2]);
+  cVariant[2].vt = VT_BSTR;
+  cVariant[2].bstrVal = b_name;
+
+  VariantInit (&cVariant[1]);
+  cVariant[1].vt = VT_INT;
+  cVariant[1].intVal = color;
+
+  VariantInit (&cVariant[0]);
+  cVariant[0].vt = VT_INT;
+  cVariant[0].intVal = 0;
+
+  dispparams.cArgs = 3;
+  dispparams.cNamedArgs = 0;
+  dispparams.rgvarg = cVariant;
+
+  hr = categories->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                           DISPATCH_METHOD, &dispparams,
+                           &rVariant, &execpinfo, &argErr);
+  SysFreeString (b_name);
+  VariantClear (&cVariant[0]);
+  VariantClear (&cVariant[1]);
+  VariantClear (&cVariant[2]);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: invoking Add p=%p vt=%d"
+                 " hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__,
+                 rVariant.pdispVal, rVariant.vt, (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+      VariantClear (&rVariant);
+      return -1;
+    }
+  VariantClear (&rVariant);
+  log_debug ("%s:%s: Created category '%s'",
+             SRCNAME, __func__, category);
+  return 0;
+}
+
+void
+ensure_category_exists (LPDISPATCH application, const char *category, int color)
+{
+  if (!application || !category)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  log_debug ("Ensure category exists called for %s, %i", category, color);
+
+  LPDISPATCH stores = get_oom_object (application, "Session.Stores");
+  if (!stores)
+    {
+      log_error ("%s:%s: No stores found.",
+                 SRCNAME, __func__);
+      return;
+    }
+  auto store_count = get_oom_int (stores, "Count");
+
+  for (int n = 1; n <= store_count; n++)
+    {
+      const auto store_str = std::string("Item(") + std::to_string(n) + ")";
+      LPDISPATCH store = get_oom_object (stores, store_str.c_str());
+
+      if (!store)
+        {
+          TRACEPOINT;
+          continue;
+        }
+
+      LPDISPATCH categories = get_oom_object (store, "Categories");
+      gpgol_release (store);
+      if (!categories)
+        {
+          TRACEPOINT;
+          continue;
+        }
+
+      auto count = get_oom_int (categories, "Count");
+      bool found = false;
+      for (int i = 1; i <= count && !found; i++)
+        {
+          const auto item_str = std::string("Item(") + std::to_string(i) + ")";
+          LPDISPATCH category_obj = get_oom_object (categories, item_str.c_str());
+          if (!category_obj)
+            {
+              TRACEPOINT;
+              break;
+            }
+          char *name = get_oom_string (category_obj, "Name");
+          if (name && !strcmp (category, name))
+            {
+              log_debug ("%s:%s: Found category '%s'",
+                         SRCNAME, __func__, name);
+              found = true;
+            }
+          /* We don't check the color here as the user may change that. */
+          gpgol_release (category_obj);
+          xfree (name);
+        }
+
+      if (!found)
+        {
+          if (create_category (categories, category, color))
+            {
+              log_debug ("%s:%s: Found category '%s'",
+                         SRCNAME, __func__, category);
+            }
+        }
+      /* Otherwise we have to create the category */
+      gpgol_release (categories);
+    }
+  gpgol_release (stores);
+}
+
+int
+add_category (LPDISPATCH mail, const char *category)
+{
+  char *tmp = get_oom_string (mail, "Categories");
+  if (!tmp)
+    {
+      TRACEPOINT;
+      return 1;
+    }
+
+  if (strstr (tmp, category))
+    {
+      log_debug ("%s:%s: category '%s' already added.",
+                 SRCNAME, __func__, category);
+      return 0;
+    }
+
+  std::string newstr (tmp);
+  xfree (tmp);
+  if (!newstr.empty ())
+    {
+      newstr += ", ";
+    }
+  newstr += category;
+
+  return put_oom_string (mail, "Categories", newstr.c_str ());
+}
+
+int
+remove_category (LPDISPATCH mail, const char *category)
+{
+  char *tmp = get_oom_string (mail, "Categories");
+  if (!tmp)
+    {
+      TRACEPOINT;
+      return 1;
+    }
+  std::string newstr (tmp);
+  xfree (tmp);
+  std::string cat (category);
+
+  size_t pos1 = newstr.find (cat);
+  size_t pos2 = newstr.find (std::string(", ") + cat);
+  if (pos1 == std::string::npos && pos2 == std::string::npos)
+    {
+      log_debug ("%s:%s: category '%s' not found.",
+                 SRCNAME, __func__, category);
+      return 0;
+    }
+
+  size_t len = cat.size();
+  if (pos2)
+    {
+      len += 2;
+    }
+  newstr.erase (pos2 != std::string::npos ? pos2 : pos1, len);
+  log_debug ("%s:%s: removing category '%s'",
+             SRCNAME, __func__, category);
+
+  return put_oom_string (mail, "Categories", newstr.c_str ());
 }
