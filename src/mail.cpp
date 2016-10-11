@@ -630,8 +630,25 @@ int
 Mail::update_sender ()
 {
   LPDISPATCH sender = NULL;
-  sender = get_oom_object (m_mailitem, "SendUsingAccount");
 
+  /* For some reason outlook my store the recipient address
+     in the send using account field. If we have SMTP we prefer
+     the SenderEmailAddress string. */
+  char *type = get_oom_string (m_mailitem, "SenderEmailType");
+  if (type && !strcmp ("SMTP", type))
+    {
+      xfree (type);
+      char *senderMail = get_oom_string (m_mailitem, "SenderEmailAddress");
+      if (senderMail)
+        {
+          xfree (m_sender);
+          m_sender = senderMail;
+          return 0;
+        }
+    }
+  xfree (type);
+
+  sender = get_oom_object (m_mailitem, "SendUsingAccount");
   xfree (m_sender);
   m_sender = NULL;
 
