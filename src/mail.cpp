@@ -845,6 +845,65 @@ Mail::close_inspector ()
   return 0;
 }
 
+static bool
+is_valid_sig (const VerificationResult &result, const char *sender)
+{
+  if (result.error() || !sender)
+    {
+      return false;
+    }
+  for (const auto sig: result.signatures())
+    {
+      if (sig.validity() != Signature::Validity::Marginal &&
+          sig.validity() != Signature::Validity::Full &&
+          sig.validity() != Signature::Validity::Ultimate)
+        {
+          /* For our category we only care about trusted sigs. */
+          continue;
+        }
+      Key k = sig.key();
+      for (const auto uid: k.userIDs())
+        {
+          if (!uid.email())
+            {
+              TRACEPOINT;
+              continue;
+            }
+          auto normalized_uid = uid.addrSpec();
+          auto normalized_sender = UserID::addrSpecFromString(sender);
+
+          if (normalized_sender.empty() || normalized_uid.empty())
+            {
+              log_error ("%s:%s: normalizing '%s' or '%s' failed.",
+                         SRCNAME, __func__, uid.email(), sender);
+              continue;
+            }
+
+          if (normalized_sender == normalized_uid)
+            {
+              if (sig.validity() == Signature::Validity::Marginal)
+                {
+                  const auto tofu = uid.tofuInfo();
+                  if (tofu.isNull() ||
+                      (tofu.validity() != TofuInfo::Validity::BasicHistory &&
+                       tofu.validity() != TofuInfo::Validity::LargeHistory))
+                    {
+                      /* Marginal is not good enough without tofu.
+                         We also wait for basic trust. */
+                      log_debug ("%s:%s: Discarding marginal signature.",
+                                 SRCNAME, __func__);
+                      continue;
+                    }
+                }
+              log_debug ("%s:%s: Classified sender as verified",
+                         SRCNAME, __func__);
+              return true;
+            }
+        }
+    }
+  return false;
+}
+
 void
 Mail::update_categories ()
 {
@@ -867,71 +926,7 @@ Mail::update_categories ()
   const auto ver_result = m_parser->verify_result();
   const char *sender = get_sender();
 
-  if (ver_result.error() || !sender)
-    {
-      remove_category (m_mailitem, verifyCategory);
-      return;
-    }
-
-  bool valid = false;
-  for (const auto sig: ver_result.signatures())
-    {
-      if (sig.validity() != Signature::Validity::Marginal &&
-          sig.validity() != Signature::Validity::Full &&
-          sig.validity() != Signature::Validity::Ultimate)
-        {
-          /* For our category we only care about full / ultimate. */
-          continue;
-        }
-      Key k = sig.key();
-      for (const auto uid: k.userIDs())
-        {
-          if (!uid.email())
-            {
-              TRACEPOINT;
-              continue;
-            }
-          char *normalized_uid = gpgme_addrspec_from_uid (uid.email());
-          char *normalized_sender = gpgme_addrspec_from_uid (sender);
-
-          log_debug ("%s:%s: comparing '%s' and '%s'",
-                     SRCNAME, __func__, normalized_uid, normalized_sender);
-
-          if (!normalized_sender || !normalized_uid)
-            {
-              log_error ("%s:%s: normalizing '%s' or '%s' failed.",
-                         SRCNAME, __func__, uid.email(), sender);
-              continue;
-            }
-
-          int result = strcmp(normalized_uid, normalized_sender);
-          gpgme_free (normalized_sender);
-          gpgme_free (normalized_uid);
-
-          if (!result)
-            {
-              if (sig.validity() == Signature::Validity::Marginal)
-                {
-                  const auto tofu = uid.tofuInfo();
-                  if (tofu.isNull() ||
-                      (tofu.validity() != TofuInfo::Validity::BasicHistory &&
-                       tofu.validity() != TofuInfo::Validity::LargeHistory))
-                    {
-                      /* Marginal is not good enough without tofu.
-                         We also wait for basic trust. */
-                      log_debug ("%s:%s: Discarding marginal signature.",
-                                 SRCNAME, __func__);
-                      continue;
-                    }
-                }
-              log_debug ("%s:%s: Classified sender as verified",
-                         SRCNAME, __func__);
-              valid = true;
-              break;
-            }
-        }
-    }
-  if (valid)
+  if (is_valid_sig (ver_result, sender))
     {
       add_category (m_mailitem, verifyCategory);
     }
