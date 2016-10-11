@@ -451,7 +451,7 @@ Mail::decrypt_verify()
   if (gpgrt_asprintf (&placeholder_buf, decrypt_template,
                       is_smime() ? "S/MIME" : "OpenPGP",
                       _("Encrypted message"),
-                      _("Please wait while the message is being decrypted...")) == -1)
+                      _("Please wait while the message is being decrypted / verified...")) == -1)
     {
       log_error ("%s:%s: Failed to format placeholder.",
                  SRCNAME, __func__);
