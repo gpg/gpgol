@@ -195,6 +195,7 @@ public:
   */
   void parsing_done ();
 private:
+  void update_categories ();
   void update_body ();
 
   LPDISPATCH m_mailitem;

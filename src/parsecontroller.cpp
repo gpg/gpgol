@@ -26,6 +26,7 @@
 
 #include <gpgme++/context.h>
 #include <gpgme++/decryptionresult.h>
+#include <gpgme++/key.h>
 
 #include <sstream>
 
@@ -293,6 +294,13 @@ ParseController::parse()
        ss << m_decrypt_result << '\n' << m_verify_result;
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
     }
+
+  /* Ensure that the Keys for the signatures are available */
+  for (const auto sig: m_verify_result.signatures())
+    {
+      sig.key(true, false);
+    }
+
   return;
 }
 

@@ -33,9 +33,16 @@
 #include "gpgolstr.h"
 #include "windowmessages.h"
 
+#include <gpgme++/tofuinfo.h>
+#include <gpgme++/verificationresult.h>
+#include <gpgme++/decryptionresult.h>
+#include <gpgme++/key.h>
+
 #include <map>
 #include <vector>
 #include <memory>
+
+using namespace GpgME;
 
 static std::map<LPDISPATCH, Mail*> g_mail_map;
 
@@ -525,6 +532,9 @@ void
 Mail::parsing_done()
 {
   m_needs_wipe = true;
+  /* Set categories according to the result. */
+  update_categories();
+
   /* Update the body */
   update_body();
 
@@ -833,4 +843,101 @@ Mail::close_inspector ()
         }
     }
   return 0;
+}
+
+void
+Mail::update_categories ()
+{
+  const auto dec_result = m_parser->decrypt_result();
+  const char *decCategory = _("GpgOL: Encrypted Message");
+  const char *verifyCategory = _("GpgOL: Verified Sender");
+  if (dec_result.numRecipients())
+    {
+      /* We use the number of recipients as we don't care
+         if decryption was successful or not for this category */
+      add_category (m_mailitem, decCategory);
+    }
+  else
+    {
+      /* As a small safeguard against fakes we remove our
+         categories */
+      remove_category (m_mailitem, decCategory);
+    }
+
+  const auto ver_result = m_parser->verify_result();
+  const char *sender = get_sender();
+
+  if (ver_result.error() || !sender)
+    {
+      remove_category (m_mailitem, verifyCategory);
+      return;
+    }
+
+  bool valid = false;
+  for (const auto sig: ver_result.signatures())
+    {
+      if (sig.validity() != Signature::Validity::Marginal &&
+          sig.validity() != Signature::Validity::Full &&
+          sig.validity() != Signature::Validity::Ultimate)
+        {
+          /* For our category we only care about full / ultimate. */
+          continue;
+        }
+      Key k = sig.key();
+      for (const auto uid: k.userIDs())
+        {
+          if (!uid.email())
+            {
+              TRACEPOINT;
+              continue;
+            }
+          char *normalized_uid = gpgme_addrspec_from_uid (uid.email());
+          char *normalized_sender = gpgme_addrspec_from_uid (sender);
+
+          log_debug ("%s:%s: comparing '%s' and '%s'",
+                     SRCNAME, __func__, normalized_uid, normalized_sender);
+
+          if (!normalized_sender || !normalized_uid)
+            {
+              log_error ("%s:%s: normalizing '%s' or '%s' failed.",
+                         SRCNAME, __func__, uid.email(), sender);
+              continue;
+            }
+
+          int result = strcmp(normalized_uid, normalized_sender);
+          gpgme_free (normalized_sender);
+          gpgme_free (normalized_uid);
+
+          if (!result)
+            {
+              if (sig.validity() == Signature::Validity::Marginal)
+                {
+                  const auto tofu = uid.tofuInfo();
+                  if (tofu.isNull() ||
+                      (tofu.validity() != TofuInfo::Validity::BasicHistory &&
+                       tofu.validity() != TofuInfo::Validity::LargeHistory))
+                    {
+                      /* Marginal is not good enough without tofu.
+                         We also wait for basic trust. */
+                      log_debug ("%s:%s: Discarding marginal signature.",
+                                 SRCNAME, __func__);
+                      continue;
+                    }
+                }
+              log_debug ("%s:%s: Classified sender as verified",
+                         SRCNAME, __func__);
+              valid = true;
+              break;
+            }
+        }
+    }
+  if (valid)
+    {
+      add_category (m_mailitem, verifyCategory);
+    }
+  else
+    {
+      remove_category (m_mailitem, verifyCategory);
+    }
+  return;
 }

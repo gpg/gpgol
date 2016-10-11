@@ -331,6 +331,12 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
                  SRCNAME, __func__);
     }
 
+  /* Set up categories */
+  const char *decCategory = _("GpgOL: Encrypted Message");
+  const char *verifyCategory = _("GpgOL: Verified Sender");
+  ensure_category_exists (m_application, decCategory, 8);
+  ensure_category_exists (m_application, verifyCategory, 5);
+
   if (m_application)
     {
       m_applicationEventSink = install_ApplicationEvents_sink(m_application);
