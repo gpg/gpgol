@@ -316,14 +316,16 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
          sig_data has not been set yet).  We also do this only while
          in verify mode because we don't want to write a full MUA.  */
       ctx->collect_signature = 1;
-      log_mime_parser ("Collecting signature now");
+      log_mime_parser ("%s:%s: Collecting signature.",
+                       SRCNAME, __func__);
     }
   else if (ctx->nesting_level == 1 && ctx->is_encrypted
            && !strcmp (ctmain, "application")
            && (ctx->protocol == PROTOCOL_OPENPGP
                && !strcmp (ctsub, "octet-stream")))
     {
-      log_mime_parser ("Collecting encrypted data from now on");
+      log_mime_parser ("%s:%s: Collecting encrypted PGP data.",
+                       SRCNAME, __func__);
       ctx->collect_crypto_data = 1;
     }
   else /* Other type. */
@@ -335,6 +337,8 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           && (!strcmp (ctsub, "pkcs7-mime")
               || !strcmp (ctsub, "x-pkcs7-mime")))
         {
+          log_mime_parser ("%s:%s: Collecting crypted S/MIME data.",
+                           SRCNAME, __func__);
           ctx->collect_crypto_data = 1;
         }
     }
@@ -358,9 +362,18 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           ctx->body_seen = 2;
           ctx->collect_html_body = 1;
           ctx->collect_body = 0;
+          log_debug ("%s:%s: Collecting HTML body.",
+                     SRCNAME, __func__);
+          /* We need this crutch because of one liner html
+             mails which would not be collected by the line
+             collector if they dont have a linefeed at the
+             end. */
+          provider->set_has_html_body (true);
         }
       else
         {
+          log_debug ("%s:%s: Collecting text body.",
+                     SRCNAME, __func__);
           ctx->body_seen = 1;
           ctx->collect_body = 1;
           ctx->collect_html_body = 0;
@@ -372,6 +385,8 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       ctx->current_attachment = provider->create_attachment();
       ctx->collect_body = 0;
       ctx->collect_html_body = 0;
+      log_mime_parser ("%s:%s: Collecting attachment.",
+                       SRCNAME, __func__);
     }
 
   return 0;
@@ -483,7 +498,8 @@ message_cb (void *opaque, rfc822parse_event_t event,
 }
 
 MimeDataProvider::MimeDataProvider(bool no_headers) :
-  m_signature(nullptr)
+  m_signature(nullptr),
+  m_has_html_body(false)
 {
   m_mime_ctx = (mime_context_t) xcalloc (1, sizeof *m_mime_ctx);
   m_mime_ctx->msg = rfc822parse_open (message_cb, this);
@@ -891,6 +907,12 @@ const std::string &MimeDataProvider::get_body()
 
 const std::string &MimeDataProvider::get_html_body()
 {
+  if (!m_has_html_body)
+    {
+      /* Don't do the last line handling if we don't
+         have html */
+      return m_html_body;
+    }
   if (m_rawbuf.size())
     {
       /* If there was some data left in the rawbuf this could

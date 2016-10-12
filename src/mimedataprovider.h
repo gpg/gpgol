@@ -115,6 +115,8 @@ public:
     {return m_attachments;}
   const std::string &get_html_charset() const;
   const std::string &get_body_charset() const;
+
+  void set_has_html_body(bool value) {m_has_html_body = value;}
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */
@@ -144,5 +146,7 @@ private:
   std::string m_html_charset;
   /* Charset of body */
   std::string m_body_charset;
+  /* Do we have html at all */
+  bool m_has_html_body;
 };
 #endif // MIMEDATAPROVIDER_H
