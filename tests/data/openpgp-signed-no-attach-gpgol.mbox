@@ -1,0 +1,32 @@
+MIME-Version: 1.0
+Content-Type: multipart/signed; boundary="nextPart1693035.rOZRFYHO8F"; micalg="pgp-sha256"; protocol="application/pgp-signature"
+
+--nextPart1693035.rOZRFYHO8F
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="iso-8859-1"
+
+Hallo Welt!
+=2D-=20
+Andre Heinecke |  ++49-541-335083-262  | http://www.intevation.de/
+Intevation GmbH, Neuer Graben 17, 49074 Osnabr=FCck | AG Osnabr=FCck, H=
+R B 18998
+Gesch=E4ftsf=FChrer: Frank Koormann, Bernhard Reiter, Dr. Jan-Oliver Wa=
+gner
+--nextPart1693035.rOZRFYHO8F
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part.
+Content-Transfer-Encoding: 7Bit
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAABCAAGBQJX49NGAAoJEI2YYMWPJG3mYDsH/3DuwYTTYSxYdk3WecCn2TPx
+UzzUB332tVE5SLzZcvH426jFwQ2qt7/f8kWjmr5+GCOenM6Nzz1FbC4K3ARuF4c3
+fZDlFegpsRg735uV8vjEEwQVkipyYMHeUJJ6d5O4FxF8q0dfkjNM53EC3cLiuKF7
+P4AjRZBycPyMf7XBaaU0zfMQkC+UkiBXMrcITQoPSSgbadlxLEc4oJIdD8zZDFVx
+q2I8RFoKzVpHMn/OjBfXi94JVz7wCTa4wGG/emxoamRvqMp2S5SWPNps79/Trvzv
+64F+3UalXGBfDybyUYgGb0wLtXnbFux03GJoY20NMjsMRBBKYfqMQbh0m8VZSI4=
+=UY6M
+-----END PGP SIGNATURE-----
+
+--nextPart1693035.rOZRFYHO8F--
+
