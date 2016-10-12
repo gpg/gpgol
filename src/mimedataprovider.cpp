@@ -158,7 +158,11 @@ is_cms_signed_data (const char *buffer, size_t length)
 /* Process the transition to body event.
 
    This means we have received the empty line indicating the body and
-   should now check the headers to see what to do about this part.  */
+   should now check the headers to see what to do about this part.
+
+   This is mostly a C style function because it was based on the old
+   c mimeparser.
+*/
 static int
 t2body (MimeDataProvider *provider, rfc822parse_t msg)
 {
@@ -169,7 +173,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   size_t off;
   char *p;
   int is_text = 0;
-  int not_inline_text = 0;
+  int is_text_attachment = 0;
   char *filename = NULL;
   char *charset = NULL;
 
@@ -197,8 +201,21 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       if (s)
         filename = rfc2047_parse (s);
       s = rfc822parse_query_parameter (field, NULL, 1);
-      if (s && strcmp (s, "inline"))
-        not_inline_text = 1;
+
+      /* This is a bit of a taste matter how to treat inline
+         attachments. Outlook does not show them inline so we
+         should not put it in the body either as we have
+         no way to show that it was actually an attachment.
+         For something like an inline patch it is better
+         to add it as an attachment instead of just putting
+         it in the body.
+
+         The handling in the old parser was:
+
+         if (s && strcmp (s, "inline"))
+           not_inline_text = 1;
+       */
+      is_text_attachment = 1;
       rfc822parse_release_field (field);
     }
 
@@ -325,16 +342,16 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   ctx->in_data = 1;
 
   log_mime_parser ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
-                   " charset=\"%s\"\n body_seen=%d not_inline_text=%d",
+                   " charset=\"%s\"\n body_seen=%d is_text_attachment=%d",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
                    ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"",
-                   ctx->body_seen, not_inline_text);
+                   ctx->body_seen, is_text_attachment);
 
   /* If this is a text part, decide whether we treat it as one
      of our bodies.
      */
-  if ((is_text && !not_inline_text))
+  if ((is_text && !is_text_attachment))
     {
       if (is_text == 2)
         {
