@@ -470,8 +470,6 @@ Mail::decrypt_verify()
     {
       log_error ("%s:%s: Failed to modify html body of item.",
                  SRCNAME, __func__);
-      xfree (placeholder_buf);
-      return 1;
     }
   xfree (placeholder_buf);
 
