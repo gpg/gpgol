@@ -218,6 +218,18 @@ get_oom_message (LPDISPATCH mailitem);
 LPMESSAGE
 get_oom_base_message (LPDISPATCH mailitem);
 
+/* Get a strong reference for a mail object by calling
+   Application.GetObjectReference with type strong. The
+   documentation is unclear what this acutally does.
+   This function is left over from experiments about
+   strong references. Maybe there is a use for them.
+   The reference we use in the Mail object is documented
+   as a Weak reference. But changing that does not appear
+   to make a difference.
+*/
+LPDISPATCH
+get_strong_reference (LPDISPATCH mail);
+
 /* Invoke a method of an outlook object.
    returns true on success false otherwise.
 
@@ -227,6 +239,20 @@ get_oom_base_message (LPDISPATCH mailitem);
    */
 int
 invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant);
+
+/* Invoke a method of an outlook object.
+   returns true on success false otherwise.
+
+   rVariant should either point to a propery initialized
+   variant (initinalized wiht VariantInit) to hold
+   the return value or a pointer to NULL.
+
+   parms can optionally be used to provide a DISPPARAMS structure
+   with parameters for the function.
+   */
+int
+invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
+                              VARIANT *rVariant, DISPPARAMS *params);
 
 /* Try to obtain the mapisession through the Application.
   returns NULL on error.*/

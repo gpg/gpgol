@@ -1165,6 +1165,40 @@ get_object_by_id (LPDISPATCH pDisp, REFIID id)
   return disp;
 }
 
+LPDISPATCH
+get_strong_reference (LPDISPATCH mail)
+{
+  VARIANT var;
+  VariantInit (&var);
+  DISPPARAMS args;
+  VARIANT argvars[2];
+  VariantInit (&argvars[0]);
+  VariantInit (&argvars[1]);
+  argvars[1].vt = VT_DISPATCH;
+  argvars[1].pdispVal = mail;
+  argvars[0].vt = VT_INT;
+  argvars[0].intVal = 1;
+  args.cArgs = 2;
+  args.cNamedArgs = 0;
+  args.rgvarg = argvars;
+  LPDISPATCH ret = NULL;
+  if (!invoke_oom_method_with_parms (
+      GpgolAddin::get_instance()->get_application(),
+      "GetObjectReference", &var, &args))
+    {
+      ret = var.pdispVal;
+      log_oom ("%s:%s: Got strong ref %p for %p",
+               SRCNAME, __func__, ret, mail);
+    }
+  else
+    {
+      log_error ("%s:%s: Failed to get strong ref.",
+                 SRCNAME, __func__);
+    }
+  VariantClear (&var);
+  return ret;
+}
+
 LPMESSAGE
 get_oom_message (LPDISPATCH mailitem)
 {
@@ -1230,7 +1264,8 @@ get_oom_base_message (LPDISPATCH mailitem)
 }
 
 int
-invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
+invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
+                              VARIANT *rVariant, DISPPARAMS *params)
 {
   HRESULT hr;
   DISPID dispid;
@@ -1242,7 +1277,7 @@ invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
       DISPPARAMS dispparams = {NULL, NULL, 0, 0};
 
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                          DISPATCH_METHOD, &dispparams,
+                          DISPATCH_METHOD, params ? params : &dispparams,
                           rVariant, &execpinfo, NULL);
       if (hr != S_OK)
         {
@@ -1254,6 +1289,12 @@ invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
     }
 
   return 0;
+}
+
+int
+invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
+{
+  return invoke_oom_method_with_parms (pDisp, name, rVariant, NULL);
 }
 
 LPMAPISESSION
