@@ -47,6 +47,7 @@
 #include "filetype.h"
 #include "gpgolstr.h"
 #include "message.h"
+#include "mail.h"
 
 #define OPAQUE_SIGNED_MARKER "-----BEGIN PGP MESSAGE-----"
 
@@ -1402,78 +1403,151 @@ done:
   return S_OK;
 }
 
-/* Get the encrypt / sign status of this mail. */
-HRESULT get_crypt_status (LPDISPATCH ctrl, int flags, VARIANT *result)
+static Mail *
+get_mail_from_control (LPDISPATCH ctrl)
 {
   HRESULT hr;
   LPDISPATCH context = NULL,
              mailitem = NULL;
-  LPMESSAGE message = NULL;
-  char *sigstat;
-
-  /* First the usual defensive check about our parameters */
-  if (!ctrl || !result)
+  if (!ctrl)
     {
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
-      return E_FAIL;
+      return NULL;
     }
-
-  result->vt = VT_BOOL | VT_BYREF;
-  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-
   hr = getContext (ctrl, &context);
 
   if (hr)
     {
       log_error ("%s:%s:%i : hresult %lx", SRCNAME, __func__, __LINE__,
                  hr);
-      return E_FAIL;
+      return NULL;
     }
 
   mailitem = get_oom_object (context, "CurrentItem");
-
+  gpgol_release (context);
   if (!mailitem)
     {
       log_error ("%s:%s: Failed to get mailitem.",
                  SRCNAME, __func__);
-      goto done;
+      return NULL;
     }
 
-  message = get_oom_base_message (mailitem);
-
-  if (!message)
-    {
-      log_error ("%s:%s: No message found.",
-                 SRCNAME, __func__);
-      goto done;
-    }
-
-  sigstat = mapi_get_sig_status (message);
-  /* sigstat will never be NULL */
-  if (flags & OP_SIGN)
-    {
-      *(result->pboolVal) = *sigstat == '!' ? VARIANT_TRUE : VARIANT_FALSE;
-    }
-  else if (flags & OP_ENCRYPT)
-    {
-      msgtype_t type = mapi_get_message_type (message);
-      /* FIXME: This reports encrypted for Opaque signed messages ! */
-      if (type == MSGTYPE_GPGOL_OPAQUE_ENCRYPTED ||
-          type == MSGTYPE_GPGOL_PGP_MESSAGE ||
-          type == MSGTYPE_GPGOL_MULTIPART_ENCRYPTED)
-        {
-          *(result->pboolVal) = VARIANT_TRUE;
-        }
-      else
-        {
-          *(result->pboolVal) = VARIANT_FALSE;
-        }
-    }
-
-done:
-  gpgol_release (context);
+  /* Get the uid of this item. */
+  char *uid = get_unique_id (mailitem, 0);
   gpgol_release (mailitem);
-  gpgol_release (message);
+  if (!uid)
+    {
+      log_oom ("%s:%s: Failed to get uid for %p .",
+               SRCNAME, __func__, mailitem);
+      return NULL;
+    }
 
+  auto ret = Mail::get_mail_for_uid (uid);
+  xfree (uid);
+  if (!ret)
+    {
+      log_error ("%s:%s: Failed to find mail %p in map.",
+                 SRCNAME, __func__, mailitem);
+    }
+  gpgol_release (mailitem);
+  return ret;
+}
+
+/* Helper to reduce code duplication.*/
+#define MY_MAIL_GETTER \
+  if (!ctrl || !result) \
+    { \
+      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__); \
+      return E_FAIL; \
+    } \
+  const auto mail = get_mail_from_control (ctrl); \
+  if (!mail) \
+    { \
+      log_oom ("%s:%s:%i Failed to get mail", \
+               SRCNAME, __func__, __LINE__); \
+    }
+
+HRESULT get_is_signed (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
+  *(result->pboolVal) = !mail ? VARIANT_FALSE :
+                        mail->is_signed () ? VARIANT_TRUE : VARIANT_FALSE;
+
+  return S_OK;
+}
+
+HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  result->vt = VT_BSTR;
+  wchar_t *w_result;
+  if (!mail)
+    {
+      log_debug ("%s:%s: No mail.",
+                 SRCNAME, __func__);
+    }
+  if (mail && mail->is_valid_sig ())
+    {
+      w_result = utf8_to_wchar (_("Verified Sender"));
+    }
+  else
+    {
+      w_result = utf8_to_wchar (_("Unverified Sender"));
+    }
+  result->bstrVal = SysAllocString (w_result);
+  xfree (w_result);
+  return S_OK;
+}
+
+HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  result->vt = VT_BSTR;
+  wchar_t *w_result;
+  if (mail && mail->is_signed ())
+    {
+      char *buf;
+      gpgrt_asprintf (&buf, _("This is a signed %s message."),
+                      mail->is_smime() ? _("S/MIME") : _("OpenPGP"));
+      w_result = utf8_to_wchar (buf);
+      xfree(buf);
+    }
+  else
+    {
+      w_result = utf8_to_wchar (_("This message is not cryptographically signed"));
+    }
+  result->bstrVal = SysAllocString (w_result);
+  xfree (w_result);
+  return S_OK;
+}
+
+HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  result->vt = VT_BSTR;
+  if (!mail)
+    {
+      log_debug ("%s:%s: No mail.",
+                 SRCNAME, __func__);
+      result->bstrVal = SysAllocString (L"");
+      return S_OK;
+    }
+  const auto message = mail->get_signature_status ();
+  wchar_t *w_message = utf8_to_wchar (message.c_str());
+  result->bstrVal = SysAllocString (w_message);
+  xfree (w_message);
+  return S_OK;
+}
+
+HRESULT launch_cert_details (LPDISPATCH ctrl, VARIANT *result)
+{
+  (void) ctrl;
+  (void) result;
   return S_OK;
 }

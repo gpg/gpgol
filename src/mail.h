@@ -25,6 +25,7 @@
 #include "mapihelp.h"
 #include "gpgme++/verificationresult.h"
 #include "gpgme++/decryptionresult.h"
+#include "gpgme++/key.h"
 
 #include <string>
 #include <future>
@@ -210,11 +211,27 @@ public:
     signature. Regardless of the validity of the mail */
   bool is_signed ();
 
-  /** Returns true if the mail was verified and the validity
+  /** Returns a non null signature / uid if the mail was verified and the validity
     was high enough that we treat it as "verified sender" in
-    the UI. */
+    the UI. The signature / uid pair returned is the signature that was used
+    to determine the verified sender in that case. */
+  const std::pair<GpgME::Signature, GpgME::UserID> get_valid_sig ();
+
+  /** Small helper to check if get_valid_sig returns non null results. */
   bool is_valid_sig ();
 
+  /** Get UID gets UniqueID property of this mail. Returns
+    an empty string if the uid was not set with set uid.*/
+  const std::string & get_uid () const { return m_uid; }
+
+  /** Returns 0 on success if the mail has a uid alrady or sets
+    the uid. Setting only succeeds if the OOM is currently
+    accessible. Returns -1 on error. */
+  int set_uid ();
+
+  /** Returns a localized string describing the signature state
+    of this mail. */
+  std::string get_signature_status ();
 private:
   void update_categories ();
   void update_body ();
@@ -226,8 +243,7 @@ private:
        m_needs_save,   /* A property was changed but not by us. */
        m_crypt_successful, /* We successfuly performed crypto on the item. */
        m_is_smime, /* This is an smime mail. */
-       m_is_smime_checked, /* it was checked if this is an smime mail */
-       m_is_valid_sig; /* We treat the signature as valid (verified) */
+       m_is_smime_checked; /* it was checked if this is an smime mail */
   int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */

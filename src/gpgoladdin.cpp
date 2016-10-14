@@ -528,10 +528,13 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"signMimeEx", ID_CMD_MIME_SIGN_EX)
       ID_MAPPER (L"getEncryptPressedEx", ID_GET_ENCRYPT_PRESSED_EX)
       ID_MAPPER (L"getSignPressedEx", ID_GET_SIGN_PRESSED_EX)
-      ID_MAPPER (L"ribbonLoaded", ID_ON_LOAD);
+      ID_MAPPER (L"ribbonLoaded", ID_ON_LOAD)
       ID_MAPPER (L"openOptions", ID_CMD_OPEN_OPTIONS)
-      ID_MAPPER (L"getSigStatus", ID_GET_SIG_STATUS)
-      ID_MAPPER (L"getEncStatus", ID_GET_ENC_STATUS)
+      ID_MAPPER (L"getSigLabel", ID_GET_SIG_LABEL)
+      ID_MAPPER (L"getSigSTip", ID_GET_SIG_STIP)
+      ID_MAPPER (L"getSigTip", ID_GET_SIG_TTIP)
+      ID_MAPPER (L"launchDetails", ID_LAUNCH_CERT_DETAILS)
+      ID_MAPPER (L"getIsSigned", ID_GET_IS_SIGNED)
     }
 
   if (cNames > 1)
@@ -603,11 +606,17 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_GET_SIGN_PRESSED_EX:
         return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_SIGN,
                                   result, true);
-      case ID_GET_ENC_STATUS:
-        return get_crypt_status (parms->rgvarg[0].pdispVal, OP_ENCRYPT,
-                                 result);
-      case ID_GET_SIG_STATUS:
-        return get_crypt_status (parms->rgvarg[0].pdispVal, OP_SIGN, result);
+      case ID_GET_SIG_STIP:
+        return get_sig_stip (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_SIG_TTIP:
+        return get_sig_ttip (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_SIG_LABEL:
+        return get_sig_label (parms->rgvarg[0].pdispVal, result);
+      case ID_LAUNCH_CERT_DETAILS:
+        return launch_cert_details (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_IS_SIGNED:
+        return get_is_signed (parms->rgvarg[0].pdispVal, result);
+
       case ID_ON_LOAD:
           {
             g_ribbon_uis.push_back (parms->rgvarg[0].pdispVal);
@@ -663,16 +672,6 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
     _("Sign the message and all attachments before sending.");
   const char *optsSTip =
     _("Open the settings dialog for GpgOL.");
-#if 0
-  const char *encryptedTTip =
-    "If this is toggled the message was encrypted. (this is development UI)";
-  const char *encryptedSTip =
-    "TODO insert more details here";
-  const char *signedTTip =
-    "If this is toggled the message was signed. (this is development UI)";
-  const char *signedSTip =
-    "TODO insert more details here";
-#endif
   log_debug ("%s:%s: GetCustomUI_MIME for id: %ls", SRCNAME, __func__, RibbonID);
 
   if (!RibbonXml || !RibbonID)
@@ -724,27 +723,19 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
       gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
         " onLoad=\"ribbonLoaded\">"
-#if 0
         " <ribbon>"
         "   <tabs>"
         "    <tab idMso=\"TabReadMessage\">"
         "     <group id=\"general\""
         "            label=\"%s\">"
-        "       <toggleButton id=\"idEncrypted\""
-        "               getImage=\"btnCryptStatus\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               getEnabled=\"getEncStatus\"/>"
         "       <button id=\"idSigned\""
         "               getImage=\"btnSignLarge\""
         "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"verifyBody\""
-        "               getEnabled=\"getSigStatus\"/>"
+        "               getLabel=\"getSigLabel\""
+        "               getScreentip=\"getSigTip\""
+        "               getSupertip=\"getSigSTip\""
+        "               onAction=\"launchDetails\""
+        "               getEnabled=\"getIsSigned\"/>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn\""
         "                 onAction=\"openOptions\""
@@ -754,7 +745,6 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "    </tab>"
         "   </tabs>"
         " </ribbon>"
-#endif
         "<contextMenus>"
         " <contextMenu idMso=\"ContextMenuAttachments\">"
         "   <button id=\"gpgol_decrypt\""
@@ -764,12 +754,8 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         " </contextMenu>"
         "</contextMenus>"
         "</customUI>",
-#if 0
         _("GpgOL"),
-        _("Encrypted"), encryptedTTip, encryptedSTip,
-        _("Signed"), signedTTip, signedSTip,
         optsSTip,
-#endif
         _("Decrypt")
         );
     }

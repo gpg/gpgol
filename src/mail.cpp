@@ -85,7 +85,6 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypt_successful(false),
     m_is_smime(false),
     m_is_smime_checked(false),
-    m_is_valid_sig(false),
     m_moss_position(0),
     m_sender(NULL),
     m_type(MSGTYPE_UNKNOWN)
@@ -560,8 +559,6 @@ Mail::parsing_done()
   m_verify_result = m_parser->verify_result ();
   m_needs_wipe = true;
 
-  /* Check our validity */
-  is_valid_sig ();
   /* Set categories according to the result. */
   update_categories();
 
@@ -875,26 +872,30 @@ Mail::close_inspector ()
   return 0;
 }
 
-bool
-Mail::is_valid_sig ()
+const std::pair <Signature, UserID>
+Mail::get_valid_sig ()
 {
   const char *sender = get_sender();
+  std::pair <Signature, UserID> ret;
 
-  static bool sig_checked;
+  if (!sender)
+    {
+      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
+      return ret;
+    }
 
   if (m_verify_result.isNull())
     {
-      return false;
-    }
-  if (sig_checked)
-    {
-      return m_is_valid_sig;
+      log_debug ("%s:%s: No verify result.",
+                 SRCNAME, __func__);
+      return ret;
     }
 
-  if (m_verify_result.error() || !sender)
+  if (m_verify_result.error())
     {
-      m_is_valid_sig = false;
-      sig_checked = true;
+      log_debug ("%s:%s: verify error.",
+                 SRCNAME, __func__);
+      return ret;
     }
 
   for (const auto sig: m_verify_result.signatures())
@@ -942,13 +943,20 @@ Mail::is_valid_sig ()
                 }
               log_debug ("%s:%s: Classified sender as verified",
                          SRCNAME, __func__);
-              m_is_valid_sig = true;
-              break;
+              return std::pair<Signature, UserID> (sig, uid);
             }
         }
     }
-  sig_checked = true;
-  return m_is_valid_sig;
+  log_debug ("%s:%s: No signature with enough trust.",
+             SRCNAME, __func__);
+  return ret;
+}
+
+bool
+Mail::is_valid_sig ()
+{
+   const auto pair = get_valid_sig();
+   return !pair.first.isNull() && !pair.second.isNull();
 }
 
 void
@@ -969,7 +977,7 @@ Mail::update_categories ()
       remove_category (m_mailitem, decCategory);
     }
 
-  if (m_is_valid_sig)
+  if (is_valid_sig())
     {
       add_category (m_mailitem, verifyCategory);
     }
@@ -983,10 +991,75 @@ Mail::update_categories ()
 bool
 Mail::is_signed()
 {
-  if (!m_parser)
+  return m_verify_result.numSignatures() > 0;
+}
+
+int
+Mail::set_uid()
+{
+  if (!m_uid.empty())
     {
-      return false;
+      return 0;
     }
-  const auto result = m_parser->verify_result ();
-  return result.numSignatures() > 0;
+  char *uid = get_unique_id (m_mailitem, 1);
+
+  if (!uid)
+    {
+      log_debug ("%s:%s: Failed to get uid for %p",
+                 SRCNAME, __func__, m_mailitem);
+      return -1;
+    }
+  m_uid = uid;
+  xfree (uid);
+  g_uid_map.insert (std::pair<std::string, Mail *> (m_uid, this));
+  return 0;
+}
+
+std::string
+Mail::get_signature_status()
+{
+  std::string message;
+  if (!is_signed())
+    {
+      return _("This message is not signed.\nYou cannot be sure who wrote the message.");
+    }
+
+  const auto pair = get_valid_sig ();
+  const auto sig = pair.first;
+  const auto uid = pair.second;
+  char *buf;
+  bool isOpenPGP = sig.key().protocol() == Protocol::OpenPGP;
+  if (!sig.isNull () && !uid.isNull ())
+    {
+      /* We are valid */
+      gpgrt_asprintf (&buf, _("The signature is valid because:\n\nThe used %s %s"),
+                      isOpenPGP ? _("key") : _("certificate"),
+                      sig.validity() == Signature::Validity::Ultimate ?
+                      _("is marked as your own.") :
+                      sig.validity() == Signature::Validity::Full && isOpenPGP ?
+                      _("was certified by enough trusted keys.") :
+                      "");
+      message += buf;
+      xfree (buf);
+      if (sig.validity() == Signature::Validity::Full && !isOpenPGP)
+        {
+          gpgrt_asprintf (&buf, _("is cerified by the trusted issuer:\n'%s'\n"),
+                          sig.key().issuerName());
+          message += buf;
+          xfree (buf);
+        }
+      else if (sig.validity() == Signature::Validity::Marginal)
+        {
+          gpgrt_asprintf (&buf, _("was consistently used for %i messages since %lu."),
+                          uid.tofuInfo().signCount (), uid.tofuInfo().signFirst());
+          message += buf;
+          xfree (buf);
+        }
+    }
+  message += "\n\n";
+  gpgrt_asprintf (&buf, _("Click here for details about the %s."),
+                  isOpenPGP ? _("key") : _("certificate."));
+  message += buf;
+  xfree (buf);
+  return message;
 }

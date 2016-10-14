@@ -42,12 +42,15 @@
 #define ID_GET_ENCRYPT_PRESSED  16
 #define ID_ON_LOAD              17
 #define ID_CMD_OPEN_OPTIONS     18
-#define ID_GET_SIG_STATUS       19
-#define ID_GET_ENC_STATUS       20
+#define ID_GET_IS_SIGNED        19
 #define ID_CMD_MIME_SIGN_EX     21
 #define ID_CMD_MIME_ENCRYPT_EX  22
 #define ID_GET_SIGN_PRESSED_EX  23
 #define ID_GET_ENCRYPT_PRESSED_EX 24
+#define ID_GET_SIG_STIP         25
+#define ID_GET_SIG_TTIP         26
+#define ID_GET_SIG_LABEL        27
+#define ID_LAUNCH_CERT_DETAILS  28
 
 #define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
@@ -77,8 +80,16 @@ HRESULT verifyBody (LPDISPATCH ctrl);
 HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result, bool is_explorer);
 /* Mark the mail to be mime encrypted on send. Flags as above */
 HRESULT mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer);
-/* Get the general crypto status / if the buttons should be toggled. */
-HRESULT get_crypt_status (LPDISPATCH ctrl, int flags, VARIANT *result);
+/* Check the if the mail was signed. Returns BOOL */
+HRESULT get_is_signed (LPDISPATCH ctrl, VARIANT *result);
+/* Get the label for the signature. Returns BSTR */
+HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result);
+/* Get the tooltip for the signature. Returns BSTR */
+HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result);
+/* Get the supertip for the signature. Returns BSTR */
+HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result);
+/* Show a certificate details dialog. Returns nothing. */
+HRESULT launch_cert_details (LPDISPATCH ctrl, VARIANT *result);
 /* Callback to get our own control reference */
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 #endif
