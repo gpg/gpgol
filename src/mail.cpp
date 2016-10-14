@@ -84,6 +84,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypt_successful(false),
     m_is_smime(false),
     m_is_smime_checked(false),
+    m_is_valid_sig(false),
     m_moss_position(0),
     m_sender(NULL),
     m_type(MSGTYPE_UNKNOWN)
@@ -531,7 +532,13 @@ Mail::update_body()
 void
 Mail::parsing_done()
 {
+  /* Store the results. */
+  m_decrypt_result = m_parser->decrypt_result ();
+  m_verify_result = m_parser->verify_result ();
   m_needs_wipe = true;
+
+  /* Check our validity */
+  is_valid_sig ();
   /* Set categories according to the result. */
   update_categories();
 
@@ -845,14 +852,29 @@ Mail::close_inspector ()
   return 0;
 }
 
-static bool
-is_valid_sig (const VerificationResult &result, const char *sender)
+bool
+Mail::is_valid_sig ()
 {
-  if (result.error() || !sender)
+  const char *sender = get_sender();
+
+  static bool sig_checked;
+
+  if (m_verify_result.isNull())
     {
       return false;
     }
-  for (const auto sig: result.signatures())
+  if (sig_checked)
+    {
+      return m_is_valid_sig;
+    }
+
+  if (m_verify_result.error() || !sender)
+    {
+      m_is_valid_sig = false;
+      sig_checked = true;
+    }
+
+  for (const auto sig: m_verify_result.signatures())
     {
       if (sig.validity() != Signature::Validity::Marginal &&
           sig.validity() != Signature::Validity::Full &&
@@ -897,20 +919,21 @@ is_valid_sig (const VerificationResult &result, const char *sender)
                 }
               log_debug ("%s:%s: Classified sender as verified",
                          SRCNAME, __func__);
-              return true;
+              m_is_valid_sig = true;
+              break;
             }
         }
     }
-  return false;
+  sig_checked = true;
+  return m_is_valid_sig;
 }
 
 void
 Mail::update_categories ()
 {
-  const auto dec_result = m_parser->decrypt_result();
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Verified Sender");
-  if (dec_result.numRecipients())
+  if (m_decrypt_result.numRecipients())
     {
       /* We use the number of recipients as we don't care
          if decryption was successful or not for this category */
@@ -923,10 +946,7 @@ Mail::update_categories ()
       remove_category (m_mailitem, decCategory);
     }
 
-  const auto ver_result = m_parser->verify_result();
-  const char *sender = get_sender();
-
-  if (is_valid_sig (ver_result, sender))
+  if (m_is_valid_sig)
     {
       add_category (m_mailitem, verifyCategory);
     }
@@ -935,4 +955,15 @@ Mail::update_categories ()
       remove_category (m_mailitem, verifyCategory);
     }
   return;
+}
+
+bool
+Mail::is_signed()
+{
+  if (!m_parser)
+    {
+      return false;
+    }
+  const auto result = m_parser->verify_result ();
+  return result.numSignatures() > 0;
 }

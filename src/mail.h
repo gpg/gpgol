@@ -23,6 +23,8 @@
 
 #include "oomhelp.h"
 #include "mapihelp.h"
+#include "gpgme++/verificationresult.h"
+#include "gpgme++/decryptionresult.h"
 
 #include <string>
 #include <future>
@@ -194,6 +196,16 @@ public:
    handler.
   */
   void parsing_done ();
+
+  /** Returns true if the mail was verified and has at least one
+    signature. Regardless of the validity of the mail */
+  bool is_signed ();
+
+  /** Returns true if the mail was verified and the validity
+    was high enough that we treat it as "verified sender" in
+    the UI. */
+  bool is_valid_sig ();
+
 private:
   void update_categories ();
   void update_body ();
@@ -205,10 +217,14 @@ private:
        m_needs_save,   /* A property was changed but not by us. */
        m_crypt_successful, /* We successfuly performed crypto on the item. */
        m_is_smime, /* This is an smime mail. */
-       m_is_smime_checked; /* it was checked if this is an smime mail */
+       m_is_smime_checked, /* it was checked if this is an smime mail */
+       m_is_valid_sig; /* We treat the signature as valid (verified) */
   int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */
   ParseController *m_parser;
+  GpgME::VerificationResult m_verify_result;
+  GpgME::DecryptionResult m_decrypt_result;
+  std::string m_uid;
 };
 #endif // MAIL_H
