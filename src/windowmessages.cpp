@@ -63,7 +63,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           case (PARSING_DONE):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_mail_valid (mail))
+              if (!Mail::is_valid_ptr (mail))
                 {
                   log_debug ("%s:%s: Parsing done for mail which is gone.",
                              SRCNAME, __func__);

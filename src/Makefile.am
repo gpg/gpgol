@@ -131,7 +131,7 @@ gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgmepp -lgpgme -lassuan -lgpg-error \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
 	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
-	-luuid -lgdiplus
+	-luuid -lgdiplus -lrpcrt4
 
 resource.o: resource.rc versioninfo.rc dialogs.rc dialogs.h
 

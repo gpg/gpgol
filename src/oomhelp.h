@@ -85,6 +85,9 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 #define GPGOL_ATTACHTYPE_DASL \
   "http://schemas.microsoft.com/mapi/string/" \
   "{31805AB8-3E92-11DC-879C-00061B031004}/GpgOL Attach Type/0x00000003"
+#define GPGOL_UID_DASL \
+  "http://schemas.microsoft.com/mapi/string/" \
+  "{31805AB8-3E92-11DC-879C-00061B031004}/GpgOL UID/0x0000001F"
 #define PR_ATTACH_DATA_BIN_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x37010102"
 #define PR_BODY_W_DASL \
@@ -182,7 +185,7 @@ get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt);
    property.
 */
 int
-set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value);
+put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value);
 
 /* Look up a variant with the propertyAccessor interface */
 int
@@ -276,6 +279,15 @@ add_category (LPDISPATCH mail, const char *category);
 int
 remove_category (LPDISPATCH mail, const char *category);
 
+/* Get a unique identifier for a mail object. The
+   uuid is a custom property. If create is set
+   a new uuid will be added if none exists and the
+   value of that uuid returned.
+
+   Return value has to be freed by the caller.
+   */
+char *
+get_unique_id (LPDISPATCH mail, int create);
 
 #ifdef __cplusplus
 }

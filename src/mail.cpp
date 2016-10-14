@@ -45,6 +45,7 @@
 using namespace GpgME;
 
 static std::map<LPDISPATCH, Mail*> g_mail_map;
+static std::map<std::string, Mail*> g_uid_map;
 
 #define COPYBUFSIZE (8 * 1024)
 
@@ -122,6 +123,15 @@ Mail::~Mail()
       g_mail_map.erase (it);
     }
 
+  if (!m_uid.empty())
+    {
+      auto it2 = g_uid_map.find(m_uid);
+      if (it2 != g_uid_map.end())
+        {
+          g_uid_map.erase (it2);
+        }
+    }
+
   xfree (m_sender);
   gpgol_release(m_mailitem);
 }
@@ -142,8 +152,23 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
   return it->second;
 }
 
+Mail *
+Mail::get_mail_for_uid (const char *uid)
+{
+  if (!uid)
+    {
+      return NULL;
+    }
+  auto it = g_uid_map.find(std::string(uid));
+  if (it == g_uid_map.end())
+    {
+      return NULL;
+    }
+  return it->second;
+}
+
 bool
-Mail::is_mail_valid (const Mail *mail)
+Mail::is_valid_ptr (const Mail *mail)
 {
   auto it = g_mail_map.begin();
   while (it != g_mail_map.end())
@@ -452,7 +477,7 @@ Mail::decrypt_verify()
                  SRCNAME, __func__, m_mailitem);
       return 1;
     }
-
+  set_uid ();
   m_processed = true;
   /* Insert placeholder */
   char *placeholder_buf;

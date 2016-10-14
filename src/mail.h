@@ -62,12 +62,21 @@ public:
   */
   static Mail* get_mail_for_item (LPDISPATCH mailitem);
 
+  /** @brief looks for existing Mail objects in the uid map.
+    Only objects for which set_uid has been called can be found
+    in the uid map. Get the UID of a mailitem thorugh get_unique_id
+
+    @returns A reference to an existing mailitem or NULL in case none
+    could be found.
+  */
+  static Mail* get_mail_for_uid (const char *uid);
+
   /** @brief looks for existing Mail objects.
 
     @returns A reference to an existing mailitem or NULL in case none
     could be found. Can be used to check if a mail object was destroyed.
   */
-  static bool is_mail_valid (const Mail *mail);
+  static bool is_valid_ptr (const Mail *mail);
 
   /** @brief wipe the plaintext from all known Mail objects.
     *

@@ -25,6 +25,7 @@
 #include <windows.h>
 #include <olectl.h>
 #include <string>
+#include <rpc.h>
 
 #include "myexchext.h"
 #include "common.h"
@@ -813,7 +814,7 @@ get_oom_context_window (LPDISPATCH context)
 }
 
 int
-set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
+put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
 {
   LPDISPATCH propertyAccessor;
   VARIANT cVariant[2];
@@ -854,7 +855,10 @@ set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
   xfree (w_property);
 
   /* Variant 0 carries the data. */
-  VariantCopy (&cVariant[0], value);
+  wchar_t *w_value = utf8_to_wchar (value);
+  BSTR b_value = SysAllocString(w_value);
+  cVariant[0].vt = VT_BSTR;
+  cVariant[0].bstrVal = b_value;
 
   /* Variant 1 is the DASL as found out by experiments. */
   cVariant[1].vt = VT_BSTR;
@@ -868,6 +872,7 @@ set_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
                                  DISPATCH_METHOD, &dispparams,
                                  &rVariant, &execpinfo, &argErr);
   SysFreeString (b_property);
+  SysFreeString (b_value);
   VariantClear (&cVariant[0]);
   gpgol_release (propertyAccessor);
   if (hr != S_OK)
@@ -1552,4 +1557,61 @@ remove_category (LPDISPATCH mail, const char *category)
              SRCNAME, __func__, category);
 
   return put_oom_string (mail, "Categories", newstr.c_str ());
+}
+
+static char *
+generate_uid ()
+{
+  UUID uuid;
+  UuidCreate (&uuid);
+
+  unsigned char *str;
+  UuidToStringA (&uuid, &str);
+
+  char *ret = strdup ((char*)str);
+  RpcStringFreeA (&str);
+
+  return ret;
+}
+
+char *
+get_unique_id (LPDISPATCH mail, int create)
+{
+  if (!mail)
+    {
+      return NULL;
+    }
+
+  /* Get the User Properties. */
+  char *uid = get_pa_string (mail, GPGOL_UID_DASL);
+  if (!uid)
+    {
+      log_debug ("%s:%s: No uuid found for '%p'",
+                 SRCNAME, __func__, mail);
+      if (!create)
+        {
+          return NULL;
+        }
+    }
+  else
+    {
+      log_debug ("%s:%s: Found uid '%s' for '%p'",
+                 SRCNAME, __func__, uid, mail);
+      return uid;
+    }
+  char *newuid = generate_uid ();
+  int ret = put_pa_string (mail, GPGOL_UID_DASL, newuid);
+
+  if (ret)
+    {
+      log_debug ("%s:%s: failed to set uid '%s' for '%p'",
+                 SRCNAME, __func__, newuid, mail);
+      xfree (newuid);
+      return NULL;
+    }
+
+
+  log_debug ("%s:%s: '%p' has now the uid: '%s' ",
+             SRCNAME, __func__, mail, newuid);
+  return newuid;
 }
