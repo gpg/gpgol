@@ -56,8 +56,14 @@
 HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
 {
   *context = get_oom_object (ctrl, "get_Context");
-  log_debug ("%s:%s: contextObj: %s",
-             SRCNAME, __func__, get_object_name (*context));
+  if (*context)
+    {
+      char *name = get_object_name (*context);
+      log_debug ("%s:%s: contextObj: %s",
+                 SRCNAME, __func__, name);
+      xfree (name);
+    }
+
   return context ? S_OK : E_FAIL;
 }
 
