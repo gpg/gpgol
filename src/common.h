@@ -116,6 +116,8 @@ char *percent_escape (const char *str, const char *extra);
 
 void fix_linebreaks (char *str, int *len);
 
+char *format_date_from_gpgme (unsigned long time);
+
 /*-- main.c --*/
 const void *get_128bit_session_key (void);
 const void *get_64bit_session_marker (void);

@@ -819,3 +819,37 @@ get_gpg4win_dir()
     }
   return NULL;
 }
+
+
+static void
+epoch_to_file_time (unsigned long time, LPFILETIME pft)
+{
+ LONGLONG ll;
+
+ ll = Int32x32To64(time, 10000000) + 116444736000000000;
+ pft->dwLowDateTime = (DWORD)ll;
+ pft->dwHighDateTime = ll >> 32;
+}
+
+char *
+format_date_from_gpgme (unsigned long time)
+{
+  wchar_t buf[256];
+  FILETIME ft;
+  SYSTEMTIME st;
+
+  epoch_to_file_time (time, &ft);
+  FileTimeToSystemTime(&ft, &st);
+  int ret = GetDateFormatEx (NULL,
+                             DATE_SHORTDATE,
+                             &st,
+                             NULL,
+                             buf,
+                             256,
+                             NULL);
+  if (ret == 0)
+    {
+      return NULL;
+    }
+  return wchar_to_utf8 (buf);
+}
