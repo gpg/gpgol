@@ -1429,22 +1429,42 @@ get_mail_from_control (LPDISPATCH ctrl)
       return NULL;
     }
 
-  mailitem = get_oom_object (context, "CurrentItem");
+  char *ctx_name = get_object_name (context);
+
+  if (!ctx_name)
+    {
+      log_error ("%s:%s: Failed to get context name",
+                 SRCNAME, __func__);
+      gpgol_release (context);
+      return NULL;
+
+    }
+  if (!strcmp (ctx_name, "_Inspector"))
+    {
+      mailitem = get_oom_object (context, "CurrentItem");
+    }
+  else if (!strcmp (ctx_name, "_Explorer"))
+    {
+      mailitem = get_oom_object (context, "Selection.Item(1)");
+    }
+
   gpgol_release (context);
   if (!mailitem)
     {
-      log_error ("%s:%s: Failed to get mailitem.",
-                 SRCNAME, __func__);
+      log_error ("%s:%s: Failed to get mailitem. From %s",
+                 SRCNAME, __func__, ctx_name);
+      xfree (ctx_name);
       return NULL;
     }
+  xfree (ctx_name);
 
   /* Get the uid of this item. */
   char *uid = get_unique_id (mailitem, 0);
-  gpgol_release (mailitem);
   if (!uid)
     {
       log_oom ("%s:%s: Failed to get uid for %p .",
                SRCNAME, __func__, mailitem);
+      gpgol_release (mailitem);
       return NULL;
     }
 
