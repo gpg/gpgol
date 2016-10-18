@@ -288,17 +288,17 @@ ParseController::parse()
              SRCNAME, __func__, m_decrypt_result.error().code(),
              m_verify_result.error().code());
 
+  /* Ensure that the Keys for the signatures are available */
+  for (const auto sig: m_verify_result.signatures())
+    {
+      sig.key(true, true);
+    }
+
   if (opt.enable_debug)
     {
        std::stringstream ss;
        ss << m_decrypt_result << '\n' << m_verify_result;
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
-    }
-
-  /* Ensure that the Keys for the signatures are available */
-  for (const auto sig: m_verify_result.signatures())
-    {
-      sig.key(true, false);
     }
 
   return;
