@@ -21,13 +21,13 @@ and those installed via the forms extensions from external files.
   dialogs.rc to create the resource.  This is all integtraged into the
   Makefile.  A sample entry in dialogs.rc looks like this:
 
-    IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "key-manager-16.bmp"
-    IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "key-manager-16m.bmp"
-    IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "key-manager-32.bmp"
-    IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "key-manager-32m.bmp"
+    IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "icons/key-manager-16.bmp"
+    IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "icons/key-manager-16m.bmp"
+    IDB_KEY_MANAGER_32        BITMAP  DISCARDABLE  "icons/key-manager-32.bmp"
+    IDB_KEY_MANAGER_32M       BITMAP  DISCARDABLE  "icons/key-manager-32m.bmp"
     //IDB_KEY_MANAGER_64        BITMAP  DISCARDABLE
     //IDB_KEY_MANAGER_64M       BITMAP  DISCARDABLE
-    IDI_KEY_MANAGER_64_PNG    RCDATA               "key-manager-64.png"
+    IDI_KEY_MANAGER_64_PNG    RCDATA               "icons/key-manager-64.png"
 
   This is the icon for the certificate manager.  We provide two
   resolutions: 16x16 and 32x32 pixel.  I have not yet encountered the
@@ -62,7 +62,7 @@ and those installed via the forms extensions from external files.
   6. Select Select->By_Color, click on the transparent area.
      Change the background color to white (0xffffff) and run
      Layer->Transparency->Remove_Alpha_Channel.
- 
+
   7. Select Select->Invert.  Use "Bucket Fill" to fill the now
      selected non-transparent area with black (0x000000).  "Fill whole
      selection" comes handy here.  Make sure that you have a only
@@ -99,7 +99,7 @@ and those installed via the forms extensions from external files.
      compression.  Click "Save".
 
   4. Load a 32x32 PNG version of the icon into The Gimp.
-   
+
   5. Select File->SaveAs and enter a file name with the suffix ".ico".
      Click "Save" and you will be asked for the type.  From the
      drop-down box choose "8 bpp, 1-bit alpha, 256-slot palette", no
@@ -130,4 +130,3 @@ like this:
   src/sign-16m.bmp:           PC bitmap data, Windows 3.x format, 16 x 16 x 1
   src/verify-16.bmp:          PC bitmap data, Windows 3.x format, 16 x 16 x 8
   src/verify-16m.bmp:         PC bitmap data, Windows 3.x format, 16 x 16 x 1
-

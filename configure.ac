@@ -311,6 +311,7 @@ fi
 
 AC_CONFIG_FILES([ Makefile
 src/Makefile
+src/icons/Makefile
 src/versioninfo.rc
 forms/Makefile
 doc/Makefile
