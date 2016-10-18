@@ -759,7 +759,6 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Decrypt")
         );
     }
-#if 0
   /* We don't use this code currently because calling the send
      event for Inline Response mailitems fails. */
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
@@ -768,6 +767,26 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
         " onLoad=\"ribbonLoaded\">"
         " <ribbon>"
+        "   <tabs>"
+        "    <tab idMso=\"TabMail\">"
+        "     <group id=\"general_read\""
+        "            label=\"%s\">"
+        "       <button id=\"idSigned\""
+        "               getImage=\"btnSignLarge\""
+        "               size=\"large\""
+        "               getLabel=\"getSigLabel\""
+        "               getScreentip=\"getSigTip\""
+        "               getSupertip=\"getSigSTip\""
+        "               onAction=\"launchDetails\""
+        "               getEnabled=\"getIsSigned\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn_read\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
+        "     </group>"
+        "    </tab>"
+        "   </tabs>"
         "   <contextualTabs>"
         "   <tabSet idMso=\"TabComposeTools\">"
         "    <tab idMso=\"TabMessage\">"
@@ -799,13 +818,15 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "   </tabSet>"
         "   </contextualTabs>"
         " </ribbon>"
-        "</customUI>", _("GpgOL"),
+        "</customUI>",
+        _("GpgOL"),
+        optsSTip,
+        _("GpgOL"),
         _("Encrypt"), encryptTTip, encryptSTip,
         _("Sign"), signTTip, signSTip,
         optsSTip
         );
     }
-#endif
 
   if (buffer)
     {
