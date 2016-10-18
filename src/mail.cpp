@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "dialogs.h"
 #include "common.h"
 #include "mail.h"
 #include "eventsinks.h"
@@ -90,6 +91,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypt_successful(false),
     m_is_smime(false),
     m_is_smime_checked(false),
+    m_is_signed(false),
+    m_is_valid(false),
     m_moss_position(0),
     m_sender(NULL),
     m_type(MSGTYPE_UNKNOWN)
@@ -127,9 +130,9 @@ Mail::~Mail()
       g_mail_map.erase (it);
     }
 
-  if (!m_uid.empty())
+  if (!m_uuid.empty())
     {
-      auto it2 = g_uid_map.find(m_uid);
+      auto it2 = g_uid_map.find(m_uuid);
       if (it2 != g_uid_map.end())
         {
           g_uid_map.erase (it2);
@@ -157,13 +160,13 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
 }
 
 Mail *
-Mail::get_mail_for_uid (const char *uid)
+Mail::get_mail_for_uuid (const char *uuid)
 {
-  if (!uid)
+  if (!uuid)
     {
       return NULL;
     }
-  auto it = g_uid_map.find(std::string(uid));
+  auto it = g_uid_map.find(std::string(uuid));
   if (it == g_uid_map.end())
     {
       return NULL;
@@ -481,7 +484,7 @@ Mail::decrypt_verify()
                  SRCNAME, __func__, m_mailitem);
       return 1;
     }
-  set_uid ();
+  set_uuid ();
   m_processed = true;
   /* Insert placeholder */
   char *placeholder_buf;
@@ -559,16 +562,22 @@ Mail::update_body()
 void
 Mail::parsing_done()
 {
+  TRACEPOINT;
   /* Store the results. */
   m_decrypt_result = m_parser->decrypt_result ();
   m_verify_result = m_parser->verify_result ();
+
+  update_sigstate ();
   m_needs_wipe = true;
 
+  TRACEPOINT;
   /* Set categories according to the result. */
   update_categories();
 
+  TRACEPOINT;
   /* Update the body */
   update_body();
+  TRACEPOINT;
 
   /* Update attachments */
   if (add_attachments (m_mailitem, m_parser->get_attachments()))
@@ -582,6 +591,7 @@ Mail::parsing_done()
   delete m_parser;
   m_parser = nullptr;
   gpgoladdin_invalidate_ui ();
+  TRACEPOINT;
   return;
 }
 
@@ -917,34 +927,34 @@ get_uid_for_sender (const Key k, const char *sender)
   return ret;
 }
 
-const std::pair <Signature, UserID>
-Mail::get_valid_sig ()
+void
+Mail::update_sigstate ()
 {
   const char *sender = get_sender();
-  std::pair <Signature, UserID> ret;
 
   if (!sender)
     {
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
-      return ret;
+      return;
     }
 
   if (m_verify_result.isNull())
     {
       log_debug ("%s:%s: No verify result.",
                  SRCNAME, __func__);
-      return ret;
+      return;
     }
 
   if (m_verify_result.error())
     {
       log_debug ("%s:%s: verify error.",
                  SRCNAME, __func__);
-      return ret;
+      return;
     }
 
   for (const auto sig: m_verify_result.signatures())
     {
+      m_is_signed = true;
       if (sig.validity() != Signature::Validity::Marginal &&
           sig.validity() != Signature::Validity::Full &&
           sig.validity() != Signature::Validity::Ultimate)
@@ -981,18 +991,32 @@ Mail::get_valid_sig ()
         }
       log_debug ("%s:%s: Classified sender as verified",
                  SRCNAME, __func__);
-      return std::pair<Signature, UserID> (sig, uid);
+      m_sig = sig;
+      m_uid = uid;
+      m_is_valid = true;
     }
-  log_debug ("%s:%s: No signature with enough trust.",
+
+  log_debug ("%s:%s: No signature with enough trust. Using first",
              SRCNAME, __func__);
-  return ret;
+  m_sig = m_verify_result.signature(0);
+  return;
+}
+
+const std::pair <Signature, UserID>
+Mail::get_valid_sig ()
+{
+  std::pair <Signature, UserID> ret;
+  if (!m_is_valid)
+    {
+      return ret;
+    }
+  return std::pair<Signature, UserID> (m_sig, m_uid);
 }
 
 bool
 Mail::is_valid_sig ()
 {
-   const auto pair = get_valid_sig();
-   return !pair.first.isNull() && !pair.second.isNull();
+   return m_is_valid;
 }
 
 void
@@ -1031,23 +1055,23 @@ Mail::is_signed()
 }
 
 int
-Mail::set_uid()
+Mail::set_uuid()
 {
-  if (!m_uid.empty())
+  if (!m_uuid.empty())
     {
       return 0;
     }
-  char *uid = get_unique_id (m_mailitem, 1);
+  char *uuid = get_unique_id (m_mailitem, 1);
 
-  if (!uid)
+  if (!uuid)
     {
-      log_debug ("%s:%s: Failed to get uid for %p",
+      log_debug ("%s:%s: Failed to get uuid for %p",
                  SRCNAME, __func__, m_mailitem);
       return -1;
     }
-  m_uid = uid;
-  xfree (uid);
-  g_uid_map.insert (std::pair<std::string, Mail *> (m_uid, this));
+  m_uuid = uuid;
+  xfree (uuid);
+  g_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
   return 0;
 }
 
@@ -1107,6 +1131,7 @@ Mail::get_signature_status()
         }
       /* We only handle the first signature. */
       const auto sig = m_verify_result.signature (0);
+      isOpenPGP = sig.key().protocol() == Protocol::OpenPGP;
       keyFound = !(sig.summary() & Signature::Summary::KeyMissing);
 
       log_debug ("%s:%s: Formatting sig. Validity: %x Summary: %x",
@@ -1215,4 +1240,36 @@ Mail::get_signature_status()
   message += buf;
   xfree (buf);
   return message;
+}
+
+int
+Mail::get_signature_icon_id () const
+{
+  if (!m_is_signed)
+    {
+      return IDI_EMBLEM_INFORMATION_64_PNG;
+    }
+  if (m_is_valid)
+    {
+      return IDI_EMBLEM_SUCCESS_64_PNG;
+    }
+  const auto sig = m_verify_result.signature (0);
+  if ((sig.summary() & Signature::Summary::KeyMissing))
+    {
+      return IDI_EMBLEM_QUESTION_64_PNG;
+    }
+
+  /* Maybe warning for unsigned and invalid sigs? */
+
+  return IDI_EMBLEM_INFORMATION_64_PNG;
+}
+
+const char*
+Mail::get_sig_fpr() const
+{
+  if (!m_is_signed || m_sig.isNull())
+    {
+      return nullptr;
+    }
+  return m_sig.fingerprint();
 }

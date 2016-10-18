@@ -63,14 +63,14 @@ public:
   */
   static Mail* get_mail_for_item (LPDISPATCH mailitem);
 
-  /** @brief looks for existing Mail objects in the uid map.
+  /** @brief looks for existing Mail objects in the uuid map.
     Only objects for which set_uid has been called can be found
-    in the uid map. Get the UID of a mailitem thorugh get_unique_id
+    in the uid map. Get the Unique ID of a mailitem thorugh get_unique_id
 
     @returns A reference to an existing mailitem or NULL in case none
     could be found.
   */
-  static Mail* get_mail_for_uid (const char *uid);
+  static Mail* get_mail_for_uuid (const char *uuid);
 
   /** @brief looks for existing Mail objects.
 
@@ -222,19 +222,28 @@ public:
 
   /** Get UID gets UniqueID property of this mail. Returns
     an empty string if the uid was not set with set uid.*/
-  const std::string & get_uid () const { return m_uid; }
+  const std::string & get_uuid () const { return m_uuid; }
 
   /** Returns 0 on success if the mail has a uid alrady or sets
     the uid. Setting only succeeds if the OOM is currently
     accessible. Returns -1 on error. */
-  int set_uid ();
+  int set_uuid ();
 
   /** Returns a localized string describing the signature state
     of this mail. */
   std::string get_signature_status ();
+
+  /** Get the icon id of the appropiate icon for this mail */
+  int get_signature_icon_id () const;
+
+  /** Get the fingerprint of an associated signature or null
+      if it is not signed. */
+  const char *get_sig_fpr() const;
+
 private:
   void update_categories ();
   void update_body ();
+  void update_sigstate ();
 
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
@@ -243,13 +252,17 @@ private:
        m_needs_save,   /* A property was changed but not by us. */
        m_crypt_successful, /* We successfuly performed crypto on the item. */
        m_is_smime, /* This is an smime mail. */
-       m_is_smime_checked; /* it was checked if this is an smime mail */
+       m_is_smime_checked, /* it was checked if this is an smime mail */
+       m_is_signed, /* Mail is signed */
+       m_is_valid; /* Mail is valid signed. */
   int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */
   ParseController *m_parser;
   GpgME::VerificationResult m_verify_result;
   GpgME::DecryptionResult m_decrypt_result;
-  std::string m_uid;
+  GpgME::Signature m_sig;
+  GpgME::UserID m_uid;
+  std::string m_uuid;
 };
 #endif // MAIL_H

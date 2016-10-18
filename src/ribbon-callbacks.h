@@ -51,6 +51,7 @@
 #define ID_GET_SIG_TTIP         26
 #define ID_GET_SIG_LABEL        27
 #define ID_LAUNCH_CERT_DETAILS  28
+#define ID_BTN_SIGSTATE_LARGE   29
 
 #define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
@@ -89,7 +90,9 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result);
 /* Get the supertip for the signature. Returns BSTR */
 HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result);
 /* Show a certificate details dialog. Returns nothing. */
-HRESULT launch_cert_details (LPDISPATCH ctrl, VARIANT *result);
+HRESULT launch_cert_details (LPDISPATCH ctrl);
+/* Callback to get the sigstate icon. */
+HRESULT get_sigstate_icon (LPDISPATCH ctrl, VARIANT *result);
 /* Callback to get our own control reference */
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 #endif

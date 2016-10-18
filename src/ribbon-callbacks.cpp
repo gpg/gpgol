@@ -49,6 +49,11 @@
 #include "message.h"
 #include "mail.h"
 
+#include <gpgme++/context.h>
+#include <gpgme++/data.h>
+
+using namespace GpgME;
+
 #define OPAQUE_SIGNED_MARKER "-----BEGIN PGP MESSAGE-----"
 
 /* Gets the context of a ribbon control. And prints some
@@ -1468,7 +1473,7 @@ get_mail_from_control (LPDISPATCH ctrl)
       return NULL;
     }
 
-  auto ret = Mail::get_mail_for_uid (uid);
+  auto ret = Mail::get_mail_for_uuid (uid);
   xfree (uid);
   if (!ret)
     {
@@ -1481,7 +1486,7 @@ get_mail_from_control (LPDISPATCH ctrl)
 
 /* Helper to reduce code duplication.*/
 #define MY_MAIL_GETTER \
-  if (!ctrl || !result) \
+  if (!ctrl) \
     { \
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__); \
       return E_FAIL; \
@@ -1571,9 +1576,74 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
   return S_OK;
 }
 
-HRESULT launch_cert_details (LPDISPATCH ctrl, VARIANT *result)
+HRESULT launch_cert_details (LPDISPATCH ctrl)
 {
-  (void) ctrl;
-  (void) result;
+  MY_MAIL_GETTER
+
+  if (!mail)
+    {
+      log_debug ("%s:%s: No mail.",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+
+  char *uiserver = get_uiserver_name ();
+  bool showError = false;
+  if (uiserver)
+    {
+      std::string path (uiserver);
+      xfree (uiserver);
+      if (path.find("kleopatra.exe") != std::string::npos)
+        {
+        size_t dpos;
+        if ((dpos = path.find(" --daemon")) != std::string::npos)
+            {
+              path.erase(dpos, strlen(" --daemon"));
+            }
+          auto ctx = Context::createForEngine(SpawnEngine);
+          if (!ctx)
+            {
+              log_error ("%s:%s: No spawn engine.",
+                         SRCNAME, __func__);
+            }
+            const char *argv[] = {path.c_str(),
+                                  "--query",
+                                  mail->get_sig_fpr(),
+                                  NULL };
+            log_debug ("%s:%s: Starting %s %s %s",
+                       SRCNAME, __func__, path.c_str(), argv[1], argv[2]);
+            Data d(Data::null);
+            ctx->spawnAsync(path.c_str(), argv, d, d,
+                            d, Context::SpawnNone);
+        }
+      else
+        {
+          showError = true;
+        }
+    }
+  else
+    {
+      showError = true;
+    }
+
+  if (showError)
+    {
+      MessageBox (NULL,
+                  _("Could not find Kleopatra.\n"
+                  "Please reinstall Gpg4win with the Kleopatra component enabled."),
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+    }
   return S_OK;
+}
+
+HRESULT get_sigstate_icon (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  if (mail)
+    {
+      return getIcon (mail->get_signature_icon_id (), result);
+    }
+  return getIcon (IDI_EMBLEM_INFORMATION_64_PNG, result);
 }

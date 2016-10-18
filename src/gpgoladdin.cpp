@@ -512,6 +512,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
       ID_MAPPER (L"btnSignLarge", ID_BTN_SIGN_LARGE)
       ID_MAPPER (L"btnVerifyLarge", ID_BTN_VERIFY_LARGE)
+      ID_MAPPER (L"btnSigstateLarge", ID_BTN_SIGSTATE_LARGE)
       ID_MAPPER (L"encryptBody", ID_CMD_ENCRYPT_BODY)
       ID_MAPPER (L"decryptBody", ID_CMD_DECRYPT_BODY)
       ID_MAPPER (L"addEncSignedAttachment", ID_CMD_ATT_ENCSIGN_FILE)
@@ -613,7 +614,7 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_GET_SIG_LABEL:
         return get_sig_label (parms->rgvarg[0].pdispVal, result);
       case ID_LAUNCH_CERT_DETAILS:
-        return launch_cert_details (parms->rgvarg[0].pdispVal, result);
+        return launch_cert_details (parms->rgvarg[0].pdispVal);
       case ID_GET_IS_SIGNED:
         return get_is_signed (parms->rgvarg[0].pdispVal, result);
 
@@ -636,6 +637,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_BTN_SIGN_LARGE:
       case ID_BTN_VERIFY_LARGE:
         return getIcon (dispid, result);
+      case ID_BTN_SIGSTATE_LARGE:
+        return get_sigstate_icon (parms->rgvarg[0].pdispVal, result);
     }
 
   log_debug ("%s:%s: leave", SRCNAME, __func__);
@@ -729,7 +732,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "     <group id=\"general\""
         "            label=\"%s\">"
         "       <button id=\"idSigned\""
-        "               getImage=\"btnSignLarge\""
+        "               getImage=\"btnSigstateLarge\""
         "               size=\"large\""
         "               getLabel=\"getSigLabel\""
         "               getScreentip=\"getSigTip\""
@@ -772,7 +775,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "     <group id=\"general_read\""
         "            label=\"%s\">"
         "       <button id=\"idSigned\""
-        "               getImage=\"btnSignLarge\""
+        "               getImage=\"btnSigstateLarge\""
         "               size=\"large\""
         "               getLabel=\"getSigLabel\""
         "               getScreentip=\"getSigTip\""
