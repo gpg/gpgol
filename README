@@ -1,12 +1,13 @@
-                         GpgOL Version 0.10.x
+                                GpgOL
                        =======================
           Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010,
                         2011 g10 Code GmbH
-
+                        2013, 2015, 2016 Intevation GmbH
 
 GpgOL is a GnuPG plugin for MS Outlook.
 
-WARNING:  This version requires the decent version of Kleopatra or GPA.
+WARNING:  This version requires the decent version of Kleopatra or GPA
+for additional features and sending encrypted mail.
 
 
 .          Top directory with build scripts and information files.
@@ -30,10 +31,8 @@ compiled binary.
 If you are missing icons in the toolbar, checkout the toolbar's
 customize button - you will find the new icons there.
 
-Bug reporting: First click on the logo on the GnuPG options tab to
-check whether a newer version has been released - try this first.  If
-this does not help, check out the mailing lists and also the bug
-archive at http://bugs.gnupg.org (use username and password "guest",
-select "query" and there category "gpgol") if you did not found any
+Bug reporting: First check whether a newer version has been released -
+try this first.  If this does not help, check out the mailing lists
+and also the bug archive at http://bugs.gnupg.org if you did not find any
 information there please send a report, including all relevant version
 numbers to the address given at the top of this AUTHORS file.
