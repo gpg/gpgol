@@ -107,6 +107,13 @@ and those installed via the forms extensions from external files.
 
   6. Done.
 
+  3. SVG icons
+  ============
+
+  To convert svg icons to png it is suggested to use inkscape.
+
+  inkscape -w 64 -h 64 -e "<file>-64.png" "<file>.svg"
+
 
 That's all.  The output of the file(1) command should show something
 like this:

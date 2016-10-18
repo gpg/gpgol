@@ -112,5 +112,9 @@
 #define IDI_ENCSIGN_FILE_48_PNG         0x6050
 #define IDI_SIGN_48_PNG                 0x6060
 #define IDI_VERIFY_48_PNG               0x6070
+#define IDI_EMBLEM_WARNING_64_PNG       0x6071
+#define IDI_EMBLEM_SUCCESS_64_PNG       0x6072
+#define IDI_EMBLEM_INFORMATION_64_PNG   0x6073
+#define IDI_EMBLEM_QUESTION_64_PNG      0x6074
 
 #endif /*DIALOGS_H*/

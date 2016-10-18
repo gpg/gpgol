@@ -52,6 +52,11 @@ IDB_DECRYPT_VERIFY_16M    BITMAP  DISCARDABLE  "icons/decrypt-verify-16m.bmp"
 
 IDI_ENCSIGN_FILE_48_PNG   RCDATA               "icons/encrypt-sign-file-48.png"
 
+IDI_EMBLEM_WARNING_64_PNG RCDATA               "icons/emblem-warning-64.png"
+IDI_EMBLEM_SUCCESS_64_PNG RCDATA               "icons/emblem-success-64.png"
+IDI_EMBLEM_INFORMATION_64_PNG RCDATA           "icons/emblem-information-64.png"
+IDI_EMBLEM_QUESTION_64_PNG RCDATA              "icons/emblem-question-64.png"
+
 
 
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274
