@@ -853,3 +853,75 @@ format_date_from_gpgme (unsigned long time)
     }
   return wchar_to_utf8 (buf);
 }
+
+/* Return the name of the default UI server.  This name is used to
+   auto start an UI server if an initial connect failed.  */
+char *
+get_uiserver_name (void)
+{
+  char *name = NULL;
+  char *dir, *uiserver, *p;
+  int extra_arglen = 9;
+
+  const char * server_names[] = {"kleopatra.exe",
+                                 "bin\\kleopatra.exe",
+                                 "gpa.exe",
+                                 "bin\\gpa.exe",
+                                 NULL};
+  const char **tmp = NULL;
+
+  dir = get_gpg4win_dir ();
+  if (!dir)
+    {
+      log_error ("Failed to find gpg4win dir");
+      return NULL;
+    }
+  uiserver = read_w32_registry_string (NULL, GPG4WIN_REGKEY_3,
+                                       "UI Server");
+  if (!uiserver)
+    {
+      uiserver = read_w32_registry_string (NULL, GPG4WIN_REGKEY_2,
+                                           "UI Server");
+    }
+  if (uiserver)
+    {
+      name = xmalloc (strlen (dir) + strlen (uiserver) + extra_arglen + 2);
+      strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);
+      for (p = name; *p; p++)
+        if (*p == '/')
+          *p = '\\';
+      xfree (uiserver);
+    }
+  if (name && !access (name, F_OK))
+    {
+      /* Set through registry and is accessible */
+      xfree(dir);
+      return name;
+    }
+  /* Fallbacks */
+  for (tmp = server_names; *tmp; tmp++)
+    {
+      if (name)
+        {
+          xfree (name);
+        }
+      name = xmalloc (strlen (dir) + strlen (*tmp) + extra_arglen + 2);
+      strcpy (stpcpy (stpcpy (name, dir), "\\"), *tmp);
+      for (p = name; *p; p++)
+        if (*p == '/')
+          *p = '\\';
+      if (!access (name, F_OK))
+        {
+          /* Found a viable candidate */
+          if (strstr (name, "kleopatra.exe"))
+            {
+              strcat (name, " --daemon");
+            }
+          xfree (dir);
+          return name;
+        }
+    }
+  xfree (dir);
+  log_error ("Failed to find a viable UIServer");
+  return NULL;
+}

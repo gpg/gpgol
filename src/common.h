@@ -116,7 +116,12 @@ char *percent_escape (const char *str, const char *extra);
 
 void fix_linebreaks (char *str, int *len);
 
+/* Format a date from gpgme (seconds since epoch)
+   with windows system locale. */
 char *format_date_from_gpgme (unsigned long time);
+
+/* Get the name of the uiserver */
+char *get_uiserver_name (void);
 
 /*-- main.c --*/
 const void *get_128bit_session_key (void);
