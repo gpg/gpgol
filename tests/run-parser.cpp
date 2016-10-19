@@ -104,6 +104,7 @@ int main(int argc, char **argv)
 
   fp_in = fopen (argv[0], "rb");
 
+  if (fp_in)
     {
       ParseController parser(fp_in, msgtype);
       parser.parse();
@@ -116,6 +117,10 @@ int main(int argc, char **argv)
         {
           std::cout << "Attachment: " << attach->get_display_name();
         }
+      fclose (fp_in);
     }
-  fclose (fp_in);
+  else
+    {
+      std::cout << "failed to open input: " << argv[0];
+    }
 }
