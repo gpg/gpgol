@@ -256,6 +256,12 @@ get_attachment (LPDISPATCH mailitem, int pos)
 static LPSTREAM
 get_attachment_stream (LPDISPATCH mailitem, int pos)
 {
+  if (!pos)
+    {
+      log_debug ("%s:%s: Called with zero pos.",
+                 SRCNAME, __func__);
+      return NULL;
+    }
   LPDISPATCH attachment = get_attachment (mailitem, pos);
   LPATTACH mapi_attachment = NULL;
   LPSTREAM stream = NULL;
@@ -267,6 +273,7 @@ get_attachment_stream (LPDISPATCH mailitem, int pos)
     {
       log_debug ("%s:%s: Failed to get MapiObject of attachment: %p",
                  SRCNAME, __func__, attachment);
+      return NULL;
     }
   if (FAILED (mapi_attachment->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream,
                                              0, MAPI_MODIFY, (LPUNKNOWN*) &stream)))
