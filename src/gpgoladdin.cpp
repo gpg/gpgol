@@ -323,29 +323,27 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
   (void)custom;
   TRACEPOINT;
 
-  install_forms ();
-
   if (!create_responder_window())
     {
       log_error ("%s:%s: Failed to create the responder window;",
                  SRCNAME, __func__);
     }
 
+  if (!m_application)
+    {
+      /* Should not happen as OnConnection should be called before */
+      log_error ("%s:%s: no application set;",
+                 SRCNAME, __func__);
+      return E_NOINTERFACE;
+    }
   /* Set up categories */
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Verified Sender");
   ensure_category_exists (m_application, decCategory, 8);
   ensure_category_exists (m_application, verifyCategory, 5);
-
-  if (m_application)
-    {
-      m_applicationEventSink = install_ApplicationEvents_sink(m_application);
-      return S_OK;
-    }
-  /* Should not happen as OnConnection should be called before */
-  log_error ("%s:%s: no application set;",
-             SRCNAME, __func__);
-  return E_NOINTERFACE;
+  install_forms ();
+  m_applicationEventSink = install_ApplicationEvents_sink(m_application);
+  return S_OK;
 }
 
 STDMETHODIMP
