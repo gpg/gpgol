@@ -313,8 +313,6 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
                      (unsigned int)argErr);
           dump_excepinfo (execpinfo);
           VariantClear (&vtResult);
-          if (parmstr)
-            SysFreeString (parmstr);
           gpgol_release (pDisp);
           return NULL;  /* Invoke failed.  */
         }
@@ -857,10 +855,12 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
   /* Variant 0 carries the data. */
   wchar_t *w_value = utf8_to_wchar (value);
   BSTR b_value = SysAllocString(w_value);
+  VariantInit (&cVariant[0]);
   cVariant[0].vt = VT_BSTR;
   cVariant[0].bstrVal = b_value;
 
   /* Variant 1 is the DASL as found out by experiments. */
+  VariantInit (&cVariant[1]);
   cVariant[1].vt = VT_BSTR;
   cVariant[1].bstrVal = b_property;
   dispparams.rgvarg = cVariant;
@@ -871,9 +871,8 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
   hr = propertyAccessor->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                                  DISPATCH_METHOD, &dispparams,
                                  &rVariant, &execpinfo, &argErr);
-  SysFreeString (b_property);
-  SysFreeString (b_value);
   VariantClear (&cVariant[0]);
+  VariantClear (&cVariant[1]);
   gpgol_release (propertyAccessor);
   if (hr != S_OK)
     {
@@ -882,10 +881,11 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
                  SRCNAME, __func__,
                  rVariant.pdispVal, rVariant.vt, (unsigned int)hr,
                  (unsigned int)argErr);
-      dump_excepinfo (execpinfo);
       VariantClear (&rVariant);
+      dump_excepinfo (execpinfo);
       return -1;
     }
+  VariantClear (&rVariant);
   return 0;
 }
 
