@@ -1027,6 +1027,15 @@ Mail::is_valid_sig ()
 }
 
 void
+Mail::remove_categories ()
+{
+  const char *decCategory = _("GpgOL: Encrypted Message");
+  const char *verifyCategory = _("GpgOL: Verified Sender");
+  remove_category (m_mailitem, decCategory);
+  remove_category (m_mailitem, verifyCategory);
+}
+
+void
 Mail::update_categories ()
 {
   const char *decCategory = _("GpgOL: Encrypted Message");

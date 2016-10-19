@@ -559,6 +559,11 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
               goto done;
             }
         }
+      else if (is_smime && !opt.enable_smime)
+        {
+          /* SMIME is disabled remove our categories. */
+          mail->remove_categories ();
+        }
     }
 
   result = 0;

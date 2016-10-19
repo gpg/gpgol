@@ -240,6 +240,9 @@ public:
       if it is not signed. */
   const char *get_sig_fpr() const;
 
+  /** Remove all categories of this mail */
+  void remove_categories ();
+
 private:
   void update_categories ();
   void update_body ();
