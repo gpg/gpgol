@@ -93,29 +93,24 @@ ParseController::~ParseController()
 
 static void
 operation_for_type(msgtype_t type, bool *decrypt,
-                   bool *verify, Protocol *protocol)
+                   bool *verify)
 {
   *decrypt = false;
   *verify = false;
-  *protocol = Protocol::UnknownProtocol;
   switch (type)
     {
       case MSGTYPE_GPGOL_MULTIPART_ENCRYPTED:
       case MSGTYPE_GPGOL_PGP_MESSAGE:
         *decrypt = true;
-        *protocol = Protocol::OpenPGP;
         break;
       case MSGTYPE_GPGOL_MULTIPART_SIGNED:
       case MSGTYPE_GPGOL_CLEAR_SIGNED:
         *verify = true;
-        *protocol = Protocol::OpenPGP;
         break;
       case MSGTYPE_GPGOL_OPAQUE_SIGNED:
-        *protocol = Protocol::CMS;
         *verify = true;
         break;
       case MSGTYPE_GPGOL_OPAQUE_ENCRYPTED:
-        *protocol = Protocol::CMS;
         *decrypt = true;
         break;
       default:
@@ -125,12 +120,12 @@ operation_for_type(msgtype_t type, bool *decrypt,
 }
 
 static bool
-is_opaque_signed (Data &data)
+is_smime (Data &data)
 {
   data.seek (0, SEEK_SET);
   auto id = data.type();
   data.seek (0, SEEK_SET);
-  return id == Data::CMSSigned;
+  return id == Data::CMSSigned || id == Data::CMSEncrypted;
 }
 
 static std::string
@@ -196,7 +191,18 @@ ParseController::parse()
   // Wrap the input stream in an attachment / GpgME Data
   Protocol protocol;
   bool decrypt, verify;
-  operation_for_type (m_type, &decrypt, &verify, &protocol);
+  operation_for_type (m_type, &decrypt, &verify);
+
+  Data input (m_inputprovider);
+  if ((m_inputprovider->signature() && is_smime (*m_inputprovider->signature())) ||
+      is_smime (input))
+    {
+      protocol = Protocol::CMS;
+    }
+  else
+    {
+      protocol = Protocol::OpenPGP;
+    }
   auto ctx = Context::createForProtocol (protocol);
   if (!ctx)
     {
@@ -221,9 +227,7 @@ ParseController::parse()
     }
   ctx->setArmor(true);
 
-  Data output(m_outputprovider);
-
-  Data input (m_inputprovider);
+  Data output (m_outputprovider);
   log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s",
              SRCNAME, __func__,
              decrypt, verify,
@@ -235,10 +239,11 @@ ParseController::parse()
       auto combined_result = ctx->decryptAndVerify(input, output);
       m_decrypt_result = combined_result.first;
       m_verify_result = combined_result.second;
+
       if ((!m_decrypt_result.error () &&
           m_verify_result.signatures ().empty() &&
           m_outputprovider->signature ()) ||
-          is_opaque_signed (output))
+          is_smime (output))
         {
           /* There is a signature in the output. So we have
              to verify it now as an extra step. */
