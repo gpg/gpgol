@@ -13,11 +13,6 @@
 
 icons = encr-l.ico encr-s.ico sign-l.ico sign-s.ico
 
-cfg_german  = gpgol_de.cfg gpgol-ms_de.cfg gpgol-cs_de.cfg 
-cfg_english = gpgol_en.cfg gpgol-ms_en.cfg gpgol-cs_en.cfg 
+cfg = gpgol.cfg gpgol-ms.cfg gpgol-cs.cfg
 
-dist_pkgdata_DATA = $(icons) $(cfg_german) $(cfg_english)
-
-
-
-
+dist_pkgdata_DATA = $(icons) $(cfg)

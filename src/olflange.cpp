@@ -798,25 +798,9 @@ install_forms (void)
       NULL,
     };
   int formidx;
-  LANGID langid;
-  const char *langsuffix;
   char buffer[MAX_PATH+10];
   char *datadir;
   int any_error = 0;
-
-  langid = PRIMARYLANGID (LANGIDFROMLCID (GetThreadLocale ()));
-  switch (langid)
-    {
-    case LANG_ENGLISH: langsuffix = "en"; break;
-    case LANG_GERMAN:  langsuffix = "de"; break;
-    default:
-      log_debug ("%s:%s: No forms available for primary language %d\n",
-                 SRCNAME, __func__, (int)langid);
-      /* Don't try again.  */
-      opt.forms_revision = GPGOL_FORMS_REVISION;
-      write_options ();
-      return;
-    }
 
   MAPIOpenLocalFormContainer (&formcontainer);
   if (!formcontainer)
@@ -831,26 +815,31 @@ install_forms (void)
     {
       log_error ("%s:%s: error getting data directory\n",
                  SRCNAME, __func__);
+      gpgol_release (formcontainer);
       return;
     }
 
   for (formidx=0; forms[formidx]; formidx++)
     {
 
-      snprintf (buffer, MAX_PATH, "%s\\%s_%s.cfg",
-                datadir, forms[formidx], langsuffix);
+      snprintf (buffer, MAX_PATH, "%s\\%s.cfg",
+                datadir, forms[formidx]);
       hr = formcontainer->InstallForm (0, MAPIFORM_INSTALL_OVERWRITEONCONFLICT,
                                        buffer);
       if (hr)
         {
           any_error = 1;
-          log_error ("%s:%s: installing form `%s' failed: hr=%#lx\n",
-                     SRCNAME, __func__, buffer, hr);
+          LPMAPIERROR err;
+          formcontainer->GetLastError (hr, 0, &err);
+          log_error ("%s:%s: installing form `%s' failed: hr=%#lx err=%s\n",
+                     SRCNAME, __func__, buffer, hr, err ? err->lpszError : "null");
+          MAPIFreeBuffer (err);
         }
       else
         log_debug ("%s:%s: form `%s' installed\n",  SRCNAME, __func__, buffer);
     }
 
+  gpgol_release (formcontainer);
   xfree (datadir);
 
   if (!any_error)
