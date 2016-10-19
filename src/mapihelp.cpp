@@ -1242,7 +1242,8 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
           newvalue = (char*)xmalloc (strlen (s) + 1);
           strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
         }
-      else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
+      else if (opt.enable_smime &&
+               !strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
         {
           /* This is an S/MIME message class but smime support is not
              enabled.  We need to check whether this is actually a

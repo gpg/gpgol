@@ -480,7 +480,8 @@ do_parsing (LPVOID arg)
 int
 Mail::decrypt_verify()
 {
-  if (m_type == MSGTYPE_UNKNOWN || m_type == MSGTYPE_GPGOL)
+  if (m_type == MSGTYPE_UNKNOWN || m_type == MSGTYPE_GPGOL ||
+      m_type == MSGTYPE_SMIME)
     {
       /* Not a message for us. */
       return 0;
