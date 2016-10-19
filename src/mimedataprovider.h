@@ -148,5 +148,7 @@ private:
   std::string m_body_charset;
   /* Do we have html at all */
   bool m_has_html_body;
+  /* Collect everything */
+  bool m_collect_everything;
 };
 #endif // MIMEDATAPROVIDER_H

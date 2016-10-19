@@ -59,9 +59,7 @@ using namespace GpgME;
 static bool
 expect_no_headers (msgtype_t type)
 {
-  return type != MSGTYPE_GPGOL_MULTIPART_SIGNED &&
-         type != MSGTYPE_GPGOL_OPAQUE_SIGNED &&
-         type != MSGTYPE_GPGOL_OPAQUE_ENCRYPTED;
+  return type != MSGTYPE_GPGOL_MULTIPART_SIGNED;
 }
 
 #ifdef HAVE_W32_SYSTEM

@@ -60,7 +60,6 @@ struct mime_context
   rfc822parse_t msg;  /* The handle of the RFC822 parser. */
 
   int verify_mode;    /* True if we want to verify a signature. */
-  int no_mail_header; /* True if we want to bypass all MIME parsing.  */
 
   int nesting_level;  /* Current MIME nesting level. */
   int in_data;        /* We are currently in data (body or attachment). */
@@ -403,40 +402,6 @@ message_cb (void *opaque, rfc822parse_event_t event,
   mime_context_t ctx = provider->mime_context();
 
   debug_message_event (event);
-  if (ctx->no_mail_header)
-    {
-      if (event == RFC822PARSE_OPEN)
-        {
-          /* We ignore the open event */
-          return 0;
-        }
-      /* Assume that this is not a regular mail but plain text. */
-      if (!ctx->body_seen)
-        {
-          log_mime_parser ("%s:%s: assuming this is plain text without headers\n",
-                           SRCNAME, __func__);
-          ctx->start_hashing = 1;
-          ctx->collect_crypto_data = 1;
-          /* Create a fake MIME structure.  */
-          /* Fixme: We might want to take it from the enclosing message.  */
-          {
-            const char ctmain[] = "text";
-            const char ctsub[] = "plain";
-            mimestruct_item_t ms;
-
-            ms = (mimestruct_item_t) xmalloc (sizeof *ms + strlen (ctmain) + 1 + strlen (ctsub));
-            ctx->mimestruct_cur = ms;
-            *ctx->mimestruct_tail = ms;
-            ctx->mimestruct_tail = &ms->next;
-            ms->next = NULL;
-            strcpy (stpcpy (stpcpy (ms->content_type, ctmain), "/"), ctsub);
-            ms->level = 0;
-            ms->filename = NULL;
-            ms->charset = NULL;
-          }
-        }
-      return 0;
-    }
 
   if (event == RFC822PARSE_BEGIN_HEADER || event == RFC822PARSE_T2BODY)
     {
@@ -499,15 +464,12 @@ message_cb (void *opaque, rfc822parse_event_t event,
 
 MimeDataProvider::MimeDataProvider(bool no_headers) :
   m_signature(nullptr),
-  m_has_html_body(false)
+  m_has_html_body(false),
+  m_collect_everything(no_headers)
 {
   m_mime_ctx = (mime_context_t) xcalloc (1, sizeof *m_mime_ctx);
   m_mime_ctx->msg = rfc822parse_open (message_cb, this);
   m_mime_ctx->mimestruct_tail = &m_mime_ctx->mimestruct;
-  if (no_headers)
-    {
-      m_mime_ctx->no_mail_header = 1;
-    }
 }
 
 #ifdef HAVE_W32_SYSTEM
@@ -781,6 +743,16 @@ MimeDataProvider::collect_data(LPSTREAM stream)
       log_mime_parser ("%s:%s: Read %lu bytes.",
                        SRCNAME, __func__, bRead);
 
+      if (m_collect_everything)
+        {
+          /* For S/MIME, Clearsigned, PGP MESSAGES we just pass everything
+             on. Only the Multipart classes need parsing. And the output
+             of course. */
+          log_mime_parser ("%s:%s: Just copying data.",
+                           SRCNAME, __func__);
+          m_crypto_data.write ((void*)buf, (size_t) bRead);
+          continue;
+        }
       m_rawbuf += std::string (buf, bRead);
       size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
                                               m_rawbuf.size());
@@ -813,6 +785,16 @@ MimeDataProvider::collect_data(FILE *stream)
       log_mime_parser ("%s:%s: Read " SIZE_T_FORMAT " bytes.",
                        SRCNAME, __func__, bRead);
 
+      if (m_collect_everything)
+        {
+          /* For S/MIME, Clearsigned, PGP MESSAGES we just pass everything
+             on. Only the Multipart classes need parsing. And the output
+             of course. */
+          log_mime_parser ("%s:%s: Making verbatim copy" SIZE_T_FORMAT " bytes.",
+                           SRCNAME, __func__, bRead);
+          m_crypto_data.write ((void*)buf, bRead);
+          continue;
+        }
       m_rawbuf += std::string (buf, bRead);
       size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
                                               m_rawbuf.size());
