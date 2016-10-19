@@ -1200,7 +1200,38 @@ DECLARE_INTERFACE_(IMAPISecureMessage, IUnknown)
 };
 
 STDAPI MAPIOpenLocalFormContainer (LPMAPIFORMCONTAINER FAR *ppfcnt);
+/* IMAPIFormContainer*/
+struct MAPIFormMgr;
+typedef struct MAPIFormMgr *LPMAPIFORMMGR;
 
+typedef ULONG HFRMREG;
+#define HFRMREG_DEFAULT  0
+#define HFRMREG_LOCAL    1
+#define HFRMREG_PERSONAL 2
+#define HFRMREG_FOLDER   3
+
+#undef INTERFACE
+#define INTERFACE MAPIFormMgr
+
+DECLARE_INTERFACE_(MAPIFormMgr, IUnknown)
+{
+  DECLARE_IUNKNOWN_METHODS;
+
+  STDMETHOD(LoadForm)(void) PURE;
+  STDMETHOD(ResolveMessageClass)(void) PURE;
+  STDMETHOD(ResolveMultipleMessageClasses)(void) PURE;
+  STDMETHOD(CalcFormPropSet)(void) PURE;
+  STDMETHOD(CreateForm)(void) PURE;
+  STDMETHOD(SelectForm)(void) PURE;
+  STDMETHOD(SelectMultipleForms)(void) PURE;
+  STDMETHOD(SelectFormContainer)(void) PURE;
+  STDMETHOD(OpenFormContainer)(HFRMREG, LPUNKNOWN, LPMAPIFORMCONTAINER FAR *) PURE;
+  STDMETHOD(PrepareForm)(void) PURE;
+  STDMETHOD(IsInConflict)(void) PURE;
+  STDMETHOD(GetLastError)(void) PURE;
+};
+
+STDAPI MAPIOpenFormMgr (LPMAPISESSION, LPMAPIFORMMGR FAR *);
 
 #ifdef __cplusplus
 }
