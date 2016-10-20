@@ -23,6 +23,7 @@
 #include "common.h"
 #include "oomhelp.h"
 #include "mail.h"
+#include "gpgoladdin.h"
 
 #include <stdio.h>
 
@@ -70,7 +71,47 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   break;
                 }
               mail->parsing_done();
+              break;
             }
+          case (REQUEST_DECRYPT):
+            {
+              char *uuid = (char *) ctx->data;
+              auto mail = Mail::get_mail_for_uuid (uuid);
+              if (!mail)
+                {
+                  log_debug ("%s:%s: Decrypt again for uuid which is gone.",
+                             SRCNAME, __func__);
+                  xfree (uuid);
+                  break;
+                }
+              /* Check if we are still in the active explorer. */
+              LPDISPATCH mailitem = get_oom_object (GpgolAddin::get_instance()->get_application (),
+                                                    "ActiveExplorer.Selection.Item(1)");
+              if (!mailitem)
+                {
+                  log_debug ("%s:%s: Decrypt again but no selected mailitem.",
+                             SRCNAME, __func__);
+                  xfree (uuid);
+                  delete mail;
+                  break;
+                }
+
+              char *active_uuid = get_unique_id (mailitem, 0);
+              if (!active_uuid || strcmp (active_uuid, uuid))
+                {
+                  log_debug ("%s:%s: UUID mismatch",
+                             SRCNAME, __func__);
+                  xfree (uuid);
+                  delete mail;
+                  break;
+                }
+              xfree (uuid);
+              xfree (active_uuid);
+
+              mail->decrypt_verify ();
+              break;
+            }
+
           break;
           default:
             log_debug ("Unknown msg");

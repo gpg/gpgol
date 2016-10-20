@@ -73,6 +73,7 @@ BEGIN_EVENT_SINK(MailItemEvents, IDispatch)
 private:
   Mail * m_mail; /* The mail object related to this mailitem */
   bool m_send_seen;   /* The message is about to be submitted */
+  bool m_decrypt_after_write;
 };
 
 MailItemEvents::MailItemEvents() :
@@ -81,7 +82,8 @@ MailItemEvents::MailItemEvents() :
     m_cookie(0),
     m_ref(1),
     m_mail(NULL),
-    m_send_seen (false)
+    m_send_seen (false),
+    m_decrypt_after_write(false)
 {
 }
 
@@ -105,6 +107,19 @@ request_send (LPVOID arg)
                   "Please press the send button again.",
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
+    }
+  return 0;
+}
+
+static DWORD WINAPI
+request_decrypt (LPVOID arg)
+{
+  log_debug ("%s:%s: requesting decrypt again for: %p",
+             SRCNAME, __func__, arg);
+  if (do_in_ui_thread (REQUEST_DECRYPT, arg))
+    {
+      log_debug ("%s:%s: second decrypt failed for: %p",
+                 SRCNAME, __func__, arg);
     }
   return 0;
 }
@@ -312,21 +327,56 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               return S_OK;
             }
+          else if (m_decrypt_after_write)
+            {
+              char *uuid = strdup (m_mail->get_uuid ().c_str());
+              CreateThread (NULL, 0, request_decrypt, (LPVOID) uuid, 0,
+                            NULL);
+            }
           break;
         }
       case Close:
         {
           if (m_mail->is_crypto_mail ())
             {
+              /* Close. This happens when an Opened mail is closed.
+                 To prevent the question of wether or not to save the changes
+                 (Which would save the decrypted data without an event to
+                 prevent it) we save proactively. This happens by set_needs_save
+                 and calling save. Which will revert a mail because we never want
+                 to save unreverted mails.
+
+                 But as a side effect the mail, if opened in the explorer still will
+                 be reverted, too. So shown as empty. This is bad. To prevent that
+                 we request a decrypt in the AfterWrite event.
+
+                 Evil Hack: Outlook sends an Unload event after the message is closed
+                 This is not true our Internal Object is kept alive if it is opened
+                 in the explorer. So we ignore the unload event and then check in
+                 the window message handler that checks for decrypt again if the
+                 mail is currently open in the active explorer. If not we delete our
+                 Mail object so that the message is released.
+              */
               m_mail->set_needs_save (true);
+              m_decrypt_after_write = true;
               invoke_oom_method (m_object, "Save", NULL);
             }
         }
       case Unload:
         {
-          log_debug ("%s:%s: Removing Mail for message: %p.",
-                     SRCNAME, __func__, m_object);
-          delete m_mail;
+          if (!m_decrypt_after_write)
+            {
+              log_debug ("%s:%s: Removing Mail for message: %p.",
+                         SRCNAME, __func__, m_object);
+              delete m_mail;
+            }
+          else
+            {
+              /* See explanation in Close why this is not broken. */
+              log_debug ("%s:%s: Ignoring unload for message: %p.",
+                         SRCNAME, __func__, m_object);
+              m_decrypt_after_write = false;
+            }
           return S_OK;
         }
       default:
