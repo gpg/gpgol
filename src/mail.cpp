@@ -33,6 +33,7 @@
 #include "parsecontroller.h"
 #include "gpgolstr.h"
 #include "windowmessages.h"
+#include "mlang-charset.h"
 
 #include <gpgme++/tofuinfo.h>
 #include <gpgme++/verificationresult.h>
@@ -555,23 +556,28 @@ Mail::update_body()
   const auto html = m_parser->get_html_body();
   if (!html.empty())
     {
-      if (put_oom_string (m_mailitem, "HTMLBody", html.c_str()))
+      char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
+                                              html.c_str(), html.size());
+      int ret = put_oom_string (m_mailitem, "HTMLBody", converted ? converted : "");
+      xfree (converted);
+      if (ret)
         {
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
-          return;
         }
+      return;
     }
-  else
+  const auto body = m_parser->get_body();
+  char *converted = ansi_charset_to_utf8 (m_parser->get_body_charset().c_str(),
+                                          body.c_str(), body.size());
+  int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
+  xfree (converted);
+  if (ret)
     {
-      const auto body = m_parser->get_body();
-      if (put_oom_string (m_mailitem, "Body", body.c_str()))
-        {
-          log_error ("%s:%s: Failed to modify body of item.",
-                     SRCNAME, __func__);
-          return;
-        }
+      log_error ("%s:%s: Failed to modify body of item.",
+                 SRCNAME, __func__);
     }
+  return;
 }
 
 void
