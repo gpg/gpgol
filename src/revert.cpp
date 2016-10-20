@@ -372,17 +372,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
 
       if (get_pa_int (attachment, GPGOL_ATTACHTYPE_DASL, (int*) &att_type))
         {
-          if (!is_smime && msgtype != MSGTYPE_GPGOL_OPAQUE_SIGNED)
-            {
-              /* The Opaque signed attachment does not have a gpgol type
-                 for some reason. So we fake this here */
-              att_type = ATTACHTYPE_MOSSTEMPL;
-            }
-          else
-            {
-              log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-              goto done;
-            }
+          att_type = ATTACHTYPE_FROMMOSS;
         }
 
       switch (att_type)
@@ -469,8 +459,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
               break;
             }
           default:
-            log_error ("%s:%s: Unknown attachment type: %i",
-                       SRCNAME, __func__, att_type);
+            to_delete[del_cnt++] = attachment;
         }
     }
 
