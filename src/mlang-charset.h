@@ -36,7 +36,7 @@ extern "C" {
   * @returns NULL on error or an UTF-8 encoded NULL terminated string.
   */
 
-char *ansi_charset_to_utf8 (const char *charset, char *input,
+char *ansi_charset_to_utf8 (const char *charset, const char *input,
                             size_t inlen);
 #ifdef __cplusplus
 }

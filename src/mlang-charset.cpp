@@ -30,7 +30,7 @@ DEFINE_GUID (IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,
 
 #include "mlang-charset.h"
 
-char *ansi_charset_to_utf8 (const char *charset, char *input,
+char *ansi_charset_to_utf8 (const char *charset, const char *input,
                             size_t inlen)
 {
   LPMULTILANGUAGE multilang = NULL;
@@ -79,7 +79,7 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
                                               mime_info.uiInternetEncoding;
 
   /** Get the size of the result */
-  err = multilang->ConvertStringToUnicode(&mode, enc, input,
+  err = multilang->ConvertStringToUnicode(&mode, enc, const_cast<char*>(input),
                                           &uinlen, NULL, &wlen);
   if (FAILED (err))
     {
@@ -90,8 +90,8 @@ char *ansi_charset_to_utf8 (const char *charset, char *input,
   }
   buf = (wchar_t*) xmalloc(sizeof(wchar_t) * (wlen + 1));
 
-  err = multilang->ConvertStringToUnicode(&mode, enc, input, &uinlen,
-                                          buf, &wlen);
+  err = multilang->ConvertStringToUnicode(&mode, enc, const_cast<char*>(input),
+                                          &uinlen, buf, &wlen);
   gpgol_release (multilang);
   if (FAILED (err))
     {
