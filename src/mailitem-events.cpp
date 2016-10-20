@@ -322,16 +322,18 @@ EVENT_SINK_INVOKE(MailItemEvents)
                      Appearently Outlook locks some methods in some events.
                      So we Create a new thread that will sleep a bit before
                      it requests to send the item again. */
-                  CreateThread (NULL, 0, request_send, (LPVOID) m_object, 0,
-                                NULL);
+                  HANDLE thread = CreateThread (NULL, 0, request_send,
+                                                (LPVOID) m_object, 0, NULL);
+                  CloseHandle (thread);
                 }
               return S_OK;
             }
           else if (m_decrypt_after_write)
             {
               char *uuid = strdup (m_mail->get_uuid ().c_str());
-              CreateThread (NULL, 0, request_decrypt, (LPVOID) uuid, 0,
-                            NULL);
+              HANDLE thread = CreateThread (NULL, 0, request_decrypt,
+                                            (LPVOID) uuid, 0, NULL);
+              CloseHandle (thread);
             }
           break;
         }
