@@ -780,6 +780,14 @@ Mail::revert_all_mails ()
         {
           log_error ("Failed to revert mail: %p ", it->first);
           err++;
+          continue;
+        }
+      it->second->set_needs_save (true);
+      if (!invoke_oom_method (it->first, "Save", NULL))
+        {
+          log_error ("Failed to save reverted mail: %p ", it->first);
+          err++;
+          continue;
         }
     }
   return err;
@@ -819,6 +827,7 @@ Mail::revert ()
     }
   /* We need to reprocess the mail next time around. */
   m_processed = false;
+  m_needs_wipe = false;
   return 0;
 }
 
