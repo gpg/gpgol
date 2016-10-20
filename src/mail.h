@@ -267,5 +267,6 @@ private:
   GpgME::Signature m_sig;
   GpgME::UserID m_uid;
   std::string m_uuid;
+  HANDLE m_parser_thread;
 };
 #endif // MAIL_H

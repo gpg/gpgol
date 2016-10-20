@@ -95,7 +95,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_valid(false),
     m_moss_position(0),
     m_sender(NULL),
-    m_type(MSGTYPE_UNKNOWN)
+    m_type(MSGTYPE_UNKNOWN),
+    m_parser_thread(NULL)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -141,6 +142,11 @@ Mail::~Mail()
 
   xfree (m_sender);
   gpgol_release(m_mailitem);
+
+  if (m_parser_thread)
+    {
+      CloseHandle (m_parser_thread);
+    }
 }
 
 Mail *
@@ -526,8 +532,15 @@ Mail::decrypt_verify()
   m_parser = new ParseController (cipherstream, m_type);
   gpgol_release (cipherstream);
 
-  CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
-                NULL);
+  m_parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
+                                  NULL);
+
+  if (!m_parser_thread)
+    {
+      log_error ("%s:%s: Failed to create decrypt / verify thread.",
+                 SRCNAME, __func__);
+    }
+
   return 0;
 }
 
@@ -600,6 +613,11 @@ Mail::parsing_done()
   m_parser = nullptr;
   gpgoladdin_invalidate_ui ();
   TRACEPOINT;
+  if (m_parser_thread)
+    {
+      CloseHandle (m_parser_thread);
+      m_parser_thread = NULL;
+    }
   return;
 }
 
