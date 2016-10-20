@@ -41,7 +41,7 @@ gpgol_SOURCES = \
 	message.cpp message.h       \
 	revert.cpp revert.h         \
 	mimeparser.c mimeparser.h   \
-	mimemaker.c mimemaker.h     \
+	mimemaker.cpp mimemaker.h     \
 	msgcache.c msgcache.h       \
 	engine.c engine.h           \
         engine-assuan.c engine-assuan.h \

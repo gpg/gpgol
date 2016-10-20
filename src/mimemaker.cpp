@@ -41,8 +41,9 @@
 #include "mapihelp.h"
 #include "mimemaker.h"
 #include "oomhelp.h"
+#include "gpgolstr.h"
 
-static const char oid_mimetag[] =
+static const unsigned char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
 
 /* The base-64 list used for base64 encoding. */
@@ -73,7 +74,7 @@ int
 sink_std_write (sink_t sink, const void *data, size_t datalen)
 {
   HRESULT hr;
-  LPSTREAM stream = sink->cb_data;
+  LPSTREAM stream = static_cast<LPSTREAM>(sink->cb_data);
 
   if (!stream)
     {
@@ -83,7 +84,7 @@ sink_std_write (sink_t sink, const void *data, size_t datalen)
   if (!data)
     return 0;  /* Flush - nothing to do here.  */
 
-  hr = IStream_Write (stream, data, datalen, NULL);
+  hr = stream->Write(data, datalen, NULL);
   if (hr)
     {
       log_error ("%s:%s: Write failed: hr=%#lx", SRCNAME, __func__, hr);
@@ -97,7 +98,7 @@ int
 sink_file_write (sink_t sink, const void *data, size_t datalen)
 {
   HANDLE hFile = sink->cb_data;
-  DWORD written = NULL;
+  DWORD written = 0;
 
   if (!hFile || hFile == INVALID_HANDLE_VALUE)
     {
@@ -152,7 +153,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
 
   sink->cb_data = NULL;
   sink->writefnc = NULL;
-  hr = IMessage_CreateAttach (message, NULL, 0, &pos, &att);
+  hr = message->CreateAttach(NULL, 0, &pos, &att);
   if (hr)
     {
       log_error ("%s:%s: can't create attachment: hr=%#lx\n",
@@ -185,7 +186,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
 
   /* We better insert a short filename. */
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = MIMEATTACHFILENAME;
+  prop.Value.lpszA = GpgOLStr (MIMEATTACHFILENAME);
   hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
   if (hr)
     {
@@ -205,7 +206,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (!hr)
     {
       prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
-      prop.Value.lpszA = "multipart/signed";
+      prop.Value.lpszA = GpgOLStr("multipart/signed");
       hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
     }
   if (hr)
@@ -216,8 +217,8 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
     }
 
   punk = NULL;
-  hr = IAttach_OpenProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream, 0,
-                             (MAPI_CREATE|MAPI_MODIFY), &punk);
+  hr = att->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+                         (MAPI_CREATE|MAPI_MODIFY), &punk);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't create output stream: hr=%#lx\n",
@@ -229,7 +230,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   return att;
 
  failure:
-  IAttach_Release (att);
+  gpgol_release (att);
   return NULL;
 }
 
@@ -252,7 +253,7 @@ write_buffer (sink_t sink, const void *data, size_t datalen)
 int
 write_buffer_for_cb (void *opaque, const void *data, size_t datalen)
 {
-  sink_t sink = opaque;
+  sink_t sink = (sink_t) opaque;
   sink->enc_counter += datalen;
   return write_buffer (sink, data, datalen) ? -1 : datalen;
 }
@@ -318,7 +319,7 @@ write_b64 (sink_t sink, const void *data, size_t datalen)
   log_debug ("  writing base64 of length %d\n", (int)datalen);
   idx = quads = 0;
   outlen = 0;
-  for (p = data; datalen; p++, datalen--)
+  for (p = (const unsigned char*)data; datalen; p++, datalen--)
     {
       inbuf[idx++] = *p;
       if (idx > 2)
@@ -419,7 +420,7 @@ write_qp (sink_t sink, const void *data, size_t datalen)
 
   log_debug ("  writing qp of length %d\n", (int)datalen);
   outidx = 0;
-  for (p = data; datalen; p++, datalen--)
+  for (p = (const unsigned char*) data; datalen; p++, datalen--)
     {
       if ((datalen > 1 && *p == '\r' && p[1] == '\n') || *p == '\n')
         {
@@ -507,7 +508,7 @@ write_plain (sink_t sink, const void *data, size_t datalen)
 
   log_debug ("  writing ascii of length %d\n", (int)datalen);
   outidx = 0;
-  for (p = data; datalen; p++, datalen--)
+  for (p = (const unsigned char*) data; datalen; p++, datalen--)
     {
       if ((datalen > 1 && *p == '\r' && p[1] == '\n') || *p == '\n')
         {
@@ -725,7 +726,7 @@ infer_content_encoding (const void *data, size_t datalen)
   ntotal = datalen;
   len = maxlen = lowbin = highbin = 0;
   need_qp = 0;
-  for (p = data; datalen; p++, datalen--)
+  for (p = (const unsigned char*) data; datalen; p++, datalen--)
     {
       len++;
       if ((*p & 0x80))
@@ -1012,7 +1013,7 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
             && table[idx].filename
             && !strcmp (table[idx].filename, MIMEATTACHFILENAME))
           continue;
-        hr = IMessage_DeleteAttach (message, table[idx].mapipos, 0, NULL, 0);
+        hr = message->DeleteAttach (table[idx].mapipos, 0, NULL, 0);
         if (hr)
           {
             log_error ("%s:%s: DeleteAttach failed: hr=%#lx\n",
@@ -1033,30 +1034,30 @@ static int
 close_mapi_attachment (LPATTACH *attach, sink_t sink)
 {
   HRESULT hr;
-  LPSTREAM stream = sink? sink->cb_data : NULL;
+  LPSTREAM stream = sink ? (LPSTREAM) sink->cb_data : NULL;
 
   if (!stream)
     {
       log_error ("%s:%s: sink not setup", SRCNAME, __func__);
       return -1;
     }
-  hr = IStream_Commit (stream, 0);
+  hr = stream->Commit (0);
   if (hr)
     {
       log_error ("%s:%s: Commiting output stream failed: hr=%#lx",
                  SRCNAME, __func__, hr);
       return -1;
     }
-  IStream_Release (stream);
+  gpgol_release (stream);
   sink->cb_data = NULL;
-  hr = IAttach_SaveChanges (*attach, 0);
+  hr = (*attach)->SaveChanges (0);
   if (hr)
     {
       log_error ("%s:%s: SaveChanges of the attachment failed: hr=%#lx\n",
                  SRCNAME, __func__, hr);
       return -1;
     }
-  IAttach_Release (*attach);
+  gpgol_release ((*attach));
   *attach = NULL;
   return 0;
 }
@@ -1069,18 +1070,18 @@ close_mapi_attachment (LPATTACH *attach, sink_t sink)
 static void
 cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 {
-  LPSTREAM stream = sink? sink->cb_data : NULL;
+  LPSTREAM stream = sink ? (LPSTREAM) sink->cb_data : NULL;
 
   if (stream)
     {
-      IStream_Revert (stream);
-      IStream_Release (stream);
+      stream->Revert();
+      gpgol_release (stream);
       sink->cb_data = NULL;
     }
   if (*attach)
     {
       /* Fixme: Should we try to delete it or is there a Revert method? */
-      IAttach_Release (*attach);
+      gpgol_release ((*attach));
       *attach = NULL;
     }
 }
@@ -1097,8 +1098,8 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
 
   /* Set the message class.  */
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
-  prop.Value.lpszA = "IPM.Note.SMIME.MultipartSigned";
-  hr = IMessage_SetProps (message, 1, &prop, NULL);
+  prop.Value.lpszA = GpgOLStr ("IPM.Note.SMIME.MultipartSigned");
+  hr = message->SetProps(1, &prop, NULL);
   if (hr)
     {
       log_error ("%s:%s: error setting the message class: hr=%#lx\n",
@@ -1143,7 +1144,7 @@ static int
 sink_hashing_write (sink_t hashsink, const void *data, size_t datalen)
 {
   int rc;
-  engine_filter_t filter = hashsink->cb_data;
+  engine_filter_t filter = (engine_filter_t) hashsink->cb_data;
 
   if (!filter || !hashsink->extrasink)
     {
@@ -1163,12 +1164,12 @@ sink_hashing_write (sink_t hashsink, const void *data, size_t datalen)
 static int
 collect_signature (void *opaque, const void *data, size_t datalen)
 {
-  struct databuf_s *db = opaque;
+  struct databuf_s *db = (databuf_s *)opaque;
 
   if (db->len + datalen >= db->size)
     {
       db->size += datalen + 1024;
-      db->buf = xrealloc (db->buf, db->size);
+      db->buf = (char*) xrealloc (db->buf, db->size);
     }
   memcpy (db->buf + db->len, data, datalen);
   db->len += datalen;
@@ -1402,10 +1403,10 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   {
     HRESULT hr;
     LARGE_INTEGER off;
-    LPSTREAM stream = sink->cb_data;
+    LPSTREAM stream = (LPSTREAM) sink->cb_data;
 
     off.QuadPart = 0;
-    hr = IStream_Seek (stream, off, STREAM_SEEK_SET, NULL);
+    hr = stream->Seek (off, STREAM_SEEK_SET, NULL);
     if (hr)
       {
         log_error ("%s:%s: seeking back to the begin failed: hr=%#lx",
@@ -1417,7 +1418,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
                                protocol, 1, boundary,
                                protocol == PROTOCOL_SMIME? "sha1":"pgp-sha1");
 
-    hr = IStream_Write (stream, top_header, strlen (top_header), NULL);
+    hr = stream->Write (top_header, strlen (top_header), NULL);
     if (hr)
       {
         log_error ("%s:%s: writing fixed micalg failed: hr=%#lx",
@@ -1427,7 +1428,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
 
     /* Better seek again to the end. */
     off.QuadPart = 0;
-    hr = IStream_Seek (stream, off, STREAM_SEEK_END, NULL);
+    hr = stream->Seek (off, STREAM_SEEK_END, NULL);
     if (hr)
       {
         log_error ("%s:%s: seeking back to the end failed: hr=%#lx",
@@ -1491,7 +1492,7 @@ mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
 int
 sink_encryption_write (sink_t encsink, const void *data, size_t datalen)
 {
-  engine_filter_t filter = encsink->cb_data;
+  engine_filter_t filter = (engine_filter_t) encsink->cb_data;
 
   if (!filter)
     {
@@ -1874,7 +1875,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                          (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
                           | STGM_CREATE | STGM_READWRITE),
-                         NULL, "GPG", &tmpstream);
+                         NULL, GpgOLStr("GPG"), &tmpstream);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't create temp file: hr=%#lx\n",
@@ -1953,7 +1954,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
     char buffer[4096];
 
     off.QuadPart = 0;
-    hr = IStream_Seek (tmpstream, off, STREAM_SEEK_SET, NULL);
+    hr = tmpstream->Seek (off, STREAM_SEEK_SET, NULL);
     if (hr)
       {
         log_error ("%s:%s: seeking back to the begin failed: hr=%#lx",
@@ -1964,7 +1965,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
 
     for (;;)
       {
-        hr = IStream_Read (tmpstream, buffer, sizeof buffer, &nread);
+        hr = tmpstream->Read (buffer, sizeof buffer, &nread);
         if (hr)
           {
             log_error ("%s:%s: IStream::Read failed: hr=%#lx",
@@ -2017,8 +2018,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
     log_debug ("%s:%s: failed rc=%d (%s) <%s>", SRCNAME, __func__, rc,
                gpg_strerror (rc), gpg_strsource (rc));
   engine_cancel (filter);
-  if (tmpstream)
-    IStream_Release (tmpstream);
+  gpgol_release (tmpstream);
   mapi_release_attach_table (att_table);
   xfree (my_sender);
   return result;
