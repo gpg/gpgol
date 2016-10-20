@@ -94,6 +94,11 @@ EVENT_SINK_INVOKE(ApplicationEvents)
           gpgoladdin_invalidate_ui ();
           break;
         }
+      case Quit:
+        {
+          log_debug ("%s:%s: Quit event", SRCNAME, __func__);
+          Mail::revert_all_mails();
+        }
       default:
         log_oom_extra ("%s:%s: Unhandled Event: %lx \n",
                        SRCNAME, __func__, dispid);
