@@ -1007,12 +1007,12 @@ Mail::update_sigstate ()
                          SRCNAME, __func__);
               continue;
             }
-          /* GnuPG uses the encrypt cound to determine validity.
+          /* GnuPG uses the encrypt count to determine validity.
              This does not make sense for us. E.g. Drafts may have
              been encrypted and encryption is no communication so
-             it does not track communication.
-             So basically "Our" Tofu validity is then more then 10 messages
-             have been exchanged. */
+             it does not track communication history or consistency.
+             So basically "our" tofu validity is that more then 10 messages
+             have been exchanged. Which was the original code in GnuPG */
           if (!tofu.isNull() && tofu.signCount() <= GPGOL_BASIC_TOFU_TRUST) {
               log_debug ("%s:%s: Tofu signcount too small.",
                          SRCNAME, __func__);
