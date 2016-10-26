@@ -3531,6 +3531,22 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
     {
       /* Found existing moss attachment */
       mapi_release_attach_table (table);
+      /* Remark to ensure that it is hidden. As our revert
+         code must unhide it so that it is not stored in winmail.dat
+         but used as the mosstmpl. */
+      mapi_attach_item_t *item = table - 1 + (part2 ? part2 : part1);
+      LPATTACH att;
+      if (message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att) != S_OK)
+        {
+          log_error ("%s:%s: can't open attachment at %d",
+                     SRCNAME, __func__, item->mapipos);
+          return -1;
+        }
+      if (!mapi_test_attach_hidden (att))
+        {
+          mapi_set_attach_hidden (att);
+        }
+      gpgol_release (att);
       if (part2)
         return part2;
       return part1;
