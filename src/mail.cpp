@@ -34,6 +34,7 @@
 #include "gpgolstr.h"
 #include "windowmessages.h"
 #include "mlang-charset.h"
+#include "mimemaker.h"
 
 #include <gpgme++/tofuinfo.h>
 #include <gpgme++/verificationresult.h>
@@ -417,11 +418,52 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
   return 0;
 }
 
-/** Helper to update the attachments of a mail object in oom.
+int
+Mail::remove_attachments()
+{
+  LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
+  if (!attachments)
+    {
+      log_debug ("%s:%s: Failed to get attachments.",
+                 SRCNAME, __func__);
+      return 0;
+    }
+
+  int count = get_oom_int (attachments, "Count");
+  if (count < 1)
+    {
+      gpgol_release (attachments);
+      return 0;
+    }
+  for (int i = 1; i <= count; i++)
+    {
+      VARIANT aVariant[1];
+      DISPPARAMS dispparams;
+
+      dispparams.rgvarg = aVariant;
+      dispparams.rgvarg[0].vt = VT_INT;
+      dispparams.rgvarg[0].intVal = i;
+      dispparams.cArgs = 1;
+      dispparams.cNamedArgs = 0;
+
+      if (invoke_oom_method_with_parms (attachments, "Remove",
+                                        NULL, &dispparams))
+        {
+          log_error ("%s:%s: Failed to remove attachments.",
+                     SRCNAME, __func__);
+          gpgol_release (attachments);
+          return 1;
+        }
+    }
+  gpgol_release (attachments);
+
+  return 0;
+}
+
+/** Update the attachments of a mail object in oom.
   does not modify the underlying mapi structure. */
-static int
-add_attachments(LPDISPATCH mail,
-                std::vector<std::shared_ptr<Attachment> > attachments)
+int
+Mail::add_attachments(std::vector<std::shared_ptr<Attachment> > attachments)
 {
   int err = 0;
   for (auto att: attachments)
@@ -436,7 +478,7 @@ add_attachments(LPDISPATCH mail,
                      SRCNAME, __func__, att->get_display_name().c_str());
           err = 1;
         }
-      if (add_oom_attachment (mail, wchar_file, wchar_name))
+      if (add_oom_attachment (m_mailitem, wchar_file, wchar_name))
         {
           log_error ("%s:%s: Failed to add attachment: %s",
                      SRCNAME, __func__, att->get_display_name().c_str());
@@ -601,7 +643,7 @@ Mail::parsing_done()
   TRACEPOINT;
 
   /* Update attachments */
-  if (add_attachments (m_mailitem, m_parser->get_attachments()))
+  if (add_attachments (m_parser->get_attachments()))
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
@@ -634,28 +676,8 @@ Mail::encrypt_sign ()
       return err;
     }
   flags = get_gpgol_draft_info_flags (message);
-  if (flags == 3)
-    {
-      log_debug ("%s:%s: Sign / Encrypting message",
-                 SRCNAME, __func__);
-      err = message_sign_encrypt (message, proto,
-                                  NULL, get_sender ());
-    }
-  else if (flags == 2)
-    {
-      err = message_sign (message, proto,
-                          NULL, get_sender ());
-    }
-  else if (flags == 1)
-    {
-      err = message_encrypt (message, proto,
-                             NULL, get_sender ());
-    }
-  else
-    {
-      log_debug ("%s:%s: Unknown flags for crypto: %i",
-                 SRCNAME, __func__, flags);
-    }
+  err = encrypt_sign_mail (this, (flags & 1), (flags & 2), proto,
+                           NULL);
   log_debug ("%s:%s: Status: %i",
              SRCNAME, __func__, err);
   gpgol_release (message);
@@ -768,6 +790,7 @@ int
 Mail::revert_all_mails ()
 {
   int err = 0;
+#if 0
   std::map<LPDISPATCH, Mail *>::iterator it;
   for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
     {
@@ -785,6 +808,7 @@ Mail::revert_all_mails ()
           continue;
         }
     }
+#endif
   return err;
 }
 
@@ -873,10 +897,45 @@ Mail::is_smime ()
   return m_is_smime;
 }
 
-std::string
-Mail::get_subject()
+static std::string
+get_string (LPDISPATCH item, const char *str)
 {
-  return std::string(get_oom_string (m_mailitem, "Subject"));
+  char *buf = get_oom_string (item, str);
+  if (!buf)
+    return std::string();
+  std::string ret = buf;
+  xfree (buf);
+  return ret;
+}
+
+std::string
+Mail::get_subject() const
+{
+  return get_string (m_mailitem, "Subject");
+}
+
+std::string
+Mail::get_body() const
+{
+  return get_string (m_mailitem, "Body");
+}
+
+std::string
+Mail::get_html_body() const
+{
+  return get_string (m_mailitem, "HTMLBody");
+}
+
+char **
+Mail::get_recipients() const
+{
+  LPDISPATCH recipients = get_oom_object (m_mailitem, "Recipients");
+  if (!recipients)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+  return get_oom_recipients (recipients);
 }
 
 int

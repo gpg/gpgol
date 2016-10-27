@@ -69,5 +69,9 @@ int restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
 
 #ifdef __cplusplus
 }
+
+class Mail;
+int encrypt_sign_mail (Mail *, bool encrypt, bool sign, protocol_t protocol,
+                       HWND hwnd);
 #endif
 #endif /*MIMEMAKER_H*/

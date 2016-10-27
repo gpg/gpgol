@@ -42,6 +42,8 @@
 #include "mimemaker.h"
 #include "oomhelp.h"
 #include "gpgolstr.h"
+#include "mail.h"
+#include "attachment.h"
 
 static const unsigned char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -116,6 +118,27 @@ sink_file_write (sink_t sink, const void *data, size_t datalen)
   return 0;
 }
 
+/* Write method used with a sink_t object that contains a GpgME::Data object.  */
+int
+sink_data_write (sink_t sink, const void *data, size_t datalen)
+{
+  auto d = static_cast<GpgME::Data*>(sink->cb_data);
+
+  if (!d)
+    {
+      log_error ("%s:%s: sink not setup for writing", SRCNAME, __func__);
+      return -1;
+    }
+  if (!data)
+    return 0;  /* Flush - nothing to do here.  */
+
+  if (d->write(data, datalen) != datalen)
+    {
+      log_error ("%s:%s: Failed to write data", SRCNAME, __func__);
+      return -1;
+    }
+  return 0;
+}
 
 /* Make sure that PROTOCOL is usable or return a suitable protocol.
    On error PROTOCOL_UNKNOWN is returned.  */
@@ -2098,4 +2121,210 @@ restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
 done:
   xfree (orig);
   return err;
+}
+
+
+int
+encrypt_sign_mail (Mail *mail, bool encrypt, bool sign, protocol_t protocol,
+                   HWND hwnd)
+{
+  if (!mail || (!encrypt && !sign))
+    {
+      TRACEPOINT;
+      return 1;
+    }
+
+  const auto body = mail->get_body();
+  /* TODO get attachments here, too */
+  if (body.empty())
+    {
+      log_debug ("%s:%s: No body",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  /* Crate an attachment as container for the data. */
+  auto attach = std::shared_ptr<Attachment> (new Attachment());
+
+  //struct sink_s tmpsinkmem;
+  //sink_t tmpsink = &tmpsinkmem;
+
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  memset (sink, 0, sizeof *sink);
+  sink->cb_data = &(attach->get_data ());
+  sink->writefnc = sink_data_write;
+
+
+  /* Prepare the engine.  We do this early as it is quite common
+     that some recipients are not available and thus the encryption
+     will fail early.  This is also required to allow the UIserver to
+     figure out the protocol to use if we have not forced one.  */
+  engine_filter_t filter = NULL;
+  if (engine_create_filter (&filter, write_buffer_for_cb, sink))
+    {
+      log_debug ("%s:%s: Failed to create filter",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  /* Session number */
+  int session_number = engine_new_session_number ();
+  engine_set_session_number (filter, session_number);
+
+  /* Set the subject for the dialog */
+  std::string subject = mail->get_subject();
+  engine_set_session_title (filter, mail->get_subject().c_str());
+
+  const char *sender = mail->get_sender();
+
+  struct sink_s encsinkmem;
+  sink_t encsink = &encsinkmem;
+  memset (encsink, 0, sizeof *encsink);
+  encsink->cb_data = filter;
+  encsink->writefnc = sink_encryption_write;
+
+  if (encrypt)
+    {
+      const auto recipients = mail->get_recipients();
+      int rc = engine_encrypt_prepare (filter, hwnd, protocol,
+                                  sign ? ENGINE_FLAG_SIGN_FOLLOWS : 0,
+                                  sender, recipients, &protocol);
+      for (int i = 0; recipients && recipients[i]; i++)
+        xfree (recipients[i]);
+      xfree (recipients);
+      if (rc)
+        {
+          log_error ("%s:%s: Failed to prepare encrypt",
+                     SRCNAME, __func__);
+          if (recipients)
+            {
+            }
+          return 1;
+        }
+      if (engine_encrypt_start (filter, 0))
+        {
+          log_error ("%s:%s: Failed to start encrypt",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+
+  /* Check the selected protocol */
+  protocol = check_protocol (protocol);
+  if (protocol == PROTOCOL_UNKNOWN)
+    {
+      log_error ("%s:%s: Protocol unkown",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  int n_att_usable = 0;
+  bool inline_pgp = opt.inline_pgp && !n_att_usable;
+
+  /* Write the top header.  */
+  char boundary[BOUNDARYSIZE+1];
+  if (!inline_pgp && create_top_encryption_header (sink, protocol, boundary))
+    {
+      log_error ("%s:%s: Failed to write top header",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  char inner_boundary[BOUNDARYSIZE+1];
+  if (!inline_pgp && ((body.size() && n_att_usable) || n_att_usable > 1))
+    {
+      /* A body and at least one attachment or more than one attachment  */
+      generate_boundary (inner_boundary);
+      if (write_multistring (encsink,
+                             "Content-Type: multipart/mixed;\r\n",
+                             "\tboundary=\"", inner_boundary, "\"\r\n",
+                             NULL))
+        {
+          log_error ("%s:%s: Failed to write boundary",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+  else
+    {
+      /* Only one part */
+      *inner_boundary = 0;
+    }
+
+  TRACEPOINT;
+  if (!body.empty())
+    {
+      if (write_part (encsink, body.c_str(), body.size(),
+                      *inner_boundary ? inner_boundary : NULL, NULL, 1))
+        {
+          log_error ("%s:%s: Failed to write body",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+
+  // TODO attachments
+  /* Finish the possible multipart/mixed. */
+  if (!inline_pgp && *inner_boundary &&
+      write_boundary (encsink, inner_boundary, 1))
+    {
+      log_error ("%s:%s: Failed to write boundary",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  /* Flush the sink and wait for the encryption to get
+     ready.  */
+  if (write_buffer (encsink, NULL, 0))
+    {
+      log_error ("%s:%s: Failed to flush tmpsink",
+                 SRCNAME, __func__);
+      return 1;
+    }
+
+  log_debug ("%s:%s: Waiting for crypto",
+             SRCNAME, __func__);
+  if (engine_wait (filter))
+    {
+      log_error ("%s:%s: Failed to wait for engine",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  log_debug ("%s:%s: Wait done",
+             SRCNAME, __func__);
+
+  if (inline_pgp)
+    {
+      return put_oom_string (mail->item (), "Body",
+                             attach->get_data_string ().c_str ());
+    }
+  if (put_oom_string (mail->item (), "Body", ""))
+    {
+      log_error ("%s:%s: Failed to update body",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  if (mail->remove_attachments ())
+    {
+      log_error ("%s:%s: Failed to remove attachments",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  attach->set_display_name("gpgol.dat");
+  std::vector<std::shared_ptr <Attachment> > attachments;
+  attachments.push_back (attach);
+  if (mail->add_attachments (attachments))
+    {
+      log_error ("%s:%s: Failed to add attachments",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  if (put_oom_string (mail->item(), "MessageClass", "IPM.Note.SMIME.MultipartSigned"))
+    {
+      log_error ("%s:%s: Failed to change message class",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  return 0;
 }

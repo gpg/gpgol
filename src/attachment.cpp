@@ -56,3 +56,21 @@ Attachment::get_data()
 {
   return m_data;
 }
+
+const std::string &
+Attachment::get_data_string()
+{
+  if (!m_data_string.empty())
+    {
+      return m_data_string;
+    }
+  char buf[4096];
+  m_data.seek (0, SEEK_SET);
+  size_t nread;
+  m_data_string = std::string();
+  while ((nread = m_data.read (buf, 4096)) > 0)
+    {
+      m_data_string += std::string(buf, nread);
+    }
+  return m_data_string;
+}
