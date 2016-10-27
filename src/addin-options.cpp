@@ -42,6 +42,10 @@ set_labels (HWND dlg)
     { IDC_G_SEND,           N_("Message sending")},
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
+    { IDC_INLINE_PGP,       N_("&Send OpenPGP mails without "
+                               "attachments as inline-pgp")},
+    { IDC_AUTORRESOLVE,     N_("&Select certificates automatically (OpenPGP only)")},
+
 
     { IDC_GPG_OPTIONS,      N_("Debug...")},
     { IDC_GPG_CONF,         N_("Configure GnuPG")},
@@ -62,6 +66,12 @@ enable_disable_opts (HWND hDlg)
   BOOL enable = opt.mime_ui ? TRUE : FALSE;
   EnableWindow (GetDlgItem (hDlg, IDC_ENCRYPT_DEFAULT), enable);
   EnableWindow (GetDlgItem (hDlg, IDC_SIGN_DEFAULT), enable);
+  char *uiserver = get_uiserver_name ();
+  if (!uiserver && !opt.enable_smime)
+    {
+      EnableWindow (GetDlgItem (hDlg, IDC_AUTORRESOLVE), FALSE);
+    }
+  xfree (uiserver);
 }
 
 static INT_PTR CALLBACK
@@ -82,6 +92,10 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           SendDlgItemMessage (hDlg, IDC_MIME_UI, BM_SETCHECK,
                               !!opt.mime_ui, 0L);
 #endif
+          SendDlgItemMessage (hDlg, IDC_INLINE_PGP, BM_SETCHECK,
+                              !!opt.inline_pgp, 0L);
+          SendDlgItemMessage (hDlg, IDC_AUTORRESOLVE, BM_SETCHECK,
+                              !!opt.autoresolve, 0L);
           enable_disable_opts (hDlg);
           set_labels (hDlg);
           ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
@@ -116,6 +130,12 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                 MB_ICONINFORMATION|MB_OK);
                   }
 #endif
+                opt.inline_pgp = !!SendDlgItemMessage
+                  (hDlg, IDC_INLINE_PGP, BM_GETCHECK, 0, 0L);
+
+                opt.autoresolve = !!SendDlgItemMessage
+                  (hDlg, IDC_AUTORRESOLVE, BM_GETCHECK, 0, 0L);
+
                 write_options ();
                 EndDialog (hDlg, TRUE);
                 break;
