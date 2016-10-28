@@ -38,8 +38,6 @@
 typedef enum _gpgol_wmsg_type
 {
   UNKNOWN = 0,
-  REQUEST_SEND_MAIL = 1, /* Request to send a mail.
-                            Data should be LPMAILITEM */
   PARSING_DONE = 2, /* A mail was parsed. Data should be a pointer
                       to the mail object. */
   REQUEST_DECRYPT = 3

@@ -32,20 +32,6 @@
 /* Singleton window */
 static HWND g_responder_window = NULL;
 
-static int
-request_send_mail (LPDISPATCH mailitem)
-{
-  if (invoke_oom_method (mailitem, "Send", NULL))
-    {
-      log_debug ("%s:%s: Failed to resend message.",
-                 SRCNAME, __func__);
-      return -1;
-    }
-  log_debug ("%s:%s: Message %p sent.",
-             SRCNAME, __func__, mailitem);
-  return 0;
-}
-
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -56,11 +42,6 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                  SRCNAME, __func__, ctx->wmsg_type);
       switch (ctx->wmsg_type)
         {
-          case (REQUEST_SEND_MAIL):
-            {
-              ctx->err = request_send_mail ((LPDISPATCH) ctx->data);
-              break;
-            }
           case (PARSING_DONE):
             {
               auto mail = (Mail*) ctx->data;

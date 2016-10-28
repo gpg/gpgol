@@ -96,22 +96,6 @@ MailItemEvents::~MailItemEvents()
 }
 
 static DWORD WINAPI
-request_send (LPVOID arg)
-{
-  log_debug ("%s:%s: requesting send for: %p",
-             SRCNAME, __func__, arg);
-  if (do_in_ui_thread (REQUEST_SEND_MAIL, arg))
-    {
-      MessageBox (NULL,
-                  "Error while requesting send of message.\n"
-                  "Please press the send button again.",
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
-    }
-  return 0;
-}
-
-static DWORD WINAPI
 request_decrypt (LPVOID arg)
 {
   log_debug ("%s:%s: requesting decrypt again for: %p",
@@ -234,25 +218,28 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           /* This is the only event where we can cancel the send of an
              mailitem. But it is too early for us to encrypt as the MAPI
-             structures are not yet filled (and we don't seem to have a way
-             to trigger this and it is likely to be impossible)
+             structures are not yet filled. Crypto based on the
+             Outlook Object Model data did not work as the messages
+             were only sent out empty. See 2b376a48 for a try of
+             this.
 
-             So the first send event is canceled but we save that we have
-             seen it in m_send_seen. We then trigger a Save of that item.
-             The Save causes the Item to be written and we have a chance
-             to Encrypt it in the AfterWrite event.
+             The we store send_seend and invoke a save which will result
+             in an error but only after triggering all the behavior
+             we need -> filling mapi structures and invoking the
+             AfterWrite handler where we encrypt.
 
-             If this encryption is successful and we see a send again
-             we let it pass as then the encrypted data is sent.
-
-             The value of m_send_seen is set to false in this case as
-             we consumed the original send that we canceled. */
+             If this encryption is successful and we pass the send
+             as then the encrypted data is sent.
+           */
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
            {
              log_debug ("%s:%s: Uncancellable send event.",
                         SRCNAME, __func__);
              break;
            }
+          m_mail->update_sender ();
+          m_send_seen = true;
+          invoke_oom_method (m_object, "Save", NULL);
           if (m_mail->crypto_successful ())
             {
                log_debug ("%s:%s: Passing send event for message %p.",
@@ -260,13 +247,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
                m_send_seen = false;
                break;
             }
-          m_mail->update_sender ();
-          m_send_seen = true;
-          log_debug ("%s:%s: Message %p cancelling send to let us do crypto.",
-                     SRCNAME, __func__, m_object);
-          *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-          invoke_oom_method (m_object, "Save", NULL);
-
+          else
+            {
+              log_debug ("%s:%s: Message %p cancelling send crypto failed.",
+                         SRCNAME, __func__, m_object);
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+            }
           return S_OK;
         }
       case Write:
@@ -316,16 +302,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               m_send_seen = false;
               m_mail->encrypt_sign ();
-              if (m_mail->crypto_successful ())
-                {
-                  /* We can't trigger a Send event in the current state.
-                     Appearently Outlook locks some methods in some events.
-                     So we Create a new thread that will sleep a bit before
-                     it requests to send the item again. */
-                  HANDLE thread = CreateThread (NULL, 0, request_send,
-                                                (LPVOID) m_object, 0, NULL);
-                  CloseHandle (thread);
-                }
               return S_OK;
             }
           else if (m_decrypt_after_write)
