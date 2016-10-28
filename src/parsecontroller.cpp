@@ -41,7 +41,7 @@
 
 
 
-const char decrypt_template[] = {
+const char decrypt_template_html[] = {
 "<html><head></head><body>"
 "<table border=\"0\" width=\"100%%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">"
 "<tr>"
@@ -53,6 +53,8 @@ const char decrypt_template[] = {
 "<br/>%s"
 "</td></tr>"
 "</table></body></html>"};
+
+const char decrypt_template[] = {"%s %s\n\n%s"};
 
 using namespace GpgME;
 
@@ -171,7 +173,8 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
       msg = _("Could not decrypt the data.");
     }
 
-  if (gpgrt_asprintf (&buf, decrypt_template,
+  if (gpgrt_asprintf (&buf, opt.prefer_html ? decrypt_template_html :
+                      decrypt_template,
                       protocol == OpenPGP ? "OpenPGP" : "S/MIME",
                       _("Encrypted message (decryption not possible)"),
                       msg.c_str()) == -1)
@@ -210,7 +213,8 @@ ParseController::parse()
                  SRCNAME, __func__);
       char *buf;
       const char *proto = protocol == OpenPGP ? "OpenPGP" : "S/MIME";
-      if (gpgrt_asprintf (&buf, decrypt_template,
+      if (gpgrt_asprintf (&buf, opt.prefer_html ? decrypt_template_html :
+                          decrypt_template,
                           proto,
                           _("Encrypted message (decryption not possible)"),
                           _("Failed to find GnuPG please ensure that GnuPG or "

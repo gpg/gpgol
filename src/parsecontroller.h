@@ -45,6 +45,7 @@ class MimeDataProvider;
 
 /* A template for decryption errors / status message. */
 extern const char decrypt_template[];
+extern const char decrypt_template_html[];
 
 class ParseController
 {

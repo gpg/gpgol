@@ -366,10 +366,6 @@ read_options (void)
   set_default_key (val);
   xfree (val); val = NULL;
 
-  load_extension_value ("preferHtml", &val);
-  opt.prefer_html = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-
   load_extension_value ("gitCommit", &val);
   opt.git_commit = val? strtoul (val, NULL, 16) : 0;
   xfree (val); val = NULL;
@@ -468,7 +464,6 @@ write_options (void)
     {"logFile",                  2, 0, (char*) get_log_file ()},
     {"defaultKey",               2, 0, opt.default_key},
     {"enableDefaultKey",         0, opt.enable_default_key, NULL},
-    {"preferHtml",               0, opt.prefer_html, NULL},
     {"gitCommit",                4, opt.git_commit, NULL},
     {"formsRevision",            1, opt.forms_revision, NULL},
     {"announceNumber",           1, opt.announce_number, NULL},

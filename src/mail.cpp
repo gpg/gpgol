@@ -496,7 +496,8 @@ Mail::decrypt_verify()
   m_processed = true;
   /* Insert placeholder */
   char *placeholder_buf;
-  if (gpgrt_asprintf (&placeholder_buf, decrypt_template,
+  if (gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
+                      decrypt_template,
                       is_smime() ? "S/MIME" : "OpenPGP",
                       _("Encrypted message"),
                       _("Please wait while the message is being decrypted / verified...")) == -1)
@@ -506,10 +507,21 @@ Mail::decrypt_verify()
       return 1;
     }
 
-  if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
+  if (opt.prefer_html)
     {
-      log_error ("%s:%s: Failed to modify html body of item.",
-                 SRCNAME, __func__);
+      if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
+        {
+          log_error ("%s:%s: Failed to modify html body of item.",
+                     SRCNAME, __func__);
+        }
+    }
+  else
+    {
+      if (put_oom_string (m_mailitem, "Body", placeholder_buf))
+        {
+          log_error ("%s:%s: Failed to modify body of item.",
+                     SRCNAME, __func__);
+        }
     }
   xfree (placeholder_buf);
 
@@ -545,16 +557,28 @@ Mail::update_body()
   const auto error = m_parser->get_formatted_error ();
   if (!error.empty())
     {
-      if (put_oom_string (m_mailitem, "HTMLBody",
-                          error.c_str ()))
+      if (opt.prefer_html)
         {
-          log_error ("%s:%s: Failed to modify html body of item.",
-                     SRCNAME, __func__);
+          if (put_oom_string (m_mailitem, "HTMLBody",
+                              error.c_str ()))
+            {
+              log_error ("%s:%s: Failed to modify html body of item.",
+                         SRCNAME, __func__);
+            }
+        }
+      else
+        {
+          if (put_oom_string (m_mailitem, "Body",
+                              error.c_str ()))
+            {
+              log_error ("%s:%s: Failed to modify html body of item.",
+                         SRCNAME, __func__);
+            }
         }
       return;
     }
   const auto html = m_parser->get_html_body();
-  if (!html.empty())
+  if (opt.prefer_html && !html.empty())
     {
       char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
                                               html.c_str(), html.size());
