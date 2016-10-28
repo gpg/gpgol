@@ -187,6 +187,12 @@ get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt);
 int
 put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value);
 
+int
+put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value);
+
+int
+put_pa_int (LPDISPATCH pDisp, const char *dasl_id, int value);
+
 /* Look up a variant with the propertyAccessor interface */
 int
 get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant);

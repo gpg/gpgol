@@ -812,7 +812,7 @@ get_oom_context_window (LPDISPATCH context)
 }
 
 int
-put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
+put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
 {
   LPDISPATCH propertyAccessor;
   VARIANT cVariant[2];
@@ -853,11 +853,13 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
   xfree (w_property);
 
   /* Variant 0 carries the data. */
-  wchar_t *w_value = utf8_to_wchar (value);
-  BSTR b_value = SysAllocString(w_value);
   VariantInit (&cVariant[0]);
-  cVariant[0].vt = VT_BSTR;
-  cVariant[0].bstrVal = b_value;
+  if (VariantCopy (&cVariant[0], value))
+    {
+      log_error ("%s:%s: Falied to copy value.",
+                 SRCNAME, __func__);
+      return -1;
+    }
 
   /* Variant 1 is the DASL as found out by experiments. */
   VariantInit (&cVariant[1]);
@@ -887,6 +889,32 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
     }
   VariantClear (&rVariant);
   return 0;
+}
+
+int
+put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
+{
+  wchar_t *w_value = utf8_to_wchar (value);
+  BSTR b_value = SysAllocString(w_value);
+  VARIANT var;
+  VariantInit (&var);
+  var.vt = VT_BSTR;
+  var.bstrVal = b_value;
+  int ret = put_pa_variant (pDisp, dasl_id, &var);
+  VariantClear (&var);
+  return ret;
+}
+
+int
+put_pa_int (LPDISPATCH pDisp, const char *dasl_id, int value)
+{
+  VARIANT var;
+  VariantInit (&var);
+  var.vt = VT_INT;
+  var.intVal = value;
+  int ret = put_pa_variant (pDisp, dasl_id, &var);
+  VariantClear (&var);
+  return ret;
 }
 
 /* Get a MAPI property through OOM using the PropertyAccessor
