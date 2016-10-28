@@ -1083,7 +1083,7 @@ release_recipient_array (char **recipients)
 
 static int
 sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag,
-              const char *sender)
+              const char *sender, Mail* mail)
 {
   gpg_error_t err;
   char **recipients;
@@ -1100,10 +1100,10 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag,
     {
       if (signflag)
         err = mime_sign_encrypt (message, hwnd, protocol, recipients,
-                                 sender);
+                                 sender, mail);
       else
         err = mime_encrypt (message, hwnd, protocol, recipients,
-                            sender);
+                            sender, mail);
       if (gpg_err_code (err) == GPG_ERR_NO_DATA)
         {
           MessageBox (hwnd, _("Encrypting or signing an empty message "
@@ -1127,11 +1127,11 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag,
 /* Sign the MESSAGE.  */
 int 
 message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd,
-              const char *sender)
+              const char *sender, Mail *mail)
 {
   gpg_error_t err;
 
-  err = mime_sign (message, hwnd, protocol, sender);
+  err = mime_sign (message, hwnd, protocol, sender, mail);
   if (gpg_err_code (err) == GPG_ERR_NO_DATA)
     {
       MessageBox (hwnd, _("Encrypting or signing an empty message "
@@ -1154,18 +1154,18 @@ message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd,
 /* Encrypt the MESSAGE.  */
 int 
 message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
-                 const char *sender)
+                 const char *sender, Mail *mail)
 {
-  return sign_encrypt (message, protocol, hwnd, 0, sender);
+  return sign_encrypt (message, protocol, hwnd, 0, sender, mail);
 }
 
 
 /* Sign+Encrypt the MESSAGE.  */
 int 
 message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
-                      const char *sender)
+                      const char *sender, Mail *mail)
 {
-  return sign_encrypt (message, protocol, hwnd, 1, sender);
+  return sign_encrypt (message, protocol, hwnd, 1, sender, mail);
 }
 
 

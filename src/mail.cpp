@@ -639,17 +639,17 @@ Mail::encrypt_sign ()
       log_debug ("%s:%s: Sign / Encrypting message",
                  SRCNAME, __func__);
       err = message_sign_encrypt (message, proto,
-                                  NULL, get_sender ());
+                                  NULL, get_sender (), this);
     }
   else if (flags == 2)
     {
       err = message_sign (message, proto,
-                          NULL, get_sender ());
+                          NULL, get_sender (), this);
     }
   else if (flags == 1)
     {
       err = message_encrypt (message, proto,
-                             NULL, get_sender ());
+                             NULL, get_sender (), this);
     }
   else
     {

@@ -1469,7 +1469,7 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
    it. */
 int
 mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
-           const char *sender)
+           const char *sender, Mail *)
 {
   int result = -1;
   mapi_attach_item_t *att_table;
@@ -1660,7 +1660,7 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
 int
 mime_encrypt (LPMESSAGE message, HWND hwnd,
               protocol_t protocol, char **recipients,
-              const char *sender)
+              const char *sender, Mail*)
 {
   int result = -1;
   int rc;
@@ -1813,7 +1813,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 int
 mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
                    protocol_t protocol, char **recipients,
-                   const char *sender)
+                   const char *sender, Mail*)
 {
   int result = -1;
   int rc = 0;

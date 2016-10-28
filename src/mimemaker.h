@@ -19,6 +19,8 @@
 
 #ifndef MIMEMAKER_H
 #define MIMEMAKER_H
+
+class Mail;
 #ifdef __cplusplus
 extern "C" {
 #if 0
@@ -45,13 +47,13 @@ struct sink_s
 };
 
 int mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
-               const char *sender);
+               const char *sender, Mail* mail);
 int mime_encrypt (LPMESSAGE message, HWND hwnd,
                   protocol_t protocol, char **recipients,
-                  const char *sender);
+                  const char *sender, Mail* mail);
 int mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
                        protocol_t protocol, char **recipients,
-                       const char *sender);
+                       const char *sender, Mail* mail);
 int sink_std_write (sink_t sink, const void *data, size_t datalen);
 int sink_file_write (sink_t sink, const void *data, size_t datalen);
 int sink_encryption_write (sink_t encsink, const void *data, size_t datalen);

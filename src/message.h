@@ -23,6 +23,8 @@
 #include "myexchext.h"
 #include "mapihelp.h"
 
+class Mail;
+
 int message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force);
 bool message_display_handler (LPMESSAGE message, LPDISPATCH inspector, 
                               HWND hwnd);
@@ -35,11 +37,11 @@ int message_verify (LPMESSAGE message, msgtype_t msgtype, int force,
 int message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, 
                      HWND hwnd);
 int message_sign (LPMESSAGE message, protocol_t protocol, HWND hwnd,
-                  const char *sender = NULL);
+                  const char *sender = NULL, Mail *mail = NULL);
 int message_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
-                     const char *sender = NULL);
+                     const char *sender = NULL, Mail *mail = NULL);
 int message_sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd,
-                          const char *sender = NULL);
+                          const char *sender = NULL, Mail *mail = NULL);
 
 
 #endif /*MESSAGE_H*/
