@@ -245,8 +245,6 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
 
   log_debug ("%s:%s: this is GpgOL %s\n",
              SRCNAME, __func__, PACKAGE_VERSION);
-  log_debug ("%s:%s:   in Outlook %s\n",
-             SRCNAME, __func__, gpgme_check_version (NULL));
 
   can_unload = false;
   m_application = Application;
@@ -256,6 +254,8 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
   version = get_oom_string (Application, "Version");
 
   log_debug ("%s:%s:   using GPGME %s\n",
+             SRCNAME, __func__, gpgme_check_version (NULL));
+  log_debug ("%s:%s:   in Outlook %s\n",
              SRCNAME, __func__, version);
 
   g_ol_version_major = atoi (version);
