@@ -95,7 +95,6 @@ MailItemEvents::~MailItemEvents()
     gpgol_release (m_object);
 }
 
-/*
 static DWORD WINAPI
 request_send (LPVOID arg)
 {
@@ -111,7 +110,6 @@ request_send (LPVOID arg)
     }
   return 0;
 }
-*/
 
 static DWORD WINAPI
 request_decrypt (LPVOID arg)
@@ -255,18 +253,19 @@ EVENT_SINK_INVOKE(MailItemEvents)
                         SRCNAME, __func__);
              break;
            }
-          m_mail->update_sender ();
-          m_mail->encrypt_sign ();
           if (m_mail->crypto_successful ())
             {
                log_debug ("%s:%s: Passing send event for message %p.",
                           SRCNAME, __func__, m_object);
+               m_send_seen = false;
                break;
             }
-          log_debug ("%s:%s: Message %p cancelling send because crypto failed.",
+          m_mail->update_sender ();
+          m_send_seen = true;
+          log_debug ("%s:%s: Message %p cancelling send to let us do crypto.",
                      SRCNAME, __func__, m_object);
           *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-          //invoke_oom_method (m_object, "Save", NULL);
+          invoke_oom_method (m_object, "Save", NULL);
 
           return S_OK;
         }
@@ -313,12 +312,27 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case AfterWrite:
         {
-          if (m_decrypt_after_write)
+          if (m_send_seen)
+            {
+              m_send_seen = false;
+              m_mail->encrypt_sign ();
+              if (m_mail->crypto_successful ())
+                {
+                  /* We can't trigger a Send event in the current state.
+                     Appearently Outlook locks some methods in some events.
+                     So we Create a new thread that will sleep a bit before
+                     it requests to send the item again. */
+                  HANDLE thread = CreateThread (NULL, 0, request_send,
+                                                (LPVOID) m_object, 0, NULL);
+                  CloseHandle (thread);
+                }
+              return S_OK;
+            }
+          else if (m_decrypt_after_write)
             {
               char *uuid = strdup (m_mail->get_uuid ().c_str());
               HANDLE thread = CreateThread (NULL, 0, request_decrypt,
                                             (LPVOID) uuid, 0, NULL);
-              log_debug ("Requesting decrypt again for uuid: %s", uuid);
               CloseHandle (thread);
             }
           break;

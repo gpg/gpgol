@@ -31,7 +31,6 @@
 #include <future>
 
 class ParseController;
-class Attachment;
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -164,7 +163,7 @@ public:
   /** @brief get the subject string (UTF-8 encoded).
     *
     * @returns the subject or an empty string. */
-  std::string get_subject () const;
+  std::string get_subject ();
 
   /** @brief Is this a crypto mail handled by gpgol.
   *
@@ -243,23 +242,6 @@ public:
 
   /** Remove all categories of this mail */
   void remove_categories ();
-
-  /** Get the body of the mail */
-  std::string get_body () const;
-
-  /** Get the html of the mail */
-  std::string get_html_body () const;
-
-  /** Get the recipients recipients is a null
-      terminated array of strings. Needs to be freed
-      by the caller. */
-  char ** get_recipients () const;
-
-  /** Add attachments to this mail returns 0 on success */
-  int add_attachments (std::vector <std::shared_ptr <Attachment> >attachments);
-
-  /** Remove all attachments of this mail. returns 0 on success. */
-  int remove_attachments ();
 
 private:
   void update_categories ();

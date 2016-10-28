@@ -41,16 +41,10 @@ public:
   /* get the underlying data structure */
   GpgME::Data& get_data();
 
-  /* get the data as string. resets the seek pointer
-     of data. The string data is cached after this
-     function is called once. */
-  const std::string & get_data_string();
-
 private:
   GpgME::Data m_data;
   std::string m_utf8DisplayName;
   attachtype_t m_type;
-  std::string m_data_string;
 };
 
 #endif // ATTACHMENT_H
