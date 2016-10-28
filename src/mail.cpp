@@ -873,10 +873,45 @@ Mail::is_smime ()
   return m_is_smime;
 }
 
-std::string
-Mail::get_subject()
+static std::string
+get_string (LPDISPATCH item, const char *str)
 {
-  return std::string(get_oom_string (m_mailitem, "Subject"));
+  char *buf = get_oom_string (item, str);
+  if (!buf)
+    return std::string();
+  std::string ret = buf;
+  xfree (buf);
+  return ret;
+}
+
+std::string
+Mail::get_subject() const
+{
+  return get_string (m_mailitem, "Subject");
+}
+
+std::string
+Mail::get_body() const
+{
+  return get_string (m_mailitem, "Body");
+}
+
+std::string
+Mail::get_html_body() const
+{
+  return get_string (m_mailitem, "HTMLBody");
+}
+
+char **
+Mail::get_recipients() const
+{
+  LPDISPATCH recipients = get_oom_object (m_mailitem, "Recipients");
+  if (!recipients)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+  return get_oom_recipients (recipients);
 }
 
 int
