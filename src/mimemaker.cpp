@@ -1098,7 +1098,14 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
 
   /* Set the message class.  */
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
-  prop.Value.lpszA = GpgOLStr ("IPM.Note.SMIME.MultipartSigned");
+  if (encrypt)
+    {
+      prop.Value.lpszA = GpgOLStr ("IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned");
+    }
+  else
+    {
+      prop.Value.lpszA = GpgOLStr ("IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned");
+    }
   hr = message->SetProps(1, &prop, NULL);
   if (hr)
     {

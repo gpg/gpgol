@@ -795,6 +795,10 @@ install_forms (void)
       "gpgol",
       "gpgol-ms",
       "gpgol-cs",
+       /* The InfoPath we use for sending, to get outlook
+          to do the S/MIME handling. */
+      "gpgol-form-signed",
+      "gpgol-form-encrypted",
       NULL,
     };
   int formidx;
