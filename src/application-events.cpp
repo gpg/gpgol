@@ -97,7 +97,11 @@ EVENT_SINK_INVOKE(ApplicationEvents)
       case Quit:
         {
           log_debug ("%s:%s: Quit event", SRCNAME, __func__);
-          Mail::revert_all_mails();
+          /* Reverting all mails here can cause outlook to go
+             into an endless sync state after the next start.
+             So we can't do it. Needs handling.
+             Mail::revert_all_mails();
+             */
         }
       default:
         log_oom_extra ("%s:%s: Unhandled Event: %lx \n",
