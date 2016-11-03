@@ -210,6 +210,7 @@ private:
   LPDISPATCH m_application;
   LPDISPATCH m_addin;
   LPDISPATCH m_applicationEventSink;
+  LPDISPATCH m_explorersEventSink;
   LPDISPATCH m_ribbon_control;
   bool m_disabled;
 

@@ -171,8 +171,12 @@ STDMETHODIMP GpgolAddinFactory::CreateInstance (LPUNKNOWN punk, REFIID riid,
 
    The ref count is set by the factory after creation.
 */
-GpgolAddin::GpgolAddin (void) : m_lRef(0), m_application(0),
-  m_addin(0), m_applicationEventSink(0), m_disabled(false)
+GpgolAddin::GpgolAddin (void) : m_lRef(0),
+  m_application(nullptr),
+  m_addin(nullptr),
+  m_applicationEventSink(nullptr),
+  m_explorersEventSink(nullptr),
+  m_disabled(false)
 {
   read_options ();
   use_mime_ui = opt.mime_ui;
@@ -190,6 +194,7 @@ GpgolAddin::~GpgolAddin (void)
     }
   log_debug ("%s:%s: Releasing Application Event Sink;",
              SRCNAME, __func__);
+  gpgol_release (m_explorersEventSink);
   gpgol_release (m_applicationEventSink);
 
   engine_deinit ();
@@ -361,6 +366,50 @@ check_html_preferred()
     }
 }
 
+static LPDISPATCH
+install_explorer_sinks (LPDISPATCH application)
+{
+
+  LPDISPATCH explorers = get_oom_object (application, "Explorers");
+
+  if (!explorers)
+    {
+      log_error ("%s:%s: No explorers object",
+                 SRCNAME, __func__);
+      return nullptr;
+    }
+  int count = get_oom_int (explorers, "Count");
+
+  for (int i = 1; i <= count; i++)
+    {
+      std::string item = "Item(";
+      item += std::to_string (i) + ")";
+      LPDISPATCH explorer = get_oom_object (explorers, item.c_str());
+      if (!explorer)
+        {
+          log_error ("%s:%s: failed to get explorer %i",
+                     SRCNAME, __func__, i);
+          continue;
+        }
+      /* Explorers delete themself in the close event of the explorer. */
+      LPDISPATCH sink = install_ExplorerEvents_sink (explorer);
+      if (!sink)
+        {
+          log_error ("%s:%s: failed to create eventsink for explorer %i",
+                     SRCNAME, __func__, i);
+
+        }
+      else
+        {
+          log_oom_extra ("%s:%s: created sink %p for explorer %i",
+                         SRCNAME, __func__, sink, i);
+        }
+      gpgol_release (explorer);
+    }
+  /* Now install the event sink to handle new explorers */
+  return install_ExplorersEvents_sink (explorers);
+}
+
 STDMETHODIMP
 GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 {
@@ -386,7 +435,8 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
   ensure_category_exists (m_application, decCategory, 8);
   ensure_category_exists (m_application, verifyCategory, 5);
   install_forms ();
-  m_applicationEventSink = install_ApplicationEvents_sink(m_application);
+  m_applicationEventSink = install_ApplicationEvents_sink (m_application);
+  m_explorersEventSink = install_explorer_sinks (m_application);
   check_html_preferred ();
   return S_OK;
 }
