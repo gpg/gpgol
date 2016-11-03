@@ -978,6 +978,35 @@ Mail::close_inspector ()
   return 0;
 }
 
+int
+Mail::close (bool discard)
+{
+  VARIANT aVariant[1];
+  DISPPARAMS dispparams;
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_INT;
+  dispparams.rgvarg[0].intVal = discard ? 1 : 0;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  int rc = invoke_oom_method_with_parms (m_mailitem, "Close",
+                                         NULL, &dispparams);
+
+  /* Reset the uuid after discarding all changes in the oom
+     so that we can still find ourself. */
+  set_uuid ();
+
+  /* Now that we have closed it with discard changes we no
+     longer need to wipe the mail because the plaintext was
+     discarded. */
+  if (!rc)
+    {
+      m_needs_wipe = false;
+    }
+  return rc;
+}
+
 static const UserID
 get_uid_for_sender (const Key k, const char *sender)
 {
