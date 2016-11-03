@@ -1186,21 +1186,38 @@ Mail::is_signed()
 int
 Mail::set_uuid()
 {
+  char *uuid;
   if (!m_uuid.empty())
     {
-      return 0;
+      /* This codepath is reached by decrypt again after a
+         close with discard changes. The close discarded
+         the uuid on the OOM object so we have to set
+         it again. */
+      log_debug ("%s:%s: Resetting uuid for %p to %s",
+                 SRCNAME, __func__, this,
+                 m_uuid.c_str());
+      uuid = get_unique_id (m_mailitem, 1, m_uuid.c_str());
     }
-  char *uuid = get_unique_id (m_mailitem, 1);
+  else
+    {
+      uuid = get_unique_id (m_mailitem, 1, nullptr);
+    }
 
   if (!uuid)
     {
-      log_debug ("%s:%s: Failed to get uuid for %p",
+      log_debug ("%s:%s: Failed to get/set uuid for %p",
                  SRCNAME, __func__, m_mailitem);
       return -1;
     }
-  m_uuid = uuid;
+  if (m_uuid.empty())
+    {
+      m_uuid = uuid;
+      g_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
+      log_debug ("%s:%s: uuid for %p is now %s",
+                 SRCNAME, __func__, this,
+                 m_uuid.c_str());
+    }
   xfree (uuid);
-  g_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
   return 0;
 }
 

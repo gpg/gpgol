@@ -1603,7 +1603,7 @@ generate_uid ()
 }
 
 char *
-get_unique_id (LPDISPATCH mail, int create)
+get_unique_id (LPDISPATCH mail, int create, const char *uuid)
 {
   if (!mail)
     {
@@ -1614,8 +1614,9 @@ get_unique_id (LPDISPATCH mail, int create)
   char *uid = get_pa_string (mail, GPGOL_UID_DASL);
   if (!uid)
     {
-      log_debug ("%s:%s: No uuid found for '%p'",
+      log_debug ("%s:%s: No uuid found in oom for '%p'",
                  SRCNAME, __func__, mail);
+
       if (!create)
         {
           return NULL;
@@ -1627,7 +1628,15 @@ get_unique_id (LPDISPATCH mail, int create)
                  SRCNAME, __func__, uid, mail);
       return uid;
     }
-  char *newuid = generate_uid ();
+  char *newuid;
+  if (!uuid)
+    {
+      newuid = generate_uid ();
+    }
+  else
+    {
+      newuid = strdup (uuid);
+    }
   int ret = put_pa_string (mail, GPGOL_UID_DASL, newuid);
 
   if (ret)

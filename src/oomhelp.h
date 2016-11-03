@@ -290,10 +290,13 @@ remove_category (LPDISPATCH mail, const char *category);
    a new uuid will be added if none exists and the
    value of that uuid returned.
 
+   The optinal uuid value can be set to be used
+   as uuid instead of a generated one.
+
    Return value has to be freed by the caller.
    */
 char *
-get_unique_id (LPDISPATCH mail, int create);
+get_unique_id (LPDISPATCH mail, int create, const char* uuid);
 
 #ifdef __cplusplus
 }
