@@ -142,6 +142,8 @@ Mail::~Mail()
 
   xfree (m_sender);
   gpgol_release(m_mailitem);
+  log_oom_extra ("%s:%s: destroyed: %p uuid: %s",
+                 SRCNAME, __func__, this, m_uuid.c_str());
 }
 
 Mail *
