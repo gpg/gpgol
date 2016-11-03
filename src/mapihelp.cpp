@@ -281,6 +281,61 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   return result;
 }
 
+/* Return the property tag for GpgOL UUID Info.  */
+static int
+get_gpgoluid_tag (LPMESSAGE message, ULONG *r_tag)
+{
+  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL UID", __func__)))
+    return -1;
+  *r_tag |= PT_UNICODE;
+  return 0;
+}
+
+char *
+mapi_get_uid (LPDISPATCH mail)
+{
+  /* If the UUID is not in OOM maybe we find it in mapi. */
+  LPMESSAGE msg = get_oom_base_message (mail);
+  if (!msg)
+    {
+      log_debug ("%s:%s: Failed to get message for '%p'",
+                 SRCNAME, __func__, mail);
+      gpgol_release (msg);
+    }
+  ULONG tag;
+  if (get_gpgoluid_tag (msg, &tag))
+    {
+      log_debug ("%s:%s: Failed to get tag for '%p'",
+                 SRCNAME, __func__, mail);
+      gpgol_release (msg);
+      return NULL;
+    }
+  LPSPropValue propval = NULL;
+  HRESULT hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
+  gpgol_release (msg);
+  if (hr)
+    {
+      log_debug ("%s:%s: Failed to get prop for '%p'",
+                 SRCNAME, __func__, mail);
+      return NULL;
+    }
+  char *ret = NULL;
+  if (PROP_TYPE (propval->ulPropTag) == PT_UNICODE)
+    {
+      ret = wchar_to_utf8 (propval->Value.lpszW);
+      log_debug ("%s:%s: Fund uuid in MAPI for %p",
+                 SRCNAME, __func__, mail);
+    }
+  else if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
+    {
+      ret = strdup (propval->Value.lpszA);
+      log_debug ("%s:%s: Fund uuid in MAPI for %p",
+                 SRCNAME, __func__, mail);
+    }
+  MAPIFreeBuffer (propval);
+  return ret;
+}
+
 
 /* A Wrapper around the SaveChanges method.  This function should be
    called indirect through the mapi_save_changes macro.  Returns 0 on
