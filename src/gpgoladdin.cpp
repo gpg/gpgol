@@ -176,7 +176,8 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0),
   m_addin(nullptr),
   m_applicationEventSink(nullptr),
   m_explorersEventSink(nullptr),
-  m_disabled(false)
+  m_disabled(false),
+  m_hook(nullptr)
 {
   read_options ();
   use_mime_ui = opt.mime_ui;
@@ -199,6 +200,8 @@ GpgolAddin::~GpgolAddin (void)
 
   engine_deinit ();
   write_options ();
+
+  UnhookWindowsHookEx (m_hook);
 
   addin_instance = NULL;
 
@@ -299,7 +302,7 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
      does not allow us any OOM calls then and only returns
      "Unexpected error" in that case. Weird. */
 
-  if (Mail::revert_all_mails ())
+  if (Mail::close_all_mails ())
     {
       MessageBox (NULL,
                   "Failed to remove plaintext from at least one message.\n\n"
@@ -429,6 +432,13 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
                  SRCNAME, __func__);
       return E_NOINTERFACE;
     }
+
+  if (!(m_hook = create_message_hook ()))
+    {
+      log_error ("%s:%s: Failed to create messagehook. ",
+                 SRCNAME, __func__);
+    }
+
   /* Set up categories */
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Verified Sender");

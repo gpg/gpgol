@@ -98,6 +98,21 @@ public:
     */
   static int revert_all_mails ();
 
+  /** @brief close all known Mail objects.
+    *
+    * Close our mail with discard changes set to true.
+    * This discards the plaintext / attachments. Afterwards
+    * it calls save if neccessary to sync back the collected
+    * property changes.
+    *
+    * This is the nicest of our three "Clean plaintext"
+    * functions. Will fallback to revert if closing fails.
+    * Closed mails are deleted.
+    *
+    * @returns the number of errors that occured.
+    */
+  static int close_all_mails ();
+
   /** @brief Reference to the mailitem. Do not Release! */
   LPDISPATCH item () { return m_mailitem; }
 

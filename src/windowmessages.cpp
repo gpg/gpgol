@@ -181,3 +181,34 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data)
     }
   return ctx.err;
 }
+
+
+LRESULT CALLBACK
+gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
+{
+/* Once we are in the close events we don't have enough
+   control to revert all our changes so we have to do it
+   with this nice little hack by catching the WM_CLOSE message
+   before it reaches outlook. */
+  LPCWPSTRUCT cwp = (LPCWPSTRUCT) lParam;
+
+  if (cwp->message == WM_CLOSE)
+    {
+      log_debug ("%s:%s: WM_CLOSE windowmessage. Closing all mails.",
+                 SRCNAME, __func__);
+      Mail::revert_all_mails();
+    }
+  return CallNextHookEx (NULL, code, wParam, lParam);
+}
+
+/* Create the message hook for outlook's windowmessages
+   we are especially interested in WM_QUIT to do cleanups
+   and prevent the "Item has changed" question. */
+HHOOK
+create_message_hook()
+{
+  return SetWindowsHookEx (WH_CALLWNDPROC,
+                           gpgol_hook,
+                           NULL,
+                           GetCurrentThreadId());
+}

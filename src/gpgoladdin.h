@@ -213,7 +213,7 @@ private:
   LPDISPATCH m_explorersEventSink;
   LPDISPATCH m_ribbon_control;
   bool m_disabled;
-
+  HHOOK m_hook;
 };
 
 class GpgolAddinFactory: public IClassFactory

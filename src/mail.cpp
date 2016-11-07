@@ -825,6 +825,30 @@ Mail::get_sender ()
 }
 
 int
+Mail::close_all_mails ()
+{
+  int err = 0;
+  std::map<LPDISPATCH, Mail *>::iterator it;
+  TRACEPOINT;
+  for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
+    {
+      if (it->second->close ())
+        {
+          log_error ("Failed to close mail: %p ", it->first);
+          /* Should not happen */
+          if (it->second->revert())
+            {
+              err++;
+            }
+        }
+      else
+        {
+          delete it->second;
+        }
+    }
+  return err;
+}
+int
 Mail::revert_all_mails ()
 {
   int err = 0;
@@ -837,10 +861,11 @@ Mail::revert_all_mails ()
           err++;
           continue;
         }
+
       it->second->set_needs_save (true);
       if (!invoke_oom_method (it->first, "Save", NULL))
         {
-          log_error ("Failed to save reverted mail: %p ", it->first);
+          log_error ("Failed to save reverted mail: %p ", it->second);
           err++;
           continue;
         }
@@ -1029,7 +1054,7 @@ Mail::close ()
 
   /* Reset the uuid after discarding all changes in the oom
      so that we can still find ourself. */
-  set_uuid ();
+//  set_uuid ();
 
   /* Now that we have closed it with discard changes we no
      longer need to wipe the mail because the plaintext was

@@ -66,4 +66,9 @@ send_msg_to_ui_thread (wm_ctx_t *ctx);
   in the ui thread.  Returns the result. */
 int
 do_in_ui_thread (gpgol_wmsg_type type, void *data);
+
+/** Create our filter before outlook Window Messages. */
+HHOOK
+create_message_hook();
+
 #endif // WINDOWMESSAGES_H
