@@ -1013,14 +1013,14 @@ Mail::close_inspector ()
 }
 
 int
-Mail::close (bool discard)
+Mail::close ()
 {
   VARIANT aVariant[1];
   DISPPARAMS dispparams;
 
   dispparams.rgvarg = aVariant;
   dispparams.rgvarg[0].vt = VT_INT;
-  dispparams.rgvarg[0].intVal = discard ? 1 : 0;
+  dispparams.rgvarg[0].intVal = 1;
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 

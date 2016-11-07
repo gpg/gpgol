@@ -254,9 +254,10 @@ public:
       by the caller. */
   char ** get_recipients () const;
 
-  /** Call close with discard changes true or false
-      returns the value of the oom call. */
-  int close (bool discard);
+  /** Call close with discard changes to discard
+      plaintext. returns the value of the oom close
+      call. */
+  int close ();
 
 private:
   void update_categories ();
