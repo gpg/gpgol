@@ -182,6 +182,21 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data)
   return ctx.err;
 }
 
+static std::vector <HWND> explorers;
+
+void
+add_explorer_window (HWND hwnd)
+{
+  explorers.push_back (hwnd);
+}
+
+void remove_explorer_window (HWND hwnd)
+{
+  explorers.erase(std::remove(explorers.begin(),
+                              explorers.end(),
+                              hwnd),
+                  explorers.end());
+}
 
 LRESULT CALLBACK
 gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
@@ -192,11 +207,30 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
    before it reaches outlook. */
   LPCWPSTRUCT cwp = (LPCWPSTRUCT) lParam;
 
-  if (cwp->message == WM_CLOSE)
+  switch (cwp->message)
     {
-      log_debug ("%s:%s: WM_CLOSE windowmessage. Closing all mails.",
-                 SRCNAME, __func__);
-      Mail::revert_all_mails();
+      case WM_CLOSE:
+      {
+        if (std::find(explorers.begin(), explorers.end(), cwp->hwnd) == explorers.end())
+          {
+            /* Not an explorer window */
+            break;
+          }
+        log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
+                   "Closing all mails.",
+                   SRCNAME, __func__);
+        Mail::close_all_mails();
+      }
+     case WM_SYSCOMMAND:
+       if (cwp->wParam == SC_CLOSE)
+        {
+          log_debug ("%s:%s: SC_CLOSE syscommand. Closing all mails.",
+                     SRCNAME, __func__);
+          Mail::close_all_mails();
+        }
+       break;
+     default:
+       break;
     }
   return CallNextHookEx (NULL, code, wParam, lParam);
 }

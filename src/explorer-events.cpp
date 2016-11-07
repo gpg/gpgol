@@ -32,6 +32,7 @@
 #include "oomhelp.h"
 #include "mail.h"
 #include "gpgoladdin.h"
+#include "windowmessages.h"
 
 /* Explorer Events */
 BEGIN_EVENT_SINK(ExplorerEvents, IDispatch)
@@ -76,6 +77,10 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Deleting event handler: %p",
                          SRCNAME, __func__, this);
+
+          HWND hwnd;
+          ((LPOLEWINDOW)m_object)->GetWindow(&hwnd);
+          remove_explorer_window (hwnd);
           delete this;
           return S_OK;
         }

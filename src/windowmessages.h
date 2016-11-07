@@ -71,4 +71,7 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data);
 HHOOK
 create_message_hook();
 
+void add_explorer_window (HWND hwnd);
+void remove_explorer_window (HWND hwnd);
+
 #endif // WINDOWMESSAGES_H

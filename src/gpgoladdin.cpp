@@ -407,6 +407,9 @@ install_explorer_sinks (LPDISPATCH application)
           log_oom_extra ("%s:%s: created sink %p for explorer %i",
                          SRCNAME, __func__, sink, i);
         }
+      HWND hwnd;
+      ((LPOLEWINDOW)explorer)->GetWindow(&hwnd);
+      add_explorer_window (hwnd);
       gpgol_release (explorer);
     }
   /* Now install the event sink to handle new explorers */
