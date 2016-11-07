@@ -25,4 +25,8 @@ LPDISPATCH install_ApplicationEvents_sink (LPDISPATCH obj);
 void detach_ApplicationEvents_sink (LPDISPATCH obj);
 LPDISPATCH install_MailItemEvents_sink (LPDISPATCH obj);
 void detach_MailItemEvents_sink (LPDISPATCH obj);
+LPDISPATCH install_ExplorerEvents_sink (LPDISPATCH obj);
+void detach_ExplorerEvents_sink (LPDISPATCH obj);
+LPDISPATCH install_ExplorersEvents_sink (LPDISPATCH obj);
+void detach_ExplorersEvents_sink (LPDISPATCH obj);
 #endif // EVENTSINKS_H
