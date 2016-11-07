@@ -82,7 +82,8 @@ gpgol_SOURCES = \
 	exechelp.c exechelp.h \
 	addin-options.cpp addin-options.h \
 	parsecontroller.cpp parsecontroller.h \
-	mimedataprovider.cpp mimedataprovider.h
+	mimedataprovider.cpp mimedataprovider.h \
+	explorer-events.cpp explorers-events.cpp
 
 
 #treeview_SOURCES = treeview.c
