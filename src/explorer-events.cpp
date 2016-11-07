@@ -69,7 +69,7 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
-          gpgoladdin_invalidate_ui ();
+        //  gpgoladdin_invalidate_ui ();
           break;
         }
       case Close:

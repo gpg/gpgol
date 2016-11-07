@@ -66,7 +66,6 @@ EVENT_SINK_INVOKE(ExplorersEvents)
               break;
 
             }
-          gpgoladdin_invalidate_ui ();
         }
       default:
         break;
