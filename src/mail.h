@@ -198,7 +198,7 @@ public:
 
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
-  ParseController *parser () { return m_parser; }
+  std::shared_ptr<ParseController> parser () { return m_parser; }
 
   /** To be called from outside once the paser was done.
    In Qt this would be a slot that is called once it is finished
@@ -276,7 +276,7 @@ private:
   int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */
-  ParseController *m_parser;
+  std::shared_ptr <ParseController> m_parser;
   GpgME::VerificationResult m_verify_result;
   GpgME::DecryptionResult m_decrypt_result;
   GpgME::Signature m_sig;

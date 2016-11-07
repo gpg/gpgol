@@ -537,7 +537,7 @@ Mail::decrypt_verify()
       return 1;
     }
 
-  m_parser = new ParseController (cipherstream, m_type);
+  m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
   gpgol_release (cipherstream);
 
   HANDLE parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
@@ -610,6 +610,31 @@ void
 Mail::parsing_done()
 {
   TRACEPOINT;
+  log_oom_extra ("Mail %p Parsing done for parser: %p",
+                 this, m_parser.get());
+  if (!m_parser)
+    {
+      /* This should not happen but it happens when outlook
+         sends multiple ItemLoad events for the same Mail
+         Object. In that case it could happen that one
+         parser was already done while a second is now
+         returning for the wrong mail (as it's looked up
+         by uuid.)
+
+         We have a check in get_uuid that the uuid was
+         not in the map before (and the parser is replaced).
+         So this really really should not happen. We
+         handle it anyway as we crash otherwise.
+
+         It should not happen because the parser is only
+         created in decrypt_verify which is called in the
+         read event. And even in there we check if the parser
+         was set.
+         */
+      log_error ("%s:%s: No parser obj. For mail: %p",
+                 SRCNAME, __func__, this);
+      return;
+    }
   /* Store the results. */
   m_decrypt_result = m_parser->decrypt_result ();
   m_verify_result = m_parser->verify_result ();
@@ -635,7 +660,6 @@ Mail::parsing_done()
     }
 
   /* Invalidate UI to set the correct sig status. */
-  delete m_parser;
   m_parser = nullptr;
   gpgoladdin_invalidate_ui ();
   TRACEPOINT;
