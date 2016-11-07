@@ -40,7 +40,9 @@ typedef enum _gpgol_wmsg_type
   UNKNOWN = 0,
   PARSING_DONE = 2, /* A mail was parsed. Data should be a pointer
                       to the mail object. */
-  REQUEST_DECRYPT = 3
+  REQUEST_DECRYPT = 3,
+  REQUEST_CLOSE = 4 /* Request the mail to be closed with discard
+                       changes set to true */
 } gpgol_wmsg_type;
 
 typedef struct

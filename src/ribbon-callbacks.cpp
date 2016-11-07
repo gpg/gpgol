@@ -1463,14 +1463,20 @@ get_mail_from_control (LPDISPATCH ctrl)
     }
   xfree (ctx_name);
 
+  char *uid;
   /* Get the uid of this item. */
-  char *uid = get_unique_id (mailitem, 0);
+  uid = get_unique_id (mailitem, 0, nullptr);
   if (!uid)
     {
-      log_oom ("%s:%s: Failed to get uid for %p .",
-               SRCNAME, __func__, mailitem);
-      gpgol_release (mailitem);
-      return NULL;
+      uid = mapi_get_uid (mailitem);
+      if (!uid)
+        {
+          log_oom ("%s:%s: Failed to get uid for %p .",
+                   SRCNAME, __func__, mailitem);
+          log_debug ("subject: %s", get_oom_string(mailitem, "Subject"));
+          gpgol_release (mailitem);
+          return NULL;
+        }
     }
 
   auto ret = Mail::get_mail_for_uuid (uid);
