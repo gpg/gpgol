@@ -479,13 +479,23 @@ do_parsing (LPVOID arg)
   return 0;
 }
 
-int
-Mail::decrypt_verify()
+bool
+Mail::is_crypto_mail() const
 {
   if (m_type == MSGTYPE_UNKNOWN || m_type == MSGTYPE_GPGOL ||
       m_type == MSGTYPE_SMIME)
     {
       /* Not a message for us. */
+      return false;
+    }
+  return true;
+}
+
+int
+Mail::decrypt_verify()
+{
+  if (!is_crypto_mail())
+    {
       return 0;
     }
   if (m_needs_wipe)

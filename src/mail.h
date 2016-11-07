@@ -172,7 +172,7 @@ public:
   * @returns true if the mail was either signed or encrypted and we processed
   * it.
   */
-  bool is_crypto_mail () { return m_processed; }
+  bool is_crypto_mail () const;
 
   /** @brief This mail needs to be actually written.
   *
