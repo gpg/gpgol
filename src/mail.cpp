@@ -1212,6 +1212,28 @@ Mail::set_uuid()
   if (m_uuid.empty())
     {
       m_uuid = uuid;
+      Mail *other = get_mail_for_uuid (uuid);
+      if (other)
+        {
+          /* According to documentation this should not
+             happen as this means that multiple ItemLoad
+             events occured for the same mailobject without
+             unload / destruction of the mail.
+
+             But it happens. If you invalidate the UI
+             in the selection change event Outlook loads a
+             new mailobject for the mail. Might happen in
+             other surprising cases. We replace in that
+             case as experiments have shown that the last
+             mailobject is the one that is visible.
+
+             Still troubling state so we log this as an error.
+             */
+          log_error ("%s:%s: There is another mail for %p "
+                     "with uuid: %s replacing it.",
+                     SRCNAME, __func__, m_mailitem, uuid);
+          delete other;
+        }
       g_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
       log_debug ("%s:%s: uuid for %p is now %s",
                  SRCNAME, __func__, this,
