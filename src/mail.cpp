@@ -39,6 +39,7 @@
 #include <gpgme++/verificationresult.h>
 #include <gpgme++/decryptionresult.h>
 #include <gpgme++/key.h>
+#include <gpg-error.h>
 
 #include <map>
 #include <vector>
@@ -460,10 +461,12 @@ add_attachments(LPDISPATCH mail,
   return 0;
 }
 
+GPGRT_LOCK_DEFINE(parser_lock);
+
 static DWORD WINAPI
 do_parsing (LPVOID arg)
 {
-  log_debug ("%s:%s: starting the parser for: %p",
+  log_debug ("%s:%s: preparing the parser for: %p",
              SRCNAME, __func__, arg);
 
   Mail *mail = (Mail *)arg;
@@ -474,8 +477,22 @@ do_parsing (LPVOID arg)
                  SRCNAME, __func__, arg);
       return -1;
     }
-  parser->parse();
-  do_in_ui_thread (PARSING_DONE, arg);
+  gpgrt_lock_lock (&parser_lock);
+  /* Serialize here to avoid too many
+     decryption attempts if there are
+     multiple mailobjects which might have already
+     been deleted (e.g. by quick switches of the mailview. */
+  if (Mail::is_valid_ptr (mail))
+    {
+      parser->parse();
+      do_in_ui_thread (PARSING_DONE, arg);
+    }
+  else
+    {
+      log_debug ("%s:%s: canceling parsing for: %p already deleted",
+                 SRCNAME, __func__, arg);
+    }
+  gpgrt_lock_unlock (&parser_lock);
   return 0;
 }
 
