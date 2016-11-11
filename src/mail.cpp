@@ -1257,6 +1257,8 @@ Mail::set_uuid()
   else
     {
       uuid = get_unique_id (m_mailitem, 1, nullptr);
+      log_debug ("%s:%s: uuid for %p set to %s",
+                 SRCNAME, __func__, this, uuid);
     }
 
   if (!uuid)
