@@ -180,7 +180,7 @@ config_dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 void
 config_dialog_box (HWND parent)
 {
-#ifndef WIN64
+#ifndef _WIN64
   int resid;
 
   resid = IDD_EXT_OPTIONS;

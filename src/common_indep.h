@@ -35,12 +35,12 @@
 #endif
 
 /* The Registry key used by Gpg4win.  */
-#ifdef WIN64
+#ifdef _WIN64
 # define GPG4WIN_REGKEY_2  "Software\\Wow6432Node\\GNU\\GnuPG"
 #else
 # define GPG4WIN_REGKEY_2  "Software\\GNU\\GnuPG"
 #endif
-#ifdef WIN64
+#ifdef _WIN64
 # define GPG4WIN_REGKEY_3  "Software\\Wow6432Node\\Gpg4win"
 #else
 # define GPG4WIN_REGKEY_3  "Software\\Gpg4win"
@@ -378,7 +378,7 @@ _gpgol_stpcpy (char *a, const char *b)
 #define stpcpy(a,b) _gpgol_stpcpy ((a), (b))
 #endif /*!HAVE_STPCPY*/
 
-#ifdef WIN64
+#ifdef _WIN64
 #define SIZE_T_FORMAT "%I64u"
 #else
 # ifdef HAVE_W32_SYSTEM
