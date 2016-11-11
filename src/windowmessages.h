@@ -33,11 +33,10 @@
 
   The Responder Window should be initalized on startup.
   */
-
-
 typedef enum _gpgol_wmsg_type
 {
   UNKNOWN = 0,
+  INVALIDATE_UI = 1, /* The UI should be invalidated. */
   PARSING_DONE = 2, /* A mail was parsed. Data should be a pointer
                       to the mail object. */
   REQUEST_DECRYPT = 3,

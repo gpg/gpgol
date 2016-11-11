@@ -113,6 +113,15 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               gpgol_window_proc (hWnd, message, wParam, (LPARAM) ctx);
               break;
             }
+          case (INVALIDATE_UI):
+            {
+              log_debug ("%s:%s: Invalidating UI",
+                         SRCNAME, __func__);
+              gpgoladdin_invalidate_ui();
+              log_debug ("%s:%s: Invalidation done",
+                         SRCNAME, __func__);
+              break;
+            }
           default:
             log_debug ("Unknown msg");
         }

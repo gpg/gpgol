@@ -61,6 +61,17 @@ typedef enum
     ViewSwitch = 0xF004
   } ExplorerEvent;
 
+static DWORD WINAPI
+invalidate_ui (LPVOID)
+{
+  /* We sleep here a bit to prevent invalidtion immediately
+     after the selection change before we have started processing
+     the mail. */
+  Sleep (1000);
+  do_in_ui_thread (INVALIDATE_UI, nullptr);
+  return 0;
+}
+
 EVENT_SINK_INVOKE(ExplorerEvents)
 {
   USE_INVOKE_ARGS
@@ -70,7 +81,18 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
-        //  gpgoladdin_invalidate_ui ();
+          HANDLE thread = CreateThread (NULL, 0, invalidate_ui, (LPVOID) this, 0,
+                                        NULL);
+
+          if (!thread)
+            {
+              log_error ("%s:%s: Failed to create invalidate_ui thread.",
+                         SRCNAME, __func__);
+            }
+          else
+            {
+              CloseHandle (thread);
+            }
           break;
         }
       case Close:
