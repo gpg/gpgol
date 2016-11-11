@@ -196,7 +196,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: Read : %p",
                          SRCNAME, __func__, m_mail);
-          m_object->AddRef();
           if (!m_mail->is_crypto_mail())
             {
               /* Not for us. */
