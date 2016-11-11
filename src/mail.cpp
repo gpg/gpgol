@@ -1043,18 +1043,20 @@ Mail::close ()
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 
+  log_oom_extra ("%s:%s: Invoking close for: %p",
+                 SRCNAME, __func__, this);
   int rc = invoke_oom_method_with_parms (m_mailitem, "Close",
                                          NULL, &dispparams);
 
   /* Reset the uuid after discarding all changes in the oom
      so that we can still find ourself. */
-//  set_uuid ();
+  set_uuid ();
 
-  /* Now that we have closed it with discard changes we no
-     longer need to wipe the mail because the plaintext was
-     discarded. */
   if (!rc)
     {
+    /* Now that we have closed it with discard changes we no
+       longer need to wipe the mail because the plaintext was
+       discarded. */
       m_needs_wipe = false;
     }
   return rc;
