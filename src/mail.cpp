@@ -57,34 +57,6 @@ static std::map<std::string, Mail*> g_uid_map;
    in get_valid_sig why.*/
 #define GPGOL_BASIC_TOFU_TRUST 10
 
-/* TODO: Localize this once it is less bound to change.
-   TODO: Use a dedicated message for failed decryption. */
-#define HTML_TEMPLATE  \
-"<html><head></head><body>" \
-"<table border=\"0\" width=\"100%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">" \
-"<tr>" \
-"<td bgcolor=\"#0080ff\">" \
-"<p><span style=\"font-weight:600; background-color:#0080ff;\"><center>This message is encrypted</center><span></p></td></tr>" \
-"<tr>" \
-"<td bgcolor=\"#e0f0ff\">" \
-"<center>" \
-"<br/>You can decrypt this message with GnuPG" \
-"<br/>Open this message to decrypt it." \
-"<br/>Opening any attachments while this message is shown will only give you access to encrypted data. </center>" \
-"<br/><br/>If you have GpgOL (The GnuPG Outlook plugin installed) this message should have been automatically decrypted." \
-"<br/>Reasons that you still see this message can be: " \
-"<ul>" \
-"<li>Decryption failed: <ul><li> Refer to the Decrypt / Verify popup window for details.</li></ul></li>" \
-"<li>Outlook tried to save the decrypted content:" \
-" <ul> "\
-" <li>To protect your data GpgOL encrypts a message when it is saved by Outlook.</li>" \
-" <li>You will need to restart Outlook to allow GpgOL to decrypt this message again.</li>" \
-" </ul>" \
-"<li>GpgOL is not activated: <ul><li>Check under Options -> Add-Ins -> COM-Add-Ins to see if this is the case.</li></ul></li>" \
-"</ul>"\
-"</td></tr>" \
-"</table></body></html>"
-
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
@@ -766,10 +738,15 @@ Mail::wipe ()
   log_debug ("%s:%s: Removing plaintext from mailitem: %p.",
              SRCNAME, __func__, m_mailitem);
   if (put_oom_string (m_mailitem, "HTMLBody",
-                      HTML_TEMPLATE))
+                      ""))
     {
-      log_debug ("%s:%s: Failed to wipe mailitem: %p.",
-                 SRCNAME, __func__, m_mailitem);
+      if (put_oom_string (m_mailitem, "Body",
+                          ""))
+        {
+          log_debug ("%s:%s: Failed to wipe mailitem: %p.",
+                     SRCNAME, __func__, m_mailitem);
+          return -1;
+        }
       return -1;
     }
   m_needs_wipe = false;
