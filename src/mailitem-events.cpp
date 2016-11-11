@@ -28,13 +28,14 @@
 #include "mail.h"
 #include "mapihelp.h"
 
-const wchar_t * save_props[] = {
+const wchar_t *prop_blacklist[] = {
+  L"Body",
+  L"HTMLBody",
+  L"To", /* Somehow this is done when a mail is opened */
+  L"CC", /* Ditto */
+  L"BCC", /* Ditto */
   L"Categories",
-  L"FlagRequest",
-  L"TaskCompletedDate",
-  L"FlagStatus",
   NULL };
-
 
 typedef enum
   {
@@ -124,6 +125,8 @@ request_close (LPVOID arg)
     }
   return 0;
 }
+
+static bool propchangeWarnShown = false;
 
 /* The main Invoke function. The return value of this
    function does not appear to have any effect on outlook
@@ -221,11 +224,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           break;
         }
-#if 0
       case PropertyChange:
         {
-          wchar_t *prop_name;
-          const wchar_t **cur;
+          const wchar_t *prop_name;
           if (!m_mail->is_crypto_mail ())
             {
               break;
@@ -238,22 +239,70 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
               break;
             }
-
           prop_name = parms->rgvarg[0].bstrVal;
-
-          for (cur = save_props; *cur; cur++)
+          for (const wchar_t **cur = prop_blacklist; *cur; cur++)
             {
               if (!wcscmp (prop_name, *cur))
                 {
-                  m_mail->set_needs_save (true);
-                  break;
+                  log_oom ("%s:%s: Message %p propchange: %ls discarded.",
+                           SRCNAME, __func__, m_object, prop_name);
+                  return S_OK;
                 }
             }
           log_oom ("%s:%s: Message %p propchange: %ls.",
                    SRCNAME, __func__, m_object, prop_name);
+
+          /* We have tried several scenarios to handle propery changes.
+             Only save the property in MAPI and call MAPI SaveChanges
+             worked and did not leak plaintext but this caused outlook
+             still to break the attachments of PGP/MIME Mails into two
+             attachments and add them as winmail.dat so other clients
+             are broken.
+
+             Alternatively reverting the mail, saving the property and
+             then decrypt again also worked a bit but there were some
+             weird side effects and breakages. But this has the usual
+             problem of a revert that the mail is created by outlook and
+             e.g. multipart/signed signatures from most MUA's are broken.
+
+             Close -> discard changes -> then setting the property and
+             then saving also works but then the mail is closed / unloaded
+             and we can't decrypt again.
+
+             Some things to try out might be the close approach and then
+             another open or a selection change. But for now we just warn.
+
+             As a workardound a user should make property changes when
+             the mail was not read by us. */
+          if (propchangeWarnShown)
+            {
+              return S_OK;
+            }
+
+          wchar_t *title = utf8_to_wchar (_("Sorry, that's not possible, yet"));
+          char *fmt;
+          gpgrt_asprintf (&fmt, _("GpgOL has prevented the change to the \"%s\" property.\n"
+                                  "Property changes are not yet handled for crypto messages.\n\n"
+                                  "To workaround this limitation please change the property when the"
+                                  "message is not open in any window and not selected in the"
+                                  "messagelist.\n\nFor example by right clicking but not selecting the message.\n"),
+                          wchar_to_utf8(prop_name));
+          wchar_t *msg = utf8_to_wchar (fmt);
+          xfree (fmt);
+          MessageBoxW (get_active_hwnd(), msg, title,
+                       MB_ICONINFORMATION | MB_OK);
+          xfree (msg);
+          xfree (title);
+          propchangeWarnShown = true;
           return S_OK;
         }
-#endif
+      case CustomPropertyChange:
+        {
+          log_oom_extra ("%s:%s: CustomPropertyChange : %p",
+                         SRCNAME, __func__, m_mail);
+          /* TODO */
+          break;
+        }
       case Send:
         {
           /* This is the only event where we can cancel the send of an
@@ -386,8 +435,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   break;
                 }
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-              log_oom ("%s:%s: Canceling close event.",
-                       SRCNAME, __func__);
+              log_oom_extra ("%s:%s: Canceling close event.",
+                             SRCNAME, __func__);
               m_decrypt_after_write = true;
               m_ignore_unloads = false;
               m_ignore_next_unload = true;
