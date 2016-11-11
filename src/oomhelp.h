@@ -302,6 +302,11 @@ remove_category (LPDISPATCH mail, const char *category);
 char *
 get_unique_id (LPDISPATCH mail, int create, const char* uuid);
 
+
+/* Uses the Application->ActiveWindow to determine the hwnd
+   through FindWindow and the caption. Does not use IOleWindow
+   because that was unreliable somhow. */
+HWND get_active_hwnd (void);
 #ifdef __cplusplus
 }
 #endif

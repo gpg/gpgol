@@ -1652,3 +1652,40 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
              SRCNAME, __func__, mail, newuid);
   return newuid;
 }
+
+HWND
+get_active_hwnd ()
+{
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+
+  if (!app)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  LPDISPATCH activeWindow = get_oom_object (app, "ActiveWindow");
+  gpgol_release (app);
+
+  if (!activeWindow)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  /* Both explorer and inspector have this. */
+  char *caption = get_oom_string (activeWindow, "Caption");
+  gpgol_release (activeWindow);
+  if (!caption)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+  /* Might not be completly true for multiple explorers
+     on the same folder but good enugh. */
+  HWND hwnd = FindWindowExA(NULL, NULL, "rctrl_renwnd32",
+                            caption);
+  xfree (caption);
+
+  return hwnd;
+}
