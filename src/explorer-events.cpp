@@ -100,9 +100,7 @@ EVENT_SINK_INVOKE(ExplorerEvents)
           log_oom_extra ("%s:%s: Deleting event handler: %p",
                          SRCNAME, __func__, this);
 
-          HWND hwnd;
-          ((LPOLEWINDOW)m_object)->GetWindow(&hwnd);
-          remove_explorer_window (hwnd);
+          remove_explorer (m_object);
           delete this;
           return S_OK;
         }

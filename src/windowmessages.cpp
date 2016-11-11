@@ -191,19 +191,19 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data)
   return ctx.err;
 }
 
-static std::vector <HWND> explorers;
+static std::vector <LPDISPATCH> explorers;
 
 void
-add_explorer_window (HWND hwnd)
+add_explorer (LPDISPATCH explorer)
 {
-  explorers.push_back (hwnd);
+  explorers.push_back (explorer);
 }
 
-void remove_explorer_window (HWND hwnd)
+void remove_explorer (LPDISPATCH explorer)
 {
   explorers.erase(std::remove(explorers.begin(),
                               explorers.end(),
-                              hwnd),
+                              explorer),
                   explorers.end());
 }
 
@@ -220,15 +220,34 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
     {
       case WM_CLOSE:
       {
-        if (std::find(explorers.begin(), explorers.end(), cwp->hwnd) == explorers.end())
+        HWND lastChild = NULL;
+        for (const auto explorer: explorers)
           {
-            /* Not an explorer window */
-            break;
+            /* Casting to LPOLEWINDOW and calling GetWindow
+               succeeded in Outlook 2016 but always returned
+               the number 1. So we need this hack. */
+            char *caption = get_oom_string (explorer, "Caption");
+            if (!caption)
+              {
+                log_debug ("%s:%s: No caption.",
+                           SRCNAME, __func__);
+                continue;
+              }
+            /* rctrl_renwnd32 is the window class of outlook. */
+            HWND hwnd = FindWindowExA(NULL, lastChild, "rctrl_renwnd32",
+                                      caption);
+            xfree (caption);
+            lastChild = hwnd;
+            if (hwnd == cwp->hwnd)
+              {
+                log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
+                           "Closing all mails.",
+                           SRCNAME, __func__);
+                Mail::close_all_mails();
+                break;
+              }
           }
-        log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
-                   "Closing all mails.",
-                   SRCNAME, __func__);
-        Mail::close_all_mails();
+        break;
       }
      case WM_SYSCOMMAND:
        if (cwp->wParam == SC_CLOSE)
