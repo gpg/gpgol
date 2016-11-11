@@ -1471,9 +1471,8 @@ get_mail_from_control (LPDISPATCH ctrl)
       uid = mapi_get_uid (mailitem);
       if (!uid)
         {
-          log_oom ("%s:%s: Failed to get uid for %p .",
+          log_debug ("%s:%s: Failed to get uid for %p",
                    SRCNAME, __func__, mailitem);
-          log_debug ("subject: %s", get_oom_string(mailitem, "Subject"));
           gpgol_release (mailitem);
           return NULL;
         }
