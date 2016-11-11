@@ -1169,6 +1169,7 @@ Mail::update_sigstate ()
       m_sig = sig;
       m_uid = uid;
       m_is_valid = true;
+      return;
     }
 
   log_debug ("%s:%s: No signature with enough trust. Using first",
