@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2016-03-04 14:31+0100\n"
+"POT-Creation-Date: 2016-11-14 15:00+0100\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -17,6 +17,73 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.4\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/addin-options.cpp:36 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1170
+#: src/gpgoladdin.cpp:1249 src/olflange-dlgs.cpp:43
+msgid "General"
+msgstr "通用"
+
+#: src/addin-options.cpp:37 src/olflange-dlgs.cpp:44
+msgid "Enable the S/MIME support"
+msgstr "启用 S/MIME 支持"
+
+#: src/addin-options.cpp:39
+msgid "Enable simplified interface (experimental)"
+msgstr ""
+
+#: src/addin-options.cpp:42 src/olflange-dlgs.cpp:46
+msgid "Message sending"
+msgstr "消息发送中"
+
+#: src/addin-options.cpp:43 src/olflange-dlgs.cpp:47
+msgid "&Encrypt new messages by default"
+msgstr "默认加密新消息（&E）"
+
+#: src/addin-options.cpp:44 src/olflange-dlgs.cpp:48
+msgid "&Sign new messages by default"
+msgstr "默认签名新消息（&S）"
+
+#: src/addin-options.cpp:45
+msgid "&Send OpenPGP mails without attachments as inline-pgp"
+msgstr ""
+
+#: src/addin-options.cpp:47
+msgid "&Select certificates automatically (OpenPGP only)"
+msgstr ""
+
+#: src/addin-options.cpp:50
+msgid "Debug..."
+msgstr ""
+
+#: src/addin-options.cpp:51
+msgid "Configure GnuPG"
+msgstr ""
+
+#: src/addin-options.cpp:52
+msgid "Version "
+msgstr ""
+
+#: src/addin-options.cpp:128
+msgid "Changing the interface requires a restart of Outlook."
+msgstr ""
+
+#: src/addin-options.cpp:129 src/cmdbarcontrols.cpp:105 src/engine.c:377
+#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:312
+#: src/gpgoladdin.cpp:822 src/gpgoladdin.cpp:864 src/gpgoladdin.cpp:929
+#: src/gpgoladdin.cpp:931 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1170
+#: src/gpgoladdin.cpp:1176 src/gpgoladdin.cpp:1249 src/gpgoladdin.cpp:1253
+#: src/main.c:459 src/main.c:465 src/message.cpp:300
+#: src/ribbon-callbacks.cpp:133 src/ribbon-callbacks.cpp:247
+#: src/ribbon-callbacks.cpp:262 src/ribbon-callbacks.cpp:274
+#: src/ribbon-callbacks.cpp:311 src/ribbon-callbacks.cpp:323
+#: src/ribbon-callbacks.cpp:668 src/ribbon-callbacks.cpp:685
+#: src/ribbon-callbacks.cpp:699 src/ribbon-callbacks.cpp:712
+#: src/ribbon-callbacks.cpp:735 src/ribbon-callbacks.cpp:795
+#: src/ribbon-callbacks.cpp:1077 src/ribbon-callbacks.cpp:1111
+#: src/ribbon-callbacks.cpp:1123 src/ribbon-callbacks.cpp:1148
+#: src/ribbon-callbacks.cpp:1639
+msgid "GpgOL"
+msgstr "GpgOL"
 
 #: src/attached-file-events.cpp:54
 msgid "Error creating file for attachment."
@@ -42,7 +109,12 @@ msgstr ""
 "请使用 ”解密/验证“按钮来重新解密整个消息，\n"
 "然后再打开这个附件。"
 
-#: src/common.c:269
+#: src/cmdbarcontrols.cpp:104
+#, fuzzy
+msgid "Could not start certificate manager"
+msgstr "运行密钥管理器"
+
+#: src/common.c:235
 msgid "GpgOL - Save attachment"
 msgstr "GpgOL - 保存附件"
 
@@ -56,28 +128,388 @@ msgid ""
 "You may want to try again."
 msgstr "用户界面服务器现在不可用或没有及时启动。你可以再试一次。"
 
-#: src/engine.c:377 src/main.c:714 src/main.c:720 src/message.cpp:300
-#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:305
-#: src/gpgoladdin.cpp:711 src/gpgoladdin.cpp:763 src/gpgoladdin.cpp:811
-#: src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051 src/gpgoladdin.cpp:1057
-#: src/gpgoladdin.cpp:1130 src/gpgoladdin.cpp:1134
-#: src/ribbon-callbacks.cpp:121 src/ribbon-callbacks.cpp:235
-#: src/ribbon-callbacks.cpp:250 src/ribbon-callbacks.cpp:262
-#: src/ribbon-callbacks.cpp:299 src/ribbon-callbacks.cpp:311
-#: src/ribbon-callbacks.cpp:656 src/ribbon-callbacks.cpp:673
-#: src/ribbon-callbacks.cpp:687 src/ribbon-callbacks.cpp:700
-#: src/ribbon-callbacks.cpp:723 src/ribbon-callbacks.cpp:783
-#: src/ribbon-callbacks.cpp:1065 src/ribbon-callbacks.cpp:1099
-#: src/ribbon-callbacks.cpp:1111 src/ribbon-callbacks.cpp:1136
-msgid "GpgOL"
-msgstr "GpgOL"
+#: src/explorers.cpp:126
+msgid "GnuPG Certificate &Manager"
+msgstr "GnuPG 密钥管理器（&M）"
 
-#: src/main.c:713
+#: src/explorers.cpp:140
+msgid "Remove GpgOL flags from this folder"
+msgstr "从此文件夹移除 GpgOL 标记"
+
+#: src/explorers.cpp:167
+msgid "Open the certificate manager"
+msgstr "运行密钥管理器"
+
+#: src/explorers.cpp:194
+msgid ""
+"You are about to start the process of reversing messages created by GpgOL to "
+"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
+"disabled state so that messages are not anymore processed by GpgOL.\n"
+"\n"
+"You should convert all folders one after the other with this command, close "
+"Outlook and then deinstall GpgOL.\n"
+"\n"
+"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
+"will again process messages."
+msgstr ""
+"你即将开始开始解开所有 GpgOL 创建的消息的流程来准备卸载 GpgOL。运行此命令将禁"
+"用 GpgOL，因此消息不会再被其处理。\n"
+"\n"
+"你应该使用此命令逐个转换所有文件夹，关闭 Outlook 然后卸载 GpgOL。\n"
+"\n"
+"注意，如果你再次启动 Outlook 而 GpgOL 未被卸载，它将再次开始处理消息。"
+
+#: src/explorers.cpp:208
+msgid "Do you want to revert this folder?"
+msgstr "你想要撤销这个文件夹吗？"
+
+#: src/gpgoladdin.cpp:444 src/mail.cpp:1207 src/mail.cpp:1216
+#, fuzzy
+msgid "GpgOL: Encrypted Message"
+msgstr "解密消息"
+
+#: src/gpgoladdin.cpp:445 src/mail.cpp:1208 src/mail.cpp:1217
+msgid "GpgOL: Verified Sender"
+msgstr ""
+
+#: src/gpgoladdin.cpp:773
+#, fuzzy
+msgid "Encrypt the message."
+msgstr "解密消息"
+
+#: src/gpgoladdin.cpp:775
+msgid "Encrypts the message and all attachments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:777
+#, fuzzy
+msgid "Sign the message."
+msgstr "解密消息"
+
+#: src/gpgoladdin.cpp:779
+msgid "Sign the message and all attachments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:781 src/gpgoladdin.cpp:995
+msgid "Open the settings dialog for GpgOL."
+msgstr ""
+
+#: src/gpgoladdin.cpp:823 src/gpgoladdin.cpp:932 src/gpgoladdin.cpp:1091
+#: src/gpgoladdin.cpp:1098
+msgid "Encrypt"
+msgstr "加密"
+
+#: src/gpgoladdin.cpp:824 src/gpgoladdin.cpp:933 src/gpgoladdin.cpp:1093
+msgid "Sign"
+msgstr "签名"
+
+#: src/gpgoladdin.cpp:866 src/gpgoladdin.cpp:1092 src/gpgoladdin.cpp:1098
+#: src/gpgoladdin.cpp:1174 src/gpgoladdin.cpp:1177 src/gpgoladdin.cpp:1178
+msgid "Decrypt"
+msgstr "解密"
+
+#: src/gpgoladdin.cpp:959
+msgid "Start the Certificate Management Software"
+msgstr "启动证书管理服务"
+
+#: src/gpgoladdin.cpp:961
+msgid ""
+"Open GPA or Kleopatra to manage your certificates. You can use this you to "
+"generate your own certificates. "
+msgstr "打开 GPA 或 Kleopatra 来管理你的证书。你可以用它来生成你自己的证书。"
+
+#: src/gpgoladdin.cpp:965
+msgid "Encrypt the text of the message"
+msgstr "加密消息文字"
+
+#: src/gpgoladdin.cpp:967
+msgid ""
+"Choose the certificates for which the message should be encrypted and "
+"replace the text with the encrypted message."
+msgstr "选择这个消息要被加密到的证书，然后用加密后的消息替换文字。"
+
+#: src/gpgoladdin.cpp:971
+msgid "Add a file as an encrypted attachment"
+msgstr "添加一个加密的附件"
+
+#: src/gpgoladdin.cpp:973
+msgid "Encrypts a file and adds it as an attachment to the message. "
+msgstr "加密一个文件，然后把加密结果加入附件。"
+
+#: src/gpgoladdin.cpp:976
+msgid "Add a file as an encrypted attachment with a signature"
+msgstr "添加加密并签名的附件"
+
+#: src/gpgoladdin.cpp:978
+msgid ""
+"Encrypts a file, signs it and adds both the encrypted file and the signature "
+"as attachments to the message. "
+msgstr "加密并签名一个文件，然后把加密结果和签名加入附件。"
+
+#: src/gpgoladdin.cpp:981
+msgid "Decrypt the message"
+msgstr "解密消息"
+
+#: src/gpgoladdin.cpp:983
+msgid ""
+"Look for PGP or S/MIME encrypted data in the message text and decrypt it."
+msgstr "在消息文字中寻找 PGP 或 S/MIME 数据并解密。"
+
+#: src/gpgoladdin.cpp:986
+msgid "Add a signature of the message"
+msgstr "为此消息添加签名"
+
+#: src/gpgoladdin.cpp:988
+msgid ""
+"Appends a signed copy of the message text in an opaque signature. An opaque "
+"signature ensures that the signed text is not modified by embedding it in "
+"the signature itself. The combination of the signed message text and your "
+"signature is added below the plain text. The message will not be encrypted!"
+msgstr ""
+"向不透明签名添加一份消息文字。不透明签名能保证文字不被改变，因为它内含一份签"
+"名。签名后的消息文字和你的签名将被加在纯文本后。此消息不会被加密！"
+
+#: src/gpgoladdin.cpp:1088 src/gpgoladdin.cpp:1171 src/gpgoladdin.cpp:1250
+msgid "Start Certificate Manager"
+msgstr "运行密钥管理器"
+
+#: src/gpgoladdin.cpp:1090 src/gpgoladdin.cpp:1173
+msgid "Textbody"
+msgstr "文本内容"
+
+#: src/gpgoladdin.cpp:1094 src/gpgoladdin.cpp:1175
+msgid "Verify"
+msgstr "验证"
+
+#: src/gpgoladdin.cpp:1095
+msgid "Attachments"
+msgstr "附件"
+
+#: src/gpgoladdin.cpp:1096
+msgid "Encrypted file"
+msgstr "加密过的文件"
+
+#: src/gpgoladdin.cpp:1097
+msgid "Encrypted file and Signature"
+msgstr "加密过的文件和签名"
+
+#: src/gpgoladdin.cpp:1176 src/gpgoladdin.cpp:1253 src/gpgoladdin.cpp:1254
+msgid "Save and decrypt"
+msgstr "保存并解密"
+
+#: src/inspectors.cpp:690
+msgid "&encrypt message with GnuPG"
+msgstr "使用 GnuPG 加密（&E）"
+
+#: src/inspectors.cpp:704
+msgid "&sign message with GnuPG"
+msgstr "使用 GnuPG 签名（&S）"
+
+#: src/inspectors.cpp:730
+msgid "GpgOL Decrypt/Verify"
+msgstr "GpgOL 解密/验证"
+
+#: src/inspectors.cpp:791
+msgid "Encrypt message with GnuPG"
+msgstr "使用 GnuPG 加密"
+
+#: src/inspectors.cpp:807
+msgid "Sign message with GnuPG"
+msgstr "使用 GnuPG 签名"
+
+#: src/inspectors.cpp:924
+msgid ""
+"This is a signed and encrypted message.\n"
+"Click for more information. "
+msgstr ""
+"此消息已加密并签名。\n"
+"点击此处获得更多信息。"
+
+#: src/inspectors.cpp:930
+msgid ""
+"This is a signed message.\n"
+"Click for more information. "
+msgstr ""
+"此消息已签名。\n"
+"点击此处获得更多信息。"
+
+#: src/inspectors.cpp:936
+msgid ""
+"This is an encrypted message.\n"
+"Click for more information. "
+msgstr ""
+"此消息已加密。\n"
+"点击此处获得更多信息。"
+
+#: src/mail.cpp:509
+#, fuzzy
+msgid "Encrypted message"
+msgstr "解密消息"
+
+#: src/mail.cpp:510
+msgid "Please wait while the message is being decrypted / verified..."
+msgstr ""
+
+#: src/mail.cpp:1316
+#, fuzzy
+msgid "This message is not signed.\n"
+msgstr "此消息未被加密。"
+
+#: src/mail.cpp:1317 src/mail.cpp:1379 src/mail.cpp:1385
+msgid "You cannot be sure who wrote the message."
+msgstr ""
+
+#: src/mail.cpp:1331
+#, c-format
+msgid ""
+"The sender is verified because:\n"
+"\n"
+"%s %s"
+msgstr ""
+
+#: src/mail.cpp:1332 src/mail.cpp:1393
+msgid "The used key"
+msgstr ""
+
+#: src/mail.cpp:1332
+#, fuzzy
+msgid " The used certificate"
+msgstr "验证出错"
+
+#: src/mail.cpp:1334
+msgid "is marked as your own."
+msgstr ""
+
+#: src/mail.cpp:1336
+msgid "was certified by enough trusted keys."
+msgstr ""
+
+#: src/mail.cpp:1342
+#, c-format
+msgid ""
+"is cerified by the trusted issuer:\n"
+"'%s'\n"
+msgstr ""
+
+#: src/mail.cpp:1350
+#, c-format
+msgid "was consistently used for %i messages since %s."
+msgstr ""
+
+#: src/mail.cpp:1373
+msgid ""
+"The sender is not verified because:\n"
+"\n"
+msgstr ""
+
+#: src/mail.cpp:1378
+#, fuzzy
+msgid "The signature is invalid.\n"
+msgstr "签名有效\n"
+
+#: src/mail.cpp:1384
+msgid "There was an error verifying the signature.\n"
+msgstr ""
+
+#: src/mail.cpp:1389
+#, fuzzy
+msgid "The signature is expired.\n"
+msgstr "签名有效\n"
+
+#: src/mail.cpp:1393
+#, fuzzy
+msgid "The used certificate"
+msgstr "验证出错"
+
+#: src/mail.cpp:1401
+msgid "is not in your keyring."
+msgstr ""
+
+#: src/mail.cpp:1405
+msgid "is revoked."
+msgstr ""
+
+#: src/mail.cpp:1409
+msgid "is expired."
+msgstr ""
+
+#: src/mail.cpp:1413
+msgid "is not meant for signing."
+msgstr ""
+
+#: src/mail.cpp:1417 src/mail.cpp:1421
+msgid "could not be checked for revocation."
+msgstr ""
+
+#: src/mail.cpp:1425
+msgid "conflicts with another key that was used in the past by the sender."
+msgstr ""
+
+#: src/mail.cpp:1429
+#, c-format
+msgid "does not claim the address: \"%s\"."
+msgstr ""
+
+#: src/mail.cpp:1439
+msgid "is not certified by enough trusted keys."
+msgstr ""
+
+#: src/mail.cpp:1443
+msgid "does not have enough history for basic trust."
+msgstr ""
+
+#: src/mail.cpp:1452
+msgid "is not certified by any trusted key."
+msgstr ""
+
+#: src/mail.cpp:1456
+msgid "is explicitly marked as invalid."
+msgstr ""
+
+#: src/mail.cpp:1462 src/mail.cpp:1463
+msgid "Click here for details about the key."
+msgstr ""
+
+#: src/mail.cpp:1467
+msgid "Click here to search the key on the configured keyserver."
+msgstr ""
+
+#: src/mail.cpp:1468
+msgid "Click here to search the certificate on the configured X509 keyserver."
+msgstr ""
+
+#: src/mailitem.cpp:160 src/message-events.cpp:279
+msgid ""
+"Sorry, we can only encrypt plain text messages and\n"
+"no RTF messages. Please make sure that only the text\n"
+"format has been selected."
+msgstr ""
+"抱歉，我们只能加密纯文本消息和\n"
+"无富文本的消息。请保证只有文字格式\n"
+"被选中。"
+
+#: src/mailitem-events.cpp:288
+msgid "Sorry, that's not possible, yet"
+msgstr ""
+
+#: src/mailitem-events.cpp:290
+#, c-format
+msgid ""
+"GpgOL has prevented the change to the \"%s\" property.\n"
+"Property changes are not yet handled for crypto messages.\n"
+"\n"
+"To workaround this limitation please change the property when the message is "
+"not open in any window and not selected in the messagelist.\n"
+"\n"
+"For example by right clicking but not selecting the message.\n"
+msgstr ""
+
+#: src/main.c:458
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "注释：使用兼容性参数：%s"
 
-#: src/main.c:719
+#: src/main.c:464
 #, c-format
 msgid ""
 "Note: Writing debug logs to\n"
@@ -88,11 +520,11 @@ msgstr ""
 "\n"
 "\"%s\""
 
-#: src/mapihelp.cpp:1659 src/mapihelp.cpp:1667 src/mapihelp.cpp:1675
+#: src/mapihelp.cpp:1715 src/mapihelp.cpp:1723 src/mapihelp.cpp:1731
 msgid "[no subject]"
 msgstr "[无主题]"
 
-#: src/mapihelp.cpp:2284
+#: src/mapihelp.cpp:2340
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -101,21 +533,11 @@ msgstr ""
 "[内容不可见，因为此消息已被另一个 Outlook 会话解密。使用解密/验证”命令使其可"
 "见]"
 
-#: src/mapihelp.cpp:3179
+#: src/mapihelp.cpp:3235
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
 msgstr "[内容不可见，因为 GpgOL 处理错误]"
-
-#: src/message-events.cpp:279 src/mailitem.cpp:160
-msgid ""
-"Sorry, we can only encrypt plain text messages and\n"
-"no RTF messages. Please make sure that only the text\n"
-"format has been selected."
-msgstr ""
-"抱歉，我们只能加密纯文本消息和\n"
-"无富文本的消息。请保证只有文字格式\n"
-"被选中。"
 
 #: src/message.cpp:178
 msgid "[Crypto operation failed - can't show the body of the message]"
@@ -156,11 +578,11 @@ msgstr "不可验证此 S/MIME 消息。请保证 S/MIME 处理已启用。"
 msgid "This message has no signature."
 msgstr "此消息没有签名。"
 
-#: src/message.cpp:837
+#: src/message.cpp:706
 msgid "This message is not encrypted."
 msgstr "此消息未被加密。"
 
-#: src/message.cpp:1064
+#: src/message.cpp:933
 #, c-format
 msgid ""
 "Decryption failed\n"
@@ -169,20 +591,20 @@ msgstr ""
 "解密失败\n"
 "（%s）"
 
-#: src/message.cpp:1225
+#: src/message.cpp:1094
 msgid "No recipients to encrypt to are given"
 msgstr "没有指定要加密给的收件人"
 
-#: src/message.cpp:1240 src/message.cpp:1268
+#: src/message.cpp:1109 src/message.cpp:1137
 msgid "Encrypting or signing an empty message is not possible."
 msgstr "不可加密或签名空消息。"
 
-#: src/message.cpp:1249
+#: src/message.cpp:1118
 #, c-format
 msgid "Encryption failed (%s)"
 msgstr "加密失败 (%s)"
 
-#: src/message.cpp:1277
+#: src/message.cpp:1146
 #, c-format
 msgid "Signing failed (%s)"
 msgstr "签名失败 (%s)"
@@ -191,69 +613,9 @@ msgstr "签名失败 (%s)"
 msgid "Error writing to stream"
 msgstr "写入流时出错。"
 
-#: src/mimeparser.c:1214
+#: src/mimeparser.c:1214 src/pgpmime.c:360 src/pgpmime.c:511
 msgid "I/O-Error"
 msgstr "输入输出错误"
-
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051
-#: src/gpgoladdin.cpp:1130
-msgid "General"
-msgstr "通用"
-
-#: src/olflange-dlgs.cpp:44
-msgid "Enable the S/MIME support"
-msgstr "启用 S/MIME 支持"
-
-#: src/olflange-dlgs.cpp:46
-msgid "Message sending"
-msgstr "消息发送中"
-
-#: src/olflange-dlgs.cpp:47
-msgid "&Encrypt new messages by default"
-msgstr "默认加密新消息（&E）"
-
-#: src/olflange-dlgs.cpp:48
-msgid "&Sign new messages by default"
-msgstr "默认签名新消息（&S）"
-
-#: src/olflange-dlgs.cpp:50
-msgid "Message receiving"
-msgstr "消息接收中"
-
-#: src/olflange-dlgs.cpp:52
-msgid "Show HTML view if possible"
-msgstr "若可能，显示 HTML 视图"
-
-#: src/olflange-dlgs.cpp:53
-msgid "Present encrypted message as attachment"
-msgstr "将加密过的信息作为附件提供"
-
-#: src/olflange-dlgs.cpp:56
-msgid "Crypto Engine"
-msgstr "密码学引擎"
-
-#. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:256
-msgid "-#GpgOLFullHelpText#-"
-msgstr ""
-"GpgOL 是用于 Outlook 的消息加密和签名插件，\n"
-"使用 OpenPGP 和 S/MIME 标准。\n"
-"它使用 GnuPG 软件 (http://www.gnupg.org)。\n"
-"点击图标即可获得最新发布信息。\n"
-"\n"
-"GpgOL 是自由软件；你可以按照 GNU Lesser General Public License\n"
-"（以自由软件基金会发布的版本为准）版本 2.1 或（如你所愿）任意更新的版本\n"
-"使用和分发它。\n"
-"\n"
-"GpgOL 在希望其能够有用的情况下分发，但不含任何保证——甚至不含隐含的\n"
-"对其商品性和对特定用途的适用性的保证。要获取更多信息，请参阅 GNU LGPL。\n"
-"你应当与本程序一起获得了一份 GNU Lesser General Public Licence 的副本；\n"
-"若没有，请参见 <http://www.gnu.org/licenses/>。"
-
-#: src/olflange-dlgs.cpp:262
-#, c-format
-msgid "This is GpgOL version %s"
-msgstr "这里是 GpgOL 版本 %s"
 
 #: src/olflange.cpp:523
 msgid "Welcome to GpgOL "
@@ -315,255 +677,184 @@ msgstr ""
 "\n"
 "请在尝试发送消息之前升级到至少 SP2 的版本。"
 
-#: src/inspectors.cpp:690
-msgid "&encrypt message with GnuPG"
-msgstr "使用 GnuPG 加密（&E）"
+#: src/olflange-dlgs.cpp:50
+msgid "Message receiving"
+msgstr "消息接收中"
 
-#: src/inspectors.cpp:704
-msgid "&sign message with GnuPG"
-msgstr "使用 GnuPG 签名（&S）"
+#: src/olflange-dlgs.cpp:52
+msgid "Show HTML view if possible"
+msgstr "若可能，显示 HTML 视图"
 
-#: src/inspectors.cpp:730
-msgid "GpgOL Decrypt/Verify"
-msgstr "GpgOL 解密/验证"
+#: src/olflange-dlgs.cpp:53
+msgid "Present encrypted message as attachment"
+msgstr "将加密过的信息作为附件提供"
 
-#: src/inspectors.cpp:791
-msgid "Encrypt message with GnuPG"
-msgstr "使用 GnuPG 加密"
+#: src/olflange-dlgs.cpp:56
+msgid "Crypto Engine"
+msgstr "密码学引擎"
 
-#: src/inspectors.cpp:807
-msgid "Sign message with GnuPG"
-msgstr "使用 GnuPG 签名"
-
-#: src/inspectors.cpp:924
-msgid ""
-"This is a signed and encrypted message.\n"
-"Click for more information. "
+#. TRANSLATORS: See the source for the full english text.
+#: src/olflange-dlgs.cpp:256
+msgid "-#GpgOLFullHelpText#-"
 msgstr ""
-"此消息已加密并签名。\n"
-"点击此处获得更多信息。"
+"GpgOL 是用于 Outlook 的消息加密和签名插件，\n"
+"使用 OpenPGP 和 S/MIME 标准。\n"
+"它使用 GnuPG 软件 (http://www.gnupg.org)。\n"
+"点击图标即可获得最新发布信息。\n"
+"\n"
+"GpgOL 是自由软件；你可以按照 GNU Lesser General Public License\n"
+"（以自由软件基金会发布的版本为准）版本 2.1 或（如你所愿）任意更新的版本\n"
+"使用和分发它。\n"
+"\n"
+"GpgOL 在希望其能够有用的情况下分发，但不含任何保证——甚至不含隐含的\n"
+"对其商品性和对特定用途的适用性的保证。要获取更多信息，请参阅 GNU LGPL。\n"
+"你应当与本程序一起获得了一份 GNU Lesser General Public Licence 的副本；\n"
+"若没有，请参见 <http://www.gnu.org/licenses/>。"
 
-#: src/inspectors.cpp:930
+#: src/olflange-dlgs.cpp:262
+#, c-format
+msgid "This is GpgOL version %s"
+msgstr "这里是 GpgOL 版本 %s"
+
+#: src/parsecontroller.cpp:154
+msgid "Decryption canceled or timed out."
+msgstr ""
+
+#: src/parsecontroller.cpp:167
 msgid ""
-"This is a signed message.\n"
-"Click for more information. "
+"No secret key found to decrypt the message. It is encrypted for following "
+"keys:"
+msgstr ""
+
+#: src/parsecontroller.cpp:173
+msgid "Could not decrypt the data."
+msgstr ""
+
+#: src/parsecontroller.cpp:179 src/parsecontroller.cpp:219
+#, fuzzy
+msgid "Encrypted message (decryption not possible)"
+msgstr "不可加密或签名空消息。"
+
+#: src/parsecontroller.cpp:220
+msgid ""
+"Failed to find GnuPG please ensure that GnuPG or Gpg4win is properly "
+"installed."
+msgstr ""
+
+#: src/pgpmime.c:358
+#, fuzzy
+msgid ""
+"Error creating file\n"
+"Please select another one"
+msgstr "生成附件时出错。"
+
+#: src/pgpmime.c:510
+#, fuzzy
+msgid "Error writing file"
+msgstr "写入流时出错。"
+
+#: src/pgpmime.c:586
+msgid "[PGP/MIME message]"
+msgstr ""
+
+#: src/pgpmime.c:607
+msgid "[PGP/MIME message without plain text body]"
+msgstr ""
+
+#: src/pgpmime.c:682
+msgid "[PGP/MIME signed message without a plain text body]"
+msgstr ""
+
+#: src/pgpmime.c:694
+#, fuzzy
+msgid "[PGP/MIME signature]"
+msgstr "完好的签名"
+
+#: src/ribbon-callbacks.cpp:261
+msgid "Please select text to encrypt."
+msgstr "选择要加密的文字。"
+
+#: src/ribbon-callbacks.cpp:273
+msgid "Textbody empty."
+msgstr "文本内容空。"
+
+#: src/ribbon-callbacks.cpp:322 src/ribbon-callbacks.cpp:1076
+msgid "Please add at least one recipent."
+msgstr "请添加至少一个收件人。"
+
+#: src/ribbon-callbacks.cpp:684
+msgid "Please select a Mail."
+msgstr "请选择一封邮件。"
+
+#: src/ribbon-callbacks.cpp:698
+msgid "Please select the data you wish to decrypt."
+msgstr "选择要解密的数据。"
+
+#: src/ribbon-callbacks.cpp:711
+msgid "Nothing to decrypt."
+msgstr "没有可以解密的目标。"
+
+#: src/ribbon-callbacks.cpp:890
+msgid "Plain text"
+msgstr "纯文本"
+
+#: src/ribbon-callbacks.cpp:891
+msgid "Signed text"
+msgstr "签名过的文本"
+
+#: src/ribbon-callbacks.cpp:1083
+msgid "Select file to encrypt"
+msgstr "选择要加密的文件"
+
+#: src/ribbon-callbacks.cpp:1531
+msgid "Verified Sender"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:1535
+msgid "Unverified Sender"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:1551
+#, fuzzy, c-format
+msgid "This is a signed %s message."
 msgstr ""
 "此消息已签名。\n"
 "点击此处获得更多信息。"
 
-#: src/inspectors.cpp:936
-msgid ""
-"This is an encrypted message.\n"
-"Click for more information. "
+#: src/ribbon-callbacks.cpp:1552
+msgid "S/MIME"
 msgstr ""
-"此消息已加密。\n"
-"点击此处获得更多信息。"
 
-#: src/explorers.cpp:126
-msgid "GnuPG Certificate &Manager"
-msgstr "GnuPG 密钥管理器（&M）"
-
-#: src/explorers.cpp:140
-msgid "Remove GpgOL flags from this folder"
-msgstr "从此文件夹移除 GpgOL 标记"
-
-#: src/explorers.cpp:167
-msgid "Open the certificate manager"
-msgstr "运行密钥管理器"
-
-#: src/explorers.cpp:194
-msgid ""
-"You are about to start the process of reversing messages created by GpgOL to "
-"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
-"disabled state so that messages are not anymore processed by GpgOL.\n"
-"\n"
-"You should convert all folders one after the other with this command, close "
-"Outlook and then deinstall GpgOL.\n"
-"\n"
-"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
-"will again process messages."
+#: src/ribbon-callbacks.cpp:1552
+msgid "OpenPGP"
 msgstr ""
-"你即将开始开始解开所有 GpgOL 创建的消息的流程来准备卸载 GpgOL。运行此命令将禁"
-"用 GpgOL，因此消息不会再被其处理。\n"
-"\n"
-"你应该使用此命令逐个转换所有文件夹，关闭 Outlook 然后卸载 GpgOL。\n"
-"\n"
-"注意，如果你再次启动 Outlook 而 GpgOL 未被卸载，它将再次开始处理消息。"
 
-#: src/explorers.cpp:208
-msgid "Do you want to revert this folder?"
-msgstr "你想要撤销这个文件夹吗？"
-
-#: src/gpgoladdin.cpp:652
+#: src/ribbon-callbacks.cpp:1558
 #, fuzzy
-msgid "Encrypt the message."
-msgstr "解密消息"
+msgid "This message is not cryptographically signed"
+msgstr "此消息未被加密。"
 
-#: src/gpgoladdin.cpp:654
-msgid "Encrypts the message and all attachments before sending."
+#: src/ribbon-callbacks.cpp:1637
+msgid ""
+"Could not find Kleopatra.\n"
+"Please reinstall Gpg4win with the Kleopatra component enabled."
 msgstr ""
 
-#: src/gpgoladdin.cpp:656
 #, fuzzy
-msgid "Sign the message."
-msgstr "解密消息"
+#~ msgid "the certificate."
+#~ msgstr "没有给定证书提示。"
 
-#: src/gpgoladdin.cpp:658
-msgid "Sign the message and all attachments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
-msgid "Open the settings dialog for GpgOL."
-msgstr ""
-
-#: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972
-#: src/gpgoladdin.cpp:979
-msgid "Encrypt"
-msgstr "加密"
-
-#: src/gpgoladdin.cpp:713 src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:974
-msgid "Sign"
-msgstr "签名"
-
-#: src/gpgoladdin.cpp:764
 #, fuzzy
-msgid "Encrypted"
-msgstr "加密"
+#~ msgid "certificate"
+#~ msgstr "验证出错"
 
-#: src/gpgoladdin.cpp:765
 #, fuzzy
-msgid "Signed"
-msgstr "签名"
+#~ msgid "Encrypted"
+#~ msgstr "加密"
 
-#: src/gpgoladdin.cpp:768 src/gpgoladdin.cpp:973 src/gpgoladdin.cpp:979
-#: src/gpgoladdin.cpp:1055 src/gpgoladdin.cpp:1058 src/gpgoladdin.cpp:1059
-msgid "Decrypt"
-msgstr "解密"
-
-#: src/gpgoladdin.cpp:840
-msgid "Start the Certificate Management Software"
-msgstr "启动证书管理服务"
-
-#: src/gpgoladdin.cpp:842
-msgid ""
-"Open GPA or Kleopatra to manage your certificates. You can use this you to "
-"generate your own certificates. "
-msgstr "打开 GPA 或 Kleopatra 来管理你的证书。你可以用它来生成你自己的证书。"
-
-#: src/gpgoladdin.cpp:846
-msgid "Encrypt the text of the message"
-msgstr "加密消息文字"
-
-#: src/gpgoladdin.cpp:848
-msgid ""
-"Choose the certificates for which the message should be encrypted and "
-"replace the text with the encrypted message."
-msgstr "选择这个消息要被加密到的证书，然后用加密后的消息替换文字。"
-
-#: src/gpgoladdin.cpp:852
-msgid "Add a file as an encrypted attachment"
-msgstr "添加一个加密的附件"
-
-#: src/gpgoladdin.cpp:854
-msgid "Encrypts a file and adds it as an attachment to the message. "
-msgstr "加密一个文件，然后把加密结果加入附件。"
-
-#: src/gpgoladdin.cpp:857
-msgid "Add a file as an encrypted attachment with a signature"
-msgstr "添加加密并签名的附件"
-
-#: src/gpgoladdin.cpp:859
-msgid ""
-"Encrypts a file, signs it and adds both the encrypted file and the signature "
-"as attachments to the message. "
-msgstr "加密并签名一个文件，然后把加密结果和签名加入附件。"
-
-#: src/gpgoladdin.cpp:862
-msgid "Decrypt the message"
-msgstr "解密消息"
-
-#: src/gpgoladdin.cpp:864
-msgid ""
-"Look for PGP or S/MIME encrypted data in the message text and decrypt it."
-msgstr "在消息文字中寻找 PGP 或 S/MIME 数据并解密。"
-
-#: src/gpgoladdin.cpp:867
-msgid "Add a signature of the message"
-msgstr "为此消息添加签名"
-
-#: src/gpgoladdin.cpp:869
-msgid ""
-"Appends a signed copy of the message text in an opaque signature. An opaque "
-"signature ensures that the signed text is not modified by embedding it in "
-"the signature itself. The combination of the signed message text and your "
-"signature is added below the plain text. The message will not be encrypted!"
-msgstr ""
-"向不透明签名添加一份消息文字。不透明签名能保证文字不被改变，因为它内含一份签"
-"名。签名后的消息文字和你的签名将被加在纯文本后。此消息不会被加密！"
-
-#: src/gpgoladdin.cpp:969 src/gpgoladdin.cpp:1052 src/gpgoladdin.cpp:1131
-msgid "Start Certificate Manager"
-msgstr "运行密钥管理器"
-
-#: src/gpgoladdin.cpp:971 src/gpgoladdin.cpp:1054
-msgid "Textbody"
-msgstr "文本内容"
-
-#: src/gpgoladdin.cpp:975 src/gpgoladdin.cpp:1056
-msgid "Verify"
-msgstr "验证"
-
-#: src/gpgoladdin.cpp:976
-msgid "Attachments"
-msgstr "附件"
-
-#: src/gpgoladdin.cpp:977
-msgid "Encrypted file"
-msgstr "加密过的文件"
-
-#: src/gpgoladdin.cpp:978
-msgid "Encrypted file and Signature"
-msgstr "加密过的文件和签名"
-
-#: src/gpgoladdin.cpp:1057 src/gpgoladdin.cpp:1134 src/gpgoladdin.cpp:1135
-msgid "Save and decrypt"
-msgstr "保存并解密"
-
-#: src/ribbon-callbacks.cpp:249
-msgid "Please select text to encrypt."
-msgstr "选择要加密的文字。"
-
-#: src/ribbon-callbacks.cpp:261
-msgid "Textbody empty."
-msgstr "文本内容空。"
-
-#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1064
-msgid "Please add at least one recipent."
-msgstr "请添加至少一个收件人。"
-
-#: src/ribbon-callbacks.cpp:672
-msgid "Please select a Mail."
-msgstr "请选择一封邮件。"
-
-#: src/ribbon-callbacks.cpp:686
-msgid "Please select the data you wish to decrypt."
-msgstr "选择要解密的数据。"
-
-#: src/ribbon-callbacks.cpp:699
-msgid "Nothing to decrypt."
-msgstr "没有可以解密的目标。"
-
-#: src/ribbon-callbacks.cpp:878
-msgid "Plain text"
-msgstr "纯文本"
-
-#: src/ribbon-callbacks.cpp:879
-msgid "Signed text"
-msgstr "签名过的文本"
-
-#: src/ribbon-callbacks.cpp:1071
-msgid "Select file to encrypt"
-msgstr "选择要加密的文件"
+#, fuzzy
+#~ msgid "Signed"
+#~ msgstr "签名"
 
 #~ msgid ""
 #~ "The user interface server is not available or does not work.  Using an "
@@ -591,9 +882,6 @@ msgstr "选择要加密的文件"
 
 #~ msgid "Fingerprint: "
 #~ msgstr "指纹："
-
-#~ msgid "This signature is valid\n"
-#~ msgstr "签名有效\n"
 
 #~ msgid "signature state is \"green\"\n"
 #~ msgstr "签名状态：绿\n"
@@ -675,9 +963,6 @@ msgstr "选择要加密的文件"
 #~ msgid "*** End Notation ***\n"
 #~ msgstr "*** 注记结束 ***\n"
 
-#~ msgid "No certificate hint given."
-#~ msgstr "没有给定证书提示。"
-
 #~ msgid "Enter passphrase to unlock the secret key"
 #~ msgstr "输入密码来解密此私钥。"
 
@@ -726,9 +1011,6 @@ msgstr "选择要加密的文件"
 #~ msgid "BAD signature!"
 #~ msgstr "损坏的签名！"
 
-#~ msgid "Good signature"
-#~ msgstr "完好的签名"
-
 #~ msgid "Good signature from revoked certificate"
 #~ msgstr "完好的签名，但证书已吊销"
 
@@ -740,9 +1022,6 @@ msgstr "选择要加密的文件"
 
 #~ msgid "Could not check signature: missing certificate"
 #~ msgstr "无法检查签名：缺失证书"
-
-#~ msgid "Verification error"
-#~ msgstr "验证出错"
 
 #~ msgid "User-ID not found"
 #~ msgstr "找不到用户标识"

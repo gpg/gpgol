@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2016-03-04 14:31+0100\n"
+"POT-Creation-Date: 2016-11-14 15:00+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -15,6 +15,74 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: src/addin-options.cpp:36 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1170
+#: src/gpgoladdin.cpp:1249 src/olflange-dlgs.cpp:43
+msgid "General"
+msgstr ""
+
+#: src/addin-options.cpp:37 src/olflange-dlgs.cpp:44
+msgid "Enable the S/MIME support"
+msgstr ""
+
+#: src/addin-options.cpp:39
+msgid "Enable simplified interface (experimental)"
+msgstr ""
+
+#: src/addin-options.cpp:42 src/olflange-dlgs.cpp:46
+msgid "Message sending"
+msgstr ""
+
+#: src/addin-options.cpp:43 src/olflange-dlgs.cpp:47
+#, fuzzy
+msgid "&Encrypt new messages by default"
+msgstr "Kryptera meddelandet med GPG"
+
+#: src/addin-options.cpp:44 src/olflange-dlgs.cpp:48
+msgid "&Sign new messages by default"
+msgstr ""
+
+#: src/addin-options.cpp:45
+msgid "&Send OpenPGP mails without attachments as inline-pgp"
+msgstr ""
+
+#: src/addin-options.cpp:47
+msgid "&Select certificates automatically (OpenPGP only)"
+msgstr ""
+
+#: src/addin-options.cpp:50
+msgid "Debug..."
+msgstr ""
+
+#: src/addin-options.cpp:51
+msgid "Configure GnuPG"
+msgstr ""
+
+#: src/addin-options.cpp:52
+msgid "Version "
+msgstr ""
+
+#: src/addin-options.cpp:128
+msgid "Changing the interface requires a restart of Outlook."
+msgstr ""
+
+#: src/addin-options.cpp:129 src/cmdbarcontrols.cpp:105 src/engine.c:377
+#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:312
+#: src/gpgoladdin.cpp:822 src/gpgoladdin.cpp:864 src/gpgoladdin.cpp:929
+#: src/gpgoladdin.cpp:931 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1170
+#: src/gpgoladdin.cpp:1176 src/gpgoladdin.cpp:1249 src/gpgoladdin.cpp:1253
+#: src/main.c:459 src/main.c:465 src/message.cpp:300
+#: src/ribbon-callbacks.cpp:133 src/ribbon-callbacks.cpp:247
+#: src/ribbon-callbacks.cpp:262 src/ribbon-callbacks.cpp:274
+#: src/ribbon-callbacks.cpp:311 src/ribbon-callbacks.cpp:323
+#: src/ribbon-callbacks.cpp:668 src/ribbon-callbacks.cpp:685
+#: src/ribbon-callbacks.cpp:699 src/ribbon-callbacks.cpp:712
+#: src/ribbon-callbacks.cpp:735 src/ribbon-callbacks.cpp:795
+#: src/ribbon-callbacks.cpp:1077 src/ribbon-callbacks.cpp:1111
+#: src/ribbon-callbacks.cpp:1123 src/ribbon-callbacks.cpp:1148
+#: src/ribbon-callbacks.cpp:1639
+msgid "GpgOL"
+msgstr ""
 
 #: src/attached-file-events.cpp:54
 #, fuzzy
@@ -40,7 +108,12 @@ msgid ""
 "entire message again.  Then open this attachment."
 msgstr ""
 
-#: src/common.c:269
+#: src/cmdbarcontrols.cpp:104
+#, fuzzy
+msgid "Could not start certificate manager"
+msgstr "Kunde inte starta nyckelhanteraren"
+
+#: src/common.c:235
 #, fuzzy
 msgid "GpgOL - Save attachment"
 msgstr "GPG - Spara dekrypterad bilaga"
@@ -55,54 +128,359 @@ msgid ""
 "You may want to try again."
 msgstr ""
 
-#: src/engine.c:377 src/main.c:714 src/main.c:720 src/message.cpp:300
-#: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:305
-#: src/gpgoladdin.cpp:711 src/gpgoladdin.cpp:763 src/gpgoladdin.cpp:811
-#: src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051 src/gpgoladdin.cpp:1057
-#: src/gpgoladdin.cpp:1130 src/gpgoladdin.cpp:1134
-#: src/ribbon-callbacks.cpp:121 src/ribbon-callbacks.cpp:235
-#: src/ribbon-callbacks.cpp:250 src/ribbon-callbacks.cpp:262
-#: src/ribbon-callbacks.cpp:299 src/ribbon-callbacks.cpp:311
-#: src/ribbon-callbacks.cpp:656 src/ribbon-callbacks.cpp:673
-#: src/ribbon-callbacks.cpp:687 src/ribbon-callbacks.cpp:700
-#: src/ribbon-callbacks.cpp:723 src/ribbon-callbacks.cpp:783
-#: src/ribbon-callbacks.cpp:1065 src/ribbon-callbacks.cpp:1099
-#: src/ribbon-callbacks.cpp:1111 src/ribbon-callbacks.cpp:1136
-msgid "GpgOL"
+#: src/explorers.cpp:126
+#, fuzzy
+msgid "GnuPG Certificate &Manager"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/explorers.cpp:140
+msgid "Remove GpgOL flags from this folder"
 msgstr ""
 
-#: src/main.c:713
-#, c-format
-msgid "Note: Using compatibility flags: %s"
-msgstr ""
+#: src/explorers.cpp:167
+#, fuzzy
+msgid "Open the certificate manager"
+msgstr "GPG-nyckel&hanterare"
 
-#: src/main.c:719
-#, c-format
+#: src/explorers.cpp:194
 msgid ""
-"Note: Writing debug logs to\n"
+"You are about to start the process of reversing messages created by GpgOL to "
+"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
+"disabled state so that messages are not anymore processed by GpgOL.\n"
 "\n"
-"\"%s\""
+"You should convert all folders one after the other with this command, close "
+"Outlook and then deinstall GpgOL.\n"
+"\n"
+"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
+"will again process messages."
 msgstr ""
 
-#: src/mapihelp.cpp:1659 src/mapihelp.cpp:1667 src/mapihelp.cpp:1675
-msgid "[no subject]"
+#: src/explorers.cpp:208
+msgid "Do you want to revert this folder?"
 msgstr ""
 
-#: src/mapihelp.cpp:2284
+#: src/gpgoladdin.cpp:444 src/mail.cpp:1207 src/mail.cpp:1216
+#, fuzzy
+msgid "GpgOL: Encrypted Message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:445 src/mail.cpp:1208 src/mail.cpp:1217
+msgid "GpgOL: Verified Sender"
+msgstr ""
+
+#: src/gpgoladdin.cpp:773
+#, fuzzy
+msgid "Encrypt the message."
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:775
+msgid "Encrypts the message and all attachments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:777
+#, fuzzy
+msgid "Sign the message."
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:779
+msgid "Sign the message and all attachments before sending."
+msgstr ""
+
+#: src/gpgoladdin.cpp:781 src/gpgoladdin.cpp:995
+msgid "Open the settings dialog for GpgOL."
+msgstr ""
+
+#: src/gpgoladdin.cpp:823 src/gpgoladdin.cpp:932 src/gpgoladdin.cpp:1091
+#: src/gpgoladdin.cpp:1098
+#, fuzzy
+msgid "Encrypt"
+msgstr "Kryptering"
+
+#: src/gpgoladdin.cpp:824 src/gpgoladdin.cpp:933 src/gpgoladdin.cpp:1093
+msgid "Sign"
+msgstr ""
+
+#: src/gpgoladdin.cpp:866 src/gpgoladdin.cpp:1092 src/gpgoladdin.cpp:1098
+#: src/gpgoladdin.cpp:1174 src/gpgoladdin.cpp:1177 src/gpgoladdin.cpp:1178
+#, fuzzy
+msgid "Decrypt"
+msgstr "Dekryptering"
+
+#: src/gpgoladdin.cpp:959
+#, fuzzy
+msgid "Start the Certificate Management Software"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/gpgoladdin.cpp:961
 msgid ""
-"[The content of this message is not visible because it has been decrypted by "
-"another Outlook session.  Use the \"decrypt/verify\" command to make it "
-"visible]"
+"Open GPA or Kleopatra to manage your certificates. You can use this you to "
+"generate your own certificates. "
 msgstr ""
 
-#: src/mapihelp.cpp:3179
+#: src/gpgoladdin.cpp:965
+#, fuzzy
+msgid "Encrypt the text of the message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:967
 msgid ""
-"[The content of this message is not visible due to an processing error in "
-"GpgOL.]"
+"Choose the certificates for which the message should be encrypted and "
+"replace the text with the encrypted message."
+msgstr ""
+
+#: src/gpgoladdin.cpp:971
+msgid "Add a file as an encrypted attachment"
+msgstr ""
+
+#: src/gpgoladdin.cpp:973
+msgid "Encrypts a file and adds it as an attachment to the message. "
+msgstr ""
+
+#: src/gpgoladdin.cpp:976
+msgid "Add a file as an encrypted attachment with a signature"
+msgstr ""
+
+#: src/gpgoladdin.cpp:978
+msgid ""
+"Encrypts a file, signs it and adds both the encrypted file and the signature "
+"as attachments to the message. "
+msgstr ""
+
+#: src/gpgoladdin.cpp:981
+#, fuzzy
+msgid "Decrypt the message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:983
+msgid ""
+"Look for PGP or S/MIME encrypted data in the message text and decrypt it."
+msgstr ""
+
+#: src/gpgoladdin.cpp:986
+#, fuzzy
+msgid "Add a signature of the message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/gpgoladdin.cpp:988
+msgid ""
+"Appends a signed copy of the message text in an opaque signature. An opaque "
+"signature ensures that the signed text is not modified by embedding it in "
+"the signature itself. The combination of the signed message text and your "
+"signature is added below the plain text. The message will not be encrypted!"
+msgstr ""
+
+#: src/gpgoladdin.cpp:1088 src/gpgoladdin.cpp:1171 src/gpgoladdin.cpp:1250
+#, fuzzy
+msgid "Start Certificate Manager"
+msgstr "GPG-nyckel&hanterare"
+
+#: src/gpgoladdin.cpp:1090 src/gpgoladdin.cpp:1173
+msgid "Textbody"
+msgstr ""
+
+#: src/gpgoladdin.cpp:1094 src/gpgoladdin.cpp:1175
+msgid "Verify"
+msgstr ""
+
+#: src/gpgoladdin.cpp:1095
+#, fuzzy
+msgid "Attachments"
+msgstr "Dekryptering av bilaga"
+
+#: src/gpgoladdin.cpp:1096
+#, fuzzy
+msgid "Encrypted file"
+msgstr "Kryptering"
+
+#: src/gpgoladdin.cpp:1097
+msgid "Encrypted file and Signature"
+msgstr ""
+
+#: src/gpgoladdin.cpp:1176 src/gpgoladdin.cpp:1253 src/gpgoladdin.cpp:1254
+msgid "Save and decrypt"
+msgstr ""
+
+#: src/inspectors.cpp:690
+#, fuzzy
+msgid "&encrypt message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:704
+#, fuzzy
+msgid "&sign message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:730
+msgid "GpgOL Decrypt/Verify"
+msgstr ""
+
+#: src/inspectors.cpp:791
+#, fuzzy
+msgid "Encrypt message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:807
+#, fuzzy
+msgid "Sign message with GnuPG"
+msgstr "Signera meddelandet med GPG"
+
+#: src/inspectors.cpp:924
+msgid ""
+"This is a signed and encrypted message.\n"
+"Click for more information. "
+msgstr ""
+
+#: src/inspectors.cpp:930
+msgid ""
+"This is a signed message.\n"
+"Click for more information. "
+msgstr ""
+
+#: src/inspectors.cpp:936
+msgid ""
+"This is an encrypted message.\n"
+"Click for more information. "
+msgstr ""
+
+#: src/mail.cpp:509
+#, fuzzy
+msgid "Encrypted message"
+msgstr "Dekryptera och validera meddelandet."
+
+#: src/mail.cpp:510
+msgid "Please wait while the message is being decrypted / verified..."
+msgstr ""
+
+#: src/mail.cpp:1316
+#, fuzzy
+msgid "This message is not signed.\n"
+msgstr "Dekryptera meddelandet och validera signaturen"
+
+#: src/mail.cpp:1317 src/mail.cpp:1379 src/mail.cpp:1385
+msgid "You cannot be sure who wrote the message."
+msgstr ""
+
+#: src/mail.cpp:1331
+#, c-format
+msgid ""
+"The sender is verified because:\n"
+"\n"
+"%s %s"
+msgstr ""
+
+#: src/mail.cpp:1332 src/mail.cpp:1393
+msgid "The used key"
+msgstr ""
+
+#: src/mail.cpp:1332
+#, fuzzy
+msgid " The used certificate"
+msgstr "Validering"
+
+#: src/mail.cpp:1334
+msgid "is marked as your own."
+msgstr ""
+
+#: src/mail.cpp:1336
+msgid "was certified by enough trusted keys."
+msgstr ""
+
+#: src/mail.cpp:1342
+#, c-format
+msgid ""
+"is cerified by the trusted issuer:\n"
+"'%s'\n"
+msgstr ""
+
+#: src/mail.cpp:1350
+#, c-format
+msgid "was consistently used for %i messages since %s."
+msgstr ""
+
+#: src/mail.cpp:1373
+msgid ""
+"The sender is not verified because:\n"
+"\n"
+msgstr ""
+
+#: src/mail.cpp:1378
+#, fuzzy
+msgid "The signature is invalid.\n"
+msgstr "Den här signaturen är giltig\n"
+
+#: src/mail.cpp:1384
+msgid "There was an error verifying the signature.\n"
+msgstr ""
+
+#: src/mail.cpp:1389
+#, fuzzy
+msgid "The signature is expired.\n"
+msgstr "Den här signaturen är giltig\n"
+
+#: src/mail.cpp:1393
+#, fuzzy
+msgid "The used certificate"
+msgstr "Validering"
+
+#: src/mail.cpp:1401
+msgid "is not in your keyring."
+msgstr ""
+
+#: src/mail.cpp:1405
+msgid "is revoked."
+msgstr ""
+
+#: src/mail.cpp:1409
+msgid "is expired."
+msgstr ""
+
+#: src/mail.cpp:1413
+msgid "is not meant for signing."
+msgstr ""
+
+#: src/mail.cpp:1417 src/mail.cpp:1421
+msgid "could not be checked for revocation."
+msgstr ""
+
+#: src/mail.cpp:1425
+msgid "conflicts with another key that was used in the past by the sender."
+msgstr ""
+
+#: src/mail.cpp:1429
+#, c-format
+msgid "does not claim the address: \"%s\"."
+msgstr ""
+
+#: src/mail.cpp:1439
+msgid "is not certified by enough trusted keys."
+msgstr ""
+
+#: src/mail.cpp:1443
+msgid "does not have enough history for basic trust."
+msgstr ""
+
+#: src/mail.cpp:1452
+msgid "is not certified by any trusted key."
+msgstr ""
+
+#: src/mail.cpp:1456
+msgid "is explicitly marked as invalid."
+msgstr ""
+
+#: src/mail.cpp:1462 src/mail.cpp:1463
+msgid "Click here for details about the key."
+msgstr ""
+
+#: src/mail.cpp:1467
+msgid "Click here to search the key on the configured keyserver."
+msgstr ""
+
+#: src/mail.cpp:1468
+msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 
 # A bit unclear in the original text
-#: src/message-events.cpp:279 src/mailitem.cpp:160
+#: src/mailitem.cpp:160 src/message-events.cpp:279
 msgid ""
 "Sorry, we can only encrypt plain text messages and\n"
 "no RTF messages. Please make sure that only the text\n"
@@ -111,6 +489,52 @@ msgstr ""
 "Tyvärr, vi kan endast kryptera vanliga textmeddelanden\n"
 "och inte RTF-meddelanden. Se till att endast textformatet\n"
 "har valts i inställningarna."
+
+#: src/mailitem-events.cpp:288
+msgid "Sorry, that's not possible, yet"
+msgstr ""
+
+#: src/mailitem-events.cpp:290
+#, c-format
+msgid ""
+"GpgOL has prevented the change to the \"%s\" property.\n"
+"Property changes are not yet handled for crypto messages.\n"
+"\n"
+"To workaround this limitation please change the property when the message is "
+"not open in any window and not selected in the messagelist.\n"
+"\n"
+"For example by right clicking but not selecting the message.\n"
+msgstr ""
+
+#: src/main.c:458
+#, c-format
+msgid "Note: Using compatibility flags: %s"
+msgstr ""
+
+#: src/main.c:464
+#, c-format
+msgid ""
+"Note: Writing debug logs to\n"
+"\n"
+"\"%s\""
+msgstr ""
+
+#: src/mapihelp.cpp:1715 src/mapihelp.cpp:1723 src/mapihelp.cpp:1731
+msgid "[no subject]"
+msgstr ""
+
+#: src/mapihelp.cpp:2340
+msgid ""
+"[The content of this message is not visible because it has been decrypted by "
+"another Outlook session.  Use the \"decrypt/verify\" command to make it "
+"visible]"
+msgstr ""
+
+#: src/mapihelp.cpp:3235
+msgid ""
+"[The content of this message is not visible due to an processing error in "
+"GpgOL.]"
+msgstr ""
 
 #: src/message.cpp:178
 msgid "[Crypto operation failed - can't show the body of the message]"
@@ -148,31 +572,31 @@ msgstr ""
 msgid "This message has no signature."
 msgstr "Dekryptera meddelandet och validera signaturen"
 
-#: src/message.cpp:837
+#: src/message.cpp:706
 msgid "This message is not encrypted."
 msgstr ""
 
-#: src/message.cpp:1064
+#: src/message.cpp:933
 #, fuzzy, c-format
 msgid ""
 "Decryption failed\n"
 "(%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:1225
+#: src/message.cpp:1094
 msgid "No recipients to encrypt to are given"
 msgstr ""
 
-#: src/message.cpp:1240 src/message.cpp:1268
+#: src/message.cpp:1109 src/message.cpp:1137
 msgid "Encrypting or signing an empty message is not possible."
 msgstr ""
 
-#: src/message.cpp:1249
+#: src/message.cpp:1118
 #, fuzzy, c-format
 msgid "Encryption failed (%s)"
 msgstr "Kryptering misslyckades"
 
-#: src/message.cpp:1277
+#: src/message.cpp:1146
 #, fuzzy, c-format
 msgid "Signing failed (%s)"
 msgstr "Signering misslyckades"
@@ -182,57 +606,9 @@ msgstr "Signering misslyckades"
 msgid "Error writing to stream"
 msgstr "Fel vid skrivning av fil"
 
-#: src/mimeparser.c:1214
+#: src/mimeparser.c:1214 src/pgpmime.c:360 src/pgpmime.c:511
 msgid "I/O-Error"
 msgstr "In-/Ut-fel"
-
-#: src/olflange-dlgs.cpp:43 src/gpgoladdin.cpp:968 src/gpgoladdin.cpp:1051
-#: src/gpgoladdin.cpp:1130
-msgid "General"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:44
-msgid "Enable the S/MIME support"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:46
-msgid "Message sending"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:47
-#, fuzzy
-msgid "&Encrypt new messages by default"
-msgstr "Kryptera meddelandet med GPG"
-
-#: src/olflange-dlgs.cpp:48
-msgid "&Sign new messages by default"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:50
-msgid "Message receiving"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:52
-msgid "Show HTML view if possible"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:53
-msgid "Present encrypted message as attachment"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:56
-msgid "Crypto Engine"
-msgstr ""
-
-#. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:256
-msgid "-#GpgOLFullHelpText#-"
-msgstr ""
-
-#: src/olflange-dlgs.cpp:262
-#, c-format
-msgid "This is GpgOL version %s"
-msgstr ""
 
 #: src/olflange.cpp:523
 msgid "Welcome to GpgOL "
@@ -282,260 +658,172 @@ msgstr ""
 "\n"
 "Uppdatera åtminstone till SP2 innan du försöker skicka ett meddelande"
 
-#: src/inspectors.cpp:690
-#, fuzzy
-msgid "&encrypt message with GnuPG"
-msgstr "Signera meddelandet med GPG"
-
-#: src/inspectors.cpp:704
-#, fuzzy
-msgid "&sign message with GnuPG"
-msgstr "Signera meddelandet med GPG"
-
-#: src/inspectors.cpp:730
-msgid "GpgOL Decrypt/Verify"
+#: src/olflange-dlgs.cpp:50
+msgid "Message receiving"
 msgstr ""
 
-#: src/inspectors.cpp:791
-#, fuzzy
-msgid "Encrypt message with GnuPG"
-msgstr "Signera meddelandet med GPG"
+#: src/olflange-dlgs.cpp:52
+msgid "Show HTML view if possible"
+msgstr ""
 
-#: src/inspectors.cpp:807
-#, fuzzy
-msgid "Sign message with GnuPG"
-msgstr "Signera meddelandet med GPG"
+#: src/olflange-dlgs.cpp:53
+msgid "Present encrypted message as attachment"
+msgstr ""
 
-#: src/inspectors.cpp:924
+#: src/olflange-dlgs.cpp:56
+msgid "Crypto Engine"
+msgstr ""
+
+#. TRANSLATORS: See the source for the full english text.
+#: src/olflange-dlgs.cpp:256
+msgid "-#GpgOLFullHelpText#-"
+msgstr ""
+
+#: src/olflange-dlgs.cpp:262
+#, c-format
+msgid "This is GpgOL version %s"
+msgstr ""
+
+#: src/parsecontroller.cpp:154
+msgid "Decryption canceled or timed out."
+msgstr ""
+
+#: src/parsecontroller.cpp:167
 msgid ""
-"This is a signed and encrypted message.\n"
-"Click for more information. "
+"No secret key found to decrypt the message. It is encrypted for following "
+"keys:"
 msgstr ""
 
-#: src/inspectors.cpp:930
+#: src/parsecontroller.cpp:173
+msgid "Could not decrypt the data."
+msgstr ""
+
+#: src/parsecontroller.cpp:179 src/parsecontroller.cpp:219
+msgid "Encrypted message (decryption not possible)"
+msgstr ""
+
+#: src/parsecontroller.cpp:220
 msgid ""
-"This is a signed message.\n"
-"Click for more information. "
+"Failed to find GnuPG please ensure that GnuPG or Gpg4win is properly "
+"installed."
 msgstr ""
 
-#: src/inspectors.cpp:936
+#: src/pgpmime.c:358
+#, fuzzy
 msgid ""
-"This is an encrypted message.\n"
-"Click for more information. "
+"Error creating file\n"
+"Please select another one"
 msgstr ""
+"Fel vid skapande av fil\n"
+"Välj en annan"
 
-#: src/explorers.cpp:126
+#: src/pgpmime.c:510
 #, fuzzy
-msgid "GnuPG Certificate &Manager"
-msgstr "GPG-nyckel&hanterare"
+msgid "Error writing file"
+msgstr "Fel vid skrivning av fil"
 
-#: src/explorers.cpp:140
-msgid "Remove GpgOL flags from this folder"
-msgstr ""
-
-#: src/explorers.cpp:167
+#: src/pgpmime.c:586
 #, fuzzy
-msgid "Open the certificate manager"
-msgstr "GPG-nyckel&hanterare"
+msgid "[PGP/MIME message]"
+msgstr "[PGP/MIME-signatur]"
 
-#: src/explorers.cpp:194
-msgid ""
-"You are about to start the process of reversing messages created by GpgOL to "
-"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
-"disabled state so that messages are not anymore processed by GpgOL.\n"
-"\n"
-"You should convert all folders one after the other with this command, close "
-"Outlook and then deinstall GpgOL.\n"
-"\n"
-"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
-"will again process messages."
-msgstr ""
+#: src/pgpmime.c:607
+msgid "[PGP/MIME message without plain text body]"
+msgstr "[PGP/MIME-meddelande utan vanlig meddelandetext]"
 
-#: src/explorers.cpp:208
-msgid "Do you want to revert this folder?"
-msgstr ""
+#: src/pgpmime.c:682
+msgid "[PGP/MIME signed message without a plain text body]"
+msgstr "[PGP/MIME-signerat meddelande utan vanlig meddelandetext]"
 
-#: src/gpgoladdin.cpp:652
-#, fuzzy
-msgid "Encrypt the message."
-msgstr "Dekryptera och validera meddelandet."
+#: src/pgpmime.c:694
+msgid "[PGP/MIME signature]"
+msgstr "[PGP/MIME-signatur]"
 
-#: src/gpgoladdin.cpp:654
-msgid "Encrypts the message and all attachments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:656
-#, fuzzy
-msgid "Sign the message."
-msgstr "Dekryptera och validera meddelandet."
-
-#: src/gpgoladdin.cpp:658
-msgid "Sign the message and all attachments before sending."
-msgstr ""
-
-#: src/gpgoladdin.cpp:660 src/gpgoladdin.cpp:876
-msgid "Open the settings dialog for GpgOL."
-msgstr ""
-
-#: src/gpgoladdin.cpp:712 src/gpgoladdin.cpp:812 src/gpgoladdin.cpp:972
-#: src/gpgoladdin.cpp:979
-#, fuzzy
-msgid "Encrypt"
-msgstr "Kryptering"
-
-#: src/gpgoladdin.cpp:713 src/gpgoladdin.cpp:813 src/gpgoladdin.cpp:974
-msgid "Sign"
-msgstr ""
-
-#: src/gpgoladdin.cpp:764
-#, fuzzy
-msgid "Encrypted"
-msgstr "Kryptering"
-
-#: src/gpgoladdin.cpp:765
-msgid "Signed"
-msgstr ""
-
-#: src/gpgoladdin.cpp:768 src/gpgoladdin.cpp:973 src/gpgoladdin.cpp:979
-#: src/gpgoladdin.cpp:1055 src/gpgoladdin.cpp:1058 src/gpgoladdin.cpp:1059
-#, fuzzy
-msgid "Decrypt"
-msgstr "Dekryptering"
-
-#: src/gpgoladdin.cpp:840
-#, fuzzy
-msgid "Start the Certificate Management Software"
-msgstr "GPG-nyckel&hanterare"
-
-#: src/gpgoladdin.cpp:842
-msgid ""
-"Open GPA or Kleopatra to manage your certificates. You can use this you to "
-"generate your own certificates. "
-msgstr ""
-
-#: src/gpgoladdin.cpp:846
-#, fuzzy
-msgid "Encrypt the text of the message"
-msgstr "Dekryptera och validera meddelandet."
-
-#: src/gpgoladdin.cpp:848
-msgid ""
-"Choose the certificates for which the message should be encrypted and "
-"replace the text with the encrypted message."
-msgstr ""
-
-#: src/gpgoladdin.cpp:852
-msgid "Add a file as an encrypted attachment"
-msgstr ""
-
-#: src/gpgoladdin.cpp:854
-msgid "Encrypts a file and adds it as an attachment to the message. "
-msgstr ""
-
-#: src/gpgoladdin.cpp:857
-msgid "Add a file as an encrypted attachment with a signature"
-msgstr ""
-
-#: src/gpgoladdin.cpp:859
-msgid ""
-"Encrypts a file, signs it and adds both the encrypted file and the signature "
-"as attachments to the message. "
-msgstr ""
-
-#: src/gpgoladdin.cpp:862
-#, fuzzy
-msgid "Decrypt the message"
-msgstr "Dekryptera och validera meddelandet."
-
-#: src/gpgoladdin.cpp:864
-msgid ""
-"Look for PGP or S/MIME encrypted data in the message text and decrypt it."
-msgstr ""
-
-#: src/gpgoladdin.cpp:867
-#, fuzzy
-msgid "Add a signature of the message"
-msgstr "Dekryptera och validera meddelandet."
-
-#: src/gpgoladdin.cpp:869
-msgid ""
-"Appends a signed copy of the message text in an opaque signature. An opaque "
-"signature ensures that the signed text is not modified by embedding it in "
-"the signature itself. The combination of the signed message text and your "
-"signature is added below the plain text. The message will not be encrypted!"
-msgstr ""
-
-#: src/gpgoladdin.cpp:969 src/gpgoladdin.cpp:1052 src/gpgoladdin.cpp:1131
-#, fuzzy
-msgid "Start Certificate Manager"
-msgstr "GPG-nyckel&hanterare"
-
-#: src/gpgoladdin.cpp:971 src/gpgoladdin.cpp:1054
-msgid "Textbody"
-msgstr ""
-
-#: src/gpgoladdin.cpp:975 src/gpgoladdin.cpp:1056
-msgid "Verify"
-msgstr ""
-
-#: src/gpgoladdin.cpp:976
-#, fuzzy
-msgid "Attachments"
-msgstr "Dekryptering av bilaga"
-
-#: src/gpgoladdin.cpp:977
-#, fuzzy
-msgid "Encrypted file"
-msgstr "Kryptering"
-
-#: src/gpgoladdin.cpp:978
-msgid "Encrypted file and Signature"
-msgstr ""
-
-#: src/gpgoladdin.cpp:1057 src/gpgoladdin.cpp:1134 src/gpgoladdin.cpp:1135
-msgid "Save and decrypt"
-msgstr ""
-
-#: src/ribbon-callbacks.cpp:249
+#: src/ribbon-callbacks.cpp:261
 #, fuzzy
 msgid "Please select text to encrypt."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:261
+#: src/ribbon-callbacks.cpp:273
 msgid "Textbody empty."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:310 src/ribbon-callbacks.cpp:1064
+#: src/ribbon-callbacks.cpp:322 src/ribbon-callbacks.cpp:1076
 #, fuzzy
 msgid "Please add at least one recipent."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:672
+#: src/ribbon-callbacks.cpp:684
 #, fuzzy
 msgid "Please select a Mail."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:686
+#: src/ribbon-callbacks.cpp:698
 #, fuzzy
 msgid "Please select the data you wish to decrypt."
 msgstr "Välj åtminstone en mottagarnyckel."
 
-#: src/ribbon-callbacks.cpp:699
+#: src/ribbon-callbacks.cpp:711
 msgid "Nothing to decrypt."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:878
+#: src/ribbon-callbacks.cpp:890
 msgid "Plain text"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:879
+#: src/ribbon-callbacks.cpp:891
 msgid "Signed text"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:1071
+#: src/ribbon-callbacks.cpp:1083
 #, fuzzy
 msgid "Select file to encrypt"
 msgstr "Välj åtminstone en mottagarnyckel."
+
+#: src/ribbon-callbacks.cpp:1531
+msgid "Verified Sender"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:1535
+msgid "Unverified Sender"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:1551
+#, fuzzy, c-format
+msgid "This is a signed %s message."
+msgstr "[Det här är ett PGP/MIME-meddelande]"
+
+#: src/ribbon-callbacks.cpp:1552
+#, fuzzy
+msgid "S/MIME"
+msgstr "[PGP/MIME-meddelande]"
+
+#: src/ribbon-callbacks.cpp:1552
+msgid "OpenPGP"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:1558
+#, fuzzy
+msgid "This message is not cryptographically signed"
+msgstr "Dekryptera meddelandet och validera signaturen"
+
+#: src/ribbon-callbacks.cpp:1637
+msgid ""
+"Could not find Kleopatra.\n"
+"Please reinstall Gpg4win with the Kleopatra component enabled."
+msgstr ""
+
+#, fuzzy
+#~ msgid "the certificate."
+#~ msgstr "Validering"
+
+#, fuzzy
+#~ msgid "certificate"
+#~ msgstr "Validering"
+
+#, fuzzy
+#~ msgid "Encrypted"
+#~ msgstr "Kryptering"
 
 #, fuzzy
 #~ msgid ""
@@ -554,9 +842,6 @@ msgstr "Välj åtminstone en mottagarnyckel."
 
 #~ msgid "Fingerprint: "
 #~ msgstr "Fingeravtryck: "
-
-#~ msgid "This signature is valid\n"
-#~ msgstr "Den här signaturen är giltig\n"
 
 #~ msgid "signature state is \"green\"\n"
 #~ msgstr "signaturens tillstånd är \"grön\"\n"
@@ -744,14 +1029,6 @@ msgstr "Välj åtminstone en mottagarnyckel."
 #~ msgstr "Välj det här alternativet för att kryptera meddelandet."
 
 #, fuzzy
-#~ msgid "PGP/MIME"
-#~ msgstr "[PGP/MIME-meddelande]"
-
-#, fuzzy
-#~ msgid "Could not start certificate manager"
-#~ msgstr "Kunde inte starta nyckelhanteraren"
-
-#, fuzzy
 #~ msgid "Select this option to automatically select the protocol."
 #~ msgstr "Välj det här alternativet för att kryptera meddelandet."
 
@@ -834,12 +1111,6 @@ msgstr "Välj åtminstone en mottagarnyckel."
 #~ "\n"
 #~ "(Det här meddelandet kommer endast att visas en gång per session)"
 
-#~ msgid "Verification"
-#~ msgstr "Validering"
-
-#~ msgid "[This is a PGP/MIME message]"
-#~ msgstr "[Det här är ett PGP/MIME-meddelande]"
-
 #~ msgid "Problem decrypting PGP/MIME message"
 #~ msgstr "Problem vid dekryptering av PGP/MIME-meddelande"
 
@@ -898,15 +1169,6 @@ msgstr "Välj åtminstone en mottagarnyckel."
 
 #~ msgid "Attachment Signing Failure"
 #~ msgstr "Signering av bilaga misslyckades"
-
-#~ msgid "[PGP/MIME message without plain text body]"
-#~ msgstr "[PGP/MIME-meddelande utan vanlig meddelandetext]"
-
-#~ msgid "[PGP/MIME signed message without a plain text body]"
-#~ msgstr "[PGP/MIME-signerat meddelande utan vanlig meddelandetext]"
-
-#~ msgid "[PGP/MIME signature]"
-#~ msgstr "[PGP/MIME-signatur]"
 
 #~ msgid "GPG &encrypt message"
 #~ msgstr "GPG-&kryptera meddelandet"
