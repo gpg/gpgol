@@ -23,6 +23,7 @@
 #include <wincrypt.h>
 #include <ctype.h>
 #include <winnls.h>
+#include <unistd.h>
 
 #include "mymapi.h"
 #include "mymapitags.h"
@@ -142,6 +143,32 @@ i18n_init (void)
   textdomain (PACKAGE_GT);
 }
 
+static char *
+get_gpgme_w32_inst_dir (void)
+{
+  char *gpg4win_dir = get_gpg4win_dir ();
+  char *tmp;
+  gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32-spawn.exe", gpg4win_dir);
+
+  if (!access(tmp, R_OK))
+    {
+      xfree (tmp);
+      gpgrt_asprintf (&tmp, "%s\\bin", gpg4win_dir);
+      xfree (gpg4win_dir);
+      return tmp;
+    }
+  xfree (tmp);
+  gpgrt_asprintf (&tmp, "%s\\gpgme-w32-spawn.exe", gpg4win_dir);
+
+  if (!access(tmp, R_OK))
+    {
+      xfree (tmp);
+      return gpg4win_dir;
+    }
+  log_error("%s:%s: Failed to find gpgme-w32-spawn.exe!",
+            SRCNAME, __func__);
+  return NULL;
+}
 
 /* Entry point called by DLL loader. */
 int WINAPI
@@ -157,8 +184,7 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 
       /* Set the installation directory for GpgME so that
          it can find tools like gpgme-w32-spawn correctly. */
-      char *instdir;
-      gpgrt_asprintf (&instdir, "%s\\bin", get_gpg4win_dir ());
+      char *instdir = get_gpgme_w32_inst_dir();
       gpgme_set_global_flag ("w32-inst-dir", instdir);
       xfree (instdir);
 
