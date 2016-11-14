@@ -164,7 +164,7 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
 
   if (no_sec)
     {
-      msg = _("No secret key found to decrypt the message."
+      msg = _("No secret key found to decrypt the message. "
               "It is encrypted for following keys:");
       msg += format_recipients (result);
     }

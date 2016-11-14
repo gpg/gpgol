@@ -28,6 +28,12 @@
 #include "mail.h"
 #include "mapihelp.h"
 
+#undef _
+# define _(a) utf8_gettext (a)
+#else
+# define _(a) a
+#endif
+
 const wchar_t *prop_blacklist[] = {
   L"Body",
   L"HTMLBody",
@@ -283,8 +289,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
           char *fmt;
           gpgrt_asprintf (&fmt, _("GpgOL has prevented the change to the \"%s\" property.\n"
                                   "Property changes are not yet handled for crypto messages.\n\n"
-                                  "To workaround this limitation please change the property when the"
-                                  "message is not open in any window and not selected in the"
+                                  "To workaround this limitation please change the property when the "
+                                  "message is not open in any window and not selected in the "
                                   "messagelist.\n\nFor example by right clicking but not selecting the message.\n"),
                           wchar_to_utf8(prop_name));
           wchar_t *msg = utf8_to_wchar (fmt);

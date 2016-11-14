@@ -45,6 +45,12 @@
 #include <vector>
 #include <memory>
 
+#undef _
+# define _(a) utf8_gettext (a)
+#else
+# define _(a) a
+#endif
+
 using namespace GpgME;
 
 static std::map<LPDISPATCH, Mail*> g_mail_map;
@@ -1322,8 +1328,8 @@ Mail::get_signature_status()
       const auto uid = pair.second;
       /* We are valid */
       keyFound = true;
-      gpgrt_asprintf (&buf, _("The sender is verified because:\n\nThe used %s %s"),
-                      isOpenPGP ? _("key") : _("certificate"),
+      gpgrt_asprintf (&buf, _("The sender is verified because:\n\n%s %s"),
+                      isOpenPGP ? _("The used key") : _(" The used certificate"),
                       sig.validity() == Signature::Validity::Ultimate ?
                       _("is marked as your own.") :
                       sig.validity() == Signature::Validity::Full && isOpenPGP ?
@@ -1384,10 +1390,8 @@ Mail::get_signature_status()
         }
       else
         {
-          gpgrt_asprintf (&buf, _("The used %s "),
-                          isOpenPGP ? _("key") : _("certificate"));
-          message += buf;
-          xfree (buf);
+          message += isOpenPGP ? _("The used key") : _("The used certificate")
+                  + std::string(" ");
         }
 
       const auto uid = get_uid_for_sender (sig.key(), get_sender());
@@ -1445,7 +1449,7 @@ Mail::get_signature_status()
                (sig.validity() == 0))
         {
            /* Bit of a catch all for weird results. */
-           message += _("is not ceritified by any trusted key.");
+           message += _("is not certified by any trusted key.");
         }
       else if ((sig.validity() & Signature::Validity::Never))
         {
@@ -1455,13 +1459,13 @@ Mail::get_signature_status()
   message += "\n\n";
   if (keyFound)
     {
-      gpgrt_asprintf (&buf, _("Click here for details about the %s."),
-                  isOpenPGP ? _("key") : _("certificate."));
+      message +=  isOpenPGP ? _("Click here for details about the key.") :
+                              _("Click here for details about the key."):
     }
   else
     {
-      gpgrt_asprintf (&buf, _("Click here to search the %s on a public keyserver."),
-                  isOpenPGP ? _("key") : _("certificate."));
+      message +=  isOpenPGP ? _("Click here to search the key on the configured keyserver.") :
+                              _("Click here to search the certificate on the configured X509 keyserver."):
     }
   message += buf;
   xfree (buf);
