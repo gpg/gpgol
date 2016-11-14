@@ -29,10 +29,7 @@
 #include "mapihelp.h"
 
 #undef _
-# define _(a) utf8_gettext (a)
-#else
-# define _(a) a
-#endif
+#define _(a) utf8_gettext (a)
 
 const wchar_t *prop_blacklist[] = {
   L"Body",

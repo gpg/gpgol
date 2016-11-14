@@ -45,11 +45,9 @@
 #include <vector>
 #include <memory>
 
+
 #undef _
-# define _(a) utf8_gettext (a)
-#else
-# define _(a) a
-#endif
+#define _(a) utf8_gettext (a)
 
 using namespace GpgME;
 
@@ -1460,12 +1458,12 @@ Mail::get_signature_status()
   if (keyFound)
     {
       message +=  isOpenPGP ? _("Click here for details about the key.") :
-                              _("Click here for details about the key."):
+                              _("Click here for details about the key.");
     }
   else
     {
       message +=  isOpenPGP ? _("Click here to search the key on the configured keyserver.") :
-                              _("Click here to search the certificate on the configured X509 keyserver."):
+                              _("Click here to search the certificate on the configured X509 keyserver.");
     }
   message += buf;
   xfree (buf);
