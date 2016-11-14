@@ -113,7 +113,7 @@ libassuan.a:
 	ln -s $$($(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a .
 
 libgpgmepp.a:
-	ln -s $$($(LIBASSUAN_CONFIG) --prefix)/lib/libgpgmepp.a .
+	ln -s $$($(GPGME_CONFIG) --prefix)/lib/libgpgmepp.a .
 
 clean-local:
 	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a libgpgmepp.a
