@@ -458,12 +458,6 @@ read_options (void)
                     _("Note: Using compatibility flags: %s"), val);
           MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
         }
-      if (get_log_file () && !opt.enable_debug)
-        {
-          snprintf (tmpbuf, sizeof tmpbuf,
-                    _("Note: Writing debug logs to\n\n\"%s\""), get_log_file ());
-          MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
-        }
     }
   xfree (val); val = NULL;
 
