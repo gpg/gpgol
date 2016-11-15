@@ -1120,7 +1120,11 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
   /* Set a special property so that we are later able to identify
      messages signed or encrypted by us.  */
   if (mapi_set_sig_status (message, "@"))
-    return -1;
+    {
+      log_error ("%s:%s: error setting sigstatus",
+                 SRCNAME, __func__);
+      return -1;
+    }
 
   /* We also need to set the message class into our custom
      property. This override is at least required for encrypted
@@ -1131,18 +1135,32 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
                                   "IPM.Note.GpgOL.OpaqueEncrypted" :
                                   "IPM.Note.GpgOL.MultipartEncrypted") :
                                  "IPM.Note.GpgOL.MultipartSigned")))
-    return -1;
+    {
+      log_error ("%s:%s: error setting gpgol msgclass",
+                 SRCNAME, __func__);
+      return -1;
+    }
 
   /* Now delete all parts of the MAPI message except for the one
      attachment we just created.  */
   if (delete_all_attachments (message, att_table))
-    return -1;
+    {
+      log_error ("%s:%s: error deleting attachments",
+                 SRCNAME, __func__);
+      return -1;
+    }
 
   /* Remove the draft info so that we don't leak the information on
      whether the message has been signed etc.  */
   mapi_set_gpgol_draft_info (message, NULL);
 
-  return mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE);
+  if (mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE))
+    {
+      log_error ("%s:%s: error saving changes.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  return 0;
 }
 
 
