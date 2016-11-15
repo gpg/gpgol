@@ -38,6 +38,7 @@ const wchar_t *prop_blacklist[] = {
   L"CC", /* Ditto */
   L"BCC", /* Ditto */
   L"Categories",
+  L"UnRead",
   NULL };
 
 typedef enum
