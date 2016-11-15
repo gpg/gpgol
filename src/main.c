@@ -148,7 +148,7 @@ get_gpgme_w32_inst_dir (void)
 {
   char *gpg4win_dir = get_gpg4win_dir ();
   char *tmp;
-  gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32-spawn.exe", gpg4win_dir);
+  gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32spawn.exe", gpg4win_dir);
 
   if (!access(tmp, R_OK))
     {
@@ -158,15 +158,14 @@ get_gpgme_w32_inst_dir (void)
       return tmp;
     }
   xfree (tmp);
-  gpgrt_asprintf (&tmp, "%s\\gpgme-w32-spawn.exe", gpg4win_dir);
+  gpgrt_asprintf (&tmp, "%s\\gpgme-w32spawn.exe", gpg4win_dir);
 
   if (!access(tmp, R_OK))
     {
       xfree (tmp);
       return gpg4win_dir;
     }
-  log_error("%s:%s: Failed to find gpgme-w32-spawn.exe!",
-            SRCNAME, __func__);
+  OutputDebugString("Failed to find gpgme-w32spawn.exe!");
   return NULL;
 }
 
