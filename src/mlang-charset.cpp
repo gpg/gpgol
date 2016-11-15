@@ -43,6 +43,13 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
   wchar_t *buf;
   char *ret;
 
+  if (!charset || !strlen (charset))
+    {
+      log_debug ("%s:%s: No charset returning plain.",
+                 SRCNAME, __func__);
+      return strdup (input);
+    }
+
   CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                    IID_IMultiLanguage, (void**)&multilang);
 
@@ -73,7 +80,7 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
       log_error ("%s:%s: Failed to find charset for: %s",
                  SRCNAME, __func__, charset);
       gpgol_release (multilang);
-      return NULL;
+      return strdup(input);
     }
   enc = (mime_info.uiInternetEncoding == 0) ? mime_info.uiCodePage :
                                               mime_info.uiInternetEncoding;
