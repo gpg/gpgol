@@ -186,8 +186,9 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
 
   /* We better insert a short filename. */
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = GpgOLStr (MIMEATTACHFILENAME);
+  prop.Value.lpszA = strdup (MIMEATTACHFILENAME);
   hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
+  xfree (prop.Value.lpszA);
   if (hr)
     {
       log_error ("%s:%s: can't set attach filename: hr=%#lx\n",
@@ -1100,13 +1101,15 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
   if (encrypt)
     {
-      prop.Value.lpszA = GpgOLStr ("IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned");
+      prop.Value.lpszA = strdup ("IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned");
     }
   else
     {
-      prop.Value.lpszA = GpgOLStr ("IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned");
+      prop.Value.lpszA = strdup ("IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned");
     }
+
   hr = message->SetProps(1, &prop, NULL);
+  xfree(prop.Value.lpszA);
   if (hr)
     {
       log_error ("%s:%s: error setting the message class: hr=%#lx\n",
