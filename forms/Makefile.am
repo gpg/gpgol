@@ -13,7 +13,8 @@
 
 icons = encr-l.ico encr-s.ico sign-l.ico sign-s.ico
 
-cfg = gpgol.cfg gpgol-ms.cfg gpgol-cs.cfg
+cfg = gpgol.cfg gpgol-ms.cfg gpgol-cs.cfg \
+	  gpgol-form-signed.cfg gpgol-form-encrypted.cfg
 
 dist_pkgdata_DATA = $(icons) $(cfg)
 
