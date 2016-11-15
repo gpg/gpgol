@@ -1465,8 +1465,6 @@ Mail::get_signature_status()
       message +=  isOpenPGP ? _("Click here to search the key on the configured keyserver.") :
                               _("Click here to search the certificate on the configured X509 keyserver.");
     }
-  message += buf;
-  xfree (buf);
   return message;
 }
 
