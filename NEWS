@@ -1,6 +1,40 @@
 Noteworthy changes for version 2.0.0 (unreleased)
 =================================================
 
+ * Decryption / verification is done in a second thread so outlook
+ stays responsive while decrypting.
+
+ * Opening a mail in a reader window no longer causes Outlook to
+ resync the mail.
+
+ * Inline editors (Reply and Forward in the messagelist) are now
+ supported.
+
+ * The HTML preferences from Outlook are now respected when viewing
+ an encrypted multipart/alternative mail.
+
+ * Two crashes that sometimes occured when sending mail have been
+ fixed.
+
+ * The "Do you want to save the changes" Messageboxes from outlook
+ no longer show up.
+
+ * Signature details are now shown in the Mail ribbon when reading
+ messages.
+
+ * Signature and encryption status is now shown in Outlook through
+ categorisation. No more popups when reading encrypted mails.
+
+ * There is now an Option to use inline-pgp when encrypting mails
+ without attachments.
+
+ * When opening a mail in a reader window closing it no longer causes
+ the mail in the Messagelist not to be displayed anymore.
+
+ * Decryption no longer requires an UI-Server (GPA or Kleopatra).
+
+ * Various bugfixes.
+
 
 Noteworthy changes for version 1.4.0 (2016-03-30)
 =================================================
