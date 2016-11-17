@@ -692,6 +692,8 @@ engine_wait (engine_filter_t filter)
       release_in_lock (filter, __func__);
       if (more)
         SwitchToThread ();
+      /* Let's not burn at 100% CPU please */
+      Sleep (100);
     }
   while (more);
 
