@@ -313,6 +313,7 @@ qp_encode (const char *input, size_t inlen, size_t *r_outlen)
         {
           log_error ("Quoted printable too long. Bug.");
           r_outlen = NULL;
+          xfree (outbuf);
           return NULL;
         }
     }
