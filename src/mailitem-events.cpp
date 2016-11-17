@@ -356,7 +356,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           else
             {
-              log_debug ("%s:%s: Message %p cancelling send crypto failed.",
+              log_debug ("%s:%s: Message %p cancelling send - crypto failed.",
                          SRCNAME, __func__, m_object);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
