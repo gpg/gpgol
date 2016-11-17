@@ -144,8 +144,13 @@ public:
   /** @brief Necessary crypto operations were completed successfully. */
   bool crypto_successful () { return !needs_crypto() || m_crypt_successful; }
 
-  /** @brief Message should be encrypted and or signed. */
-  bool needs_crypto ();
+  /** @brief Message should be encrypted and or signed.
+    0: No
+    1: Encrypt
+    2: Sign
+    3: Encrypt & Sign
+  */
+  int needs_crypto ();
 
   /** @brief wipe the plaintext from the message and encrypt attachments.
    *
@@ -274,6 +279,8 @@ public:
       call. */
   int close ();
 
+  /** Try to locate the keys for all recipients */
+  void locate_keys();
 private:
   void update_categories ();
   void update_body ();

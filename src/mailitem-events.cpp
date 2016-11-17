@@ -230,11 +230,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case PropertyChange:
         {
-          const wchar_t *prop_name;
-          if (!m_mail->is_crypto_mail ())
-            {
-              break;
-            }
           if (!parms || parms->cArgs != 1 ||
               parms->rgvarg[0].vt != VT_BSTR ||
               !parms->rgvarg[0].bstrVal)
@@ -243,7 +238,24 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
               break;
             }
-          prop_name = parms->rgvarg[0].bstrVal;
+          const wchar_t *prop_name = parms->rgvarg[0].bstrVal;
+          if (!m_mail->is_crypto_mail ())
+            {
+              if (!opt.autoresolve)
+                {
+                  break;
+                }
+              if (!wcscmp (prop_name, L"To") ||
+                  !wcscmp (prop_name, L"BCC") ||
+                  !wcscmp (prop_name, L"CC"))
+                {
+                  if ((m_mail->needs_crypto() & 1))
+                    {
+                      m_mail->locate_keys();
+                    }
+                }
+              break;
+            }
           for (const wchar_t **cur = prop_blacklist; *cur; cur++)
             {
               if (!wcscmp (prop_name, *cur))

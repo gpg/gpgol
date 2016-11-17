@@ -39,9 +39,12 @@
 #include <gpgme++/verificationresult.h>
 #include <gpgme++/decryptionresult.h>
 #include <gpgme++/key.h>
+#include <gpgme++/context.h>
+#include <gpgme++/keylistresult.h>
 #include <gpg-error.h>
 
 #include <map>
+#include <set>
 #include <vector>
 #include <memory>
 
@@ -53,6 +56,7 @@ using namespace GpgME;
 
 static std::map<LPDISPATCH, Mail*> g_mail_map;
 static std::map<std::string, Mail*> g_uid_map;
+static std::set<std::string> uids_searched;
 
 #define COPYBUFSIZE (8 * 1024)
 
@@ -716,7 +720,7 @@ Mail::encrypt_sign ()
   return err;
 }
 
-bool
+int
 Mail::needs_crypto ()
 {
   LPMESSAGE message = get_oom_message (m_mailitem);
@@ -1498,4 +1502,67 @@ Mail::get_sig_fpr() const
       return nullptr;
     }
   return m_sig.fingerprint();
+}
+
+
+static DWORD WINAPI
+do_locate (LPVOID arg)
+{
+  char *recipient = (char*) arg;
+  log_debug ("%s:%s searching key for recipient: \"%s\"",
+             SRCNAME, __func__, recipient);
+  Context *ctx = Context::createForProtocol (OpenPGP);
+
+  if (!ctx)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+
+  ctx->setKeyListMode (GpgME::Extern | GpgME::Local);
+  ctx->startKeyListing (recipient, false);
+
+  std::vector<Key> keys;
+  Error err;
+  do {
+      keys.push_back (ctx->nextKey(err));
+    } while (!err);
+  keys.pop_back ();
+  ctx->endKeyListing ();
+  delete ctx;
+
+  if (keys.size ())
+    {
+      log_debug ("%s:%s found key for recipient: \"%s\"",
+                 SRCNAME, __func__, recipient);
+    }
+  xfree (recipient);
+  do_in_ui_thread (UNKNOWN, NULL);
+  return 0;
+}
+
+/** Try to locate the keys for all recipients */
+void Mail::locate_keys()
+{
+  char ** recipients = get_recipients ();
+
+  if (!recipients)
+    {
+      TRACEPOINT;
+      return;
+    }
+  for (int i = 0; recipients[i]; i++)
+    {
+      std::string recp = recipients[i];
+      if (uids_searched.find (recp) == uids_searched.end ())
+        {
+          uids_searched.insert (recp);
+          HANDLE thread = CreateThread (NULL, 0, do_locate,
+                                        (LPVOID) strdup(recipients[i]), 0,
+                                        NULL);
+          CloseHandle (thread);
+        }
+      xfree (recipients[i]);
+    }
+  xfree (recipients);
 }
