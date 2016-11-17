@@ -44,7 +44,7 @@ set_labels (HWND dlg)
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
     { IDC_INLINE_PGP,       N_("&Send OpenPGP mails without "
                                "attachments as inline-pgp")},
-    { IDC_AUTORRESOLVE,     N_("&Select certificates automatically (OpenPGP only)")},
+    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
 
 
     { IDC_GPG_OPTIONS,      N_("Debug...")},

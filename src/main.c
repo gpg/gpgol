@@ -418,6 +418,9 @@ read_options (void)
   load_extension_value ("inlinePGP", &val);
   opt.inline_pgp = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
+  load_extension_value ("autoresolve", &val);
+  opt.autoresolve = val == NULL || *val != '1'? 0 : 1;
+  xfree (val); val = NULL;
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
      the switch below for a description. */
@@ -489,6 +492,7 @@ write_options (void)
     {"bodyAsAttachment",         0, opt.body_as_attachment, NULL},
     {"mimeUI", MIME_UI_DEFAULT, opt.mime_ui, NULL},
     {"inlinePGP",                0, opt.inline_pgp, NULL},
+    {"autoresolve",              0, opt.autoresolve, NULL},
     {NULL, 0, 0, NULL}
   };
   char buf[32];

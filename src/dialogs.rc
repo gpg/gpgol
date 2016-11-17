@@ -337,7 +337,7 @@ BEGIN
 
     CONTROL         "autoresolve", IDC_AUTORRESOLVE,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-                    24, 82, 215, 10
+                    24, 93, 215, 10
 
     /* Stuff at the lower left corner.  */
     LTEXT           "GpgOL by Gpg4win", IDC_GPG4WIN_STRING,
