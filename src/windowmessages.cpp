@@ -250,12 +250,15 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
         break;
       }
      case WM_SYSCOMMAND:
+        /*
+         This comes to often and when we are closed from the icon
+         we also get WM_CLOSE
        if (cwp->wParam == SC_CLOSE)
         {
           log_debug ("%s:%s: SC_CLOSE syscommand. Closing all mails.",
                      SRCNAME, __func__);
           Mail::close_all_mails();
-        }
+        } */
        break;
      default:
        break;
