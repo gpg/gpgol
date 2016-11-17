@@ -1110,10 +1110,9 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag,
                               "is not possible."),
                       "GpgOL", MB_ICONERROR|MB_OK);
         }
-      else if (err && opt.enable_debug)
+      else if (err && err != -1)
         {
           char buf[200];
-          
           snprintf (buf, sizeof buf,
                     _("Encryption failed (%s)"), gpg_strerror (err));
           MessageBox (hwnd, buf, "GpgOL", MB_ICONERROR|MB_OK);
