@@ -99,8 +99,16 @@ Mail::Mail (LPDISPATCH mailitem) :
   g_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
 }
 
+GPGRT_LOCK_DEFINE(dtor_lock);
+
 Mail::~Mail()
 {
+  /* This should fix a race condition where the mail is
+     deleted before the parser is accessed in the decrypt
+     thread. The shared_ptr of the parser then ensures
+     that the parser is alive even if the mail is deleted
+     while parsing. */
+  gpgrt_lock_lock (&dtor_lock);
   std::map<LPDISPATCH, Mail *>::iterator it;
 
   detach_MailItemEvents_sink (m_event_sink);
@@ -123,8 +131,17 @@ Mail::~Mail()
 
   xfree (m_sender);
   gpgol_release(m_mailitem);
-  log_oom_extra ("%s:%s: destroyed: %p uuid: %s",
-                 SRCNAME, __func__, this, m_uuid.c_str());
+  if (!m_uuid.empty())
+    {
+      log_oom_extra ("%s:%s: destroyed: %p uuid: %s",
+                     SRCNAME, __func__, this, m_uuid.c_str());
+    }
+  else
+    {
+      log_oom_extra ("%s:%s: non crypto mail: %p destroyed",
+                     SRCNAME, __func__, this);
+    }
+  gpgrt_lock_unlock (&dtor_lock);
 }
 
 Mail *
@@ -448,32 +465,41 @@ GPGRT_LOCK_DEFINE(parser_lock);
 static DWORD WINAPI
 do_parsing (LPVOID arg)
 {
+  gpgrt_lock_lock (&dtor_lock);
+  /* We lock with mail dtors so we can be sure the mail->parser
+     call is valid. */
+  Mail *mail = (Mail *)arg;
+  if (!Mail::is_valid_ptr (mail))
+    {
+      log_debug ("%s:%s: canceling parsing for: %p already deleted",
+                 SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&dtor_lock);
+      return 0;
+    }
+  /* This takes a shared ptr of parser. So the parser is
+     still valid when the mail is deleted. */
+  auto parser = mail->parser();
+  gpgrt_lock_unlock (&dtor_lock);
+
+  gpgrt_lock_lock (&parser_lock);
+  /* We lock the parser here to avoid too many
+     decryption attempts if there are
+     multiple mailobjects which might have already
+     been deleted (e.g. by quick switches of the mailview.)
+     Let's rather be a bit slower.
+     */
   log_debug ("%s:%s: preparing the parser for: %p",
              SRCNAME, __func__, arg);
 
-  Mail *mail = (Mail *)arg;
-  auto parser = mail->parser();
   if (!parser)
     {
       log_error ("%s:%s: no parser found for mail: %p",
                  SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&parser_lock);
       return -1;
     }
-  gpgrt_lock_lock (&parser_lock);
-  /* Serialize here to avoid too many
-     decryption attempts if there are
-     multiple mailobjects which might have already
-     been deleted (e.g. by quick switches of the mailview. */
-  if (Mail::is_valid_ptr (mail))
-    {
-      parser->parse();
-      do_in_ui_thread (PARSING_DONE, arg);
-    }
-  else
-    {
-      log_debug ("%s:%s: canceling parsing for: %p already deleted",
-                 SRCNAME, __func__, arg);
-    }
+  parser->parse();
+  do_in_ui_thread (PARSING_DONE, arg);
   gpgrt_lock_unlock (&parser_lock);
   return 0;
 }
