@@ -861,6 +861,10 @@ Mail::close_all_mails ()
   TRACEPOINT;
   for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
     {
+      if (!it->second->is_crypto_mail())
+        {
+          continue;
+        }
       if (it->second->close ())
         {
           log_error ("Failed to close mail: %p ", it->first);
@@ -869,10 +873,6 @@ Mail::close_all_mails ()
             {
               err++;
             }
-        }
-      else
-        {
-          delete it->second;
         }
     }
   return err;
