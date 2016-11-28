@@ -214,7 +214,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
          if (s && strcmp (s, "inline"))
            not_inline_text = 1;
        */
-      is_text_attachment = 1;
+      if (ctx->body_seen)
+        {
+          /* Some MUA's like kontact e3.5 send the body as
+             an inline text attachment. So if we have not
+             seen the body yet we treat the first text/plain
+             element as the body and not as an inline attachment. */
+          is_text_attachment = 1;
+        }
       rfc822parse_release_field (field);
     }
 
@@ -864,6 +871,8 @@ MimeDataProvider::create_attachment()
         }
       else
         {
+          log_mime_parser ("%s:%s: Attachment filename: %s",
+                           SRCNAME, __func__, m_mime_ctx->mimestruct_cur->filename);
           attach->set_display_name (m_mime_ctx->mimestruct_cur->filename);
         }
     }
