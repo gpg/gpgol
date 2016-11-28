@@ -409,6 +409,12 @@ add_attachments(LPDISPATCH mail,
   int err = 0;
   for (auto att: attachments)
     {
+      if (att->get_display_name().empty())
+        {
+          log_error ("%s:%s: Ignoring attachment without display name.",
+                     SRCNAME, __func__);
+          continue;
+        }
       wchar_t* wchar_name = utf8_to_wchar (att->get_display_name().c_str());
       HANDLE hFile;
       wchar_t* wchar_file = get_tmp_outfile (GpgOLStr (att->get_display_name().c_str()),
@@ -433,12 +439,8 @@ add_attachments(LPDISPATCH mail,
         }
       xfree (wchar_file);
       xfree (wchar_name);
-      if (err)
-        {
-          return err;
-        }
     }
-  return 0;
+  return err;
 }
 
 GPGRT_LOCK_DEFINE(parser_lock);
@@ -663,7 +665,6 @@ Mail::parsing_done()
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
-      return;
     }
 
   /* Invalidate UI to set the correct sig status. */
