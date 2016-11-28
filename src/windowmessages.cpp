@@ -54,65 +54,6 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->parsing_done();
               break;
             }
-          case (REQUEST_DECRYPT):
-            {
-              char *uuid = (char *) ctx->data;
-              auto mail = Mail::get_mail_for_uuid (uuid);
-              if (!mail)
-                {
-                  log_debug ("%s:%s: Decrypt again for uuid which is gone.",
-                             SRCNAME, __func__);
-                  xfree (uuid);
-                  break;
-                }
-              /* Check if we are still in the active explorer. */
-              LPDISPATCH mailitem = get_oom_object (GpgolAddin::get_instance()->get_application (),
-                                                    "ActiveExplorer.Selection.Item(1)");
-              if (!mailitem)
-                {
-                  log_debug ("%s:%s: Decrypt again but no selected mailitem.",
-                             SRCNAME, __func__);
-                  xfree (uuid);
-                  delete mail;
-                  break;
-                }
-
-              char *active_uuid = get_unique_id (mailitem, 0, nullptr);
-              if (!active_uuid || strcmp (active_uuid, uuid))
-                {
-                  log_debug ("%s:%s: UUID mismatch",
-                             SRCNAME, __func__);
-                  xfree (uuid);
-                  delete mail;
-                  break;
-                }
-              log_debug ("%s:%s: Decrypting %s again",
-                         SRCNAME, __func__, uuid);
-              xfree (uuid);
-              xfree (active_uuid);
-
-              mail->decrypt_verify ();
-              break;
-            }
-          case (REQUEST_CLOSE):
-            {
-              char *uuid = (char *) ctx->data;
-              auto mail = Mail::get_mail_for_uuid (uuid);
-              if (!mail)
-                {
-                  log_debug ("%s:%s: Close request for uuid which is gone.",
-                             SRCNAME, __func__);
-                  break;
-                }
-              if (mail->close())
-                {
-                  log_debug ("%s:%s: Close request failed.",
-                             SRCNAME, __func__);
-                }
-              ctx->wmsg_type = REQUEST_DECRYPT;
-              gpgol_window_proc (hWnd, message, wParam, (LPARAM) ctx);
-              break;
-            }
           case (INVALIDATE_UI):
             {
               log_debug ("%s:%s: Invalidating UI",

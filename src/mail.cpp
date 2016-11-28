@@ -75,6 +75,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_smime_checked(false),
     m_is_signed(false),
     m_is_valid(false),
+    m_close_triggered(false),
     m_moss_position(0),
     m_sender(NULL),
     m_type(MSGTYPE_UNKNOWN)
@@ -859,17 +860,18 @@ Mail::close_all_mails ()
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   TRACEPOINT;
-  for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
+  std::map<LPDISPATCH, Mail *> mail_map_copy = g_mail_map;
+  for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (!it->second->is_crypto_mail())
         {
           continue;
         }
-      if (it->second->close ())
+      if (close_inspector (it->second) || close (it->second))
         {
           log_error ("Failed to close mail: %p ", it->first);
           /* Should not happen */
-          if (it->second->revert())
+          if (is_valid_ptr (it->second) && it->second->revert())
             {
               err++;
             }
@@ -1029,9 +1031,9 @@ Mail::get_recipients() const
 }
 
 int
-Mail::close_inspector ()
+Mail::close_inspector (Mail *mail)
 {
-  LPDISPATCH inspector = get_oom_object (m_mailitem, "GetInspector");
+  LPDISPATCH inspector = get_oom_object (mail->item(), "GetInspector");
   HRESULT hr;
   DISPID dispid;
   if (!inspector)
@@ -1066,8 +1068,9 @@ Mail::close_inspector ()
   return 0;
 }
 
+/* static */
 int
-Mail::close ()
+Mail::close (Mail *mail)
 {
   VARIANT aVariant[1];
   DISPPARAMS dispparams;
@@ -1079,22 +1082,25 @@ Mail::close ()
   dispparams.cNamedArgs = 0;
 
   log_oom_extra ("%s:%s: Invoking close for: %p",
-                 SRCNAME, __func__, this);
-  int rc = invoke_oom_method_with_parms (m_mailitem, "Close",
-                                         NULL, &dispparams);
+                 SRCNAME, __func__, mail->item());
+  mail->set_close_triggered (true);
+  int rc = invoke_oom_method_with_parms (mail->item(), "Close",
+                                       NULL, &dispparams);
 
-  /* Reset the uuid after discarding all changes in the oom
-     so that we can still find ourself. */
-  set_uuid ();
-
-  if (!rc)
-    {
-    /* Now that we have closed it with discard changes we no
-       longer need to wipe the mail because the plaintext was
-       discarded. */
-      m_needs_wipe = false;
-    }
+  log_debug ("returned from invoke");
   return rc;
+}
+
+void
+Mail::set_close_triggered (bool value)
+{
+  m_close_triggered = value;
+}
+
+bool
+Mail::get_close_triggered () const
+{
+  return m_close_triggered;
 }
 
 static const UserID

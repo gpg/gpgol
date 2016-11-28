@@ -78,9 +78,6 @@ BEGIN_EVENT_SINK(MailItemEvents, IDispatch)
 private:
   Mail * m_mail; /* The mail object related to this mailitem */
   bool m_send_seen;   /* The message is about to be submitted */
-  bool m_decrypt_after_write;
-  bool m_ignore_unloads;
-  bool m_ignore_next_unload;
 };
 
 MailItemEvents::MailItemEvents() :
@@ -89,10 +86,7 @@ MailItemEvents::MailItemEvents() :
     m_cookie(0),
     m_ref(1),
     m_mail(NULL),
-    m_send_seen (false),
-    m_decrypt_after_write(false),
-    m_ignore_unloads(false),
-    m_ignore_next_unload(false)
+    m_send_seen (false)
 {
 }
 
@@ -102,32 +96,6 @@ MailItemEvents::~MailItemEvents()
     m_pCP->Unadvise(m_cookie);
   if (m_object)
     gpgol_release (m_object);
-}
-
-static DWORD WINAPI
-request_decrypt (LPVOID arg)
-{
-  log_debug ("%s:%s: requesting decrypt again for: %p",
-             SRCNAME, __func__, arg);
-  if (do_in_ui_thread (REQUEST_DECRYPT, arg))
-    {
-      log_debug ("%s:%s: second decrypt failed for: %p",
-                 SRCNAME, __func__, arg);
-    }
-  return 0;
-}
-
-static DWORD WINAPI
-request_close (LPVOID arg)
-{
-  log_debug ("%s:%s: requesting close for: %s",
-             SRCNAME, __func__, (char*) arg);
-  if (do_in_ui_thread (REQUEST_CLOSE, arg))
-    {
-      log_debug ("%s:%s: close request failed for: %s",
-                 SRCNAME, __func__, (char*) arg);
-    }
-  return 0;
 }
 
 static bool propchangeWarnShown = false;
@@ -182,11 +150,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           set_gpgol_draft_info_flags (message, draft_flags);
           gpgol_release (message);
-
-          if (m_mail->is_crypto_mail())
-            {
-              m_ignore_unloads = true;
-            }
+          break;
         }
       case BeforeRead:
         {
@@ -280,10 +244,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
              weird side effects and breakages. But this has the usual
              problem of a revert that the mail is created by outlook and
              e.g. multipart/signed signatures from most MUA's are broken.
-
-             Close -> discard changes -> then setting the property and
-             then saving also works but then the mail is closed / unloaded
-             and we can't decrypt again.
 
              Some things to try out might be the close approach and then
              another open or a selection change. But for now we just warn.
@@ -407,14 +367,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->encrypt_sign ();
               return S_OK;
             }
-          else if (m_decrypt_after_write)
-            {
-              char *uuid = strdup (m_mail->get_uuid ().c_str());
-              HANDLE thread = CreateThread (NULL, 0, request_decrypt,
-                                            (LPVOID) uuid, 0, NULL);
-              CloseHandle (thread);
-              m_decrypt_after_write = false;
-            }
           break;
         }
       case Close:
@@ -428,20 +380,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                  (Which would save the decrypted data without an event to
                  prevent it) we cancel the close and then either close it
                  with discard changes or revert / save it.
-                 This happens with a window message as we can't invoke close from
+                 Contrary to documentation we can invoke close from
                  close.
-
-                 But as a side effect the mail, if opened in the explorer still will
-                 be reverted, too. So shown as empty. To prevent that
-                 we request a decrypt in the AfterWrite event which checks if the
-                 message is opened in the explorer. If not it destroys the mail.
-
-                 Evil Hack: Outlook sends an Unload event after the message is closed
-                 This is not true our Internal Object is kept alive if it is opened
-                 in the explorer. So we ignore the unload event and then check in
-                 the window message handler that checks for decrypt again if the
-                 mail is currently open in the active explorer. If not we delete our
-                 Mail object so that the message is released.
                  */
               if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
                 {
@@ -450,64 +390,30 @@ EVENT_SINK_INVOKE(MailItemEvents)
                              SRCNAME, __func__);
                   break;
                 }
+              if (m_mail->get_close_triggered ())
+                {
+                  /* Our close with discard changes, pass through */
+                  m_mail->set_close_triggered (false);
+                  return S_OK;
+                }
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
               log_oom_extra ("%s:%s: Canceling close event.",
                              SRCNAME, __func__);
-              m_decrypt_after_write = true;
-              m_ignore_unloads = false;
-              m_ignore_next_unload = true;
-
-              char *uuid = strdup (m_mail->get_uuid ().c_str());
-              HANDLE thread = CreateThread (NULL, 0, request_close,
-                                            (LPVOID) uuid, 0, NULL);
-              CloseHandle (thread);
+              if (Mail::close(m_mail))
+                {
+                  log_debug ("%s:%s: Close request failed.",
+                             SRCNAME, __func__);
+                }
             }
+          return S_OK;
         }
       case Unload:
         {
           log_oom_extra ("%s:%s: Unload : %p",
                          SRCNAME, __func__, m_mail);
-          /* Unload. Experiments have shown that this does not
-             mean a mail is actually unloaded in Outlook. E.g.
-             If it was open in an inspector and then closed we
-             see an unload event but the mail is still shown in
-             the explorer. Fun. On the other hand if a message
-             was opened and the explorer selection changes
-             we also get an unload but the mail is still open.
-
-             Really we still get events after the unload and
-             can make changes to the object.
-
-             In case the mail was opened m_ignore_unloads is set
-             to true so the mail is not removed when the message
-             selection changes. As close invokes decrypt_again
-             the mail object is removed there when the explorer
-             selection changed.
-
-             In case the mail was closed m_ignore_next_unload
-             is set so only the Unload thad follows the canceled
-             close is ignored and not the unload that comes from
-             our then triggered close (save / discard).
-
-
-             This is horribly hackish and feels wrong. But it
-             works.
-             */
-          if (m_ignore_unloads || m_ignore_next_unload)
-            {
-              if (m_ignore_next_unload)
-                {
-                  m_ignore_next_unload = false;
-                }
-              log_debug ("%s:%s: Ignoring unload for message: %p.",
-                         SRCNAME, __func__, m_object);
-            }
-          else
-            {
-              log_debug ("%s:%s: Removing Mail for message: %p.",
-                         SRCNAME, __func__, m_object);
-              delete m_mail;
-            }
+          log_debug ("%s:%s: Removing Mail for message: %p.",
+                     SRCNAME, __func__, m_object);
+          delete m_mail;
           return S_OK;
         }
       default:

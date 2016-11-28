@@ -210,11 +210,11 @@ public:
     */
   bool is_smime ();
 
-  /** @brief closes the inspector for this mail
+  /** @brief closes the inspector for a mail
     *
     * @returns true on success.
   */
-  int close_inspector ();
+  static int close_inspector (Mail *mail);
 
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
@@ -276,11 +276,17 @@ public:
 
   /** Call close with discard changes to discard
       plaintext. returns the value of the oom close
-      call. */
-  int close ();
+      call. This may have delete the mail if the close
+      triggers an unload.
+  */
+  static int close (Mail *mail);
 
   /** Try to locate the keys for all recipients */
   void locate_keys();
+
+  /** State variable to check if a close was triggerd by us. */
+  void set_close_triggered (bool value);
+  bool get_close_triggered () const;
 private:
   void update_categories ();
   void update_body ();
@@ -295,7 +301,8 @@ private:
        m_is_smime, /* This is an smime mail. */
        m_is_smime_checked, /* it was checked if this is an smime mail */
        m_is_signed, /* Mail is signed */
-       m_is_valid; /* Mail is valid signed. */
+       m_is_valid, /* Mail is valid signed. */
+       m_close_triggered; /* We have programtically triggered a close */
   int m_moss_position; /* The number of the original message attachment. */
   char *m_sender;
   msgtype_t m_type; /* Our messagetype as set in mapi */
