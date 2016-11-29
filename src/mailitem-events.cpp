@@ -306,7 +306,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                         SRCNAME, __func__);
              break;
            }
-          m_mail->update_sender ();
+          m_mail->update_oom_data ();
           m_send_seen = true;
           invoke_oom_method (m_object, "Save", NULL);
           if (m_mail->crypto_successful ())

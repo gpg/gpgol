@@ -162,15 +162,20 @@ public:
    * @returns 0 on success; */
   int revert ();
 
-  /** @brief update the sender address.
+  /** @brief update some data collected from the oom
+   *
+   * This updates cached values from the OOM that are not available
+   * in MAPI events like after Write.
    *
    * For Exchange 2013 at least we don't have any other way to get the
    * senders SMTP address then through the object model. So we have to
    * store the sender address for later events that do not allow us to
    * access the OOM but enable us to work with the underlying MAPI structure.
    *
+   * It also updated the is_html_alternative value.
+   *
    * @returns 0 on success */
-  int update_sender ();
+  int update_oom_data ();
 
   /** @brief get sender SMTP address (UTF-8 encoded).
    *
@@ -178,7 +183,7 @@ public:
    * calls update_sender before returning the sender.
    *
    * @returns A reference to the utf8 sender address. Or NULL. */
-  const char *get_sender ();
+  std::string get_sender ();
 
   /** @brief get the subject string (UTF-8 encoded).
     *
@@ -287,6 +292,13 @@ public:
   /** State variable to check if a close was triggerd by us. */
   void set_close_triggered (bool value);
   bool get_close_triggered () const;
+
+  /** Check if the mail should be sent as html alternative mail.
+    Only valid if update_oom_data was called before. */
+  bool is_html_alternative () const;
+
+  /** Get the html body. It is updated in update_oom_data. */
+  const std::string & get_cached_html_body () const;
 private:
   void update_categories ();
   void update_body ();
@@ -302,9 +314,11 @@ private:
        m_is_smime_checked, /* it was checked if this is an smime mail */
        m_is_signed, /* Mail is signed */
        m_is_valid, /* Mail is valid signed. */
-       m_close_triggered; /* We have programtically triggered a close */
+       m_close_triggered, /* We have programtically triggered a close */
+       m_is_html_alternative; /* Body Format is not plain text */
   int m_moss_position; /* The number of the original message attachment. */
-  char *m_sender;
+  std::string m_sender;
+  std::string m_html_body; /* Cached html body. */
   msgtype_t m_type; /* Our messagetype as set in mapi */
   std::shared_ptr <ParseController> m_parser;
   GpgME::VerificationResult m_verify_result;

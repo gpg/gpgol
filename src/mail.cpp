@@ -76,8 +76,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_signed(false),
     m_is_valid(false),
     m_close_triggered(false),
+    m_is_html_alternative(false),
     m_moss_position(0),
-    m_sender(NULL),
     m_type(MSGTYPE_UNKNOWN)
 {
   if (get_mail_for_item (mailitem))
@@ -130,7 +130,6 @@ Mail::~Mail()
         }
     }
 
-  xfree (m_sender);
   gpgol_release(m_mailitem);
   if (!m_uuid.empty())
     {
@@ -724,17 +723,17 @@ Mail::encrypt_sign ()
       log_debug ("%s:%s: Sign / Encrypting message",
                  SRCNAME, __func__);
       err = message_sign_encrypt (message, proto,
-                                  NULL, get_sender (), this);
+                                  NULL, get_sender ().c_str (), this);
     }
   else if (flags == 2)
     {
       err = message_sign (message, proto,
-                          NULL, get_sender (), this);
+                          NULL, get_sender ().c_str (), this);
     }
   else if (flags == 1)
     {
       err = message_encrypt (message, proto,
-                             NULL, get_sender (), this);
+                             NULL, get_sender ().c_str (), this);
     }
   else
     {
@@ -790,34 +789,51 @@ Mail::wipe ()
 }
 
 int
-Mail::update_sender ()
+Mail::update_oom_data ()
 {
   LPDISPATCH sender = NULL;
+  log_debug ("%s:%s", SRCNAME, __func__);
 
-  /* For some reason outlook my store the recipient address
+  /* Update the body format. */
+  m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
+
+  /* Store the body. It was not obvious for me (aheinecke) how
+     to access this through MAPI. */
+  m_html_body = get_oom_string (m_mailitem, "HTMLBody");
+
+  /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
      the SenderEmailAddress string. */
-  char *type = get_oom_string (m_mailitem, "SenderEmailType");
-  if (type && !strcmp ("SMTP", type))
+
+  if (is_crypto_mail ())
     {
-      xfree (type);
-      char *senderMail = get_oom_string (m_mailitem, "SenderEmailAddress");
-      if (senderMail)
+      /* This is the case where we are reading a mail and not composing.
+         When composing we need to use the SendUsingAccount because if
+         you send from the folder of userA but change the from to userB
+         outlook will keep the SenderEmailAddress of UserA. This is all
+         so horrible. */
+      char *type = get_oom_string (m_mailitem, "SenderEmailType");
+      if (type && !strcmp ("SMTP", type))
         {
-          xfree (m_sender);
-          m_sender = senderMail;
-          return 0;
+          char *senderMail = get_oom_string (m_mailitem, "SenderEmailAddress");
+          if (senderMail)
+            {
+              m_sender = senderMail;
+              log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
+              xfree (senderMail);
+              xfree (type);
+              return 0;
+            }
         }
+      xfree (type);
     }
-  xfree (type);
-
   sender = get_oom_object (m_mailitem, "SendUsingAccount");
-  xfree (m_sender);
-  m_sender = NULL;
-
   if (sender)
     {
-      m_sender = get_oom_string (sender, "SmtpAddress");
+      char *buf = get_oom_string (sender, "SmtpAddress");
+      m_sender = buf;
+          log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
+      xfree (buf);
       gpgol_release (sender);
       return 0;
     }
@@ -825,7 +841,10 @@ Mail::update_sender ()
   sender = get_oom_object (m_mailitem, "Sender");
   if (sender)
     {
-      m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+      char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+      m_sender = buf;
+          log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
+      xfree (buf);
       gpgol_release (sender);
       return 0;
     }
@@ -834,23 +853,24 @@ Mail::update_sender ()
   sender = get_oom_object (m_mailitem, "Session.CurrentUser");
   if (sender)
     {
-      m_sender = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+      char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+      m_sender = buf;
+          log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
+      xfree (buf);
       gpgol_release (sender);
       return 0;
     }
 
-  log_error ("%s:%s: All fallbacks failed.",
+  log_debug ("%s:%s: All fallbacks failed.",
              SRCNAME, __func__);
   return -1;
 }
 
-const char *
+std::string
 Mail::get_sender ()
 {
-  if (!m_sender)
-    {
-      update_sender();
-    }
+  if (m_sender.empty())
+    update_oom_data();
   return m_sender;
 }
 
@@ -1146,9 +1166,9 @@ get_uid_for_sender (const Key k, const char *sender)
 void
 Mail::update_sigstate ()
 {
-  const char *sender = get_sender();
+  std::string sender = get_sender();
 
-  if (!sender)
+  if (sender.empty())
     {
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
       return;
@@ -1178,7 +1198,7 @@ Mail::update_sigstate ()
           /* For our category we only care about trusted sigs. */
           continue;
         }
-      const auto uid = get_uid_for_sender (sig.key(), sender);
+      const auto uid = get_uid_for_sender (sig.key(), sender.c_str());
       if (sig.validity() == Signature::Validity::Marginal)
         {
           const auto tofu = uid.tofuInfo();
@@ -1429,7 +1449,7 @@ Mail::get_signature_status()
                   + std::string(" ");
         }
 
-      const auto uid = get_uid_for_sender (sig.key(), get_sender());
+      const auto uid = get_uid_for_sender (sig.key(), get_sender().c_str());
       /* Now the key problems */
       if ((sig.summary() & Signature::Summary::KeyMissing))
         {
@@ -1462,7 +1482,7 @@ Mail::get_signature_status()
       else if (uid.isNull())
         {
           gpgrt_asprintf (&buf, _("does not claim the address: \"%s\"."),
-                          get_sender());
+                          get_sender().c_str());
           message += buf;
           xfree (buf);
         }
@@ -1598,4 +1618,16 @@ void Mail::locate_keys()
       xfree (recipients[i]);
     }
   xfree (recipients);
+}
+
+bool
+Mail::is_html_alternative () const
+{
+  return m_is_html_alternative;
+}
+
+const std::string &
+Mail::get_cached_html_body () const
+{
+  return m_html_body;
 }

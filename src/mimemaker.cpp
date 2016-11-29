@@ -42,6 +42,7 @@
 #include "mimemaker.h"
 #include "oomhelp.h"
 #include "gpgolstr.h"
+#include "mail.h"
 
 static const unsigned char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
@@ -207,8 +208,9 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (!hr)
     {
       prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
-      prop.Value.lpszA = GpgOLStr("multipart/signed");
+      prop.Value.lpszA = strdup("multipart/signed");
       hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
+      xfree (prop.Value.lpszA);
     }
   if (hr)
     {
@@ -558,14 +560,14 @@ write_plain (sink_t sink, const void *data, size_t datalen)
 }
 
 
-/* Infer the conent type from DATA and FILENAME.  The return value is
+/* Infer the conent type from the FILENAME.  The return value is
    a static string there won't be an error return.  In case Bae 64
    encoding is required for the type true will be stored at FORCE_B64;
    however, this is only a shortcut and if that is not set, the caller
-   should infer the encoding by otehr means. */
+   should infer the encoding by other means. */
 static const char *
-infer_content_type (const char *data, size_t datalen, const char *filename,
-                    int is_mapibody, int *force_b64)
+infer_content_type (const char * /*data*/, size_t /*datalen*/,
+                    const char *filename, int is_mapibody, int *force_b64)
 {
   static struct {
     char b64;
@@ -701,15 +703,14 @@ infer_content_type (const char *data, size_t datalen, const char *filename,
 
   /* Not found via filename, look at the content.  */
 
-  if (is_mapibody)
+  if (is_mapibody == 1)
     {
-      /* Fixme:  This is too simple. */
-      if (datalen > 6  && (!memcmp (data, "<html>", 6)
-                           ||!memcmp (data, "<HTML>", 6)))
-        return "text/html";
       return "text/plain";
     }
-
+  else if (is_mapibody == 2)
+    {
+      return "text/html";
+    }
   return "application/octet-stream";
 }
 
@@ -1225,6 +1226,85 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
             micalg, boundary);
 }
 
+/* Add the body, either as multipart/alternative or just as the
+  simple body part. Depending on the format set in outlook. To
+  avoid memory duplication it takes the plain body as parameter.
+
+  Boundary is the potential outer boundary of a multipart/mixed
+  mail. If it is null we assume the multipart/alternative is
+  the only part.
+
+  return is zero on success.
+*/
+static int
+add_body (Mail *mail, const char *boundary, sink_t sink,
+          const char *plain_body)
+{
+  if (!plain_body)
+    {
+      return 0;
+    }
+  bool is_alternative = false;
+  if (mail)
+    {
+      is_alternative = mail->is_html_alternative ();
+    }
+
+  int rc = 0;
+  if (!is_alternative || !plain_body)
+    {
+      if (plain_body)
+        {
+          rc = write_part (sink, plain_body, strlen (plain_body),
+                           *boundary? boundary : NULL, NULL, 1);
+        }
+      /* Just the plain body or no body. We are done. */
+      return rc;
+    }
+
+  /* Now for the multipart/alternative part. We never do HTML only. */
+  char alt_boundary [BOUNDARYSIZE+1];
+  generate_boundary (alt_boundary);
+
+  if ((rc=write_multistring (sink,
+                            "Content-Type: multipart/alternative;\r\n",
+                            "\tboundary=\"", alt_boundary, "\"\r\n",
+                            "\r\n",  /* <-- extra line */
+                            NULL)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  /* Now the plain body part */
+  if ((rc = write_part (sink, plain_body, strlen (plain_body),
+                       alt_boundary, NULL, 1)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  /* Now the html body. It is somehow not accessible through PR_HTML,
+     OutlookSpy also shows MAPI Unsported (but shows the data) strange.
+     We just cache it. Memory is cheap :-) */
+  const auto html_body = mail->get_cached_html_body();
+  if (html_body.empty())
+    {
+      log_error ("%s:%s: BUG: Body but no html body in alternative mail?",
+                 SRCNAME, __func__);
+    }
+
+  rc = write_part (sink, html_body.c_str(), html_body.size(),
+                   alt_boundary, NULL, 2);
+  if (rc)
+    {
+      TRACEPOINT;
+      return rc;
+    }
+  /* Finish our multipart */
+  return write_boundary (sink, alt_boundary, 1);
+}
+
 
 /* Main body of mime_sign without the the code to delete the original
    attachments.  On success the function returns the current
@@ -1234,7 +1314,8 @@ create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
 static int
 do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
               mapi_attach_item_t **r_att_table, sink_t tmpsink,
-              unsigned int session_number, const char *sender)
+              unsigned int session_number, const char *sender,
+              Mail *mail)
 {
   int result = -1;
   int rc;
@@ -1350,10 +1431,13 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
                                 NULL)))
         goto failure;
 
+  if ((rc=add_body (mail, inner_boundary, hashsink, body)))
+    {
+      log_error ("%s:%s: Adding the body failed.",
+                 SRCNAME, __func__);
+      goto failure;
+    }
 
-  if (body)
-    rc = write_part (hashsink, body, strlen (body),
-                     *inner_boundary? inner_boundary : NULL, NULL, 1);
   if (!rc && n_att_usable)
     rc = write_attachments (hashsink, message, att_table,
                             *inner_boundary? inner_boundary : NULL);
@@ -1497,13 +1581,13 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
    it. */
 int
 mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
-           const char *sender, Mail *)
+           const char *sender, Mail *mail)
 {
   int result = -1;
   mapi_attach_item_t *att_table;
 
   result = do_mime_sign (message, hwnd, protocol, &att_table, 0,
-                         engine_new_session_number (), sender);
+                         engine_new_session_number (), sender, mail);
   if (!result)
     {
       if (!finalize_message (message, att_table, protocol, 0))
@@ -1688,7 +1772,7 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
 int
 mime_encrypt (LPMESSAGE message, HWND hwnd,
               protocol_t protocol, char **recipients,
-              const char *sender, Mail*)
+              const char *sender, Mail* mail)
 {
   int result = -1;
   int rc;
@@ -1782,9 +1866,12 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   else /* Only one part.  */
     *inner_boundary = 0;
 
-  if (body)
-    rc = write_part (encsink, body, strlen (body),
-                     *inner_boundary? inner_boundary : NULL, NULL, 1);
+  if ((rc=add_body (mail, inner_boundary, encsink, body)))
+    {
+      log_error ("%s:%s: Adding the body failed.",
+                 SRCNAME, __func__);
+      goto failure;
+    }
   if (!rc && n_att_usable)
     rc = write_attachments (encsink, message, att_table,
                             *inner_boundary? inner_boundary : NULL);
@@ -1841,7 +1928,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 int
 mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
                    protocol_t protocol, char **recipients,
-                   const char *sender, Mail*)
+                   const char *sender, Mail *mail)
 {
   int result = -1;
   int rc = 0;
@@ -1950,7 +2037,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
      the signature.  Note that the protocol to use is taken from the
      encryption operation. */
   if (do_mime_sign (message, hwnd, protocol, &att_table, tmpsink,
-                    session_number, sender))
+                    session_number, sender, mail))
     goto failure;
 
   /* Now send the actual ENCRYPT command.  This split up between
