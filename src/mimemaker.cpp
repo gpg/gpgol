@@ -1262,6 +1262,13 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
       return rc;
     }
 
+  /* Add a new multipart / mixed element. */
+  if (boundary && write_boundary (sink, boundary, 0))
+    {
+      TRACEPOINT;
+      return 1;
+    }
+
   /* Now for the multipart/alternative part. We never do HTML only. */
   char alt_boundary [BOUNDARYSIZE+1];
   generate_boundary (alt_boundary);
