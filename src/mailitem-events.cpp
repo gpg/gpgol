@@ -39,6 +39,8 @@ const wchar_t *prop_blacklist[] = {
   L"BCC", /* Ditto */
   L"Categories",
   L"UnRead",
+  L"OutlookVersion",
+  L"OutlookInternalVersion",
   NULL };
 
 typedef enum
