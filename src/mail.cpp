@@ -238,8 +238,16 @@ get_attachment (LPDISPATCH mailitem, int pos)
       return NULL;
     }
 
-  const auto item_str = std::string("Item(") + std::to_string(pos) + ")";
+  std::string item_str;
   int count = get_oom_int (attachments, "Count");
+  if (pos > 0)
+    {
+      item_str = std::string("Item(") + std::to_string(pos) + ")";
+    }
+  else
+    {
+      item_str = std::string("Item(") + std::to_string(count) + ")";
+    }
   if (count < 1)
     {
       log_debug ("%s:%s: Invalid attachment count: %i.",
@@ -417,6 +425,33 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
   return 0;
 }
 
+/** Sets some meta data on the last attachment atted. The meta
+  data is taken from the attachment object. */
+static int
+fixup_last_attachment (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
+{
+  /* Currently we only set content id */
+  if (attachment->get_content_id ().empty())
+    {
+      log_debug ("%s:%s: Content id not found.",
+                 SRCNAME, __func__);
+      return 0;
+    }
+
+  LPDISPATCH attach = get_attachment (mail, -1);
+  if (!attach)
+    {
+      log_error ("%s:%s: No attachment.",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  int ret = put_pa_string (attach,
+                           PR_ATTACH_CONTENT_ID_DASL,
+                           attachment->get_content_id ().c_str());
+  gpgol_release (attach);
+  return ret;
+}
+
 /** Helper to update the attachments of a mail object in oom.
   does not modify the underlying mapi structure. */
 static int
@@ -456,6 +491,8 @@ add_attachments(LPDISPATCH mail,
         }
       xfree (wchar_file);
       xfree (wchar_name);
+
+      err = fixup_last_attachment (mail, att);
     }
   return err;
 }

@@ -50,6 +50,7 @@ struct mimestruct_item_s
   unsigned int level;   /* Level in the hierarchy of that part.  0
                            indicates the outer body.  */
   char *filename;       /* Malloced filename or NULL.  */
+  char *cid;            /* Malloced content id or NULL. */
   char *charset;        /* Malloced charset or NULL.  */
   char content_type[1]; /* String with the content type. */
 };
@@ -174,6 +175,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   int is_text = 0;
   int is_text_attachment = 0;
   char *filename = NULL;
+  char *cid = NULL;
   char *charset = NULL;
 
   /* Figure out the encoding.  */
@@ -254,6 +256,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
         filename = rfc2047_parse (s);
     }
 
+  /* Parse a Content Id header */
+  p = rfc822parse_get_field (msg, "Content-Id", -1, &off);
+  if (p)
+    {
+       cid = xstrdup (p+off);
+       xfree (p);
+    }
+
   /* Update our idea of the entire MIME structure.  */
   {
     mimestruct_item_t ms;
@@ -266,6 +276,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     strcpy (stpcpy (stpcpy (ms->content_type, ctmain), "/"), ctsub);
     ms->level = ctx->nesting_level;
     ms->filename = filename;
+    ms->cid = cid;
     filename = NULL;
     ms->charset = charset;
     charset = NULL;
@@ -515,6 +526,7 @@ MimeDataProvider::~MimeDataProvider()
       mimestruct_item_t tmp = m_mime_ctx->mimestruct->next;
       xfree (m_mime_ctx->mimestruct->filename);
       xfree (m_mime_ctx->mimestruct->charset);
+      xfree (m_mime_ctx->mimestruct->cid);
       xfree (m_mime_ctx->mimestruct);
       m_mime_ctx->mimestruct = tmp;
     }
@@ -875,6 +887,10 @@ MimeDataProvider::create_attachment()
                            SRCNAME, __func__, m_mime_ctx->mimestruct_cur->filename);
           attach->set_display_name (m_mime_ctx->mimestruct_cur->filename);
         }
+    }
+  if (m_mime_ctx->mimestruct_cur && m_mime_ctx->mimestruct_cur->cid)
+    {
+      attach->set_content_id (m_mime_ctx->mimestruct_cur->cid);
     }
   m_attachments.push_back (attach);
 

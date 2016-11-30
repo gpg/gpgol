@@ -38,6 +38,10 @@ public:
 
   void set_attach_type(attachtype_t type);
 
+  /* Content id */
+  void set_content_id (const char *cid);
+  std::string get_content_id() const;
+
   /* get the underlying data structure */
   GpgME::Data& get_data();
 
@@ -45,6 +49,7 @@ private:
   GpgME::Data m_data;
   std::string m_utf8DisplayName;
   attachtype_t m_type;
+  std::string m_cid;
 };
 
 #endif // ATTACHMENT_H

@@ -56,3 +56,15 @@ Attachment::get_data()
 {
   return m_data;
 }
+
+void
+Attachment::set_content_id(const char *cid)
+{
+  m_cid = cid;
+}
+
+std::string
+Attachment::get_content_id() const
+{
+  return m_cid;
+}
