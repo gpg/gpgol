@@ -681,24 +681,25 @@ infer_content_type (const char * /*data*/, size_t /*datalen*/,
       { 0, NULL, NULL }
     };
   int i;
-  char suffix_buffer[12+1];
-  const char *suffix;
+  std::string suffix;
 
   *force_b64 = 0;
-  suffix = filename? strrchr (filename, '.') : NULL;
-  if (suffix && strlen (suffix) < sizeof suffix_buffer -1 )
+  if (filename)
+    suffix = strrchr (filename, '.');
+
+  if (!suffix.empty())
     {
-      suffix++;
-      for (i=0; i < sizeof suffix_buffer - 1; i++)
-        suffix_buffer[i] = tolower (*(const unsigned char*)suffix);
-      suffix_buffer[i] = 0;
+      suffix.erase(0, 1);
+      std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
       for (i=0; suffix_table[i].suffix; i++)
-        if (!strcmp (suffix_table[i].suffix, suffix_buffer))
-          {
-            if (suffix_table[i].b64)
-              *force_b64 = 1;
-            return suffix_table[i].ct;
-          }
+        {
+          if (!strcmp (suffix_table[i].suffix, suffix.c_str()))
+            {
+              if (suffix_table[i].b64)
+                *force_b64 = 1;
+              return suffix_table[i].ct;
+            }
+        }
     }
 
   /* Not found via filename, look at the content.  */
