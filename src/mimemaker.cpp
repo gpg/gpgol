@@ -846,7 +846,8 @@ utf8_to_rfc2047b (const char *input)
    retrieved from the body property.  */
 static int
 write_part (sink_t sink, const char *data, size_t datalen,
-            const char *boundary, const char *filename, int is_mapibody)
+            const char *boundary, const char *filename, int is_mapibody,
+            const char *content_id = NULL)
 {
   int rc;
   const char *ct;
@@ -926,7 +927,14 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                NULL)))
     return rc;
 
-  if (encoded_filename)
+  if (content_id)
+    {
+      if ((rc=write_multistring (sink,
+                                 "Content-ID: <", content_id, ">\r\n",
+                                 NULL)))
+        return rc;
+    }
+  else if (encoded_filename)
     if ((rc=write_multistring (sink,
                                "Content-Disposition: attachment;\r\n"
                                "\tfilename=\"", encoded_filename, "\"\r\n",
@@ -967,11 +975,13 @@ count_usable_attachments (mapi_attach_item_t *table)
 }
 
 /* Write out all attachments from TABLE separated by BOUNDARY to SINK.
-   This function needs to be syncronized with count_usable_attachments.  */
+   This function needs to be syncronized with count_usable_attachments.
+   If only_related is 1 only include attachments for multipart/related they
+   are excluded otherwise. */
 static int
 write_attachments (sink_t sink,
                    LPMESSAGE message, mapi_attach_item_t *table,
-                   const char *boundary)
+                   const char *boundary, int only_related)
 {
   int idx, rc;
   char *buffer;
@@ -982,6 +992,14 @@ write_attachments (sink_t sink,
       if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
           && table[idx].method == ATTACH_BY_VALUE)
         {
+          if (only_related && !table[idx].content_id)
+            {
+              continue;
+            }
+          else if (!only_related && table[idx].content_id)
+            {
+              continue;
+            }
           buffer = mapi_get_attach (message, 0, table+idx, &buflen);
           if (!buffer)
             log_debug ("Attachment at index %d not found\n", idx);
@@ -990,7 +1008,7 @@ write_attachments (sink_t sink,
           if (!buffer)
             return -1;
           rc = write_part (sink, buffer, buflen, boundary,
-                           table[idx].filename, 0);
+                           table[idx].filename, 0, table[idx].content_id);
           if (rc)
             {
               log_error ("Write part returned err: %i", rc);
@@ -1000,6 +1018,31 @@ write_attachments (sink_t sink,
   return 0;
 }
 
+/* Returns 1 if all attachments are related. 2 if there is a
+   related and a mixed attachment. 0 if there are no other parts*/
+static int
+is_related (Mail *mail, mapi_attach_item_t *table)
+{
+  if (!mail || !mail->is_html_alternative () || !table)
+    {
+      return 0;
+    }
+
+  int related = 0;
+  int mixed = 0;
+  for (int idx = 0; !table[idx].end_of_table; idx++)
+    {
+      if (table[idx].content_id)
+        {
+          related = 1;
+        }
+      else
+        {
+          mixed = 1;
+        }
+    }
+  return mixed + related;
+}
 
 
 /* Delete all attachments from TABLE except for the one we just created */
@@ -1313,6 +1356,98 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
   return write_boundary (sink, alt_boundary, 1);
 }
 
+/* Add the body and attachments. Does multipart handling. */
+static int
+add_body_and_attachments (sink_t sink, LPMESSAGE message,
+                          mapi_attach_item_t *att_table, Mail *mail,
+                          const char *body, int n_att_usable)
+{
+  int related = is_related (mail, att_table);
+  int rc = 0;
+  char inner_boundary[BOUNDARYSIZE+1];
+  char outer_boundary[BOUNDARYSIZE+1];
+
+  if (((body && n_att_usable) || n_att_usable > 1) && related == 1)
+    {
+      /* A body and at least one attachment or more than one attachment  */
+      generate_boundary (outer_boundary);
+      if ((rc=write_multistring (sink,
+                                 "Content-Type: multipart/related;\r\n",
+                                 "\tboundary=\"", outer_boundary, "\"\r\n",
+                                 NULL)))
+        return rc;
+    }
+  else if ((body && n_att_usable) || n_att_usable > 1)
+    {
+      generate_boundary (outer_boundary);
+      if ((rc=write_multistring (sink,
+                                 "Content-Type: multipart/mixed;\r\n",
+                                 "\tboundary=\"", outer_boundary, "\"\r\n",
+                                 NULL)))
+        return rc;
+    }
+  else
+  /* Only one part.  */
+    *outer_boundary = 0;
+
+  if (*outer_boundary && related == 2)
+    {
+      /* We have attachments that are related to the body and unrelated
+         attachments. So we need another part. */
+      if ((rc=write_boundary (sink, outer_boundary, 0)))
+        {
+          return rc;
+        }
+      generate_boundary (inner_boundary);
+      if ((rc=write_multistring (sink,
+                                 "Content-Type: multipart/related;\r\n",
+                                 "\tboundary=\"", inner_boundary, "\"\r\n",
+                                 NULL)))
+        {
+          return rc;
+        }
+    }
+  else
+    {
+      *inner_boundary = 0;
+    }
+
+
+  if ((rc=add_body (mail, *inner_boundary ? inner_boundary : outer_boundary,
+                    sink, body)))
+    {
+      log_error ("%s:%s: Adding the body failed.",
+                 SRCNAME, __func__);
+      return rc;
+    }
+  if (!rc && n_att_usable && related)
+    {
+      /* Write the related attachments. */
+      rc = write_attachments (sink, message, att_table,
+                              *inner_boundary? inner_boundary :
+                              *outer_boundary? outer_boundary : NULL, 1);
+      if (rc)
+        {
+          return rc;
+        }
+      /* Close the related part if neccessary.*/
+      if (*inner_boundary && (rc=write_boundary (sink, inner_boundary, 1)))
+        {
+          return rc;
+        }
+    }
+
+  /* Now write the other attachments */
+  if (!rc && n_att_usable)
+    rc = write_attachments (sink, message, att_table,
+                            *outer_boundary? outer_boundary : NULL, 0);
+
+  /* Finish the possible multipart/mixed. */
+  if (*outer_boundary && (rc = write_boundary (sink, outer_boundary, 1)))
+    return rc;
+
+  return rc;
+}
 
 /* Main body of mime_sign without the the code to delete the original
    attachments.  On success the function returns the current
@@ -1333,7 +1468,6 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   struct sink_s hashsinkmem;
   sink_t hashsink = &hashsinkmem;
   char boundary[BOUNDARYSIZE+1];
-  char inner_boundary[BOUNDARYSIZE+1];
   mapi_attach_item_t *att_table = NULL;
   char *body = NULL;
   int n_att_usable;
@@ -1412,13 +1546,6 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   if ((rc = write_string (sink, top_header)))
     goto failure;
 
-  /* Create the inner boundary if we have a body and at least one
-     attachment or more than one attachment.  */
-  if ((body && n_att_usable) || n_att_usable > 1)
-    generate_boundary (inner_boundary);
-  else
-    *inner_boundary = 0;
-
   /* Write the boundary so that it is not included in the hashing.  */
   if ((rc = write_boundary (sink, boundary, 0)))
     goto failure;
@@ -1428,36 +1555,13 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
   hashsink->extrasink = sink;
   hashsink->writefnc = sink_hashing_write;
 
-  /* Note that OL2003 will add an extra line after the multipart
-     header, thus we do the same to avoid running all through an
-     IConverterSession first. */
-  if (*inner_boundary
-      && (rc=write_multistring (hashsink,
-                                "Content-Type: multipart/mixed;\r\n",
-                                "\tboundary=\"", inner_boundary, "\"\r\n",
-                                "\r\n",  /* <-- extra line */
-                                NULL)))
-        goto failure;
-
-  if ((rc=add_body (mail, inner_boundary, hashsink, body)))
-    {
-      log_error ("%s:%s: Adding the body failed.",
-                 SRCNAME, __func__);
-      goto failure;
-    }
-
-  if (!rc && n_att_usable)
-    rc = write_attachments (hashsink, message, att_table,
-                            *inner_boundary? inner_boundary : NULL);
-  if (rc)
+  /* Add the plaintext */
+  if (add_body_and_attachments (hashsink, message, att_table, mail,
+                                body, n_att_usable))
     goto failure;
 
   xfree (body);
   body = NULL;
-
-  /* Finish the possible multipart/mixed. */
-  if (*inner_boundary && (rc = write_boundary (hashsink, inner_boundary, 1)))
-    goto failure;
 
   /* Here we are ready with the hashing.  Flush the filter and wait
      for the signing process to finish.  */
@@ -1790,7 +1894,6 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   struct sink_s encsinkmem;
   sink_t encsink = &encsinkmem;
   char boundary[BOUNDARYSIZE+1];
-  char inner_boundary[BOUNDARYSIZE+1];
   mapi_attach_item_t *att_table = NULL;
   char *body = NULL;
   int n_att_usable;
@@ -1861,37 +1964,13 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   encsink->cb_data = filter;
   encsink->writefnc = sink_encryption_write;
 
-  if ((body && n_att_usable) || n_att_usable > 1)
-    {
-      /* A body and at least one attachment or more than one attachment  */
-      generate_boundary (inner_boundary);
-      if ((rc=write_multistring (encsink,
-                                 "Content-Type: multipart/mixed;\r\n",
-                                 "\tboundary=\"", inner_boundary, "\"\r\n",
-                                 NULL)))
-        goto failure;
-    }
-  else /* Only one part.  */
-    *inner_boundary = 0;
-
-  if ((rc=add_body (mail, inner_boundary, encsink, body)))
-    {
-      log_error ("%s:%s: Adding the body failed.",
-                 SRCNAME, __func__);
-      goto failure;
-    }
-  if (!rc && n_att_usable)
-    rc = write_attachments (encsink, message, att_table,
-                            *inner_boundary? inner_boundary : NULL);
-  if (rc)
+  /* Add the plaintext */
+  if (add_body_and_attachments (encsink, message, att_table, mail,
+                                body, n_att_usable))
     goto failure;
 
   xfree (body);
   body = NULL;
-
-  /* Finish the possible multipart/mixed. */
-  if (*inner_boundary && (rc = write_boundary (encsink, inner_boundary, 1)))
-    goto failure;
 
   /* Flush the encryption sink and wait for the encryption to get
      ready.  */

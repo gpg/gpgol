@@ -513,6 +513,7 @@
 #define PR_ATTACH_MIME_TAG_W                    PROP_TAG( PT_UNICODE,   0x370E)
 #define PR_ATTACH_MIME_TAG_A                    PROP_TAG( PT_STRING8,   0x370E)
 #define PR_ATTACH_ADDITIONAL_INFO               PROP_TAG( PT_BINARY,    0x370F)
+#define PR_ATTACH_CONTENT_ID                    PROP_TAG( PT_UNICODE,   0x3712)
 #define PR_DISPLAY_TYPE                         PROP_TAG( PT_LONG,      0x3900)
 #define PR_TEMPLATEID                           PROP_TAG( PT_BINARY,    0x3902)
 #define PR_PRIMARY_CAPABILITY                   PROP_TAG( PT_BINARY,    0x3904)
