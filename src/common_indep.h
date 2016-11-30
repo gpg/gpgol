@@ -141,6 +141,9 @@ struct mapi_attach_item_s
   /* If not NULL the parameters of the content_type. */
   const char *content_type_parms;
 
+  /* If not NULL the content_id */
+  char *content_id;
+
   /* The attachment type from Property GpgOL Attach Type.  */
   attachtype_t attach_type;
 };

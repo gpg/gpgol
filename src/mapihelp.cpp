@@ -1996,6 +1996,44 @@ get_attach_filename (LPATTACH obj)
   return name;
 }
 
+/* Return the content-id of the attachment OBJ or NULL if it does
+   not exists.  Caller must free. */
+static char *
+get_attach_content_id (LPATTACH obj)
+{
+  HRESULT hr;
+  LPSPropValue propval = NULL;
+  char *name;
+
+  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_CONTENT_ID, &propval);
+  if (FAILED (hr))
+    {
+      if (hr != MAPI_E_NOT_FOUND)
+        log_error ("%s:%s: error getting attachment's MIME tag: hr=%#lx",
+                   SRCNAME, __func__, hr);
+      return NULL;
+    }
+  switch ( PROP_TYPE (propval->ulPropTag) )
+    {
+    case PT_UNICODE:
+      name = wchar_to_utf8 (propval->Value.lpszW);
+      if (!name)
+        log_debug ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
+      break;
+
+    case PT_STRING8:
+      name = xstrdup (propval->Value.lpszA);
+      break;
+
+    default:
+      log_debug ("%s:%s: proptag=%#lx not supported\n",
+                 SRCNAME, __func__, propval->ulPropTag);
+      name = NULL;
+      break;
+    }
+  MAPIFreeBuffer (propval);
+  return name;
+}
 
 /* Return the content-type of the attachment OBJ or NULL if it does
    not exists.  Caller must free. */
@@ -2140,6 +2178,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
       table[pos].method = get_attach_method (att);
       table[pos].filename = fast? NULL : get_attach_filename (att);
       table[pos].content_type = fast? NULL : get_attach_mime_tag (att);
+      table[pos].content_id = fast? NULL : get_attach_content_id (att);
       if (table[pos].content_type)
         {
           char *p = strchr (table[pos].content_type, ';');
@@ -2200,6 +2239,7 @@ mapi_release_attach_table (mapi_attach_item_t *table)
     {
       xfree (table[pos].filename);
       xfree (table[pos].content_type);
+      xfree (table[pos].content_id);
     }
   xfree (table);
 }
