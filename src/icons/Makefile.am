@@ -26,4 +26,9 @@ EXTRA_DIST= \
     emblem-question-64.png \
     emblem-warning-64.png \
     emblem-success-64.png \
-    emblem-information-64.png
+    emblem-information-64.png \
+    emblem-success-yellow-64.png \
+    emblem-question.svg \
+    emblem-warning.svg \
+    emblem-information.svg \
+    emblem-success-yellow.svg

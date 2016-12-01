@@ -1569,18 +1569,25 @@ Mail::get_signature_icon_id () const
     {
       return IDI_EMBLEM_INFORMATION_64_PNG;
     }
-  if (m_is_valid)
-    {
-      return IDI_EMBLEM_SUCCESS_64_PNG;
-    }
   const auto sig = m_verify_result.signature (0);
   if ((sig.summary() & Signature::Summary::KeyMissing))
     {
       return IDI_EMBLEM_QUESTION_64_PNG;
     }
-
-  /* Maybe warning for unsigned and invalid sigs? */
-
+  if (m_is_valid && sig.validity() == Signature::Validity::Full)
+    {
+      return IDI_EMBLEM_SUCCESS_64_PNG;
+    }
+  else if (m_is_valid)
+    {
+      return IDI_EMBLEM_SUCCESS_YELLOW_64_PNG;
+    }
+  const auto uid = get_uid_for_sender (sig.key(), m_sender.c_str());
+  if (sig.summary() & Signature::Summary::TofuConflict ||
+      uid.tofuInfo().validity() == TofuInfo::Conflict)
+    {
+      return IDI_EMBLEM_WARNING_64_PNG;
+    }
   return IDI_EMBLEM_INFORMATION_64_PNG;
 }
 
