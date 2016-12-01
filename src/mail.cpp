@@ -1414,23 +1414,27 @@ Mail::get_signature_status()
 
   const auto pair = get_valid_sig ();
   bool keyFound = false;
-  char *buf;
   bool isOpenPGP = pair.first.key().protocol() == Protocol::OpenPGP;
+  char *buf;
+  bool hasConflict = false;
   if (!pair.first.isNull () && !pair.second.isNull ())
     {
       const auto sig = pair.first;
       const auto uid = pair.second;
       /* We are valid */
       keyFound = true;
-      gpgrt_asprintf (&buf, _("The sender is verified because:\n\n%s %s"),
-                      isOpenPGP ? _("The used key") : _(" The used certificate"),
-                      sig.validity() == Signature::Validity::Ultimate ?
+      message += _("The sender address is trusted because:");
+      message += "\n\n";
+      message += isOpenPGP ? _("The used key") : _("The used certificate");
+      message += " ";
+      message += sig.validity() == Signature::Validity::Ultimate ?
                       _("is marked as your own.") :
+                      sig.validity() == Signature::Validity::Full && isOpenPGP &&
+                      uid.tofuInfo().policy() == TofuInfo::PolicyGood ?
+                      _("was marked to be the right key for this address") :
                       sig.validity() == Signature::Validity::Full && isOpenPGP ?
-                      _("was certified by enough trusted keys.") :
-                      "");
-      message += buf;
-      xfree (buf);
+                      _("was certified by enough trusted keys or yourself.") :
+                      "";
       if (sig.validity() == Signature::Validity::Full && !isOpenPGP)
         {
           gpgrt_asprintf (&buf, _("is cerified by the trusted issuer:\n'%s'\n"),
@@ -1441,7 +1445,9 @@ Mail::get_signature_status()
       else if (sig.validity() == Signature::Validity::Marginal)
         {
           char *time = format_date_from_gpgme (uid.tofuInfo().signFirst());
-          gpgrt_asprintf (&buf, _("was consistently used for %i messages since %s."),
+          /* i18n note signcount is always pulral because with signcount 1 we
+           * would not be in this branch. */
+          gpgrt_asprintf (&buf, _("was used for %i messages since %s."),
                           uid.tofuInfo().signCount (), time);
           xfree (time);
           message += buf;
@@ -1457,15 +1463,17 @@ Mail::get_signature_status()
         }
       /* We only handle the first signature. */
       const auto sig = m_verify_result.signature (0);
-      isOpenPGP = sig.key().protocol() == Protocol::OpenPGP;
+      isOpenPGP = !is_smime();
       keyFound = !(sig.summary() & Signature::Summary::KeyMissing);
 
       log_debug ("%s:%s: Formatting sig. Validity: %x Summary: %x",
                  SRCNAME, __func__, sig.validity(), sig.summary());
 
       /* There is a signature but we don't accepted it as fully valid. */
-      message += _("The sender is not verified because:\n\n");
+      message += _("The sender address is not trusted because:");
+      message += "\n\n";
 
+      bool general_problem = true;
       /* First the general stuff. */
       if (sig.summary() & Signature::Summary::Red)
         {
@@ -1484,15 +1492,16 @@ Mail::get_signature_status()
         }
       else
         {
-          message += isOpenPGP ? _("The used key") : _("The used certificate")
-                  + std::string(" ");
+          message += isOpenPGP ? _("The used key") : _("The used certificate");
+          message += " ";
+          general_problem = false;
         }
 
       const auto uid = get_uid_for_sender (sig.key(), get_sender().c_str());
       /* Now the key problems */
       if ((sig.summary() & Signature::Summary::KeyMissing))
         {
-          message += _("is not in your keyring.");
+          message += _("is not available for verification.");
         }
       else if ((sig.summary() & Signature::Summary::KeyRevoked))
         {
@@ -1514,9 +1523,11 @@ Mail::get_signature_status()
         {
           message += _("could not be checked for revocation.");
         }
-      else if ((sig.summary() & Signature::Summary::TofuConflict))
+      else if ((sig.summary() & Signature::Summary::TofuConflict) ||
+               uid.tofuInfo().validity() == TofuInfo::Conflict)
         {
           message += _("conflicts with another key that was used in the past by the sender.");
+          hasConflict = true;
         }
       else if (uid.isNull())
         {
@@ -1532,18 +1543,25 @@ Mail::get_signature_status()
             {
               message += _("is not certified by enough trusted keys.");
             }
+          else if (tofuInfo.signCount() == 1)
+            {
+              message += _("is seen for the first time.");
+            }
           else
             {
-              message += _("does not have enough history for basic trust.");
+              gpgrt_asprintf (&buf, "was only used for %i messages.",
+                              tofuInfo.signCount());
+              message += buf;
+              xfree (buf);
             }
         }
-      else if ((sig.validity() & Signature::Validity::Undefined) ||
+      else if (((sig.validity() & Signature::Validity::Undefined) ||
                (sig.validity() & Signature::Validity::Unknown) ||
                (sig.summary() == Signature::Summary::None) ||
-               (sig.validity() == 0))
+               (sig.validity() == 0))&& !general_problem)
         {
            /* Bit of a catch all for weird results. */
-           message += _("is not certified by any trusted key.");
+          message += _("is not certified by any trusted key.");
         }
       else if ((sig.validity() & Signature::Validity::Never))
         {
@@ -1551,10 +1569,14 @@ Mail::get_signature_status()
         }
     }
   message += "\n\n";
-  if (keyFound)
+  if (hasConflict)
+    {
+      message += _("Click here to resolve the conflict.");
+    }
+  else if (keyFound)
     {
       message +=  isOpenPGP ? _("Click here for details about the key.") :
-                              _("Click here for details about the key.");
+                              _("Click here for details about the certificate.");
     }
   else
     {

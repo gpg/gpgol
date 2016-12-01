@@ -1528,11 +1528,11 @@ HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
     }
   if (mail && mail->is_valid_sig ())
     {
-      w_result = utf8_to_wchar (_("Verified Sender"));
+      w_result = utf8_to_wchar (_("Trusted Address"));
     }
   else
     {
-      w_result = utf8_to_wchar (_("Unverified Sender"));
+      w_result = utf8_to_wchar (_("Untrusted Address"));
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
