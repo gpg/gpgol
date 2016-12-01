@@ -1526,13 +1526,21 @@ HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
       log_debug ("%s:%s: No mail.",
                  SRCNAME, __func__);
     }
-  if (mail && mail->is_valid_sig ())
+  bool valid = mail->is_valid_sig ();
+  const auto pair = mail->get_valid_sig ();
+  bool fully = pair.first.validity() == GpgME::Signature::Validity::Full ||
+               pair.first.validity() == GpgME::Signature::Validity::Ultimate;
+  if (valid && fully)
     {
-      w_result = utf8_to_wchar (_("Trusted Address"));
+      w_result = utf8_to_wchar (_("Fully Trusted"));
+    }
+  else if (valid)
+    {
+      w_result = utf8_to_wchar (_("Trusted"));
     }
   else
     {
-      w_result = utf8_to_wchar (_("Untrusted Address"));
+      w_result = utf8_to_wchar (_("Not Trusted"));
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);

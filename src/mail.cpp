@@ -1423,7 +1423,15 @@ Mail::get_signature_status()
       const auto uid = pair.second;
       /* We are valid */
       keyFound = true;
-      message += _("The sender address is trusted because:");
+      if (sig.validity() == Signature::Validity::Full ||
+          sig.validity() == Signature::Validity::Ultimate)
+        {
+          message += _("The sender address is fully trusted because:");
+        }
+      else
+        {
+          message += _("The sender address is trusted because:");
+        }
       message += "\n\n";
       message += isOpenPGP ? _("The used key") : _("The used certificate");
       message += " ";
