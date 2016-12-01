@@ -418,6 +418,38 @@ EVENT_SINK_INVOKE(MailItemEvents)
           delete m_mail;
           return S_OK;
         }
+      case Forward:
+      case Reply:
+      case ReplyAll:
+        {
+          log_oom_extra ("%s:%s: Reply Forward ReplyAll: %p",
+                         SRCNAME, __func__, m_mail);
+          int crypto_flags = 0;
+          if (!(crypto_flags = m_mail->get_crypto_flags ()))
+            {
+              break;
+            }
+          if (parms->cArgs != 2 || parms->rgvarg[1].vt != (VT_DISPATCH) ||
+              parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
+            {
+              /* This happens in the weird case */
+              log_debug ("%s:%s: Unexpected args %i %x %x named: %i",
+                         SRCNAME, __func__, parms->cArgs, parms->rgvarg[0].vt, parms->rgvarg[1].vt,
+                         parms->cNamedArgs);
+              break;
+            }
+          LPMESSAGE msg = get_oom_base_message (parms->rgvarg[1].pdispVal);
+          if (!msg)
+            {
+              log_debug ("%s:%s: Failed to get base message",
+                         SRCNAME, __func__);
+              break;
+            }
+          set_gpgol_draft_info_flags (msg, crypto_flags);
+          gpgol_release (msg);
+          break;
+        }
+
       default:
         log_oom_extra ("%s:%s: Message:%p Unhandled Event: %lx \n",
                        SRCNAME, __func__, m_object, dispid);

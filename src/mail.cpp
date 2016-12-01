@@ -78,6 +78,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_close_triggered(false),
     m_is_html_alternative(false),
     m_moss_position(0),
+    m_crypto_flags(0),
     m_type(MSGTYPE_UNKNOWN)
 {
   if (get_mail_for_item (mailitem))
@@ -710,6 +711,16 @@ Mail::parsing_done()
   /* Store the results. */
   m_decrypt_result = m_parser->decrypt_result ();
   m_verify_result = m_parser->verify_result ();
+
+  m_crypto_flags = 0;
+  if (m_decrypt_result.numRecipients())
+    {
+      m_crypto_flags |= 1;
+    }
+  if (m_verify_result.numSignatures())
+    {
+      m_crypto_flags |= 2;
+    }
 
   update_sigstate ();
   m_needs_wipe = true;
@@ -1702,4 +1713,10 @@ const std::string &
 Mail::get_cached_html_body () const
 {
   return m_html_body;
+}
+
+int
+Mail::get_crypto_flags () const
+{
+  return m_crypto_flags;
 }

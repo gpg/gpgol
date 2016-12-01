@@ -299,6 +299,11 @@ public:
 
   /** Get the html body. It is updated in update_oom_data. */
   const std::string & get_cached_html_body () const;
+
+  /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
+      Only valid after decrypt_verify.
+  */
+  int get_crypto_flags () const;
 private:
   void update_categories ();
   void update_body ();
@@ -317,6 +322,7 @@ private:
        m_close_triggered, /* We have programtically triggered a close */
        m_is_html_alternative; /* Body Format is not plain text */
   int m_moss_position; /* The number of the original message attachment. */
+  int m_crypto_flags;
   std::string m_sender;
   std::string m_html_body; /* Cached html body. */
   msgtype_t m_type; /* Our messagetype as set in mapi */
