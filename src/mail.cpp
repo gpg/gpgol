@@ -856,7 +856,6 @@ Mail::update_oom_data ()
           if (senderMail)
             {
               m_sender = senderMail;
-              log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
               xfree (senderMail);
               xfree (type);
               return 0;
@@ -869,7 +868,6 @@ Mail::update_oom_data ()
     {
       char *buf = get_oom_string (sender, "SmtpAddress");
       m_sender = buf;
-          log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
       xfree (buf);
       gpgol_release (sender);
       return 0;
@@ -880,7 +878,6 @@ Mail::update_oom_data ()
     {
       char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
       m_sender = buf;
-          log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
       xfree (buf);
       gpgol_release (sender);
       return 0;
@@ -892,7 +889,6 @@ Mail::update_oom_data ()
     {
       char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
       m_sender = buf;
-          log_debug ("Sender %i is now: %s",__LINE__, m_sender.c_str());
       xfree (buf);
       gpgol_release (sender);
       return 0;
