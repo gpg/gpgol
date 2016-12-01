@@ -1567,7 +1567,7 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
     }
   else
     {
-      w_result = utf8_to_wchar (_("This message is not cryptographically signed"));
+      w_result = utf8_to_wchar (_("This message is not cryptographically signed."));
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
@@ -1583,7 +1583,10 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
     {
       log_debug ("%s:%s: No mail.",
                  SRCNAME, __func__);
-      result->bstrVal = SysAllocString (L"");
+      wchar_t *w_result;
+      w_result = utf8_to_wchar (_("You cannot be sure who wrote the message."));
+      result->bstrVal = SysAllocString (w_result);
+      xfree (w_result);
       return S_OK;
     }
   const auto message = mail->get_signature_status ();
