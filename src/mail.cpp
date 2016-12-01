@@ -1181,6 +1181,8 @@ get_uid_for_sender (const Key k, const char *sender)
     {
       if (!uid.email())
         {
+          log_error ("%s:%s: skipping uid without email.",
+                     SRCNAME, __func__);
           continue;
         }
       auto normalized_uid = uid.addrSpec();
