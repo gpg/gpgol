@@ -442,7 +442,7 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 
   /* Set up categories */
   const char *decCategory = _("GpgOL: Encrypted Message");
-  const char *verifyCategory = _("GpgOL: Verified Sender");
+  const char *verifyCategory = _("GpgOL: Trusted Sender Address");
   ensure_category_exists (m_application, decCategory, 8);
   ensure_category_exists (m_application, verifyCategory, 5);
   install_forms ();

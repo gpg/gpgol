@@ -1297,7 +1297,7 @@ void
 Mail::remove_categories ()
 {
   const char *decCategory = _("GpgOL: Encrypted Message");
-  const char *verifyCategory = _("GpgOL: Verified Sender");
+  const char *verifyCategory = _("GpgOL: Trusted Sender Address");
   remove_category (m_mailitem, decCategory);
   remove_category (m_mailitem, verifyCategory);
 }
@@ -1306,7 +1306,7 @@ void
 Mail::update_categories ()
 {
   const char *decCategory = _("GpgOL: Encrypted Message");
-  const char *verifyCategory = _("GpgOL: Verified Sender");
+  const char *verifyCategory = _("GpgOL: Trusted Sender Address");
   if (m_decrypt_result.numRecipients())
     {
       /* We use the number of recipients as we don't care
