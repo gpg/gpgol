@@ -66,7 +66,7 @@ typedef enum
     PropertyChange = 0xF009,
     Read = 0xF001,
     ReadComplete = 0xFC8F,
-    Reply = 0xFC8F,
+    Reply = 0xF466,
     ReplyAll = 0xF467,
     Send = 0xF005,
     Unload = 0xFBAD,
