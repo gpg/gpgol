@@ -1525,6 +1525,10 @@ HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
     {
       log_debug ("%s:%s: No mail.",
                  SRCNAME, __func__);
+      w_result = utf8_to_wchar (_("Not Trusted"));
+      result->bstrVal = SysAllocString (w_result);
+      xfree (w_result);
+      return S_OK;
     }
   bool valid = mail->is_valid_sig ();
   const auto pair = mail->get_valid_sig ();
