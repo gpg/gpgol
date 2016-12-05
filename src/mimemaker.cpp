@@ -1366,6 +1366,8 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
   int rc = 0;
   char inner_boundary[BOUNDARYSIZE+1];
   char outer_boundary[BOUNDARYSIZE+1];
+  *outer_boundary = 0;
+  *inner_boundary = 0;
 
   if (((body && n_att_usable) || n_att_usable > 1) && related == 1)
     {
@@ -1386,10 +1388,8 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
                                  NULL)))
         return rc;
     }
-  else
-  /* Only one part.  */
-    *outer_boundary = 0;
 
+  /* Only one part.  */
   if (*outer_boundary && related == 2)
     {
       /* We have attachments that are related to the body and unrelated
@@ -1407,13 +1407,10 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
           return rc;
         }
     }
-  else
-    {
-      *inner_boundary = 0;
-    }
 
 
-  if ((rc=add_body (mail, *inner_boundary ? inner_boundary : outer_boundary,
+  if ((rc=add_body (mail, *inner_boundary ? inner_boundary :
+                          *outer_boundary ? outer_boundary : NULL,
                     sink, body)))
     {
       log_error ("%s:%s: Adding the body failed.",
