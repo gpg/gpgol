@@ -128,6 +128,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
           log_oom_extra ("%s:%s: Open : %p",
                          SRCNAME, __func__, m_mail);
           LPMESSAGE message;
+          if (g_ol_version_major < 14 && m_mail->set_uuid ())
+            {
+              /* In Outlook 2007 we need the uid for every
+                 open mail to track the message in case
+                 it is sent and crypto is required. */
+              log_debug ("%s:%s: Failed to set uuid.",
+                         SRCNAME, __func__);
+              delete m_mail; /* deletes this, too */
+              return S_OK;
+            }
           int draft_flags = 0;
           if (!opt.encrypt_default && !opt.sign_default)
             {
@@ -165,6 +175,20 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Read:
         {
+          if (g_ol_version_major < 14)
+            {
+              /* In Outlook 2007 there is no Before read event.
+                 We change the message class in message-events to
+                 prevent that outlook parses the mail itself but
+                 we still need to update our mail object accordingly.
+                 So we call pre_process here gain although the message
+                 class already was changed. */
+              if (m_mail->pre_process_message ())
+                {
+                  log_error ("%s:%s: Pre process message failed.",
+                             SRCNAME, __func__);
+                }
+            }
           log_oom_extra ("%s:%s: Read : %p",
                          SRCNAME, __func__, m_mail);
           if (!m_mail->is_crypto_mail())
