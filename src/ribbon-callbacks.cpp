@@ -1468,7 +1468,9 @@ get_mail_from_control (LPDISPATCH ctrl)
   uid = get_unique_id (mailitem, 0, nullptr);
   if (!uid)
     {
-      uid = mapi_get_uid (mailitem);
+      LPMESSAGE msg = get_oom_base_message (mailitem);
+      uid = mapi_get_uid (msg);
+      gpgol_release (msg);
       if (!uid)
         {
           log_debug ("%s:%s: Failed to get uid for %p",

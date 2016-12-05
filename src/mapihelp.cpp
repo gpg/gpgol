@@ -292,31 +292,28 @@ get_gpgoluid_tag (LPMESSAGE message, ULONG *r_tag)
 }
 
 char *
-mapi_get_uid (LPDISPATCH mail)
+mapi_get_uid (LPMESSAGE msg)
 {
   /* If the UUID is not in OOM maybe we find it in mapi. */
-  LPMESSAGE msg = get_oom_base_message (mail);
   if (!msg)
     {
-      log_debug ("%s:%s: Failed to get message for '%p'",
-                 SRCNAME, __func__, mail);
-      gpgol_release (msg);
+      log_error ("%s:%s: Called without message",
+                 SRCNAME, __func__);
+      return NULL;
     }
   ULONG tag;
   if (get_gpgoluid_tag (msg, &tag))
     {
       log_debug ("%s:%s: Failed to get tag for '%p'",
-                 SRCNAME, __func__, mail);
-      gpgol_release (msg);
+                 SRCNAME, __func__, msg);
       return NULL;
     }
   LPSPropValue propval = NULL;
   HRESULT hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
-  gpgol_release (msg);
   if (hr)
     {
       log_debug ("%s:%s: Failed to get prop for '%p'",
-                 SRCNAME, __func__, mail);
+                 SRCNAME, __func__, msg);
       return NULL;
     }
   char *ret = NULL;
@@ -324,13 +321,13 @@ mapi_get_uid (LPDISPATCH mail)
     {
       ret = wchar_to_utf8 (propval->Value.lpszW);
       log_debug ("%s:%s: Fund uuid in MAPI for %p",
-                 SRCNAME, __func__, mail);
+                 SRCNAME, __func__, msg);
     }
   else if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
     {
       ret = strdup (propval->Value.lpszA);
       log_debug ("%s:%s: Fund uuid in MAPI for %p",
-                 SRCNAME, __func__, mail);
+                 SRCNAME, __func__, msg);
     }
   MAPIFreeBuffer (propval);
   return ret;

@@ -131,7 +131,8 @@ int mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype);
 /* Copy the MAPI body to a PGPBODY type attachment. */
 int mapi_body_to_attachment (LPMESSAGE message);
 
-char * mapi_get_uid (LPDISPATCH mail);
+/* Get malloced uid of a message */
+char * mapi_get_uid (LPMESSAGE message);
 #ifdef __cplusplus
 }
 #endif
