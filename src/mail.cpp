@@ -77,6 +77,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_valid(false),
     m_close_triggered(false),
     m_is_html_alternative(false),
+    m_needs_encrypt(false),
     m_moss_position(0),
     m_crypto_flags(0),
     m_type(MSGTYPE_UNKNOWN)
@@ -1719,4 +1720,16 @@ int
 Mail::get_crypto_flags () const
 {
   return m_crypto_flags;
+}
+
+void
+Mail::set_needs_encrypt (bool value)
+{
+  m_needs_encrypt = value;
+}
+
+bool
+Mail::needs_encrypt() const
+{
+  return m_needs_encrypt;
 }

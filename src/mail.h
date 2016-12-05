@@ -304,6 +304,11 @@ public:
       Only valid after decrypt_verify.
   */
   int get_crypto_flags () const;
+
+  /** Returns true if the mail should be encrypted in the
+      after write event. */
+  bool needs_encrypt () const;
+  void set_needs_encrypt (bool val);
 private:
   void update_categories ();
   void update_body ();
@@ -320,7 +325,8 @@ private:
        m_is_signed, /* Mail is signed */
        m_is_valid, /* Mail is valid signed. */
        m_close_triggered, /* We have programtically triggered a close */
-       m_is_html_alternative; /* Body Format is not plain text */
+       m_is_html_alternative, /* Body Format is not plain text */
+       m_needs_encrypt; /* Send was triggered we want to encrypt. */
   int m_moss_position; /* The number of the original message attachment. */
   int m_crypto_flags;
   std::string m_sender;

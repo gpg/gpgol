@@ -79,7 +79,6 @@ BEGIN_EVENT_SINK(MailItemEvents, IDispatch)
 
 private:
   Mail * m_mail; /* The mail object related to this mailitem */
-  bool m_send_seen;   /* The message is about to be submitted */
 };
 
 MailItemEvents::MailItemEvents() :
@@ -87,8 +86,7 @@ MailItemEvents::MailItemEvents() :
     m_pCP(NULL),
     m_cookie(0),
     m_ref(1),
-    m_mail(NULL),
-    m_send_seen (false)
+    m_mail(NULL)
 {
 }
 
@@ -307,13 +305,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
              break;
            }
           m_mail->update_oom_data ();
-          m_send_seen = true;
+          m_mail->set_needs_encrypt (true);
           invoke_oom_method (m_object, "Save", NULL);
           if (m_mail->crypto_successful ())
             {
                log_debug ("%s:%s: Passing send event for message %p.",
                           SRCNAME, __func__, m_object);
-               m_send_seen = false;
                break;
             }
           else
@@ -363,9 +360,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_send_seen)
+          if (m_mail->needs_encrypt ())
             {
-              m_send_seen = false;
               m_mail->encrypt_sign ();
               return S_OK;
             }
