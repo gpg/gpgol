@@ -1490,8 +1490,12 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
       gpgol_release (store);
       if (!categories)
         {
-          TRACEPOINT;
-          continue;
+          categories = get_oom_object (application, "Session.Categories");
+          if (!categories)
+            {
+              TRACEPOINT;
+              continue;
+            }
         }
 
       auto count = get_oom_int (categories, "Count");
