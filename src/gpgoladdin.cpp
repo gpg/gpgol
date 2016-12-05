@@ -1298,7 +1298,8 @@ void gpgoladdin_invalidate_ui ()
 
   for (it = g_ribbon_uis.begin(); it != g_ribbon_uis.end(); ++it)
     {
-      log_debug ("Invalidating ribbon: %p", *it);
+      log_debug ("%s:%s: Invalidating ribbon: %p",
+                 SRCNAME, __func__, *it);
       invoke_oom_method (*it, "Invalidate", NULL);
     }
 }
