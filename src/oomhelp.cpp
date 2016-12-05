@@ -181,6 +181,8 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
       unsigned int argErr = 0;
       EXCEPINFO execpinfo;
 
+      init_excepinfo (&execpinfo);
+
       if (pDisp)
         {
           gpgol_release (pDisp);
@@ -487,6 +489,7 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
   BSTR bstring;
   EXCEPINFO execpinfo;
 
+  init_excepinfo (&execpinfo);
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid == DISPID_UNKNOWN)
     return -1;
@@ -934,6 +937,7 @@ int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
   wchar_t *w_property;
   unsigned int argErr = 0;
 
+  init_excepinfo (&execpinfo);
   log_oom ("%s:%s: Looking up property: %s;",
              SRCNAME, __func__, dasl_id);
 
@@ -1128,6 +1132,7 @@ add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
   unsigned int argErr = 0;
   EXCEPINFO execpinfo;
 
+  init_excepinfo (&execpinfo);
   dispid = lookup_oom_dispid (attachments, "Add");
 
   if (dispid == DISPID_UNKNOWN)
@@ -1307,6 +1312,7 @@ invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
   if (dispid != DISPID_UNKNOWN)
     {
       EXCEPINFO execpinfo;
+      init_excepinfo (&execpinfo);
       DISPPARAMS dispparams = {NULL, NULL, 0, 0};
 
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
