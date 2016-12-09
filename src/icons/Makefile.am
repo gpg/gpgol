@@ -31,4 +31,6 @@ EXTRA_DIST= \
     emblem-question.svg \
     emblem-warning.svg \
     emblem-information.svg \
-    emblem-success-yellow.svg
+    emblem-success-yellow.svg \
+    sign.svg sign-enc.svg enc.svg \
+    sign-enc-40.png sign-20.png encrypt-20.png

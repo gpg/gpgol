@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="48px"
+   height="48px"
+   id="svg4223"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   inkscape:export-filename="/home/aheinecke/arbeit/kf5/src/gpgol/src/icons/sign-20.png"
+   inkscape:export-xdpi="37.5"
+   inkscape:export-ydpi="37.5"
+   sodipodi:docname="New document 23">
+  <defs
+     id="defs4225" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="7"
+     inkscape:cx="24"
+     inkscape:cy="24"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1003"
+     inkscape:window-x="1918"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4242" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata4228">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <polygon
+       transform="matrix(0.07831286,0,0,0.11775271,4.9522209,-11.798783)"
+       style="fill:#d65533;fill-opacity:1"
+       points="338.235,308.602 173.765,308.602 173.765,512 256.001,459.841 338.235,512 "
+       id="polygon3338" />
+    <polygon
+       transform="matrix(0.07831286,0,0,0.07831286,4.9522209,0.3724384)"
+       style="fill:#ff9070;fill-opacity:1"
+       points="163.945,343.488 144.221,295.843 96.575,276.119 103.268,224.999 71.936,184.064 103.268,143.13 96.575,92.01 144.221,72.285 163.946,24.639 215.065,31.333 256.001,0 296.935,31.333 348.055,24.639 367.779,72.286 415.425,92.01 408.732,143.13 440.064,184.064 408.732,224.999 415.425,276.119 367.779,295.844 348.053,343.49 296.935,336.796 256.001,368.129 215.065,336.796 "
+       id="polygon3340" />
+    <circle
+       transform="matrix(0.07831286,0,0,0.07831286,4.9522209,0.3724384)"
+       sodipodi:ry="112.206"
+       sodipodi:rx="112.206"
+       sodipodi:cy="184.06599"
+       sodipodi:cx="255.996"
+       style="fill:#d65533;fill-opacity:1"
+       cx="255.996"
+       cy="184.06599"
+       r="112.206"
+       id="circle3342" />
+  </g>
+</svg>
