@@ -613,6 +613,9 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnDecryptLarge", ID_BTN_DECRYPT_LARGE)
       ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
       ID_MAPPER (L"btnEncryptLarge", ID_BTN_ENCRYPT_LARGE)
+      ID_MAPPER (L"btnEncryptSmall", IDI_ENCRYPT_20_PNG)
+      ID_MAPPER (L"btnSignSmall", IDI_SIGN_20_PNG)
+      ID_MAPPER (L"btnSignEncryptLarge", IDI_SIGN_ENCRYPT_40_PNG)
       ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
       ID_MAPPER (L"btnSignLarge", ID_BTN_SIGN_LARGE)
       ID_MAPPER (L"btnVerifyLarge", ID_BTN_VERIFY_LARGE)
@@ -626,13 +629,17 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
 
       /* MIME support: */
       ID_MAPPER (L"encryptMime", ID_CMD_MIME_ENCRYPT)
-      ID_MAPPER (L"signMime", ID_CMD_MIME_SIGN)
-      ID_MAPPER (L"getEncryptPressed", ID_GET_ENCRYPT_PRESSED)
-      ID_MAPPER (L"getSignPressed", ID_GET_SIGN_PRESSED)
       ID_MAPPER (L"encryptMimeEx", ID_CMD_MIME_ENCRYPT_EX)
+      ID_MAPPER (L"signMime", ID_CMD_MIME_SIGN)
       ID_MAPPER (L"signMimeEx", ID_CMD_MIME_SIGN_EX)
+      ID_MAPPER (L"encryptSignMime", ID_CMD_SIGN_ENCRYPT_MIME)
+      ID_MAPPER (L"encryptSignMimeEx", ID_CMD_SIGN_ENCRYPT_MIME_EX)
+      ID_MAPPER (L"getEncryptPressed", ID_GET_ENCRYPT_PRESSED)
       ID_MAPPER (L"getEncryptPressedEx", ID_GET_ENCRYPT_PRESSED_EX)
+      ID_MAPPER (L"getSignPressed", ID_GET_SIGN_PRESSED)
       ID_MAPPER (L"getSignPressedEx", ID_GET_SIGN_PRESSED_EX)
+      ID_MAPPER (L"getSignEncryptPressed", ID_GET_SIGN_ENCRYPT_PRESSED)
+      ID_MAPPER (L"getSignEncryptPressedEx", ID_GET_SIGN_ENCRYPT_PRESSED_EX)
       ID_MAPPER (L"ribbonLoaded", ID_ON_LOAD)
       ID_MAPPER (L"openOptions", ID_CMD_OPEN_OPTIONS)
       ID_MAPPER (L"getSigLabel", ID_GET_SIG_LABEL)
@@ -690,16 +697,28 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return signBody (parms->rgvarg[0].pdispVal);
       case ID_CMD_VERIFY_BODY:
         return verifyBody (parms->rgvarg[0].pdispVal);
-      case ID_CMD_MIME_SIGN:
-        return mark_mime_action (parms->rgvarg[1].pdispVal, OP_SIGN, false);
+      case ID_CMD_SIGN_ENCRYPT_MIME:
+        return mark_mime_action (parms->rgvarg[1].pdispVal,
+                                 OP_SIGN|OP_ENCRYPT, false);
+      case ID_CMD_SIGN_ENCRYPT_MIME_EX:
+        return mark_mime_action (parms->rgvarg[1].pdispVal,
+                                 OP_SIGN|OP_ENCRYPT, true);
       case ID_CMD_MIME_ENCRYPT:
         return mark_mime_action (parms->rgvarg[1].pdispVal, OP_ENCRYPT,
+
+                                 false);
+      case ID_CMD_MIME_SIGN:
+        return mark_mime_action (parms->rgvarg[1].pdispVal, OP_SIGN,
                                  false);
       case ID_GET_ENCRYPT_PRESSED:
         return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_ENCRYPT,
                                   result, false);
       case ID_GET_SIGN_PRESSED:
         return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_SIGN,
+                                  result, false);
+      case ID_GET_SIGN_ENCRYPT_PRESSED:
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal,
+                                  OP_SIGN | OP_ENCRYPT,
                                   result, false);
       case ID_CMD_MIME_SIGN_EX:
         return mark_mime_action (parms->rgvarg[1].pdispVal, OP_SIGN, true);
@@ -710,6 +729,9 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
                                   result, true);
       case ID_GET_SIGN_PRESSED_EX:
         return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_SIGN,
+                                  result, true);
+      case ID_GET_SIGN_ENCRYPT_PRESSED_EX:
+        return get_crypt_pressed (parms->rgvarg[0].pdispVal, OP_SIGN | OP_ENCRYPT,
                                   result, true);
       case ID_GET_SIG_STIP:
         return get_sig_stip (parms->rgvarg[0].pdispVal, result);
@@ -740,6 +762,9 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_BTN_ENCSIGN_LARGE:
       case ID_BTN_SIGN_LARGE:
       case ID_BTN_VERIFY_LARGE:
+      case IDI_SIGN_ENCRYPT_40_PNG:
+      case IDI_ENCRYPT_20_PNG:
+      case IDI_SIGN_20_PNG:
         return getIcon (dispid, result);
       case ID_BTN_SIGSTATE_LARGE:
         return get_sigstate_icon (parms->rgvarg[0].pdispVal, result);
@@ -777,6 +802,13 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
     _("Sign the message.");
   const char *signSTip =
     _("Sign the message and all attachments before sending.");
+
+  const char *secureTTip =
+    _("Encrypt and sign the message.");
+  const char *secureSTip =
+    _("Encrypting and cryptographically signing a message means that the "
+      "recipient can be sure that no one modified the message and only the "
+      "recipients can read it.\nNot even the NSA.");
   const char *optsSTip =
     _("Open the settings dialog for GpgOL.");
   log_debug ("%s:%s: GetCustomUI_MIME for id: %ls", SRCNAME, __func__, RibbonID);
@@ -794,22 +826,30 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "    <tab idMso=\"TabNewMailMessage\">"
         "     <group id=\"general\""
         "            label=\"%s\">"
-        "       <toggleButton id=\"mimeEncrypt\""
-        "               getImage=\"btnEncryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"encryptMime\""
-        "               getPressed=\"getEncryptPressed\"/>"
-        "       <toggleButton id=\"mimeSign\""
-        "               getImage=\"btnSignLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"signMime\""
-        "               getPressed=\"getSignPressed\"/>"
+        "       <splitButton id=\"splitty\" size=\"large\">"
+        "         <toggleButton id=\"mimeSignEncrypt\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 getPressed=\"getSignEncryptPressed\""
+        "                 getImage=\"btnSignEncryptLarge\""
+        "                 onAction=\"encryptSignMime\"""/>"
+        "         <menu id=\"encMenu\" showLabel=\"true\">"
+        "         <toggleButton id=\"mimeSign\""
+        "                 getImage=\"btnSignSmall\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 onAction=\"signMime\""
+        "                 getPressed=\"getSignPressed\"/>"
+        "         <toggleButton id=\"mimeEncrypt\""
+        "                 getImage=\"btnEncryptSmall\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 onAction=\"encryptMime\""
+        "                 getPressed=\"getEncryptPressed\"/>"
+        "       </menu></splitButton>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn\""
         "                 onAction=\"openOptions\""
@@ -820,8 +860,9 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "   </tabs>"
         " </ribbon>"
         "</customUI>", _("GpgOL"),
-        _("Encrypt"), encryptTTip, encryptSTip,
+        _("Sign Encrypt"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
+        _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip
         );
     }
@@ -899,28 +940,36 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "    <tab idMso=\"TabMessage\">"
         "     <group id=\"general\""
         "            label=\"%s\">"
-        "       <toggleButton id=\"mimeEncryptEx\""
-        "               getImage=\"btnEncryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"encryptMimeEx\""
-        "               getPressed=\"getEncryptPressedEx\"/>"
-        "       <toggleButton id=\"mimeSignEx\""
-        "               getImage=\"btnSignLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"signMimeEx\""
-        "               getPressed=\"getSignPressedEx\"/>"
+        "       <splitButton id=\"splitty\" size=\"large\">"
+        "         <toggleButton id=\"mimeSignEncrypt\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 getPressed=\"getSignEncryptPressedEx\""
+        "                 getImage=\"btnSignEncryptLarge\""
+        "                 onAction=\"encryptSignMimeEx\"""/>"
+        "         <menu id=\"encMenu\" showLabel=\"true\">"
+        "         <toggleButton id=\"mimeSign\""
+        "                 getImage=\"btnSignSmall\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 onAction=\"signMimeEx\""
+        "                 getPressed=\"getSignPressedEx\"/>"
+        "         <toggleButton id=\"mimeEncrypt\""
+        "                 getImage=\"btnEncryptSmall\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 onAction=\"encryptMimeEx\""
+        "                 getPressed=\"getEncryptPressedEx\"/>"
+        "       </menu></splitButton>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn\""
         "                 onAction=\"openOptions\""
         "                 screentip=\"%s\"/>"
         "       </dialogBoxLauncher>"
-        "     </group>"
+        "      </group>"
         "    </tab>"
         "   </tabSet>"
         "   </contextualTabs>"
@@ -929,8 +978,9 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("GpgOL"),
         optsSTip,
         _("GpgOL"),
-        _("Encrypt"), encryptTTip, encryptSTip,
+        _("Sign Encrypt"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
+        _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip
         );
     }

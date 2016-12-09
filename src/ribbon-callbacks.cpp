@@ -1342,6 +1342,11 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
 
   rc = S_OK;
 
+  /*  We need to invalidate the UI to update the toggle
+      states of the subbuttons and the top button. Yeah,
+      we invalidate a lot *sigh* */
+  gpgoladdin_invalidate_ui ();
+
 done:
   gpgol_release (context);
   gpgol_release (mailitem);
@@ -1353,12 +1358,13 @@ done:
 /* Get the state of encrypt / sign toggle buttons.
   flag values: 1 get the state of the encrypt button.
                2 get the state of the sign button.
-  If is_explorer is set to true
-               */
+  If is_explorer is set to true we look at the inline response.
+*/
 HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
                            bool is_explorer)
 {
   HRESULT hr;
+  bool value;
   LPDISPATCH context = NULL,
              mailitem = NULL;
   LPMESSAGE message = NULL;
@@ -1402,9 +1408,9 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
       goto done;
     }
 
-  *(result->pboolVal) = get_gpgol_draft_info_flags (message) & flags ?
-                                                        VARIANT_TRUE :
-                                                        VARIANT_FALSE;
+  value = (get_gpgol_draft_info_flags (message) & flags) == flags;
+
+  *(result->pboolVal) = value ? VARIANT_TRUE : VARIANT_FALSE;
 
 done:
   gpgol_release (context);

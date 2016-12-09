@@ -119,5 +119,8 @@
 #define IDI_EMBLEM_INFORMATION_64_PNG   0x6073
 #define IDI_EMBLEM_QUESTION_64_PNG      0x6074
 #define IDI_EMBLEM_SUCCESS_YELLOW_64_PNG 0x6075
+#define IDI_SIGN_ENCRYPT_40_PNG         0x6075
+#define IDI_ENCRYPT_20_PNG              0x6076
+#define IDI_SIGN_20_PNG                 0x6077
 
 #endif /*DIALOGS_H*/

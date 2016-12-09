@@ -58,7 +58,9 @@ IDI_EMBLEM_SUCCESS_YELLOW_64_PNG RCDATA        "icons/emblem-success-yellow-64.p
 IDI_EMBLEM_INFORMATION_64_PNG RCDATA           "icons/emblem-information-64.png"
 IDI_EMBLEM_QUESTION_64_PNG RCDATA              "icons/emblem-question-64.png"
 
-
+IDI_SIGN_ENCRYPT_40_PNG    RCDATA              "icons/sing-enc-40.png"
+IDI_ENCRYPT_20_PNG         RCDATA              "icons/encrypt-20.png"
+IDI_SIGN_20_PNG            RCDATA              "icons/sign-20.png"
 
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
