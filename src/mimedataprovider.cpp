@@ -833,21 +833,30 @@ MimeDataProvider::collect_data(FILE *stream)
 
 ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
 {
-    m_rawbuf += std::string ((const char*)buffer, bufSize);
-    size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
-                                            m_rawbuf.size());
+  if (m_collect_everything)
+    {
+      /* Writing with collect everything one means that we are outputprovider.
+         In this case for inline messages we want to collect everything. */
+      log_mime_parser ("%s:%s: Using complete input as body " SIZE_T_FORMAT " bytes.",
+                       SRCNAME, __func__, bufSize);
+      m_body += std::string ((const char *) buffer, bufSize);
+      return bufSize;
+    }
+  m_rawbuf += std::string ((const char*)buffer, bufSize);
+  size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
+                                          m_rawbuf.size());
 
-    if (not_taken == m_rawbuf.size())
-      {
-        log_error ("%s:%s: Write failed to consume anything.\n"
-                   "Buffer too small? or no newlines in text?",
-                   SRCNAME, __func__);
-        return bufSize;
-      }
-    log_mime_parser ("%s:%s: Write Consumed: " SIZE_T_FORMAT " bytes",
-                     SRCNAME, __func__, m_rawbuf.size() - not_taken);
-    m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
-    return bufSize;
+  if (not_taken == m_rawbuf.size())
+    {
+      log_error ("%s:%s: Write failed to consume anything.\n"
+                 "Buffer too small? or no newlines in text?",
+                 SRCNAME, __func__);
+      return bufSize;
+    }
+  log_mime_parser ("%s:%s: Write Consumed: " SIZE_T_FORMAT " bytes",
+                   SRCNAME, __func__, m_rawbuf.size() - not_taken);
+  m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
+  return bufSize;
 }
 
 off_t

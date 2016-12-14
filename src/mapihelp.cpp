@@ -959,41 +959,37 @@ change_message_class_ipm_note (LPMESSAGE message)
   char *ct, *proto;
 
   ct = mapi_get_message_content_type (message, &proto, NULL);
-  if (ct)
+  log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__,
+             ct ? ct : "null");
+  if (ct && proto)
     {
-      log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
-      if (proto)
-        {
-          log_debug ("%s:%s:     protocol is '%s'", SRCNAME, __func__, proto);
-          
-          if (!strcmp (ct, "multipart/encrypted")
-              && !strcmp (proto, "application/pgp-encrypted"))
-            {
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
-            }
-          else if (!strcmp (ct, "multipart/signed")
-                   && !strcmp (proto, "application/pgp-signature"))
-            {
-              /* Sometimes we receive a PGP/MIME signed message with a
-                 class IPM.Note.  */
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-            }
-          xfree (proto);
-        }
-      else if (!strcmp (ct, "text/plain") ||
-               !strcmp (ct, "multipart/mixed") ||
-               !strcmp (ct, "multipart/alternative"))
-        {
-          /* It is quite common to have a multipart/mixed or alternative
-             mail with separate encrypted PGP parts.  Look at the body to
-             decide.  */
-          newvalue = get_msgcls_from_pgp_lines (message);
-        }
+      log_debug ("%s:%s:     protocol is '%s'", SRCNAME, __func__, proto);
 
-      xfree (ct);
+      if (!strcmp (ct, "multipart/encrypted")
+          && !strcmp (proto, "application/pgp-encrypted"))
+        {
+          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+        }
+      else if (!strcmp (ct, "multipart/signed")
+               && !strcmp (proto, "application/pgp-signature"))
+        {
+          /* Sometimes we receive a PGP/MIME signed message with a
+             class IPM.Note.  */
+          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+        }
+      xfree (proto);
     }
-  else
-    log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
+  else if (!ct || !strcmp (ct, "text/plain") ||
+           !strcmp (ct, "multipart/mixed") ||
+           !strcmp (ct, "multipart/alternative"))
+    {
+      /* It is quite common to have a multipart/mixed or alternative
+         mail with separate encrypted PGP parts.  Look at the body to
+         decide.  */
+      newvalue = get_msgcls_from_pgp_lines (message);
+    }
+
+  xfree (ct);
 
   return newvalue;
 }

@@ -64,22 +64,31 @@ expect_no_headers (msgtype_t type)
   return type != MSGTYPE_GPGOL_MULTIPART_SIGNED;
 }
 
+static bool
+expect_no_mime (msgtype_t type)
+{
+  return type == MSGTYPE_GPGOL_PGP_MESSAGE ||
+         type == MSGTYPE_GPGOL_CLEAR_SIGNED;
+}
+
 #ifdef HAVE_W32_SYSTEM
 ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_inputprovider  (new MimeDataProvider(instream,
                           expect_no_headers(type))),
-    m_outputprovider (new MimeDataProvider()),
+    m_outputprovider (new MimeDataProvider(expect_no_mime(type))),
     m_type (type)
 {
-  log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
-                   SRCNAME, __func__, instream, type);
+  log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i"
+                   " expect headers: %i expect no mime: %i",
+                   SRCNAME, __func__, instream, type,
+                   expect_no_headers (type), expect_no_mime (type));
 }
 #endif
 
 ParseController::ParseController(FILE *instream, msgtype_t type):
     m_inputprovider  (new MimeDataProvider(instream,
                           expect_no_headers(type))),
-    m_outputprovider (new MimeDataProvider()),
+    m_outputprovider (new MimeDataProvider(expect_no_mime(type))),
     m_type (type)
 {
   log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
