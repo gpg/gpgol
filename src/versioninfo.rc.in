@@ -39,7 +39,7 @@ BEGIN
             VALUE "FileDescription", "GpgOL - GnuPG plugin for Outlook\0"
             VALUE "FileVersion", "@VERSION@\0"
             VALUE "InternalName", "gpgol\0"
-            VALUE "LegalCopyright", "Copyright © 2013 g10 Code GmbH\0"
+            VALUE "LegalCopyright", "Copyright © 2016 g10 Code GmbH\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "gpgol.dll\0"
             VALUE "PrivateBuild", "\0"
