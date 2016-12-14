@@ -60,11 +60,6 @@ static std::set<std::string> uids_searched;
 
 #define COPYBUFSIZE (8 * 1024)
 
-/* Our own basic trust level for tofu.
-   GnuPG's can't be trusted. See comment
-   in get_valid_sig why.*/
-#define GPGOL_BASIC_TOFU_TRUST 10
-
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
@@ -1238,44 +1233,33 @@ Mail::update_sigstate ()
   for (const auto sig: m_verify_result.signatures())
     {
       m_is_signed = true;
-      if (sig.validity() != Signature::Validity::Marginal &&
+      m_uid = get_uid_for_sender (sig.key(), sender.c_str());
+      if (!m_uid.isNull() && sig.validity() != Signature::Validity::Marginal &&
           sig.validity() != Signature::Validity::Full &&
           sig.validity() != Signature::Validity::Ultimate)
         {
-          /* For our category we only care about trusted sigs. */
+          /* For our category we only care about trusted sigs. And
+          the UID needs to match.*/
           continue;
         }
-      const auto uid = get_uid_for_sender (sig.key(), sender.c_str());
       if (sig.validity() == Signature::Validity::Marginal)
         {
-          const auto tofu = uid.tofuInfo();
+          const auto tofu = m_uid.tofuInfo();
           if (tofu.isNull() ||
-              (tofu.validity() != TofuInfo::Validity::LittleHistory &&
-               tofu.validity() != TofuInfo::Validity::BasicHistory &&
+              (tofu.validity() != TofuInfo::Validity::BasicHistory &&
                tofu.validity() != TofuInfo::Validity::LargeHistory))
             {
               /* Marginal is not good enough without tofu.
                  We also wait for basic trust. */
-              log_debug ("%s:%s: Discarding marginal signature.",
+              log_debug ("%s:%s: Discarding marginal signature."
+                         "With too little history.",
                          SRCNAME, __func__);
               continue;
             }
-          /* GnuPG uses the encrypt count to determine validity.
-             This does not make sense for us. E.g. Drafts may have
-             been encrypted and encryption is no communication so
-             it does not track communication history or consistency.
-             So basically "our" tofu validity is that more then 10 messages
-             have been exchanged. Which was the original code in GnuPG */
-          if (!tofu.isNull() && tofu.signCount() <= GPGOL_BASIC_TOFU_TRUST) {
-              log_debug ("%s:%s: Tofu signcount too small.",
-                         SRCNAME, __func__);
-              continue;
-          }
         }
       log_debug ("%s:%s: Classified sender as verified",
                  SRCNAME, __func__);
       m_sig = sig;
-      m_uid = uid;
       m_is_valid = true;
       return;
     }
@@ -1284,17 +1268,6 @@ Mail::update_sigstate ()
              SRCNAME, __func__);
   m_sig = m_verify_result.signature(0);
   return;
-}
-
-const std::pair <Signature, UserID>
-Mail::get_valid_sig ()
-{
-  std::pair <Signature, UserID> ret;
-  if (!m_is_valid)
-    {
-      return ret;
-    }
-  return std::pair<Signature, UserID> (m_sig, m_uid);
 }
 
 bool
@@ -1342,9 +1315,15 @@ Mail::update_categories ()
 }
 
 bool
-Mail::is_signed()
+Mail::is_signed() const
 {
   return m_verify_result.numSignatures() > 0;
+}
+
+bool
+Mail::is_encrypted() const
+{
+  return m_decrypt_result.numRecipients() > 0;
 }
 
 int
@@ -1409,100 +1388,204 @@ Mail::set_uuid()
   return 0;
 }
 
-std::string
-Mail::get_signature_status()
+/* Returns -1 if the mail was signed by a uid with ownertrust
+   ultimate and to which we have the secret key.
+   This basically means "mail was signed by yourself"
+
+   Returns the number of the signature fromt the uid that belongs
+   made it ultimately or fully trusted if the mail was signed by some
+   ultimate key for which we don't have the secret key.
+   This is direct trust or CA Style PGP.
+
+   0 otherwise */
+static int
+level_4_check (const UserID &uid)
 {
-  std::string message;
-  if (!is_signed())
+  if (uid.validity() == UserID::Validity::Ultimate)
     {
-      message =_("This message is not signed.\n");
-      message += _("You cannot be sure who wrote the message.");
-      return message;
+      /* TODO look for the signature that caused this
+         to be ultimate. And check if it is our own. */
+      return -1;
+    }
+  else if (uid.validity() == UserID::Validity::Full)
+    {
+      return 1;
+    }
+  return 0;
+}
+
+std::string
+Mail::get_crypto_summary ()
+{
+  const int level = get_signature_level ();
+
+  bool enc = is_encrypted ();
+  if (level > 3 && enc)
+    {
+      return _("Highly Secure");
+    }
+  if (level > 3)
+    {
+      return _("Highly Trustworthy");
+    }
+  if (level >= 2 && enc)
+    {
+      return _("Secure");
+    }
+  if (level >= 2)
+    {
+      return _("Trustworthy");
+    }
+  if (enc)
+    {
+      return _("Encrypted");
+    }
+  if (is_signed ())
+    {
+      return _("Signed");
+    }
+  return _("Insecure");
+}
+
+std::string
+Mail::get_crypto_details()
+{
+  /* Handle encrypt only */
+  if (!is_encrypted () && !is_signed ())
+    {
+      return _("You cannot be sure who sent, "
+               "modified and read the message in transit.");
+    }
+  else if (is_encrypted() && !is_signed ())
+    {
+      return _("You cannot be sure who sent the message as "
+               "it is not signed.");
     }
 
-  const auto pair = get_valid_sig ();
-  bool keyFound = false;
-  bool isOpenPGP = pair.first.key().protocol() == Protocol::OpenPGP;
+  std::string message;
+
+  bool keyFound = true;
+  bool isOpenPGP = m_sig.key().protocol() == Protocol::OpenPGP;
   char *buf;
   bool hasConflict = false;
-  if (!pair.first.isNull () && !pair.second.isNull ())
+  int level = get_signature_level ();
+
+  log_debug ("%s:%s: Formatting sig. Validity: %x Summary: %x Level: %i",
+             SRCNAME, __func__, m_sig.validity(), m_sig.summary(),
+             level);
+
+  if (level == 4)
     {
-      const auto sig = pair.first;
-      const auto uid = pair.second;
-      /* We are valid */
-      keyFound = true;
-      if (sig.validity() == Signature::Validity::Full ||
-          sig.validity() == Signature::Validity::Ultimate)
+      /* level 4 check for direct trust */
+      int four_check = level_4_check (m_uid);
+
+      if (four_check == -1)
         {
-          message += _("The sender address is fully trusted because:");
+          message = _("And you signed this message.");
+        }
+      else if (four_check >= 0)
+        {
+          /* TODO
+            And you certified the identity of the sender.
+            And <uid with ultimate trust> certified the identity
+            of the sender.
+          */
         }
       else
         {
-          message += _("The sender address is trusted because:");
+          log_error ("%s:%s:%i BUG: Invalid sigstate.",
+                     SRCNAME, __func__, __LINE__);
+          return message;
         }
-      message += "\n\n";
-      message += isOpenPGP ? _("The used key") : _("The used certificate");
-      message += " ";
-      message += sig.validity() == Signature::Validity::Ultimate ?
-                      _("is marked as your own.") :
-                      sig.validity() == Signature::Validity::Full && isOpenPGP &&
-                      uid.tofuInfo().policy() == TofuInfo::PolicyGood ?
-                      _("was marked to be the right key for this address") :
-                      sig.validity() == Signature::Validity::Full && isOpenPGP ?
-                      _("was certified by enough trusted keys or yourself.") :
-                      "";
-      if (sig.validity() == Signature::Validity::Full && !isOpenPGP)
+    }
+  else if (level == 3 && isOpenPGP)
+    {
+      /* Level three is only reachable through web of trust and no
+         direct signature. */
+      message = _("And the senders identity was certified by several trusted people.");
+    }
+  else if (level == 3 && !isOpenPGP)
+    {
+      /* Level three is the only level for trusted S/MIME keys. */
+      gpgrt_asprintf (&buf, _("And the senders identity is cerified by the trusted issuer:\n'%s'\n"),
+                      m_sig.key().issuerName());
+      message = buf;
+      xfree (buf);
+    }
+  else if (level == 2)
+    {
+      /* Only reachable through TOFU Trust. */
+      if (m_uid.tofuInfo ().isNull ())
         {
-          gpgrt_asprintf (&buf, _("is cerified by the trusted issuer:\n'%s'\n"),
-                          sig.key().issuerName());
-          message += buf;
-          xfree (buf);
+          log_error ("%s:%s:%i BUG: Invalid sigstate.",
+                     SRCNAME, __func__, __LINE__);
+          return message;
         }
-      else if (sig.validity() == Signature::Validity::Marginal)
+
+      unsigned long first_contact = std::max (m_uid.tofuInfo().signFirst(),
+                                              m_uid.tofuInfo().encrFirst());
+      char *time = format_date_from_gpgme (first_contact);
+      /* i18n note signcount is always pulral because with signcount 1 we
+       * would not be in this branch. */
+      gpgrt_asprintf (&buf, _("And the senders address is trustworthy, because "
+                              "you have established a communication history "
+                              "with this address starting on %s.\n"
+                              "You encrypted %i times to this address and verified %i since."),
+                              time, m_uid.tofuInfo().signCount (),
+                              m_uid.tofuInfo().encrCount());
+      xfree (time);
+      message = buf;
+      xfree (buf);
+    }
+  else if (level == 1)
+    {
+      /* This could be marginal trust through pgp, or tofu with little
+         history. */
+      if (m_uid.tofuInfo ().validity() == TofuInfo::Validity::LittleHistory)
         {
-          char *time = format_date_from_gpgme (uid.tofuInfo().signFirst());
-          /* i18n note signcount is always pulral because with signcount 1 we
-           * would not be in this branch. */
-          gpgrt_asprintf (&buf, _("was used for %i messages since %s."),
-                          uid.tofuInfo().signCount (), time);
+          unsigned long first_contact = std::max (m_uid.tofuInfo().signFirst(),
+                                                  m_uid.tofuInfo().encrFirst());
+          char *time = format_date_from_gpgme (first_contact);
+          gpgrt_asprintf (&buf, _("But the senders address is not trustworthy yet because "
+                                  "you only verified %i messages and encrypted %i messages to "
+                                  "it since %s."),
+                                  m_uid.tofuInfo().signCount (),
+                                  m_uid.tofuInfo().encrCount (), time);
           xfree (time);
-          message += buf;
+          message = buf;
           xfree (buf);
+        }
+      else if (m_uid.tofuInfo ().signCount() == 1)
+        {
+          message += _("But the senders signature was verified for the first time.");
+        }
+      else
+        {
+          /* Marginal trust through pgp */
+          message = _("Not enough trusted people or yourself "
+                      "have certified the senders identity.");
         }
     }
   else
     {
-      if (m_verify_result.numSignatures() > 1)
-        {
-          log_debug ("%s:%s: More then one signature found on %p",
-                     SRCNAME, __func__, m_mailitem);
-        }
-      /* We only handle the first signature. */
-      const auto sig = m_verify_result.signature (0);
-      isOpenPGP = !is_smime();
-      keyFound = !(sig.summary() & Signature::Summary::KeyMissing);
-
-      log_debug ("%s:%s: Formatting sig. Validity: %x Summary: %x",
-                 SRCNAME, __func__, sig.validity(), sig.summary());
-
-      /* There is a signature but we don't accepted it as fully valid. */
-      message += _("The sender address is not trusted because:");
+      /* Now we are in level 0, this could be a technical problem, no key
+         or just unkown. */
+      message = _("But the sender address is not trustworthy because:");
       message += "\n\n";
+      keyFound = !(m_sig.summary() & Signature::Summary::KeyMissing);
 
       bool general_problem = true;
       /* First the general stuff. */
-      if (sig.summary() & Signature::Summary::Red)
+      if (m_sig.summary() & Signature::Summary::Red)
         {
           message += _("The signature is invalid.\n");
-          message += _("You cannot be sure who wrote the message.");
         }
-      else if (sig.summary() & Signature::Summary::SysError ||
+      else if (m_sig.summary() & Signature::Summary::SysError ||
                m_verify_result.numSignatures() < 1)
         {
           message += _("There was an error verifying the signature.\n");
-          message += _("You cannot be sure who wrote the message.");
         }
-      else if (sig.summary() & Signature::Summary::SigExpired)
+      else if (m_sig.summary() & Signature::Summary::SigExpired)
         {
           message += _("The signature is expired.\n");
         }
@@ -1513,81 +1596,62 @@ Mail::get_signature_status()
           general_problem = false;
         }
 
-      const auto uid = get_uid_for_sender (sig.key(), get_sender().c_str());
       /* Now the key problems */
-      if ((sig.summary() & Signature::Summary::KeyMissing))
+      if ((m_sig.summary() & Signature::Summary::KeyMissing))
         {
-          message += _("is not available for verification.");
+          message += _("is not available.");
         }
-      else if ((sig.summary() & Signature::Summary::KeyRevoked))
+      else if ((m_sig.summary() & Signature::Summary::KeyRevoked))
         {
           message += _("is revoked.");
         }
-      else if ((sig.summary() & Signature::Summary::KeyExpired))
+      else if ((m_sig.summary() & Signature::Summary::KeyExpired))
         {
           message += _("is expired.");
         }
-      else if ((sig.summary() & Signature::Summary::BadPolicy))
+      else if ((m_sig.summary() & Signature::Summary::BadPolicy))
         {
           message += _("is not meant for signing.");
         }
-      else if ((sig.summary() & Signature::Summary::CrlMissing))
+      else if ((m_sig.summary() & Signature::Summary::CrlMissing))
         {
           message += _("could not be checked for revocation.");
         }
-      else if ((sig.summary() & Signature::Summary::CrlTooOld))
+      else if ((m_sig.summary() & Signature::Summary::CrlTooOld))
         {
           message += _("could not be checked for revocation.");
         }
-      else if ((sig.summary() & Signature::Summary::TofuConflict) ||
-               uid.tofuInfo().validity() == TofuInfo::Conflict)
+      else if ((m_sig.summary() & Signature::Summary::TofuConflict) ||
+               m_uid.tofuInfo().validity() == TofuInfo::Conflict)
         {
           message += _("conflicts with another key that was used in the past by the sender.");
           hasConflict = true;
         }
-      else if (uid.isNull())
+      else if (m_uid.isNull())
         {
           gpgrt_asprintf (&buf, _("does not claim the address: \"%s\"."),
                           get_sender().c_str());
           message += buf;
           xfree (buf);
         }
-      else if ((sig.validity() & Signature::Validity::Marginal))
-        {
-          const auto tofuInfo = uid.tofuInfo();
-          if (tofuInfo.isNull() || !tofuInfo.signCount())
-            {
-              message += _("is not certified by enough trusted keys.");
-            }
-          else if (tofuInfo.signCount() == 1)
-            {
-              message += _("is seen for the first time.");
-            }
-          else
-            {
-              gpgrt_asprintf (&buf, "was only used for %i messages.",
-                              tofuInfo.signCount());
-              message += buf;
-              xfree (buf);
-            }
-        }
-      else if (((sig.validity() & Signature::Validity::Undefined) ||
-               (sig.validity() & Signature::Validity::Unknown) ||
-               (sig.summary() == Signature::Summary::None) ||
-               (sig.validity() == 0))&& !general_problem)
+      else if (((m_sig.validity() & Signature::Validity::Undefined) ||
+               (m_sig.validity() & Signature::Validity::Unknown) ||
+               (m_sig.summary() == Signature::Summary::None) ||
+               (m_sig.validity() == 0))&& !general_problem)
         {
            /* Bit of a catch all for weird results. */
-          message += _("is not certified by any trusted key.");
+          message += _("is not certified by any trustworthy key.");
         }
-      else if ((sig.validity() & Signature::Validity::Never))
+      else if ((m_sig.validity() & Signature::Validity::Never))
         {
-          message += _("is explicitly marked as invalid.");
+          message += _("is marked as not trustworthy.");
         }
     }
+  message += _("You cannot be sure who wrote or modified the message.");
   message += "\n\n";
   if (hasConflict)
     {
-      message += _("Click here to resolve the conflict.");
+      message += _("Click here to change the key used for this address.");
     }
   else if (keyFound)
     {
@@ -1602,33 +1666,52 @@ Mail::get_signature_status()
   return message;
 }
 
+
 int
-Mail::get_signature_icon_id () const
+Mail::get_signature_level () const
 {
-  if (!m_is_signed)
+  if (!m_is_signed || !is_encrypted ())
     {
-      return IDI_EMBLEM_INFORMATION_64_PNG;
+      return 0;
     }
-  const auto sig = m_verify_result.signature (0);
-  if ((sig.summary() & Signature::Summary::KeyMissing))
+
+  if (m_uid.isNull ())
     {
-      return IDI_EMBLEM_QUESTION_64_PNG;
+      /* No m_uid matches our sender. */
+      return 0;
     }
-  if (m_is_valid && sig.validity() == Signature::Validity::Full)
+  if (m_is_valid && (m_uid.validity () == UserID::Validity::Ultimate ||
+      (m_uid.validity () == UserID::Validity::Full &&
+      level_4_check (m_uid))))
     {
-      return IDI_EMBLEM_SUCCESS_64_PNG;
+      return 4;
     }
-  else if (m_is_valid)
+  if (m_is_valid && m_uid.validity () == UserID::Validity::Full)
     {
-      return IDI_EMBLEM_SUCCESS_YELLOW_64_PNG;
+      return 3;
     }
-  const auto uid = get_uid_for_sender (sig.key(), m_sender.c_str());
-  if (sig.summary() & Signature::Summary::TofuConflict ||
-      uid.tofuInfo().validity() == TofuInfo::Conflict)
+  if (m_is_valid)
     {
-      return IDI_EMBLEM_WARNING_64_PNG;
+      return 2;
     }
-  return IDI_EMBLEM_INFORMATION_64_PNG;
+  if (m_sig.validity() == Signature::Validity::Marginal)
+    {
+      return 1;
+    }
+  if (m_sig.summary() & Signature::Summary::TofuConflict ||
+      m_uid.tofuInfo().validity() == TofuInfo::Conflict)
+    {
+      return 1;
+    }
+  return 0;
+}
+
+int
+Mail::get_crypto_icon_id () const
+{
+  int level = get_signature_level ();
+  int offset = is_encrypted () ? ENCRYPT_ICON_OFFSET : 0;
+  return IDI_LEVEL_0 + level + offset;
 }
 
 const char*

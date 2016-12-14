@@ -234,15 +234,13 @@ public:
 
   /** Returns true if the mail was verified and has at least one
     signature. Regardless of the validity of the mail */
-  bool is_signed ();
+  bool is_signed () const;
 
-  /** Returns a non null signature / uid if the mail was verified and the validity
-    was high enough that we treat it as "verified sender" in
-    the UI. The signature / uid pair returned is the signature that was used
-    to determine the verified sender in that case. */
-  const std::pair<GpgME::Signature, GpgME::UserID> get_valid_sig ();
+  /** Returns true if the mail is encrypted to at least one
+    recipient. Regardless if it could be decrypted. */
+  bool is_encrypted () const;
 
-  /** Small helper to check if get_valid_sig returns non null results. */
+  /** Are we "green" */
   bool is_valid_sig ();
 
   /** Get UID gets UniqueID property of this mail. Returns
@@ -254,12 +252,16 @@ public:
     accessible. Returns -1 on error. */
   int set_uuid ();
 
-  /** Returns a localized string describing the signature state
-    of this mail. */
-  std::string get_signature_status ();
+  /** Returns a localized string describing in one or two
+    words the crypto status of this mail. */
+  std::string get_crypto_summary ();
+
+  /** Returns a localized string describing the detailed
+    crypto state of this mail. */
+  std::string get_crypto_details ();
 
   /** Get the icon id of the appropiate icon for this mail */
-  int get_signature_icon_id () const;
+  int get_crypto_icon_id () const;
 
   /** Get the fingerprint of an associated signature or null
       if it is not signed. */
@@ -309,6 +311,11 @@ public:
       after write event. */
   bool needs_encrypt () const;
   void set_needs_encrypt (bool val);
+
+  /** Gets the level of the signature. See:
+    https://wiki.gnupg.org/EasyGpg2016/AutomatedEncryption for
+    a definition of the levels. */
+  int get_signature_level () const;
 private:
   void update_categories ();
   void update_body ();

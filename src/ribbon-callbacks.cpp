@@ -1511,14 +1511,16 @@ get_mail_from_control (LPDISPATCH ctrl)
                SRCNAME, __func__, __LINE__); \
     }
 
-HRESULT get_is_signed (LPDISPATCH ctrl, VARIANT *result)
+HRESULT get_is_crypto (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
 
   result->vt = VT_BOOL | VT_BYREF;
   result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-  *(result->pboolVal) = !mail ? VARIANT_FALSE :
-                        mail->is_signed () ? VARIANT_TRUE : VARIANT_FALSE;
+  *(result->pboolVal) = !mail ?
+                        VARIANT_FALSE :
+                        (mail->is_signed () || mail->is_encrypted ()) ?
+                        VARIANT_TRUE : VARIANT_FALSE;
 
   return S_OK;
 }
@@ -1533,27 +1535,12 @@ HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
     {
       log_debug ("%s:%s: No mail.",
                  SRCNAME, __func__);
-      w_result = utf8_to_wchar (_("Not Trusted"));
+      w_result = utf8_to_wchar (_("Insecure"));
       result->bstrVal = SysAllocString (w_result);
       xfree (w_result);
       return S_OK;
     }
-  bool valid = mail->is_valid_sig ();
-  const auto pair = mail->get_valid_sig ();
-  bool fully = pair.first.validity() == GpgME::Signature::Validity::Full ||
-               pair.first.validity() == GpgME::Signature::Validity::Ultimate;
-  if (valid && fully)
-    {
-      w_result = utf8_to_wchar (_("Fully Trusted"));
-    }
-  else if (valid)
-    {
-      w_result = utf8_to_wchar (_("Trusted"));
-    }
-  else
-    {
-      w_result = utf8_to_wchar (_("Not Trusted"));
-    }
+  w_result = utf8_to_wchar (mail->get_crypto_summary ().c_str ());
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
   return S_OK;
@@ -1565,17 +1552,16 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
 
   result->vt = VT_BSTR;
   wchar_t *w_result;
-  if (mail && mail->is_signed ())
+  if (mail && (mail->is_signed () || mail->is_encrypted ()))
     {
       char *buf;
-      gpgrt_asprintf (&buf, _("This is a signed %s message."),
-                      mail->is_smime() ? _("S/MIME") : _("OpenPGP"));
+      gpgrt_asprintf (&buf, _("%s message."), mail->get_crypto_summary ().c_str());
       w_result = utf8_to_wchar (buf);
       xfree(buf);
     }
   else
     {
-      w_result = utf8_to_wchar (_("This message is not cryptographically signed."));
+      w_result = utf8_to_wchar (_("Insecure message."));
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
@@ -1587,17 +1573,16 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
   MY_MAIL_GETTER
 
   result->vt = VT_BSTR;
-  if (!mail)
+  if (!mail || (!mail->is_signed () && !mail->is_encrypted ()))
     {
-      log_debug ("%s:%s: No mail.",
-                 SRCNAME, __func__);
       wchar_t *w_result;
-      w_result = utf8_to_wchar (_("You cannot be sure who wrote the message."));
+      w_result = utf8_to_wchar (_("You cannot be sure who sent, "
+                                  "modified and read the message in transit."));
       result->bstrVal = SysAllocString (w_result);
       xfree (w_result);
       return S_OK;
     }
-  const auto message = mail->get_signature_status ();
+  const auto message = mail->get_crypto_details ();
   wchar_t *w_message = utf8_to_wchar (message.c_str());
   result->bstrVal = SysAllocString (w_message);
   xfree (w_message);
@@ -1665,13 +1650,13 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
   return S_OK;
 }
 
-HRESULT get_sigstate_icon (LPDISPATCH ctrl, VARIANT *result)
+HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
 
   if (mail)
     {
-      return getIcon (mail->get_signature_icon_id (), result);
+      return getIcon (mail->get_crypto_icon_id (), result);
     }
-  return getIcon (IDI_EMBLEM_INFORMATION_64_PNG, result);
+  return getIcon (IDI_LEVEL_0, result);
 }

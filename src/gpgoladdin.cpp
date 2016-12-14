@@ -646,7 +646,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getSigSTip", ID_GET_SIG_STIP)
       ID_MAPPER (L"getSigTip", ID_GET_SIG_TTIP)
       ID_MAPPER (L"launchDetails", ID_LAUNCH_CERT_DETAILS)
-      ID_MAPPER (L"getIsSigned", ID_GET_IS_SIGNED)
+      ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO)
     }
 
   if (cNames > 1)
@@ -741,8 +741,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return get_sig_label (parms->rgvarg[0].pdispVal, result);
       case ID_LAUNCH_CERT_DETAILS:
         return launch_cert_details (parms->rgvarg[0].pdispVal);
-      case ID_GET_IS_SIGNED:
-        return get_is_signed (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_IS_CRYPTO:
+        return get_is_crypto (parms->rgvarg[0].pdispVal, result);
 
       case ID_ON_LOAD:
           {
@@ -767,7 +767,7 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case IDI_SIGN_20_PNG:
         return getIcon (dispid, result);
       case ID_BTN_SIGSTATE_LARGE:
-        return get_sigstate_icon (parms->rgvarg[0].pdispVal, result);
+        return get_crypto_icon (parms->rgvarg[0].pdispVal, result);
     }
 
   log_debug ("%s:%s: leave", SRCNAME, __func__);
@@ -883,7 +883,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "               getScreentip=\"getSigTip\""
         "               getSupertip=\"getSigSTip\""
         "               onAction=\"launchDetails\""
-        "               getEnabled=\"getIsSigned\"/>"
+        "               getEnabled=\"getIsCrypto\"/>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn\""
         "                 onAction=\"openOptions\""
@@ -926,7 +926,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "               getScreentip=\"getSigTip\""
         "               getSupertip=\"getSigSTip\""
         "               onAction=\"launchDetails\""
-        "               getEnabled=\"getIsSigned\"/>"
+        "               getEnabled=\"getIsCrypto\"/>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn_read\""
         "                 onAction=\"openOptions\""

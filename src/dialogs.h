@@ -115,12 +115,23 @@
 #define IDI_SIGN_48_PNG                 0x6060
 #define IDI_VERIFY_48_PNG               0x6070
 #define IDI_EMBLEM_WARNING_64_PNG       0x6071
-#define IDI_EMBLEM_SUCCESS_64_PNG       0x6072
-#define IDI_EMBLEM_INFORMATION_64_PNG   0x6073
 #define IDI_EMBLEM_QUESTION_64_PNG      0x6074
-#define IDI_EMBLEM_SUCCESS_YELLOW_64_PNG 0x6075
 #define IDI_SIGN_ENCRYPT_40_PNG         0x6075
 #define IDI_ENCRYPT_20_PNG              0x6076
 #define IDI_SIGN_20_PNG                 0x6077
+
+/* Status icons */
+#define ENCRYPT_ICON_OFFSET             0x10
+
+#define IDI_LEVEL_0                     0x6080
+#define IDI_LEVEL_1                     0x6081
+#define IDI_LEVEL_2                     0x6082
+#define IDI_LEVEL_3                     0x6083
+#define IDI_LEVEL_4                     0x6084
+#define IDI_LEVEL_0_ENC                 (IDI_LEVEL_0 + ENCRYPT_ICON_OFFSET)
+#define IDI_LEVEL_1_ENC                 (IDI_LEVEL_1 + ENCRYPT_ICON_OFFSET)
+#define IDI_LEVEL_2_ENC                 (IDI_LEVEL_2 + ENCRYPT_ICON_OFFSET)
+#define IDI_LEVEL_3_ENC                 (IDI_LEVEL_3 + ENCRYPT_ICON_OFFSET)
+#define IDI_LEVEL_4_ENC                 (IDI_LEVEL_4 + ENCRYPT_ICON_OFFSET)
 
 #endif /*DIALOGS_H*/
