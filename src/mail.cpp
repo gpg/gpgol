@@ -1164,7 +1164,7 @@ Mail::get_close_triggered () const
 }
 
 static const UserID
-get_uid_for_sender (const Key k, const char *sender)
+get_uid_for_sender (const Key &k, const char *sender)
 {
   UserID ret;
 
