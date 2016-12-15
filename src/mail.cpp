@@ -1234,9 +1234,9 @@ Mail::update_sigstate ()
     {
       m_is_signed = true;
       m_uid = get_uid_for_sender (sig.key(), sender.c_str());
-      if (!m_uid.isNull() && sig.validity() != Signature::Validity::Marginal &&
+      if (m_uid.isNull() || (sig.validity() != Signature::Validity::Marginal &&
           sig.validity() != Signature::Validity::Full &&
-          sig.validity() != Signature::Validity::Ultimate)
+          sig.validity() != Signature::Validity::Ultimate))
         {
           /* For our category we only care about trusted sigs. And
           the UID needs to match.*/
@@ -1257,8 +1257,8 @@ Mail::update_sigstate ()
               continue;
             }
         }
-      log_debug ("%s:%s: Classified sender as verified",
-                 SRCNAME, __func__);
+      log_debug ("%s:%s: Classified sender as verified uid validity: %i",
+                 SRCNAME, __func__, m_uid.validity());
       m_sig = sig;
       m_is_valid = true;
       return;
