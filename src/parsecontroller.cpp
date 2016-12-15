@@ -203,9 +203,19 @@ ParseController::parse()
   // Wrap the input stream in an attachment / GpgME Data
   Protocol protocol;
   bool decrypt, verify;
-  operation_for_type (m_type, &decrypt, &verify);
 
   Data input (m_inputprovider);
+
+  if (input.type () == Data::Type::PGPSigned)
+    {
+      verify = true;
+      decrypt = false;
+    }
+  else
+    {
+      operation_for_type (m_type, &decrypt, &verify);
+    }
+
   if ((m_inputprovider->signature() && is_smime (*m_inputprovider->signature())) ||
       is_smime (input))
     {
@@ -256,7 +266,8 @@ ParseController::parse()
       if ((!m_decrypt_result.error () &&
           m_verify_result.signatures ().empty() &&
           m_outputprovider->signature ()) ||
-          is_smime (output))
+          is_smime (output) ||
+          output.type() == Data::Type::PGPSigned)
         {
           /* There is a signature in the output. So we have
              to verify it now as an extra step. */
@@ -315,6 +326,10 @@ ParseController::parse()
     {
        std::stringstream ss;
        ss << m_decrypt_result << '\n' << m_verify_result;
+      for (const auto sig: m_verify_result.signatures())
+        {
+          ss << '\n' << sig.key();
+        }
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
     }
   TRACEPOINT;
