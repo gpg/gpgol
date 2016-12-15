@@ -1290,6 +1290,15 @@ Mail::update_categories ()
 {
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Trusted Sender Address");
+  if (is_valid_sig())
+    {
+      add_category (m_mailitem, verifyCategory);
+    }
+  else
+    {
+      remove_category (m_mailitem, verifyCategory);
+    }
+
   if (m_decrypt_result.numRecipients())
     {
       /* We use the number of recipients as we don't care
@@ -1301,15 +1310,6 @@ Mail::update_categories ()
       /* As a small safeguard against fakes we remove our
          categories */
       remove_category (m_mailitem, decCategory);
-    }
-
-  if (is_valid_sig())
-    {
-      add_category (m_mailitem, verifyCategory);
-    }
-  else
-    {
-      remove_category (m_mailitem, verifyCategory);
     }
   return;
 }
