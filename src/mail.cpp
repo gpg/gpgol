@@ -1677,7 +1677,7 @@ Mail::get_crypto_details()
 int
 Mail::get_signature_level () const
 {
-  if (!m_is_signed || !is_encrypted ())
+  if (!m_is_signed)
     {
       return 0;
     }
@@ -1708,7 +1708,7 @@ Mail::get_signature_level () const
   if (m_sig.summary() & Signature::Summary::TofuConflict ||
       m_uid.tofuInfo().validity() == TofuInfo::Conflict)
     {
-      return 1;
+      return 0;
     }
   return 0;
 }
