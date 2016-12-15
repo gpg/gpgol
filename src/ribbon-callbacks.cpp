@@ -1577,7 +1577,8 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
     {
       wchar_t *w_result;
       w_result = utf8_to_wchar (_("You cannot be sure who sent, "
-                                  "modified and read the message in transit."));
+                                  "modified and read the message in transit.\n\n"
+                                  "Click here to learn more."));
       result->bstrVal = SysAllocString (w_result);
       xfree (w_result);
       return S_OK;
@@ -1593,10 +1594,10 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
 {
   MY_MAIL_GETTER
 
-  if (!mail)
+  if (!mail || (!mail->is_signed () && !mail->is_encrypted ()))
     {
-      log_debug ("%s:%s: No mail.",
-                 SRCNAME, __func__);
+      ShellExecuteA(NULL, NULL, "https://emailselfdefense.fsf.org/infographic",
+                    0, 0, SW_SHOWNORMAL);
       return S_OK;
     }
 
