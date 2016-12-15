@@ -1555,13 +1555,13 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
   if (mail && (mail->is_signed () || mail->is_encrypted ()))
     {
       char *buf;
-      gpgrt_asprintf (&buf, _("%s message."), mail->get_crypto_summary ().c_str());
+      gpgrt_asprintf (&buf, _("%s message"), mail->get_crypto_summary ().c_str());
       w_result = utf8_to_wchar (buf);
       xfree(buf);
     }
   else
     {
-      w_result = utf8_to_wchar (_("Insecure message."));
+      w_result = utf8_to_wchar (_("Insecure message"));
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
