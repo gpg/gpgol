@@ -1442,7 +1442,11 @@ Mail::get_crypto_summary ()
     }
   if (is_signed ())
     {
-      return _("Signed");
+      /* Even if it is signed, if it is not validly
+         signed it's still completly insecure as anyone
+         could have signed this. So we avoid the label
+         "signed" here as this already leaves */
+      return _("Insecure");
     }
   return _("Insecure");
 }
