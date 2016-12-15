@@ -1462,14 +1462,15 @@ Mail::get_crypto_details()
     }
   else if (is_encrypted() && !is_signed ())
     {
-      return _("You cannot be sure who sent the message as "
+      return _("But you cannot be sure who sent the message because "
                "it is not signed.");
     }
 
   std::string message;
 
   bool keyFound = true;
-  bool isOpenPGP = m_sig.key().protocol() == Protocol::OpenPGP;
+  bool isOpenPGP = m_sig.key().isNull() ? !is_smime() :
+                   m_sig.key().protocol() == Protocol::OpenPGP;
   char *buf;
   bool hasConflict = false;
   int level = get_signature_level ();
@@ -1485,7 +1486,7 @@ Mail::get_crypto_details()
 
       if (four_check == -1)
         {
-          message = _("And you signed this message.");
+          message = _("You signed this message.");
         }
       else if (four_check >= 0)
         {
@@ -1494,6 +1495,7 @@ Mail::get_crypto_details()
             And <uid with ultimate trust> certified the identity
             of the sender.
           */
+          message = _("The senders identity was certified by yourself.");
         }
       else
         {
@@ -1506,12 +1508,12 @@ Mail::get_crypto_details()
     {
       /* Level three is only reachable through web of trust and no
          direct signature. */
-      message = _("And the senders identity was certified by several trusted people.");
+      message = _("The senders identity was certified by several trusted people.");
     }
   else if (level == 3 && !isOpenPGP)
     {
       /* Level three is the only level for trusted S/MIME keys. */
-      gpgrt_asprintf (&buf, _("And the senders identity is cerified by the trusted issuer:\n'%s'\n"),
+      gpgrt_asprintf (&buf, _("The senders identity is cerified by the trusted issuer:\n'%s'\n"),
                       m_sig.key().issuerName());
       message = buf;
       xfree (buf);
@@ -1531,12 +1533,12 @@ Mail::get_crypto_details()
       char *time = format_date_from_gpgme (first_contact);
       /* i18n note signcount is always pulral because with signcount 1 we
        * would not be in this branch. */
-      gpgrt_asprintf (&buf, _("And the senders address is trustworthy, because "
+      gpgrt_asprintf (&buf, _("The senders address is trustworthy, because "
                               "you have established a communication history "
                               "with this address starting on %s.\n"
-                              "You encrypted %i times to this address and verified %i since."),
-                              time, m_uid.tofuInfo().signCount (),
-                              m_uid.tofuInfo().encrCount());
+                              "You encrypted %i and verified %i messages since."),
+                              time, m_uid.tofuInfo().encrCount(),
+                              m_uid.tofuInfo().signCount ());
       xfree (time);
       message = buf;
       xfree (buf);
@@ -1545,12 +1547,16 @@ Mail::get_crypto_details()
     {
       /* This could be marginal trust through pgp, or tofu with little
          history. */
-      if (m_uid.tofuInfo ().validity() == TofuInfo::Validity::LittleHistory)
+      if (m_uid.tofuInfo ().signCount() == 1)
+        {
+          message += _("The senders signature was verified for the first time.");
+        }
+      else if (m_uid.tofuInfo ().validity() == TofuInfo::Validity::LittleHistory)
         {
           unsigned long first_contact = std::max (m_uid.tofuInfo().signFirst(),
                                                   m_uid.tofuInfo().encrFirst());
           char *time = format_date_from_gpgme (first_contact);
-          gpgrt_asprintf (&buf, _("But the senders address is not trustworthy yet because "
+          gpgrt_asprintf (&buf, _("The senders address is not trustworthy yet because "
                                   "you only verified %i messages and encrypted %i messages to "
                                   "it since %s."),
                                   m_uid.tofuInfo().signCount (),
@@ -1558,10 +1564,6 @@ Mail::get_crypto_details()
           xfree (time);
           message = buf;
           xfree (buf);
-        }
-      else if (m_uid.tofuInfo ().signCount() == 1)
-        {
-          message += _("But the senders signature was verified for the first time.");
         }
       else
         {
@@ -1574,7 +1576,8 @@ Mail::get_crypto_details()
     {
       /* Now we are in level 0, this could be a technical problem, no key
          or just unkown. */
-      message = _("But the sender address is not trustworthy because:");
+      message = is_encrypted () ? _("But the sender address is not trustworthy because:") :
+                                  _("The sender address is not trustworthy because:");
       message += "\n\n";
       keyFound = !(m_sig.summary() & Signature::Summary::KeyMissing);
 
@@ -1628,7 +1631,8 @@ Mail::get_crypto_details()
       else if ((m_sig.summary() & Signature::Summary::TofuConflict) ||
                m_uid.tofuInfo().validity() == TofuInfo::Conflict)
         {
-          message += _("conflicts with another key that was used in the past by the sender.");
+          message += _("is not the same as the key that was used "
+                       "for this address in the past.");
           hasConflict = true;
         }
       else if (m_uid.isNull())
@@ -1651,7 +1655,6 @@ Mail::get_crypto_details()
           message += _("is marked as not trustworthy.");
         }
     }
-  message += _("You cannot be sure who wrote or modified the message.");
   message += "\n\n";
   if (hasConflict)
     {
