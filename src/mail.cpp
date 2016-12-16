@@ -1388,7 +1388,7 @@ Mail::set_uuid()
   return 0;
 }
 
-/* Returns 1 if the userid is ultimately trusted.
+/* Returns 2 if the userid is ultimately trusted.
 
    Returns 1 if the userid is fully trusted but has
    a signature by a key for which we have a secret
@@ -1431,8 +1431,8 @@ level_4_check (const UserID &uid)
                 }
               /* Check that the userID of the signature is the ultimately
                  trusted one. */
-              const char *signed_uid_str = uid.id ();
-              if (!signed_uid_str)
+              const char *sig_uid_str = sig.signerUserID();
+              if (!sig_uid_str)
                 {
                   /* should not happen */
                   TRACEPOINT;
@@ -1442,21 +1442,22 @@ level_4_check (const UserID &uid)
                 {
                   if (signer_uid.validity() != UserID::Validity::Ultimate)
                     {
+                      TRACEPOINT;
                       continue;
                     }
-                  const char *signer_uid_str = uid.id ();
-                  if (!signer_uid_str)
+                  const char *signer_uid_str = signer_uid.id ();
+                  if (!sig_uid_str)
                     {
                       /* should not happen */
                       TRACEPOINT;
                       continue;
                     }
-                  if (!strcmp(signer_uid_str, signed_uid_str))
+                  if (!strcmp(sig_uid_str, signer_uid_str))
                     {
                       /* We have a match */
                       log_debug ("%s:%s: classified %s as ultimate because "
                                  "it was signed by uid %s of key %s",
-                                 SRCNAME, __func__, signed_uid_str, signer_uid_str,
+                                 SRCNAME, __func__, signer_uid_str, sig_uid_str,
                                  secKeyID);
                       return 1;
                     }
@@ -1537,17 +1538,17 @@ Mail::get_crypto_details()
       /* level 4 check for direct trust */
       int four_check = level_4_check (m_uid);
 
-      if (four_check == 1 && m_sig.key().hasSecret ())
+      if (four_check == 2 && m_sig.key().hasSecret ())
         {
           message = _("You signed this message.");
         }
       else if (four_check == 1)
         {
-          message = _("The sender is allowed to manage your mail trust.");
+          message = _("The senders identity was certified by yourself.");
         }
       else if (four_check == 2)
         {
-          message = _("The senders identity was certified by yourself.");
+          message = _("The sender is allowed to manage your mail trust.");
         }
       else
         {
