@@ -1609,6 +1609,27 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
       return S_OK;
     }
 
+  if (!mail->is_signed () && mail->is_encrypted ())
+    {
+      /* Encrypt only, no information but show something. because
+         we want the button to be active.
+
+         Aheinecke: I don't think we should show to which keys the message
+         is encrypted here. This would confuse users if they see keyids
+         of unknown keys and the information can't be "true" because the
+         sender could have sent the same information to other people or
+         used throw keyids etc.
+         */
+      char * buf;
+      gpgrt_asprintf (&buf, _("The message was not cryptographically signed.\n"
+                      "There is no additional information available if it "
+                      "was actually sent by '%s' or if someone faked the sender address."), mail->get_sender ().c_str());
+      MessageBox (NULL, buf, _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+      xfree (buf);
+      return S_OK;
+    }
+
   char *uiserver = get_uiserver_name ();
   bool showError = false;
   if (uiserver)
