@@ -1479,7 +1479,7 @@ Mail::get_crypto_summary ()
     }
   if (level > 3)
     {
-      return _("Highly Trustworthy");
+      return _("Highly Trusted");
     }
   if (level >= 2 && enc)
     {
@@ -1487,7 +1487,7 @@ Mail::get_crypto_summary ()
     }
   if (level >= 2)
     {
-      return _("Trustworthy");
+      return _("Trusted");
     }
   if (enc)
     {
@@ -1630,14 +1630,14 @@ Mail::get_crypto_details()
          or just unkown. */
       message = is_encrypted () ? _("But the sender address is not trustworthy because:") :
                                   _("The sender address is not trustworthy because:");
-      message += "\n\n";
+      message += "\n";
       keyFound = !(m_sig.summary() & Signature::Summary::KeyMissing);
 
       bool general_problem = true;
       /* First the general stuff. */
       if (m_sig.summary() & Signature::Summary::Red)
         {
-          message += _("The signature is invalid.\n");
+          message += _("The signature is invalid: \n");
         }
       else if (m_sig.summary() & Signature::Summary::SysError ||
                m_verify_result.numSignatures() < 1)
@@ -1701,6 +1701,10 @@ Mail::get_crypto_details()
         {
            /* Bit of a catch all for weird results. */
           message += _("is not certified by any trustworthy key.");
+        }
+      else if (m_uid.isRevoked())
+        {
+          message += _("The sender marked this address as revoked.");
         }
       else if ((m_sig.validity() & Signature::Validity::Never))
         {

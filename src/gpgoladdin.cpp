@@ -795,22 +795,22 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
       "You can use this you to generate your "
       "own certificates. ");*/
   const char *encryptTTip =
-    _("Encrypt the message.");
+    _("Encrypt the message");
   const char *encryptSTip =
-    _("Encrypts the message and all attachments before sending.");
+    _("Encrypts the message and all attachments before sending");
   const char *signTTip =
-    _("Sign the message.");
+    _("Sign the message");
   const char *signSTip =
-    _("Sign the message and all attachments before sending.");
+    _("Sign the message and all attachments before sending");
 
   const char *secureTTip =
-    _("Encrypt and sign the message.");
+    _("Sign and encrypt the message");
   const char *secureSTip =
     _("Encrypting and cryptographically signing a message means that the "
       "recipient can be sure that no one modified the message and only the "
-      "recipients can read it.\nNot even the NSA.");
+      "recipients can read it");
   const char *optsSTip =
-    _("Open the settings dialog for GpgOL.");
+    _("Open the settings dialog for GpgOL");
   log_debug ("%s:%s: GetCustomUI_MIME for id: %ls", SRCNAME, __func__, RibbonID);
 
   if (!RibbonXml || !RibbonID)
@@ -860,7 +860,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "   </tabs>"
         " </ribbon>"
         "</customUI>", _("GpgOL"),
-        _("Sign Encrypt"), secureTTip, secureSTip,
+        _("Secure"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip
@@ -978,7 +978,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("GpgOL"),
         optsSTip,
         _("GpgOL"),
-        _("Sign Encrypt"), secureTTip, secureSTip,
+        _("Secure"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip
