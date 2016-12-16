@@ -61,6 +61,13 @@ public:
 
   ~ParseController();
 
+  /* Get a list of ultimately keys where at least one
+     userid has ultimate trust. This list
+     will be initialized only once when the first signature
+     is validity full or ultimate is encountered. */
+  static std::vector<GpgME::Key> get_ultimate_keys();
+
+
   /** Main entry point. After execution getters will become
   valid. */
   void parse();

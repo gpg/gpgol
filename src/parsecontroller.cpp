@@ -320,6 +320,13 @@ ParseController::parse()
   for (const auto sig: m_verify_result.signatures())
     {
       sig.key(true, true);
+      if (sig.validity() == Signature::Validity::Full ||
+          sig.validity() == Signature::Validity::Ultimate)
+        {
+          /* Ensure that we have the keys with ultimate
+             trust cached for the ui. */
+          get_ultimate_keys ();
+        }
     }
 
   if (opt.enable_debug)
@@ -400,4 +407,64 @@ ParseController::get_attachments() const
     {
       return std::vector<std::shared_ptr<Attachment> >();
     }
+}
+
+GPGRT_LOCK_DEFINE(keylist_lock);
+/* static */
+std::vector<Key>
+ParseController::get_ultimate_keys()
+{
+  static bool s_keys_listed;
+  static std::vector<Key> s_ultimate_keys;
+  gpgrt_lock_lock (&keylist_lock);
+  if (s_keys_listed)
+    {
+      gpgrt_lock_unlock (&keylist_lock);
+      return s_ultimate_keys;
+    }
+  log_debug ("%s:%s: Starting keylisting.",
+             SRCNAME, __func__);
+  auto ctx = Context::createForProtocol (OpenPGP);
+  if (!ctx)
+    {
+      /* Maybe PGP broken and not S/MIME */
+      log_error ("%s:%s: broken installation no ctx.",
+                 SRCNAME, __func__);
+      gpgrt_lock_unlock (&keylist_lock);
+      return s_ultimate_keys;
+    }
+  ctx->setKeyListMode (KeyListMode::Local);
+  Error err;
+  if ((err = ctx->startKeyListing ()))
+    {
+      log_error ("%s:%s: Failed to start keylisting err: %i: %s",
+                 SRCNAME, __func__, err.code (), err.asString());
+      delete ctx;
+      gpgrt_lock_unlock (&keylist_lock);
+      return s_ultimate_keys;
+    }
+  while (!err)
+    {
+      const auto key = ctx->nextKey(err);
+      if (key.isNull() || err)
+        {
+          break;
+        }
+      for (const auto uid: key.userIDs())
+        {
+          if (uid.validity() == UserID::Validity::Ultimate)
+            {
+              s_ultimate_keys.push_back (key);
+              log_debug ("adding ultimate uid: %s", uid.id());
+              break;
+            }
+        }
+    }
+  delete ctx;
+  log_debug ("%s:%s: keylisting done.",
+             SRCNAME, __func__);
+
+  s_keys_listed = true;
+  gpgrt_lock_unlock (&keylist_lock);
+  return s_ultimate_keys;
 }

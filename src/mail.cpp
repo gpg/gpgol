@@ -1388,28 +1388,81 @@ Mail::set_uuid()
   return 0;
 }
 
-/* Returns -1 if the mail was signed by a uid with ownertrust
-   ultimate and to which we have the secret key.
-   This basically means "mail was signed by yourself"
+/* Returns 1 if the userid is ultimately trusted.
 
-   Returns the number of the signature fromt the uid that belongs
-   made it ultimately or fully trusted if the mail was signed by some
-   ultimate key for which we don't have the secret key.
-   This is direct trust or CA Style PGP.
+   Returns 1 if the userid is fully trusted but has
+   a signature by a key for which we have a secret
+   and which is ultimately trusted. (Direct trust)
 
    0 otherwise */
 static int
 level_4_check (const UserID &uid)
 {
-  if (uid.validity() == UserID::Validity::Ultimate)
+  if (uid.isNull())
     {
-      /* TODO look for the signature that caused this
-         to be ultimate. And check if it is our own. */
-      return -1;
+      return 0;
     }
-  else if (uid.validity() == UserID::Validity::Full)
+  if (uid.validity () == UserID::Validity::Ultimate)
     {
-      return 1;
+      return 2;
+    }
+  if (uid.validity () == UserID::Validity::Full)
+    {
+      for (const auto sig: uid.signatures ())
+        {
+          const char *sigID = sig.signerKeyID ();
+          if (sig.isNull() || !sigID)
+            {
+              /* should not happen */
+              TRACEPOINT;
+              continue;
+            }
+          /* Direct trust information is not available
+             through gnupg so we cached the keys with ultimate
+             trust during parsing and now see if we find a direct
+             trust path.*/
+          for (const auto secKey: ParseController::get_ultimate_keys ())
+            {
+              /* Check that the Key id of the key matches */
+              const char *secKeyID = secKey.keyID ();
+              if (!secKeyID || strcmp (secKeyID, sigID))
+                {
+                  continue;
+                }
+              /* Check that the userID of the signature is the ultimately
+                 trusted one. */
+              const char *signed_uid_str = uid.id ();
+              if (!signed_uid_str)
+                {
+                  /* should not happen */
+                  TRACEPOINT;
+                  continue;
+                }
+              for (const auto signer_uid: secKey.userIDs ())
+                {
+                  if (signer_uid.validity() != UserID::Validity::Ultimate)
+                    {
+                      continue;
+                    }
+                  const char *signer_uid_str = uid.id ();
+                  if (!signer_uid_str)
+                    {
+                      /* should not happen */
+                      TRACEPOINT;
+                      continue;
+                    }
+                  if (!strcmp(signer_uid_str, signed_uid_str))
+                    {
+                      /* We have a match */
+                      log_debug ("%s:%s: classified %s as ultimate because "
+                                 "it was signed by uid %s of key %s",
+                                 SRCNAME, __func__, signed_uid_str, signer_uid_str,
+                                 secKeyID);
+                      return 1;
+                    }
+                }
+            }
+        }
     }
   return 0;
 }
@@ -1484,17 +1537,16 @@ Mail::get_crypto_details()
       /* level 4 check for direct trust */
       int four_check = level_4_check (m_uid);
 
-      if (four_check == -1)
+      if (four_check == 1 && m_sig.key().hasSecret ())
         {
           message = _("You signed this message.");
         }
-      else if (four_check >= 0)
+      else if (four_check == 1)
         {
-          /* TODO
-            And you certified the identity of the sender.
-            And <uid with ultimate trust> certified the identity
-            of the sender.
-          */
+          message = _("The sender is allowed to manage your mail trust.");
+        }
+      else if (four_check == 2)
+        {
           message = _("The senders identity was certified by yourself.");
         }
       else
