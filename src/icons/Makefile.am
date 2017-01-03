@@ -23,7 +23,7 @@ EXTRA_DIST= \
     encrypt-sign-file-48.png \
     sign-48.png verify-48.png \
     README.icons\
-    sign.svg sign-enc.svg enc.svg \
+    sign.svg sign-enc.svg encrypt.svg \
     sign-enc-40.png sign-20.png encrypt-20.png \
     level-0.svg level-0-enc.svg level-0.png level-0-enc.png \
     level-1.svg level-1-enc.svg level-1.png level-1-enc.png \
