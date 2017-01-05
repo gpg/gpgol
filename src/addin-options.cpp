@@ -44,7 +44,7 @@ set_labels (HWND dlg)
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
     { IDC_INLINE_PGP,       N_("&Send OpenPGP mails without "
                                "attachments as inline-pgp")},
-    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
+//    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
 
 
     { IDC_GPG_OPTIONS,      N_("Debug...")},
@@ -94,8 +94,8 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #endif
           SendDlgItemMessage (hDlg, IDC_INLINE_PGP, BM_SETCHECK,
                               !!opt.inline_pgp, 0L);
-          SendDlgItemMessage (hDlg, IDC_AUTORRESOLVE, BM_SETCHECK,
-                              !!opt.autoresolve, 0L);
+//          SendDlgItemMessage (hDlg, IDC_AUTORRESOLVE, BM_SETCHECK,
+//                              !!opt.autoresolve, 0L);
           enable_disable_opts (hDlg);
           set_labels (hDlg);
           ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
@@ -133,8 +133,8 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 opt.inline_pgp = !!SendDlgItemMessage
                   (hDlg, IDC_INLINE_PGP, BM_GETCHECK, 0, 0L);
 
-                opt.autoresolve = !!SendDlgItemMessage
-                  (hDlg, IDC_AUTORRESOLVE, BM_GETCHECK, 0, 0L);
+//                opt.autoresolve = !!SendDlgItemMessage
+////                  (hDlg, IDC_AUTORRESOLVE, BM_GETCHECK, 0, 0L);
 
                 write_options ();
                 EndDialog (hDlg, TRUE);
