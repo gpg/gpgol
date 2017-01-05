@@ -1621,22 +1621,21 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
     }
 
   /* Get the User Properties. */
-  char *uid = get_pa_string (mail, GPGOL_UID_DASL);
-  if (!uid)
+  if (!create)
     {
-      log_debug ("%s:%s: No uuid found in oom for '%p'",
-                 SRCNAME, __func__, mail);
-
-      if (!create)
+      char *uid = get_pa_string (mail, GPGOL_UID_DASL);
+      if (!uid)
         {
+          log_debug ("%s:%s: No uuid found in oom for '%p'",
+                     SRCNAME, __func__, mail);
           return NULL;
         }
-    }
-  else
-    {
-      log_debug ("%s:%s: Found uid '%s' for '%p'",
-                 SRCNAME, __func__, uid, mail);
-      return uid;
+      else
+        {
+          log_debug ("%s:%s: Found uid '%s' for '%p'",
+                     SRCNAME, __func__, uid, mail);
+          return uid;
+        }
     }
   char *newuid;
   if (!uuid)
