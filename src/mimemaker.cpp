@@ -1300,7 +1300,7 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
       if (plain_body)
         {
           rc = write_part (sink, plain_body, strlen (plain_body),
-                           *boundary? boundary : NULL, NULL, 1);
+                           boundary, NULL, 1);
         }
       /* Just the plain body or no body. We are done. */
       return rc;
