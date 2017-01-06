@@ -260,6 +260,10 @@ public:
     crypto state of this mail. */
   std::string get_crypto_details ();
 
+  /** Returns a localized string describing a one line
+    summary of the crypto state. */
+  std::string get_crypto_one_line ();
+
   /** Get the icon id of the appropiate icon for this mail */
   int get_crypto_icon_id () const;
 

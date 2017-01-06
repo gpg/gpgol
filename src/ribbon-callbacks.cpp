@@ -1552,20 +1552,9 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
 
   result->vt = VT_BSTR;
   wchar_t *w_result;
-  if (mail && (mail->is_signed () || mail->is_encrypted ()))
+  if (mail)
     {
-      if (mail->is_signed () && mail->is_encrypted ())
-        {
-          w_result = utf8_to_wchar (_("Signed and encrypted message"));
-        }
-      else if (mail->is_signed ())
-        {
-          w_result = utf8_to_wchar (_("Signed message"));
-        }
-      else if (mail->is_encrypted ())
-        {
-          w_result = utf8_to_wchar (_("Encrypted message"));
-        }
+      w_result = utf8_to_wchar (mail->get_crypto_one_line().c_str());
     }
   else
     {

@@ -1474,21 +1474,29 @@ Mail::get_crypto_summary ()
   const int level = get_signature_level ();
 
   bool enc = is_encrypted ();
-  if (level > 3 && enc)
+  if (level == 4 && enc)
     {
-      return _("Highly Secure");
+      return _("Security Level 4");
     }
-  if (level > 3)
+  if (level == 4)
     {
-      return _("Highly Trusted");
+      return _("Trust Level 4");
     }
-  if (level >= 2 && enc)
+  if (level == 3 && enc)
     {
-      return _("Secure");
+      return _("Security Level 3");
     }
-  if (level >= 2)
+  if (level == 3)
     {
-      return _("Trusted");
+      return _("Trust Level 3");
+    }
+  if (level == 2 && enc)
+    {
+      return _("Security Level 2");
+    }
+  if (level == 2)
+    {
+      return _("Trust Level 2");
     }
   if (enc)
     {
@@ -1499,10 +1507,34 @@ Mail::get_crypto_summary ()
       /* Even if it is signed, if it is not validly
          signed it's still completly insecure as anyone
          could have signed this. So we avoid the label
-         "signed" here as this already leaves */
+         "signed" here as this word already implies some
+         security. */
       return _("Insecure");
     }
   return _("Insecure");
+}
+
+std::string
+Mail::get_crypto_one_line()
+{
+  bool sig = is_signed ();
+  bool enc = is_encrypted ();
+  if (sig || enc)
+    {
+      if (sig && enc)
+        {
+          return _("Signed and encrypted message");
+        }
+      else if (sig)
+        {
+          return _("Signed message");
+        }
+      else if (enc)
+        {
+          return _("Encrypted message");
+        }
+    }
+  return _("Insecure message");
 }
 
 std::string
@@ -1586,7 +1618,7 @@ Mail::get_crypto_details()
       char *time = format_date_from_gpgme (first_contact);
       /* i18n note signcount is always pulral because with signcount 1 we
        * would not be in this branch. */
-      gpgrt_asprintf (&buf, _("The senders address is trustworthy, because "
+      gpgrt_asprintf (&buf, _("The senders address is trusted, because "
                               "you have established a communication history "
                               "with this address starting on %s.\n"
                               "You encrypted %i and verified %i messages since."),
