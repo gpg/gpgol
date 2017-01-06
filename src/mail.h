@@ -320,6 +320,10 @@ public:
     https://wiki.gnupg.org/EasyGpg2016/AutomatedEncryption for
     a definition of the levels. */
   int get_signature_level () const;
+
+  /** Check if all attachments are hidden and show a warning
+    message appropiate to the crypto state if necessary. */
+  int check_attachments () const;
 private:
   void update_categories ();
   void update_body ();

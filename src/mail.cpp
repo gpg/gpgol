@@ -258,6 +258,89 @@ get_attachment (LPDISPATCH mailitem, int pos)
   return attachment;
 }
 
+/** Helper to check that all attachments are hidden, to be
+  called before crypto. */
+int
+Mail::check_attachments () const
+{
+  LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
+  if (!attachments)
+    {
+      log_debug ("%s:%s: Failed to get attachments.",
+                 SRCNAME, __func__);
+      return 1;
+    }
+  int count = get_oom_int (attachments, "Count");
+  if (!count)
+    {
+      gpgol_release (attachments);
+      return 0;
+    }
+
+  std::string message;
+
+  if (is_encrypted () && is_signed ())
+    {
+      message += _("Not all attachments were encrypted or signed.\n"
+                   "The unsigned / unencrypted attachments are:\n\n");
+    }
+  else if (is_signed ())
+    {
+      message += _("Not all attachments were signed.\n"
+                   "The unsigned attachments are:\n\n");
+    }
+  else if (is_encrypted ())
+    {
+      message += _("Not all attachments were encrypted.\n"
+                   "The unencrypted attachments are:\n\n");
+    }
+  else
+    {
+      gpgol_release (attachments);
+      return 0;
+    }
+
+  bool foundOne = false;
+
+  for (int i = 1; i <= count; i++)
+    {
+      std::string item_str;
+      item_str = std::string("Item(") + std::to_string (i) + ")";
+      LPDISPATCH oom_attach = get_oom_object (attachments, item_str.c_str ());
+      if (!oom_attach)
+        {
+          log_error ("%s:%s: Failed to get attachment.",
+                     SRCNAME, __func__);
+          continue;
+        }
+      VARIANT var;
+      VariantInit (&var);
+      if (get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var) ||
+          (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE))
+        {
+          foundOne = true;
+          message += get_oom_string (oom_attach, "DisplayName");
+          message += "\n";
+        }
+      VariantClear (&var);
+      gpgol_release (oom_attach);
+    }
+  if (foundOne)
+    {
+      message += "\n";
+      message += _("Note: The attachments may be encrypted or signed "
+                    "on a file level but the GpgOL status does not apply to them.");
+      wchar_t *wmsg = utf8_to_wchar (message.c_str ());
+      wchar_t *wtitle = utf8_to_wchar (_("GpgOL Warning"));
+      MessageBoxW (get_active_hwnd (), wmsg, wtitle,
+                   MB_ICONWARNING|MB_OK);
+      xfree (wmsg);
+      xfree (wtitle);
+    }
+  gpgol_release (attachments);
+  return 0;
+}
+
 /** Get the cipherstream of the mailitem. */
 static LPSTREAM
 get_attachment_stream (LPDISPATCH mailitem, int pos)
@@ -729,6 +812,9 @@ Mail::parsing_done()
   /* Update the body */
   update_body();
   TRACEPOINT;
+
+  /* Check that there are no unsigned / unencrypted messages. */
+  check_attachments ();
 
   /* Update attachments */
   if (add_attachments (m_mailitem, m_parser->get_attachments()))
