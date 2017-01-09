@@ -1421,11 +1421,12 @@ done:
 }
 
 static Mail *
-get_mail_from_control (LPDISPATCH ctrl)
+get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
 {
   HRESULT hr;
   LPDISPATCH context = NULL,
              mailitem = NULL;
+  *none_selected = false;
   if (!ctrl)
     {
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
@@ -1457,6 +1458,10 @@ get_mail_from_control (LPDISPATCH ctrl)
   else if (!strcmp (ctx_name, "_Explorer"))
     {
       mailitem = get_oom_object (context, "Selection.Item(1)");
+      if (!mailitem)
+        {
+          *none_selected = true;
+        }
     }
 
   gpgol_release (context);
@@ -1504,23 +1509,22 @@ get_mail_from_control (LPDISPATCH ctrl)
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__); \
       return E_FAIL; \
     } \
-  const auto mail = get_mail_from_control (ctrl); \
+  bool none_selected; \
+  const auto mail = get_mail_from_control (ctrl, &none_selected); \
+  (void)none_selected; \
   if (!mail) \
     { \
       log_oom ("%s:%s:%i Failed to get mail", \
                SRCNAME, __func__, __LINE__); \
     }
 
-HRESULT get_is_crypto (LPDISPATCH ctrl, VARIANT *result)
+HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
 
   result->vt = VT_BOOL | VT_BYREF;
   result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-  *(result->pboolVal) = !mail ?
-                        VARIANT_FALSE :
-                        (mail->is_signed () || mail->is_encrypted ()) ?
-                        VARIANT_TRUE : VARIANT_FALSE;
+  *(result->pboolVal) = none_selected ? VARIANT_FALSE : VARIANT_TRUE;
 
   return S_OK;
 }
@@ -1556,9 +1560,13 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
     {
       w_result = utf8_to_wchar (mail->get_crypto_one_line().c_str());
     }
-  else
+  else if (!none_selected)
     {
       w_result = utf8_to_wchar (_("Insecure message"));
+    }
+  else
+    {
+      w_result = utf8_to_wchar (_("No message selected"));
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
@@ -1570,6 +1578,11 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
   MY_MAIL_GETTER
 
   result->vt = VT_BSTR;
+  if (none_selected)
+    {
+      result->bstrVal = SysAllocString (L"");
+      return S_OK;
+    }
   if (!mail || (!mail->is_signed () && !mail->is_encrypted ()))
     {
       wchar_t *w_result;

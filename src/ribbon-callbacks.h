@@ -42,7 +42,7 @@
 #define ID_GET_ENCRYPT_PRESSED  16
 #define ID_ON_LOAD              17
 #define ID_CMD_OPEN_OPTIONS     18
-#define ID_GET_IS_CRYPTO        19
+#define ID_GET_IS_DETAILS_ENABLED 19
 #define ID_CMD_MIME_SIGN_EX     21
 #define ID_CMD_MIME_ENCRYPT_EX  22
 #define ID_GET_SIGN_PRESSED_EX  23
@@ -85,8 +85,8 @@ HRESULT verifyBody (LPDISPATCH ctrl);
 HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result, bool is_explorer);
 /* Mark the mail to be mime encrypted on send. Flags as above */
 HRESULT mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer);
-/* Check the if the mail was signed. Returns BOOL */
-HRESULT get_is_crypto (LPDISPATCH ctrl, VARIANT *result);
+/* Check the if the gpgol button should be enabled */
+HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result);
 /* Get the label for the signature. Returns BSTR */
 HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result);
 /* Get the tooltip for the signature. Returns BSTR */

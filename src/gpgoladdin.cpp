@@ -646,7 +646,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getSigSTip", ID_GET_SIG_STIP)
       ID_MAPPER (L"getSigTip", ID_GET_SIG_TTIP)
       ID_MAPPER (L"launchDetails", ID_LAUNCH_CERT_DETAILS)
-      ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO)
+      ID_MAPPER (L"getIsDetailsEnabled", ID_GET_IS_DETAILS_ENABLED)
     }
 
   if (cNames > 1)
@@ -741,8 +741,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return get_sig_label (parms->rgvarg[0].pdispVal, result);
       case ID_LAUNCH_CERT_DETAILS:
         return launch_cert_details (parms->rgvarg[0].pdispVal);
-      case ID_GET_IS_CRYPTO:
-        return get_is_crypto (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_IS_DETAILS_ENABLED:
+        return get_is_details_enabled (parms->rgvarg[0].pdispVal, result);
 
       case ID_ON_LOAD:
           {
@@ -925,8 +925,8 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "               getLabel=\"getSigLabel\""
         "               getScreentip=\"getSigTip\""
         "               getSupertip=\"getSigSTip\""
-        "               onAction=\"launchDetails\"/>"
-       /* "               getEnabled=\"getIsCrypto\"/>" */
+        "               onAction=\"launchDetails\""
+        "               getEnabled=\"getIsDetailsEnabled\"/>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn_read\""
         "                 onAction=\"openOptions\""
