@@ -69,6 +69,8 @@ IDI_SIGN_ENCRYPT_40_PNG    RCDATA              "icons/sign-enc-40.png"
 IDI_ENCRYPT_20_PNG         RCDATA              "icons/encrypt-20.png"
 IDI_SIGN_20_PNG            RCDATA              "icons/sign-20.png"
 
+IDB_LOGO                   BITMAP  DISCARDABLE "icons/logo.bmp"
+
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "GpgOL"
@@ -350,10 +352,12 @@ BEGIN
 //                    24, 93, 215, 10
 
     /* Stuff at the lower left corner.  */
-    LTEXT           "GpgOL by Gpg4win", IDC_GPG4WIN_STRING,
-                      8, 144, 100, 8
+    CONTROL         IDB_LOGO, IDC_BITMAP,
+                    "Static", SS_BITMAP | SS_REALSIZEIMAGE,
+                      10, 105, 128, 80
+
     LTEXT           "Version x ", IDC_VERSION_INFO,
-                      8, 155, 100, 9
+                      10, 155, 100, 9
 
     PUSHBUTTON      "advanced", IDC_GPG_OPTIONS,
                     180, 120, 70, 14

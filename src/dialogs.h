@@ -28,6 +28,8 @@
 #define IDB_DECRYPT_VERIFY_16           0x1050
 #define IDB_DECRYPT_VERIFY_16M          0x1051
 
+#define IDB_LOGO                        0x1060
+
 
 /* Ids for the extended options dialog.  */
 #define IDD_EXT_OPTIONS                 0x4110
