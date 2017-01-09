@@ -1334,12 +1334,12 @@ Mail::update_sigstate ()
       if (sig.validity() == Signature::Validity::Marginal)
         {
           const auto tofu = m_uid.tofuInfo();
-          if (tofu.isNull() ||
+          if (!tofu.isNull() &&
               (tofu.validity() != TofuInfo::Validity::BasicHistory &&
                tofu.validity() != TofuInfo::Validity::LargeHistory))
             {
-              /* Marginal is not good enough without tofu.
-                 We also wait for basic trust. */
+              /* Marginal is only good enough without tofu.
+                 Otherwise we wait for basic trust. */
               log_debug ("%s:%s: Discarding marginal signature."
                          "With too little history.",
                          SRCNAME, __func__);
@@ -1692,16 +1692,14 @@ Mail::get_crypto_details()
       message = buf;
       xfree (buf);
     }
+  else if (level == 2 && m_uid.tofuInfo ().isNull ())
+    {
+      /* Marginal trust through pgp only */
+      message = _("Some trusted people "
+                  "have certified the senders identity.");
+    }
   else if (level == 2)
     {
-      /* Only reachable through TOFU Trust. */
-      if (m_uid.tofuInfo ().isNull ())
-        {
-          log_error ("%s:%s:%i BUG: Invalid sigstate.",
-                     SRCNAME, __func__, __LINE__);
-          return message;
-        }
-
       unsigned long first_contact = std::max (m_uid.tofuInfo().signFirst(),
                                               m_uid.tofuInfo().encrFirst());
       char *time = format_date_from_gpgme (first_contact);
@@ -1738,12 +1736,6 @@ Mail::get_crypto_details()
           xfree (time);
           message = buf;
           xfree (buf);
-        }
-      else
-        {
-          /* Marginal trust through pgp */
-          message = _("Not enough trusted people or yourself "
-                      "have certified the senders identity.");
         }
     }
   else
