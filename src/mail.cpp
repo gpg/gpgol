@@ -325,6 +325,7 @@ Mail::check_attachments () const
       VariantClear (&var);
       gpgol_release (oom_attach);
     }
+  gpgol_release (attachments);
   if (foundOne)
     {
       message += "\n";
@@ -337,7 +338,6 @@ Mail::check_attachments () const
       xfree (wmsg);
       xfree (wtitle);
     }
-  gpgol_release (attachments);
   return 0;
 }
 
