@@ -43,7 +43,7 @@ set_labels (HWND dlg)
     { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
     { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
     { IDC_INLINE_PGP,       N_("&Send OpenPGP mails without "
-                               "attachments as inline-pgp")},
+                               "attachments as PGP/Inline")},
 //    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
 
 
