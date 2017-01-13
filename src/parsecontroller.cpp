@@ -140,12 +140,25 @@ is_smime (Data &data)
 }
 
 static std::string
-format_recipients(GpgME::DecryptionResult result)
+format_recipients(GpgME::DecryptionResult result, Protocol protocol)
 {
   std::string msg;
   for (const auto recipient: result.recipients())
     {
-      msg += std::string("<br/>0x") + recipient.keyID() + "</a>";
+      auto ctx = Context::createForProtocol(protocol);
+      Error e;
+      if (!ctx) {
+          /* Can't happen */
+          TRACEPOINT;
+          continue;
+      }
+      const auto key = ctx->key(recipient.keyID(), e, false);
+      delete ctx;
+      if (!key.isNull() && key.numUserIDs() && !e) {
+        msg += std::string("<br/>") + key.userIDs()[0].id() + " (0x" + recipient.keyID() + ")";
+        continue;
+      }
+      msg += std::string("<br/>") + _("Unknown Key:") + " 0x" + recipient.keyID();
     }
   return msg;
 }
@@ -174,12 +187,13 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
   if (no_sec)
     {
       msg = _("No secret key found to decrypt the message. "
-              "It is encrypted for following keys:");
-      msg += format_recipients (result);
+              "It is encrypted to the following keys:");
+      msg += format_recipients (result, protocol);
     }
   else
     {
-      msg = _("Could not decrypt the data.");
+      msg = _("Could not decrypt the data: ");
+      msg += result.error().asString();
     }
 
   if (gpgrt_asprintf (&buf, opt.prefer_html ? decrypt_template_html :
