@@ -1462,6 +1462,32 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
         {
           *none_selected = true;
         }
+      else
+        {
+          // Avoid showing wrong crypto state if we don't have a reading
+          // pane. In that case the parser will finish for a mail which is gone
+          // and the crypto state will not get updated.
+          LPDISPATCH tableView = get_oom_object (context, "CurrentView");
+          if (!tableView)
+            {
+              // Woops, should not happen.
+              TRACEPOINT;
+              *none_selected = true;
+              gpgol_release (mailitem);
+              mailitem = nullptr;
+            }
+          else
+            {
+              int hasReadingPane = get_oom_bool (tableView, "ShowReadingPane");
+              gpgol_release (tableView);
+              if (!hasReadingPane)
+                {
+                  *none_selected = true;
+                  gpgol_release (mailitem);
+                  mailitem = nullptr;
+                }
+            }
+        }
     }
 
   gpgol_release (context);
