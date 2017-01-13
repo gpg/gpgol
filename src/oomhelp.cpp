@@ -188,7 +188,13 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           gpgol_release (pDisp);
           pDisp = NULL;
         }
-      pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp);
+      if (pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp) != S_OK)
+        {
+          log_error ("%s:%s Object does not support IDispatch",
+                     SRCNAME, __func__);
+          gpgol_release (pObj);
+          return NULL;
+        }
       if (pObj != pStart)
         gpgol_release (pObj);
       pObj = NULL;
