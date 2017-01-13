@@ -1680,8 +1680,6 @@ get_active_hwnd ()
     }
 
   LPDISPATCH activeWindow = get_oom_object (app, "ActiveWindow");
-  gpgol_release (app);
-
   if (!activeWindow)
     {
       TRACEPOINT;
