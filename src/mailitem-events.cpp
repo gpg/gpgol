@@ -27,6 +27,7 @@
 #include "windowmessages.h"
 #include "mail.h"
 #include "mapihelp.h"
+#include "gpgoladdin.h"
 
 #undef _
 #define _(a) utf8_gettext (a)
@@ -193,7 +194,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__, m_mail);
           if (!m_mail->is_crypto_mail())
             {
-              /* Not for us. */
+              /* Ensure that no wrong sigstatus is shown */
+              gpgoladdin_invalidate_ui ();
               break;
             }
           if (m_mail->set_uuid ())
