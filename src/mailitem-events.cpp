@@ -446,6 +446,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: Reply Forward ReplyAll: %p",
                          SRCNAME, __func__, m_mail);
+          if (!opt.reply_crypt)
+            {
+              break;
+            }
           int crypto_flags = 0;
           if (!(crypto_flags = m_mail->get_crypto_flags ()))
             {

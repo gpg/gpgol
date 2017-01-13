@@ -106,6 +106,7 @@
 #define IDC_MIME_UI                     0x5133
 #define IDC_INLINE_PGP                  0x5134
 #define IDC_AUTORRESOLVE                0x5135
+#define IDC_REPLYCRYPT                  0x5136
 
 /* Ids for PNG Images */
 #define IDI_ENCRYPT_16_PNG              0x6000
