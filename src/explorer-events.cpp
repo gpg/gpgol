@@ -81,6 +81,18 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
+          LPDISPATCH tableView = get_oom_object (m_object, "CurrentView");
+          if (!tableView)
+            {
+              TRACEPOINT;
+              break;
+            }
+          int hasReadingPane = get_oom_bool (tableView, "ShowReadingPane");
+          gpgol_release (tableView);
+          if (!hasReadingPane)
+            {
+              break;
+            }
           HANDLE thread = CreateThread (NULL, 0, invalidate_ui, (LPVOID) this, 0,
                                         NULL);
 
