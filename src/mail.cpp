@@ -1374,6 +1374,68 @@ Mail::remove_categories ()
   remove_category (m_mailitem, verifyCategory);
 }
 
+/* Now for some tasty hack: Outlook sometimes does
+   not show the new categories properly but instead
+   does some weird scrollbar thing. This can be
+   avoided by resizing the message a bit. But somehow
+   this only needs to be done once.
+
+   Weird isn't it? But as this workaround worked let's
+   do it programatically. Fun. Wan't some tomato sauce
+   with this hack? */
+static void
+resize_active_window ()
+{
+  HWND wnd = get_active_hwnd ();
+  static std::vector<HWND> resized_windows;
+  if(std::find(resized_windows.begin(), resized_windows.end(), wnd) != resized_windows.end()) {
+      /* We only need to do this once per window. XXX But sometimes we also
+         need to do this once per view of the explorer. So for now this might
+         break but we reduce the flicker. A better solution would be to find
+         the current view and track that. */
+      return;
+  }
+
+  if (!wnd)
+    {
+      TRACEPOINT;
+      return;
+    }
+  RECT oldpos;
+  if (!GetWindowRect (wnd, &oldpos))
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  if (!SetWindowPos (wnd, nullptr,
+                     (int)oldpos.left,
+                     (int)oldpos.top,
+                     /* Anything smaller then 19 was ignored when the window was
+                      * maximized on Windows 10 at least with a 1980*1024
+                      * resolution. So I assume it's at least 1 percent.
+                      * This is all hackish and ugly but should work for 90%...
+                      * hopefully.
+                      */
+                     (int)oldpos.right - oldpos.left - 20,
+                     (int)oldpos.bottom - oldpos.top, 0))
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  if (!SetWindowPos (wnd, nullptr,
+                     (int)oldpos.left,
+                     (int)oldpos.top,
+                     (int)oldpos.right - oldpos.left,
+                     (int)oldpos.bottom - oldpos.top, 0))
+    {
+      TRACEPOINT;
+      return;
+    }
+  resized_windows.push_back(wnd);
+}
+
 void
 Mail::update_categories ()
 {
@@ -1400,6 +1462,9 @@ Mail::update_categories ()
          categories */
       remove_category (m_mailitem, decCategory);
     }
+
+  resize_active_window();
+
   return;
 }
 
