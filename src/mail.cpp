@@ -1814,7 +1814,14 @@ Mail::get_crypto_details()
                (m_sig.validity() == 0))&& !general_problem)
         {
            /* Bit of a catch all for weird results. */
-          message += _("is not certified by any trustworthy key.");
+          if (isOpenPGP)
+            {
+              message += _("is not certified by any trustworthy key.");
+            }
+          else
+            {
+              message += _("is not certified by a trustworthy Certificate Authority or the Certificate Authority is unknown.");
+            }
         }
       else if (m_uid.isRevoked())
         {
