@@ -1734,7 +1734,7 @@ Mail::get_crypto_details()
         }
       else if (four_check == 2)
         {
-          message = _("The sender is allowed to manage your mail trust.");
+          message = _("The sender is allowed to certify identities for you.");
         }
       else
         {
@@ -1752,7 +1752,7 @@ Mail::get_crypto_details()
   else if (level == 3 && !isOpenPGP)
     {
       /* Level three is the only level for trusted S/MIME keys. */
-      gpgrt_asprintf (&buf, _("The senders identity is cerified by the trusted issuer:\n'%s'\n"),
+      gpgrt_asprintf (&buf, _("The senders identity is certified by the trusted issuer:\n'%s'\n"),
                       m_sig.key().issuerName());
       message = buf;
       xfree (buf);

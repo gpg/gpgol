@@ -807,7 +807,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
     _("Sign and encrypt the message");
   const char *secureSTip =
     _("Encrypting and cryptographically signing a message means that the "
-      "recipient can be sure that no one modified the message and only the "
+      "recipients can be sure that no one modified the message and only the "
       "recipients can read it");
   const char *optsSTip =
     _("Open the settings dialog for GpgOL");
