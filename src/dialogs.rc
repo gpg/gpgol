@@ -309,7 +309,7 @@ BEGIN
                     198, 96, 50, 14
 END
 
-IDD_ADDIN_OPTIONS DIALOGEX DISCARDABLE  300, 300, 266, 180
+IDD_ADDIN_OPTIONS DIALOGEX DISCARDABLE  300, 300, 266, 190
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | DS_SHELLFONT | DS_SETFONT
 CAPTION "GpgOL"
 FONT 8, "MS Shell Dlg"
@@ -333,7 +333,7 @@ BEGIN
 
     /* Send options box.  */
     GROUPBOX        "send-options", IDC_G_SEND,
-                    9, 50, 250, 57
+                    9, 50, 250, 67
 
     CONTROL         "encrypt-by-default", IDC_ENCRYPT_DEFAULT,
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
@@ -351,25 +351,25 @@ BEGIN
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
                     24, 93, 215, 10
 
-//    CONTROL         "autoresolve", IDC_AUTORRESOLVE,
-//                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-//                    24, 93, 215, 10
+    CONTROL         "autoresolve", IDC_AUTORRESOLVE,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
+                    24, 104, 215, 10
 
     /* Stuff at the lower left corner.  */
     CONTROL         IDB_LOGO, IDC_BITMAP,
                     "Static", SS_BITMAP | SS_REALSIZEIMAGE,
-                      10, 115, 128, 80
+                      10, 125, 128, 80
 
     LTEXT           "Version x ", IDC_VERSION_INFO,
-                      10, 165, 100, 9
+                      10, 175, 100, 9
 
     PUSHBUTTON      "advanced", IDC_GPG_OPTIONS,
-                    180, 130, 70, 14
+                    180, 140, 70, 14
 
     PUSHBUTTON      "gpgconf", IDC_GPG_CONF,
-                    180, 145, 70, 14
+                    180, 155, 70, 14
 
     DEFPUSHBUTTON   "&OK", IDOK,
-                    180, 160, 70, 14
+                    180, 170, 70, 14
 
 END

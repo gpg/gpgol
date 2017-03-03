@@ -46,7 +46,7 @@ set_labels (HWND dlg)
                                "attachments as PGP/Inline")},
     { IDC_REPLYCRYPT,       N_("S&elect crypto settings automatically "
                                "for reply and foward.")},
-//    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
+    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
 
 
     { IDC_GPG_OPTIONS,      N_("Debug...")},
@@ -98,8 +98,8 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                               !!opt.inline_pgp, 0L);
           SendDlgItemMessage (hDlg, IDC_REPLYCRYPT, BM_SETCHECK,
                               !!opt.reply_crypt, 0L);
-//          SendDlgItemMessage (hDlg, IDC_AUTORRESOLVE, BM_SETCHECK,
-//                              !!opt.autoresolve, 0L);
+          SendDlgItemMessage (hDlg, IDC_AUTORRESOLVE, BM_SETCHECK,
+                              !!opt.autoresolve, 0L);
           enable_disable_opts (hDlg);
           set_labels (hDlg);
           ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
@@ -140,8 +140,8 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 opt.reply_crypt = !!SendDlgItemMessage
                   (hDlg, IDC_REPLYCRYPT, BM_GETCHECK, 0, 0L);
 
-//                opt.autoresolve = !!SendDlgItemMessage
-////                  (hDlg, IDC_AUTORRESOLVE, BM_GETCHECK, 0, 0L);
+                opt.autoresolve = !!SendDlgItemMessage
+                  (hDlg, IDC_AUTORRESOLVE, BM_GETCHECK, 0, 0L);
 
                 write_options ();
                 EndDialog (hDlg, TRUE);
