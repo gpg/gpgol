@@ -214,7 +214,7 @@ msgstr "Die Einstellungen von GpgOL öffnen"
 
 #: src/gpgoladdin.cpp:863 src/gpgoladdin.cpp:981
 msgid "Secure"
-msgstr "Sicher"
+msgstr "Absichern"
 
 #: src/gpgoladdin.cpp:864 src/gpgoladdin.cpp:982 src/gpgoladdin.cpp:1143
 msgid "Sign"
