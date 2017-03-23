@@ -210,6 +210,11 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
   return msg;
 }
 
+void
+ParseController::setSender(const std::string &sender)
+{
+  m_sender = sender;
+}
 
 void
 ParseController::parse()
@@ -264,12 +269,18 @@ ParseController::parse()
     }
   ctx->setArmor(true);
 
+  if (!m_sender.empty())
+    {
+      ctx->setSender(m_sender.c_str());
+    }
+
   Data output (m_outputprovider);
-  log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s",
+  log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s sender: %s",
              SRCNAME, __func__,
              decrypt, verify,
              protocol == OpenPGP ? "OpenPGP" :
-             protocol == CMS ? "CMS" : "Unknown");
+             protocol == CMS ? "CMS" : "Unknown",
+             m_sender.empty() ? "none" : m_sender.c_str());
   if (decrypt)
     {
       input.seek (0, SEEK_SET);

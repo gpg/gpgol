@@ -690,6 +690,7 @@ Mail::decrypt_verify()
     }
 
   m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
+  m_parser->setSender(GpgME::UserID::addrSpecFromString(get_sender().c_str()));
   gpgol_release (cipherstream);
 
   HANDLE parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,

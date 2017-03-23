@@ -99,6 +99,8 @@ public:
   const std::string get_formatted_error() const
   { return m_error; }
 
+  void setSender(const std::string &sender);
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;
@@ -107,6 +109,7 @@ private:
   std::string m_error;
   GpgME::DecryptionResult m_decrypt_result;
   GpgME::VerificationResult m_verify_result;
+  std::string m_sender;
 };
 
 #endif /* PARSECONTROLLER_H */
