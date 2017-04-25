@@ -1,6 +1,8 @@
 /* common.h - Common declarations for GpgOL
  * Copyright (C) 2004 Timo Schulz
  * Copyright (C) 2005, 2006, 2007, 2008 g10 Code GmbH
+ * Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *
