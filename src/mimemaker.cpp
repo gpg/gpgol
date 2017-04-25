@@ -1,6 +1,7 @@
 /* mimemaker.c - Construct MIME message out of a MAPI
  *    Copyright (C) 2007, 2008 g10 Code GmbH
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

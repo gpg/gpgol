@@ -1,5 +1,6 @@
 /* application-events.cpp - Event handling for the application.
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

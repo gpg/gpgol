@@ -1,7 +1,8 @@
 #ifndef ADDIN_OPTIONS_H
 #define ADDIN_OPTIONS_H
 /* addin-options.cpp - Options for the Ol >= 2010 Addin
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

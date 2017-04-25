@@ -1,5 +1,6 @@
 /* t-parser.cpp - Test for gpgOL's parser.
- *    Copyright (C) 2016 Intevation GmbH
+ *    Copyright (C) 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

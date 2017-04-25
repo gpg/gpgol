@@ -1,5 +1,7 @@
 /* gpgoladdin.cpp - Connect GpgOL to Outlook as an addin
- *    Copyright (C) 2013, 2015 Intevation GmbH
+ *    Copyright (C) 2013 Intevation GmbH
+ *    2015 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

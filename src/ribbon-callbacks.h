@@ -1,5 +1,6 @@
 /* ribbon-callbacks.h - Callbacks for the ribbon extension interface
  *    Copyright (C) 2013 Intevation GmbH
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

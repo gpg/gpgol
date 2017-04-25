@@ -1,6 +1,7 @@
 # Makefile.am - makefile for GPGol
 # Copyright (C) 2005 g10 Code GmbH
-# Copyright (C) 2016 Intevation GmbH
+# Copyright (C) 2016 Bundesamt für Sicherheit in der Informationstechnik
+# Software engineering by Intevation GmbH
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without

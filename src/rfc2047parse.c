@@ -1,7 +1,8 @@
 /* @file rfc2047parse.c
  * @brief Parsercode for rfc2047
  *
- *    Copyright (C) 2015 Intevation GmbH
+ *    Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

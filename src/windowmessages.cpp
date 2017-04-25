@@ -1,7 +1,8 @@
 /* @file windowmessages.h
  * @brief Helper class to work with the windowmessage handler thread.
  *
- *    Copyright (C) 2015, 2016 Intevation GmbH
+ *    Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ *    Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *
