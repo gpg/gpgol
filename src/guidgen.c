@@ -1,5 +1,5 @@
 /* guidgen.c - Tool to create GUIDs
- *	Copyright (C) 2001 g10 Code GmbH
+ * Copyright (C) 2001 g10 Code GmbH
  *
  * This file is part of GPGME.
  *

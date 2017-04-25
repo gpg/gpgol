@@ -1,5 +1,5 @@
 /* session-events.cpp - Subclass impl of IExchExtSessionEvents
- *	Copyright (C) 2007 g10 Code GmbH
+ * Copyright (C) 2007 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 

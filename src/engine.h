@@ -1,5 +1,5 @@
 /* engine.h - Crypto engine dispatcher
- *	Copyright (C) 2007 g10 Code GmbH
+ * Copyright (C) 2007 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

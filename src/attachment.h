@@ -1,7 +1,7 @@
 /* attachment.h - Wrapper class for attachments
- *    Copyright (C) 2005, 2007 g10 Code GmbH
- *    Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Copyright (C) 2005, 2007 g10 Code GmbH
+ * Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

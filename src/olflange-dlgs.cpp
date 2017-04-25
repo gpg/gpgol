@@ -1,5 +1,5 @@
 /* olflange-dlgs.cpp - New dialogs for Outlook.
- *	Copyright (C) 2004, 2005, 2006, 2007, 2008 g10 Code GmbH
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

@@ -1,7 +1,7 @@
 /* oomhelp.h - Defs for helper functions for the Outlook Object Model
- *     Copyright (C) 2009 g10 Code GmbH
- *     Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Copyright (C) 2009 g10 Code GmbH
+ * Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  * 

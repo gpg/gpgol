@@ -1,8 +1,8 @@
 /* @file parsecontroller.cpp
  * @brief Parse a mail and decrypt / verify accordingly
  *
- *    Copyright (C) 2016 by Bundesamt für Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Copyright (C) 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

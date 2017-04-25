@@ -1,5 +1,5 @@
 /* msgcache.h - Interface to the message cache.
- *	Copyright (C) 2005 g10 Code GmbH
+ * Copyright (C) 2005 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 

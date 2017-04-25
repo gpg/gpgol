@@ -1,5 +1,5 @@
 /* xmalloc.h - xmalloc prototypes
- *	Copyright (C) 2006 g10 Code GmbH
+ * Copyright (C) 2006 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 

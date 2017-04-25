@@ -1,7 +1,7 @@
 /* eventsink.h - Macros to implement an OLE event sink
- *     Copyright (C) 2009 g10 Code GmbH
- *     Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Copyright (C) 2009 g10 Code GmbH
+ * Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

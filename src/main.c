@@ -1,5 +1,5 @@
 /* main.c - DLL entry point
- *	Copyright (C) 2005, 2007, 2008 g10 Code GmbH
+ * Copyright (C) 2005, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

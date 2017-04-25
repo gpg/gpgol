@@ -1,5 +1,5 @@
 /* engine-assuan.c - Crypto engine using an Assuan server
- *	Copyright (C) 2007, 2008, 2009, 2010 g10 Code GmbH
+ * Copyright (C) 2007, 2008, 2009, 2010 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

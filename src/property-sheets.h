@@ -1,5 +1,5 @@
 /* property-sheets.h - Definitions for our subclass of IExchExtPropertySheets
- *	Copyright (C) 2005, 2007 g10 Code GmbH
+ * Copyright (C) 2005, 2007 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 

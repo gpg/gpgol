@@ -1,5 +1,5 @@
 /* pgpmime.c - Try to handle PGP/MIME for Outlook
- *	Copyright (C) 2005 g10 Code GmbH
+ * Copyright (C) 2005 g10 Code GmbH
  *
  * This file is part of Gpgol.
  * 

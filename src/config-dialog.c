@@ -1,6 +1,6 @@
 /* config-dialog.c
- *	Copyright (C) 2005, 2008 g10 Code GmbH
- *	Copyright (C) 2003 Timo Schulz
+ * Copyright (C) 2005, 2008 g10 Code GmbH
+ * Copyright (C) 2003 Timo Schulz
  *
  * This file is part of GpgOL.
  * 

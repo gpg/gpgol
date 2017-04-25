@@ -1,5 +1,5 @@
 /* attached-file-events.cpp - GpgolAttachedFileEvents implementation
- *	Copyright (C) 2005, 2007 g10 Code GmbH
+ * Copyright (C) 2005, 2007 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

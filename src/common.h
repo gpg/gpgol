@@ -1,6 +1,6 @@
 /* common.h - Common declarations for GpgOL
- *	Copyright (C) 2004 Timo Schulz
- *	Copyright (C) 2005, 2006, 2007, 2008 g10 Code GmbH
+ * Copyright (C) 2004 Timo Schulz
+ * Copyright (C) 2005, 2006, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

@@ -1,5 +1,5 @@
 /* revert.cpp - Convert messages back to the orignal format
- *	Copyright (C) 2008 g10 Code GmbH
+ * Copyright (C) 2008 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 

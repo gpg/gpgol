@@ -1,6 +1,6 @@
 /* olflange.cpp - Connect GpgOL to Outlook
- *	Copyright (C) 2001 G Data Software AG, http://www.gdata.de
- *	Copyright (C) 2004, 2005, 2007, 2008 g10 Code GmbH
+ * Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+ * Copyright (C) 2004, 2005, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

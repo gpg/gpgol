@@ -1,5 +1,5 @@
 /* explorers.cpp - Code to handle the OOM Explorers
- *	Copyright (C) 2009 g10 Code GmbH
+ * Copyright (C) 2009 g10 Code GmbH
  * 
  * This file is part of GpgOL.
  * 

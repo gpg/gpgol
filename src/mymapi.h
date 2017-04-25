@@ -3,7 +3,7 @@
  * Copyright (C) 2000 François Gouget
  * Copyright (C) 2005, 2007 g10 Code GmbH
  * Copyright (C) 2015 by Bundesamt fÃ¼r Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Software engineering by Intevation GmbH
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

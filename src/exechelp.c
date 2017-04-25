@@ -1,7 +1,7 @@
 /* exechelp.c - fork and exec helpers
  * Copyright (C) 2004, 2007, 2014 g10 Code GmbH
  * Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

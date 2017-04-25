@@ -3,7 +3,7 @@
  *
  *  This file was copied from GMime rev. 496313fb
  *
- *  Copyright (C) 2000-2014 Jeffrey Stedfast
+ * Copyright (C) 2000-2014 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License

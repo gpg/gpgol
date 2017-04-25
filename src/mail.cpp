@@ -1,8 +1,8 @@
 /* @file mail.h
  * @brief High level class to work with Outlook Mailitems.
  *
- *    Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
- *    Software engineering by Intevation GmbH
+ * Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
  *

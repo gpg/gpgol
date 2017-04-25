@@ -1,5 +1,5 @@
 /* mimeparser.c - Parse multipart MIME message
- *	Copyright (C) 2005, 2007, 2008, 2009 g10 Code GmbH
+ * Copyright (C) 2005, 2007, 2008, 2009 g10 Code GmbH
  *
  * This file is part of GpgOL.
  * 
