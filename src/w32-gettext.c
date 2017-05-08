@@ -1722,26 +1722,26 @@ internal_gettext (const char *msgid, int utf8)
                                 domain->orig_tab[nstr - 1].offset)))
         return get_string (domain, nstr - 1, utf8);
 
-        for(;;)
-          {
-            if (idx >= domain->hash_size - incr)
-              idx -= domain->hash_size - incr;
-            else
-              idx += incr;
+      for(;;)
+        {
+          if (idx >= domain->hash_size - incr)
+            idx -= domain->hash_size - incr;
+          else
+            idx += incr;
 
-            nstr = SWAPIT (domain->must_swap, domain->hash_tab[idx]);
-            if (!nstr)
-              /* Hash table entry is empty.  */
-              goto not_found;
+          nstr = SWAPIT (domain->must_swap, domain->hash_tab[idx]);
+          if (!nstr)
+            /* Hash table entry is empty.  */
+            goto not_found;
 
-            if (SWAPIT (domain->must_swap,
-                        domain->orig_tab[nstr - 1].length) == len
-                && !strcmp (msgid,
-                            domain->data
-                            + SWAPIT (domain->must_swap,
-                                      domain->orig_tab[nstr - 1].offset)))
-              return get_string (domain, nstr-1, utf8);
-          }
+          if (SWAPIT (domain->must_swap,
+                      domain->orig_tab[nstr - 1].length) == len
+              && !strcmp (msgid,
+                          domain->data
+                          + SWAPIT (domain->must_swap,
+                                    domain->orig_tab[nstr - 1].offset)))
+            return get_string (domain, nstr-1, utf8);
+        }
         /* NOTREACHED */
     }
 
