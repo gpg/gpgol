@@ -21,6 +21,7 @@
 #include "common_indep.h"
 #include "xmalloc.h"
 #include <string.h>
+#include <vector>
 
 #include "mimedataprovider.h"
 #include "parsetlv.h"
