@@ -1,6 +1,6 @@
 /* common.c - Common routines used by GpgOL
  * Copyright (C) 2005, 2007, 2008 g10 Code GmbH
- * Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
+ * 2015, 2016, 2017  Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
@@ -926,4 +926,81 @@ get_uiserver_name (void)
   xfree (dir);
   log_error ("Failed to find a viable UIServer");
   return NULL;
+}
+
+int
+has_high_integrity(HANDLE hToken)
+{
+  PTOKEN_MANDATORY_LABEL integrity_label = NULL;
+  DWORD integrity_level = 0,
+        size = 0;
+
+
+  if (hToken == NULL || hToken == INVALID_HANDLE_VALUE)
+    {
+      log_debug ("Invalid parameters.");
+      return 0;
+    }
+
+  /* Get the required size */
+  if (!GetTokenInformation (hToken, TokenIntegrityLevel,
+                            NULL, 0, &size))
+    {
+      if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        {
+          log_debug ("Failed to get required size.\n");
+          return 0;
+        }
+    }
+  integrity_label = (PTOKEN_MANDATORY_LABEL) LocalAlloc(0, size);
+  if (integrity_label == NULL)
+    {
+      log_debug ("Failed to allocate label. \n");
+      return 0;
+    }
+
+  if (!GetTokenInformation (hToken, TokenIntegrityLevel,
+                            integrity_label, size, &size))
+    {
+      log_debug ("Failed to get integrity level.\n");
+      LocalFree(integrity_label);
+      return 0;
+    }
+
+  /* Get the last integrity level */
+  integrity_level = *GetSidSubAuthority(integrity_label->Label.Sid,
+                     (DWORD)(UCHAR)(*GetSidSubAuthorityCount(
+                        integrity_label->Label.Sid) - 1));
+
+  LocalFree (integrity_label);
+
+  return integrity_level >= SECURITY_MANDATORY_HIGH_RID;
+}
+
+int
+is_elevated()
+{
+  int ret = 0;
+  HANDLE hToken = NULL;
+  if (OpenProcessToken (GetCurrentProcess(), TOKEN_QUERY, &hToken))
+    {
+      DWORD elevation;
+      DWORD cbSize = sizeof (DWORD);
+      if (GetTokenInformation (hToken, TokenElevation, &elevation,
+                               sizeof (TokenElevation), &cbSize))
+        {
+          ret = elevation;
+        }
+    }
+  /* Elevation will be true and ElevationType TokenElevationTypeFull even
+     if the token is a user token created by SAFER so we additionally
+     check the integrity level of the token which will only be high in
+     the real elevated process and medium otherwise. */
+
+  ret = ret && has_high_integrity (hToken);
+
+  if (hToken)
+    CloseHandle (hToken);
+
+  return ret;
 }
