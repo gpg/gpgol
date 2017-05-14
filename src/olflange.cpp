@@ -124,6 +124,18 @@ DllRegisterServer (void)
   TCHAR szModuleFileName[MAX_PATH];
   DWORD dwTemp = 0;
   long ec;
+  HKEY root_key;
+
+  int inst_global = is_elevated ();
+
+  if (inst_global)
+    {
+      root_key = HKEY_LOCAL_MACHINE;
+    }
+  else
+    {
+      root_key = HKEY_CURRENT_USER;
+    }
 
   /* Get server location. */
   if (!GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH))
@@ -165,7 +177,7 @@ DllRegisterServer (void)
      -    IExchExtModelessCallback
                    ___1234567___ */
   lstrcat (szEntry, ";11111101");
-  ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL,
+  ec = RegCreateKeyEx (root_key, szKeyBuf, 0, NULL,
                        REG_OPTION_NON_VOLATILE,
                        KEY_ALL_ACCESS, NULL, &hkey, NULL);
   if (ec != ERROR_SUCCESS)
@@ -210,9 +222,21 @@ DllRegisterServer (void)
 
   /* Register the CLSID in the registry */
   hkey = NULL;
-  strcpy (szKeyBuf, "CLSID\\" CLSIDSTR_GPGOL);
-  ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
-                  REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+
+  if (inst_global)
+    {
+      strcpy (szKeyBuf, "CLSID\\" CLSIDSTR_GPGOL);
+      ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
+                   REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+      OutputDebugString("Created: ");
+      OutputDebugString(szKeyBuf);
+    }
+  else
+    {
+      strcpy (szKeyBuf, "Software\\Classes\\CLSID\\" CLSIDSTR_GPGOL);
+      ec = RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
+                   REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    }
   if (ec != ERROR_SUCCESS)
     {
       fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
@@ -261,9 +285,20 @@ DllRegisterServer (void)
    * Extension
    */
   hkey = NULL;
-  strcpy (szKeyBuf, GPGOL_PROGID);
-  ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
-                  REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+
+  if (inst_global)
+    {
+      strcpy (szKeyBuf, GPGOL_PROGID);
+      ec = RegCreateKeyEx (HKEY_CLASSES_ROOT, szKeyBuf, 0, NULL,
+                      REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    }
+  else
+    {
+      strcpy (szKeyBuf, "Software\\Classes\\" GPGOL_PROGID);
+      ec = RegCreateKeyEx (HKEY_CURRENT_USER, szKeyBuf, 0, NULL,
+                      REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+
+    }
   if (ec != ERROR_SUCCESS)
     {
       fprintf (stderr, "creating key `%s' failed: ec=%#lx\n", szKeyBuf, ec);
@@ -292,7 +327,7 @@ DllRegisterServer (void)
   /* Register ourself as an extension for outlook >= 14 */
 
   strcpy (szKeyBuf, "Software\\Microsoft\\Office\\Outlook\\Addins\\" GPGOL_PROGID);
-  ec = RegCreateKeyEx (HKEY_LOCAL_MACHINE, szKeyBuf, 0, NULL,
+  ec = RegCreateKeyEx (root_key, szKeyBuf, 0, NULL,
                   REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
   if (ec != ERROR_SUCCESS)
     {
@@ -335,10 +370,20 @@ DllUnregisterServer (void)
   CHAR buf[MAX_PATH+1024];
   DWORD ntemp;
   long res;
+  HKEY root_key;
+
+  if (is_elevated ())
+    {
+      root_key = HKEY_LOCAL_MACHINE;
+    }
+  else
+    {
+      root_key = HKEY_CURRENT_USER;
+    }
 
   strcpy (buf, "Software\\Microsoft\\Exchange\\Client\\Extensions");
   /* Create and open key and subkey. */
-  res = RegCreateKeyEx (HKEY_LOCAL_MACHINE, buf, 0, NULL,
+  res = RegCreateKeyEx (root_key, buf, 0, NULL,
 			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS,
 			NULL, &hkey, NULL);
   if (res != ERROR_SUCCESS)
@@ -371,7 +416,7 @@ DllUnregisterServer (void)
 
   /* Delete Addin entry */
   strcpy (buf, "Software\\Microsoft\\Office\\Outlook\\Addins\\" GPGOL_PROGID);
-  RegDeleteKey (HKEY_LOCAL_MACHINE, buf);
+  RegDeleteKey (root_key, buf);
 
   return S_OK;
 }
