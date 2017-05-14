@@ -199,6 +199,7 @@ struct
   int inline_pgp;            /* Only for Addin. Use Inline PGP by default. */
   int autoresolve;           /* Autresolve keys with --locate-keys. */
   int reply_crypt;           /* Only for Addin. Encrypt / Sign based on cryptostatus. */
+  int deprecation_shown;     /* Flag to save if deprecation warning was shown */
 
   /* The compatibility flags. */
   struct

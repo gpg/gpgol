@@ -803,6 +803,20 @@ GpgolExt::Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags)
         }
     }
 
+    if ( !opt.deprecation_shown && ((lBuildVersion & EECBGV_BUILDVERSION_MAJOR_MASK) < 13
+         || (lBuildVersion & EECBGV_BUILDVERSION_MINOR_MASK) < 1573
+         || (olversion && atoi (olversion) < 14)))
+      {
+        MessageBox (NULL,
+                  _("GpgOL for Outlook 2003 / 2007 is longer maintained.\n"
+                    "\n"
+                    "Please note that any support may be removed in a future version."),
+                    "GpgOL", MB_ICONINFORMATION|MB_OK);
+
+        opt.deprecation_shown = 1;
+        write_options ();
+      }
+
   /* If the version from the OOM is available we can assume that the
      OOM is ready for use and thus we can install the event sinks. */
   if (olversion)
