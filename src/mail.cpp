@@ -36,6 +36,7 @@
 #include "windowmessages.h"
 #include "mlang-charset.h"
 
+#include <gpgme++/configuration.h>
 #include <gpgme++/tofuinfo.h>
 #include <gpgme++/verificationresult.h>
 #include <gpgme++/decryptionresult.h>
@@ -58,6 +59,58 @@ using namespace GpgME;
 static std::map<LPDISPATCH, Mail*> g_mail_map;
 static std::map<std::string, Mail*> g_uid_map;
 static std::set<std::string> uids_searched;
+
+static bool
+in_de_vs_mode()
+{
+  /* We cache the values only once. A change requires restart.
+     This is because checking this is very expensive as gpgconf
+     spawns each process to query the settings. */
+  static bool checked;
+  static bool vs_mode;
+
+  if (checked)
+    {
+      return vs_mode;
+    }
+  Error err;
+  const auto components = Configuration::Component::load (err);
+  log_debug ("%s:%s: Checking for de-vs mode.",
+             SRCNAME, __func__);
+  if (err)
+    {
+      log_error ("%s:%s: Failed to get gpgconf components: %s",
+                 SRCNAME, __func__, err.asString ());
+      checked = true;
+      vs_mode = false;
+      return vs_mode;
+    }
+  for (const auto &component: components)
+    {
+      if (component.name () && !strcmp (component.name (), "gpg"))
+        {
+          for (const auto &option: component.options ())
+            {
+              if (option.name () && strcmp (option.name (), "compliance") &&
+                  option.currentValue ().stringValue () &&
+                  stricmp (option.currentValue ().stringValue (), "de-vs"))
+                {
+                  log_debug ("%s:%s: Detected de-vs mode",
+                             SRCNAME, __func__);
+                  checked = true;
+                  vs_mode = true;
+                  return vs_mode;
+                }
+            }
+          checked = true;
+          vs_mode = false;
+          return vs_mode;
+        }
+    }
+  checked = true;
+  vs_mode = false;
+  return false;
+}
 
 #define COPYBUFSIZE (8 * 1024)
 
@@ -1696,6 +1749,7 @@ Mail::get_crypto_one_line()
 std::string
 Mail::get_crypto_details()
 {
+  std::string message;
   /* Handle encrypt only */
   if (!is_encrypted () && !is_signed ())
     {
@@ -1704,11 +1758,21 @@ Mail::get_crypto_details()
     }
   else if (is_encrypted() && !is_signed ())
     {
-      return _("But you cannot be sure who sent the message because "
-               "it is not signed.");
+      if (in_de_vs_mode ())
+       {
+         if (m_sig.isDeVs())
+           {
+             message += _("The encryption was VS-compliant.");
+           }
+         else
+           {
+             message += _("The encryption was not VS-compliant.");
+           }
+        }
+      message += "\n";
+      message += _("You cannot be sure who sent the message because "
+                   "it is not signed.");
     }
-
-  std::string message;
 
   bool keyFound = true;
   bool isOpenPGP = m_sig.key().isNull() ? !is_smime() :
@@ -1899,8 +1963,35 @@ Mail::get_crypto_details()
           message += _("is marked as not trustworthy.");
         }
     }
-  message += "\n\n";
-  if (hasConflict)
+   message += "\n\n";
+   if (in_de_vs_mode ())
+     {
+       if (is_signed ())
+         {
+           if (m_sig.isDeVs ())
+             {
+               message += _("The signature is VS-compliant.");
+             }
+           else
+             {
+               message += _("The signature is not VS-compliant.");
+             }
+           message += "\n";
+         }
+       if (is_encrypted ())
+         {
+           if (m_decrypt_result.isDeVs ())
+             {
+               message += _("The encryption is VS-compliant.");
+             }
+           else
+             {
+               message += _("The encryption is not VS-compliant.");
+             }
+           message += "\n\n";
+         }
+     }
+   if (hasConflict)
     {
       message += _("Click here to change the key used for this address.");
     }
@@ -1917,7 +2008,6 @@ Mail::get_crypto_details()
   return message;
 }
 
-
 int
 Mail::get_signature_level () const
 {
@@ -1931,13 +2021,15 @@ Mail::get_signature_level () const
       /* No m_uid matches our sender. */
       return 0;
     }
+
   if (m_is_valid && (m_uid.validity () == UserID::Validity::Ultimate ||
       (m_uid.validity () == UserID::Validity::Full &&
-      level_4_check (m_uid))))
+      level_4_check (m_uid))) && (!in_de_vs_mode () || m_sig.isDeVs()))
     {
       return 4;
     }
-  if (m_is_valid && m_uid.validity () == UserID::Validity::Full)
+  if (m_is_valid && m_uid.validity () == UserID::Validity::Full &&
+      (!in_de_vs_mode () || m_sig.isDeVs()))
     {
       return 3;
     }
