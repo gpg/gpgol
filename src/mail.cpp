@@ -904,7 +904,9 @@ Mail::encrypt_sign ()
     }
   flags = get_gpgol_draft_info_flags (message);
 
-  EnableWindow (get_active_hwnd(), FALSE);
+  const auto window = get_active_hwnd ();
+
+  EnableWindow (window, FALSE);
   if (flags == 3)
     {
       log_debug ("%s:%s: Sign / Encrypting message",
@@ -929,7 +931,7 @@ Mail::encrypt_sign ()
     }
   log_debug ("%s:%s: Status: %i",
              SRCNAME, __func__, err);
-  EnableWindow (get_active_hwnd(), TRUE);
+  EnableWindow (window, TRUE);
   gpgol_release (message);
   m_crypt_successful = !err;
   return err;
