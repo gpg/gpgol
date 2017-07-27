@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2017-07-25 14:26+0200\n"
+"POT-Creation-Date: 2017-07-27 09:17+0200\n"
 "PO-Revision-Date: 2017-07-25 14:45+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
@@ -483,11 +483,13 @@ msgstr ""
 "während der Übertragung gelesen hat."
 
 #: src/mail.cpp:1767
-msgid "The encryption was VS-compliant."
+#, fuzzy
+msgid "The encryption was VS-NfD-compliant."
 msgstr "Diese Verschlüsselung war VS-Konform."
 
 #: src/mail.cpp:1771
-msgid "The encryption was not VS-compliant."
+#, fuzzy
+msgid "The encryption was not VS-NfD-compliant."
 msgstr "Diese Verschlüsselung war nicht VS-Konform."
 
 #: src/mail.cpp:1775
@@ -634,19 +636,23 @@ msgid "is marked as not trustworthy."
 msgstr "ist als nicht vertrauenswürdig markiert."
 
 #: src/mail.cpp:1975
-msgid "The signature is VS-compliant."
+#, fuzzy
+msgid "The signature is VS-NfD-compliant."
 msgstr "Die Signatur ist VS-Konform."
 
 #: src/mail.cpp:1979
-msgid "The signature is not VS-compliant."
+#, fuzzy
+msgid "The signature is not VS-NfD-compliant."
 msgstr "Die Signatur ist nicht VS-Konform."
 
 #: src/mail.cpp:1987
-msgid "The encryption is VS-compliant."
+#, fuzzy
+msgid "The encryption is VS-NfD-compliant."
 msgstr "Diese Verschlüsselung ist VS-Konform."
 
 #: src/mail.cpp:1991
-msgid "The encryption is not VS-compliant."
+#, fuzzy
+msgid "The encryption is not VS-NfD-compliant."
 msgstr "Diese Verschlüsselung ist nicht VS-Konform."
 
 #: src/mail.cpp:1998
@@ -899,9 +905,10 @@ msgid ""
 "\n"
 "Please note that any support may be removed in a future version."
 msgstr ""
-"GpgOL für Outlook 2003 / 2007 wird nicht weitergepflegt.\n\n"
-"Bitte beachten Sie das jegliche Unterstützung dieser Versionen in Zukunft"
-" entfallen kann."
+"GpgOL für Outlook 2003 / 2007 wird nicht weitergepflegt.\n"
+"\n"
+"Bitte beachten Sie das jegliche Unterstützung dieser Versionen in Zukunft "
+"entfallen kann."
 
 #: src/olflange-dlgs.cpp:50
 msgid "Message receiving"
