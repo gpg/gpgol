@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2017-07-27 09:17+0200\n"
-"PO-Revision-Date: 2017-07-25 14:45+0100\n"
+"PO-Revision-Date: 2017-07-27 09:18+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
 "Language: en_US\n"
@@ -483,14 +483,12 @@ msgstr ""
 "während der Übertragung gelesen hat."
 
 #: src/mail.cpp:1767
-#, fuzzy
 msgid "The encryption was VS-NfD-compliant."
-msgstr "Diese Verschlüsselung war VS-Konform."
+msgstr "Diese Verschlüsselung war VS-NfD-konform."
 
 #: src/mail.cpp:1771
-#, fuzzy
 msgid "The encryption was not VS-NfD-compliant."
-msgstr "Diese Verschlüsselung war nicht VS-Konform."
+msgstr "Diese Verschlüsselung war nicht VS-NfD-konform."
 
 #: src/mail.cpp:1775
 msgid "You cannot be sure who sent the message because it is not signed."
@@ -636,24 +634,20 @@ msgid "is marked as not trustworthy."
 msgstr "ist als nicht vertrauenswürdig markiert."
 
 #: src/mail.cpp:1975
-#, fuzzy
 msgid "The signature is VS-NfD-compliant."
-msgstr "Die Signatur ist VS-Konform."
+msgstr "Die Signatur ist VS-NfD-konform."
 
 #: src/mail.cpp:1979
-#, fuzzy
 msgid "The signature is not VS-NfD-compliant."
-msgstr "Die Signatur ist nicht VS-Konform."
+msgstr "Die Signatur ist nicht VS-NfD-konform."
 
 #: src/mail.cpp:1987
-#, fuzzy
 msgid "The encryption is VS-NfD-compliant."
-msgstr "Diese Verschlüsselung ist VS-Konform."
+msgstr "Diese Verschlüsselung ist VS-NfD-konform."
 
 #: src/mail.cpp:1991
-#, fuzzy
 msgid "The encryption is not VS-NfD-compliant."
-msgstr "Diese Verschlüsselung ist nicht VS-Konform."
+msgstr "Diese Verschlüsselung ist nicht VS-NfD-konform."
 
 #: src/mail.cpp:1998
 msgid "Click here to change the key used for this address."
