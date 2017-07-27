@@ -1764,11 +1764,11 @@ Mail::get_crypto_details()
        {
          if (m_sig.isDeVs())
            {
-             message += _("The encryption was VS-compliant.");
+             message += _("The encryption was VS-NfD-compliant.");
            }
          else
            {
-             message += _("The encryption was not VS-compliant.");
+             message += _("The encryption was not VS-NfD-compliant.");
            }
         }
       message += "\n";
@@ -1972,11 +1972,11 @@ Mail::get_crypto_details()
          {
            if (m_sig.isDeVs ())
              {
-               message += _("The signature is VS-compliant.");
+               message += _("The signature is VS-NfD-compliant.");
              }
            else
              {
-               message += _("The signature is not VS-compliant.");
+               message += _("The signature is not VS-NfD-compliant.");
              }
            message += "\n";
          }
@@ -1984,11 +1984,11 @@ Mail::get_crypto_details()
          {
            if (m_decrypt_result.isDeVs ())
              {
-               message += _("The encryption is VS-compliant.");
+               message += _("The encryption is VS-NfD-compliant.");
              }
            else
              {
-               message += _("The encryption is not VS-compliant.");
+               message += _("The encryption is not VS-NfD-compliant.");
              }
            message += "\n\n";
          }
