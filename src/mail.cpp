@@ -1769,9 +1769,10 @@ Mail::get_crypto_details()
              message += _("The encryption was not VS-NfD-compliant.");
            }
         }
-      message += "\n";
+      message += "\n\n";
       message += _("You cannot be sure who sent the message because "
                    "it is not signed.");
+      return message;
     }
 
   bool keyFound = true;
