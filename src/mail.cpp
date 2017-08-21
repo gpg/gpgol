@@ -847,7 +847,7 @@ Mail::parsing_done()
   m_verify_result = m_parser->verify_result ();
 
   m_crypto_flags = 0;
-  if (m_decrypt_result.numRecipients())
+  if (!m_decrypt_result.isNull())
     {
       m_crypto_flags |= 1;
     }
@@ -1507,10 +1507,8 @@ Mail::update_categories ()
       remove_category (m_mailitem, verifyCategory);
     }
 
-  if (m_decrypt_result.numRecipients())
+  if (!m_decrypt_result.isNull())
     {
-      /* We use the number of recipients as we don't care
-         if decryption was successful or not for this category */
       add_category (m_mailitem, decCategory);
     }
   else
@@ -1534,7 +1532,7 @@ Mail::is_signed() const
 bool
 Mail::is_encrypted() const
 {
-  return m_decrypt_result.numRecipients() > 0;
+  return !m_decrypt_result.isNull();
 }
 
 int
