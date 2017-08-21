@@ -703,11 +703,16 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
             msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
           break;
         }
+
+#if 0
+      This might be too strict for some broken implementations. Lets
+      look anywhere in the first 1k.
       else if (!trailing_ws_p (p))
         break;  /* Text before the PGP message - don't take this as a
                    proper message.  */
+#endif
     }
-  
+
 
   xfree (body);
   return msgcls;
