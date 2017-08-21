@@ -1613,7 +1613,7 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
   if (!mail || (!mail->is_signed () && !mail->is_encrypted ()))
     {
       wchar_t *w_result;
-      w_result = utf8_to_wchar (_("You cannot be sure who sent, "
+      w_result = utf8_to_wchar (utf8_gettext ("You cannot be sure who sent, "
                                   "modified and read the message in transit.\n\n"
                                   "Click here to learn more."));
       result->bstrVal = SysAllocString (w_result);
