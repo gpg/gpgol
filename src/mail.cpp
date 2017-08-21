@@ -1991,6 +1991,10 @@ Mail::get_crypto_details()
              }
            message += "\n\n";
          }
+       else
+         {
+           message += "\n";
+         }
      }
    if (hasConflict)
     {
