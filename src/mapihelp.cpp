@@ -981,7 +981,9 @@ change_message_class_ipm_note (LPMESSAGE message)
     }
   else if (!ct || !strcmp (ct, "text/plain") ||
            !strcmp (ct, "multipart/mixed") ||
-           !strcmp (ct, "multipart/alternative"))
+           !strcmp (ct, "multipart/alternative") ||
+           !strcmp (ct, "multipart/related") ||
+           !strcmp (ct, "text/html"))
     {
       /* It is quite common to have a multipart/mixed or alternative
          mail with separate encrypted PGP parts.  Look at the body to
