@@ -760,6 +760,16 @@ Mail::decrypt_verify()
   return 0;
 }
 
+void find_and_replace(std::string& source, const std::string &find,
+                      const std::string &replace)
+{
+  for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+    {
+      source.replace(i, find.length(), replace);
+      i += replace.length();
+    }
+}
+
 void
 Mail::update_body()
 {
@@ -786,7 +796,10 @@ Mail::update_body()
         }
       return;
     }
-  const auto html = m_parser->get_html_body();
+  auto html = m_parser->get_html_body ();
+  /** Outlook does not show newlines if \r\r\n is a newline. We replace
+    these as apparently some other buggy MUA sends this. */
+  find_and_replace (html, "\r\r\n", "\r\n");
   if (opt.prefer_html && !html.empty())
     {
       char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
@@ -800,7 +813,8 @@ Mail::update_body()
         }
       return;
     }
-  const auto body = m_parser->get_body();
+  auto body = m_parser->get_body ();
+  find_and_replace (body, "\r\r\n", "\r\n");
   char *converted = ansi_charset_to_utf8 (m_parser->get_body_charset().c_str(),
                                           body.c_str(), body.size());
   int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
