@@ -1142,6 +1142,7 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
 {
   HRESULT hr;
   SPropValue prop;
+  SPropTagArray proparray;
 
   /* Set the message class.  */
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
@@ -1194,6 +1195,24 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
       log_error ("%s:%s: error deleting attachments",
                  SRCNAME, __func__);
       return -1;
+    }
+
+  proparray.cValues = 1;
+  proparray.aulPropTag[0] = PR_BODY;
+  hr = message->DeleteProps (&proparray, NULL);
+  if (hr)
+    {
+      log_debug_w32 (hr, "%s:%s: deleting PR_BODY failed",
+                     SRCNAME, __func__);
+    }
+
+  proparray.cValues = 1;
+  proparray.aulPropTag[0] = PR_BODY_HTML;
+  hr = message->DeleteProps (&proparray, NULL);
+  if (hr)
+    {
+      log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed",
+                     SRCNAME, __func__);
     }
 
   /* Remove the draft info so that we don't leak the information on
