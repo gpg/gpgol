@@ -276,8 +276,8 @@ ParseController::parse()
     }
 
   Data output (m_outputprovider);
-  log_debug ("%s:%s: decrypt: %i verify: %i with protocol: %s sender: %s",
-             SRCNAME, __func__,
+  log_debug ("%s:%s:%p decrypt: %i verify: %i with protocol: %s sender: %s",
+             SRCNAME, __func__, this,
              decrypt, verify,
              protocol == OpenPGP ? "OpenPGP" :
              protocol == CMS ? "CMS" : "Unknown",
@@ -286,6 +286,8 @@ ParseController::parse()
     {
       input.seek (0, SEEK_SET);
       auto combined_result = ctx->decryptAndVerify(input, output);
+      log_debug ("%s:%s:%p decrypt / verify done.",
+                 SRCNAME, __func__, this);
       m_decrypt_result = combined_result.first;
       m_verify_result = combined_result.second;
 
@@ -321,6 +323,8 @@ ParseController::parse()
         {
           sig->seek (0, SEEK_SET);
           m_verify_result = ctx->verifyDetachedSignature(*sig, input);
+          log_debug ("%s:%s:%p verify done.",
+                     SRCNAME, __func__, this);
           /* Copy the input to output to do a mime parsing. */
           char buf[4096];
           input.seek (0, SEEK_SET);
@@ -337,8 +341,8 @@ ParseController::parse()
         }
     }
   delete ctx;
-  log_debug ("%s:%s: decrypt err: %i verify err: %i",
-             SRCNAME, __func__, m_decrypt_result.error().code(),
+  log_debug ("%s:%s:%p: decrypt err: %i verify err: %i",
+             SRCNAME, __func__, this, m_decrypt_result.error().code(),
              m_verify_result.error().code());
 
   TRACEPOINT;
