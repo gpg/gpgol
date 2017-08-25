@@ -3657,7 +3657,12 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
                      SRCNAME, __func__);
           return 0;
         }
-      return 1;
+      log_debug ("%s:%s: Created body attachment. Repeating lookup.",
+                 SRCNAME, __func__);
+      /* The position of the MOSS attach might change depending on
+         the attachment count of the mail. So repeat the check to get
+         the right position. */
+      return mapi_mark_or_create_moss_attach (message, msgtype);
     }
   if (!table)
     {
