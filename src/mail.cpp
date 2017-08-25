@@ -91,9 +91,9 @@ in_de_vs_mode()
         {
           for (const auto &option: component.options ())
             {
-              if (option.name () && strcmp (option.name (), "compliance") &&
+              if (option.name () && !strcmp (option.name (), "compliance") &&
                   option.currentValue ().stringValue () &&
-                  stricmp (option.currentValue ().stringValue (), "de-vs"))
+                  !stricmp (option.currentValue ().stringValue (), "de-vs"))
                 {
                   log_debug ("%s:%s: Detected de-vs mode",
                              SRCNAME, __func__);
