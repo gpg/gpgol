@@ -530,6 +530,9 @@ do_log (const char *fmt, va_list a, int w32err, int err,
     return;
 
 #ifdef HAVE_W32_SYSTEM
+  if (!opt.enable_debug)
+    return;
+
   if (lock_log ())
     return;
 #endif
