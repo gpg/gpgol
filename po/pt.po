@@ -48,7 +48,7 @@ msgid "&Send OpenPGP mails without attachments as PGP/Inline"
 msgstr "Enviar mails OpenPGP sem anexos como PGP/Inline"
 
 #: src/addin-options.cpp:48
-msgid "S&elect crypto settings automatically for reply and foward."
+msgid "S&elect crypto settings automatically for reply and forward"
 msgstr ""
 "Seleciona as definições de criptografia automaticamente para responder e "
 "encaminhar."

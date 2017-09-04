@@ -46,7 +46,7 @@ set_labels (HWND dlg)
     { IDC_INLINE_PGP,       N_("&Send OpenPGP mails without "
                                "attachments as PGP/Inline")},
     { IDC_REPLYCRYPT,       N_("S&elect crypto settings automatically "
-                               "for reply and foward.")},
+                               "for reply and forward")},
     { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
 
 
