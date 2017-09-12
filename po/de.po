@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2017-07-27 09:17+0200\n"
+"POT-Creation-Date: 2017-09-12 11:38+0200\n"
 "PO-Revision-Date: 2017-07-27 09:18+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
@@ -26,7 +26,7 @@ msgstr "Allgemein"
 
 #: src/addin-options.cpp:38 src/olflange-dlgs.cpp:44
 msgid "Enable the S/MIME support"
-msgstr "S/MIME Unterstützung einschalten"
+msgstr "S/MIME-Unterstützung einschalten"
 
 #: src/addin-options.cpp:40
 msgid "Enable simplified interface (experimental)"
@@ -46,15 +46,15 @@ msgstr "Neue Nachrichten per Voreinstellung signieren"
 
 #: src/addin-options.cpp:46
 msgid "&Send OpenPGP mails without attachments as PGP/Inline"
-msgstr "&OpenPGP Nachrichten ohne Anhänge als PGP/Inline verschlüsseln"
+msgstr "&OpenPGP-Nachrichten ohne Anhänge als PGP/Inline verschlüsseln"
 
 #: src/addin-options.cpp:48
 msgid "S&elect crypto settings automatically for reply and forward"
-msgstr "Krypto &Einstellungen beim Antworten und weiterleiten übernehmen"
+msgstr "Krypto-&Einstellungen beim Antworten und Weiterleiten übernehmen"
 
 #: src/addin-options.cpp:50
 msgid "&Search for OpenPGP keys automatically when encrypting"
-msgstr "OpenPGP &Schlüssel zum verschlüsseln automatisch suchen"
+msgstr "OpenPGP-&Schlüssel zum verschlüsseln automatisch suchen"
 
 #: src/addin-options.cpp:53
 msgid "Debug..."
