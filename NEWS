@@ -1,4 +1,4 @@
-Noteworthy changes for version 2.0.0 (unreleased)
+Noteworthy changes for version 2.0.0 (2017-09-12)
 =================================================
 
  * Decryption / verification is done in a second thread so outlook
