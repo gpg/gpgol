@@ -1,5 +1,12 @@
-Noteworthy changes for version 2.0.1 (unreleased)
+Noteworthy changes for version 2.0.2 (unreleased)
 =================================================
+
+
+Noteworthy changes for version 2.0.1 (2017-09-12)
+=================================================
+
+ * Support for some kinds of PGP Multipart / Signed
+ mails has been fixed if S/MIME is disabled.
 
 
 Noteworthy changes for version 2.0.0 (2017-09-12)
