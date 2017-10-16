@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2017-09-12 13:26+0200\n"
-"PO-Revision-Date: 2017-08-26 07:52+0100\n"
+"PO-Revision-Date: 2017-10-16 14:17+0100\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@mail.telepac.pt>\n"
 "Language-Team: Portuguese <marcoagpinto@mail.telepac.pt>\n"
 "Language: pt\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Poedit 2.0.4\n"
 
 #: src/addin-options.cpp:37 src/gpgoladdin.cpp:1139 src/gpgoladdin.cpp:1222
 #: src/gpgoladdin.cpp:1301 src/olflange-dlgs.cpp:43
@@ -37,20 +37,20 @@ msgstr "Envio de mensagem"
 
 #: src/addin-options.cpp:44 src/olflange-dlgs.cpp:47
 msgid "&Encrypt new messages by default"
-msgstr "Encriptar novas mensagens por defeito"
+msgstr "Encriptar novas mensagens por omissão"
 
 #: src/addin-options.cpp:45 src/olflange-dlgs.cpp:48
 msgid "&Sign new messages by default"
-msgstr "Assinar novas mensagens por defeito"
+msgstr "Assinar novas mensagens por omissão"
 
 #: src/addin-options.cpp:46
 msgid "&Send OpenPGP mails without attachments as PGP/Inline"
-msgstr "Enviar mails OpenPGP sem anexos como PGP/Inline"
+msgstr "Enviar e-mails OpenPGP sem anexos como PGP/Inline"
 
 #: src/addin-options.cpp:48
 msgid "S&elect crypto settings automatically for reply and forward"
 msgstr ""
-"Seleciona as definições de criptografia automaticamente para responder e "
+"Selecionar as definições de criptografia automaticamente para responder e "
 "encaminhar."
 
 #: src/addin-options.cpp:50
@@ -67,11 +67,11 @@ msgstr "Configurar o GnuPG"
 
 #: src/addin-options.cpp:55
 msgid "Version "
-msgstr "Versão"
+msgstr "Versão "
 
 #: src/addin-options.cpp:133
 msgid "Changing the interface requires a restart of Outlook."
-msgstr "Mudar a interface requer reiniciar o Outlook."
+msgstr "Mudar a interface necessita reiniciar o Outlook."
 
 #: src/addin-options.cpp:134 src/cmdbarcontrols.cpp:105 src/engine.c:377
 #: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:314
@@ -121,7 +121,7 @@ msgstr "Não foi possível iniciar o gestor de certificados"
 
 #: src/common.c:237
 msgid "GpgOL - Save attachment"
-msgstr "GpgOL - Gravar anexo"
+msgstr "GpgOL - Guardar anexo"
 
 #: src/config-dialog.c:135
 msgid "Debug output (for analysing problems)"
@@ -164,7 +164,7 @@ msgstr ""
 "o GpgOL num estado desativado para que as mensagens não sejam mais "
 "processadas pelo GpgOL.\n"
 "\n"
-"Deves converter todas as pastas uma após a outra com este comando, fechar o "
+"Deves converter todas as pastas, uma após a outra com este comando, fechar o "
 "Outlook e depois desinstalar o GpgOL.\n"
 "\n"
 "Nota que se iniciares o Outlook novamente com o GpgOL ainda a ser instalado, "
@@ -214,7 +214,7 @@ msgstr ""
 
 #: src/gpgoladdin.cpp:815
 msgid "Open the settings dialog for GpgOL"
-msgstr "Abre o diálogo de definições para o GpgOL"
+msgstr "Abrir o diálogo de definições para o GpgOL"
 
 #: src/gpgoladdin.cpp:865 src/gpgoladdin.cpp:983
 msgid "Secure"
@@ -244,7 +244,7 @@ msgid ""
 "generate your own certificates. "
 msgstr ""
 "Abre o GPA ou Kleopatra para gerir os teus certificados. Podes usar isto "
-"para gerar os teus próprios certificados."
+"para gerar os teus próprios certificados. "
 
 #: src/gpgoladdin.cpp:1017
 msgid "Encrypt the text of the message"
@@ -256,7 +256,7 @@ msgid ""
 "replace the text with the encrypted message."
 msgstr ""
 "Escolher os certificados para quem a mensagem deve ser encriptada e "
-"substitui o texto com a mensagem encriptada."
+"substituir o texto com a mensagem encriptada."
 
 #: src/gpgoladdin.cpp:1023
 msgid "Add a file as an encrypted attachment"
@@ -264,7 +264,7 @@ msgstr "Adicionar um ficheiro como anexo encriptado"
 
 #: src/gpgoladdin.cpp:1025
 msgid "Encrypts a file and adds it as an attachment to the message. "
-msgstr "Encripta um ficheiro e adiciona-o como um anexo à mensagem."
+msgstr "Encripta um ficheiro e adiciona-o como um anexo à mensagem. "
 
 #: src/gpgoladdin.cpp:1028
 msgid "Add a file as an encrypted attachment with a signature"
@@ -275,8 +275,8 @@ msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
 msgstr ""
-"Encripta um ficheiro, assina-o e adiciona quer o ficheiro encriptado e a "
-"assinatura como anexos à mensagem."
+"Encripta um ficheiro, assina-o e adiciona o ficheiro encriptado e a "
+"assinatura como anexos à mensagem. "
 
 #: src/gpgoladdin.cpp:1033
 msgid "Decrypt the message"
@@ -308,7 +308,7 @@ msgstr ""
 
 #: src/gpgoladdin.cpp:1047
 msgid "Open the settings dialog for GpgOL."
-msgstr "Abre o diálogo de definições para o GpgOL"
+msgstr "Abre o diálogo de definições para o GpgOL."
 
 #: src/gpgoladdin.cpp:1140 src/gpgoladdin.cpp:1223 src/gpgoladdin.cpp:1302
 msgid "Start Certificate Manager"
@@ -336,7 +336,7 @@ msgstr "Ficheiro encriptado e Assinatura"
 
 #: src/gpgoladdin.cpp:1228 src/gpgoladdin.cpp:1305 src/gpgoladdin.cpp:1306
 msgid "Save and decrypt"
-msgstr "Gravar e desencriptar"
+msgstr "Guardar e desencriptar"
 
 #: src/inspectors.cpp:690
 msgid "&encrypt message with GnuPG"
@@ -372,7 +372,7 @@ msgid ""
 "Click for more information. "
 msgstr ""
 "Esta é uma mensagem assinada.\n"
-"Clica para mais informação."
+"Clica para mais informação. "
 
 #: src/inspectors.cpp:936
 msgid ""
@@ -380,7 +380,7 @@ msgid ""
 "Click for more information. "
 msgstr ""
 "Esta é uma mensagem encriptada.\n"
-"Clica para mais informação."
+"Clica para mais informação. "
 
 #: src/mail.cpp:338
 msgid ""
@@ -417,7 +417,7 @@ msgid ""
 "Note: The attachments may be encrypted or signed on a file level but the "
 "GpgOL status does not apply to them."
 msgstr ""
-"Nota: Os anexos podem ser encriptados ou assinados a nível de ficheiro, mas "
+"Nota: Os anexos podem ser encriptados ou assinados ao nível de ficheiro, mas "
 "o status do GpgOL não se aplica a eles."
 
 #: src/mail.cpp:389
@@ -481,15 +481,16 @@ msgstr "Mensagem insegura"
 #: src/mail.cpp:1772
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
-"Não podes ter certeza quem enviou, modificou e leu a mensagem em trânsito."
+"Não podes ter a certeza de quem enviou, modificou e leu a mensagem em "
+"trânsito."
 
 #: src/mail.cpp:1781
 msgid "The encryption was VS-NfD-compliant."
-msgstr "A encriptação foi em conformidade com VS-NfD."
+msgstr "A encriptação está em conformidade com VS-NfD."
 
 #: src/mail.cpp:1785
 msgid "The encryption was not VS-NfD-compliant."
-msgstr "A encriptação não foi em conformidade com VS-NfD."
+msgstr "A encriptação não está em conformidade com VS-NfD."
 
 #: src/mail.cpp:1789
 msgid "You cannot be sure who sent the message because it is not signed."
@@ -534,7 +535,7 @@ msgid ""
 "You encrypted %i and verified %i messages since."
 msgstr ""
 "O endereço dos remetentes é confiável, porque estabeleceste um histórico de "
-"comunicação com este endereço a partir de %s.\n"
+"comunicação com este endereço desde %s.\n"
 "Encriptaste %i e verificaste %i mensagens desde então."
 
 #: src/mail.cpp:1872
@@ -609,7 +610,7 @@ msgstr "não reivindica o endereço: \"%s\"."
 
 #: src/mail.cpp:1967
 msgid "is not certified by any trustworthy key."
-msgstr "não é certificado por qualquer chave confiável."
+msgstr "não está certificado por qualquer chave confiável."
 
 #: src/mail.cpp:1971
 msgid ""
@@ -662,7 +663,7 @@ msgstr "Clica aqui para localizar a chave no servidor de chaves configurado."
 #: src/mail.cpp:2027
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
-"Clica aqui para localizar o certificado X509 no servidor de chaves "
+"Clica aqui para localizar o certificado no servidor de chaves X509 "
 "configurado."
 
 #: src/mailitem.cpp:160 src/message-events.cpp:279
@@ -690,7 +691,7 @@ msgid ""
 "\n"
 "For example by right clicking but not selecting the message.\n"
 msgstr ""
-"O GpgOL impediu a mudança para a propriedade \"%s\".\n"
+"O GpgOL impediu a alteração para a propriedade \"%s\".\n"
 "As alterações de propriedade não são ainda manejadas para mensagens de "
 "criptografia.\n"
 "\n"
@@ -716,7 +717,7 @@ msgid ""
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
 "visible]"
 msgstr ""
-"[O conteúdo desta mensagem não é visível porque foi desencriptado noutra "
+"[O conteúdo desta mensagem não é visível porque foi desencriptado por outra "
 "sessão do Outlook. Usa o comando \"desencriptar/verificar\" para torná-lo "
 "visível]"
 
@@ -812,7 +813,7 @@ msgstr "I/O-Erro"
 
 #: src/olflange.cpp:568
 msgid "Welcome to GpgOL "
-msgstr "Bem-vindo ao GpgOL"
+msgstr "Bem-vindo ao GpgOL "
 
 #: src/olflange.cpp:569
 msgid ""
@@ -838,15 +839,15 @@ msgstr ""
 "Embora testámos este software extensivamente, não podemos dar qualquer "
 "garantia que funcione da forma esperada. A interface de programação em uso "
 "não foi devidamente documentada pela Microsoft e daí a funcionalidade do "
-"GpgOL pode cessar com uma actualização do teu sistema Windows.\n"
+"GpgOL poder cessar com uma atualização do teu sistema Windows.\n"
 "\n"
 "ACONSELHAMOS FORTEMENTE A EXECUTAR TESTES DE ENCRIPTAÇÃO ANTES DE COMEÇAR A "
 "USAR O GPGOL EM DADOS SENSÍVEIS!\n"
 "\n"
 "Existem alguns problemas conhecidos, sendo os mais graves o não "
 "funcionamento em enviar e-mails encriptados ou assinados usando uma conta "
-"com base no Exchange. Usar o GpgOL com outros plug-ins do Outlook poderá não "
-"funcionar em alguns casos.\n"
+"com base no Exchange. Usar o GpgOL com outros suplementos do Outlook poderá "
+"não funcionar em alguns casos.\n"
 
 #: src/olflange.cpp:595
 msgid ""
@@ -873,11 +874,10 @@ msgid ""
 msgstr ""
 "Esta versão do Outlook é muito antiga!\n"
 "\n"
-"Pelo menos as versões do Outlook 2003 mais antigas que o SP2 exibem crashes "
-"ao enviar as mensagens e estas podem ficar presas na fila de saída.\n"
+"As versões do Outlook 2003 anteriores ao SP2 exibem crashes ao enviar as "
+"mensagens, podendo estas ficar presas na fila de saída.\n"
 "\n"
-"Por favor atualiza pelo menos para o SP2 antes de tentares enviar uma "
-"mensagem."
+"Por favor atualiza pelo menos para o SP2 antes de tentar enviar uma mensagem."
 
 #: src/olflange.cpp:811
 msgid ""
@@ -910,7 +910,7 @@ msgstr "Motor Criptográfico"
 #: src/olflange-dlgs.cpp:256
 msgid "-#GpgOLFullHelpText#-"
 msgstr ""
-"O GpgOL é um plugin para o Outlook que permite a encriptação e\n"
+"O GpgOL é um suplemento para o Outlook que permite a encriptação e\n"
 "assinatura de mensagens usando o standard OpenPGP e S/MIME.\n"
 "Ele usa o software GnuPG (http://www.gnupg.org). A mais recente\n"
 "informação de lançamento é acessível ao clicar no logótipo.\n"
@@ -922,11 +922,11 @@ msgstr ""
 "\n"
 "O GpgOL é distribuído na esperança que possa ser útil,\n"
 "mas SEM QUALQUER GARANTIA; nem mesmo a garantia implícita de\n"
-"MERCANTIBILIDADE ou APTIDÃO PARA UMA FINALIDADE PARTICULAR. Vê a\n"
+"MERCANTIBILIDADE ou APTIDÃO PARA UMA FINALIDADE ESPECÍFICA. Vê a\n"
 "GNU Lesser General Public License para mais detalhes.\n"
 "\n"
 "Deves ter recebido uma cópia da GNU Lesser General Public License\n"
-"juntamente com este programa; se não, vê <http://www.gnu.org/licenses/>."
+"juntamente com este programa; se não, vê: <http://www.gnu.org/licenses/>."
 
 #: src/olflange-dlgs.cpp:262
 #, c-format
@@ -951,7 +951,7 @@ msgstr ""
 
 #: src/parsecontroller.cpp:196
 msgid "Could not decrypt the data: "
-msgstr "Não foi possível desencriptar os dados:"
+msgstr "Não foi possível desencriptar os dados: "
 
 #: src/parsecontroller.cpp:203 src/parsecontroller.cpp:258
 msgid "Encrypted message (decryption not possible)"
@@ -975,7 +975,7 @@ msgstr ""
 
 #: src/pgpmime.c:510
 msgid "Error writing file"
-msgstr "Erro ao gravar o ficheiro"
+msgstr "Erro ao escrever o ficheiro"
 
 #: src/pgpmime.c:586
 msgid "[PGP/MIME message]"
@@ -1007,7 +1007,7 @@ msgstr "Por favor adiciona pelo menos um destinatário."
 
 #: src/ribbon-callbacks.cpp:685
 msgid "Please select a Mail."
-msgstr "Por favor seleciona um mail."
+msgstr "Por favor seleciona um e-mail."
 
 #: src/ribbon-callbacks.cpp:699
 msgid "Please select the data you wish to decrypt."
@@ -1015,7 +1015,7 @@ msgstr "Por favor seleciona os dados que desejas desencriptar."
 
 #: src/ribbon-callbacks.cpp:712
 msgid "Nothing to decrypt."
-msgstr "Nada a desencriptar."
+msgstr "Nada para desencriptar."
 
 #: src/ribbon-callbacks.cpp:891
 msgid "Plain text"
@@ -1027,7 +1027,7 @@ msgstr "Texto assinado"
 
 #: src/ribbon-callbacks.cpp:1084
 msgid "Select file to encrypt"
-msgstr "Seleciona ficheiro a encriptar"
+msgstr "Seleciona o ficheiro a encriptar"
 
 #: src/ribbon-callbacks.cpp:1596
 msgid "No message selected"
@@ -1049,7 +1049,7 @@ msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
 msgstr ""
-"Não foi possível encontrar Kleopatra.\n"
+"Não foi possível encontrar o Kleopatra.\n"
 "Por favor reinstala o Gpg4win com o componente Kleopatra ativado."
 
 #~ msgid ""
