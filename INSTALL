@@ -35,7 +35,7 @@ for proj in $PROJECTS; do
     ./autogen.sh
     mkdir build-w32
     cd build-w32
-    ../autogen.sh --build-w32
+    ../autogen.sh --build-w32 --enable-static
     make -j`nproc`
     make install
 done
