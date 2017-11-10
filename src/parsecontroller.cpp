@@ -80,7 +80,7 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_type (type)
 {
   log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i"
-                   " expect headers: %i expect no mime: %i",
+                   " expect no headers: %i expect no mime: %i",
                    SRCNAME, __func__, instream, type,
                    expect_no_headers (type), expect_no_mime (type));
 }
@@ -276,12 +276,12 @@ ParseController::parse()
     }
 
   Data output (m_outputprovider);
-  log_debug ("%s:%s:%p decrypt: %i verify: %i with protocol: %s sender: %s",
+  log_debug ("%s:%s:%p decrypt: %i verify: %i with protocol: %s sender: %s type: %i",
              SRCNAME, __func__, this,
              decrypt, verify,
              protocol == OpenPGP ? "OpenPGP" :
              protocol == CMS ? "CMS" : "Unknown",
-             m_sender.empty() ? "none" : m_sender.c_str());
+             m_sender.empty() ? "none" : m_sender.c_str(), input.type ());
   if (decrypt)
     {
       input.seek (0, SEEK_SET);
