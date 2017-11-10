@@ -752,6 +752,7 @@ MimeDataProvider::collect_data(LPSTREAM stream)
   HRESULT hr;
   char buf[BUFSIZE];
   ULONG bRead;
+  bool first_read = true;
   while ((hr = stream->Read (buf, BUFSIZE, &bRead)) == S_OK ||
          hr == S_FALSE)
     {
@@ -763,6 +764,27 @@ MimeDataProvider::collect_data(LPSTREAM stream)
         }
       log_mime_parser ("%s:%s: Read %lu bytes.",
                        SRCNAME, __func__, bRead);
+
+      if (first_read)
+        {
+          if (bRead > 12 && strncmp ("MIME-Version", buf, 12) == 0)
+            {
+              /* Fun! In case we have exchange or sent messages created by us
+                 we get the mail attachment like it is before the MAPI to MIME
+                 conversion. So it has our MIME structure. In that case
+                 we have to expect MIME data even if the initial data check
+                 suggests that we don't.
+
+                 Checking if the content starts with MIME-Version appears
+                 to be a robust way to check if we try to parse MIME data. */
+              m_collect_everything = false;
+              log_debug ("%s:%s: Found MIME-Version marker."
+                         "Expecting headers even if type suggested not to.",
+                         SRCNAME, __func__);
+
+            }
+        }
+      first_read = false;
 
       if (m_collect_everything)
         {
