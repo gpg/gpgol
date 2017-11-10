@@ -215,6 +215,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               /* We want to save the mail when it's an smime mail and smime
                  is disabled to revert it. */
+              log_debug ("%s:%s: S/MIME mail but S/MIME is disabled."
+                         " Need save.",
+                         SRCNAME, __func__);
               m_mail->set_needs_save (true);
             }
           break;
@@ -378,6 +381,18 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
               return S_OK;
             }
+
+          if (m_mail->is_crypto_mail () && m_mail->needs_save () &&
+              m_mail->revert ())
+            {
+              /* An error cleaning the mail should not happen normally.
+                 But just in case there is an error we cancel the
+                 write here. */
+              log_debug ("%s:%s: Failed to remove plaintext.",
+                         SRCNAME, __func__);
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+            }
+
           log_debug ("%s:%s: Passing write event.",
                      SRCNAME, __func__);
           m_mail->set_needs_save (false);
