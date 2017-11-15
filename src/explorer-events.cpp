@@ -82,6 +82,13 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
+#if 0
+          This is fragile. Somehow. Accessing the current view of the
+          Explorer might crash outlook. This is even reproducable with
+          GpgOL enabled and only with Outlook Spy. If you select
+          the explorer of an Outlook.com resource and then access
+          the CurrentView and close the CurrentView again outlook crashes.
+
           LPDISPATCH tableView = get_oom_object (m_object, "CurrentView");
           if (!tableView)
             {
@@ -94,6 +101,14 @@ EVENT_SINK_INVOKE(ExplorerEvents)
             {
               break;
             }
+#else
+          LPDISPATCH prevEdit = get_oom_object (m_object, "PreviewPane.WordEditor");
+          gpgol_release (prevEdit);
+          if (!prevEdit)
+            {
+              break;
+            }
+#endif
           HANDLE thread = CreateThread (NULL, 0, invalidate_ui, (LPVOID) this, 0,
                                         NULL);
 
