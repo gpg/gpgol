@@ -418,7 +418,7 @@ ParseController::get_html_charset() const
 {
   if (m_outputprovider)
     {
-      return m_outputprovider->get_body_charset();
+      return m_outputprovider->get_html_charset();
     }
   else
     {
