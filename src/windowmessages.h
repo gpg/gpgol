@@ -40,6 +40,8 @@ typedef enum _gpgol_wmsg_type
   INVALIDATE_UI = 1, /* The UI should be invalidated. */
   PARSING_DONE = 2, /* A mail was parsed. Data should be a pointer
                       to the mail object. */
+  RECIPIENT_ADDED = 3, /* A recipient was added. Data should be ptr
+                          to mail */
 } gpgol_wmsg_type;
 
 typedef struct

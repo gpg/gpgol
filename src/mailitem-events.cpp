@@ -102,6 +102,14 @@ MailItemEvents::~MailItemEvents()
 
 static bool propchangeWarnShown = false;
 
+static DWORD WINAPI
+do_delayed_locate (LPVOID arg)
+{
+  Sleep(100);
+  do_in_ui_thread (RECIPIENT_ADDED, arg);
+  return 0;
+}
+
 /* The main Invoke function. The return value of this
    function does not appear to have any effect on outlook
    although I have read in an example somewhere that you
@@ -239,13 +247,22 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 {
                   break;
                 }
-              if (!wcscmp (prop_name, L"To") ||
+              if (!wcscmp (prop_name, L"To") /* ||
                   !wcscmp (prop_name, L"BCC") ||
-                  !wcscmp (prop_name, L"CC"))
+                  !wcscmp (prop_name, L"CC")
+                  Testing shows that Outlook always sends these three in a row
+                  */)
                 {
                   if ((m_mail->needs_crypto() & 1))
                     {
-                      m_mail->locate_keys();
+                      /* XXX Racy race. This is a fix for crashes
+                         that happend if a resolved recipient is copied an pasted.
+                         If we then access the recipients object in the Property
+                         Change event we crash. Thus we do the delay dance. */
+                      HANDLE thread = CreateThread (NULL, 0, do_delayed_locate,
+                                                    (LPVOID) m_mail, 0,
+                                                    NULL);
+                      CloseHandle(thread);
                     }
                 }
               break;

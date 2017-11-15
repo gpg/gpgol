@@ -55,6 +55,18 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->parsing_done();
               break;
             }
+          case (RECIPIENT_ADDED):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: Recipient add for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+              mail->locate_keys();
+              break;
+            }
           case (INVALIDATE_UI):
             {
               log_debug ("%s:%s: Invalidating UI",
