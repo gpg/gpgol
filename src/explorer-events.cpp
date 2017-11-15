@@ -83,11 +83,12 @@ EVENT_SINK_INVOKE(ExplorerEvents)
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
 #if 0
-          This is fragile. Somehow. Accessing the current view of the
-          Explorer might crash outlook. This is even reproducable with
-          GpgOL enabled and only with Outlook Spy. If you select
+          Somehow latest Outlook 2016 crashes when accessing the current view
+          of the Explorer. This is even reproducible with
+          GpgOL disabled and only with Outlook Spy active. If you select
           the explorer of an Outlook.com resource and then access
-          the CurrentView and close the CurrentView again outlook crashes.
+          the CurrentView and close the CurrentView again in Outlook Spy
+          outlook crashes.
 
           LPDISPATCH tableView = get_oom_object (m_object, "CurrentView");
           if (!tableView)
