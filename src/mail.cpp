@@ -1256,7 +1256,9 @@ Mail::get_recipients() const
       TRACEPOINT;
       return nullptr;
     }
-  return get_oom_recipients (recipients);
+  auto ret = get_oom_recipients (recipients);
+  gpgol_release (recipients);
+  return ret;
 }
 
 int
