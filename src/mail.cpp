@@ -2130,13 +2130,16 @@ do_locate (LPVOID arg)
                  SRCNAME, __func__, recipient);
     }
   xfree (recipient);
-  do_in_ui_thread (UNKNOWN, NULL);
+  // do_in_ui_thread (UNKNOWN, NULL);
   return 0;
 }
+
+GPGRT_LOCK_DEFINE(uids_searched_lock);
 
 /** Try to locate the keys for all recipients */
 void Mail::locate_keys()
 {
+  gpgrt_lock_lock (&uids_searched_lock);
   char ** recipients = get_recipients ();
 
   if (!recipients)
@@ -2158,6 +2161,7 @@ void Mail::locate_keys()
       xfree (recipients[i]);
     }
   xfree (recipients);
+  gpgrt_lock_unlock (&uids_searched_lock);
 }
 
 bool
