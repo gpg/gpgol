@@ -911,7 +911,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
     }
   /* We don't use this code currently because calling the send
      event for Inline Response mailitems fails. */
-  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer") && g_ol_version_major > 14)
     {
       gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
@@ -983,6 +983,39 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Secure"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
+        optsSTip
+        );
+    }
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
+    {
+      // No TabComposeTools in Outlook 2010
+      gpgrt_asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
+        " onLoad=\"ribbonLoaded\">"
+        " <ribbon>"
+        "   <tabs>"
+        "    <tab idMso=\"TabMail\">"
+        "     <group id=\"general_read\""
+        "            label=\"%s\">"
+        "       <button id=\"idSigned\""
+        "               getImage=\"btnSigstateLarge\""
+        "               size=\"large\""
+        "               getLabel=\"getSigLabel\""
+        "               getScreentip=\"getSigTip\""
+        "               getSupertip=\"getSigSTip\""
+        "               onAction=\"launchDetails\""
+        "               getEnabled=\"getIsDetailsEnabled\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn_read\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
+        "     </group>"
+        "    </tab>"
+        "   </tabs>"
+        " </ribbon>"
+        "</customUI>",
+        _("GpgOL"),
         optsSTip
         );
     }
