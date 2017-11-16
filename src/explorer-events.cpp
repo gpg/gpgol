@@ -82,34 +82,38 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
-#if 0
-          Somehow latest Outlook 2016 crashes when accessing the current view
+          /* Somehow latest Outlook 2016 crashes when accessing the current view
           of the Explorer. This is even reproducible with
           GpgOL disabled and only with Outlook Spy active. If you select
           the explorer of an Outlook.com resource and then access
           the CurrentView and close the CurrentView again in Outlook Spy
-          outlook crashes.
+          outlook crashes. */
 
-          LPDISPATCH tableView = get_oom_object (m_object, "CurrentView");
-          if (!tableView)
+          if (g_ol_version_major <= 15)
             {
-              TRACEPOINT;
-              break;
+              LPDISPATCH tableView = get_oom_object (m_object, "CurrentView");
+              if (!tableView)
+                {
+                  TRACEPOINT;
+                  break;
+                }
+              int hasReadingPane = get_oom_bool (tableView, "ShowReadingPane");
+              gpgol_release (tableView);
+              if (!hasReadingPane)
+                {
+                  break;
+                }
             }
-          int hasReadingPane = get_oom_bool (tableView, "ShowReadingPane");
-          gpgol_release (tableView);
-          if (!hasReadingPane)
+          else
             {
-              break;
+              LPDISPATCH prevEdit = get_oom_object (m_object, "PreviewPane.WordEditor");
+              gpgol_release (prevEdit);
+              if (!prevEdit)
+                {
+                  break;
+                }
             }
-#else
-          LPDISPATCH prevEdit = get_oom_object (m_object, "PreviewPane.WordEditor");
-          gpgol_release (prevEdit);
-          if (!prevEdit)
-            {
-              break;
-            }
-#endif
+
           HANDLE thread = CreateThread (NULL, 0, invalidate_ui, (LPVOID) this, 0,
                                         NULL);
 
