@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2017-09-12 13:26+0200\n"
+"POT-Creation-Date: 2017-11-16 10:00+0100\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -18,8 +18,8 @@ msgstr ""
 "X-Generator: Poedit 1.8.4\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/addin-options.cpp:37 src/gpgoladdin.cpp:1139 src/gpgoladdin.cpp:1222
-#: src/gpgoladdin.cpp:1301 src/olflange-dlgs.cpp:43
+#: src/addin-options.cpp:37 src/gpgoladdin.cpp:1172 src/gpgoladdin.cpp:1255
+#: src/gpgoladdin.cpp:1334 src/olflange-dlgs.cpp:43
 msgid "General"
 msgstr "通用"
 
@@ -74,18 +74,18 @@ msgstr ""
 #: src/addin-options.cpp:134 src/cmdbarcontrols.cpp:105 src/engine.c:377
 #: src/explorers.cpp:204 src/explorers.cpp:209 src/gpgoladdin.cpp:314
 #: src/gpgoladdin.cpp:864 src/gpgoladdin.cpp:907 src/gpgoladdin.cpp:980
-#: src/gpgoladdin.cpp:982 src/gpgoladdin.cpp:1139 src/gpgoladdin.cpp:1222
-#: src/gpgoladdin.cpp:1228 src/gpgoladdin.cpp:1301 src/gpgoladdin.cpp:1305
-#: src/main.c:467 src/message.cpp:300 src/ribbon-callbacks.cpp:134
-#: src/ribbon-callbacks.cpp:248 src/ribbon-callbacks.cpp:263
-#: src/ribbon-callbacks.cpp:275 src/ribbon-callbacks.cpp:312
-#: src/ribbon-callbacks.cpp:324 src/ribbon-callbacks.cpp:669
-#: src/ribbon-callbacks.cpp:686 src/ribbon-callbacks.cpp:700
-#: src/ribbon-callbacks.cpp:713 src/ribbon-callbacks.cpp:736
-#: src/ribbon-callbacks.cpp:796 src/ribbon-callbacks.cpp:1078
-#: src/ribbon-callbacks.cpp:1112 src/ribbon-callbacks.cpp:1124
-#: src/ribbon-callbacks.cpp:1149 src/ribbon-callbacks.cpp:1656
-#: src/ribbon-callbacks.cpp:1706
+#: src/gpgoladdin.cpp:982 src/gpgoladdin.cpp:1018 src/gpgoladdin.cpp:1172
+#: src/gpgoladdin.cpp:1255 src/gpgoladdin.cpp:1261 src/gpgoladdin.cpp:1334
+#: src/gpgoladdin.cpp:1338 src/main.c:467 src/message.cpp:300
+#: src/ribbon-callbacks.cpp:134 src/ribbon-callbacks.cpp:248
+#: src/ribbon-callbacks.cpp:263 src/ribbon-callbacks.cpp:275
+#: src/ribbon-callbacks.cpp:312 src/ribbon-callbacks.cpp:324
+#: src/ribbon-callbacks.cpp:669 src/ribbon-callbacks.cpp:686
+#: src/ribbon-callbacks.cpp:700 src/ribbon-callbacks.cpp:713
+#: src/ribbon-callbacks.cpp:736 src/ribbon-callbacks.cpp:796
+#: src/ribbon-callbacks.cpp:1078 src/ribbon-callbacks.cpp:1112
+#: src/ribbon-callbacks.cpp:1124 src/ribbon-callbacks.cpp:1149
+#: src/ribbon-callbacks.cpp:1644 src/ribbon-callbacks.cpp:1694
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -167,12 +167,12 @@ msgstr ""
 msgid "Do you want to revert this folder?"
 msgstr "你想要撤销这个文件夹吗？"
 
-#: src/gpgoladdin.cpp:446 src/mail.cpp:1444 src/mail.cpp:1515
+#: src/gpgoladdin.cpp:446 src/mail.cpp:1453 src/mail.cpp:1524
 #, fuzzy
 msgid "GpgOL: Encrypted Message"
 msgstr "解密消息"
 
-#: src/gpgoladdin.cpp:447 src/mail.cpp:1445 src/mail.cpp:1516
+#: src/gpgoladdin.cpp:447 src/mail.cpp:1454 src/mail.cpp:1525
 msgid "GpgOL: Trusted Sender Address"
 msgstr ""
 
@@ -214,72 +214,72 @@ msgstr ""
 msgid "Secure"
 msgstr ""
 
-#: src/gpgoladdin.cpp:866 src/gpgoladdin.cpp:984 src/gpgoladdin.cpp:1145
+#: src/gpgoladdin.cpp:866 src/gpgoladdin.cpp:984 src/gpgoladdin.cpp:1178
 msgid "Sign"
 msgstr "签名"
 
-#: src/gpgoladdin.cpp:867 src/gpgoladdin.cpp:985 src/gpgoladdin.cpp:1143
-#: src/gpgoladdin.cpp:1150
+#: src/gpgoladdin.cpp:867 src/gpgoladdin.cpp:985 src/gpgoladdin.cpp:1176
+#: src/gpgoladdin.cpp:1183
 msgid "Encrypt"
 msgstr "加密"
 
-#: src/gpgoladdin.cpp:909 src/gpgoladdin.cpp:1144 src/gpgoladdin.cpp:1150
-#: src/gpgoladdin.cpp:1226 src/gpgoladdin.cpp:1229 src/gpgoladdin.cpp:1230
+#: src/gpgoladdin.cpp:909 src/gpgoladdin.cpp:1177 src/gpgoladdin.cpp:1183
+#: src/gpgoladdin.cpp:1259 src/gpgoladdin.cpp:1262 src/gpgoladdin.cpp:1263
 msgid "Decrypt"
 msgstr "解密"
 
-#: src/gpgoladdin.cpp:1011
+#: src/gpgoladdin.cpp:1044
 msgid "Start the Certificate Management Software"
 msgstr "启动证书管理服务"
 
-#: src/gpgoladdin.cpp:1013
+#: src/gpgoladdin.cpp:1046
 msgid ""
 "Open GPA or Kleopatra to manage your certificates. You can use this you to "
 "generate your own certificates. "
 msgstr "打开 GPA 或 Kleopatra 来管理你的证书。你可以用它来生成你自己的证书。"
 
-#: src/gpgoladdin.cpp:1017
+#: src/gpgoladdin.cpp:1050
 msgid "Encrypt the text of the message"
 msgstr "加密消息文字"
 
-#: src/gpgoladdin.cpp:1019
+#: src/gpgoladdin.cpp:1052
 msgid ""
 "Choose the certificates for which the message should be encrypted and "
 "replace the text with the encrypted message."
 msgstr "选择这个消息要被加密到的证书，然后用加密后的消息替换文字。"
 
-#: src/gpgoladdin.cpp:1023
+#: src/gpgoladdin.cpp:1056
 msgid "Add a file as an encrypted attachment"
 msgstr "添加一个加密的附件"
 
-#: src/gpgoladdin.cpp:1025
+#: src/gpgoladdin.cpp:1058
 msgid "Encrypts a file and adds it as an attachment to the message. "
 msgstr "加密一个文件，然后把加密结果加入附件。"
 
-#: src/gpgoladdin.cpp:1028
+#: src/gpgoladdin.cpp:1061
 msgid "Add a file as an encrypted attachment with a signature"
 msgstr "添加加密并签名的附件"
 
-#: src/gpgoladdin.cpp:1030
+#: src/gpgoladdin.cpp:1063
 msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
 msgstr "加密并签名一个文件，然后把加密结果和签名加入附件。"
 
-#: src/gpgoladdin.cpp:1033
+#: src/gpgoladdin.cpp:1066
 msgid "Decrypt the message"
 msgstr "解密消息"
 
-#: src/gpgoladdin.cpp:1035
+#: src/gpgoladdin.cpp:1068
 msgid ""
 "Look for PGP or S/MIME encrypted data in the message text and decrypt it."
 msgstr "在消息文字中寻找 PGP 或 S/MIME 数据并解密。"
 
-#: src/gpgoladdin.cpp:1038
+#: src/gpgoladdin.cpp:1071
 msgid "Add a signature of the message"
 msgstr "为此消息添加签名"
 
-#: src/gpgoladdin.cpp:1040
+#: src/gpgoladdin.cpp:1073
 msgid ""
 "Appends a signed copy of the message text in an opaque signature. An opaque "
 "signature ensures that the signed text is not modified by embedding it in "
@@ -289,35 +289,35 @@ msgstr ""
 "向不透明签名添加一份消息文字。不透明签名能保证文字不被改变，因为它内含一份签"
 "名。签名后的消息文字和你的签名将被加在纯文本后。此消息不会被加密！"
 
-#: src/gpgoladdin.cpp:1047
+#: src/gpgoladdin.cpp:1080
 msgid "Open the settings dialog for GpgOL."
 msgstr ""
 
-#: src/gpgoladdin.cpp:1140 src/gpgoladdin.cpp:1223 src/gpgoladdin.cpp:1302
+#: src/gpgoladdin.cpp:1173 src/gpgoladdin.cpp:1256 src/gpgoladdin.cpp:1335
 msgid "Start Certificate Manager"
 msgstr "运行密钥管理器"
 
-#: src/gpgoladdin.cpp:1142 src/gpgoladdin.cpp:1225
+#: src/gpgoladdin.cpp:1175 src/gpgoladdin.cpp:1258
 msgid "Textbody"
 msgstr "文本内容"
 
-#: src/gpgoladdin.cpp:1146 src/gpgoladdin.cpp:1227
+#: src/gpgoladdin.cpp:1179 src/gpgoladdin.cpp:1260
 msgid "Verify"
 msgstr "验证"
 
-#: src/gpgoladdin.cpp:1147
+#: src/gpgoladdin.cpp:1180
 msgid "Attachments"
 msgstr "附件"
 
-#: src/gpgoladdin.cpp:1148
+#: src/gpgoladdin.cpp:1181
 msgid "Encrypted file"
 msgstr "加密过的文件"
 
-#: src/gpgoladdin.cpp:1149
+#: src/gpgoladdin.cpp:1182
 msgid "Encrypted file and Signature"
 msgstr "加密过的文件和签名"
 
-#: src/gpgoladdin.cpp:1228 src/gpgoladdin.cpp:1305 src/gpgoladdin.cpp:1306
+#: src/gpgoladdin.cpp:1261 src/gpgoladdin.cpp:1338 src/gpgoladdin.cpp:1339
 msgid "Save and decrypt"
 msgstr "保存并解密"
 
@@ -396,7 +396,7 @@ msgstr ""
 msgid "GpgOL Warning"
 msgstr ""
 
-#: src/mail.cpp:710 src/mail.cpp:1759
+#: src/mail.cpp:710 src/mail.cpp:1768
 #, fuzzy
 msgid "Encrypted message"
 msgstr "解密消息"
@@ -405,101 +405,101 @@ msgstr "解密消息"
 msgid "Please wait while the message is being decrypted / verified..."
 msgstr ""
 
-#: src/mail.cpp:1704
+#: src/mail.cpp:1713
 msgid "Security Level 4"
 msgstr ""
 
-#: src/mail.cpp:1708
+#: src/mail.cpp:1717
 msgid "Trust Level 4"
 msgstr ""
 
-#: src/mail.cpp:1712
+#: src/mail.cpp:1721
 msgid "Security Level 3"
 msgstr ""
 
-#: src/mail.cpp:1716
+#: src/mail.cpp:1725
 msgid "Trust Level 3"
 msgstr ""
 
-#: src/mail.cpp:1720
+#: src/mail.cpp:1729
 msgid "Security Level 2"
 msgstr ""
 
-#: src/mail.cpp:1724
+#: src/mail.cpp:1733
 msgid "Trust Level 2"
 msgstr ""
 
-#: src/mail.cpp:1728
+#: src/mail.cpp:1737
 #, fuzzy
 msgid "Encrypted"
 msgstr "加密"
 
-#: src/mail.cpp:1737 src/mail.cpp:1739 src/ribbon-callbacks.cpp:1569
+#: src/mail.cpp:1746 src/mail.cpp:1748 src/ribbon-callbacks.cpp:1557
 msgid "Insecure"
 msgstr ""
 
-#: src/mail.cpp:1751
+#: src/mail.cpp:1760
 #, fuzzy
 msgid "Signed and encrypted message"
 msgstr "解密消息"
 
-#: src/mail.cpp:1755
+#: src/mail.cpp:1764
 #, fuzzy
 msgid "Signed message"
 msgstr "解密消息"
 
-#: src/mail.cpp:1762 src/ribbon-callbacks.cpp:1592
+#: src/mail.cpp:1771 src/ribbon-callbacks.cpp:1580
 #, fuzzy
 msgid "Insecure message"
 msgstr "解密消息"
 
-#: src/mail.cpp:1772
+#: src/mail.cpp:1781
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
 
-#: src/mail.cpp:1781
+#: src/mail.cpp:1790
 #, fuzzy
 msgid "The encryption was VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:1785
+#: src/mail.cpp:1794
 #, fuzzy
 msgid "The encryption was not VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:1789
+#: src/mail.cpp:1798
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
 
-#: src/mail.cpp:1812
+#: src/mail.cpp:1821
 #, fuzzy
 msgid "You signed this message."
 msgstr "解密消息"
 
-#: src/mail.cpp:1816
+#: src/mail.cpp:1825
 msgid "The senders identity was certified by yourself."
 msgstr ""
 
-#: src/mail.cpp:1820
+#: src/mail.cpp:1829
 msgid "The sender is allowed to certify identities for you."
 msgstr ""
 
-#: src/mail.cpp:1833
+#: src/mail.cpp:1842
 msgid "The senders identity was certified by several trusted people."
 msgstr ""
 
-#: src/mail.cpp:1838
+#: src/mail.cpp:1847
 #, c-format
 msgid ""
 "The senders identity is certified by the trusted issuer:\n"
 "'%s'\n"
 msgstr ""
 
-#: src/mail.cpp:1846
+#: src/mail.cpp:1855
 msgid "Some trusted people have certified the senders identity."
 msgstr ""
 
-#: src/mail.cpp:1856
+#: src/mail.cpp:1865
 #, c-format
 msgid ""
 "The senders address is trusted, because you have established a communication "
@@ -507,133 +507,133 @@ msgid ""
 "You encrypted %i and verified %i messages since."
 msgstr ""
 
-#: src/mail.cpp:1872
+#: src/mail.cpp:1881
 msgid "The senders signature was verified for the first time."
 msgstr ""
 
-#: src/mail.cpp:1879
+#: src/mail.cpp:1888
 #, c-format
 msgid ""
 "The senders address is not trustworthy yet because you only verified %i "
 "messages and encrypted %i messages to it since %s."
 msgstr ""
 
-#: src/mail.cpp:1893
+#: src/mail.cpp:1902
 msgid "But the sender address is not trustworthy because:"
 msgstr ""
 
-#: src/mail.cpp:1894
+#: src/mail.cpp:1903
 msgid "The sender address is not trustworthy because:"
-msgstr ""
-
-#: src/mail.cpp:1902
-#, fuzzy
-msgid "The signature is invalid: \n"
-msgstr "签名有效\n"
-
-#: src/mail.cpp:1907
-msgid "There was an error verifying the signature.\n"
 msgstr ""
 
 #: src/mail.cpp:1911
 #, fuzzy
+msgid "The signature is invalid: \n"
+msgstr "签名有效\n"
+
+#: src/mail.cpp:1916
+msgid "There was an error verifying the signature.\n"
+msgstr ""
+
+#: src/mail.cpp:1920
+#, fuzzy
 msgid "The signature is expired.\n"
 msgstr "签名有效\n"
 
-#: src/mail.cpp:1915
+#: src/mail.cpp:1924
 msgid "The used key"
 msgstr ""
 
-#: src/mail.cpp:1915
+#: src/mail.cpp:1924
 #, fuzzy
 msgid "The used certificate"
 msgstr "验证出错"
 
-#: src/mail.cpp:1923
+#: src/mail.cpp:1932
 #, fuzzy
 msgid "is not available."
 msgstr "证书吊销列表（CRL）不可用\n"
 
-#: src/mail.cpp:1927
+#: src/mail.cpp:1936
 msgid "is revoked."
 msgstr ""
 
-#: src/mail.cpp:1931
+#: src/mail.cpp:1940
 msgid "is expired."
 msgstr ""
 
-#: src/mail.cpp:1935
+#: src/mail.cpp:1944
 msgid "is not meant for signing."
 msgstr ""
 
-#: src/mail.cpp:1939 src/mail.cpp:1943
+#: src/mail.cpp:1948 src/mail.cpp:1952
 msgid "could not be checked for revocation."
 msgstr ""
 
-#: src/mail.cpp:1948
+#: src/mail.cpp:1957
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
 
-#: src/mail.cpp:1954
+#: src/mail.cpp:1963
 #, c-format
 msgid "does not claim the address: \"%s\"."
 msgstr ""
 
-#: src/mail.cpp:1967
+#: src/mail.cpp:1976
 msgid "is not certified by any trustworthy key."
 msgstr ""
 
-#: src/mail.cpp:1971
+#: src/mail.cpp:1980
 msgid ""
 "is not certified by a trustworthy Certificate Authority or the Certificate "
 "Authority is unknown."
 msgstr ""
 
-#: src/mail.cpp:1976
+#: src/mail.cpp:1985
 msgid "The sender marked this address as revoked."
 msgstr ""
 
-#: src/mail.cpp:1980
+#: src/mail.cpp:1989
 msgid "is marked as not trustworthy."
 msgstr ""
 
-#: src/mail.cpp:1990
+#: src/mail.cpp:1999
 #, fuzzy
 msgid "The signature is VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:1994
+#: src/mail.cpp:2003
 #, fuzzy
 msgid "The signature is not VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:2002
+#: src/mail.cpp:2011
 #, fuzzy
 msgid "The encryption is VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:2006
+#: src/mail.cpp:2015
 #, fuzzy
 msgid "The encryption is not VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:2017
+#: src/mail.cpp:2026
 msgid "Click here to change the key used for this address."
 msgstr ""
 
-#: src/mail.cpp:2021
+#: src/mail.cpp:2030
 msgid "Click here for details about the key."
 msgstr ""
 
-#: src/mail.cpp:2022
+#: src/mail.cpp:2031
 msgid "Click here for details about the certificate."
 msgstr ""
 
-#: src/mail.cpp:2026
+#: src/mail.cpp:2035
 msgid "Click here to search the key on the configured keyserver."
 msgstr ""
 
-#: src/mail.cpp:2027
+#: src/mail.cpp:2036
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 
@@ -647,11 +647,11 @@ msgstr ""
 "无富文本的消息。请保证只有文字格式\n"
 "被选中。"
 
-#: src/mailitem-events.cpp:285
+#: src/mailitem-events.cpp:305
 msgid "Sorry, that's not possible, yet"
 msgstr ""
 
-#: src/mailitem-events.cpp:287
+#: src/mailitem-events.cpp:307
 #, c-format
 msgid ""
 "GpgOL has prevented the change to the \"%s\" property.\n"
@@ -668,11 +668,11 @@ msgstr ""
 msgid "Note: Using compatibility flags: %s"
 msgstr "注释：使用兼容性参数：%s"
 
-#: src/mapihelp.cpp:1714 src/mapihelp.cpp:1722 src/mapihelp.cpp:1730
+#: src/mapihelp.cpp:1713 src/mapihelp.cpp:1721 src/mapihelp.cpp:1729
 msgid "[no subject]"
 msgstr "[无主题]"
 
-#: src/mapihelp.cpp:2379
+#: src/mapihelp.cpp:2378
 msgid ""
 "[The content of this message is not visible because it has been decrypted by "
 "another Outlook session.  Use the \"decrypt/verify\" command to make it "
@@ -681,7 +681,7 @@ msgstr ""
 "[内容不可见，因为此消息已被另一个 Outlook 会话解密。使用解密/验证”命令使其可"
 "见]"
 
-#: src/mapihelp.cpp:3274
+#: src/mapihelp.cpp:3273
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
@@ -965,12 +965,12 @@ msgstr "签名过的文本"
 msgid "Select file to encrypt"
 msgstr "选择要加密的文件"
 
-#: src/ribbon-callbacks.cpp:1596
+#: src/ribbon-callbacks.cpp:1584
 #, fuzzy
 msgid "No message selected"
 msgstr "此消息未被加密。"
 
-#: src/ribbon-callbacks.cpp:1653
+#: src/ribbon-callbacks.cpp:1641
 #, c-format
 msgid ""
 "The message was not cryptographically signed.\n"
@@ -978,7 +978,7 @@ msgid ""
 "or if someone faked the sender address."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:1704
+#: src/ribbon-callbacks.cpp:1692
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
