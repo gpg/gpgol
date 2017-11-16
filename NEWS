@@ -1,5 +1,17 @@
-Noteworthy changes for version 2.0.2 (unreleased)
+Noteworthy changes for version 2.0.2 (2017-11-16)
 =================================================
+
+ * A potential crash when pasting recpients was fixed.
+
+ * A potential random crash in Outlook 2016 has been worked
+ around.
+
+ * Encoding problems when reading HTML mails have been fixed.
+
+ * S/MIME Mails are reverted again if S/MIME is disabled.
+
+ * S/MIME Mails through Exchange and sent mails are now
+ handled correctly.
 
 
 Noteworthy changes for version 2.0.1 (2017-09-12)
