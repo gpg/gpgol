@@ -33,7 +33,6 @@ src/olflange.cpp
 src/olflange-dlgs.cpp
 src/olflange.h
 src/parsecontroller.cpp
-src/pgpmime.c
 src/property-sheets.h
 src/ribbon-callbacks.cpp
 src/session-events.h
