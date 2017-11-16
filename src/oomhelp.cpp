@@ -196,6 +196,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           gpgol_release (pObj);
           return NULL;
         }
+      /* Confirmed through testing that the retval needs a release */
       if (pObj != pStart)
         gpgol_release (pObj);
       pObj = NULL;
