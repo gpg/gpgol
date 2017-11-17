@@ -776,7 +776,6 @@ void
 Mail::update_body()
 {
   const auto error = m_parser->get_formatted_error ();
-  TRACEPOINT;
   if (!error.empty())
     {
       if (opt.prefer_html)
@@ -802,9 +801,7 @@ Mail::update_body()
   auto html = m_parser->get_html_body ();
   /** Outlook does not show newlines if \r\r\n is a newline. We replace
     these as apparently some other buggy MUA sends this. */
-  TRACEPOINT;
   find_and_replace (html, "\r\r\n", "\r\n");
-  TRACEPOINT;
   if (opt.prefer_html && !html.empty())
     {
       char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
@@ -816,8 +813,6 @@ Mail::update_body()
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
         }
-
-      TRACEPOINT;
       return;
     }
   auto body = m_parser->get_body ();
@@ -825,14 +820,12 @@ Mail::update_body()
   char *converted = ansi_charset_to_utf8 (m_parser->get_body_charset().c_str(),
                                           body.c_str(), body.size());
   int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
-  TRACEPOINT;
   xfree (converted);
   if (ret)
     {
       log_error ("%s:%s: Failed to modify body of item.",
                  SRCNAME, __func__);
     }
-  TRACEPOINT;
   return;
 }
 
