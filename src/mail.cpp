@@ -970,9 +970,9 @@ Mail::needs_crypto ()
 }
 
 int
-Mail::wipe ()
+Mail::wipe (bool force)
 {
-  if (!m_needs_wipe)
+  if (!m_needs_wipe && !force)
     {
       return 0;
     }

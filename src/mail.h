@@ -156,7 +156,7 @@ public:
   /** @brief wipe the plaintext from the message and encrypt attachments.
    *
    * @returns 0 on success; */
-  int wipe ();
+  int wipe (bool force = false);
 
   /** @brief revert the message to the original mail before our changes.
    *

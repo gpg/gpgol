@@ -356,9 +356,49 @@ EVENT_SINK_INVOKE(MailItemEvents)
           invoke_oom_method (m_object, "Save", NULL);
           if (m_mail->crypto_successful ())
             {
-               log_debug ("%s:%s: Passing send event for message %p.",
-                          SRCNAME, __func__, m_object);
-               break;
+              /* Fishy behavior catcher: Sometimes the save does not clean
+                 out the body. Weird. Happened at least for one user.
+                 The following code checks for plain text leaks and
+                 prevents send in case the body can't be wiped. */
+              if (!m_mail->get_body().empty() || !m_mail->get_html_body().empty())
+                {
+                  log_debug ("%s:%s: Body found after encryption %p.",
+                            SRCNAME, __func__, m_object);
+                  const auto body = m_mail->get_body();
+                  if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
+                    {
+                      log_debug ("%s:%s: Looks like inline body. You can pass %p.",
+                                SRCNAME, __func__, m_object);
+                      break;
+                    }
+
+                  if (!m_mail->wipe (true))
+                    {
+                      log_debug ("%s:%s: Wipe succeded. %p.",
+                                 SRCNAME, __func__, m_object);
+
+                      log_debug ("%s:%s: Passing send event for message %p.",
+                                SRCNAME, __func__, m_object);
+                      break;
+                    }
+                  log_debug ("%s:%s: Cancel send for %p.",
+                            SRCNAME, __func__, m_object);
+                  wchar_t *title = utf8_to_wchar (_("GpgOL: Encryption not possible!"));
+                  wchar_t *msg = utf8_to_wchar (_(
+                  "Outlook returned an error when trying to send the encrypted mail.\n\n"
+                  "Please restart Outlook and try again.\n\n"
+                  "If it still fails consider using an encrypted attachment or\n"
+                  "switching to PGP/Inline in GpgOL's options."));
+                  MessageBoxW (get_active_hwnd(), msg, title,
+                               MB_ICONERROR | MB_OK);
+                  xfree (msg);
+                  xfree (title);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  return S_OK;
+                }
+              log_debug ("%s:%s: Passing send event for message %p.",
+                         SRCNAME, __func__, m_object);
+              break;
             }
           else
             {
