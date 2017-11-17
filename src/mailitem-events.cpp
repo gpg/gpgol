@@ -328,16 +328,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Send:
         {
-          /* This is the only event where we can cancel the send of an
+          /* This is the only event where we can cancel the send of a
              mailitem. But it is too early for us to encrypt as the MAPI
              structures are not yet filled. Crypto based on the
              Outlook Object Model data did not work as the messages
              were only sent out empty. See 2b376a48 for a try of
              this.
 
-             The we store send_seend and invoke a save which will result
-             in an error but only after triggering all the behavior
-             we need -> filling mapi structures and invoking the
+             This is why we store send_seen and invoke a save which
+             may result in an error but only after triggering all the
+             behavior we need -> filling mapi structures and invoking the
              AfterWrite handler where we encrypt.
 
              If this encryption is successful and we pass the send
