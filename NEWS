@@ -1,5 +1,12 @@
-Noteworthy changes for version 2.0.3 (unreleased)
+Noteworthy changes for version 2.0.3 (2017-11-20)
 =================================================
+
+ * Additional saveguards have been added to prevent
+ sending out unencrypted bodys when used with
+ Exchange 2007.
+
+ * Fixed a regression from 2.0.2 regarding message
+ list display in Outlook 2010 and 2013.
 
 
 Noteworthy changes for version 2.0.2 (2017-11-16)
