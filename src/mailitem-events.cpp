@@ -345,6 +345,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
            */
           log_oom_extra ("%s:%s: Send : %p",
                          SRCNAME, __func__, m_mail);
+          if (!m_mail->needs_crypto ())
+            {
+             log_debug ("%s:%s: No crypto neccessary. Passing send for unencrypted %p",
+                        SRCNAME, __func__, m_mail);
+             break;
+            }
+
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
            {
              log_debug ("%s:%s: Uncancellable send event.",
