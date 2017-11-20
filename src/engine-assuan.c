@@ -383,8 +383,12 @@ send_options (assuan_context_t ctx, void *hwnd, pid_t *r_pid)
   char numbuf[50];
 
   *r_pid = (pid_t)(-1);
+  log_debug ("%s:%s: transacting",
+             SRCNAME, __func__);
   err = assuan_transact (ctx, "GETINFO pid", getinfo_pid_cb, r_pid,
                          NULL, NULL, NULL, NULL);
+  log_debug ("%s:%s: transaction done",
+             SRCNAME, __func__);
   if (!err && *r_pid == (pid_t)(-1))
     {
       log_debug ("%s:%s: server did not return a PID", SRCNAME, __func__);
@@ -397,10 +401,14 @@ send_options (assuan_context_t ctx, void *hwnd, pid_t *r_pid)
 
   if (!err && hwnd)
     {
+      log_debug ("%s:%s: Sending Window ID",
+                 SRCNAME, __func__);
       snprintf (numbuf, sizeof numbuf, "%x", handle_to_int (hwnd));
       err = send_one_option (ctx, "window-id", numbuf);
     }
 
+  log_debug ("%s:%s: Returning.",
+             SRCNAME, __func__);
   return err;
 }
 
@@ -418,6 +426,8 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
   *r_pid = (pid_t)(-1);
   *r_cmdid = 0;
 
+  log_debug ("%s:%s: Connecting",
+             SRCNAME, __func__);
   socket_name = get_socket_name();
   if (!socket_name || !*socket_name)
     {
@@ -434,6 +444,8 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
       return rc;
     }
 
+  log_debug ("%s:%s: initial try",
+             SRCNAME, __func__);
   rc = assuan_socket_connect (*r_ctx, socket_name, -1, 0);
   if (rc)
     {
@@ -464,14 +476,26 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
               for (count = 0; count < 10; count++)
                 {
                   Sleep (1000);
+                  log_debug ("%s:%s: Connect try %i to \"%s\"",
+                             SRCNAME, __func__, count, socket_name);
                   rc = assuan_socket_connect (*r_ctx, socket_name, -1, 0);
                   if (!rc)
-                    break;
+                    {
+                      break;
+                      log_debug ("Connected");
+                    }
                 }
             }
 
         }
       gpgol_unlock_spawning (&lock);
+      log_debug ("%s:%s: Spawn unlocked.",
+                 SRCNAME, __func__);
+    }
+  else
+    {
+      log_debug ("%s:%s: initial try succeded",
+               SRCNAME, __func__);
     }
 
   if (rc)
@@ -487,7 +511,11 @@ connect_uiserver (assuan_context_t *r_ctx, pid_t *r_pid, ULONG *r_cmdid,
       if (debug_flags & DEBUG_ASSUAN)
         assuan_set_log_stream (*ctx, debug_file);
 #endif
+  log_debug ("%s:%s: About to send options",
+             SRCNAME, __func__);
   rc = send_options (*r_ctx, hwnd, r_pid);
+  log_debug ("%s:%s: Options sent to uiserver",
+             SRCNAME, __func__);
   if (rc)
     {
       assuan_release (*r_ctx);
@@ -1556,10 +1584,13 @@ op_assuan_encrypt (protocol_t protocol,
 
   detect_protocol = !(protocol_name = get_protocol_name (protocol));
 
+  TRACEPOINT;
   err = connect_uiserver (&ctx, &pid, &cmdid, hwnd);
+  TRACEPOINT;
   if (err)
     return err;
 
+  TRACEPOINT;
   if ((err = create_io_pipe (inpipe, pid, 1)))
     return err;
   if ((err = create_io_pipe (outpipe, pid, 0)))
@@ -1567,15 +1598,18 @@ op_assuan_encrypt (protocol_t protocol,
       close_pipe (inpipe);
       return err;
     }
+  TRACEPOINT;
 
   cld = xcalloc (1, sizeof *cld);
   cld->closure = encrypt_closure;
   cld->filter = filter;
 
+  TRACEPOINT;
   err = assuan_transact (ctx, "RESET", NULL, NULL, NULL, NULL, NULL, NULL);
   if (err)
     goto leave;
   send_session_info (ctx, filter);
+  TRACEPOINT;
 
   /* If a sender has been supplied, tell the server about it.  We
      don't care about error because servers may not implement SENDER
@@ -1597,6 +1631,7 @@ op_assuan_encrypt (protocol_t protocol,
       if (err)
         goto leave;
     }
+  TRACEPOINT;
 
   /* If the protocol has not been given, let the UI server tell us the
      protocol to use.  If we know that we will also sign the message,
@@ -1605,11 +1640,13 @@ op_assuan_encrypt (protocol_t protocol,
   if (detect_protocol)
     {
       protocol = PROTOCOL_UNKNOWN;
+      TRACEPOINT;
       err = assuan_transact (ctx,
                              (flags & ENGINE_FLAG_SIGN_FOLLOWS)
                              ? "PREP_ENCRYPT --expect-sign": "PREP_ENCRYPT",
                              NULL, NULL, NULL, NULL,
                              prep_foo_status_cb, &protocol);
+      TRACEPOINT;
       if (err)
         {
           if (gpg_err_code (err) == GPG_ERR_ASS_UNKNOWN_CMD)
@@ -1634,7 +1671,9 @@ op_assuan_encrypt (protocol_t protocol,
                 ? "PREP_ENCRYPT --protocol=%s --expect-sign"
                 : "PREP_ENCRYPT --protocol=%s",
                 protocol_name);
+      TRACEPOINT;
       err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+      TRACEPOINT;
       if (err)
         {
           if (gpg_err_code (err) == GPG_ERR_ASS_UNKNOWN_CMD)
@@ -1658,7 +1697,9 @@ op_assuan_encrypt (protocol_t protocol,
               handle_to_int (outpipe[1]));
   else
     snprintf (line, sizeof line, "OUTPUT FD=%d", handle_to_int (outpipe[1]));
+  TRACEPOINT;
   err = assuan_transact (ctx, line, NULL, NULL, NULL, NULL, NULL, NULL);
+  TRACEPOINT;
   if (err)
     goto leave;
 
@@ -1669,6 +1710,7 @@ op_assuan_encrypt (protocol_t protocol,
                     cmdid, NULL, 0, 1); 
   enqueue_callback ("output", ctx, outdata, outpipe[0], 0, finalize_handler, 
                     cmdid, NULL, 1 /* Wait on success */, 1); 
+  TRACEPOINT;
 
   encstate = xcalloc (1, sizeof *encstate);
   encstate->filter = filter;
@@ -1714,8 +1756,10 @@ op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
     {
       snprintf (line, sizeof line, "ENCRYPT --protocol=%s",
                 encstate->protocol_name);
+      TRACEPOINT;
       err = start_command (encstate->ctx, encstate->cld, 
                            encstate->cmdid, line);
+      TRACEPOINT;
       encstate->cld = NULL; /* Now owned by start_command.  */
     }
 
@@ -1734,6 +1778,7 @@ op_assuan_encrypt_bottom (struct engine_assuan_encstate_s *encstate,
   else
     engine_private_set_cancel (encstate->filter, encstate->ctx);
   xfree (encstate);
+  TRACEPOINT;
   return err;
 }
 
