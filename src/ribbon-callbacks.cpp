@@ -1442,9 +1442,9 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
       return NULL;
     }
 
-  char *ctx_name = get_object_name (context);
+  const auto ctx_name = std::string (get_object_name (context));
 
-  if (!ctx_name)
+  if (ctx_name.empty())
     {
       log_error ("%s:%s: Failed to get context name",
                  SRCNAME, __func__);
@@ -1452,13 +1452,30 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
       return NULL;
 
     }
-  if (!strcmp (ctx_name, "_Inspector"))
+  if (!strcmp (ctx_name.c_str(), "_Inspector"))
     {
       mailitem = get_oom_object (context, "CurrentItem");
     }
-  else if (!strcmp (ctx_name, "_Explorer"))
+  else if (!strcmp (ctx_name.c_str(), "_Explorer"))
     {
-      mailitem = get_oom_object (context, "Selection.Item(1)");
+      LPDISPATCH selection = get_oom_object (context, "Selection");
+      if (!selection)
+        {
+          log_error ("%s:%s: Failed to get selection.",
+                     SRCNAME, __func__);
+          gpgol_release (context);
+          return NULL;
+        }
+      int count = get_oom_int (selection, "Count");
+      if (count == 1)
+        {
+          // If we call this on a selection with more items
+          // Outlook sends an ItemLoad event for each mail
+          // in that selection.
+          mailitem = get_oom_object (selection, "Item(1)");
+        }
+      gpgol_release (selection);
+
       if (!mailitem)
         {
           *none_selected = true;
@@ -1514,12 +1531,10 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
   gpgol_release (context);
   if (!mailitem)
     {
-      log_error ("%s:%s: Failed to get mailitem. From %s",
-                 SRCNAME, __func__, ctx_name);
-      xfree (ctx_name);
+      log_debug ("%s:%s: No mailitem. From %s",
+                 SRCNAME, __func__, ctx_name.c_str());
       return NULL;
     }
-  xfree (ctx_name);
 
   char *uid;
   /* Get the uid of this item. */
