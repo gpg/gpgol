@@ -662,6 +662,14 @@ do_parsing (LPVOID arg)
   log_debug ("%s:%s: preparing the parser for: %p",
              SRCNAME, __func__, arg);
 
+  if (!Mail::is_valid_ptr (mail))
+    {
+      log_debug ("%s:%s: cancel for: %p already deleted",
+                 SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&parser_lock);
+      return 0;
+    }
+
   if (!parser)
     {
       log_error ("%s:%s: no parser found for mail: %p",
