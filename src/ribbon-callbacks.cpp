@@ -1468,6 +1468,14 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
           // Avoid showing wrong crypto state if we don't have a reading
           // pane. In that case the parser will finish for a mail which is gone
           // and the crypto state will not get updated.
+
+          //
+          // Somehow latest Outlook 2016 crashes when accessing the current view
+          // of the Explorer. This is even reproducible with
+          // GpgOL disabled and only with Outlook Spy active. If you select
+          // the explorer of an Outlook.com resource and then access
+          // the CurrentView and close the CurrentView again in Outlook Spy
+          // outlook crashes.
           LPDISPATCH prevEdit = get_oom_object (context, "PreviewPane.WordEditor");
           gpgol_release (prevEdit);
           if (!prevEdit)

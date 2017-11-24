@@ -231,3 +231,27 @@ create_message_hook()
                            NULL,
                            GetCurrentThreadId());
 }
+
+GPGRT_LOCK_DEFINE(invalidate_lock);
+static bool invalidation_in_progress;
+
+DWORD WINAPI
+delayed_invalidate_ui (LPVOID)
+{
+  if (invalidation_in_progress)
+    {
+      log_debug ("%s:%s: Invalidation canceled as it is in progress.",
+                 SRCNAME, __func__);
+      return 0;
+    }
+  gpgrt_lock_lock(&invalidate_lock);
+  invalidation_in_progress = true;
+  /* We sleep here a bit to prevent invalidation immediately
+     after the selection change before we have started processing
+     the mail. */
+  Sleep (500);
+  do_in_ui_thread (INVALIDATE_UI, nullptr);
+  invalidation_in_progress = false;
+  gpgrt_lock_unlock(&invalidate_lock);
+  return 0;
+}

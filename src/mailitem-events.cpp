@@ -204,7 +204,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (!m_mail->is_crypto_mail())
             {
               /* Ensure that no wrong sigstatus is shown */
-              gpgoladdin_invalidate_ui ();
+              CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
+                                        NULL));
               break;
             }
           if (m_mail->set_uuid ())

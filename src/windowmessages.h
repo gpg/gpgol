@@ -70,6 +70,9 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data);
 HHOOK
 create_message_hook();
 
+DWORD WINAPI
+delayed_invalidate_ui (LPVOID);
+
 void add_explorer (LPDISPATCH explorer);
 void remove_explorer (LPDISPATCH explorer);
 

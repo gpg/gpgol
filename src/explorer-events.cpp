@@ -62,16 +62,6 @@ typedef enum
     ViewSwitch = 0xF004
   } ExplorerEvent;
 
-static DWORD WINAPI
-invalidate_ui (LPVOID)
-{
-  /* We sleep here a bit to prevent invalidtion immediately
-     after the selection change before we have started processing
-     the mail. */
-  Sleep (1000);
-  do_in_ui_thread (INVALIDATE_UI, nullptr);
-  return 0;
-}
 
 EVENT_SINK_INVOKE(ExplorerEvents)
 {
@@ -82,39 +72,8 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
-          /* Somehow latest Outlook 2016 crashes when accessing the current view
-          of the Explorer. This is even reproducible with
-          GpgOL disabled and only with Outlook Spy active. If you select
-          the explorer of an Outlook.com resource and then access
-          the CurrentView and close the CurrentView again in Outlook Spy
-          outlook crashes. */
 
-          if (g_ol_version_major <= 15)
-            {
-              LPDISPATCH tableView = get_oom_object (m_object, "CurrentView");
-              if (!tableView)
-                {
-                  TRACEPOINT;
-                  break;
-                }
-              int hasReadingPane = get_oom_bool (tableView, "ShowReadingPane");
-              gpgol_release (tableView);
-              if (!hasReadingPane)
-                {
-                  break;
-                }
-            }
-          else
-            {
-              LPDISPATCH prevEdit = get_oom_object (m_object, "PreviewPane.WordEditor");
-              gpgol_release (prevEdit);
-              if (!prevEdit)
-                {
-                  break;
-                }
-            }
-
-          HANDLE thread = CreateThread (NULL, 0, invalidate_ui, (LPVOID) this, 0,
+          HANDLE thread = CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
                                         NULL);
 
           if (!thread)
