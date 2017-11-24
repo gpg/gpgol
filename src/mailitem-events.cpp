@@ -185,20 +185,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Read:
         {
-          if (g_ol_version_major < 14)
-            {
-              /* In Outlook 2007 there is no Before read event.
-                 We change the message class in message-events to
-                 prevent that outlook parses the mail itself but
-                 we still need to update our mail object accordingly.
-                 So we call pre_process here gain although the message
-                 class already was changed. */
-              if (m_mail->pre_process_message ())
-                {
-                  log_error ("%s:%s: Pre process message failed.",
-                             SRCNAME, __func__);
-                }
-            }
           log_oom_extra ("%s:%s: Read : %p",
                          SRCNAME, __func__, m_mail);
           if (!m_mail->is_crypto_mail())

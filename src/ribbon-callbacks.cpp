@@ -1468,7 +1468,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
           // Avoid showing wrong crypto state if we don't have a reading
           // pane. In that case the parser will finish for a mail which is gone
           // and the crypto state will not get updated.
-
+          //
           //
           // Somehow latest Outlook 2016 crashes when accessing the current view
           // of the Explorer. This is even reproducible with
