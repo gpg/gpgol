@@ -1039,8 +1039,15 @@ Mail::update_oom_data ()
 
   /* Store the body. It was not obvious for me (aheinecke) how
      to access this through MAPI. */
-  m_html_body = get_oom_string (m_mailitem, "HTMLBody");
-
+  if (m_is_html_alternative)
+    {
+      log_debug ("%s:%s: Is html alternative mail.", SRCNAME, __func__);
+      const char * html_body = get_oom_string (m_mailitem, "HTMLBody")
+      if (html_body)
+        {
+          m_html_body = html_body;
+        }
+    }
   /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
      the SenderEmailAddress string. */
@@ -1070,7 +1077,8 @@ Mail::update_oom_data ()
   if (sender)
     {
       char *buf = get_oom_string (sender, "SmtpAddress");
-      m_sender = buf;
+      if (buf)
+        m_sender = buf;
       xfree (buf);
       gpgol_release (sender);
       return 0;
@@ -1080,7 +1088,8 @@ Mail::update_oom_data ()
   if (sender)
     {
       char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      m_sender = buf;
+      if (buf)
+        m_sender = buf;
       xfree (buf);
       gpgol_release (sender);
       return 0;
@@ -1091,7 +1100,8 @@ Mail::update_oom_data ()
   if (sender)
     {
       char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      m_sender = buf;
+      if (buf)
+        m_sender = buf;
       xfree (buf);
       gpgol_release (sender);
       return 0;
