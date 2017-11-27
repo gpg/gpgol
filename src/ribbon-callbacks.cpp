@@ -1645,7 +1645,7 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
       result->bstrVal = SysAllocString (L"");
       return S_OK;
     }
-  if (!mail || (!mail->is_signed () && !mail->is_encrypted ()))
+  if (!mail || !mail->is_crypto_mail ())
     {
       wchar_t *w_result;
       w_result = utf8_to_wchar (utf8_gettext ("You cannot be sure who sent, "

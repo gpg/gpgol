@@ -1802,13 +1802,26 @@ std::string
 Mail::get_crypto_details()
 {
   std::string message;
-  /* Handle encrypt only */
+
+  /* No signature with keys but error */
+  if (!is_encrypted() && !is_signed () && m_verify_result.error())
+    {
+      message = _("You cannot be sure who sent, "
+                  "modified and read the message in transit.");
+      message += "\n\n";
+      message += _("The message was signed but the verification failed with:");
+      message += "\n";
+      message += m_verify_result.error().asString();
+      return message;
+    }
+  /* No crypo, what are we doing here? */
   if (!is_encrypted () && !is_signed ())
     {
       return _("You cannot be sure who sent, "
                "modified and read the message in transit.");
     }
-  else if (is_encrypted() && !is_signed ())
+  /* Handle encrypt only */
+  if (is_encrypted() && !is_signed ())
     {
       if (in_de_vs_mode ())
        {
