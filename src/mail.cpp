@@ -1042,7 +1042,7 @@ Mail::update_oom_data ()
   if (m_is_html_alternative)
     {
       log_debug ("%s:%s: Is html alternative mail.", SRCNAME, __func__);
-      const char * html_body = get_oom_string (m_mailitem, "HTMLBody")
+      const char * html_body = get_oom_string (m_mailitem, "HTMLBody");
       if (html_body)
         {
           m_html_body = html_body;
