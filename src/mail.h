@@ -354,5 +354,6 @@ private:
   GpgME::Signature m_sig;
   GpgME::UserID m_uid;
   std::string m_uuid;
+  std::string m_orig_body;
 };
 #endif // MAIL_H

@@ -725,6 +725,7 @@ Mail::decrypt_verify()
 
   if (opt.prefer_html)
     {
+      m_orig_body = get_oom_string (m_mailitem, "HTMLBody");
       if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify html body of item.",
@@ -733,6 +734,7 @@ Mail::decrypt_verify()
     }
   else
     {
+      m_orig_body = get_oom_string (m_mailitem, "Body");
       if (put_oom_string (m_mailitem, "Body", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify body of item.",
@@ -806,6 +808,30 @@ Mail::update_body()
         }
       return;
     }
+  if (m_verify_result.error())
+    {
+      log_error ("%s:%s: Verification failed. Restoring Body.",
+                 SRCNAME, __func__);
+      if (opt.prefer_html)
+        {
+          if (put_oom_string (m_mailitem, "HTMLBody", m_orig_body.c_str ()))
+            {
+              log_error ("%s:%s: Failed to modify html body of item.",
+                         SRCNAME, __func__);
+            }
+        }
+      else
+        {
+          if (put_oom_string (m_mailitem, "Body", m_orig_body.c_str ()))
+            {
+              log_error ("%s:%s: Failed to modify html body of item.",
+                         SRCNAME, __func__);
+            }
+        }
+      return;
+    }
+  // No need to carry body anymore
+  m_orig_body = std::string();
   auto html = m_parser->get_html_body ();
   /** Outlook does not show newlines if \r\r\n is a newline. We replace
     these as apparently some other buggy MUA sends this. */
