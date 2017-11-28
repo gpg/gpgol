@@ -985,7 +985,7 @@ msgstr ""
 
 #: src/parsecontroller.cpp:196
 msgid "Could not decrypt the data: "
-msgstr "Daten konnten nicht entschlüsselt werden:"
+msgstr "Daten konnten nicht entschlüsselt werden: "
 
 #: src/parsecontroller.cpp:203 src/parsecontroller.cpp:258
 msgid "Encrypted message (decryption not possible)"
