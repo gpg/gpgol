@@ -1156,6 +1156,16 @@ Mail::close_all_mails ()
   std::map<LPDISPATCH, Mail *> mail_map_copy = g_mail_map;
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
+      /* XXX For non racy code the is_valid_ptr check should not
+         be necessary but we crashed sometimes closing a destroyed
+         mail. */
+      if (!is_valid_ptr (it->second))
+        {
+          log_debug ("%s:%s: Already deleted mail for %p",
+                   SRCNAME, __func__, it->first);
+          continue;
+        }
+
       if (!it->second->is_crypto_mail())
         {
           continue;
@@ -1382,7 +1392,8 @@ Mail::close (Mail *mail)
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                        NULL, &dispparams);
 
-  log_debug ("returned from invoke");
+  log_oom_extra ("%s:%s: Reurned from close",
+                 SRCNAME, __func__);
   return rc;
 }
 
