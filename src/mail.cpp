@@ -291,6 +291,13 @@ get_attachment (LPDISPATCH mailitem, int pos)
 
   std::string item_str;
   int count = get_oom_int (attachments, "Count");
+  if (count < 1)
+    {
+      log_debug ("%s:%s: Invalid attachment count: %i.",
+                 SRCNAME, __func__, count);
+      gpgol_release (attachments);
+      return NULL;
+    }
   if (pos > 0)
     {
       item_str = std::string("Item(") + std::to_string(pos) + ")";
@@ -298,13 +305,6 @@ get_attachment (LPDISPATCH mailitem, int pos)
   else
     {
       item_str = std::string("Item(") + std::to_string(count) + ")";
-    }
-  if (count < 1)
-    {
-      log_debug ("%s:%s: Invalid attachment count: %i.",
-                 SRCNAME, __func__, count);
-      gpgol_release (attachments);
-      return NULL;
     }
   attachment = get_oom_object (attachments, item_str.c_str());
   gpgol_release (attachments);
