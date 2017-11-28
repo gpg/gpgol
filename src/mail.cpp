@@ -1092,6 +1092,7 @@ Mail::update_oom_data ()
           char *senderMail = get_oom_string (m_mailitem, "SenderEmailAddress");
           if (senderMail)
             {
+              log_debug ("%s:%s Sender found", SRCNAME, __func__);
               m_sender = senderMail;
               xfree (senderMail);
               xfree (type);
@@ -1104,22 +1105,30 @@ Mail::update_oom_data ()
   if (sender)
     {
       char *buf = get_oom_string (sender, "SmtpAddress");
-      if (buf)
-        m_sender = buf;
-      xfree (buf);
       gpgol_release (sender);
-      return 0;
+      if (buf && strlen (buf))
+        {
+          log_debug ("%s:%s Sender fallback 1", SRCNAME, __func__);
+          m_sender = buf;
+          xfree (buf);
+          return 0;
+        }
+      xfree (buf);
     }
   /* Fallback to Sender object */
   sender = get_oom_object (m_mailitem, "Sender");
   if (sender)
     {
       char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      if (buf)
-        m_sender = buf;
-      xfree (buf);
       gpgol_release (sender);
-      return 0;
+      if (buf && strlen (buf))
+        {
+          log_debug ("%s:%s Sender fallback 2", SRCNAME, __func__);
+          m_sender = buf;
+          xfree (buf);
+          return 0;
+        }
+      xfree (buf);
     }
   /* We don't have s sender object or SendUsingAccount,
      well, in that case fall back to the current user. */
@@ -1127,11 +1136,15 @@ Mail::update_oom_data ()
   if (sender)
     {
       char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      if (buf)
-        m_sender = buf;
-      xfree (buf);
       gpgol_release (sender);
-      return 0;
+      if (buf && strlen (buf))
+        {
+          log_debug ("%s:%s Sender fallback 3", SRCNAME, __func__);
+          m_sender = buf;
+          xfree (buf);
+          return 0;
+        }
+      xfree (buf);
     }
 
   log_debug ("%s:%s: All fallbacks failed.",
