@@ -406,8 +406,35 @@ get_attachment_stream (LPDISPATCH mailitem, int pos)
       return NULL;
     }
   LPDISPATCH attachment = get_attachment (mailitem, pos);
-  LPATTACH mapi_attachment = NULL;
   LPSTREAM stream = NULL;
+
+  if (!attachment)
+    {
+      // For opened messages that have ms-tnef type we
+      // create the moss attachment but don't find it
+      // in the OOM. Try to find it through MAPI.
+      HRESULT hr;
+      log_debug ("%s:%s: Failed to find MOSS Attachment. "
+                 "Fallback to MAPI.", SRCNAME, __func__);
+      LPMESSAGE message = get_oom_message (mailitem);
+      if (!message)
+        {
+          log_debug ("%s:%s: Failed to get MAPI Interface.",
+                     SRCNAME, __func__);
+          return NULL;
+        }
+      hr = message->OpenProperty (PR_BODY_A, &IID_IStream, 0, 0,
+                                  (LPUNKNOWN*)&stream);
+      if (hr)
+        {
+          log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
+                     SRCNAME, __func__, hr);
+          return NULL;
+        }
+      return stream;
+    }
+
+  LPATTACH mapi_attachment = NULL;
 
   mapi_attachment = (LPATTACH) get_oom_iunknown (attachment,
                                                  "MapiObject");
@@ -559,7 +586,7 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
   return 0;
 }
 
-/** Sets some meta data on the last attachment atted. The meta
+/** Sets some meta data on the last attachment added. The meta
   data is taken from the attachment object. */
 static int
 fixup_last_attachment (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)

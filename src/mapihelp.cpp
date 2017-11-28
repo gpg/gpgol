@@ -265,7 +265,7 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
     proparr = NULL;
   if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
     {
-      log_error ("%s:%s: can't get the Internet Charset Body property:"
+      log_debug ("%s:%s: can't get the Internet Charset Body property:"
                  " hr=%#lx\n", SRCNAME, __func__, hr); 
       result = -1;
     }
@@ -604,39 +604,30 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   char *body = NULL;
   char *p;
   char *msgcls = NULL;
-  ULONG tag;
-  int   is_binary = 0;
+  int is_wchar = 0;
 
   if (!opt.mime_ui)
     {
       return NULL;
     }
 
-  hr = 0;
-  if (!get_internetcharsetbody_tag (message, &tag) )
+  stream = mapi_get_body_as_stream (message);
+  if (!stream)
     {
-      hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
-                                  (LPUNKNOWN*)&stream);
-      if (!hr)
-        is_binary = 1;
-    }
-  else
-    {
-      log_debug ("%s:%s: Failed to get body tag.",
+      log_debug ("%s:%s: Failed to get body ASCII stream.",
                  SRCNAME, __func__);
-      return NULL;
-    }
-  if (hr)
-    {
-      tag = PR_BODY;
-      hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
+      hr = message->OpenProperty (PR_BODY_W, &IID_IStream, 0, 0,
                                   (LPUNKNOWN*)&stream);
-    }
-  if (hr)
-    {
-      log_debug ("%s:%s: OpenProperty(%lx) failed: hr=%#lx",
-                 SRCNAME, __func__, tag, hr);
-      return NULL;
+      if (hr)
+        {
+          log_error ("%s:%s: Failed to get  w_body stream. : hr=%#lx",
+                     SRCNAME, __func__, hr);
+          return NULL;
+        }
+      else
+        {
+          is_wchar = 1;
+        }
     }
 
   hr = stream->Stat (&statInfo, STATFLAG_NONAME);
@@ -646,7 +637,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
       gpgol_release (stream);
       return NULL;
     }
-  
+
   /* We read only the first 1k to decide whether this is actually an
      OpenPGP armored message .  */
   nbytes = (size_t)statInfo.cbSize.QuadPart;
@@ -666,14 +657,14 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
   if (nread != nbytes)
     {
       log_debug ("%s:%s: not enough bytes returned\n", SRCNAME, __func__);
-      
+
       xfree (body);
       gpgol_release (stream);
       return NULL;
     }
   gpgol_release (stream);
 
-  if (!is_binary)
+  if (is_wchar)
     {
       char *tmp;
       tmp = wchar_to_utf8 ((wchar_t*)body);
@@ -988,7 +979,8 @@ change_message_class_ipm_note (LPMESSAGE message)
            !strcmp (ct, "multipart/mixed") ||
            !strcmp (ct, "multipart/alternative") ||
            !strcmp (ct, "multipart/related") ||
-           !strcmp (ct, "text/html"))
+           !strcmp (ct, "text/html") ||
+           !strcmp (ct, "application/ms-tnef"))
     {
       /* It is quite common to have a multipart/mixed or alternative
          mail with separate encrypted PGP parts.  Look at the body to
