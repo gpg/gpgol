@@ -983,6 +983,8 @@ Mail::encrypt_sign ()
 
   const auto window = get_active_hwnd ();
 
+  m_do_inline = opt.inline_pgp;
+
   EnableWindow (window, FALSE);
   if (flags == 3)
     {

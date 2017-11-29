@@ -75,6 +75,7 @@ struct mime_context
   int collect_html_body;  /* True if we are collcting the html body */
   int collect_crypto_data; /* True if we are collecting the signed data. */
   int collect_signature;  /* True if we are collecting a signature.  */
+  int pgp_marker_checked; /* Checked if the first body line is pgp marker*/
   int is_encrypted;       /* True if we are working on an encrypted mail. */
   int start_hashing;      /* Flag used to start collecting signed data. */
   int hashing_level;      /* MIME level where we started hashing. */
@@ -609,6 +610,22 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
               log_error ("%s:%s: rfc822 parser failed: %s\n",
                          SRCNAME, __func__, strerror (errno));
               return not_taken;
+            }
+
+          /* Check if the first line of the body is actually
+             a PGP Inline message. If so treat it as crypto data. */
+          if (!m_mime_ctx->pgp_marker_checked && m_mime_ctx->collect_body == 2)
+            {
+              m_mime_ctx->pgp_marker_checked = true;
+              if (pos >= 27 && !strncmp ("-----BEGIN PGP MESSAGE-----", linebuf, 27))
+                {
+                  log_debug ("%s:%s: Found PGP Message in body.",
+                             SRCNAME, __func__);
+                  m_mime_ctx->collect_body = 0;
+                  m_mime_ctx->collect_crypto_data = 1;
+                  m_mime_ctx->start_hashing = 1;
+                  m_collect_everything = true;
+                }
             }
 
           /* If we are currently in a collecting state actually

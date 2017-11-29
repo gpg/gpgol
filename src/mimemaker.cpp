@@ -1072,7 +1072,6 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
 }
 
 
-
 /* Commit changes to the attachment ATTACH and release the object.
    SINK needs to be passed as well and will also be closed.  Note that
    the address of ATTACH is expected so that the fucntion can set it
@@ -1138,7 +1137,7 @@ cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 /* Do the final processing for a message. */
 static int
 finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
-                  protocol_t protocol, int encrypt)
+                  protocol_t protocol, int encrypt, bool is_inline = false)
 {
   HRESULT hr;
   SPropValue prop;
@@ -1176,7 +1175,18 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
   /* We also need to set the message class into our custom
      property. This override is at least required for encrypted
      messages.  */
-  if (mapi_set_gpgol_msg_class (message,
+  if (is_inline && mapi_set_gpgol_msg_class (message,
+                                          (encrypt?
+                                           (protocol == PROTOCOL_SMIME?
+                                            "IPM.Note.GpgOL.OpaqueEncrypted" :
+                                            "IPM.Note.GpgOL.PGPMessage") :
+                                            "IPM.Note.GpgOL.ClearSigned")))
+    {
+      log_error ("%s:%s: error setting gpgol msgclass",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  if (!is_inline && mapi_set_gpgol_msg_class (message,
                                 (encrypt?
                                  (protocol == PROTOCOL_SMIME?
                                   "IPM.Note.GpgOL.OpaqueEncrypted" :
@@ -1184,15 +1194,6 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
                                  "IPM.Note.GpgOL.MultipartSigned")))
     {
       log_error ("%s:%s: error setting gpgol msgclass",
-                 SRCNAME, __func__);
-      return -1;
-    }
-
-  /* Now delete all parts of the MAPI message except for the one
-     attachment we just created.  */
-  if (delete_all_attachments (message, att_table))
-    {
-      log_error ("%s:%s: error deleting attachments",
                  SRCNAME, __func__);
       return -1;
     }
@@ -1213,6 +1214,15 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
     {
       log_debug_w32 (hr, "%s:%s: deleting PR_BODY_HTML failed",
                      SRCNAME, __func__);
+    }
+
+  /* Now delete all parts of the MAPI message except for the one
+     attachment we just created.  */
+  if (delete_all_attachments (message, att_table))
+    {
+      log_error ("%s:%s: error deleting attachments",
+                 SRCNAME, __func__);
+      return -1;
     }
 
   /* Remove the draft info so that we don't leak the information on
@@ -1845,11 +1855,23 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
    BOUNDARYSIZE+1 bytes which will be set on return from that
    function.  */
 static int
-create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary)
+create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
+                              bool is_inline = false)
 {
   int rc;
 
-  if (protocol == PROTOCOL_SMIME)
+  if (is_inline)
+    {
+      *boundary = 0;
+      rc = write_multistring (sink,
+                              "MIME-Version: 1.0\r\n"
+                              "Content-Type: text/plain;\r\n"
+                              "\tcharset=\"iso-8859-1\"\r\n"
+                              "Content-Transfer-Encoding: 7BIT\r\n"
+                              "\r\n",
+                              NULL);
+    }
+  else if (protocol == PROTOCOL_SMIME)
     {
       *boundary = 0;
       rc = write_multistring (sink,
@@ -1916,6 +1938,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   int n_att_usable;
   engine_filter_t filter = NULL;
   char *my_sender = NULL;
+  bool is_inline = mail && mail->should_inline_crypt ();
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -1945,6 +1968,13 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
       goto failure;
     }
 
+  if (n_att_usable && is_inline)
+    {
+      log_debug ("%s:%s: PGP Inline not supported for attachments. Using PGP MIME",
+                 SRCNAME, __func__);
+      is_inline = false;
+    }
+
   /* Prepare the encryption.  We do this early as it is quite common
      that some recipient keys are not available and thus the
      encryption will fail early. */
@@ -1972,8 +2002,16 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   if (protocol == PROTOCOL_UNKNOWN)
     goto failure;
 
+  if (protocol != PROTOCOL_OPENPGP)
+    {
+      log_debug ("%s:%s: Inline not supported for S/MIME. Using MIME",
+                 SRCNAME, __func__);
+      is_inline = false;
+    }
+
   /* Write the top header.  */
-  rc = create_top_encryption_header (sink, protocol, boundary);
+  rc = create_top_encryption_header (sink, protocol, boundary,
+                                     is_inline);
   if (rc)
     goto failure;
 
@@ -1982,9 +2020,20 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   encsink->writefnc = sink_encryption_write;
 
   /* Add the plaintext */
-  if (add_body_and_attachments (encsink, message, att_table, mail,
-                                body, n_att_usable))
-    goto failure;
+  if (is_inline && body)
+    {
+      if ((rc = write_multistring (encsink, body, NULL)))
+        {
+          log_error ("%s:%s: Adding the body failed.",
+                     SRCNAME, __func__);
+          goto failure;
+        }
+    }
+  else if (add_body_and_attachments (encsink, message, att_table, mail,
+                                     body, n_att_usable))
+    {
+      goto failure;
+    }
 
   xfree (body);
   body = NULL;
@@ -2011,7 +2060,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   if (close_mapi_attachment (&attach, sink))
     goto failure;
 
-  if (finalize_message (message, att_table, protocol, 1))
+  if (finalize_message (message, att_table, protocol, 1, is_inline))
     goto failure;
 
   result = 0;  /* Everything is fine, fall through the cleanup now.  */

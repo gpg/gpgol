@@ -325,6 +325,9 @@ public:
   /** Check if all attachments are hidden and show a warning
     message appropiate to the crypto state if necessary. */
   int check_attachments () const;
+
+  /** Check if the mail should be encrypted "inline" */
+  bool should_inline_crypt () const {return m_do_inline;}
 private:
   void update_categories ();
   void update_body ();
@@ -355,5 +358,6 @@ private:
   GpgME::UserID m_uid;
   std::string m_uuid;
   std::string m_orig_body;
+  bool m_do_inline;
 };
 #endif // MAIL_H
