@@ -983,8 +983,11 @@ int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
                                  rVariant, &execpinfo, &argErr);
   SysFreeString (b_property);
   gpgol_release (propertyAccessor);
-  if (hr != S_OK)
+  if (hr != S_OK && strcmp (GPGOL_UID_DASL, dasl_id))
     {
+      /* It often happens that mails don't have a uid by us e.g. if
+         they are not crypto mails or just dont have one. This is
+         not an error. */
       log_debug ("%s:%s: error: invoking GetProperty p=%p vt=%d"
                  " hr=0x%x argErr=0x%x",
                  SRCNAME, __func__,
