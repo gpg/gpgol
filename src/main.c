@@ -419,10 +419,10 @@ read_options (void)
   opt.inline_pgp = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
   load_extension_value ("autoresolve", &val);
-  opt.autoresolve = val == NULL || *val != '1'? 0 : 1;
+  opt.autoresolve = val == NULL ? 1 : *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
   load_extension_value ("replyCrypt", &val);
-  opt.reply_crypt = val == NULL || *val != '1'? 1 : 0;
+  opt.reply_crypt = val == NULL ? 1 : *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
   load_extension_value ("deprecationShown", &val);
   opt.deprecation_shown = val == NULL || *val != '1'? 0 : 1;
