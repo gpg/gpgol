@@ -962,7 +962,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
 
 /* Return the number of attachments in TABLE to be put into the MIME
    message.  */
-static int
+int
 count_usable_attachments (mapi_attach_item_t *table)
 {
   int idx, count = 0;

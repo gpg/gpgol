@@ -27,6 +27,7 @@
 #include "eventsinks.h"
 #include "attachment.h"
 #include "mapihelp.h"
+#include "mimemaker.h"
 #include "message.h"
 #include "revert.h"
 #include "gpgoladdin.h"
@@ -983,7 +984,55 @@ Mail::encrypt_sign ()
 
   const auto window = get_active_hwnd ();
 
-  m_do_inline = opt.inline_pgp;
+  if (m_is_gsuite)
+    {
+      auto att_table = mapi_create_attach_table (message, 0);
+      int n_att_usable = count_usable_attachments (att_table);
+      mapi_release_attach_table (att_table);
+      /* Check for attachments if we have some abort. */
+      if (n_att_usable)
+        {
+          MessageBox (window,
+                      _("G Suite Sync breaks outgoing crypto mails "
+                        "with attachments.\nUsing crypto and attachments "
+                        "with G Suite Sync is not supported.\n\n"
+                        "See: https://dev.gnupg.org/T3545 for details."),
+                      _("GpgOL: Oops, G Suite Sync account detected"),
+                      MB_ICONINFORMATION|MB_OK);
+          return -1;
+        }
+      if (flags == 2)
+        {
+          MessageBox (window,
+                      _("G Suite Sync breaks outgoing signed mails.\n"
+                        "Ensuring mail integrity (signing) with G Suite Sync "
+                        "is not supported.\n\n"
+                        "See: https://dev.gnupg.org/T3545 for details."),
+                      _("GpgOL: Oops, G Suite Sync account detected"),
+                      MB_ICONINFORMATION|MB_OK);
+          return -1;
+        }
+      if (flags == 3)
+        {
+          if(MessageBox (window,
+                        _("G Suite Sync breaks outgoing signed mails.\n"
+                          "Ensuring mail integrity (signing) with G Suite Sync "
+                          "is not supported.\n\n"
+                          "See: https://dev.gnupg.org/T3545 for details.\n\n"
+                          "Do you want to only encrypt the message?"),
+                        _("GpgOL: Oops, G Suite Sync account detected"),
+                        MB_ICONINFORMATION|MB_YESNO) != IDYES)
+            {
+              return -1;
+            }
+          else
+            {
+              flags = 1;
+            }
+        }
+    }
+
+  m_do_inline = m_is_gsuite ? true : opt.inline_pgp;
 
   EnableWindow (window, FALSE);
   if (flags == 3)
@@ -1107,7 +1156,15 @@ Mail::update_oom_data ()
   if (sender)
     {
       char *buf = get_oom_string (sender, "SmtpAddress");
+      char *dispName = get_oom_string (sender, "DisplayName");
       gpgol_release (sender);
+
+      /* Check for G Suite account */
+      if (dispName && !strcmp ("G Suite", dispName))
+        {
+          m_is_gsuite = true;
+        }
+      xfree (dispName);
       if (buf && strlen (buf))
         {
           log_debug ("%s:%s Sender fallback 1", SRCNAME, __func__);

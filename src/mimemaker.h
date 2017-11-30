@@ -71,6 +71,8 @@ int write_buffer (sink_t sink, const void *data, size_t datalen);
 int restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
                            msgtype_t type, char *msgcls);
 
+int count_usable_attachments (mapi_attach_item_t *table);
+
 #ifdef __cplusplus
 }
 #endif

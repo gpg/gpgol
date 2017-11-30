@@ -359,5 +359,6 @@ private:
   std::string m_uuid;
   std::string m_orig_body;
   bool m_do_inline;
+  bool m_is_gsuite; /* Are we on a gsuite account */
 };
 #endif // MAIL_H
