@@ -60,7 +60,8 @@ int mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
 
 int mapi_set_header (LPMESSAGE msg, const char *name, const char *val);
 
-int mapi_change_message_class (LPMESSAGE message, int sync_override);
+int mapi_change_message_class (LPMESSAGE message, int sync_override,
+                               msgtype_t *r_type);
 char *mapi_get_message_class (LPMESSAGE message);
 char *mapi_get_old_message_class (LPMESSAGE message);
 char *mapi_get_sender (LPMESSAGE message);

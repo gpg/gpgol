@@ -259,10 +259,13 @@ Mail::pre_process_message ()
      to the same value again that it already has) causes
      Outlook to reconsider what it "knows" about a message
      and reread data from the underlying base message. */
-  mapi_change_message_class (message, 1);
-  /* TODO: Unify this so mapi_change_message_class returns
-     a useful value already. */
-  m_type = mapi_get_message_type (message);
+  mapi_change_message_class (message, 1, &m_type);
+
+  if (m_type == MSGTYPE_UNKNOWN)
+    {
+      gpgol_release (message);
+      return 0;
+    }
 
   /* Create moss attachments here so that they are properly
      hidden when the item is read into the model. */

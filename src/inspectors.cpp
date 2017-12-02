@@ -1091,7 +1091,7 @@ proc_inspector_button_click (LPDISPATCH button, const char *tag, int instid)
       if (message)
         {
           /* We sync here. */
-          mapi_change_message_class (message, 1);
+          mapi_change_message_class (message, 1, NULL);
           gpgol_release (message);
         }
     }

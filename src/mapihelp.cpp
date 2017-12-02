@@ -1221,6 +1221,39 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
   return newvalue;
 }
 
+static msgtype_t
+string_to_type (const char *s)
+{
+  if (!s || strlen (s) < 14)
+    {
+      return MSGTYPE_UNKNOWN;
+    }
+  if (!strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14] || s[14] =='.'))
+    {
+      s += 14;
+      if (!*s)
+        return MSGTYPE_GPGOL;
+      else if (!strcmp (s, ".MultipartSigned"))
+        return MSGTYPE_GPGOL_MULTIPART_SIGNED;
+      else if (!strcmp (s, ".MultipartEncrypted"))
+        return MSGTYPE_GPGOL_MULTIPART_ENCRYPTED;
+      else if (!strcmp (s, ".OpaqueSigned"))
+        return MSGTYPE_GPGOL_OPAQUE_SIGNED;
+      else if (!strcmp (s, ".OpaqueEncrypted"))
+        return MSGTYPE_GPGOL_OPAQUE_ENCRYPTED;
+      else if (!strcmp (s, ".ClearSigned"))
+        return MSGTYPE_GPGOL_CLEAR_SIGNED;
+      else if (!strcmp (s, ".PGPMessage"))
+        return MSGTYPE_GPGOL_PGP_MESSAGE;
+      else
+        log_debug ("%s:%s: message class `%s' not supported",
+                   SRCNAME, __func__, s-14);
+    }
+  else if (!strncmp (s, "IPM.Note.SMIME", 14) && (!s[14] || s[14] =='.'))
+    return MSGTYPE_SMIME;
+  return MSGTYPE_UNKNOWN;
+}
+
 
 /* This function checks whether MESSAGE requires processing by us and
    adjusts the message class to our own.  By passing true for
@@ -1228,7 +1261,8 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
    own message class overide.  Return true if the message was
    changed. */
 int
-mapi_change_message_class (LPMESSAGE message, int sync_override)
+mapi_change_message_class (LPMESSAGE message, int sync_override,
+                           msgtype_t *r_type)
 {
   HRESULT hr;
   ULONG tag;
@@ -1318,6 +1352,10 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
           newvalue = change_message_class_ipm_note_secure_cex
             (message, cexenc);
         }
+      else if (r_type)
+        {
+          *r_type = string_to_type (s);
+        }
     }
 
   if (!newvalue)
@@ -1332,6 +1370,10 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
     }
   else
     {
+      if (r_type && newvalue)
+        {
+          *r_type = string_to_type (newvalue);
+        }
       /* Save old message class if not yet done.  (The second
          condition is just a failsafe check). */
       if (!get_gpgololdmsgclass_tag (message, &tag)
@@ -1377,6 +1419,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override)
         }
       need_save = 1;
     }
+
   MAPIFreeBuffer (propval);
 
   if (need_save)
@@ -1757,34 +1800,10 @@ mapi_get_message_type (LPMESSAGE message)
     }
   else
     log_debug ("%s:%s: have override message class\n", SRCNAME, __func__);
-    
+
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
-      const char *s = propval->Value.lpszA;
-
-      if (!strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14] || s[14] =='.'))
-        {
-          s += 14;
-          if (!*s)
-            msgtype = MSGTYPE_GPGOL;
-          else if (!strcmp (s, ".MultipartSigned"))
-            msgtype = MSGTYPE_GPGOL_MULTIPART_SIGNED;
-          else if (!strcmp (s, ".MultipartEncrypted"))
-            msgtype = MSGTYPE_GPGOL_MULTIPART_ENCRYPTED;
-          else if (!strcmp (s, ".OpaqueSigned"))
-            msgtype = MSGTYPE_GPGOL_OPAQUE_SIGNED;
-          else if (!strcmp (s, ".OpaqueEncrypted"))
-            msgtype = MSGTYPE_GPGOL_OPAQUE_ENCRYPTED;
-          else if (!strcmp (s, ".ClearSigned"))
-            msgtype = MSGTYPE_GPGOL_CLEAR_SIGNED;
-          else if (!strcmp (s, ".PGPMessage"))
-            msgtype = MSGTYPE_GPGOL_PGP_MESSAGE;
-          else
-            log_debug ("%s:%s: message class `%s' not supported",
-                       SRCNAME, __func__, s-14);
-        }
-      else if (!strncmp (s, "IPM.Note.SMIME", 14) && (!s[14] || s[14] =='.'))
-        msgtype = MSGTYPE_SMIME;
+      msgtype = string_to_type (propval->Value.lpszA);
     }
   MAPIFreeBuffer (propval);
   return msgtype;

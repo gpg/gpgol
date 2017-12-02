@@ -161,7 +161,7 @@ GpgolUserEvents::OnSelectionChange (LPEXCHEXTCALLBACK eecb)
                                      SRCNAME, __func__);
                           /* We sync the message class here to get rid
                              of IPM.Note.SMIME etc. */
-                          mapi_change_message_class (message, 1);
+                          mapi_change_message_class (message, 1, NULL);
                         }
                     }
                   else

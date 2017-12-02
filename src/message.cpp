@@ -82,7 +82,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
         {
           log_debug ("%s:%s: message class not yet checked - doing now\n",
                      SRCNAME, __func__);
-          if (mapi_change_message_class (message, 0))
+          if (mapi_change_message_class (message, 0, NULL))
             goto retry;
         }
       break;
@@ -91,7 +91,7 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
         {
           log_debug ("%s:%s: message class not checked with smime enabled "
                      "- doing now\n", SRCNAME, __func__);
-          if (mapi_change_message_class (message, 0))
+          if (mapi_change_message_class (message, 0, NULL))
             goto retry;
         }
       break;
