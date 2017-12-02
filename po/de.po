@@ -511,7 +511,7 @@ msgstr "Der Absender ist berechtigt für Sie Identitäten zu beglaubigen."
 #: src/mail.cpp:1835
 msgid "The senders identity was certified by several trusted people."
 msgstr ""
-"The Identität des Absenders wurde von mehreren vertrauenswürdigen Personen "
+"Die Identität des Absenders wurde von mehreren vertrauenswürdigen Personen "
 "beglaubigt."
 
 #: src/mail.cpp:1840
