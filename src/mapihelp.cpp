@@ -34,6 +34,8 @@
 #include "gpgolstr.h"
 #include "oomhelp.h"
 
+#include <string>
+
 #ifndef CRYPT_E_STREAM_INSUFFICIENT_DATA
 #define CRYPT_E_STREAM_INSUFFICIENT_DATA 0x80091011
 #endif
@@ -444,6 +446,42 @@ mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
   return result;
 }
 
+
+/* Return the headers as ASCII string. Returns empty
+   string on failure. */
+std::string
+mapi_get_header (LPMESSAGE message)
+{
+  HRESULT hr;
+  LPSTREAM stream;
+  ULONG bRead;
+  std::string ret;
+
+  if (!message)
+    return ret;
+
+  hr = message->OpenProperty (PR_TRANSPORT_MESSAGE_HEADERS_A, &IID_IStream, 0, 0,
+                              (LPUNKNOWN*)&stream);
+  if (hr)
+    {
+      log_debug ("%s:%s: OpenProperty failed: hr=%#lx", SRCNAME, __func__, hr);
+      return ret;
+    }
+
+  char buf[8192];
+  while ((hr = stream->Read (buf, 8192, &bRead)) == S_OK ||
+         hr == S_FALSE)
+    {
+      if (!bRead)
+        {
+          // EOF
+          break;
+        }
+      ret += std::string (buf, bRead);
+    }
+  gpgol_release (stream);
+  return ret;
+}
 
 
 /* Return the body as a new IStream object.  Returns NULL on failure.
@@ -2944,47 +2982,36 @@ char *
 mapi_get_message_content_type (LPMESSAGE message,
                                char **r_protocol, char **r_smtype)
 {
-  HRESULT hr;
-  LPSPropValue propval = NULL;
   rfc822parse_t msg;
   const char *header_lines, *s;
   rfc822parse_field_t ctx;
   size_t length;
   char *retstr = NULL;
-  
+
   if (r_protocol)
     *r_protocol = NULL;
   if (r_smtype)
     *r_smtype = NULL;
 
-  hr = HrGetOneProp ((LPMAPIPROP)message,
-                     PR_TRANSPORT_MESSAGE_HEADERS_A, &propval);
-  if (FAILED (hr))
-    {
-      log_error ("%s:%s: error getting the headers lines: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      return NULL; 
-    }
-  if (PROP_TYPE (propval->ulPropTag) != PT_STRING8)
-    {
-      /* As per rfc822, header lines must be plain ascii, so no need
-         to cope with unicode etc. */
-      log_error ("%s:%s: proptag=%#lx not supported\n",
-                 SRCNAME, __func__, propval->ulPropTag);
-      MAPIFreeBuffer (propval);
-      return NULL;
-    }
-  header_lines = propval->Value.lpszA;
-
   /* Read the headers into an rfc822 object. */
   msg = rfc822parse_open (get_message_content_type_cb, NULL);
   if (!msg)
     {
-      log_error ("%s:%s: rfc822parse_open failed\n", SRCNAME, __func__);
-      MAPIFreeBuffer (propval);
+      log_error ("%s:%s: rfc822parse_open failed",
+                 SRCNAME, __func__);
       return NULL;
     }
-  
+
+  const std::string hdrStr = mapi_get_header (message);
+  if (hdrStr.empty())
+    {
+
+      log_error ("%s:%s: failed to get headers",
+                 SRCNAME, __func__);
+      return NULL;
+    }
+
+  header_lines = hdrStr.c_str();
   while ((s = strchr (header_lines, '\n')))
     {
       length = (s - header_lines);
@@ -2993,7 +3020,7 @@ mapi_get_message_content_type (LPMESSAGE message,
       rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
       header_lines = s+1;
     }
-  
+
   /* Parse the content-type field. */
   ctx = rfc822parse_parse_field (msg, "Content-Type", -1);
   if (ctx)
@@ -3022,7 +3049,6 @@ mapi_get_message_content_type (LPMESSAGE message,
     }
 
   rfc822parse_close (msg);
-  MAPIFreeBuffer (propval);
   return retstr;
 }
 
