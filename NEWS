@@ -1,5 +1,23 @@
-Noteworthy changes for version 2.0.4 (unreleased)
+Noteworthy changes for version 2.0.4 (2017-12-05)
 =================================================
+
+ * Some possible "random" crashes in GpgOL have been fixed (T3484)
+
+ * Fixed Outlook hang when selecting and deleting many mails (T3433)
+
+ * G Suite Sync plugin accounts are now detected. Only
+ no-mime PGP/Messages (without attachments) and encrypted only
+ is supported. Reading is fully supported.
+
+ * Basic support for No-MIME inline PGP Encryption (T3514)
+
+ * Improved error handling for signed, unencrypted mails (T3538)
+
+ * Performance improvements / Fix running out of resources (T3523)
+
+ * Improved detection of large PGP/MIME messages and MS-TNEF Messages.
+ (T3419 , T3542)
+
 
 Noteworthy changes for version 2.0.3 (2017-11-20)
 =================================================
