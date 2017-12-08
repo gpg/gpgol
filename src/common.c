@@ -756,7 +756,6 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
   memset (outName, 0, (MAX_PATH + 1) * sizeof (wchar_t));
 
   snwprintf (outName, MAX_PATH, L"%s%s", tmpPath, name);
-  fileExt = wcschr (wcschr(outName, '\\'), '.');
 
   while ((*outHandle = CreateFileW (outName,
                                     GENERIC_WRITE | GENERIC_READ,
@@ -773,8 +772,16 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
 
       snwprintf (origName, MAX_PATH, L"%s%s", tmpPath, name);
       fileExt = wcschr (wcsrchr(origName, '\\'), '.');
-      wcsncpy (fnameBuf, origName, fileExt - origName);
-      snwprintf (outName, MAX_PATH, L"%s%i%s", fnameBuf, tries++, fileExt);
+      if (fileExt)
+        {
+          wcsncpy (fnameBuf, origName, fileExt - origName);
+        }
+      else
+        {
+          wcsncpy (fnameBuf, origName, wcslen (origName));
+        }
+      snwprintf (outName, MAX_PATH, L"%s%i%s", fnameBuf, tries++,
+                 fileExt ? fileExt : L"");
       if (tries > 100)
         {
           /* You have to know when to give up,.. */
