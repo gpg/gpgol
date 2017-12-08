@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2017-12-08 06:49+0100\n"
-"PO-Revision-Date: 2017-07-27 09:18+0100\n"
+"PO-Revision-Date: 2017-12-08 06:55+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
 "Language: en_US\n"
@@ -439,10 +439,15 @@ msgid ""
 "\n"
 "See: https://dev.gnupg.org/T3545 for details."
 msgstr ""
+"G Suite Sync bricht ausgehende Krypto Mails mit anhängen.\n"
+"Die verwendung von Krypto und anhängen wird mit G Suite Sync nicht"
+" unterstützt.\n"
+"\n"
+"Details siehe: https://dev.gnupg.org/T3545"
 
 #: src/mail.cpp:1005 src/mail.cpp:1016 src/mail.cpp:1028
 msgid "GpgOL: Oops, G Suite Sync account detected"
-msgstr ""
+msgstr "GpgOL: Oops, G Suite Sync Konto erkannt"
 
 #: src/mail.cpp:1012
 msgid ""
@@ -451,6 +456,11 @@ msgid ""
 "\n"
 "See: https://dev.gnupg.org/T3545 for details."
 msgstr ""
+"G Suite Sync bricht ausgehende, signierte, Mails.\n"
+"Sicherung der Integrität (signieren) wird mit G Suite Sync nicht"
+" unterstützt.\n"
+"\n"
+"Details siehe: https://dev.gnupg.org/T3545"
 
 #: src/mail.cpp:1023
 msgid ""
@@ -461,6 +471,13 @@ msgid ""
 "\n"
 "Do you want to only encrypt the message?"
 msgstr ""
+"G Suite Sync bricht ausgehende, signierte, Mails.\n"
+"Sicherung der Integrität (signieren) wird mit G Suite Sync nicht"
+" unterstützt.\n"
+"\n"
+"Details siehe: https://dev.gnupg.org/T3545\n"
+"\n"
+"Möchten Sie die Nachricht nur verschlüsseln?"
 
 #: src/mail.cpp:1867
 msgid "Security Level 4"
@@ -514,7 +531,7 @@ msgstr ""
 
 #: src/mail.cpp:1939
 msgid "The message was signed but the verification failed with:"
-msgstr ""
+msgstr "Die Nachricht ist signiert aber die überprüfung schlug fehl mit:"
 
 #: src/mail.cpp:1957
 msgid "The encryption was VS-NfD-compliant."
@@ -745,9 +762,8 @@ msgstr ""
 "ausgewählt ist.\n"
 
 #: src/mailitem-events.cpp:380
-#, fuzzy
 msgid "GpgOL: Encryption not possible!"
-msgstr "GpgOL: Verschlüsselte Nachricht"
+msgstr "GpgOL: Verschlüsselung nicht möglich!"
 
 #: src/mailitem-events.cpp:382
 msgid ""
@@ -758,6 +774,12 @@ msgid ""
 "If it still fails consider using an encrypted attachment or\n"
 "switching to PGP/Inline in GpgOL's options."
 msgstr ""
+"Outlook meldete einen Fehler beim senden der Mail.\n"
+"\n"
+"Bitte starten Sie Outlook neu und versuchen Sie es erneut.\n"
+"\n"
+"Wenn es weiterhin fehlschlägt könnten Sie ihre daten gegebenenfalls \n"
+"als verschlüsselten Anhang anhängen."
 
 #: src/main.c:466
 #, c-format
