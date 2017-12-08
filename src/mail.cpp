@@ -377,7 +377,9 @@ Mail::check_attachments () const
           (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE))
         {
           foundOne = true;
-          message += get_oom_string (oom_attach, "DisplayName");
+          char *dispName = get_oom_string (oom_attach, "DisplayName");
+          message += dispName ? dispName : "Unknown";
+          xfree (dispName);
           message += "\n";
         }
       VariantClear (&var);
@@ -1442,9 +1444,11 @@ Mail::close_inspector (Mail *mail)
         {
           log_debug ("%s:%s: Failed to close inspector: %#lx",
                      SRCNAME, __func__, hr);
+          gpgol_release (inspector);
           return -1;
         }
     }
+  gpgol_release (inspector);
   return 0;
 }
 
