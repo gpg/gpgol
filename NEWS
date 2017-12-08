@@ -1,5 +1,10 @@
-Noteworthy changes for version 2.0.5 (unreleased)
+Noteworthy changes for version 2.0.5 (2017-12-08)
 =================================================
+
+ * A crash when receiving crypto mails with attachments without
+ file extension has been fixed. (T3582).
+
+ * Fixed a cause for potentially undefined behavior when closing.
 
 
 Noteworthy changes for version 2.0.4 (2017-12-05)
