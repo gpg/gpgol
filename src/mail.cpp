@@ -636,7 +636,7 @@ add_attachments(LPDISPATCH mail,
         }
       wchar_t* wchar_name = utf8_to_wchar (att->get_display_name().c_str());
       HANDLE hFile;
-      wchar_t* wchar_file = get_tmp_outfile (GpgOLStr (att->get_display_name().c_str()),
+      wchar_t* wchar_file = get_tmp_outfile (wchar_name,
                                              &hFile);
       if (copy_attachment_to_file (att, hFile))
         {
@@ -1471,7 +1471,7 @@ Mail::close (Mail *mail)
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                        NULL, &dispparams);
 
-  log_oom_extra ("%s:%s: Reurned from close",
+  log_oom_extra ("%s:%s: Returned from close",
                  SRCNAME, __func__);
   return rc;
 }
