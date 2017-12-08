@@ -130,7 +130,9 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_needs_encrypt(false),
     m_moss_position(0),
     m_crypto_flags(0),
-    m_type(MSGTYPE_UNKNOWN)
+    m_type(MSGTYPE_UNKNOWN),
+    m_do_inline(false),
+    m_is_gsuite(false)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -995,46 +997,63 @@ Mail::encrypt_sign ()
       int n_att_usable = count_usable_attachments (att_table);
       mapi_release_attach_table (att_table);
       /* Check for attachments if we have some abort. */
+
+      wchar_t *w_title = utf8_to_wchar (_(
+                              "GpgOL: Oops, G Suite Sync account detected"));
       if (n_att_usable)
         {
-          MessageBox (window,
+          wchar_t *msg = utf8_to_wchar (
                       _("G Suite Sync breaks outgoing crypto mails "
                         "with attachments.\nUsing crypto and attachments "
                         "with G Suite Sync is not supported.\n\n"
-                        "See: https://dev.gnupg.org/T3545 for details."),
-                      _("GpgOL: Oops, G Suite Sync account detected"),
-                      MB_ICONINFORMATION|MB_OK);
+                        "See: https://dev.gnupg.org/T3545 for details."));
+          MessageBoxW (window,
+                       msg,
+                       w_title,
+                       MB_ICONINFORMATION|MB_OK);
+          xfree (msg);
+          xfree (w_title);
           return -1;
         }
       if (flags == 2)
         {
-          MessageBox (window,
-                      _("G Suite Sync breaks outgoing signed mails.\n"
+          wchar_t *msg = utf8_to_wchar (
+                       _("G Suite Sync breaks outgoing signed mails.\n"
                         "Ensuring mail integrity (signing) with G Suite Sync "
                         "is not supported.\n\n"
-                        "See: https://dev.gnupg.org/T3545 for details."),
-                      _("GpgOL: Oops, G Suite Sync account detected"),
-                      MB_ICONINFORMATION|MB_OK);
+                        "See: https://dev.gnupg.org/T3545 for details."));
+          MessageBoxW (window,
+                       msg,
+                       w_title,
+                       MB_ICONINFORMATION|MB_OK);
+          xfree (msg);
+          xfree (w_title);
           return -1;
         }
       if (flags == 3)
         {
-          if(MessageBox (window,
+          wchar_t *msg = utf8_to_wchar (
                         _("G Suite Sync breaks outgoing signed mails.\n"
                           "Ensuring mail integrity (signing) with G Suite Sync "
                           "is not supported.\n\n"
                           "See: https://dev.gnupg.org/T3545 for details.\n\n"
-                          "Do you want to only encrypt the message?"),
-                        _("GpgOL: Oops, G Suite Sync account detected"),
-                        MB_ICONINFORMATION|MB_YESNO) != IDYES)
+                          "Do you want to only encrypt the message?"));
+          if(MessageBoxW (window,
+                          msg,
+                          w_title,
+                          MB_ICONINFORMATION|MB_YESNO) != IDYES)
             {
+              xfree (msg);
+              xfree (w_title);
               return -1;
             }
           else
             {
               flags = 1;
             }
+          xfree (msg);
         }
+      xfree (w_title);
     }
 
   m_do_inline = m_is_gsuite ? true : opt.inline_pgp;
