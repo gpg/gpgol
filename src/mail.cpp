@@ -130,6 +130,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_needs_encrypt(false),
     m_moss_position(0),
     m_crypto_flags(0),
+    m_cached_html_body(nullptr),
+    m_cached_plain_body(nullptr),
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false)
@@ -1144,12 +1146,11 @@ Mail::update_oom_data ()
   if (m_is_html_alternative)
     {
       log_debug ("%s:%s: Is html alternative mail.", SRCNAME, __func__);
-      const char * html_body = get_oom_string (m_mailitem, "HTMLBody");
-      if (html_body)
-        {
-          m_html_body = html_body;
-        }
+      xfree (m_cached_html_body);
+      m_cached_html_body = get_oom_string (m_mailitem, "HTMLBody");
     }
+  xfree (m_cached_plain_body);
+  m_cached_plain_body = get_oom_string (m_mailitem, "Body");
   /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
      the SenderEmailAddress string. */
@@ -2356,10 +2357,20 @@ Mail::is_html_alternative () const
   return m_is_html_alternative;
 }
 
-const std::string &
-Mail::get_cached_html_body () const
+char *
+Mail::take_cached_html_body ()
 {
-  return m_html_body;
+  char *ret = m_cached_html_body;
+  m_cached_html_body = nullptr;
+  return ret;
+}
+
+char *
+Mail::take_cached_plain_body ()
+{
+  char *ret = m_cached_plain_body;
+  m_cached_plain_body = nullptr;
+  return ret;
 }
 
 int

@@ -1366,17 +1366,19 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
     }
 
   /* Now the html body. It is somehow not accessible through PR_HTML,
-     OutlookSpy also shows MAPI Unsported (but shows the data) strange.
+     OutlookSpy also shows MAPI Unsupported (but shows the data) strange.
      We just cache it. Memory is cheap :-) */
-  const auto html_body = mail->get_cached_html_body();
-  if (html_body.empty())
+  char *html_body = mail->take_cached_html_body();
+  if (!html_body)
     {
       log_error ("%s:%s: BUG: Body but no html body in alternative mail?",
                  SRCNAME, __func__);
+      return -1;
     }
 
-  rc = write_part (sink, html_body.c_str(), html_body.size(),
+  rc = write_part (sink, html_body, strlen (html_body),
                    alt_boundary, NULL, 2);
+  xfree (html_body);
   if (rc)
     {
       TRACEPOINT;
@@ -1521,8 +1523,18 @@ do_mime_sign (LPMESSAGE message, HWND hwnd, protocol_t protocol,
         return -1;
     }
 
+  /* Take the Body from the mail if possible. This is a fix for
+     GnuPG-Bug-ID: T3614 because the body is not always properly
+     updated in MAPI when sending. */
+  if (mail)
+    {
+      body = mail->take_cached_plain_body ();
+    }
   /* Get the attachment info and the body.  */
-  body = mapi_get_body (message, NULL);
+  if (!body)
+    {
+      body = mapi_get_body (message, NULL);
+    }
   if (body && !*body)
     {
       xfree (body);
@@ -1948,12 +1960,24 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
     return -1;
 
   /* Get the attachment info and the body.  We need to do this before
-     creating the engine's filter sue problem sending the cancel to
-     the engine with nothing for the engine to process.  This is
-     actually a bug in our engine code but we better avoid triggering
-     this bug because the engine sometimes hangs.  Fixme: Needs a
-     proper fix. */
-  body = mapi_get_body (message, NULL);
+     creating the engine's filter because sending the cancel to
+     the engine with nothing for the engine to process.  Will result
+     in an error. This is actually a bug in our engine code but
+     we better avoid triggering this bug because the engine
+     sometimes hangs.  Fixme: Needs a proper fix. */
+
+
+  /* Take the Body from the mail if possible. This is a fix for
+     GnuPG-Bug-ID: T3614 because the body is not always properly
+     updated in MAPI when sending. */
+  if (mail)
+    {
+      body = mail->take_cached_plain_body ();
+    }
+  if (!body)
+    {
+      body = mapi_get_body (message, NULL);
+    }
   if (body && !*body)
     {
       xfree (body);

@@ -304,8 +304,15 @@ public:
     Only valid if update_oom_data was called before. */
   bool is_html_alternative () const;
 
-  /** Get the html body. It is updated in update_oom_data. */
-  const std::string & get_cached_html_body () const;
+  /** Get the html body. It is updated in update_oom_data.
+      Caller takes ownership of the string and has to free it.
+  */
+  char *take_cached_html_body ();
+
+  /** Get the plain body. It is updated in update_oom_data.
+      Caller takes ownership of the string and has to free it.
+  */
+  char *take_cached_plain_body ();
 
   /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
       Only valid after decrypt_verify.
@@ -349,7 +356,8 @@ private:
   int m_moss_position; /* The number of the original message attachment. */
   int m_crypto_flags;
   std::string m_sender;
-  std::string m_html_body; /* Cached html body. */
+  char *m_cached_html_body; /* Cached html body. */
+  char *m_cached_plain_body; /* Cached plain body. */
   msgtype_t m_type; /* Our messagetype as set in mapi */
   std::shared_ptr <ParseController> m_parser;
   GpgME::VerificationResult m_verify_result;
