@@ -1378,9 +1378,30 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
 
           hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A,
                              &propval2);
-          if (SUCCEEDED (hr) && PROP_TYPE (propval2->ulPropTag) == PT_STRING8
-              && propval2->Value.lpszA && strcmp (propval2->Value.lpszA, s))
-            newvalue = (char*)xstrdup (s);
+          if (!SUCCEEDED (hr))
+            {
+              log_debug ("%s:%s: Failed to get PR_MESSAGE_CLASS_A property.",
+                         SRCNAME, __func__);
+            }
+          else if (PROP_TYPE (propval2->ulPropTag) != PT_STRING8)
+            {
+              log_debug ("%s:%s: PR_MESSAGE_CLASS_A is not string.",
+                         SRCNAME, __func__);
+            }
+          else if (!propval2->Value.lpszA)
+            {
+              log_debug ("%s:%s: PR_MESSAGE_CLASS_A is null.",
+                         SRCNAME, __func__);
+            }
+          else if (!strcmp (propval2->Value.lpszA, s))
+            {
+              log_debug ("%s:%s: PR_MESSAGE_CLASS_A is already the same.",
+                         SRCNAME, __func__);
+            }
+          else
+            {
+              newvalue = (char*)xstrdup (s);
+            }
           MAPIFreeBuffer (propval2);
         }
       else if (opt.enable_smime 
@@ -1390,7 +1411,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
           newvalue = change_message_class_ipm_note_secure_cex
             (message, cexenc);
         }
-      else if (r_type)
+      if (r_type && !newvalue)
         {
           *r_type = string_to_type (s);
         }
@@ -1408,7 +1429,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
     }
   else
     {
-      if (r_type && newvalue)
+      if (r_type)
         {
           *r_type = string_to_type (newvalue);
         }
