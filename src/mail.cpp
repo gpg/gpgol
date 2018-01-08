@@ -256,8 +256,8 @@ Mail::pre_process_message ()
                  SRCNAME, __func__);
       return 0;
     }
-  log_oom_extra ("%s:%s: GetBaseMessage OK.",
-                 SRCNAME, __func__);
+  log_oom_extra ("%s:%s: GetBaseMessage OK for %p.",
+                 SRCNAME, __func__, m_mailitem);
   /* Change the message class here. It is important that
      we change the message class in the before read event
      regardless if it is already set to one of GpgOL's message
@@ -739,6 +739,8 @@ Mail::decrypt_verify()
 {
   if (!is_crypto_mail())
     {
+      log_debug ("%s:%s: Decrypt Verify for non crypto mail: %p.",
+                 SRCNAME, __func__, m_mailitem);
       return 0;
     }
   if (m_needs_wipe)

@@ -189,6 +189,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__, m_mail);
           if (!m_mail->is_crypto_mail())
             {
+              log_debug ("%s:%s: Non crypto mail %p opened. Updating sigstatus.",
+                         SRCNAME, __func__, m_mail);
               /* Ensure that no wrong sigstatus is shown */
               CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
                                         NULL));
