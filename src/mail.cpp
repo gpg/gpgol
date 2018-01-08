@@ -197,6 +197,8 @@ Mail::~Mail()
       log_oom_extra ("%s:%s: non crypto mail: %p destroyed",
                      SRCNAME, __func__, this);
     }
+  xfree (m_cached_html_body);
+  xfree (m_cached_plain_body);
   gpgrt_lock_unlock (&dtor_lock);
 }
 
