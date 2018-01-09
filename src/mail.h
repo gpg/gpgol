@@ -314,6 +314,11 @@ public:
   */
   char *take_cached_plain_body ();
 
+  /** Get the cached recipients. It is updated in update_oom_data.
+      Caller takes ownership of the list and has to free it.
+  */
+  char **take_cached_recipients ();
+
   /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
       Only valid after decrypt_verify.
   */
@@ -358,6 +363,7 @@ private:
   std::string m_sender;
   char *m_cached_html_body; /* Cached html body. */
   char *m_cached_plain_body; /* Cached plain body. */
+  char **m_cached_recipients;
   msgtype_t m_type; /* Our messagetype as set in mapi */
   std::shared_ptr <ParseController> m_parser;
   GpgME::VerificationResult m_verify_result;

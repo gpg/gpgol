@@ -317,7 +317,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         SysFreeString (parmstr);
       if (hr != S_OK || vtResult.vt != VT_DISPATCH)
         {
-          log_debug ("%s:%s:       error: '%s' p=%p vt=%d hr=0x%x argErr=0x%x",
+          log_debug ("%s:%s: failure: '%s' p=%p vt=%d hr=0x%x argErr=0x%x",
                      SRCNAME, __func__,
                      name, vtResult.pdispVal, vtResult.vt, (unsigned int)hr,
                      (unsigned int)argErr);
@@ -329,7 +329,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
 
       pObj = vtResult.pdispVal;
     }
-  log_debug ("%s:%s:       error: no object", SRCNAME, __func__);
+  log_debug ("%s:%s: no object", SRCNAME, __func__);
   return NULL;
 }
 
@@ -1072,6 +1072,64 @@ get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt)
   return 0;
 }
 
+/* Helper for additional fallbacks in recipient lookup */
+static char *
+get_recipient_addr_fallbacks (LPDISPATCH recipient)
+{
+  LPDISPATCH addr_entry = get_oom_object (recipient, "AddressEntry");
+
+  if (!addr_entry)
+    {
+      log_debug ("%s:%s: Failed to find AddressEntry",
+                 SRCNAME, __func__);
+      return nullptr;
+    }
+
+  /* Maybe check for type here? We are pretty sure that we are exchange */
+
+  /* According to MSDN Message Boards the PR_EMS_AB_PROXY_ADDRESSES_DASL
+     is more avilable then the SMTP Address. */
+  char *ret = get_pa_string (addr_entry, PR_EMS_AB_PROXY_ADDRESSES_DASL);
+  if (ret)
+    {
+      log_debug ("%s:%s: Found recipient through AB_PROXY: %s",
+                 SRCNAME, __func__, ret);
+
+      char *smtpbegin = strstr(ret, "SMTP:");
+      if (smtpbegin == ret)
+        {
+          ret += 5;
+        }
+      gpgol_release (addr_entry);
+      return ret;
+    }
+  else
+    {
+      log_debug ("%s:%s: Failed AB_PROXY lookup.",
+                 SRCNAME, __func__);
+    }
+
+  LPDISPATCH ex_user = get_oom_object (addr_entry, "GetExchangeUser");
+  gpgol_release (addr_entry);
+  if (!ex_user)
+    {
+      log_debug ("%s:%s: Failed to find ExchangeUser",
+                 SRCNAME, __func__);
+      return nullptr;
+    }
+
+  ret = get_oom_string (ex_user, "PrimarySmtpAddress");
+  gpgol_release (ex_user);
+  if (ret)
+    {
+      log_debug ("%s:%s: Found recipient through exchange user primary smtp address: %s",
+                 SRCNAME, __func__, ret);
+      return ret;
+    }
+
+  return nullptr;
+}
+
 /* Gets a malloced NULL terminated array of recipent strings from
    an OOM recipients Object. */
 char **
@@ -1103,22 +1161,26 @@ get_oom_recipients (LPDISPATCH recipients)
                      SRCNAME, __func__, i);
           break;
         }
-      else
+      char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
+      if (resolved)
         {
-          char *address,
-               *resolved;
-          address = get_oom_string (recipient, "Address");
-          resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
-          if (resolved)
-            {
-              xfree (address);
-              recipientAddrs[i-1] = resolved;
-              continue;
-            }
-          log_debug ("%s:%s: Failed to look up SMTP Address;",
-                     SRCNAME, __func__);
-          recipientAddrs[i-1] = address;
+          recipientAddrs[i-1] = resolved;
+          gpgol_release (recipient);
+          continue;
         }
+      /* No PR_SMTP_ADDRESS first fallback */
+      resolved = get_recipient_addr_fallbacks (recipient);
+      gpgol_release (recipient);
+      if (resolved)
+        {
+          recipientAddrs[i-1] = resolved;
+          continue;
+        }
+
+      char *address = get_oom_string (recipient, "Address");
+      log_debug ("%s:%s: Failed to look up Address probably EX addr is returned",
+                 SRCNAME, __func__);
+      recipientAddrs[i-1] = address;
     }
   return recipientAddrs;
 }

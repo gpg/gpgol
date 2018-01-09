@@ -32,6 +32,7 @@
 #include "display.h"
 #include "message.h"
 #include "gpgolstr.h"
+#include "mail.h"
 
 
 /* Wrapper around UlRelease with error checking. */
@@ -1040,6 +1041,9 @@ get_recipients (LPMESSAGE message)
               found_one = true;
               break;
 
+            case PT_ERROR:
+              log_debug ("%s:%s: proptag=0x%08lx is error",
+                         SRCNAME, __func__, val.ulPropTag);
             default:
               log_debug ("%s:%s: proptag=0x%08lx not supported\n",
                          SRCNAME, __func__, val.ulPropTag);
@@ -1086,9 +1090,16 @@ sign_encrypt (LPMESSAGE message, protocol_t protocol, HWND hwnd, int signflag,
               const char *sender, Mail* mail)
 {
   gpg_error_t err;
-  char **recipients;
+  char **recipients = nullptr;
 
-  recipients = get_recipients (message);
+  if (mail)
+    {
+      recipients = mail->take_cached_recipients ();
+    }
+  if (!recipients)
+    {
+      recipients = get_recipients (message);
+    }
   if (!recipients || !recipients[0])
     {
       MessageBox (hwnd, _("No recipients to encrypt to are given"),

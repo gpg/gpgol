@@ -132,6 +132,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypto_flags(0),
     m_cached_html_body(nullptr),
     m_cached_plain_body(nullptr),
+    m_cached_recipients(nullptr),
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false)
@@ -199,6 +200,9 @@ Mail::~Mail()
     }
   xfree (m_cached_html_body);
   xfree (m_cached_plain_body);
+  for (int i = 0; m_cached_recipients && m_cached_recipients[i]; ++i)
+      xfree (m_cached_recipients[i]);
+  xfree (m_cached_recipients);
   gpgrt_lock_unlock (&dtor_lock);
 }
 
@@ -1142,23 +1146,30 @@ Mail::update_oom_data ()
   LPDISPATCH sender = NULL;
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  /* Update the body format. */
-  m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
-
-  /* Store the body. It was not obvious for me (aheinecke) how
-     to access this through MAPI. */
-  if (m_is_html_alternative)
+  if (!is_crypto_mail())
     {
-      log_debug ("%s:%s: Is html alternative mail.", SRCNAME, __func__);
-      xfree (m_cached_html_body);
-      m_cached_html_body = get_oom_string (m_mailitem, "HTMLBody");
+      /* Update the body format. */
+      m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
+
+      /* Store the body. It was not obvious for me (aheinecke) how
+         to access this through MAPI. */
+      if (m_is_html_alternative)
+        {
+          log_debug ("%s:%s: Is html alternative mail.", SRCNAME, __func__);
+          xfree (m_cached_html_body);
+          m_cached_html_body = get_oom_string (m_mailitem, "HTMLBody");
+        }
+      xfree (m_cached_plain_body);
+      m_cached_plain_body = get_oom_string (m_mailitem, "Body");
+
+      for (int i = 0; m_cached_recipients && m_cached_recipients[i]; ++i)
+          xfree (m_cached_recipients[i]);
+      xfree (m_cached_recipients);
+      m_cached_recipients = get_recipients ();
     }
-  xfree (m_cached_plain_body);
-  m_cached_plain_body = get_oom_string (m_mailitem, "Body");
   /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
      the SenderEmailAddress string. */
-
   if (is_crypto_mail ())
     {
       /* This is the case where we are reading a mail and not composing.
@@ -2393,4 +2404,12 @@ bool
 Mail::needs_encrypt() const
 {
   return m_needs_encrypt;
+}
+
+char **
+Mail::take_cached_recipients()
+{
+  char **ret = m_cached_recipients;
+  m_cached_recipients = nullptr;
+  return ret;
 }

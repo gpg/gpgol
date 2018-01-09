@@ -85,6 +85,11 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
 #endif
 
+#ifndef PR_EMS_AB_PROXY_ADDRESSES_DASL
+#define PR_EMS_AB_PROXY_ADDRESSES_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x800F101E"
+#endif
+
 #ifndef PR_ATTACHMENT_HIDDEN_DASL
 #define PR_ATTACHMENT_HIDDEN_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
