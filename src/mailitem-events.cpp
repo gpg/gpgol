@@ -360,6 +360,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 {
                   log_debug ("%s:%s: Body found after encryption %p.",
                             SRCNAME, __func__, m_object);
+                  if (m_mail->should_inline_crypt ())
+                    {
+                      if (m_mail->inline_body_to_body ())
+                        {
+                          log_debug ("%s:%s: Inline body to body failed %p.",
+                                    SRCNAME, __func__, m_object);
+                        }
+                    }
                   const auto body = m_mail->get_body();
                   if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
                     {

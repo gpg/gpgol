@@ -2413,3 +2413,21 @@ Mail::take_cached_recipients()
   m_cached_recipients = nullptr;
   return ret;
 }
+
+void
+Mail::append_to_inline_body (const std::string &data)
+{
+  m_inline_body += data;
+}
+
+int
+Mail::inline_body_to_body()
+{
+  if (m_inline_body.empty())
+    {
+      return 0;
+    }
+  int ret = put_oom_string (m_mailitem, "Body", m_inline_body.c_str ());
+  m_inline_body = std::string();
+  return ret;
+}

@@ -95,6 +95,14 @@ sink_std_write (sink_t sink, const void *data, size_t datalen)
   return 0;
 }
 
+int
+sink_string_write (sink_t sink, const void *data, size_t datalen)
+{
+  Mail *mail = static_cast<Mail *>(sink->cb_data);
+  mail->append_to_inline_body (std::string((char*)data, datalen));
+  return 0;
+}
+
 /* Write method used with a sink_t that contains a file object.  */
 int
 sink_file_write (sink_t sink, const void *data, size_t datalen)
@@ -1139,7 +1147,7 @@ static int
 finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
                   protocol_t protocol, int encrypt, bool is_inline = false)
 {
-  HRESULT hr;
+  HRESULT hr = 0;
   SPropValue prop;
   SPropTagArray proparray;
 
@@ -1154,7 +1162,13 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
       prop.Value.lpszA = strdup ("IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned");
     }
 
-  hr = message->SetProps(1, &prop, NULL);
+  if (!is_inline)
+    {
+      /* For inline we stick with IPM.Note because Exchange Online would
+         error out if we tried our S/MIME conversion trick with a text
+         plain message */
+      hr = message->SetProps(1, &prop, NULL);
+    }
   xfree(prop.Value.lpszA);
   if (hr)
     {
@@ -1875,6 +1889,10 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
   if (is_inline)
     {
       *boundary = 0;
+      rc = 0;
+      /* This would be nice and worked for Google Sync but it failed
+         for Microsoft Exchange Online *sigh* so we put the body
+         instead into the oom body property and stick with IPM Note.
       rc = write_multistring (sink,
                               "MIME-Version: 1.0\r\n"
                               "Content-Type: text/plain;\r\n"
@@ -1882,6 +1900,7 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
                               "Content-Transfer-Encoding: 7BIT\r\n"
                               "\r\n",
                               NULL);
+     */
     }
   else if (protocol == PROTOCOL_SMIME)
     {
@@ -1939,7 +1958,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 {
   int result = -1;
   int rc;
-  LPATTACH attach;
+  LPATTACH attach = nullptr;
   struct sink_s sinkmem;
   sink_t sink = &sinkmem;
   struct sink_s encsinkmem;
@@ -1954,10 +1973,6 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
-
-  attach = create_mapi_attachment (message, sink);
-  if (!attach)
-    return -1;
 
   /* Get the attachment info and the body.  We need to do this before
      creating the engine's filter because sending the cancel to
@@ -1997,6 +2012,18 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
       log_debug ("%s:%s: PGP Inline not supported for attachments. Using PGP MIME",
                  SRCNAME, __func__);
       is_inline = false;
+    }
+
+  if (!is_inline || !mail)
+    {
+      attach = create_mapi_attachment (message, sink);
+      if (!attach)
+        return -1;
+    }
+  else
+    {
+      sink->cb_data = mail;
+      sink->writefnc = sink_string_write;
     }
 
   /* Prepare the encryption.  We do this early as it is quite common
@@ -2081,7 +2108,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   if (*boundary && (rc = write_boundary (sink, boundary, 1)))
     goto failure;
 
-  if (close_mapi_attachment (&attach, sink))
+  if (attach && close_mapi_attachment (&attach, sink))
     goto failure;
 
   if (finalize_message (message, att_table, protocol, 1, is_inline))
@@ -2091,7 +2118,10 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
 
  failure:
   engine_cancel (filter);
-  cancel_mapi_attachment (&attach, sink);
+  if (attach)
+    {
+      cancel_mapi_attachment (&attach, sink);
+    }
   xfree (body);
   mapi_release_attach_table (att_table);
   xfree (my_sender);

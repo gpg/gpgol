@@ -340,6 +340,13 @@ public:
 
   /** Check if the mail should be encrypted "inline" */
   bool should_inline_crypt () const {return m_do_inline;}
+
+  /** Append data to a cached inline body. Helper to do this
+     on MAPI level and later add it through OOM */
+  void append_to_inline_body (const std::string &data);
+
+  /** Set the inline body as OOM body property. */
+  int inline_body_to_body ();
 private:
   void update_categories ();
   void update_body ();
@@ -374,5 +381,6 @@ private:
   std::string m_orig_body;
   bool m_do_inline;
   bool m_is_gsuite; /* Are we on a gsuite account */
+  std::string m_inline_body;
 };
 #endif // MAIL_H
