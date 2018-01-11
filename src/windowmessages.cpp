@@ -76,6 +76,18 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                          SRCNAME, __func__);
               break;
             }
+          case (CLOSE):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: Close for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+              Mail::close (mail);
+              break;
+            }
           default:
             log_debug ("Unknown msg");
         }
@@ -253,5 +265,12 @@ delayed_invalidate_ui (LPVOID)
   do_in_ui_thread (INVALIDATE_UI, nullptr);
   invalidation_in_progress = false;
   gpgrt_lock_unlock(&invalidate_lock);
+  return 0;
+}
+
+DWORD WINAPI
+close_mail (LPVOID mail)
+{
+  do_in_ui_thread (CLOSE, mail);
   return 0;
 }

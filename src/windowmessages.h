@@ -42,6 +42,7 @@ typedef enum _gpgol_wmsg_type
                       to the mail object. */
   RECIPIENT_ADDED = 3, /* A recipient was added. Data should be ptr
                           to mail */
+  CLOSE = 4, /* Send the message in the next event loop. */
 } gpgol_wmsg_type;
 
 typedef struct
@@ -72,6 +73,9 @@ create_message_hook();
 
 DWORD WINAPI
 delayed_invalidate_ui (LPVOID);
+
+DWORD WINAPI
+close_mail (LPVOID);
 
 void add_explorer (LPDISPATCH explorer);
 void remove_explorer (LPDISPATCH explorer);
