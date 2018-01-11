@@ -411,6 +411,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                       HRESULT hr;
                       LPSPropValue propval = NULL;
 
+                      // It's important we use the _not_ base message here.
                       LPMESSAGE message = get_oom_message (m_object);
                       hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
                       gpgol_release (message);
@@ -429,6 +430,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                           log_debug ("%s:%s: Message %p - Activating T3656 Workaround",
                                     SRCNAME, __func__, m_object);
                           message = get_oom_base_message (m_object);
+                          // It's important we use the _base_ message here.
                           mapi_save_changes (message, KEEP_OPEN_READWRITE | FORCE_SAVE);
                           message->SubmitMessage(0);
                           gpgol_release (message);
