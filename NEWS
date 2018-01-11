@@ -1,6 +1,17 @@
-Noteworthy changes for version 2.0.6 (unreleased)
+Noteworthy changes for version 2.0.6 (2018-01-11)
 =================================================
 
+ * PGP/Inline sending is now compatible with Microsoft Exchange
+ Online. (T3662)
+
+ * A bug that caused encrypted mails not to be displayed has been
+ fixed. (T3537)
+
+ * A bug that caused drafted mails not to encrypt the correct
+ content has been fixed. (T3419)
+
+ * The recipient lookup for Exchange addresses has been slightly
+ improved.
 
 Noteworthy changes for version 2.0.5 (2017-12-08)
 =================================================
