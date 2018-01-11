@@ -332,8 +332,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
              If this encryption is successful and we pass the send
              as then the encrypted data is sent.
            */
-          log_oom_extra ("%s:%s: Send : %p",
-                         SRCNAME, __func__, m_mail);
+          log_debug ("%s:%s: Send : %p item %p",
+                     SRCNAME, __func__, m_object, m_mail);
           if (!m_mail->needs_crypto ())
             {
              log_debug ("%s:%s: No crypto neccessary. Passing send for unencrypted %p",
@@ -349,6 +349,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
            }
           m_mail->update_oom_data ();
           m_mail->set_needs_encrypt (true);
+          log_debug ("%s:%s: Send : %p item %p needs encrypt. Calling save.",
+                     SRCNAME, __func__, m_mail, m_object);
+          log_debug ("%s:%s: Send : %p Setting uuid.",
+                     SRCNAME, __func__, m_mail);
+          m_mail->set_uuid ();
+          log_debug ("%s:%s: Send : %p has subject: %s.",
+                     SRCNAME, __func__, m_mail, m_mail->get_subject ().c_str());
+
           invoke_oom_method (m_object, "Save", NULL);
           if (m_mail->crypto_successful ())
             {
@@ -381,8 +389,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
                       log_debug ("%s:%s: Wipe succeded. %p.",
                                  SRCNAME, __func__, m_object);
 
-                      log_debug ("%s:%s: Passing send event for message %p.",
-                                SRCNAME, __func__, m_object);
+                      const auto uuid = m_mail->get_uuid ();
+                      log_debug ("%s:%s: Passing send event for message %p uuid: %s.",
+                                SRCNAME, __func__, m_object, uuid.empty() ? "null" : uuid.c_str ());
                       break;
                     }
                   log_debug ("%s:%s: Cancel send for %p.",
@@ -400,22 +409,22 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   return S_OK;
                 }
-              log_debug ("%s:%s: Passing send event for message %p.",
-                         SRCNAME, __func__, m_object);
+              log_debug ("%s:%s: Passing send event for encrypted message %p item %p.",
+                         SRCNAME, __func__, m_object, m_mail);
               break;
             }
           else
             {
-              log_debug ("%s:%s: Message %p cancelling send - crypto failed.",
-                         SRCNAME, __func__, m_object);
+              log_debug ("%s:%s: Message %p cancelling send - crypto failed item %p.",
+                         SRCNAME, __func__, m_object, m_mail);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
           return S_OK;
         }
       case Write:
         {
-          log_oom_extra ("%s:%s: Write : %p",
-                         SRCNAME, __func__, m_mail);
+          log_debug ("%s:%s: Write : %p",
+                     SRCNAME, __func__, m_mail);
           /* This is a bit strange. We sometimes get multiple write events
              without a read in between. When we access the message in
              the second event it fails and if we cancel the event outlook
@@ -454,19 +463,28 @@ EVENT_SINK_INVOKE(MailItemEvents)
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
 
-          log_debug ("%s:%s: Passing write event.",
-                     SRCNAME, __func__);
+          const auto uuid = m_mail->get_uuid ();
+          log_debug ("%s:%s: Passing write event for message %p mailitem %p uuid: %s subject: %s",
+                     SRCNAME, __func__, m_object, m_mail, uuid.empty() ? "null" : uuid.c_str (),
+                     m_mail->get_subject ().c_str());
           m_mail->set_needs_save (false);
           break;
         }
       case AfterWrite:
         {
-          log_oom_extra ("%s:%s: AfterWrite : %p",
+          log_debug ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
           if (m_mail->needs_encrypt ())
             {
+              log_debug ("%s:%s: Mail needs encrypt: %p",
+                             SRCNAME, __func__, m_mail);
               m_mail->encrypt_sign ();
               return S_OK;
+            }
+          else
+            {
+              log_debug ("%s:%s: Mail does not need encrypt: %p",
+                         SRCNAME, __func__, m_mail);
             }
           break;
         }

@@ -86,6 +86,8 @@ sink_std_write (sink_t sink, const void *data, size_t datalen)
   if (!data)
     return 0;  /* Flush - nothing to do here.  */
 
+  log_debug ("Sink write: %.*s", datalen, (char*)data);
+
   hr = stream->Write(data, datalen, NULL);
   if (hr)
     {
