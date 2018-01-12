@@ -1422,6 +1422,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
       if ((rc=write_multistring (sink,
                                  "Content-Type: multipart/related;\r\n",
                                  "\tboundary=\"", outer_boundary, "\"\r\n",
+                                 "\r\n", /* <--- Outlook adds an extra line. */
                                  NULL)))
         return rc;
     }
@@ -1431,6 +1432,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
       if ((rc=write_multistring (sink,
                                  "Content-Type: multipart/mixed;\r\n",
                                  "\tboundary=\"", outer_boundary, "\"\r\n",
+                                 "\r\n", /* <--- Outlook adds an extra line. */
                                  NULL)))
         return rc;
     }
@@ -1448,6 +1450,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
       if ((rc=write_multistring (sink,
                                  "Content-Type: multipart/related;\r\n",
                                  "\tboundary=\"", inner_boundary, "\"\r\n",
+                                 "\r\n", /* <--- Outlook adds an extra line. */
                                  NULL)))
         {
           return rc;
