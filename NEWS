@@ -1,4 +1,4 @@
-Noteworthy changes for version 2.0.6 (2018-01-11)
+Noteworthy changes for version 2.0.6 (2018-01-12)
 =================================================
 
  * PGP/Inline sending is now compatible with Microsoft Exchange
@@ -12,6 +12,11 @@ Noteworthy changes for version 2.0.6 (2018-01-11)
 
  * The recipient lookup for Exchange addresses has been slightly
  improved.
+
+ * When Outlooks internal S/MIME handling code was activated
+ mails might be sent out unencrypted (T3656)
+
+ * Fixed signed only PGP Mails with attachments. (T3735)
 
 Noteworthy changes for version 2.0.5 (2017-12-08)
 =================================================
