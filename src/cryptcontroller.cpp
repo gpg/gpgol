@@ -295,6 +295,103 @@ write_data (sink_t sink, GpgME::Data &data)
 }
 
 static int
+create_sign_attach (sink_t sink, protocol_t protocol,
+                    GpgME::Data &signature,
+                    GpgME::Data &signedData)
+{
+  char boundary[BOUNDARYSIZE+1];
+  char top_header[BOUNDARYSIZE+200];
+  int rc = 0;
+
+  /* Write the top header.  */
+  generate_boundary (boundary);
+  create_top_signing_header (top_header, sizeof top_header,
+                             protocol, 1, boundary,
+                             protocol == PROTOCOL_SMIME ? "sha1":"pgp-sha1");
+
+  if ((rc = write_string (sink, top_header)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  /* Write the boundary so that it is not included in the hashing.  */
+  if ((rc = write_boundary (sink, boundary, 0)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  /* Write the signed mime structure */
+  if ((rc = write_data (sink, signedData)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  /* Write the signature attachment */
+  if ((rc = write_boundary (sink, boundary, 0)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  if (protocol == PROTOCOL_OPENPGP)
+    {
+      rc = write_string (sink,
+                         "Content-Type: application/pgp-signature\r\n");
+    }
+  else
+    {
+      rc = write_string (sink,
+                         "Content-Transfer-Encoding: base64\r\n"
+                         "Content-Type: application/pkcs7-signature\r\n");
+      /* rc = write_string (sink, */
+      /*                    "Content-Type: application/x-pkcs7-signature\r\n" */
+      /*                    "\tname=\"smime.p7s\"\r\n" */
+      /*                    "Content-Transfer-Encoding: base64\r\n" */
+      /*                    "Content-Disposition: attachment;\r\n" */
+      /*                    "\tfilename=\"smime.p7s\"\r\n"); */
+
+    }
+
+  if (rc)
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  if ((rc = write_string (sink, "\r\n")))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  // Write the signature data
+  if ((rc = write_data (sink, signature)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  // Add an extra linefeed with should not harm.
+  if ((rc = write_string (sink, "\r\n")))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  /* Write the final boundary.  */
+  if ((rc = write_boundary (sink, boundary, 1)))
+    {
+      TRACEPOINT;
+      return rc;
+    }
+
+  return rc;
+}
+
+static int
 create_encrypt_attach (sink_t sink, protocol_t protocol,
                        GpgME::Data &encryptedData)
 {
@@ -367,9 +464,18 @@ CryptController::update_mail_mapi ()
                                    PROTOCOL_SMIME :
                                    PROTOCOL_OPENPGP;
   int rc = 0;
-  if (m_encrypt)
+  if (m_sign && m_encrypt)
+    {
+      // FIXME we need some doubling here for S/MIME.
+      rc = create_encrypt_attach (sink, protocol, m_output);
+    }
+  else if (m_encrypt)
     {
       rc = create_encrypt_attach (sink, protocol, m_output);
+    }
+  else if (m_sign)
+    {
+      rc = create_sign_attach (sink, protocol, m_output, m_input);
     }
 
   // Close our attachment
@@ -381,7 +487,8 @@ CryptController::update_mail_mapi ()
   // Set message class etc.
   if (!rc)
     {
-      rc = finalize_message (message, att_table, protocol, 1, false);
+      rc = finalize_message (message, att_table, protocol, m_encrypt ? 1 : 0,
+                             false);
     }
 
   // only on error.

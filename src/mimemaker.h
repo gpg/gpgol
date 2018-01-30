@@ -88,7 +88,9 @@ int close_mapi_attachment (LPATTACH *attach, sink_t sink);
 int finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
                       protocol_t protocol, int encrypt, bool is_inline = false);
 void cancel_mapi_attachment (LPATTACH *attach, sink_t sink);
-
+void create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
+                           int first, const char *boundary, const char *micalg);
+int write_string (sink_t sink, const char *text);
 
 #ifdef __cplusplus
 }

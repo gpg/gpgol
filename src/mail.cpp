@@ -765,7 +765,6 @@ do_crypt (LPVOID arg)
 
   /* This can take a while */
   int rc = crypter->do_crypto();
-  Sleep(3000);
 
   gpgrt_lock_lock (&dtor_lock);
   if (!Mail::is_valid_ptr (mail))

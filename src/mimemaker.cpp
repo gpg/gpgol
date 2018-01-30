@@ -273,7 +273,7 @@ write_buffer_for_cb (void *opaque, const void *data, size_t datalen)
 
 /* Write the string TEXT to the IStream STREAM.  Returns 0 on sucsess,
    prints an error message and returns -1 on error.  */
-static int
+int
 write_string (sink_t sink, const char *text)
 {
   return write_buffer (sink, text, strlen (text));
@@ -1298,7 +1298,7 @@ collect_signature (void *opaque, const void *data, size_t datalen)
 /* Helper to create the signing header.  This includes enough space
    for later fixup of the micalg parameter.  The MIME version is only
    written if FIRST is set.  */
-static void
+void
 create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
                            int first, const char *boundary, const char *micalg)
 {
