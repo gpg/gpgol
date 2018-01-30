@@ -26,6 +26,10 @@
 #include "mapihelp.h"
 #include "mimemaker.h"
 
+#include <gpgme++/context.h>
+#include <gpgme++/signingresult.h>
+#include <gpgme++/encryptionresult.h>
+
 #ifdef HAVE_W32_SYSTEM
 #include "common.h"
 /* We use UTF-8 internally. */
@@ -54,6 +58,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
     m_encrypt (encrypt),
     m_sign (sign),
     m_inline (doInline),
+    m_crypto_success (false),
     m_proto (proto)
 {
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
@@ -115,6 +120,8 @@ CryptController::collect_data ()
       log_debug ("%s:%s: PGP Inline. Using cached body as input.",
                  SRCNAME, __func__);
       gpgol_release (message);
+      /* Set the input buffer to start. */
+      m_input.seek (0, SEEK_SET);
       return 0;
     }
 
@@ -144,10 +151,127 @@ CryptController::collect_data ()
 }
 
 int
+CryptController::resolve_keys ()
+{
+  m_recipients.clear();
+
+  /*XXX Temporary hack part do key resolution here. */
+  GpgME::Error err;
+  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(GpgME::OpenPGP));
+  const auto key = ctx->key ("EB4C5A5B7AD6C8527F050BAF1ED4F0BC6CFBC912", err, true);
+
+  if (key.isNull())
+    {
+      log_error ("%s:%s: Failure to resolve keys.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  m_recipients.push_back(key);
+  m_signer_key = key;
+  return 0;
+}
+
+int
 CryptController::do_crypto ()
 {
+  // TODO get recipients and sender and protocol.
+
   log_debug ("%s:%s:",
              SRCNAME, __func__);
+  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(GpgME::OpenPGP));
+
+  if (!ctx)
+    {
+      log_error ("%s:%s: Failure to create context.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  if (resolve_keys ())
+    {
+      log_debug ("%s:%s: Failure to resolve keys.",
+                 SRCNAME, __func__);
+      return -2;
+    }
+
+  if (!m_signer_key.isNull())
+    {
+      ctx->addSigningKey (m_signer_key);
+    }
+
+  ctx->setTextMode (true);
+  ctx->setArmor (true);
+
+  if (m_encrypt && m_sign)
+    {
+      const auto result_pair = ctx->signAndEncrypt (m_recipients,
+                                                    m_input,
+                                                    m_output,
+                                                    GpgME::Context::AlwaysTrust);
+
+      if (result_pair.first.error() || result_pair.second.error())
+        {
+          log_error ("%s:%s: Encrypt / Sign error %s %s.",
+                     SRCNAME, __func__, result_pair.first.error().asString(),
+                     result_pair.second.error().asString());
+          return -1;
+        }
+
+      if (result_pair.first.error().isCanceled() || result_pair.second.error().isCanceled())
+        {
+          log_debug ("%s:%s: User cancled",
+                     SRCNAME, __func__);
+          return -2;
+        }
+    }
+  else if (m_encrypt)
+    {
+      const auto result = ctx->encrypt (m_recipients, m_input,
+                                        m_output,
+                                        GpgME::Context::AlwaysTrust);
+      if (result.error())
+        {
+          log_error ("%s:%s: Encryption error %s.",
+                     SRCNAME, __func__, result.error().asString());
+          return -1;
+        }
+      if (result.error().isCanceled())
+        {
+          log_debug ("%s:%s: User cancled",
+                     SRCNAME, __func__);
+          return -2;
+        }
+    }
+  else if (m_sign)
+    {
+      const auto result = ctx->sign (m_input, m_output,
+                                     m_inline ? GpgME::Clearsigned :
+                                     GpgME::Detached);
+      if (result.error())
+        {
+          log_error ("%s:%s: Signing error %s.",
+                     SRCNAME, __func__, result.error().asString());
+          return -1;
+        }
+      if (result.error().isCanceled())
+        {
+          log_debug ("%s:%s: User cancled",
+                     SRCNAME, __func__);
+          return -2;
+        }
+    }
+  else
+    {
+      // ???
+      log_error ("%s:%s: unreachable code reached.",
+                 SRCNAME, __func__);
+    }
+
+
+  log_debug ("%s:%s: Crypto done sucessfuly.",
+             SRCNAME, __func__);
+  m_crypto_success = true;
   return 0;
 }
 
@@ -156,4 +280,22 @@ CryptController::update_mail_mapi ()
 {
   log_debug ("%s:%s:", SRCNAME, __func__);
   return 0;
+}
+
+std::string
+CryptController::get_inline_data ()
+{
+  std::string ret;
+  if (!m_inline)
+    {
+      return ret;
+    }
+  m_output.seek (0, SEEK_SET);
+  char buf[4096];
+  size_t nread;
+  while ((nread = m_output.read (buf, 4096)) > 0)
+    {
+      ret += std::string (buf, nread);
+    }
+  return ret;
 }

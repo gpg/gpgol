@@ -55,11 +55,19 @@ public:
     the result. */
   int update_mail_mapi ();
 
+  /** @brief Get an inline body as std::string. */
+  std::string get_inline_data ();
+
+private:
+  int resolve_keys ();
+
 private:
   Mail *m_mail;
   GpgME::Data m_input, m_output;
-  bool m_encrypt, m_sign, m_inline;
+  bool m_encrypt, m_sign, m_inline, m_crypto_success;
   GpgME::Protocol m_proto;
+  GpgME::Key m_signer_key;
+  std::vector<GpgME::Key> m_recipients;
 };
 
 #endif

@@ -2487,12 +2487,21 @@ Mail::append_to_inline_body (const std::string &data)
 int
 Mail::inline_body_to_body()
 {
-  if (m_inline_body.empty())
+  if (!m_crypter)
+    {
+      log_error ("%s:%s: No crypter.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  const auto body = m_crypter->get_inline_data ();
+  if (body.empty())
     {
       return 0;
     }
-  int ret = put_oom_string (m_mailitem, "Body", m_inline_body.c_str ());
-  m_inline_body = std::string();
+
+  int ret = put_oom_string (m_mailitem, "Body",
+                            body.c_str ());
   return ret;
 }
 
@@ -2533,6 +2542,7 @@ Mail::update_crypt_oom()
       return;
     }
 
+  // We are in MIME land. Wipe the body.
   if (wipe (true))
     {
       log_debug ("%s:%s: Cancel send for %p.",
