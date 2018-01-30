@@ -98,15 +98,15 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   break;
                 }
               // modify the mail.
-              if (mail->crypt_state (Mail::NeedsUpdateInOOM))
-                {
-                  mail->update_crypt_oom();
-                }
-              if (mail->crypt_state (Mail::NeedsSecondAfterWrite))
+              if (mail->crypt_state () == Mail::NeedsUpdateInOOM)
                 {
                   // Save the Mail
-                  log_debug ("%s:%s: Crypto done for %p Invoking second save.",
+                  log_debug ("%s:%s: Crypto done for %p updating oom.",
                              SRCNAME, __func__, mail);
+                  mail->update_crypt_oom();
+                }
+              if (mail->crypt_state () == Mail::NeedsSecondAfterWrite)
+                {
                   invoke_oom_method (mail->item (), "Save", NULL);
                   log_debug ("%s:%s: Second save done for %p Invoking second send.",
                              SRCNAME, __func__, mail);
@@ -115,7 +115,8 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               invoke_oom_method (mail->item (), "Send", NULL);
             }
           default:
-            log_debug ("Unknown msg");
+            log_debug ("%s:%s: Unknown msg %x",
+                       SRCNAME, __func__, ctx->wmsg_type);
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

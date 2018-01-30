@@ -765,6 +765,7 @@ do_crypt (LPVOID arg)
 
   /* This can take a while */
   int rc = crypter->do_crypto();
+  Sleep(3000);
 
   gpgrt_lock_lock (&dtor_lock);
   if (!Mail::is_valid_ptr (mail))
@@ -783,7 +784,7 @@ do_crypt (LPVOID arg)
       return rc;
     }
 
-  mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
+  mail->set_crypt_state (Mail::NeedsUpdateInOOM);
 
   do_in_ui_thread (CRYPTO_DONE, arg);
   gpgrt_lock_unlock (&dtor_lock);
@@ -2498,7 +2499,7 @@ Mail::inline_body_to_body()
 void
 Mail::update_crypt_mapi()
 {
-  log_debug ("%s:%s: Update crypt oom",
+  log_debug ("%s:%s: Update crypt mapi",
              SRCNAME, __func__);
   m_crypt_state = WantsSend;
 }
@@ -2506,7 +2507,49 @@ Mail::update_crypt_mapi()
 void
 Mail::update_crypt_oom()
 {
-  log_debug ("%s:%s: Update crypt oom",
-             SRCNAME, __func__);
+  log_debug ("%s:%s: Update crypt oom for %p",
+             SRCNAME, __func__, this);
+  if (m_crypt_state != NeedsUpdateInOOM)
+    {
+      log_debug ("%s:%s: invalid state %i",
+                 SRCNAME, __func__, m_crypt_state);
+      return;
+    }
+
+  if (should_inline_crypt ())
+    {
+      if (inline_body_to_body ())
+        {
+          log_debug ("%s:%s: Inline body to body failed %p.",
+                     SRCNAME, __func__, this);
+        }
+    }
+  const auto body = get_body();
+  if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
+    {
+      log_debug ("%s:%s: Looks like inline body. You can pass %p.",
+                 SRCNAME, __func__, this);
+      m_crypt_state = NeedsSecondAfterWrite;
+      return;
+    }
+
+  if (wipe (true))
+    {
+      log_debug ("%s:%s: Cancel send for %p.",
+                 SRCNAME, __func__, this);
+      wchar_t *title = utf8_to_wchar (_("GpgOL: Encryption not possible!"));
+      wchar_t *msg = utf8_to_wchar (_(
+                                      "Outlook returned an error when trying to send the encrypted mail.\n\n"
+                                      "Please restart Outlook and try again.\n\n"
+                                      "If it still fails consider using an encrypted attachment or\n"
+                                      "switching to PGP/Inline in GpgOL's options."));
+      MessageBoxW (get_active_hwnd(), msg, title,
+                   MB_ICONERROR | MB_OK);
+      xfree (msg);
+      xfree (title);
+      m_crypt_state = NoCryptMail;
+      return;
+    }
   m_crypt_state = NeedsSecondAfterWrite;
+  return;
 }

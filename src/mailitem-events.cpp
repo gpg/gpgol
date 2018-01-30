@@ -357,6 +357,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->update_oom_data ();
               m_mail->set_crypt_state (Mail::NeedsFirstAfterWrite);
 
+             log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
+                        SRCNAME, __func__, m_mail);
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
@@ -365,118 +367,72 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
               // Cancel send
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-            }
-
-          if (m_mail->crypt_state () == Mail::NeedsUpdateInOOM)
-            {
-              m_mail->update_crypt_oom ();
+              break;
             }
 
           if (m_mail->crypt_state () == Mail::WantsSend)
             {
-              /* Fishy behavior catcher: Sometimes the save does not clean
-                 out the body. Weird. Happened at least for one user.
-                 The following code checks for plain text leaks and
-                 prevents send in case the body can't be wiped. */
-              if (!m_mail->get_body().empty() || !m_mail->get_html_body().empty())
+#if 0
+              /* Now we adress T3656 if Outlooks internal S/MIME is somehow
+               * mixed in (even if it is enabled and then disabled) it might
+               * cause strange behavior in that it sends the plain message
+               * and not the encrypted message. Tests have shown that we can
+               * bypass that by calling submit message on our base
+               * message.
+               *
+               * We do this conditionally as our other way of using OOM
+               * to send is proven to work and we don't want to mess
+               * with it.
+               */
+              // Get the Message class.
+              HRESULT hr;
+              LPSPropValue propval = NULL;
+
+              // It's important we use the _not_ base message here.
+              LPMESSAGE message = get_oom_message (m_object);
+              hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
+              gpgol_release (message);
+              if (FAILED (hr))
                 {
-                  log_debug ("%s:%s: Body found after encryption %p.",
-                            SRCNAME, __func__, m_object);
-                  if (m_mail->should_inline_crypt ())
-                    {
-                      if (m_mail->inline_body_to_body ())
-                        {
-                          log_debug ("%s:%s: Inline body to body failed %p.",
-                                    SRCNAME, __func__, m_object);
-                        }
-                    }
-                  const auto body = m_mail->get_body();
-                  if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
-                    {
-                      log_debug ("%s:%s: Looks like inline body. You can pass %p.",
-                                SRCNAME, __func__, m_object);
-                      break;
-                    }
-
-                  if (m_mail->wipe (true))
-                    {
-                      log_debug ("%s:%s: Cancel send for %p.",
-                                SRCNAME, __func__, m_object);
-                      wchar_t *title = utf8_to_wchar (_("GpgOL: Encryption not possible!"));
-                      wchar_t *msg = utf8_to_wchar (_(
-                      "Outlook returned an error when trying to send the encrypted mail.\n\n"
-                      "Please restart Outlook and try again.\n\n"
-                      "If it still fails consider using an encrypted attachment or\n"
-                      "switching to PGP/Inline in GpgOL's options."));
-                      MessageBoxW (get_active_hwnd(), msg, title,
-                                   MB_ICONERROR | MB_OK);
-                      xfree (msg);
-                      xfree (title);
-                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                      return S_OK;
-                    }
-                    {
-                      /* Now we adress T3656 if Outlooks internal S/MIME is somehow
-                       * mixed in (even if it is enabled and then disabled) it might
-                       * cause strange behavior in that it sends the plain message
-                       * and not the encrypted message. Tests have shown that we can
-                       * bypass that by calling submit message on our base
-                       * message.
-                       *
-                       * We do this conditionally as our other way of using OOM
-                       * to send is proven to work and we don't want to mess
-                       * with it.
-                       */
-                      // Get the Message class.
-                      HRESULT hr;
-                      LPSPropValue propval = NULL;
-
-                      // It's important we use the _not_ base message here.
-                      LPMESSAGE message = get_oom_message (m_object);
-                      hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
-                      gpgol_release (message);
-                      if (FAILED (hr))
-                        {
-                          log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
-                                     SRCNAME, __func__, hr);
-                          gpgol_release (message);
-                          break;
-                        }
-                      if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL"))
-                        {
-                          // Does not have a message class by us.
-                          log_debug ("%s:%s: Message %p - No GpgOL Message class after encryption.",
-                                    SRCNAME, __func__, m_object);
-                          log_debug ("%s:%s: Message %p - Activating T3656 Workaround",
-                                    SRCNAME, __func__, m_object);
-                          message = get_oom_base_message (m_object);
-                          // It's important we use the _base_ message here.
-                          mapi_save_changes (message, KEEP_OPEN_READWRITE | FORCE_SAVE);
-                          message->SubmitMessage(0);
-                          gpgol_release (message);
-
-                          // Cancel send
-                          *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-
-                          // Close the composer and trigger unloads
-                          CloseHandle(CreateThread (NULL, 0, close_mail, (LPVOID) m_mail, 0,
-                                                    NULL));
-                        }
-                      MAPIFreeBuffer (propval);
-                    }
-
-                  if (*(parms->rgvarg[0].pboolVal) == VARIANT_TRUE)
-                    {
-                      break;
-                    }
+                  log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
+                             SRCNAME, __func__, hr);
+                  gpgol_release (message);
+                  break;
                 }
+              if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL"))
+                {
+                  // Does not have a message class by us.
+                  log_debug ("%s:%s: Message %p - No GpgOL Message class after encryption.",
+                             SRCNAME, __func__, m_object);
+                  log_debug ("%s:%s: Message %p - Activating T3656 Workaround",
+                             SRCNAME, __func__, m_object);
+                  message = get_oom_base_message (m_object);
+                  // It's important we use the _base_ message here.
+                  mapi_save_changes (message, KEEP_OPEN_READWRITE | FORCE_SAVE);
+                  message->SubmitMessage(0);
+                  gpgol_release (message);
+
+                  // Cancel send
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+
+                  // Close the composer and trigger unloads
+                  CloseHandle(CreateThread (NULL, 0, close_mail, (LPVOID) m_mail, 0,
+                                            NULL));
+                }
+              MAPIFreeBuffer (propval);
+              if (*(parms->rgvarg[0].pboolVal) == VARIANT_TRUE)
+                {
+                  break;
+                }
+#endif
               log_debug ("%s:%s: Passing send event for message %p.",
                          SRCNAME, __func__, m_object);
               break;
             }
           else
             {
-              log_debug ("%s:%s: Message %p cancelling send - crypto failed.",
+              log_debug ("%s:%s: Message %p cancelling send - "
+                         "crypto or second save failed.",
                          SRCNAME, __func__, m_object);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
@@ -524,8 +480,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
 
-          log_debug ("%s:%s: Passing write event. Subject: %s Body: %s MsgCls: %s",
-                     SRCNAME, __func__, m_mail->get_subject().c_str(), m_mail->get_body().c_str(), get_oom_string (m_object, "MessageClass"));
           log_debug ("%s:%s: Passing write event.",
                      SRCNAME, __func__);
           m_mail->set_needs_save (false);

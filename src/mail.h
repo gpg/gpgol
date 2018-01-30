@@ -55,6 +55,7 @@ public:
       NeedsActualCrypt,
       NeedsUpdateInOOM,
       NeedsSecondAfterWrite,
+      NeedsUpdateInMAPI,
       WantsSend
     };
 
@@ -373,6 +374,11 @@ public:
   void update_crypt_mapi ();
 
   /** Update OOM data after encryption. */
+  /** Update OOM data after encryption.
+
+    Checks for plain text leaks and
+    does not advance crypt state if body can't be cleaned.
+  */
   void update_crypt_oom ();
 
 private:
