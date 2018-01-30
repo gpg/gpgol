@@ -152,7 +152,7 @@ check_protocol (protocol_t protocol)
    to is stored at STREAM and the attachment object itself is
    returned.  The caller needs to call SaveChanges.  Returns NULL on
    failure in which case STREAM will be set to NULL.  */
-static LPATTACH
+LPATTACH
 create_mapi_attachment (LPMESSAGE message, sink_t sink)
 {
   HRESULT hr;
@@ -304,7 +304,7 @@ write_multistring (sink_t sink, const char *text1, ...)
 
 /* Helper to write a boundary to the output sink.  The leading LF
    will be written as well.  */
-static int
+int
 write_boundary (sink_t sink, const char *boundary, int lastone)
 {
   int rc = write_string (sink, "\r\n--");
@@ -1084,7 +1084,7 @@ delete_all_attachments (LPMESSAGE message, mapi_attach_item_t *table)
    SINK needs to be passed as well and will also be closed.  Note that
    the address of ATTACH is expected so that the fucntion can set it
    to NULL. */
-static int
+int
 close_mapi_attachment (LPATTACH *attach, sink_t sink)
 {
   HRESULT hr;
@@ -1121,7 +1121,7 @@ close_mapi_attachment (LPATTACH *attach, sink_t sink)
    SINK needs to be passed as well and will also be closed.  Note that
    the address of ATTACH is expected so that the fucntion can set it
    to NULL. */
-static void
+void
 cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 {
   LPSTREAM stream = sink ? (LPSTREAM) sink->cb_data : NULL;
@@ -1143,9 +1143,9 @@ cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 
 
 /* Do the final processing for a message. */
-static int
+int
 finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
-                  protocol_t protocol, int encrypt, bool is_inline = false)
+                  protocol_t protocol, int encrypt, bool is_inline)
 {
   HRESULT hr = 0;
   SPropValue prop;
@@ -1883,9 +1883,9 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
 /* Helper from mime_encrypt.  BOUNDARY is a buffer of at least
    BOUNDARYSIZE+1 bytes which will be set on return from that
    function.  */
-static int
+int
 create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
-                              bool is_inline = false)
+                              bool is_inline)
 {
   int rc;
 

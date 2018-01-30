@@ -76,6 +76,20 @@ int count_usable_attachments (mapi_attach_item_t *table);
 int add_body_and_attachments (sink_t sink, LPMESSAGE message,
                               mapi_attach_item_t *att_table, Mail *mail,
                               const char *body, int n_att_usable);
+int create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
+                              bool is_inline = false);
+
+/* Helper to write a boundary to the output sink.  The leading LF
+   will be written as well.  */
+int write_boundary (sink_t sink, const char *boundary, int lastone);
+
+LPATTACH create_mapi_attachment (LPMESSAGE message, sink_t sink);
+int close_mapi_attachment (LPATTACH *attach, sink_t sink);
+int finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
+                      protocol_t protocol, int encrypt, bool is_inline = false);
+void cancel_mapi_attachment (LPATTACH *attach, sink_t sink);
+
+
 #ifdef __cplusplus
 }
 #endif

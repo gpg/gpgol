@@ -275,11 +275,127 @@ CryptController::do_crypto ()
   return 0;
 }
 
+static int
+write_data (sink_t sink, GpgME::Data &data)
+{
+  if (!sink || !sink->writefnc)
+    {
+      return -1;
+    }
+
+  char buf[4096];
+  size_t nread;
+  data.seek (0, SEEK_SET);
+  while ((nread = data.read (buf, 4096)) > 0)
+    {
+      sink->writefnc (sink, buf, nread);
+    }
+
+  return 0;
+}
+
+static int
+create_encrypt_attach (sink_t sink, protocol_t protocol,
+                       GpgME::Data &encryptedData)
+{
+  char boundary[BOUNDARYSIZE+1];
+  int rc = create_top_encryption_header (sink, protocol, boundary,
+                                         false);
+  // From here on use goto failure pattern.
+  if (rc)
+    {
+      log_error ("%s:%s: Failed to create top header.",
+                 SRCNAME, __func__);
+      return rc;
+    }
+
+  rc = write_data (sink, encryptedData);
+  if (rc)
+    {
+      log_error ("%s:%s: Failed to create top header.",
+                 SRCNAME, __func__);
+      return rc;
+    }
+
+  /* Write the final boundary (for OpenPGP) and finish the attachment.  */
+  if (*boundary && (rc = write_boundary (sink, boundary, 1)))
+    {
+      log_error ("%s:%s: Failed to write boundary.",
+                 SRCNAME, __func__);
+    }
+  return rc;
+}
+
 int
 CryptController::update_mail_mapi ()
 {
   log_debug ("%s:%s:", SRCNAME, __func__);
-  return 0;
+
+  if (m_inline)
+    {
+      // Nothing to do for inline.
+      return 0;
+    }
+
+  LPMESSAGE message = get_oom_base_message (m_mail->item());
+  if (!message)
+    {
+      log_error ("%s:%s: Failed to obtain message.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  mapi_attach_item_t *att_table = mapi_create_attach_table (message, 0);
+
+  // Set up the sink object for our MSOXSMIME attachment.
+  struct sink_s sinkmem;
+  sink_t sink = &sinkmem;
+  memset (sink, 0, sizeof *sink);
+  sink->cb_data = &m_input;
+  sink->writefnc = sink_data_write;
+
+  LPATTACH attach = create_mapi_attachment (message, sink);
+  if (!attach)
+    {
+      log_error ("%s:%s: Failed to create moss attach.",
+                 SRCNAME, __func__);
+      gpgol_release (message);
+      return -1;
+    }
+
+  protocol_t protocol = m_proto == GpgME::CMS ?
+                                   PROTOCOL_SMIME :
+                                   PROTOCOL_OPENPGP;
+  int rc = 0;
+  if (m_encrypt)
+    {
+      rc = create_encrypt_attach (sink, protocol, m_output);
+    }
+
+  // Close our attachment
+  if (!rc)
+    {
+      rc = close_mapi_attachment (&attach, sink);
+    }
+
+  // Set message class etc.
+  if (!rc)
+    {
+      rc = finalize_message (message, att_table, protocol, 1, false);
+    }
+
+  // only on error.
+  if (rc)
+    {
+      cancel_mapi_attachment (&attach, sink);
+    }
+
+  // cleanup
+  mapi_release_attach_table (att_table);
+  gpgol_release (attach);
+  gpgol_release (message);
+
+  return rc;
 }
 
 std::string

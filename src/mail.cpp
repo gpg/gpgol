@@ -2510,7 +2510,32 @@ Mail::update_crypt_mapi()
 {
   log_debug ("%s:%s: Update crypt mapi",
              SRCNAME, __func__);
-  m_crypt_state = WantsSend;
+  if (m_crypt_state != NeedsUpdateInMAPI)
+    {
+      log_debug ("%s:%s: invalid state %i",
+                 SRCNAME, __func__, m_crypt_state);
+      return;
+    }
+  if (!m_crypter)
+    {
+      log_error ("%s:%s: No crypter.",
+                 SRCNAME, __func__);
+      m_crypt_state = NoCryptMail;
+      return;
+    }
+
+  if (m_crypter->update_mail_mapi ())
+    {
+      log_error ("%s:%s: Failed to update MAPI after crypt",
+                 SRCNAME, __func__);
+      m_crypt_state = NoCryptMail;
+    }
+  else
+    {
+      m_crypt_state = WantsSend;
+    }
+  // We don't need the crypter anymore.
+  m_crypter = nullptr;
 }
 
 void
