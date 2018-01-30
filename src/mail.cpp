@@ -33,6 +33,7 @@
 #include "gpgoladdin.h"
 #include "mymapitags.h"
 #include "parsecontroller.h"
+#include "cryptcontroller.h"
 #include "gpgolstr.h"
 #include "windowmessages.h"
 #include "mlang-charset.h"
@@ -135,7 +136,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_cached_recipients(nullptr),
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
-    m_is_gsuite(false)
+    m_is_gsuite(false),
+    m_crypt_state(NoCryptMail)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -726,6 +728,68 @@ do_parsing (LPVOID arg)
   return 0;
 }
 
+static DWORD WINAPI
+do_crypt (LPVOID arg)
+{
+  gpgrt_lock_lock (&dtor_lock);
+  /* We lock with mail dtors so we can be sure the mail->parser
+     call is valid. */
+  Mail *mail = (Mail *)arg;
+  if (!Mail::is_valid_ptr (mail))
+    {
+      log_debug ("%s:%s: canceling crypt for: %p already deleted",
+                 SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&dtor_lock);
+      return 0;
+    }
+  if (mail->crypt_state() != Mail::NeedsActualCrypt)
+    {
+      log_debug ("%s:%s: invalid state %i",
+                 SRCNAME, __func__, mail->crypt_state ());
+      gpgrt_lock_unlock (&dtor_lock);
+      return -1;
+    }
+
+  /* This takes a shared ptr of parser. So the parser is
+     still valid when the mail is deleted. */
+  auto crypter = mail->crypter();
+  gpgrt_lock_unlock (&dtor_lock);
+
+  if (!crypter)
+    {
+      log_error ("%s:%s: no crypter found for mail: %p",
+                 SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&parser_lock);
+      return -1;
+    }
+
+  /* This can take a while */
+  int rc = crypter->do_crypto();
+
+  gpgrt_lock_lock (&dtor_lock);
+  if (!Mail::is_valid_ptr (mail))
+    {
+      log_debug ("%s:%s: aborting crypt for: %p already deleted",
+                 SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&dtor_lock);
+      return 0;
+    }
+
+  if (rc)
+    {
+      log_debug ("%s:%s: crypto failed for: %p with: %i",
+                 SRCNAME, __func__, arg, rc);
+      gpgrt_lock_unlock (&dtor_lock);
+      return rc;
+    }
+
+  mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
+
+  do_in_ui_thread (CRYPTO_DONE, arg);
+  gpgrt_lock_unlock (&dtor_lock);
+  return 0;
+}
+
 bool
 Mail::is_crypto_mail() const
 {
@@ -981,11 +1045,15 @@ Mail::parsing_done()
 }
 
 int
-Mail::encrypt_sign ()
+Mail::encrypt_sign_start ()
 {
-  int err = -1,
-      flags = 0;
-  protocol_t proto = opt.enable_smime ? PROTOCOL_UNKNOWN : PROTOCOL_OPENPGP;
+  if (m_crypt_state != NeedsActualCrypt)
+    {
+      log_debug ("%s:%s: invalid state %i",
+                 SRCNAME, __func__, m_crypt_state);
+      return -1;
+    }
+  int flags = 0;
   if (!needs_crypto())
     {
       return 0;
@@ -995,9 +1063,10 @@ Mail::encrypt_sign ()
     {
       log_error ("%s:%s: Failed to get base message.",
                  SRCNAME, __func__);
-      return err;
+      return -1;
     }
   flags = get_gpgol_draft_info_flags (message);
+  gpgol_release (message);
 
   const auto window = get_active_hwnd ();
 
@@ -1068,35 +1137,29 @@ Mail::encrypt_sign ()
 
   m_do_inline = m_is_gsuite ? true : opt.inline_pgp;
 
-  EnableWindow (window, FALSE);
-  if (flags == 3)
+  if (m_crypter)
     {
-      log_debug ("%s:%s: Sign / Encrypting message",
-                 SRCNAME, __func__);
-      err = message_sign_encrypt (message, proto,
-                                  NULL, get_sender ().c_str (), this);
+      log_error ("%s:%s: Crypter already exists for mail %p",
+                 SRCNAME, __func__, this);
+      return -1;
     }
-  else if (flags == 2)
+
+  GpgME::Protocol proto = opt.enable_smime ? GpgME::UnknownProtocol: GpgME::OpenPGP;
+  m_crypter = std::shared_ptr <CryptController> (new CryptController (this, flags & 1,
+                                                                      flags & 2,
+                                                                      m_do_inline, proto));
+
+  if (m_crypter->collect_data ())
     {
-      err = message_sign (message, proto,
-                          NULL, get_sender ().c_str (), this);
+      log_error ("%s:%s: Crypter for mail %p failed to collect data.",
+                 SRCNAME, __func__, this);
+      return -1;
     }
-  else if (flags == 1)
-    {
-      err = message_encrypt (message, proto,
-                             NULL, get_sender ().c_str (), this);
-    }
-  else
-    {
-      log_debug ("%s:%s: Unknown flags for crypto: %i",
-                 SRCNAME, __func__, flags);
-    }
-  log_debug ("%s:%s: Status: %i",
-             SRCNAME, __func__, err);
-  EnableWindow (window, TRUE);
-  gpgol_release (message);
-  m_crypt_successful = !err;
-  return err;
+  //EnableWindow (window, FALSE);
+  CloseHandle(CreateThread (NULL, 0, do_crypt,
+                            (LPVOID) this, 0,
+                            NULL));
+  return 0;
 }
 
 int
@@ -2430,4 +2493,20 @@ Mail::inline_body_to_body()
   int ret = put_oom_string (m_mailitem, "Body", m_inline_body.c_str ());
   m_inline_body = std::string();
   return ret;
+}
+
+void
+Mail::update_crypt_mapi()
+{
+  log_debug ("%s:%s: Update crypt oom",
+             SRCNAME, __func__);
+  m_crypt_state = WantsSend;
+}
+
+void
+Mail::update_crypt_oom()
+{
+  log_debug ("%s:%s: Update crypt oom",
+             SRCNAME, __func__);
+  m_crypt_state = NeedsSecondAfterWrite;
 }

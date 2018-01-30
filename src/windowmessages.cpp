@@ -88,6 +88,32 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               Mail::close (mail);
               break;
             }
+          case (CRYPTO_DONE):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: Crypto done for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+              // modify the mail.
+              if (mail->crypt_state (Mail::NeedsUpdateInOOM))
+                {
+                  mail->update_crypt_oom();
+                }
+              if (mail->crypt_state (Mail::NeedsSecondAfterWrite))
+                {
+                  // Save the Mail
+                  log_debug ("%s:%s: Crypto done for %p Invoking second save.",
+                             SRCNAME, __func__, mail);
+                  invoke_oom_method (mail->item (), "Save", NULL);
+                  log_debug ("%s:%s: Second save done for %p Invoking second send.",
+                             SRCNAME, __func__, mail);
+                }
+              // Finaly this should pass.
+              invoke_oom_method (mail->item (), "Send", NULL);
+            }
           default:
             log_debug ("Unknown msg");
         }

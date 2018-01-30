@@ -32,6 +32,7 @@
 #include <future>
 
 class ParseController;
+class CryptController;
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -47,6 +48,16 @@ class ParseController;
 class Mail
 {
 public:
+  enum CryptState
+    {
+      NoCryptMail,
+      NeedsFirstAfterWrite,
+      NeedsActualCrypt,
+      NeedsUpdateInOOM,
+      NeedsSecondAfterWrite,
+      WantsSend
+    };
+
   /** @brief Construct a mail object for the item.
     *
     * This also installs the event sink for this item.
@@ -134,13 +145,13 @@ public:
    * @returns 0 on success. */
   int decrypt_verify ();
 
-  /** @brief do crypto operations as selected by the user.
+  /** @brief start crypto operations as selected by the user.
    *
    * Initiates the crypto operations according to the gpgol
    * draft info flags.
    *
    * @returns 0 on success. */
-  int encrypt_sign ();
+  int encrypt_sign_start ();
 
   /** @brief Necessary crypto operations were completed successfully. */
   bool crypto_successful () { return !needs_crypto() || m_crypt_successful; }
@@ -225,6 +236,10 @@ public:
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
   std::shared_ptr<ParseController> parser () { return m_parser; }
+
+  /** @brief get the associated cryptcontroller.
+    only valid while the crypting happens. */
+  std::shared_ptr<CryptController> crypter () { return m_crypter; }
 
   /** To be called from outside once the paser was done.
    In Qt this would be a slot that is called once it is finished
@@ -347,6 +362,19 @@ public:
 
   /** Set the inline body as OOM body property. */
   int inline_body_to_body ();
+
+  /** Get the crypt state */
+  CryptState crypt_state () const {return m_crypt_state;}
+
+  /** Set the crypt state */
+  void set_crypt_state (CryptState state) {m_crypt_state = state;}
+
+  /** Update MAPI data after encryption. */
+  void update_crypt_mapi ();
+
+  /** Update OOM data after encryption. */
+  void update_crypt_oom ();
+
 private:
   void update_categories ();
   void update_body ();
@@ -373,6 +401,7 @@ private:
   char **m_cached_recipients;
   msgtype_t m_type; /* Our messagetype as set in mapi */
   std::shared_ptr <ParseController> m_parser;
+  std::shared_ptr <CryptController> m_crypter;
   GpgME::VerificationResult m_verify_result;
   GpgME::DecryptionResult m_decrypt_result;
   GpgME::Signature m_sig;
@@ -382,5 +411,6 @@ private:
   bool m_do_inline;
   bool m_is_gsuite; /* Are we on a gsuite account */
   std::string m_inline_body;
+  CryptState m_crypt_state;
 };
 #endif // MAIL_H

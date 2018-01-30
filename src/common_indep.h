@@ -297,6 +297,7 @@ void log_hexdump (const void *buf, size_t buflen, const char *fmt,
 #define log_oom if (opt.enable_debug & DBG_OOM) log_debug
 #define log_oom_extra if (opt.enable_debug & DBG_OOM_EXTRA) log_debug
 #define log_mime_parser if (opt.enable_debug & DBG_MIME_PARSER) log_debug
+#define log_mime_data if (opt.enable_debug & DBG_MIME_DATA) log_debug
 
 #define gpgol_release(X) \
 { \

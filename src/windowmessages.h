@@ -42,7 +42,8 @@ typedef enum _gpgol_wmsg_type
                       to the mail object. */
   RECIPIENT_ADDED = 3, /* A recipient was added. Data should be ptr
                           to mail */
-  CLOSE = 4, /* Send the message in the next event loop. */
+  CLOSE = 4, /* Close the message in the next event loop. */
+  CRYPTO_DONE = 5, /* Sign / Encrypt done. */
 } gpgol_wmsg_type;
 
 typedef struct

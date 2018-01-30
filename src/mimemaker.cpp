@@ -1403,7 +1403,7 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
 }
 
 /* Add the body and attachments. Does multipart handling. */
-static int
+int
 add_body_and_attachments (sink_t sink, LPMESSAGE message,
                           mapi_attach_item_t *att_table, Mail *mail,
                           const char *body, int n_att_usable)

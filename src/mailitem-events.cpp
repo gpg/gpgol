@@ -348,11 +348,31 @@ EVENT_SINK_INVOKE(MailItemEvents)
                         SRCNAME, __func__);
              break;
            }
-          m_mail->update_oom_data ();
-          m_mail->set_needs_encrypt (true);
 
-          invoke_oom_method (m_object, "Save", NULL);
-          if (m_mail->crypto_successful ())
+          if (m_mail->crypt_state () == Mail::NoCryptMail &&
+              m_mail->needs_crypto ())
+            {
+              // First contact with a mail to encrypt update
+              // state and oom data.
+              m_mail->update_oom_data ();
+              m_mail->set_crypt_state (Mail::NeedsFirstAfterWrite);
+
+              // Save the Mail
+              invoke_oom_method (m_object, "Save", NULL);
+
+              // The afterwrite in the save should have triggered
+              // the encryption. We cancel send for our asyncness.
+
+              // Cancel send
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+            }
+
+          if (m_mail->crypt_state () == Mail::NeedsUpdateInOOM)
+            {
+              m_mail->update_crypt_oom ();
+            }
+
+          if (m_mail->crypt_state () == Mail::WantsSend)
             {
               /* Fishy behavior catcher: Sometimes the save does not clean
                  out the body. Weird. Happened at least for one user.
@@ -515,9 +535,17 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->needs_encrypt ())
+          if (m_mail->crypt_state () == Mail::NeedsFirstAfterWrite)
             {
-              m_mail->encrypt_sign ();
+              /* Seen the first after write. Advance the state */
+              m_mail->set_crypt_state (Mail::NeedsActualCrypt);
+              m_mail->encrypt_sign_start ();
+              return S_OK;
+            }
+          if (m_mail->crypt_state () == Mail::NeedsSecondAfterWrite)
+            {
+              m_mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
+              m_mail->update_crypt_mapi ();
               return S_OK;
             }
           break;
