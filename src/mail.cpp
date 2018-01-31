@@ -138,7 +138,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_do_inline(false),
     m_is_gsuite(false),
     m_crypt_state(NoCryptMail),
-    m_window(nullptr)
+    m_window(nullptr),
+    m_is_inline_response(false)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -785,9 +786,17 @@ do_crypt (LPVOID arg)
       return rc;
     }
 
-  mail->set_crypt_state (Mail::NeedsUpdateInOOM);
-
-  do_in_ui_thread (CRYPTO_DONE, arg);
+  if (!mail->is_inline_response ())
+    {
+      mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+      do_in_ui_thread (CRYPTO_DONE, arg);
+    }
+  else
+    {
+      mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
+      mail->update_crypt_mapi ();
+      mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+    }
   gpgrt_lock_unlock (&dtor_lock);
   return 0;
 }
@@ -1157,9 +1166,17 @@ Mail::encrypt_sign_start ()
                  SRCNAME, __func__, this);
       return -1;
     }
-  CloseHandle(CreateThread (NULL, 0, do_crypt,
-                            (LPVOID) this, 0,
-                            NULL));
+
+  if (!m_is_inline_response)
+    {
+      CloseHandle(CreateThread (NULL, 0, do_crypt,
+                                (LPVOID) this, 0,
+                                NULL));
+    }
+  else
+    {
+      do_crypt (this);
+    }
   return 0;
 }
 
@@ -2600,4 +2617,50 @@ Mail::set_window_enabled (bool value)
              SRCNAME, __func__, m_window, value);
 
   EnableWindow (m_window, value ? TRUE : FALSE);
+}
+
+bool
+Mail::check_inline_response ()
+{
+  m_is_inline_response = false;
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+  if (!app)
+    {
+      TRACEPOINT;
+      return false;
+    }
+
+  LPDISPATCH explorer = get_oom_object (app, "ActiveExplorer");
+
+  if (!explorer)
+    {
+      TRACEPOINT;
+      return false;
+    }
+
+  LPDISPATCH inlineResponse = get_oom_object (explorer, "ActiveInlineResponse");
+  gpgol_release (explorer);
+
+  if (!inlineResponse)
+    {
+      return false;
+    }
+
+  // We have inline response
+  // Check if we are it. It's a bit naive but meh. Worst case
+  // is that we think inline response too often and do sync
+  // crypt where we could do async crypt.
+  char * inlineSubject = get_oom_string (inlineResponse, "Subject");
+  gpgol_release (inlineResponse);
+
+  const auto subject = get_subject ();
+  if (inlineResponse && !subject.empty() && !strcmp (subject.c_str (), inlineSubject))
+    {
+      log_debug ("%s:%s: Detected inline response for '%p'",
+                 SRCNAME, __func__, this);
+      m_is_inline_response = true;
+    }
+  xfree (inlineSubject);
+
+  return m_is_inline_response;
 }

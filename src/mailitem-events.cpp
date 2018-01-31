@@ -358,17 +358,35 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->set_window_enabled (false);
               m_mail->set_crypt_state (Mail::NeedsFirstAfterWrite);
 
+              // Check inline response state before the write.
+              m_mail->check_inline_response ();
+
               log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
                          SRCNAME, __func__, m_mail);
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
-              // The afterwrite in the save should have triggered
-              // the encryption. We cancel send for our asyncness.
-
-              // Cancel send
-              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-              break;
+              if (!m_mail->is_inline_response ())
+                {
+                  // The afterwrite in the save should have triggered
+                  // the encryption. We cancel send for our asyncness.
+                  // Cancel send
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  break;
+                }
+              else
+                {
+                  // For inline response we can't trigger send programatically
+                  // so we do the encryption in sync.
+                  if (m_mail->crypt_state () == Mail::NeedsUpdateInOOM)
+                    {
+                      m_mail->update_crypt_oom ();
+                    }
+                  if (m_mail->crypt_state () == Mail::NeedsSecondAfterWrite)
+                    {
+                      m_mail->set_crypt_state (Mail::WantsSend);
+                    }
+                }
             }
 
           if (m_mail->crypt_state () == Mail::WantsSend)

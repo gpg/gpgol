@@ -387,6 +387,22 @@ public:
     enable. */
   void set_window_enabled (bool value);
 
+  /** Determine if the mail is an inline response.
+
+    Call check_inline_response first to update the state
+    from the OOM.
+
+    We need synchronous encryption for inline responses. */
+  bool is_inline_response () { return m_is_inline_response; }
+
+  /** Check through OOM if the current mail is an inline
+    response.
+
+    Caches the state which can then be queried through
+    is_inline_response
+  */
+  bool check_inline_response ();
+
 private:
   void update_categories ();
   void update_body ();
@@ -425,5 +441,6 @@ private:
   std::string m_inline_body;
   CryptState m_crypt_state;
   HWND m_window;
+  bool m_is_inline_response;
 };
 #endif // MAIL_H
