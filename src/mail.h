@@ -373,13 +373,19 @@ public:
   /** Update MAPI data after encryption. */
   void update_crypt_mapi ();
 
-  /** Update OOM data after encryption. */
   /** Update OOM data after encryption.
 
     Checks for plain text leaks and
     does not advance crypt state if body can't be cleaned.
   */
   void update_crypt_oom ();
+
+  /** Enable / Disable the window of this mail.
+
+    When value is false the active window will
+    be disabled and the handle stored for a later
+    enable. */
+  void set_window_enabled (bool value);
 
 private:
   void update_categories ();
@@ -418,5 +424,6 @@ private:
   bool m_is_gsuite; /* Are we on a gsuite account */
   std::string m_inline_body;
   CryptState m_crypt_state;
+  HWND m_window;
 };
 #endif // MAIL_H

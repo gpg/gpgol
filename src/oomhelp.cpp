@@ -1749,8 +1749,16 @@ get_active_hwnd ()
   LPDISPATCH activeWindow = get_oom_object (app, "ActiveWindow");
   if (!activeWindow)
     {
-      TRACEPOINT;
-      return nullptr;
+      activeWindow = get_oom_object (app, "ActiveInspector");
+      if (!activeWindow)
+        {
+          activeWindow = get_oom_object (app, "ActiveExplorer");
+          if (!activeWindow)
+            {
+              TRACEPOINT;
+              return nullptr;
+            }
+        }
     }
 
   /* Both explorer and inspector have this. */

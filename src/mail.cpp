@@ -137,7 +137,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false),
-    m_crypt_state(NoCryptMail)
+    m_crypt_state(NoCryptMail),
+    m_window(nullptr)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -763,7 +764,6 @@ do_crypt (LPVOID arg)
       return -1;
     }
 
-  /* This can take a while */
   int rc = crypter->do_crypto();
 
   gpgrt_lock_lock (&dtor_lock);
@@ -774,6 +774,8 @@ do_crypt (LPVOID arg)
       gpgrt_lock_unlock (&dtor_lock);
       return 0;
     }
+
+  mail->set_window_enabled (true);
 
   if (rc)
     {
@@ -1155,7 +1157,6 @@ Mail::encrypt_sign_start ()
                  SRCNAME, __func__, this);
       return -1;
     }
-  //EnableWindow (window, FALSE);
   CloseHandle(CreateThread (NULL, 0, do_crypt,
                             (LPVOID) this, 0,
                             NULL));
@@ -2586,4 +2587,17 @@ Mail::update_crypt_oom()
     }
   m_crypt_state = NeedsSecondAfterWrite;
   return;
+}
+
+void
+Mail::set_window_enabled (bool value)
+{
+  if (!value)
+    {
+      m_window = get_active_hwnd ();
+    }
+  log_debug ("%s:%s: enable window %p %i",
+             SRCNAME, __func__, m_window, value);
+
+  EnableWindow (m_window, value ? TRUE : FALSE);
 }

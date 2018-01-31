@@ -355,10 +355,11 @@ EVENT_SINK_INVOKE(MailItemEvents)
               // First contact with a mail to encrypt update
               // state and oom data.
               m_mail->update_oom_data ();
+              m_mail->set_window_enabled (false);
               m_mail->set_crypt_state (Mail::NeedsFirstAfterWrite);
 
-             log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
-                        SRCNAME, __func__, m_mail);
+              log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
+                         SRCNAME, __func__, m_mail);
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
