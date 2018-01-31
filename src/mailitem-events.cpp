@@ -373,7 +373,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
           if (m_mail->crypt_state () == Mail::WantsSend)
             {
-#if 0
               /* Now we adress T3656 if Outlooks internal S/MIME is somehow
                * mixed in (even if it is enabled and then disabled) it might
                * cause strange behavior in that it sends the plain message
@@ -425,7 +424,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 {
                   break;
                 }
-#endif
               log_debug ("%s:%s: Passing send event for message %p.",
                          SRCNAME, __func__, m_object);
               break;
