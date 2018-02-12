@@ -195,8 +195,15 @@ public:
    * If the sender address has not been set through update_sender this
    * calls update_sender before returning the sender.
    *
-   * @returns A reference to the utf8 sender address. Or NULL. */
+   * @returns A reference to the utf8 sender address. Or an empty string. */
   std::string get_sender ();
+
+  /** @brief get sender SMTP address (UTF-8 encoded).
+   *
+   * Like get_sender but ensures not to touch oom or mapi
+   *
+   * @returns A reference to the utf8 sender address. Or an empty string. */
+  std::string get_cached_sender ();
 
   /** @brief get the subject string (UTF-8 encoded).
     *

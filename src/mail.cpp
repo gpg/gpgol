@@ -1340,6 +1340,12 @@ Mail::get_sender ()
   return m_sender;
 }
 
+std::string
+Mail::get_cached_sender ()
+{
+  return m_sender;
+}
+
 int
 Mail::close_all_mails ()
 {

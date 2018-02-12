@@ -38,6 +38,11 @@
 #else
 # define _(a) a
 #endif
+
+#include <sstream>
+
+#define DEBUG_RESOLVER 1
+
 static int
 sink_data_write (sink_t sink, const void *data, size_t datalen)
 {
@@ -150,25 +155,173 @@ CryptController::collect_data ()
   return 0;
 }
 
+static void
+release_recipient_array (char **recipients)
+{
+  int idx;
+
+  if (recipients)
+    {
+      for (idx=0; recipients[idx]; idx++)
+        xfree (recipients[idx]);
+      xfree (recipients);
+    }
+}
+
+int
+CryptController::parse_keys (GpgME::Data &resolverOutput)
+{
+  // Todo: Use Data::toString
+  std::istringstream ss(resolverOutput.toString());
+  std::string line;
+
+  while (std::getline (ss, line))
+    {
+      if (line == "cancel")
+        {
+          log_debug ("%s:%s: resolver canceled",
+                     SRCNAME, __func__);
+          return -1;
+        }
+      if (line == "unencrypted")
+        {
+          log_debug ("%s:%s: FIXME resolver wants unencrypted",
+                     SRCNAME, __func__);
+          return -1;
+        }
+      std::istringstream lss (line);
+
+      // First is sig or enc
+      std::string what;
+      std::string how;
+      std::string fingerprint;
+
+      lss >> what;
+      lss >> how;
+      lss >> fingerprint;
+
+      log_debug ("Data what: %s how: %s fingerprint: %s", what.c_str (), how.c_str (), fingerprint.c_str ());
+    }
+  return -1;
+}
+
 int
 CryptController::resolve_keys ()
 {
   m_recipients.clear();
 
-  /*XXX Temporary hack part do key resolution here. */
-  GpgME::Error err;
-  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(GpgME::OpenPGP));
-  const auto key = ctx->key ("EB4C5A5B7AD6C8527F050BAF1ED4F0BC6CFBC912", err, true);
+  std::vector<std::string> args;
 
-  if (key.isNull())
+  // Collect the arguments
+  char *gpg4win_dir = get_gpg4win_dir ();
+  if (!gpg4win_dir)
     {
-      log_error ("%s:%s: Failure to resolve keys.",
+      TRACEPOINT;
+      return -1;
+    }
+  const auto resolver = std::string (gpg4win_dir) + "\\bin\\resolver.exe";
+  args.push_back (resolver);
+
+  log_debug ("%s:%s: resolving keys with '%s'",
+                 SRCNAME, __func__, resolver.c_str ());
+
+  // We want debug output as OutputDebugString
+  args.push_back (std::string ("--debug"));
+
+  if (m_sign)
+    {
+      args.push_back (std::string ("--sign"));
+    }
+  const auto cached_sender = m_mail->get_cached_sender ();
+  if (cached_sender.empty())
+    {
+      log_error ("%s:%s: resolve keys without sender.",
                  SRCNAME, __func__);
+    }
+  else
+    {
+      args.push_back (std::string ("--sender"));
+      args.push_back (cached_sender);
+    }
+
+  if (m_encrypt)
+    {
+      args.push_back (std::string ("--encrypt"));
+    }
+
+  if (!opt.autoresolve)
+    {
+      args.push_back (std::string ("--alwaysShow"));
+    }
+
+  // Get the recipients that are cached from OOM
+  char **recipients = m_mail->take_cached_recipients ();
+  for (size_t i = 0; recipients && recipients[i]; i++)
+    {
+      args.push_back (GpgME::UserID::addrSpecFromString (recipients[i]));
+    }
+
+  release_recipient_array (recipients);
+
+  // Convert our collected vector to c strings
+  // It's a bit overhead but should be quick for such small
+  // data.
+  char **cargs = (char**) xmalloc (sizeof (char*) * (args.size() + 1));
+  for (size_t i = 0; i < args.size(); i++)
+    {
+      gpgrt_asprintf (cargs + i, "%s", args[i].c_str());
+    }
+  cargs[args.size()] = NULL;
+
+  // Args are prepared. Spawn the resolver.
+  auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+
+  if (!ctx)
+    {
+      // can't happen
+      release_recipient_array (cargs);
+      TRACEPOINT;
       return -1;
     }
 
-  m_recipients.push_back(key);
-  m_signer_key = key;
+  GpgME::Data mystdin (GpgME::Data::null), mystdout, mystderr;
+
+#ifdef DEBUG_RESOLVER
+  log_debug ("Spawning args:");
+  for (size_t i = 0; cargs && cargs[i]; i++)
+    {
+      log_debug ("%i: '%s'", i, cargs[i]);
+    }
+#endif
+
+  GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char**> (cargs),
+                                 mystdin, mystdout, mystderr,
+                                 (GpgME::Context::SpawnFlags) (
+                                  GpgME::Context::SpawnAllowSetFg |
+                                  GpgME::Context::SpawnShowWindow));
+
+#ifdef DEBUG_RESOLVER
+  log_debug ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
+  log_debug ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
+#endif
+
+  release_recipient_array (cargs);
+
+  if (err)
+    {
+      log_debug ("%s:%s: Resolver spawn finished Err code: %i asString: %s",
+                 SRCNAME, __func__, err.code(), err.asString());
+    }
+
+  if (parse_keys (mystdout))
+    {
+      log_debug ("%s:%s: Failed to parse / resolve keys.",
+                 SRCNAME, __func__);
+      log_debug ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
+      log_debug ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
+      return -1;
+    }
+
   return 0;
 }
 

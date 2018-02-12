@@ -60,6 +60,7 @@ public:
 
 private:
   int resolve_keys ();
+  int parse_keys (GpgME::Data &resolverOutput);
 
 private:
   Mail *m_mail;
