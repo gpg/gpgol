@@ -841,6 +841,12 @@ Mail::update_body()
               log_error ("%s:%s: Failed to modify html body of item.",
                          SRCNAME, __func__);
             }
+          else
+            {
+              log_debug ("%s:%s: Set error html to: '%s'",
+                         SRCNAME, __func__, error.c_str ());
+            }
+
         }
       else
         {
@@ -849,6 +855,11 @@ Mail::update_body()
             {
               log_error ("%s:%s: Failed to modify html body of item.",
                          SRCNAME, __func__);
+            }
+          else
+            {
+              log_debug ("%s:%s: Set error plain to: '%s'",
+                         SRCNAME, __func__, error.c_str ());
             }
         }
       return;
