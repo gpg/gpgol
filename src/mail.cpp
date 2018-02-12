@@ -748,6 +748,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, mail->crypt_state ());
+      mail->set_window_enabled (true);
       gpgrt_lock_unlock (&dtor_lock);
       return -1;
     }
@@ -762,6 +763,7 @@ do_crypt (LPVOID arg)
       log_error ("%s:%s: no crypter found for mail: %p",
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&parser_lock);
+      mail->set_window_enabled (true);
       return -1;
     }
 
@@ -782,6 +784,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i",
                  SRCNAME, __func__, arg, rc);
+      mail->set_crypt_state (Mail::NoCryptMail);
       gpgrt_lock_unlock (&dtor_lock);
       return rc;
     }
@@ -1148,22 +1151,19 @@ Mail::encrypt_sign_start ()
 
   m_do_inline = m_is_gsuite ? true : opt.inline_pgp;
 
-  if (m_crypter)
-    {
-      log_error ("%s:%s: Crypter already exists for mail %p",
-                 SRCNAME, __func__, this);
-      return -1;
-    }
-
   GpgME::Protocol proto = opt.enable_smime ? GpgME::UnknownProtocol: GpgME::OpenPGP;
   m_crypter = std::shared_ptr <CryptController> (new CryptController (this, flags & 1,
                                                                       flags & 2,
                                                                       m_do_inline, proto));
 
+  // Careful from here on we have to check every
+  // error condition with window enabling again.
+  set_window_enabled (false);
   if (m_crypter->collect_data ())
     {
       log_error ("%s:%s: Crypter for mail %p failed to collect data.",
                  SRCNAME, __func__, this);
+      set_window_enabled (true);
       return -1;
     }
 

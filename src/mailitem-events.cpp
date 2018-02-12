@@ -355,7 +355,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
               // First contact with a mail to encrypt update
               // state and oom data.
               m_mail->update_oom_data ();
-              m_mail->set_window_enabled (false);
               m_mail->set_crypt_state (Mail::NeedsFirstAfterWrite);
 
               // Check inline response state before the write.
