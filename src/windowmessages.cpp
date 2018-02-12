@@ -36,7 +36,7 @@ static HWND g_responder_window = NULL;
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  if (message == WM_USER + 1)
+  if (message == WM_USER + 42)
     {
       wm_ctx_t *ctx = (wm_ctx_t *) lParam;
       log_debug ("%s:%s: Recieved user msg: %i",
@@ -140,7 +140,7 @@ send_msg_to_ui_thread (wm_ctx_t *ctx)
                SRCNAME, __func__);
     return -1;
   }
-  SendMessage (responder, WM_USER + 1, 0, (LPARAM) ctx);
+  SendMessage (responder, WM_USER + 42, 0, (LPARAM) ctx);
   return 0;
 }
 
