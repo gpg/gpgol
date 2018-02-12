@@ -504,8 +504,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
 
-          log_debug ("%s:%s: Passing write event. Subject: %s Body: %s MsgCls: %s",
-                     SRCNAME, __func__, m_mail->get_subject().c_str(), m_mail->get_body().c_str(), get_oom_string (m_object, "MessageClass"));
           log_debug ("%s:%s: Passing write event.",
                      SRCNAME, __func__);
           m_mail->set_needs_save (false);
