@@ -700,6 +700,7 @@ do_parsing (LPVOID arg)
   gpgrt_lock_unlock (&dtor_lock);
 
   gpgrt_lock_lock (&parser_lock);
+  gpgrt_lock_lock (&invalidate_lock);
   /* We lock the parser here to avoid too many
      decryption attempts if there are
      multiple mailobjects which might have already
@@ -713,6 +714,7 @@ do_parsing (LPVOID arg)
     {
       log_debug ("%s:%s: cancel for: %p already deleted",
                  SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
       return 0;
     }
@@ -721,11 +723,13 @@ do_parsing (LPVOID arg)
     {
       log_error ("%s:%s: no parser found for mail: %p",
                  SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
       return -1;
     }
   parser->parse();
   do_in_ui_thread (PARSING_DONE, arg);
+  gpgrt_lock_unlock (&invalidate_lock);
   gpgrt_lock_unlock (&parser_lock);
   return 0;
 }
@@ -919,6 +923,12 @@ Mail::update_body()
               log_error ("%s:%s: Failed to modify html body of item.",
                          SRCNAME, __func__);
             }
+          else
+            {
+              log_debug ("%s:%s: Set error html to: '%s'",
+                         SRCNAME, __func__, error.c_str ());
+            }
+
         }
       else
         {
@@ -927,6 +937,11 @@ Mail::update_body()
             {
               log_error ("%s:%s: Failed to modify html body of item.",
                          SRCNAME, __func__);
+            }
+          else
+            {
+              log_debug ("%s:%s: Set error plain to: '%s'",
+                         SRCNAME, __func__, error.c_str ());
             }
         }
       return;
@@ -1053,7 +1068,11 @@ Mail::parsing_done()
 
   /* Invalidate UI to set the correct sig status. */
   m_parser = nullptr;
-  gpgoladdin_invalidate_ui ();
+
+  log_debug ("%s:%s: Delayed invalidate to update sigstate.",
+             SRCNAME, __func__);
+  CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
+                            NULL));
   TRACEPOINT;
   return;
 }

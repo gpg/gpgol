@@ -22,6 +22,10 @@
 
 #include <windows.h>
 
+#include "config.h"
+
+#include <gpg-error.h>
+
 /** Window Message handling for GpgOL.
   In Outlook only one thread has access to the Outlook Object model
   and this is the UI Thread. We can work in other threads but
@@ -36,14 +40,14 @@
   */
 typedef enum _gpgol_wmsg_type
 {
-  UNKNOWN = 0,
-  INVALIDATE_UI = 1, /* The UI should be invalidated. */
-  PARSING_DONE = 2, /* A mail was parsed. Data should be a pointer
+  UNKNOWN = 1100, /* A large offset to avoid conflicts */
+  INVALIDATE_UI, /* The UI should be invalidated. */
+  PARSING_DONE, /* A mail was parsed. Data should be a pointer
                       to the mail object. */
-  RECIPIENT_ADDED = 3, /* A recipient was added. Data should be ptr
-                          to mail */
-  CLOSE = 4, /* Close the message in the next event loop. */
-  CRYPTO_DONE = 5, /* Sign / Encrypt done. */
+  RECIPIENT_ADDED, /* A recipient was added. Data should be ptr
+                      to mail */
+  CLOSE, /* Close the message in the next event loop. */
+  CRYPTO_DONE, /* Sign / Encrypt done. */
 } gpgol_wmsg_type;
 
 typedef struct
@@ -80,5 +84,8 @@ close_mail (LPVOID);
 
 void add_explorer (LPDISPATCH explorer);
 void remove_explorer (LPDISPATCH explorer);
+
+/* The lock to invalide the ui */
+extern gpgrt_lock_t invalidate_lock;
 
 #endif // WINDOWMESSAGES_H

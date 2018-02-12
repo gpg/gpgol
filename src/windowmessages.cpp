@@ -36,7 +36,7 @@ static HWND g_responder_window = NULL;
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  if (message == WM_USER + 1)
+  if (message == WM_USER + 42)
     {
       wm_ctx_t *ctx = (wm_ctx_t *) lParam;
       log_debug ("%s:%s: Recieved user msg: %i",
@@ -167,7 +167,7 @@ send_msg_to_ui_thread (wm_ctx_t *ctx)
                SRCNAME, __func__);
     return -1;
   }
-  SendMessage (responder, WM_USER + 1, 0, (LPARAM) ctx);
+  SendMessage (responder, WM_USER + 42, 0, (LPARAM) ctx);
   return 0;
 }
 
@@ -271,7 +271,8 @@ create_message_hook()
                            GetCurrentThreadId());
 }
 
-GPGRT_LOCK_DEFINE(invalidate_lock);
+gpgrt_lock_t invalidate_lock = GPGRT_LOCK_INITIALIZER;
+
 static bool invalidation_in_progress;
 
 DWORD WINAPI
@@ -288,7 +289,7 @@ delayed_invalidate_ui (LPVOID)
   /* We sleep here a bit to prevent invalidation immediately
      after the selection change before we have started processing
      the mail. */
-  Sleep (500);
+  Sleep (250);
   do_in_ui_thread (INVALIDATE_UI, nullptr);
   invalidation_in_progress = false;
   gpgrt_lock_unlock(&invalidate_lock);
