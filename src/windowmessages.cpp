@@ -244,7 +244,8 @@ create_message_hook()
                            GetCurrentThreadId());
 }
 
-GPGRT_LOCK_DEFINE(invalidate_lock);
+gpgrt_lock_t invalidate_lock = GPGRT_LOCK_INITIALIZER;
+
 static bool invalidation_in_progress;
 
 DWORD WINAPI
@@ -261,7 +262,7 @@ delayed_invalidate_ui (LPVOID)
   /* We sleep here a bit to prevent invalidation immediately
      after the selection change before we have started processing
      the mail. */
-  Sleep (500);
+  Sleep (250);
   do_in_ui_thread (INVALIDATE_UI, nullptr);
   invalidation_in_progress = false;
   gpgrt_lock_unlock(&invalidate_lock);

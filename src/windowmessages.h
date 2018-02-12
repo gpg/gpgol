@@ -22,6 +22,10 @@
 
 #include <windows.h>
 
+#include "config.h"
+
+#include <gpg-error.h>
+
 /** Window Message handling for GpgOL.
   In Outlook only one thread has access to the Outlook Object model
   and this is the UI Thread. We can work in other threads but
@@ -79,5 +83,8 @@ close_mail (LPVOID);
 
 void add_explorer (LPDISPATCH explorer);
 void remove_explorer (LPDISPATCH explorer);
+
+/* The lock to invalide the ui */
+extern gpgrt_lock_t invalidate_lock;
 
 #endif // WINDOWMESSAGES_H

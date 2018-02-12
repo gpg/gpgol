@@ -696,6 +696,7 @@ do_parsing (LPVOID arg)
   gpgrt_lock_unlock (&dtor_lock);
 
   gpgrt_lock_lock (&parser_lock);
+  gpgrt_lock_lock (&invalidate_lock);
   /* We lock the parser here to avoid too many
      decryption attempts if there are
      multiple mailobjects which might have already
@@ -709,6 +710,7 @@ do_parsing (LPVOID arg)
     {
       log_debug ("%s:%s: cancel for: %p already deleted",
                  SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
       return 0;
     }
@@ -717,11 +719,13 @@ do_parsing (LPVOID arg)
     {
       log_error ("%s:%s: no parser found for mail: %p",
                  SRCNAME, __func__, arg);
+      gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
       return -1;
     }
   parser->parse();
   do_in_ui_thread (PARSING_DONE, arg);
+  gpgrt_lock_unlock (&invalidate_lock);
   gpgrt_lock_unlock (&parser_lock);
   return 0;
 }
