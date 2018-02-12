@@ -986,7 +986,11 @@ Mail::parsing_done()
 
   /* Invalidate UI to set the correct sig status. */
   m_parser = nullptr;
-  gpgoladdin_invalidate_ui ();
+
+  log_debug ("%s:%s: Delayed invalidate to update sigstate.",
+             SRCNAME, __func__);
+  CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
+                            NULL));
   TRACEPOINT;
   return;
 }
