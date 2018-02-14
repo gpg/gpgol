@@ -410,6 +410,12 @@ public:
   */
   bool check_inline_response ();
 
+  /** Get the window for the mail. Caution! This is only
+    really valid in the time that the window is disabled.
+    Use with care and can be null or invalid.
+  */
+  HWND get_window () { return m_window; }
+
 private:
   void update_categories ();
   void update_body ();
