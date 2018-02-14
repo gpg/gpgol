@@ -120,14 +120,14 @@ CryptController::collect_data ()
     }
   else if (m_inline)
     {
-      // Inline. Use Body as input and be done.
-      m_input.write (body, strlen (body));
-      log_debug ("%s:%s: PGP Inline. Using cached body as input.",
+      /* Inline. Use Body as input.
+        We need to collect also our mime structure for S/MIME
+        as we don't know yet if we are S/MIME or OpenPGP */
+      m_bodyInput.write (body, strlen (body));
+      log_debug ("%s:%s: Inline. Caching body.",
                  SRCNAME, __func__);
-      gpgol_release (message);
       /* Set the input buffer to start. */
-      m_input.seek (0, SEEK_SET);
-      return 0;
+      m_bodyInput.seek (0, SEEK_SET);
     }
 
   /* Set up the sink object to collect the mime structure */
@@ -177,23 +177,35 @@ rtrim(std::string &s) {
 
 int
 CryptController::lookup_fingerprints (const std::string &sigFpr,
-                                      const std::vector<std::string> recpFprs,
-                                      GpgME::Protocol proto)
+                                      const std::vector<std::string> recpFprs)
 {
-  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (proto));
+  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
+
+  if (!ctx)
+    {
+      log_error ("%s:%s: failed to create context with protocol '%s'",
+                 SRCNAME, __func__,
+                 m_proto == GpgME::CMS ? "smime" :
+                 m_proto == GpgME::OpenPGP ? "openpgp" :
+                 "unknown");
+      return -1;
+    }
 
   ctx->setKeyListMode (GpgME::Local);
   GpgME::Error err;
 
   if (!sigFpr.empty()) {
       m_signer_key = ctx->key (sigFpr.c_str (), err, true);
-      if (err || m_signer_key.isNull () ) {
-          log_error ("%s:%s: failed to lookup key for '%s'",
-                     SRCNAME, __func__, sigFpr.c_str ());
+      if (err || m_signer_key.isNull ()) {
+          log_error ("%s:%s: failed to lookup key for '%s' with protocol '%s'",
+                     SRCNAME, __func__, sigFpr.c_str (),
+                     m_proto == GpgME::CMS ? "smime" :
+                     m_proto == GpgME::OpenPGP ? "openpgp" :
+                     "unknown");
           return -1;
       }
       // reset context
-      ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (proto));
+      ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
       ctx->setKeyListMode (GpgME::Local);
   }
 
@@ -236,8 +248,6 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
   std::istringstream ss(resolverOutput.toString());
   std::string line;
 
-  GpgME::Protocol proto = GpgME::UnknownProtocol;
-
   std::string sigFpr;
   std::vector<std::string> recpFprs;
   while (std::getline (ss, line))
@@ -266,9 +276,9 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
       std::getline (lss, how, ':');
       std::getline (lss, fingerprint, ':');
 
-      if (proto == GpgME::UnknownProtocol)
+      if (m_proto == GpgME::UnknownProtocol)
         {
-          proto = (how == "smime") ? GpgME::CMS : GpgME::OpenPGP;
+          m_proto = (how == "smime") ? GpgME::CMS : GpgME::OpenPGP;
         }
 
       if (what == "sig")
@@ -301,7 +311,7 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
       return -1;
     }
 
-  return lookup_fingerprints (sigFpr, recpFprs, proto);
+  return lookup_fingerprints (sigFpr, recpFprs);
 }
 
 int
@@ -363,24 +373,24 @@ CryptController::resolve_keys ()
       args.push_back (cached_sender);
     }
 
-  if (m_encrypt)
-    {
-      args.push_back (std::string ("--encrypt"));
-    }
-
   if (!opt.autoresolve)
     {
       args.push_back (std::string ("--alwaysShow"));
     }
 
-  // Get the recipients that are cached from OOM
-  char **recipients = m_mail->take_cached_recipients ();
-  for (size_t i = 0; recipients && recipients[i]; i++)
-    {
-      args.push_back (GpgME::UserID::addrSpecFromString (recipients[i]));
-    }
 
-  release_carray (recipients);
+  if (m_encrypt)
+    {
+      args.push_back (std::string ("--encrypt"));
+      // Get the recipients that are cached from OOM
+      char **recipients = m_mail->take_cached_recipients ();
+      for (size_t i = 0; recipients && recipients[i]; i++)
+        {
+          args.push_back (GpgME::UserID::addrSpecFromString (recipients[i]));
+        }
+
+      release_carray (recipients);
+    }
 
   // Convert our collected vector to c strings
   // It's a bit overhead but should be quick for such small
@@ -460,7 +470,15 @@ CryptController::do_crypto ()
       return -2;
     }
 
-  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(GpgME::OpenPGP));
+  if (m_proto == GpgME::CMS && m_inline)
+    {
+      log_debug ("%s:%s: Inline for S/MIME not supported. Switching to mime.",
+                 SRCNAME, __func__);
+      m_inline = false;
+      m_bodyInput = GpgME::Data(GpgME::Data::null);
+    }
+
+  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(m_proto));
 
   if (!ctx)
     {
@@ -479,7 +497,7 @@ CryptController::do_crypto ()
   if (m_encrypt && m_sign)
     {
       const auto result_pair = ctx->signAndEncrypt (m_recipients,
-                                                    m_input,
+                                                    m_inline ? m_bodyInput : m_input,
                                                     m_output,
                                                     GpgME::Context::AlwaysTrust);
 
@@ -500,7 +518,7 @@ CryptController::do_crypto ()
     }
   else if (m_encrypt)
     {
-      const auto result = ctx->encrypt (m_recipients, m_input,
+      const auto result = ctx->encrypt (m_recipients, m_inline ? m_bodyInput : m_input,
                                         m_output,
                                         GpgME::Context::AlwaysTrust);
       if (result.error())
@@ -518,7 +536,7 @@ CryptController::do_crypto ()
     }
   else if (m_sign)
     {
-      const auto result = ctx->sign (m_input, m_output,
+      const auto result = ctx->sign (m_inline ? m_bodyInput : m_input, m_output,
                                      m_inline ? GpgME::Clearsigned :
                                      GpgME::Detached);
       if (result.error())

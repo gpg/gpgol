@@ -62,12 +62,11 @@ private:
   int resolve_keys ();
   int parse_output (GpgME::Data &resolverOutput);
   int lookup_fingerprints (const std::string &sigFpr,
-                           const std::vector<std::string> recpFprs,
-                           GpgME::Protocol proto);
+                           const std::vector<std::string> recpFprs);
 
 private:
   Mail *m_mail;
-  GpgME::Data m_input, m_output;
+  GpgME::Data m_input, m_bodyInput, m_smime_intermediate, m_output;
   bool m_encrypt, m_sign, m_inline, m_crypto_success;
   GpgME::Protocol m_proto;
   GpgME::Key m_signer_key;
