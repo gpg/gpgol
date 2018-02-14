@@ -156,7 +156,7 @@ CryptController::collect_data ()
 }
 
 static void
-release_recipient_array (char **recipients)
+release_carray (char **recipients)
 {
   int idx;
 
@@ -168,20 +168,85 @@ release_recipient_array (char **recipients)
     }
 }
 
+static inline void
+rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
 int
-CryptController::parse_keys (GpgME::Data &resolverOutput)
+CryptController::lookup_fingerprints (const std::string &sigFpr,
+                                      const std::vector<std::string> recpFprs,
+                                      GpgME::Protocol proto)
+{
+  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (proto));
+
+  ctx->setKeyListMode (GpgME::Local);
+  GpgME::Error err;
+
+  if (!sigFpr.empty()) {
+      m_signer_key = ctx->key (sigFpr.c_str (), err, true);
+      if (err || m_signer_key.isNull () ) {
+          log_error ("%s:%s: failed to lookup key for '%s'",
+                     SRCNAME, __func__, sigFpr.c_str ());
+          return -1;
+      }
+      // reset context
+      ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (proto));
+      ctx->setKeyListMode (GpgME::Local);
+  }
+
+  if (!recpFprs.size()) {
+      return 0;
+  }
+
+  // Convert recipient fingerprints
+  char **cRecps = (char**) xmalloc (sizeof (char*) * (recpFprs.size() + 1));
+  for (size_t i = 0; i < recpFprs.size(); i++)
+    {
+      cRecps[i] = strdup (recpFprs[i].c_str());
+    }
+  cRecps[recpFprs.size()] = NULL;
+
+  err = ctx->startKeyListing (const_cast<const char **> (cRecps));
+
+  if (err) {
+      log_error ("%s:%s: failed to start recipient keylisting",
+                 SRCNAME, __func__);
+      return -1;
+  }
+
+  do {
+      m_recipients.push_back(ctx->nextKey(err));
+  } while (!err);
+
+  m_recipients.pop_back();
+
+  release_carray (cRecps);
+
+  return 0;
+}
+
+
+int
+CryptController::parse_output (GpgME::Data &resolverOutput)
 {
   // Todo: Use Data::toString
   std::istringstream ss(resolverOutput.toString());
   std::string line;
 
+  GpgME::Protocol proto = GpgME::UnknownProtocol;
+
+  std::string sigFpr;
+  std::vector<std::string> recpFprs;
   while (std::getline (ss, line))
     {
       if (line == "cancel")
         {
           log_debug ("%s:%s: resolver canceled",
                      SRCNAME, __func__);
-          return -1;
+          return -2;
         }
       if (line == "unencrypted")
         {
@@ -196,13 +261,49 @@ CryptController::parse_keys (GpgME::Data &resolverOutput)
       std::string how;
       std::string fingerprint;
 
-      lss >> what;
-      lss >> how;
-      lss >> fingerprint;
+      std::getline (lss, what, ':');
+      std::getline (lss, how, ':');
+      std::getline (lss, fingerprint, ':');
 
-      log_debug ("Data what: %s how: %s fingerprint: %s", what.c_str (), how.c_str (), fingerprint.c_str ());
+      // Remove possible trailing newline / cr
+      rtrim (fingerprint);
+
+      if (proto == GpgME::UnknownProtocol)
+        {
+          proto = (how == "smime") ? GpgME::CMS : GpgME::OpenPGP;
+        }
+
+      if (what == "sig")
+        {
+          if (!sigFpr.empty ())
+            {
+              log_error ("%s:%s: multiple signing keys not supported",
+                         SRCNAME, __func__);
+
+            }
+          sigFpr = fingerprint;
+          continue;
+        }
+      if (what == "enc")
+        {
+          recpFprs.push_back (fingerprint);
+        }
     }
-  return -1;
+
+  if (m_sign && sigFpr.empty())
+    {
+      log_error ("%s:%s: Sign requested but no signing fingerprint",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  if (m_encrypt && !recpFprs.size())
+    {
+      log_error ("%s:%s: Encrypt requested but no recipient fingerprints",
+                 SRCNAME, __func__);
+      return -1;
+    }
+
+  return lookup_fingerprints (sigFpr, recpFprs, proto);
 }
 
 int
@@ -223,10 +324,26 @@ CryptController::resolve_keys ()
   args.push_back (resolver);
 
   log_debug ("%s:%s: resolving keys with '%s'",
-                 SRCNAME, __func__, resolver.c_str ());
+             SRCNAME, __func__, resolver.c_str ());
 
   // We want debug output as OutputDebugString
   args.push_back (std::string ("--debug"));
+
+  // Pass the handle of the active window for raise / overlay.
+  args.push_back (std::string ("--hwnd"));
+  // Yes passing it as int is ok.
+  args.push_back (std::to_string ((int) m_mail->get_window ()));
+
+  // Set the overlay caption
+  args.push_back (std::string ("--overlayText"));
+  if (m_encrypt)
+    {
+      args.push_back (std::string (_("Resolving recipients...")));
+    }
+  else if (m_sign)
+    {
+      args.push_back (std::string (_("Resolving signers...")));
+    }
 
   if (m_sign)
     {
@@ -261,7 +378,7 @@ CryptController::resolve_keys ()
       args.push_back (GpgME::UserID::addrSpecFromString (recipients[i]));
     }
 
-  release_recipient_array (recipients);
+  release_carray (recipients);
 
   // Convert our collected vector to c strings
   // It's a bit overhead but should be quick for such small
@@ -269,7 +386,7 @@ CryptController::resolve_keys ()
   char **cargs = (char**) xmalloc (sizeof (char*) * (args.size() + 1));
   for (size_t i = 0; i < args.size(); i++)
     {
-      gpgrt_asprintf (cargs + i, "%s", args[i].c_str());
+      cargs[i] = strdup (args[i].c_str());
     }
   cargs[args.size()] = NULL;
 
@@ -279,7 +396,7 @@ CryptController::resolve_keys ()
   if (!ctx)
     {
       // can't happen
-      release_recipient_array (cargs);
+      release_carray (cargs);
       TRACEPOINT;
       return -1;
     }
@@ -305,7 +422,7 @@ CryptController::resolve_keys ()
   log_debug ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
 #endif
 
-  release_recipient_array (cargs);
+  release_carray (cargs);
 
   if (err)
     {
@@ -313,7 +430,7 @@ CryptController::resolve_keys ()
                  SRCNAME, __func__, err.code(), err.asString());
     }
 
-  if (parse_keys (mystdout))
+  if (parse_output (mystdout))
     {
       log_debug ("%s:%s: Failed to parse / resolve keys.",
                  SRCNAME, __func__);
@@ -579,11 +696,13 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
 int
 CryptController::update_mail_mapi ()
 {
-  log_debug ("%s:%s:", SRCNAME, __func__);
+  log_debug ("%s:%s", SRCNAME, __func__);
 
   if (m_inline)
     {
       // Nothing to do for inline.
+      log_debug ("%s:%s: Inline mail. No MAPI update.",
+                 SRCNAME, __func__);
       return 0;
     }
 

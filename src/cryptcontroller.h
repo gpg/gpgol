@@ -60,7 +60,10 @@ public:
 
 private:
   int resolve_keys ();
-  int parse_keys (GpgME::Data &resolverOutput);
+  int parse_output (GpgME::Data &resolverOutput);
+  int lookup_fingerprints (const std::string &sigFpr,
+                           const std::vector<std::string> recpFprs,
+                           GpgME::Protocol proto);
 
 private:
   Mail *m_mail;
