@@ -242,6 +242,7 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
   std::vector<std::string> recpFprs;
   while (std::getline (ss, line))
     {
+      rtrim (line);
       if (line == "cancel")
         {
           log_debug ("%s:%s: resolver canceled",
@@ -264,9 +265,6 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
       std::getline (lss, what, ':');
       std::getline (lss, how, ':');
       std::getline (lss, fingerprint, ':');
-
-      // Remove possible trailing newline / cr
-      rtrim (fingerprint);
 
       if (proto == GpgME::UnknownProtocol)
         {
