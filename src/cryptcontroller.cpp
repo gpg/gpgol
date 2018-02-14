@@ -706,7 +706,15 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
       return rc;
     }
 
-  rc = write_data (sink, encryptedData);
+  if (protocol == PROTOCOL_OPENPGP)
+    {
+      rc = write_data (sink, encryptedData);
+    }
+  else
+    {
+      const auto encStr = encryptedData.toString();
+      rc = write_b64 (sink, encStr.c_str(), encStr.size());
+    }
   if (rc)
     {
       log_error ("%s:%s: Failed to create top header.",
