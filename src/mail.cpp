@@ -2574,7 +2574,7 @@ Mail::update_crypt_mapi()
     }
   else
     {
-      m_crypt_state = WantsSend;
+      m_crypt_state = WantsSendMIME;
     }
   // We don't need the crypter anymore.
   m_crypter = nullptr;
@@ -2605,7 +2605,7 @@ Mail::update_crypt_oom()
     {
       log_debug ("%s:%s: Looks like inline body. You can pass %p.",
                  SRCNAME, __func__, this);
-      m_crypt_state = NeedsSecondAfterWrite;
+      m_crypt_state = WantsSendInline;
       return;
     }
 

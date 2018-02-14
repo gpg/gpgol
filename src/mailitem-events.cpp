@@ -383,12 +383,19 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     }
                   if (m_mail->crypt_state () == Mail::NeedsSecondAfterWrite)
                     {
-                      m_mail->set_crypt_state (Mail::WantsSend);
+                      m_mail->set_crypt_state (Mail::WantsSendMIME);
                     }
                 }
             }
 
-          if (m_mail->crypt_state () == Mail::WantsSend)
+          if (m_mail->crypt_state () == Mail::WantsSendInline)
+            {
+              log_debug ("%s:%s: Passing send event for no-mime message %p.",
+                         SRCNAME, __func__, m_object);
+              break;
+            }
+
+          if (m_mail->crypt_state () == Mail::WantsSendMIME)
             {
               /* Now we adress T3656 if Outlooks internal S/MIME is somehow
                * mixed in (even if it is enabled and then disabled) it might
@@ -419,8 +426,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL"))
                 {
                   // Does not have a message class by us.
-                  log_debug ("%s:%s: Message %p - No GpgOL Message class after encryption.",
-                             SRCNAME, __func__, m_object);
+                  log_debug ("%s:%s: Message %p - No GpgOL Message class after encryption. cls is: '%s'",
+                             SRCNAME, __func__, m_object, propval->Value.lpszA);
                   log_debug ("%s:%s: Message %p - Activating T3656 Workaround",
                              SRCNAME, __func__, m_object);
                   message = get_oom_base_message (m_object);

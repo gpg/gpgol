@@ -56,7 +56,8 @@ public:
       NeedsUpdateInOOM,
       NeedsSecondAfterWrite,
       NeedsUpdateInMAPI,
-      WantsSend
+      WantsSendInline,
+      WantsSendMIME,
     };
 
   /** @brief Construct a mail object for the item.
