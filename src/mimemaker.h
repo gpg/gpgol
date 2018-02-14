@@ -91,6 +91,7 @@ void cancel_mapi_attachment (LPATTACH *attach, sink_t sink);
 void create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol,
                            int first, const char *boundary, const char *micalg);
 int write_string (sink_t sink, const char *text);
+int write_b64 (sink_t sink, const void *data, size_t datalen);
 
 #ifdef __cplusplus
 }

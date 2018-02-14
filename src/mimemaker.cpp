@@ -318,7 +318,7 @@ write_boundary (sink_t sink, const char *boundary, int lastone)
 
 /* Write DATALEN bytes of DATA to SINK in base64 encoding.  This
    creates a complete Base64 chunk including the trailing fillers.  */
-static int
+int
 write_b64 (sink_t sink, const void *data, size_t datalen)
 {
   int rc;

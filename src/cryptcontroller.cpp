@@ -491,8 +491,8 @@ CryptController::do_crypto ()
       ctx->addSigningKey (m_signer_key);
     }
 
-  ctx->setTextMode (true);
-  ctx->setArmor (true);
+  ctx->setTextMode (m_proto == GpgME::OpenPGP);
+  ctx->setArmor (m_proto == GpgME::OpenPGP);
 
   if (m_encrypt && m_sign)
     {
@@ -659,7 +659,16 @@ create_sign_attach (sink_t sink, protocol_t protocol,
     }
 
   // Write the signature data
-  if ((rc = write_data (sink, signature)))
+  if (protocol == PROTOCOL_SMIME)
+    {
+      const std::string sigStr = signature.toString();
+      if ((rc = write_b64 (sink, (const void *) sigStr.c_str (), sigStr.size())))
+        {
+          TRACEPOINT;
+          return rc;
+        }
+    }
+  else if ((rc = write_data (sink, signature)))
     {
       TRACEPOINT;
       return rc;
