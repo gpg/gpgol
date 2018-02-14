@@ -450,18 +450,8 @@ CryptController::resolve_keys ()
 int
 CryptController::do_crypto ()
 {
-  // TODO get recipients and sender and protocol.
-
-  log_debug ("%s:%s:",
+  log_debug ("%s:%s",
              SRCNAME, __func__);
-  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(GpgME::OpenPGP));
-
-  if (!ctx)
-    {
-      log_error ("%s:%s: Failure to create context.",
-                 SRCNAME, __func__);
-      return -1;
-    }
 
   if (resolve_keys ())
     {
@@ -470,6 +460,14 @@ CryptController::do_crypto ()
       return -2;
     }
 
+  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(GpgME::OpenPGP));
+
+  if (!ctx)
+    {
+      log_error ("%s:%s: Failure to create context.",
+                 SRCNAME, __func__);
+      return -1;
+    }
   if (!m_signer_key.isNull())
     {
       ctx->addSigningKey (m_signer_key);
