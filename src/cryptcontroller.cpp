@@ -51,6 +51,11 @@ sink_data_write (sink_t sink, const void *data, size_t datalen)
   return 0;
 }
 
+static int
+create_sign_attach (sink_t sink, protocol_t protocol,
+                    GpgME::Data &signature,
+                    GpgME::Data &signedData,
+                    const char *micalg);
 
 /** We have some C Style cruft in here as this was historically how
   GpgOL worked directly in the MAPI data objects. To reduce the regression
@@ -494,8 +499,9 @@ CryptController::do_crypto ()
   ctx->setTextMode (m_proto == GpgME::OpenPGP);
   ctx->setArmor (m_proto == GpgME::OpenPGP);
 
-  if (m_encrypt && m_sign)
+  if (m_encrypt && m_sign && m_inline)
     {
+      // Sign encrypt combined
       const auto result_pair = ctx->signAndEncrypt (m_recipients,
                                                     m_inline ? m_bodyInput : m_input,
                                                     m_output,
@@ -515,6 +521,66 @@ CryptController::do_crypto ()
                      SRCNAME, __func__);
           return -2;
         }
+    }
+  else if (m_encrypt && m_sign)
+    {
+      // First sign then encrypt
+      const auto sigResult = ctx->sign (m_input, m_output,
+                                        GpgME::Detached);
+      if (sigResult.error())
+        {
+          log_error ("%s:%s: Signing error %s.",
+                     SRCNAME, __func__, sigResult.error().asString());
+          return -1;
+        }
+      if (sigResult.error().isCanceled())
+        {
+          log_debug ("%s:%s: User cancled",
+                     SRCNAME, __func__);
+          return -2;
+        }
+      parse_micalg (sigResult);
+
+      // We now have plaintext in m_input
+      // The detached signature in m_output
+
+      // Set up the sink object to construct the multipart/signed
+      GpgME::Data multipart;
+      struct sink_s sinkmem;
+      sink_t sink = &sinkmem;
+      memset (sink, 0, sizeof *sink);
+      sink->cb_data = &multipart;
+      sink->writefnc = sink_data_write;
+
+      if (create_sign_attach (sink,
+                              m_proto == GpgME::CMS ?
+                                         PROTOCOL_SMIME : PROTOCOL_OPENPGP,
+                              m_output, m_input, m_micalg.c_str ()))
+        {
+          TRACEPOINT;
+          return -1;
+        }
+
+      // Now we have the multipart throw away the rest.
+      m_output = GpgME::Data ();
+      m_input = GpgME::Data ();
+      multipart.seek (0, SEEK_SET);
+      const auto encResult = ctx->encrypt (m_recipients, multipart,
+                                           m_output,
+                                           GpgME::Context::AlwaysTrust);
+      if (encResult.error())
+        {
+          log_error ("%s:%s: Encryption error %s.",
+                     SRCNAME, __func__, encResult.error().asString());
+          return -1;
+        }
+      if (encResult.error().isCanceled())
+        {
+          log_debug ("%s:%s: User cancled",
+                     SRCNAME, __func__);
+          return -2;
+        }
+      // Now we have encrypted output just treat it like encrypted.
     }
   else if (m_encrypt)
     {
@@ -586,7 +652,7 @@ write_data (sink_t sink, GpgME::Data &data)
   return 0;
 }
 
-static int
+int
 create_sign_attach (sink_t sink, protocol_t protocol,
                     GpgME::Data &signature,
                     GpgME::Data &signedData,
@@ -778,7 +844,6 @@ CryptController::update_mail_mapi ()
   int rc = 0;
   if (m_sign && m_encrypt)
     {
-      // FIXME we need some doubling here for S/MIME.
       rc = create_encrypt_attach (sink, protocol, m_output);
     }
   else if (m_encrypt)
