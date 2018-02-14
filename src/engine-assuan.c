@@ -559,52 +559,15 @@ op_assuan_deinit (void)
   cleanup ();
 }
 
-/* Code for a thread in the background */
-static DWORD WINAPI
-spawn_background (LPVOID arg)
-{
-  gpgme_error_t err;
-  assuan_context_t ctx;
-  pid_t pid;
-  ULONG cmdid;
-
-  (void) arg;
-
-  /* Run a test connection to see whether the UI server is available.  */
-  log_debug ("%s:%s: Initial uiserver connect", SRCNAME, __func__);
-  err = connect_uiserver (&ctx, &pid, &cmdid, NULL);
-  if (!err)
-    {
-      log_debug ("%s:%s: Sending noop", SRCNAME, __func__);
-      err = assuan_transact (ctx, "NOP", NULL, NULL, NULL, NULL, NULL, NULL);
-      assuan_release (ctx);
-    }
-  if (err)
-    log_debug ("%s:%s: Failed code: %i", SRCNAME, __func__, err);
-
-  return 0;
-}
 
 /* Initialize this system. */
 int
 op_assuan_init (void)
 {
   static int init_done;
-  HANDLE thread;
 
   if (init_done)
     return 0;
-
-  /* Connect to UiServer in the background */
-
-  /* XXX This should not really be necessary but
-     it was often reported that the spawn and connect
-     did not work. Also it is much faster to access
-     Kleopatra when it's already running so spawning
-     it as lookahead probably makes sense. */
-  thread = CreateThread (NULL, 0, spawn_background,
-                         NULL, 0, NULL);
-  CloseHandle(thread);
 
   /* Fire up the pipe worker thread. */
   {
