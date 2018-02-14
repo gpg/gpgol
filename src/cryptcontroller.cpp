@@ -329,10 +329,14 @@ CryptController::resolve_keys ()
   // We want debug output as OutputDebugString
   args.push_back (std::string ("--debug"));
 
-  // Pass the handle of the active window for raise / overlay.
-  args.push_back (std::string ("--hwnd"));
   // Yes passing it as int is ok.
-  args.push_back (std::to_string ((int) m_mail->get_window ()));
+  auto wnd = m_mail->get_window ();
+  if (wnd)
+    {
+      // Pass the handle of the active window for raise / overlay.
+      args.push_back (std::string ("--hwnd"));
+      args.push_back (std::to_string ((int) wnd));
+    }
 
   // Set the overlay caption
   args.push_back (std::string ("--overlayText"));
@@ -416,6 +420,9 @@ CryptController::resolve_keys ()
                                  (GpgME::Context::SpawnFlags) (
                                   GpgME::Context::SpawnAllowSetFg |
                                   GpgME::Context::SpawnShowWindow));
+  // Somehow Qt messes up which window to bring back to front.
+  // So we do it manually.
+  bring_to_front (wnd);
 
 #ifdef DEBUG_RESOLVER
   log_debug ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());

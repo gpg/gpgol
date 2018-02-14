@@ -140,6 +140,7 @@ extern int g_ol_version_major;
 void log_window_hierarchy (HWND window, const char *fmt,
                            ...) __attribute__ ((format (printf,2,3)));
 
+void bring_to_front (HWND wid);
 #ifdef __cplusplus
 }
 #endif

@@ -242,6 +242,23 @@ get_save_filename (HWND root, const char *srcname)
   return NULL;
 }
 
+void
+bring_to_front (HWND wid)
+{
+  if (wid)
+    {
+      if (!SetForegroundWindow (wid))
+        {
+          log_debug ("%s:%s: SetForegroundWindow failed", SRCNAME, __func__);
+          /* Yet another fallback which will not work on some
+           * versions and is not recommended by msdn */
+          if (!ShowWindow (wid, SW_SHOWNORMAL))
+            {
+              log_debug ("%s:%s: ShowWindow failed.", SRCNAME, __func__);
+            }
+        }
+    }
+}
 
 void
 fatal_error (const char *format, ...)
