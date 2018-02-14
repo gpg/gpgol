@@ -29,6 +29,11 @@
 
 class Mail;
 
+namespace GpgME
+{
+  class SigningResult;
+} // namespace GpgME
+
 class CryptController
 {
 public:
@@ -64,9 +69,12 @@ private:
   int lookup_fingerprints (const std::string &sigFpr,
                            const std::vector<std::string> recpFprs);
 
+  void parse_micalg (const GpgME::SigningResult &sResult);
+
 private:
   Mail *m_mail;
-  GpgME::Data m_input, m_bodyInput, m_smime_intermediate, m_output;
+  GpgME::Data m_input, m_bodyInput, m_signedData, m_output;
+  std::string m_micalg;
   bool m_encrypt, m_sign, m_inline, m_crypto_success;
   GpgME::Protocol m_proto;
   GpgME::Key m_signer_key;

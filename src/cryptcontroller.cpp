@@ -551,6 +551,7 @@ CryptController::do_crypto ()
                      SRCNAME, __func__);
           return -2;
         }
+      parse_micalg (result);
     }
   else
     {
@@ -588,7 +589,8 @@ write_data (sink_t sink, GpgME::Data &data)
 static int
 create_sign_attach (sink_t sink, protocol_t protocol,
                     GpgME::Data &signature,
-                    GpgME::Data &signedData)
+                    GpgME::Data &signedData,
+                    const char *micalg)
 {
   char boundary[BOUNDARYSIZE+1];
   char top_header[BOUNDARYSIZE+200];
@@ -598,7 +600,7 @@ create_sign_attach (sink_t sink, protocol_t protocol,
   generate_boundary (boundary);
   create_top_signing_header (top_header, sizeof top_header,
                              protocol, 1, boundary,
-                             protocol == PROTOCOL_SMIME ? "sha1":"pgp-sha1");
+                             micalg);
 
   if ((rc = write_string (sink, top_header)))
     {
@@ -785,7 +787,7 @@ CryptController::update_mail_mapi ()
     }
   else if (m_sign)
     {
-      rc = create_sign_attach (sink, protocol, m_output, m_input);
+      rc = create_sign_attach (sink, protocol, m_output, m_input, m_micalg.c_str ());
     }
 
   // Close our attachment
@@ -831,4 +833,39 @@ CryptController::get_inline_data ()
       ret += std::string (buf, nread);
     }
   return ret;
+}
+
+void
+CryptController::parse_micalg (const GpgME::SigningResult &result)
+{
+  if (result.isNull())
+    {
+      TRACEPOINT;
+      return;
+    }
+  const auto signature = result.createdSignature(0);
+  if (signature.isNull())
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  const char *hashAlg = signature.hashAlgorithmAsString ();
+  if (!hashAlg)
+    {
+      TRACEPOINT;
+      return;
+    }
+  if (m_proto == GpgME::OpenPGP)
+    {
+      m_micalg = std::string("pgp-") + hashAlg;
+    }
+  else
+    {
+      m_micalg = hashAlg;
+    }
+  std::transform(m_micalg.begin(), m_micalg.end(), m_micalg.begin(), ::tolower);
+
+  log_debug ("%s:%s: micalg is: '%s'.",
+             SRCNAME, __func__, m_micalg.c_str ());
 }
