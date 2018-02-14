@@ -71,14 +71,19 @@ private:
 
   void parse_micalg (const GpgME::SigningResult &sResult);
 
+  void start_crypto_overlay ();
+  void stop_crypto_overlay ();
+
 private:
   Mail *m_mail;
   GpgME::Data m_input, m_bodyInput, m_signedData, m_output;
+  GpgME::Data m_overlayStdin;
   std::string m_micalg;
   bool m_encrypt, m_sign, m_inline, m_crypto_success;
   GpgME::Protocol m_proto;
   GpgME::Key m_signer_key;
   std::vector<GpgME::Key> m_recipients;
+  std::unique_ptr<GpgME::Context> m_overlayCtx;
 };
 
 #endif

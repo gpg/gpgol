@@ -77,6 +77,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
 
 CryptController::~CryptController()
 {
+  stop_crypto_overlay();
   log_debug ("%s:%s:%p",
              SRCNAME, __func__, m_mail);
 }
@@ -180,6 +181,18 @@ rtrim(std::string &s) {
     }).base(), s.end());
 }
 
+char **
+vector_to_charArray(const std::vector<std::string> &vec)
+{
+  char ** ret = (char**) xmalloc (sizeof (char*) * (vec.size() + 1));
+  for (size_t i = 0; i < vec.size(); i++)
+    {
+      ret[i] = strdup (vec[i].c_str());
+    }
+  ret[vec.size()] = NULL;
+  return ret;
+}
+
 int
 CryptController::lookup_fingerprints (const std::string &sigFpr,
                                       const std::vector<std::string> recpFprs)
@@ -219,12 +232,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   }
 
   // Convert recipient fingerprints
-  char **cRecps = (char**) xmalloc (sizeof (char*) * (recpFprs.size() + 1));
-  for (size_t i = 0; i < recpFprs.size(); i++)
-    {
-      cRecps[i] = strdup (recpFprs[i].c_str());
-    }
-  cRecps[recpFprs.size()] = NULL;
+  char **cRecps = vector_to_charArray (recpFprs);
 
   err = ctx->startKeyListing (const_cast<const char **> (cRecps));
 
@@ -400,12 +408,7 @@ CryptController::resolve_keys ()
   // Convert our collected vector to c strings
   // It's a bit overhead but should be quick for such small
   // data.
-  char **cargs = (char**) xmalloc (sizeof (char*) * (args.size() + 1));
-  for (size_t i = 0; i < args.size(); i++)
-    {
-      cargs[i] = strdup (args[i].c_str());
-    }
-  cargs[args.size()] = NULL;
+  char **cargs = vector_to_charArray (args);
 
   // Args are prepared. Spawn the resolver.
   auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
@@ -436,6 +439,9 @@ CryptController::resolve_keys ()
   // Somehow Qt messes up which window to bring back to front.
   // So we do it manually.
   bring_to_front (wnd);
+
+  // We need to create an overlay while encrypting as pinentry can take a while
+  start_crypto_overlay();
 
 #ifdef DEBUG_RESOLVER
   log_debug ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
@@ -630,6 +636,7 @@ CryptController::do_crypto ()
   log_debug ("%s:%s: Crypto done sucessfuly.",
              SRCNAME, __func__);
   m_crypto_success = true;
+
   return 0;
 }
 
@@ -933,4 +940,78 @@ CryptController::parse_micalg (const GpgME::SigningResult &result)
 
   log_debug ("%s:%s: micalg is: '%s'.",
              SRCNAME, __func__, m_micalg.c_str ());
+}
+
+void
+CryptController::stop_crypto_overlay ()
+{
+  if (m_overlayCtx)
+    {
+      log_debug ("%s:%s: Stopping crypto overlay.",
+                 SRCNAME, __func__);
+      m_overlayStdin.write ("quit\n", 5);
+      m_overlayCtx = nullptr;
+    }
+}
+
+void
+CryptController::start_crypto_overlay ()
+{
+  std::vector<std::string> args;
+
+  // Collect the arguments
+  char *gpg4win_dir = get_gpg4win_dir ();
+  if (!gpg4win_dir)
+    {
+      TRACEPOINT;
+      return;
+    }
+  const auto overlayer = std::string (gpg4win_dir) + "\\bin\\overlayer.exe";
+  args.push_back (overlayer);
+
+  auto wnd = m_mail->get_window ();
+  if (wnd)
+    {
+      // Pass the handle of the active window for raise / overlay.
+      args.push_back (std::string ("--hwnd"));
+      args.push_back (std::to_string ((int) wnd));
+    }
+
+  args.push_back (std::string ("--overlayText"));
+  if (m_encrypt)
+    {
+      args.push_back (std::string (_("Encrypting...")));
+    }
+  else if (m_sign)
+    {
+      args.push_back (std::string (_("Signing...")));
+    }
+  char **cargs = vector_to_charArray (args);
+
+  m_overlayCtx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+
+  if (!m_overlayCtx)
+    {
+      // can't happen
+      release_carray (cargs);
+      TRACEPOINT;
+      return;
+    }
+
+  GpgME::Data mystderr(GpgME::Data::null);
+  GpgME::Data mystdout(GpgME::Data::null);
+
+  GpgME::Error err = m_overlayCtx->spawnAsync (cargs[0], const_cast <const char**> (cargs),
+                                      m_overlayStdin, mystdout, mystderr,
+                                      (GpgME::Context::SpawnFlags) (
+                                       GpgME::Context::SpawnAllowSetFg |
+                                       GpgME::Context::SpawnShowWindow));
+#ifdef DEBUG_RESOLVER
+  log_debug ("Overlayer args:");
+  for (size_t i = 0; cargs && cargs[i]; i++)
+    {
+      log_debug ("%i: '%s'", i, cargs[i]);
+    }
+#endif
+  release_carray (cargs);
 }

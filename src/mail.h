@@ -417,6 +417,10 @@ public:
   */
   HWND get_window () { return m_window; }
 
+  /** Cleanup any attached crypter object. Useful
+    on error. */
+  void reset_crypter () { m_crypter = nullptr; }
+
 private:
   void update_categories ();
   void update_body ();

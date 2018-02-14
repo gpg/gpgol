@@ -789,6 +789,7 @@ do_crypt (LPVOID arg)
       log_debug ("%s:%s: crypto failed for: %p with: %i",
                  SRCNAME, __func__, arg, rc);
       mail->set_crypt_state (Mail::NoCryptMail);
+      mail->reset_crypter ();
       gpgrt_lock_unlock (&dtor_lock);
       return rc;
     }
@@ -2577,7 +2578,7 @@ Mail::update_crypt_mapi()
       m_crypt_state = WantsSendMIME;
     }
   // We don't need the crypter anymore.
-  m_crypter = nullptr;
+  reset_crypter ();
 }
 
 void
