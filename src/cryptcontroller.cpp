@@ -936,6 +936,7 @@ CryptController::start_crypto_overlay ()
       return;
     }
   const auto overlayer = std::string (gpg4win_dir) + "\\bin\\overlayer.exe";
+  xfree (gpg4win_dir);
   args.push_back (overlayer);
 
   auto wnd = m_mail->get_window ();
