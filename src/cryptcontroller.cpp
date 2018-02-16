@@ -27,6 +27,7 @@
 #include "mapihelp.h"
 #include "mimemaker.h"
 #include "wks-helper.h"
+#include "overlay.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/signingresult.h>
@@ -79,7 +80,6 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
 
 CryptController::~CryptController()
 {
-  stop_crypto_overlay();
   log_debug ("%s:%s:%p",
              SRCNAME, __func__, m_mail);
 }
@@ -916,76 +916,19 @@ CryptController::parse_micalg (const GpgME::SigningResult &result)
 }
 
 void
-CryptController::stop_crypto_overlay ()
-{
-  if (m_overlayCtx)
-    {
-      log_debug ("%s:%s: Stopping crypto overlay.",
-                 SRCNAME, __func__);
-      m_overlayStdin.write ("quit\n", 5);
-      m_overlayCtx = nullptr;
-    }
-}
-
-void
 CryptController::start_crypto_overlay ()
 {
-  std::vector<std::string> args;
+  auto wid = m_mail->get_window ();
 
-  // Collect the arguments
-  char *gpg4win_dir = get_gpg4win_dir ();
-  if (!gpg4win_dir)
-    {
-      TRACEPOINT;
-      return;
-    }
-  const auto overlayer = std::string (gpg4win_dir) + "\\bin\\overlayer.exe";
-  xfree (gpg4win_dir);
-  args.push_back (overlayer);
+  std::string text;
 
-  auto wnd = m_mail->get_window ();
-  if (wnd)
-    {
-      // Pass the handle of the active window for raise / overlay.
-      args.push_back (std::string ("--hwnd"));
-      args.push_back (std::to_string ((int) wnd));
-    }
-
-  args.push_back (std::string ("--overlayText"));
   if (m_encrypt)
     {
-      args.push_back (std::string (_("Encrypting...")));
+      text = _("Encrypting...");
     }
   else if (m_sign)
     {
-      args.push_back (std::string (_("Signing...")));
+      text =_("Signing...");
     }
-  char **cargs = vector_to_cArray (args);
-
-  m_overlayCtx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
-
-  if (!m_overlayCtx)
-    {
-      // can't happen
-      release_cArray (cargs);
-      TRACEPOINT;
-      return;
-    }
-
-  GpgME::Data mystderr(GpgME::Data::null);
-  GpgME::Data mystdout(GpgME::Data::null);
-
-  GpgME::Error err = m_overlayCtx->spawnAsync (cargs[0], const_cast <const char**> (cargs),
-                                      m_overlayStdin, mystdout, mystderr,
-                                      (GpgME::Context::SpawnFlags) (
-                                       GpgME::Context::SpawnAllowSetFg |
-                                       GpgME::Context::SpawnShowWindow));
-#ifdef DEBUG_RESOLVER
-  log_debug ("Overlayer args:");
-  for (size_t i = 0; cargs && cargs[i]; i++)
-    {
-      log_debug ("%i: '%s'", i, cargs[i]);
-    }
-#endif
-  release_cArray (cargs);
+  m_overlay = std::unique_ptr<Overlay> (new Overlay (wid, text));
 }

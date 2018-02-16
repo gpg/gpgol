@@ -87,7 +87,8 @@ gpgol_SOURCES = \
 	explorer-events.cpp explorers-events.cpp \
 	cryptcontroller.cpp cryptcontroller.h \
 	cpphelp.cpp cpphelp.h \
-	wks-helper.cpp wks-helper.h
+	wks-helper.cpp wks-helper.h \
+	overlay.cpp overlay.h
 
 
 #treeview_SOURCES = treeview.c
