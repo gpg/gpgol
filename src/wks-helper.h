@@ -41,6 +41,7 @@ public:
         NeedsPublish, /* <-- There was no key published for this address */
         NeedsUpdate, /* <-- Not yet implemeted. */
         RequestSent, /* <-- A publishing request has been sent. */
+        PublishDenied, /* <-- A user denied publishing. */
       };
 
     ~WKSHelper ();
@@ -72,9 +73,23 @@ public:
     */
     void start_check (const std::string &mbox, bool force = false) const;
 
+    /** Starts gpg-wks-client --create */
+    void start_publish (const std::string &mbox) const;
+
+    /** Allow queueing a notification. */
+    void allow_notify () const;
+
+    /** Send a notification and start publishing accordingly */
+    void notify (const char *mbox) const;
+
+    /** Store the current static maps. */
+    void save () const;
+
+    /** Update or insert a state in the static maps. */
+    void update_state (const std::string &mbox, WKSState state) const;
+
 private:
     time_t get_check_time (const std::string &mbox) const;
 
-    void save() const;
-    void load() const;;
+    void load() const;
 };

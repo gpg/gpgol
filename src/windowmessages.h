@@ -48,6 +48,7 @@ typedef enum _gpgol_wmsg_type
                       to mail */
   CLOSE, /* Close the message in the next event loop. */
   CRYPTO_DONE, /* Sign / Encrypt done. */
+  WKS_NOTIFY, /* Show a WKS Notification. */
 } gpgol_wmsg_type;
 
 typedef struct

@@ -25,6 +25,7 @@
 #include "oomhelp.h"
 #include "mail.h"
 #include "gpgoladdin.h"
+#include "wks-helper.h"
 
 #include <stdio.h>
 
@@ -113,6 +114,15 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
               // Finaly this should pass.
               invoke_oom_method (mail->item (), "Send", NULL);
+              // Allow the WKS helper to queue a notification.
+              WKSHelper::instance()->allow_notify ();
+              break;
+            }
+          case (WKS_NOTIFY):
+            {
+              WKSHelper::instance ()->notify ((const char *) ctx->data);
+              xfree (ctx->data);
+              break;
             }
           default:
             log_debug ("%s:%s: Unknown msg %x",

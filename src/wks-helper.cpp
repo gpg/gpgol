@@ -21,6 +21,9 @@
 
 #include "common.h"
 #include "cpphelp.h"
+#include "oomhelp.h"
+#include "windowmessages.h"
+#include "overlay.h"
 
 #include <map>
 
@@ -32,6 +35,9 @@
 #include <gpgme++/context.h>
 
 #define CHECK_MIN_INTERVAL (60 * 60 * 24 * 7)
+
+#undef _
+#define _(a) utf8_gettext (a)
 
 static std::map <std::string, WKSHelper::WKSState> s_states;
 static std::map <std::string, time_t> s_last_checked;
@@ -162,27 +168,17 @@ do_check (LPVOID arg)
   rtrim (data);
 
   bool success = data == "[GNUPG:] SUCCESS";
-  const auto state = success ? WKSHelper::Supported : WKSHelper::NotSupported;
-
-  gpgrt_lock_lock (&wks_lock);
-
-  auto it = s_states.find(mbox);
-
-  // TODO figure out if it was published.
+  // TODO Figure out NeedsPublish state.
+  const auto state = success ? WKSHelper::NeedsPublish : WKSHelper::NotSupported;
   if (success)
     {
       log_debug ("%s:%s: WKS client: '%s' is supported",
                  SRCNAME, __func__, mbox.c_str ());
     }
-  if (it != s_states.end())
-    {
-      it->second = state;
-    }
-  else
-    {
-      s_states.insert (std::make_pair (mbox, state));
-    }
 
+  WKSHelper::instance()->update_state (mbox, state);
+
+  gpgrt_lock_lock (&wks_lock);
   auto tit = s_last_checked.find(mbox);
   auto now = time (0);
   if (tit != s_last_checked.end())
@@ -193,10 +189,12 @@ do_check (LPVOID arg)
     {
       s_last_checked.insert (std::make_pair (mbox, now));
     }
-
   gpgrt_lock_unlock (&wks_lock);
+
+  WKSHelper::instance()->save ();
   return 0;
 }
+
 
 void
 WKSHelper::start_check (const std::string &mbox, bool forced) const
@@ -233,4 +231,159 @@ void
 WKSHelper::save () const
 {
   // TODO
+}
+
+static DWORD WINAPI
+do_notify (LPVOID arg)
+{
+  /** Wait till a message was sent */
+  //Sleep (5000);
+  do_in_ui_thread (WKS_NOTIFY, arg);
+
+  return 0;
+}
+
+void
+WKSHelper::allow_notify () const
+{
+  gpgrt_lock_lock (&wks_lock);
+  for (auto &pair: s_states)
+    {
+      if (pair.second == NeedsPublish)
+        {
+          CloseHandle (CreateThread (NULL, 0, do_notify,
+                                     strdup (pair.first.c_str ()), 0,
+                                     NULL));
+          break;
+        }
+    }
+  gpgrt_lock_unlock (&wks_lock);
+}
+
+void
+WKSHelper::notify (const char *cBox) const
+{
+  std::string mbox = cBox;
+
+  const auto state = get_state (mbox);
+
+  if (state == NeedsPublish)
+    {
+      wchar_t * w_title = utf8_to_wchar (_("GpgOL: Key directory available!"));
+      wchar_t * w_desc = utf8_to_wchar (_("Your mail provider supports a key directory.\n\n"
+                                          "Register your key in that directory to make\n"
+                                          "it easier for others to send you encrypted mail.\n\n\n"
+                                          "Register Key?"));
+      if (MessageBoxW (get_active_hwnd (),
+                       w_desc, w_title, MB_ICONINFORMATION | MB_YESNO) == IDYES)
+        {
+          start_publish (mbox);
+        }
+      else
+        {
+           update_state (mbox, PublishDenied);
+        }
+
+      xfree (w_desc);
+      xfree (w_title);
+      return;
+    }
+  else
+    {
+      log_debug ("%s:%s: Unhandled notify state: %i for '%s'",
+                 SRCNAME, __func__, state, cBox);
+      return;
+    }
+}
+
+void
+WKSHelper::start_publish (const std::string &mbox) const
+{
+  Overlay (get_active_hwnd (),
+           std::string (_("Creating registration request...")));
+
+  log_debug ("%s:%s: Start publish for '%s'",
+             SRCNAME, __func__, mbox.c_str ());
+
+  const auto key = GpgME::Key::locate (mbox.c_str ());
+
+  if (key.isNull ())
+    {
+      MessageBox (get_active_hwnd (),
+                  "WKS publish failed to find key for mail address.",
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+      return;
+    }
+
+  const auto wksPath = get_wks_client_path ();
+
+  if (wksPath.empty())
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  std::vector<std::string> args;
+
+  args.push_back (wksPath);
+  args.push_back (std::string ("--create"));
+  args.push_back (std::string (key.primaryFingerprint ()));
+  args.push_back (mbox);
+
+  // Spawn the process
+  auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+  if (!ctx)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  GpgME::Data mystdin, mystdout, mystderr;
+
+  char **cargs = vector_to_cArray (args);
+
+  GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char **> (cargs),
+                                 mystdin, mystdout, mystderr,
+                                 GpgME::Context::SpawnNone);
+  release_cArray (cargs);
+
+  if (err)
+    {
+      log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
+                 SRCNAME, __func__, err.code(), err.asString());
+      return;
+    }
+  auto data = mystdout.toString ();
+
+  if (data.empty ())
+    {
+      MessageBox (get_active_hwnd (),
+                  "WKS client failed to create publishing request.",
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+      return;
+    }
+
+  log_debug ("%s:%s: WKS client: returned '%s'",
+             SRCNAME, __func__, data.c_str ());
+  return;
+}
+
+
+void
+WKSHelper::update_state (const std::string &mbox, WKSState state) const
+{
+  gpgrt_lock_lock (&wks_lock);
+  auto it = s_states.find(mbox);
+
+  if (it != s_states.end())
+    {
+      it->second = state;
+    }
+  else
+    {
+      s_states.insert (std::make_pair (mbox, state));
+    }
+  gpgrt_lock_unlock (&wks_lock);
 }
