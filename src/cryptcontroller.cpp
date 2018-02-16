@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "common.h"
+#include "cpphelp.h"
 #include "cryptcontroller.h"
 #include "mail.h"
 #include "mapihelp.h"
@@ -161,38 +162,6 @@ CryptController::collect_data ()
   return 0;
 }
 
-static void
-release_carray (char **recipients)
-{
-  int idx;
-
-  if (recipients)
-    {
-      for (idx=0; recipients[idx]; idx++)
-        xfree (recipients[idx]);
-      xfree (recipients);
-    }
-}
-
-static inline void
-rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
-}
-
-char **
-vector_to_charArray(const std::vector<std::string> &vec)
-{
-  char ** ret = (char**) xmalloc (sizeof (char*) * (vec.size() + 1));
-  for (size_t i = 0; i < vec.size(); i++)
-    {
-      ret[i] = strdup (vec[i].c_str());
-    }
-  ret[vec.size()] = NULL;
-  return ret;
-}
-
 int
 CryptController::lookup_fingerprints (const std::string &sigFpr,
                                       const std::vector<std::string> recpFprs)
@@ -232,7 +201,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   }
 
   // Convert recipient fingerprints
-  char **cRecps = vector_to_charArray (recpFprs);
+  char **cRecps = vector_to_cArray (recpFprs);
 
   err = ctx->startKeyListing (const_cast<const char **> (cRecps));
 
@@ -248,7 +217,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
 
   m_recipients.pop_back();
 
-  release_carray (cRecps);
+  release_cArray (cRecps);
 
   return 0;
 }
@@ -402,13 +371,13 @@ CryptController::resolve_keys ()
           args.push_back (GpgME::UserID::addrSpecFromString (recipients[i]));
         }
 
-      release_carray (recipients);
+      release_cArray (recipients);
     }
 
   // Convert our collected vector to c strings
   // It's a bit overhead but should be quick for such small
   // data.
-  char **cargs = vector_to_charArray (args);
+  char **cargs = vector_to_cArray (args);
 
   // Args are prepared. Spawn the resolver.
   auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
@@ -416,7 +385,7 @@ CryptController::resolve_keys ()
   if (!ctx)
     {
       // can't happen
-      release_carray (cargs);
+      release_cArray (cargs);
       TRACEPOINT;
       return -1;
     }
@@ -448,7 +417,7 @@ CryptController::resolve_keys ()
   log_debug ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
 #endif
 
-  release_carray (cargs);
+  release_cArray (cargs);
 
   if (err)
     {
@@ -986,14 +955,14 @@ CryptController::start_crypto_overlay ()
     {
       args.push_back (std::string (_("Signing...")));
     }
-  char **cargs = vector_to_charArray (args);
+  char **cargs = vector_to_cArray (args);
 
   m_overlayCtx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
 
   if (!m_overlayCtx)
     {
       // can't happen
-      release_carray (cargs);
+      release_cArray (cargs);
       TRACEPOINT;
       return;
     }
@@ -1013,5 +982,5 @@ CryptController::start_crypto_overlay ()
       log_debug ("%i: '%s'", i, cargs[i]);
     }
 #endif
-  release_carray (cargs);
+  release_cArray (cargs);
 }
