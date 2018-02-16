@@ -335,7 +335,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
            */
           log_oom_extra ("%s:%s: Send : %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->needs_crypto ())
+          if (!m_mail->needs_crypto () && m_mail->crypt_state () == Mail::NoCryptMail)
             {
              log_debug ("%s:%s: No crypto neccessary. Passing send for %p obj %p",
                         SRCNAME, __func__, m_mail, m_object);
