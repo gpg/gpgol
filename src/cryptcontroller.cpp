@@ -822,7 +822,13 @@ CryptController::update_mail_mapi ()
                                    PROTOCOL_SMIME :
                                    PROTOCOL_OPENPGP;
   int rc = 0;
-  if (m_sign && m_encrypt)
+  /* Do we have override MIME ? */
+  const auto overrideMime = m_mail->get_override_mime_data ();
+  if (!overrideMime.empty())
+    {
+      rc = write_string (sink, overrideMime.c_str ());
+    }
+  else if (m_sign && m_encrypt)
     {
       rc = create_encrypt_attach (sink, protocol, m_output);
     }

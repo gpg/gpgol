@@ -2561,10 +2561,21 @@ Mail::update_crypt_mapi()
     }
   if (!m_crypter)
     {
-      log_error ("%s:%s: No crypter.",
-                 SRCNAME, __func__);
-      m_crypt_state = NoCryptMail;
-      return;
+      if (!m_mime_data.empty())
+        {
+          log_debug ("%s:%s: Have override mime data creating dummy crypter",
+                     SRCNAME, __func__);
+          m_crypter = std::shared_ptr <CryptController> (new CryptController (this, false,
+                                                                              false,
+                                                                              false, GpgME::UnknownProtocol));
+        }
+      else
+        {
+          log_error ("%s:%s: No crypter.",
+                     SRCNAME, __func__);
+          m_crypt_state = NoCryptMail;
+          return;
+        }
     }
 
   if (m_crypter->update_mail_mapi ())

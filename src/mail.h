@@ -421,6 +421,13 @@ public:
     on error. */
   void reset_crypter () { m_crypter = nullptr; }
 
+  /** Set special crypto mime data that should be used as the
+    mime structure when sending. */
+  void set_override_mime_data (const std::string &data) {m_mime_data = data;}
+
+  /** Get the mime data that should be used when sending. */
+  std::string get_override_mime_data () const { return m_mime_data; }
+
 private:
   void update_categories ();
   void update_body ();
@@ -460,5 +467,6 @@ private:
   CryptState m_crypt_state;
   HWND m_window;
   bool m_is_inline_response;
+  std::string m_mime_data;
 };
 #endif // MAIL_H
