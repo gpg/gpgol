@@ -533,6 +533,40 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
   return 0;
 }
 
+/* Set the property NAME to DISP.  */
+int
+put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH disp)
+{
+  HRESULT hr;
+  DISPID dispid_put = DISPID_PROPERTYPUT;
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  VARIANT aVariant[1];
+  EXCEPINFO execpinfo;
+
+  init_excepinfo (&execpinfo);
+  dispid = lookup_oom_dispid (pDisp, name);
+  if (dispid == DISPID_UNKNOWN)
+    return -1;
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_DISPATCH | VT_BYREF;
+  dispparams.rgvarg[0].pdispVal = disp;
+  dispparams.cArgs = 1;
+  dispparams.rgdispidNamedArgs = &dispid_put;
+  dispparams.cNamedArgs = 1;
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_PROPERTYPUT, &dispparams,
+                      NULL, &execpinfo, NULL);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Putting '%s' failed: %#lx",
+                 SRCNAME, __func__, name, hr);
+      dump_excepinfo (execpinfo);
+      return -1;
+    }
+  return 0;
+}
 
 /* Get the boolean property NAME of the object PDISP.  Returns False if
    not found or if it is not a boolean property.  */
@@ -1776,4 +1810,93 @@ get_active_hwnd ()
   xfree (caption);
 
   return hwnd;
+}
+
+LPDISPATCH
+create_mail ()
+{
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+
+  if (!app)
+    {
+      TRACEPOINT;
+      return nullptr;
+   }
+
+  VARIANT var;
+  VariantInit (&var);
+  VARIANT argvars[1];
+  DISPPARAMS args;
+  VariantInit (&argvars[0]);
+  argvars[0].vt = VT_I2;
+  argvars[0].intVal = 0;
+  args.cArgs = 1;
+  args.cNamedArgs = 0;
+  args.rgvarg = argvars;
+
+  LPDISPATCH ret = nullptr;
+
+  if (invoke_oom_method_with_parms (app, "CreateItem", &var, &args))
+    {
+      log_error ("%s:%s: Failed to create mailitem.",
+                 SRCNAME, __func__);
+      return ret;
+    }
+
+  ret = var.pdispVal;
+  return ret;
+}
+
+LPDISPATCH
+get_account_for_mail (const char *mbox)
+{
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+
+  if (!app)
+    {
+      TRACEPOINT;
+      return nullptr;
+   }
+
+  LPDISPATCH accounts = get_oom_object (app, "Session.Accounts");
+
+  if (!accounts)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  int count = get_oom_int (accounts, "Count");
+  for (int i = 1; i <= count; i++)
+    {
+      std::string item = std::string ("Item(") + std::to_string (i) + ")";
+
+      LPDISPATCH account = get_oom_object (accounts, item.c_str ());
+
+      if (!account)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      char *smtpAddr = get_oom_string (account, "SmtpAddress");
+
+      if (!smtpAddr)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      if (!stricmp (mbox, smtpAddr))
+        {
+          gpgol_release (accounts);
+          xfree (smtpAddr);
+          return account;
+        }
+      xfree (smtpAddr);
+    }
+  gpgol_release (accounts);
+
+  log_error ("%s:%s: Failed to find account for '%s'.",
+             SRCNAME, __func__, mbox);
+
+  return nullptr;
 }

@@ -141,6 +141,9 @@ int put_oom_int (LPDISPATCH pDisp, const char *name, int value);
 /* Set the property NAME to STRING.  */
 int put_oom_string (LPDISPATCH pDisp, const char *name, const char *string);
 
+/* Set the property NAME to DISP.  */
+int put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH value);
+
 /* Get the boolean property NAME of the object PDISP.  */
 int get_oom_bool (LPDISPATCH pDisp, const char *name);
 
@@ -320,6 +323,11 @@ get_unique_id (LPDISPATCH mail, int create, const char* uuid);
    through FindWindow and the caption. Does not use IOleWindow
    because that was unreliable somhow. */
 HWND get_active_hwnd (void);
+
+/* Create a new mailitem and return it */
+LPDISPATCH create_mail (void);
+
+LPDISPATCH get_account_for_mail (const char *mbox);
 #ifdef __cplusplus
 }
 #endif
