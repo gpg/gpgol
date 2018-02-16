@@ -24,8 +24,10 @@
 #include "oomhelp.h"
 #include "windowmessages.h"
 #include "overlay.h"
+#include "mail.h"
 
 #include <map>
+#include <sstream>
 
 #include <unistd.h>
 
@@ -299,8 +301,8 @@ WKSHelper::notify (const char *cBox) const
 void
 WKSHelper::start_publish (const std::string &mbox) const
 {
-  Overlay (get_active_hwnd (),
-           std::string (_("Creating registration request...")));
+//  Overlay (get_active_hwnd (),
+//           std::string (_("Creating registration request...")));
 
   log_debug ("%s:%s: Start publish for '%s'",
              SRCNAME, __func__, mbox.c_str ());
@@ -354,7 +356,7 @@ WKSHelper::start_publish (const std::string &mbox) const
                  SRCNAME, __func__, err.code(), err.asString());
       return;
     }
-  auto data = mystdout.toString ();
+  const auto data = mystdout.toString ();
 
   if (data.empty ())
     {
@@ -367,6 +369,9 @@ WKSHelper::start_publish (const std::string &mbox) const
 
   log_debug ("%s:%s: WKS client: returned '%s'",
              SRCNAME, __func__, data.c_str ());
+
+  send_mail (data);
+
   return;
 }
 
@@ -386,4 +391,83 @@ WKSHelper::update_state (const std::string &mbox, WKSState state) const
       s_states.insert (std::make_pair (mbox, state));
     }
   gpgrt_lock_unlock (&wks_lock);
+}
+
+void
+WKSHelper::send_mail (const std::string &mimeData) const
+{
+  std::istringstream ss(mimeData);
+
+  std::string from;
+  std::string to;
+  std::string subject;
+  std::string withoutHeaders;
+
+  std::getline (ss, from);
+  std::getline (ss, to);
+  std::getline (ss, subject);
+
+  if (from.compare (0, 6, "From: ") || to.compare (0, 4, "To: "),
+      subject.compare (0, 9, "Subject: "))
+    {
+      log_error ("%s:%s: Invalid mime data..",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  std::getline (ss, withoutHeaders, '\0');
+
+  from.erase (0, 6);
+  to.erase (0, 4);
+  subject.erase (0, 9);
+
+  rtrim (from);
+  rtrim (to);
+  rtrim (subject);
+
+  LPDISPATCH mail = create_mail ();
+
+  if (!mail)
+    {
+      log_error ("%s:%s: Failed to create mail for request.",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  if (put_oom_string (mail, "Subject", subject.c_str ()))
+    {
+      TRACEPOINT;
+      gpgol_release (mail);
+      return;
+    }
+
+  if (put_oom_string (mail, "To", to.c_str ()))
+    {
+      TRACEPOINT;
+      gpgol_release (mail);
+      return;
+    }
+
+  LPDISPATCH account = get_account_for_mail (from.c_str ());
+  if (account)
+    {
+      log_debug ("%s:%s: Changing account.",
+                 SRCNAME, __func__);
+      put_oom_disp (mail, "SendUsingAccount", account);
+    }
+
+  /* Now we have a problem. The created LPDISPATCH pointer has
+     a different value then the one with which we saw the ItemLoad
+     event. But we want to get the mail object. So,.. surpise
+     a Hack! :-) */
+  auto last_mail = Mail::get_last_mail ();
+
+  last_mail->set_override_mime_data (mimeData);
+  last_mail->set_crypt_state (Mail::NeedsSecondAfterWrite);
+
+  invoke_oom_method (mail, "Save", NULL);
+  invoke_oom_method (mail, "Send", NULL);
+
+  log_debug ("%s:%s: Publish successful",
+             SRCNAME, __func__);
 }

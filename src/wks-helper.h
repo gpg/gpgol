@@ -88,6 +88,9 @@ public:
     /** Update or insert a state in the static maps. */
     void update_state (const std::string &mbox, WKSState state) const;
 
+    /** Create / Build Mail */
+    void send_mail (const std::string &mimeData) const;
+
 private:
     time_t get_check_time (const std::string &mbox) const;
 
