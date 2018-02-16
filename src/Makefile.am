@@ -86,7 +86,8 @@ gpgol_SOURCES = \
 	mimedataprovider.cpp mimedataprovider.h \
 	explorer-events.cpp explorers-events.cpp \
 	cryptcontroller.cpp cryptcontroller.h \
-	cpphelp.cpp cpphelp.h
+	cpphelp.cpp cpphelp.h \
+	wks-helper.cpp wks-helper.h
 
 
 #treeview_SOURCES = treeview.c

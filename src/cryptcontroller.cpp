@@ -26,6 +26,7 @@
 #include "mail.h"
 #include "mapihelp.h"
 #include "mimemaker.h"
+#include "wks-helper.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/signingresult.h>
@@ -442,6 +443,9 @@ CryptController::do_crypto ()
 {
   log_debug ("%s:%s",
              SRCNAME, __func__);
+
+  /* Start a WKS check if necessary. */
+  WKSHelper::instance()->start_check (m_mail->get_cached_sender ());
 
   if (resolve_keys ())
     {

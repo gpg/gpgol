@@ -1,0 +1,80 @@
+/* @file wks-helper.cpp
+ * @brief Helper to work with a web-key-service
+ *
+ * Copyright (C) 2018 Intevation GmbH
+ *
+ * This file is part of GpgOL.
+ *
+ * GpgOL is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * GpgOL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
+#include "config.h"
+
+#include <string>
+
+/** @brief Helper for web key services.
+ *
+ * Everything is public to make it easy to access data
+ * members from another windows thread. Don't mess with them.
+ */
+class WKSHelper
+{
+protected:
+    /** Loads the list of checked keys */
+    explicit WKSHelper ();
+public:
+    enum WKSState
+      {
+        NotChecked, /*<-- Supported state was not checked */
+        NotSupported, /* <-- WKS is not supported for this address */
+        Supported, /* <-- WKS is supported for this address */
+        NeedsPublish, /* <-- There was no key published for this address */
+        NeedsUpdate, /* <-- Not yet implemeted. */
+        RequestSent, /* <-- A publishing request has been sent. */
+      };
+
+    ~WKSHelper ();
+
+    /** Get the WKSHelper
+
+        On the initial request:
+        Ensure that the OOM is available.
+        Will load all account addresses from OOM and then return.
+
+        Starts a background thread to load info from a file
+        and run checks if necessary.
+
+        When the thread is finished initialized will be true.
+    */
+    static const WKSHelper* instance ();
+
+    /** If the key for the address @address should be published */
+    WKSState get_state (const std::string &mbox) const;
+
+    /** Start a supported check for a given mbox.
+
+        If force is true the check will be run. Otherwise
+        the state will only be updated if the last check
+        was more then 7 days ago.
+
+        Returns immediately as the check is run in a background
+        thread.
+    */
+    void start_check (const std::string &mbox, bool force = false) const;
+
+private:
+    time_t get_check_time (const std::string &mbox) const;
+
+    void save() const;
+    void load() const;;
+};
