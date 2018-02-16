@@ -41,6 +41,7 @@ public:
 private:
   std::unique_ptr<GpgME::Context> m_overlayCtx;
   GpgME::Data m_overlayStdin;
+  HWND m_wid;
 };
 
 #endif // OVERLAY_H

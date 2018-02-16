@@ -27,8 +27,10 @@
 
 #include <gpgme++/context.h>
 
-Overlay::Overlay (HWND wid, const std::string &text)
+Overlay::Overlay (HWND wid, const std::string &text): m_wid (wid)
 {
+  // Disable the window early to avoid it beeing closed.
+  EnableWindow (m_wid, FALSE);
   std::vector<std::string> args;
 
   // Collect the arguments
@@ -36,6 +38,7 @@ Overlay::Overlay (HWND wid, const std::string &text)
   if (!gpg4win_dir)
     {
       TRACEPOINT;
+      EnableWindow (m_wid, TRUE);
       return;
     }
   const auto overlayer = std::string (gpg4win_dir) + "\\bin\\overlayer.exe";
@@ -56,6 +59,7 @@ Overlay::Overlay (HWND wid, const std::string &text)
       // can't happen
       release_cArray (cargs);
       TRACEPOINT;
+      EnableWindow (m_wid, TRUE);
       return;
     }
 
@@ -68,7 +72,6 @@ Overlay::Overlay (HWND wid, const std::string &text)
                                                 GpgME::Context::SpawnAllowSetFg |
                                                 GpgME::Context::SpawnShowWindow));
   release_cArray (cargs);
-  TRACEPOINT;
 
   log_debug ("%s:%s: Created overlay window over %p",
              SRCNAME, __func__, wid);
@@ -78,5 +81,8 @@ Overlay::~Overlay()
 {
   log_debug ("%s:%s: Stopping overlay.",
              SRCNAME, __func__);
+  m_overlayCtx->wait ();
   m_overlayStdin.write ("quit\n", 5);
+  m_overlayStdin.write (nullptr, 0);
+  EnableWindow (m_wid, TRUE);
 }
