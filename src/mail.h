@@ -86,6 +86,12 @@ public:
   */
   static Mail* get_mail_for_uuid (const char *uuid);
 
+  /** @brief Get the last created mail.
+
+    @returns A reference to the last created mail or null.
+  */
+  static Mail* get_last_mail ();
+
   /** @brief looks for existing Mail objects.
 
     @returns A reference to an existing mailitem or NULL in case none

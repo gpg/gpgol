@@ -62,6 +62,8 @@ static std::map<LPDISPATCH, Mail*> g_mail_map;
 static std::map<std::string, Mail*> g_uid_map;
 static std::set<std::string> uids_searched;
 
+static Mail *s_last_mail;
+
 static bool
 in_de_vs_mode()
 {
@@ -159,6 +161,7 @@ Mail::Mail (LPDISPATCH mailitem) :
       return;
     }
   g_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
+  s_last_mail = this;
 }
 
 GPGRT_LOCK_DEFINE(dtor_lock);
@@ -2700,4 +2703,15 @@ Mail::check_inline_response ()
   xfree (inlineSubject);
 
   return m_is_inline_response;
+}
+
+// static
+Mail *
+Mail::get_last_mail ()
+{
+  if (!s_last_mail || !is_valid_ptr (s_last_mail))
+    {
+      s_last_mail = nullptr;
+    }
+  return s_last_mail;
 }
