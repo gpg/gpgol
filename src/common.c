@@ -38,6 +38,8 @@
 
 #include "common.h"
 
+#include "dialogs.h"
+
 HINSTANCE glob_hinst = NULL;
 
 void
@@ -1026,5 +1028,32 @@ is_elevated()
   if (hToken)
     CloseHandle (hToken);
 
+  return ret;
+}
+
+int
+gpgol_message_box (HWND parent, const char *utf8_text,
+                   const char *utf8_caption, UINT type)
+{
+  wchar_t *w_text = utf8_to_wchar (utf8_text);
+  wchar_t *w_caption = utf8_to_wchar (utf8_caption);
+  int ret = 0;
+
+  MSGBOXPARAMSW mbp;
+  mbp.cbSize = sizeof (MSGBOXPARAMS);
+  mbp.hwndOwner = parent;
+  mbp.hInstance = glob_hinst;
+  mbp.lpszText = w_text;
+  mbp.lpszCaption = w_caption;
+  mbp.dwStyle = type | MB_USERICON;
+  mbp.dwLanguageId = MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT);
+  mbp.lpfnMsgBoxCallback = NULL;
+  mbp.dwContextHelpId = 0;
+  mbp.lpszIcon = (LPCWSTR) MAKEINTRESOURCE (IDI_GPGOL_LOCK_ICON);
+
+  ret = MessageBoxIndirectW (&mbp);
+
+  xfree (w_text);
+  xfree (w_caption);
   return ret;
 }

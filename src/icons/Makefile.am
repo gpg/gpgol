@@ -31,4 +31,4 @@ EXTRA_DIST= \
     level-2.svg level-2-enc.svg level-2.png level-2-enc.png \
     level-3.svg level-3-enc.svg level-3.png level-3-enc.png \
     level-4.svg level-4-enc.svg level-4.png level-4-enc.png \
-    logo.svg logo.bmp
+    logo.svg logo.bmp lock.ico

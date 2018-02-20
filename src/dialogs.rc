@@ -69,6 +69,8 @@ IDI_SIGN_ENCRYPT_40_PNG    RCDATA              "icons/sign-enc-40.png"
 IDI_ENCRYPT_20_PNG         RCDATA              "icons/encrypt-20.png"
 IDI_SIGN_20_PNG            RCDATA              "icons/sign-20.png"
 
+IDI_GPGOL_LOCK_ICON        ICON    DISCARDABLE "icons/lock.ico"
+
 IDB_LOGO                   BITMAP  DISCARDABLE "icons/logo.bmp"
 
 IDD_GPG_OPTIONS  DIALOG DISCARDABLE  0, 0, 266, 274

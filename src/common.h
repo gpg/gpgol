@@ -141,6 +141,9 @@ void log_window_hierarchy (HWND window, const char *fmt,
                            ...) __attribute__ ((format (printf,2,3)));
 
 void bring_to_front (HWND wid);
+
+int gpgol_message_box (HWND parent, const char *utf8_text,
+                       const char *utf8_caption, UINT type);
 #ifdef __cplusplus
 }
 #endif

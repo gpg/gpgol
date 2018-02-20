@@ -122,6 +122,7 @@
 #define IDI_SIGN_ENCRYPT_40_PNG         0x6075
 #define IDI_ENCRYPT_20_PNG              0x6076
 #define IDI_SIGN_20_PNG                 0x6077
+#define IDI_GPGOL_LOCK_ICON             0x6078
 
 /* Status icons */
 #define ENCRYPT_ICON_OFFSET             0x10
