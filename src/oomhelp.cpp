@@ -550,13 +550,13 @@ put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH disp)
     return -1;
 
   dispparams.rgvarg = aVariant;
-  dispparams.rgvarg[0].vt = VT_DISPATCH | VT_BYREF;
+  dispparams.rgvarg[0].vt = VT_DISPATCH;
   dispparams.rgvarg[0].pdispVal = disp;
   dispparams.cArgs = 1;
   dispparams.rgdispidNamedArgs = &dispid_put;
   dispparams.cNamedArgs = 1;
   hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                      DISPATCH_PROPERTYPUT, &dispparams,
+                      DISPATCH_PROPERTYPUTREF, &dispparams,
                       NULL, &execpinfo, NULL);
   if (hr != S_OK)
     {

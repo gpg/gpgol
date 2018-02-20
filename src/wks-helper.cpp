@@ -451,10 +451,11 @@ WKSHelper::send_mail (const std::string &mimeData) const
   LPDISPATCH account = get_account_for_mail (from.c_str ());
   if (account)
     {
-      log_debug ("%s:%s: Changing account.",
-                 SRCNAME, __func__);
+      log_debug ("%s:%s: Found account to change for '%s'.",
+                 SRCNAME, __func__, from.c_str ());
       put_oom_disp (mail, "SendUsingAccount", account);
     }
+  gpgol_release (account);
 
   /* Now we have a problem. The created LPDISPATCH pointer has
      a different value then the one with which we saw the ItemLoad
