@@ -271,13 +271,12 @@ WKSHelper::notify (const char *cBox) const
 
   if (state == NeedsPublish)
     {
-      wchar_t * w_title = utf8_to_wchar (_("GpgOL: Key directory available!"));
-      wchar_t * w_desc = utf8_to_wchar (_("Your mail provider supports a key directory.\n\n"
+      if (gpgol_message_box (get_active_hwnd (),
+                             _("Your mail provider supports a key directory.\n\n"
                                           "Register your key in that directory to make\n"
                                           "it easier for others to send you encrypted mail.\n\n\n"
-                                          "Register Key?"));
-      if (MessageBoxW (get_active_hwnd (),
-                       w_desc, w_title, MB_ICONINFORMATION | MB_YESNO) == IDYES)
+                                          "Register Key?"),
+                             _("GpgOL: Key directory available!"), MB_YESNO) == IDYES)
         {
           start_publish (mbox);
         }
@@ -285,9 +284,6 @@ WKSHelper::notify (const char *cBox) const
         {
            update_state (mbox, PublishDenied);
         }
-
-      xfree (w_desc);
-      xfree (w_title);
       return;
     }
   else
@@ -360,10 +356,10 @@ WKSHelper::start_publish (const std::string &mbox) const
 
   if (data.empty ())
     {
-      MessageBox (get_active_hwnd (),
-                  "WKS client failed to create publishing request.",
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
+      gpgol_message_box (get_active_hwnd (),
+                         "WKS client failed to create publishing request.",
+                         _("GpgOL"),
+                         MB_OK);
       return;
     }
 
@@ -469,6 +465,6 @@ WKSHelper::send_mail (const std::string &mimeData) const
   invoke_oom_method (mail, "Save", NULL);
   invoke_oom_method (mail, "Send", NULL);
 
-  log_debug ("%s:%s: Publish successful",
+  log_debug ("%s:%s: Done send mail.",
              SRCNAME, __func__);
 }
