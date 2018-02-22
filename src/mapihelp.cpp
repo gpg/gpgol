@@ -931,11 +931,11 @@ get_first_attach_mime_tag (LPMESSAGE message)
       return NULL;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
-  if (n_attach != 1)
+  if (n_attach < 1)
     {
       FreeProws (mapirows);
       gpgol_release (mapitable);
-      log_debug ("%s:%s: not just one attachment", SRCNAME, __func__);
+      log_debug ("%s:%s: less then one attachment", SRCNAME, __func__);
       return NULL;
     }
   pos = 0;
@@ -1013,12 +1013,38 @@ change_message_class_ipm_note (LPMESSAGE message)
         }
       xfree (proto);
     }
+  else if (ct && !strcmp (ct, "application/ms-tnef"))
+    {
+      /* ms-tnef can either be inline PGP or PGP/MIME. First check
+         for inline and then look at the attachments if they look
+         like PGP /MIME .*/
+      newvalue = get_msgcls_from_pgp_lines (message);
+      if (!newvalue)
+        {
+          /* So no PGP Inline. Lets look at the attachment. */
+          char *attach_mime = get_first_attach_mime_tag (message);
+          if (!attach_mime)
+            {
+              xfree (ct);
+              return nullptr;
+            }
+          if (!strcmp (attach_mime, "application/pgp-encrypted"))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+              xfree (attach_mime);
+            }
+          else if (!strcmp (attach_mime, "application/pgp-signature"))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+              xfree (attach_mime);
+            }
+        }
+    }
   else if (!ct || !strcmp (ct, "text/plain") ||
            !strcmp (ct, "multipart/mixed") ||
            !strcmp (ct, "multipart/alternative") ||
            !strcmp (ct, "multipart/related") ||
-           !strcmp (ct, "text/html") ||
-           !strcmp (ct, "application/ms-tnef"))
+           !strcmp (ct, "text/html"))
     {
       /* It is quite common to have a multipart/mixed or alternative
          mail with separate encrypted PGP parts.  Look at the body to
