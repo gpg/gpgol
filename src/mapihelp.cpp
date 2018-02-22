@@ -3060,7 +3060,8 @@ mapi_get_message_content_type (LPMESSAGE message,
       if (length && s[-1] == '\r')
         length--;
 
-      if (!strncmp ("Wks-Phase: confirm", header_lines, length))
+      if (!strncmp ("Wks-Phase: confirm", header_lines,
+                    std::max (18, (int) length)))
         {
           log_debug ("%s:%s: detected wks confirmation mail",
                      SRCNAME, __func__);
