@@ -21,11 +21,22 @@
 #include "config.h"
 
 #include <string>
+#include "oomhelp.h"
+
+#include <utility>
+
+class Mail;
+namespace GpgME
+{
+  class Data;
+} // namespace GpgME
 
 /** @brief Helper for web key services.
  *
  * Everything is public to make it easy to access data
  * members from another windows thread. Don't mess with them.
+ *
+ * This is all a bit weird, don't look at it too much as it works ;-)
  */
 class WKSHelper
 {
@@ -39,9 +50,11 @@ public:
         NotSupported, /* <-- WKS is not supported for this address */
         Supported, /* <-- WKS is supported for this address */
         NeedsPublish, /* <-- There was no key published for this address */
+        ConfirmationSeen, /* A confirmation request was seen for this mail addres. */
         NeedsUpdate, /* <-- Not yet implemeted. */
         RequestSent, /* <-- A publishing request has been sent. */
         PublishDenied, /* <-- A user denied publishing. */
+        ConfirmationSent, /* <-- The confirmation response was sent. */
       };
 
     ~WKSHelper ();
@@ -76,8 +89,8 @@ public:
     /** Starts gpg-wks-client --create */
     void start_publish (const std::string &mbox) const;
 
-    /** Allow queueing a notification. */
-    void allow_notify () const;
+    /** Allow queueing a notification after a sleepTime */
+    void allow_notify (int sleepTimeMS = 0) const;
 
     /** Send a notification and start publishing accordingly */
     void notify (const char *mbox) const;
@@ -88,9 +101,20 @@ public:
     /** Update or insert a state in the static maps. */
     void update_state (const std::string &mbox, WKSState state) const;
 
-    /** Create / Build Mail */
-    void send_mail (const std::string &mimeData) const;
+    /** Create / Build / Send Mail
+      returns 0 on success.
+    */
+    int send_mail (const std::string &mimeData) const;
 
+    /** Handle a confirmation mail read event */
+    void handle_confirmation_read (Mail *mail, LPSTREAM msgstream) const;
+
+    /** Handle the notifcation following the read. */
+    void handle_confirmation_notify (const std::string &mbox) const;
+
+    /** Get the cached confirmation data. Caller takes ownership of
+      the data object and has to delete it. It is removed from the cache. */
+    std::pair <GpgME::Data *, Mail *> get_cached_confirmation (const std::string &mbox) const;
 private:
     time_t get_check_time (const std::string &mbox) const;
 

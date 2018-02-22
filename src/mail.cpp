@@ -37,6 +37,7 @@
 #include "gpgolstr.h"
 #include "windowmessages.h"
 #include "mlang-charset.h"
+#include "wks-helper.h"
 
 #include <gpgme++/configuration.h>
 #include <gpgme++/tofuinfo.h>
@@ -841,9 +842,22 @@ Mail::decrypt_verify()
     }
   set_uuid ();
   m_processed = true;
+
+
   /* Insert placeholder */
   char *placeholder_buf;
-  if (gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
+  if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
+    {
+      gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
+                      decrypt_template,
+                      "OpenPGP",
+                      _("Pubkey directory confirmation"),
+                      _("This is a confirmation request to publish your Pubkey in the "
+                        "directory for your domain.\n\n"
+                        "<p>If you did not request to publish your Pubkey in your providers "
+                        "directory, simply ignore this message.</p>\n"));
+    }
+  else if (gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
                       decrypt_template,
                       is_smime() ? "S/MIME" : "OpenPGP",
                       _("Encrypted message"),
@@ -876,6 +890,12 @@ Mail::decrypt_verify()
 
   /* Do the actual parsing */
   auto cipherstream = get_attachment_stream (m_mailitem, m_moss_position);
+
+  if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
+    {
+      WKSHelper::instance ()->handle_confirmation_read (this, cipherstream);
+      return 0;
+    }
 
   if (!cipherstream)
     {
@@ -1504,7 +1524,8 @@ Mail::is_smime ()
         }
       else
         {
-          log_error ("Protocol in multipart signed mail.");
+          log_error ("%s:%s: No protocol in multipart / signed mail.",
+                     SRCNAME, __func__);
         }
       xfree (proto);
       xfree (ct);

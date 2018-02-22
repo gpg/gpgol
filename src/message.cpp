@@ -135,6 +135,8 @@ message_incoming_handler (LPMESSAGE message, HWND hwnd, bool force)
       retval = 2;
       message_decrypt (message, msgtype, force, hwnd);
       break;
+    default:
+      break;
     }
 
   return retval;
@@ -537,6 +539,7 @@ message_verify (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
                               "that S/MIME processing has been enabled."));
       else
         show_message (hwnd, _("This message has no signature."));
+    default:
       return 0; /* Nothing to do.  */
     }
   
@@ -712,6 +715,7 @@ message_decrypt (LPMESSAGE message, msgtype_t msgtype, int force, HWND hwnd)
       is_opaque = 1;
       break;
     case MSGTYPE_GPGOL_PGP_MESSAGE:
+    default:
       break;
     }
   

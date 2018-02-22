@@ -136,5 +136,7 @@ int mapi_body_to_attachment (LPMESSAGE message);
 char * mapi_get_uid (LPMESSAGE message);
 #ifdef __cplusplus
 }
+#include <string>
+std::string mapi_get_header (LPMESSAGE message);
 #endif
 #endif /*MAPIHELP_H*/

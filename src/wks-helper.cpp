@@ -23,8 +23,8 @@
 #include "cpphelp.h"
 #include "oomhelp.h"
 #include "windowmessages.h"
-#include "overlay.h"
 #include "mail.h"
+#include "mapihelp.h"
 
 #include <map>
 #include <sstream>
@@ -38,13 +38,16 @@
 
 #define CHECK_MIN_INTERVAL (60 * 60 * 24 * 7)
 
+#define DEBUG_WKS 1
+
 #undef _
 #define _(a) utf8_gettext (a)
 
 static std::map <std::string, WKSHelper::WKSState> s_states;
 static std::map <std::string, time_t> s_last_checked;
+static std::map <std::string, std::pair <GpgME::Data *, Mail *> > s_confirmation_cache;
 
-static WKSHelper* singleton = NULL;
+static WKSHelper* singleton = nullptr;
 
 GPGRT_LOCK_DEFINE (wks_lock);
 
@@ -97,6 +100,24 @@ WKSHelper::get_check_time (const std::string &mbox) const
       return 0;
     }
   return it->second;
+}
+
+std::pair <GpgME::Data *, Mail *>
+WKSHelper::get_cached_confirmation (const std::string &mbox) const
+{
+  gpgrt_lock_lock (&wks_lock);
+  const auto it = s_confirmation_cache.find(mbox);
+  const auto dataEnd = s_confirmation_cache.end();
+
+  if (it == dataEnd)
+    {
+      gpgrt_lock_unlock (&wks_lock);
+      return std::make_pair (nullptr, nullptr);
+    }
+  auto ret = it->second;
+  s_confirmation_cache.erase (it);
+  gpgrt_lock_unlock (&wks_lock);
+  return ret;
 }
 
 static std::string
@@ -218,8 +239,8 @@ WKSHelper::start_check (const std::string &mbox, bool forced) const
   log_debug ("%s:%s: WKSHelper starting check",
              SRCNAME, __func__);
   /* Start the actual work that can be done in a background thread. */
-  CloseHandle (CreateThread (NULL, 0, do_check, strdup (mbox.c_str ()), 0,
-                             NULL));
+  CloseHandle (CreateThread (nullptr, 0, do_check, strdup (mbox.c_str ()), 0,
+                             nullptr));
   return;
 }
 
@@ -239,23 +260,28 @@ static DWORD WINAPI
 do_notify (LPVOID arg)
 {
   /** Wait till a message was sent */
-  //Sleep (5000);
-  do_in_ui_thread (WKS_NOTIFY, arg);
+  std::pair<char *, int> *args = (std::pair<char *, int> *) arg;
+
+  Sleep (args->second);
+  do_in_ui_thread (WKS_NOTIFY, args->first);
+  delete args;
 
   return 0;
 }
 
 void
-WKSHelper::allow_notify () const
+WKSHelper::allow_notify (int sleepTimeMS) const
 {
   gpgrt_lock_lock (&wks_lock);
   for (auto &pair: s_states)
     {
-      if (pair.second == NeedsPublish)
+      if (pair.second == ConfirmationSeen ||
+          pair.second == NeedsPublish)
         {
-          CloseHandle (CreateThread (NULL, 0, do_notify,
-                                     strdup (pair.first.c_str ()), 0,
-                                     NULL));
+          auto *args = new std::pair<char *, int> (strdup (pair.first.c_str()), sleepTimeMS);
+          CloseHandle (CreateThread (nullptr, 0, do_notify,
+                                     args, 0,
+                                     nullptr));
           break;
         }
     }
@@ -272,11 +298,12 @@ WKSHelper::notify (const char *cBox) const
   if (state == NeedsPublish)
     {
       if (gpgol_message_box (get_active_hwnd (),
-                             _("Your mail provider supports a key directory.\n\n"
-                                          "Register your key in that directory to make\n"
-                                          "it easier for others to send you encrypted mail.\n\n\n"
-                                          "Register Key?"),
-                             _("GpgOL: Key directory available!"), MB_YESNO) == IDYES)
+                             _("A Pubkey directory is available for your domain.\n\n"
+                               "Register your Pubkey in that directory to make\n"
+                               "it easy for others to send you encrypted mail.\n\n"
+                               "It's secure and free!\n\n"
+                               "Register automatically?"),
+                             _("GpgOL: Pubkey directory available!"), MB_YESNO) == IDYES)
         {
           start_publish (mbox);
         }
@@ -286,20 +313,20 @@ WKSHelper::notify (const char *cBox) const
         }
       return;
     }
-  else
+  if (state == ConfirmationSeen)
     {
-      log_debug ("%s:%s: Unhandled notify state: %i for '%s'",
-                 SRCNAME, __func__, state, cBox);
+      handle_confirmation_notify (mbox);
       return;
     }
+
+  log_debug ("%s:%s: Unhandled notify state: %i for '%s'",
+             SRCNAME, __func__, state, cBox);
+  return;
 }
 
 void
 WKSHelper::start_publish (const std::string &mbox) const
 {
-//  Overlay (get_active_hwnd (),
-//           std::string (_("Creating registration request...")));
-
   log_debug ("%s:%s: Start publish for '%s'",
              SRCNAME, __func__, mbox.c_str ());
 
@@ -357,20 +384,26 @@ WKSHelper::start_publish (const std::string &mbox) const
   if (data.empty ())
     {
       gpgol_message_box (get_active_hwnd (),
-                         "WKS client failed to create publishing request.",
-                         _("GpgOL"),
+                         mystderr.toString().c_str (),
+                         _("GpgOL: Directory request failed"),
                          MB_OK);
       return;
     }
 
+#ifdef DEBUG_WKS
   log_debug ("%s:%s: WKS client: returned '%s'",
              SRCNAME, __func__, data.c_str ());
+#endif
 
-  send_mail (data);
-
+  if (!send_mail (data))
+    {
+      gpgol_message_box (get_active_hwnd (),
+                         _("You might receive a confirmation challenge from\n"
+                           "your provider to finish the registration."),
+                         _("GpgOL: Registration request sent!"), MB_OK);
+    }
   return;
 }
-
 
 void
 WKSHelper::update_state (const std::string &mbox, WKSState state) const
@@ -389,7 +422,7 @@ WKSHelper::update_state (const std::string &mbox, WKSState state) const
   gpgrt_lock_unlock (&wks_lock);
 }
 
-void
+int
 WKSHelper::send_mail (const std::string &mimeData) const
 {
   std::istringstream ss(mimeData);
@@ -408,7 +441,7 @@ WKSHelper::send_mail (const std::string &mimeData) const
     {
       log_error ("%s:%s: Invalid mime data..",
                  SRCNAME, __func__);
-      return;
+      return -1;
     }
 
   std::getline (ss, withoutHeaders, '\0');
@@ -427,21 +460,21 @@ WKSHelper::send_mail (const std::string &mimeData) const
     {
       log_error ("%s:%s: Failed to create mail for request.",
                  SRCNAME, __func__);
-      return;
+      return -1;
     }
 
   if (put_oom_string (mail, "Subject", subject.c_str ()))
     {
       TRACEPOINT;
       gpgol_release (mail);
-      return;
+      return -1;
     }
 
   if (put_oom_string (mail, "To", to.c_str ()))
     {
       TRACEPOINT;
       gpgol_release (mail);
-      return;
+      return -1;
     }
 
   LPDISPATCH account = get_account_for_mail (from.c_str ());
@@ -462,9 +495,207 @@ WKSHelper::send_mail (const std::string &mimeData) const
   last_mail->set_override_mime_data (mimeData);
   last_mail->set_crypt_state (Mail::NeedsSecondAfterWrite);
 
-  invoke_oom_method (mail, "Save", NULL);
-  invoke_oom_method (mail, "Send", NULL);
-
+  if (invoke_oom_method (mail, "Save", nullptr))
+    {
+      // Should not happen.
+      log_error ("%s:%s: Failed to save mail.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  if (invoke_oom_method (mail, "Send", nullptr))
+    {
+      log_error ("%s:%s: Failed to send mail.",
+                 SRCNAME, __func__);
+      return -1;
+    }
   log_debug ("%s:%s: Done send mail.",
              SRCNAME, __func__);
+  return 0;
+}
+
+static void
+copy_stream_to_data (LPSTREAM stream, GpgME::Data *data)
+{
+  HRESULT hr;
+  char buf[4096];
+  ULONG bRead;
+  while ((hr = stream->Read (buf, 4096, &bRead)) == S_OK ||
+         hr == S_FALSE)
+    {
+      if (!bRead)
+        {
+          // EOF
+          return;
+        }
+      data->write (buf, (size_t) bRead);
+    }
+}
+
+void
+WKSHelper::handle_confirmation_notify (const std::string &mbox) const
+{
+  auto pair = get_cached_confirmation (mbox);
+  GpgME::Data *mimeData = pair.first;
+  Mail *mail = pair.second;
+
+  if (!mail)
+    {
+      log_debug ("%s:%s: Confirmation notify without cached mail.",
+                 SRCNAME, __func__);
+    }
+
+  if (!mimeData)
+    {
+      log_error ("%s:%s: Confirmation notify without cached data.",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  /* First ask the user if he wants to confirm */
+  if (gpgol_message_box (get_active_hwnd (),
+                         _("Confirm registration?"),
+                         _("GpgOL: Pubkey directory confirmation"), MB_YESNO) != IDYES)
+    {
+      log_debug ("%s:%s: User aborted confirmation.",
+                 SRCNAME, __func__);
+      delete mimeData;
+
+      /* Next time we read the confirmation we ask again. */
+      update_state (mbox, RequestSent);
+      return;
+    }
+
+  /* Do the confirmation */
+  const auto wksPath = get_wks_client_path ();
+
+  if (wksPath.empty())
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  std::vector<std::string> args;
+
+  args.push_back (wksPath);
+  args.push_back (std::string ("--receive"));
+
+  // Spawn the process
+  auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+  if (!ctx)
+    {
+      TRACEPOINT;
+      return;
+    }
+  GpgME::Data mystdout, mystderr;
+
+  char **cargs = vector_to_cArray (args);
+
+  GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char **> (cargs),
+                                 *mimeData, mystdout, mystderr,
+                                 GpgME::Context::SpawnNone);
+  release_cArray (cargs);
+
+  if (err)
+    {
+      log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
+                 SRCNAME, __func__, err.code(), err.asString());
+      return;
+    }
+  const auto data = mystdout.toString ();
+
+  if (data.empty ())
+    {
+      gpgol_message_box (get_active_hwnd (),
+                         mystderr.toString().c_str (),
+                         _("GpgOL: Confirmation failed"),
+                         MB_OK);
+      return;
+    }
+
+#ifdef DEBUG_WKS
+  log_debug ("%s:%s: WKS client: returned '%s'",
+             SRCNAME, __func__, data.c_str ());
+#endif
+  if (!send_mail (data))
+   {
+     gpgol_message_box (get_active_hwnd (),
+                        _("Your Pubkey can soon be retrieved from your domain."),
+                        _("GpgOL: Request confirmed!"), MB_OK);
+   }
+
+  if (mail && Mail::is_valid_ptr (mail))
+    {
+      invoke_oom_method (mail->item(), "Delete", nullptr);
+    }
+
+  update_state (mbox, ConfirmationSent);
+}
+
+void
+WKSHelper::handle_confirmation_read (Mail *mail, LPSTREAM stream) const
+{
+  /* We get the handle_confirmation in the Read event. To do sending
+     etc. we have to move out of that event. For this we prepare
+     the data for later usage. */
+
+  if (!mail || !stream)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  /* Get the recipient of the confirmation mail */
+  char **recipients = mail->get_recipients ();
+
+  /* We assert that we have one recipient as the mail should have been
+     sent by the wks-server. */
+  if (!recipients || !recipients[0] || recipients[1])
+    {
+      log_error ("%s:%s: invalid recipients",
+                 SRCNAME, __func__);
+      release_cArray (recipients);
+      gpgol_release (stream);
+      return;
+    }
+
+  std::string mbox = recipients[0];
+  release_cArray (recipients);
+
+  /* Prepare stdin for the wks-client process */
+
+  /* First we need to write the headers */
+  LPMESSAGE message = get_oom_base_message (mail->item());
+  if (!message)
+    {
+      log_error ("%s:%s: Failed to obtain message.",
+                 SRCNAME, __func__);
+      gpgol_release (stream);
+      return;
+    }
+
+  const auto headers = mapi_get_header (message);
+  gpgol_release (message);
+
+  GpgME::Data *mystdin = new GpgME::Data();
+
+  mystdin->write (headers.c_str (), headers.size ());
+
+  /* Then the MIME data */
+  copy_stream_to_data (stream, mystdin);
+  gpgol_release (stream);
+
+  /* Then lets make sure its flushy */
+  mystdin->write (nullptr, 0);
+
+  /* And reset it to start */
+  mystdin->seek (0, SEEK_SET);
+
+  gpgrt_lock_lock (&wks_lock);
+  s_confirmation_cache.insert (std::make_pair (mbox, std::make_pair (mystdin, mail)));
+  gpgrt_lock_unlock (&wks_lock);
+
+  update_state (mbox, ConfirmationSeen);
+
+  /* Send the window message for notify. */
+  allow_notify (5000);
 }

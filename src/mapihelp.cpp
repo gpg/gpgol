@@ -1047,7 +1047,7 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
   if (ct)
     {
       log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
-      if (proto 
+      if (proto
           && !strcmp (ct, "multipart/signed")
           && !strcmp (proto, "application/pgp-signature"))
         {
@@ -1139,6 +1139,10 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
           && !strcmp (proto, "application/pgp-signature"))
         {
           newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+        }
+      else if (!strcmp (ct, "wks.confirmation.mail"))
+        {
+          newvalue = xstrdup ("IPM.Note.GpgOL.WKSConfirmation");
         }
       xfree (proto);
       xfree (ct);
@@ -1283,6 +1287,8 @@ string_to_type (const char *s)
         return MSGTYPE_GPGOL_CLEAR_SIGNED;
       else if (!strcmp (s, ".PGPMessage"))
         return MSGTYPE_GPGOL_PGP_MESSAGE;
+      else if (!strcmp (s, ".WKSConfirmation"))
+        return MSGTYPE_GPGOL_WKS_CONFIRMATION;
       else
         log_debug ("%s:%s: message class `%s' not supported",
                    SRCNAME, __func__, s-14);
@@ -1357,8 +1363,23 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
              keep the SMIME; we need to change the SMIME part of the
              class name so that Outlook does not process it as an
              SMIME message. */
-          newvalue = (char*)xmalloc (strlen (s) + 1);
-          strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
+
+          char *tmp = change_message_class_ipm_note_smime_multipartsigned
+            (message);
+          /* This case happens even for PGP/MIME mails but that is ok
+             as we later fiddle out the protocol. But we have to
+             check if this is a WKS Mail now so that we can do the
+             special handling for that. */
+          if (tmp && !strcmp (tmp, "IPM.Note.GpgOL.WKSConfirmation"))
+            {
+              newvalue = tmp;
+            }
+          else
+            {
+              xfree (tmp);
+              newvalue = (char*)xmalloc (strlen (s) + 1);
+              strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
+            }
         }
       else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
         {
@@ -3038,6 +3059,16 @@ mapi_get_message_content_type (LPMESSAGE message,
       length = (s - header_lines);
       if (length && s[-1] == '\r')
         length--;
+
+      if (!strncmp ("Wks-Phase: confirm", header_lines, length))
+        {
+          log_debug ("%s:%s: detected wks confirmation mail",
+                     SRCNAME, __func__);
+          retstr = xstrdup ("wks.confirmation.mail");
+          rfc822parse_close (msg);
+          return retstr;
+        }
+
       rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
       header_lines = s+1;
     }
