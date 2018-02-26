@@ -1247,6 +1247,26 @@ Mail::update_oom_data ()
           return 0;
         }
       xfree (buf);
+      /* We have a sender object but not yet an smtp address likely
+         exchange. Try some more propertys of the message. */
+      buf = get_pa_string (m_mailitem, PR_TAG_SENDER_SMTP_ADDRESS);
+      if (buf && strlen (buf))
+        {
+          log_debug ("%s:%s Sender fallback 3", SRCNAME, __func__);
+          m_sender = buf;
+          xfree (buf);
+          return 0;
+        }
+      xfree (buf);
+      buf = get_pa_string (m_mailitem, PR_TAG_RECEIVED_REPRESENTING_SMTP_ADDRESS);
+      if (buf && strlen (buf))
+        {
+          log_debug ("%s:%s Sender fallback 4", SRCNAME, __func__);
+          m_sender = buf;
+          xfree (buf);
+          return 0;
+        }
+      xfree (buf);
     }
   /* We don't have s sender object or SendUsingAccount,
      well, in that case fall back to the current user. */
@@ -1257,7 +1277,7 @@ Mail::update_oom_data ()
       gpgol_release (sender);
       if (buf && strlen (buf))
         {
-          log_debug ("%s:%s Sender fallback 3", SRCNAME, __func__);
+          log_debug ("%s:%s Sender fallback 5", SRCNAME, __func__);
           m_sender = buf;
           xfree (buf);
           return 0;
