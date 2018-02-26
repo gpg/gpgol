@@ -1079,6 +1079,22 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
         {
           newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
         }
+      else if (ct && !strcmp (ct, "application/ms-tnef"))
+        {
+          /* So no PGP Inline. Lets look at the attachment. */
+          char *attach_mime = get_first_attach_mime_tag (message);
+          if (!attach_mime)
+            {
+              xfree (ct);
+              xfree (proto);
+              return nullptr;
+            }
+          if (!strcmp (attach_mime, "multipart/signed"))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+              xfree (attach_mime);
+            }
+        }
       else if (!opt.enable_smime)
         ; /* S/MIME not enabled; thus no further checks.  */
       else if (smtype)
@@ -1165,6 +1181,22 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
           && !strcmp (proto, "application/pgp-signature"))
         {
           newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+        }
+      else if (ct && !strcmp (ct, "application/ms-tnef"))
+        {
+          /* So no PGP Inline. Lets look at the attachment. */
+          char *attach_mime = get_first_attach_mime_tag (message);
+          if (!attach_mime)
+            {
+              xfree (ct);
+              xfree (proto);
+              return nullptr;
+            }
+          if (!strcmp (attach_mime, "multipart/signed"))
+            {
+              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+              xfree (attach_mime);
+            }
         }
       xfree (proto);
       xfree (ct);
