@@ -113,6 +113,11 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/proptag/0x370E001F"
 #define PR_ATTACH_CONTENT_ID_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x3712001F"
+#define PR_TAG_SENDER_SMTP_ADDRESS \
+  "http://schemas.microsoft.com/mapi/proptag/0x5D01001F"
+#define PR_TAG_RECEIVED_REPRESENTING_SMTP_ADDRESS \
+  "http://schemas.microsoft.com/mapi/proptag/0x5D08001F"
+
 #ifdef __cplusplus
 extern "C" {
 #if 0

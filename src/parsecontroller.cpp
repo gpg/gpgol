@@ -194,7 +194,15 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
   else
     {
       msg = _("Could not decrypt the data: ");
-      msg += result.error().asString();
+
+      if (result.isNull ())
+        {
+          msg += _("Failed to parse the mail.");
+        }
+      else
+        {
+          msg += result.error().asString();
+        }
     }
 
   if (gpgrt_asprintf (&buf, opt.prefer_html ? decrypt_template_html :
@@ -310,7 +318,7 @@ ParseController::parse()
         {
           verify = false;
         }
-      if (m_decrypt_result.error())
+      if (m_decrypt_result.error () || m_decrypt_result.isNull ())
         {
           m_error = format_error (m_decrypt_result, protocol);
         }
