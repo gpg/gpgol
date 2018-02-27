@@ -1458,29 +1458,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
     }
   else if (!strcmp (ctx_name.c_str(), "_Explorer"))
     {
-      LPDISPATCH selection = get_oom_object (context, "Selection");
-      if (!selection)
-        {
-          log_error ("%s:%s: Failed to get selection.",
-                     SRCNAME, __func__);
-          gpgol_release (context);
-          return NULL;
-        }
-      int count = get_oom_int (selection, "Count");
-      if (count == 1)
-        {
-          // If we call this on a selection with more items
-          // Outlook sends an ItemLoad event for each mail
-          // in that selection.
-          mailitem = get_oom_object (selection, "Item(1)");
-        }
-      gpgol_release (selection);
-
-      if (!mailitem)
-        {
-          *none_selected = true;
-        }
-      else if (g_ol_version_major >= 16)
+      if (g_ol_version_major >= 16)
         {
           // Avoid showing wrong crypto state if we don't have a reading
           // pane. In that case the parser will finish for a mail which is gone
@@ -1524,6 +1502,35 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
                   gpgol_release (mailitem);
                   mailitem = nullptr;
                 }
+            }
+        }
+      if (!*none_selected)
+        {
+          /* Accessing the selection item can trigger a load event
+             so we only do this here if we think that there might be
+             something visible / selected. To avoid triggering a load
+             if there is no content shown. */
+          LPDISPATCH selection = get_oom_object (context, "Selection");
+          if (!selection)
+            {
+              log_error ("%s:%s: Failed to get selection.",
+                         SRCNAME, __func__);
+              gpgol_release (context);
+              return NULL;
+            }
+          int count = get_oom_int (selection, "Count");
+          if (count == 1)
+            {
+              // If we call this on a selection with more items
+              // Outlook sends an ItemLoad event for each mail
+              // in that selection.
+              mailitem = get_oom_object (selection, "Item(1)");
+            }
+          gpgol_release (selection);
+
+          if (!mailitem)
+            {
+              *none_selected = true;
             }
         }
     }
