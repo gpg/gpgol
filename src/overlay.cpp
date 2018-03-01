@@ -81,8 +81,8 @@ Overlay::~Overlay()
 {
   log_debug ("%s:%s: Stopping overlay.",
              SRCNAME, __func__);
-  m_overlayCtx->wait ();
   m_overlayStdin.write ("quit\n", 5);
   m_overlayStdin.write (nullptr, 0);
+  m_overlayCtx->wait ();
   EnableWindow (m_wid, TRUE);
 }
