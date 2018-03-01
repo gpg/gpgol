@@ -1333,7 +1333,16 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
 
   oldflags = get_gpgol_draft_info_flags (message);
 
-  newflags = oldflags xor flags;
+  if (flags == 3 && oldflags != 3)
+    {
+      // If only one sub button is active activate
+      // both now.
+      newflags = 3;
+    }
+  else
+    {
+      newflags = oldflags xor flags;
+    }
 
   if (set_gpgol_draft_info_flags (message, newflags))
     {
