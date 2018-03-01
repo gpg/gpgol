@@ -26,6 +26,10 @@
 
 #include "common.h"
 
+#include <gpgme++/context.h>
+#include <gpgme++/error.h>
+#include <gpgme++/configuration.h>
+
 void
 release_cArray (char **carray)
 {
@@ -54,4 +58,56 @@ vector_to_cArray(const std::vector<std::string> &vec)
     }
   ret[vec.size()] = NULL;
   return ret;
+}
+
+bool
+in_de_vs_mode()
+{
+/* We cache the values only once. A change requires restart.
+     This is because checking this is very expensive as gpgconf
+     spawns each process to query the settings. */
+  static bool checked;
+  static bool vs_mode;
+
+  if (checked)
+    {
+      return vs_mode;
+    }
+  GpgME::Error err;
+  const auto components = GpgME::Configuration::Component::load (err);
+  log_debug ("%s:%s: Checking for de-vs mode.",
+             SRCNAME, __func__);
+  if (err)
+    {
+      log_error ("%s:%s: Failed to get gpgconf components: %s",
+                 SRCNAME, __func__, err.asString ());
+      checked = true;
+      vs_mode = false;
+      return vs_mode;
+    }
+  for (const auto &component: components)
+    {
+      if (component.name () && !strcmp (component.name (), "gpg"))
+        {
+          for (const auto &option: component.options ())
+            {
+              if (option.name () && !strcmp (option.name (), "compliance") &&
+                  option.currentValue ().stringValue () &&
+                  !stricmp (option.currentValue ().stringValue (), "de-vs"))
+                {
+                  log_debug ("%s:%s: Detected de-vs mode",
+                             SRCNAME, __func__);
+                  checked = true;
+                  vs_mode = true;
+                  return vs_mode;
+                }
+            }
+          checked = true;
+          vs_mode = false;
+          return vs_mode;
+        }
+    }
+  checked = true;
+  vs_mode = false;
+  return false;
 }

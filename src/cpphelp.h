@@ -36,4 +36,7 @@ void rtrim(std::string &s);
 /* Convert a string vector to a null terminated char array */
 char **vector_to_cArray (const std::vector<std::string> &vec);
 
+/* Check if we are in de_vs mode. */
+bool in_de_vs_mode ();
+
 #endif // CPPHELP_H

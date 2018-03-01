@@ -1357,6 +1357,11 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
       we invalidate a lot *sigh* */
   gpgoladdin_invalidate_ui ();
 
+  if (newflags & 1)
+    {
+      Mail::locate_all_crypto_recipients ();
+    }
+
 done:
   gpgol_release (context);
   gpgol_release (mailitem);

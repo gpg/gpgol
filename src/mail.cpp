@@ -38,6 +38,8 @@
 #include "windowmessages.h"
 #include "mlang-charset.h"
 #include "wks-helper.h"
+#include "keycache.h"
+#include "cpphelp.h"
 
 #include <gpgme++/configuration.h>
 #include <gpgme++/tofuinfo.h>
@@ -59,63 +61,11 @@
 
 using namespace GpgME;
 
-static std::map<LPDISPATCH, Mail*> g_mail_map;
-static std::map<std::string, Mail*> g_uid_map;
+static std::map<LPDISPATCH, Mail*> s_mail_map;
+static std::map<std::string, Mail*> s_uid_map;
 static std::set<std::string> uids_searched;
 
 static Mail *s_last_mail;
-
-static bool
-in_de_vs_mode()
-{
-  /* We cache the values only once. A change requires restart.
-     This is because checking this is very expensive as gpgconf
-     spawns each process to query the settings. */
-  static bool checked;
-  static bool vs_mode;
-
-  if (checked)
-    {
-      return vs_mode;
-    }
-  Error err;
-  const auto components = Configuration::Component::load (err);
-  log_debug ("%s:%s: Checking for de-vs mode.",
-             SRCNAME, __func__);
-  if (err)
-    {
-      log_error ("%s:%s: Failed to get gpgconf components: %s",
-                 SRCNAME, __func__, err.asString ());
-      checked = true;
-      vs_mode = false;
-      return vs_mode;
-    }
-  for (const auto &component: components)
-    {
-      if (component.name () && !strcmp (component.name (), "gpg"))
-        {
-          for (const auto &option: component.options ())
-            {
-              if (option.name () && !strcmp (option.name (), "compliance") &&
-                  option.currentValue ().stringValue () &&
-                  !stricmp (option.currentValue ().stringValue (), "de-vs"))
-                {
-                  log_debug ("%s:%s: Detected de-vs mode",
-                             SRCNAME, __func__);
-                  checked = true;
-                  vs_mode = true;
-                  return vs_mode;
-                }
-            }
-          checked = true;
-          vs_mode = false;
-          return vs_mode;
-        }
-    }
-  checked = true;
-  vs_mode = false;
-  return false;
-}
 
 #define COPYBUFSIZE (8 * 1024)
 
@@ -161,7 +111,7 @@ Mail::Mail (LPDISPATCH mailitem) :
       gpgol_release(mailitem);
       return;
     }
-  g_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
+  s_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
   s_last_mail = this;
 }
 
@@ -180,18 +130,18 @@ Mail::~Mail()
   detach_MailItemEvents_sink (m_event_sink);
   gpgol_release(m_event_sink);
 
-  it = g_mail_map.find(m_mailitem);
-  if (it != g_mail_map.end())
+  it = s_mail_map.find(m_mailitem);
+  if (it != s_mail_map.end())
     {
-      g_mail_map.erase (it);
+      s_mail_map.erase (it);
     }
 
   if (!m_uuid.empty())
     {
-      auto it2 = g_uid_map.find(m_uuid);
-      if (it2 != g_uid_map.end())
+      auto it2 = s_uid_map.find(m_uuid);
+      if (it2 != s_uid_map.end())
         {
-          g_uid_map.erase (it2);
+          s_uid_map.erase (it2);
         }
     }
 
@@ -222,8 +172,8 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
       return NULL;
     }
   std::map<LPDISPATCH, Mail *>::iterator it;
-  it = g_mail_map.find(mailitem);
-  if (it == g_mail_map.end())
+  it = s_mail_map.find(mailitem);
+  if (it == s_mail_map.end())
     {
       return NULL;
     }
@@ -237,8 +187,8 @@ Mail::get_mail_for_uuid (const char *uuid)
     {
       return NULL;
     }
-  auto it = g_uid_map.find(std::string(uuid));
-  if (it == g_uid_map.end())
+  auto it = s_uid_map.find(std::string(uuid));
+  if (it == s_uid_map.end())
     {
       return NULL;
     }
@@ -248,8 +198,8 @@ Mail::get_mail_for_uuid (const char *uuid)
 bool
 Mail::is_valid_ptr (const Mail *mail)
 {
-  auto it = g_mail_map.begin();
-  while (it != g_mail_map.end())
+  auto it = s_mail_map.begin();
+  while (it != s_mail_map.end())
     {
       if (it->second == mail)
         return true;
@@ -1415,7 +1365,7 @@ Mail::close_all_mails ()
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   TRACEPOINT;
-  std::map<LPDISPATCH, Mail *> mail_map_copy = g_mail_map;
+  std::map<LPDISPATCH, Mail *> mail_map_copy = s_mail_map;
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       /* XXX For non racy code the is_valid_ptr check should not
@@ -1449,7 +1399,7 @@ Mail::revert_all_mails ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
-  for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
+  for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
       if (it->second->revert ())
         {
@@ -1474,7 +1424,7 @@ Mail::wipe_all_mails ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
-  for (it = g_mail_map.begin(); it != g_mail_map.end(); ++it)
+  for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
       if (it->second->wipe ())
         {
@@ -1953,7 +1903,7 @@ Mail::set_uuid()
                      SRCNAME, __func__, m_mailitem, uuid);
           delete other;
         }
-      g_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
+      s_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
       log_debug ("%s:%s: uuid for %p is now %s",
                  SRCNAME, __func__, this,
                  m_uuid.c_str());
@@ -2450,71 +2400,12 @@ Mail::get_sig_fpr() const
   return m_sig.fingerprint();
 }
 
-
-static DWORD WINAPI
-do_locate (LPVOID arg)
-{
-  char *recipient = (char*) arg;
-  log_debug ("%s:%s searching key for recipient: \"%s\"",
-             SRCNAME, __func__, recipient);
-  Context *ctx = Context::createForProtocol (OpenPGP);
-
-  if (!ctx)
-    {
-      TRACEPOINT;
-      return 0;
-    }
-
-  ctx->setKeyListMode (GpgME::Extern | GpgME::Local);
-  ctx->startKeyListing (recipient, false);
-
-  std::vector<Key> keys;
-  Error err;
-  do {
-      keys.push_back (ctx->nextKey(err));
-    } while (!err);
-  keys.pop_back ();
-  ctx->endKeyListing ();
-  delete ctx;
-
-  if (keys.size ())
-    {
-      log_debug ("%s:%s found key for recipient: \"%s\"",
-                 SRCNAME, __func__, recipient);
-    }
-  xfree (recipient);
-  // do_in_ui_thread (UNKNOWN, NULL);
-  return 0;
-}
-
-GPGRT_LOCK_DEFINE(uids_searched_lock);
-
 /** Try to locate the keys for all recipients */
 void Mail::locate_keys()
 {
-  gpgrt_lock_lock (&uids_searched_lock);
   char ** recipients = get_recipients ();
-
-  if (!recipients)
-    {
-      TRACEPOINT;
-      return;
-    }
-  for (int i = 0; recipients[i]; i++)
-    {
-      std::string recp = recipients[i];
-      if (uids_searched.find (recp) == uids_searched.end ())
-        {
-          uids_searched.insert (recp);
-          HANDLE thread = CreateThread (NULL, 0, do_locate,
-                                        (LPVOID) strdup(recipients[i]), 0,
-                                        NULL);
-          CloseHandle (thread);
-        }
-      xfree (recipients[i]);
-    }
-  xfree (recipients);
-  gpgrt_lock_unlock (&uids_searched_lock);
+  KeyCache::instance()->startLocate (recipients);
+  release_cArray (recipients);
 }
 
 bool
@@ -2755,4 +2646,23 @@ Mail::get_last_mail ()
       s_last_mail = nullptr;
     }
   return s_last_mail;
+}
+
+// static
+void
+Mail::locate_all_crypto_recipients()
+{
+  if (!opt.autoresolve)
+    {
+      return;
+    }
+
+  std::map<LPDISPATCH, Mail *>::iterator it;
+  for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
+    {
+      if (it->second->needs_crypto ())
+        {
+          it->second->locate_keys ();
+        }
+    }
 }

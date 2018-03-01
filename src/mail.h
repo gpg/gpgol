@@ -133,6 +133,18 @@ public:
     */
   static int close_all_mails ();
 
+  /** @brief locate recipients for all crypto mails
+    *
+    * To avoid lookups of recipients for non crypto mails we only
+    * locate keys when a crypto action is already selected.
+    *
+    * As the user can do this after recipients were added but
+    * we don't know for which mail the crypt button was triggered.
+    * we march over all mails and if they are crypto mails we check
+    * that the recipents were located.
+    */
+  static void locate_all_crypto_recipients ();
+
   /** @brief Reference to the mailitem. Do not Release! */
   LPDISPATCH item () { return m_mailitem; }
 

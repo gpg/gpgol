@@ -88,7 +88,8 @@ gpgol_SOURCES = \
 	cryptcontroller.cpp cryptcontroller.h \
 	cpphelp.cpp cpphelp.h \
 	wks-helper.cpp wks-helper.h \
-	overlay.cpp overlay.h
+	overlay.cpp overlay.h \
+	keycache.cpp keycache.h
 
 
 #treeview_SOURCES = treeview.c
