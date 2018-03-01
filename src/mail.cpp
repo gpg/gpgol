@@ -2401,10 +2401,13 @@ Mail::get_sig_fpr() const
 }
 
 /** Try to locate the keys for all recipients */
-void Mail::locate_keys()
+void
+Mail::locate_keys()
 {
   char ** recipients = get_recipients ();
   KeyCache::instance()->startLocate (recipients);
+  KeyCache::instance()->startLocate (get_sender ().c_str ());
+  KeyCache::instance()->startLocateSecret (get_sender ().c_str ());
   release_cArray (recipients);
 }
 

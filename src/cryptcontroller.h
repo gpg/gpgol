@@ -66,6 +66,7 @@ public:
 
 private:
   int resolve_keys ();
+  int resolve_keys_cached ();
   int parse_output (GpgME::Data &resolverOutput);
   int lookup_fingerprints (const std::string &sigFpr,
                            const std::vector<std::string> recpFprs);
@@ -83,6 +84,7 @@ private:
   GpgME::Key m_signer_key;
   std::vector<GpgME::Key> m_recipients;
   std::unique_ptr<Overlay> m_overlay;
+  char **m_recipient_addrs;
 };
 
 #endif

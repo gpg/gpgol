@@ -44,7 +44,7 @@ public:
     /** Get the KeyCache */
     static KeyCache* instance ();
 
-    /* Try to find a key for signing in the internal
+    /* Try to find a key for signing in the internal secret key
        cache. If no proper key is found a Null key is
        returned.*/
     GpgME::Key getSigningKey (const char *addr, GpgME::Protocol proto) const;
@@ -61,12 +61,21 @@ public:
        of address strings. */
     void startLocate (char **cArray) const;
 
+    /* Look for a secret key for the addr. */
+    void startLocateSecret (const char *addr) const;
+
+    /* Start a key location in a background thread filling
+       the key cache. */
+    void startLocate (const char *addr) const;
 
     // Internal for thread
     void setSmimeKey(const char *mbox, const GpgME::Key &key);
     void setPgpKey(const char *mbox, const GpgME::Key &key);
+    void setSmimeKeySecret(const char *mbox, const GpgME::Key &key);
+    void setPgpKeySecret(const char *mbox, const GpgME::Key &key);
 
 private:
+
     class Private;
     std::shared_ptr<Private> d;
 };

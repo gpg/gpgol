@@ -28,6 +28,7 @@
 #include "mimemaker.h"
 #include "wks-helper.h"
 #include "overlay.h"
+#include "keycache.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/signingresult.h>
@@ -76,12 +77,14 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
 {
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, doInline);
+  m_recipient_addrs = mail->take_cached_recipients ();
 }
 
 CryptController::~CryptController()
 {
   log_debug ("%s:%s:%p",
              SRCNAME, __func__, m_mail);
+  release_cArray (m_recipient_addrs);
 }
 
 int
@@ -298,9 +301,64 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
 }
 
 int
+CryptController::resolve_keys_cached()
+{
+  const auto cache = KeyCache::instance();
+
+  bool fallbackToSMIME = false;
+
+  if (m_encrypt)
+    {
+      m_recipients = cache->getEncryptionKeys((const char **)m_recipient_addrs, GpgME::OpenPGP);
+
+      if (m_recipients.empty() && opt.enable_smime)
+        {
+          m_recipients = cache->getEncryptionKeys((const char **)m_recipient_addrs, GpgME::CMS);
+          fallbackToSMIME = true;
+        }
+      if (m_recipients.empty())
+        {
+          log_debug ("%s:%s: Failed to resolve keys through cache",
+                     SRCNAME, __func__);
+          return 1;
+        }
+    }
+
+  if (m_sign)
+    {
+      if (!fallbackToSMIME)
+        {
+          m_signer_key = cache->getSigningKey (m_mail->get_cached_sender ().c_str (),
+                                               GpgME::OpenPGP);
+        }
+      if (m_signer_key.isNull() && opt.enable_smime)
+        {
+          m_signer_key = cache->getSigningKey (m_mail->get_cached_sender ().c_str (),
+                                               GpgME::CMS);
+        }
+      if (m_signer_key.isNull())
+        {
+          log_debug ("%s:%s: Failed to resolve signer key through cache",
+                     SRCNAME, __func__);
+          m_recipients.clear();
+          return 1;
+        }
+    }
+  return 0;
+}
+
+int
 CryptController::resolve_keys ()
 {
   m_recipients.clear();
+
+  if (opt.autoresolve && !resolve_keys_cached ())
+    {
+      log_debug ("%s:%s: resolved keys through the cache",
+                 SRCNAME, __func__);
+      start_crypto_overlay();
+      return 0;
+    }
 
   std::vector<std::string> args;
 
@@ -366,13 +424,10 @@ CryptController::resolve_keys ()
     {
       args.push_back (std::string ("--encrypt"));
       // Get the recipients that are cached from OOM
-      char **recipients = m_mail->take_cached_recipients ();
-      for (size_t i = 0; recipients && recipients[i]; i++)
+      for (size_t i = 0; m_recipient_addrs && m_recipient_addrs[i]; i++)
         {
-          args.push_back (GpgME::UserID::addrSpecFromString (recipients[i]));
+          args.push_back (GpgME::UserID::addrSpecFromString (m_recipient_addrs[i]));
         }
-
-      release_cArray (recipients);
     }
 
   args.push_back (std::string ("--lang"));
