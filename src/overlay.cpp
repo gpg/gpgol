@@ -85,4 +85,5 @@ Overlay::~Overlay()
   m_overlayStdin.write (nullptr, 0);
   m_overlayCtx->wait ();
   EnableWindow (m_wid, TRUE);
+  bring_to_front (m_wid);
 }
