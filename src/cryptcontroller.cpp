@@ -375,24 +375,23 @@ CryptController::resolve_keys ()
       release_cArray (recipients);
     }
 
-  // Convert our collected vector to c strings
-  // It's a bit overhead but should be quick for such small
-  // data.
-  char **cargs = vector_to_cArray (args);
+  args.push_back (std::string ("--lang"));
+  args.push_back (std::string (gettext_localename ()));
 
   // Args are prepared. Spawn the resolver.
   auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
-
   if (!ctx)
     {
       // can't happen
-      release_cArray (cargs);
       TRACEPOINT;
       return -1;
     }
 
-  GpgME::Data mystdin (GpgME::Data::null), mystdout, mystderr;
 
+  // Convert our collected vector to c strings
+  // It's a bit overhead but should be quick for such small
+  // data.
+  char **cargs = vector_to_cArray (args);
 #ifdef DEBUG_RESOLVER
   log_debug ("Spawning args:");
   for (size_t i = 0; cargs && cargs[i]; i++)
@@ -401,6 +400,7 @@ CryptController::resolve_keys ()
     }
 #endif
 
+  GpgME::Data mystdin (GpgME::Data::null), mystdout, mystderr;
   GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char**> (cargs),
                                  mystdin, mystdout, mystderr,
                                  (GpgME::Context::SpawnFlags) (
