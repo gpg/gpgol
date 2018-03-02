@@ -40,6 +40,9 @@
 
 #include "dialogs.h"
 
+/* Registry path to store plugin settings */
+#define GPGOL_REGPATH "Software\\GNU\\GpgOL"
+
 HINSTANCE glob_hinst = NULL;
 
 void
@@ -1056,4 +1059,122 @@ gpgol_message_box (HWND parent, const char *utf8_text,
   xfree (w_text);
   xfree (w_caption);
   return ret;
+}
+
+static char*
+expand_path (const char *path)
+{
+  DWORD len;
+  char *p;
+
+  len = ExpandEnvironmentStrings (path, NULL, 0);
+  if (!len)
+    {
+      return NULL;
+    }
+  len += 1;
+  p = xcalloc (1, len+1);
+  if (!p)
+    {
+      return NULL;
+    }
+  len = ExpandEnvironmentStrings (path, p, len);
+  if (!len)
+    {
+      xfree (p);
+      return NULL;
+    }
+  return p;
+}
+
+static int
+load_config_value (HKEY hk, const char *path, const char *key, char **val)
+{
+  HKEY h;
+  DWORD size=0, type;
+  int ec;
+
+  *val = NULL;
+  if (hk == NULL)
+    {
+      hk = HKEY_CURRENT_USER;
+    }
+  ec = RegOpenKeyEx (hk, path, 0, KEY_READ, &h);
+  if (ec != ERROR_SUCCESS)
+    {
+      return -1;
+    }
+
+  ec = RegQueryValueEx(h, key, NULL, &type, NULL, &size);
+  if (ec != ERROR_SUCCESS)
+    {
+      RegCloseKey (h);
+      return -1;
+    }
+  if (type == REG_EXPAND_SZ)
+    {
+      char tmp[256];
+      RegQueryValueEx (h, key, NULL, NULL, (BYTE*)tmp, &size);
+      *val = expand_path (tmp);
+    }
+  else
+    {
+      *val = xcalloc(1, size+1);
+      ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
+      if (ec != ERROR_SUCCESS)
+        {
+          xfree (*val);
+          *val = NULL;
+          RegCloseKey (h);
+          return -1;
+        }
+    }
+  RegCloseKey (h);
+  return 0;
+}
+
+static int
+store_config_value (HKEY hk, const char *path, const char *key, const char *val)
+{
+  HKEY h;
+  int type;
+  int ec;
+
+  if (hk == NULL)
+    {
+      hk = HKEY_CURRENT_USER;
+    }
+  ec = RegCreateKeyEx (hk, path, 0, NULL, REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS, NULL, &h, NULL);
+  if (ec != ERROR_SUCCESS)
+    {
+      log_debug_w32 (ec, "creating/opening registry key `%s' failed", path);
+      return -1;
+    }
+  type = strchr (val, '%')? REG_EXPAND_SZ : REG_SZ;
+  ec = RegSetValueEx (h, key, 0, type, (const BYTE*)val, strlen (val));
+  if (ec != ERROR_SUCCESS)
+    {
+      log_debug_w32 (ec, "saving registry key `%s'->`%s' failed", path, key);
+      RegCloseKey(h);
+      return -1;
+    }
+  RegCloseKey(h);
+  return 0;
+}
+
+/* Store a key in the registry with the key given by @key and the
+   value @value. */
+int
+store_extension_value (const char *key, const char *val)
+{
+  return store_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
+}
+
+/* Load a key from the registry with the key given by @key. The value is
+   returned in @val and needs to freed by the caller. */
+int
+load_extension_value (const char *key, char **val)
+{
+  return load_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
 }
