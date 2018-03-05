@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 /* Stuff that should be in common but is c++ so it does not fit in there. */
 
@@ -39,4 +40,8 @@ char **vector_to_cArray (const std::vector<std::string> &vec);
 /* Check if we are in de_vs mode. */
 bool in_de_vs_mode ();
 
+/* Get a map of all subkey value pairs in a registry key */
+std::map<std::string, std::string> get_registry_subkeys (const char *path);
+
+std::vector<std::string> gpgol_split(const std::string &s, char delim);
 #endif // CPPHELP_H

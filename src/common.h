@@ -39,6 +39,9 @@
 # define MIME_UI_DEFAULT 0
 #endif
 
+/* Registry path to store plugin settings */
+#define GPGOL_REGPATH "Software\\GNU\\GpgOL"
+
 #ifdef __cplusplus
 extern "C" {
 #if 0
@@ -59,6 +62,11 @@ char *utf8_to_wincp (const char *string);
 const char *default_homedir (void);
 char *get_data_dir (void);
 char *get_gpg4win_dir (void);
+
+int store_extension_value (const char *key, const char *val);
+int store_extension_subkey_value (const char *subkey, const char *key,
+                                  const char *val);
+int load_extension_value (const char *key, char **val);
 
 /* Get a temporary filename with and its name */
 wchar_t *get_tmp_outfile (wchar_t *name, HANDLE *outHandle);
@@ -81,8 +89,6 @@ const char *get_pubkey_algo_str (gpgme_pubkey_algo_t id);
 
 /*-- config-dialog.c --*/
 void config_dialog_box (HWND parent);
-int store_extension_value (const char *key, const char *val);
-int load_extension_value (const char *key, char **val);
 
 /*-- verify-dialog.c --*/
 int verify_dialog_box (gpgme_protocol_t protocol,

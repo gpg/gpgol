@@ -40,9 +40,6 @@
 
 #include "dialogs.h"
 
-/* Registry path to store plugin settings */
-#define GPGOL_REGPATH "Software\\GNU\\GpgOL"
-
 HINSTANCE glob_hinst = NULL;
 
 void
@@ -1177,4 +1174,17 @@ int
 load_extension_value (const char *key, char **val)
 {
   return load_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
+}
+
+int
+store_extension_subkey_value (const char *subkey,
+                              const char *key,
+                              const char *val)
+{
+  int ret;
+  char *path;
+  gpgrt_asprintf (&path, "%s\\%s", GPGOL_REGPATH, subkey);
+  ret = store_config_value (HKEY_CURRENT_USER, path, key, val);
+  xfree (path);
+  return ret;
 }

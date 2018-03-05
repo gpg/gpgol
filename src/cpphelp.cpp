@@ -21,14 +21,20 @@
 
 #include "config.h"
 
-#include <algorithm>
 #include "cpphelp.h"
+
+#include <algorithm>
+#include <sstream>
+#include <vector>
+#include <iterator>
 
 #include "common.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/error.h>
 #include <gpgme++/configuration.h>
+
+#include <windows.h>
 
 void
 release_cArray (char **carray)
@@ -110,4 +116,111 @@ in_de_vs_mode()
   checked = true;
   vs_mode = false;
   return false;
+}
+
+std::map<std::string, std::string>
+get_registry_subkeys (const char *path)
+{
+  HKEY theKey;
+  std::map<std::string, std::string> ret;
+
+  std::string regPath = GPGOL_REGPATH;
+  regPath += "\\";
+  regPath += path;
+
+  if (RegOpenKeyEx (HKEY_CURRENT_USER,
+                    regPath.c_str (),
+                    0, KEY_ENUMERATE_SUB_KEYS | KEY_READ,
+                    &theKey) != ERROR_SUCCESS)
+    {
+      TRACEPOINT;
+      return ret;
+    }
+
+  DWORD values = 0,
+        maxValueName = 0,
+        maxValueLen = 0;
+
+  DWORD err = RegQueryInfoKey (theKey,
+                               nullptr,
+                               nullptr,
+                               nullptr,
+                               nullptr,
+                               nullptr,
+                               nullptr,
+                               &values,
+                               &maxValueName,
+                               &maxValueLen,
+                               nullptr,
+                               nullptr);
+
+  if (err != ERROR_SUCCESS)
+    {
+      TRACEPOINT;
+      RegCloseKey (theKey);
+      return ret;
+    }
+
+  /* Add space for NULL */
+  maxValueName++;
+  maxValueLen++;
+
+  char name[maxValueName + 1];
+  char value[maxValueLen + 1];
+  for (int i = 0; i < values; i++)
+    {
+      DWORD nameLen = maxValueName;
+      err = RegEnumValue (theKey, i,
+                          name,
+                          &nameLen,
+                          nullptr,
+                          nullptr,
+                          nullptr,
+                          nullptr);
+
+      if (err != ERROR_SUCCESS)
+        {
+          TRACEPOINT;
+          continue;
+        }
+
+      DWORD type;
+      DWORD valueLen = maxValueLen;
+      err = RegQueryValueEx (theKey, name,
+                             NULL, &type,
+                             (BYTE*)value, &valueLen);
+
+      if (err != ERROR_SUCCESS)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      if (type != REG_SZ)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      ret.insert (std::make_pair (std::string (name, nameLen),
+                                  std::string (value, valueLen)));
+    }
+  RegCloseKey (theKey);
+  return ret;
+}
+
+template<typename Out> void
+internal_split (const std::string &s, char delim, Out result) {
+  std::stringstream ss(s);
+  std::string item;
+  while (std::getline (ss, item, delim))
+    {
+      *(result++) = item;
+    }
+}
+
+std::vector<std::string>
+gpgol_split (const std::string &s, char delim)
+{
+  std::vector<std::string> elems;
+  internal_split (s, delim, std::back_inserter (elems));
+  return elems;
 }
