@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2018-03-05 14:28+0100\n"
+"POT-Creation-Date: 2018-03-05 14:35+0100\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -85,6 +85,7 @@ msgstr ""
 #: src/ribbon-callbacks.cpp:1078 src/ribbon-callbacks.cpp:1112
 #: src/ribbon-callbacks.cpp:1124 src/ribbon-callbacks.cpp:1149
 #: src/ribbon-callbacks.cpp:1712 src/ribbon-callbacks.cpp:1762
+#: src/wks-helper.cpp:442
 msgid "GpgOL"
 msgstr ""
 
@@ -993,6 +994,56 @@ msgstr ""
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
+msgstr ""
+
+#: src/wks-helper.cpp:404
+msgid ""
+"A Pubkey directory is available for your domain.\n"
+"\n"
+"Register your Pubkey in that directory to make\n"
+"it easy for others to send you encrypted mail.\n"
+"\n"
+"It's secure and free!\n"
+"\n"
+"Register automatically?"
+msgstr ""
+
+#: src/wks-helper.cpp:409
+msgid "GpgOL: Pubkey directory available!"
+msgstr ""
+
+#: src/wks-helper.cpp:491
+msgid "GpgOL: Directory request failed"
+msgstr ""
+
+#: src/wks-helper.cpp:504
+msgid ""
+"You might receive a confirmation challenge from\n"
+"your provider to finish the registration."
+msgstr ""
+
+#: src/wks-helper.cpp:506
+msgid "GpgOL: Registration request sent!"
+msgstr ""
+
+#: src/wks-helper.cpp:687
+msgid "Confirm registration?"
+msgstr ""
+
+#: src/wks-helper.cpp:688
+msgid "GpgOL: Pubkey directory confirmation"
+msgstr ""
+
+#: src/wks-helper.cpp:741
+msgid "GpgOL: Confirmation failed"
+msgstr ""
+
+#: src/wks-helper.cpp:753
+msgid "Your Pubkey can soon be retrieved from your domain."
+msgstr ""
+
+#: src/wks-helper.cpp:754
+msgid "GpgOL: Request confirmed!"
 msgstr ""
 
 #, fuzzy

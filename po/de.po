@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2018-03-05 14:28+0100\n"
+"POT-Creation-Date: 2018-03-05 14:35+0100\n"
 "PO-Revision-Date: 2018-03-05 14:33+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
@@ -87,6 +87,7 @@ msgstr "Die Benutzeroberfläche zu ändern erfordert einen Neustart von Outlook"
 #: src/ribbon-callbacks.cpp:1078 src/ribbon-callbacks.cpp:1112
 #: src/ribbon-callbacks.cpp:1124 src/ribbon-callbacks.cpp:1149
 #: src/ribbon-callbacks.cpp:1712 src/ribbon-callbacks.cpp:1762
+#: src/wks-helper.cpp:442
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -436,11 +437,11 @@ msgid ""
 "<p>If you did not request to publish your Pubkey in your providers "
 "directory, simply ignore this message.</p>\n"
 msgstr ""
-"Dies ist eine Bestätigungmail um ihren Öschl in dem Verzeichnis für ihre"
-" Maildomäne zu hinterlegen.\n"
+"Dies ist eine Bestätigungmail um ihren Öschl in dem Verzeichnis für ihre "
+"Maildomäne zu hinterlegen.\n"
 "\n"
-"<p>Wenn sie dies nicht angefordert haben, können Sie diese Mail ignorieren.<"
-"/p>\n"
+"<p>Wenn sie dies nicht angefordert haben, können Sie diese Mail ignorieren.</"
+"p>\n"
 
 #: src/mail.cpp:813 src/mail.cpp:2058
 msgid "Encrypted message"
@@ -1135,6 +1136,58 @@ msgid ""
 msgstr ""
 "Kleopatra konnte nicht gefunden werden. Bitte installieren Sie Gpg4win "
 "erneut mit der Komponente Kleopatra aktiviert."
+
+#: src/wks-helper.cpp:404
+msgid ""
+"A Pubkey directory is available for your domain.\n"
+"\n"
+"Register your Pubkey in that directory to make\n"
+"it easy for others to send you encrypted mail.\n"
+"\n"
+"It's secure and free!\n"
+"\n"
+"Register automatically?"
+msgstr ""
+
+#: src/wks-helper.cpp:409
+#, fuzzy
+msgid "GpgOL: Pubkey directory available!"
+msgstr "Öschl Verzeichnis Bestätigung"
+
+#: src/wks-helper.cpp:491
+msgid "GpgOL: Directory request failed"
+msgstr ""
+
+#: src/wks-helper.cpp:504
+msgid ""
+"You might receive a confirmation challenge from\n"
+"your provider to finish the registration."
+msgstr ""
+
+#: src/wks-helper.cpp:506
+msgid "GpgOL: Registration request sent!"
+msgstr ""
+
+#: src/wks-helper.cpp:687
+msgid "Confirm registration?"
+msgstr ""
+
+#: src/wks-helper.cpp:688
+#, fuzzy
+msgid "GpgOL: Pubkey directory confirmation"
+msgstr "Öschl Verzeichnis Bestätigung"
+
+#: src/wks-helper.cpp:741
+msgid "GpgOL: Confirmation failed"
+msgstr ""
+
+#: src/wks-helper.cpp:753
+msgid "Your Pubkey can soon be retrieved from your domain."
+msgstr ""
+
+#: src/wks-helper.cpp:754
+msgid "GpgOL: Request confirmed!"
+msgstr ""
 
 #~ msgid "&Search for OpenPGP keys automatically when encrypting"
 #~ msgstr "OpenPGP-&Schlüssel zum verschlüsseln automatisch suchen"
