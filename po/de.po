@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the GpgOL package.
 #
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
-# Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017.
+# Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-03-05 14:28+0100\n"
-"PO-Revision-Date: 2017-12-08 06:55+0100\n"
+"PO-Revision-Date: 2018-03-05 14:33+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
 "Language: en_US\n"
@@ -54,7 +54,7 @@ msgstr "Krypto-&Einstellungen beim Antworten und Weiterleiten übernehmen"
 
 #: src/addin-options.cpp:50
 msgid "&Resolve recipient keys automatically"
-msgstr ""
+msgstr "Empfängerschlüssel automatisch auflösen"
 
 #: src/addin-options.cpp:53
 msgid "Debug..."
@@ -426,7 +426,7 @@ msgstr "GpgOL Warnung"
 
 #: src/mail.cpp:804
 msgid "Pubkey directory confirmation"
-msgstr ""
+msgstr "Öschl Verzeichnis Bestätigung"
 
 #: src/mail.cpp:805
 msgid ""
@@ -436,6 +436,11 @@ msgid ""
 "<p>If you did not request to publish your Pubkey in your providers "
 "directory, simply ignore this message.</p>\n"
 msgstr ""
+"Dies ist eine Bestätigungmail um ihren Öschl in dem Verzeichnis für ihre"
+" Maildomäne zu hinterlegen.\n"
+"\n"
+"<p>Wenn sie dies nicht angefordert haben, können Sie diese Mail ignorieren.<"
+"/p>\n"
 
 #: src/mail.cpp:813 src/mail.cpp:2058
 msgid "Encrypted message"
@@ -1058,7 +1063,7 @@ msgstr "Daten konnten nicht entschlüsselt werden: "
 
 #: src/parsecontroller.cpp:200
 msgid "Failed to parse the mail."
-msgstr ""
+msgstr "Konnte die Mail nicht verarbeiten."
 
 #: src/parsecontroller.cpp:211 src/parsecontroller.cpp:266
 msgid "Encrypted message (decryption not possible)"
