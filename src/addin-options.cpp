@@ -47,7 +47,7 @@ set_labels (HWND dlg)
                                "attachments as PGP/Inline")},
     { IDC_REPLYCRYPT,       N_("S&elect crypto settings automatically "
                                "for reply and forward")},
-    { IDC_AUTORRESOLVE,     N_("&Search for OpenPGP keys automatically when encrypting")},
+    { IDC_AUTORRESOLVE,     N_("&Resolve recipient keys automatically")},
 
 
     { IDC_GPG_OPTIONS,      N_("Debug...")},
