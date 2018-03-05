@@ -37,3 +37,6 @@ src/property-sheets.h
 src/ribbon-callbacks.cpp
 src/session-events.h
 src/user-events.h
+src/keycache.cpp
+src/wks-helper.cpp
+src/overlay.cpp
