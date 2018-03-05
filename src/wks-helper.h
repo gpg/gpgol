@@ -48,8 +48,8 @@ public:
       {
         NotChecked, /*<-- Supported state was not checked */
         NotSupported, /* <-- WKS is not supported for this address */
-        Supported, /* <-- WKS is supported for this address */
         NeedsPublish, /* <-- There was no key published for this address */
+        IsPublished, /* <-- WKS is supported for this address and published */
         ConfirmationSeen, /* A confirmation request was seen for this mail addres. */
         NeedsUpdate, /* <-- Not yet implemeted. */
         RequestSent, /* <-- A publishing request has been sent. */
@@ -99,7 +99,11 @@ public:
     void save () const;
 
     /** Update or insert a state in the static maps. */
-    void update_state (const std::string &mbox, WKSState state) const;
+    void update_state (const std::string &mbox, WKSState state, bool save = true) const;
+
+    /** Update or insert last_checked in the static maps. */
+    void update_last_checked (const std::string &mbox, time_t last_checked,
+                              bool save = true) const;
 
     /** Create / Build / Send Mail
       returns 0 on success.

@@ -30,6 +30,7 @@
 #include <sstream>
 
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <gpg-error.h>
 #include <gpgme++/key.h>
@@ -37,6 +38,7 @@
 #include <gpgme++/context.h>
 
 #define CHECK_MIN_INTERVAL (60 * 60 * 24 * 7)
+#define WKS_REG_KEY "webkey"
 
 #define DEBUG_WKS 1
 
@@ -142,6 +144,54 @@ get_wks_client_path ()
   return std::string ();
 }
 
+static bool
+check_published (const std::string &mbox)
+{
+  const auto wksPath = get_wks_client_path ();
+
+  if (wksPath.empty())
+    {
+      return 0;
+    }
+
+  std::vector<std::string> args;
+
+  args.push_back (wksPath);
+  args.push_back (std::string ("--status-fd"));
+  args.push_back (std::string ("1"));
+  args.push_back (std::string ("--check"));
+  args.push_back (mbox);
+
+  // Spawn the process
+  auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+
+  if (!ctx)
+    {
+      TRACEPOINT;
+      return false;
+    }
+
+  GpgME::Data mystdin, mystdout, mystderr;
+
+  char **cargs = vector_to_cArray (args);
+
+  GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char **> (cargs),
+                                 mystdin, mystdout, mystderr,
+                                 GpgME::Context::SpawnNone);
+  release_cArray (cargs);
+
+  if (err)
+    {
+      log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
+                 SRCNAME, __func__, err.code(), err.asString());
+      return false;
+    }
+  auto data = mystdout.toString ();
+  rtrim (data);
+
+  return data == "[GNUPG:] SUCCESS";
+}
+
 static DWORD WINAPI
 do_check (LPVOID arg)
 {
@@ -192,29 +242,26 @@ do_check (LPVOID arg)
 
   bool success = data == "[GNUPG:] SUCCESS";
   // TODO Figure out NeedsPublish state.
-  const auto state = success ? WKSHelper::NeedsPublish : WKSHelper::NotSupported;
+  auto state = success ? WKSHelper::NeedsPublish : WKSHelper::NotSupported;
+  bool isPublished = false;
+
   if (success)
     {
       log_debug ("%s:%s: WKS client: '%s' is supported",
                  SRCNAME, __func__, mbox.c_str ());
+      isPublished = check_published (mbox);
     }
 
-  WKSHelper::instance()->update_state (mbox, state);
-
-  gpgrt_lock_lock (&wks_lock);
-  auto tit = s_last_checked.find(mbox);
-  auto now = time (0);
-  if (tit != s_last_checked.end())
+  if (isPublished)
     {
-      tit->second = now;
+      log_debug ("%s:%s: WKS client: '%s' is published",
+                 SRCNAME, __func__, mbox.c_str ());
+      state = WKSHelper::IsPublished;
     }
-  else
-    {
-      s_last_checked.insert (std::make_pair (mbox, now));
-    }
-  gpgrt_lock_unlock (&wks_lock);
 
-  WKSHelper::instance()->save ();
+  WKSHelper::instance()->update_state (mbox, state, false);
+  WKSHelper::instance()->update_last_checked (mbox, time (0));
+
   return 0;
 }
 
@@ -222,11 +269,25 @@ do_check (LPVOID arg)
 void
 WKSHelper::start_check (const std::string &mbox, bool forced) const
 {
+  const auto state = get_state (mbox);
+
+  if (!forced && (state != NotChecked && state != NotSupported))
+    {
+      log_debug ("%s:%s: Check aborted because its neither "
+                 "not supported nor not checked.",
+                 SRCNAME, __func__);
+      return;
+    }
+
   auto lastTime = get_check_time (mbox);
   auto now = time (0);
-  if (!forced && lastTime && difftime (lastTime, now) < CHECK_MIN_INTERVAL)
+
+  if (!forced && (state == NotSupported && lastTime &&
+                  difftime (now, lastTime) < CHECK_MIN_INTERVAL))
     {
       /* Data is new enough */
+      log_debug ("%s:%s: Check aborted because last checked is too recent.",
+                 SRCNAME, __func__);
       return;
     }
 
@@ -247,13 +308,54 @@ WKSHelper::start_check (const std::string &mbox, bool forced) const
 void
 WKSHelper::load () const
 {
-  // TODO
+  /* Map of mbox'es to states. states are <state>;<last_checked> */
+  const auto map = get_registry_subkeys (WKS_REG_KEY);
+
+  for (const auto &pair: map)
+    {
+      const auto mbox = pair.first;
+      const auto states = gpgol_split (pair.second, ';');
+
+      if (states.size() != 2)
+        {
+          log_error ("%s:%s: Invalid state '%s' for '%s'",
+                     SRCNAME, __func__, mbox.c_str (), pair.second.c_str ());
+          continue;
+        }
+
+      WKSState state = (WKSState) strtol (states[0].c_str (), nullptr, 10);
+      time_t update_time = (time_t) strtol (states[1].c_str (), nullptr, 10);
+
+      update_state (mbox, state, false);
+      update_last_checked (mbox, update_time, false);
+    }
 }
 
 void
 WKSHelper::save () const
 {
-  // TODO
+  gpgrt_lock_lock (&wks_lock);
+  for (const auto &pair: s_states)
+    {
+      auto state = std::to_string (pair.second) + ';';
+
+      const auto it = s_last_checked.find (pair.first);
+      if (it != s_last_checked.end ())
+        {
+          state += std::to_string (it->second);
+        }
+      else
+        {
+          state += '0';
+        }
+      if (store_extension_subkey_value (WKS_REG_KEY, pair.first.c_str (),
+                                        state.c_str ()))
+        {
+          log_error ("%s:%s: Failed to store state.",
+                     SRCNAME, __func__);
+        }
+    }
+  gpgrt_lock_unlock (&wks_lock);
 }
 
 static DWORD WINAPI
@@ -278,7 +380,8 @@ WKSHelper::allow_notify (int sleepTimeMS) const
       if (pair.second == ConfirmationSeen ||
           pair.second == NeedsPublish)
         {
-          auto *args = new std::pair<char *, int> (strdup (pair.first.c_str()), sleepTimeMS);
+          auto *args = new std::pair<char *, int> (strdup (pair.first.c_str()),
+                                                   sleepTimeMS);
           CloseHandle (CreateThread (nullptr, 0, do_notify,
                                      args, 0,
                                      nullptr));
@@ -309,7 +412,7 @@ WKSHelper::notify (const char *cBox) const
         }
       else
         {
-           update_state (mbox, PublishDenied);
+          update_state (mbox, PublishDenied);
         }
       return;
     }
@@ -406,7 +509,8 @@ WKSHelper::start_publish (const std::string &mbox) const
 }
 
 void
-WKSHelper::update_state (const std::string &mbox, WKSState state) const
+WKSHelper::update_state (const std::string &mbox, WKSState state,
+                         bool store) const
 {
   gpgrt_lock_lock (&wks_lock);
   auto it = s_states.find(mbox);
@@ -420,6 +524,33 @@ WKSHelper::update_state (const std::string &mbox, WKSState state) const
       s_states.insert (std::make_pair (mbox, state));
     }
   gpgrt_lock_unlock (&wks_lock);
+
+  if (store)
+    {
+      save ();
+    }
+}
+
+void
+WKSHelper::update_last_checked (const std::string &mbox, time_t time,
+                                bool store) const
+{
+  gpgrt_lock_lock (&wks_lock);
+  auto it = s_last_checked.find(mbox);
+  if (it != s_last_checked.end())
+    {
+      it->second = time;
+    }
+  else
+    {
+      s_last_checked.insert (std::make_pair (mbox, time));
+    }
+  gpgrt_lock_unlock (&wks_lock);
+
+  if (store)
+    {
+      save ();
+    }
 }
 
 int
