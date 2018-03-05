@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-03-05 14:35+0100\n"
-"PO-Revision-Date: 2018-03-05 14:33+0100\n"
+"PO-Revision-Date: 2018-03-05 14:43+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
 "Language: en_US\n"
@@ -438,7 +438,7 @@ msgid ""
 "directory, simply ignore this message.</p>\n"
 msgstr ""
 "Dies ist eine Bestätigungmail um ihren Öschl in dem Verzeichnis für ihre "
-"Maildomäne zu hinterlegen.\n"
+"Maildomäne einzutragen.\n"
 "\n"
 "<p>Wenn sie dies nicht angefordert haben, können Sie diese Mail ignorieren.</"
 "p>\n"
@@ -1148,46 +1148,56 @@ msgid ""
 "\n"
 "Register automatically?"
 msgstr ""
+"Ein Öschl Verzeichnis ist für ihre Domäne verfügbar.\n"
+"\n"
+"Tragen Sie ihren öffentlichen Schlüssel in diesem\n"
+"Verzeichnis ein um es anderen leicht zu machen ihnen verschlüsselte\n"
+"Mails zu schicken. "
+"\n"
+"Dies ist sicher und kostenlos!\n"
+"\n"
+"Automatisch eintragen?"
 
 #: src/wks-helper.cpp:409
-#, fuzzy
 msgid "GpgOL: Pubkey directory available!"
-msgstr "Öschl Verzeichnis Bestätigung"
+msgstr "GpgOL: Öschl Verzeichnis verfügbar!"
 
 #: src/wks-helper.cpp:491
 msgid "GpgOL: Directory request failed"
-msgstr ""
+msgstr "GpgOL: Verzeichnis Anfrage fehlgeschlagen"
 
 #: src/wks-helper.cpp:504
 msgid ""
 "You might receive a confirmation challenge from\n"
 "your provider to finish the registration."
 msgstr ""
+"Es ist möglich das ihnen ihr Mailprovider noch eine Bestätigungs-\n"
+"Anfrage sendet um die Eintragung abzuschließen."
 
 #: src/wks-helper.cpp:506
 msgid "GpgOL: Registration request sent!"
-msgstr ""
+msgstr "GpgOL: Registrierungs-Anfrage gesendet."
 
 #: src/wks-helper.cpp:687
 msgid "Confirm registration?"
-msgstr ""
+msgstr "Eintragung bestätigen?"
 
 #: src/wks-helper.cpp:688
-#, fuzzy
 msgid "GpgOL: Pubkey directory confirmation"
-msgstr "Öschl Verzeichnis Bestätigung"
+msgstr "GpgOL: Öschl Verzeichnis Bestätigung"
 
 #: src/wks-helper.cpp:741
 msgid "GpgOL: Confirmation failed"
-msgstr ""
+msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:753
 msgid "Your Pubkey can soon be retrieved from your domain."
 msgstr ""
+"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:754
 msgid "GpgOL: Request confirmed!"
-msgstr ""
+msgstr "GpgOL: Eintragung bestätigt."
 
 #~ msgid "&Search for OpenPGP keys automatically when encrypting"
 #~ msgstr "OpenPGP-&Schlüssel zum verschlüsseln automatisch suchen"
