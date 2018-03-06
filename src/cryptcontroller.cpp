@@ -384,7 +384,7 @@ CryptController::resolve_keys ()
     {
       // Pass the handle of the active window for raise / overlay.
       args.push_back (std::string ("--hwnd"));
-      args.push_back (std::to_string ((int) wnd));
+      args.push_back (std::to_string ((int) (intptr_t) wnd));
     }
 
   // Set the overlay caption
@@ -451,7 +451,7 @@ CryptController::resolve_keys ()
   log_debug ("Spawning args:");
   for (size_t i = 0; cargs && cargs[i]; i++)
     {
-      log_debug ("%i: '%s'", i, cargs[i]);
+      log_debug (SIZE_T_FORMAT ": '%s'", i, cargs[i]);
     }
 #endif
 

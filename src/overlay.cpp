@@ -46,7 +46,7 @@ Overlay::Overlay (HWND wid, const std::string &text): m_wid (wid)
   args.push_back (overlayer);
 
   args.push_back (std::string ("--hwnd"));
-  args.push_back (std::to_string ((int) wid));
+  args.push_back (std::to_string ((int) (intptr_t) wid));
 
   args.push_back (std::string ("--overlayText"));
   args.push_back (text);
