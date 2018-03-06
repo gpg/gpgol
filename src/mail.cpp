@@ -1259,13 +1259,19 @@ Mail::update_oom_data ()
          outlook will keep the SenderEmailAddress of UserA. This is all
          so horrible. */
       buf = get_sender_SenderEMailAddress (m_mailitem);
+
+      if (!buf)
+        {
+          /* Try the sender Object */
+          buf = get_sender_Sender (m_mailitem);
+        }
     }
 
   if (!buf)
     {
       buf = get_sender_SendUsingAccount (m_mailitem, &m_is_gsuite);
     }
-  if (!buf)
+  if (!buf && !is_crypto_mail ())
     {
       /* Try the sender Object */
       buf = get_sender_Sender (m_mailitem);
