@@ -22,12 +22,14 @@
 #include "xmalloc.h"
 #include <string.h>
 #include <vector>
+#include <sstream>
 
 #include "mimedataprovider.h"
 #include "parsetlv.h"
 #include "rfc822parse.h"
 #include "rfc2047parse.h"
 #include "attachment.h"
+#include "cpphelp.h"
 
 #ifndef HAVE_W32_SYSTEM
 #define stricmp strcasecmp
@@ -770,6 +772,8 @@ MimeDataProvider::collect_data(LPSTREAM stream)
   char buf[BUFSIZE];
   ULONG bRead;
   bool first_read = true;
+  bool is_pgp_message = false;
+  size_t allRead = 0;
   while ((hr = stream->Read (buf, BUFSIZE, &bRead)) == S_OK ||
          hr == S_FALSE)
     {
@@ -777,11 +781,11 @@ MimeDataProvider::collect_data(LPSTREAM stream)
         {
           log_mime_parser ("%s:%s: Input stream at EOF.",
                            SRCNAME, __func__);
-          return;
+          break;
         }
       log_mime_parser ("%s:%s: Read %lu bytes.",
                        SRCNAME, __func__, bRead);
-
+      allRead += bRead;
       if (first_read)
         {
           if (bRead > 12 && strncmp ("MIME-Version", buf, 12) == 0)
@@ -799,6 +803,18 @@ MimeDataProvider::collect_data(LPSTREAM stream)
                          "Expecting headers even if type suggested not to.",
                          SRCNAME, __func__);
 
+            }
+          /* check for the PGP MESSAGE marker to see if we have it. */
+          if (bRead && m_collect_everything)
+            {
+              std::string tmp (buf, bRead);
+              std::size_t found = tmp.find ("-----BEGIN PGP MESSAGE-----");
+              if (found != std::string::npos)
+                {
+                  log_debug ("%s:%s: found PGP Message marker,",
+                             SRCNAME, __func__);
+                  is_pgp_message = true;
+                }
             }
         }
       first_read = false;
@@ -822,11 +838,52 @@ MimeDataProvider::collect_data(LPSTREAM stream)
           log_error ("%s:%s: Collect failed to consume anything.\n"
                      "Buffer too small?",
                      SRCNAME, __func__);
-          return;
+          break;
         }
       log_mime_parser ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
                        SRCNAME, __func__, m_rawbuf.size() - not_taken);
       m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
+    }
+
+
+  if (is_pgp_message && allRead < (1024 * 100))
+    {
+      /* Sometimes received PGP Messsages contain extra whitespace /
+         newlines. To also accept such messages we fix up pgp inline
+         messages here. We only do this for messages which are smaller
+         then a hundred KByte for performance. */
+      log_debug ("%s:%s: Fixing up a possible broken message.",
+                 SRCNAME, __func__);
+      /* Copy crypto data to string */
+      std::string data = m_crypto_data.toString();
+      m_crypto_data = GpgME::Data();
+      std::istringstream iss (data);
+      // Now parse it by line.
+      std::string line;
+      while (std::getline (iss, line))
+        {
+          trim (line);
+          if (line == "-----BEGIN PGP MESSAGE-----")
+            {
+              /* Finish an armor header */
+              line += "\n\n";
+              m_crypto_data.write (line.c_str (), line.size ());
+              continue;
+            }
+          /* Remove empty lines */
+          if (line.empty())
+            {
+              continue;
+            }
+          if (line.find (':') != std::string::npos)
+            {
+              log_mime_parser ("%s:%s: Removing comment '%s'.",
+                               SRCNAME, __func__, line.c_str ());
+              continue;
+            }
+          line += '\n';
+          m_crypto_data.write (line.c_str (), line.size ());
+        }
     }
 }
 #endif
