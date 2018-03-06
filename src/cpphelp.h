@@ -32,7 +32,9 @@
 void release_cArray (char **carray);
 
 /* Trim whitespace from a string. */
-void rtrim(std::string &s);
+void rtrim (std::string &s);
+void ltrim (std::string &s);
+void trim (std::string &s);
 
 /* Convert a string vector to a null terminated char array */
 char **vector_to_cArray (const std::vector<std::string> &vec);
