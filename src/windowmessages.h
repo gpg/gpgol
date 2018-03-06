@@ -73,6 +73,11 @@ send_msg_to_ui_thread (wm_ctx_t *ctx);
 int
 do_in_ui_thread (gpgol_wmsg_type type, void *data);
 
+/** Send a message to the UI thread but returns
+    immediately without waiting for the execution. */
+void
+do_in_ui_thread_async (gpgol_wmsg_type type, void *data);
+
 /** Create our filter before outlook Window Messages. */
 HHOOK
 create_message_hook();

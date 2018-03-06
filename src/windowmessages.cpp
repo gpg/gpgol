@@ -194,6 +194,25 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data)
   return ctx.err;
 }
 
+static DWORD WINAPI
+do_async (LPVOID arg)
+{
+  wm_ctx_t *ctx = (wm_ctx_t*) arg;
+  send_msg_to_ui_thread (ctx);
+  xfree (ctx);
+  return 0;
+}
+
+void
+do_in_ui_thread_async (gpgol_wmsg_type type, void *data)
+{
+  wm_ctx_t *ctx = (wm_ctx_t *) calloc (1, sizeof (wm_ctx_t));
+  ctx->wmsg_type = type;
+  ctx->data = data;
+
+  CloseHandle (CreateThread (NULL, 0, do_async, (LPVOID) ctx, 0, NULL));
+}
+
 static std::vector <LPDISPATCH> explorers;
 
 void
