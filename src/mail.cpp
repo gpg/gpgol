@@ -759,6 +759,13 @@ do_crypt (LPVOID arg)
       mail->update_crypt_mapi ();
       mail->set_crypt_state (Mail::NeedsUpdateInOOM);
     }
+  /* This works around a bug in pinentry that it might
+     bring the wrong window to front. So after encryption /
+     signing we bring outlook back to front.
+
+     See GnuPG-Bug-Id: T3732
+     */
+  do_in_ui_thread_async (BRING_TO_FRONT, nullptr);
   gpgrt_lock_unlock (&dtor_lock);
   return 0;
 }

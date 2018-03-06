@@ -118,6 +118,22 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               WKSHelper::instance()->allow_notify ();
               break;
             }
+          case (BRING_TO_FRONT):
+            {
+              HWND wnd = get_active_hwnd ();
+              if (wnd)
+                {
+                  log_debug ("%s:%s: Bringing window %p to front.",
+                             SRCNAME, __func__, wnd);
+                  bring_to_front (wnd);
+                }
+              else
+                {
+                  log_debug ("%s:%s: No active window found for bring to front.",
+                             SRCNAME, __func__);
+                }
+              break;
+            }
           case (WKS_NOTIFY):
             {
               WKSHelper::instance ()->notify ((const char *) ctx->data);

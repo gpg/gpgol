@@ -49,6 +49,7 @@ typedef enum _gpgol_wmsg_type
   CLOSE, /* Close the message in the next event loop. */
   CRYPTO_DONE, /* Sign / Encrypt done. */
   WKS_NOTIFY, /* Show a WKS Notification. */
+  BRING_TO_FRONT, /* Bring the active Outlook window to the front. */
 } gpgol_wmsg_type;
 
 typedef struct
