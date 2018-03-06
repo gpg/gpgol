@@ -333,7 +333,13 @@ HWND get_active_hwnd (void);
 LPDISPATCH create_mail (void);
 
 LPDISPATCH get_account_for_mail (const char *mbox);
+
+/* Sender fallbacks. All return either null or a malloced address. */
+char *get_sender_CurrentUser (LPDISPATCH mailitem);
+char *get_sender_Sender (LPDISPATCH mailitem);
+char *get_sender_SenderEMailAddress (LPDISPATCH mailitem);
 #ifdef __cplusplus
+char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
 }
 #endif
 #endif /*OOMHELP_H*/

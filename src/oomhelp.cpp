@@ -1900,3 +1900,105 @@ get_account_for_mail (const char *mbox)
 
   return nullptr;
 }
+
+char *
+get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite)
+{
+  LPDISPATCH sender = get_oom_object (mailitem, "SendUsingAccount");
+  if (!sender)
+    {
+      return nullptr;
+    }
+
+  char *buf = get_oom_string (sender, "SmtpAddress");
+  char *dispName = get_oom_string (sender, "DisplayName");
+  gpgol_release (sender);
+
+  /* Check for G Suite account */
+  if (dispName && !strcmp ("G Suite", dispName) && r_is_GSuite)
+    {
+      *r_is_GSuite = true;
+    }
+  xfree (dispName);
+  if (buf && strlen (buf))
+    {
+      log_debug ("%s:%s: found sender", SRCNAME, __func__);
+      return buf;
+    }
+  xfree (buf);
+  return nullptr;
+}
+
+char *
+get_sender_Sender (LPDISPATCH mailitem)
+{
+  LPDISPATCH sender = get_oom_object (mailitem, "Sender");
+  if (!sender)
+    {
+      return nullptr;
+    }
+  char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+  gpgol_release (sender);
+  if (buf && strlen (buf))
+    {
+      log_debug ("%s:%s Sender fallback 2", SRCNAME, __func__);
+      return buf;
+    }
+  xfree (buf);
+  /* We have a sender object but not yet an smtp address likely
+     exchange. Try some more propertys of the message. */
+  buf = get_pa_string (mailitem, PR_TAG_SENDER_SMTP_ADDRESS);
+  if (buf && strlen (buf))
+    {
+      log_debug ("%s:%s Sender fallback 3", SRCNAME, __func__);
+      return buf;
+    }
+  xfree (buf);
+  buf = get_pa_string (mailitem, PR_TAG_RECEIVED_REPRESENTING_SMTP_ADDRESS);
+  if (buf && strlen (buf))
+    {
+      log_debug ("%s:%s Sender fallback 4", SRCNAME, __func__);
+      return buf;
+    }
+  xfree (buf);
+  return nullptr;
+}
+
+char *
+get_sender_CurrentUser (LPDISPATCH mailitem)
+{
+  LPDISPATCH sender = get_oom_object (mailitem,
+                                      "Session.CurrentUser");
+  if (!sender)
+    {
+      return nullptr;
+    }
+  char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
+  gpgol_release (sender);
+  if (buf && strlen (buf))
+    {
+      log_debug ("%s:%s Sender fallback 5", SRCNAME, __func__);
+      return buf;
+    }
+  xfree (buf);
+  return nullptr;
+}
+
+char *
+get_sender_SenderEMailAddress (LPDISPATCH mailitem)
+{
+
+  char *type = get_oom_string (mailitem, "SenderEmailType");
+  if (type && !strcmp ("SMTP", type))
+    {
+      char *senderMail = get_oom_string (mailitem, "SenderEmailAddress");
+      if (senderMail)
+        {
+          log_debug ("%s:%s: Sender found", SRCNAME, __func__);
+          xfree (type);
+          return senderMail;
+        }
+    }
+  xfree (type);
+  return nullptr;
+}

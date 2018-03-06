@@ -1224,7 +1224,7 @@ Mail::wipe (bool force)
 int
 Mail::update_oom_data ()
 {
-  LPDISPATCH sender = NULL;
+  char *buf = nullptr;
   log_debug ("%s:%s", SRCNAME, __func__);
 
   if (!is_crypto_mail())
@@ -1258,98 +1258,33 @@ Mail::update_oom_data ()
          you send from the folder of userA but change the from to userB
          outlook will keep the SenderEmailAddress of UserA. This is all
          so horrible. */
-      char *type = get_oom_string (m_mailitem, "SenderEmailType");
-      if (type && !strcmp ("SMTP", type))
-        {
-          char *senderMail = get_oom_string (m_mailitem, "SenderEmailAddress");
-          if (senderMail)
-            {
-              log_debug ("%s:%s Sender found", SRCNAME, __func__);
-              m_sender = senderMail;
-              xfree (senderMail);
-              xfree (type);
-              return 0;
-            }
-        }
-      xfree (type);
-    }
-  sender = get_oom_object (m_mailitem, "SendUsingAccount");
-  if (sender)
-    {
-      char *buf = get_oom_string (sender, "SmtpAddress");
-      char *dispName = get_oom_string (sender, "DisplayName");
-      gpgol_release (sender);
-
-      /* Check for G Suite account */
-      if (dispName && !strcmp ("G Suite", dispName))
-        {
-          m_is_gsuite = true;
-        }
-      xfree (dispName);
-      if (buf && strlen (buf))
-        {
-          log_debug ("%s:%s Sender fallback 1", SRCNAME, __func__);
-          m_sender = buf;
-          xfree (buf);
-          return 0;
-        }
-      xfree (buf);
-    }
-  /* Fallback to Sender object */
-  sender = get_oom_object (m_mailitem, "Sender");
-  if (sender)
-    {
-      char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      gpgol_release (sender);
-      if (buf && strlen (buf))
-        {
-          log_debug ("%s:%s Sender fallback 2", SRCNAME, __func__);
-          m_sender = buf;
-          xfree (buf);
-          return 0;
-        }
-      xfree (buf);
-      /* We have a sender object but not yet an smtp address likely
-         exchange. Try some more propertys of the message. */
-      buf = get_pa_string (m_mailitem, PR_TAG_SENDER_SMTP_ADDRESS);
-      if (buf && strlen (buf))
-        {
-          log_debug ("%s:%s Sender fallback 3", SRCNAME, __func__);
-          m_sender = buf;
-          xfree (buf);
-          return 0;
-        }
-      xfree (buf);
-      buf = get_pa_string (m_mailitem, PR_TAG_RECEIVED_REPRESENTING_SMTP_ADDRESS);
-      if (buf && strlen (buf))
-        {
-          log_debug ("%s:%s Sender fallback 4", SRCNAME, __func__);
-          m_sender = buf;
-          xfree (buf);
-          return 0;
-        }
-      xfree (buf);
-    }
-  /* We don't have s sender object or SendUsingAccount,
-     well, in that case fall back to the current user. */
-  sender = get_oom_object (m_mailitem, "Session.CurrentUser");
-  if (sender)
-    {
-      char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
-      gpgol_release (sender);
-      if (buf && strlen (buf))
-        {
-          log_debug ("%s:%s Sender fallback 5", SRCNAME, __func__);
-          m_sender = buf;
-          xfree (buf);
-          return 0;
-        }
-      xfree (buf);
+      buf = get_sender_SenderEMailAddress (m_mailitem);
     }
 
-  log_debug ("%s:%s: All fallbacks failed.",
-             SRCNAME, __func__);
-  return -1;
+  if (!buf)
+    {
+      buf = get_sender_SendUsingAccount (m_mailitem, &m_is_gsuite);
+    }
+  if (!buf)
+    {
+      /* Try the sender Object */
+      buf = get_sender_Sender (m_mailitem);
+    }
+  if (!buf)
+    {
+      /* We don't have s sender object or SendUsingAccount,
+         well, in that case fall back to the current user. */
+      buf = get_sender_CurrentUser (m_mailitem);
+    }
+  if (!buf)
+    {
+      log_debug ("%s:%s: All fallbacks failed.",
+                 SRCNAME, __func__);
+      return -1;
+    }
+  m_sender = buf;
+  xfree (buf);
+  return 0;
 }
 
 std::string
