@@ -751,6 +751,8 @@ do_crypt (LPVOID arg)
   if (!mail->is_inline_response ())
     {
       mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+      gpgrt_lock_unlock (&dtor_lock);
+      // This deletes the Mail in Outlook 2010
       do_in_ui_thread (CRYPTO_DONE, arg);
     }
   else
@@ -758,6 +760,7 @@ do_crypt (LPVOID arg)
       mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
       mail->update_crypt_mapi ();
       mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+      gpgrt_lock_unlock (&dtor_lock);
     }
   /* This works around a bug in pinentry that it might
      bring the wrong window to front. So after encryption /
@@ -766,7 +769,6 @@ do_crypt (LPVOID arg)
      See GnuPG-Bug-Id: T3732
      */
   do_in_ui_thread_async (BRING_TO_FRONT, nullptr);
-  gpgrt_lock_unlock (&dtor_lock);
   return 0;
 }
 
