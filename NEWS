@@ -1,6 +1,14 @@
-Noteworthy changes for version 2.0.7 (unreleased)
+Noteworthy changes for version 2.1.0 (unreleased)
 =================================================
 
+ * Encryption and Signing has been reworked to, again,
+ work without Kleopatra.
+
+ * WKS Setup is supported in a basic way.
+
+ * PGP/Inline is now fully supported.
+
+ * Many Bugfixes and Parser improvements.
 
 
 Noteworthy changes for version 2.0.6 (2018-01-12)
