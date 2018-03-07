@@ -34,14 +34,7 @@
 #include <gpgme++/signingresult.h>
 #include <gpgme++/encryptionresult.h>
 
-#ifdef HAVE_W32_SYSTEM
 #include "common.h"
-/* We use UTF-8 internally. */
-#undef _
-# define _(a) utf8_gettext (a)
-#else
-# define _(a) a
-#endif
 
 #include <sstream>
 
@@ -286,9 +279,9 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
 
   if (m_sign && sigFpr.empty())
     {
-      log_error ("%s:%s: Sign requested but no signing fingerprint",
+      log_error ("%s:%s: Sign requested but no signing fingerprint - sending unsigned",
                  SRCNAME, __func__);
-      return -1;
+      m_sign = false;
     }
   if (m_encrypt && !recpFprs.size())
     {
@@ -487,7 +480,8 @@ CryptController::resolve_keys ()
                  SRCNAME, __func__, err.code(), err.asString());
     }
 
-  if (parse_output (mystdout))
+  int ret = parse_output (mystdout);
+  if (ret == -1)
     {
       log_debug ("%s:%s: Failed to parse / resolve keys.",
                  SRCNAME, __func__);
@@ -496,7 +490,7 @@ CryptController::resolve_keys ()
       return -1;
     }
 
-  return 0;
+  return ret;
 }
 
 int
@@ -508,10 +502,20 @@ CryptController::do_crypto ()
   /* Start a WKS check if necessary. */
   WKSHelper::instance()->start_check (m_mail->get_cached_sender ());
 
-  if (resolve_keys ())
+  int ret = resolve_keys ();
+  if (ret == -1)
     {
+      //error
       log_debug ("%s:%s: Failure to resolve keys.",
                  SRCNAME, __func__);
+      gpgol_message_box (nullptr,
+                         utf8_gettext ("Failure to resolve keys."),
+                         utf8_gettext ("GpgOL"), MB_OK);
+      return ret;
+    }
+  if (ret == -2)
+    {
+      // Cancel
       return -2;
     }
 
@@ -529,6 +533,9 @@ CryptController::do_crypto ()
     {
       log_error ("%s:%s: Failure to create context.",
                  SRCNAME, __func__);
+      gpgol_message_box (nullptr,
+                         "Failure to create context.",
+                         utf8_gettext ("GpgOL"), MB_OK);
       return -1;
     }
   if (!m_signer_key.isNull())
@@ -995,7 +1002,7 @@ CryptController::start_crypto_overlay ()
     }
   else if (m_sign)
     {
-      text =_("Signing...");
+      text = _("Signing...");
     }
   m_overlay = std::unique_ptr<Overlay> (new Overlay (wid, text));
 }

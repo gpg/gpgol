@@ -738,6 +738,12 @@ do_crypt (LPVOID arg)
 
   mail->set_window_enabled (true);
 
+  if (rc == -1)
+    {
+      gpgol_message_box (nullptr,
+                         "Crypto failed",
+                         _("GpgOL"), MB_OK);
+    }
   if (rc)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i",
