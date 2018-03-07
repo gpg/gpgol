@@ -40,3 +40,4 @@ src/user-events.h
 src/keycache.cpp
 src/wks-helper.cpp
 src/overlay.cpp
+src/cryptcontroller.cpp
