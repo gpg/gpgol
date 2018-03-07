@@ -398,6 +398,12 @@ CryptController::resolve_keys ()
       args.push_back (std::string (_("Resolving signers...")));
     }
 
+  if (!opt.enable_smime)
+    {
+      args.push_back (std::string ("--protocol"));
+      args.push_back (std::string ("pgp"));
+    }
+
   if (m_sign)
     {
       args.push_back (std::string ("--sign"));
