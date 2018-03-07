@@ -303,16 +303,19 @@ CryptController::resolve_keys_cached()
   if (m_encrypt)
     {
       m_recipients = cache->getEncryptionKeys((const char **)m_recipient_addrs, GpgME::OpenPGP);
+      m_proto = GpgME::OpenPGP;
 
       if (m_recipients.empty() && opt.enable_smime)
         {
           m_recipients = cache->getEncryptionKeys((const char **)m_recipient_addrs, GpgME::CMS);
           fallbackToSMIME = true;
+          m_proto = GpgME::CMS;
         }
       if (m_recipients.empty())
         {
           log_debug ("%s:%s: Failed to resolve keys through cache",
                      SRCNAME, __func__);
+          m_proto = GpgME::UnknownProtocol;
           return 1;
         }
     }
@@ -323,17 +326,20 @@ CryptController::resolve_keys_cached()
         {
           m_signer_key = cache->getSigningKey (m_mail->get_cached_sender ().c_str (),
                                                GpgME::OpenPGP);
+          m_proto = GpgME::OpenPGP;
         }
       if (m_signer_key.isNull() && opt.enable_smime)
         {
           m_signer_key = cache->getSigningKey (m_mail->get_cached_sender ().c_str (),
                                                GpgME::CMS);
+          m_proto = GpgME::CMS;
         }
       if (m_signer_key.isNull())
         {
           log_debug ("%s:%s: Failed to resolve signer key through cache",
                      SRCNAME, __func__);
           m_recipients.clear();
+          m_proto = GpgME::UnknownProtocol;
           return 1;
         }
     }
