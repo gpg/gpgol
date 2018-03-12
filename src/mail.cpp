@@ -125,11 +125,17 @@ Mail::~Mail()
      that the parser is alive even if the mail is deleted
      while parsing. */
   gpgrt_lock_lock (&dtor_lock);
+  log_oom_extra ("%s:%s: dtor: Mail: %p item: %p",
+                 SRCNAME, __func__, this, m_mailitem);
   std::map<LPDISPATCH, Mail *>::iterator it;
 
+  log_oom_extra ("%s:%s: Detaching event sink",
+                 SRCNAME, __func__);
   detach_MailItemEvents_sink (m_event_sink);
   gpgol_release(m_event_sink);
 
+  log_oom_extra ("%s:%s: Erasing mail",
+                 SRCNAME, __func__);
   it = s_mail_map.find(m_mailitem);
   if (it != s_mail_map.end())
     {
@@ -145,7 +151,12 @@ Mail::~Mail()
         }
     }
 
+  log_oom_extra ("%s:%s: releasing mailitem",
+                 SRCNAME, __func__);
   gpgol_release(m_mailitem);
+  xfree (m_cached_html_body);
+  xfree (m_cached_plain_body);
+  release_cArray (m_cached_recipients);
   if (!m_uuid.empty())
     {
       log_oom_extra ("%s:%s: destroyed: %p uuid: %s",
@@ -153,15 +164,16 @@ Mail::~Mail()
     }
   else
     {
-      log_oom_extra ("%s:%s: non crypto mail: %p destroyed",
+      log_oom_extra ("%s:%s: non crypto (or sent) mail: %p destroyed",
                      SRCNAME, __func__, this);
     }
-  xfree (m_cached_html_body);
-  xfree (m_cached_plain_body);
-  for (int i = 0; m_cached_recipients && m_cached_recipients[i]; ++i)
-      xfree (m_cached_recipients[i]);
-  xfree (m_cached_recipients);
+  log_oom_extra ("%s:%s: nulling shared pointer",
+                 SRCNAME, __func__);
+  m_parser = nullptr;
+  m_crypter = nullptr;
   gpgrt_lock_unlock (&dtor_lock);
+  log_oom_extra ("%s:%s: returning",
+                 SRCNAME, __func__);
 }
 
 Mail *
@@ -775,6 +787,8 @@ do_crypt (LPVOID arg)
      See GnuPG-Bug-Id: T3732
      */
   do_in_ui_thread_async (BRING_TO_FRONT, nullptr);
+  log_debug ("%s:%s: crypto thread for %p finished",
+             SRCNAME, __func__, arg);
   return 0;
 }
 
@@ -1212,9 +1226,7 @@ Mail::update_oom_data ()
       xfree (m_cached_plain_body);
       m_cached_plain_body = get_oom_string (m_mailitem, "Body");
 
-      for (int i = 0; m_cached_recipients && m_cached_recipients[i]; ++i)
-          xfree (m_cached_recipients[i]);
-      xfree (m_cached_recipients);
+      release_cArray (m_cached_recipients);
       m_cached_recipients = get_recipients ();
     }
   /* For some reason outlook may store the recipient address
