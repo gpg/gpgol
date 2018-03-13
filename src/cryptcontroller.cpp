@@ -517,7 +517,8 @@ CryptController::do_crypto ()
       gpgol_message_box (nullptr,
                          utf8_gettext ("Failure to resolve keys."),
                          utf8_gettext ("GpgOL"), MB_OK);
-      return ret;
+      // Error handled, return as canceled.
+      return -2;
     }
   if (ret == -2)
     {
@@ -539,7 +540,7 @@ CryptController::do_crypto ()
     {
       log_error ("%s:%s: Failure to create context.",
                  SRCNAME, __func__);
-      gpgol_message_box (nullptr,
+      gpgol_message_box (m_mail->get_window (),
                          "Failure to create context.",
                          utf8_gettext ("GpgOL"), MB_OK);
       return -1;

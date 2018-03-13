@@ -748,20 +748,27 @@ do_crypt (LPVOID arg)
       return 0;
     }
 
-  mail->set_window_enabled (true);
-
   if (rc == -1)
     {
-      gpgol_message_box (nullptr,
-                         "Crypto failed",
+      mail->reset_crypter ();
+      crypter = nullptr;
+      gpgol_message_box (mail->get_window (),
+                         utf8_gettext ("Sign / Encrypt failed.\n\n"
+                         "This is usually caused by an error in your system.\n"
+                         "Please refer to the Gpg4win compendium how to enable debugging in GpgOL,"
+                         "or ask your Administrator for support."),
                          _("GpgOL"), MB_OK);
     }
+
+  mail->set_window_enabled (true);
+
   if (rc)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i",
                  SRCNAME, __func__, arg, rc);
       mail->set_crypt_state (Mail::NoCryptMail);
       mail->reset_crypter ();
+      crypter = nullptr;
       gpgrt_lock_unlock (&dtor_lock);
       return rc;
     }
