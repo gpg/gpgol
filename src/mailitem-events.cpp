@@ -480,6 +480,45 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
           if (m_mail->is_crypto_mail () && !m_mail->needs_save ())
             {
+              Mail *last_mail = Mail::get_last_mail ();
+              if (Mail::is_valid_ptr (last_mail))
+                {
+                  /* We want to identify here if there was a mail created that
+                     should receive the contents of this mail. For this we check
+                     for a write in the same loop as a mail creation.
+                     Now when switching from one mail to another this is also what
+                     happens. The new mail is loaded and the old mail is written.
+                     To distinguish the two we check that the new mail does not have
+                     an entryID, a Subject and No Size. Maybe just size or entryID
+                     would be enough but better save then sorry.
+
+                     Security consideration: Worst case we pass the write here but
+                     an unload follows before we get the scheduled revert. This
+                     would leak plaintext.
+
+                     Similarly if we crash or Outlook is closed before we see this
+                     revert. */
+                  const std::string lastSubject = last_mail->get_subject ();
+                  char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
+                  int lastSize = get_oom_int (last_mail->item (), "Size");
+                  std::string lastEntryStr;
+                  if (lastEntryID)
+                    {
+                      lastEntryStr = lastEntryID;
+                      xfree (lastEntryID);
+                    }
+
+                  if (!lastSize && !lastEntryStr.size () && !lastSubject.size ())
+                    {
+                      log_debug ("%s:%s: Write in the same loop as empty load."
+                                 " Pass but schedule revert.",
+                                 SRCNAME, __func__);
+
+                      Mail::invalidate_last_mail ();
+                      do_in_ui_thread_async (REVERT_MAIL, m_mail);
+                      return S_OK;
+                    }
+                }
               /* We cancel the write event to stop outlook from excessively
                  syncing our changes.
                  if smime support is disabled and we still have an smime

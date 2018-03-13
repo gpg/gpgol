@@ -922,6 +922,12 @@ void find_and_replace(std::string& source, const std::string &find,
 void
 Mail::update_body()
 {
+  if (!m_parser)
+    {
+      TRACEPOINT;
+      return;
+    }
+
   const auto error = m_parser->get_formatted_error ();
   if (!error.empty())
     {
@@ -1075,9 +1081,6 @@ Mail::parsing_done()
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
     }
-
-  /* Invalidate UI to set the correct sig status. */
-  m_parser = nullptr;
 
   log_debug ("%s:%s: Delayed invalidate to update sigstate.",
              SRCNAME, __func__);
@@ -2585,6 +2588,13 @@ Mail::get_last_mail ()
       s_last_mail = nullptr;
     }
   return s_last_mail;
+}
+
+// static
+void
+Mail::invalidate_last_mail ()
+{
+  s_last_mail = nullptr;
 }
 
 // static

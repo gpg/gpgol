@@ -2002,3 +2002,35 @@ get_sender_SenderEMailAddress (LPDISPATCH mailitem)
   xfree (type);
   return nullptr;
 }
+
+char *
+get_inline_body ()
+{
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+  if (!app)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  LPDISPATCH explorer = get_oom_object (app, "ActiveExplorer");
+
+  if (!explorer)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  LPDISPATCH inlineResponse = get_oom_object (explorer, "ActiveInlineResponse");
+  gpgol_release (explorer);
+
+  if (!inlineResponse)
+    {
+      return nullptr;
+    }
+
+  char *body = get_oom_string (inlineResponse, "Body");
+  gpgol_release (inlineResponse);
+
+  return body;
+}

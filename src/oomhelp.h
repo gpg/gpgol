@@ -338,6 +338,9 @@ LPDISPATCH get_account_for_mail (const char *mbox);
 char *get_sender_CurrentUser (LPDISPATCH mailitem);
 char *get_sender_Sender (LPDISPATCH mailitem);
 char *get_sender_SenderEMailAddress (LPDISPATCH mailitem);
+
+/* Get the body of the active inline response */
+char *get_inline_body (void);
 #ifdef __cplusplus
 char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
 }

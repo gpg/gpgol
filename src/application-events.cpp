@@ -33,6 +33,7 @@
 #include "oomhelp.h"
 #include "mail.h"
 #include "gpgoladdin.h"
+#include "windowmessages.h"
 
 /* Application Events */
 BEGIN_EVENT_SINK(ApplicationEvents, IDispatch)
@@ -91,6 +92,7 @@ EVENT_SINK_INVOKE(ApplicationEvents)
           log_debug ("%s:%s: Creating mail object for item: %p",
                      SRCNAME, __func__, mailItem);
           new Mail (mailItem);
+          do_in_ui_thread_async (INVALIDATE_LAST_MAIL, nullptr);
           break;
         }
       case Quit:

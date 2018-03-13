@@ -623,6 +623,12 @@ WKSHelper::send_mail (const std::string &mimeData) const
      a Hack! :-) */
   auto last_mail = Mail::get_last_mail ();
 
+  if (!Mail::is_valid_ptr (last_mail))
+    {
+      log_error ("%s:%s: Invalid last mail %p.",
+                 SRCNAME, __func__, last_mail);
+      return -1;
+    }
   last_mail->set_override_mime_data (mimeData);
   last_mail->set_crypt_state (Mail::NeedsSecondAfterWrite);
 

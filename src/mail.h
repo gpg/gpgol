@@ -92,6 +92,8 @@ public:
   */
   static Mail* get_last_mail ();
 
+  static void invalidate_last_mail ();
+
   /** @brief looks for existing Mail objects.
 
     @returns A reference to an existing mailitem or NULL in case none
@@ -446,9 +448,9 @@ public:
   /** Get the mime data that should be used when sending. */
   std::string get_override_mime_data () const { return m_mime_data; }
 
+  void update_body ();
 private:
   void update_categories ();
-  void update_body ();
   void update_sigstate ();
 
   LPDISPATCH m_mailitem;

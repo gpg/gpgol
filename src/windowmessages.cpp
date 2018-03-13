@@ -68,6 +68,34 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->locate_keys();
               break;
             }
+          case (REVERT_MAIL):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: Revert mail for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+
+              mail->set_needs_save (true);
+              /* Some magic here. Accessing any existing inline body cements
+                 it. Otherwise updating the body through the revert also changes
+                 the body of a inline mail. */
+              char *inlineBody = get_inline_body ();
+              xfree (inlineBody);
+
+              // Does the revert.
+              log_debug ("%s:%s: Revert mail. Invoking save.",
+                         SRCNAME, __func__);
+              invoke_oom_method (mail->item (), "Save", NULL);
+              log_debug ("%s:%s: Revert mail. Save done. Updating body..",
+                         SRCNAME, __func__);
+              mail->update_body ();
+              log_debug ("%s:%s: Revert mail done.",
+                         SRCNAME, __func__);
+              break;
+            }
           case (INVALIDATE_UI):
             {
               log_debug ("%s:%s: Invalidating UI",
@@ -75,6 +103,13 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               gpgoladdin_invalidate_ui();
               log_debug ("%s:%s: Invalidation done",
                          SRCNAME, __func__);
+              break;
+            }
+          case (INVALIDATE_LAST_MAIL):
+            {
+              log_debug ("%s:%s: Invalidating last mail",
+                         SRCNAME, __func__);
+              Mail::invalidate_last_mail ();
               break;
             }
           case (CLOSE):
@@ -114,6 +149,8 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
               // Finaly this should pass.
               invoke_oom_method (mail->item (), "Send", NULL);
+              log_debug ("%s:%s:  Send for %p completed.",
+                         SRCNAME, __func__, mail);
               // Allow the WKS helper to queue a notification.
               WKSHelper::instance()->allow_notify ();
               break;

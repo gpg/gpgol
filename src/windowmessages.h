@@ -50,6 +50,8 @@ typedef enum _gpgol_wmsg_type
   CRYPTO_DONE, /* Sign / Encrypt done. */
   WKS_NOTIFY, /* Show a WKS Notification. */
   BRING_TO_FRONT, /* Bring the active Outlook window to the front. */
+  INVALIDATE_LAST_MAIL,
+  REVERT_MAIL,
 } gpgol_wmsg_type;
 
 typedef struct
