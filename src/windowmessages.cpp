@@ -153,6 +153,8 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                          SRCNAME, __func__, mail);
               // Allow the WKS helper to queue a notification.
               WKSHelper::instance()->allow_notify ();
+              log_debug ("%s:%s:  Crypto done handler completed.",
+                         SRCNAME, __func__);
               break;
             }
           case (BRING_TO_FRONT):
@@ -251,6 +253,8 @@ static DWORD WINAPI
 do_async (LPVOID arg)
 {
   wm_ctx_t *ctx = (wm_ctx_t*) arg;
+  log_debug ("%s:%s: Do async with type %i",
+             SRCNAME, __func__, ctx ? ctx->wmsg_type : -1);
   send_msg_to_ui_thread (ctx);
   xfree (ctx);
   return 0;

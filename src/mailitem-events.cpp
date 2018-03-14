@@ -611,6 +611,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
           log_debug ("%s:%s: Removing Mail for message: %p.",
                      SRCNAME, __func__, m_object);
           delete m_mail;
+          log_oom_extra ("%s:%s: deletion done",
+                         SRCNAME, __func__);
           return S_OK;
         }
       case Forward:

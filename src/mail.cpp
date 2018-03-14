@@ -779,6 +779,8 @@ do_crypt (LPVOID arg)
       gpgrt_lock_unlock (&dtor_lock);
       // This deletes the Mail in Outlook 2010
       do_in_ui_thread (CRYPTO_DONE, arg);
+      log_debug ("%s:%s: UI thread finished for %p",
+                 SRCNAME, __func__, arg);
     }
   else
     {
