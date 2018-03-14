@@ -514,11 +514,7 @@ CryptController::do_crypto ()
       //error
       log_debug ("%s:%s: Failure to resolve keys.",
                  SRCNAME, __func__);
-      gpgol_message_box (nullptr,
-                         utf8_gettext ("Failure to resolve keys."),
-                         utf8_gettext ("GpgOL"), MB_OK);
-      // Error handled, return as canceled.
-      return -2;
+      return -1;
     }
   if (ret == -2)
     {
