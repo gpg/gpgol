@@ -1605,6 +1605,12 @@ HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
 
+  if (!result)
+    {
+      TRACEPOINT;
+      return S_OK;
+    }
+
   result->vt = VT_BOOL | VT_BYREF;
   result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
   *(result->pboolVal) = none_selected ? VARIANT_FALSE : VARIANT_TRUE;
