@@ -448,6 +448,15 @@ public:
   /** Get the mime data that should be used when sending. */
   std::string get_override_mime_data () const { return m_mime_data; }
 
+  /** Set if this is a forward of a crypto mail. */
+  void set_is_forwarded_crypto_mail (bool value) { m_is_forwarded_crypto_mail = value; }
+  bool is_forwarded_crypto_mail () { return m_is_forwarded_crypto_mail; }
+
+  /** Remove the hidden GpgOL attachments. This is needed when forwarding
+    without encryption so that our attachments are not included in the forward.
+    Returns 0 on success. Works in OOM. */
+  int remove_our_attachments ();
+
   void update_body ();
 private:
   void update_categories ();
@@ -488,5 +497,6 @@ private:
   HWND m_window;
   bool m_is_inline_response;
   std::string m_mime_data;
+  bool m_is_forwarded_crypto_mail; /* Is this a forward of a crypto mail */
 };
 #endif // MAIL_H

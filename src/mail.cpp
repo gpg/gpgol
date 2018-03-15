@@ -92,7 +92,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_gsuite(false),
     m_crypt_state(NoCryptMail),
     m_window(nullptr),
-    m_is_inline_response(false)
+    m_is_inline_response(false),
+    m_is_forwarded_crypto_mail(false)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -2623,4 +2624,64 @@ Mail::locate_all_crypto_recipients()
           it->second->locate_keys ();
         }
     }
+}
+
+int
+Mail::remove_our_attachments ()
+{
+  LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
+  if (!attachments)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+  int count = get_oom_int (attachments, "Count");
+  LPDISPATCH to_delete[count];
+  int del_cnt = 0;
+  for (int i = 1; i <= count; i++)
+    {
+      auto item_str = std::string("Item(") + std::to_string (i) + ")";
+      LPDISPATCH attachment = get_oom_object (attachments, item_str.c_str());
+      if (!attachment)
+        {
+          TRACEPOINT;
+          continue;
+        }
+
+      attachtype_t att_type;
+      if (get_pa_int (attachment, GPGOL_ATTACHTYPE_DASL, (int*) &att_type))
+        {
+          /* Not our attachment. */
+          gpgol_release (attachment);
+          continue;
+        }
+
+      if (att_type == ATTACHTYPE_PGPBODY || att_type == ATTACHTYPE_MOSS ||
+          att_type == ATTACHTYPE_MOSSTEMPL)
+        {
+          /* One of ours to delete. */
+          to_delete[del_cnt++] = attachment;
+          /* Dont' release yet */
+          continue;
+        }
+      gpgol_release (attachment);
+    }
+  gpgol_release (attachments);
+
+  int ret = 0;
+
+  for (int i = 0; i < del_cnt; i++)
+    {
+      LPDISPATCH attachment = to_delete[i];
+
+      /* Delete the attachments that are marked to delete */
+      if (invoke_oom_method (attachment, "Delete", NULL))
+        {
+          log_error ("%s:%s: Error: deleting attachment %i",
+                     SRCNAME, __func__, i);
+          ret = -1;
+        }
+      gpgol_release (attachment);
+    }
+  return ret;
 }

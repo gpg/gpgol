@@ -494,10 +494,11 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
                      Security consideration: Worst case we pass the write here but
                      an unload follows before we get the scheduled revert. This
-                     would leak plaintext.
+                     would leak plaintext. But does not happen in our tests.
 
                      Similarly if we crash or Outlook is closed before we see this
-                     revert. */
+                     revert. But as we immediately revert after the write this should
+                     also not happen. */
                   const std::string lastSubject = last_mail->get_subject ();
                   char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
                   int lastSize = get_oom_int (last_mail->item (), "Size");
@@ -540,6 +541,27 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Failed to remove plaintext.",
                          SRCNAME, __func__);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+            }
+
+          if (!m_mail->is_crypto_mail () && m_mail->is_forwarded_crypto_mail () &&
+              !m_mail->needs_crypto () && m_mail->crypt_state () == Mail::NoCryptMail)
+            {
+              /* We are sure now that while this is a forward of an encrypted
+               * mail that the forward should not be signed or encrypted. So
+               * it's not constructed by us. We need to remove our attachments
+               * though so that they are not included in the forward. */
+              log_debug ("%s:%s: Writing unencrypted forward of crypt mail. "
+                         "Removing attachments. mail: %p item: %p",
+                         SRCNAME, __func__, m_mail, m_object);
+              if (m_mail->remove_our_attachments ())
+                {
+                  // Worst case we forward some encrypted data here not
+                  // a security problem, so let it pass.
+                  log_error ("%s:%s: Failed to remove our attachments.",
+                             SRCNAME, __func__);
+                }
+              /* Remove marker because we did this now. */
+              m_mail->set_is_forwarded_crypto_mail (false);
             }
 
           log_debug ("%s:%s: Passing write event.",
@@ -616,6 +638,41 @@ EVENT_SINK_INVOKE(MailItemEvents)
           return S_OK;
         }
       case Forward:
+        {
+          log_oom_extra ("%s:%s: Forward: %p",
+                         SRCNAME, __func__, m_mail);
+          if (!m_mail->is_crypto_mail ())
+            {
+              /* Non crypto mails do not interest us.*/
+              break;
+            }
+          Mail *last_mail = Mail::get_last_mail ();
+          if (Mail::is_valid_ptr (last_mail))
+            {
+              /* We want to identify here if there was a mail created that
+                 should receive the contents of this mail. For this we check
+                 for a forward in the same loop as a mail creation.
+              */
+              char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
+              int lastSize = get_oom_int (last_mail->item (), "Size");
+              std::string lastEntryStr;
+              if (lastEntryID)
+                {
+                  lastEntryStr = lastEntryID;
+                  xfree (lastEntryID);
+                }
+
+              if (!lastSize && !lastEntryStr.size ())
+                {
+                  log_debug ("%s:%s: Forward in the same loop as empty load."
+                             " Marking %p (item %p) as forwarded.",
+                             SRCNAME, __func__, last_mail, last_mail->item ());
+
+                  last_mail->set_is_forwarded_crypto_mail (true);
+                }
+            }
+        }
+      /* Fallthrough */
       case Reply:
       case ReplyAll:
         {
