@@ -37,7 +37,7 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
  */
 
 /* The ProgID used by us */
-#define GPGOL_PROGID "GNU.GpgOL"
+#define GPGOL_PROGID "Z.GNU.GpgOL"
 /* User friendly add in name */
 #define GPGOL_PRETTY "GpgOL - The GnuPG Outlook Plugin"
 /* Short description of the addin */
