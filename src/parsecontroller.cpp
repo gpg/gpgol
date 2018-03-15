@@ -234,7 +234,9 @@ ParseController::parse()
 
   Data input (m_inputprovider);
 
-  if (input.type () == Data::Type::PGPSigned)
+  auto inputType = input.type ();
+
+  if (inputType == Data::Type::PGPSigned)
     {
       verify = true;
       decrypt = false;
@@ -289,7 +291,7 @@ ParseController::parse()
              decrypt, verify,
              protocol == OpenPGP ? "OpenPGP" :
              protocol == CMS ? "CMS" : "Unknown",
-             m_sender.empty() ? "none" : m_sender.c_str(), input.type ());
+             m_sender.empty() ? "none" : m_sender.c_str(), inputType);
   if (decrypt)
     {
       input.seek (0, SEEK_SET);
