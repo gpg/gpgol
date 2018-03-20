@@ -1751,7 +1751,9 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
                        SRCNAME, __func__, path.c_str(), argv[1], argv[2]);
             Data d(Data::null);
             ctx->spawnAsync(path.c_str(), argv, d, d,
-                            d, Context::SpawnNone);
+                            d, (GpgME::Context::SpawnFlags) (
+                                GpgME::Context::SpawnAllowSetFg |
+                                GpgME::Context::SpawnShowWindow));
         }
       else
         {
