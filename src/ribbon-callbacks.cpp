@@ -1740,9 +1740,12 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
               log_error ("%s:%s: No spawn engine.",
                          SRCNAME, __func__);
             }
+            std::string parentWid = std::to_string ((unsigned int) get_active_hwnd ());
             const char *argv[] = {path.c_str(),
                                   "--query",
                                   mail->get_sig_fpr(),
+                                  "--parent-windowid",
+                                  parentWid.c_str(),
                                   NULL };
             log_debug ("%s:%s: Starting %s %s %s",
                        SRCNAME, __func__, path.c_str(), argv[1], argv[2]);
