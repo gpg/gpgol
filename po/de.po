@@ -114,7 +114,7 @@ msgstr ""
 "\n"
 "Bitten benutzen Sie den \"Entschlüsseln/Überprüfen\" Menüpunkt\n"
 "um die gesamte Nachricht nochmal zu entschlüsseln.  Danach können\n"
-"Sie das Attachment wieder öffenen."
+"Sie das Attachment wieder öffnen."
 
 #: src/cmdbarcontrols.cpp:104
 msgid "Could not start certificate manager"
@@ -349,7 +349,7 @@ msgstr "Nachricht signieren"
 
 #: src/inspectors.cpp:730
 msgid "GpgOL Decrypt/Verify"
-msgstr "GpgOL Enschlüsseln/Prüfen"
+msgstr "GpgOL Entschlüsseln/Prüfen"
 
 #: src/inspectors.cpp:791
 msgid "Encrypt message with GnuPG"
@@ -389,7 +389,7 @@ msgid ""
 "The unsigned / unencrypted attachments are:\n"
 "\n"
 msgstr ""
-"Nicht alle Anhänge waren verschlüsselt order signiert.\n"
+"Nicht alle Anhänge waren verschlüsselt oder signiert.\n"
 "Die unsignierten / unverschlüsselten Anhänge sind:\n"
 "\n"
 
@@ -418,7 +418,7 @@ msgid ""
 "Note: The attachments may be encrypted or signed on a file level but the "
 "GpgOL status does not apply to them."
 msgstr ""
-"Note: Die Anhänge könnten auf Dateiebene verschlüsselt oder singiert sein, "
+"Note: Die Anhänge könnten auf Dateiebene verschlüsselt oder signiert sein, "
 "aber GpgOL kann deren Kryptostatus nicht anzeigen."
 
 #: src/mail.cpp:376
@@ -437,7 +437,7 @@ msgid ""
 "<p>If you did not request to publish your Pubkey in your providers "
 "directory, simply ignore this message.</p>\n"
 msgstr ""
-"Dies ist eine Bestätigungmail um ihren Öschl in dem Verzeichnis für ihre "
+"Dies ist eine Bestätigungsmail um ihren Öschl in dem Verzeichnis für ihre "
 "Maildomäne einzutragen.\n"
 "\n"
 "<p>Wenn sie dies nicht angefordert haben, können Sie diese Mail ignorieren.</"
@@ -463,7 +463,7 @@ msgid ""
 "See: https://dev.gnupg.org/T3545 for details."
 msgstr ""
 "G Suite Sync bricht ausgehende Krypto Mails mit anhängen.\n"
-"Die verwendung von Krypto und anhängen wird mit G Suite Sync nicht "
+"Die Verwendung von Krypto und anhängen wird mit G Suite Sync nicht "
 "unterstützt.\n"
 "\n"
 "Details siehe: https://dev.gnupg.org/T3545"
@@ -520,7 +520,7 @@ msgstr ""
 
 #: src/mail.cpp:2017
 msgid "The message was signed but the verification failed with:"
-msgstr "Die Nachricht ist signiert aber die überprüfung schlug fehl mit:"
+msgstr "Die Nachricht ist signiert aber die Überprüfung schlug fehl mit:"
 
 #: src/mail.cpp:2035
 msgid "The encryption was VS-NfD-compliant."
@@ -542,7 +542,7 @@ msgstr "Sie haben diese Nachricht signiert."
 
 #: src/mail.cpp:2070
 msgid "The senders identity was certified by yourself."
-msgstr "Die Idenität des Absenders wurde von ihnen selbst beglaubigt."
+msgstr "Die Identität des Absenders wurde von ihnen selbst beglaubigt."
 
 #: src/mail.cpp:2074
 msgid "The sender is allowed to certify identities for you."
@@ -560,13 +560,13 @@ msgid ""
 "The senders identity is certified by the trusted issuer:\n"
 "'%s'\n"
 msgstr ""
-"Die Idenität des Absenders wurde bestätigt von:\n"
+"Die Identität des Absenders wurde bestätigt von:\n"
 "'%s'\n"
 
 #: src/mail.cpp:2100
 msgid "Some trusted people have certified the senders identity."
 msgstr ""
-"Einige vertrauenswürde Personen haben die Identität des Absenders beglaubigt."
+"Einige vertrauenswürdige Personen haben die Identität des Absenders beglaubigt."
 
 #: src/mail.cpp:2110
 #, c-format
@@ -582,7 +582,7 @@ msgstr ""
 
 #: src/mail.cpp:2126
 msgid "The senders signature was verified for the first time."
-msgstr "The Signatur des Absenders wurde das erste mal verifiziert."
+msgstr "Die Signatur des Absenders wurde das erste mal verifiziert."
 
 #: src/mail.cpp:2133
 #, c-format
@@ -591,7 +591,7 @@ msgid ""
 "messages and encrypted %i messages to it since %s."
 msgstr ""
 "Die Absenderadresse ist noch nicht vertrauenswürdig da Sie erst %i "
-"Nachrichten von diesem absender verifziert und %i Nachrichten verschlüssel "
+"Nachrichten von diesem Absender verifiziert und %i Nachrichten verschlüsselt "
 "haben. Seit dem %s."
 
 #: src/mail.cpp:2147
@@ -645,7 +645,7 @@ msgstr "wurde möglicherweise zurückgezogen."
 #: src/mail.cpp:2202
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
-"ist nicht der gleiche Schlüssel der in der vergangenheit für diese Adresse "
+"ist nicht der gleiche Schlüssel der in der Vergangenheit für diese Adresse "
 "verwendet wurde."
 
 #: src/mail.cpp:2208
@@ -699,7 +699,7 @@ msgstr "Klicken Sie hier für Details zu dem Schlüssel"
 
 #: src/mail.cpp:2276
 msgid "Click here for details about the certificate."
-msgstr "Klicken Sie hier für Details zu dem Zertifiakt."
+msgstr "Klicken Sie hier für Details zu dem Zertifikat."
 
 #: src/mail.cpp:2280
 msgid "Click here to search the key on the configured keyserver."
@@ -934,7 +934,7 @@ msgstr ""
 "\n"
 "Bitte öffnen Sie das Fenster mit den Einstellungen und bestätigen Sie, daß "
 "die Einstellungen für Sie noch stimmen.  Sie finden die Einstellungen im "
-"Hauptmenu unter:  Extras->Optionen->GpgOL.\n"
+"Hauptmenü unter:  Extras->Optionen->GpgOL.\n"
 
 #: src/olflange.cpp:796
 msgid ""
