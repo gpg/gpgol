@@ -157,6 +157,7 @@ void gpgol_bug (HWND parent, int code);
 #define ERR_CRYPT_RESOLVER_FAILED 1
 #define ERR_WANTS_SEND_MIME_BODY 2
 #define ERR_WANTS_SEND_INLINE_BODY 3
+#define ERR_INLINE_BODY_TO_BODY 4
 #ifdef __cplusplus
 }
 #endif

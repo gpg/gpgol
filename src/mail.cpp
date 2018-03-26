@@ -2579,8 +2579,11 @@ Mail::update_crypt_oom()
     {
       if (inline_body_to_body ())
         {
-          log_debug ("%s:%s: Inline body to body failed %p.",
+          log_error ("%s:%s: Inline body to body failed %p.",
                      SRCNAME, __func__, this);
+          gpgol_bug (get_active_hwnd(), ERR_INLINE_BODY_TO_BODY);
+          m_crypt_state = NoCryptMail;
+          return;
         }
     }
 
