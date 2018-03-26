@@ -577,7 +577,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               /* Seen the first after write. Advance the state */
               m_mail->set_crypt_state (Mail::NeedsActualCrypt);
-              m_mail->encrypt_sign_start ();
+              if (m_mail->encrypt_sign_start ())
+                {
+                  log_debug ("%s:%s: Encrypt sign start failes.",
+                             SRCNAME, __func__);
+                  m_mail->set_crypt_state (Mail::NoCryptMail);
+                }
               return S_OK;
             }
           if (m_mail->crypt_state () == Mail::NeedsSecondAfterWrite)
