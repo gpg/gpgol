@@ -97,7 +97,7 @@ CryptController::collect_data ()
   if (body && !*body)
     {
       xfree (body);
-      body = NULL;
+      body = nullptr;
     }
 
   LPMESSAGE message = get_oom_base_message (m_mail->item ());
@@ -111,7 +111,10 @@ CryptController::collect_data ()
   int n_att_usable = count_usable_attachments (att_table);
   if (!n_att_usable && !body)
     {
-      log_debug ("%s:%s: encrypt empty message", SRCNAME, __func__);
+      log_error ("%s:%s: encrypt empty message", SRCNAME, __func__);
+      gpgol_release (message);
+      xfree (body);
+      return -1;
     }
 
   bool do_inline = m_mail->should_inline_crypt ();
