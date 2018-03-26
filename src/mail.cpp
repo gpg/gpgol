@@ -2535,8 +2535,13 @@ Mail::update_crypt_mapi()
     {
       m_crypt_state = WantsSendMIME;
     }
-  // We don't need the crypter anymore.
-  reset_crypter ();
+
+  /** If sync we need the crypter in update_crypt_oom */
+  if (!is_inline_response ())
+    {
+      // We don't need the crypter anymore.
+      reset_crypter ();
+    }
 }
 
 /** Checks in OOM if the body is either
@@ -2572,6 +2577,7 @@ Mail::update_crypt_oom()
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
+      reset_crypter ();
       return;
     }
 
@@ -2585,6 +2591,12 @@ Mail::update_crypt_oom()
           m_crypt_state = NoCryptMail;
           return;
         }
+    }
+  /** When doing async update_crypt_mapi follows and needs
+    the crypter. */
+  if (is_inline_response ())
+    {
+      reset_crypter ();
     }
 
   const auto pair = has_crypt_or_empty_body_oom (this);

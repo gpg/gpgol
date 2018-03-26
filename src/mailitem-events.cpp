@@ -385,6 +385,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     {
                       m_mail->set_crypt_state (Mail::WantsSendMIME);
                     }
+                  if (m_mail->should_inline_crypt () && m_mail->crypt_state () != Mail::WantsSendInline)
+                    {
+                      log_debug ("%s:%s: Message %p mail %p cancelling send - "
+                                 "Invalid state.",
+                                 SRCNAME, __func__, m_object, m_mail);
+                      gpgol_bug (m_mail->get_window (),
+                                 ERR_INLINE_BODY_INV_STATE);
+                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                      break;
+                    }
                 }
             }
 
