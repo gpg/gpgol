@@ -68,7 +68,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
     m_proto (proto)
 {
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
-             SRCNAME, __func__, mail, encrypt, sign, mail->should_inline_crypt ());
+             SRCNAME, __func__, mail, encrypt, sign, mail->do_pgp_inline ());
   m_recipient_addrs = mail->take_cached_recipients ();
 }
 
@@ -119,7 +119,7 @@ CryptController::collect_data ()
       return -1;
     }
 
-  bool do_inline = m_mail->should_inline_crypt ();
+  bool do_inline = m_mail->do_pgp_inline ();
 
   if (n_att_usable && do_inline)
     {
@@ -127,7 +127,7 @@ CryptController::collect_data ()
                  " Using PGP MIME",
                  SRCNAME, __func__);
       do_inline = false;
-      m_mail->set_should_inline_crypt (false);
+      m_mail->set_do_pgp_inline (false);
     }
   else if (do_inline)
     {
@@ -528,14 +528,14 @@ CryptController::do_crypto ()
       // Cancel
       return -2;
     }
-  bool do_inline = m_mail->should_inline_crypt ();
+  bool do_inline = m_mail->do_pgp_inline ();
 
   if (m_proto == GpgME::CMS && do_inline)
     {
       log_debug ("%s:%s: Inline for S/MIME not supported. Switching to mime.",
                  SRCNAME, __func__);
       do_inline = false;
-      m_mail->set_should_inline_crypt (false);
+      m_mail->set_do_pgp_inline (false);
       m_bodyInput = GpgME::Data(GpgME::Data::null);
     }
 
@@ -864,7 +864,7 @@ CryptController::update_mail_mapi ()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  if (m_mail->should_inline_crypt ())
+  if (m_mail->do_pgp_inline ())
     {
       // Nothing to do for inline.
       log_debug ("%s:%s: Inline mail. No MAPI update.",
@@ -952,7 +952,7 @@ std::string
 CryptController::get_inline_data ()
 {
   std::string ret;
-  if (!m_mail->should_inline_crypt ())
+  if (!m_mail->do_pgp_inline ())
     {
       return ret;
     }

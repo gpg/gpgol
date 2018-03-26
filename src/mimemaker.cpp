@@ -1972,7 +1972,7 @@ mime_encrypt (LPMESSAGE message, HWND hwnd,
   int n_att_usable;
   engine_filter_t filter = NULL;
   char *my_sender = NULL;
-  bool is_inline = mail && mail->should_inline_crypt ();
+  bool is_inline = mail && mail->do_pgp_inline ();
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);

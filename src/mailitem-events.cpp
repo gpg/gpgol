@@ -385,7 +385,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     {
                       m_mail->set_crypt_state (Mail::WantsSendMIME);
                     }
-                  if (m_mail->should_inline_crypt () && m_mail->crypt_state () != Mail::WantsSendInline)
+                  if (m_mail->do_pgp_inline () && m_mail->crypt_state () != Mail::WantsSendInline)
                     {
                       log_debug ("%s:%s: Message %p mail %p cancelling send - "
                                  "Invalid state.",

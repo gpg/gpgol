@@ -2581,7 +2581,7 @@ Mail::update_crypt_oom()
       return;
     }
 
-  if (should_inline_crypt ())
+  if (do_pgp_inline ())
     {
       if (inline_body_to_body ())
         {
