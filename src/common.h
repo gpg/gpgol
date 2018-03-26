@@ -150,6 +150,13 @@ void bring_to_front (HWND wid);
 
 int gpgol_message_box (HWND parent, const char *utf8_text,
                        const char *utf8_caption, UINT type);
+
+/* Show a bug message with the code. */
+void gpgol_bug (HWND parent, int code);
+
+#define ERR_CRYPT_RESOLVER_FAILED 1
+#define ERR_WANTS_SEND_MIME_BODY 2
+#define ERR_WANTS_SEND_INLINE_BODY 3
 #ifdef __cplusplus
 }
 #endif

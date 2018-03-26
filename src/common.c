@@ -1058,6 +1058,22 @@ gpgol_message_box (HWND parent, const char *utf8_text,
   return ret;
 }
 
+void
+gpgol_bug (HWND parent, int code)
+{
+  const char *bugmsg = utf8_gettext ("Operation failed.\n\n"
+                "This is usually caused by a bug in GpgOL or an error in your setup.\n"
+                "Please see https://www.gpg4win.org/reporting-bugs.html "
+                "or ask your Administrator for support.");
+  char *with_code;
+  gpgrt_asprintf (&with_code, "%s\nCode: %i", bugmsg, code);
+  gpgol_message_box (parent,
+                     with_code,
+                     _("GpgOL Error"), MB_OK);
+  xfree (with_code);
+  return;
+}
+
 static char*
 expand_path (const char *path)
 {
