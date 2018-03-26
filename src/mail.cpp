@@ -701,6 +701,77 @@ do_parsing (LPVOID arg)
   return 0;
 }
 
+/* How encryption is done:
+
+   There are two modes of encryption. Synchronous and Async.
+   If async is used depends on the value of mail->is_inline_response.
+
+   Synchronous crypto:
+
+   > Send Event < | State NoCryptMail
+   Needs Crypto ? (get_gpgol_draft_info_flags != 0)
+
+   -> No:
+      Pass send -> unencrypted mail.
+
+   -> Yes:
+      mail->update_oom_data
+      State = Mail::NeedsFirstAfterWrite
+      check_inline_response
+      invoke_oom_method (m_object, "Save", NULL);
+
+      > Write Event <
+      Pass because is_crypto_mail is false (not a decrypted mail)
+
+      > AfterWrite Event < | State NeedsFirstAfterWrite
+      State = NeedsActualCrypo
+      encrypt_sign_start
+        collect_input_data
+        -> Check if Inline PGP should be used
+        do_crypt
+          -> Resolve keys / do crypto
+
+          State = NeedsUpdateInMAPI
+          update_crypt_mapi
+          crypter->update_mail_mapi
+           if (inline) (Meaning PGP/Inline)
+          <-- do nothing.
+           else
+            build MSOXSMIME attachment and clear body / attachments.
+
+          State = NeedsUpdateInOOM
+      <- Back to Send Event
+      update_crypt_oom
+        -> Cleans body or sets PGP/Inline body. (inline_body_to_body)
+      State = WantsSendMIME or WantsSendInline
+
+      -> Saftey check "has_crypted_or_empty_body"
+      -> If MIME Mail do the T3656 check.
+
+    Send.
+
+    State order for "inline_response" (sync) Mails.
+    NoCryptMail
+    NeedsFirstAfterWrite
+    NeedsActualCrypto
+    NeedsUpdateInMAPI
+    NeedsUpdateInOOM
+    WantsSendMIME (or inline for PGP Inline)
+    -> Send.
+
+    State order for async Mails
+    NoCryptMail
+    NeedsFirstAfterWrite
+    NeedsActualCrypto
+    -> Cancel Send.
+    Windowmessages -> Crypto Done
+    NeedsUpdateInOOM
+    NeedsSecondAfterWrite
+    trigger Save.
+    NeedsUpdateInMAPI
+    WantsSendMIME
+    trigger Send.
+*/
 static DWORD WINAPI
 do_crypt (LPVOID arg)
 {
@@ -724,7 +795,7 @@ do_crypt (LPVOID arg)
       return -1;
     }
 
-  /* This takes a shared ptr of parser. So the parser is
+  /* This takes a shared ptr of crypter. So the crypter is
      still valid when the mail is deleted. */
   auto crypter = mail->crypter();
   gpgrt_lock_unlock (&dtor_lock);
