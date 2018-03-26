@@ -40,7 +40,7 @@ class CryptController
 public:
   /** @brief Construct a Crypthelper for a Mail object. */
   CryptController (Mail *mail, bool encrypt, bool sign,
-                   bool inlineCrypt, GpgME::Protocol proto);
+                   GpgME::Protocol proto);
   ~CryptController ();
 
   /** @brief Collect the data from the mail into the internal
@@ -79,7 +79,7 @@ private:
   Mail *m_mail;
   GpgME::Data m_input, m_bodyInput, m_signedData, m_output;
   std::string m_micalg;
-  bool m_encrypt, m_sign, m_inline, m_crypto_success;
+  bool m_encrypt, m_sign, m_crypto_success;
   GpgME::Protocol m_proto;
   GpgME::Key m_signer_key;
   std::vector<GpgME::Key> m_recipients;

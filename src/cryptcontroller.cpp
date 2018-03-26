@@ -60,16 +60,15 @@ create_sign_attach (sink_t sink, protocol_t protocol,
   from this.
 */
 CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
-                                  bool doInline, GpgME::Protocol proto):
+                                  GpgME::Protocol proto):
     m_mail (mail),
     m_encrypt (encrypt),
     m_sign (sign),
-    m_inline (doInline),
     m_crypto_success (false),
     m_proto (proto)
 {
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
-             SRCNAME, __func__, mail, encrypt, sign, doInline);
+             SRCNAME, __func__, mail, encrypt, sign, mail->should_inline_crypt ());
   m_recipient_addrs = mail->take_cached_recipients ();
 }
 
@@ -115,14 +114,17 @@ CryptController::collect_data ()
       log_debug ("%s:%s: encrypt empty message", SRCNAME, __func__);
     }
 
-  if (n_att_usable && m_inline)
+  bool do_inline = m_mail->should_inline_crypt ();
+
+  if (n_att_usable && do_inline)
     {
       log_debug ("%s:%s: PGP Inline not supported for attachments."
                  " Using PGP MIME",
                  SRCNAME, __func__);
-      m_inline = false;
+      do_inline = false;
+      m_mail->set_should_inline_crypt (false);
     }
-  else if (m_inline)
+  else if (do_inline)
     {
       /* Inline. Use Body as input.
         We need to collect also our mime structure for S/MIME
@@ -521,12 +523,14 @@ CryptController::do_crypto ()
       // Cancel
       return -2;
     }
+  bool do_inline = m_mail->should_inline_crypt ();
 
-  if (m_proto == GpgME::CMS && m_inline)
+  if (m_proto == GpgME::CMS && do_inline)
     {
       log_debug ("%s:%s: Inline for S/MIME not supported. Switching to mime.",
                  SRCNAME, __func__);
-      m_inline = false;
+      do_inline = false;
+      m_mail->set_should_inline_crypt (false);
       m_bodyInput = GpgME::Data(GpgME::Data::null);
     }
 
@@ -549,11 +553,11 @@ CryptController::do_crypto ()
   ctx->setTextMode (m_proto == GpgME::OpenPGP);
   ctx->setArmor (m_proto == GpgME::OpenPGP);
 
-  if (m_encrypt && m_sign && m_inline)
+  if (m_encrypt && m_sign && do_inline)
     {
       // Sign encrypt combined
       const auto result_pair = ctx->signAndEncrypt (m_recipients,
-                                                    m_inline ? m_bodyInput : m_input,
+                                                    do_inline ? m_bodyInput : m_input,
                                                     m_output,
                                                     GpgME::Context::AlwaysTrust);
 
@@ -634,7 +638,7 @@ CryptController::do_crypto ()
     }
   else if (m_encrypt)
     {
-      const auto result = ctx->encrypt (m_recipients, m_inline ? m_bodyInput : m_input,
+      const auto result = ctx->encrypt (m_recipients, do_inline ? m_bodyInput : m_input,
                                         m_output,
                                         GpgME::Context::AlwaysTrust);
       if (result.error())
@@ -652,8 +656,8 @@ CryptController::do_crypto ()
     }
   else if (m_sign)
     {
-      const auto result = ctx->sign (m_inline ? m_bodyInput : m_input, m_output,
-                                     m_inline ? GpgME::Clearsigned :
+      const auto result = ctx->sign (do_inline ? m_bodyInput : m_input, m_output,
+                                     do_inline ? GpgME::Clearsigned :
                                      GpgME::Detached);
       if (result.error())
         {
@@ -855,7 +859,7 @@ CryptController::update_mail_mapi ()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  if (m_inline)
+  if (m_mail->should_inline_crypt ())
     {
       // Nothing to do for inline.
       log_debug ("%s:%s: Inline mail. No MAPI update.",
@@ -943,7 +947,7 @@ std::string
 CryptController::get_inline_data ()
 {
   std::string ret;
-  if (!m_inline)
+  if (!m_mail->should_inline_crypt ())
     {
       return ret;
     }

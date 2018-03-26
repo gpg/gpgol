@@ -385,6 +385,9 @@ public:
   /** Check if the mail should be encrypted "inline" */
   bool should_inline_crypt () const {return m_do_inline;}
 
+  /** Check if the mail should be encrypted "inline" */
+  void set_should_inline_crypt (bool value) {m_do_inline = value;}
+
   /** Append data to a cached inline body. Helper to do this
      on MAPI level and later add it through OOM */
   void append_to_inline_body (const std::string &data);

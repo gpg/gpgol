@@ -1150,7 +1150,7 @@ Mail::encrypt_sign_start ()
   GpgME::Protocol proto = opt.enable_smime ? GpgME::UnknownProtocol: GpgME::OpenPGP;
   m_crypter = std::shared_ptr <CryptController> (new CryptController (this, flags & 1,
                                                                       flags & 2,
-                                                                      m_do_inline, proto));
+                                                                      proto));
 
   // Careful from here on we have to check every
   // error condition with window enabling again.
@@ -2447,7 +2447,7 @@ Mail::update_crypt_mapi()
                      SRCNAME, __func__);
           m_crypter = std::shared_ptr <CryptController> (new CryptController (this, false,
                                                                               false,
-                                                                              false, GpgME::UnknownProtocol));
+                                                                              GpgME::UnknownProtocol));
         }
       else
         {
