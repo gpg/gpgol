@@ -390,6 +390,17 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
           if (m_mail->crypt_state () == Mail::WantsSendInline)
             {
+              if (!m_mail->has_crypted_or_empty_body())
+                {
+                  log_debug ("%s:%s: Message %p mail %p cancelling send - "
+                             "not encrypted or not empty body detected.",
+                             SRCNAME, __func__, m_object, m_mail);
+                  gpgol_bug (m_mail->get_window (),
+                             ERR_WANTS_SEND_INLINE_BODY);
+                  m_mail->set_crypt_state (Mail::NoCryptMail);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  break;
+                }
               log_debug ("%s:%s: Passing send event for no-mime message %p.",
                          SRCNAME, __func__, m_object);
               break;
@@ -397,6 +408,17 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
           if (m_mail->crypt_state () == Mail::WantsSendMIME)
             {
+              if (!m_mail->has_crypted_or_empty_body())
+                {
+                  gpgol_bug (m_mail->get_window (),
+                             ERR_WANTS_SEND_MIME_BODY);
+                  log_debug ("%s:%s: Message %p mail %p cancelling send mime - "
+                             "not encrypted or not empty body detected.",
+                             SRCNAME, __func__, m_object, m_mail);
+                  m_mail->set_crypt_state (Mail::NoCryptMail);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  break;
+                }
               /* Now we adress T3656 if Outlooks internal S/MIME is somehow
                * mixed in (even if it is enabled and then disabled) it might
                * cause strange behavior in that it sends the plain message

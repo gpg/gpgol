@@ -460,6 +460,18 @@ public:
     Returns 0 on success. Works in OOM. */
   int remove_our_attachments ();
 
+  /** Check both OOM and MAPI if the body is either empty or
+    encrypted. Won't abort on OOM or MAPI errors, so it can be
+    used in both states. But will return false if a body
+    was detected or in the OOM the MAPI Base Message. This
+    is intended as a saveguard before sending a mail.
+
+    This function should not be used to detected the necessity
+    of encryption and is only an extra check to catch unexpected
+    errors.
+    */
+  bool has_crypted_or_empty_body ();
+
   void update_body ();
 private:
   void update_categories ();

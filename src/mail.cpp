@@ -2539,6 +2539,30 @@ Mail::update_crypt_mapi()
   reset_crypter ();
 }
 
+/** Checks in OOM if the body is either
+  empty or contains the -----BEGIN tag.
+  pair.first -> true if body starts with -----BEGIN
+  pair.second -> true if body is empty. */
+static std::pair<bool, bool>
+has_crypt_or_empty_body_oom (Mail *mail)
+{
+  auto body = mail->get_body();
+  std::pair<bool, bool> ret;
+  ret.first = false;
+  ret.second = false;
+  ltrim (body);
+  if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
+    {
+      ret.first = true;
+      return ret;
+    }
+  if (!body.size())
+    {
+      ret.second = true;
+    }
+  return ret;
+}
+
 void
 Mail::update_crypt_oom()
 {
@@ -2559,8 +2583,9 @@ Mail::update_crypt_oom()
                      SRCNAME, __func__, this);
         }
     }
-  const auto body = get_body();
-  if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
+
+  const auto pair = has_crypt_or_empty_body_oom (this);
+  if (pair.first)
     {
       log_debug ("%s:%s: Looks like inline body. You can pass %p.",
                  SRCNAME, __func__, this);
@@ -2751,4 +2776,65 @@ Mail::remove_our_attachments ()
       gpgol_release (attachment);
     }
   return ret;
+}
+
+/* We are very verbose because if we fail it might mean
+   that we have leaked plaintext -> critical. */
+bool
+Mail::has_crypted_or_empty_body ()
+{
+  const auto pair = has_crypt_or_empty_body_oom (this);
+
+  if (pair.first /* encrypted marker */)
+    {
+      log_debug ("%s:%s: Crypt Marker detected in OOM body. Return true %p.",
+                 SRCNAME, __func__, this);
+      return true;
+    }
+
+  if (!pair.second)
+    {
+      log_debug ("%s:%s: Unexpected content detected. Return false %p.",
+                 SRCNAME, __func__, this);
+      return false;
+    }
+
+  // Pair second == true (is empty) can happen on OOM error.
+  LPMESSAGE message = get_oom_base_message (m_mailitem);
+  if (!message && pair.second)
+    {
+      if (message)
+        {
+          gpgol_release (message);
+        }
+      return true;
+    }
+
+  size_t r_nbytes = 0;
+  char *mapi_body = mapi_get_body (message, &r_nbytes);
+  gpgol_release (message);
+
+  if (!mapi_body || !r_nbytes)
+    {
+      // Body or bytes are null. we are empty.
+      xfree (mapi_body);
+      log_debug ("%s:%s: MAPI error or empty message. Return true. %p.",
+                 SRCNAME, __func__, this);
+      return true;
+    }
+  if (r_nbytes > 10 && !strncmp (mapi_body, "-----BEGIN", 10))
+    {
+      // Body is crypt.
+      log_debug ("%s:%s: MAPI Crypt marker detected. Return true. %p.",
+                 SRCNAME, __func__, this);
+      xfree (mapi_body);
+      return true;
+    }
+
+  xfree (mapi_body);
+
+  log_debug ("%s:%s: Found mapi body. Return false. %p.",
+             SRCNAME, __func__, this);
+
+  return false;
 }
