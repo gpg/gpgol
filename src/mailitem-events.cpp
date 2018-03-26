@@ -365,7 +365,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
-              if (!m_mail->is_inline_response ())
+              if (!m_mail->async_crypt_disabled ())
                 {
                   // The afterwrite in the save should have triggered
                   // the encryption. We cancel send for our asyncness.

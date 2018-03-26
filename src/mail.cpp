@@ -92,7 +92,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_gsuite(false),
     m_crypt_state(NoCryptMail),
     m_window(nullptr),
-    m_is_inline_response(false),
+    m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false)
 {
   if (get_mail_for_item (mailitem))
@@ -704,7 +704,7 @@ do_parsing (LPVOID arg)
 /* How encryption is done:
 
    There are two modes of encryption. Synchronous and Async.
-   If async is used depends on the value of mail->is_inline_response.
+   If async is used depends on the value of mail->async_crypt_disabled.
 
    Synchronous crypto:
 
@@ -841,7 +841,7 @@ do_crypt (LPVOID arg)
       return rc;
     }
 
-  if (!mail->is_inline_response ())
+  if (!mail->async_crypt_disabled ())
     {
       mail->set_crypt_state (Mail::NeedsUpdateInOOM);
       gpgrt_lock_unlock (&dtor_lock);
@@ -1230,7 +1230,7 @@ Mail::encrypt_sign_start ()
       return -1;
     }
 
-  if (!m_is_inline_response)
+  if (!m_async_crypt_disabled)
     {
       CloseHandle(CreateThread (NULL, 0, do_crypt,
                                 (LPVOID) this, 0,
@@ -2537,7 +2537,7 @@ Mail::update_crypt_mapi()
     }
 
   /** If sync we need the crypter in update_crypt_oom */
-  if (!is_inline_response ())
+  if (!async_crypt_disabled ())
     {
       // We don't need the crypter anymore.
       reset_crypter ();
@@ -2594,7 +2594,7 @@ Mail::update_crypt_oom()
     }
   /** When doing async update_crypt_mapi follows and needs
     the crypter. */
-  if (is_inline_response ())
+  if (async_crypt_disabled ())
     {
       reset_crypter ();
     }
@@ -2650,7 +2650,7 @@ Mail::check_inline_response ()
  * For now we treat every mail as an inline response to disable async
  * encryption. :-( For more details see: T3838 */
 #ifdef DO_ASYNC_CRYPTO
-  m_is_inline_response = false;
+  m_async_crypt_disabled = false;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
   if (!app)
     {
@@ -2686,14 +2686,14 @@ Mail::check_inline_response ()
     {
       log_debug ("%s:%s: Detected inline response for '%p'",
                  SRCNAME, __func__, this);
-      m_is_inline_response = true;
+      m_async_crypt_disabled = true;
     }
   xfree (inlineSubject);
 #else
-  m_is_inline_response = true;
+  m_async_crypt_disabled = true;
 #endif
 
-  return m_is_inline_response;
+  return m_async_crypt_disabled;
 }
 
 // static

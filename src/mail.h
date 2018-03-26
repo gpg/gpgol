@@ -424,13 +424,13 @@ public:
     from the OOM.
 
     We need synchronous encryption for inline responses. */
-  bool is_inline_response () { return m_is_inline_response; }
+  bool async_crypt_disabled () { return m_async_crypt_disabled; }
 
   /** Check through OOM if the current mail is an inline
     response.
 
     Caches the state which can then be queried through
-    is_inline_response
+    async_crypt_disabled
   */
   bool check_inline_response ();
 
@@ -510,7 +510,7 @@ private:
   std::string m_inline_body;
   CryptState m_crypt_state;
   HWND m_window;
-  bool m_is_inline_response;
+  bool m_async_crypt_disabled;
   std::string m_mime_data;
   bool m_is_forwarded_crypto_mail; /* Is this a forward of a crypto mail */
 };
