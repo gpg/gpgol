@@ -111,7 +111,9 @@ CryptController::collect_data ()
   int n_att_usable = count_usable_attachments (att_table);
   if (!n_att_usable && !body)
     {
-      log_error ("%s:%s: encrypt empty message", SRCNAME, __func__);
+      gpgol_message_box (m_mail->get_window(),
+                         utf8_gettext ("Can't encrypt / sign an empty message."),
+                         utf8_gettext ("GpgOL"), MB_OK);
       gpgol_release (message);
       xfree (body);
       return -1;
