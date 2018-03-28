@@ -889,7 +889,18 @@ CryptController::update_mail_mapi ()
   sink->cb_data = &m_input;
   sink->writefnc = sink_data_write;
 
-  LPATTACH attach = create_mapi_attachment (message, sink);
+  // For S/MIME encrypted mails we have to use the multipart/encrypted
+  // content type. Otherwise newer (2016) exchange servers will throw
+  // an M2MCVT.StorageError.Exeption (See GnuPG-Bug-Id: T3853 )
+  std::string overrideMimeTag;
+  if (m_proto == GpgME::CMS && m_encrypt)
+    {
+      overrideMimeTag = "application/pkcs7-mime";
+    }
+
+  LPATTACH attach = create_mapi_attachment (message, sink,
+                                            overrideMimeTag.empty() ? nullptr :
+                                            overrideMimeTag.c_str());
   if (!attach)
     {
       log_error ("%s:%s: Failed to create moss attach.",

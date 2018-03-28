@@ -153,7 +153,8 @@ check_protocol (protocol_t protocol)
    returned.  The caller needs to call SaveChanges.  Returns NULL on
    failure in which case STREAM will be set to NULL.  */
 LPATTACH
-create_mapi_attachment (LPMESSAGE message, sink_t sink)
+create_mapi_attachment (LPMESSAGE message, sink_t sink,
+                        const char *overrideMimeTag)
 {
   HRESULT hr;
   ULONG pos;
@@ -217,7 +218,13 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink)
   if (!hr)
     {
       prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
-      prop.Value.lpszA = strdup("multipart/signed");
+      prop.Value.lpszA = overrideMimeTag ? strdup (overrideMimeTag) :
+                         strdup ("multipart/signed");
+      if (overrideMimeTag)
+        {
+          log_debug ("%s:%s: using override mimetag: %s\n",
+                     SRCNAME, __func__, overrideMimeTag);
+        }
       hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
       xfree (prop.Value.lpszA);
     }
@@ -1909,11 +1916,12 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
     {
       *boundary = 0;
       rc = write_multistring (sink,
-                              "MIME-Version: 1.0\r\n"
-                              "Content-Type: application/pkcs7-mime;\r\n"
-                              "\tsmime-type=enveloped-data;\r\n"
+                              "Content-Type: application/pkcs7-mime; "
+                              "smime-type=enveloped-data;\r\n"
                               "\tname=\"smime.p7m\"\r\n"
+                              "Content-Disposition: attachment; filename=\"smime.p7m\"\r\n"
                               "Content-Transfer-Encoding: base64\r\n"
+                              "MIME-Version: 1.0\r\n"
                               "\r\n",
                               NULL);
     }
