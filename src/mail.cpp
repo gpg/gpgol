@@ -1280,6 +1280,10 @@ Mail::wipe (bool force)
         }
       return -1;
     }
+  else
+    {
+      put_oom_string (m_mailitem, "Body", "");
+    }
   m_needs_wipe = false;
   return 0;
 }
