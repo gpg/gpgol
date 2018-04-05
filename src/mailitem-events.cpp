@@ -429,6 +429,19 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               if (!m_mail->has_crypted_or_empty_body())
                 {
+/* The safety checks here trigger too often. Somehow for some
+   users the body is not empty after the encryption but when
+   it is sent it is still sent with the crypto content because
+   the encrypted MIME Structure is used because it is
+   correct in MAPI land.
+
+   For safety reasons enabling the checks might be better but
+   until we figure out why for some users the body replacement
+   does not work we have to disable them. Otherwise GpgOL
+   is unusuable for such users. GnuPG-Bug-Id: T3875
+*/
+#define DISABLE_SAFTEY_CHECKS
+#ifndef DISABLE_SAFTEY_CHECKS
                   gpgol_bug (m_mail->get_window (),
                              ERR_WANTS_SEND_MIME_BODY);
                   log_debug ("%s:%s: Message %p mail %p cancelling send mime - "
@@ -437,6 +450,11 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   m_mail->set_crypt_state (Mail::NoCryptMail);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   break;
+#else
+                  log_debug ("%s:%s: Message %p mail %p - "
+                             "not encrypted or not empty body detected - MIME.",
+                             SRCNAME, __func__, m_object, m_mail);
+#endif
                 }
               /* Now we adress T3656 if Outlooks internal S/MIME is somehow
                * mixed in (even if it is enabled and then disabled) it might
