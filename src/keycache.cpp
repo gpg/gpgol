@@ -219,22 +219,22 @@ public:
     return key;
   }
 
-  std::vector<GpgME::Key> getEncryptionKeys (const char **recipients,
+  std::vector<GpgME::Key> getEncryptionKeys (const std::vector<std::string> &recipients,
                                              GpgME::Protocol proto)
   {
     std::vector<GpgME::Key> ret;
-    if (!recipients)
+    if (recipients.empty ())
       {
         TRACEPOINT;
         return ret;
       }
-    for (int i = 0; recipients[i]; i++)
+    for (const auto &recip: recipients)
       {
-        const auto key = getKey (recipients[i], proto);
+        const auto key = getKey (recip.c_str (), proto);
         if (key.isNull())
           {
             log_mime_parser ("%s:%s: No key for %s. no internal encryption",
-                       SRCNAME, __func__, recipients[i]);
+                       SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
 
@@ -242,20 +242,20 @@ public:
             key.isExpired() || key.isDisabled() || key.isInvalid())
           {
             log_mime_parser ("%s:%s: Invalid key for %s. no internal encryption",
-                       SRCNAME, __func__, recipients[i]);
+                       SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
 
         if (in_de_vs_mode () && key.isDeVs ())
           {
             log_mime_parser ("%s:%s: key for %s is not deVS",
-                       SRCNAME, __func__, recipients[i]);
+                       SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
 
         bool validEnough = false;
         /* Here we do the check if the key is valid for this recipient */
-        const auto addrSpec = GpgME::UserID::addrSpecFromString (recipients[i]);
+        const auto addrSpec = GpgME::UserID::addrSpecFromString (recip.c_str ());
         for (const auto &uid: key.userIDs ())
           {
             if (addrSpec != uid.addrSpec())
@@ -272,7 +272,7 @@ public:
         if (!validEnough)
           {
             log_mime_parser ("%s:%s: UID for %s does not have at least marginal trust",
-                             SRCNAME, __func__, recipients[i]);
+                             SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
         // Accepting key
@@ -309,7 +309,7 @@ KeyCache::getSigningKey (const char *addr, GpgME::Protocol proto) const
 }
 
 std::vector<GpgME::Key>
-KeyCache::getEncryptionKeys (const char **recipients, GpgME::Protocol proto) const
+KeyCache::getEncryptionKeys (const std::vector<std::string> &recipients, GpgME::Protocol proto) const
 {
   return d->getEncryptionKeys (recipients, proto);
 }

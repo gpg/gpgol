@@ -309,12 +309,16 @@ CryptController::resolve_keys_cached()
 
   if (m_encrypt)
     {
-      m_recipients = cache->getEncryptionKeys((const char **)m_recipient_addrs, GpgME::OpenPGP);
+      const auto cached_sender = m_mail->get_cached_sender ();
+      auto recps = cArray_to_vector ((const char**) m_recipient_addrs);
+      recps.push_back (cached_sender);
+
+      m_recipients = cache->getEncryptionKeys(recps, GpgME::OpenPGP);
       m_proto = GpgME::OpenPGP;
 
       if (m_recipients.empty() && opt.enable_smime)
         {
-          m_recipients = cache->getEncryptionKeys((const char **)m_recipient_addrs, GpgME::CMS);
+          m_recipients = cache->getEncryptionKeys(recps, GpgME::CMS);
           fallbackToSMIME = true;
           m_proto = GpgME::CMS;
         }

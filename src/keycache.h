@@ -53,7 +53,7 @@ public:
        are taken from the internal cache. If
        one recipient can't be resolved an empty
        list is returned. */
-    std::vector<GpgME::Key> getEncryptionKeys (const char **recipients,
+    std::vector<GpgME::Key> getEncryptionKeys (const std::vector<std::string> &recipients,
                                                GpgME::Protocol proto) const;
 
     /* Start a key location in a background thread filling
