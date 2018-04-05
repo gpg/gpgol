@@ -375,6 +375,15 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               else
                 {
+                  if (m_mail->crypt_state () == Mail::NoCryptMail)
+                    {
+                      // Crypto failed or was canceled
+                      log_debug ("%s:%s: Message %p mail %p cancelling send - "
+                                 "Crypto failed or canceled.",
+                                 SRCNAME, __func__, m_object, m_mail);
+                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                      break;
+                    }
                   // For inline response we can't trigger send programatically
                   // so we do the encryption in sync.
                   if (m_mail->crypt_state () == Mail::NeedsUpdateInOOM)
