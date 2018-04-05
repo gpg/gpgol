@@ -475,6 +475,7 @@ ParseController::get_ultimate_keys()
     }
   ctx->setKeyListMode (KeyListMode::Local);
   Error err;
+  TRACEPOINT;
   if ((err = ctx->startKeyListing ()))
     {
       log_error ("%s:%s: Failed to start keylisting err: %i: %s",
@@ -483,23 +484,36 @@ ParseController::get_ultimate_keys()
       gpgrt_lock_unlock (&keylist_lock);
       return s_ultimate_keys;
     }
+  TRACEPOINT;
   while (!err)
     {
       const auto key = ctx->nextKey(err);
       if (err || key.isNull())
         {
+          TRACEPOINT;
           break;
+        }
+      if (key.isInvalid ())
+        {
+          log_debug ("%s:%s: skipping invalid key.",
+                     SRCNAME, __func__);
+          continue;
         }
       for (const auto uid: key.userIDs())
         {
-          if (uid.validity() == UserID::Validity::Ultimate)
+          if (uid.validity() == UserID::Validity::Ultimate &&
+              uid.id())
             {
               s_ultimate_keys.push_back (key);
-              log_debug ("adding ultimate uid: %s", uid.id());
+              log_debug ("%s:%s: Adding ultimate uid.",
+                         SRCNAME, __func__);
+              log_mime_parser ("%s:%s: Added uid %s.",
+                               SRCNAME, __func__, uid.id());
               break;
             }
         }
     }
+  TRACEPOINT;
   delete ctx;
   log_debug ("%s:%s: keylisting done.",
              SRCNAME, __func__);
