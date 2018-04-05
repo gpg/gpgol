@@ -2569,6 +2569,11 @@ has_crypt_or_empty_body_oom (Mail *mail)
     {
       ret.second = true;
     }
+  else
+    {
+      log_mime_parser ("%s:%s: Body found in %p : \"%s\"",
+                       SRCNAME, __func__, mail, body.c_str ());
+    }
   return ret;
 }
 
