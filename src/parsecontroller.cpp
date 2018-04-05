@@ -486,7 +486,7 @@ ParseController::get_ultimate_keys()
   while (!err)
     {
       const auto key = ctx->nextKey(err);
-      if (key.isNull() || err)
+      if (err || key.isNull())
         {
           break;
         }
