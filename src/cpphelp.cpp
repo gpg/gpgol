@@ -82,6 +82,23 @@ vector_to_cArray(const std::vector<std::string> &vec)
   return ret;
 }
 
+std::vector <std::string>
+cArray_to_vector(const char **cArray)
+{
+  std::vector<std::string> ret;
+
+  if (!cArray)
+    {
+      return ret;
+    }
+
+  for (int i = 0; cArray[i]; i++)
+    {
+      ret.push_back (std::string (cArray[i]));
+    }
+  return ret;
+}
+
 bool
 in_de_vs_mode()
 {

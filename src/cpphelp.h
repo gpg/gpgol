@@ -38,6 +38,7 @@ void trim (std::string &s);
 
 /* Convert a string vector to a null terminated char array */
 char **vector_to_cArray (const std::vector<std::string> &vec);
+std::vector <std::string> cArray_to_vector (const char **cArray);
 
 /* Check if we are in de_vs mode. */
 bool in_de_vs_mode ();
