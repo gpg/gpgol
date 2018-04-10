@@ -260,6 +260,7 @@ bring_to_front (HWND wid)
             }
         }
     }
+  log_debug ("%s:%s: done", SRCNAME, __func__);
 }
 
 void

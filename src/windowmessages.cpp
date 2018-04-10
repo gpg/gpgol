@@ -159,6 +159,9 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
           case (BRING_TO_FRONT):
             {
+              // We want to avoid a race where the mail window
+              // was still the active window.
+              Sleep (250);
               HWND wnd = get_active_hwnd ();
               if (wnd)
                 {
