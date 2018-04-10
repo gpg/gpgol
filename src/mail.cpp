@@ -854,7 +854,19 @@ do_crypt (LPVOID arg)
     {
       mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
       mail->update_crypt_mapi ();
-      mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+      if (mail->crypt_state () == Mail::WantsSendMIME)
+        {
+          // For sync crypto we need to switch this.
+          mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+        }
+      else
+        {
+          // A bug!
+          log_debug ("%s:%s: Resetting crypter because of state mismatch. %p",
+                     SRCNAME, __func__, arg);
+          crypter = nullptr;
+          mail->reset_crypter ();
+        }
       gpgrt_lock_unlock (&dtor_lock);
     }
   /* This works around a bug in pinentry that it might
