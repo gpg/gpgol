@@ -2613,6 +2613,21 @@ Mail::update_crypt_oom()
           return;
         }
     }
+
+  if (m_crypter->get_protocol () == GpgME::CMS && m_crypter->is_encrypter ())
+    {
+      /* We put the PIDNameContentType headers here for exchange
+         because this is the only way we found to inject the
+         smime-type. */
+      if (put_pa_string (m_mailitem,
+                         PR_PIDNameContentType_DASL,
+                         "application/pkcs7-mime;smime-type=\"enveloped-data\";name=smime.p7m"))
+        {
+          log_debug ("%s:%s: Failed to put PIDNameContentType for %p.",
+                     SRCNAME, __func__, this);
+        }
+    }
+
   /** When doing async update_crypt_mapi follows and needs
     the crypter. */
   if (async_crypt_disabled ())

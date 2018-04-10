@@ -64,6 +64,12 @@ public:
   /** @brief Get an inline body as std::string. */
   std::string get_inline_data ();
 
+  /** @brief Get the protocol. Valid after do_crypto. */
+  GpgME::Protocol get_protocol () const { return m_proto; }
+
+  /** @brief check weather something was encrypted. */
+  bool is_encrypter () const { return m_encrypt; }
+
 private:
   int resolve_keys ();
   int resolve_keys_cached ();

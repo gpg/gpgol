@@ -1915,6 +1915,16 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
   else if (protocol == PROTOCOL_SMIME)
     {
       *boundary = 0;
+      rc = 0;
+      /*
+        For S/MIME encrypted mails we do not use the S/MIME conversion
+        code anymore. With Exchange 2016 this no longer works. Instead
+        we set an override mime tag, the extended headers in OOM in
+        Mail::update_crypt_oom and let outlook convert the attachment
+        to base64.
+
+        A bit more details can be found in T3853 / T3884
+
       rc = write_multistring (sink,
                               "Content-Type: application/pkcs7-mime; "
                               "smime-type=enveloped-data;\r\n"
@@ -1924,6 +1934,7 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
                               "MIME-Version: 1.0\r\n"
                               "\r\n",
                               NULL);
+      */
     }
   else
     {
