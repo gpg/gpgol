@@ -804,6 +804,19 @@ MimeDataProvider::collect_data(LPSTREAM stream)
                          SRCNAME, __func__);
 
             }
+          else if (bRead > 12 && !strncmp ("Content-Type:", buf, 13))
+            {
+              /* Similar as above but we messed with the order of the headers
+                 for some s/mime mails. So also check for content type.
+
+                 Want some cheese with that hack?
+              */
+              m_collect_everything = false;
+              log_debug ("%s:%s: Found Content-Type header."
+                         "Expecting headers even if type suggested not to.",
+                         SRCNAME, __func__);
+
+            }
           /* check for the PGP MESSAGE marker to see if we have it. */
           if (bRead && m_collect_everything)
             {
