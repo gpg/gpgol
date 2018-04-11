@@ -632,6 +632,7 @@ add_attachments(LPDISPATCH mail,
                      SRCNAME, __func__, att->get_display_name().c_str());
           err = 1;
         }
+      CloseHandle (hFile);
       if (!DeleteFileW (wchar_file))
         {
           log_error ("%s:%s: Failed to delete tmp attachment for: %s",
