@@ -630,9 +630,12 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
 
 /* Look at the body of the MESSAGE and try to figure out whether this
    is a supported PGP message.  Returns the new message class or NULL
-   if it does not look like a PGP message.  */
+   if it does not look like a PGP message.
+
+   If r_nobody is not null it is set to true if no body was found.
+   */
 static char *
-get_msgcls_from_pgp_lines (LPMESSAGE message)
+get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
 {
   HRESULT hr;
   LPSTREAM stream;
@@ -649,6 +652,11 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
       return NULL;
     }
 
+  if (r_nobody)
+    {
+      *r_nobody = false;
+    }
+
   stream = mapi_get_body_as_stream (message);
   if (!stream)
     {
@@ -660,6 +668,10 @@ get_msgcls_from_pgp_lines (LPMESSAGE message)
         {
           log_error ("%s:%s: Failed to get  w_body stream. : hr=%#lx",
                      SRCNAME, __func__, hr);
+          if (r_nobody)
+            {
+              *r_nobody = true;
+            }
           return NULL;
         }
       else
@@ -979,6 +991,30 @@ get_first_attach_mime_tag (LPMESSAGE message)
 }
 
 
+/* Look at the first attachment's content type to determine the
+   messageclass. */
+static char *
+get_msgcls_from_first_attachment (LPMESSAGE message)
+{
+  char *ret = nullptr;
+  char *attach_mime = get_first_attach_mime_tag (message);
+  if (!attach_mime)
+    {
+      return nullptr;
+    }
+  if (!strcmp (attach_mime, "application/pgp-encrypted"))
+    {
+      ret = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+      xfree (attach_mime);
+    }
+  else if (!strcmp (attach_mime, "application/pgp-signature"))
+    {
+      ret = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+      xfree (attach_mime);
+    }
+  return ret;
+}
+
 /* Helper for mapi_change_message_class.  Returns the new message
    class as an allocated string.
 
@@ -1022,22 +1058,7 @@ change_message_class_ipm_note (LPMESSAGE message)
       if (!newvalue)
         {
           /* So no PGP Inline. Lets look at the attachment. */
-          char *attach_mime = get_first_attach_mime_tag (message);
-          if (!attach_mime)
-            {
-              xfree (ct);
-              return nullptr;
-            }
-          if (!strcmp (attach_mime, "application/pgp-encrypted"))
-            {
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
-              xfree (attach_mime);
-            }
-          else if (!strcmp (attach_mime, "application/pgp-signature"))
-            {
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-              xfree (attach_mime);
-            }
+          newvalue = get_msgcls_from_first_attachment (message);
         }
     }
   else if (!ct || !strcmp (ct, "text/plain") ||
@@ -1046,10 +1067,21 @@ change_message_class_ipm_note (LPMESSAGE message)
            !strcmp (ct, "multipart/related") ||
            !strcmp (ct, "text/html"))
     {
+      bool has_no_body = false;
       /* It is quite common to have a multipart/mixed or alternative
          mail with separate encrypted PGP parts.  Look at the body to
          decide.  */
-      newvalue = get_msgcls_from_pgp_lines (message);
+      newvalue = get_msgcls_from_pgp_lines (message, &has_no_body);
+
+      if (!newvalue && has_no_body && !strcmp (ct, "multipart/mixed"))
+        {
+          /* This is uncommon. But some Exchanges might break a PGP/MIME mail
+             this way. Let's take a look at the attachments. Maybe it's
+             a PGP/MIME mail. */
+          log_debug ("%s:%s: Multipart mixed without body found. Looking at attachments.",
+                     SRCNAME, __func__);
+          newvalue = get_msgcls_from_first_attachment (message);
+        }
     }
 
   xfree (ct);
