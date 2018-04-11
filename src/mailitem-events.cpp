@@ -103,6 +103,7 @@ MailItemEvents::~MailItemEvents()
 }
 
 static bool propchangeWarnShown = false;
+static bool attachRemoveWarnShown = false;
 
 static DWORD WINAPI
 do_delayed_locate (LPVOID arg)
@@ -786,6 +787,21 @@ EVENT_SINK_INVOKE(MailItemEvents)
           set_gpgol_draft_info_flags (msg, crypto_flags);
           gpgol_release (msg);
           break;
+        }
+      case AttachmentRemove:
+        {
+          log_oom_extra ("%s:%s: AttachmentRemove: %p",
+                         SRCNAME, __func__, m_mail);
+          if (!m_mail->is_crypto_mail () || attachRemoveWarnShown)
+            {
+              return S_OK;
+            }
+          gpgol_message_box (get_active_hwnd (),
+                             _("Attachments are part of the crypto message.\nThey "
+                               "can't be permanently removed and will be shown again the next "
+                               "time this message is opened."),
+                             _("Sorry, that's not possible, yet"), MB_OK);
+          attachRemoveWarnShown = true;
         }
 
       default:
