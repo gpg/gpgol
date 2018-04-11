@@ -1892,7 +1892,7 @@ sink_encryption_write_b64 (sink_t encsink, const void *data, size_t datalen)
    function.  */
 int
 create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
-                              bool is_inline)
+                              bool is_inline, int exchange_major_version)
 {
   int rc;
 
@@ -1915,26 +1915,31 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
   else if (protocol == PROTOCOL_SMIME)
     {
       *boundary = 0;
-      rc = 0;
-      /*
-        For S/MIME encrypted mails we do not use the S/MIME conversion
-        code anymore. With Exchange 2016 this no longer works. Instead
-        we set an override mime tag, the extended headers in OOM in
-        Mail::update_crypt_oom and let outlook convert the attachment
-        to base64.
+      if (exchange_major_version >= 15)
+        {
+          /*
+             For S/MIME encrypted mails we do not use the S/MIME conversion
+             code anymore. With Exchange 2016 this no longer works. Instead
+             we set an override mime tag, the extended headers in OOM in
+             Mail::update_crypt_oom and let outlook convert the attachment
+             to base64.
 
-        A bit more details can be found in T3853 / T3884
-
-      rc = write_multistring (sink,
-                              "Content-Type: application/pkcs7-mime; "
-                              "smime-type=enveloped-data;\r\n"
-                              "\tname=\"smime.p7m\"\r\n"
-                              "Content-Disposition: attachment; filename=\"smime.p7m\"\r\n"
-                              "Content-Transfer-Encoding: base64\r\n"
-                              "MIME-Version: 1.0\r\n"
-                              "\r\n",
-                              NULL);
-      */
+             A bit more details can be found in T3853 / T3884
+             */
+          rc = 0;
+        }
+      else
+        {
+          rc = write_multistring (sink,
+                                  "Content-Type: application/pkcs7-mime; "
+                                  "smime-type=enveloped-data;\r\n"
+                                  "\tname=\"smime.p7m\"\r\n"
+                                  "Content-Disposition: attachment; filename=\"smime.p7m\"\r\n"
+                                  "Content-Transfer-Encoding: base64\r\n"
+                                  "MIME-Version: 1.0\r\n"
+                                  "\r\n",
+                                  NULL);
+        }
     }
   else
     {

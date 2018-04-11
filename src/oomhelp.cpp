@@ -2034,3 +2034,26 @@ get_inline_body ()
 
   return body;
 }
+
+int
+get_ex_major_version_for_addr (const char *mbox)
+{
+  LPDISPATCH account = get_account_for_mail (mbox);
+  if (!account)
+    {
+      TRACEPOINT;
+      return -1;
+    }
+
+  char *version_str = get_oom_string (account, "ExchangeMailboxServerVersion");
+  gpgol_release (account);
+
+  if (!version_str)
+    {
+      return -1;
+    }
+  long int version = strtol (version_str, nullptr, 10);
+  xfree (version_str);
+
+  return (int) version;
+}

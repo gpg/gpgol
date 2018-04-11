@@ -825,11 +825,12 @@ create_sign_attach (sink_t sink, protocol_t protocol,
 
 static int
 create_encrypt_attach (sink_t sink, protocol_t protocol,
-                       GpgME::Data &encryptedData)
+                       GpgME::Data &encryptedData,
+                       int exchange_major_version)
 {
   char boundary[BOUNDARYSIZE+1];
   int rc = create_top_encryption_header (sink, protocol, boundary,
-                                         false);
+                                         false, exchange_major_version);
   // From here on use goto failure pattern.
   if (rc)
     {
@@ -838,7 +839,18 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
       return rc;
     }
 
-  rc = write_data (sink, encryptedData);
+  if (protocol == PROTOCOL_OPENPGP ||
+      exchange_major_version >= 15)
+    {
+      // With exchange 2016 we have to construct S/MIME
+      // differently and write the raw data here.
+      rc = write_data (sink, encryptedData);
+    }
+  else
+    {
+      const auto encStr = encryptedData.toString();
+      rc = write_b64 (sink, encStr.c_str(), encStr.size());
+    }
 
   if (rc)
     {
@@ -886,12 +898,20 @@ CryptController::update_mail_mapi ()
   sink->cb_data = &m_input;
   sink->writefnc = sink_data_write;
 
-  // For S/MIME encrypted mails we have to use the multipart/encrypted
+  // For S/MIME encrypted mails we have to use the application/pkcs7-mime
   // content type. Otherwise newer (2016) exchange servers will throw
   // an M2MCVT.StorageError.Exeption (See GnuPG-Bug-Id: T3853 )
+
+  // This means that the conversion / build of the mime structure also
+  // happens differently.
+  int exchange_major_version = get_ex_major_version_for_addr (
+                                        m_mail->get_cached_sender ().c_str ());
+
   std::string overrideMimeTag;
-  if (m_proto == GpgME::CMS && m_encrypt)
+  if (m_proto == GpgME::CMS && m_encrypt && exchange_major_version >= 15)
     {
+      log_debug ("%s:%s: CMS Encrypt with Exchange %i activating alternative.",
+                 SRCNAME, __func__, exchange_major_version);
       overrideMimeTag = "application/pkcs7-mime";
     }
 
@@ -909,6 +929,7 @@ CryptController::update_mail_mapi ()
   protocol_t protocol = m_proto == GpgME::CMS ?
                                    PROTOCOL_SMIME :
                                    PROTOCOL_OPENPGP;
+
   int rc = 0;
   /* Do we have override MIME ? */
   const auto overrideMime = m_mail->get_override_mime_data ();
@@ -918,11 +939,11 @@ CryptController::update_mail_mapi ()
     }
   else if (m_sign && m_encrypt)
     {
-      rc = create_encrypt_attach (sink, protocol, m_output);
+      rc = create_encrypt_attach (sink, protocol, m_output, exchange_major_version);
     }
   else if (m_encrypt)
     {
-      rc = create_encrypt_attach (sink, protocol, m_output);
+      rc = create_encrypt_attach (sink, protocol, m_output, exchange_major_version);
     }
   else if (m_sign)
     {

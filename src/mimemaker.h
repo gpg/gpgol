@@ -77,7 +77,7 @@ int add_body_and_attachments (sink_t sink, LPMESSAGE message,
                               mapi_attach_item_t *att_table, Mail *mail,
                               const char *body, int n_att_usable);
 int create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
-                              bool is_inline = false);
+                              bool is_inline = false, int exchange_major_version = -1);
 
 /* Helper to write a boundary to the output sink.  The leading LF
    will be written as well.  */

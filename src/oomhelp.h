@@ -343,6 +343,12 @@ char *get_sender_SenderEMailAddress (LPDISPATCH mailitem);
 
 /* Get the body of the active inline response */
 char *get_inline_body (void);
+
+/* Get the major version of the exchange server of the account for the
+   mail address "mbox". Returns -1 if no version could be detected
+   or exchange is not used.*/
+int get_ex_major_version_for_addr (const char *mbox);
+
 #ifdef __cplusplus
 char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
 }
