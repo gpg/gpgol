@@ -93,7 +93,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypt_state(NoCryptMail),
     m_window(nullptr),
     m_async_crypt_disabled(false),
-    m_is_forwarded_crypto_mail(false)
+    m_is_forwarded_crypto_mail(false),
+    m_is_send_again(false)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -1143,7 +1144,7 @@ Mail::parsing_done()
     }
 
   update_sigstate ();
-  m_needs_wipe = true;
+  m_needs_wipe = !m_is_send_again;
 
   TRACEPOINT;
   /* Set categories according to the result. */
@@ -1162,6 +1163,26 @@ Mail::parsing_done()
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
+    }
+
+  if (m_is_send_again)
+    {
+      log_debug ("%s:%s: I think that this is the send again of a crypto mail.",
+                 SRCNAME, __func__);
+
+      /* We no longer want to be treated like a crypto mail. */
+      m_type = MSGTYPE_UNKNOWN;
+      LPMESSAGE msg = get_oom_base_message (m_mailitem);
+      if (!msg)
+        {
+          TRACEPOINT;
+        }
+      else
+        {
+          set_gpgol_draft_info_flags (msg, m_crypto_flags);
+          gpgol_release (msg);
+        }
+      remove_our_attachments ();
     }
 
   log_debug ("%s:%s: Delayed invalidate to update sigstate.",

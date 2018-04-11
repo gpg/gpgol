@@ -473,6 +473,14 @@ public:
   bool has_crypted_or_empty_body ();
 
   void update_body ();
+
+  /** Set if this mail looks like the send again of a crypto mail.
+      This will mean that after it is decrypted it is treated
+      like an unencrypted mail so that it can be encrypted again
+      or sent unencrypted.
+      */
+  void set_is_send_again (bool value) { m_is_send_again = value; }
+
 private:
   void update_categories ();
   void update_sigstate ();
@@ -513,5 +521,6 @@ private:
   bool m_async_crypt_disabled;
   std::string m_mime_data;
   bool m_is_forwarded_crypto_mail; /* Is this a forward of a crypto mail */
+  bool m_is_send_again; /* Is this a send again of a crypto mail */
 };
 #endif // MAIL_H

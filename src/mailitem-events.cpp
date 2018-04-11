@@ -269,6 +269,21 @@ EVENT_SINK_INVOKE(MailItemEvents)
           log_oom ("%s:%s: Message %p propchange: %ls.",
                    SRCNAME, __func__, m_object, prop_name);
 
+          if (!wcscmp (prop_name, L"SendUsingAccount"))
+            {
+              bool sent = get_oom_bool (m_object, "Sent");
+              if (sent)
+                {
+                  log_debug ("%s:%s: Ignoring SendUsingAccount change for sent %p ",
+                             SRCNAME, __func__, m_object);
+                  return S_OK;
+                }
+              log_debug ("%s:%s: Message %p looks like send again.",
+                        SRCNAME, __func__, m_object);
+              m_mail->set_is_send_again (true);
+              return S_OK;
+            }
+
           /* We have tried several scenarios to handle propery changes.
              Only save the property in MAPI and call MAPI SaveChanges
              worked and did not leak plaintext but this caused outlook
