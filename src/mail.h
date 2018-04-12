@@ -481,6 +481,10 @@ public:
       */
   void set_is_send_again (bool value) { m_is_send_again = value; }
 
+
+  /* Attachment removal state variables. */
+  bool attachment_remove_warning_disabled () { return m_disable_att_remove_warning; }
+
 private:
   void update_categories ();
   void update_sigstate ();
@@ -522,5 +526,6 @@ private:
   std::string m_mime_data;
   bool m_is_forwarded_crypto_mail; /* Is this a forward of a crypto mail */
   bool m_is_send_again; /* Is this a send again of a crypto mail */
+  bool m_disable_att_remove_warning; /* Should not warn about attachment removal. */
 };
 #endif // MAIL_H

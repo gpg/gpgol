@@ -94,7 +94,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_window(nullptr),
     m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false),
-    m_is_send_again(false)
+    m_is_send_again(false),
+    m_disable_att_remove_warning(false)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -1491,6 +1492,8 @@ Mail::revert ()
       return 0;
     }
 
+  m_disable_att_remove_warning = true;
+
   err = gpgol_mailitem_revert (m_mailitem);
   if (err == -1)
     {
@@ -1501,6 +1504,7 @@ Mail::revert ()
   /* We need to reprocess the mail next time around. */
   m_processed = false;
   m_needs_wipe = false;
+  m_disable_att_remove_warning = false;
   return 0;
 }
 

@@ -793,7 +793,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: AttachmentRemove: %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->is_crypto_mail () || attachRemoveWarnShown)
+          if (!m_mail->is_crypto_mail () || attachRemoveWarnShown ||
+              m_mail->attachment_remove_warning_disabled ())
             {
               return S_OK;
             }
@@ -803,6 +804,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                "time this message is opened."),
                              _("Sorry, that's not possible, yet"), MB_OK);
           attachRemoveWarnShown = true;
+          return S_OK;
         }
 
       default:
