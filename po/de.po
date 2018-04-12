@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-04-12 12:58+0200\n"
-"PO-Revision-Date: 2018-03-07 08:59+0100\n"
+"PO-Revision-Date: 2018-04-12 12:59+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
 "Language: en_US\n"
@@ -125,9 +125,8 @@ msgid "GpgOL - Save attachment"
 msgstr "GpgOL - Anlage Speichern"
 
 #: src/common.c:1073
-#, fuzzy
 msgid "GpgOL Error"
-msgstr "GpgOL"
+msgstr "GpgOL Fehler"
 
 #: src/config-dialog.c:38
 msgid "Debug output (for analysing problems)"
@@ -782,6 +781,9 @@ msgid ""
 "They can't be permanently removed and will be shown again the next time this "
 "message is opened."
 msgstr ""
+"Anhänge sind Teil der Krypto-Nachricht.\n"
+"Sie können nicht permanent entfernt werden und werden beim "
+"nächsten öffnen dieser Nachricht wieder angezeigt."
 
 #: src/main.c:466
 #, c-format
