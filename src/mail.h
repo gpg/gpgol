@@ -485,6 +485,8 @@ public:
   /* Attachment removal state variables. */
   bool attachment_remove_warning_disabled () { return m_disable_att_remove_warning; }
 
+  /* Gets the string dump of the verification result. */
+  std::string get_verification_result_dump ();
 private:
   void update_categories ();
   void update_sigstate ();

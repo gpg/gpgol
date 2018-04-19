@@ -54,7 +54,7 @@
 #include <set>
 #include <vector>
 #include <memory>
-
+#include <sstream>
 
 #undef _
 #define _(a) utf8_gettext (a)
@@ -2914,4 +2914,12 @@ Mail::has_crypted_or_empty_body ()
              SRCNAME, __func__, this);
 
   return false;
+}
+
+std::string
+Mail::get_verification_result_dump()
+{
+  std::stringstream ss;
+  ss << m_verify_result;
+  return ss.str();
 }

@@ -1464,8 +1464,8 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
                  SRCNAME, __func__);
       gpgol_release (context);
       return NULL;
-
     }
+
   if (!strcmp (ctx_name.c_str(), "_Inspector"))
     {
       mailitem = get_oom_object (context, "CurrentItem");
@@ -1734,6 +1734,14 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
                   MB_ICONINFORMATION|MB_OK);
       xfree (buf);
       return S_OK;
+    }
+
+  if (!mail->get_sig_fpr())
+    {
+      std::string buf = _("There was an error verifying the signature.\n"
+                           "Full details:\n");
+      buf += mail->get_verification_result_dump();
+      gpgol_message_box (get_active_hwnd(), buf.c_str(), _("GpgOL"), MB_OK);
     }
 
   char *uiserver = get_uiserver_name ();
