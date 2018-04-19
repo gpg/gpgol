@@ -1548,6 +1548,21 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
             }
         }
     }
+  else if (!strcmp (ctx_name.c_str(), "Selection"))
+    {
+      int count = get_oom_int (context, "Count");
+      if (count == 1)
+        {
+          // If we call this on a selection with more items
+          // Outlook sends an ItemLoad event for each mail
+          // in that selection.
+          mailitem = get_oom_object (context, "Item(1)");
+        }
+      if (!mailitem)
+        {
+          *none_selected = true;
+        }
+    }
 
   gpgol_release (context);
   if (!mailitem)
@@ -1785,4 +1800,30 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result)
       return getIcon (mail->get_crypto_icon_id (), result);
     }
   return getIcon (IDI_LEVEL_0, result);
+}
+
+HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
+  *(result->pboolVal) = (mail && (mail->is_signed () || mail->is_encrypted ())) ?
+                          VARIANT_TRUE : VARIANT_FALSE;
+
+  return S_OK;
+}
+
+HRESULT print_decrypted (LPDISPATCH ctrl)
+{
+  MY_MAIL_GETTER
+
+  if (!mail)
+    {
+      log_error ("%s:%s: Failed to get mail.",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+  invoke_oom_method (mail->item(), "PrintOut", NULL);
+  return S_OK;
 }

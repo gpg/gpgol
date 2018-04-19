@@ -649,6 +649,8 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getSigTip", ID_GET_SIG_TTIP)
       ID_MAPPER (L"launchDetails", ID_LAUNCH_CERT_DETAILS)
       ID_MAPPER (L"getIsDetailsEnabled", ID_GET_IS_DETAILS_ENABLED)
+      ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO_MAIL)
+      ID_MAPPER (L"printDecrypted", ID_CMD_PRINT_DECRYPTED)
     }
 
   if (cNames > 1)
@@ -756,6 +758,10 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
             options_dialog_box (NULL);
             return S_OK;
           }
+      case ID_CMD_PRINT_DECRYPTED:
+        return print_decrypted (parms->rgvarg[0].pdispVal);
+      case ID_GET_IS_CRYPTO_MAIL:
+        return get_is_crypto_mail (parms->rgvarg[0].pdispVal, result);
       case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
@@ -974,8 +980,20 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "      </group>"
         "    </tab>"
         "   </tabSet>"
-        "   </contextualTabs>"
+        "  </contextualTabs>"
         " </ribbon>"
+        " <contextMenus>"
+        "  <contextMenu idMso=\"ContextMenuMailItem\">"
+        "   <button id=\"decryptedPrintBtn\""
+//        "idMso=\"FilePrintQuick\""
+        "           label=\"%s\""
+        "           onAction=\"printDecrypted\""
+        "           getImage=\"btnEncryptSmall\""
+        "           getVisible=\"getIsCrypto\""
+        "           insertAfterMso=\"FilePrintQuick\""
+        "   />"
+        "  </contextMenu>"
+        " </contextMenus>"
         "</customUI>",
         _("GpgOL"),
         optsSTip,
@@ -983,7 +1001,8 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Secure"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
-        optsSTip
+        optsSTip,
+        _("&amp;Print decrypted")
         );
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
