@@ -263,7 +263,8 @@ public:
                 // Ignore unmatching addr specs
                 continue;
               }
-            if (uid.validity() >= GpgME::UserID::Marginal)
+            if (uid.validity() >= GpgME::UserID::Marginal ||
+                uid.origin() == GpgME::Key::OriginWKD)
               {
                 validEnough = true;
                 break;
