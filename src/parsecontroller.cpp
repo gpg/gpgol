@@ -321,7 +321,8 @@ ParseController::parse()
         {
           verify = false;
         }
-      if (m_decrypt_result.error () || m_decrypt_result.isNull ())
+      if (m_decrypt_result.error () || m_decrypt_result.isNull () ||
+          m_decrypt_result.error ().isCanceled ())
         {
           m_error = format_error (m_decrypt_result, protocol);
         }
