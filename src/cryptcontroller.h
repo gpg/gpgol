@@ -33,6 +33,7 @@ class Overlay;
 namespace GpgME
 {
   class SigningResult;
+  class Error;
 } // namespace GpgME
 
 class CryptController
@@ -53,9 +54,12 @@ public:
   /** @brief Does the actual crypto work according to op.
       Can be called in a different thread then the UI Thread.
 
+      An operational error is returned in the passed err
+      variable.
+
       @returns 0 on success.
   */
-  int do_crypto ();
+  int do_crypto (GpgME::Error &err);
 
   /** @brief Update the MAPI structure of the mail with
     the result. */

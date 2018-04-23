@@ -812,7 +812,8 @@ do_crypt (LPVOID arg)
       return -1;
     }
 
-  int rc = crypter->do_crypto();
+  GpgME::Error err;
+  int rc = crypter->do_crypto(err);
 
   gpgrt_lock_lock (&dtor_lock);
   if (!Mail::is_valid_ptr (mail))
@@ -823,20 +824,31 @@ do_crypt (LPVOID arg)
       return 0;
     }
 
-  if (rc == -1)
+  mail->set_window_enabled (true);
+
+  if (rc == -1 || err)
     {
       mail->reset_crypter ();
       crypter = nullptr;
-      gpgol_bug (mail->get_window (),
-                 ERR_CRYPT_RESOLVER_FAILED);
+      if (err)
+        {
+          char *buf = nullptr;
+          gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
+                          err.asString());
+          gpgol_message_box (mail->get_window(), buf, _("GpgOL"), MB_OK);
+          xfree (buf);
+        }
+      else
+        {
+          gpgol_bug (mail->get_window (),
+                     ERR_CRYPT_RESOLVER_FAILED);
+        }
     }
 
-  mail->set_window_enabled (true);
-
-  if (rc)
+  if (rc || err.isCanceled())
     {
-      log_debug ("%s:%s: crypto failed for: %p with: %i",
-                 SRCNAME, __func__, arg, rc);
+      log_debug ("%s:%s: crypto failed for: %p with: %i err: %i",
+                 SRCNAME, __func__, arg, rc, err.code());
       mail->set_crypt_state (Mail::NoCryptMail);
       mail->reset_crypter ();
       crypter = nullptr;

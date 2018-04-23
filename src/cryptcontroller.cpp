@@ -294,7 +294,9 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
     {
       log_error ("%s:%s: Encrypt requested but no recipient fingerprints",
                  SRCNAME, __func__);
-      return -1;
+      gpgol_message_box (m_mail->get_window(), _("No recipients for encryption selected."),
+                         _("GpgOL"), MB_OK);
+      return -2;
     }
 
   return lookup_fingerprints (sigFpr, recpFprs);
@@ -511,7 +513,7 @@ CryptController::resolve_keys ()
 }
 
 int
-CryptController::do_crypto ()
+CryptController::do_crypto (GpgME::Error &err)
 {
   log_debug ("%s:%s",
              SRCNAME, __func__);
@@ -569,17 +571,21 @@ CryptController::do_crypto ()
                                                     do_inline ? m_bodyInput : m_input,
                                                     m_output,
                                                     GpgME::Context::AlwaysTrust);
+      const auto err1 = result_pair.first.error();
+      const auto err2 = result_pair.second.error();
 
-      if (result_pair.first.error() || result_pair.second.error())
+      if (err1 || err2)
         {
           log_error ("%s:%s: Encrypt / Sign error %s %s.",
                      SRCNAME, __func__, result_pair.first.error().asString(),
                      result_pair.second.error().asString());
+          err = err1 ? err1 : err2;
           return -1;
         }
 
-      if (result_pair.first.error().isCanceled() || result_pair.second.error().isCanceled())
+      if (err1.isCanceled() || err2.isCanceled())
         {
+          err = err1.isCanceled() ? err1 : err2;
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
           return -2;
@@ -590,13 +596,14 @@ CryptController::do_crypto ()
       // First sign then encrypt
       const auto sigResult = ctx->sign (m_input, m_output,
                                         GpgME::Detached);
-      if (sigResult.error())
+      err = sigResult.error();
+      if (err)
         {
           log_error ("%s:%s: Signing error %s.",
                      SRCNAME, __func__, sigResult.error().asString());
           return -1;
         }
-      if (sigResult.error().isCanceled())
+      if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
@@ -631,13 +638,14 @@ CryptController::do_crypto ()
       const auto encResult = ctx->encrypt (m_recipients, multipart,
                                            m_output,
                                            GpgME::Context::AlwaysTrust);
-      if (encResult.error())
+      err = encResult.error();
+      if (err)
         {
           log_error ("%s:%s: Encryption error %s.",
-                     SRCNAME, __func__, encResult.error().asString());
+                     SRCNAME, __func__, err.asString());
           return -1;
         }
-      if (encResult.error().isCanceled())
+      if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
@@ -650,13 +658,14 @@ CryptController::do_crypto ()
       const auto result = ctx->encrypt (m_recipients, do_inline ? m_bodyInput : m_input,
                                         m_output,
                                         GpgME::Context::AlwaysTrust);
-      if (result.error())
+      err = result.error();
+      if (err)
         {
           log_error ("%s:%s: Encryption error %s.",
-                     SRCNAME, __func__, result.error().asString());
+                     SRCNAME, __func__, err.asString());
           return -1;
         }
-      if (result.error().isCanceled())
+      if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
@@ -668,13 +677,14 @@ CryptController::do_crypto ()
       const auto result = ctx->sign (do_inline ? m_bodyInput : m_input, m_output,
                                      do_inline ? GpgME::Clearsigned :
                                      GpgME::Detached);
-      if (result.error())
+      err = result.error();
+      if (err)
         {
           log_error ("%s:%s: Signing error %s.",
-                     SRCNAME, __func__, result.error().asString());
+                     SRCNAME, __func__, err.asString());
           return -1;
         }
-      if (result.error().isCanceled())
+      if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
