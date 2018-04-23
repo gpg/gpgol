@@ -177,7 +177,8 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
        msg = _("Decryption canceled or timed out.");
     }
 
-  if (result.error ().code () == GPG_ERR_DECRYPT_FAILED)
+  if (result.error ().code () == GPG_ERR_DECRYPT_FAILED ||
+      result.error ().code () == GPG_ERR_NO_SECKEY)
     {
       no_sec = true;
       for (const auto &recipient: result.recipients ()) {
