@@ -1110,6 +1110,10 @@ get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt)
 static char *
 get_recipient_addr_fallbacks (LPDISPATCH recipient)
 {
+  if (!recipient)
+    {
+      return nullptr;
+    }
   LPDISPATCH addr_entry = get_oom_object (recipient, "AddressEntry");
 
   if (!addr_entry)
@@ -1204,14 +1208,15 @@ get_oom_recipients (LPDISPATCH recipients)
         }
       /* No PR_SMTP_ADDRESS first fallback */
       resolved = get_recipient_addr_fallbacks (recipient);
-      gpgol_release (recipient);
       if (resolved)
         {
           recipientAddrs[i-1] = resolved;
+          gpgol_release (recipient);
           continue;
         }
 
       char *address = get_oom_string (recipient, "Address");
+      gpgol_release (recipient);
       log_debug ("%s:%s: Failed to look up Address probably EX addr is returned",
                  SRCNAME, __func__);
       recipientAddrs[i-1] = address;
