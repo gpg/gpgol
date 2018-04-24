@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-04-24 10:54+0200\n"
-"PO-Revision-Date: 2018-04-12 12:59+0100\n"
+"PO-Revision-Date: 2018-04-24 10:59+0100\n"
 "Last-Translator: Andre Heinecke <andre.heinecke@intevation.de>\n"
 "Language-Team: English <kde-i18n-de@kde.org>\n"
 "Language: en_US\n"
@@ -242,7 +242,7 @@ msgstr "Entschlüsseln"
 
 #: src/gpgoladdin.cpp:1005
 msgid "&amp;Print decrypted"
-msgstr ""
+msgstr "Entschlüsselt &amp;Drucken"
 
 #: src/gpgoladdin.cpp:1063
 msgid "Start the Certificate Management Software"
@@ -435,13 +435,13 @@ msgid "GpgOL Warning"
 msgstr "GpgOL Warnung"
 
 #: src/mail.cpp:836
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Crypto operation failed:\n"
 "%s"
 msgstr ""
-"Entschlüsselungsfehler\n"
-"(%s)"
+"Krypto-Operation fehlgeschlagen:\n"
+"%s"
 
 #: src/mail.cpp:937
 msgid "Pubkey directory confirmation"
@@ -462,9 +462,8 @@ msgstr ""
 "p>\n"
 
 #: src/mail.cpp:946
-#, fuzzy
 msgid "message"
-msgstr "Signierte Nachricht"
+msgstr "Nachricht"
 
 #: src/mail.cpp:947
 msgid "Please wait while the message is being decrypted / verified..."
@@ -1134,11 +1133,12 @@ msgstr ""
 "gesendet wurde oder ob jemand die Absenderadresse vortäuscht."
 
 #: src/ribbon-callbacks.cpp:1741
-#, fuzzy
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
-msgstr "Beim überprüfen der Signatur ist ein Fehler aufgetreten.\n"
+msgstr ""
+"Beim überprüfen der Signatur ist ein Fehler aufgetreten.\n"
+"Details:\n"
 
 #: src/ribbon-callbacks.cpp:1794
 msgid ""
@@ -1210,9 +1210,8 @@ msgid "GpgOL: Request confirmed!"
 msgstr "GpgOL: Eintragung bestätigt."
 
 #: src/cryptcontroller.cpp:297
-#, fuzzy
 msgid "No recipients for encryption selected."
-msgstr "Empfänger zum Verschlüsseln wurde nicht angegeben"
+msgstr "Keine Empfänger zum verschlüsseln ausgewählt."
 
 #: src/cryptcontroller.cpp:406
 msgid "Resolving recipients..."
