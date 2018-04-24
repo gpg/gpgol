@@ -1,6 +1,19 @@
-Noteworthy changes for version 2.1.1 (unreleased)
+Noteworthy changes for version 2.1.1 (2018-04-24)
 =================================================
 
+ * Fixed a regression in 3.1.0 that could lead to
+ decryption errors.
+
+ * Fixed internal keycache in de-vs mode.
+
+ * Fixed a crash during recipient lookup.
+
+ * Improved error handling.
+
+ * Keys from WKD are automatically acceptable
+ for auto encryption.
+
+ * Added quick print context menu option.
 
 Noteworthy changes for version 2.1.0 (2018-04-12)
 =================================================
