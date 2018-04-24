@@ -2467,11 +2467,44 @@ Mail::get_sig_fpr() const
 void
 Mail::locate_keys()
 {
-  char ** recipients = get_recipients ();
-  KeyCache::instance()->startLocate (recipients);
-  KeyCache::instance()->startLocate (get_sender ().c_str ());
+  static bool locate_in_progress;
+
+  if (locate_in_progress)
+    {
+      /** XXX
+        The strangest thing seems to happen here:
+        In get_recipients the lookup for "AddressEntry" on
+        an unresolved address might cause network traffic.
+
+        So Outlook somehow "detaches" this call and keeps
+        processing window messages while the call is running.
+
+        So our do_delayed_locate might trigger a second locate.
+        If we access the OOM in this call while we access the
+        same object in the blocked "detached" call we crash.
+        (T3931)
+
+        After the window message is handled outlook retunrs
+        in the original lookup.
+
+        A better fix here might be a non recursive lock
+        of the OOM. But I expect that if we lock the handling
+        of the Windowmessage we might deadlock.
+        */
+      log_debug ("%s:%s: Locate for %p already in progress.",
+                 SRCNAME, __func__, this);
+      return;
+    }
+  locate_in_progress = true;
+
+  // First update oom data to have recipients and sender updated.
+  update_oom_data ();
+  char ** recipients = take_cached_recipients ();
   KeyCache::instance()->startLocateSecret (get_sender ().c_str ());
+  KeyCache::instance()->startLocate (get_sender ().c_str ());
+  KeyCache::instance()->startLocate (recipients);
   release_cArray (recipients);
+  locate_in_progress = false;
 }
 
 bool
