@@ -246,7 +246,7 @@ public:
             return std::vector<GpgME::Key>();
           }
 
-        if (in_de_vs_mode () && key.isDeVs ())
+        if (in_de_vs_mode () && !key.isDeVs ())
           {
             log_mime_parser ("%s:%s: key for %s is not deVS",
                        SRCNAME, __func__, recip.c_str ());
