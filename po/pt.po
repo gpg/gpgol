@@ -243,7 +243,7 @@ msgstr "Desencriptar"
 
 #: src/gpgoladdin.cpp:1005
 msgid "&amp;Print decrypted"
-msgstr ""
+msgstr "&amp;Imprimir desencriptado"
 
 #: src/gpgoladdin.cpp:1063
 msgid "Start the Certificate Management Software"
