@@ -246,6 +246,77 @@ GpgolAddin::QueryInterface (REFIID riid, LPVOID* ppvObj)
   return hr;
 }
 
+static void
+addGpgOLToReg (const std::string &path)
+{
+  HKEY h;
+  int err = RegOpenKeyEx (HKEY_CURRENT_USER, path.c_str(), 0,
+                          KEY_ALL_ACCESS, &h);
+  if (err != ERROR_SUCCESS)
+    {
+      log_debug ("%s:%s: no DoNotDisableAddinList entry '%s' creating it",
+                 SRCNAME, __func__, path.c_str ());
+      err = RegCreateKeyEx (HKEY_CURRENT_USER, path.c_str (), 0, NULL,
+                            REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,
+                            &h, NULL);
+    }
+  if (err != ERROR_SUCCESS)
+    {
+      log_error ("%s:%s: failed to create key.",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  DWORD type;
+  err = RegQueryValueEx (h, GPGOL_PROGID, NULL, &type, NULL, NULL);
+  if (err == ERROR_SUCCESS)
+    {
+      log_debug ("%s:%s: Found gpgol reg key. Leaving it unchanged.",
+                 SRCNAME, __func__);
+      RegCloseKey (h);
+      return;
+    }
+
+  // No key exists. Create one.
+  DWORD dwTemp = 1;
+  err = RegSetValueEx (h, GPGOL_PROGID, 0, REG_DWORD, (BYTE*)&dwTemp, 4);
+  RegCloseKey (h);
+
+  if (err != ERROR_SUCCESS)
+    {
+      log_error ("%s:%s: failed to set registry value.",
+                 SRCNAME, __func__);
+    }
+  else
+    {
+      log_debug ("%s:%s: added gpgol to %s",
+                 SRCNAME, __func__, path.c_str ());
+    }
+}
+
+/* This is a bit evil as we basically disable outlooks resiliency
+   for us. But users are still able to manually disable the addon
+   or change the donotdisable setting to zero and we won't change
+   it.
+
+   It has been much requested by users that we do this automatically.
+*/
+static void
+setupDoNotDisable ()
+{
+  std::string path = "Software\\Microsoft\\Office\\";
+  path += std::to_string (g_ol_version_major);
+  path += ".0\\Outlook\\Resiliency\\DoNotDisableAddinList";
+
+  addGpgOLToReg (path);
+
+  path = "Software\\Microsoft\\Office\\";
+  path += std::to_string (g_ol_version_major);
+  path += ".0\\Outlook\\Resiliency\\AddinList";
+
+  addGpgOLToReg (path);
+}
+
 STDMETHODIMP
 GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
                           LPDISPATCH AddInInst, SAFEARRAY ** custom)
@@ -283,6 +354,8 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
       return S_OK;
     }
   engine_init ();
+
+  setupDoNotDisable ();
 
   if (ConnectMode != ext_cm_Startup)
     {
