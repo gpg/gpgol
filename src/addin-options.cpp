@@ -27,6 +27,11 @@
 #include "common.h"
 #include "engine.h"
 
+#include <string>
+
+#include <gpgme++/context.h>
+#include <gpgme++/data.h>
+
 /* To avoid writing a dialog template for each language we use gettext
    for the labels and hope that there is enough space in the dialog to
    fit the longest translation.. */
@@ -75,6 +80,63 @@ enable_disable_opts (HWND hDlg)
       EnableWindow (GetDlgItem (hDlg, IDC_AUTORRESOLVE), FALSE);
     }
   xfree (uiserver);
+}
+
+static void
+launch_kleo_config (HWND hDlg)
+{
+  char *uiserver = get_uiserver_name ();
+  bool showError = false;
+  if (uiserver)
+    {
+      std::string path (uiserver);
+      xfree (uiserver);
+      if (path.find("kleopatra.exe") != std::string::npos)
+        {
+        size_t dpos;
+        if ((dpos = path.find(" --daemon")) != std::string::npos)
+            {
+              path.erase(dpos, strlen(" --daemon"));
+            }
+          auto ctx = GpgME::Context::createForEngine(GpgME::SpawnEngine);
+          if (!ctx)
+            {
+              log_error ("%s:%s: No spawn engine.",
+                         SRCNAME, __func__);
+            }
+            std::string parentWid = std::to_string ((int) (intptr_t) hDlg);
+            const char *argv[] = {path.c_str(),
+                                  "--config",
+                                  "--parent-windowid",
+                                  parentWid.c_str(),
+                                  NULL };
+            log_debug ("%s:%s: Starting %s %s %s",
+                       SRCNAME, __func__, path.c_str(), argv[1], argv[2]);
+            GpgME::Data d(GpgME::Data::null);
+            ctx->spawnAsync(path.c_str(), argv, d, d,
+                            d, (GpgME::Context::SpawnFlags) (
+                                GpgME::Context::SpawnAllowSetFg |
+                                GpgME::Context::SpawnShowWindow));
+        }
+      else
+        {
+          showError = true;
+        }
+    }
+  else
+    {
+      showError = true;
+    }
+
+  if (showError)
+    {
+      MessageBox (NULL,
+                  _("Could not find Kleopatra.\n"
+                  "Please reinstall Gpg4win with the Kleopatra component enabled."),
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+    }
+
 }
 
 static INT_PTR CALLBACK
@@ -149,7 +211,7 @@ options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 break;
               }
             case IDC_GPG_CONF:
-              engine_start_confdialog (hDlg);
+              launch_kleo_config (hDlg);
               break;
             case IDC_GPG_OPTIONS:
               config_dialog_box (hDlg);
