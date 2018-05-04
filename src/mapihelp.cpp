@@ -1073,7 +1073,7 @@ change_message_class_ipm_note (LPMESSAGE message)
          decide.  */
       newvalue = get_msgcls_from_pgp_lines (message, &has_no_body);
 
-      if (!newvalue && has_no_body && !strcmp (ct, "multipart/mixed"))
+      if (!newvalue && has_no_body && ct && !strcmp (ct, "multipart/mixed"))
         {
           /* This is uncommon. But some Exchanges might break a PGP/MIME mail
              this way. Let's take a look at the attachments. Maybe it's
