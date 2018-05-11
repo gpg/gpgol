@@ -744,14 +744,19 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
             msgcls = xstrdup ("IPM.Note.GpgOL.PGPMessage");
           break;
         }
-
-#if 0
-      This might be too strict for some broken implementations. Lets
-      look anywhere in the first 1k.
       else if (!trailing_ws_p (p))
-        break;  /* Text before the PGP message - don't take this as a
-                   proper message.  */
-#endif
+        {
+          /* We have text before the message. In that case we need
+             to break because some bad MUA's like Outlook do not insert
+             quote characters before a replied to message. In that case
+             the reply to an inline Mail from an Outlook without GpgOL
+             enabled could cause the behavior that we would detect
+             the original message.
+          */
+          log_debug ("%s:%s: Detected non whitespace %c before a PGP Marker",
+                     SRCNAME, __func__, *p);
+          break;
+        }
     }
 
 
