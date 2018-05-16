@@ -2,6 +2,7 @@
 # Copyright (C) 2005 g10 Code GmbH
 # Copyright (C) 2016 Bundesamt für Sicherheit in der Informationstechnik
 # Software engineering by Intevation GmbH
+# Copyright (C) 2018 Intevation GmbH
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -12,15 +13,11 @@
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ## Process this file with automake to produce Makefile.in
-
-
-unused_sources = item-events.cpp 
-
 SUBDIRS = icons
 
 bin_PROGRAMS = gpgol 
 EXTRA_DIST = \
-	versioninfo.rc.in mapi32.def $(unused_sources) Outlook.gpl \
+	versioninfo.rc.in mapi32.def Outlook.gpl \
 	dialogs.rc
 
 EXEEXT = .dll
@@ -34,16 +31,10 @@ gpgol_SOURCES = \
 	resource.rc	            \
         gpgol-ids.h                 \
 	olflange.cpp olflange.h     \
-	olflange-def.h              \
-	olflange-dlgs.cpp           \
 	dialogs.h                   \
-	myexchext.h                 \
-	display.cpp display.h       \
-	message.cpp message.h       \
 	revert.cpp revert.h         \
-	mimeparser.c mimeparser.h   \
+	parsetlv.h parsetlv.c \
 	mimemaker.cpp mimemaker.h     \
-	msgcache.c msgcache.h       \
 	engine.c engine.h           \
         engine-assuan.c engine-assuan.h \
 	rfc822parse.c rfc822parse.h \
@@ -53,23 +44,10 @@ gpgol_SOURCES = \
         config-dialog.c	            \
 	mapihelp.cpp mapihelp.h     \
 	mymapi.h  mymapitags.h      \
-	serpent.c serpent.h         \
-	ext-commands.cpp ext-commands.h       \
-	user-events.cpp     user-events.h     \
-	session-events.cpp  session-events.h  \
-	message-events.cpp  message-events.h  \
-	attached-file-events.cpp attached-file-events.h \
-	property-sheets.cpp property-sheets.h \
-	item-events.h         \
 	oomhelp.cpp oomhelp.h eventsink.h \
-	explorers.cpp explorers.h \
-	inspectors.cpp inspectors.h \
-	mailitem.cpp mailitem.h \
-	cmdbarcontrols.cpp cmdbarcontrols.h \
 	w32-gettext.c w32-gettext.h \
 	gpgoladdin.cpp gpgoladdin.h \
 	ribbon-callbacks.cpp ribbon-callbacks.h \
-	parsetlv.c parsetlv.h \
 	filetype.c filetype.h \
 	eventsinks.h application-events.cpp \
 	mailitem-events.cpp \

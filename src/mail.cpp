@@ -28,7 +28,6 @@
 #include "attachment.h"
 #include "mapihelp.h"
 #include "mimemaker.h"
-#include "message.h"
 #include "revert.h"
 #include "gpgoladdin.h"
 #include "mymapitags.h"

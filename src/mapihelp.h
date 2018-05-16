@@ -82,7 +82,7 @@ void mapi_release_attach_table (mapi_attach_item_t *table);
 LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message, 
                                     mapi_attach_item_t *item, 
                                     LPATTACH *r_attach);
-char *mapi_get_attach (LPMESSAGE message, int unprotect,
+char *mapi_get_attach (LPMESSAGE message,
                        mapi_attach_item_t *item, size_t *r_nbytes);
 int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
 int mapi_has_sig_status (LPMESSAGE msg);
@@ -109,7 +109,6 @@ char *mapi_get_message_content_type (LPMESSAGE message,
                                      char **r_protocol, char **r_smtype);
 
 int   mapi_has_last_decrypted (LPMESSAGE message);
-int   mapi_test_last_decrypted (LPMESSAGE message);
 int   mapi_get_gpgol_body_attachment (LPMESSAGE message,
                                       char **r_body, size_t *r_nbytes,
                                       int *r_ishtml, int *r_protected);

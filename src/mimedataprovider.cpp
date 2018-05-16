@@ -25,7 +25,6 @@
 #include <sstream>
 
 #include "mimedataprovider.h"
-#include "parsetlv.h"
 #include "rfc822parse.h"
 #include "rfc2047parse.h"
 #include "attachment.h"

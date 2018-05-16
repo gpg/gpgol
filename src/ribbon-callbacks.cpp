@@ -36,18 +36,14 @@
 
 #include "mymapi.h"
 #include "mymapitags.h"
-#include "myexchext.h"
 
 #include "common.h"
-#include "display.h"
-#include "msgcache.h"
 #include "engine.h"
 #include "engine-assuan.h"
 #include "mapihelp.h"
 #include "mimemaker.h"
 #include "filetype.h"
 #include "gpgolstr.h"
-#include "message.h"
 #include "mail.h"
 
 #include <gpgme++/context.h>
@@ -604,7 +600,8 @@ verify_mime (LPDISPATCH mailitem)
                  SRCNAME, __func__);
       return 0;
     }
-  ret = message_incoming_handler (message, NULL, true /*force */);
+  ret = -1;
+//  ret = message_incoming_handler (message, NULL, true /*force */);
   gpgol_release (message);
 
   return ret;

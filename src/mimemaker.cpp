@@ -1016,7 +1016,7 @@ write_attachments (sink_t sink,
             {
               continue;
             }
-          buffer = mapi_get_attach (message, 0, table+idx, &buflen);
+          buffer = mapi_get_attach (message, table+idx, &buflen);
           if (!buffer)
             log_debug ("Attachment at index %d not found\n", idx);
           else

@@ -28,7 +28,6 @@
 #include <string>
 #include <rpc.h>
 
-#include "myexchext.h"
 #include "common.h"
 
 #include "oomhelp.h"

@@ -22,10 +22,7 @@
 
 #include "mymapi.h"
 #include "mymapitags.h"
-#include "myexchext.h"
 #include "mapihelp.h"
-
-#include "olflange-def.h"
 
 /* The GUID for this plugin.  */
 #define CLSIDSTR_GPGOL   "{42d30988-1a3a-11da-c687-000d6080e735}"
@@ -43,60 +40,9 @@ DEFINE_GUID(CLSID_GPGOL, 0x42d30988, 0x1a3a, 0x11da,
 /* Short description of the addin */
 #define GPGOL_DESCRIPTION "Cryptography for Outlook"
 
-
-
-/*
- GpgolExt
-
- The GpgolExt class is the main exchange extension class. The other 
- extensions will be created in the constructor of this class.
-*/
-class GpgolExt : public IExchExt
-{
-public:
-  GpgolExt();
-  virtual ~GpgolExt();
-
-public:	
-  HWND m_hWndExchange;  /* Handle of the exchange window. */
-
-private:
-  ULONG m_lRef;
-  ULONG m_lContext;
-  
-  /* Pointer to the other extension objects.  */
-  GpgolExtCommands        *m_pExchExtCommands;
-  GpgolUserEvents         *m_pExchExtUserEvents;
-  GpgolSessionEvents      *m_pExchExtSessionEvents;
-  GpgolMessageEvents      *m_pExchExtMessageEvents;
-  GpgolPropertySheets     *m_pExchExtPropertySheets;
-  GpgolAttachedFileEvents *m_pExchExtAttachedFileEvents;
-  GpgolItemEvents         *m_pOutlookExtItemEvents;
-
-public:
-  STDMETHODIMP QueryInterface(REFIID riid, LPVOID* ppvObj);
-  inline STDMETHODIMP_(ULONG) AddRef() { ++m_lRef;  return m_lRef; };
-  inline STDMETHODIMP_(ULONG) Release()
-    {
-      ULONG lCount = --m_lRef;
-      if (!lCount) 
-	delete this;
-      return lCount;	
-    };
-  STDMETHODIMP Install(LPEXCHEXTCALLBACK pEECB, ULONG lContext, ULONG lFlags);
-};
-
-
-const char *ext_context_name (unsigned long no);
-
 EXTERN_C const char * __stdcall gpgol_check_version (const char *req_version);
 
 EXTERN_C int get_ol_main_version (void);
 
-void install_sinks (LPEXCHEXTCALLBACK eecb);
-
 void install_forms (void);
-
-LPDISPATCH get_eecb_object (LPEXCHEXTCALLBACK eecb);
-
 #endif /*OLFLANGE_H*/

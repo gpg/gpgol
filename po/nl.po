@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2018-05-14 22:29+0200\n"
+"POT-Creation-Date: 2018-05-16 17:26+0200\n"
 "PO-Revision-Date: 2018-05-14 22:49+0200\n"
 "Last-Translator: Erwin Bronkhorst <erwinbronkhorst@gmail.com>\n"
 "Language-Team: \n"
@@ -18,12 +18,12 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.8.11\n"
 
-#: src/addin-options.cpp:42 src/gpgoladdin.cpp:1264 src/gpgoladdin.cpp:1347
-#: src/gpgoladdin.cpp:1426 src/olflange-dlgs.cpp:43
+#: src/addin-options.cpp:42 src/gpgoladdin.cpp:1261 src/gpgoladdin.cpp:1344
+#: src/gpgoladdin.cpp:1423
 msgid "General"
 msgstr "Algemeen"
 
-#: src/addin-options.cpp:43 src/olflange-dlgs.cpp:44
+#: src/addin-options.cpp:43
 msgid "Enable the S/MIME support"
 msgstr "S/MIME-ondersteuning inschakelen"
 
@@ -31,15 +31,15 @@ msgstr "S/MIME-ondersteuning inschakelen"
 msgid "Enable simplified interface (experimental)"
 msgstr "Vereenvoudigde interface inschakelen (experimenteel)"
 
-#: src/addin-options.cpp:48 src/olflange-dlgs.cpp:46
+#: src/addin-options.cpp:48
 msgid "Message sending"
 msgstr "Versturen van bericht"
 
-#: src/addin-options.cpp:49 src/olflange-dlgs.cpp:47
+#: src/addin-options.cpp:49
 msgid "&Encrypt new messages by default"
 msgstr "Nieuwe berichten standaard &versleutelen"
 
-#: src/addin-options.cpp:50 src/olflange-dlgs.cpp:48
+#: src/addin-options.cpp:50
 msgid "&Sign new messages by default"
 msgstr "Nieuwe berichten standaard &ondertekenen"
 
@@ -69,7 +69,7 @@ msgstr "GnuPG configureren"
 msgid "Version "
 msgstr "Versie"
 
-#: src/addin-options.cpp:134 src/ribbon-callbacks.cpp:1794
+#: src/addin-options.cpp:134 src/ribbon-callbacks.cpp:1791
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
@@ -77,23 +77,21 @@ msgstr ""
 "Kleopatra kon niet gevonden worden.\n"
 "Installeer Gpg4win opnieuw met het Kleopatra-component ingeschakeld."
 
-#: src/addin-options.cpp:136 src/addin-options.cpp:196
-#: src/cmdbarcontrols.cpp:105 src/engine.c:377 src/explorers.cpp:204
-#: src/explorers.cpp:209 src/gpgoladdin.cpp:387 src/gpgoladdin.cpp:943
-#: src/gpgoladdin.cpp:986 src/gpgoladdin.cpp:1071 src/gpgoladdin.cpp:1073
-#: src/gpgoladdin.cpp:1110 src/gpgoladdin.cpp:1264 src/gpgoladdin.cpp:1347
-#: src/gpgoladdin.cpp:1353 src/gpgoladdin.cpp:1426 src/gpgoladdin.cpp:1430
-#: src/mail.cpp:838 src/main.c:467 src/message.cpp:303
-#: src/ribbon-callbacks.cpp:134 src/ribbon-callbacks.cpp:248
-#: src/ribbon-callbacks.cpp:263 src/ribbon-callbacks.cpp:275
-#: src/ribbon-callbacks.cpp:312 src/ribbon-callbacks.cpp:324
-#: src/ribbon-callbacks.cpp:669 src/ribbon-callbacks.cpp:686
-#: src/ribbon-callbacks.cpp:700 src/ribbon-callbacks.cpp:713
-#: src/ribbon-callbacks.cpp:736 src/ribbon-callbacks.cpp:796
-#: src/ribbon-callbacks.cpp:1078 src/ribbon-callbacks.cpp:1112
-#: src/ribbon-callbacks.cpp:1124 src/ribbon-callbacks.cpp:1149
-#: src/ribbon-callbacks.cpp:1733 src/ribbon-callbacks.cpp:1744
-#: src/ribbon-callbacks.cpp:1796 src/wks-helper.cpp:442
+#: src/addin-options.cpp:136 src/addin-options.cpp:196 src/engine.c:377
+#: src/gpgoladdin.cpp:384 src/gpgoladdin.cpp:940 src/gpgoladdin.cpp:983
+#: src/gpgoladdin.cpp:1068 src/gpgoladdin.cpp:1070 src/gpgoladdin.cpp:1107
+#: src/gpgoladdin.cpp:1261 src/gpgoladdin.cpp:1344 src/gpgoladdin.cpp:1350
+#: src/gpgoladdin.cpp:1423 src/gpgoladdin.cpp:1427 src/mail.cpp:837
+#: src/main.c:417 src/ribbon-callbacks.cpp:130 src/ribbon-callbacks.cpp:244
+#: src/ribbon-callbacks.cpp:259 src/ribbon-callbacks.cpp:271
+#: src/ribbon-callbacks.cpp:308 src/ribbon-callbacks.cpp:320
+#: src/ribbon-callbacks.cpp:666 src/ribbon-callbacks.cpp:683
+#: src/ribbon-callbacks.cpp:697 src/ribbon-callbacks.cpp:710
+#: src/ribbon-callbacks.cpp:733 src/ribbon-callbacks.cpp:793
+#: src/ribbon-callbacks.cpp:1075 src/ribbon-callbacks.cpp:1109
+#: src/ribbon-callbacks.cpp:1121 src/ribbon-callbacks.cpp:1146
+#: src/ribbon-callbacks.cpp:1730 src/ribbon-callbacks.cpp:1741
+#: src/ribbon-callbacks.cpp:1793 src/wks-helper.cpp:442
 #: src/cryptcontroller.cpp:298
 msgid "GpgOL"
 msgstr "GpgOL"
@@ -101,34 +99,6 @@ msgstr "GpgOL"
 #: src/addin-options.cpp:195
 msgid "Changing the interface requires a restart of Outlook."
 msgstr "Het wijzigen van de interface vereist een herstart van Outlook."
-
-#: src/attached-file-events.cpp:54
-msgid "Error creating file for attachment."
-msgstr "Fout bij het maken van bestand voor de bijlage"
-
-#: src/attached-file-events.cpp:67
-msgid "Error reading attachment."
-msgstr "Fout bij het lezen van de bijlage"
-
-#: src/attached-file-events.cpp:78 src/attached-file-events.cpp:92
-msgid "Error writing attachment."
-msgstr "Fout bij het schrijven van de bijlage"
-
-#: src/attached-file-events.cpp:213
-msgid ""
-"Sorry, we are not able to decrypt this attachment.\n"
-"\n"
-"Please use the decrypt/verify button to decrypt the\n"
-"entire message again.  Then open this attachment."
-msgstr ""
-"Sorry, we kunnen de bijlage niet ontcijferen.\n"
-"\n"
-"Gebruik de knop \"Ontcijferen/verifiëren\" om het hele\n"
-"bericht opnieuw te ontcijferen. Open daarna de bijlage."
-
-#: src/cmdbarcontrols.cpp:104
-msgid "Could not start certificate manager"
-msgstr "De certificaat-manager kan niet worden gestart"
 
 #: src/common.c:239
 msgid "GpgOL - Save attachment"
@@ -150,74 +120,35 @@ msgstr ""
 "De gebruikers-interface-server is niet beschikbaar of kon niet op tijd "
 "worden gestart. Je kunt het opnieuw proberen."
 
-#: src/explorers.cpp:126
-msgid "GnuPG Certificate &Manager"
-msgstr "GnuPG Certificaat-manager"
-
-#: src/explorers.cpp:140
-msgid "Remove GpgOL flags from this folder"
-msgstr "GpgOL-vlaggen van deze map verwijderen"
-
-#: src/explorers.cpp:167
-msgid "Open the certificate manager"
-msgstr "De certificaat-manager openen"
-
-#: src/explorers.cpp:194
-msgid ""
-"You are about to start the process of reversing messages created by GpgOL to "
-"prepare deinstalling of GpgOL. Running this command will put GpgOL into a "
-"disabled state so that messages are not anymore processed by GpgOL.\n"
-"\n"
-"You should convert all folders one after the other with this command, close "
-"Outlook and then deinstall GpgOL.\n"
-"\n"
-"Note that if you start Outlook again with GpgOL still being installed, GpgOL "
-"will again process messages."
-msgstr ""
-"U staat op het punt om berichten terug te draaien die zijn gemaakt door "
-"GpgOL om het deïnstalleren van GpgOL voor te bereiden. Door het uitvoeren "
-"van dit commando zal GpgOL in een uitgeschakelde toestand komen, zodat "
-"berichten niet meer door GpgOL verwerkt worden.\n"
-"\n"
-"U moet alle mappen een voor een converteren met dit commando, Outlook "
-"afsluien en dan GpgOL deïnstalleren.\n"
-"\n"
-"Let op dat GpgOL deze bestanden opnieuw zal verwerekn als u Outlook start "
-"terwijl GpgOL nog geïnstalleerd is."
-
-#: src/explorers.cpp:208
-msgid "Do you want to revert this folder?"
-msgstr "Wil je deze map herstellen?"
-
-#: src/gpgoladdin.cpp:519 src/mail.cpp:1806 src/mail.cpp:1877
+#: src/gpgoladdin.cpp:516 src/mail.cpp:1805 src/mail.cpp:1876
 msgid "GpgOL: Encrypted Message"
 msgstr "GpgOL: Versleuteld bericht"
 
-#: src/gpgoladdin.cpp:520 src/mail.cpp:1807 src/mail.cpp:1878
+#: src/gpgoladdin.cpp:517 src/mail.cpp:1806 src/mail.cpp:1877
 msgid "GpgOL: Trusted Sender Address"
 msgstr "GpgOL: Vertrouwd Afzenderadres"
 
-#: src/gpgoladdin.cpp:879
+#: src/gpgoladdin.cpp:876
 msgid "Encrypt the message"
 msgstr "Het bericht versleutelen"
 
-#: src/gpgoladdin.cpp:881
+#: src/gpgoladdin.cpp:878
 msgid "Encrypts the message and all attachments before sending"
 msgstr "Versleutelt het bericht en alle bijlagen voor verzending"
 
-#: src/gpgoladdin.cpp:883
+#: src/gpgoladdin.cpp:880
 msgid "Sign the message"
 msgstr "Het bericht ondertekenen"
 
-#: src/gpgoladdin.cpp:885
+#: src/gpgoladdin.cpp:882
 msgid "Sign the message and all attachments before sending"
 msgstr "Het bericht en alle bijlagen ondertekenen voor verzending"
 
-#: src/gpgoladdin.cpp:888
+#: src/gpgoladdin.cpp:885
 msgid "Sign and encrypt the message"
 msgstr "Het bericht ondertekenen en versleutelen"
 
-#: src/gpgoladdin.cpp:890
+#: src/gpgoladdin.cpp:887
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -227,37 +158,37 @@ msgstr ""
 "de ontvangers er zeker van kunnen zijn dat niemand het bericht heeft "
 "aangepast en dat alleen de ontvangers het kunnen lezen"
 
-#: src/gpgoladdin.cpp:894
+#: src/gpgoladdin.cpp:891
 msgid "Open the settings dialog for GpgOL"
 msgstr "Het instellingen-scherm voor GpgOL openen"
 
-#: src/gpgoladdin.cpp:944 src/gpgoladdin.cpp:1074
+#: src/gpgoladdin.cpp:941 src/gpgoladdin.cpp:1071
 msgid "Secure"
 msgstr "Beveiligen"
 
-#: src/gpgoladdin.cpp:945 src/gpgoladdin.cpp:1075 src/gpgoladdin.cpp:1270
+#: src/gpgoladdin.cpp:942 src/gpgoladdin.cpp:1072 src/gpgoladdin.cpp:1267
 msgid "Sign"
 msgstr "Ondertekenen"
 
-#: src/gpgoladdin.cpp:946 src/gpgoladdin.cpp:1076 src/gpgoladdin.cpp:1268
-#: src/gpgoladdin.cpp:1275
+#: src/gpgoladdin.cpp:943 src/gpgoladdin.cpp:1073 src/gpgoladdin.cpp:1265
+#: src/gpgoladdin.cpp:1272
 msgid "Encrypt"
 msgstr "Versleutelen"
 
-#: src/gpgoladdin.cpp:988 src/gpgoladdin.cpp:1269 src/gpgoladdin.cpp:1275
-#: src/gpgoladdin.cpp:1351 src/gpgoladdin.cpp:1354 src/gpgoladdin.cpp:1355
+#: src/gpgoladdin.cpp:985 src/gpgoladdin.cpp:1266 src/gpgoladdin.cpp:1272
+#: src/gpgoladdin.cpp:1348 src/gpgoladdin.cpp:1351 src/gpgoladdin.cpp:1352
 msgid "Decrypt"
 msgstr "Ontcijferen"
 
-#: src/gpgoladdin.cpp:1078
+#: src/gpgoladdin.cpp:1075
 msgid "&amp;Print decrypted"
 msgstr "Ontcijferd afdrukken"
 
-#: src/gpgoladdin.cpp:1136
+#: src/gpgoladdin.cpp:1133
 msgid "Start the Certificate Management Software"
 msgstr "De Certificaat-manager-software starten"
 
-#: src/gpgoladdin.cpp:1138
+#: src/gpgoladdin.cpp:1135
 msgid ""
 "Open GPA or Kleopatra to manage your certificates. You can use this you to "
 "generate your own certificates. "
@@ -265,11 +196,11 @@ msgstr ""
 "Open GPA of Kleopatra om uw certificaten te beheren. U kunt dit gebruiken om "
 "eigen certificaten te genereren. "
 
-#: src/gpgoladdin.cpp:1142
+#: src/gpgoladdin.cpp:1139
 msgid "Encrypt the text of the message"
 msgstr "De tekst van het bericht versleutelen"
 
-#: src/gpgoladdin.cpp:1144
+#: src/gpgoladdin.cpp:1141
 msgid ""
 "Choose the certificates for which the message should be encrypted and "
 "replace the text with the encrypted message."
@@ -277,20 +208,20 @@ msgstr ""
 "Kies de certificaten waarmee de berichten moeten worden versleuteld en "
 "vervang de tekst met het versleutelde bericht."
 
-#: src/gpgoladdin.cpp:1148
+#: src/gpgoladdin.cpp:1145
 msgid "Add a file as an encrypted attachment"
 msgstr "Een bestand toevoegen als een versleutelde bijlage"
 
-#: src/gpgoladdin.cpp:1150
+#: src/gpgoladdin.cpp:1147
 msgid "Encrypts a file and adds it as an attachment to the message. "
 msgstr ""
 "Versleutelt een bestand en voegt het als een bijlage toe aan het bericht."
 
-#: src/gpgoladdin.cpp:1153
+#: src/gpgoladdin.cpp:1150
 msgid "Add a file as an encrypted attachment with a signature"
 msgstr "Een bestand als versleutelde bijlage met een handtekening toevoegen"
 
-#: src/gpgoladdin.cpp:1155
+#: src/gpgoladdin.cpp:1152
 msgid ""
 "Encrypts a file, signs it and adds both the encrypted file and the signature "
 "as attachments to the message. "
@@ -298,22 +229,22 @@ msgstr ""
 "Versleutelt een bestand, ondertekent het en voegt zowel het versleutelde "
 "bestand als de handtekening als bijlage toe aan het bericht. "
 
-#: src/gpgoladdin.cpp:1158
+#: src/gpgoladdin.cpp:1155
 msgid "Decrypt the message"
 msgstr "Het bericht ontcijferen"
 
-#: src/gpgoladdin.cpp:1160
+#: src/gpgoladdin.cpp:1157
 msgid ""
 "Look for PGP or S/MIME encrypted data in the message text and decrypt it."
 msgstr ""
 "Naar PGP- of S/MIME-versleutelde data zoeken in de bericht-tekst en het "
 "ontcijferen."
 
-#: src/gpgoladdin.cpp:1163
+#: src/gpgoladdin.cpp:1160
 msgid "Add a signature of the message"
 msgstr "Een handtekening aan het bericht toevoegen"
 
-#: src/gpgoladdin.cpp:1165
+#: src/gpgoladdin.cpp:1162
 msgid ""
 "Appends a signed copy of the message text in an opaque signature. An opaque "
 "signature ensures that the signed text is not modified by embedding it in "
@@ -326,83 +257,39 @@ msgstr ""
 "combinatie van de ondertekende bericht-tekst en uw handtekening wordt onder "
 "de platte tekst toegevoegd. Het bericht zal niet versleuteld worden!"
 
-#: src/gpgoladdin.cpp:1172
+#: src/gpgoladdin.cpp:1169
 msgid "Open the settings dialog for GpgOL."
 msgstr "Het instellingen-scherm voor GpgOL openen."
 
-#: src/gpgoladdin.cpp:1265 src/gpgoladdin.cpp:1348 src/gpgoladdin.cpp:1427
+#: src/gpgoladdin.cpp:1262 src/gpgoladdin.cpp:1345 src/gpgoladdin.cpp:1424
 msgid "Start Certificate Manager"
 msgstr "Certifcaat-manager starten"
 
-#: src/gpgoladdin.cpp:1267 src/gpgoladdin.cpp:1350
+#: src/gpgoladdin.cpp:1264 src/gpgoladdin.cpp:1347
 msgid "Textbody"
 msgstr "Hoofdtekst"
 
-#: src/gpgoladdin.cpp:1271 src/gpgoladdin.cpp:1352
+#: src/gpgoladdin.cpp:1268 src/gpgoladdin.cpp:1349
 msgid "Verify"
 msgstr "Verifiëren"
 
-#: src/gpgoladdin.cpp:1272
+#: src/gpgoladdin.cpp:1269
 msgid "Attachments"
 msgstr "Bijlagen"
 
-#: src/gpgoladdin.cpp:1273
+#: src/gpgoladdin.cpp:1270
 msgid "Encrypted file"
 msgstr "Versleuteld bestand"
 
-#: src/gpgoladdin.cpp:1274
+#: src/gpgoladdin.cpp:1271
 msgid "Encrypted file and Signature"
 msgstr "Verleuteld bestand en Handtekening"
 
-#: src/gpgoladdin.cpp:1353 src/gpgoladdin.cpp:1430 src/gpgoladdin.cpp:1431
+#: src/gpgoladdin.cpp:1350 src/gpgoladdin.cpp:1427 src/gpgoladdin.cpp:1428
 msgid "Save and decrypt"
 msgstr "Opslaan en ontcijferen"
 
-#: src/inspectors.cpp:690
-msgid "&encrypt message with GnuPG"
-msgstr "bericht met GnuPG versleutelen"
-
-#: src/inspectors.cpp:704
-msgid "&sign message with GnuPG"
-msgstr "bericht met GnuPG ondertekenen"
-
-#: src/inspectors.cpp:730
-msgid "GpgOL Decrypt/Verify"
-msgstr "GpgOL Ontcijferen/Verifiëren"
-
-#: src/inspectors.cpp:791
-msgid "Encrypt message with GnuPG"
-msgstr "Bericht met GnuPG versleutelen"
-
-#: src/inspectors.cpp:807
-msgid "Sign message with GnuPG"
-msgstr "Bericht met GnuPG ondertekenen"
-
-#: src/inspectors.cpp:924
-msgid ""
-"This is a signed and encrypted message.\n"
-"Click for more information. "
-msgstr ""
-"Dit is een ondertekend en versleuteld bericht.\n"
-"Klik hier voor meer informatie. "
-
-#: src/inspectors.cpp:930
-msgid ""
-"This is a signed message.\n"
-"Click for more information. "
-msgstr ""
-"Dit is een ondertekend bericht.\n"
-"Klik hier voor meer informatie. "
-
-#: src/inspectors.cpp:936
-msgid ""
-"This is an encrypted message.\n"
-"Click for more information. "
-msgstr ""
-"Dit is een versleuteld bericht.\n"
-"Klik hier voor meer informatie. "
-
-#: src/mail.cpp:325
+#: src/mail.cpp:324
 msgid ""
 "Not all attachments were encrypted or signed.\n"
 "The unsigned / unencrypted attachments are:\n"
@@ -412,7 +299,7 @@ msgstr ""
 "De niet-versleutelde/ondertekende bijlagen zijn:\n"
 "\n"
 
-#: src/mail.cpp:330
+#: src/mail.cpp:329
 msgid ""
 "Not all attachments were signed.\n"
 "The unsigned attachments are:\n"
@@ -422,7 +309,7 @@ msgstr ""
 "De niet-ondertekende bijlagen zijn:\n"
 "\n"
 
-#: src/mail.cpp:335
+#: src/mail.cpp:334
 msgid ""
 "Not all attachments were encrypted.\n"
 "The unencrypted attachments are:\n"
@@ -432,7 +319,7 @@ msgstr ""
 "De niet-versleutelde bijlagen zijn:\n"
 "\n"
 
-#: src/mail.cpp:375
+#: src/mail.cpp:374
 msgid ""
 "Note: The attachments may be encrypted or signed on a file level but the "
 "GpgOL status does not apply to them."
@@ -440,11 +327,11 @@ msgstr ""
 "Let op: De bijlagen zouden op bestands-niveau versleuteld of ondertekend "
 "kunnen zijn, maar de GpgOL-status is daarop niet van toepassing."
 
-#: src/mail.cpp:378
+#: src/mail.cpp:377
 msgid "GpgOL Warning"
 msgstr "GpgOL Waarschuwing"
 
-#: src/mail.cpp:836
+#: src/mail.cpp:835
 #, c-format
 msgid ""
 "Crypto operation failed:\n"
@@ -453,11 +340,11 @@ msgstr ""
 "Crypto-bewerking mislukt:\n"
 "(%s)"
 
-#: src/mail.cpp:937
+#: src/mail.cpp:936
 msgid "Pubkey directory confirmation"
 msgstr "Bevestiging van map publieke sleutel"
 
-#: src/mail.cpp:938
+#: src/mail.cpp:937
 msgid ""
 "This is a confirmation request to publish your Pubkey in the directory for "
 "your domain.\n"
@@ -471,19 +358,19 @@ msgstr ""
 "<p>Als u niet heeft verzocht om uw publieke sleutel in de map van uw "
 "provider te publiceren, negeer dan dit bericht.</p>\n"
 
-#: src/mail.cpp:946
+#: src/mail.cpp:945
 msgid "message"
 msgstr "bericht"
 
-#: src/mail.cpp:947
+#: src/mail.cpp:946
 msgid "Please wait while the message is being decrypted / verified..."
 msgstr "Een moment geduld voordat het bericht is ontcijferd / geverifieerd..."
 
-#: src/mail.cpp:1246
+#: src/mail.cpp:1245
 msgid "GpgOL: Oops, G Suite Sync account detected"
 msgstr "GpgOL: Oeps, G Suite Sync account gevonden"
 
-#: src/mail.cpp:1248
+#: src/mail.cpp:1247
 msgid ""
 "G Suite Sync breaks outgoing crypto mails with attachments.\n"
 "Using crypto and attachments with G Suite Sync is not supported.\n"
@@ -495,97 +382,97 @@ msgstr ""
 "\n"
 "Zie: https://dev.gnupg.org/T3545 voor details."
 
-#: src/mail.cpp:2066
+#: src/mail.cpp:2065
 msgid "Security Level 4"
 msgstr "Veiligheidsniveau 4"
 
-#: src/mail.cpp:2070
+#: src/mail.cpp:2069
 msgid "Trust Level 4"
 msgstr "Vertrouwensniveau 4"
 
-#: src/mail.cpp:2074
+#: src/mail.cpp:2073
 msgid "Security Level 3"
 msgstr "Veiligheidsniveau 3"
 
-#: src/mail.cpp:2078
+#: src/mail.cpp:2077
 msgid "Trust Level 3"
 msgstr "Vertrouwensniveau 3"
 
-#: src/mail.cpp:2082
+#: src/mail.cpp:2081
 msgid "Security Level 2"
 msgstr "Veiligheidsniveau 2"
 
-#: src/mail.cpp:2086
+#: src/mail.cpp:2085
 msgid "Trust Level 2"
 msgstr "Vertrouwensniveau 2"
 
-#: src/mail.cpp:2090
+#: src/mail.cpp:2089
 msgid "Encrypted"
 msgstr "Versleuteld"
 
-#: src/mail.cpp:2099 src/mail.cpp:2101 src/ribbon-callbacks.cpp:1646
+#: src/mail.cpp:2098 src/mail.cpp:2100 src/ribbon-callbacks.cpp:1643
 msgid "Insecure"
 msgstr "Onveilig"
 
-#: src/mail.cpp:2113
+#: src/mail.cpp:2112
 msgid "Signed and encrypted message"
 msgstr "Ondertekend en versleuteld bericht"
 
-#: src/mail.cpp:2117
+#: src/mail.cpp:2116
 msgid "Signed message"
 msgstr "Ondertekend bericht"
 
-#: src/mail.cpp:2121
+#: src/mail.cpp:2120
 msgid "Encrypted message"
 msgstr "Versleuteld bericht"
 
-#: src/mail.cpp:2124 src/ribbon-callbacks.cpp:1669
+#: src/mail.cpp:2123 src/ribbon-callbacks.cpp:1666
 msgid "Insecure message"
 msgstr "Onveilig bericht"
 
-#: src/mail.cpp:2135 src/mail.cpp:2146
+#: src/mail.cpp:2134 src/mail.cpp:2145
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
 "Het is niet zeker wie het bericht heeft verzonden of onderweg aangepast of "
 "gelezen heeft."
 
-#: src/mail.cpp:2138
+#: src/mail.cpp:2137
 msgid "The message was signed but the verification failed with:"
 msgstr "Het bericht is ondertekend, maar de verificatie is mislukt met:"
 
-#: src/mail.cpp:2156
+#: src/mail.cpp:2155
 msgid "The encryption was VS-NfD-compliant."
 msgstr "De versleuteling is conform VS-NfD."
 
-#: src/mail.cpp:2160
+#: src/mail.cpp:2159
 msgid "The encryption was not VS-NfD-compliant."
 msgstr "De versleuteling is niet conform VS-NfD."
 
-#: src/mail.cpp:2164
+#: src/mail.cpp:2163
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
 "Het is niet zeker wie dit bericht heeft verzonden omdat het niet is "
 "ondertekend"
 
-#: src/mail.cpp:2187
+#: src/mail.cpp:2186
 msgid "You signed this message."
 msgstr "U heeft dit bericht ondertekend."
 
-#: src/mail.cpp:2191
+#: src/mail.cpp:2190
 msgid "The senders identity was certified by yourself."
 msgstr "De identiteit van de verzender is door uzelf gecertificeerd."
 
-#: src/mail.cpp:2195
+#: src/mail.cpp:2194
 msgid "The sender is allowed to certify identities for you."
 msgstr "De verzender heeft toestemming om identiteiten voor u te certificeren."
 
-#: src/mail.cpp:2208
+#: src/mail.cpp:2207
 msgid "The senders identity was certified by several trusted people."
 msgstr ""
 "De identiteit van de verzender is gecertificeerd door verschillende "
 "vertrouwde mensen."
 
-#: src/mail.cpp:2213
+#: src/mail.cpp:2212
 #, c-format
 msgid ""
 "The senders identity is certified by the trusted issuer:\n"
@@ -595,13 +482,13 @@ msgstr ""
 "verlener:\n"
 "'%s'\n"
 
-#: src/mail.cpp:2221
+#: src/mail.cpp:2220
 msgid "Some trusted people have certified the senders identity."
 msgstr ""
 "Enkele vertrouwde personen hebben de identiteit van de verzender "
 "gecertificeerd."
 
-#: src/mail.cpp:2231
+#: src/mail.cpp:2230
 #, c-format
 msgid ""
 "The senders address is trusted, because you have established a communication "
@@ -612,11 +499,11 @@ msgstr ""
 "geschiedenis heb opgebouwd met dit adres vanaf %s.\n"
 "U heeft sindsdien %i berichten versleuteld en %i berichten geverifieerd."
 
-#: src/mail.cpp:2247
+#: src/mail.cpp:2246
 msgid "The senders signature was verified for the first time."
 msgstr "De handtekening van de verzender is voor het eerst geverifieerd."
 
-#: src/mail.cpp:2254
+#: src/mail.cpp:2253
 #, c-format
 msgid ""
 "The senders address is not trustworthy yet because you only verified %i "
@@ -625,70 +512,70 @@ msgstr ""
 "Het adres van de verzender is nog niet betrouwbaar omdat u nog maar %i "
 "berichten heeft geverifieerd en %i berichten heeft versleuteld sinds %s."
 
-#: src/mail.cpp:2268
+#: src/mail.cpp:2267
 msgid "But the sender address is not trustworthy because:"
 msgstr "Maar het adres van de verzender is niet betrouwbaar vanwege:"
 
-#: src/mail.cpp:2269
+#: src/mail.cpp:2268
 msgid "The sender address is not trustworthy because:"
 msgstr "Het adres van de verzender is niet betrouwbaar vanwege:"
 
-#: src/mail.cpp:2277
+#: src/mail.cpp:2276
 msgid "The signature is invalid: \n"
 msgstr "De handtekening is ongeldig:\n"
 
-#: src/mail.cpp:2282
+#: src/mail.cpp:2281
 msgid "There was an error verifying the signature.\n"
 msgstr "Fout bij het verifiëren van de handtekening.\n"
 
-#: src/mail.cpp:2286
+#: src/mail.cpp:2285
 msgid "The signature is expired.\n"
 msgstr "De handtekening is verlopen.\n"
 
-#: src/mail.cpp:2290
+#: src/mail.cpp:2289
 msgid "The used key"
 msgstr "De gebruikte sleutel"
 
-#: src/mail.cpp:2290
+#: src/mail.cpp:2289
 msgid "The used certificate"
 msgstr "Het gebruikte certificaat"
 
-#: src/mail.cpp:2298
+#: src/mail.cpp:2297
 msgid "is not available."
 msgstr "is niet beschikbaar."
 
-#: src/mail.cpp:2302
+#: src/mail.cpp:2301
 msgid "is revoked."
 msgstr "is ingetrokken."
 
-#: src/mail.cpp:2306
+#: src/mail.cpp:2305
 msgid "is expired."
 msgstr "is verlopen."
 
-#: src/mail.cpp:2310
+#: src/mail.cpp:2309
 msgid "is not meant for signing."
 msgstr "is niet bedoeld voor ondertekening."
 
-#: src/mail.cpp:2314 src/mail.cpp:2318
+#: src/mail.cpp:2313 src/mail.cpp:2317
 msgid "could not be checked for revocation."
 msgstr "kan niet worden geverifieerd op intrekking."
 
-#: src/mail.cpp:2323
+#: src/mail.cpp:2322
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
 "is niet dezelfde als de sleutel die in het verleden voor dit adres is "
 "gebruikt."
 
-#: src/mail.cpp:2329
+#: src/mail.cpp:2328
 #, c-format
 msgid "does not claim the address: \"%s\"."
 msgstr "claimt het adres: \"%s\" niet."
 
-#: src/mail.cpp:2342
+#: src/mail.cpp:2341
 msgid "is not certified by any trustworthy key."
 msgstr "is niet certificeerd door een betrouwbare sleutel."
 
-#: src/mail.cpp:2346
+#: src/mail.cpp:2345
 msgid ""
 "is not certified by a trustworthy Certificate Authority or the Certificate "
 "Authority is unknown."
@@ -696,56 +583,56 @@ msgstr ""
 "is niet gecertificeerd door een betrouwbare certificeringsinstantie of de "
 "certificeringsinstantie is onbekend."
 
-#: src/mail.cpp:2351
+#: src/mail.cpp:2350
 msgid "The sender marked this address as revoked."
 msgstr "De verzender heeft dit adres als ingetrokken gemarkeerd."
 
-#: src/mail.cpp:2355
+#: src/mail.cpp:2354
 msgid "is marked as not trustworthy."
 msgstr "is gemarkeerd als onbetrouwbaar."
 
-#: src/mail.cpp:2365
+#: src/mail.cpp:2364
 msgid "The signature is VS-NfD-compliant."
 msgstr "De handtekening is conform VS-NfD."
 
-#: src/mail.cpp:2369
+#: src/mail.cpp:2368
 msgid "The signature is not VS-NfD-compliant."
 msgstr "De handtekening is niet conform VS-NfD."
 
-#: src/mail.cpp:2377
+#: src/mail.cpp:2376
 msgid "The encryption is VS-NfD-compliant."
 msgstr "De versleuteling is conform VS-NfD."
 
-#: src/mail.cpp:2381
+#: src/mail.cpp:2380
 msgid "The encryption is not VS-NfD-compliant."
 msgstr "De versleuteling is niet conform VS-NfD."
 
-#: src/mail.cpp:2392
+#: src/mail.cpp:2391
 msgid "Click here to change the key used for this address."
 msgstr "Klik hier om de sleutel voor dit adres te wijzigen."
 
-#: src/mail.cpp:2396
+#: src/mail.cpp:2395
 msgid "Click here for details about the key."
 msgstr "Klik hier voor details over de sleutel."
 
-#: src/mail.cpp:2397
+#: src/mail.cpp:2396
 msgid "Click here for details about the certificate."
 msgstr "Klik hier voor details over het certificaat."
 
-#: src/mail.cpp:2401
+#: src/mail.cpp:2400
 msgid "Click here to search the key on the configured keyserver."
 msgstr "Klik hier om de sleutel op de geconfigureerde keyserver te zoeken."
 
-#: src/mail.cpp:2402
+#: src/mail.cpp:2401
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 "Klik hier om het certificaat op de geconfigureerde X509 keyserver te zoeken."
 
-#: src/mail.cpp:2723
+#: src/mail.cpp:2722
 msgid "GpgOL: Encryption not possible!"
 msgstr "GpgOL: Versleutelen niet mogelijk!"
 
-#: src/mail.cpp:2725
+#: src/mail.cpp:2724
 msgid ""
 "Outlook returned an error when trying to send the encrypted mail.\n"
 "\n"
@@ -762,16 +649,6 @@ msgstr ""
 "Als het probleem nog steeds optreedt, overweeg dan een versleutelde bijlage "
 "te gebruiken,\n"
 "of stap over naar PGP/Inline in de opties van GpgOL."
-
-#: src/mailitem.cpp:160 src/message-events.cpp:279
-msgid ""
-"Sorry, we can only encrypt plain text messages and\n"
-"no RTF messages. Please make sure that only the text\n"
-"format has been selected."
-msgstr ""
-"Sorry, we kunnen alleen platte tekstberichten versleutelen en\n"
-"geen RTF-berichten. Zorg ervoor dat de optie \"Tekst zonder opmaak\"\n"
-"geselecteerd is."
 
 #: src/mailitem-events.cpp:313 src/mailitem-events.cpp:805
 msgid "Sorry, that's not possible, yet"
@@ -809,243 +686,22 @@ msgstr ""
 "Ze kunnen niet permanent verwijderd worden en zullen de volgende keer dat "
 "dit bericht wordt geopend, weer getoond worden."
 
-#: src/main.c:466
+#: src/main.c:416
 #, c-format
 msgid "Note: Using compatibility flags: %s"
 msgstr "Let op: De volgende compatibiliteits-opties worden gebruikt: %s"
 
-#: src/mapihelp.cpp:1923 src/mapihelp.cpp:1931 src/mapihelp.cpp:1939
+#: src/mapihelp.cpp:1922 src/mapihelp.cpp:1930 src/mapihelp.cpp:1938
 msgid "[no subject]"
 msgstr "[geen onderwerp]"
 
-#: src/mapihelp.cpp:2564
-msgid ""
-"[The content of this message is not visible because it has been decrypted by "
-"another Outlook session.  Use the \"decrypt/verify\" command to make it "
-"visible]"
-msgstr ""
-"[De inhoud van dit bericht is niet zichtbaar omdat het in een andere sessie "
-"van Outlook is ontcijferd. Gebruik het \"Ontcijferen/Verifiëren\"-commando "
-"om het zichtbaar te maken]"
-
-#: src/mapihelp.cpp:3458
+#: src/mapihelp.cpp:3382
 msgid ""
 "[The content of this message is not visible due to an processing error in "
 "GpgOL.]"
 msgstr ""
 "[De inhoud van dit bericht is niet zichtbaar door een verwerkingsfout in "
 "GpgOL.]"
-
-#: src/message.cpp:181
-msgid "[Crypto operation failed - can't show the body of the message]"
-msgstr ""
-"[De crypto-handeling is mislukt - de hoofdtekst van het bericht kan niet "
-"weergegeven worden]"
-
-#: src/message.cpp:283
-#, c-format
-msgid ""
-"Signature status: %s\n"
-"Message class ..: %s\n"
-"MIME structure .:\n"
-"%s"
-msgstr ""
-"Status handtekening: %s\n"
-"Berichtklasse .....: %s\n"
-"MIME structuur ....:\n"
-"%s"
-
-#: src/message.cpp:291
-msgid "GpgOL - Message Information"
-msgstr "GpgOL - Berichtinformatie"
-
-#: src/message.cpp:523
-msgid "Signature verification of an encrypted message is not possible."
-msgstr ""
-"Verificatie van de handtekening van een versleuteld bericht is niet mogelijk."
-
-#: src/message.cpp:534
-msgid "Signature verification of this message class is not possible."
-msgstr ""
-"Verificatie van de handtekening van deze berichtklasse is niet mogelijk."
-
-#: src/message.cpp:537
-msgid ""
-"Signature verification of this S/MIME message is not possible.  Please check "
-"that S/MIME processing has been enabled."
-msgstr ""
-"Verificatie van de handtekening van dit S/MIME-bericht is niet mogelijk. "
-"Controleer dat S/MIME-verwerking is ingeschakeld."
-
-#: src/message.cpp:541
-msgid "This message has no signature."
-msgstr "Dit bericht heeft geen handtekening."
-
-#: src/message.cpp:710
-msgid "This message is not encrypted."
-msgstr "Dit bericht is niet versleuteld."
-
-#: src/message.cpp:938
-#, c-format
-msgid ""
-"Decryption failed\n"
-"(%s)"
-msgstr ""
-"Ontcijferen mislukt\n"
-"(%s)"
-
-#: src/message.cpp:1109
-msgid "No recipients to encrypt to are given"
-msgstr "Er zijn geen ontvangers voor de versleuteling opgegeven"
-
-#: src/message.cpp:1124 src/message.cpp:1151
-msgid "Encrypting or signing an empty message is not possible."
-msgstr ""
-"Het versleutelen of ondertekenen van een leeg bericht is niet mogelijk."
-
-#: src/message.cpp:1132
-#, c-format
-msgid "Encryption failed (%s)"
-msgstr "Versleutelen mislukt (%s)"
-
-#: src/message.cpp:1160
-#, c-format
-msgid "Signing failed (%s)"
-msgstr "Ondertekenen mislukt (%s)"
-
-#: src/mimeparser.c:1213
-msgid "Error writing to stream"
-msgstr "Fout bji het schrijven naar de stream"
-
-#: src/mimeparser.c:1214
-msgid "I/O-Error"
-msgstr "I/O-fout"
-
-#: src/olflange.cpp:568
-msgid "Welcome to GpgOL "
-msgstr "Welkom bij GpgOL "
-
-#: src/olflange.cpp:569
-msgid ""
-"GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
-"support to Outlook 2003 and 2007.\n"
-"\n"
-"Although we tested this software extensively, we can't give you any "
-"guarantee that it will work as expected. The programming interface we are "
-"using has not been properly documented by Microsoft and thus the "
-"functionality of GpgOL may cease to work with an update of your Windows "
-"system.\n"
-"\n"
-"WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START TO USE GPGOL ON "
-"ANY SENSITIVE DATA!\n"
-"\n"
-"There are some known problems, the most severe being that sending encrypted "
-"or signed mails using an Exchange based account does not work.  Using GpgOL "
-"along with other Outlook plugins may in some cases not work.\n"
-msgstr ""
-"GpgOL voegt geïntegreerde ondersteuning toe voor versleuteling en digitale "
-"ondertekening op basis van OpenPGP en S/MIME aan Outlook 2003 en 2007.\n"
-"\n"
-"Hoewel we deze software uitvoerig testen, kunnen we geen enkele garantie "
-"geven dat het werkt zoals verwacht. De programmeer-interface die we "
-"gebruiker is niet goed gedocumenteerd door Microsoft en dus kan het zijn dat "
-"de functionaliteit van GpgOL niet meer werkt met een updat van uw Windows-"
-"systeem.\n"
-"\n"
-"HET WORDT STERK AANGERADEN OM VERSLEUTELINGS-TESTEN UIT TE VOEREN ALVORENS U "
-"GPGOL OP VERTROUWELIJKE GEGEVENS GEBRUIKT!\n"
-"\n"
-"Er zijn enkele bekende problemen, waarvan het niet kunnen verzenden van "
-"versleutelde of ondertekende e-mail met een op Exchange gebaseerd account de "
-"meest ernstige is. Het gebruik  van GpgOL met andere Outlook-"
-"invoegtoepassingen kan in bepaalde gevallen niet werken.\n"
-
-#: src/olflange.cpp:595
-msgid ""
-"You have installed a new version of GpgOL.\n"
-"\n"
-"Please open the option dialog and confirm that the settings are correct for "
-"your needs.  The option dialog can be found in the main menu at: Extras-"
-">Options->GpgOL.\n"
-msgstr ""
-"U heeft een nieuwe versie van GpgOL geïnstalleerd.\n"
-"\n"
-"Open het opties-scherm en controleer of de instellingen nog correct zijn. "
-"Het opties-scherm kan gevonden worden via het hoofdmenu via Extras->Opties-"
-">GpgOL.\n"
-
-#: src/olflange.cpp:796
-msgid ""
-"This version of Outlook is too old!\n"
-"\n"
-"At least versions of Outlook 2003 older than SP2 exhibit crashes when "
-"sending messages and messages might get stuck in the outgoing queue.\n"
-"\n"
-"Please update at least to SP2 before trying to send a message"
-msgstr ""
-"Deze versie van Outlook is te oud!\n"
-"\n"
-"Versies van Outlook 2003 ouder dan SP2 ondervinden crashes bij het verzenden "
-"van berichten en berichten kunnen blijven hangen in de uitgaande wachtrij.\n"
-"\n"
-"Update naar tenmiste SP2 alvorens een bericht te verzenden"
-
-#: src/olflange.cpp:811
-msgid ""
-"GpgOL for Outlook 2003 / 2007 is longer maintained.\n"
-"\n"
-"Please note that any support may be removed in a future version."
-msgstr ""
-"GpgOL voor Outlook 2003 / 2007 word niet langer onderhouden.\n"
-"\n"
-"Hou er rekening mee dat de ondersteuning in een toekomstige versie kan "
-"worden verwijderd."
-
-#: src/olflange-dlgs.cpp:50
-msgid "Message receiving"
-msgstr "Ontvangen van bericht"
-
-#: src/olflange-dlgs.cpp:52
-msgid "Show HTML view if possible"
-msgstr "HTML-weergave tonen indien mogelijk"
-
-#: src/olflange-dlgs.cpp:53
-msgid "Present encrypted message as attachment"
-msgstr "Het versleutelde bericht als bijlage aanbieden"
-
-#: src/olflange-dlgs.cpp:56
-msgid "Crypto Engine"
-msgstr "Versleutelingsengine"
-
-#. TRANSLATORS: See the source for the full english text.
-#: src/olflange-dlgs.cpp:256
-msgid "-#GpgOLFullHelpText#-"
-msgstr ""
-"GpgOL is een invoegtoepassing voor Outlook die het mogelijk maakt\n"
-"om berichten te versleutelen en ondertekenen met de OpenPGP- en\n"
-"S/MIME-standaarden.\n"
-"GpgOL gebruikt de GnuPG-software (http://www.gnupg.org). De meest\n"
-"recente uitgave-informatie kan worden ingezien door op het logo\n"
-"te klikken.\n"
-"\n"
-"GpgOL is vrijwe software; u kunt het verspreiden en/of aanpassen\n"
-"onder de voorwaarden van de GNU Lesser General Public License\n"
-"zoals gepubliceerd bij de Free Software Foundation; zowel versie\n"
-"2.1 van de licentie, of (naar eigen keuze) elke nieuwere versie.\n"
-"\n"
-"GpgOL wordt verspreid in de hoop dat het bruikbaar zal zijn,\n"
-"maar ZONDER ENIGE GARANTIE; zonder ook maar de impliciete garantie\n"
-"van VERKOOPBAARHEID of TOEPASSING VOOR EEN BEPAALD DOEL. Zie de\n"
-"GNU Lesser General Public LIcense voor meer details.\n"
-"\n"
-"U zou een kopie van de GNU Lesser General Public License\n"
-"ontvangen moeten hebben bij dit programma; zo niet,\n"
-"zie <http://www.gnu.org/licenses/>."
-
-#: src/olflange-dlgs.cpp:262
-#, c-format
-msgid "This is GpgOL version %s"
-msgstr "Dit is GpgOL versie %s"
 
 #: src/parsecontroller.cpp:162
 msgid "Unknown Key:"
@@ -1083,47 +739,47 @@ msgstr ""
 "GnuPG kon niet gevonden worden. Controleer dat GnuPG of Gpg4win correct "
 "geïnstalleerd is."
 
-#: src/ribbon-callbacks.cpp:262
+#: src/ribbon-callbacks.cpp:258
 msgid "Please select text to encrypt."
 msgstr "Selecteer een tekst om te versleutelen."
 
-#: src/ribbon-callbacks.cpp:274
+#: src/ribbon-callbacks.cpp:270
 msgid "Textbody empty."
 msgstr "Hoofdtekst leeg."
 
-#: src/ribbon-callbacks.cpp:323 src/ribbon-callbacks.cpp:1077
+#: src/ribbon-callbacks.cpp:319 src/ribbon-callbacks.cpp:1074
 msgid "Please add at least one recipent."
 msgstr "Voeg ten minste één ontvanger toe."
 
-#: src/ribbon-callbacks.cpp:685
+#: src/ribbon-callbacks.cpp:682
 msgid "Please select a Mail."
 msgstr "Selecteer een e-mailbericht."
 
-#: src/ribbon-callbacks.cpp:699
+#: src/ribbon-callbacks.cpp:696
 msgid "Please select the data you wish to decrypt."
 msgstr "Selecteer de gegevens om te ontcijferen."
 
-#: src/ribbon-callbacks.cpp:712
+#: src/ribbon-callbacks.cpp:709
 msgid "Nothing to decrypt."
 msgstr "Niets om te ontcijferen."
 
-#: src/ribbon-callbacks.cpp:891
+#: src/ribbon-callbacks.cpp:888
 msgid "Plain text"
 msgstr "Platte tekst"
 
-#: src/ribbon-callbacks.cpp:892
+#: src/ribbon-callbacks.cpp:889
 msgid "Signed text"
 msgstr "Ondertekende tekst"
 
-#: src/ribbon-callbacks.cpp:1084
+#: src/ribbon-callbacks.cpp:1081
 msgid "Select file to encrypt"
 msgstr "Selecteer een bestand om te versleutelen"
 
-#: src/ribbon-callbacks.cpp:1673
+#: src/ribbon-callbacks.cpp:1670
 msgid "No message selected"
 msgstr "Geen bericht geselecteerd"
 
-#: src/ribbon-callbacks.cpp:1730
+#: src/ribbon-callbacks.cpp:1727
 #, c-format
 msgid ""
 "The message was not cryptographically signed.\n"
@@ -1134,7 +790,7 @@ msgstr ""
 "Er is geen aanvullende informatie beschikbaar over of het daadwerkelijk door "
 "'%s' is verzonden of dat iemand het afzender-adres heeft vervalst."
 
-#: src/ribbon-callbacks.cpp:1741
+#: src/ribbon-callbacks.cpp:1738
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
@@ -1221,6 +877,300 @@ msgstr "Versleutelen..."
 #: src/cryptcontroller.cpp:1056
 msgid "Signing..."
 msgstr "Ondertekenen..."
+
+#~ msgid "Error creating file for attachment."
+#~ msgstr "Fout bij het maken van bestand voor de bijlage"
+
+#~ msgid "Error reading attachment."
+#~ msgstr "Fout bij het lezen van de bijlage"
+
+#~ msgid "Error writing attachment."
+#~ msgstr "Fout bij het schrijven van de bijlage"
+
+#~ msgid ""
+#~ "Sorry, we are not able to decrypt this attachment.\n"
+#~ "\n"
+#~ "Please use the decrypt/verify button to decrypt the\n"
+#~ "entire message again.  Then open this attachment."
+#~ msgstr ""
+#~ "Sorry, we kunnen de bijlage niet ontcijferen.\n"
+#~ "\n"
+#~ "Gebruik de knop \"Ontcijferen/verifiëren\" om het hele\n"
+#~ "bericht opnieuw te ontcijferen. Open daarna de bijlage."
+
+#~ msgid "Could not start certificate manager"
+#~ msgstr "De certificaat-manager kan niet worden gestart"
+
+#~ msgid "GnuPG Certificate &Manager"
+#~ msgstr "GnuPG Certificaat-manager"
+
+#~ msgid "Remove GpgOL flags from this folder"
+#~ msgstr "GpgOL-vlaggen van deze map verwijderen"
+
+#~ msgid "Open the certificate manager"
+#~ msgstr "De certificaat-manager openen"
+
+#~ msgid ""
+#~ "You are about to start the process of reversing messages created by GpgOL "
+#~ "to prepare deinstalling of GpgOL. Running this command will put GpgOL "
+#~ "into a disabled state so that messages are not anymore processed by "
+#~ "GpgOL.\n"
+#~ "\n"
+#~ "You should convert all folders one after the other with this command, "
+#~ "close Outlook and then deinstall GpgOL.\n"
+#~ "\n"
+#~ "Note that if you start Outlook again with GpgOL still being installed, "
+#~ "GpgOL will again process messages."
+#~ msgstr ""
+#~ "U staat op het punt om berichten terug te draaien die zijn gemaakt door "
+#~ "GpgOL om het deïnstalleren van GpgOL voor te bereiden. Door het uitvoeren "
+#~ "van dit commando zal GpgOL in een uitgeschakelde toestand komen, zodat "
+#~ "berichten niet meer door GpgOL verwerkt worden.\n"
+#~ "\n"
+#~ "U moet alle mappen een voor een converteren met dit commando, Outlook "
+#~ "afsluien en dan GpgOL deïnstalleren.\n"
+#~ "\n"
+#~ "Let op dat GpgOL deze bestanden opnieuw zal verwerekn als u Outlook start "
+#~ "terwijl GpgOL nog geïnstalleerd is."
+
+#~ msgid "Do you want to revert this folder?"
+#~ msgstr "Wil je deze map herstellen?"
+
+#~ msgid "&encrypt message with GnuPG"
+#~ msgstr "bericht met GnuPG versleutelen"
+
+#~ msgid "&sign message with GnuPG"
+#~ msgstr "bericht met GnuPG ondertekenen"
+
+#~ msgid "GpgOL Decrypt/Verify"
+#~ msgstr "GpgOL Ontcijferen/Verifiëren"
+
+#~ msgid "Encrypt message with GnuPG"
+#~ msgstr "Bericht met GnuPG versleutelen"
+
+#~ msgid "Sign message with GnuPG"
+#~ msgstr "Bericht met GnuPG ondertekenen"
+
+#~ msgid ""
+#~ "This is a signed and encrypted message.\n"
+#~ "Click for more information. "
+#~ msgstr ""
+#~ "Dit is een ondertekend en versleuteld bericht.\n"
+#~ "Klik hier voor meer informatie. "
+
+#~ msgid ""
+#~ "This is a signed message.\n"
+#~ "Click for more information. "
+#~ msgstr ""
+#~ "Dit is een ondertekend bericht.\n"
+#~ "Klik hier voor meer informatie. "
+
+#~ msgid ""
+#~ "This is an encrypted message.\n"
+#~ "Click for more information. "
+#~ msgstr ""
+#~ "Dit is een versleuteld bericht.\n"
+#~ "Klik hier voor meer informatie. "
+
+#~ msgid ""
+#~ "Sorry, we can only encrypt plain text messages and\n"
+#~ "no RTF messages. Please make sure that only the text\n"
+#~ "format has been selected."
+#~ msgstr ""
+#~ "Sorry, we kunnen alleen platte tekstberichten versleutelen en\n"
+#~ "geen RTF-berichten. Zorg ervoor dat de optie \"Tekst zonder opmaak\"\n"
+#~ "geselecteerd is."
+
+#~ msgid ""
+#~ "[The content of this message is not visible because it has been decrypted "
+#~ "by another Outlook session.  Use the \"decrypt/verify\" command to make "
+#~ "it visible]"
+#~ msgstr ""
+#~ "[De inhoud van dit bericht is niet zichtbaar omdat het in een andere "
+#~ "sessie van Outlook is ontcijferd. Gebruik het \"Ontcijferen/Verifiëren\"-"
+#~ "commando om het zichtbaar te maken]"
+
+#~ msgid "[Crypto operation failed - can't show the body of the message]"
+#~ msgstr ""
+#~ "[De crypto-handeling is mislukt - de hoofdtekst van het bericht kan niet "
+#~ "weergegeven worden]"
+
+#~ msgid ""
+#~ "Signature status: %s\n"
+#~ "Message class ..: %s\n"
+#~ "MIME structure .:\n"
+#~ "%s"
+#~ msgstr ""
+#~ "Status handtekening: %s\n"
+#~ "Berichtklasse .....: %s\n"
+#~ "MIME structuur ....:\n"
+#~ "%s"
+
+#~ msgid "GpgOL - Message Information"
+#~ msgstr "GpgOL - Berichtinformatie"
+
+#~ msgid "Signature verification of an encrypted message is not possible."
+#~ msgstr ""
+#~ "Verificatie van de handtekening van een versleuteld bericht is niet "
+#~ "mogelijk."
+
+#~ msgid "Signature verification of this message class is not possible."
+#~ msgstr ""
+#~ "Verificatie van de handtekening van deze berichtklasse is niet mogelijk."
+
+#~ msgid ""
+#~ "Signature verification of this S/MIME message is not possible.  Please "
+#~ "check that S/MIME processing has been enabled."
+#~ msgstr ""
+#~ "Verificatie van de handtekening van dit S/MIME-bericht is niet mogelijk. "
+#~ "Controleer dat S/MIME-verwerking is ingeschakeld."
+
+#~ msgid "This message has no signature."
+#~ msgstr "Dit bericht heeft geen handtekening."
+
+#~ msgid "This message is not encrypted."
+#~ msgstr "Dit bericht is niet versleuteld."
+
+#~ msgid ""
+#~ "Decryption failed\n"
+#~ "(%s)"
+#~ msgstr ""
+#~ "Ontcijferen mislukt\n"
+#~ "(%s)"
+
+#~ msgid "No recipients to encrypt to are given"
+#~ msgstr "Er zijn geen ontvangers voor de versleuteling opgegeven"
+
+#~ msgid "Encrypting or signing an empty message is not possible."
+#~ msgstr ""
+#~ "Het versleutelen of ondertekenen van een leeg bericht is niet mogelijk."
+
+#~ msgid "Encryption failed (%s)"
+#~ msgstr "Versleutelen mislukt (%s)"
+
+#~ msgid "Signing failed (%s)"
+#~ msgstr "Ondertekenen mislukt (%s)"
+
+#~ msgid "Error writing to stream"
+#~ msgstr "Fout bji het schrijven naar de stream"
+
+#~ msgid "I/O-Error"
+#~ msgstr "I/O-fout"
+
+#~ msgid "Welcome to GpgOL "
+#~ msgstr "Welkom bij GpgOL "
+
+#~ msgid ""
+#~ "GpgOL adds integrated OpenPGP and S/MIME encryption and digital signing "
+#~ "support to Outlook 2003 and 2007.\n"
+#~ "\n"
+#~ "Although we tested this software extensively, we can't give you any "
+#~ "guarantee that it will work as expected. The programming interface we are "
+#~ "using has not been properly documented by Microsoft and thus the "
+#~ "functionality of GpgOL may cease to work with an update of your Windows "
+#~ "system.\n"
+#~ "\n"
+#~ "WE STRONGLY ADVISE TO RUN ENCRYPTION TESTS BEFORE YOU START TO USE GPGOL "
+#~ "ON ANY SENSITIVE DATA!\n"
+#~ "\n"
+#~ "There are some known problems, the most severe being that sending "
+#~ "encrypted or signed mails using an Exchange based account does not work.  "
+#~ "Using GpgOL along with other Outlook plugins may in some cases not work.\n"
+#~ msgstr ""
+#~ "GpgOL voegt geïntegreerde ondersteuning toe voor versleuteling en "
+#~ "digitale ondertekening op basis van OpenPGP en S/MIME aan Outlook 2003 en "
+#~ "2007.\n"
+#~ "\n"
+#~ "Hoewel we deze software uitvoerig testen, kunnen we geen enkele garantie "
+#~ "geven dat het werkt zoals verwacht. De programmeer-interface die we "
+#~ "gebruiker is niet goed gedocumenteerd door Microsoft en dus kan het zijn "
+#~ "dat de functionaliteit van GpgOL niet meer werkt met een updat van uw "
+#~ "Windows-systeem.\n"
+#~ "\n"
+#~ "HET WORDT STERK AANGERADEN OM VERSLEUTELINGS-TESTEN UIT TE VOEREN "
+#~ "ALVORENS U GPGOL OP VERTROUWELIJKE GEGEVENS GEBRUIKT!\n"
+#~ "\n"
+#~ "Er zijn enkele bekende problemen, waarvan het niet kunnen verzenden van "
+#~ "versleutelde of ondertekende e-mail met een op Exchange gebaseerd account "
+#~ "de meest ernstige is. Het gebruik  van GpgOL met andere Outlook-"
+#~ "invoegtoepassingen kan in bepaalde gevallen niet werken.\n"
+
+#~ msgid ""
+#~ "You have installed a new version of GpgOL.\n"
+#~ "\n"
+#~ "Please open the option dialog and confirm that the settings are correct "
+#~ "for your needs.  The option dialog can be found in the main menu at: "
+#~ "Extras->Options->GpgOL.\n"
+#~ msgstr ""
+#~ "U heeft een nieuwe versie van GpgOL geïnstalleerd.\n"
+#~ "\n"
+#~ "Open het opties-scherm en controleer of de instellingen nog correct zijn. "
+#~ "Het opties-scherm kan gevonden worden via het hoofdmenu via Extras-"
+#~ ">Opties->GpgOL.\n"
+
+#~ msgid ""
+#~ "This version of Outlook is too old!\n"
+#~ "\n"
+#~ "At least versions of Outlook 2003 older than SP2 exhibit crashes when "
+#~ "sending messages and messages might get stuck in the outgoing queue.\n"
+#~ "\n"
+#~ "Please update at least to SP2 before trying to send a message"
+#~ msgstr ""
+#~ "Deze versie van Outlook is te oud!\n"
+#~ "\n"
+#~ "Versies van Outlook 2003 ouder dan SP2 ondervinden crashes bij het "
+#~ "verzenden van berichten en berichten kunnen blijven hangen in de "
+#~ "uitgaande wachtrij.\n"
+#~ "\n"
+#~ "Update naar tenmiste SP2 alvorens een bericht te verzenden"
+
+#~ msgid ""
+#~ "GpgOL for Outlook 2003 / 2007 is longer maintained.\n"
+#~ "\n"
+#~ "Please note that any support may be removed in a future version."
+#~ msgstr ""
+#~ "GpgOL voor Outlook 2003 / 2007 word niet langer onderhouden.\n"
+#~ "\n"
+#~ "Hou er rekening mee dat de ondersteuning in een toekomstige versie kan "
+#~ "worden verwijderd."
+
+#~ msgid "Message receiving"
+#~ msgstr "Ontvangen van bericht"
+
+#~ msgid "Show HTML view if possible"
+#~ msgstr "HTML-weergave tonen indien mogelijk"
+
+#~ msgid "Present encrypted message as attachment"
+#~ msgstr "Het versleutelde bericht als bijlage aanbieden"
+
+#~ msgid "Crypto Engine"
+#~ msgstr "Versleutelingsengine"
+
+#~ msgid "-#GpgOLFullHelpText#-"
+#~ msgstr ""
+#~ "GpgOL is een invoegtoepassing voor Outlook die het mogelijk maakt\n"
+#~ "om berichten te versleutelen en ondertekenen met de OpenPGP- en\n"
+#~ "S/MIME-standaarden.\n"
+#~ "GpgOL gebruikt de GnuPG-software (http://www.gnupg.org). De meest\n"
+#~ "recente uitgave-informatie kan worden ingezien door op het logo\n"
+#~ "te klikken.\n"
+#~ "\n"
+#~ "GpgOL is vrijwe software; u kunt het verspreiden en/of aanpassen\n"
+#~ "onder de voorwaarden van de GNU Lesser General Public License\n"
+#~ "zoals gepubliceerd bij de Free Software Foundation; zowel versie\n"
+#~ "2.1 van de licentie, of (naar eigen keuze) elke nieuwere versie.\n"
+#~ "\n"
+#~ "GpgOL wordt verspreid in de hoop dat het bruikbaar zal zijn,\n"
+#~ "maar ZONDER ENIGE GARANTIE; zonder ook maar de impliciete garantie\n"
+#~ "van VERKOOPBAARHEID of TOEPASSING VOOR EEN BEPAALD DOEL. Zie de\n"
+#~ "GNU Lesser General Public LIcense voor meer details.\n"
+#~ "\n"
+#~ "U zou een kopie van de GNU Lesser General Public License\n"
+#~ "ontvangen moeten hebben bij dit programma; zo niet,\n"
+#~ "zie <http://www.gnu.org/licenses/>."
+
+#~ msgid "This is GpgOL version %s"
+#~ msgstr "Dit is GpgOL versie %s"
 
 #~ msgid "&Search for OpenPGP keys automatically when encrypting"
 #~ msgstr "Automatisch naar OpenPGP-sleutels zoeken tijdens versleutelen"

@@ -32,10 +32,7 @@
 
 #include "mymapi.h"
 #include "mymapitags.h"
-#include "myexchext.h"
 
-#include "display.h"
-#include "msgcache.h"
 #include "engine.h"
 #include "engine-assuan.h"
 #include "mapihelp.h"

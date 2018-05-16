@@ -28,7 +28,6 @@
 #include "mymapitags.h"
 #include "common.h"
 #include "rfc822parse.h"
-#include "serpent.h"
 #include "mapihelp.h"
 #include "parsetlv.h"
 #include "gpgolstr.h"
@@ -2487,36 +2486,13 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
    attribute is available, the function returns the unprotected
    version of the atatchment. */
 static char *
-attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect, 
-                  int *r_was_protected)
+attach_to_buffer (LPATTACH att, size_t *r_nbytes)
 {
   HRESULT hr;
   LPSTREAM stream;
   STATSTG statInfo;
   ULONG nread;
   char *buffer;
-  symenc_t symenc = NULL;
-
-  if (r_was_protected)
-    *r_was_protected = 0;
-
-  if (unprotect)
-    {
-      ULONG tag;
-      char *iv;
-      size_t ivlen;
-
-      if (!get_gpgolprotectiv_tag ((LPMESSAGE)att, &tag) 
-          && (iv = mapi_get_binary_prop ((LPMESSAGE)att, tag, &ivlen)))
-        {
-          symenc = symenc_open (get_128bit_session_key (), 16, iv, ivlen);
-          xfree (iv);
-          if (!symenc)
-            log_error ("%s:%s: can't open encryption context", 
-                       SRCNAME, __func__);
-        }
-    }
-  
 
   hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
                           0, 0, (LPUNKNOWN*) &stream);
@@ -2534,7 +2510,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
       gpgol_release (stream);
       return NULL;
     }
-      
+
   /* Allocate one byte more so that we can terminate the string.  */
   buffer = (char*)xmalloc ((size_t)statInfo.cbSize.QuadPart + 1);
 
@@ -2554,32 +2530,10 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
     }
   gpgol_release (stream);
 
-  if (buffer && symenc)
-    {
-      symenc_cfb_decrypt (symenc, buffer, buffer, nread);
-      if (nread < 16 || memcmp (buffer, "GpgOL attachment", 16))
-        {
-          xfree (buffer);
-          buffer = native_to_utf8 
-            (_("[The content of this message is not visible because it has "
-               "been decrypted by another Outlook session.  Use the "
-               "\"decrypt/verify\" command to make it visible]"));
-          nread = strlen (buffer);
-        }
-      else
-        {
-          memmove (buffer, buffer+16, nread-16);
-          nread -= 16;
-          if (r_was_protected)
-            *r_was_protected = 1;
-        }
-    }
-
   /* Make sure that the buffer is a C string.  */
   if (buffer)
     buffer[nread] = 0;
 
-  symenc_close (symenc);
   if (r_nbytes)
     *r_nbytes = nread;
   return buffer;
@@ -2591,7 +2545,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes, int unprotect,
    will be stored at R_NBYTES.  If unprotect is true, the atatchment
    will be unprotected.  Returns NULL on failure. */
 char *
-mapi_get_attach (LPMESSAGE message, int unprotect, 
+mapi_get_attach (LPMESSAGE message,
                  mapi_attach_item_t *item, size_t *r_nbytes)
 {
   HRESULT hr;
@@ -2615,7 +2569,7 @@ mapi_get_attach (LPMESSAGE message, int unprotect,
       return NULL;
     }
 
-  buffer = attach_to_buffer (att, r_nbytes, unprotect, NULL);
+  buffer = attach_to_buffer (att, r_nbytes);
   gpgol_release (att);
 
   return buffer;
@@ -3225,36 +3179,6 @@ mapi_has_last_decrypted (LPMESSAGE message)
 }
 
 
-/* Returns True if MESSAGE has a GpgOL Last Decrypted property and
-   that matches the current session. */
-int
-mapi_test_last_decrypted (LPMESSAGE message)
-{
-  HRESULT hr;
-  LPSPropValue propval = NULL;
-  ULONG tag;
-  int yes = 0;
-
-  if (get_gpgollastdecrypted_tag (message, &tag) )
-    goto leave; /* No.  */
-  hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
-  if (FAILED (hr))
-    goto leave; /* No.  */  
-
-  if (PROP_TYPE (propval->ulPropTag) == PT_BINARY
-      && propval->Value.bin.cb == 8
-      && !memcmp (propval->Value.bin.lpb, get_64bit_session_marker (), 8) )
-    yes = 1;
-
-  MAPIFreeBuffer (propval);
- leave:
-  log_debug ("%s:%s: message decrypted during this session: %s\n",
-             SRCNAME, __func__, yes?"yes":"no");
-  return yes;
-}
-
-
-
 /* Helper for mapi_get_gpgol_body_attachment.  */
 static int
 has_gpgol_body_name (LPATTACH obj)
@@ -3427,7 +3351,7 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
               char *charset;
               
               if (get_attach_method (att) == ATTACH_BY_VALUE)
-                body = attach_to_buffer (att, r_nbytes, 1, r_protected);
+                body = attach_to_buffer (att, r_nbytes);
               if (body && (charset = mapi_get_gpgol_charset ((LPMESSAGE)att)))
                 {
                   /* We only support transcoding from Latin-1 for now.  */

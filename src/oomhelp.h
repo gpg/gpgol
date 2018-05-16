@@ -24,7 +24,6 @@
 
 #include <unknwn.h>
 #include "mymapi.h"
-#include "myexchext.h"
 
 #define MSOCONTROLBUTTON    1
 #define MSOCONTROLEDIT      2

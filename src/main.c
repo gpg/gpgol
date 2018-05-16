@@ -29,15 +29,7 @@
 #include "mymapitags.h"
 
 #include "common.h"
-#include "msgcache.h"
 #include "mymapi.h"
-/* The session key used to temporary encrypt attachments.  It is
-   initialized at startup.  */
-static char *the_session_key;
-
-/* The session marker to identify this session.  Its value is not
-  confidential.  It is initialized at startup.  */
-static char *the_session_marker;
 
 /* Local function prototypes. */
 static char *get_locale_dir (void);
@@ -97,26 +89,6 @@ get_crypt_random (size_t nbytes)
     }
   CryptReleaseContext (prov, 0);
   return buffer;
-}
-
-
-/* Initialize the session key and the session marker.  */
-static int
-initialize_session_key (void)
-{
-  the_session_key = get_crypt_random (16+sizeof (unsigned int)+8);
-  if (the_session_key)
-    {
-      /* We use rand() in generate_boundary so we need to seed it. */
-      unsigned int tmp;
-
-      memcpy (&tmp, the_session_key+16, sizeof (unsigned int));
-      srand (tmp);
-
-      /* And save the session marker. */
-      the_session_marker = the_session_key + 16 + sizeof (unsigned int);
-    }
-  return !the_session_key;
 }
 
 
@@ -197,12 +169,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
       if (initialize_main ())
         return FALSE;
       i18n_init ();
-      if (initialize_session_key ())
-        return FALSE;
-      if (initialize_msgcache ())
-        return FALSE;
-      if (initialize_inspectors ())
-        return FALSE;
       init_options ();
     }
   else if (reason == DLL_PROCESS_DETACH)
@@ -212,22 +178,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 
   return TRUE;
 }
-
-/* Return the static session key we are using for temporary encrypting
-   attachments.  The session key is guaranteed to be available.  */
-const void *
-get_128bit_session_key (void)
-{
-  return the_session_key;
-}
-
-
-const void *
-get_64bit_session_marker (void)
-{
-  return the_session_marker;
-}
-
 
 /* Return a new allocated IV of size NBYTES.  Caller must free it.  On
    error NULL is returned. */
