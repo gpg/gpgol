@@ -357,14 +357,6 @@ read_options (void)
   opt.body_as_attachment = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
-#ifdef MIME_SEND
-  opt.mime_ui = 1;
-#else
-  load_extension_value ("mimeUI", &val);
-  opt.mime_ui = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-#endif
-
   load_extension_value ("inlinePGP", &val);
   opt.inline_pgp = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
@@ -446,7 +438,6 @@ write_options (void)
     {"formsRevision",            1, opt.forms_revision, NULL},
     {"announceNumber",           1, opt.announce_number, NULL},
     {"bodyAsAttachment",         0, opt.body_as_attachment, NULL},
-    {"mimeUI", MIME_UI_DEFAULT, opt.mime_ui, NULL},
     {"inlinePGP",                0, opt.inline_pgp, NULL},
     {"autoresolve",              0, opt.autoresolve, NULL},
     {"replyCrypt",               0, opt.reply_crypt, NULL},

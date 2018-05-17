@@ -63,10 +63,6 @@ ULONG addinLocks = 0;
 
 bool can_unload = false;
 
-/* Invalidating the interface does not take a nice effect so we store
-   this option in a global variable. */
-bool use_mime_ui = false;
-
 static std::list<LPDISPATCH> g_ribbon_uis;
 
 static GpgolAddin * addin_instance = NULL;
@@ -179,7 +175,6 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0),
   m_hook(nullptr)
 {
   read_options ();
-  use_mime_ui = opt.mime_ui;
   /* RibbonExtender is it's own object to avoid the pitfalls of
      multiple inheritance
   */
@@ -677,10 +672,6 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
          and we give it one of our own dispIds's that are later handled in
          the invoke part */
       ID_MAPPER (L"attachmentDecryptCallback", ID_CMD_DECRYPT)
-      ID_MAPPER (L"encryptSelection", ID_CMD_ENCRYPT_SELECTION)
-      ID_MAPPER (L"decryptSelection", ID_CMD_DECRYPT_SELECTION)
-      ID_MAPPER (L"startCertManager", ID_CMD_CERT_MANAGER)
-      ID_MAPPER (L"btnCertManager", ID_BTN_CERTMANAGER)
       ID_MAPPER (L"btnDecrypt", ID_BTN_DECRYPT)
       ID_MAPPER (L"btnDecryptLarge", ID_BTN_DECRYPT_LARGE)
       ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
@@ -692,12 +683,6 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnSignLarge", ID_BTN_SIGN_LARGE)
       ID_MAPPER (L"btnVerifyLarge", ID_BTN_VERIFY_LARGE)
       ID_MAPPER (L"btnSigstateLarge", ID_BTN_SIGSTATE_LARGE)
-      ID_MAPPER (L"encryptBody", ID_CMD_ENCRYPT_BODY)
-      ID_MAPPER (L"decryptBody", ID_CMD_DECRYPT_BODY)
-      ID_MAPPER (L"addEncSignedAttachment", ID_CMD_ATT_ENCSIGN_FILE)
-      ID_MAPPER (L"addEncAttachment", ID_CMD_ATT_ENC_FILE)
-      ID_MAPPER (L"signBody", ID_CMD_SIGN_BODY)
-      ID_MAPPER (L"verifyBody", ID_CMD_VERIFY_BODY)
 
       /* MIME support: */
       ID_MAPPER (L"encryptMime", ID_CMD_MIME_ENCRYPT)
@@ -753,24 +738,6 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         /* We can assume that this points to an implementation of
            IRibbonControl as we know the callback dispid. */
         return decryptAttachments (parms->rgvarg[0].pdispVal);
-      case ID_CMD_ENCRYPT_SELECTION:
-        return encryptSelection (parms->rgvarg[0].pdispVal);
-      case ID_CMD_DECRYPT_SELECTION:
-        return decryptSelection (parms->rgvarg[0].pdispVal);
-      case ID_CMD_CERT_MANAGER:
-        return startCertManager (parms->rgvarg[0].pdispVal);
-      case ID_CMD_ENCRYPT_BODY:
-        return encryptBody (parms->rgvarg[0].pdispVal);
-      case ID_CMD_DECRYPT_BODY:
-        return decryptBody (parms->rgvarg[0].pdispVal);
-      case ID_CMD_ATT_ENCSIGN_FILE:
-        return addEncSignedAttachment (parms->rgvarg[0].pdispVal);
-      case ID_CMD_ATT_ENC_FILE:
-        return addEncAttachment (parms->rgvarg[0].pdispVal);
-      case ID_CMD_SIGN_BODY:
-        return signBody (parms->rgvarg[0].pdispVal);
-      case ID_CMD_VERIFY_BODY:
-        return verifyBody (parms->rgvarg[0].pdispVal);
       case ID_CMD_SIGN_ENCRYPT_MIME:
         return mark_mime_action (parms->rgvarg[1].pdispVal,
                                  OP_SIGN|OP_ENCRYPT, false);
@@ -832,7 +799,6 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return print_decrypted (parms->rgvarg[0].pdispVal);
       case ID_GET_IS_CRYPTO_MAIL:
         return get_is_crypto_mail (parms->rgvarg[0].pdispVal, result);
-      case ID_BTN_CERTMANAGER:
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
       case ID_BTN_DECRYPT_LARGE:
@@ -1122,336 +1088,10 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
   return S_OK;
 }
 
-/* This is the old pre-mime adding UI code. It will be removed once we have a
-   stable version that can also send mime messages.
-*/
-static STDMETHODIMP
-GetCustomUI_old (BSTR RibbonID, BSTR * RibbonXml)
-{
-  char *buffer = NULL;
-  const char *certManagerTTip =
-    _("Start the Certificate Management Software");
-  const char *certManagerSTip =
-    _("Open GPA or Kleopatra to manage your certificates. "
-      "You can use this you to generate your "
-      "own certificates. ");
-  const char *encryptTextTTip =
-    _("Encrypt the text of the message");
-  const char *encryptTextSTip =
-    _("Choose the certificates for which the message "
-      "should be encrypted and replace the text "
-      "with the encrypted message.");
-  const char *encryptFileTTip =
-    _("Add a file as an encrypted attachment");
-  const char *encryptFileSTip =
-    _("Encrypts a file and adds it as an attachment to the "
-      "message. ");
-  const char *encryptSignFileTTip =
-    _("Add a file as an encrypted attachment with a signature");
-  const char *encryptSignFileSTip =
-    _("Encrypts a file, signs it and adds both the encrypted file "
-      "and the signature as attachments to the message. ");
-  const char *decryptTextTTip=
-    _("Decrypt the message");
-  const char *decryptTextSTip =
-    _("Look for PGP or S/MIME encrypted data in the message text "
-      "and decrypt it.");
-  const char *signTextTTip =
-    _("Add a signature of the message");
-  const char *signTextSTip =
-    _("Appends a signed copy of the message text in an opaque signature. "
-      "An opaque signature ensures that the signed text is not modified by "
-      "embedding it in the signature itself. "
-      "The combination of the signed message text and your signature is "
-      "added below the plain text. "
-      "The message will not be encrypted!");
-  const char *optsSTip =
-    _("Open the settings dialog for GpgOL.");
-
-  log_debug ("%s:%s: GetCustomUI for id: %ls", SRCNAME, __func__, RibbonID);
-
-  if (!RibbonXml)
-    return E_POINTER;
-
-  if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Compose"))
-    {
-      gpgrt_asprintf (&buffer,
-        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
-        " onLoad=\"ribbonLoaded\">"
-        " <ribbon>"
-        "   <tabs>"
-        "    <tab id=\"gpgolTab\""
-        "         label=\"%s\">"
-        "     <group id=\"general\""
-        "            label=\"%s\">"
-        "       <button id=\"CustomButton\""
-        "               getImage=\"btnCertManager\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"startCertManager\"/>"
-        "       <dialogBoxLauncher>"
-        "         <button id=\"optsBtn\""
-        "                 onAction=\"openOptions\""
-        "                 screentip=\"%s\"/>"
-        "       </dialogBoxLauncher>"
-        "     </group>"
-        "     <group id=\"textGroup\""
-        "            label=\"%s\">"
-        "       <button id=\"fullTextEncrypt\""
-        "               getImage=\"btnEncryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"encryptBody\"/>"
-        "       <button id=\"fullTextDecrypt\""
-        "               getImage=\"btnDecryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"decryptBody\"/>"
-        "       <button id=\"fullTextSign\""
-        "               getImage=\"btnSignLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"signBody\"/>"
-        "       <button id=\"fullTextVerify\""
-        "               getImage=\"btnVerifyLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               onAction=\"verifyBody\"/>"
-        "     </group>"
-        "     <group id=\"attachmentGroup\""
-        "            label=\"%s\">"
-        "       <button id=\"encryptedFile\""
-        "               getImage=\"btnEncryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"addEncAttachment\"/>"
-        "       <button id=\"encryptSignFile\""
-        "               getImage=\"btnEncryptFileLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"addEncSignedAttachment\"/>"
-        "     </group>"
-        "    </tab>"
-        "   </tabs>"
-        " </ribbon>"
-        " <contextMenus>"
-        "  <contextMenu idMso=\"ContextMenuText\">"
-        "    <button id=\"encryptButton\""
-        "            label=\"%s\""
-        "            getImage=\"btnEncrypt\""
-        "            onAction=\"encryptSelection\"/>"
-        "    <button id=\"decryptButton\""
-        "            label=\"%s\""
-        "            getImage=\"btnDecrypt\""
-        "            onAction=\"decryptSelection\"/>"
-        " </contextMenu>"
-        "</contextMenus>"
-        "</customUI>", _("GpgOL"), _("General"),
-        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
-        optsSTip,
-        _("Textbody"),
-        _("Encrypt"), encryptTextTTip, encryptTextSTip,
-        _("Decrypt"), decryptTextTTip, decryptTextSTip,
-        _("Sign"), signTextTTip, signTextSTip,
-        _("Verify"),
-        _("Attachments"),
-        _("Encrypted file"), encryptFileTTip, encryptFileSTip,
-        _("Encrypted file and Signature"), encryptSignFileTTip, encryptSignFileSTip,
-        _("Encrypt"), _("Decrypt")
-        );
-    }
-  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Mail.Read"))
-    {
-      gpgrt_asprintf (&buffer,
-        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
-        " <ribbon>"
-        "   <tabs>"
-        "    <tab id=\"gpgolTab\""
-        "         label=\"%s\">"
-        "     <group id=\"general\""
-        "            label=\"%s\">"
-        "       <button id=\"CustomButton\""
-        "               getImage=\"btnCertManager\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"startCertManager\"/>"
-        "       <dialogBoxLauncher>"
-        "         <button id=\"optsBtn\""
-        "                 onAction=\"openOptions\""
-        "                 screentip=\"%s\"/>"
-        "       </dialogBoxLauncher>"
-        "     </group>"
-        "     <group id=\"textGroup\""
-        "            label=\"%s\">"
-        "       <button id=\"fullTextDecrypt\""
-        "               getImage=\"btnDecryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"decryptBody\"/>"
-        "       <button id=\"fullTextVerify\""
-        "               getImage=\"btnVerifyLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               onAction=\"verifyBody\"/>"
-        "     </group>"
-        "    </tab>"
-        "   </tabs>"
-        "  <contextualTabs>"
-        "    <tabSet idMso=\"TabSetAttachments\">"
-        "        <tab idMso=\"TabAttachments\">"
-        "            <group label=\"%s\" id=\"gnupgLabel\">"
-        "                <button id=\"gpgol_contextual_decrypt\""
-        "                    size=\"large\""
-        "                    label=\"%s\""
-        "                    getImage=\"btnDecryptLarge\""
-        "                    onAction=\"attachmentDecryptCallback\" />"
-        "            </group>"
-        "        </tab>"
-        "    </tabSet>"
-        "  </contextualTabs>"
-        " </ribbon>"
-        "<contextMenus>"
-        "<contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
-        "   <button id=\"decryptReadButton\""
-        "           label=\"%s\""
-        "           getImage=\"btnDecrypt\""
-        "           onAction=\"decryptSelection\"/>"
-        " </contextMenu>"
-        " <contextMenu idMso=\"ContextMenuAttachments\">"
-        "   <button id=\"gpgol_decrypt\""
-        "           label=\"%s\""
-        "           getImage=\"btnDecrypt\""
-        "           onAction=\"attachmentDecryptCallback\"/>"
-        " </contextMenu>"
-        "</contextMenus>"
-        "</customUI>",
-        _("GpgOL"), _("General"),
-        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
-        optsSTip,
-        _("Textbody"),
-        _("Decrypt"), decryptTextTTip, decryptTextSTip,
-        _("Verify"),
-        _("GpgOL"), _("Save and decrypt"),
-        _("Decrypt"),
-        _("Decrypt"));
-    }
-  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))
-    {
-      gpgrt_asprintf (&buffer,
-        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">"
-        " <ribbon>"
-        "   <tabs>"
-        "    <tab id=\"gpgolTab\""
-        "         label=\"%s\">"
-        "     <group id=\"general\""
-        "            label=\"%s\">"
-        "       <button id=\"CustomButton\""
-        "               getImage=\"btnCertManager\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               screentip=\"%s\""
-        "               supertip=\"%s\""
-        "               onAction=\"startCertManager\"/>"
-        "       <dialogBoxLauncher>"
-        "         <button id=\"optsBtn\""
-        "                 onAction=\"openOptions\""
-        "                 screentip=\"%s\"/>"
-        "       </dialogBoxLauncher>"
-        "     </group>"
-        /* This would be totally nice but Outlook
-           saves the decrypted text aftewards automatically.
-           Yay,..
-        "     <group id=\"textGroup\""
-        "            label=\"%s\">"
-        "       <button id=\"fullTextDecrypt\""
-        "               getImage=\"btnDecryptLarge\""
-        "               size=\"large\""
-        "               label=\"%s\""
-        "               onAction=\"decryptBody\"/>"
-        "     </group>"
-        */
-        "    </tab>"
-        "   </tabs>"
-        "  <contextualTabs>"
-        "    <tabSet idMso=\"TabSetAttachments\">"
-        "        <tab idMso=\"TabAttachments\">"
-        "            <group label=\"%s\" id=\"gnupgLabel\">"
-        "                <button id=\"gpgol_contextual_decrypt\""
-        "                    size=\"large\""
-        "                    label=\"%s\""
-        "                    getImage=\"btnDecryptLarge\""
-        "                    onAction=\"attachmentDecryptCallback\" />"
-        "            </group>"
-        "        </tab>"
-        "    </tabSet>"
-        "  </contextualTabs>"
-        " </ribbon>"
-        " <contextMenus>"
-        /*
-           There appears to be no way to access the word editor
-           / get the selected text from that Context.
-        " <contextMenu idMso=\"ContextMenuReadOnlyMailText\">"
-        " <button id=\"decryptReadButton1\""
-        "         label=\"%s\""
-        "         onAction=\"decryptSelection\"/>"
-        " </contextMenu>"
-        */
-        " <contextMenu idMso=\"ContextMenuAttachments\">"
-        "   <button id=\"gpgol_decrypt\""
-        "           label=\"%s\""
-        "           getImage=\"btnDecrypt\""
-        "           onAction=\"attachmentDecryptCallback\"/>"
-        " </contextMenu>"
-        " </contextMenus>"
-        "</customUI>",
-        _("GpgOL"), _("General"),
-        _("Start Certificate Manager"), certManagerTTip, certManagerSTip,
-        optsSTip,
-        /*_("Mail Body"), _("Decrypt"),*/
-        _("GpgOL"), _("Save and decrypt"),/*_("Decrypt"), */
-        _("Save and decrypt"));
-    }
-
-  if (buffer)
-    {
-      wchar_t *wbuf = utf8_to_wchar2 (buffer, strlen(buffer));
-      xfree (buffer);
-      *RibbonXml = SysAllocString (wbuf);
-      xfree (wbuf);
-    }
-  else
-    *RibbonXml = NULL;
-
-  return S_OK;
-}
-
 STDMETHODIMP
 GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
 {
-  if (use_mime_ui)
-    {
-      return GetCustomUI_MIME (RibbonID, RibbonXml);
-    }
-  else
-    {
-      return GetCustomUI_old (RibbonID, RibbonXml);
-    }
+  return GetCustomUI_MIME (RibbonID, RibbonXml);
 }
 
 /* RibbonUi elements are created on demand but they are reused

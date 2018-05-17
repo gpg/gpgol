@@ -33,12 +33,6 @@
 
 #include <windows.h>
 
-#ifdef MIME_SEND
-# define MIME_UI_DEFAULT 1
-#else
-# define MIME_UI_DEFAULT 0
-#endif
-
 /* Registry path to store plugin settings */
 #define GPGOL_REGPATH "Software\\GNU\\GpgOL"
 

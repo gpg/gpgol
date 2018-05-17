@@ -7,27 +7,6 @@
 #define DIALOGS_H
 
 
-/* Ids used for bitmaps. There is some magic in the identifiers: In
-   the code we only use the first ID value and add 1 to find the mask.
-   */
-#define IDB_ENCRYPT_16                  0x1000
-#define IDB_ENCRYPT_16M                 0x1001
-
-#define IDB_SIGN_16                     0x1010
-#define IDB_SIGN_16M                    0x1011
-
-#define IDB_KEY_MANAGER_16              0x1020
-#define IDB_KEY_MANAGER_16M             0x1021
-
-#define IDB_DECRYPT_16                  0x1030
-#define IDB_DECRYPT_16M                 0x1031
-
-#define IDB_VERIFY_16                   0x1040
-#define IDB_VERIFY_16M                  0x1041
-
-#define IDB_DECRYPT_VERIFY_16           0x1050
-#define IDB_DECRYPT_VERIFY_16M          0x1051
-
 #define IDB_LOGO                        0x1060
 
 
@@ -36,47 +15,6 @@
 #define IDC_T_DEBUG_LOGFILE             0x4120
 #define IDC_DEBUG_LOGFILE               0x4130
 
-
-/* Ids for the recipient selection dialog.  */
-#define IDD_ENC                         0x4210
-#define IDC_ENC_RSET1                   0x4220
-#define IDC_ENC_RSET2_T                 0x4230
-#define IDC_ENC_RSET2                   0x4240
-#define IDC_ENC_NOTFOUND_T              0x4250
-#define IDC_ENC_NOTFOUND                0x4260
-
-
-/* Ids for the two decryption dialogs.  */
-#define IDD_DEC                         0x4310
-#define IDD_DECEXT                      0x4320
-#define IDC_DEC_KEYLIST                 0x4330
-#define IDC_DEC_HINT                    0x4340
-#define IDC_DEC_PASSINF                 0x4350
-#define IDC_DEC_PASS                    0x4360
-#define IDC_DEC_HIDE                    0x4370
-#define IDC_DECEXT_RSET_T               0x4380
-#define IDC_DECEXT_RSET                 0x4390
-#define IDC_DECEXT_KEYLIST              0x43A0
-#define IDC_DECEXT_HINT                 0x43B0
-#define IDC_DECEXT_PASSINF              0x43C0
-#define IDC_DECEXT_PASS                 0x43D0
-#define IDC_DECEXT_HIDE                 0x43E0
-
-
-/* Ids for the verification dialog.  */
-#define IDD_VRY                         0x4410
-#define IDC_VRY_TIME_T                  0x4420
-#define IDC_VRY_TIME                    0x4430
-#define IDC_VRY_PKALGO_T                0x4440
-#define IDC_VRY_PKALGO                  0x4450
-#define IDC_VRY_KEYID_T                 0x4460
-#define IDC_VRY_KEYID                   0x4470
-#define IDC_VRY_STATUS                  0x4480
-#define IDC_VRY_ISSUER_T                0x4490
-#define IDC_VRY_ISSUER                  0x44A0
-#define IDC_VRY_AKALIST_T               0x44B0
-#define IDC_VRY_AKALIST                 0x44C0
-#define IDC_VRY_HINT                    0x44D0
 
 /* Ids used for the main config dialog.  */
 #define IDD_GPG_OPTIONS                 0x5000

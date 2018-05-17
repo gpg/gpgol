@@ -646,11 +646,6 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
   char *msgcls = NULL;
   int is_wchar = 0;
 
-  if (!opt.mime_ui)
-    {
-      return NULL;
-    }
-
   if (r_nobody)
     {
       *r_nobody = false;

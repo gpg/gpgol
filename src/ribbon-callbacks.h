@@ -28,15 +28,6 @@
 
 /* Id's of our callbacks */
 #define ID_CMD_DECRYPT           2
-#define ID_CMD_ENCRYPT_SELECTION 3
-#define ID_CMD_DECRYPT_SELECTION 4
-#define ID_CMD_CERT_MANAGER      5
-#define ID_CMD_ENCRYPT_BODY      6
-#define ID_CMD_DECRYPT_BODY      8
-#define ID_CMD_ATT_ENCSIGN_FILE  9
-#define ID_CMD_SIGN_BODY        10
-#define ID_CMD_ATT_ENC_FILE     11
-#define ID_CMD_VERIFY_BODY      12
 #define ID_CMD_MIME_SIGN        13
 #define ID_CMD_MIME_ENCRYPT     14
 #define ID_GET_SIGN_PRESSED     15
@@ -60,7 +51,6 @@
 #define ID_CMD_PRINT_DECRYPTED 34
 #define ID_GET_IS_CRYPTO_MAIL 35
 
-#define ID_BTN_CERTMANAGER       IDI_KEY_MANAGER_64_PNG
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
 #define ID_BTN_ENCRYPT           IDI_ENCRYPT_16_PNG
@@ -73,16 +63,7 @@
 #define OP_SIGN        2 /* Sign the data */
 
 HRESULT decryptAttachments (LPDISPATCH ctrl);
-HRESULT encryptSelection (LPDISPATCH ctrl);
-HRESULT decryptSelection (LPDISPATCH ctrl);
-HRESULT decryptBody (LPDISPATCH ctrl);
-HRESULT encryptBody (LPDISPATCH ctrl);
-HRESULT addEncSignedAttachment (LPDISPATCH ctrl);
-HRESULT addEncAttachment (LPDISPATCH ctrl);
 HRESULT getIcon (int id, VARIANT* result);
-HRESULT startCertManager (LPDISPATCH ctrl);
-HRESULT signBody (LPDISPATCH ctrl);
-HRESULT verifyBody (LPDISPATCH ctrl);
 
 /* Get the toggle state of a crypt button. Flag value 1: encrypt, 2: sign */
 HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result, bool is_explorer);

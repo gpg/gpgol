@@ -196,7 +196,6 @@ struct
   int preview_decrypt;       /* Decrypt in preview window. */
   int prefer_html;           /* Prefer html in html/text alternatives. */
   int body_as_attachment;    /* Present encrypted message as attachment.  */
-  int mime_ui;               /* Only for Addin. Use the PGP/MIME ui */
   int inline_pgp;            /* Only for Addin. Use Inline PGP by default. */
   int autoresolve;           /* Autresolve keys with --locate-keys. */
   int reply_crypt;           /* Only for Addin. Encrypt / Sign based on cryptostatus. */
