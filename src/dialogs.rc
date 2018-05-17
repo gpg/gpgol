@@ -25,30 +25,15 @@
 #include "afxres.h"
 
 
-IDB_ENCRYPT_16            BITMAP  DISCARDABLE  "icons/encrypt-16.bmp"
-IDB_ENCRYPT_16M           BITMAP  DISCARDABLE  "icons/encrypt-16m.bmp"
 IDI_ENCRYPT_16_PNG        RCDATA               "icons/encrypt-16.png"
 IDI_ENCRYPT_48_PNG        RCDATA               "icons/encrypt-48.png"
 
-IDB_SIGN_16               BITMAP  DISCARDABLE  "icons/sign-16.bmp"
-IDB_SIGN_16M              BITMAP  DISCARDABLE  "icons/sign-16m.bmp"
 IDI_SIGN_48_PNG           RCDATA               "icons/sign-48.png"
 
-IDB_KEY_MANAGER_16        BITMAP  DISCARDABLE  "icons/key-manager-16.bmp"
-IDB_KEY_MANAGER_16M       BITMAP  DISCARDABLE  "icons/key-manager-16m.bmp"
-IDI_KEY_MANAGER_64_PNG    RCDATA               "icons/key-manager-64.png"
-
-IDB_DECRYPT_16            BITMAP  DISCARDABLE  "icons/decrypt-16.bmp"
-IDB_DECRYPT_16M           BITMAP  DISCARDABLE  "icons/decrypt-16m.bmp"
 IDI_DECRYPT_16_PNG        RCDATA               "icons/decrypt-16.png"
 IDI_DECRYPT_48_PNG        RCDATA               "icons/decrypt-48.png"
 
-IDB_VERIFY_16             BITMAP  DISCARDABLE  "icons/verify-16.bmp"
-IDB_VERIFY_16M            BITMAP  DISCARDABLE  "icons/verify-16m.bmp"
 IDI_VERIFY_48_PNG         RCDATA               "icons/verify-48.png"
-
-IDB_DECRYPT_VERIFY_16     BITMAP  DISCARDABLE  "icons/decrypt-verify-16.bmp"
-IDB_DECRYPT_VERIFY_16M    BITMAP  DISCARDABLE  "icons/decrypt-verify-16m.bmp"
 
 IDI_ENCSIGN_FILE_48_PNG   RCDATA               "icons/encrypt-sign-file-48.png"
 

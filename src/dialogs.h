@@ -113,7 +113,6 @@
 #define IDI_ENCRYPT_48_PNG              0x6010
 #define IDI_DECRYPT_16_PNG              0x6020
 #define IDI_DECRYPT_48_PNG              0x6030
-#define IDI_KEY_MANAGER_64_PNG          0x6040
 #define IDI_ENCSIGN_FILE_48_PNG         0x6050
 #define IDI_SIGN_48_PNG                 0x6060
 #define IDI_VERIFY_48_PNG               0x6070
