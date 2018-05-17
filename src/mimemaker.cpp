@@ -42,7 +42,6 @@
 #include "mapihelp.h"
 #include "mimemaker.h"
 #include "oomhelp.h"
-#include "gpgolstr.h"
 #include "mail.h"
 
 static const unsigned char oid_mimetag[] =
@@ -2180,6 +2179,7 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
   engine_filter_t filter = NULL;
   unsigned int session_number;
   char *my_sender = NULL;
+  char gpgstr[] = "GPG";
 
   memset (sink, 0, sizeof *sink);
   memset (encsink, 0, sizeof *encsink);
@@ -2219,12 +2219,11 @@ mime_sign_encrypt (LPMESSAGE message, HWND hwnd,
       }
   }
 
-
   /* Create a temporary sink to construct the signed data.  */
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                          (SOF_UNIQUEFILENAME | STGM_DELETEONRELEASE
                           | STGM_CREATE | STGM_READWRITE),
-                         NULL, GpgOLStr("GPG"), &tmpstream);
+                         NULL, gpgstr, &tmpstream);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't create temp file: hr=%#lx\n",

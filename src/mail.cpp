@@ -33,7 +33,6 @@
 #include "mymapitags.h"
 #include "parsecontroller.h"
 #include "cryptcontroller.h"
-#include "gpgolstr.h"
 #include "windowmessages.h"
 #include "mlang-charset.h"
 #include "wks-helper.h"

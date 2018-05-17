@@ -30,7 +30,6 @@
 #include "rfc822parse.h"
 #include "mapihelp.h"
 #include "parsetlv.h"
-#include "gpgolstr.h"
 #include "oomhelp.h"
 
 #include <string>
@@ -113,7 +112,7 @@ create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
   HRESULT hr;
   LPSPropTagArray proparr = NULL;
   MAPINAMEID mnid, *pmnid;
-  GpgOLStr propname(name);
+  wchar_t *propname = wcsdup (name);
   /* {31805ab8-3e92-11dc-879c-00061b031004}: GpgOL custom properties.  */
   GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
                                             0x1b, 0x03, 0x10, 0x04}};
@@ -125,6 +124,7 @@ create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
   mnid.Kind.lpwstrName = propname;
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
+  xfree (propname);
   if (FAILED (hr))
     proparr = NULL;
   if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
@@ -253,7 +253,7 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   /* {4E3A7680-B77A-11D0-9DA5-00C04FD65685} */
   GUID guid = {0x4E3A7680, 0xB77A, 0x11D0, {0x9D, 0xA5, 0x00, 0xC0,
                                             0x4F, 0xD6, 0x56, 0x85}};
-  GpgOLStr propname (L"Internet Charset Body");
+  wchar_t propname[] = L"Internet Charset Body";
   int result;
 
   memset (&mnid, 0, sizeof mnid);
@@ -3572,7 +3572,7 @@ mapi_body_to_attachment (LPMESSAGE message)
   SPropValue prop;
   LPSTREAM outstream = NULL;
   LPUNKNOWN punk;
-  GpgOLStr body_filename (PGPBODYFILENAME);
+  char body_filename[] = PGPBODYFILENAME;
 
   instream = mapi_get_body_as_stream (message);
   if (!instream)
