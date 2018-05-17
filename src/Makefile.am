@@ -27,48 +27,52 @@ AM_CXXFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared -std=c++11
 AM_CXXFLAGS += $(GPGMEPP_CXXFLAGS) -D_FILE_OFFSET_BITS=64
 
 gpgol_SOURCES = \
-	main.c  gpgol.def           \
-	resource.rc	            \
-        gpgol-ids.h                 \
-	olflange.cpp olflange.h     \
-	dialogs.h                   \
-	revert.cpp revert.h         \
-	parsetlv.h parsetlv.c \
-	mimemaker.cpp mimemaker.h     \
-	engine.c engine.h           \
-        engine-assuan.c engine-assuan.h \
-	rfc822parse.c rfc822parse.h \
+    addin-options.cpp addin-options.h \
+    application-events.cpp \
+    attachment.h attachment.cpp \
     common.h common.c \
     common_indep.h common_indep.c \
-	xmalloc.h		    \
-        config-dialog.c	            \
-	mapihelp.cpp mapihelp.h     \
-	mymapi.h  mymapitags.h      \
-	oomhelp.cpp oomhelp.h eventsink.h \
-	w32-gettext.c w32-gettext.h \
-	gpgoladdin.cpp gpgoladdin.h \
-	ribbon-callbacks.cpp ribbon-callbacks.h \
-	filetype.c filetype.h \
-	eventsinks.h application-events.cpp \
-	mailitem-events.cpp \
-	attachment.h attachment.cpp \
-	windowmessages.h windowmessages.cpp \
-	gpgolstr.h gpgolstr.cpp \
-	mail.h mail.cpp \
-	rfc2047parse.h rfc2047parse.c \
-	mlang-charset.cpp mlang-charset.h \
-	gmime-table-private.h \
-	exechelp.c exechelp.h \
-	addin-options.cpp addin-options.h \
-	parsecontroller.cpp parsecontroller.h \
-	mimedataprovider.cpp mimedataprovider.h \
-	explorer-events.cpp explorers-events.cpp \
-	cryptcontroller.cpp cryptcontroller.h \
-	cpphelp.cpp cpphelp.h \
-	wks-helper.cpp wks-helper.h \
-	overlay.cpp overlay.h \
-	keycache.cpp keycache.h
-
+    config-dialog.c \
+    cpphelp.cpp cpphelp.h \
+    cryptcontroller.cpp cryptcontroller.h \
+    dialogs.h \
+    engine-assuan.c engine-assuan.h \
+    engine.c engine.h \
+    eventsink.h \
+    eventsinks.h \
+    exechelp.c exechelp.h \
+    explorer-events.cpp \
+    explorers-events.cpp \
+    filetype.c filetype.h \
+    gmime-table-private.h \
+    gpgoladdin.cpp gpgoladdin.h \
+    gpgol.def \
+    gpgol-ids.h \
+    gpgolstr.h gpgolstr.cpp \
+    keycache.cpp keycache.h \
+    mail.h mail.cpp \
+    mailitem-events.cpp \
+    main.c \
+    mapihelp.cpp mapihelp.h \
+    mimedataprovider.cpp mimedataprovider.h \
+    mimemaker.cpp mimemaker.h \
+    mlang-charset.cpp mlang-charset.h \
+    mymapi.h \
+    mymapitags.h \
+    olflange.cpp olflange.h \
+    oomhelp.cpp oomhelp.h \
+    overlay.cpp overlay.h \
+    parsecontroller.cpp parsecontroller.h \
+    parsetlv.h parsetlv.c \
+    resource.rc \
+    revert.cpp revert.h \
+    rfc2047parse.h rfc2047parse.c \
+    rfc822parse.c rfc822parse.h \
+    ribbon-callbacks.cpp ribbon-callbacks.h \
+    w32-gettext.c w32-gettext.h \
+    windowmessages.h windowmessages.cpp \
+    wks-helper.cpp wks-helper.h \
+    xmalloc.h
 
 #treeview_SOURCES = treeview.c
 
