@@ -25,7 +25,6 @@
 #include <windows.h>
 #include "dialogs.h"
 #include "common.h"
-#include "engine.h"
 
 #include <string>
 

@@ -22,7 +22,7 @@ EXTRA_DIST = \
 
 EXEEXT = .dll
 
-AM_CFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared
+AM_CFLAGS = $(GPGME_CFLAGS) -shared
 AM_CXXFLAGS = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -shared -std=c++11
 AM_CXXFLAGS += $(GPGMEPP_CXXFLAGS) -D_FILE_OFFSET_BITS=64
 
@@ -36,8 +36,6 @@ gpgol_SOURCES = \
     cpphelp.cpp cpphelp.h \
     cryptcontroller.cpp cryptcontroller.h \
     dialogs.h \
-    engine-assuan.c engine-assuan.h \
-    engine.c engine.h \
     eventsink.h \
     eventsinks.h \
     exechelp.c exechelp.h \

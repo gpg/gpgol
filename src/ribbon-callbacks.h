@@ -27,7 +27,6 @@
 #include "dialogs.h"
 
 /* Id's of our callbacks */
-#define ID_CMD_DECRYPT           2
 #define ID_CMD_MIME_SIGN        13
 #define ID_CMD_MIME_ENCRYPT     14
 #define ID_GET_SIGN_PRESSED     15
@@ -62,7 +61,6 @@
 #define OP_ENCRYPT     1 /* Encrypt the data */
 #define OP_SIGN        2 /* Sign the data */
 
-HRESULT decryptAttachments (LPDISPATCH ctrl);
 HRESULT getIcon (int id, VARIANT* result);
 
 /* Get the toggle state of a crypt button. Flag value 1: encrypt, 2: sign */

@@ -38,8 +38,6 @@
 #include "mymapitags.h"
 
 #include "common.h"
-#include "engine.h"
-#include "engine-assuan.h"
 #include "mapihelp.h"
 #include "mimemaker.h"
 #include "filetype.h"
@@ -66,110 +64,6 @@ HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
   return context ? S_OK : E_FAIL;
 }
 
-#define OP_ENCRYPT     1 /* Encrypt the data */
-#define OP_SIGN        2 /* Sign the data */
-#define OP_DECRYPT     1 /* Decrypt the data */
-#define OP_VERIFY      2 /* Verify the data */
-#define DATA_BODY      4 /* Use text body as data */
-#define DATA_SELECTION 8 /* Use selection as data */
-
-HRESULT
-decryptAttachments (LPDISPATCH ctrl)
-{
-  LPDISPATCH context = NULL;
-  LPDISPATCH attachmentSelection;
-  int attachmentCount;
-  HRESULT hr = 0;
-  int i = 0;
-  HWND curWindow;
-  int err;
-
-  hr = getContext(ctrl, &context);
-
-  attachmentSelection = get_oom_object (context, "AttachmentSelection");
-  if (!attachmentSelection)
-    {
-      /* We can be called from a context menu, in that case we
-         directly have an AttachmentSelection context. Otherwise
-         we have an Explorer context with an Attachment Selection property. */
-      attachmentSelection = context;
-    }
-
-  attachmentCount = get_oom_int (attachmentSelection, "Count");
-
-  curWindow = get_oom_context_window (context);
-
-  {
-    char *filenames[attachmentCount + 1];
-    filenames[attachmentCount] = NULL;
-    /* Yes the items start at 1! */
-    for (i = 1; i <= attachmentCount; i++)
-      {
-        char buf[16];
-        char *filename;
-        wchar_t *wcsOutFilename;
-        DISPPARAMS saveParams;
-        VARIANT aVariant[1];
-        LPDISPATCH attachmentObj;
-        DISPID saveID;
-
-        snprintf (buf, sizeof (buf), "Item(%i)", i);
-        attachmentObj = get_oom_object (attachmentSelection, buf);
-        if (!attachmentObj)
-          {
-            /* Should be impossible */
-            filenames[i-1] = NULL;
-            log_error ("%s:%s: could not find Item %i;",
-                       SRCNAME, __func__, i);
-            break;
-          }
-        filename = get_oom_string (attachmentObj, "FileName");
-
-        saveID = lookup_oom_dispid (attachmentObj, "SaveAsFile");
-
-        saveParams.rgvarg = aVariant;
-        saveParams.rgvarg[0].vt = VT_BSTR;
-        filenames[i-1] = get_save_filename (NULL, filename);
-        xfree (filename);
-
-        if (!filenames [i-1])
-          continue;
-
-        wcsOutFilename = utf8_to_wchar2 (filenames[i-1],
-                                         strlen(filenames[i-1]));
-        saveParams.rgvarg[0].bstrVal = SysAllocString (wcsOutFilename);
-        saveParams.cArgs = 1;
-        saveParams.cNamedArgs = 0;
-
-        hr = attachmentObj->Invoke (saveID, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                                    DISPATCH_METHOD, &saveParams,
-                                    NULL, NULL, NULL);
-        SysFreeString (saveParams.rgvarg[0].bstrVal);
-        gpgol_release (attachmentObj);
-        if (FAILED(hr))
-          {
-            int j;
-            log_debug ("%s:%s: Saving to file failed. hr: %x",
-                       SRCNAME, __func__, (unsigned int) hr);
-            for (j = 0; j < i; j++)
-              xfree (filenames[j]);
-            gpgol_release (attachmentSelection);
-            return hr;
-          }
-      }
-    gpgol_release (attachmentSelection);
-    err = op_assuan_start_decrypt_files (curWindow, filenames);
-    for (i = 0; i < attachmentCount; i++)
-      xfree (filenames[i]);
-  }
-
-  log_debug ("%s:%s: Leaving. Err: %i",
-             SRCNAME, __func__, err);
-
-  return S_OK; /* If we return an error outlook will show that our
-                  callback function failed in an ugly window. */
-}
-
 /* getIcon
    Loads a PNG image from the resurce converts it into a Bitmap
    and Wraps it in an PictureDispatcher that is returned as result.
@@ -177,7 +71,6 @@ decryptAttachments (LPDISPATCH ctrl)
    Based on documentation from:
    http://www.codeproject.com/Articles/3537/Loading-JPG-PNG-resources-using-GDI
 */
-
 HRESULT
 getIcon (int id, VARIANT* result)
 {

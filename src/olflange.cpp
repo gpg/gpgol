@@ -36,7 +36,6 @@
 #include "mymapitags.h"
 
 #include "common.h"
-#include "engine.h"
 #include "mapihelp.h"
 
 #include "olflange.h"

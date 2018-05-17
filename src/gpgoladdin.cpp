@@ -33,8 +33,6 @@
 #include "mymapi.h"
 #include "mymapitags.h"
 
-#include "engine.h"
-#include "engine-assuan.h"
 #include "mapihelp.h"
 
 #include "oomhelp.h"
@@ -192,7 +190,6 @@ GpgolAddin::~GpgolAddin (void)
   gpgol_release (m_explorersEventSink);
   gpgol_release (m_applicationEventSink);
 
-  engine_deinit ();
   write_options ();
 
   UnhookWindowsHookEx (m_hook);
@@ -345,7 +342,6 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
       xfree (version);
       return S_OK;
     }
-  engine_init ();
 
   setupDoNotDisable ();
 
@@ -671,7 +667,6 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
          different parameters and just match the name (the first element)
          and we give it one of our own dispIds's that are later handled in
          the invoke part */
-      ID_MAPPER (L"attachmentDecryptCallback", ID_CMD_DECRYPT)
       ID_MAPPER (L"btnDecrypt", ID_BTN_DECRYPT)
       ID_MAPPER (L"btnDecryptLarge", ID_BTN_DECRYPT_LARGE)
       ID_MAPPER (L"btnEncrypt", ID_BTN_ENCRYPT)
@@ -734,10 +729,6 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
 
   switch (dispid)
     {
-      case ID_CMD_DECRYPT:
-        /* We can assume that this points to an implementation of
-           IRibbonControl as we know the callback dispid. */
-        return decryptAttachments (parms->rgvarg[0].pdispVal);
       case ID_CMD_SIGN_ENCRYPT_MIME:
         return mark_mime_action (parms->rgvarg[1].pdispVal,
                                  OP_SIGN|OP_ENCRYPT, false);
@@ -937,18 +928,9 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "    </tab>"
         "   </tabs>"
         " </ribbon>"
-        "<contextMenus>"
-        " <contextMenu idMso=\"ContextMenuAttachments\">"
-        "   <button id=\"gpgol_decrypt\""
-        "           label=\"%s\""
-        "           getImage=\"btnDecrypt\""
-        "           onAction=\"attachmentDecryptCallback\"/>"
-        " </contextMenu>"
-        "</contextMenus>"
         "</customUI>",
         _("GpgOL"),
-        optsSTip,
-        _("Decrypt")
+        optsSTip
         );
     }
   /* We don't use this code currently because calling the send
