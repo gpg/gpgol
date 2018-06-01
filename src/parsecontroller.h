@@ -102,6 +102,9 @@ public:
 
   void setSender(const std::string &sender);
 
+  bool shouldBlockHtml() const
+  { return m_block_html; }
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;
@@ -111,6 +114,7 @@ private:
   GpgME::DecryptionResult m_decrypt_result;
   GpgME::VerificationResult m_verify_result;
   std::string m_sender;
+  bool m_block_html;
 };
 
 #endif /* PARSECONTROLLER_H */

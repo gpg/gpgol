@@ -1085,7 +1085,7 @@ Mail::update_body()
   /** Outlook does not show newlines if \r\r\n is a newline. We replace
     these as apparently some other buggy MUA sends this. */
   find_and_replace (html, "\r\r\n", "\r\n");
-  if (opt.prefer_html && !html.empty())
+  if (opt.prefer_html && !html.empty() && !m_block_html)
     {
       char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
                                               html.c_str(), html.size());
@@ -1096,9 +1096,71 @@ Mail::update_body()
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
         }
+
       return;
     }
   auto body = m_parser->get_body ();
+
+  if (body.empty () && m_block_html && !html.empty())
+    {
+#if 0
+      Sadly the following code still offers to load external references
+      it might also be too dangerous if Outlook somehow autoloads the
+      references as soon as the Body is put into HTML
+
+
+      // Fallback to show HTML as plaintext if HTML display
+      // is blocked.
+      log_error ("%s:%s: No text body. Putting HTML into plaintext.",
+                 SRCNAME, __func__);
+
+      char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
+                                              html.c_str(), html.size());
+      int ret = put_oom_string (m_mailitem, "HTMLBody", converted ? converted : "");
+      xfree (converted);
+      if (ret)
+        {
+          log_error ("%s:%s: Failed to modify html body of item.",
+                     SRCNAME, __func__);
+          body = html;
+        }
+      else
+        {
+          char *plainBody = get_oom_string (m_mailitem, "Body");
+
+          if (!plainBody)
+            {
+              log_error ("%s:%s: Failed to obtain converted plain body.",
+                         SRCNAME, __func__);
+              body = html;
+            }
+          else
+            {
+              ret = put_oom_string (m_mailitem, "HTMLBody", plainBody);
+              xfree (plainBody);
+              if (ret)
+                {
+                  log_error ("%s:%s: Failed to put plain into html body of item.",
+                             SRCNAME, __func__);
+                  body = html;
+                }
+              else
+                {
+                  return;
+                }
+            }
+        }
+#endif
+      body = html;
+      std::string buf = _("HTML display disabled.");
+      buf += "\n\n";
+      buf += _("For security reasons HTML content in unsigned, encrypted\n"
+               "S/MIME mails cannot be displayed.\n\n"
+               "Please ask the sender to sign the message or to send it as plain text.");
+
+      gpgol_message_box (get_window(), buf.c_str() , _("GpgOL"), MB_OK);
+    }
+
   find_and_replace (body, "\r\r\n", "\r\n");
   char *converted = ansi_charset_to_utf8 (m_parser->get_body_charset().c_str(),
                                           body.c_str(), body.size());
@@ -1160,7 +1222,16 @@ Mail::parsing_done()
 
   TRACEPOINT;
   /* Set categories according to the result. */
-  update_categories();
+  update_categories ();
+
+  TRACEPOINT;
+  m_block_html = m_parser->shouldBlockHtml ();
+
+  if (m_block_html)
+    {
+      // Just to be careful.
+      set_block_status ();
+    }
 
   TRACEPOINT;
   /* Update the body */
@@ -2965,4 +3036,31 @@ Mail::get_verification_result_dump()
   std::stringstream ss;
   ss << m_verify_result;
   return ss.str();
+}
+
+void
+Mail::set_block_status()
+{
+  SPropValue prop;
+
+  LPMESSAGE message = get_oom_base_message (m_mailitem);
+
+  prop.ulPropTag = PR_BLOCK_STATUS;
+  prop.Value.l = 1;
+  HRESULT hr = message->SetProps (1, &prop, NULL);
+
+  if (hr)
+    {
+      log_error ("%s:%s: can't set block value: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+    }
+
+  gpgol_release (message);
+  return;
+}
+
+void
+Mail::set_block_html(bool value)
+{
+  m_block_html = value;
 }

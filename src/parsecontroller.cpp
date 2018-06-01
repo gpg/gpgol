@@ -77,7 +77,8 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_inputprovider  (new MimeDataProvider(instream,
                           expect_no_headers(type))),
     m_outputprovider (new MimeDataProvider(expect_no_mime(type))),
-    m_type (type)
+    m_type (type),
+    m_block_html (false)
 {
   log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i"
                    " expect no headers: %i expect no mime: %i",
@@ -90,7 +91,8 @@ ParseController::ParseController(FILE *instream, msgtype_t type):
     m_inputprovider  (new MimeDataProvider(instream,
                           expect_no_headers(type))),
     m_outputprovider (new MimeDataProvider(expect_no_mime(type))),
-    m_type (type)
+    m_type (type),
+    m_block_html (false)
 {
   log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
                    SRCNAME, __func__, instream, type);
@@ -226,6 +228,25 @@ ParseController::setSender(const std::string &sender)
   m_sender = sender;
 }
 
+static bool
+is_valid_chksum(const GpgME::Signature &sig)
+{
+  switch (sig.summary())
+    {
+      case GpgME::Signature::Valid:
+      case GpgME::Signature::Green:
+      case GpgME::Signature::KeyRevoked:
+      case GpgME::Signature::KeyExpired:
+      case GpgME::Signature::SigExpired:
+      case GpgME::Signature::CrlMissing:
+      case GpgME::Signature::CrlTooOld:
+      case GpgME::Signature::TofuConflict:
+        return true;
+      default:
+        return false;
+    }
+}
+
 void
 ParseController::parse()
 {
@@ -358,9 +379,14 @@ ParseController::parse()
              m_verify_result.error().code());
 
   TRACEPOINT;
-  /* Ensure that the Keys for the signatures are available */
+
+  bool has_valid_encrypted_checksum = false;
+  /* Ensure that the Keys for the signatures are available
+     and if it has a valid encrypted checksum. */
   for (const auto sig: m_verify_result.signatures())
     {
+      has_valid_encrypted_checksum = is_valid_chksum (sig);
+
       sig.key(true, true);
       if (sig.validity() == Signature::Validity::Full ||
           sig.validity() == Signature::Validity::Ultimate)
@@ -369,6 +395,14 @@ ParseController::parse()
              trust cached for the ui. */
           get_ultimate_keys ();
         }
+    }
+
+  if (protocol == Protocol::CMS && decrypt && !m_decrypt_result.error() &&
+      !has_valid_encrypted_checksum)
+    {
+      log_debug ("%s:%s:%p Encrypted S/MIME without checksum. Block HTML.",
+                 SRCNAME, __func__, this);
+      m_block_html = true;
     }
 
   if (opt.enable_debug)

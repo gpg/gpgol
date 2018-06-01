@@ -487,6 +487,13 @@ public:
 
   /* Gets the string dump of the verification result. */
   std::string get_verification_result_dump ();
+
+  /* Block loading HTML content */
+  void set_block_html (bool value);
+
+  /* Remove automatic loading of HTML references setting. */
+  void set_block_status ();
+
 private:
   void update_categories ();
   void update_sigstate ();
@@ -529,5 +536,6 @@ private:
   bool m_is_forwarded_crypto_mail; /* Is this a forward of a crypto mail */
   bool m_is_send_again; /* Is this a send again of a crypto mail */
   bool m_disable_att_remove_warning; /* Should not warn about attachment removal. */
+  bool m_block_html; /* Force blocking of html content. e.g for unsigned S/MIME mails. */
 };
 #endif // MAIL_H

@@ -118,6 +118,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/proptag/0x5D08001F"
 #define PR_PIDNameContentType_DASL \
   "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F"
+#define PR_BLOCK_STATUS_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x10960003"
 
 #ifdef __cplusplus
 extern "C" {
