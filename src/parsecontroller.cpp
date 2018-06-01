@@ -393,8 +393,19 @@ ParseController::parse()
               log_debug ("%s:%s:%p inline verify error trying native to utf8.",
                          SRCNAME, __func__, this);
 
-              // Maybe we would need to take the internetcodepage here instead
-              // of native?
+
+              /* The proper solution would be to take the encoding from
+                 the mail / headers. Then convert the wchar body to that
+                 encoding. Verify, and convert it after verifcation to
+                 UTF-8 which the rest of the code expects.
+
+                 Or native_body from native ACP to InternetCodepage, then
+                 verify and convert the output back to utf8 as the rest
+                 expects.
+
+                 But as this is clearsigned and we don't really want that.
+                 Meh.
+                 */
               char *utf8 = native_to_utf8 (input.toString().c_str());
               if (utf8)
                 {
