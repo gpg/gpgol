@@ -371,6 +371,54 @@ ParseController::parse()
       else
         {
           m_verify_result = ctx->verifyOpaqueSignature(input, output);
+
+          const auto sigs = m_verify_result.signatures();
+          bool allBad = sigs.size();
+          for (const auto s :sigs)
+            {
+              if (!(s.summary() & Signature::Red))
+                {
+                  allBad = false;
+                  break;
+                }
+            }
+
+          if (allBad)
+            {
+              log_debug ("%s:%s:%p inline verify error trying native to utf8.",
+                         SRCNAME, __func__, this);
+
+              // Maybe we would need to take the internetcodepage here instead
+              // of native?
+              char *utf8 = native_to_utf8 (input.toString().c_str());
+              if (utf8)
+                {
+                  // Try again after conversion.
+                  delete ctx;
+                  ctx = Context::createForProtocol (protocol);
+                  ctx->setArmor (true);
+                  if (!m_sender.empty())
+                    {
+                      ctx->setSender(m_sender.c_str());
+                    }
+
+                  input = Data (utf8, strlen (utf8));
+                  xfree (utf8);
+
+                  // Use a fresh output
+                  auto provider = new MimeDataProvider (true);
+
+                  // Warning: The dtor of the Data object touches
+                  // the provider. So we have to delete it after
+                  // the assignment.
+                  output = Data (provider);
+                  delete m_outputprovider;
+                  m_outputprovider = provider;
+
+                  // Try again
+                  m_verify_result = ctx->verifyOpaqueSignature(input, output);
+                }
+            }
         }
     }
   delete ctx;
