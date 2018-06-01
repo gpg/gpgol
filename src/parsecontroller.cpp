@@ -202,6 +202,11 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
         {
           msg += _("Failed to parse the mail.");
         }
+      else if (result.isLegacyCipherNoMDC())
+        {
+          msg += _("Data is not integrity protected. "
+                   "Decrypting it could be a security problem. (no MDC)");
+        }
       else
         {
           msg += result.error().asString();
