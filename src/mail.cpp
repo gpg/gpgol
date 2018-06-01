@@ -1090,7 +1090,7 @@ Mail::update_body()
       const auto charset = m_parser->get_html_charset();
 
       int codepage = 0;
-      if (html_charset.empty())
+      if (charset.empty())
         {
           codepage = get_oom_int (m_mailitem, "InternetCodepage");
           log_debug ("%s:%s: Did not find html charset."
@@ -2674,6 +2674,9 @@ Mail::inline_body_to_body()
     {
       return 0;
     }
+
+  /* For inline we always work with UTF-8 */
+  put_oom_int (m_mailitem, "InternetCodepage", 65001);
 
   int ret = put_oom_string (m_mailitem, "Body",
                             body.c_str ());

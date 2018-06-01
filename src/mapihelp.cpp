@@ -500,7 +500,7 @@ mapi_get_body_as_stream (LPMESSAGE message)
     {
       /* The store knows about the Internet Charset Body property,
          thus try to get the body from this property if it exists.  */
-      
+
       hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
                                   (LPUNKNOWN*)&stream);
       if (!hr)

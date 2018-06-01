@@ -29,6 +29,7 @@
 #include "wks-helper.h"
 #include "overlay.h"
 #include "keycache.h"
+#include "mymapitags.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/signingresult.h>
@@ -883,20 +884,30 @@ CryptController::update_mail_mapi ()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  if (m_mail->do_pgp_inline ())
-    {
-      // Nothing to do for inline.
-      log_debug ("%s:%s: Inline mail. No MAPI update.",
-                 SRCNAME, __func__);
-      return 0;
-    }
-
   LPMESSAGE message = get_oom_base_message (m_mail->item());
   if (!message)
     {
       log_error ("%s:%s: Failed to obtain message.",
                  SRCNAME, __func__);
       return -1;
+    }
+
+  if (m_mail->do_pgp_inline ())
+    {
+      // Nothing to do for inline.
+      log_debug ("%s:%s: Inline mail. Setting encoding.",
+                 SRCNAME, __func__);
+
+      SPropValue prop;
+      prop.ulPropTag = PR_INTERNET_CPID;
+      prop.Value.l = 65001;
+      if (HrSetOneProp (message, &prop))
+        {
+          log_error ("%s:%s: Failed to set CPID mapiprop.",
+                     SRCNAME, __func__);
+        }
+
+      return 0;
     }
 
   mapi_attach_item_t *att_table = mapi_create_attach_table (message, 0);
