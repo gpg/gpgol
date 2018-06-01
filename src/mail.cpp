@@ -1087,8 +1087,19 @@ Mail::update_body()
   find_and_replace (html, "\r\r\n", "\r\n");
   if (opt.prefer_html && !html.empty() && !m_block_html)
     {
-      char *converted = ansi_charset_to_utf8 (m_parser->get_html_charset().c_str(),
-                                              html.c_str(), html.size());
+      const auto charset = m_parser->get_html_charset();
+
+      int codepage = 0;
+      if (html_charset.empty())
+        {
+          codepage = get_oom_int (m_mailitem, "InternetCodepage");
+          log_debug ("%s:%s: Did not find html charset."
+                     " Using internet Codepage %i.",
+                     SRCNAME, __func__, codepage);
+        }
+
+      char *converted = ansi_charset_to_utf8 (charset.c_str(), html.c_str(),
+                                              html.size(), codepage);
       int ret = put_oom_string (m_mailitem, "HTMLBody", converted ? converted : "");
       xfree (converted);
       if (ret)
@@ -1162,8 +1173,21 @@ Mail::update_body()
     }
 
   find_and_replace (body, "\r\r\n", "\r\n");
-  char *converted = ansi_charset_to_utf8 (m_parser->get_body_charset().c_str(),
-                                          body.c_str(), body.size());
+
+  const auto plain_charset = m_parser->get_body_charset();
+
+  int codepage = 0;
+  if (plain_charset.empty())
+    {
+      codepage = get_oom_int (m_mailitem, "InternetCodepage");
+      log_debug ("%s:%s: Did not find body charset. "
+                 "Using internet Codepage %i.",
+                 SRCNAME, __func__, codepage);
+    }
+
+  char *converted = ansi_charset_to_utf8 (plain_charset.c_str(),
+                                          body.c_str(), body.size(),
+                                          codepage);
   int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
   xfree (converted);
   if (ret)

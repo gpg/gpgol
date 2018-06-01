@@ -33,12 +33,13 @@ extern "C" {
   * @param charset: ANSI name of the charset to decode.
   * @param input: The input to convert.
   * @param inlen: The size of the input.
+  * @param codepage: Alternative codepage to be prefered over the name.
   *
   * @returns NULL on error or an UTF-8 encoded NULL terminated string.
   */
 
 char *ansi_charset_to_utf8 (const char *charset, const char *input,
-                            size_t inlen);
+                            size_t inlen, int codepage);
 #ifdef __cplusplus
 }
 #endif

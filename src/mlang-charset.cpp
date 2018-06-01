@@ -32,7 +32,7 @@ DEFINE_GUID (IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,
 #include "mlang-charset.h"
 
 char *ansi_charset_to_utf8 (const char *charset, const char *input,
-                            size_t inlen)
+                            size_t inlen, int codepage)
 {
   LPMULTILANGUAGE multilang = NULL;
   MIMECSETINFO mime_info;
@@ -44,9 +44,9 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
   wchar_t *buf;
   char *ret;
 
-  if (!charset || !strlen (charset))
+  if ((!charset || !strlen (charset)) && !codepage)
     {
-      log_debug ("%s:%s: No charset returning plain.",
+      log_debug ("%s:%s: No charset / codepage returning plain.",
                  SRCNAME, __func__);
       return strdup (input);
     }
@@ -71,20 +71,27 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
 
   uinlen = (unsigned int) inlen;
 
-  mime_info.uiCodePage = 0;
-  mime_info.uiInternetEncoding = 0;
-  BSTR w_charset = utf8_to_wchar (charset);
-  err = multilang->GetCharsetInfo (w_charset, &mime_info);
-  xfree (w_charset);
-  if (err != S_OK)
+  if (!codepage)
     {
-      log_error ("%s:%s: Failed to find charset for: %s",
-                 SRCNAME, __func__, charset);
-      gpgol_release (multilang);
-      return strdup(input);
+      mime_info.uiCodePage = 0;
+      mime_info.uiInternetEncoding = 0;
+      BSTR w_charset = utf8_to_wchar (charset);
+      err = multilang->GetCharsetInfo (w_charset, &mime_info);
+      xfree (w_charset);
+      if (err != S_OK)
+        {
+          log_error ("%s:%s: Failed to find charset for: %s",
+                     SRCNAME, __func__, charset);
+          gpgol_release (multilang);
+          return strdup(input);
+        }
+      enc = (mime_info.uiInternetEncoding == 0) ? mime_info.uiCodePage :
+                                                  mime_info.uiInternetEncoding;
     }
-  enc = (mime_info.uiInternetEncoding == 0) ? mime_info.uiCodePage :
-                                              mime_info.uiInternetEncoding;
+  else
+    {
+      enc = codepage;
+    }
 
   /** Get the size of the result */
   err = multilang->ConvertStringToUnicode(&mode, enc, const_cast<char*>(input),

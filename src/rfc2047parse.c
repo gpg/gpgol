@@ -581,7 +581,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
               strncat (decoded, (char *) outptr, outlen);
           } else {
 #ifdef HAVE_W32_SYSTEM
-              str = ansi_charset_to_utf8 (charset, outptr, outlen);
+              str = ansi_charset_to_utf8 (charset, outptr, outlen, 0);
 #else
               log_debug ("%s:%s: Conversion not available on non W32 systems",
                          SRCNAME, __func__);
