@@ -2349,6 +2349,11 @@ Mail::get_crypto_details()
                m_verify_result.numSignatures() < 1)
         {
           message += _("There was an error verifying the signature.\n");
+          const auto err = m_sig.status ();
+          if (err)
+            {
+              message += err.asString () + std::string ("\n");
+            }
         }
       else if (m_sig.summary() & Signature::Summary::SigExpired)
         {
