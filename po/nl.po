@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-06-12 11:16+0200\n"
-"PO-Revision-Date: 2018-05-14 22:49+0200\n"
+"PO-Revision-Date: 2018-06-12 21:28+0200\n"
 "Last-Translator: Erwin Bronkhorst <erwinbronkhorst@gmail.com>\n"
 "Language-Team: \n"
 "Language: nl\n"
@@ -231,26 +231,27 @@ msgstr "Een moment geduld voordat het bericht is ontcijferd / geverifieerd..."
 
 #: src/mail.cpp:1127 src/mail.cpp:1196
 msgid "HTML display disabled."
-msgstr ""
+msgstr "Weergave van HTML uitgeschakeld."
 
 #: src/mail.cpp:1128 src/mail.cpp:1197
 msgid "HTML content in unsigned S/MIME mails is insecure."
-msgstr ""
+msgstr "HTML-inhoud in niet-ondertekende S/MIME e-mail is onveilig."
 
 #: src/mail.cpp:1131 src/mail.cpp:1200
 msgid "GpgOL will only show such mails as text."
-msgstr ""
+msgstr "GpgOL zal dergelijke e-mailberichten alleen als tekst weergeven."
 
 #: src/mail.cpp:1134
-#, fuzzy
 msgid "This message is shown only once."
-msgstr "Dit bericht is niet versleuteld."
+msgstr "Dit bericht wordt eenmalig weergegeven."
 
 #: src/mail.cpp:1203
 msgid ""
 "Please ask the sender to sign the message or\n"
 "to send it with a plain text alternative."
 msgstr ""
+"Vraag de verzender om het bericht te ondertekenen of\n"
+" het als platte tekst te versturen."
 
 #: src/mail.cpp:1374
 msgid "GpgOL: Oops, G Suite Sync account detected"
@@ -564,25 +565,29 @@ msgstr ""
 
 #: src/mailitem-events.cpp:779
 msgid "Dangerous reply"
-msgstr ""
+msgstr "Gevaarlijke handeling: Beantwoorden"
 
 #: src/mailitem-events.cpp:780
 msgid "Dangerous forward"
-msgstr ""
+msgstr "Gevaarlijke handeling: Doorsturen"
 
 #: src/mailitem-events.cpp:781
 msgid "Unsigned S/MIME mails are not integrity protected."
-msgstr ""
+msgstr "Ongetekende S/MAIL e-mailberichten zijn niet beschermd op integriteit."
 
 #: src/mailitem-events.cpp:787
 msgid "For security reasons no decrypted contents are included in this reply."
 msgstr ""
+"Uit veiligheidsoverwegingen wordt er geen ontsleutelde inhoud ingevoegd in "
+"dit antwoord."
 
 #: src/mailitem-events.cpp:792
 msgid ""
 "For security reasons no decrypted contents are included in the forwarded "
 "mail."
 msgstr ""
+"Uit veiligheidsoverwegingen wordt er geen ontsleutelde inhoud ingevoegd in "
+"deze doorgestuurde e-mail."
 
 #: src/mailitem-events.cpp:847
 msgid ""
@@ -640,6 +645,8 @@ msgid ""
 "Data is not integrity protected. Decrypting it could be a security problem. "
 "(no MDC)"
 msgstr ""
+"Gegevens-integriteit is niet beschermd. Ontcijferen kan een "
+"beveiligingsprobleem zijn. (geen MDC)"
 
 #: src/parsecontroller.cpp:219 src/parsecontroller.cpp:295
 msgid "Encrypted message (decryption not possible)"
