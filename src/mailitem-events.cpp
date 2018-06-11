@@ -135,6 +135,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
           return S_OK;
         }
     }
+
+  bool is_reply = false;
   switch(dispid)
     {
       case Open:
@@ -592,7 +594,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                  " Pass but schedule revert.",
                                  SRCNAME, __func__);
 
-                      Mail::invalidate_last_mail ();
+                      /* This might be a forward. So don't invalidate yet. */
+
+                      // Mail::invalidate_last_mail ();
+
                       do_in_ui_thread_async (REVERT_MAIL, m_mail);
                       return S_OK;
                     }
@@ -719,10 +724,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
           return S_OK;
         }
+      /* Fallthrough */
+      case ReplyAll:
+      case Reply:
+        {
+          is_reply = true;
+        }
       case Forward:
         {
-          log_oom_extra ("%s:%s: Forward: %p",
-                         SRCNAME, __func__, m_mail);
+          log_oom_extra ("%s:%s: %s : %p",
+                         SRCNAME, __func__, is_reply ? "reply" : "forward", m_mail);
           if (!m_mail->is_crypto_mail ())
             {
               /* Non crypto mails do not interest us.*/
@@ -746,18 +757,52 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
               if (!lastSize && !lastEntryStr.size ())
                 {
-                  log_debug ("%s:%s: Forward in the same loop as empty load."
-                             " Marking %p (item %p) as forwarded.",
-                             SRCNAME, __func__, last_mail, last_mail->item ());
+                  if (!is_reply)
+                    {
+                      log_debug ("%s:%s: Forward in the same loop as empty "
+                                 "load Marking %p (item %p) as forwarded.",
+                                 SRCNAME, __func__, last_mail,
+                                 last_mail->item ());
 
-                  last_mail->set_is_forwarded_crypto_mail (true);
+                      last_mail->set_is_forwarded_crypto_mail (true);
+                    }
+                  else
+                    {
+                      log_debug ("%s:%s: Reply in the same loop as empty "
+                                 "load Marking %p (item %p) as reply.",
+                                 SRCNAME, __func__, last_mail,
+                                 last_mail->item ());
+                    }
+                  if (m_mail->is_block_html())
+                    {
+                      std::string caption = _("GpgOL") + std::string (": ");
+                      caption += is_reply ? _("Dangerous reply") :
+                                            _("Dangerous forward");
+                      std::string buf = _("Unsigned S/MIME mails are not integrity "
+                                          "protected.");
+                      buf += "\n\n";
+
+                      if (is_reply)
+                        {
+                          buf += _("For security reasons no decrypted contents"
+                                   " are included in this reply.");
+                        }
+                      else
+                        {
+                          buf += _("For security reasons no decrypted contents"
+                                   " are included in the forwarded mail.");
+                        }
+
+                      gpgol_message_box (get_active_hwnd (), buf.c_str(),
+                                         _("GpgOL"), MB_OK);
+
+                      do_in_ui_thread_async (CLEAR_REPLY_FORWARD, last_mail, 1000);
+                    }
                 }
+              // We can now invalidate the last mail
+              Mail::invalidate_last_mail ();
             }
-        }
-      /* Fallthrough */
-      case Reply:
-      case ReplyAll:
-        {
+
           log_oom_extra ("%s:%s: Reply Forward ReplyAll: %p",
                          SRCNAME, __func__, m_mail);
           if (!opt.reply_crypt)

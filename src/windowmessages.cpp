@@ -182,6 +182,19 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               xfree (ctx->data);
               break;
             }
+          case (CLEAR_REPLY_FORWARD):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: Clear reply forward for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+              mail->wipe (true);
+              mail->remove_all_attachments ();
+              break;
+            }
           default:
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);
@@ -242,7 +255,7 @@ send_msg_to_ui_thread (wm_ctx_t *ctx)
 int
 do_in_ui_thread (gpgol_wmsg_type type, void *data)
 {
-  wm_ctx_t ctx = {NULL, UNKNOWN, 0};
+  wm_ctx_t ctx = {NULL, UNKNOWN, 0, 0};
   ctx.wmsg_type = type;
   ctx.data = data;
   if (send_msg_to_ui_thread (&ctx))
@@ -256,19 +269,25 @@ static DWORD WINAPI
 do_async (LPVOID arg)
 {
   wm_ctx_t *ctx = (wm_ctx_t*) arg;
-  log_debug ("%s:%s: Do async with type %i",
-             SRCNAME, __func__, ctx ? ctx->wmsg_type : -1);
+  log_debug ("%s:%s: Do async with type %i after %i ms",
+             SRCNAME, __func__, ctx ? ctx->wmsg_type : -1,
+             ctx->delay);
+  if (ctx->delay)
+    {
+      Sleep (ctx->delay);
+    }
   send_msg_to_ui_thread (ctx);
   xfree (ctx);
   return 0;
 }
 
 void
-do_in_ui_thread_async (gpgol_wmsg_type type, void *data)
+do_in_ui_thread_async (gpgol_wmsg_type type, void *data, int delay)
 {
   wm_ctx_t *ctx = (wm_ctx_t *) calloc (1, sizeof (wm_ctx_t));
   ctx->wmsg_type = type;
   ctx->data = data;
+  ctx->delay = delay;
 
   CloseHandle (CreateThread (NULL, 0, do_async, (LPVOID) ctx, 0, NULL));
 }
