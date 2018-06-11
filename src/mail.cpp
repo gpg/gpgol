@@ -1082,35 +1082,63 @@ Mail::update_body()
   // No need to carry body anymore
   m_orig_body = std::string();
   auto html = m_parser->get_html_body ();
+  auto body = m_parser->get_body ();
   /** Outlook does not show newlines if \r\r\n is a newline. We replace
     these as apparently some other buggy MUA sends this. */
   find_and_replace (html, "\r\r\n", "\r\n");
-  if (opt.prefer_html && !html.empty() && !m_block_html)
+  if (opt.prefer_html && !html.empty())
     {
-      const auto charset = m_parser->get_html_charset();
-
-      int codepage = 0;
-      if (charset.empty())
+      if (!m_block_html)
         {
-          codepage = get_oom_int (m_mailitem, "InternetCodepage");
-          log_debug ("%s:%s: Did not find html charset."
-                     " Using internet Codepage %i.",
-                     SRCNAME, __func__, codepage);
-        }
+          const auto charset = m_parser->get_html_charset();
 
-      char *converted = ansi_charset_to_utf8 (charset.c_str(), html.c_str(),
-                                              html.size(), codepage);
-      int ret = put_oom_string (m_mailitem, "HTMLBody", converted ? converted : "");
-      xfree (converted);
-      if (ret)
+          int codepage = 0;
+          if (charset.empty())
+            {
+              codepage = get_oom_int (m_mailitem, "InternetCodepage");
+              log_debug ("%s:%s: Did not find html charset."
+                         " Using internet Codepage %i.",
+                         SRCNAME, __func__, codepage);
+            }
+
+          char *converted = ansi_charset_to_utf8 (charset.c_str(), html.c_str(),
+                                                  html.size(), codepage);
+          int ret = put_oom_string (m_mailitem, "HTMLBody", converted ?
+                                                            converted : "");
+          xfree (converted);
+          if (ret)
+            {
+              log_error ("%s:%s: Failed to modify html body of item.",
+                         SRCNAME, __func__);
+            }
+
+          return;
+        }
+      else if (!body.empty())
         {
-          log_error ("%s:%s: Failed to modify html body of item.",
-                     SRCNAME, __func__);
-        }
+          /* We had a multipart/alternative mail but html should be
+             blocked. So we prefer the text/plain part and warn
+             once about this so that we hopefully don't get too
+             many bugreports about this. */
+          if (!opt.smime_html_warn_shown)
+            {
+              std::string caption = _("GpgOL") + std::string (": ") +
+                std::string (_("HTML display disabled."));
+              std::string buf = _("HTML content in unsigned S/MIME mails "
+                                  "is insecure.");
+              buf += "\n";
+              buf += _("GpgOL will only show such mails as text.");
 
-      return;
+              buf += "\n\n";
+              buf += _("This message is shown only once.");
+
+              gpgol_message_box (get_window(), buf.c_str(), caption.c_str(),
+                                 MB_OK);
+              opt.smime_html_warn_shown = true;
+              write_options ();
+            }
+        }
     }
-  auto body = m_parser->get_body ();
 
   if (body.empty () && m_block_html && !html.empty())
     {
@@ -1163,13 +1191,19 @@ Mail::update_body()
         }
 #endif
       body = html;
-      std::string buf = _("HTML display disabled.");
-      buf += "\n\n";
-      buf += _("For security reasons HTML content in unsigned, encrypted\n"
-               "S/MIME mails cannot be displayed.\n\n"
-               "Please ask the sender to sign the message or to send it as plain text.");
+      std::string caption = _("GpgOL") + std::string (": ") +
+        std::string (_("HTML display disabled."));
+      std::string buf = _("HTML content in unsigned S/MIME mails "
+                          "is insecure.");
+      buf += "\n";
+      buf += _("GpgOL will only show such mails as text.");
 
-      gpgol_message_box (get_window(), buf.c_str() , _("GpgOL"), MB_OK);
+      buf += "\n\n";
+      buf += _("Please ask the sender to sign the message or\n"
+               "to send it with a plain text alternative.");
+
+      gpgol_message_box (get_window(), buf.c_str(), caption.c_str(),
+                         MB_OK);
     }
 
   find_and_replace (body, "\r\r\n", "\r\n");
