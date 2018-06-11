@@ -455,10 +455,19 @@ public:
   void set_is_forwarded_crypto_mail (bool value) { m_is_forwarded_crypto_mail = value; }
   bool is_forwarded_crypto_mail () { return m_is_forwarded_crypto_mail; }
 
+  /** Set if this is a reply of a crypto mail. */
+  void set_is_reply_crypto_mail (bool value) { m_is_reply_crypto_mail = value; }
+  bool is_reply_crypto_mail () { return m_is_reply_crypto_mail; }
+
   /** Remove the hidden GpgOL attachments. This is needed when forwarding
     without encryption so that our attachments are not included in the forward.
     Returns 0 on success. Works in OOM. */
   int remove_our_attachments ();
+
+  /** Remove all attachments. Including our own. This is needed for
+    forwarding of unsigned S/MIME mails (Efail).
+    Returns 0 on success. Works in OOM. */
+  int remove_all_attachments ();
 
   /** Check both OOM and MAPI if the body is either empty or
     encrypted. Won't abort on OOM or MAPI errors, so it can be
@@ -490,6 +499,7 @@ public:
 
   /* Block loading HTML content */
   void set_block_html (bool value);
+  bool is_block_html () const { return m_block_html; }
 
   /* Remove automatic loading of HTML references setting. */
   void set_block_status ();
@@ -534,6 +544,7 @@ private:
   bool m_async_crypt_disabled;
   std::string m_mime_data;
   bool m_is_forwarded_crypto_mail; /* Is this a forward of a crypto mail */
+  bool m_is_reply_crypto_mail; /* Is this a reply to a crypto mail */
   bool m_is_send_again; /* Is this a send again of a crypto mail */
   bool m_disable_att_remove_warning; /* Should not warn about attachment removal. */
   bool m_block_html; /* Force blocking of html content. e.g for unsigned S/MIME mails. */

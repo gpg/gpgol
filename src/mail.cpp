@@ -92,6 +92,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_window(nullptr),
     m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false),
+    m_is_reply_crypto_mail(false),
     m_is_send_again(false),
     m_disable_att_remove_warning(false)
 {
@@ -2973,6 +2974,51 @@ Mail::locate_all_crypto_recipients()
           it->second->locate_keys ();
         }
     }
+}
+
+int
+Mail::remove_all_attachments ()
+{
+  int ret = 0;
+  LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
+  if (!attachments)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+  int count = get_oom_int (attachments, "Count");
+  LPDISPATCH to_delete[count];
+
+  /* Populate the array so that we don't get in an index mess */
+  for (int i = 1; i <= count; i++)
+    {
+      auto item_str = std::string("Item(") + std::to_string (i) + ")";
+      to_delete[i-1] = get_oom_object (attachments, item_str.c_str());
+    }
+  gpgol_release (attachments);
+
+  /* Now delete all attachments */
+  for (int i = 0; i < count; i++)
+    {
+      LPDISPATCH attachment = to_delete[i];
+
+      if (!attachment)
+        {
+          log_error ("%s:%s: No such attachment %i",
+                     SRCNAME, __func__, i);
+          ret = -1;
+        }
+
+      /* Delete the attachments that are marked to delete */
+      if (invoke_oom_method (attachment, "Delete", NULL))
+        {
+          log_error ("%s:%s: Deleting attachment %i",
+                     SRCNAME, __func__, i);
+          ret = -1;
+        }
+      gpgol_release (attachment);
+    }
+  return ret;
 }
 
 int
