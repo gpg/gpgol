@@ -39,16 +39,6 @@ static void drop_locale_dir (char *locale_dir);
 int g_ol_version_major;
 
 
-
-/* Initialization of gloabl options.  These are merely the defaults
-   and will get updated later from the Registry.  That is done later
-   at the time Outlook calls its entry point the first time. */
-static void
-init_options (void)
-{
-  opt.enc_format = GPG_FMT_CLASSIC;
-}
-
 /* For certain operations we need to acquire a log on the logging
    functions.  This lock is controlled by this Mutex. */
 HANDLE log_mutex;
@@ -169,7 +159,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
       if (initialize_main ())
         return FALSE;
       i18n_init ();
-      init_options ();
     }
   else if (reason == DLL_PROCESS_DETACH)
     {
@@ -306,35 +295,12 @@ read_options (void)
   opt.enable_smime = !val ? 0 : atoi (val);
   xfree (val); val = NULL;
 
-/*   load_extension_value ("defaultProtocol", &val); */
-/*   switch ((!val || *val == '0')? 0 : atol (val)) */
-/*     { */
-/*     case 1: opt.default_protocol = PROTOCOL_OPENPGP; break; */
-/*     case 2: opt.default_protocol = PROTOCOL_SMIME; break; */
-/*     case 0: */
-/*     default: opt.default_protocol = PROTOCOL_UNKNOWN /\*(auto*)*\/; break; */
-/*     } */
-/*   xfree (val); val = NULL; */
-  opt.default_protocol = PROTOCOL_UNKNOWN; /* (auto)*/
-
   load_extension_value ("encryptDefault", &val);
   opt.encrypt_default = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
 
   load_extension_value ("signDefault", &val);
   opt.sign_default = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-
-  load_extension_value ("previewDecrypt", &val);
-  opt.preview_decrypt = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-
-  load_extension_value ("enableDefaultKey", &val);
-  opt.enable_default_key = val == NULL || *val != '1' ? 0 : 1;
-  xfree (val); val = NULL;
-
-  load_extension_value ("encodingFormat", &val);
-  opt.enc_format = val == NULL? GPG_FMT_CLASSIC  : atol (val);
   xfree (val); val = NULL;
 
   load_extension_value ("defaultKey", &val);
@@ -353,10 +319,6 @@ read_options (void)
   opt.announce_number = val? atol (val) : 0;
   xfree (val); val = NULL;
 
-  load_extension_value ("bodyAsAttachment", &val);
-  opt.body_as_attachment = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-
   load_extension_value ("inlinePGP", &val);
   opt.inline_pgp = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
@@ -366,8 +328,8 @@ read_options (void)
   load_extension_value ("replyCrypt", &val);
   opt.reply_crypt = val == NULL ? 1 : *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
-  load_extension_value ("deprecationShown", &val);
-  opt.deprecation_shown = val == NULL || *val != '1'? 0 : 1;
+  load_extension_value ("smimeHtmlWarnShown", &val);
+  opt.smime_html_warn_shown = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
@@ -426,22 +388,16 @@ write_options (void)
     char *s_val;
   } table[] = {
     {"enableSmime",              0, opt.enable_smime, NULL},
-/*     {"defaultProtocol",          3, opt.default_protocol}, */
     {"encryptDefault",           0, opt.encrypt_default, NULL},
     {"signDefault",              0, opt.sign_default, NULL},
-    {"previewDecrypt",           0, opt.preview_decrypt, NULL},
-    {"encodingFormat",           1, opt.enc_format, NULL},
     {"logFile",                  2, 0, (char*) get_log_file ()},
-    {"defaultKey",               2, 0, opt.default_key},
-    {"enableDefaultKey",         0, opt.enable_default_key, NULL},
     {"gitCommit",                4, opt.git_commit, NULL},
     {"formsRevision",            1, opt.forms_revision, NULL},
     {"announceNumber",           1, opt.announce_number, NULL},
-    {"bodyAsAttachment",         0, opt.body_as_attachment, NULL},
     {"inlinePGP",                0, opt.inline_pgp, NULL},
     {"autoresolve",              0, opt.autoresolve, NULL},
     {"replyCrypt",               0, opt.reply_crypt, NULL},
-    {"deprecationShown",         0, opt.deprecation_shown, NULL},
+    {"smimeHtmlWarnShown",       0, opt.smime_html_warn_shown, NULL},
     {NULL, 0, 0, NULL}
   };
   char buf[32];

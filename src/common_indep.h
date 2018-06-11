@@ -186,20 +186,14 @@ struct
                                 larger than 1 increases the debug log
                                 verbosity.  */
   int enable_smime;	     /* Enable S/MIME support. */
-  int passwd_ttl;            /* Time in seconds the passphrase is stored. */
-  protocol_t default_protocol;/* The default protocol. */
   int encrypt_default;       /* Encrypt by default. */
   int sign_default;          /* Sign by default. */
-  int enc_format;            /* Encryption format for attachments. */
   char *default_key;         /* The key we want to always encrypt to. */
-  int enable_default_key;    /* Enable the use of DEFAULT_KEY. */
-  int preview_decrypt;       /* Decrypt in preview window. */
   int prefer_html;           /* Prefer html in html/text alternatives. */
-  int body_as_attachment;    /* Present encrypted message as attachment.  */
   int inline_pgp;            /* Only for Addin. Use Inline PGP by default. */
   int autoresolve;           /* Autresolve keys with --locate-keys. */
   int reply_crypt;           /* Only for Addin. Encrypt / Sign based on cryptostatus. */
-  int deprecation_shown;     /* Flag to save if deprecation warning was shown */
+  int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
 
   /* The compatibility flags. */
   struct

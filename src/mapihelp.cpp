@@ -3330,17 +3330,6 @@ mapi_get_gpgol_body_attachment (LPMESSAGE message,
           found = 1;
           if (!r_body)
             ; /* Body content has not been requested. */
-          else if (opt.body_as_attachment && !mapi_test_attach_hidden (att))
-            {
-              /* The body is to be shown as an attachment. */
-              body = native_to_utf8 
-                (bodytype == 2
-                 ? ("[Open the attachment \"gpgol000.htm\""
-                    " to view the message.]")
-                 : ("[Open the attachment \"gpgol000.txt\""
-                    " to view the message.]"));
-              found = 1;
-            }
           else
             {
               char *charset;
