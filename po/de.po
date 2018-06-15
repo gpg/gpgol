@@ -581,8 +581,8 @@ msgstr "Unsignierte S/MIME Mails sind nicht integritätsgeschützt."
 #: src/mailitem-events.cpp:787
 msgid "For security reasons no decrypted contents are included in this reply."
 msgstr ""
-"Aus Sicherheitsgründen werden keine entschlüsselte Inhalte in die Antwort"
-" aufgenommen."
+"Aus Sicherheitsgründen werden keine entschlüsselte Inhalte in die Antwort "
+"aufgenommen."
 
 #: src/mailitem-events.cpp:792
 msgid ""
@@ -647,8 +647,8 @@ msgid ""
 "Data is not integrity protected. Decrypting it could be a security problem. "
 "(no MDC)"
 msgstr ""
-"Daten sind nicht integritätsgeschützt. Das Entschlüsseln könnte ein"
-" Sicherheitsproblem sein.  (Kein MDC)"
+"Daten sind nicht integritätsgeschützt. Das Entschlüsseln könnte ein "
+"Sicherheitsproblem sein.  (Kein MDC)"
 
 #: src/parsecontroller.cpp:219 src/parsecontroller.cpp:295
 msgid "Encrypted message (decryption not possible)"
