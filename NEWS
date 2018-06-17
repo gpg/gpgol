@@ -1,6 +1,15 @@
-Noteworthy changes for version 2.1.2 (unreleased)
+Noteworthy changes for version 2.2.0 (2018-06-15)
 =================================================
 
+ * Removed support for Outlook 2003 and 2007.
+
+ * Fixed reply handling of PGP/Inline mails. (T3964)
+
+ * Fixed a seemingly random crash. (T3946)
+
+ * Added dutch and ukrainian translation.
+
+ * Fixed encoding for some PGP/Inline mails. (T3986)
 
 Noteworthy changes for version 2.1.1 (2018-04-24)
 =================================================
