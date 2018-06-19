@@ -679,10 +679,19 @@ infer_content_type (const char * /*data*/, size_t /*datalen*/,
 
   *force_b64 = 0;
   if (filename)
-    suffix = strrchr (filename, '.');
-
-  if (!suffix.empty())
     {
+      const char *dot = strrchr (filename, '.');
+
+      if (dot)
+        {
+          suffix = dot;
+        }
+    }
+
+  /* Check for at least one char after the dot. */
+  if (suffix.size() > 1)
+    {
+      /* Erase the dot */
       suffix.erase(0, 1);
       std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
       for (i=0; suffix_table[i].suffix; i++)
