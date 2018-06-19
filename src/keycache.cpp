@@ -43,16 +43,14 @@ public:
 
   }
 
-  void setPgpKey(const char *mbox, const GpgME::Key &key)
+  void setPgpKey(const std::string &mbox, const GpgME::Key &key)
   {
-    const std::string sMbox(mbox);
-
     gpgrt_lock_lock (&keycache_lock);
-    auto it = m_pgp_key_map.find (sMbox);
+    auto it = m_pgp_key_map.find (mbox);
 
     if (it == m_pgp_key_map.end ())
       {
-        m_pgp_key_map.insert (std::pair<std::string, GpgME::Key> (sMbox, key));
+        m_pgp_key_map.insert (std::pair<std::string, GpgME::Key> (mbox, key));
       }
     else
       {
@@ -61,16 +59,14 @@ public:
     gpgrt_lock_unlock (&keycache_lock);
   }
 
-  void setSmimeKey(const char *mbox, const GpgME::Key &key)
+  void setSmimeKey(const std::string &mbox, const GpgME::Key &key)
   {
-    const std::string sMbox(mbox);
-
     gpgrt_lock_lock (&keycache_lock);
-    auto it = m_smime_key_map.find (sMbox);
+    auto it = m_smime_key_map.find (mbox);
 
     if (it == m_smime_key_map.end ())
       {
-        m_smime_key_map.insert (std::pair<std::string, GpgME::Key> (sMbox, key));
+        m_smime_key_map.insert (std::pair<std::string, GpgME::Key> (mbox, key));
       }
     else
       {
@@ -79,16 +75,14 @@ public:
     gpgrt_lock_unlock (&keycache_lock);
   }
 
-  void setPgpKeySecret(const char *mbox, const GpgME::Key &key)
+  void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
   {
-    const std::string sMbox(mbox);
-
     gpgrt_lock_lock (&keycache_lock);
-    auto it = m_pgp_skey_map.find (sMbox);
+    auto it = m_pgp_skey_map.find (mbox);
 
     if (it == m_pgp_skey_map.end ())
       {
-        m_pgp_skey_map.insert (std::pair<std::string, GpgME::Key> (sMbox, key));
+        m_pgp_skey_map.insert (std::pair<std::string, GpgME::Key> (mbox, key));
       }
     else
       {
@@ -97,16 +91,14 @@ public:
     gpgrt_lock_unlock (&keycache_lock);
   }
 
-  void setSmimeKeySecret(const char *mbox, const GpgME::Key &key)
+  void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key)
   {
-    const std::string sMbox(mbox);
-
     gpgrt_lock_lock (&keycache_lock);
-    auto it = m_smime_skey_map.find (sMbox);
+    auto it = m_smime_skey_map.find (mbox);
 
     if (it == m_smime_skey_map.end ())
       {
-        m_smime_skey_map.insert (std::pair<std::string, GpgME::Key> (sMbox, key));
+        m_smime_skey_map.insert (std::pair<std::string, GpgME::Key> (mbox, key));
       }
     else
       {
@@ -318,37 +310,42 @@ KeyCache::getEncryptionKeys (const std::vector<std::string> &recipients, GpgME::
 static DWORD WINAPI
 do_locate (LPVOID arg)
 {
-  char *addr = (char*) arg;
+  if (!arg)
+    {
+      return 0;
+    }
+  std::string addr = (char*) arg;
+  xfree (arg);
 
   log_mime_parser ("%s:%s searching key for addr: \"%s\"",
-                   SRCNAME, __func__, addr);
+                   SRCNAME, __func__, addr.c_str());
 
-  const auto k = GpgME::Key::locate (addr);
+  const auto k = GpgME::Key::locate (addr.c_str());
 
   if (!k.isNull ())
     {
       log_mime_parser ("%s:%s found key for addr: \"%s\":%s",
-                       SRCNAME, __func__, addr, k.primaryFingerprint());
+                       SRCNAME, __func__, addr.c_str(),
+                       k.primaryFingerprint());
       KeyCache::instance ()->setPgpKey (addr, k);
     }
 
   if (opt.enable_smime)
     {
-      auto ctx = GpgME::Context::createForProtocol (GpgME::CMS);
+      auto ctx = std::unique_ptr<GpgME::Context> (
+                          GpgME::Context::createForProtocol (GpgME::CMS));
       if (!ctx)
         {
           TRACEPOINT;
-          xfree (addr);
           return 0;
         }
       // We need to validate here to fetch CRL's
       ctx->setKeyListMode (GpgME::KeyListMode::Local |
                            GpgME::KeyListMode::Validate);
-      GpgME::Error e = ctx->startKeyListing (addr);
+      GpgME::Error e = ctx->startKeyListing (addr.c_str());
       if (e)
         {
           TRACEPOINT;
-          xfree (addr);
           return 0;
         }
 
@@ -358,7 +355,6 @@ do_locate (LPVOID arg)
           keys.push_back(ctx->nextKey(err));
       } while (!err);
       keys.pop_back();
-      delete ctx;
 
       GpgME::Key candidate;
       for (const auto &key: keys)
@@ -382,12 +378,11 @@ do_locate (LPVOID arg)
       if (!candidate.isNull())
         {
           log_mime_parser ("%s:%s found SMIME key for addr: \"%s\":%s",
-                           SRCNAME, __func__, addr, candidate.primaryFingerprint());
+                           SRCNAME, __func__, addr.c_str(),
+                           candidate.primaryFingerprint());
           KeyCache::instance()->setSmimeKey (addr, candidate);
         }
     }
-  xfree (addr);
-
   log_debug ("%s:%s locator thread done",
              SRCNAME, __func__);
   return 0;
@@ -396,20 +391,27 @@ do_locate (LPVOID arg)
 static void
 locate_secret (char *addr, GpgME::Protocol proto)
 {
-  auto ctx = GpgME::Context::createForProtocol (proto);
+  auto ctx = std::unique_ptr<GpgME::Context> (
+                      GpgME::Context::createForProtocol (proto));
   if (!ctx)
     {
       TRACEPOINT;
       return;
     }
+  if (!addr)
+    {
+      TRACEPOINT;
+      return;
+    }
+  const auto mbox = GpgME::UserID::addrSpecFromString (addr);
+
   // We need to validate here to fetch CRL's
   ctx->setKeyListMode (GpgME::KeyListMode::Local |
                        GpgME::KeyListMode::Validate);
-  GpgME::Error e = ctx->startKeyListing (addr, true);
+  GpgME::Error e = ctx->startKeyListing (mbox.c_str(), true);
   if (e)
     {
       TRACEPOINT;
-      xfree (addr);
       return;
     }
 
@@ -432,21 +434,20 @@ locate_secret (char *addr, GpgME::Protocol proto)
       if (proto == GpgME::OpenPGP)
         {
           log_mime_parser ("%s:%s found pgp skey for addr: \"%s\":%s",
-                           SRCNAME, __func__, addr, key.primaryFingerprint());
-          KeyCache::instance()->setPgpKeySecret (addr, key);
-          delete ctx;
+                           SRCNAME, __func__, mbox.c_str(),
+                           key.primaryFingerprint());
+          KeyCache::instance()->setPgpKeySecret (mbox, key);
           return;
         }
       if (proto == GpgME::CMS)
         {
           log_mime_parser ("%s:%s found cms skey for addr: \"%s\":%s",
-                           SRCNAME, __func__, addr, key.primaryFingerprint());
-          KeyCache::instance()->setSmimeKeySecret (addr, key);
-          delete ctx;
+                           SRCNAME, __func__, mbox.c_str (),
+                           key.primaryFingerprint());
+          KeyCache::instance()->setSmimeKeySecret (mbox, key);
           return;
         }
     } while (!err);
-  delete ctx;
   return;
 }
 
@@ -543,25 +544,25 @@ KeyCache::startLocateSecret (const char *addr) const
 
 
 void
-KeyCache::setSmimeKey(const char *mbox, const GpgME::Key &key)
+KeyCache::setSmimeKey(const std::string &mbox, const GpgME::Key &key)
 {
   d->setSmimeKey(mbox, key);
 }
 
 void
-KeyCache::setPgpKey(const char *mbox, const GpgME::Key &key)
+KeyCache::setPgpKey(const std::string &mbox, const GpgME::Key &key)
 {
   d->setPgpKey(mbox, key);
 }
 
 void
-KeyCache::setSmimeKeySecret(const char *mbox, const GpgME::Key &key)
+KeyCache::setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key)
 {
   d->setSmimeKeySecret(mbox, key);
 }
 
 void
-KeyCache::setPgpKeySecret(const char *mbox, const GpgME::Key &key)
+KeyCache::setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
 {
   d->setPgpKeySecret(mbox, key);
 }

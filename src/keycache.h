@@ -69,10 +69,10 @@ public:
     void startLocate (const char *addr) const;
 
     // Internal for thread
-    void setSmimeKey(const char *mbox, const GpgME::Key &key);
-    void setPgpKey(const char *mbox, const GpgME::Key &key);
-    void setSmimeKeySecret(const char *mbox, const GpgME::Key &key);
-    void setPgpKeySecret(const char *mbox, const GpgME::Key &key);
+    void setSmimeKey(const std::string &mbox, const GpgME::Key &key);
+    void setPgpKey(const std::string &mbox, const GpgME::Key &key);
+    void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key);
+    void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key);
 
 private:
 
