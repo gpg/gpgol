@@ -63,6 +63,9 @@ static std::map<LPDISPATCH, Mail*> s_mail_map;
 static std::map<std::string, Mail*> s_uid_map;
 static std::set<std::string> uids_searched;
 
+GPGRT_LOCK_DEFINE (mail_map_lock);
+GPGRT_LOCK_DEFINE (uid_map_lock);
+
 static Mail *s_last_mail;
 
 #define COPYBUFSIZE (8 * 1024)
@@ -113,11 +116,27 @@ Mail::Mail (LPDISPATCH mailitem) :
       gpgol_release(mailitem);
       return;
     }
+  gpgrt_lock_lock (&mail_map_lock);
   s_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
+  gpgrt_lock_unlock (&mail_map_lock);
   s_last_mail = this;
 }
 
 GPGRT_LOCK_DEFINE(dtor_lock);
+
+// static
+void
+Mail::delete_lock ()
+{
+  gpgrt_lock_lock (&dtor_lock);
+}
+
+// static
+void
+Mail::delete_unlock ()
+{
+  gpgrt_lock_unlock (&dtor_lock);
+}
 
 Mail::~Mail()
 {
@@ -138,19 +157,23 @@ Mail::~Mail()
 
   log_oom_extra ("%s:%s: Erasing mail",
                  SRCNAME, __func__);
+  gpgrt_lock_lock (&mail_map_lock);
   it = s_mail_map.find(m_mailitem);
   if (it != s_mail_map.end())
     {
       s_mail_map.erase (it);
     }
+  gpgrt_lock_unlock (&mail_map_lock);
 
   if (!m_uuid.empty())
     {
+      gpgrt_lock_lock (&uid_map_lock);
       auto it2 = s_uid_map.find(m_uuid);
       if (it2 != s_uid_map.end())
         {
           s_uid_map.erase (it2);
         }
+      gpgrt_lock_unlock (&uid_map_lock);
     }
 
   log_oom_extra ("%s:%s: releasing mailitem",
@@ -186,7 +209,9 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
       return NULL;
     }
   std::map<LPDISPATCH, Mail *>::iterator it;
+  gpgrt_lock_lock (&mail_map_lock);
   it = s_mail_map.find(mailitem);
+  gpgrt_lock_unlock (&mail_map_lock);
   if (it == s_mail_map.end())
     {
       return NULL;
@@ -201,7 +226,9 @@ Mail::get_mail_for_uuid (const char *uuid)
     {
       return NULL;
     }
+  gpgrt_lock_lock (&uid_map_lock);
   auto it = s_uid_map.find(std::string(uuid));
+  gpgrt_lock_unlock (&uid_map_lock);
   if (it == s_uid_map.end())
     {
       return NULL;
@@ -212,13 +239,18 @@ Mail::get_mail_for_uuid (const char *uuid)
 bool
 Mail::is_valid_ptr (const Mail *mail)
 {
+  gpgrt_lock_lock (&mail_map_lock);
   auto it = s_mail_map.begin();
   while (it != s_mail_map.end())
     {
       if (it->second == mail)
-        return true;
+        {
+          gpgrt_lock_unlock (&mail_map_lock);
+          return true;
+        }
       ++it;
     }
+  gpgrt_lock_unlock (&mail_map_lock);
   return false;
 }
 
@@ -1553,7 +1585,9 @@ Mail::close_all_mails ()
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   TRACEPOINT;
+  gpgrt_lock_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *> mail_map_copy = s_mail_map;
+  gpgrt_lock_unlock (&mail_map_lock);
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       /* XXX For non racy code the is_valid_ptr check should not
@@ -1587,6 +1621,7 @@ Mail::revert_all_mails ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
+  gpgrt_lock_lock (&mail_map_lock);
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
       if (it->second->revert ())
@@ -1604,6 +1639,7 @@ Mail::revert_all_mails ()
           continue;
         }
     }
+  gpgrt_lock_unlock (&mail_map_lock);
   return err;
 }
 
@@ -1612,6 +1648,7 @@ Mail::wipe_all_mails ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
+  gpgrt_lock_lock (&mail_map_lock);
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
       if (it->second->wipe ())
@@ -1620,6 +1657,7 @@ Mail::wipe_all_mails ()
           err++;
         }
     }
+  gpgrt_lock_unlock (&mail_map_lock);
   return err;
 }
 
@@ -2094,7 +2132,10 @@ Mail::set_uuid()
                      SRCNAME, __func__, m_mailitem, uuid);
           delete other;
         }
+
+      gpgrt_lock_lock (&uid_map_lock);
       s_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
+      gpgrt_lock_unlock (&uid_map_lock);
       log_debug ("%s:%s: uuid for %p is now %s",
                  SRCNAME, __func__, this,
                  m_uuid.c_str());
@@ -2966,6 +3007,7 @@ Mail::locate_all_crypto_recipients()
       return;
     }
 
+  gpgrt_lock_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *>::iterator it;
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
@@ -2974,6 +3016,7 @@ Mail::locate_all_crypto_recipients()
           it->second->locate_keys ();
         }
     }
+  gpgrt_lock_unlock (&mail_map_lock);
 }
 
 int

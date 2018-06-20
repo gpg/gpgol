@@ -92,7 +92,33 @@ public:
   */
   static Mail* get_last_mail ();
 
+  /** @brief voids the last mail variable. */
   static void invalidate_last_mail ();
+
+  /** @brief Lock mail deletion.
+
+    Mails are heavily accessed multi threaded. E.g. when locating
+    keys. Due to bad timing it would be possible that between
+    a check for "is_valid_ptr" to see if a map is still valid
+    and the usage of the mail a delete would happen.
+
+    This lock can be used to prevent that. Changes made to the
+    mail will of course have no effect as the mail is already in
+    the process of beeing unloaded. And calls that access MAPI
+    or OOM still might crash. But this at least gurantees that
+    the member variables of the mail exist while the lock is taken.
+
+    Use it in your thread like:
+
+      Mail::delete_lock ();
+      Mail::is_valid_ptr (mail);
+      mail->set_or_check_something ();
+      Mail::delete_unlock ();
+
+      Still be carefull when it is a mapi or oom function.
+  */
+  static void delete_lock ();
+  static void delete_unlock ();
 
   /** @brief looks for existing Mail objects.
 
