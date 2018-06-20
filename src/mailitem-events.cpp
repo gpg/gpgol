@@ -745,6 +745,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
               /* We want to identify here if there was a mail created that
                  should receive the contents of this mail. For this we check
                  for a forward in the same loop as a mail creation.
+
+                 We need to do it this complicated and can't just use
+                 get_mail_for_item because the mailitem pointer we get here
+                 is a different one then the one with which the mail was loaded.
               */
               char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
               int lastSize = get_oom_int (last_mail->item (), "Size");
