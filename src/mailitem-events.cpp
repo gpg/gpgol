@@ -734,11 +734,52 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: %s : %p",
                          SRCNAME, __func__, is_reply ? "reply" : "forward", m_mail);
-          if (!m_mail->is_crypto_mail ())
+          int draft_flags = 0;
+          if (opt.encrypt_default)
             {
-              /* Non crypto mails do not interest us.*/
+              draft_flags = 1;
+            }
+          if (opt.sign_default)
+            {
+              draft_flags += 2;
+            }
+          bool is_crypto_mail = m_mail->is_crypto_mail();
+
+          /* If it is a crypto mail and the settings should not be taken
+           * from the crypto mail and always encrypt / sign is on. Or
+           * If it is not a crypto mail and we have automaticalls sign_encrypt. */
+          if ((is_crypto_mail && !opt.reply_crypt && draft_flags) ||
+              (!is_crypto_mail && draft_flags))
+            {
+              /* Check if we can use the dispval */
+                if (parms->cArgs == 2 && parms->rgvarg[1].vt == (VT_DISPATCH) &&
+                    parms->rgvarg[0].vt == (VT_BOOL | VT_BYREF))
+                {
+                  LPMESSAGE msg = get_oom_base_message (parms->rgvarg[1].pdispVal);
+                  if (msg)
+                    {
+                      set_gpgol_draft_info_flags (msg, draft_flags);
+                      gpgol_release (msg);
+                    }
+                  else
+                    {
+                      log_error ("%s:%s: Failed to get base message.",
+                                 SRCNAME, __func__);
+                    }
+                }
+              else
+                {
+                  log_error ("%s:%s: Unexpected parameters.",
+                             SRCNAME, __func__);
+                }
+            }
+
+          if (!is_crypto_mail)
+            {
+              /* Replys to non crypto mails do not interest us anymore. */
               break;
             }
+
           Mail *last_mail = Mail::get_last_mail ();
           if (Mail::is_valid_ptr (last_mail))
             {
