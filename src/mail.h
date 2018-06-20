@@ -530,6 +530,18 @@ public:
   /* Remove automatic loading of HTML references setting. */
   void set_block_status ();
 
+  /* Crypto options (sign/encrypt) have been set manually. */
+  void set_crypto_selected_manually (bool v) { m_manual_crypto_opts = v; }
+  // bool is_crypto_selected_manually () const { return m_manual_crypto_opts; }
+
+  /* Reference that a resolver thread is running for this mail. */
+  void increment_locate_count ();
+
+  /* To be called when a resolver thread is done. If there are no running
+     resolver threads we can check the recipients to see if we should
+     toggle / untoggle the secure state. */
+  void decrement_locate_count ();
+
 private:
   void update_categories ();
   void update_sigstate ();
@@ -574,5 +586,7 @@ private:
   bool m_is_send_again; /* Is this a send again of a crypto mail */
   bool m_disable_att_remove_warning; /* Should not warn about attachment removal. */
   bool m_block_html; /* Force blocking of html content. e.g for unsigned S/MIME mails. */
+  bool m_manual_crypto_opts; /* Crypto options (sign/encrypt) have been set manually. */
+  int m_locate_count; /* The number of key locates pending for this mail. */
 };
 #endif // MAIL_H

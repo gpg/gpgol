@@ -97,7 +97,9 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_forwarded_crypto_mail(false),
     m_is_reply_crypto_mail(false),
     m_is_send_again(false),
-    m_disable_att_remove_warning(false)
+    m_disable_att_remove_warning(false),
+    m_manual_crypto_opts(false),
+    m_locate_count(0)
 {
   if (get_mail_for_item (mailitem))
     {
@@ -2674,9 +2676,9 @@ Mail::locate_keys()
   // First update oom data to have recipients and sender updated.
   update_oom_data ();
   char ** recipients = take_cached_recipients ();
-  KeyCache::instance()->startLocateSecret (get_sender ().c_str ());
-  KeyCache::instance()->startLocate (get_sender ().c_str ());
-  KeyCache::instance()->startLocate (recipients);
+  KeyCache::instance()->startLocateSecret (get_sender ().c_str (), this);
+  KeyCache::instance()->startLocate (get_sender ().c_str (), this);
+  KeyCache::instance()->startLocate (recipients, this);
   release_cArray (recipients);
   locate_in_progress = false;
 }
@@ -3218,4 +3220,16 @@ void
 Mail::set_block_html(bool value)
 {
   m_block_html = value;
+}
+
+void
+Mail::increment_locate_count()
+{
+  m_locate_count++;
+}
+
+void
+Mail::decrement_locate_count()
+{
+  m_locate_count--;
 }

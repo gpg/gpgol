@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "cpphelp.h"
+#include "mail.h"
 
 #include <gpg-error.h>
 #include <gpgme++/context.h>
@@ -34,6 +35,53 @@
 
 GPGRT_LOCK_DEFINE (keycache_lock);
 static KeyCache* singleton = nullptr;
+
+/** At some point we need to set a limit. There
+  seems to be no limit on how many recipients a mail
+  can have in outlook.
+
+  We would run out of resources or block.
+
+  50 Threads already seems a bit excessive but
+  it should really cover most legit use cases.
+*/
+
+#define MAX_LOCATOR_THREADS 50
+static int s_thread_cnt;
+
+namespace
+{
+  class LocateArgs
+    {
+      public:
+        LocateArgs (const std::string& mbox, Mail *mail = nullptr):
+          m_mbox (mbox),
+          m_mail (mail)
+        {
+          s_thread_cnt++;
+          Mail::delete_lock ();
+          if (Mail::is_valid_ptr (m_mail))
+            {
+              m_mail->increment_locate_count ();
+            }
+          Mail::delete_unlock ();
+        };
+
+        ~LocateArgs()
+        {
+          s_thread_cnt--;
+          Mail::delete_lock ();
+          if (Mail::is_valid_ptr (m_mail))
+            {
+              m_mail->decrement_locate_count ();
+            }
+          Mail::delete_unlock ();
+        }
+
+        std::string m_mbox;
+        Mail *m_mail;
+    };
+} // namespace
 
 class KeyCache::Private
 {
@@ -471,7 +519,7 @@ do_locate_secret (LPVOID arg)
 }
 
 void
-KeyCache::startLocate (char **recipients) const
+KeyCache::startLocate (char **recipients, Mail *mail) const
 {
   if (!recipients)
     {
@@ -480,12 +528,12 @@ KeyCache::startLocate (char **recipients) const
     }
   for (int i = 0; recipients[i]; i++)
     {
-      startLocate (recipients[i]);
+      startLocate (recipients[i], mail);
     }
 }
 
 void
-KeyCache::startLocate (const char *addr) const
+KeyCache::startLocate (const char *addr, Mail *mail) const
 {
   if (!addr)
     {
@@ -505,8 +553,9 @@ KeyCache::startLocate (const char *addr) const
       d->m_pgp_key_map.insert (std::pair<std::string, GpgME::Key> (recp, GpgME::Key()));
       log_debug ("%s:%s Creating a locator thread",
                  SRCNAME, __func__);
+      const auto args = new LocateArgs(recp, mail);
       HANDLE thread = CreateThread (NULL, 0, do_locate,
-                                    (LPVOID) strdup (recp.c_str ()), 0,
+                                    args, 0,
                                     NULL);
       CloseHandle (thread);
     }
@@ -514,7 +563,7 @@ KeyCache::startLocate (const char *addr) const
 }
 
 void
-KeyCache::startLocateSecret (const char *addr) const
+KeyCache::startLocateSecret (const char *addr, Mail *mail) const
 {
   if (!addr)
     {
@@ -534,8 +583,10 @@ KeyCache::startLocateSecret (const char *addr) const
       d->m_pgp_skey_map.insert (std::pair<std::string, GpgME::Key> (recp, GpgME::Key()));
       log_debug ("%s:%s Creating a locator thread",
                  SRCNAME, __func__);
+      const auto args = new LocateArgs(recp, mail);
+
       HANDLE thread = CreateThread (NULL, 0, do_locate_secret,
-                                    (LPVOID) strdup (recp.c_str ()), 0,
+                                    (LPVOID) args, 0,
                                     NULL);
       CloseHandle (thread);
     }

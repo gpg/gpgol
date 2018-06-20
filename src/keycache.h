@@ -34,6 +34,8 @@ namespace GpgME
   class Key;
 };
 
+class Mail;
+
 class KeyCache
 {
 protected:
@@ -58,15 +60,19 @@ public:
 
     /* Start a key location in a background thread filling
        the key cache. cArray is a null terminated array
-       of address strings. */
-    void startLocate (char **cArray) const;
+       of address strings.
+
+       The mail argument is used to add / remove the
+       locator thread counter.
+       */
+    void startLocate (char **cArray, Mail *mail) const;
 
     /* Look for a secret key for the addr. */
-    void startLocateSecret (const char *addr) const;
+    void startLocateSecret (const char *addr, Mail *mail) const;
 
     /* Start a key location in a background thread filling
        the key cache. */
-    void startLocate (const char *addr) const;
+    void startLocate (const char *addr, Mail *mail) const;
 
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);
