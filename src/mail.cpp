@@ -1576,7 +1576,7 @@ Mail::get_sender ()
 }
 
 std::string
-Mail::get_cached_sender ()
+Mail::get_cached_sender () const
 {
   return m_sender;
 }
@@ -1963,7 +1963,7 @@ Mail::update_sigstate ()
 }
 
 bool
-Mail::is_valid_sig ()
+Mail::is_valid_sig () const
 {
    return m_is_valid;
 }
@@ -2227,7 +2227,7 @@ level_4_check (const UserID &uid)
 }
 
 std::string
-Mail::get_crypto_summary ()
+Mail::get_crypto_summary () const
 {
   const int level = get_signature_level ();
 
@@ -2273,7 +2273,7 @@ Mail::get_crypto_summary ()
 }
 
 std::string
-Mail::get_crypto_one_line()
+Mail::get_crypto_one_line() const
 {
   bool sig = is_signed ();
   bool enc = is_encrypted ();

@@ -197,6 +197,19 @@ public:
     */
   static int close_all_mails ();
 
+  /** @brief closes the inspector for a mail
+    *
+    * @returns true on success.
+  */
+  static int close_inspector (Mail *mail);
+
+  /** Call close with discard changes to discard
+      plaintext. returns the value of the oom close
+      call. This may have delete the mail if the close
+      triggers an unload.
+  */
+  static int close (Mail *mail);
+
   /** @brief locate recipients for all crypto mails
     *
     * To avoid lookups of recipients for non crypto mails we only
@@ -238,7 +251,7 @@ public:
   int encrypt_sign_start ();
 
   /** @brief Necessary crypto operations were completed successfully. */
-  bool crypto_successful () { return !needs_crypto() || m_crypt_successful; }
+  bool crypto_successful () { return m_crypt_successful || !needs_crypto(); }
 
   /** @brief Message should be encrypted and or signed.
     0: No
@@ -286,7 +299,7 @@ public:
    * Like get_sender but ensures not to touch oom or mapi
    *
    * @returns A reference to the utf8 sender address. Or an empty string. */
-  std::string get_cached_sender ();
+  std::string get_cached_sender () const;
 
   /** @brief get the subject string (UTF-8 encoded).
     *
@@ -318,12 +331,6 @@ public:
     */
   bool is_smime ();
 
-  /** @brief closes the inspector for a mail
-    *
-    * @returns true on success.
-  */
-  static int close_inspector (Mail *mail);
-
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
   std::shared_ptr<ParseController> parser () { return m_parser; }
@@ -348,7 +355,7 @@ public:
   bool is_encrypted () const;
 
   /** Are we "green" */
-  bool is_valid_sig ();
+  bool is_valid_sig () const;
 
   /** Get UID gets UniqueID property of this mail. Returns
     an empty string if the uid was not set with set uid.*/
@@ -361,7 +368,7 @@ public:
 
   /** Returns a localized string describing in one or two
     words the crypto status of this mail. */
-  std::string get_crypto_summary ();
+  std::string get_crypto_summary () const;
 
   /** Returns a localized string describing the detailed
     crypto state of this mail. */
@@ -369,7 +376,7 @@ public:
 
   /** Returns a localized string describing a one line
     summary of the crypto state. */
-  std::string get_crypto_one_line ();
+  std::string get_crypto_one_line () const;
 
   /** Get the icon id of the appropiate icon for this mail */
   int get_crypto_icon_id () const;
@@ -391,13 +398,6 @@ public:
       terminated array of strings. Needs to be freed
       by the caller. */
   char ** get_recipients () const;
-
-  /** Call close with discard changes to discard
-      plaintext. returns the value of the oom close
-      call. This may have delete the mail if the close
-      triggers an unload.
-  */
-  static int close (Mail *mail);
 
   /** Try to locate the keys for all recipients */
   void locate_keys();
