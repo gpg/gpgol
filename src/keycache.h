@@ -75,9 +75,10 @@ public:
 
     /* Check that a mail is resolvable through the keycache.
      *
-     * Returns the usual int with sign = 2 and encrypt = 1
+     * For OpenPGP only the recipients are checked as we can
+     * generate a new key for the sender.
      **/
-    int isMailResolvable (Mail *mail);
+    bool isMailResolvable (Mail *mail);
 
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);

@@ -3250,7 +3250,7 @@ Mail::autoresolve_check_s()
     {
       return;
     }
-  int ret = KeyCache::instance()->isMailResolvable (this);
+  bool ret = KeyCache::instance()->isMailResolvable (this);
 
   log_debug ("%s:%s: status %i",
              SRCNAME, __func__, ret);
@@ -3259,14 +3259,8 @@ Mail::autoresolve_check_s()
    * to be triggered by the locator threads finishing we
    * need to actually set the draft info flags in
    * the ui thread. */
-  if (ret == 3)
-    {
-      do_in_ui_thread (DO_AUTO_SECURE, this);
-    }
-  else
-    {
-      do_in_ui_thread (DONT_AUTO_SECURE, this);
-    }
+  do_in_ui_thread (ret ? DO_AUTO_SECURE : DONT_AUTO_SECURE,
+                   this);
   return;
 }
 

@@ -621,7 +621,7 @@ KeyCache::setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
   d->setPgpKeySecret(mbox, key);
 }
 
-int
+bool
 KeyCache::isMailResolvable(Mail *mail)
 {
   /* Get the data from the mail. */
@@ -632,44 +632,28 @@ KeyCache::isMailResolvable(Mail *mail)
     {
       log_debug ("%s:%s: Mail has no sender or no recipients.",
                  SRCNAME, __func__);
-      return 0;
+      return false;
     }
 
-  /* Include sender for encryption */
-  recps.push_back (sender);
 
-  GpgME::Key sigKey = getSigningKey (sender.c_str(), GpgME::OpenPGP);
   std::vector<GpgME::Key> encKeys = getEncryptionKeys (recps,
                                                        GpgME::OpenPGP);
 
-  int pgpState = 0;
   if (!encKeys.empty())
     {
-      pgpState = 1;
-    }
-  if (!sigKey.isNull())
-    {
-      pgpState += 2;
+      return true;
     }
 
-  if (pgpState == 3 /* all good */ || !opt.enable_smime)
+  if (!opt.enable_smime)
     {
-      return pgpState;
+      return false;
     }
 
-  /* Check S/MIME instead */
-  sigKey = getSigningKey (sender.c_str(), GpgME::CMS);
+  /* Check S/MIME instead here we need to include the sender
+     as we can't just generate a key. */
+  recps.push_back (sender);
+  GpgME::Key sigKey= getSigningKey (sender.c_str(), GpgME::CMS);
   encKeys = getEncryptionKeys (recps, GpgME::CMS);
 
-  int cmsState = 0;
-  if (!encKeys.empty())
-    {
-      cmsState = 1;
-    }
-  if (!sigKey.isNull())
-    {
-      cmsState += 2;
-    }
-
-  return (cmsState > pgpState) ? cmsState : pgpState;
+  return !encKeys.empty() && !sigKey.isNull();
 }
