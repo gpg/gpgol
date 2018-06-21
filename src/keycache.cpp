@@ -59,23 +59,23 @@ namespace
           m_mail (mail)
         {
           s_thread_cnt++;
-          Mail::delete_lock ();
-          if (Mail::is_valid_ptr (m_mail))
+          Mail::lockDelete ();
+          if (Mail::isValidPtr (m_mail))
             {
-              m_mail->increment_locate_count ();
+              m_mail->incrementLocateCount ();
             }
-          Mail::delete_unlock ();
+          Mail::unlockDelete ();
         };
 
         ~LocateArgs()
         {
           s_thread_cnt--;
-          Mail::delete_lock ();
-          if (Mail::is_valid_ptr (m_mail))
+          Mail::lockDelete ();
+          if (Mail::isValidPtr (m_mail))
             {
-              m_mail->decrement_locate_count ();
+              m_mail->decrementLocateCount ();
             }
-          Mail::delete_unlock ();
+          Mail::unlockDelete ();
         }
 
         std::string m_mbox;
@@ -625,8 +625,8 @@ bool
 KeyCache::isMailResolvable(Mail *mail)
 {
   /* Get the data from the mail. */
-  const auto sender = mail->get_cached_sender();
-  auto recps = mail->get_cached_recipients();
+  const auto sender = mail->getSender ();
+  auto recps = mail->getRecipients ();
 
   if (sender.empty() || recps.empty())
     {

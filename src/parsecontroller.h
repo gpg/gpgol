@@ -74,7 +74,7 @@ public:
   void parse();
 
   /** Get the Body. Call parse first. */
-  const std::string get_body() const;
+  const std::string get_body () const;
 
   /** Get the charset of the body. Call parse first.
     *
@@ -86,7 +86,7 @@ public:
   const std::string get_html_charset() const;
 
   /** Get an alternative? HTML Body. Call parse first. */
-  const std::string get_html_body() const;
+  const std::string get_html_body () const;
 
   /** Get the decrypted / verified attachments. Call parse first.
   */

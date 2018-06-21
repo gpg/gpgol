@@ -111,7 +111,7 @@ public:
     @returns A reference to an existing mailitem or NULL in case none
     could be found.
   */
-  static Mail* get_mail_for_item (LPDISPATCH mailitem);
+  static Mail* getMailForItem (LPDISPATCH mailitem);
 
   /** @brief looks for existing Mail objects in the uuid map.
     Only objects for which set_uid has been called can be found
@@ -120,16 +120,16 @@ public:
     @returns A reference to an existing mailitem or NULL in case none
     could be found.
   */
-  static Mail* get_mail_for_uuid (const char *uuid);
+  static Mail* getMailForUUID (const char *uuid);
 
   /** @brief Get the last created mail.
 
     @returns A reference to the last created mail or null.
   */
-  static Mail* get_last_mail ();
+  static Mail* getLastMail ();
 
   /** @brief voids the last mail variable. */
-  static void invalidate_last_mail ();
+  static void clearLastMail ();
 
   /** @brief Lock mail deletion.
 
@@ -146,22 +146,22 @@ public:
 
     Use it in your thread like:
 
-      Mail::delete_lock ();
-      Mail::is_valid_ptr (mail);
+      Mail::lockDelete ();
+      Mail::isValidPtr (mail);
       mail->set_or_check_something ();
-      Mail::delete_unlock ();
+      Mail::unlockDelete ();
 
       Still be carefull when it is a mapi or oom function.
   */
-  static void delete_lock ();
-  static void delete_unlock ();
+  static void lockDelete ();
+  static void unlockDelete ();
 
   /** @brief looks for existing Mail objects.
 
     @returns A reference to an existing mailitem or NULL in case none
     could be found. Can be used to check if a mail object was destroyed.
   */
-  static bool is_valid_ptr (const Mail *mail);
+  static bool isValidPtr (const Mail *mail);
 
   /** @brief wipe the plaintext from all known Mail objects.
     *
@@ -171,7 +171,7 @@ public:
     *
     * @returns the number of errors that occured.
     */
-  static int wipe_all_mails ();
+  static int wipeAllMails_o ();
 
   /** @brief revert all known Mail objects.
     *
@@ -180,7 +180,7 @@ public:
     *
     * @returns the number of errors that occured.
     */
-  static int revert_all_mails ();
+  static int revertAllMails_o ();
 
   /** @brief close all known Mail objects.
     *
@@ -195,13 +195,13 @@ public:
     *
     * @returns the number of errors that occured.
     */
-  static int close_all_mails ();
+  static int closeAllMails_o ();
 
   /** @brief closes the inspector for a mail
     *
     * @returns true on success.
   */
-  static int close_inspector (Mail *mail);
+  static int closeInspector_o (Mail *mail);
 
   /** Call close with discard changes to discard
       plaintext. returns the value of the oom close
@@ -220,7 +220,7 @@ public:
     * we march over all mails and if they are crypto mails we check
     * that the recipents were located.
     */
-  static void locate_all_crypto_recipients ();
+  static void locateAllCryptoRecipients_o ();
 
   /** @brief Reference to the mailitem. Do not Release! */
   LPDISPATCH item () { return m_mailitem; }
@@ -233,14 +233,14 @@ public:
    *
    * @returns 0 on success.
    */
-  int pre_process_message ();
+  int preProcessMessage_m ();
 
   /** @brief Decrypt / Verify the mail.
    *
    * Sets the needs_wipe and was_encrypted variable.
    *
    * @returns 0 on success. */
-  int decrypt_verify ();
+  int decryptVerify_o ();
 
   /** @brief start crypto operations as selected by the user.
    *
@@ -248,10 +248,10 @@ public:
    * draft info flags.
    *
    * @returns 0 on success. */
-  int encrypt_sign_start ();
+  int encryptSignStart_o ();
 
   /** @brief Necessary crypto operations were completed successfully. */
-  bool crypto_successful () { return m_crypt_successful || !needs_crypto(); }
+  bool wasCryptoSuccessful_m () { return m_crypt_successful || !needs_crypto(); }
 
   /** @brief Message should be encrypted and or signed.
     0: No
@@ -264,12 +264,12 @@ public:
   /** @brief wipe the plaintext from the message and encrypt attachments.
    *
    * @returns 0 on success; */
-  int wipe (bool force = false);
+  int wipe_o (bool force = false);
 
   /** @brief revert the message to the original mail before our changes.
    *
    * @returns 0 on success; */
-  int revert ();
+  int revert_o ();
 
   /** @brief update some data collected from the oom
    *
@@ -284,7 +284,7 @@ public:
    * It also updated the is_html_alternative value.
    *
    * @returns 0 on success */
-  int update_oom_data ();
+  int updateOOMData_o ();
 
   /** @brief get sender SMTP address (UTF-8 encoded).
    *
@@ -292,19 +292,19 @@ public:
    * calls update_sender before returning the sender.
    *
    * @returns A reference to the utf8 sender address. Or an empty string. */
-  std::string get_sender ();
+  std::string getSender_o ();
 
   /** @brief get sender SMTP address (UTF-8 encoded).
    *
    * Like get_sender but ensures not to touch oom or mapi
    *
    * @returns A reference to the utf8 sender address. Or an empty string. */
-  std::string get_cached_sender () const;
+  std::string getSender () const;
 
   /** @brief get the subject string (UTF-8 encoded).
     *
     * @returns the subject or an empty string. */
-  std::string get_subject () const;
+  std::string getSubject_o () const;
 
   /** @brief Is this a crypto mail handled by gpgol.
   *
@@ -313,23 +313,23 @@ public:
   * @returns true if the mail was either signed or encrypted and we processed
   * it.
   */
-  bool is_crypto_mail () const;
+  bool isCryptoMail () const;
 
   /** @brief This mail needs to be actually written.
   *
   * @returns true if the next write event should not be canceled.
   */
-  bool needs_save () { return m_needs_save; }
+  bool needsSave () { return m_needs_save; }
 
   /** @brief set the needs save state.
   */
-  void set_needs_save (bool val) { m_needs_save = val; }
+  void setNeedsSave (bool val) { m_needs_save = val; }
 
   /** @brief is this mail an S/MIME mail.
     *
     * @returns true for smime messages.
     */
-  bool is_smime ();
+  bool isSMIME_m ();
 
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
@@ -337,7 +337,7 @@ public:
 
   /** @brief get the associated cryptcontroller.
     only valid while the crypting happens. */
-  std::shared_ptr<CryptController> crypter () { return m_crypter; }
+  std::shared_ptr<CryptController> cryper () { return m_crypter; }
 
   /** To be called from outside once the paser was done.
    In Qt this would be a slot that is called once it is finished
@@ -348,90 +348,90 @@ public:
 
   /** Returns true if the mail was verified and has at least one
     signature. Regardless of the validity of the mail */
-  bool is_signed () const;
+  bool isSigned () const;
 
   /** Returns true if the mail is encrypted to at least one
     recipient. Regardless if it could be decrypted. */
-  bool is_encrypted () const;
+  bool isEncrypted () const;
 
   /** Are we "green" */
-  bool is_valid_sig () const;
+  bool isValidSig () const;
 
   /** Get UID gets UniqueID property of this mail. Returns
     an empty string if the uid was not set with set uid.*/
-  const std::string & get_uuid () const { return m_uuid; }
+  const std::string & getUUID () const { return m_uuid; }
 
   /** Returns 0 on success if the mail has a uid alrady or sets
     the uid. Setting only succeeds if the OOM is currently
     accessible. Returns -1 on error. */
-  int set_uuid ();
+  int setUUID_o ();
 
   /** Returns a localized string describing in one or two
     words the crypto status of this mail. */
-  std::string get_crypto_summary () const;
+  std::string getCryptoSummary () const;
 
   /** Returns a localized string describing the detailed
     crypto state of this mail. */
-  std::string get_crypto_details ();
+  std::string getCryptoDetails_o ();
 
   /** Returns a localized string describing a one line
     summary of the crypto state. */
-  std::string get_crypto_one_line () const;
+  std::string getCryptoOneLine () const;
 
   /** Get the icon id of the appropiate icon for this mail */
-  int get_crypto_icon_id () const;
+  int getCryptoIconID () const;
 
   /** Get the fingerprint of an associated signature or null
       if it is not signed. */
-  const char *get_sig_fpr() const;
+  const char *getSigFpr () const;
 
   /** Remove all categories of this mail */
-  void remove_categories ();
+  void removeCategories_o ();
 
   /** Get the body of the mail */
-  std::string get_body () const;
+  std::string getBody_o () const;
 
   /** Get the html of the mail */
-  std::string get_html_body () const;
+  std::string getHTMLBody_o () const;
 
   /** Get the recipients recipients is a null
       terminated array of strings. Needs to be freed
       by the caller. */
-  char ** get_recipients () const;
+  char ** getRecipients_o () const;
 
   /** Try to locate the keys for all recipients */
-  void locate_keys();
+  void locateKeys_o ();
 
   /** State variable to check if a close was triggerd by us. */
-  void set_close_triggered (bool value);
-  bool get_close_triggered () const;
+  void setCloseTriggered (bool value);
+  bool getCloseTriggered () const;
 
   /** Check if the mail should be sent as html alternative mail.
     Only valid if update_oom_data was called before. */
-  bool is_html_alternative () const;
+  bool isHTMLAlternative () const;
 
   /** Get the html body. It is updated in update_oom_data.
       Caller takes ownership of the string and has to free it.
   */
-  char *take_cached_html_body ();
+  char *takeCachedHTMLBody ();
 
   /** Get the plain body. It is updated in update_oom_data.
       Caller takes ownership of the string and has to free it.
   */
-  char *take_cached_plain_body ();
+  char *takeCachedPlainBody ();
 
   /** Get the cached recipients. It is updated in update_oom_data.*/
-  std::vector<std::string> get_cached_recipients ();
+  std::vector<std::string> getRecipients ();
 
   /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
       Only valid after decrypt_verify.
   */
-  int get_crypto_flags () const;
+  int getCryptoFlags () const;
 
   /** Returns true if the mail should be encrypted in the
       after write event. */
-  bool needs_encrypt () const;
-  void set_needs_encrypt (bool val);
+  bool getNeedsEncrypt () const;
+  void setNeedsEncrypt (bool val);
 
   /** Gets the level of the signature. See:
     https://wiki.gnupg.org/EasyGpg2016/AutomatedEncryption for
@@ -440,43 +440,43 @@ public:
 
   /** Check if all attachments are hidden and show a warning
     message appropiate to the crypto state if necessary. */
-  int check_attachments () const;
+  int checkAttachments_o () const;
 
   /** Check if the mail should be encrypted "inline" */
-  bool do_pgp_inline () const {return m_do_inline;}
+  bool getDoPGPInline () const {return m_do_inline;}
 
   /** Check if the mail should be encrypted "inline" */
-  void set_do_pgp_inline (bool value) {m_do_inline = value;}
+  void setDoPGPInline (bool value) {m_do_inline = value;}
 
   /** Append data to a cached inline body. Helper to do this
      on MAPI level and later add it through OOM */
-  void append_to_inline_body (const std::string &data);
+  void appendToInlineBody (const std::string &data);
 
   /** Set the inline body as OOM body property. */
-  int inline_body_to_body ();
+  int inlineBodyToBody ();
 
   /** Get the crypt state */
-  CryptState crypt_state () const {return m_crypt_state;}
+  CryptState cryptState () const {return m_crypt_state;}
 
   /** Set the crypt state */
-  void set_crypt_state (CryptState state) {m_crypt_state = state;}
+  void setCryptState (CryptState state) {m_crypt_state = state;}
 
   /** Update MAPI data after encryption. */
-  void update_crypt_mapi ();
+  void updateCryptMAPI_m ();
 
   /** Update OOM data after encryption.
 
     Checks for plain text leaks and
     does not advance crypt state if body can't be cleaned.
   */
-  void update_crypt_oom ();
+  void updateCryptOOM_o ();
 
   /** Enable / Disable the window of this mail.
 
     When value is false the active window will
     be disabled and the handle stored for a later
     enable. */
-  void set_window_enabled (bool value);
+  void setWindowEnabled_o (bool value);
 
   /** Determine if the mail is an inline response.
 
@@ -484,7 +484,7 @@ public:
     from the OOM.
 
     We need synchronous encryption for inline responses. */
-  bool async_crypt_disabled () { return m_async_crypt_disabled; }
+  bool isAsyncCryptDisabled () { return m_async_crypt_disabled; }
 
   /** Check through OOM if the current mail is an inline
     response.
@@ -498,36 +498,36 @@ public:
     really valid in the time that the window is disabled.
     Use with care and can be null or invalid.
   */
-  HWND get_window () { return m_window; }
+  HWND getWindow () { return m_window; }
 
   /** Cleanup any attached crypter object. Useful
     on error. */
-  void reset_crypter () { m_crypter = nullptr; }
+  void resetCrypter () { m_crypter = nullptr; }
 
   /** Set special crypto mime data that should be used as the
     mime structure when sending. */
-  void set_override_mime_data (const std::string &data) {m_mime_data = data;}
+  void setOverrideMIMEData (const std::string &data) {m_mime_data = data;}
 
   /** Get the mime data that should be used when sending. */
   std::string get_override_mime_data () const { return m_mime_data; }
 
   /** Set if this is a forward of a crypto mail. */
-  void set_is_forwarded_crypto_mail (bool value) { m_is_forwarded_crypto_mail = value; }
+  void setIsForwardedCryptoMail (bool value) { m_is_forwarded_crypto_mail = value; }
   bool is_forwarded_crypto_mail () { return m_is_forwarded_crypto_mail; }
 
   /** Set if this is a reply of a crypto mail. */
-  void set_is_reply_crypto_mail (bool value) { m_is_reply_crypto_mail = value; }
+  void setIsReplyCryptoMail (bool value) { m_is_reply_crypto_mail = value; }
   bool is_reply_crypto_mail () { return m_is_reply_crypto_mail; }
 
   /** Remove the hidden GpgOL attachments. This is needed when forwarding
     without encryption so that our attachments are not included in the forward.
     Returns 0 on success. Works in OOM. */
-  int remove_our_attachments ();
+  int removeOurAttachments_o ();
 
   /** Remove all attachments. Including our own. This is needed for
     forwarding of unsigned S/MIME mails (Efail).
     Returns 0 on success. Works in OOM. */
-  int remove_all_attachments ();
+  int removeAllAttachments_o ();
 
   /** Check both OOM and MAPI if the body is either empty or
     encrypted. Won't abort on OOM or MAPI errors, so it can be
@@ -539,58 +539,58 @@ public:
     of encryption and is only an extra check to catch unexpected
     errors.
     */
-  bool has_crypted_or_empty_body ();
+  bool hasCryptedOrEmptyBody_o ();
 
-  void update_body ();
+  void updateBody_o ();
 
   /** Set if this mail looks like the send again of a crypto mail.
       This will mean that after it is decrypted it is treated
       like an unencrypted mail so that it can be encrypted again
       or sent unencrypted.
       */
-  void set_is_send_again (bool value) { m_is_send_again = value; }
+  void setIsSendAgain (bool value) { m_is_send_again = value; }
 
 
   /* Attachment removal state variables. */
-  bool attachment_remove_warning_disabled () { return m_disable_att_remove_warning; }
+  bool attachmentRemoveWarningDisabled () { return m_disable_att_remove_warning; }
 
   /* Gets the string dump of the verification result. */
-  std::string get_verification_result_dump ();
+  std::string getVerificationResultDump ();
 
   /* Block loading HTML content */
-  void set_block_html (bool value);
-  bool is_block_html () const { return m_block_html; }
+  void setBlockHTML (bool value);
+  bool isBlockHTML () const { return m_block_html; }
 
   /* Remove automatic loading of HTML references setting. */
-  void set_block_status ();
+  void setBlockStatus_m ();
 
   /* Crypto options (sign/encrypt) have been set manually. */
-  void set_crypto_selected_manually (bool v) { m_manual_crypto_opts = v; }
+  void setCryptoSelectedManually (bool v) { m_manual_crypto_opts = v; }
   // bool is_crypto_selected_manually () const { return m_manual_crypto_opts; }
 
   /* Reference that a resolver thread is running for this mail. */
-  void increment_locate_count ();
+  void incrementLocateCount ();
 
   /* To be called when a resolver thread is done. If there are no running
      resolver threads we can check the recipients to see if we should
      toggle / untoggle the secure state.
      */
-  void decrement_locate_count ();
+  void decrementLocateCount ();
 
   /* Check if the keys can be resolved automatically and trigger
    * setting the crypto flags accordingly.
    */
-  void autoresolve_check_s ();
+  void autoresolveCheck ();
 
   /* Set if a mail should be secured (encrypted and signed)
    *
    * Only save to call from a place that may access mapi.
    */
-  void set_do_autosecure_mapi (bool value);
+  void setDoAutosecure_m (bool value);
 
 private:
-  void update_categories ();
-  void update_sigstate ();
+  void updateCategories_o ();
+  void updateSigstate_o ();
 
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;

@@ -621,16 +621,16 @@ WKSHelper::send_mail (const std::string &mimeData) const
      a different value then the one with which we saw the ItemLoad
      event. But we want to get the mail object. So,.. surpise
      a Hack! :-) */
-  auto last_mail = Mail::get_last_mail ();
+  auto last_mail = Mail::getLastMail ();
 
-  if (!Mail::is_valid_ptr (last_mail))
+  if (!Mail::isValidPtr (last_mail))
     {
       log_error ("%s:%s: Invalid last mail %p.",
                  SRCNAME, __func__, last_mail);
       return -1;
     }
-  last_mail->set_override_mime_data (mimeData);
-  last_mail->set_crypt_state (Mail::NeedsSecondAfterWrite);
+  last_mail->setOverrideMIMEData (mimeData);
+  last_mail->setCryptState (Mail::NeedsSecondAfterWrite);
 
   if (invoke_oom_method (mail, "Save", nullptr))
     {
@@ -760,7 +760,7 @@ WKSHelper::handle_confirmation_notify (const std::string &mbox) const
                         _("GpgOL: Request confirmed!"), MB_OK);
    }
 
-  if (mail && Mail::is_valid_ptr (mail))
+  if (mail && Mail::isValidPtr (mail))
     {
       invoke_oom_method (mail->item(), "Delete", nullptr);
     }
@@ -782,7 +782,7 @@ WKSHelper::handle_confirmation_read (Mail *mail, LPSTREAM stream) const
     }
 
   /* Get the recipient of the confirmation mail */
-  char **recipients = mail->get_recipients ();
+  char **recipients = mail->getRecipients_o ();
 
   /* We assert that we have one recipient as the mail should have been
      sent by the wks-server. */

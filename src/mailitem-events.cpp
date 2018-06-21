@@ -127,7 +127,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
   USE_INVOKE_ARGS
   if (!m_mail)
     {
-      m_mail = Mail::get_mail_for_item (m_object);
+      m_mail = Mail::getMailForItem (m_object);
       if (!m_mail)
         {
           log_error ("%s:%s: mail event without mail object known. Bug.",
@@ -144,7 +144,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
           log_oom_extra ("%s:%s: Open : %p",
                          SRCNAME, __func__, m_mail);
           LPMESSAGE message;
-          if (g_ol_version_major < 14 && m_mail->set_uuid ())
+          if (g_ol_version_major < 14 && m_mail->setUUID_o ())
             {
               /* In Outlook 2007 we need the uid for every
                  open mail to track the message in case
@@ -182,7 +182,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: BeforeRead : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->pre_process_message ())
+          if (m_mail->preProcessMessage_m ())
             {
               log_error ("%s:%s: Pre process message failed.",
                          SRCNAME, __func__);
@@ -193,7 +193,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: Read : %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->is_crypto_mail())
+          if (!m_mail->isCryptoMail ())
             {
               log_debug ("%s:%s: Non crypto mail %p opened. Updating sigstatus.",
                          SRCNAME, __func__, m_mail);
@@ -202,26 +202,26 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                         NULL));
               break;
             }
-          if (m_mail->set_uuid ())
+          if (m_mail->setUUID_o ())
             {
               log_debug ("%s:%s: Failed to set uuid.",
                          SRCNAME, __func__);
               delete m_mail; /* deletes this, too */
               return S_OK;
             }
-          if (m_mail->decrypt_verify ())
+          if (m_mail->decryptVerify_o ())
             {
               log_error ("%s:%s: Decrypt message failed.",
                          SRCNAME, __func__);
             }
-          if (!opt.enable_smime && m_mail->is_smime ())
+          if (!opt.enable_smime && m_mail->isSMIME_m ())
             {
               /* We want to save the mail when it's an smime mail and smime
                  is disabled to revert it. */
               log_debug ("%s:%s: S/MIME mail but S/MIME is disabled."
                          " Need save.",
                          SRCNAME, __func__);
-              m_mail->set_needs_save (true);
+              m_mail->setNeedsSave (true);
             }
           break;
         }
@@ -236,7 +236,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               break;
             }
           const wchar_t *prop_name = parms->rgvarg[0].bstrVal;
-          if (!m_mail->is_crypto_mail ())
+          if (!m_mail->isCryptoMail ())
             {
               if (!opt.autoresolve)
                 {
@@ -285,7 +285,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               log_debug ("%s:%s: Message %p looks like send again.",
                         SRCNAME, __func__, m_object);
-              m_mail->set_is_send_again (true);
+              m_mail->setIsSendAgain (true);
               return S_OK;
             }
 
@@ -355,7 +355,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
            */
           log_oom_extra ("%s:%s: Send : %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->needs_crypto () && m_mail->crypt_state () == Mail::NoCryptMail)
+          if (!m_mail->needs_crypto () && m_mail->cryptState () == Mail::NoCryptMail)
             {
              log_debug ("%s:%s: No crypto neccessary. Passing send for %p obj %p",
                         SRCNAME, __func__, m_mail, m_object);
@@ -369,13 +369,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
              break;
            }
 
-          if (m_mail->crypt_state () == Mail::NoCryptMail &&
+          if (m_mail->cryptState () == Mail::NoCryptMail &&
               m_mail->needs_crypto ())
             {
               // First contact with a mail to encrypt update
               // state and oom data.
-              m_mail->update_oom_data ();
-              m_mail->set_crypt_state (Mail::NeedsFirstAfterWrite);
+              m_mail->updateOOMData_o ();
+              m_mail->setCryptState (Mail::NeedsFirstAfterWrite);
 
               // Check inline response state before the write.
               m_mail->check_inline_response ();
@@ -385,7 +385,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
-              if (!m_mail->async_crypt_disabled ())
+              if (!m_mail->isAsyncCryptDisabled ())
                 {
                   // The afterwrite in the save should have triggered
                   // the encryption. We cancel send for our asyncness.
@@ -395,7 +395,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               else
                 {
-                  if (m_mail->crypt_state () == Mail::NoCryptMail)
+                  if (m_mail->cryptState () == Mail::NoCryptMail)
                     {
                       // Crypto failed or was canceled
                       log_debug ("%s:%s: Message %p mail %p cancelling send - "
@@ -406,20 +406,20 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     }
                   // For inline response we can't trigger send programatically
                   // so we do the encryption in sync.
-                  if (m_mail->crypt_state () == Mail::NeedsUpdateInOOM)
+                  if (m_mail->cryptState () == Mail::NeedsUpdateInOOM)
                     {
-                      m_mail->update_crypt_oom ();
+                      m_mail->updateCryptOOM_o ();
                     }
-                  if (m_mail->crypt_state () == Mail::NeedsSecondAfterWrite)
+                  if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
                     {
-                      m_mail->set_crypt_state (Mail::WantsSendMIME);
+                      m_mail->setCryptState (Mail::WantsSendMIME);
                     }
-                  if (m_mail->do_pgp_inline () && m_mail->crypt_state () != Mail::WantsSendInline)
+                  if (m_mail->getDoPGPInline () && m_mail->cryptState () != Mail::WantsSendInline)
                     {
                       log_debug ("%s:%s: Message %p mail %p cancelling send - "
                                  "Invalid state.",
                                  SRCNAME, __func__, m_object, m_mail);
-                      gpgol_bug (m_mail->get_window (),
+                      gpgol_bug (m_mail->getWindow (),
                                  ERR_INLINE_BODY_INV_STATE);
                       *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                       break;
@@ -427,16 +427,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
             }
 
-          if (m_mail->crypt_state () == Mail::WantsSendInline)
+          if (m_mail->cryptState () == Mail::WantsSendInline)
             {
-              if (!m_mail->has_crypted_or_empty_body())
+              if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
                   log_debug ("%s:%s: Message %p mail %p cancelling send - "
                              "not encrypted or not empty body detected.",
                              SRCNAME, __func__, m_object, m_mail);
-                  gpgol_bug (m_mail->get_window (),
+                  gpgol_bug (m_mail->getWindow (),
                              ERR_WANTS_SEND_INLINE_BODY);
-                  m_mail->set_crypt_state (Mail::NoCryptMail);
+                  m_mail->setCryptState (Mail::NoCryptMail);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   break;
                 }
@@ -445,9 +445,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
               break;
             }
 
-          if (m_mail->crypt_state () == Mail::WantsSendMIME)
+          if (m_mail->cryptState () == Mail::WantsSendMIME)
             {
-              if (!m_mail->has_crypted_or_empty_body())
+              if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
 /* The safety checks here trigger too often. Somehow for some
    users the body is not empty after the encryption but when
@@ -462,12 +462,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
 */
 #define DISABLE_SAFTEY_CHECKS
 #ifndef DISABLE_SAFTEY_CHECKS
-                  gpgol_bug (m_mail->get_window (),
+                  gpgol_bug (m_mail->getWindow (),
                              ERR_WANTS_SEND_MIME_BODY);
                   log_debug ("%s:%s: Message %p mail %p cancelling send mime - "
                              "not encrypted or not empty body detected.",
                              SRCNAME, __func__, m_object, m_mail);
-                  m_mail->set_crypt_state (Mail::NoCryptMail);
+                  m_mail->setCryptState (Mail::NoCryptMail);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   break;
 #else
@@ -557,10 +557,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
              break;
            }
 
-          if (m_mail->is_crypto_mail () && !m_mail->needs_save ())
+          if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
-              Mail *last_mail = Mail::get_last_mail ();
-              if (Mail::is_valid_ptr (last_mail))
+              Mail *last_mail = Mail::getLastMail ();
+              if (Mail::isValidPtr (last_mail))
                 {
                   /* We want to identify here if there was a mail created that
                      should receive the contents of this mail. For this we check
@@ -578,7 +578,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                      Similarly if we crash or Outlook is closed before we see this
                      revert. But as we immediately revert after the write this should
                      also not happen. */
-                  const std::string lastSubject = last_mail->get_subject ();
+                  const std::string lastSubject = last_mail->getSubject_o ();
                   char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
                   int lastSize = get_oom_int (last_mail->item (), "Size");
                   std::string lastEntryStr;
@@ -596,7 +596,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
                       /* This might be a forward. So don't invalidate yet. */
 
-                      // Mail::invalidate_last_mail ();
+                      // Mail::clearLastMail ();
 
                       do_in_ui_thread_async (REVERT_MAIL, m_mail);
                       return S_OK;
@@ -614,8 +614,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               return S_OK;
             }
 
-          if (m_mail->is_crypto_mail () && m_mail->needs_save () &&
-              m_mail->revert ())
+          if (m_mail->isCryptoMail () && m_mail->needsSave () &&
+              m_mail->revert_o ())
             {
               /* An error cleaning the mail should not happen normally.
                  But just in case there is an error we cancel the
@@ -625,8 +625,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
 
-          if (!m_mail->is_crypto_mail () && m_mail->is_forwarded_crypto_mail () &&
-              !m_mail->needs_crypto () && m_mail->crypt_state () == Mail::NoCryptMail)
+          if (!m_mail->isCryptoMail () && m_mail->is_forwarded_crypto_mail () &&
+              !m_mail->needs_crypto () && m_mail->cryptState () == Mail::NoCryptMail)
             {
               /* We are sure now that while this is a forward of an encrypted
                * mail that the forward should not be signed or encrypted. So
@@ -635,7 +635,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Writing unencrypted forward of crypt mail. "
                          "Removing attachments. mail: %p item: %p",
                          SRCNAME, __func__, m_mail, m_object);
-              if (m_mail->remove_our_attachments ())
+              if (m_mail->removeOurAttachments_o ())
                 {
                   // Worst case we forward some encrypted data here not
                   // a security problem, so let it pass.
@@ -643,34 +643,34 @@ EVENT_SINK_INVOKE(MailItemEvents)
                              SRCNAME, __func__);
                 }
               /* Remove marker because we did this now. */
-              m_mail->set_is_forwarded_crypto_mail (false);
+              m_mail->setIsForwardedCryptoMail (false);
             }
 
           log_debug ("%s:%s: Passing write event.",
                      SRCNAME, __func__);
-          m_mail->set_needs_save (false);
+          m_mail->setNeedsSave (false);
           break;
         }
       case AfterWrite:
         {
           log_oom_extra ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->crypt_state () == Mail::NeedsFirstAfterWrite)
+          if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite)
             {
               /* Seen the first after write. Advance the state */
-              m_mail->set_crypt_state (Mail::NeedsActualCrypt);
-              if (m_mail->encrypt_sign_start ())
+              m_mail->setCryptState (Mail::NeedsActualCrypt);
+              if (m_mail->encryptSignStart_o ())
                 {
                   log_debug ("%s:%s: Encrypt sign start failes.",
                              SRCNAME, __func__);
-                  m_mail->set_crypt_state (Mail::NoCryptMail);
+                  m_mail->setCryptState (Mail::NoCryptMail);
                 }
               return S_OK;
             }
-          if (m_mail->crypt_state () == Mail::NeedsSecondAfterWrite)
+          if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
             {
-              m_mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
-              m_mail->update_crypt_mapi ();
+              m_mail->setCryptState (Mail::NeedsUpdateInMAPI);
+              m_mail->updateCryptMAPI_m ();
               return S_OK;
             }
           break;
@@ -679,7 +679,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: Close : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->is_crypto_mail ())
+          if (m_mail->isCryptoMail ())
             {
               /* Close. This happens when an Opened mail is closed.
                  To prevent the question of wether or not to save the changes
@@ -696,10 +696,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
                              SRCNAME, __func__);
                   break;
                 }
-              if (m_mail->get_close_triggered ())
+              if (m_mail->getCloseTriggered ())
                 {
                   /* Our close with discard changes, pass through */
-                  m_mail->set_close_triggered (false);
+                  m_mail->setCloseTriggered (false);
                   return S_OK;
                 }
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
@@ -743,7 +743,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               draft_flags += 2;
             }
-          bool is_crypto_mail = m_mail->is_crypto_mail();
+          bool is_crypto_mail = m_mail->isCryptoMail ();
 
           /* If it is a crypto mail and the settings should not be taken
            * from the crypto mail and always encrypt / sign is on. Or
@@ -780,8 +780,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               break;
             }
 
-          Mail *last_mail = Mail::get_last_mail ();
-          if (Mail::is_valid_ptr (last_mail))
+          Mail *last_mail = Mail::getLastMail ();
+          if (Mail::isValidPtr (last_mail))
             {
               /* We want to identify here if there was a mail created that
                  should receive the contents of this mail. For this we check
@@ -809,7 +809,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                  SRCNAME, __func__, last_mail,
                                  last_mail->item ());
 
-                      last_mail->set_is_forwarded_crypto_mail (true);
+                      last_mail->setIsForwardedCryptoMail (true);
                     }
                   else
                     {
@@ -818,7 +818,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                  SRCNAME, __func__, last_mail,
                                  last_mail->item ());
                     }
-                  if (m_mail->is_block_html())
+                  if (m_mail->isBlockHTML ())
                     {
                       std::string caption = _("GpgOL") + std::string (": ");
                       caption += is_reply ? _("Dangerous reply") :
@@ -845,7 +845,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     }
                 }
               // We can now invalidate the last mail
-              Mail::invalidate_last_mail ();
+              Mail::clearLastMail ();
             }
 
           log_oom_extra ("%s:%s: Reply Forward ReplyAll: %p",
@@ -855,7 +855,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               break;
             }
           int crypto_flags = 0;
-          if (!(crypto_flags = m_mail->get_crypto_flags ()))
+          if (!(crypto_flags = m_mail->getCryptoFlags ()))
             {
               break;
             }
@@ -883,8 +883,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: AttachmentRemove: %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->is_crypto_mail () || attachRemoveWarnShown ||
-              m_mail->attachment_remove_warning_disabled ())
+          if (!m_mail->isCryptoMail () || attachRemoveWarnShown ||
+              m_mail->attachmentRemoveWarningDisabled ())
             {
               return S_OK;
             }

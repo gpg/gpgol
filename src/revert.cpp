@@ -105,7 +105,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
       return -1;
     }
 
-  mail = Mail::get_mail_for_item (mailitem);
+  mail = Mail::getMailForItem (mailitem);
   if (!mail)
     {
       xfree (msgcls);
@@ -113,7 +113,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
                  SRCNAME, __func__);
       return -1;
     }
-  is_smime = mail->is_smime ();
+  is_smime = mail->isSMIME_m ();
 
   message = get_oom_base_message (mailitem);
   attachments = get_oom_object (mailitem, "Attachments");
@@ -349,7 +349,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
       else if (is_smime && !opt.enable_smime)
         {
           /* SMIME is disabled remove our categories. */
-          mail->remove_categories ();
+          mail->removeCategories_o ();
         }
     }
 

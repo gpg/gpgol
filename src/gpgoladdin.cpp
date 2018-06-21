@@ -365,7 +365,7 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
      does not allow us any OOM calls then and only returns
      "Unexpected error" in that case. Weird. */
 
-  if (Mail::close_all_mails ())
+  if (Mail::closeAllMails_o ())
     {
       MessageBox (NULL,
                   "Failed to remove plaintext from at least one message.\n\n"

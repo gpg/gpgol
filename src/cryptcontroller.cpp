@@ -69,8 +69,8 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
     m_proto (proto)
 {
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
-             SRCNAME, __func__, mail, encrypt, sign, mail->do_pgp_inline ());
-  m_recipient_addrs = vector_to_cArray (mail->get_cached_recipients ());
+             SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
+  m_recipient_addrs = vector_to_cArray (mail->getRecipients ());
 }
 
 CryptController::~CryptController()
@@ -94,7 +94,7 @@ CryptController::collect_data ()
   /* Take the Body from the mail if possible. This is a fix for
      GnuPG-Bug-ID: T3614 because the body is not always properly
      updated in MAPI when sending. */
-  char *body = m_mail->take_cached_plain_body ();
+  char *body = m_mail->takeCachedPlainBody ();
   if (body && !*body)
     {
       xfree (body);
@@ -112,7 +112,7 @@ CryptController::collect_data ()
   int n_att_usable = count_usable_attachments (att_table);
   if (!n_att_usable && !body)
     {
-      gpgol_message_box (m_mail->get_window(),
+      gpgol_message_box (m_mail->getWindow (),
                          utf8_gettext ("Can't encrypt / sign an empty message."),
                          utf8_gettext ("GpgOL"), MB_OK);
       gpgol_release (message);
@@ -120,7 +120,7 @@ CryptController::collect_data ()
       return -1;
     }
 
-  bool do_inline = m_mail->do_pgp_inline ();
+  bool do_inline = m_mail->getDoPGPInline ();
 
   if (n_att_usable && do_inline)
     {
@@ -128,7 +128,7 @@ CryptController::collect_data ()
                  " Using PGP MIME",
                  SRCNAME, __func__);
       do_inline = false;
-      m_mail->set_do_pgp_inline (false);
+      m_mail->setDoPGPInline (false);
     }
   else if (do_inline)
     {
@@ -295,7 +295,7 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
     {
       log_error ("%s:%s: Encrypt requested but no recipient fingerprints",
                  SRCNAME, __func__);
-      gpgol_message_box (m_mail->get_window(), _("No recipients for encryption selected."),
+      gpgol_message_box (m_mail->getWindow (), _("No recipients for encryption selected."),
                          _("GpgOL"), MB_OK);
       return -2;
     }
@@ -312,7 +312,7 @@ CryptController::resolve_keys_cached()
 
   if (m_encrypt)
     {
-      const auto cached_sender = m_mail->get_cached_sender ();
+      const auto cached_sender = m_mail->getSender ();
       auto recps = cArray_to_vector ((const char**) m_recipient_addrs);
       recps.push_back (cached_sender);
 
@@ -338,13 +338,13 @@ CryptController::resolve_keys_cached()
     {
       if (!fallbackToSMIME)
         {
-          m_signer_key = cache->getSigningKey (m_mail->get_cached_sender ().c_str (),
+          m_signer_key = cache->getSigningKey (m_mail->getSender ().c_str (),
                                                GpgME::OpenPGP);
           m_proto = GpgME::OpenPGP;
         }
       if (m_signer_key.isNull() && opt.enable_smime)
         {
-          m_signer_key = cache->getSigningKey (m_mail->get_cached_sender ().c_str (),
+          m_signer_key = cache->getSigningKey (m_mail->getSender ().c_str (),
                                                GpgME::CMS);
           m_proto = GpgME::CMS;
         }
@@ -392,7 +392,7 @@ CryptController::resolve_keys ()
   args.push_back (std::string ("--debug"));
 
   // Yes passing it as int is ok.
-  auto wnd = m_mail->get_window ();
+  auto wnd = m_mail->getWindow ();
   if (wnd)
     {
       // Pass the handle of the active window for raise / overlay.
@@ -421,7 +421,7 @@ CryptController::resolve_keys ()
     {
       args.push_back (std::string ("--sign"));
     }
-  const auto cached_sender = m_mail->get_cached_sender ();
+  const auto cached_sender = m_mail->getSender ();
   if (cached_sender.empty())
     {
       log_error ("%s:%s: resolve keys without sender.",
@@ -520,7 +520,7 @@ CryptController::do_crypto (GpgME::Error &err)
              SRCNAME, __func__);
 
   /* Start a WKS check if necessary. */
-  WKSHelper::instance()->start_check (m_mail->get_cached_sender ());
+  WKSHelper::instance()->start_check (m_mail->getSender ());
 
   int ret = resolve_keys ();
   if (ret == -1)
@@ -535,14 +535,14 @@ CryptController::do_crypto (GpgME::Error &err)
       // Cancel
       return -2;
     }
-  bool do_inline = m_mail->do_pgp_inline ();
+  bool do_inline = m_mail->getDoPGPInline ();
 
   if (m_proto == GpgME::CMS && do_inline)
     {
       log_debug ("%s:%s: Inline for S/MIME not supported. Switching to mime.",
                  SRCNAME, __func__);
       do_inline = false;
-      m_mail->set_do_pgp_inline (false);
+      m_mail->setDoPGPInline (false);
       m_bodyInput = GpgME::Data(GpgME::Data::null);
     }
 
@@ -552,7 +552,7 @@ CryptController::do_crypto (GpgME::Error &err)
     {
       log_error ("%s:%s: Failure to create context.",
                  SRCNAME, __func__);
-      gpgol_message_box (m_mail->get_window (),
+      gpgol_message_box (m_mail->getWindow (),
                          "Failure to create context.",
                          utf8_gettext ("GpgOL"), MB_OK);
       return -1;
@@ -892,7 +892,7 @@ CryptController::update_mail_mapi ()
       return -1;
     }
 
-  if (m_mail->do_pgp_inline ())
+  if (m_mail->getDoPGPInline ())
     {
       // Nothing to do for inline.
       log_debug ("%s:%s: Inline mail. Setting encoding.",
@@ -926,7 +926,7 @@ CryptController::update_mail_mapi ()
   // This means that the conversion / build of the mime structure also
   // happens differently.
   int exchange_major_version = get_ex_major_version_for_addr (
-                                        m_mail->get_cached_sender ().c_str ());
+                                        m_mail->getSender ().c_str ());
 
   std::string overrideMimeTag;
   if (m_proto == GpgME::CMS && m_encrypt && exchange_major_version >= 15)
@@ -1002,7 +1002,7 @@ std::string
 CryptController::get_inline_data ()
 {
   std::string ret;
-  if (!m_mail->do_pgp_inline ())
+  if (!m_mail->getDoPGPInline ())
     {
       return ret;
     }
@@ -1054,7 +1054,7 @@ CryptController::parse_micalg (const GpgME::SigningResult &result)
 void
 CryptController::start_crypto_overlay ()
 {
-  auto wid = m_mail->get_window ();
+  auto wid = m_mail->getWindow ();
 
   std::string text;
 

@@ -47,7 +47,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           case (PARSING_DONE):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: Parsing done for mail which is gone.",
                              SRCNAME, __func__);
@@ -59,26 +59,26 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           case (RECIPIENT_ADDED):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: Recipient add for mail which is gone.",
                              SRCNAME, __func__);
                   break;
                 }
-              mail->locate_keys();
+              mail->locateKeys_o ();
               break;
             }
           case (REVERT_MAIL):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: Revert mail for mail which is gone.",
                              SRCNAME, __func__);
                   break;
                 }
 
-              mail->set_needs_save (true);
+              mail->setNeedsSave (true);
               /* Some magic here. Accessing any existing inline body cements
                  it. Otherwise updating the body through the revert also changes
                  the body of a inline mail. */
@@ -91,7 +91,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               invoke_oom_method (mail->item (), "Save", NULL);
               log_debug ("%s:%s: Revert mail. Save done. Updating body..",
                          SRCNAME, __func__);
-              mail->update_body ();
+              mail->updateBody_o ();
               log_debug ("%s:%s: Revert mail done.",
                          SRCNAME, __func__);
               break;
@@ -109,13 +109,13 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
               log_debug ("%s:%s: Invalidating last mail",
                          SRCNAME, __func__);
-              Mail::invalidate_last_mail ();
+              Mail::clearLastMail ();
               break;
             }
           case (CLOSE):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: Close for mail which is gone.",
                              SRCNAME, __func__);
@@ -127,21 +127,21 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           case (CRYPTO_DONE):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: Crypto done for mail which is gone.",
                              SRCNAME, __func__);
                   break;
                 }
               // modify the mail.
-              if (mail->crypt_state () == Mail::NeedsUpdateInOOM)
+              if (mail->cryptState () == Mail::NeedsUpdateInOOM)
                 {
                   // Save the Mail
                   log_debug ("%s:%s: Crypto done for %p updating oom.",
                              SRCNAME, __func__, mail);
-                  mail->update_crypt_oom();
+                  mail->updateCryptOOM_o ();
                 }
-              if (mail->crypt_state () == Mail::NeedsSecondAfterWrite)
+              if (mail->cryptState () == Mail::NeedsSecondAfterWrite)
                 {
                   invoke_oom_method (mail->item (), "Save", NULL);
                   log_debug ("%s:%s: Second save done for %p Invoking second send.",
@@ -185,38 +185,38 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           case (CLEAR_REPLY_FORWARD):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: Clear reply forward for mail which is gone.",
                              SRCNAME, __func__);
                   break;
                 }
-              mail->wipe (true);
-              mail->remove_all_attachments ();
+              mail->wipe_o (true);
+              mail->removeAllAttachments_o ();
               break;
             }
           case (DO_AUTO_SECURE):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: DO_AUTO_SECURE for mail which is gone.",
                              SRCNAME, __func__);
                   break;
                 }
-              mail->set_do_autosecure_mapi (true);
+              mail->setDoAutosecure_m (true);
               break;
             }
           case (DONT_AUTO_SECURE):
             {
               auto mail = (Mail*) ctx->data;
-              if (!Mail::is_valid_ptr (mail))
+              if (!Mail::isValidPtr (mail))
                 {
                   log_debug ("%s:%s: DO_AUTO_SECURE for mail which is gone.",
                              SRCNAME, __func__);
                   break;
                 }
-              mail->set_do_autosecure_mapi (false);
+              mail->setDoAutosecure_m (false);
               break;
             }
           default:
@@ -368,7 +368,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
                 log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
                            "Closing all mails.",
                            SRCNAME, __func__);
-                Mail::close_all_mails();
+                Mail::closeAllMails_o ();
                 break;
               }
           }
@@ -382,7 +382,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
         {
           log_debug ("%s:%s: SC_CLOSE syscommand. Closing all mails.",
                      SRCNAME, __func__);
-          Mail::close_all_mails();
+          Mail::closeAllMails_o ();
         } */
        break;
      default:

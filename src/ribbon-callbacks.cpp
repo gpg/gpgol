@@ -210,13 +210,13 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
   Mail *mail = nullptr;
   if (uid)
     {
-      mail = Mail::get_mail_for_uuid (uid);
+      mail = Mail::getMailForUUID (uid);
       xfree (uid);
     }
 
   if (mail)
     {
-      mail->set_crypto_selected_manually (true);
+      mail->setCryptoSelectedManually (true);
     }
   else
     {
@@ -260,7 +260,7 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
 
   if (newflags & 1)
     {
-      Mail::locate_all_crypto_recipients ();
+      Mail::locateAllCryptoRecipients_o ();
     }
 
   return S_OK;
@@ -485,7 +485,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
         }
     }
 
-  auto ret = Mail::get_mail_for_uuid (uid);
+  auto ret = Mail::getMailForUUID (uid);
   xfree (uid);
   if (!ret)
     {
@@ -544,7 +544,7 @@ HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
       xfree (w_result);
       return S_OK;
     }
-  w_result = utf8_to_wchar (mail->get_crypto_summary ().c_str ());
+  w_result = utf8_to_wchar (mail->getCryptoSummary ().c_str ());
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
   return S_OK;
@@ -558,7 +558,7 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
   wchar_t *w_result;
   if (mail)
     {
-      w_result = utf8_to_wchar (mail->get_crypto_one_line().c_str());
+      w_result = utf8_to_wchar (mail->getCryptoOneLine ().c_str());
     }
   else if (!none_selected)
     {
@@ -583,7 +583,7 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
       result->bstrVal = SysAllocString (L"");
       return S_OK;
     }
-  if (!mail || !mail->is_crypto_mail ())
+  if (!mail || !mail->isCryptoMail ())
     {
       wchar_t *w_result;
       w_result = utf8_to_wchar (utf8_gettext ("You cannot be sure who sent, "
@@ -593,7 +593,7 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
       xfree (w_result);
       return S_OK;
     }
-  const auto message = mail->get_crypto_details ();
+  const auto message = mail->getCryptoDetails_o ();
   wchar_t *w_message = utf8_to_wchar (message.c_str());
   result->bstrVal = SysAllocString (w_message);
   xfree (w_message);
@@ -604,14 +604,14 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
 {
   MY_MAIL_GETTER
 
-  if (!mail || (!mail->is_signed () && !mail->is_encrypted ()))
+  if (!mail || (!mail->isSigned () && !mail->isEncrypted ()))
     {
       ShellExecuteA(NULL, NULL, "https://emailselfdefense.fsf.org/infographic",
                     0, 0, SW_SHOWNORMAL);
       return S_OK;
     }
 
-  if (!mail->is_signed () && mail->is_encrypted ())
+  if (!mail->isSigned () && mail->isEncrypted ())
     {
       /* Encrypt only, no information but show something. because
          we want the button to be active.
@@ -625,18 +625,18 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
       char * buf;
       gpgrt_asprintf (&buf, _("The message was not cryptographically signed.\n"
                       "There is no additional information available if it "
-                      "was actually sent by '%s' or if someone faked the sender address."), mail->get_sender ().c_str());
+                      "was actually sent by '%s' or if someone faked the sender address."), mail->getSender_o ().c_str());
       MessageBox (NULL, buf, _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
       xfree (buf);
       return S_OK;
     }
 
-  if (!mail->get_sig_fpr())
+  if (!mail->getSigFpr ())
     {
       std::string buf = _("There was an error verifying the signature.\n"
                            "Full details:\n");
-      buf += mail->get_verification_result_dump();
+      buf += mail->getVerificationResultDump ();
       gpgol_message_box (get_active_hwnd(), buf.c_str(), _("GpgOL"), MB_OK);
     }
 
@@ -662,7 +662,7 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
             std::string parentWid = std::to_string ((int) (intptr_t) get_active_hwnd ());
             const char *argv[] = {path.c_str(),
                                   "--query",
-                                  mail->get_sig_fpr(),
+                                  mail->getSigFpr (),
                                   "--parent-windowid",
                                   parentWid.c_str(),
                                   NULL };
@@ -701,7 +701,7 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result)
 
   if (mail)
     {
-      return getIcon (mail->get_crypto_icon_id (), result);
+      return getIcon (mail->getCryptoIconID (), result);
     }
   return getIcon (IDI_LEVEL_0, result);
 }
@@ -712,7 +712,7 @@ HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
 
   result->vt = VT_BOOL | VT_BYREF;
   result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-  *(result->pboolVal) = (mail && (mail->is_signed () || mail->is_encrypted ())) ?
+  *(result->pboolVal) = (mail && (mail->isSigned () || mail->isEncrypted ())) ?
                           VARIANT_TRUE : VARIANT_FALSE;
 
   return S_OK;

@@ -1017,7 +1017,7 @@ MimeDataProvider::create_attachment()
   /* TODO handle encoding */
 }
 
-const std::string &MimeDataProvider::get_body()
+const std::string &MimeDataProvider::get_body ()
 {
   if (m_rawbuf.size())
     {
@@ -1031,7 +1031,7 @@ const std::string &MimeDataProvider::get_body()
   return m_body;
 }
 
-const std::string &MimeDataProvider::get_html_body()
+const std::string &MimeDataProvider::get_html_body ()
 {
   if (!m_has_html_body)
     {

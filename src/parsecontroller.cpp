@@ -485,11 +485,11 @@ ParseController::parse()
 }
 
 const std::string
-ParseController::get_html_body() const
+ParseController::get_html_body () const
 {
   if (m_outputprovider)
     {
-      return m_outputprovider->get_html_body();
+      return m_outputprovider->get_html_body ();
     }
   else
     {
@@ -498,11 +498,11 @@ ParseController::get_html_body() const
 }
 
 const std::string
-ParseController::get_body() const
+ParseController::get_body () const
 {
   if (m_outputprovider)
     {
-      return m_outputprovider->get_body();
+      return m_outputprovider->get_body ();
     }
   else
     {

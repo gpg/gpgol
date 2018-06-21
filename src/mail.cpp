@@ -101,7 +101,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_first_autosecure_check(true),
     m_locate_count(0)
 {
-  if (get_mail_for_item (mailitem))
+  if (getMailForItem (mailitem))
     {
       log_error ("Mail object for item: %p already exists. Bug.",
                  mailitem);
@@ -128,14 +128,14 @@ GPGRT_LOCK_DEFINE(dtor_lock);
 
 // static
 void
-Mail::delete_lock ()
+Mail::lockDelete ()
 {
   gpgrt_lock_lock (&dtor_lock);
 }
 
 // static
 void
-Mail::delete_unlock ()
+Mail::unlockDelete ()
 {
   gpgrt_lock_unlock (&dtor_lock);
 }
@@ -203,7 +203,7 @@ Mail::~Mail()
 }
 
 Mail *
-Mail::get_mail_for_item (LPDISPATCH mailitem)
+Mail::getMailForItem (LPDISPATCH mailitem)
 {
   if (!mailitem)
     {
@@ -221,7 +221,7 @@ Mail::get_mail_for_item (LPDISPATCH mailitem)
 }
 
 Mail *
-Mail::get_mail_for_uuid (const char *uuid)
+Mail::getMailForUUID (const char *uuid)
 {
   if (!uuid)
     {
@@ -238,7 +238,7 @@ Mail::get_mail_for_uuid (const char *uuid)
 }
 
 bool
-Mail::is_valid_ptr (const Mail *mail)
+Mail::isValidPtr (const Mail *mail)
 {
   gpgrt_lock_lock (&mail_map_lock);
   auto it = s_mail_map.begin();
@@ -256,7 +256,7 @@ Mail::is_valid_ptr (const Mail *mail)
 }
 
 int
-Mail::pre_process_message ()
+Mail::preProcessMessage_m ()
 {
   LPMESSAGE message = get_oom_base_message (m_mailitem);
   if (!message)
@@ -334,7 +334,7 @@ get_attachment (LPDISPATCH mailitem, int pos)
 /** Helper to check that all attachments are hidden, to be
   called before crypto. */
 int
-Mail::check_attachments () const
+Mail::checkAttachments_o () const
 {
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (!attachments)
@@ -352,17 +352,17 @@ Mail::check_attachments () const
 
   std::string message;
 
-  if (is_encrypted () && is_signed ())
+  if (isEncrypted () && isSigned ())
     {
       message += _("Not all attachments were encrypted or signed.\n"
                    "The unsigned / unencrypted attachments are:\n\n");
     }
-  else if (is_signed ())
+  else if (isSigned ())
     {
       message += _("Not all attachments were signed.\n"
                    "The unsigned attachments are:\n\n");
     }
-  else if (is_encrypted ())
+  else if (isEncrypted ())
     {
       message += _("Not all attachments were encrypted.\n"
                    "The unencrypted attachments are:\n\n");
@@ -689,7 +689,7 @@ do_parsing (LPVOID arg)
   /* We lock with mail dtors so we can be sure the mail->parser
      call is valid. */
   Mail *mail = (Mail *)arg;
-  if (!Mail::is_valid_ptr (mail))
+  if (!Mail::isValidPtr (mail))
     {
       log_debug ("%s:%s: canceling parsing for: %p already deleted",
                  SRCNAME, __func__, arg);
@@ -698,7 +698,7 @@ do_parsing (LPVOID arg)
     }
   /* This takes a shared ptr of parser. So the parser is
      still valid when the mail is deleted. */
-  auto parser = mail->parser();
+  auto parser = mail->parser ();
   gpgrt_lock_unlock (&dtor_lock);
 
   gpgrt_lock_lock (&parser_lock);
@@ -712,7 +712,7 @@ do_parsing (LPVOID arg)
   log_debug ("%s:%s: preparing the parser for: %p",
              SRCNAME, __func__, arg);
 
-  if (!Mail::is_valid_ptr (mail))
+  if (!Mail::isValidPtr (mail))
     {
       log_debug ("%s:%s: cancel for: %p already deleted",
                  SRCNAME, __func__, arg);
@@ -814,25 +814,25 @@ do_crypt (LPVOID arg)
   /* We lock with mail dtors so we can be sure the mail->parser
      call is valid. */
   Mail *mail = (Mail *)arg;
-  if (!Mail::is_valid_ptr (mail))
+  if (!Mail::isValidPtr (mail))
     {
       log_debug ("%s:%s: canceling crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&dtor_lock);
       return 0;
     }
-  if (mail->crypt_state() != Mail::NeedsActualCrypt)
+  if (mail->cryptState () != Mail::NeedsActualCrypt)
     {
       log_debug ("%s:%s: invalid state %i",
-                 SRCNAME, __func__, mail->crypt_state ());
-      mail->set_window_enabled (true);
+                 SRCNAME, __func__, mail->cryptState ());
+      mail->setWindowEnabled_o (true);
       gpgrt_lock_unlock (&dtor_lock);
       return -1;
     }
 
   /* This takes a shared ptr of crypter. So the crypter is
      still valid when the mail is deleted. */
-  auto crypter = mail->crypter();
+  auto crypter = mail->cryper ();
   gpgrt_lock_unlock (&dtor_lock);
 
   if (!crypter)
@@ -840,7 +840,7 @@ do_crypt (LPVOID arg)
       log_error ("%s:%s: no crypter found for mail: %p",
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&parser_lock);
-      mail->set_window_enabled (true);
+      mail->setWindowEnabled_o (true);
       return -1;
     }
 
@@ -848,7 +848,7 @@ do_crypt (LPVOID arg)
   int rc = crypter->do_crypto(err);
 
   gpgrt_lock_lock (&dtor_lock);
-  if (!Mail::is_valid_ptr (mail))
+  if (!Mail::isValidPtr (mail))
     {
       log_debug ("%s:%s: aborting crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
@@ -856,23 +856,23 @@ do_crypt (LPVOID arg)
       return 0;
     }
 
-  mail->set_window_enabled (true);
+  mail->setWindowEnabled_o (true);
 
   if (rc == -1 || err)
     {
-      mail->reset_crypter ();
+      mail->resetCrypter ();
       crypter = nullptr;
       if (err)
         {
           char *buf = nullptr;
           gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
                           err.asString());
-          gpgol_message_box (mail->get_window(), buf, _("GpgOL"), MB_OK);
+          gpgol_message_box (mail->getWindow (), buf, _("GpgOL"), MB_OK);
           xfree (buf);
         }
       else
         {
-          gpgol_bug (mail->get_window (),
+          gpgol_bug (mail->getWindow (),
                      ERR_CRYPT_RESOLVER_FAILED);
         }
     }
@@ -881,16 +881,16 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i err: %i",
                  SRCNAME, __func__, arg, rc, err.code());
-      mail->set_crypt_state (Mail::NoCryptMail);
-      mail->reset_crypter ();
+      mail->setCryptState (Mail::NoCryptMail);
+      mail->resetCrypter ();
       crypter = nullptr;
       gpgrt_lock_unlock (&dtor_lock);
       return rc;
     }
 
-  if (!mail->async_crypt_disabled ())
+  if (!mail->isAsyncCryptDisabled ())
     {
-      mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+      mail->setCryptState (Mail::NeedsUpdateInOOM);
       gpgrt_lock_unlock (&dtor_lock);
       // This deletes the Mail in Outlook 2010
       do_in_ui_thread (CRYPTO_DONE, arg);
@@ -899,12 +899,12 @@ do_crypt (LPVOID arg)
     }
   else
     {
-      mail->set_crypt_state (Mail::NeedsUpdateInMAPI);
-      mail->update_crypt_mapi ();
-      if (mail->crypt_state () == Mail::WantsSendMIME)
+      mail->setCryptState (Mail::NeedsUpdateInMAPI);
+      mail->updateCryptMAPI_m ();
+      if (mail->cryptState () == Mail::WantsSendMIME)
         {
           // For sync crypto we need to switch this.
-          mail->set_crypt_state (Mail::NeedsUpdateInOOM);
+          mail->setCryptState (Mail::NeedsUpdateInOOM);
         }
       else
         {
@@ -912,7 +912,7 @@ do_crypt (LPVOID arg)
           log_debug ("%s:%s: Resetting crypter because of state mismatch. %p",
                      SRCNAME, __func__, arg);
           crypter = nullptr;
-          mail->reset_crypter ();
+          mail->resetCrypter ();
         }
       gpgrt_lock_unlock (&dtor_lock);
     }
@@ -929,7 +929,7 @@ do_crypt (LPVOID arg)
 }
 
 bool
-Mail::is_crypto_mail() const
+Mail::isCryptoMail () const
 {
   if (m_type == MSGTYPE_UNKNOWN || m_type == MSGTYPE_GPGOL ||
       m_type == MSGTYPE_SMIME)
@@ -941,9 +941,9 @@ Mail::is_crypto_mail() const
 }
 
 int
-Mail::decrypt_verify()
+Mail::decryptVerify_o ()
 {
-  if (!is_crypto_mail())
+  if (!isCryptoMail ())
     {
       log_debug ("%s:%s: Decrypt Verify for non crypto mail: %p.",
                  SRCNAME, __func__, m_mailitem);
@@ -955,7 +955,7 @@ Mail::decrypt_verify()
                  SRCNAME, __func__, m_mailitem);
       return 1;
     }
-  set_uuid ();
+  setUUID_o ();
   m_processed = true;
 
 
@@ -974,7 +974,7 @@ Mail::decrypt_verify()
     }
   else if (gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
                       decrypt_template,
-                      is_smime() ? "S/MIME" : "OpenPGP",
+                      isSMIME_m () ? "S/MIME" : "OpenPGP",
                       _("message"),
                       _("Please wait while the message is being decrypted / verified...")) == -1)
     {
@@ -1020,9 +1020,9 @@ Mail::decrypt_verify()
     }
 
   m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
-  m_parser->setSender(GpgME::UserID::addrSpecFromString(get_sender().c_str()));
+  m_parser->setSender(GpgME::UserID::addrSpecFromString(getSender_o ().c_str()));
   log_mime_parser ("%s:%s: Parser for \"%s\" is %p",
-                   SRCNAME, __func__, get_subject ().c_str(), m_parser.get());
+                   SRCNAME, __func__, getSubject_o ().c_str(), m_parser.get());
   gpgol_release (cipherstream);
 
   HANDLE parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
@@ -1049,7 +1049,7 @@ void find_and_replace(std::string& source, const std::string &find,
 }
 
 void
-Mail::update_body()
+Mail::updateBody_o ()
 {
   if (!m_parser)
     {
@@ -1166,7 +1166,7 @@ Mail::update_body()
               buf += "\n\n";
               buf += _("This message is shown only once.");
 
-              gpgol_message_box (get_window(), buf.c_str(), caption.c_str(),
+              gpgol_message_box (getWindow (), buf.c_str(), caption.c_str(),
                                  MB_OK);
               opt.smime_html_warn_shown = true;
               write_options ();
@@ -1236,7 +1236,7 @@ Mail::update_body()
       buf += _("Please ask the sender to sign the message or\n"
                "to send it with a plain text alternative.");
 
-      gpgol_message_box (get_window(), buf.c_str(), caption.c_str(),
+      gpgol_message_box (getWindow (), buf.c_str(), caption.c_str(),
                          MB_OK);
     }
 
@@ -1309,12 +1309,12 @@ Mail::parsing_done()
       m_crypto_flags |= 2;
     }
 
-  update_sigstate ();
+  updateSigstate_o ();
   m_needs_wipe = !m_is_send_again;
 
   TRACEPOINT;
   /* Set categories according to the result. */
-  update_categories ();
+  updateCategories_o ();
 
   TRACEPOINT;
   m_block_html = m_parser->shouldBlockHtml ();
@@ -1322,16 +1322,16 @@ Mail::parsing_done()
   if (m_block_html)
     {
       // Just to be careful.
-      set_block_status ();
+      setBlockStatus_m ();
     }
 
   TRACEPOINT;
   /* Update the body */
-  update_body();
+  updateBody_o ();
   TRACEPOINT;
 
   /* Check that there are no unsigned / unencrypted messages. */
-  check_attachments ();
+  checkAttachments_o ();
 
   /* Update attachments */
   if (add_attachments (m_mailitem, m_parser->get_attachments()))
@@ -1357,7 +1357,7 @@ Mail::parsing_done()
           set_gpgol_draft_info_flags (msg, m_crypto_flags);
           gpgol_release (msg);
         }
-      remove_our_attachments ();
+      removeOurAttachments_o ();
     }
 
   log_debug ("%s:%s: Delayed invalidate to update sigstate.",
@@ -1369,7 +1369,7 @@ Mail::parsing_done()
 }
 
 int
-Mail::encrypt_sign_start ()
+Mail::encryptSignStart_o ()
 {
   if (m_crypt_state != NeedsActualCrypt)
     {
@@ -1429,12 +1429,12 @@ Mail::encrypt_sign_start ()
 
   // Careful from here on we have to check every
   // error condition with window enabling again.
-  set_window_enabled (false);
+  setWindowEnabled_o (false);
   if (m_crypter->collect_data ())
     {
       log_error ("%s:%s: Crypter for mail %p failed to collect data.",
                  SRCNAME, __func__, this);
-      set_window_enabled (true);
+      setWindowEnabled_o (true);
       return -1;
     }
 
@@ -1468,7 +1468,7 @@ Mail::needs_crypto ()
 }
 
 int
-Mail::wipe (bool force)
+Mail::wipe_o (bool force)
 {
   if (!m_needs_wipe && !force)
     {
@@ -1497,12 +1497,12 @@ Mail::wipe (bool force)
 }
 
 int
-Mail::update_oom_data ()
+Mail::updateOOMData_o ()
 {
   char *buf = nullptr;
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  if (!is_crypto_mail())
+  if (!isCryptoMail ())
     {
       /* Update the body format. */
       m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
@@ -1518,14 +1518,14 @@ Mail::update_oom_data ()
       xfree (m_cached_plain_body);
       m_cached_plain_body = get_oom_string (m_mailitem, "Body");
 
-      char **recipients = get_recipients ();
+      char **recipients = getRecipients_o ();
       m_cached_recipients = cArray_to_vector ((const char **)recipients);
       xfree (recipients);
     }
   /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
      the SenderEmailAddress string. */
-  if (is_crypto_mail ())
+  if (isCryptoMail ())
     {
       /* This is the case where we are reading a mail and not composing.
          When composing we need to use the SendUsingAccount because if
@@ -1545,7 +1545,7 @@ Mail::update_oom_data ()
     {
       buf = get_sender_SendUsingAccount (m_mailitem, &m_is_gsuite);
     }
-  if (!buf && !is_crypto_mail ())
+  if (!buf && !isCryptoMail ())
     {
       /* Try the sender Object */
       buf = get_sender_Sender (m_mailitem);
@@ -1568,21 +1568,21 @@ Mail::update_oom_data ()
 }
 
 std::string
-Mail::get_sender ()
+Mail::getSender_o ()
 {
   if (m_sender.empty())
-    update_oom_data();
+    updateOOMData_o ();
   return m_sender;
 }
 
 std::string
-Mail::get_cached_sender () const
+Mail::getSender () const
 {
   return m_sender;
 }
 
 int
-Mail::close_all_mails ()
+Mail::closeAllMails_o ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
@@ -1595,22 +1595,22 @@ Mail::close_all_mails ()
       /* XXX For non racy code the is_valid_ptr check should not
          be necessary but we crashed sometimes closing a destroyed
          mail. */
-      if (!is_valid_ptr (it->second))
+      if (!isValidPtr (it->second))
         {
           log_debug ("%s:%s: Already deleted mail for %p",
                    SRCNAME, __func__, it->first);
           continue;
         }
 
-      if (!it->second->is_crypto_mail())
+      if (!it->second->isCryptoMail ())
         {
           continue;
         }
-      if (close_inspector (it->second) || close (it->second))
+      if (closeInspector_o (it->second) || close (it->second))
         {
           log_error ("Failed to close mail: %p ", it->first);
           /* Should not happen */
-          if (is_valid_ptr (it->second) && it->second->revert())
+          if (isValidPtr (it->second) && it->second->revert_o ())
             {
               err++;
             }
@@ -1619,21 +1619,21 @@ Mail::close_all_mails ()
   return err;
 }
 int
-Mail::revert_all_mails ()
+Mail::revertAllMails_o ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
-      if (it->second->revert ())
+      if (it->second->revert_o ())
         {
           log_error ("Failed to revert mail: %p ", it->first);
           err++;
           continue;
         }
 
-      it->second->set_needs_save (true);
+      it->second->setNeedsSave (true);
       if (!invoke_oom_method (it->first, "Save", NULL))
         {
           log_error ("Failed to save reverted mail: %p ", it->second);
@@ -1646,14 +1646,14 @@ Mail::revert_all_mails ()
 }
 
 int
-Mail::wipe_all_mails ()
+Mail::wipeAllMails_o ()
 {
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
-      if (it->second->wipe ())
+      if (it->second->wipe_o ())
         {
           log_error ("Failed to wipe mail: %p ", it->first);
           err++;
@@ -1664,7 +1664,7 @@ Mail::wipe_all_mails ()
 }
 
 int
-Mail::revert ()
+Mail::revert_o ()
 {
   int err = 0;
   if (!m_processed)
@@ -1679,7 +1679,7 @@ Mail::revert ()
     {
       log_error ("%s:%s: Message revert failed falling back to wipe.",
                  SRCNAME, __func__);
-      return wipe ();
+      return wipe_o ();
     }
   /* We need to reprocess the mail next time around. */
   m_processed = false;
@@ -1689,7 +1689,7 @@ Mail::revert ()
 }
 
 bool
-Mail::is_smime ()
+Mail::isSMIME_m ()
 {
   msgtype_t msgtype;
   LPMESSAGE message;
@@ -1748,25 +1748,25 @@ get_string (LPDISPATCH item, const char *str)
 }
 
 std::string
-Mail::get_subject() const
+Mail::getSubject_o () const
 {
   return get_string (m_mailitem, "Subject");
 }
 
 std::string
-Mail::get_body() const
+Mail::getBody_o () const
 {
   return get_string (m_mailitem, "Body");
 }
 
 std::string
-Mail::get_html_body() const
+Mail::getHTMLBody_o () const
 {
   return get_string (m_mailitem, "HTMLBody");
 }
 
 char **
-Mail::get_recipients() const
+Mail::getRecipients_o () const
 {
   LPDISPATCH recipients = get_oom_object (m_mailitem, "Recipients");
   if (!recipients)
@@ -1780,7 +1780,7 @@ Mail::get_recipients() const
 }
 
 int
-Mail::close_inspector (Mail *mail)
+Mail::closeInspector_o (Mail *mail)
 {
   LPDISPATCH inspector = get_oom_object (mail->item(), "GetInspector");
   HRESULT hr;
@@ -1834,7 +1834,7 @@ Mail::close (Mail *mail)
 
   log_oom_extra ("%s:%s: Invoking close for: %p",
                  SRCNAME, __func__, mail->item());
-  mail->set_close_triggered (true);
+  mail->setCloseTriggered (true);
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                        NULL, &dispparams);
 
@@ -1844,13 +1844,13 @@ Mail::close (Mail *mail)
 }
 
 void
-Mail::set_close_triggered (bool value)
+Mail::setCloseTriggered (bool value)
 {
   m_close_triggered = value;
 }
 
 bool
-Mail::get_close_triggered () const
+Mail::getCloseTriggered () const
 {
   return m_close_triggered;
 }
@@ -1898,9 +1898,9 @@ get_uid_for_sender (const Key &k, const char *sender)
 }
 
 void
-Mail::update_sigstate ()
+Mail::updateSigstate_o ()
 {
-  std::string sender = get_sender();
+  std::string sender = getSender_o ();
 
   if (sender.empty())
     {
@@ -1963,13 +1963,13 @@ Mail::update_sigstate ()
 }
 
 bool
-Mail::is_valid_sig () const
+Mail::isValidSig () const
 {
    return m_is_valid;
 }
 
 void
-Mail::remove_categories ()
+Mail::removeCategories_o ()
 {
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Trusted Sender Address");
@@ -2040,11 +2040,11 @@ resize_active_window ()
 }
 
 void
-Mail::update_categories ()
+Mail::updateCategories_o ()
 {
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Trusted Sender Address");
-  if (is_valid_sig())
+  if (isValidSig ())
     {
       add_category (m_mailitem, verifyCategory);
     }
@@ -2070,19 +2070,19 @@ Mail::update_categories ()
 }
 
 bool
-Mail::is_signed() const
+Mail::isSigned () const
 {
   return m_verify_result.numSignatures() > 0;
 }
 
 bool
-Mail::is_encrypted() const
+Mail::isEncrypted () const
 {
   return !m_decrypt_result.isNull();
 }
 
 int
-Mail::set_uuid()
+Mail::setUUID_o ()
 {
   char *uuid;
   if (!m_uuid.empty())
@@ -2112,7 +2112,7 @@ Mail::set_uuid()
   if (m_uuid.empty())
     {
       m_uuid = uuid;
-      Mail *other = get_mail_for_uuid (uuid);
+      Mail *other = getMailForUUID (uuid);
       if (other)
         {
           /* According to documentation this should not
@@ -2227,11 +2227,11 @@ level_4_check (const UserID &uid)
 }
 
 std::string
-Mail::get_crypto_summary () const
+Mail::getCryptoSummary () const
 {
   const int level = get_signature_level ();
 
-  bool enc = is_encrypted ();
+  bool enc = isEncrypted ();
   if (level == 4 && enc)
     {
       return _("Security Level 4");
@@ -2260,7 +2260,7 @@ Mail::get_crypto_summary () const
     {
       return _("Encrypted");
     }
-  if (is_signed ())
+  if (isSigned ())
     {
       /* Even if it is signed, if it is not validly
          signed it's still completly insecure as anyone
@@ -2273,10 +2273,10 @@ Mail::get_crypto_summary () const
 }
 
 std::string
-Mail::get_crypto_one_line() const
+Mail::getCryptoOneLine () const
 {
-  bool sig = is_signed ();
-  bool enc = is_encrypted ();
+  bool sig = isSigned ();
+  bool enc = isEncrypted ();
   if (sig || enc)
     {
       if (sig && enc)
@@ -2296,12 +2296,12 @@ Mail::get_crypto_one_line() const
 }
 
 std::string
-Mail::get_crypto_details()
+Mail::getCryptoDetails_o ()
 {
   std::string message;
 
   /* No signature with keys but error */
-  if (!is_encrypted() && !is_signed () && m_verify_result.error())
+  if (!isEncrypted () && !isSigned () && m_verify_result.error())
     {
       message = _("You cannot be sure who sent, "
                   "modified and read the message in transit.");
@@ -2312,13 +2312,13 @@ Mail::get_crypto_details()
       return message;
     }
   /* No crypo, what are we doing here? */
-  if (!is_encrypted () && !is_signed ())
+  if (!isEncrypted () && !isSigned ())
     {
       return _("You cannot be sure who sent, "
                "modified and read the message in transit.");
     }
   /* Handle encrypt only */
-  if (is_encrypted() && !is_signed ())
+  if (isEncrypted () && !isSigned ())
     {
       if (in_de_vs_mode ())
        {
@@ -2338,7 +2338,7 @@ Mail::get_crypto_details()
     }
 
   bool keyFound = true;
-  bool isOpenPGP = m_sig.key().isNull() ? !is_smime() :
+  bool isOpenPGP = m_sig.key().isNull() ? !isSMIME_m () :
                    m_sig.key().protocol() == Protocol::OpenPGP;
   char *buf;
   bool hasConflict = false;
@@ -2436,7 +2436,7 @@ Mail::get_crypto_details()
     {
       /* Now we are in level 0, this could be a technical problem, no key
          or just unkown. */
-      message = is_encrypted () ? _("But the sender address is not trustworthy because:") :
+      message = isEncrypted () ? _("But the sender address is not trustworthy because:") :
                                   _("The sender address is not trustworthy because:");
       message += "\n";
       keyFound = !(m_sig.summary() & Signature::Summary::KeyMissing);
@@ -2503,7 +2503,7 @@ Mail::get_crypto_details()
       else if (m_uid.isNull())
         {
           gpgrt_asprintf (&buf, _("does not claim the address: \"%s\"."),
-                          get_sender().c_str());
+                          getSender_o ().c_str());
           message += buf;
           xfree (buf);
         }
@@ -2534,7 +2534,7 @@ Mail::get_crypto_details()
    message += "\n\n";
    if (in_de_vs_mode ())
      {
-       if (is_signed ())
+       if (isSigned ())
          {
            if (m_sig.isDeVs ())
              {
@@ -2546,7 +2546,7 @@ Mail::get_crypto_details()
              }
            message += "\n";
          }
-       if (is_encrypted ())
+       if (isEncrypted ())
          {
            if (m_decrypt_result.isDeVs ())
              {
@@ -2622,15 +2622,15 @@ Mail::get_signature_level () const
 }
 
 int
-Mail::get_crypto_icon_id () const
+Mail::getCryptoIconID () const
 {
   int level = get_signature_level ();
-  int offset = is_encrypted () ? ENCRYPT_ICON_OFFSET : 0;
+  int offset = isEncrypted () ? ENCRYPT_ICON_OFFSET : 0;
   return IDI_LEVEL_0 + level + offset;
 }
 
 const char*
-Mail::get_sig_fpr() const
+Mail::getSigFpr () const
 {
   if (!m_is_signed || m_sig.isNull())
     {
@@ -2641,7 +2641,7 @@ Mail::get_sig_fpr() const
 
 /** Try to locate the keys for all recipients */
 void
-Mail::locate_keys()
+Mail::locateKeys_o ()
 {
   static bool locate_in_progress;
 
@@ -2674,23 +2674,23 @@ Mail::locate_keys()
   locate_in_progress = true;
 
   // First update oom data to have recipients and sender updated.
-  update_oom_data ();
-  KeyCache::instance()->startLocateSecret (get_sender ().c_str (), this);
-  KeyCache::instance()->startLocate (get_sender ().c_str (), this);
-  KeyCache::instance()->startLocate (get_cached_recipients (), this);
-  autoresolve_check_s ();
+  updateOOMData_o ();
+  KeyCache::instance()->startLocateSecret (getSender_o ().c_str (), this);
+  KeyCache::instance()->startLocate (getSender_o ().c_str (), this);
+  KeyCache::instance()->startLocate (getRecipients (), this);
+  autoresolveCheck ();
 
   locate_in_progress = false;
 }
 
 bool
-Mail::is_html_alternative () const
+Mail::isHTMLAlternative () const
 {
   return m_is_html_alternative;
 }
 
 char *
-Mail::take_cached_html_body ()
+Mail::takeCachedHTMLBody ()
 {
   char *ret = m_cached_html_body;
   m_cached_html_body = nullptr;
@@ -2698,7 +2698,7 @@ Mail::take_cached_html_body ()
 }
 
 char *
-Mail::take_cached_plain_body ()
+Mail::takeCachedPlainBody ()
 {
   char *ret = m_cached_plain_body;
   m_cached_plain_body = nullptr;
@@ -2706,37 +2706,37 @@ Mail::take_cached_plain_body ()
 }
 
 int
-Mail::get_crypto_flags () const
+Mail::getCryptoFlags () const
 {
   return m_crypto_flags;
 }
 
 void
-Mail::set_needs_encrypt (bool value)
+Mail::setNeedsEncrypt (bool value)
 {
   m_needs_encrypt = value;
 }
 
 bool
-Mail::needs_encrypt() const
+Mail::getNeedsEncrypt () const
 {
   return m_needs_encrypt;
 }
 
 std::vector<std::string>
-Mail::get_cached_recipients()
+Mail::getRecipients ()
 {
   return m_cached_recipients;
 }
 
 void
-Mail::append_to_inline_body (const std::string &data)
+Mail::appendToInlineBody (const std::string &data)
 {
   m_inline_body += data;
 }
 
 int
-Mail::inline_body_to_body()
+Mail::inlineBodyToBody ()
 {
   if (!m_crypter)
     {
@@ -2760,7 +2760,7 @@ Mail::inline_body_to_body()
 }
 
 void
-Mail::update_crypt_mapi()
+Mail::updateCryptMAPI_m ()
 {
   log_debug ("%s:%s: Update crypt mapi",
              SRCNAME, __func__);
@@ -2801,10 +2801,10 @@ Mail::update_crypt_mapi()
     }
 
   /** If sync we need the crypter in update_crypt_oom */
-  if (!async_crypt_disabled ())
+  if (!isAsyncCryptDisabled ())
     {
       // We don't need the crypter anymore.
-      reset_crypter ();
+      resetCrypter ();
     }
 }
 
@@ -2815,7 +2815,7 @@ Mail::update_crypt_mapi()
 static std::pair<bool, bool>
 has_crypt_or_empty_body_oom (Mail *mail)
 {
-  auto body = mail->get_body();
+  auto body = mail->getBody_o ();
   std::pair<bool, bool> ret;
   ret.first = false;
   ret.second = false;
@@ -2838,7 +2838,7 @@ has_crypt_or_empty_body_oom (Mail *mail)
 }
 
 void
-Mail::update_crypt_oom()
+Mail::updateCryptOOM_o ()
 {
   log_debug ("%s:%s: Update crypt oom for %p",
              SRCNAME, __func__, this);
@@ -2846,13 +2846,13 @@ Mail::update_crypt_oom()
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
-      reset_crypter ();
+      resetCrypter ();
       return;
     }
 
-  if (do_pgp_inline ())
+  if (getDoPGPInline ())
     {
-      if (inline_body_to_body ())
+      if (inlineBodyToBody ())
         {
           log_error ("%s:%s: Inline body to body failed %p.",
                      SRCNAME, __func__, this);
@@ -2878,9 +2878,9 @@ Mail::update_crypt_oom()
 
   /** When doing async update_crypt_mapi follows and needs
     the crypter. */
-  if (async_crypt_disabled ())
+  if (isAsyncCryptDisabled ())
     {
-      reset_crypter ();
+      resetCrypter ();
     }
 
   const auto pair = has_crypt_or_empty_body_oom (this);
@@ -2893,7 +2893,7 @@ Mail::update_crypt_oom()
     }
 
   // We are in MIME land. Wipe the body.
-  if (wipe (true))
+  if (wipe_o (true))
     {
       log_debug ("%s:%s: Cancel send for %p.",
                  SRCNAME, __func__, this);
@@ -2915,7 +2915,7 @@ Mail::update_crypt_oom()
 }
 
 void
-Mail::set_window_enabled (bool value)
+Mail::setWindowEnabled_o (bool value)
 {
   if (!value)
     {
@@ -2965,7 +2965,7 @@ Mail::check_inline_response ()
   char * inlineSubject = get_oom_string (inlineResponse, "Subject");
   gpgol_release (inlineResponse);
 
-  const auto subject = get_subject ();
+  const auto subject = getSubject_o ();
   if (inlineResponse && !subject.empty() && !strcmp (subject.c_str (), inlineSubject))
     {
       log_debug ("%s:%s: Detected inline response for '%p'",
@@ -2982,9 +2982,9 @@ Mail::check_inline_response ()
 
 // static
 Mail *
-Mail::get_last_mail ()
+Mail::getLastMail ()
 {
-  if (!s_last_mail || !is_valid_ptr (s_last_mail))
+  if (!s_last_mail || !isValidPtr (s_last_mail))
     {
       s_last_mail = nullptr;
     }
@@ -2993,14 +2993,14 @@ Mail::get_last_mail ()
 
 // static
 void
-Mail::invalidate_last_mail ()
+Mail::clearLastMail ()
 {
   s_last_mail = nullptr;
 }
 
 // static
 void
-Mail::locate_all_crypto_recipients()
+Mail::locateAllCryptoRecipients_o ()
 {
   if (!opt.autoresolve)
     {
@@ -3013,14 +3013,14 @@ Mail::locate_all_crypto_recipients()
     {
       if (it->second->needs_crypto ())
         {
-          it->second->locate_keys ();
+          it->second->locateKeys_o ();
         }
     }
   gpgrt_lock_unlock (&mail_map_lock);
 }
 
 int
-Mail::remove_all_attachments ()
+Mail::removeAllAttachments_o ()
 {
   int ret = 0;
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
@@ -3065,7 +3065,7 @@ Mail::remove_all_attachments ()
 }
 
 int
-Mail::remove_our_attachments ()
+Mail::removeOurAttachments_o ()
 {
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (!attachments)
@@ -3127,7 +3127,7 @@ Mail::remove_our_attachments ()
 /* We are very verbose because if we fail it might mean
    that we have leaked plaintext -> critical. */
 bool
-Mail::has_crypted_or_empty_body ()
+Mail::hasCryptedOrEmptyBody_o ()
 {
   const auto pair = has_crypt_or_empty_body_oom (this);
 
@@ -3186,7 +3186,7 @@ Mail::has_crypted_or_empty_body ()
 }
 
 std::string
-Mail::get_verification_result_dump()
+Mail::getVerificationResultDump ()
 {
   std::stringstream ss;
   ss << m_verify_result;
@@ -3194,7 +3194,7 @@ Mail::get_verification_result_dump()
 }
 
 void
-Mail::set_block_status()
+Mail::setBlockStatus_m ()
 {
   SPropValue prop;
 
@@ -3215,19 +3215,19 @@ Mail::set_block_status()
 }
 
 void
-Mail::set_block_html(bool value)
+Mail::setBlockHTML (bool value)
 {
   m_block_html = value;
 }
 
 void
-Mail::increment_locate_count()
+Mail::incrementLocateCount ()
 {
   m_locate_count++;
 }
 
 void
-Mail::decrement_locate_count()
+Mail::decrementLocateCount ()
 {
   m_locate_count--;
 
@@ -3239,12 +3239,12 @@ Mail::decrement_locate_count()
     }
   if (!m_locate_count)
     {
-      autoresolve_check_s ();
+      autoresolveCheck ();
     }
 }
 
 void
-Mail::autoresolve_check_s()
+Mail::autoresolveCheck ()
 {
   if (!opt.autoresolve || m_manual_crypto_opts ||
       m_locate_count)
@@ -3266,7 +3266,7 @@ Mail::autoresolve_check_s()
 }
 
 void
-Mail::set_do_autosecure_mapi(bool value)
+Mail::setDoAutosecure_m (bool value)
 {
   TRACEPOINT;
   LPMESSAGE msg = get_oom_base_message (m_mailitem);
@@ -3277,7 +3277,7 @@ Mail::set_do_autosecure_mapi(bool value)
     }
   /* We need to set a uuid so that autosecure can
      be disabled manually */
-  set_uuid ();
+  setUUID_o ();
 
   int old_flags = get_gpgol_draft_info_flags (msg);
   if (old_flags && m_first_autosecure_check)

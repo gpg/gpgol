@@ -97,7 +97,7 @@ int
 sink_string_write (sink_t sink, const void *data, size_t datalen)
 {
   Mail *mail = static_cast<Mail *>(sink->cb_data);
-  mail->append_to_inline_body (std::string((char*)data, datalen));
+  mail->appendToInlineBody (std::string((char*)data, datalen));
   return 0;
 }
 
@@ -1026,7 +1026,7 @@ write_attachments (sink_t sink,
 static int
 is_related (Mail *mail, mapi_attach_item_t *table)
 {
-  if (!mail || !mail->is_html_alternative () || !table)
+  if (!mail || !mail->isHTMLAlternative () || !table)
     {
       return 0;
     }
@@ -1287,7 +1287,7 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
   bool is_alternative = false;
   if (mail)
     {
-      is_alternative = mail->is_html_alternative ();
+      is_alternative = mail->isHTMLAlternative ();
     }
 
   int rc = 0;
@@ -1334,7 +1334,7 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
   /* Now the html body. It is somehow not accessible through PR_HTML,
      OutlookSpy also shows MAPI Unsupported (but shows the data) strange.
      We just cache it. Memory is cheap :-) */
-  char *html_body = mail->take_cached_html_body();
+  char *html_body = mail->takeCachedHTMLBody ();
   if (!html_body)
     {
       log_error ("%s:%s: BUG: Body but no html body in alternative mail?",
