@@ -3246,7 +3246,8 @@ Mail::decrement_locate_count()
 void
 Mail::autoresolve_check_s()
 {
-  if (!opt.autoresolve || m_manual_crypto_opts)
+  if (!opt.autoresolve || m_manual_crypto_opts ||
+      m_locate_count)
     {
       return;
     }
