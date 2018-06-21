@@ -59,13 +59,12 @@ public:
                                                GpgME::Protocol proto) const;
 
     /* Start a key location in a background thread filling
-       the key cache. cArray is a null terminated array
-       of address strings.
+       the key cache.
 
        The mail argument is used to add / remove the
        locator thread counter.
        */
-    void startLocate (char **cArray, Mail *mail) const;
+    void startLocate (const std::vector<std::string> &addrs, Mail *mail) const;
 
     /* Look for a secret key for the addr. */
     void startLocateSecret (const char *addr, Mail *mail) const;
@@ -73,6 +72,12 @@ public:
     /* Start a key location in a background thread filling
        the key cache. */
     void startLocate (const char *addr, Mail *mail) const;
+
+    /* Check that a mail is resolvable through the keycache.
+     *
+     * Returns the usual int with sign = 2 and encrypt = 1
+     **/
+    int isMailResolvable (Mail *mail);
 
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);

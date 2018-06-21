@@ -87,7 +87,6 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_crypto_flags(0),
     m_cached_html_body(nullptr),
     m_cached_plain_body(nullptr),
-    m_cached_recipients(nullptr),
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false),
@@ -99,6 +98,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_send_again(false),
     m_disable_att_remove_warning(false),
     m_manual_crypto_opts(false),
+    m_first_autosecure_check(true),
     m_locate_count(0)
 {
   if (get_mail_for_item (mailitem))
@@ -183,7 +183,6 @@ Mail::~Mail()
   gpgol_release(m_mailitem);
   xfree (m_cached_html_body);
   xfree (m_cached_plain_body);
-  release_cArray (m_cached_recipients);
   if (!m_uuid.empty())
     {
       log_oom_extra ("%s:%s: destroyed: %p uuid: %s",
@@ -1519,8 +1518,9 @@ Mail::update_oom_data ()
       xfree (m_cached_plain_body);
       m_cached_plain_body = get_oom_string (m_mailitem, "Body");
 
-      release_cArray (m_cached_recipients);
-      m_cached_recipients = get_recipients ();
+      char **recipients = get_recipients ();
+      m_cached_recipients = cArray_to_vector ((const char **)recipients);
+      xfree (recipients);
     }
   /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
@@ -2675,11 +2675,11 @@ Mail::locate_keys()
 
   // First update oom data to have recipients and sender updated.
   update_oom_data ();
-  char ** recipients = take_cached_recipients ();
   KeyCache::instance()->startLocateSecret (get_sender ().c_str (), this);
   KeyCache::instance()->startLocate (get_sender ().c_str (), this);
-  KeyCache::instance()->startLocate (recipients, this);
-  release_cArray (recipients);
+  KeyCache::instance()->startLocate (get_cached_recipients (), this);
+  autoresolve_check_s ();
+
   locate_in_progress = false;
 }
 
@@ -2723,12 +2723,10 @@ Mail::needs_encrypt() const
   return m_needs_encrypt;
 }
 
-char **
-Mail::take_cached_recipients()
+std::vector<std::string>
+Mail::get_cached_recipients()
 {
-  char **ret = m_cached_recipients;
-  m_cached_recipients = nullptr;
-  return ret;
+  return m_cached_recipients;
 }
 
 void
@@ -3232,4 +3230,70 @@ void
 Mail::decrement_locate_count()
 {
   m_locate_count--;
+
+  if (m_locate_count < 0)
+    {
+      log_error ("%s:%s: locate count mismatch.",
+                 SRCNAME, __func__);
+      m_locate_count = 0;
+    }
+  if (!m_locate_count)
+    {
+      autoresolve_check_s ();
+    }
+}
+
+void
+Mail::autoresolve_check_s()
+{
+  if (!opt.autoresolve || m_manual_crypto_opts)
+    {
+      return;
+    }
+  int ret = KeyCache::instance()->isMailResolvable (this);
+
+  log_debug ("%s:%s: status %i",
+             SRCNAME, __func__, ret);
+
+  /* As we are safe to call at any time, because we need
+   * to be triggered by the locator threads finishing we
+   * need to actually set the draft info flags in
+   * the ui thread. */
+  if (ret == 3)
+    {
+      do_in_ui_thread (DO_AUTO_SECURE, this);
+    }
+  else
+    {
+      do_in_ui_thread (DONT_AUTO_SECURE, this);
+    }
+  return;
+}
+
+void
+Mail::set_do_autosecure_mapi(bool value)
+{
+  TRACEPOINT;
+  LPMESSAGE msg = get_oom_base_message (m_mailitem);
+
+  if (!msg)
+    {
+      TRACEPOINT;
+    }
+  int old_flags = get_gpgol_draft_info_flags (msg);
+  if (old_flags && m_first_autosecure_check)
+    {
+      /* They were set explicily before us. This can be
+       * because they were a draft (which is bad) or
+       * because they are a reply/forward to a crypto mail
+       * or because there are conflicting settings. */
+      log_debug ("%s:%s: Mail %p had already flags set.",
+                 SRCNAME, __func__, m_mailitem);
+      m_first_autosecure_check = false;
+      m_manual_crypto_opts = true;
+      return;
+    }
+  m_first_autosecure_check = false;
+  set_gpgol_draft_info_flags (msg, value ? 3 : 0);
+  gpgoladdin_invalidate_ui();
 }

@@ -384,10 +384,8 @@ public:
   */
   char *take_cached_plain_body ();
 
-  /** Get the cached recipients. It is updated in update_oom_data.
-      Caller takes ownership of the list and has to free it.
-  */
-  char **take_cached_recipients ();
+  /** Get the cached recipients. It is updated in update_oom_data.*/
+  std::vector<std::string> get_cached_recipients ();
 
   /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
       Only valid after decrypt_verify.
@@ -539,8 +537,20 @@ public:
 
   /* To be called when a resolver thread is done. If there are no running
      resolver threads we can check the recipients to see if we should
-     toggle / untoggle the secure state. */
+     toggle / untoggle the secure state.
+     */
   void decrement_locate_count ();
+
+  /* Check if the keys can be resolved automatically and trigger
+   * setting the crypto flags accordingly.
+   */
+  void autoresolve_check_s ();
+
+  /* Set if a mail should be secured (encrypted and signed)
+   *
+   * Only save to call from a place that may access mapi.
+   */
+  void set_do_autosecure_mapi (bool value);
 
 private:
   void update_categories ();
@@ -564,7 +574,7 @@ private:
   std::string m_sender;
   char *m_cached_html_body; /* Cached html body. */
   char *m_cached_plain_body; /* Cached plain body. */
-  char **m_cached_recipients;
+  std::vector<std::string> m_cached_recipients;
   msgtype_t m_type; /* Our messagetype as set in mapi */
   std::shared_ptr <ParseController> m_parser;
   std::shared_ptr <CryptController> m_crypter;
@@ -587,6 +597,7 @@ private:
   bool m_disable_att_remove_warning; /* Should not warn about attachment removal. */
   bool m_block_html; /* Force blocking of html content. e.g for unsigned S/MIME mails. */
   bool m_manual_crypto_opts; /* Crypto options (sign/encrypt) have been set manually. */
+  bool m_first_autosecure_check; /* This is the first autoresolve check */
   int m_locate_count; /* The number of key locates pending for this mail. */
 };
 #endif // MAIL_H

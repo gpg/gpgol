@@ -331,6 +331,9 @@ read_options (void)
   load_extension_value ("smimeHtmlWarnShown", &val);
   opt.smime_html_warn_shown = val == NULL || *val != '1'? 0 : 1;
   xfree (val); val = NULL;
+  load_extension_value ("autosecure", &val);
+  opt.autosecure = val == NULL ? 1 : *val != '1' ? 0 : 1;
+  xfree (val); val = NULL;
   /* Note, that on purpose these flags are only Registry changeable.
      The format of the entry is a string of of "0" and "1" digits; see
      the switch below for a description. */

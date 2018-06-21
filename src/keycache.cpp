@@ -362,8 +362,10 @@ do_locate (LPVOID arg)
     {
       return 0;
     }
-  std::string addr = (char*) arg;
-  xfree (arg);
+
+  auto args = std::unique_ptr<LocateArgs> ((LocateArgs *) arg);
+
+  const auto addr = args->m_mbox;
 
   log_mime_parser ("%s:%s searching key for addr: \"%s\"",
                    SRCNAME, __func__, addr.c_str());
@@ -437,7 +439,7 @@ do_locate (LPVOID arg)
 }
 
 static void
-locate_secret (char *addr, GpgME::Protocol proto)
+locate_secret (const char *addr, GpgME::Protocol proto)
 {
   auto ctx = std::unique_ptr<GpgME::Context> (
                       GpgME::Context::createForProtocol (proto));
@@ -452,6 +454,13 @@ locate_secret (char *addr, GpgME::Protocol proto)
       return;
     }
   const auto mbox = GpgME::UserID::addrSpecFromString (addr);
+
+  if (mbox.empty())
+    {
+      log_debug ("%s:%s: Empty mbox for addr %s",
+                 SRCNAME, __func__, addr);
+      return;
+    }
 
   // We need to validate here to fetch CRL's
   ctx->setKeyListMode (GpgME::KeyListMode::Local |
@@ -502,33 +511,27 @@ locate_secret (char *addr, GpgME::Protocol proto)
 static DWORD WINAPI
 do_locate_secret (LPVOID arg)
 {
-  char *addr = (char*) arg;
+  auto args = std::unique_ptr<LocateArgs> ((LocateArgs *) arg);
 
   log_mime_parser ("%s:%s searching secret key for addr: \"%s\"",
-                   SRCNAME, __func__, addr);
+                   SRCNAME, __func__, args->m_mbox.c_str ());
 
-  locate_secret (addr, GpgME::OpenPGP);
+  locate_secret (args->m_mbox.c_str(), GpgME::OpenPGP);
   if (opt.enable_smime)
     {
-      locate_secret (addr, GpgME::CMS);
+      locate_secret (args->m_mbox.c_str(), GpgME::CMS);
     }
-  xfree (addr);
   log_debug ("%s:%s locator sthread thread done",
              SRCNAME, __func__);
   return 0;
 }
 
 void
-KeyCache::startLocate (char **recipients, Mail *mail) const
+KeyCache::startLocate (const std::vector<std::string> &addrs, Mail *mail) const
 {
-  if (!recipients)
+  for (const auto &addr: addrs)
     {
-      TRACEPOINT;
-      return;
-    }
-  for (int i = 0; recipients[i]; i++)
-    {
-      startLocate (recipients[i], mail);
+      startLocate (addr.c_str(), mail);
     }
 }
 
@@ -616,4 +619,57 @@ void
 KeyCache::setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
 {
   d->setPgpKeySecret(mbox, key);
+}
+
+int
+KeyCache::isMailResolvable(Mail *mail)
+{
+  /* Get the data from the mail. */
+  const auto sender = mail->get_cached_sender();
+  auto recps = mail->get_cached_recipients();
+
+  if (sender.empty() || recps.empty())
+    {
+      log_debug ("%s:%s: Mail has no sender or no recipients.",
+                 SRCNAME, __func__);
+      return 0;
+    }
+
+  /* Include sender for encryption */
+  recps.push_back (sender);
+
+  GpgME::Key sigKey = getSigningKey (sender.c_str(), GpgME::OpenPGP);
+  std::vector<GpgME::Key> encKeys = getEncryptionKeys (recps,
+                                                       GpgME::OpenPGP);
+
+  int pgpState = 0;
+  if (!encKeys.empty())
+    {
+      pgpState = 1;
+    }
+  if (!sigKey.isNull())
+    {
+      pgpState += 2;
+    }
+
+  if (pgpState == 3 /* all good */ || !opt.enable_smime)
+    {
+      return pgpState;
+    }
+
+  /* Check S/MIME instead */
+  sigKey = getSigningKey (sender.c_str(), GpgME::CMS);
+  encKeys = getEncryptionKeys (recps, GpgME::CMS);
+
+  int cmsState = 0;
+  if (!encKeys.empty())
+    {
+      cmsState = 1;
+    }
+  if (!sigKey.isNull())
+    {
+      cmsState += 2;
+    }
+
+  return (cmsState > pgpState) ? cmsState : pgpState;
 }

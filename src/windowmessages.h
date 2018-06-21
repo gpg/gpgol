@@ -53,6 +53,8 @@ typedef enum _gpgol_wmsg_type
   INVALIDATE_LAST_MAIL,
   REVERT_MAIL,
   CLEAR_REPLY_FORWARD,
+  DO_AUTO_SECURE,
+  DONT_AUTO_SECURE,
 } gpgol_wmsg_type;
 
 typedef struct

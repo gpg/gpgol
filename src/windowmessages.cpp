@@ -195,6 +195,30 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->remove_all_attachments ();
               break;
             }
+          case (DO_AUTO_SECURE):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: DO_AUTO_SECURE for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+              mail->set_do_autosecure_mapi (true);
+              break;
+            }
+          case (DONT_AUTO_SECURE):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::is_valid_ptr (mail))
+                {
+                  log_debug ("%s:%s: DO_AUTO_SECURE for mail which is gone.",
+                             SRCNAME, __func__);
+                  break;
+                }
+              mail->set_do_autosecure_mapi (false);
+              break;
+            }
           default:
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);

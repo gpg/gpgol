@@ -248,7 +248,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   Testing shows that Outlook always sends these three in a row
                   */)
                 {
-                  if ((m_mail->needs_crypto() & 1))
+                  if (opt.autosecure || (m_mail->needs_crypto() & 1))
                     {
                       /* XXX Racy race. This is a fix for crashes
                          that happend if a resolved recipient is copied an pasted.

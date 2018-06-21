@@ -170,40 +170,71 @@ getIcon (int id, VARIANT* result)
 HRESULT
 mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
 {
-  HRESULT hr;
-  HRESULT rc = E_FAIL;
-  LPDISPATCH context = NULL,
-             mailitem = NULL;
   LPMESSAGE message = NULL;
   int oldflags,
       newflags;
 
   log_debug ("%s:%s: enter", SRCNAME, __func__);
-  hr = getContext (ctrl, &context);
-  if (FAILED(hr))
-      return hr;
+  LPDISPATCH context = NULL;
+  if (FAILED(getContext (ctrl, &context)))
+    {
+      TRACEPOINT;
+      return E_FAIL;
+    }
 
-  mailitem = get_oom_object (context, is_explorer ? "ActiveInlineResponse" :
-                                                    "CurrentItem");
+  LPDISPATCH mailitem = get_oom_object (context,
+                                        is_explorer ? "ActiveInlineResponse" :
+                                                      "CurrentItem");
+  gpgol_release (context);
 
   if (!mailitem)
     {
       log_error ("%s:%s: Failed to get mailitem.",
                  SRCNAME, __func__);
-      goto done;
+      return E_FAIL;
+    }
+
+  /* Get the uid of this item. */
+  char *uid = get_unique_id (mailitem, 0, nullptr);
+  if (!uid)
+    {
+      LPMESSAGE msg = get_oom_base_message (mailitem);
+      uid = mapi_get_uid (msg);
+      gpgol_release (msg);
+      if (!uid)
+        {
+          log_debug ("%s:%s: Failed to get uid for %p",
+                   SRCNAME, __func__, mailitem);
+        }
+    }
+  Mail *mail = nullptr;
+  if (uid)
+    {
+      mail = Mail::get_mail_for_uuid (uid);
+      xfree (uid);
+    }
+
+  if (mail)
+    {
+      mail->set_crypto_selected_manually (true);
+    }
+  else
+    {
+      log_debug ("%s:%s: Failed to get mail object.",
+                 SRCNAME, __func__);
     }
 
   message = get_oom_base_message (mailitem);
+  gpgol_release (mailitem);
 
   if (!message)
     {
       log_error ("%s:%s: Failed to get message.",
                  SRCNAME, __func__);
-      goto done;
+      return S_OK;
     }
 
   oldflags = get_gpgol_draft_info_flags (message);
-
   if (flags == 3 && oldflags != 3)
     {
       // If only one sub button is active activate
@@ -220,8 +251,7 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
       log_error ("%s:%s: Failed to set draft flags.",
                  SRCNAME, __func__);
     }
-
-  rc = S_OK;
+  gpgol_release (message);
 
   /*  We need to invalidate the UI to update the toggle
       states of the subbuttons and the top button. Yeah,
@@ -233,12 +263,7 @@ mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer)
       Mail::locate_all_crypto_recipients ();
     }
 
-done:
-  gpgol_release (context);
-  gpgol_release (mailitem);
-  gpgol_release (message);
-
-  return rc;
+  return S_OK;
 }
 
 /* Get the state of encrypt / sign toggle buttons.
