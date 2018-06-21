@@ -44,6 +44,42 @@ class CryptController;
  *
  * This class bundles such information and also provides a way to
  * access the event handler of a mail.
+ *
+ * Naming conventions of the suffixes:
+ *  _o functions that work on OOM and possibly also MAPI.
+ *  _m functions that work on MAPI.
+ *  _s functions that only work on internal data and are safe to call
+ *     from any thread.
+ *
+ * O and M functions _must_ only be called from the main thread. Use
+ * a WindowMessage to signal the Main thread. But be wary. A WindowMessage
+ * might be handled while an OOM call in the main thread waits for completion.
+ *
+ * An example for this is how update_oom_data can work:
+ *
+ * Main Thread:
+ *   call update_oom_data
+ *    └> internally invokes an OOM function that might do network access e.g.
+ *       to connect to the exchange server to fetch the address.
+ *
+ *   Counterintutively the Main thread does not return from that function or
+ *   blocks for it's completion but handles windowmessages.
+ *
+ *   After a windowmessage was handled and if the OOM invocation is
+ *   completed the invocation returns and normal execution continues.
+ *
+ *   So if the window message handler's includes for example
+ *   also a call to lookup recipients we crash. Note that it's usually
+ *   safe to do OOM / MAPI calls from a window message.
+ *
+ *
+ * While this seems impossible, remember that we do not work directly
+ * with functions but everything is handled through COM. Without this
+ * logic Outlook would probably become unusable because as any long running
+ * call to the OOM would block it completely and freeze the UI.
+ * (no windowmessages handled).
+ *
+ * So be wary when accessing the OOM from a Window Message.
  */
 class Mail
 {
