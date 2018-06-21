@@ -3275,6 +3275,10 @@ Mail::set_do_autosecure_mapi(bool value)
     {
       TRACEPOINT;
     }
+  /* We need to set a uuid so that autosecure can
+     be disabled manually */
+  set_uuid ();
+
   int old_flags = get_gpgol_draft_info_flags (msg);
   if (old_flags && m_first_autosecure_check)
     {
