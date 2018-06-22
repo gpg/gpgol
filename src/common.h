@@ -148,6 +148,7 @@ int gpgol_message_box (HWND parent, const char *utf8_text,
 /* Show a bug message with the code. */
 void gpgol_bug (HWND parent, int code);
 
+void i18n_init (void);
 #define ERR_CRYPT_RESOLVER_FAILED 1
 #define ERR_WANTS_SEND_MIME_BODY 2
 #define ERR_WANTS_SEND_INLINE_BODY 3

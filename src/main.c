@@ -82,7 +82,7 @@ get_crypt_random (size_t nbytes)
 }
 
 
-static void
+void
 i18n_init (void)
 {
   char *locale_dir;
@@ -158,7 +158,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
       /* Early initializations of our subsystems. */
       if (initialize_main ())
         return FALSE;
-      i18n_init ();
     }
   else if (reason == DLL_PROCESS_DETACH)
     {
