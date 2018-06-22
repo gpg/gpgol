@@ -151,10 +151,6 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               invoke_oom_method (mail->item (), "Send", NULL);
               log_debug ("%s:%s:  Send for %p completed.",
                          SRCNAME, __func__, mail);
-              // Allow the WKS helper to queue a notification.
-              WKSHelper::instance()->allow_notify ();
-              log_debug ("%s:%s:  Crypto done handler completed.",
-                         SRCNAME, __func__);
               break;
             }
           case (BRING_TO_FRONT):

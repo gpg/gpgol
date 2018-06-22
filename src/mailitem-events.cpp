@@ -30,6 +30,7 @@
 #include "mail.h"
 #include "mapihelp.h"
 #include "gpgoladdin.h"
+#include "wks-helper.h"
 
 #undef _
 #define _(a) utf8_gettext (a)
@@ -361,16 +362,17 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (m_mail->cryptState () == Mail::NoCryptMail &&
               m_mail->needs_crypto_m ())
             {
+              log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
+                         SRCNAME, __func__, m_mail);
+
               // First contact with a mail to encrypt update
               // state and oom data.
               m_mail->updateOOMData_o ();
+
               m_mail->setCryptState (Mail::NeedsFirstAfterWrite);
 
               // Check inline response state before the write.
               m_mail->check_inline_response ();
-
-              log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
-                         SRCNAME, __func__, m_mail);
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
@@ -431,6 +433,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               log_debug ("%s:%s: Passing send event for no-mime message %p.",
                          SRCNAME, __func__, m_object);
+              WKSHelper::instance()->allow_notify (1000);
               break;
             }
 
@@ -516,8 +519,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 {
                   break;
                 }
-              log_debug ("%s:%s: Passing send event for message %p.",
+              log_debug ("%s:%s: Passing send event for mime-encrypted message %p.",
                          SRCNAME, __func__, m_object);
+              WKSHelper::instance()->allow_notify (1000);
               break;
             }
           else
