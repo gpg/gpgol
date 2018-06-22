@@ -350,6 +350,9 @@ char *get_inline_body (void);
    or exchange is not used.*/
 int get_ex_major_version_for_addr (const char *mbox);
 
+/* Get the language code used for Outlooks UI */
+int get_ol_ui_language (void);
+
 #ifdef __cplusplus
 char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
 }

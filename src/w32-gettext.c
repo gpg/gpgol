@@ -69,6 +69,8 @@
 #include <stdlib.h>
 #include <locale.h>
 
+#include <oomhelp.h>
+
 #ifdef HAVE_W32_SYSTEM
 # include <windows.h>
 /* List of language codes, sorted by value:
@@ -787,8 +789,14 @@ _nl_locale_name (int category, const char *categoryname)
   if (retval != NULL && retval[0] != '\0')
     return retval;
 
-  /* Use native Win32 API locale ID.  */
-  lcid = GetThreadLocale ();
+  /* Prefer the Ui language of Outlook. */
+  lcid = get_ol_ui_language ();
+
+  if (!lcid)
+    {
+      /* Use native Win32 API locale ID.  */
+      lcid = GetThreadLocale ();
+    }
 
   /* Strip off the sorting rules, keep only the language part.  */
   langid = LANGIDFROMLCID (lcid);

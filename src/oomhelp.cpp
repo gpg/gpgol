@@ -1412,9 +1412,10 @@ get_oom_base_message (LPDISPATCH mailitem)
   return ret;
 }
 
-int
-invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
-                              VARIANT *rVariant, DISPPARAMS *params)
+static int
+invoke_oom_method_with_parms_type (LPDISPATCH pDisp, const char *name,
+                                   VARIANT *rVariant, DISPPARAMS *params,
+                                   int type)
 {
   HRESULT hr;
   DISPID dispid;
@@ -1427,7 +1428,7 @@ invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
       DISPPARAMS dispparams = {NULL, NULL, 0, 0};
 
       hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
-                          DISPATCH_METHOD, params ? params : &dispparams,
+                          type, params ? params : &dispparams,
                           rVariant, &execpinfo, NULL);
       if (hr != S_OK)
         {
@@ -1439,6 +1440,14 @@ invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
     }
 
   return 0;
+}
+
+int
+invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
+                              VARIANT *rVariant, DISPPARAMS *params)
+{
+  return invoke_oom_method_with_parms_type (pDisp, name, rVariant, params,
+                                            DISPATCH_METHOD);
 }
 
 int
@@ -2060,4 +2069,53 @@ get_ex_major_version_for_addr (const char *mbox)
   xfree (version_str);
 
   return (int) version;
+}
+
+int
+get_ol_ui_language ()
+{
+  LPDISPATCH app = GpgolAddin::get_instance()->get_application();
+  if (!app)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+
+  LPDISPATCH langSettings = get_oom_object (app, "LanguageSettings");
+  if (!langSettings)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+
+  VARIANT var;
+  VariantInit (&var);
+
+  VARIANT aVariant[1];
+  DISPPARAMS dispparams;
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_INT;
+  dispparams.rgvarg[0].intVal = 2;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  if (invoke_oom_method_with_parms_type (langSettings, "LanguageID", &var,
+                                         &dispparams,
+                                         DISPATCH_PROPERTYGET))
+    {
+      TRACEPOINT;
+      return 0;
+    }
+  if (var.vt != VT_INT && var.vt != VT_I4)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+
+  int result = var.intVal;
+
+  log_debug ("XXXXX %i", result);
+  VariantClear (&var);
+  return result;
 }
