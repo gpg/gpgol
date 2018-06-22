@@ -70,6 +70,8 @@ static Mail *s_last_mail;
 
 #define COPYBUFSIZE (8 * 1024)
 
+#define DO_ASYNC_CRYPTO
+
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
     m_processed(false),
