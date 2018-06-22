@@ -251,7 +251,7 @@ public:
   int encryptSignStart_o ();
 
   /** @brief Necessary crypto operations were completed successfully. */
-  bool wasCryptoSuccessful_m () { return m_crypt_successful || !needs_crypto(); }
+  bool wasCryptoSuccessful_m () { return m_crypt_successful || !needs_crypto_m (); }
 
   /** @brief Message should be encrypted and or signed.
     0: No
@@ -259,7 +259,7 @@ public:
     2: Sign
     3: Encrypt & Sign
   */
-  int needs_crypto ();
+  int needs_crypto_m () const;
 
   /** @brief wipe the plaintext from the message and encrypt attachments.
    *
@@ -453,7 +453,7 @@ public:
   void appendToInlineBody (const std::string &data);
 
   /** Set the inline body as OOM body property. */
-  int inlineBodyToBody ();
+  int inlineBodyToBody_o ();
 
   /** Get the crypt state */
   CryptState cryptState () const {return m_crypt_state;}
@@ -590,7 +590,7 @@ public:
 
 private:
   void updateCategories_o ();
-  void updateSigstate_o ();
+  void updateSigstate ();
 
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;

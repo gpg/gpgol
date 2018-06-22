@@ -202,6 +202,7 @@ Mail::~Mail()
                  SRCNAME, __func__);
 }
 
+//static
 Mail *
 Mail::getMailForItem (LPDISPATCH mailitem)
 {
@@ -220,6 +221,7 @@ Mail::getMailForItem (LPDISPATCH mailitem)
   return it->second;
 }
 
+//static
 Mail *
 Mail::getMailForUUID (const char *uuid)
 {
@@ -237,6 +239,7 @@ Mail::getMailForUUID (const char *uuid)
   return it->second;
 }
 
+//static
 bool
 Mail::isValidPtr (const Mail *mail)
 {
@@ -297,7 +300,7 @@ Mail::preProcessMessage_m ()
 }
 
 static LPDISPATCH
-get_attachment (LPDISPATCH mailitem, int pos)
+get_attachment_o (LPDISPATCH mailitem, int pos)
 {
   LPDISPATCH attachment;
   LPDISPATCH attachments = get_oom_object (mailitem, "Attachments");
@@ -418,7 +421,7 @@ Mail::checkAttachments_o () const
 
 /** Get the cipherstream of the mailitem. */
 static LPSTREAM
-get_attachment_stream (LPDISPATCH mailitem, int pos)
+get_attachment_stream_o (LPDISPATCH mailitem, int pos)
 {
   if (!pos)
     {
@@ -426,7 +429,7 @@ get_attachment_stream (LPDISPATCH mailitem, int pos)
                  SRCNAME, __func__);
       return NULL;
     }
-  LPDISPATCH attachment = get_attachment (mailitem, pos);
+  LPDISPATCH attachment = get_attachment_o (mailitem, pos);
   LPSTREAM stream = NULL;
 
   if (!attachment)
@@ -610,7 +613,7 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
 /** Sets some meta data on the last attachment added. The meta
   data is taken from the attachment object. */
 static int
-fixup_last_attachment (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
+fixup_last_attachment_o (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
 {
   /* Currently we only set content id */
   if (attachment->get_content_id ().empty())
@@ -620,7 +623,7 @@ fixup_last_attachment (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
       return 0;
     }
 
-  LPDISPATCH attach = get_attachment (mail, -1);
+  LPDISPATCH attach = get_attachment_o (mail, -1);
   if (!attach)
     {
       log_error ("%s:%s: No attachment.",
@@ -637,7 +640,7 @@ fixup_last_attachment (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
 /** Helper to update the attachments of a mail object in oom.
   does not modify the underlying mapi structure. */
 static int
-add_attachments(LPDISPATCH mail,
+add_attachments_o(LPDISPATCH mail,
                 std::vector<std::shared_ptr<Attachment> > attachments)
 {
   int err = 0;
@@ -675,7 +678,7 @@ add_attachments(LPDISPATCH mail,
       xfree (wchar_file);
       xfree (wchar_name);
 
-      err = fixup_last_attachment (mail, att);
+      err = fixup_last_attachment_o (mail, att);
     }
   return err;
 }
@@ -1004,7 +1007,7 @@ Mail::decryptVerify_o ()
   xfree (placeholder_buf);
 
   /* Do the actual parsing */
-  auto cipherstream = get_attachment_stream (m_mailitem, m_moss_position);
+  auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
 
   if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
     {
@@ -1309,7 +1312,7 @@ Mail::parsing_done()
       m_crypto_flags |= 2;
     }
 
-  updateSigstate_o ();
+  updateSigstate ();
   m_needs_wipe = !m_is_send_again;
 
   TRACEPOINT;
@@ -1334,7 +1337,7 @@ Mail::parsing_done()
   checkAttachments_o ();
 
   /* Update attachments */
-  if (add_attachments (m_mailitem, m_parser->get_attachments()))
+  if (add_attachments_o (m_mailitem, m_parser->get_attachments()))
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
@@ -1378,7 +1381,7 @@ Mail::encryptSignStart_o ()
       return -1;
     }
   int flags = 0;
-  if (!needs_crypto())
+  if (!needs_crypto_m ())
     {
       return 0;
     }
@@ -1452,7 +1455,7 @@ Mail::encryptSignStart_o ()
 }
 
 int
-Mail::needs_crypto ()
+Mail::needs_crypto_m () const
 {
   LPMESSAGE message = get_oom_message (m_mailitem);
   bool ret;
@@ -1737,7 +1740,7 @@ Mail::isSMIME_m ()
 }
 
 static std::string
-get_string (LPDISPATCH item, const char *str)
+get_string_o (LPDISPATCH item, const char *str)
 {
   char *buf = get_oom_string (item, str);
   if (!buf)
@@ -1750,19 +1753,19 @@ get_string (LPDISPATCH item, const char *str)
 std::string
 Mail::getSubject_o () const
 {
-  return get_string (m_mailitem, "Subject");
+  return get_string_o (m_mailitem, "Subject");
 }
 
 std::string
 Mail::getBody_o () const
 {
-  return get_string (m_mailitem, "Body");
+  return get_string_o (m_mailitem, "Body");
 }
 
 std::string
 Mail::getHTMLBody_o () const
 {
-  return get_string (m_mailitem, "HTMLBody");
+  return get_string_o (m_mailitem, "HTMLBody");
 }
 
 char **
@@ -1898,9 +1901,9 @@ get_uid_for_sender (const Key &k, const char *sender)
 }
 
 void
-Mail::updateSigstate_o ()
+Mail::updateSigstate ()
 {
-  std::string sender = getSender_o ();
+  std::string sender = getSender ();
 
   if (sender.empty())
     {
@@ -2736,7 +2739,7 @@ Mail::appendToInlineBody (const std::string &data)
 }
 
 int
-Mail::inlineBodyToBody ()
+Mail::inlineBodyToBody_o ()
 {
   if (!m_crypter)
     {
@@ -2852,7 +2855,7 @@ Mail::updateCryptOOM_o ()
 
   if (getDoPGPInline ())
     {
-      if (inlineBodyToBody ())
+      if (inlineBodyToBody_o ())
         {
           log_error ("%s:%s: Inline body to body failed %p.",
                      SRCNAME, __func__, this);
@@ -3011,7 +3014,7 @@ Mail::locateAllCryptoRecipients_o ()
   std::map<LPDISPATCH, Mail *>::iterator it;
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
     {
-      if (it->second->needs_crypto ())
+      if (it->second->needs_crypto_m ())
         {
           it->second->locateKeys_o ();
         }

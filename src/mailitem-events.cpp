@@ -143,23 +143,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom_extra ("%s:%s: Open : %p",
                          SRCNAME, __func__, m_mail);
-          LPMESSAGE message;
-          if (g_ol_version_major < 14 && m_mail->setUUID_o ())
-            {
-              /* In Outlook 2007 we need the uid for every
-                 open mail to track the message in case
-                 it is sent and crypto is required. */
-              log_debug ("%s:%s: Failed to set uuid.",
-                         SRCNAME, __func__);
-              delete m_mail; /* deletes this, too */
-              return S_OK;
-            }
           int draft_flags = 0;
           if (!opt.encrypt_default && !opt.sign_default)
             {
               return S_OK;
             }
-          message = get_oom_base_message (m_object);
+          LPMESSAGE message = get_oom_base_message (m_object);
           if (!message)
             {
               log_error ("%s:%s: Failed to get message.",
@@ -248,7 +237,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   Testing shows that Outlook always sends these three in a row
                   */)
                 {
-                  if (opt.autosecure || (m_mail->needs_crypto() & 1))
+                  if (opt.autosecure || (m_mail->needs_crypto_m () & 1))
                     {
                       /* XXX Racy race. This is a fix for crashes
                          that happend if a resolved recipient is copied an pasted.
@@ -355,7 +344,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
            */
           log_oom_extra ("%s:%s: Send : %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->needs_crypto () && m_mail->cryptState () == Mail::NoCryptMail)
+          if (!m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NoCryptMail)
             {
              log_debug ("%s:%s: No crypto neccessary. Passing send for %p obj %p",
                         SRCNAME, __func__, m_mail, m_object);
@@ -370,7 +359,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
            }
 
           if (m_mail->cryptState () == Mail::NoCryptMail &&
-              m_mail->needs_crypto ())
+              m_mail->needs_crypto_m ())
             {
               // First contact with a mail to encrypt update
               // state and oom data.
@@ -626,7 +615,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
 
           if (!m_mail->isCryptoMail () && m_mail->is_forwarded_crypto_mail () &&
-              !m_mail->needs_crypto () && m_mail->cryptState () == Mail::NoCryptMail)
+              !m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NoCryptMail)
             {
               /* We are sure now that while this is a forward of an encrypted
                * mail that the forward should not be signed or encrypted. So
