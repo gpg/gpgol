@@ -400,12 +400,15 @@ WKSHelper::notify (const char *cBox) const
 
   if (state == NeedsPublish)
     {
+      char *buf;
+      gpgrt_asprintf (&buf, _("A Pubkey directory is available for the address:\n\n"
+                              "\t%s\n\n"
+                              "Register your Pubkey in that directory to make\n"
+                              "it easy for others to send you encrypted mail.\n\n"
+                              "It's secure and free!\n\n"
+                              "Register automatically?"), mbox);
       if (gpgol_message_box (get_active_hwnd (),
-                             _("A Pubkey directory is available for your domain.\n\n"
-                               "Register your Pubkey in that directory to make\n"
-                               "it easy for others to send you encrypted mail.\n\n"
-                               "It's secure and free!\n\n"
-                               "Register automatically?"),
+                             buf,
                              _("GpgOL: Pubkey directory available!"), MB_YESNO) == IDYES)
         {
           start_publish (mbox);
@@ -414,6 +417,7 @@ WKSHelper::notify (const char *cBox) const
         {
           update_state (mbox, PublishDenied);
         }
+      xfree (buf);
       return;
     }
   if (state == ConfirmationSeen)
