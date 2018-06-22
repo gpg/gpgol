@@ -406,7 +406,7 @@ WKSHelper::notify (const char *cBox) const
                               "Register your Pubkey in that directory to make\n"
                               "it easy for others to send you encrypted mail.\n\n"
                               "It's secure and free!\n\n"
-                              "Register automatically?"), mbox);
+                              "Register automatically?"), mbox.c_str ());
       if (gpgol_message_box (get_active_hwnd (),
                              buf,
                              _("GpgOL: Pubkey directory available!"), MB_YESNO) == IDYES)
