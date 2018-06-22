@@ -216,7 +216,6 @@ drop_locale_dir (char *locale_dir)
 void
 read_options (void)
 {
-  static int warnings_shown;
   char *val = NULL;
 
   /* Set the log file first so that output from this function is
@@ -333,48 +332,6 @@ read_options (void)
   load_extension_value ("autosecure", &val);
   opt.autosecure = val == NULL ? 1 : *val != '1' ? 0 : 1;
   xfree (val); val = NULL;
-  /* Note, that on purpose these flags are only Registry changeable.
-     The format of the entry is a string of of "0" and "1" digits; see
-     the switch below for a description. */
-  memset (&opt.compat, 0, sizeof opt.compat);
-  load_extension_value ("compatFlags", &val);
-  if (val)
-    {
-      const char *s = val;
-      int i, x;
-
-      for (s=val, i=0; *s; s++, i++)
-        {
-          x = *s == '1';
-          switch (i)
-            {
-            case 0: opt.compat.no_msgcache = x; break;
-            case 1: opt.compat.no_pgpmime = x; break;
-            case 2: opt.compat.no_oom_write = x; break;
-            case 3: opt.compat.no_preview_info = x; break;
-            case 4: opt.compat.old_reply_hack = x; break;
-            case 5: opt.compat.auto_decrypt = x; break;
-            case 6: opt.compat.no_attestation = x; break;
-            case 7: opt.compat.use_mwfmo = x; break;
-            }
-        }
-      log_debug ("Note: using compatibility flags: %s", val);
-    }
-
-  if (!warnings_shown)
-    {
-      char tmpbuf[512];
-
-      warnings_shown = 1;
-      if (val && *val)
-        {
-          snprintf (tmpbuf, sizeof tmpbuf,
-                    _("Note: Using compatibility flags: %s"), val);
-          MessageBox (NULL, tmpbuf, _("GpgOL"), MB_ICONWARNING|MB_OK);
-        }
-    }
-  xfree (val); val = NULL;
-
 }
 
 
