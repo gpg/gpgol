@@ -232,6 +232,11 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 {
                   break;
                 }
+              if (m_mail->hasOverrideMimeData())
+                {
+                  /* This is a mail created by us. Ignore propchanges. */
+                  break;
+                }
               if (!wcscmp (prop_name, L"To") /* ||
                   !wcscmp (prop_name, L"BCC") ||
                   !wcscmp (prop_name, L"CC")

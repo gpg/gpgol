@@ -510,6 +510,7 @@ public:
 
   /** Get the mime data that should be used when sending. */
   std::string get_override_mime_data () const { return m_mime_data; }
+  bool hasOverrideMimeData() const { return !m_mime_data.empty(); }
 
   /** Set if this is a forward of a crypto mail. */
   void setIsForwardedCryptoMail (bool value) { m_is_forwarded_crypto_mail = value; }

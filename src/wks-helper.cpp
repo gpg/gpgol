@@ -598,6 +598,23 @@ WKSHelper::send_mail (const std::string &mimeData) const
       return -1;
     }
 
+  /* Now we have a problem. The created LPDISPATCH pointer has
+     a different value then the one with which we saw the ItemLoad
+     event. But we want to get the mail object. So,.. surpise
+     a Hack! :-) */
+  auto last_mail = Mail::getLastMail ();
+
+  if (!Mail::isValidPtr (last_mail))
+    {
+      log_error ("%s:%s: Invalid last mail %p.",
+                 SRCNAME, __func__, last_mail);
+      return -1;
+    }
+  /* Adding to / Subject etc already leads to changes and events so
+     we set up the state before this. */
+  last_mail->setOverrideMIMEData (mimeData);
+  last_mail->setCryptState (Mail::NeedsSecondAfterWrite);
+
   if (put_oom_string (mail, "Subject", subject.c_str ()))
     {
       TRACEPOINT;
@@ -620,21 +637,6 @@ WKSHelper::send_mail (const std::string &mimeData) const
       put_oom_disp (mail, "SendUsingAccount", account);
     }
   gpgol_release (account);
-
-  /* Now we have a problem. The created LPDISPATCH pointer has
-     a different value then the one with which we saw the ItemLoad
-     event. But we want to get the mail object. So,.. surpise
-     a Hack! :-) */
-  auto last_mail = Mail::getLastMail ();
-
-  if (!Mail::isValidPtr (last_mail))
-    {
-      log_error ("%s:%s: Invalid last mail %p.",
-                 SRCNAME, __func__, last_mail);
-      return -1;
-    }
-  last_mail->setOverrideMIMEData (mimeData);
-  last_mail->setCryptState (Mail::NeedsSecondAfterWrite);
 
   if (invoke_oom_method (mail, "Save", nullptr))
     {
