@@ -31,6 +31,13 @@
 #include <gpgme++/context.h>
 #include <gpgme++/data.h>
 
+
+__attribute__((__unused__)) static char const *
+i18n_noops[] = {
+    N_("GnuPG System"),
+    N_("Enable the S/MIME support"),
+};
+
 /* To avoid writing a dialog template for each language we use gettext
    for the labels and hope that there is enough space in the dialog to
    fit the longest translation.. */
