@@ -927,7 +927,7 @@ do_crypt (LPVOID arg)
 
      See GnuPG-Bug-Id: T3732
      */
-  do_in_ui_thread_async (BRING_TO_FRONT, nullptr);
+  do_in_ui_thread_async (BRING_TO_FRONT, nullptr, 250);
   log_debug ("%s:%s: crypto thread for %p finished",
              SRCNAME, __func__, arg);
   return 0;
