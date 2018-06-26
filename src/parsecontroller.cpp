@@ -305,6 +305,13 @@ ParseController::parse()
       xfree (buf);
       return;
     }
+
+  /* Maybe a different option for this ? */
+  if (opt.autoresolve)
+    {
+      ctx->setFlag("auto-key-retrieve", "1");
+    }
+
   ctx->setArmor(true);
 
   if (!m_sender.empty())
