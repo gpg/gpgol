@@ -718,7 +718,7 @@ msgid ""
 "You might receive a confirmation challenge from\n"
 "your provider to finish the registration."
 msgstr ""
-"Es ist möglich das ihnen ihr Mailprovider noch eine Bestätigungs-\n"
+"Es ist möglich das ihnen ihr Mailprovider noch eine Bestätigungs-"
 "Anfrage sendet um die Eintragung abzuschließen."
 
 #: src/wks-helper.cpp:506
