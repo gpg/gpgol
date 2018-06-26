@@ -1931,7 +1931,16 @@ Mail::updateSigstate ()
     {
       m_is_signed = true;
       m_uid = get_uid_for_sender (sig.key(), sender.c_str());
-      if (m_uid.isNull() || (sig.validity() != Signature::Validity::Marginal &&
+
+      if (m_uid.origin() == GpgME::Key::OriginWKD &&
+          (sig.validity() == Signature::Validity::Unknown ||
+           sig.validity() == Signature::Validity::Marginal))
+        {
+          // WKD is a shortcut to Level 2 trust.
+          log_debug ("%s:%s: Unknown or marginal from WKD -> Level 2",
+                     SRCNAME, __func__);
+         }
+      else if (m_uid.isNull() || (sig.validity() != Signature::Validity::Marginal &&
           sig.validity() != Signature::Validity::Full &&
           sig.validity() != Signature::Validity::Ultimate))
         {
@@ -1939,7 +1948,7 @@ Mail::updateSigstate ()
           the UID needs to match.*/
           continue;
         }
-      if (sig.validity() == Signature::Validity::Marginal)
+      else if (sig.validity() == Signature::Validity::Marginal)
         {
           const auto tofu = m_uid.tofuInfo();
           if (!tofu.isNull() &&
@@ -1954,8 +1963,8 @@ Mail::updateSigstate ()
               continue;
             }
         }
-      log_debug ("%s:%s: Classified sender as verified uid validity: %i",
-                 SRCNAME, __func__, m_uid.validity());
+      log_debug ("%s:%s: Classified sender as verified uid validity: %i origin: %i",
+                 SRCNAME, __func__, m_uid.validity(), m_uid.origin());
       m_sig = sig;
       m_is_valid = true;
       return;
@@ -2390,6 +2399,10 @@ Mail::getCryptoDetails_o ()
                       m_sig.key().issuerName());
       message = buf;
       xfree (buf);
+    }
+  else if (level == 2 && m_uid.origin () == GpgME::Key::OriginWKD)
+    {
+      message = _("The mail provider of the recipient served this key.");
     }
   else if (level == 2 && m_uid.tofuInfo ().isNull ())
     {
