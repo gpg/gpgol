@@ -3279,6 +3279,7 @@ Mail::setDoAutosecure_m (bool value)
   if (!msg)
     {
       TRACEPOINT;
+      return;
     }
   /* We need to set a uuid so that autosecure can
      be disabled manually */
