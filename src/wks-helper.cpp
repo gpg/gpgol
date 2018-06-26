@@ -324,8 +324,14 @@ WKSHelper::load () const
         }
 
       WKSState state = (WKSState) strtol (states[0].c_str (), nullptr, 10);
-      time_t update_time = (time_t) strtol (states[1].c_str (), nullptr, 10);
+      if (state == PublishInProgress)
+        {
+          /* Probably an error during the last publish. Let's start again. */
+          update_state (mbox, NotChecked, false);
+          continue;
+        }
 
+      time_t update_time = (time_t) strtol (states[1].c_str (), nullptr, 10);
       update_state (mbox, state, false);
       update_last_checked (mbox, update_time, false);
     }
@@ -437,6 +443,7 @@ WKSHelper::start_publish (const std::string &mbox) const
   log_debug ("%s:%s: Start publish for '%s'",
              SRCNAME, __func__, mbox.c_str ());
 
+  update_state (mbox, PublishInProgress);
   const auto key = GpgME::Key::locate (mbox.c_str ());
 
   if (key.isNull ())
@@ -509,6 +516,8 @@ WKSHelper::start_publish (const std::string &mbox) const
                            "your provider to finish the registration."),
                          _("GpgOL: Registration request sent!"), MB_OK);
     }
+
+  update_state (mbox, RequestSent);
   return;
 }
 

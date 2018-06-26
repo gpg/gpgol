@@ -52,6 +52,7 @@ public:
         IsPublished, /* <-- WKS is supported for this address and published */
         ConfirmationSeen, /* A confirmation request was seen for this mail addres. */
         NeedsUpdate, /* <-- Not yet implemeted. */
+        PublishInProgress, /* <-- Publishing is currently in progress. */
         RequestSent, /* <-- A publishing request has been sent. */
         PublishDenied, /* <-- A user denied publishing. */
         ConfirmationSent, /* <-- The confirmation response was sent. */
