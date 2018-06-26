@@ -61,6 +61,7 @@ using namespace GpgME;
 
 static std::map<LPDISPATCH, Mail*> s_mail_map;
 static std::map<std::string, Mail*> s_uid_map;
+static std::map<std::string, LPDISPATCH> s_folder_events_map;
 static std::set<std::string> uids_searched;
 
 GPGRT_LOCK_DEFINE (mail_map_lock);
@@ -101,7 +102,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_disable_att_remove_warning(false),
     m_manual_crypto_opts(false),
     m_first_autosecure_check(true),
-    m_locate_count(0)
+    m_locate_count(0),
+    m_is_about_to_be_moved(false)
 {
   if (getMailForItem (mailitem))
     {
@@ -1365,6 +1367,8 @@ Mail::parsing_done()
       removeOurAttachments_o ();
     }
 
+  installFolderEventHandler_o ();
+
   log_debug ("%s:%s: Delayed invalidate to update sigstate.",
              SRCNAME, __func__);
   CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
@@ -1621,6 +1625,11 @@ Mail::closeAllMails_o ()
             }
         }
     }
+  for (auto fit = s_folder_events_map.begin(); fit != s_folder_events_map.end(); ++fit)
+    {
+      detach_FolderEvents_sink (fit->second);
+    }
+  s_folder_events_map.clear();
   return err;
 }
 int
@@ -3314,4 +3323,56 @@ Mail::setDoAutosecure_m (bool value)
   m_first_autosecure_check = false;
   set_gpgol_draft_info_flags (msg, value ? 3 : 0);
   gpgoladdin_invalidate_ui();
+}
+
+void
+Mail::installFolderEventHandler_o()
+{
+  TRACEPOINT;
+  LPDISPATCH folder = get_oom_object (m_mailitem, "Parent");
+
+  if (!folder)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  char *objName = get_object_name (folder);
+  if (!objName || strcmp (objName, "MAPIFolder"))
+    {
+      log_debug ("%s:%s: Mail %p parent is not a mapi folder.",
+                 SRCNAME, __func__, m_mailitem);
+      xfree (objName);
+      gpgol_release (folder);
+      return;
+    }
+  xfree (objName);
+
+  char *path = get_oom_string (folder, "FullFolderPath");
+  if (!path)
+    {
+      TRACEPOINT;
+      path = get_oom_string (folder, "FolderPath");
+    }
+  if (!path)
+    {
+      log_error ("%s:%s: Mail %p parent has no folder path.",
+                 SRCNAME, __func__, m_mailitem);
+      gpgol_release (folder);
+      return;
+    }
+
+  std::string strPath (path);
+  xfree (path);
+
+  if (s_folder_events_map.find (strPath) == s_folder_events_map.end())
+    {
+      log_error ("%s:%s: Install folder events watcher for %s.",
+                 SRCNAME, __func__, strPath.c_str());
+      install_FolderEvents_sink (folder);
+      s_folder_events_map.insert (std::make_pair (strPath, folder));
+    }
+
+  /* Folder already registered */
+  gpgol_release (folder);
 }

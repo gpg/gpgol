@@ -42,6 +42,7 @@ gpgol_SOURCES = \
     explorer-events.cpp \
     explorers-events.cpp \
     filetype.c filetype.h \
+    folder-events.cpp \
     gmime-table-private.h \
     gpgoladdin.cpp gpgoladdin.h \
     gpgol.def \

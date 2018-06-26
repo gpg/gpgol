@@ -589,6 +589,13 @@ public:
    */
   void setDoAutosecure_m (bool value);
 
+  /* Install an event handler for the folder of this mail. */
+  void installFolderEventHandler_o ();
+
+  /* Marker for a "Move" of this mail */
+  bool isAboutToBeMoved () { return m_is_about_to_be_moved; }
+  void setIsAboutToBeMoved (bool value) { m_is_about_to_be_moved = value; }
+
 private:
   void updateCategories_o ();
   void updateSigstate ();
@@ -636,5 +643,6 @@ private:
   bool m_manual_crypto_opts; /* Crypto options (sign/encrypt) have been set manually. */
   bool m_first_autosecure_check; /* This is the first autoresolve check */
   int m_locate_count; /* The number of key locates pending for this mail. */
+  bool m_is_about_to_be_moved;
 };
 #endif // MAIL_H

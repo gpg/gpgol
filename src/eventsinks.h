@@ -30,4 +30,6 @@ LPDISPATCH install_ExplorerEvents_sink (LPDISPATCH obj);
 void detach_ExplorerEvents_sink (LPDISPATCH obj);
 LPDISPATCH install_ExplorersEvents_sink (LPDISPATCH obj);
 void detach_ExplorersEvents_sink (LPDISPATCH obj);
+LPDISPATCH install_FolderEvents_sink (LPDISPATCH obj);
+void detach_FolderEvents_sink (LPDISPATCH obj);
 #endif // EVENTSINKS_H

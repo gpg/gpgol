@@ -555,6 +555,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
              break;
            }
 
+          if (m_mail->isAboutToBeMoved())
+            {
+              log_debug ("%s:%s: Mail is about to be moved. Passing write for %p",
+                         SRCNAME, __func__, m_mail);
+              break;
+            }
+
           if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
               Mail *last_mail = Mail::getLastMail ();
