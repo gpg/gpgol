@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2018-07-24 08:32+0200\n"
-"PO-Revision-Date: 2018-06-12 21:28+0200\n"
+"POT-Creation-Date: 2018-07-30 23:37+0200\n"
+"PO-Revision-Date: 2018-07-30 23:57+0200\n"
 "Last-Translator: Erwin Bronkhorst <erwinbronkhorst@gmail.com>\n"
 "Language-Team: \n"
 "Language: nl\n"
@@ -20,29 +20,27 @@ msgstr ""
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
-msgstr ""
+msgstr "GnuPG-systeem"
 
 #: src/addin-options.cpp:40
 msgid "Enable the S/MIME support"
 msgstr "S/MIME-ondersteuning inschakelen"
 
-#: src/addin-options.cpp:41 src/addin-options.cpp:147
-#, fuzzy
+#: src/addin-options.cpp:41 src/addin-options.cpp:148
 msgid "Configure GpgOL"
 msgstr "GnuPG configureren"
 
 #: src/addin-options.cpp:42
 msgid "Automation"
-msgstr ""
+msgstr "Automatisering"
 
 #: src/addin-options.cpp:43
 msgid "General"
 msgstr "Algemeen"
 
 #: src/addin-options.cpp:45
-#, fuzzy
 msgid "Automatically secure &messages"
-msgstr "Onveilig bericht"
+msgstr "Berichten automatisch beveiligen"
 
 #: src/addin-options.cpp:46
 msgid "Configure GnuPG"
@@ -80,44 +78,51 @@ msgstr ""
 
 #: src/addin-options.cpp:56
 msgid "&Prefer S/MIME when automatically resolving recipients"
-msgstr ""
+msgstr "Voorkeur geven aan S/MIME bij het opzoeken van ontvangers"
 
 #: src/addin-options.cpp:59
 msgid "Enable or disable any automated key handling."
-msgstr ""
+msgstr "In- of uitschakelenv van automatische sleutel-afhandeling."
 
 #: src/addin-options.cpp:60
 msgid "Automate trust based on communication history."
-msgstr ""
+msgstr "Vertrouwen automatisch baseren op communicatiegeschiedenis"
 
 #: src/addin-options.cpp:61
 msgid ""
 "This changes the trust model to \"tofu+pgp\" which tracks the history of key "
 "usage. Automated trust can <b>never</b> exceed level 2."
 msgstr ""
+"Dit verandert het vertrouwensmodel naar \"tofu+pgp\", dat de geschiedenis "
+"van sleutelgebruik bijhoudt. Geautomatiseerd vertrouwen kan <b>nooit</b> "
+"niveau 2 overschrijden."
 
 #: src/addin-options.cpp:62
 msgid "experimental"
-msgstr ""
+msgstr "experimenteel"
 
 #: src/addin-options.cpp:63
 msgid ""
 "Automatically toggles secure if keys with at least level 1 trust were found "
 "for all recipients."
 msgstr ""
+"Automatisch beveiligen als sleutels met ten minste vertrouwensniveau 1 zijn "
+"gevonden voor alle ontvangers."
 
 #: src/addin-options.cpp:64
 msgid "Toggles the encrypt option for all new mails."
-msgstr ""
+msgstr "Verandert de versleutelings-optie voor alle nieuwe e-mailberichten."
 
 #: src/addin-options.cpp:65
 msgid "Toggles the sign option for all new mails."
-msgstr ""
+msgstr "Verandert de ondertekenings-optie voor alle nieuwe e-mailberichten."
 
 #: src/addin-options.cpp:66
 msgid ""
 "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
+"Verandert de ondertekenings- en versleutelings-opties als het originele e-"
+"mailbericht ondertekend of versleuteld is."
 
 #: src/addin-options.cpp:67
 msgid ""
@@ -125,6 +130,10 @@ msgid ""
 "encoding, the deprecated PGP/Inline is used.\n"
 "This can be required for compatibility but should generally not be used."
 msgstr ""
+"In plaats van het PGP/MIME-formaat, wat bijlages en encodering correct "
+"afhandelt, wordt het verouderde PGP/Inline gebruikt.\n"
+"Dit kan nodig zijn voor compatibiliteit, maar zou in het algemeen niet meer "
+"gebruikt moeten worden."
 
 #: src/common.cpp:768
 msgid "GpgOL Error"
@@ -417,7 +426,7 @@ msgstr ""
 
 #: src/mail.cpp:2484
 msgid "The mail provider of the recipient served this key."
-msgstr ""
+msgstr "De e-mailprovider van de ontvanger heeft deze sleutel aangeboden."
 
 #: src/mail.cpp:2489
 msgid "Some trusted people have certified the senders identity."
@@ -729,7 +738,7 @@ msgstr ""
 "Installeer Gpg4win opnieuw met het Kleopatra-component ingeschakeld."
 
 #: src/wks-helper.cpp:410
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A Pubkey directory is available for the address:\n"
 "\n"
@@ -742,7 +751,9 @@ msgid ""
 "\n"
 "Register automatically?"
 msgstr ""
-"Er is een map voor publieke sleutels beschikbaar op uw domein.\n"
+"Er is een map voor publieke sleutels beschikbaar voor het adres:\n"
+"\n"
+"\t%s\n"
 "\n"
 "Registreer uw publieke sleutel in die map om het makkelijk\n"
 "te maken voor anderen om u versleutelde e-mail te sturen.\n"
