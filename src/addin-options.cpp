@@ -25,6 +25,8 @@
 #include <windows.h>
 #include "dialogs.h"
 #include "common.h"
+#include "cpphelp.h"
+#include "oomhelp.h"
 
 #include <string>
 
@@ -36,178 +38,125 @@ __attribute__((__unused__)) static char const *
 i18n_noops[] = {
     N_("GnuPG System"),
     N_("Enable the S/MIME support"),
+    N_("Configure GpgOL"),
+    N_("Automation"),
+    N_("General"),
+
+    N_("Automatically secure &messages"),
+    N_("Configure GnuPG"),
+    N_("Debug..."),
+    N_("Version "),
+    N_("&Resolve recipient keys automatically"),
+    N_("&Encrypt new messages by default"),
+    N_("&Sign new messages by default"),
+    N_("&Send OpenPGP mails without "
+       "attachments as PGP/Inline"),
+    N_("S&elect crypto settings automatically "
+       "for reply and forward"),
+
+    /* Tooltips */
+    N_("Enable or disable any automated key handling."),
+    N_("Automate trust based on communication history."),
+    N_("This changes the trust model to \"tofu+pgp\" which tracks the history of key usage. Automated trust can <b>never</b> exceed level 2."),
+    N_("experimental"),
+    N_("Automatically toggles secure if keys with at least level 1 trust were found for all recipients."),
+    N_("Toggles the encrypt option for all new mails."),
+    N_("Toggles the sign option for all new mails."),
+    N_("Toggles sign, encrypt options if the original mail was signed or encrypted."),
+    N_("Instead of using the PGP/MIME format, "
+       "which properly handles attachments and encoding, "
+       "the deprecated PGP/Inline is used.\n"
+       "This can be required for compatibility but should generally not "
+       "be used."),
 };
 
-/* To avoid writing a dialog template for each language we use gettext
-   for the labels and hope that there is enough space in the dialog to
-   fit the longest translation.. */
-static void
-set_labels (HWND dlg)
+static bool dlg_open;
+
+static DWORD WINAPI
+open_gpgolgui (LPVOID arg)
 {
-  static struct { int itemid; const char *label; } labels[] = {
-    { IDC_G_GENERAL,        N_("General")},
-    { IDC_ENABLE_SMIME,     N_("Enable the S/MIME support")},
+  HWND wnd = (HWND) arg;
 
-    { IDC_G_SEND,           N_("Message sending")},
-    { IDC_ENCRYPT_DEFAULT,  N_("&Encrypt new messages by default")},
-    { IDC_SIGN_DEFAULT,     N_("&Sign new messages by default")},
-    { IDC_INLINE_PGP,       N_("&Send OpenPGP mails without "
-                               "attachments as PGP/Inline")},
-    { IDC_REPLYCRYPT,       N_("S&elect crypto settings automatically "
-                               "for reply and forward")},
-    { IDC_AUTORRESOLVE,     N_("&Resolve recipient keys automatically")},
+  std::vector<std::string> args;
 
-
-    { IDC_GPG_OPTIONS,      N_("Debug...")},
-    { IDC_GPG_CONF,         N_("Configure GnuPG")},
-    { IDC_VERSION_INFO,     N_("Version ")VERSION},
-    { 0, NULL}
-  };
-  int i;
-
-  for (i=0; labels[i].itemid; i++)
-    SetDlgItemText (dlg, labels[i].itemid, _(labels[i].label));
-}
-
-static void
-launch_kleo_config (HWND hDlg)
-{
-  char *uiserver = get_uiserver_name ();
-  bool showError = false;
-  if (uiserver)
+  // Collect the arguments
+  char *gpg4win_dir = get_gpg4win_dir ();
+  if (!gpg4win_dir)
     {
-      std::string path (uiserver);
-      xfree (uiserver);
-      if (path.find("kleopatra.exe") != std::string::npos)
-        {
-        size_t dpos;
-        if ((dpos = path.find(" --daemon")) != std::string::npos)
-            {
-              path.erase(dpos, strlen(" --daemon"));
-            }
-          auto ctx = GpgME::Context::createForEngine(GpgME::SpawnEngine);
-          if (!ctx)
-            {
-              log_error ("%s:%s: No spawn engine.",
-                         SRCNAME, __func__);
-            }
-            std::string parentWid = std::to_string ((int) (intptr_t) hDlg);
-            const char *argv[] = {path.c_str(),
-                                  "--config",
-                                  "--parent-windowid",
-                                  parentWid.c_str(),
-                                  NULL };
-            log_debug ("%s:%s: Starting %s %s %s",
-                       SRCNAME, __func__, path.c_str(), argv[1], argv[2]);
-            GpgME::Data d(GpgME::Data::null);
-            ctx->spawnAsync(path.c_str(), argv, d, d,
-                            d, (GpgME::Context::SpawnFlags) (
-                                GpgME::Context::SpawnAllowSetFg |
-                                GpgME::Context::SpawnShowWindow));
-        }
-      else
-        {
-          showError = true;
-        }
+      TRACEPOINT;
+      return -1;
     }
-  else
+  const auto gpgolgui = std::string (gpg4win_dir) + "\\bin\\gpgolgui.exe";
+  args.push_back (gpgolgui);
+
+  args.push_back (std::string ("--hwnd"));
+  args.push_back (std::to_string ((int) (intptr_t) wnd));
+
+  args.push_back (std::string("--gpgol-version"));
+  args.push_back (std::string(VERSION));
+
+  auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+  if (!ctx)
     {
-      showError = true;
+      // can't happen
+      TRACEPOINT;
+      return -1;
     }
 
-  if (showError)
+  GpgME::Data mystdin (GpgME::Data::null), mystdout, mystderr;
+  dlg_open = true;
+
+  char **cargs = vector_to_cArray (args);
+  log_debug ("%s:%s: args:", SRCNAME, __func__);
+  for (size_t i = 0; cargs && cargs[i]; i++)
     {
-      MessageBox (NULL,
-                  _("Could not find Kleopatra.\n"
-                  "Please reinstall Gpg4win with the Kleopatra component enabled."),
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
+      log_debug (SIZE_T_FORMAT ": '%s'", i, cargs[i]);
     }
 
-}
-
-static INT_PTR CALLBACK
-options_window_proc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-  (void)lParam;
-  switch (uMsg)
+  GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char**> (cargs),
+                                 mystdin, mystdout, mystderr,
+                                 (GpgME::Context::SpawnFlags) (
+                                  GpgME::Context::SpawnAllowSetFg |
+                                  GpgME::Context::SpawnShowWindow));
+  if (err)
     {
-      case WM_INITDIALOG:
-        {
-          SendDlgItemMessage (hDlg, IDC_ENABLE_SMIME, BM_SETCHECK,
-                              !!opt.enable_smime, 0L);
-          SendDlgItemMessage (hDlg, IDC_ENCRYPT_DEFAULT, BM_SETCHECK,
-                              !!opt.encrypt_default, 0L);
-          SendDlgItemMessage (hDlg, IDC_SIGN_DEFAULT, BM_SETCHECK,
-                              !!opt.sign_default, 0L);
-          SendDlgItemMessage (hDlg, IDC_INLINE_PGP, BM_SETCHECK,
-                              !!opt.inline_pgp, 0L);
-          SendDlgItemMessage (hDlg, IDC_REPLYCRYPT, BM_SETCHECK,
-                              !!opt.reply_crypt, 0L);
-          SendDlgItemMessage (hDlg, IDC_AUTORRESOLVE, BM_SETCHECK,
-                              !!opt.autoresolve, 0L);
-          set_labels (hDlg);
-          ShowWindow (GetDlgItem (hDlg, IDC_GPG_OPTIONS),
-                      opt.enable_debug ? SW_SHOW : SW_HIDE);
-        }
-      return 1;
-      case WM_LBUTTONDOWN:
-        {
-          return 1;
-        }
-      case WM_COMMAND:
-        switch (LOWORD (wParam))
-          {
-            case IDOK:
-              {
-                opt.enable_smime = !!SendDlgItemMessage
-                  (hDlg, IDC_ENABLE_SMIME, BM_GETCHECK, 0, 0L);
-
-                opt.encrypt_default = !!SendDlgItemMessage
-                  (hDlg, IDC_ENCRYPT_DEFAULT, BM_GETCHECK, 0, 0L);
-                opt.sign_default = !!SendDlgItemMessage
-                  (hDlg, IDC_SIGN_DEFAULT, BM_GETCHECK, 0, 0L);
-                opt.inline_pgp = !!SendDlgItemMessage
-                  (hDlg, IDC_INLINE_PGP, BM_GETCHECK, 0, 0L);
-
-                opt.reply_crypt = !!SendDlgItemMessage
-                  (hDlg, IDC_REPLYCRYPT, BM_GETCHECK, 0, 0L);
-
-                opt.autoresolve = !!SendDlgItemMessage
-                  (hDlg, IDC_AUTORRESOLVE, BM_GETCHECK, 0, 0L);
-
-                write_options ();
-                EndDialog (hDlg, TRUE);
-                break;
-              }
-            case IDC_GPG_CONF:
-              launch_kleo_config (hDlg);
-              break;
-            case IDC_GPG_OPTIONS:
-              config_dialog_box (hDlg);
-              break;
-          }
-      case WM_SYSCOMMAND:
-        switch (LOWORD (wParam))
-          {
-            case SC_CLOSE:
-              EndDialog (hDlg, TRUE);
-          }
-
-      break;
+      log_error ("%s:%s: Err code: %i asString: %s",
+                 SRCNAME, __func__, err.code(), err.asString());
     }
+  dlg_open = false;
+
+  log_debug ("%s:%s:finished stdout:\n'%s'",
+             SRCNAME, __func__, mystdout.toString ().c_str ());
+  log_debug ("%s:%s:stderr:\n'%s'",
+             SRCNAME, __func__, mystderr.toString ().c_str ());
+  read_options ();
   return 0;
 }
 
 void
 options_dialog_box (HWND parent)
 {
-  int resid;
-
-  resid = IDD_ADDIN_OPTIONS;
-
   if (!parent)
-    parent = GetDesktopWindow ();
-  DialogBoxParam (glob_hinst, MAKEINTRESOURCE (resid), parent,
-                  options_window_proc, 0);
+    parent = get_active_hwnd ();
+
+  if (dlg_open)
+    {
+      log_debug ("%s:%s: Gpgolgui open. Not launching new dialog.",
+                 SRCNAME, __func__);
+      HWND optWindow = FindWindow (nullptr, _("Configure GpgOL"));
+      if (!optWindow) {
+        log_debug ("%s:%s: Gpgolgui open but could not find window.",
+                 SRCNAME, __func__);
+        return;
+      }
+      SetForegroundWindow(optWindow);
+
+      return;
+    }
+
+  log_debug ("%s:%s: Launching gpgolgui.",
+             SRCNAME, __func__);
+
+  CloseHandle (CreateThread (NULL, 0, open_gpgolgui, (LPVOID) parent, 0,
+                             NULL));
 }
