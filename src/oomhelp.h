@@ -339,6 +339,9 @@ LPDISPATCH create_mail (void);
 
 LPDISPATCH get_account_for_mail (const char *mbox);
 
+/* Print all active addins to log */
+void log_addins (void);
+
 /* Sender fallbacks. All return either null or a malloced address. */
 char *get_sender_CurrentUser (LPDISPATCH mailitem);
 char *get_sender_Sender (LPDISPATCH mailitem);

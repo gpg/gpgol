@@ -316,10 +316,10 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         SysFreeString (parmstr);
       if (hr != S_OK || vtResult.vt != VT_DISPATCH)
         {
-          log_debug ("%s:%s: failure: '%s' p=%p vt=%d hr=0x%x argErr=0x%x",
+          log_debug ("%s:%s: failure: '%s' p=%p vt=%d hr=0x%x argErr=0x%x dispid=0x%x",
                      SRCNAME, __func__,
                      name, vtResult.pdispVal, vtResult.vt, (unsigned int)hr,
-                     (unsigned int)argErr);
+                     (unsigned int)argErr, (unsigned int)dispid);
           dump_excepinfo (execpinfo);
           VariantClear (&vtResult);
           gpgol_release (pDisp);
@@ -2118,4 +2118,61 @@ get_ol_ui_language ()
   log_debug ("XXXXX %i", result);
   VariantClear (&var);
   return result;
+}
+
+void
+log_addins ()
+{
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+
+  if (!app)
+    {
+      TRACEPOINT;
+      return;
+   }
+
+  LPDISPATCH addins = get_oom_object (app, "COMAddins");
+
+  if (!addins)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  std::string activeAddins;
+  int count = get_oom_int (addins, "Count");
+  for (int i = 1; i <= count; i++)
+    {
+      std::string item = std::string ("Item(") + std::to_string (i) + ")";
+
+      LPDISPATCH addin = get_oom_object (addins, item.c_str ());
+
+      if (!addin)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      bool connected = get_oom_bool (addin, "Connect");
+      if (!connected)
+        {
+          gpgol_release (addin);
+          continue;
+        }
+
+      char *progId = get_oom_string (addin, "ProgId");
+      gpgol_release (addin);
+
+      if (!progId)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      activeAddins += std::string (progId) + "\n";
+      xfree (progId);
+    }
+  gpgol_release (addins);
+
+  log_debug ("%s:%s:Active Addins:\n%s", SRCNAME, __func__,
+             activeAddins.c_str ());
+  return;
 }
