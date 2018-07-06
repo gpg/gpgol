@@ -368,19 +368,28 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
     }
   else if (!strcmp (ctx_name.c_str(), "_Explorer"))
     {
-      if (g_ol_version_major >= 16)
+      /* Avoid showing wrong crypto state if we don't have a reading
+         pane. In that case the parser will finish for a mail which is gone
+         and the crypto state will not get updated. */
+      if (0 /*g_ol_version_major >= 16 */)
         {
-          // Avoid showing wrong crypto state if we don't have a reading
-          // pane. In that case the parser will finish for a mail which is gone
-          // and the crypto state will not get updated.
-          //
-          //
-          // Somehow latest Outlook 2016 crashes when accessing the current view
-          // of the Explorer. This is even reproducible with
-          // GpgOL disabled and only with Outlook Spy active. If you select
-          // the explorer of an Outlook.com resource and then access
-          // the CurrentView and close the CurrentView again in Outlook Spy
-          // outlook crashes.
+          /* Some Versions of Outlook 2016 crashed when accessing the current view
+             of the Explorer. This was even reproducible with
+             GpgOL disabled and only with Outlook Spy active. If you selected
+             the explorer of an Outlook.com resource and then access
+             the CurrentView and close the CurrentView again in Outlook Spy
+             outlook crashes. See: T3484
+
+             The crash no longer occured at least since build 10228. As
+             I'm not sure which Version fixed the crash we don't do a version
+             check and just use the same codepath as for Outlook 2010 and
+             2013 again.
+
+             Accessing PreviewPane.WordEditor is not a good solution here as
+             it requires "Microsoft VBA for Office" (See T4056 ).
+             A possible solution for that might be to check if
+             "Mail.GetInspector().WordEditor()" returns NULL. In that case we
+             know that we also won't get a WordEditor in the preview pane. */
           LPDISPATCH prevEdit = get_oom_object (context, "PreviewPane.WordEditor");
           gpgol_release (prevEdit);
           if (!prevEdit)
@@ -414,6 +423,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
                 }
             }
         }
+
       if (!*none_selected)
         {
           /* Accessing the selection item can trigger a load event
