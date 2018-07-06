@@ -53,6 +53,7 @@ i18n_noops[] = {
        "attachments as PGP/Inline"),
     N_("S&elect crypto settings automatically "
        "for reply and forward"),
+    N_("&Prefer S/MIME when automatically resolving recipients"),
 
     /* Tooltips */
     N_("Enable or disable any automated key handling."),
