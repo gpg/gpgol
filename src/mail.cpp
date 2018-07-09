@@ -1888,7 +1888,7 @@ get_uid_for_sender (const Key &k, const char *sender)
 
   for (const auto uid: k.userIDs())
     {
-      if (!uid.email())
+      if (!uid.email() || !*(uid.email()))
         {
           log_error ("%s:%s: skipping uid without email.",
                      SRCNAME, __func__);
