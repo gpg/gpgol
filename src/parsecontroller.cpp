@@ -394,7 +394,7 @@ ParseController::parse()
                   break;
                 }
             }
-
+#ifdef HAVE_W32_SYSTEM
           if (allBad)
             {
               log_debug ("%s:%s:%p inline verify error trying native to utf8.",
@@ -442,6 +442,7 @@ ParseController::parse()
                   m_verify_result = ctx->verifyOpaqueSignature(input, output);
                 }
             }
+#endif
         }
     }
   delete ctx;
