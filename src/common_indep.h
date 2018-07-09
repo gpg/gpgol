@@ -188,39 +188,18 @@ struct
   int enable_smime;	     /* Enable S/MIME support. */
   int encrypt_default;       /* Encrypt by default. */
   int sign_default;          /* Sign by default. */
-  char *default_key;         /* The key we want to always encrypt to. */
   int prefer_html;           /* Prefer html in html/text alternatives. */
   int inline_pgp;            /* Only for Addin. Use Inline PGP by default. */
   int autoresolve;           /* Autresolve keys with --locate-keys. */
   int autosecure;             /* Autmatically encrypt if locate returns enough validity. */
   int reply_crypt;           /* Only for Addin. Encrypt / Sign based on cryptostatus. */
+  int automation;            /* General automation */
+  int autotrust;             /* TOFU configured for GpgOL */
+  int prefer_smime;          /* S/MIME prefered when autoresolving */
   int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
-
-  /* The compatibility flags. */
-  struct
-  {
-    unsigned int no_msgcache:1;
-    unsigned int no_pgpmime:1;
-    unsigned int no_oom_write:1; /* Don't write using Outlooks object model. */
-    unsigned int no_preview_info:1; /* No preview info about PGP/MIME. */
-    unsigned int old_reply_hack: 1; /* See gpgmsg.cpp:decrypt. */
-    unsigned int auto_decrypt: 1;   /* Try to decrypt when clicked. */
-    unsigned int no_attestation: 1; /* Don't create an attestation. */
-    unsigned int use_mwfmo: 1;      /* Use MsgWaitForMultipleObjects.  */
-  } compat;
-
-  /* The current git commit id.  */
-  unsigned int git_commit;
 
   /* The forms revision number of the binary.  */
   int forms_revision;
-
-  /* The stored number of the binary which showed the last announcement.  */
-  int announce_number;
-
-  /* Disable message processing until restart.  This is required to
-     implement message reverting as a perparation to remove GpgOL.  */
-  int disable_gpgol;
 
 } opt;
 

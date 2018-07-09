@@ -212,6 +212,17 @@ drop_locale_dir (char *locale_dir)
 }
 
 
+static int
+get_conf_bool (const char *name, int defaultVal)
+{
+  char *val = NULL;
+  int ret;
+  load_extension_value (name, &val);
+  ret = val == NULL ? defaultVal : *val != '1' ? 0 : 1;
+  xfree (val);
+  return ret;
+}
+
 /* Read option settings from the Registry. */
 void
 read_options (void)
@@ -288,50 +299,26 @@ read_options (void)
                (opt.enable_debug & DBG_OOM_EXTRA)? " oom-extra":""
                );
 
+  opt.enable_smime = get_conf_bool ("enableSmime", 0);
+  opt.encrypt_default = get_conf_bool ("encryptDefault", 0);
+  opt.sign_default = get_conf_bool ("signDefault", 0);
+  opt.inline_pgp = get_conf_bool ("inlinePGP", 0);
+  opt.reply_crypt = get_conf_bool ("replyCrypt", 1);
+  opt.prefer_smime = get_conf_bool ("preferSmime", 0);
+  opt.autoresolve = get_conf_bool ("autoresolve", 1);
+  opt.automation = get_conf_bool ("automation", 1);
+  opt.autosecure = get_conf_bool ("autosecure", 1);
+  opt.autotrust = get_conf_bool ("autotrust", 0);
+  opt.smime_html_warn_shown = get_conf_bool ("smimeHtmlWarnShown", 0);
 
-  load_extension_value ("enableSmime", &val);
-  opt.enable_smime = !val ? 0 : atoi (val);
-  xfree (val); val = NULL;
-
-  load_extension_value ("encryptDefault", &val);
-  opt.encrypt_default = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-
-  load_extension_value ("signDefault", &val);
-  opt.sign_default = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-
-  load_extension_value ("defaultKey", &val);
-  set_default_key (val);
-  xfree (val); val = NULL;
-
-  load_extension_value ("gitCommit", &val);
-  opt.git_commit = val? strtoul (val, NULL, 16) : 0;
-  xfree (val); val = NULL;
-
-  load_extension_value ("formsRevision", &val);
-  opt.forms_revision = val? atol (val) : 0;
-  xfree (val); val = NULL;
-
-  load_extension_value ("announceNumber", &val);
-  opt.announce_number = val? atol (val) : 0;
-  xfree (val); val = NULL;
-
-  load_extension_value ("inlinePGP", &val);
-  opt.inline_pgp = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-  load_extension_value ("autoresolve", &val);
-  opt.autoresolve = val == NULL ? 1 : *val != '1' ? 0 : 1;
-  xfree (val); val = NULL;
-  load_extension_value ("replyCrypt", &val);
-  opt.reply_crypt = val == NULL ? 1 : *val != '1' ? 0 : 1;
-  xfree (val); val = NULL;
-  load_extension_value ("smimeHtmlWarnShown", &val);
-  opt.smime_html_warn_shown = val == NULL || *val != '1'? 0 : 1;
-  xfree (val); val = NULL;
-  load_extension_value ("autosecure", &val);
-  opt.autosecure = val == NULL ? 1 : *val != '1' ? 0 : 1;
-  xfree (val); val = NULL;
+  if (!opt.automation)
+    {
+      // Disabling automation is a shorthand to disable the
+      // others, too.
+      opt.autosecure = 0;
+      opt.autoresolve = 0;
+      opt.autotrust = 0;
+    }
 }
 
 
@@ -346,16 +333,6 @@ write_options (void)
     int  value;
     char *s_val;
   } table[] = {
-    {"enableSmime",              0, opt.enable_smime, NULL},
-    {"encryptDefault",           0, opt.encrypt_default, NULL},
-    {"signDefault",              0, opt.sign_default, NULL},
-    {"logFile",                  2, 0, (char*) get_log_file ()},
-    {"gitCommit",                4, opt.git_commit, NULL},
-    {"formsRevision",            1, opt.forms_revision, NULL},
-    {"announceNumber",           1, opt.announce_number, NULL},
-    {"inlinePGP",                0, opt.inline_pgp, NULL},
-    {"autoresolve",              0, opt.autoresolve, NULL},
-    {"replyCrypt",               0, opt.reply_crypt, NULL},
     {"smimeHtmlWarnShown",       0, opt.smime_html_warn_shown, NULL},
     {NULL, 0, 0, NULL}
   };

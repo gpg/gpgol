@@ -749,22 +749,4 @@ log_window_hierarchy (HWND window, const char *fmt, ...)
     }
 }
 
-void
-set_default_key (const char *name)
-{
-  if (!lock_log ())
-    {
-      if (!name || *name == '\"' || !*name)
-        {
-          xfree (opt.default_key);
-          opt.default_key = NULL;
-        }
-      else
-        {
-          xfree (opt.default_key);
-          opt.default_key = xstrdup (name);;
-        }
-      unlock_log ();
-    }
-}
 #endif
