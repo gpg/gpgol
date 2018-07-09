@@ -316,15 +316,30 @@ CryptController::resolve_keys_cached()
       auto recps = cArray_to_vector ((const char**) m_recipient_addrs);
       recps.push_back (cached_sender);
 
-      m_recipients = cache->getEncryptionKeys(recps, GpgME::OpenPGP);
-      m_proto = GpgME::OpenPGP;
+      m_recipients.clear();
+      if (opt.enable_smime && opt.prefer_smime)
+        {
+          m_recipients = cache->getEncryptionKeys(recps, GpgME::CMS);
+          if (!m_recipients.empty())
+            {
+              fallbackToSMIME = true;
+              m_proto = GpgME::CMS;
+            }
+        }
 
-      if (m_recipients.empty() && opt.enable_smime)
+      if (m_recipients.empty())
+        {
+          m_recipients = cache->getEncryptionKeys(recps, GpgME::OpenPGP);
+          m_proto = GpgME::OpenPGP;
+        }
+
+      if (m_recipients.empty() && (opt.enable_smime && !opt.prefer_smime))
         {
           m_recipients = cache->getEncryptionKeys(recps, GpgME::CMS);
           fallbackToSMIME = true;
           m_proto = GpgME::CMS;
         }
+
       if (m_recipients.empty())
         {
           log_debug ("%s:%s: Failed to resolve keys through cache",
