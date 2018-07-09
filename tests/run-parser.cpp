@@ -46,7 +46,6 @@ int main(int argc, char **argv)
   msgtype_t msgtype = MSGTYPE_UNKNOWN;
   FILE *fp_in = NULL;
 
-  putenv ((char*) "GNUPGHOME=" GPGHOMEDIR);
   gpgme_check_version (NULL);
 
   if (argc)
