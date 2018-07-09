@@ -556,7 +556,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
           /* make sure our temporary output buffer is large enough... */
           if (len > tmplen)
             {
-              xrealloc (outbuf, len + 1);
+              outbuf = xrealloc (outbuf, len + 1);
               tmplen = len + 1;
             }
 
