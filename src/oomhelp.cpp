@@ -2265,7 +2265,6 @@ get_ol_ui_language ()
 
   int result = var.intVal;
 
-  log_debug ("XXXXX %i", result);
   VariantClear (&var);
   return result;
 }
