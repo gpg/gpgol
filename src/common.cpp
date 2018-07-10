@@ -37,8 +37,9 @@
 #include <ctype.h>
 
 #include "common.h"
-
 #include "dialogs.h"
+
+#include <string>
 
 HINSTANCE glob_hinst = NULL;
 
@@ -46,202 +47,6 @@ void
 set_global_hinstance (HINSTANCE hinst)
 {
     glob_hinst = hinst;
-}
-
-/* Center the given window with the desktop window as the
-   parent window. */
-void
-center_window (HWND childwnd, HWND style)
-{
-    HWND parwnd;
-    RECT rchild, rparent;
-    HDC hdc;
-    int wchild, hchild, wparent, hparent;
-    int wscreen, hscreen, xnew, ynew;
-    int flags = SWP_NOSIZE | SWP_NOZORDER;
-
-    parwnd = GetDesktopWindow ();
-    GetWindowRect (childwnd, &rchild);
-    wchild = rchild.right - rchild.left;
-    hchild = rchild.bottom - rchild.top;
-
-    GetWindowRect (parwnd, &rparent);
-    wparent = rparent.right - rparent.left;
-    hparent = rparent.bottom - rparent.top;
-
-    hdc = GetDC (childwnd);
-    wscreen = GetDeviceCaps (hdc, HORZRES);
-    hscreen = GetDeviceCaps (hdc, VERTRES);
-    ReleaseDC (childwnd, hdc);
-    xnew = rparent.left + ((wparent - wchild) / 2);
-    if (xnew < 0)
-	xnew = 0;
-    else if ((xnew+wchild) > wscreen)
-	xnew = wscreen - wchild;
-    ynew = rparent.top  + ((hparent - hchild) / 2);
-    if (ynew < 0)
-	ynew = 0;
-    else if ((ynew+hchild) > hscreen)
-	ynew = hscreen - hchild;
-    if (style == HWND_TOPMOST || style == HWND_NOTOPMOST)
-	flags = SWP_NOMOVE | SWP_NOSIZE;
-    SetWindowPos (childwnd, style? style : NULL, xnew, ynew, 0, 0, flags);
-}
-
-
-/* Return the system's bitmap of the check bar used which check boxes.
-   If CHECKED is set, this check mark is returned; if it is not set,
-   the one used for not-checked is returned.  May return NULL on
-   error.  Taken from an example in the platform reference. 
-
-   Not used as of now. */
-HBITMAP
-get_system_check_bitmap (int checked)
-{
-  COLORREF bg_color;
-  HBRUSH bg_brush, saved_dst_brush;
-  HDC src_dc, dst_dc;
-  WORD xsize, ysize;
-  HBITMAP result, saved_dst_bitmap, saved_src_bitmap, checkboxes;
-  BITMAP bitmap;
-  RECT rect;
-
-  bg_color = GetSysColor (COLOR_MENU);
-  bg_brush = CreateSolidBrush (bg_color);
-
-  src_dc = CreateCompatibleDC (NULL);
-  dst_dc = CreateCompatibleDC (src_dc);
-
-  xsize = GetSystemMetrics (SM_CXMENUCHECK);
-  ysize = GetSystemMetrics (SM_CYMENUCHECK);
-  result = CreateCompatibleBitmap(src_dc, xsize, ysize);
-
-  saved_dst_brush  = SelectObject (dst_dc, bg_brush);
-  saved_dst_bitmap = SelectObject (dst_dc, result);
-
-  PatBlt (dst_dc, 0, 0, xsize, ysize, PATCOPY);
-
-  checkboxes = LoadBitmap (NULL, (LPTSTR)OBM_CHECKBOXES);
-
-  saved_src_bitmap = SelectObject (src_dc, checkboxes);
-
-  GetObject (checkboxes, sizeof (BITMAP), &bitmap);
-  rect.top = 0;
-  rect.bottom = (bitmap.bmHeight / 3);
-  if (checked)
-    {
-      /* Select row 1, column 1.  */
-      rect.left  = 0;
-      rect.right = (bitmap.bmWidth / 4);
-    }
-  else
-    {
-      /* Select row 1, column 2. */ 
-      rect.left  = (bitmap.bmWidth / 4);
-      rect.right = (bitmap.bmWidth / 4) * 2;
-    }
-
-  if ( ((rect.right - rect.left) > (int)xsize)
-       || ((rect.bottom - rect.top) > (int)ysize) )
-    StretchBlt (dst_dc, 0, 0, xsize, ysize, src_dc, rect.left, rect.top,
-                rect.right - rect.left, rect.bottom - rect.top, SRCCOPY);
-  else
-    BitBlt (dst_dc, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
-            src_dc, rect.left, rect.top, SRCCOPY);
-
-  SelectObject (src_dc, saved_src_bitmap);
-  SelectObject (dst_dc, saved_dst_brush);
-  result = SelectObject (dst_dc, saved_dst_bitmap);
-
-  DeleteObject (bg_brush);
-  DeleteObject (src_dc);
-  DeleteObject (dst_dc);
-  return result;
-}
-
-/* Return the path to a file that should be worked with.
-   Returns a malloced string (UTF-8) on success.
-   HWND is the current Window.
-   Title is a UTF-8 encoded string containing the
-   dialog title and may be NULL.
-   On error (i.e. cancel) NULL is returned. */
-char *
-get_open_filename (HWND root, const char *title)
-{
-  OPENFILENAMEW ofn;
-  wchar_t fname[MAX_PATH+1];
-  wchar_t *wTitle = NULL;
-
-  if (title)
-    {
-      wTitle = utf8_to_wchar2 (title, strlen(title));
-    }
-  memset (fname, 0, sizeof (fname));
-
-  /* Set up the ofn structure */
-  memset (&ofn, 0, sizeof (ofn));
-  ofn.lStructSize = sizeof (ofn);
-  ofn.hwndOwner = root;
-  ofn.lpstrFile = fname;
-  ofn.nMaxFile = MAX_PATH;
-  ofn.lpstrTitle = wTitle;
-  ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-
-  if (GetOpenFileNameW (&ofn))
-    {
-      xfree (wTitle);
-      return wchar_to_utf8_2 (fname, MAX_PATH);
-    }
-  xfree (wTitle);
-  return NULL;
-}
-
-
-/* Return a filename to be used for saving an attachment. Returns a
-   malloced string on success. HWND is the current Window and SRCNAME
-   the filename to be used as suggestion.  On error (i.e. cancel) NULL
-   is returned. */
-char *
-get_save_filename (HWND root, const char *srcname)
-{
-  char filter[21] = "All Files (*.*)\0*.*\0\0";
-  char fname[MAX_PATH+1];
-  char filterBuf[32];
-  char* extSep;
-  OPENFILENAME ofn;
-
-  memset (fname, 0, sizeof (fname));
-  memset (filterBuf, 0, sizeof (filterBuf));
-  strncpy (fname, srcname, MAX_PATH-1);
-  fname[MAX_PATH] = 0;
-
-  if ((extSep = strrchr (srcname, '.')) && strlen (extSep) <= 4)
-    {
-      /* Windows removes the file extension by default so we
-         need to set the first filter to the file extension.
-      */
-      strcpy (filterBuf, extSep);
-      strcpy (filterBuf + strlen (filterBuf) + 1, extSep);
-      memcpy (filterBuf + strlen (extSep) * 2 + 2, filter, 21);
-    }
-  else
-    memcpy (filterBuf, filter, 21);
-
-
-  memset (&ofn, 0, sizeof (ofn));
-  ofn.lStructSize = sizeof (ofn);
-  ofn.hwndOwner = root;
-  ofn.lpstrFile = fname;
-  ofn.nMaxFile = MAX_PATH;
-  ofn.lpstrFileTitle = NULL;
-  ofn.nMaxFileTitle = 0;
-  ofn.Flags |= OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-  ofn.lpstrTitle = _("GpgOL - Save attachment");
-  ofn.lpstrFilter = filterBuf;
-
-  if (GetSaveFileName (&ofn))
-    return xstrdup (fname);
-  return NULL;
 }
 
 void
@@ -278,97 +83,6 @@ fatal_error (const char *format, ...)
 }
 
 
-/* This is a helper function to load a Windows function from either of
-   one DLLs. */
-static HRESULT
-w32_shgetfolderpath (HWND a, int b, HANDLE c, DWORD d, LPSTR e)
-{
-  static int initialized;
-  static HRESULT (WINAPI * func)(HWND,int,HANDLE,DWORD,LPSTR);
-
-  if (!initialized)
-    {
-      static char *dllnames[] = { "shell32.dll", "shfolder.dll", NULL };
-      void *handle;
-      int i;
-
-      initialized = 1;
-
-      for (i=0, handle = NULL; !handle && dllnames[i]; i++)
-        {
-          handle = LoadLibrary (dllnames[i]);
-          if (handle)
-            {
-              func = (HRESULT (WINAPI *)(HWND,int,HANDLE,DWORD,LPSTR))
-                     GetProcAddress (handle, "SHGetFolderPathA");
-              if (!func)
-                {
-                  FreeLibrary (handle);
-                  handle = NULL;
-                }
-            }
-        }
-    }
-
-  if (func)
-    return func (a,b,c,d,e);
-  else
-    return -1;
-}
-
-
-
-/* Same as above, but only convert the first LEN wchars.  */
-char *
-wchar_to_utf8_2 (const wchar_t *string, size_t len)
-{
-  int n;
-  char *result;
-
-  /* Note, that CP_UTF8 is not defined in Windows versions earlier
-     than NT.*/
-  n = WideCharToMultiByte (CP_UTF8, 0, string, len, NULL, 0, NULL, NULL);
-  if (n < 0)
-    return NULL;
-
-  result = xmalloc (n+1);
-  n = WideCharToMultiByte (CP_UTF8, 0, string, len, result, n, NULL, NULL);
-  if (n < 0)
-    {
-      xfree (result);
-      return NULL;
-    }
-  return result;
-}
-
-
-/* Same as above but convert only the first LEN characters.  STRING
-   must be at least LEN characters long. */
-wchar_t *
-utf8_to_wchar2 (const char *string, size_t len)
-{
-  int n;
-  wchar_t *result;
-
-  n = MultiByteToWideChar (CP_UTF8, 0, string, len, NULL, 0);
-  if (n < 0)
-    return NULL;
-
-  result = xmalloc ((n+1) * sizeof *result);
-  n = MultiByteToWideChar (CP_UTF8, 0, string, len, result, n);
-  if (n < 0)
-    {
-      xfree (result);
-      return NULL;
-    }
-  result[n] = 0;
-  return result;
-}
-
-
-
-
-
 /* Helper for read_w32_registry_string(). */
 static HKEY
 get_root_key(const char *root)
@@ -394,6 +108,83 @@ get_root_key(const char *root)
   return root_key;
 }
 
+static std::string
+readRegStr (const char *root, const char *dir, const char *name)
+{
+#ifndef _WIN32
+    (void)root; (void)dir; (void)name;
+    return std::string();
+#else
+
+    HKEY root_key, key_handle;
+    DWORD n1, nbytes, type;
+    std::string ret;
+
+    if (!(root_key = get_root_key(root))) {
+        return ret;
+    }
+
+    if (RegOpenKeyExA(root_key, dir, 0, KEY_READ, &key_handle)) {
+        if (root) {
+            /* no need for a RegClose, so return direct */
+            return ret;
+        }
+        /* Fallback to HKLM */
+
+        if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
+            return ret;
+        }
+    }
+
+    nbytes = 1;
+    if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
+        if (root) {
+            RegCloseKey (key_handle);
+            return ret;
+        }
+        /* Try to fallback to HKLM also vor a missing value.  */
+        RegCloseKey (key_handle);
+        if (RegOpenKeyExA (HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
+            return ret;
+        }
+        if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
+            RegCloseKey(key_handle);
+            return ret;
+        }
+    }
+    n1 = nbytes+1;
+    char result[n1];
+    if (RegQueryValueExA(key_handle, name, 0, &type, (LPBYTE)result, &n1)) {
+        RegCloseKey(key_handle);
+        return ret;
+    }
+    RegCloseKey(key_handle);
+    result[nbytes] = 0; /* make sure it is really a string  */
+    ret = result;
+    if (type == REG_EXPAND_SZ && strchr (result, '%')) {
+        n1 += 1000;
+        char tmp[n1 +1];
+
+        nbytes = ExpandEnvironmentStringsA(ret.c_str(), tmp, n1);
+        if (nbytes && nbytes > n1) {
+            n1 = nbytes;
+            char tmp2[n1 +1];
+            nbytes = ExpandEnvironmentStringsA(result, tmp2, n1);
+            if (nbytes && nbytes > n1) {
+                /* oops - truncated, better don't expand at all */
+                return ret;
+            }
+            tmp2[nbytes] = 0;
+            ret = tmp2;
+        } else if (nbytes) { /* okay, reduce the length */
+            tmp[nbytes] = 0;
+            ret = tmp;
+        }
+    }
+    return ret;
+#endif
+}
+
 /* Return a string from the Win32 Registry or NULL in case of error.
    Caller must release the return value.  A NULL for root is an alias
    for HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE in turn.  NOTE: The value
@@ -402,159 +193,12 @@ get_root_key(const char *root)
 char *
 read_w32_registry_string (const char *root, const char *dir, const char *name)
 {
-  HKEY root_key, key_handle;
-  DWORD n1, nbytes, type;
-  char *result = NULL;
-
-  if ( !(root_key = get_root_key(root) ) )
-    return NULL;
-
-  if( RegOpenKeyEx( root_key, dir, 0, KEY_READ, &key_handle ) )
+  const auto ret = readRegStr (root, dir, name);
+  if (ret.empty())
     {
-      if (root)
-	return NULL; /* no need for a RegClose, so return direct */
-      /* It seems to be common practise to fall back to HKLM. */
-      if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle) )
-	return NULL; /* still no need for a RegClose, so return direct */
+      return nullptr;
     }
-
-  nbytes = 1;
-  if( RegQueryValueEx( key_handle, name, 0, NULL, NULL, &nbytes ) ) {
-    if (root)
-      goto leave;
-    /* Try to fallback to HKLM also vor a missing value.  */
-    RegCloseKey (key_handle);
-    if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle) )
-      return NULL; /* Nope.  */
-    if (RegQueryValueEx( key_handle, name, 0, NULL, NULL, &nbytes))
-      goto leave;
-  }
-  result = malloc( (n1=nbytes+1) );
-  if( !result )
-    goto leave;
-  if( RegQueryValueEx( key_handle, name, 0, &type, result, &n1 ) ) {
-    free(result); result = NULL;
-    goto leave;
-  }
-  result[nbytes] = 0; /* make sure it is really a string  */
-  if (type == REG_EXPAND_SZ && strchr (result, '%')) {
-    char *tmp;
-
-    n1 += 1000;
-    tmp = malloc (n1+1);
-    if (!tmp)
-      goto leave;
-    nbytes = ExpandEnvironmentStrings (result, tmp, n1);
-    if (nbytes && nbytes > n1) {
-      free (tmp);
-      n1 = nbytes;
-      tmp = malloc (n1 + 1);
-      if (!tmp)
-	goto leave;
-      nbytes = ExpandEnvironmentStrings (result, tmp, n1);
-      if (nbytes && nbytes > n1) {
-	free (tmp); /* oops - truncated, better don't expand at all */
-	goto leave;
-      }
-      tmp[nbytes] = 0;
-      free (result);
-      result = tmp;
-    }
-    else if (nbytes) { /* okay, reduce the length */
-      tmp[nbytes] = 0;
-      free (result);
-      result = malloc (strlen (tmp)+1);
-      if (!result)
-	result = tmp;
-      else {
-	strcpy (result, tmp);
-	free (tmp);
-      }
-    }
-    else {  /* error - don't expand */
-      free (tmp);
-    }
-  }
-
- leave:
-  RegCloseKey( key_handle );
-  return result;
-}
-
-
-/* Get the standard home directory.  In general this function should
-   not be used as it does not consider a registry value or the
-   GNUPGHOME environment variable.  Please use default_homedir(). */
-static const char *
-standard_homedir (void)
-{
-  static char *dir;
-
-  if (!dir)
-    {
-      char path[MAX_PATH];
-
-      /* It might be better to use LOCAL_APPDATA because this is
-         defined as "non roaming" and thus more likely to be kept
-         locally.  For private keys this is desired.  However, given
-         that many users copy private keys anyway forth and back,
-         using a system roaming services might be better than to let
-         them do it manually.  A security conscious user will anyway
-         use the registry entry to have better control.  */
-      if (w32_shgetfolderpath (NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE,
-                               NULL, 0, path) >= 0)
-        {
-          char *tmp = malloc (strlen (path) + 6 + 1);
-
-	  strcpy (tmp, path);
-	  strcat (tmp, "\\gnupg");
-
-          dir = tmp;
-
-          /* Try to create the directory if it does not yet exists.  */
-          if (access (dir, F_OK))
-            CreateDirectory (dir, NULL);
-        }
-      else
-        dir = xstrdup ("C:\\gnupg");
-    }
-  return dir;
-}
-
-
-/* Retrieve the default home directory.  */
-const char *
-default_homedir (void)
-{
-  static char *dir;
-
-  if (!dir)
-    {
-      dir = getenv ("GNUPGHOME");
-      if (!dir || !*dir)
-        {
-          char *tmp;
-
-          tmp = read_w32_registry_string (NULL, GPG4WIN_REGKEY_3, "HomeDir");
-          if (!tmp)
-            {
-              tmp = read_w32_registry_string (NULL, GPG4WIN_REGKEY_2, "HomeDir");
-            }
-          if (tmp && !*tmp)
-            {
-              free (tmp);
-              tmp = NULL;
-            }
-          if (tmp)
-            dir = tmp;
-          else
-            dir = xstrdup (standard_homedir ());
-        }
-      else
-        dir = xstrdup (dir);
-    }
-
-  return dir;
+  return strdup (ret.c_str ());
 }
 
 /* Return the data dir used for forms etc.   Returns NULL on error. */
@@ -568,10 +212,10 @@ get_data_dir (void)
   instdir = get_gpg4win_dir();
   if (!instdir)
     return NULL;
-  
+
   /* Build the key: "<instdir>/share/gpgol".  */
 #define SDDIR "\\share\\gpgol"
-  dname = malloc (strlen (instdir) + strlen (SDDIR) + 1);
+  dname = (char*) malloc (strlen (instdir) + strlen (SDDIR) + 1);
   if (!dname)
     {
       free (instdir);
@@ -581,9 +225,9 @@ get_data_dir (void)
   strcpy (p, instdir);
   p += strlen (instdir);
   strcpy (p, SDDIR);
-  
+
   free (instdir);
-  
+
 #undef SDDIR
   return dname;
 }
@@ -914,7 +558,7 @@ get_uiserver_name (void)
     }
   if (uiserver)
     {
-      name = xmalloc (strlen (dir) + strlen (uiserver) + extra_arglen + 2);
+      name = (char*) xmalloc (strlen (dir) + strlen (uiserver) + extra_arglen + 2);
       strcpy (stpcpy (stpcpy (name, dir), "\\"), uiserver);
       for (p = name; *p; p++)
         if (*p == '/')
@@ -934,7 +578,7 @@ get_uiserver_name (void)
         {
           xfree (name);
         }
-      name = xmalloc (strlen (dir) + strlen (*tmp) + extra_arglen + 2);
+      name = (char *) xmalloc (strlen (dir) + strlen (*tmp) + extra_arglen + 2);
       strcpy (stpcpy (stpcpy (name, dir), "\\"), *tmp);
       for (p = name; *p; p++)
         if (*p == '/')
@@ -1087,7 +731,7 @@ expand_path (const char *path)
       return NULL;
     }
   len += 1;
-  p = xcalloc (1, len+1);
+  p = (char *) xcalloc (1, len+1);
   if (!p)
     {
       return NULL;
@@ -1133,7 +777,7 @@ load_config_value (HKEY hk, const char *path, const char *key, char **val)
     }
   else
     {
-      *val = xcalloc(1, size+1);
+      *val = (char *) xcalloc(1, size+1);
       ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
       if (ec != ERROR_SUCCESS)
         {

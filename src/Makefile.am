@@ -30,9 +30,8 @@ gpgol_SOURCES = \
     addin-options.cpp addin-options.h \
     application-events.cpp \
     attachment.h attachment.cpp \
-    common.h common.c \
+    common.h common.cpp \
     common_indep.h common_indep.c \
-    config-dialog.c \
     cpphelp.cpp cpphelp.h \
     cryptcontroller.cpp cryptcontroller.h \
     dialogs.h \

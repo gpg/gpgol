@@ -33,6 +33,12 @@
 
 #include <windows.h>
 
+/* i18n stuff */
+#include "w32-gettext.h"
+#define _(a) gettext (a)
+#define N_(a) gettext_noop (a)
+
+
 /* Registry path to store plugin settings */
 #define GPGOL_REGPATH "Software\\GNU\\GpgOL"
 
@@ -47,13 +53,7 @@ extern UINT      this_dll;
 
 /*-- common.c --*/
 void set_global_hinstance (HINSTANCE hinst);
-void center_window (HWND childwnd, HWND style);
-HBITMAP get_system_check_bitmap (int checked);
-char *get_save_filename (HWND root, const char *srcname);
-char *get_open_filename (HWND root, const char *title);
-char *utf8_to_wincp (const char *string);
 
-const char *default_homedir (void);
 char *get_data_dir (void);
 char *get_gpg4win_dir (void);
 
@@ -67,22 +67,6 @@ wchar_t *get_tmp_outfile (wchar_t *name, HANDLE *outHandle);
 
 wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
                                      int signature);
-
-/*-- recipient-dialog.c --*/
-unsigned int recipient_dialog_box (gpgme_key_t **ret_rset);
-unsigned int recipient_dialog_box2 (gpgme_key_t *fnd, char **unknown,
-                                    gpgme_key_t **ret_rset);
-
-/*-- passphrase-dialog.c --*/
-int signer_dialog_box (gpgme_key_t *r_key, char **r_passwd, int encrypting);
-gpgme_error_t passphrase_callback_box (void *opaque, const char *uid_hint,
-			     const char *pass_info,
-			     int prev_was_bad, int fd);
-void free_decrypt_key (struct passphrase_cb_s *ctx);
-const char *get_pubkey_algo_str (gpgme_pubkey_algo_t id);
-
-/*-- config-dialog.c --*/
-void config_dialog_box (HWND parent);
 
 /*-- verify-dialog.c --*/
 int verify_dialog_box (gpgme_protocol_t protocol,
@@ -100,18 +84,10 @@ int initialize_inspectors (void);
 #endif
 
 
-/* i18n stuff */
-#include "w32-gettext.h"
-#define _(a) gettext (a)
-#define N_(a) gettext_noop (a)
-
-
 /*-- common.c --*/
 
 void fatal_error (const char *format, ...);
 
-char *wchar_to_utf8_2 (const wchar_t *string, size_t len);
-wchar_t *utf8_to_wchar2 (const char *string, size_t len);
 char *read_w32_registry_string (const char *root, const char *dir,
                                 const char *name);
 char *percent_escape (const char *str, const char *extra);
@@ -128,17 +104,10 @@ char *get_uiserver_name (void);
 int is_elevated (void);
 
 /*-- main.c --*/
-const void *get_128bit_session_key (void);
-const void *get_64bit_session_marker (void);
-void *create_initialization_vector (size_t nbytes);
-
 void read_options (void);
 int write_options (void);
 
 extern int g_ol_version_major;
-
-void log_window_hierarchy (HWND window, const char *fmt,
-                           ...) __attribute__ ((format (printf,2,3)));
 
 void bring_to_front (HWND wid);
 
