@@ -123,13 +123,6 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 #define PR_BLOCK_STATUS_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x10960003"
 
-#ifdef __cplusplus
-extern "C" {
-#if 0
-}
-#endif
-#endif
-
 /* Return the malloced name of an COM+ object.  */
 char *get_object_name (LPUNKNOWN obj);
 
@@ -358,8 +351,5 @@ int get_ex_major_version_for_addr (const char *mbox);
 /* Get the language code used for Outlooks UI */
 int get_ol_ui_language (void);
 
-#ifdef __cplusplus
 char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
-}
-#endif
 #endif /*OOMHELP_H*/

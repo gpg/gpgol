@@ -3,17 +3,17 @@
    Copyright (C) 2005, 2007 g10 Code GmbH
 
    This file is part of libgpg-error.
- 
+
    libgpg-error is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public License
    as published by the Free Software Foundation; either version 2.1 of
    the License, or (at your option) any later version.
- 
+
    libgpg-error is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Lesser General Public License for more details.
- 
+
    You should have received a copy of the GNU Lesser General Public
    License along with libgpg-error; if not, write to the Free
    Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -743,7 +743,7 @@ _nl_locale_name (int category, const char *categoryname)
      On some systems this can be done by the 'setlocale' function itself.  */
 # if defined HAVE_SETLOCALE && defined HAVE_LC_MESSAGES && defined HAVE_LOCALE_NULL
   retval = setlocale (category, NULL);
-# else 
+# else
   /* Setting of LC_ALL overwrites all other.  */
   retval = getenv ("LC_ALL");
   if (retval == NULL || retval[0] == '\0')
@@ -1303,7 +1303,7 @@ free_domain (struct loaded_domain *domain)
   free (domain);
 }
 
-  
+
 /* The gettext implementation; support functions.  */
 static struct loaded_domain *
 load_domain (const char *filename)
@@ -1315,7 +1315,7 @@ load_domain (const char *filename)
   struct loaded_domain *domain = NULL;
   size_t to_read;
   char *read_ptr;
-  
+
   fp = fopen (filename, "rb");
   if (!fp)
     return NULL;
@@ -1329,7 +1329,7 @@ load_domain (const char *filename)
       return NULL;
     }
 
-  data = malloc (size);
+  data = (mo_file_header*) malloc (size);
   if (!data)
     {
       fclose (fp);
@@ -1362,7 +1362,7 @@ load_domain (const char *filename)
       return NULL;
     }
 
-  domain = calloc (1, sizeof *domain);
+  domain = (loaded_domain *) calloc (1, sizeof *domain);
   if (!domain)
     {
       free (data);
@@ -1370,12 +1370,12 @@ load_domain (const char *filename)
     }
   domain->data = (char *) data;
   domain->must_swap = data->magic != MAGIC;
-  
+
   /* Fill in the information about the available tables.  */
   switch (SWAPIT (domain->must_swap, data->revision))
     {
     case 0:
-      
+
       domain->nstrings = SWAPIT (domain->must_swap, data->nstrings);
       domain->orig_tab = (struct string_desc *)
 	((char *) data + SWAPIT (domain->must_swap, data->orig_tab_offset));
@@ -1394,7 +1394,7 @@ load_domain (const char *filename)
     }
 
   /* Allocate an array to keep track of code page mappings.  */
-  domain->mapped = calloc (1, domain->nstrings);
+  domain->mapped = (char *) calloc (1, domain->nstrings);
   if (!domain->mapped)
     {
       free (data);
@@ -1421,7 +1421,7 @@ wchar_to_native (const wchar_t *string)
   if (n < 0)
     return NULL;
 
-  result = malloc (n+1);
+  result = (char*) malloc (n+1);
   if (!result)
     return NULL;
 
@@ -1445,7 +1445,7 @@ native_to_wchar (const char *string)
   if (n < 0)
     return NULL;
 
-  result = malloc ((n+1) * sizeof *result);
+  result = (wchar_t *) malloc ((n+1) * sizeof *result);
   if (!result)
     return NULL;
 
@@ -1474,7 +1474,7 @@ utf8_to_wchar (const char *string)
   if (n < 0)
     return NULL;
 
-  result = malloc ((n+1) * sizeof *result);
+  result = (wchar_t *) malloc ((n+1) * sizeof *result);
   if (!result)
     return NULL;
 
@@ -1505,7 +1505,7 @@ wchar_to_utf8 (const wchar_t *string)
   if (n < 0)
     return NULL;
 
-  result = xmalloc (n+1);
+  result = (char *) xmalloc (n+1);
   n = WideCharToMultiByte (CP_UTF8, 0, string, -1, result, n, NULL, NULL);
   if (n < 0)
     {
@@ -1544,7 +1544,7 @@ utf8_to_native (const char *string)
 char *
 native_to_utf8 (const char *string)
 {
-  char *result; 
+  char *result;
   wchar_t *wstring;
 
   wstring = native_to_wchar (string);
@@ -1568,7 +1568,7 @@ get_string (struct loaded_domain *domain, u32 idx, int utf8)
   char *p;
 
   p = domain->data + SWAPIT (domain->must_swap, domain->trans_tab[idx].offset);
-  if (!domain->mapped[idx]) 
+  if (!domain->mapped[idx])
     {
       size_t plen, buflen;
       char *buf;
@@ -1586,7 +1586,7 @@ get_string (struct loaded_domain *domain, u32 idx, int utf8)
              in the overflow_space else and mark that in the mapped
              array.  Because we expect that this won't happen too
              often, we use a simple linked list.  */
-          os = malloc (sizeof *os + buflen);
+          os = (overflow_space_s *) malloc (sizeof *os + buflen);
           if (os)
             {
               os->idx = idx;
@@ -1596,17 +1596,17 @@ get_string (struct loaded_domain *domain, u32 idx, int utf8)
               p = os->d;
             }
           else
-            p = "ERROR in GETTEXT MALLOC";
+            p = (char *) "ERROR in GETTEXT MALLOC";
         }
       free (buf);
     }
-  else if (domain->mapped[idx] == 2) 
+  else if (domain->mapped[idx] == 2)
     {
       /* We need to get the string from the overflow_space.  */
       for (os=domain->overflow_space; os; os = os->next)
         if (os->idx == idx)
           return (const char*) os->d;
-      p = "ERROR in GETTEXT\n";
+      p = (char *) "ERROR in GETTEXT\n";
     }
   return (const char*) p;
 }
@@ -1645,7 +1645,7 @@ bindtextdomain (const char *domainname, const char *dirname)
     {
       char *p;
 
-      catval = malloc (strlen (catval_full) + 1);
+      catval = (char *)malloc (strlen (catval_full) + 1);
       if (catval)
 	{
 	  strcpy (catval, catval_full);
@@ -1664,7 +1664,7 @@ bindtextdomain (const char *domainname, const char *dirname)
       + strlen (domainname) + 3 + 1;
     char *p;
 
-    fname = malloc (len);
+    fname = (char*) malloc (len);
     if (!fname)
       {
 	free (catval);

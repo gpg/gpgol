@@ -67,7 +67,7 @@ gpgol_SOURCES = \
     rfc2047parse.h rfc2047parse.c \
     rfc822parse.c rfc822parse.h \
     ribbon-callbacks.cpp ribbon-callbacks.h \
-    w32-gettext.c w32-gettext.h \
+    w32-gettext.cpp w32-gettext.h \
     windowmessages.h windowmessages.cpp \
     wks-helper.cpp wks-helper.h \
     xmalloc.h

@@ -25,6 +25,13 @@
 # define LC_MESSAGES 1729
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#if 0
+}
+#endif
+#endif
+
 /* Specify that the DOMAINNAME message catalog will be found
    in DIRNAME rather than in the system locale data base.  */
 char *bindtextdomain (const char *domainname, const char *dirname);
@@ -64,4 +71,6 @@ wchar_t *utf8_to_wchar (const char *string);
 char *utf8_to_native (const char *string);
 char *native_to_utf8 (const char *string);
 
-
+#ifdef __cplusplus
+}
+#endif

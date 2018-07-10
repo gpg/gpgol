@@ -20,18 +20,15 @@
 #ifndef MAPIHELP_H
 #define MAPIHELP_H
 
-#ifdef __cplusplus
-extern "C" {
-#if 0
-}
-#endif
-#endif
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <oomhelp.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* The filename of the attachment we create as the result of sign or
    encrypt operations.  Don't change this name as some tests rely on
    it.  */
