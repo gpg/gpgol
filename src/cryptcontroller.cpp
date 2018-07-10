@@ -372,6 +372,18 @@ CryptController::resolve_keys_cached()
           return 1;
         }
     }
+
+  log_debug ("%s:%s: Encrypting to:",
+             SRCNAME, __func__);
+  for (const auto &key: m_recipients)
+    {
+      log_debug ("%s", key.primaryFingerprint());
+    }
+  if (!m_signer_key.isNull())
+    {
+      log_debug ("%s:%s: Signing key: %s",
+                 SRCNAME, __func__, m_signer_key.primaryFingerprint());
+    }
   return 0;
 }
 
