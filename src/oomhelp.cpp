@@ -1105,6 +1105,52 @@ get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt)
   return 0;
 }
 
+/* Helper for exchange address lookup. */
+static char *
+get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
+{
+  /* Maybe check for type here? We are pretty sure that we are exchange */
+
+  /* According to MSDN Message Boards the PR_EMS_AB_PROXY_ADDRESSES_DASL
+     is more avilable then the SMTP Address. */
+  char *ret = get_pa_string (addr_entry, PR_EMS_AB_PROXY_ADDRESSES_DASL);
+  if (ret)
+    {
+      log_debug ("%s:%s: Found recipient through AB_PROXY: %s",
+                 SRCNAME, __func__, ret);
+
+      char *smtpbegin = strstr(ret, "SMTP:");
+      if (smtpbegin == ret)
+        {
+          ret += 5;
+        }
+      return ret;
+    }
+  else
+    {
+      log_debug ("%s:%s: Failed AB_PROXY lookup.",
+                 SRCNAME, __func__);
+    }
+
+  LPDISPATCH ex_user = get_oom_object (addr_entry, "GetExchangeUser");
+  if (!ex_user)
+    {
+      log_debug ("%s:%s: Failed to find ExchangeUser",
+                 SRCNAME, __func__);
+      return nullptr;
+    }
+
+  ret = get_oom_string (ex_user, "PrimarySmtpAddress");
+  gpgol_release (ex_user);
+  if (ret)
+    {
+      log_debug ("%s:%s: Found recipient through exchange user primary smtp address: %s",
+                 SRCNAME, __func__, ret);
+      return ret;
+    }
+  return nullptr;
+}
+
 /* Helper for additional fallbacks in recipient lookup */
 static char *
 get_recipient_addr_fallbacks (LPDISPATCH recipient)
@@ -1122,49 +1168,131 @@ get_recipient_addr_fallbacks (LPDISPATCH recipient)
       return nullptr;
     }
 
-  /* Maybe check for type here? We are pretty sure that we are exchange */
+  char *ret = get_recipient_addr_entry_fallbacks_ex (addr_entry);
 
-  /* According to MSDN Message Boards the PR_EMS_AB_PROXY_ADDRESSES_DASL
-     is more avilable then the SMTP Address. */
-  char *ret = get_pa_string (addr_entry, PR_EMS_AB_PROXY_ADDRESSES_DASL);
-  if (ret)
-    {
-      log_debug ("%s:%s: Found recipient through AB_PROXY: %s",
-                 SRCNAME, __func__, ret);
-
-      char *smtpbegin = strstr(ret, "SMTP:");
-      if (smtpbegin == ret)
-        {
-          ret += 5;
-        }
-      gpgol_release (addr_entry);
-      return ret;
-    }
-  else
-    {
-      log_debug ("%s:%s: Failed AB_PROXY lookup.",
-                 SRCNAME, __func__);
-    }
-
-  LPDISPATCH ex_user = get_oom_object (addr_entry, "GetExchangeUser");
   gpgol_release (addr_entry);
-  if (!ex_user)
+
+  return ret;
+}
+
+/* Try to resolve a recipient group and add it to the recipients vector.
+
+   returns true on success.
+*/
+static bool
+try_resolve_group (LPDISPATCH addrEntry, std::vector<std::string> &ret)
+{
+  /* Get the name for debugging */
+  std::string name;
+  char *cname = get_oom_string (addrEntry, "Name");
+  if (cname)
     {
-      log_debug ("%s:%s: Failed to find ExchangeUser",
-                 SRCNAME, __func__);
-      return nullptr;
+      name = cname;
+    }
+  xfree (cname);
+
+  int type = get_oom_int (addrEntry, "AddressEntryUserType");
+
+  if (type != DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
+    {
+      log_mime_parser ("%s:%s: type of %s is %i",
+                       SRCNAME, __func__, name.c_str(), type);
+      return false;
     }
 
-  ret = get_oom_string (ex_user, "PrimarySmtpAddress");
-  gpgol_release (ex_user);
-  if (ret)
+  LPDISPATCH members = get_oom_object (addrEntry, "Members");
+  addrEntry = nullptr;
+
+  if (!members)
     {
-      log_debug ("%s:%s: Found recipient through exchange user primary smtp address: %s",
-                 SRCNAME, __func__, ret);
-      return ret;
+      TRACEPOINT;
+      return false;
     }
 
-  return nullptr;
+  int count = get_oom_int (members, "Count");
+
+  if (!count)
+    {
+      TRACEPOINT;
+      gpgol_release (members);
+      return false;
+    }
+
+  bool foundOne = false;
+  for (int i = 1; i <= count; i++)
+    {
+      auto item_str = std::string("Item(") + std::to_string (i) + ")";
+      LPDISPATCH entry = get_oom_object (members, item_str.c_str());
+      if (!entry)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      std::string entryName;
+      char *entry_name = get_oom_string (entry, "Name");
+      if (entry_name)
+        {
+          entryName = entry_name;
+          xfree (entry_name);
+        }
+
+      int subType = get_oom_int (entry, "AddressEntryUserType");
+      /* Resolve recursively, yeah fun. */
+      if (subType == DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
+        {
+          log_debug ("%s:%s: recursive address entry %s",
+                     SRCNAME, __func__,
+                     (opt.enable_debug & DBG_MIME_PARSER) ?
+                     entryName.c_str() : "omitted");
+          if (try_resolve_group (entry, ret))
+            {
+              foundOne = true;
+              gpgol_release (entry);
+              continue;
+            }
+        }
+
+      /* Resolve directly ? */
+      char *addrtype = get_pa_string (entry, PR_ADDRTYPE_DASL);
+      if (addrtype && !strcmp (addrtype, "SMTP"))
+        {
+          xfree (addrtype);
+          char *resolved = get_pa_string (entry, PR_EMAIL_ADDRESS_DASL);
+          if (resolved)
+            {
+              ret.push_back(resolved);
+              foundOne = true;
+              gpgol_release (entry);
+              continue;
+            }
+        }
+      xfree (addrtype);
+
+      /* Resolve through Exchange API */
+      char *ex_resolved = get_recipient_addr_entry_fallbacks_ex (entry);
+      if (ex_resolved)
+        {
+          ret.push_back (ex_resolved);
+          foundOne = true;
+          gpgol_release (entry);
+          continue;
+        }
+
+      gpgol_release (entry);
+      log_debug ("%s:%s: failed to resolve name %s",
+                 SRCNAME, __func__,
+                 (opt.enable_debug & DBG_MIME_PARSER) ?
+                 entryName.c_str() : "omitted");
+    }
+  gpgol_release (members);
+  if (!foundOne)
+    {
+      log_debug ("%s:%s: failed to resolve group %s",
+                 SRCNAME, __func__,
+                 (opt.enable_debug & DBG_MIME_PARSER) ?
+                 name.c_str() : "omitted");
+    }
+  return foundOne;
 }
 
 /* Gets the resolved smtp addresses of the recpients. */
@@ -1198,6 +1326,17 @@ get_oom_recipients (LPDISPATCH recipients, bool *r_err)
             }
           break;
         }
+
+      LPDISPATCH addrEntry = get_oom_object (recipient, "AddressEntry");
+      if (addrEntry && try_resolve_group (addrEntry, ret))
+        {
+          log_debug ("%s:%s: Resolved recipient group",
+                     SRCNAME, __func__);
+          gpgol_release (recipient);
+          gpgol_release (addrEntry);
+          continue;
+        }
+
       char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
       if (resolved)
         {

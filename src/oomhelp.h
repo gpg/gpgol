@@ -99,6 +99,16 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
 #endif
 
+#ifndef PR_ADDRTYPE_DASL
+#define PR_ADDRTYPE_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x3002001E"
+#endif
+
+#ifndef PR_EMAIL_ADDRESS_DASL
+#define PR_EMAIL_ADDRESS_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x3003001E"
+#endif
+
 #define PR_MESSAGE_CLASS_W_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x001A001F"
 #define GPGOL_ATTACHTYPE_DASL \
@@ -125,6 +135,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F"
 #define PR_BLOCK_STATUS_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x10960003"
+
+#define DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE 11
 
 /* Return the malloced name of an COM+ object.  */
 char *get_object_name (LPUNKNOWN obj);
