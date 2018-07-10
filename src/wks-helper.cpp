@@ -797,21 +797,19 @@ WKSHelper::handle_confirmation_read (Mail *mail, LPSTREAM stream) const
     }
 
   /* Get the recipient of the confirmation mail */
-  char **recipients = mail->getRecipients_o ();
+  const auto recipients = mail->getRecipients_o ();
 
   /* We assert that we have one recipient as the mail should have been
      sent by the wks-server. */
-  if (!recipients || !recipients[0] || recipients[1])
+  if (recipients.size() != 1)
     {
       log_error ("%s:%s: invalid recipients",
                  SRCNAME, __func__);
-      release_cArray (recipients);
       gpgol_release (stream);
       return;
     }
 
   std::string mbox = recipients[0];
-  release_cArray (recipients);
 
   /* Prepare stdin for the wks-client process */
 

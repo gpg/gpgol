@@ -394,10 +394,8 @@ public:
   /** Get the html of the mail */
   std::string getHTMLBody_o () const;
 
-  /** Get the recipients recipients is a null
-      terminated array of strings. Needs to be freed
-      by the caller. */
-  char ** getRecipients_o () const;
+  /** Get the recipients. */
+  std::vector<std::string> getRecipients_o () const;
 
   /** Try to locate the keys for all recipients */
   void locateKeys_o ();
@@ -421,7 +419,7 @@ public:
   char *takeCachedPlainBody ();
 
   /** Get the cached recipients. It is updated in update_oom_data.*/
-  std::vector<std::string> getRecipients ();
+  std::vector<std::string> getCachedRecipients ();
 
   /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
       Only valid after decrypt_verify.

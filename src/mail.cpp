@@ -1527,9 +1527,7 @@ Mail::updateOOMData_o ()
       xfree (m_cached_plain_body);
       m_cached_plain_body = get_oom_string (m_mailitem, "Body");
 
-      char **recipients = getRecipients_o ();
-      m_cached_recipients = cArray_to_vector ((const char **)recipients);
-      xfree (recipients);
+      m_cached_recipients = getRecipients_o ();
     }
   /* For some reason outlook may store the recipient address
      in the send using account field. If we have SMTP we prefer
@@ -1779,17 +1777,34 @@ Mail::getHTMLBody_o () const
   return get_string_o (m_mailitem, "HTMLBody");
 }
 
-char **
+std::vector<std::string>
 Mail::getRecipients_o () const
 {
   LPDISPATCH recipients = get_oom_object (m_mailitem, "Recipients");
   if (!recipients)
     {
       TRACEPOINT;
-      return nullptr;
+      std::vector<std::string>();
     }
-  auto ret = get_oom_recipients (recipients);
+  bool err = false;
+  auto ret = get_oom_recipients (recipients, &err);
   gpgol_release (recipients);
+
+  if (err)
+    {
+      /* Should not happen. But we add it for better bug reports. */
+      const char *bugmsg = utf8_gettext ("Operation failed.\n\n"
+              "This is usually caused by a bug in GpgOL or an error in your setup.\n"
+              "Please see https://www.gpg4win.org/reporting-bugs.html "
+              "or ask your Administrator for support.");
+      char *buf;
+      gpgrt_asprintf (&buf, "Failed to resolve recipients.\n\n%s\n", bugmsg);
+      gpgol_message_box (get_active_hwnd (),
+                         buf,
+                         _("GpgOL"), MB_OK);
+      xfree(buf);
+    }
+
   return ret;
 }
 
@@ -2704,7 +2719,7 @@ Mail::locateKeys_o ()
   updateOOMData_o ();
   KeyCache::instance()->startLocateSecret (getSender_o ().c_str (), this);
   KeyCache::instance()->startLocate (getSender_o ().c_str (), this);
-  KeyCache::instance()->startLocate (getRecipients (), this);
+  KeyCache::instance()->startLocate (getCachedRecipients (), this);
   autoresolveCheck ();
 
   locate_in_progress = false;
@@ -2751,7 +2766,7 @@ Mail::getNeedsEncrypt () const
 }
 
 std::vector<std::string>
-Mail::getRecipients ()
+Mail::getCachedRecipients ()
 {
   return m_cached_recipients;
 }

@@ -25,6 +25,9 @@
 #include <unknwn.h>
 #include "mymapi.h"
 
+#include <vector>
+#include <string>
+
 #define MSOCONTROLBUTTON    1
 #define MSOCONTROLEDIT      2
 #define MSOCONTROLDROPDOWN  3
@@ -172,8 +175,10 @@ void del_oom_button (LPDISPATCH button);
 /* Get the HWND of the active window in the current context */
 HWND get_oom_context_window (LPDISPATCH context);
 
-/* Get the address of the recipients as string list */
-char ** get_oom_recipients (LPDISPATCH recipients);
+/* Get the address of the recipients as string list.
+   If r_err is not null it is set to true in case of an error. */
+std::vector<std::string> get_oom_recipients (LPDISPATCH recipients,
+                                             bool *r_err = nullptr);
 
 /* Add an attachment to a dispatcher */
 int

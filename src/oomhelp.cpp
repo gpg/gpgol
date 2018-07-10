@@ -1167,23 +1167,20 @@ get_recipient_addr_fallbacks (LPDISPATCH recipient)
   return nullptr;
 }
 
-/* Gets a malloced NULL terminated array of recipent strings from
-   an OOM recipients Object. */
-char **
-get_oom_recipients (LPDISPATCH recipients)
+/* Gets the resolved smtp addresses of the recpients. */
+std::vector<std::string>
+get_oom_recipients (LPDISPATCH recipients, bool *r_err)
 {
   int recipientsCnt = get_oom_int (recipients, "Count");
-  char **recipientAddrs = NULL;
+  std::vector<std::string> ret;
   int i;
 
   if (!recipientsCnt)
     {
-      return NULL;
+      return ret;
     }
 
   /* Get the recipients */
-  recipientAddrs = (char**) xmalloc((recipientsCnt + 1) * sizeof(char*));
-  recipientAddrs[recipientsCnt] = NULL;
   for (i = 1; i <= recipientsCnt; i++)
     {
       char buf[16];
@@ -1193,15 +1190,19 @@ get_oom_recipients (LPDISPATCH recipients)
       if (!recipient)
         {
           /* Should be impossible */
-          recipientAddrs[i-1] = NULL;
           log_error ("%s:%s: could not find Item %i;",
                      SRCNAME, __func__, i);
+          if (r_err)
+            {
+              *r_err = true;
+            }
           break;
         }
       char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
       if (resolved)
         {
-          recipientAddrs[i-1] = resolved;
+          ret.push_back (resolved);
+          xfree (resolved);
           gpgol_release (recipient);
           continue;
         }
@@ -1209,7 +1210,8 @@ get_oom_recipients (LPDISPATCH recipients)
       resolved = get_recipient_addr_fallbacks (recipient);
       if (resolved)
         {
-          recipientAddrs[i-1] = resolved;
+          ret.push_back (resolved);
+          xfree (resolved);
           gpgol_release (recipient);
           continue;
         }
@@ -1218,9 +1220,18 @@ get_oom_recipients (LPDISPATCH recipients)
       gpgol_release (recipient);
       log_debug ("%s:%s: Failed to look up Address probably EX addr is returned",
                  SRCNAME, __func__);
-      recipientAddrs[i-1] = address;
+      if (address)
+        {
+          ret.push_back (address);
+          xfree (address);
+        }
+      else if (r_err)
+        {
+          *r_err = true;
+        }
     }
-  return recipientAddrs;
+
+  return ret;
 }
 
 /* Add an attachment to the outlook dispatcher disp

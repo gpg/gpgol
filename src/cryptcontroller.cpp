@@ -70,7 +70,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
 {
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
-  m_recipient_addrs = vector_to_cArray (mail->getRecipients ());
+  m_recipient_addrs = vector_to_cArray (mail->getCachedRecipients ());
 }
 
 CryptController::~CryptController()
