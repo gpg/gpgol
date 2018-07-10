@@ -282,7 +282,7 @@ ParseController::parse()
     {
       protocol = Protocol::OpenPGP;
     }
-  auto ctx = Context::createForProtocol (protocol);
+  auto ctx = std::unique_ptr<Context> (Context::createForProtocol (protocol));
   if (!ctx)
     {
       log_error ("%s:%s:Failed to create context. Installation broken.",
@@ -417,8 +417,7 @@ ParseController::parse()
               if (utf8)
                 {
                   // Try again after conversion.
-                  delete ctx;
-                  ctx = Context::createForProtocol (protocol);
+                  ctx = std::unique_ptr<Context> (Context::createForProtocol (protocol));
                   ctx->setArmor (true);
                   if (!m_sender.empty())
                     {
@@ -445,7 +444,6 @@ ParseController::parse()
 #endif
         }
     }
-  delete ctx;
   log_debug ("%s:%s:%p: decrypt err: %i verify err: %i",
              SRCNAME, __func__, this, m_decrypt_result.error().code(),
              m_verify_result.error().code());
