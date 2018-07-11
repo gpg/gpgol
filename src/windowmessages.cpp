@@ -275,6 +275,10 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data)
   wm_ctx_t ctx = {NULL, UNKNOWN, 0, 0};
   ctx.wmsg_type = type;
   ctx.data = data;
+
+  log_debug ("%s:%s: Sending message of type %i",
+             SRCNAME, __func__, type);
+
   if (send_msg_to_ui_thread (&ctx))
     {
       return -1;
