@@ -647,9 +647,10 @@ static int
 add_attachments_o(LPDISPATCH mail,
                 std::vector<std::shared_ptr<Attachment> > attachments)
 {
-  int err = 0;
+  bool anyError = false;
   for (auto att: attachments)
     {
+      int err = 0;
       if (att->get_display_name().empty())
         {
           log_error ("%s:%s: Ignoring attachment without display name.",
@@ -660,13 +661,19 @@ add_attachments_o(LPDISPATCH mail,
       HANDLE hFile;
       wchar_t* wchar_file = get_tmp_outfile (wchar_name,
                                              &hFile);
-      if (copy_attachment_to_file (att, hFile))
+      if (!wchar_file)
+        {
+          log_error ("%s:%s: Failed to obtain a tmp filename for: %s",
+                     SRCNAME, __func__, att->get_display_name().c_str());
+          err = 1;
+        }
+      if (!err && copy_attachment_to_file (att, hFile))
         {
           log_error ("%s:%s: Failed to copy attachment %s to temp file",
                      SRCNAME, __func__, att->get_display_name().c_str());
           err = 1;
         }
-      if (add_oom_attachment (mail, wchar_file, wchar_name))
+      if (!err && add_oom_attachment (mail, wchar_file, wchar_name))
         {
           log_error ("%s:%s: Failed to add attachment: %s",
                      SRCNAME, __func__, att->get_display_name().c_str());
@@ -682,9 +689,16 @@ add_attachments_o(LPDISPATCH mail,
       xfree (wchar_file);
       xfree (wchar_name);
 
-      err = fixup_last_attachment_o (mail, att);
+      if (!err)
+        {
+          err = fixup_last_attachment_o (mail, att);
+        }
+      if (err)
+        {
+          anyError = true;
+        }
     }
-  return err;
+  return anyError;
 }
 
 GPGRT_LOCK_DEFINE(parser_lock);
