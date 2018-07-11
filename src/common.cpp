@@ -425,7 +425,7 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
                                     FILE_ATTRIBUTE_TEMPORARY,
                                     NULL)) == INVALID_HANDLE_VALUE)
     {
-      log_debug_w32 (-1, "%s:%s: Failed to open candidate %S.",
+      log_debug_w32 (-1, "%s:%s: Failed to open candidate '%S'",
                      SRCNAME, __func__, outName);
       wchar_t fnameBuf[MAX_PATH + 1];
       wchar_t origName[MAX_PATH + 1];
