@@ -405,10 +405,6 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
       return NULL;
     }
 
-  /* We should probably use the unicode variants here
-     but this would mean adding OpenStreamOnFileW to
-     out mapi */
-
   if (!GetTempPathW (MAX_PATH, tmpPath))
     {
       log_error ("%s:%s: Could not get tmp path.",
@@ -429,6 +425,8 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
                                     FILE_ATTRIBUTE_TEMPORARY,
                                     NULL)) == INVALID_HANDLE_VALUE)
     {
+      log_debug_w32 (-1, "%s:%s: Failed to open candidate %S.",
+                     SRCNAME, __func__, outName);
       wchar_t fnameBuf[MAX_PATH + 1];
       wchar_t origName[MAX_PATH + 1];
       memset (fnameBuf, 0, MAX_PATH + 1);
