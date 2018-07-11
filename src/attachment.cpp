@@ -43,6 +43,12 @@ Attachment::get_display_name() const
 void
 Attachment::set_display_name(const char *name)
 {
+  if (!name)
+    {
+      log_error ("%s:%s: Display name set to null.",
+                 SRCNAME, __func__);
+      return;
+    }
   m_utf8DisplayName = std::string(name);
 }
 
