@@ -651,39 +651,47 @@ add_attachments_o(LPDISPATCH mail,
   for (auto att: attachments)
     {
       int err = 0;
-      if (att->get_display_name().empty())
+      const auto dispName = att->get_display_name ();
+      if (dispName.empty())
         {
           log_error ("%s:%s: Ignoring attachment without display name.",
                      SRCNAME, __func__);
           continue;
         }
-      wchar_t* wchar_name = utf8_to_wchar (att->get_display_name().c_str());
+      wchar_t* wchar_name = utf8_to_wchar (dispName.c_str());
+      if (!wchar_name)
+        {
+          log_error ("%s:%s: Failed to convert '%s' to wchar.",
+                     SRCNAME, __func__, dispName.c_str());
+          continue;
+        }
+
       HANDLE hFile;
       wchar_t* wchar_file = get_tmp_outfile (wchar_name,
                                              &hFile);
       if (!wchar_file)
         {
           log_error ("%s:%s: Failed to obtain a tmp filename for: %s",
-                     SRCNAME, __func__, att->get_display_name().c_str());
+                     SRCNAME, __func__, dispName.c_str());
           err = 1;
         }
       if (!err && copy_attachment_to_file (att, hFile))
         {
           log_error ("%s:%s: Failed to copy attachment %s to temp file",
-                     SRCNAME, __func__, att->get_display_name().c_str());
+                     SRCNAME, __func__, dispName.c_str());
           err = 1;
         }
       if (!err && add_oom_attachment (mail, wchar_file, wchar_name))
         {
           log_error ("%s:%s: Failed to add attachment: %s",
-                     SRCNAME, __func__, att->get_display_name().c_str());
+                     SRCNAME, __func__, dispName.c_str());
           err = 1;
         }
       CloseHandle (hFile);
       if (!DeleteFileW (wchar_file))
         {
           log_error ("%s:%s: Failed to delete tmp attachment for: %s",
-                     SRCNAME, __func__, att->get_display_name().c_str());
+                     SRCNAME, __func__, dispName.c_str());
           err = 1;
         }
       xfree (wchar_file);
