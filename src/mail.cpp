@@ -1927,7 +1927,8 @@ get_uid_for_sender (const Key &k, const char *sender)
     {
       if (!uid.email() || !*(uid.email()))
         {
-          log_error ("%s:%s: skipping uid without email.",
+          /* This happens for S/MIME a lot */
+          log_debug ("%s:%s: skipping uid without email.",
                      SRCNAME, __func__);
           continue;
         }
