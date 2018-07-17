@@ -112,6 +112,7 @@ in_de_vs_mode()
     {
       return vs_mode;
     }
+  checked = true;
   GpgME::Error err;
   const auto components = GpgME::Configuration::Component::load (err);
   log_debug ("%s:%s: Checking for de-vs mode.",
@@ -120,7 +121,6 @@ in_de_vs_mode()
     {
       log_error ("%s:%s: Failed to get gpgconf components: %s",
                  SRCNAME, __func__, err.asString ());
-      checked = true;
       vs_mode = false;
       return vs_mode;
     }
@@ -136,17 +136,14 @@ in_de_vs_mode()
                 {
                   log_debug ("%s:%s: Detected de-vs mode",
                              SRCNAME, __func__);
-                  checked = true;
                   vs_mode = true;
                   return vs_mode;
                 }
             }
-          checked = true;
           vs_mode = false;
           return vs_mode;
         }
     }
-  checked = true;
   vs_mode = false;
   return false;
 }

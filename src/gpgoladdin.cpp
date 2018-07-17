@@ -46,6 +46,7 @@
 #include "windowmessages.h"
 #include "mail.h"
 #include "addin-options.h"
+#include "cpphelp.h"
 
 #include <gpg-error.h>
 #include <list>
@@ -458,6 +459,18 @@ install_explorer_sinks (LPDISPATCH application)
   return install_ExplorersEvents_sink (explorers);
 }
 
+static DWORD WINAPI
+init_gpgme_config (LPVOID)
+{
+  /* This is a check we need to do anyway. GpgME++ caches
+     the configuration once it is accessed for the first time
+     so this call also initializes GpgME++ */
+  bool de_vs_mode = in_de_vs_mode ();
+  log_debug ("%s:%s: init_gpgme_config de_vs_mode %i",
+             SRCNAME, __func__, de_vs_mode);
+  return 0;
+}
+
 STDMETHODIMP
 GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 {
@@ -495,6 +508,9 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
   m_applicationEventSink = install_ApplicationEvents_sink (m_application);
   m_explorersEventSink = install_explorer_sinks (m_application);
   check_html_preferred ();
+
+  CloseHandle (CreateThread (NULL, 0, init_gpgme_config, nullptr, 0,
+                             NULL));
   return S_OK;
 }
 
