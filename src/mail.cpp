@@ -687,8 +687,11 @@ add_attachments_o(LPDISPATCH mail,
                      SRCNAME, __func__, dispName.c_str());
           err = 1;
         }
-      CloseHandle (hFile);
-      if (!DeleteFileW (wchar_file))
+      if (hFile && hFile != INVALID_HANDLE_VALUE)
+        {
+          CloseHandle (hFile);
+        }
+      if (wchar_file && !DeleteFileW (wchar_file))
         {
           log_error ("%s:%s: Failed to delete tmp attachment for: %s",
                      SRCNAME, __func__, dispName.c_str());
