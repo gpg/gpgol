@@ -386,6 +386,61 @@ get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
   return pretty;
 }
 
+static HANDLE
+CreateFileUtf8 (const char *utf8Name)
+{
+  if (!utf8Name)
+    {
+      return INVALID_HANDLE_VALUE;
+    }
+
+  wchar_t *wname = utf8_to_wchar (utf8Name);
+  if (!wname)
+    {
+      TRACEPOINT;
+      return INVALID_HANDLE_VALUE;
+    }
+
+  auto ret = CreateFileW (wname,
+                          GENERIC_WRITE | GENERIC_READ,
+                          FILE_SHARE_READ | FILE_SHARE_DELETE,
+                          NULL,
+                          CREATE_NEW,
+                          FILE_ATTRIBUTE_TEMPORARY,
+                          NULL);
+  xfree (wname);
+  return ret;
+}
+
+static std::string
+getTmpPathUtf8 ()
+{
+  static std::string ret;
+  if (!ret.empty())
+    {
+      return ret;
+    }
+  wchar_t tmpPath[MAX_PATH + 2];
+
+  if (!GetTempPathW (MAX_PATH, tmpPath))
+    {
+      log_error ("%s:%s: Could not get tmp path.",
+                 SRCNAME, __func__);
+      return ret;
+    }
+
+  char *utf8Name = wchar_to_utf8 (tmpPath);
+
+  if (!utf8Name)
+    {
+      TRACEPOINT;
+      return ret;
+    }
+  ret = utf8Name;
+  xfree (utf8Name);
+  return ret;
+}
+
 /* Open a file in a temporary directory, take name as a
    suggestion and put the open Handle in outHandle.
    Returns the actually used file name in case there
@@ -393,68 +448,65 @@ get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
 wchar_t*
 get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
 {
-  wchar_t tmpPath[MAX_PATH];
-  wchar_t *outName;
-  wchar_t *fileExt = NULL;
+  const auto utf8Name = wchar_to_utf8_string (name);
+  const auto tmpPath = getTmpPathUtf8 ();
+
+  if (utf8Name.empty() || tmpPath.empty())
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  auto outName = tmpPath + utf8Name;
+
+  log_mime_parser("%s:%s: Attachment candidate is %s",
+                  SRCNAME, __func__, outName.c_str ());
+
   int tries = 1;
-
-  if (!name || !wcslen(name))
+  while ((*outHandle = CreateFileUtf8 (outName.c_str ())) == INVALID_HANDLE_VALUE)
     {
-      log_error ("%s:%s: Needs a name.",
-                 SRCNAME, __func__);
-      return NULL;
-    }
+      log_debug_w32 (-1, "%s:%s: Failed to open candidate '%s'",
+                     SRCNAME, __func__, outName.c_str());
 
-  if (!GetTempPathW (MAX_PATH, tmpPath))
-    {
-      log_error ("%s:%s: Could not get tmp path.",
-                 SRCNAME, __func__);
-      return NULL;
-    }
+      char *outNameC = strdup (outName.c_str());
 
-  outName = (wchar_t*) xmalloc ((MAX_PATH + 1) * sizeof(wchar_t));
-  memset (outName, 0, (MAX_PATH + 1) * sizeof (wchar_t));
+      const auto lastBackslash = strrchr (outNameC, '\\');
+      if (!lastBackslash)
+        {
+          /* This is an error because tmp name by definition contains one */
+          log_error ("%s:%s: No backslash in origname '%s'",
+                     SRCNAME, __func__, outNameC);
+          xfree (outNameC);
+          return NULL;
+        }
 
-  snwprintf (outName, MAX_PATH, L"%s%s", tmpPath, name);
-
-  while ((*outHandle = CreateFileW (outName,
-                                    GENERIC_WRITE | GENERIC_READ,
-                                    FILE_SHARE_READ | FILE_SHARE_DELETE,
-                                    NULL,
-                                    CREATE_NEW,
-                                    FILE_ATTRIBUTE_TEMPORARY,
-                                    NULL)) == INVALID_HANDLE_VALUE)
-    {
-      log_debug_w32 (-1, "%s:%s: Failed to open candidate '%S'",
-                     SRCNAME, __func__, outName);
-      wchar_t fnameBuf[MAX_PATH + 1];
-      wchar_t origName[MAX_PATH + 1];
-      memset (fnameBuf, 0, MAX_PATH + 1);
-      memset (origName, 0, MAX_PATH + 1);
-
-      snwprintf (origName, MAX_PATH, L"%s%s", tmpPath, name);
-      fileExt = wcschr (wcsrchr(origName, '\\'), '.');
+      auto fileExt = strchr (lastBackslash, '.');
       if (fileExt)
         {
-          wcsncpy (fnameBuf, origName, fileExt - origName);
+          *fileExt = '\0';
+          ++fileExt;
         }
-      else
+      // OutNameC is now without an extension and if
+      // there is a file ext it now points to the extension.
+
+      outName = tmpPath + outNameC + std::to_string(tries++);
+
+      if (fileExt)
         {
-          wcsncpy (fnameBuf, origName, wcslen (origName));
+          outName += fileExt;
         }
-      snwprintf (outName, MAX_PATH, L"%s%i%s", fnameBuf, tries++,
-                 fileExt ? fileExt : L"");
+      xfree (outNameC);
+
       if (tries > 100)
         {
           /* You have to know when to give up,.. */
           log_error ("%s:%s: Could not get a name out of 100 tries",
                      SRCNAME, __func__);
-          xfree (outName);
           return NULL;
         }
     }
 
-  return outName;
+  return utf8_to_wchar (outName.c_str ());
 }
 
 /** Get the Gpg4win Install directory.
