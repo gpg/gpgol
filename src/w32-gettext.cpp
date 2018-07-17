@@ -1515,6 +1515,26 @@ wchar_to_utf8 (const wchar_t *string)
   return result;
 }
 
+std::string
+wchar_to_utf8_string (const wchar_t *string)
+{
+  std::string ret;
+  if (!string)
+    {
+      return ret;
+    }
+
+  const auto utf8 = wchar_to_utf8 (string);
+  if (!utf8)
+    {
+      return ret;
+    }
+  ret = utf8;
+
+  xfree (utf8);
+  return ret;
+}
+
 
 /* Convert UTF8 to the native codepage.  This function is guaranteed
    to never return NULL.  Caller must xfree the return value. */

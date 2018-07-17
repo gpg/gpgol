@@ -73,4 +73,6 @@ char *native_to_utf8 (const char *string);
 
 #ifdef __cplusplus
 }
+#include <string>
+std::string wchar_to_utf8_string (const wchar_t *string);
 #endif
