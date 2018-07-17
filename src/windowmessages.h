@@ -98,9 +98,6 @@ delayed_invalidate_ui (LPVOID);
 DWORD WINAPI
 close_mail (LPVOID);
 
-void add_explorer (LPDISPATCH explorer);
-void remove_explorer (LPDISPATCH explorer);
-
 /* The lock to invalide the ui */
 extern gpgrt_lock_t invalidate_lock;
 

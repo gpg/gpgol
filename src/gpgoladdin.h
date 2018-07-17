@@ -26,6 +26,8 @@
 
 #include "mymapi.h"
 
+#include <vector>
+
 class GpgolAddinRibbonExt;
 class ApplicationEventListener;
 
@@ -203,6 +205,12 @@ public:
 
 public:
   static GpgolAddin * get_instance ();
+
+  void registerExplorerSink (LPDISPATCH sink);
+  void unregisterExplorerSink (LPDISPATCH sink);
+  /* Start the shutdown. Unregisters everything and closes all
+     crypto mails. */
+  void shutdown ();
   LPDISPATCH get_application () { return m_application; }
 
 private:
@@ -215,7 +223,9 @@ private:
   LPDISPATCH m_explorersEventSink;
   LPDISPATCH m_ribbon_control;
   bool m_disabled;
+  bool m_shutdown;
   HHOOK m_hook;
+  std::vector<LPDISPATCH> m_explorerEventSinks;
 };
 
 class GpgolAddinFactory: public IClassFactory

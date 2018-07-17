@@ -1614,6 +1614,16 @@ int
 Mail::closeAllMails_o ()
 {
   int err = 0;
+
+  /* Detach Folder sinks */
+  for (auto fit = s_folder_events_map.begin(); fit != s_folder_events_map.end(); ++fit)
+    {
+      detach_FolderEvents_sink (fit->second);
+      gpgol_release (fit->second);
+    }
+  s_folder_events_map.clear();
+
+
   std::map<LPDISPATCH, Mail *>::iterator it;
   TRACEPOINT;
   gpgrt_lock_lock (&mail_map_lock);
@@ -1645,11 +1655,6 @@ Mail::closeAllMails_o ()
             }
         }
     }
-  for (auto fit = s_folder_events_map.begin(); fit != s_folder_events_map.end(); ++fit)
-    {
-      detach_FolderEvents_sink (fit->second);
-    }
-  s_folder_events_map.clear();
   return err;
 }
 int
@@ -3407,8 +3412,8 @@ Mail::installFolderEventHandler_o()
     {
       log_error ("%s:%s: Install folder events watcher for %s.",
                  SRCNAME, __func__, strPath.c_str());
-      install_FolderEvents_sink (folder);
-      s_folder_events_map.insert (std::make_pair (strPath, folder));
+      const auto sink = install_FolderEvents_sink (folder);
+      s_folder_events_map.insert (std::make_pair (strPath, sink));
     }
 
   /* Folder already registered */

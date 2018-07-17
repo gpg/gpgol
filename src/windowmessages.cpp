@@ -313,22 +313,6 @@ do_in_ui_thread_async (gpgol_wmsg_type type, void *data, int delay)
   CloseHandle (CreateThread (NULL, 0, do_async, (LPVOID) ctx, 0, NULL));
 }
 
-static std::vector <LPDISPATCH> explorers;
-
-void
-add_explorer (LPDISPATCH explorer)
-{
-  explorers.push_back (explorer);
-}
-
-void remove_explorer (LPDISPATCH explorer)
-{
-  explorers.erase(std::remove(explorers.begin(),
-                              explorers.end(),
-                              explorer),
-                  explorers.end());
-}
-
 LRESULT CALLBACK
 gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
 {
@@ -343,12 +327,41 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
       case WM_CLOSE:
       {
         HWND lastChild = NULL;
-        for (const auto explorer: explorers)
+        log_debug ("%s:%s: Got WM_CLOSE",
+                   SRCNAME, __func__);
+        if (!GpgolAddin::get_instance() || !GpgolAddin::get_instance ()->get_application())
           {
+            TRACEPOINT;
+            break;
+          }
+        LPDISPATCH explorers = get_oom_object (GpgolAddin::get_instance ()->get_application(),
+                                               "Explorers");
+
+        if (!explorers)
+          {
+            log_error ("%s:%s: No explorers object",
+                       SRCNAME, __func__);
+            break;
+          }
+        int count = get_oom_int (explorers, "Count");
+
+        for (int i = 1; i <= count; i++)
+          {
+            std::string item = "Item(";
+            item += std::to_string (i) + ")";
+            LPDISPATCH explorer = get_oom_object (explorers, item.c_str());
+
+            if (!explorer)
+              {
+                TRACEPOINT;
+                break;
+              }
+
             /* Casting to LPOLEWINDOW and calling GetWindow
                succeeded in Outlook 2016 but always returned
                the number 1. So we need this hack. */
             char *caption = get_oom_string (explorer, "Caption");
+            gpgol_release (explorer);
             if (!caption)
               {
                 log_debug ("%s:%s: No caption.",
@@ -363,9 +376,9 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
             if (hwnd == cwp->hwnd)
               {
                 log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
-                           "Closing all mails.",
+                           "Shutting down.",
                            SRCNAME, __func__);
-                Mail::closeAllMails_o ();
+                GpgolAddin::get_instance ()->shutdown();
                 break;
               }
           }
@@ -379,7 +392,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
         {
           log_debug ("%s:%s: SC_CLOSE syscommand. Closing all mails.",
                      SRCNAME, __func__);
-          Mail::closeAllMails_o ();
+          GpgolAddin::get_instance ()->shutdown();
         } */
        break;
      default:

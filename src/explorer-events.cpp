@@ -92,7 +92,7 @@ EVENT_SINK_INVOKE(ExplorerEvents)
           log_oom_extra ("%s:%s: Deleting event handler: %p",
                          SRCNAME, __func__, this);
 
-          remove_explorer (m_object);
+          GpgolAddin::get_instance ()->unregisterExplorerSink (this);
           delete this;
           return S_OK;
         }

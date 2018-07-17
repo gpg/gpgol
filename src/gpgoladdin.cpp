@@ -170,6 +170,7 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0),
   m_applicationEventSink(nullptr),
   m_explorersEventSink(nullptr),
   m_disabled(false),
+  m_shutdown(false),
   m_hook(nullptr)
 {
   read_options ();
@@ -185,15 +186,6 @@ GpgolAddin::~GpgolAddin (void)
     {
       return;
     }
-  log_debug ("%s:%s: Releasing Application Event Sink;",
-             SRCNAME, __func__);
-  gpgol_release (m_explorersEventSink);
-  gpgol_release (m_applicationEventSink);
-
-  write_options ();
-
-  UnhookWindowsHookEx (m_hook);
-
   addin_instance = NULL;
 
   log_debug ("%s:%s: Object deleted\n", SRCNAME, __func__);
@@ -316,6 +308,7 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
   log_debug ("%s:%s: this is GpgOL %s\n",
              SRCNAME, __func__, PACKAGE_VERSION);
 
+  m_shutdown = false;
   can_unload = false;
   m_application = Application;
   m_application->AddRef();
@@ -365,18 +358,7 @@ GpgolAddin::OnDisconnection (ext_DisconnectMode RemoveMode,
      does not allow us any OOM calls then and only returns
      "Unexpected error" in that case. Weird. */
 
-  if (Mail::closeAllMails_o ())
-    {
-      MessageBox (NULL,
-                  "Failed to remove plaintext from at least one message.\n\n"
-                  "Until GpgOL is activated again it is possible that the "
-                  "plaintext of messages decrypted in this Session is saved "
-                  "or transfered back to your mailserver.",
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
-    }
-
-  write_options();
+  shutdown ();
   can_unload = true;
   return S_OK;
 }
@@ -469,9 +451,8 @@ install_explorer_sinks (LPDISPATCH application)
         {
           log_oom_extra ("%s:%s: created sink %p for explorer %i",
                          SRCNAME, __func__, sink, i);
+          GpgolAddin::get_instance ()->registerExplorerSink (sink);
         }
-      add_explorer (explorer);
-      gpgol_release (explorer);
     }
   /* Now install the event sink to handle new explorers */
   return install_ExplorersEvents_sink (explorers);
@@ -1110,4 +1091,71 @@ GpgolAddin::get_instance ()
       addin_instance = new GpgolAddin ();
     }
   return addin_instance;
+}
+
+void
+GpgolAddin::shutdown ()
+{
+  if (m_shutdown)
+    {
+      log_debug ("%s:%s: Already shutdown",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  /* Disabling message hook */
+  UnhookWindowsHookEx (m_hook);
+
+  log_debug ("%s:%s: Releasing Application Event Sink;",
+             SRCNAME, __func__);
+  detach_ApplicationEvents_sink (m_applicationEventSink);
+  gpgol_release (m_applicationEventSink);
+
+  log_debug ("%s:%s: Releasing Explorers Event Sink;",
+             SRCNAME, __func__);
+  detach_ExplorersEvents_sink (m_explorersEventSink);
+  gpgol_release (m_explorersEventSink);
+
+  log_debug ("%s:%s: Releasing Explorer Event Sinks;",
+             SRCNAME, __func__);
+  for (auto sink: m_explorerEventSinks)
+    {
+      detach_ExplorerEvents_sink (sink);
+      gpgol_release (sink);
+    }
+
+  write_options ();
+
+  if (Mail::closeAllMails_o ())
+    {
+      MessageBox (NULL,
+                  "Failed to remove plaintext from at least one message.\n\n"
+                  "Until GpgOL is activated again it is possible that the "
+                  "plaintext of messages decrypted in this Session is saved "
+                  "or transfered back to your mailserver.",
+                  _("GpgOL"),
+                  MB_ICONINFORMATION|MB_OK);
+    }
+  m_shutdown = true;
+}
+
+void
+GpgolAddin::registerExplorerSink (LPDISPATCH sink)
+{
+  m_explorerEventSinks.push_back (sink);
+}
+
+void
+GpgolAddin::unregisterExplorerSink (LPDISPATCH sink)
+{
+  for (int i = 0; i < m_explorerEventSinks.size(); ++i)
+    {
+      if (m_explorerEventSinks[i] == sink)
+        {
+          m_explorerEventSinks.erase(m_explorerEventSinks.begin() + i);
+          return;
+        }
+    }
+  log_error ("%s:%s: Unregister %p which was not registered.",
+             SRCNAME, __func__, sink);
 }

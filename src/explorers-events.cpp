@@ -60,13 +60,14 @@ EVENT_SINK_INVOKE(ExplorersEvents)
                          SRCNAME, __func__);
               break;
             }
-          if (!install_ExplorerEvents_sink (parms->rgvarg[0].pdispVal))
+          LPDISPATCH expSink = install_ExplorerEvents_sink (parms->rgvarg[0].pdispVal);
+          if (!expSink)
             {
               log_error ("%s:%s: Failed to install Explorer event sink.",
                          SRCNAME, __func__);
               break;
-
             }
+          GpgolAddin::get_instance()->registerExplorerSink (expSink);
         }
       default:
         break;
