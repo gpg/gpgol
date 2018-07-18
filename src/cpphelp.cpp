@@ -254,3 +254,39 @@ gpgol_split (const std::string &s, char delim)
   internal_split (s, delim, std::back_inserter (elems));
   return elems;
 }
+
+std::string
+string_to_hex(const std::string& input)
+{
+    static const char* const lut = "0123456789ABCDEF";
+    size_t len = input.length();
+
+    std::string output;
+    output.reserve (3 * len + (len * 3 / 26));
+    for (size_t i = 0; i < len; ++i)
+    {
+        const unsigned char c = input[i];
+        output.push_back (lut[c >> 4]);
+        output.push_back (lut[c & 15]);
+        output.push_back (' ');
+        if (i % 26 == 0)
+          {
+            output.push_back ('\n');
+          }
+    }
+    return output;
+}
+
+bool
+is_binary (const std::string &input)
+{
+  for (int i = 0; i < input.size() - 1; ++i)
+    {
+      const unsigned char c = input[i];
+      if (c < 32 && c != 0x0d && c != 0x0a)
+        {
+          return true;
+        }
+    }
+  return false;
+}

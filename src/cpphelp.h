@@ -46,5 +46,11 @@ bool in_de_vs_mode ();
 /* Get a map of all subkey value pairs in a registry key */
 std::map<std::string, std::string> get_registry_subkeys (const char *path);
 
-std::vector<std::string> gpgol_split(const std::string &s, char delim);
+std::vector<std::string> gpgol_split (const std::string &s, char delim);
+
+/* Convert a string to a hex representation */
+std::string string_to_hex (const std::string& input);
+
+/* Check if a string contains a char < 32 */
+bool is_binary (const std::string &input);
 #endif // CPPHELP_H
