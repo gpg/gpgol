@@ -558,11 +558,21 @@ MimeDataProvider::read(void *buffer, size_t size)
   log_mime_parser ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
                  SRCNAME, __func__, size);
   ssize_t bRead = m_crypto_data.read (buffer, size);
-  if (opt.enable_debug & DBG_MIME_PARSER)
+  if (opt.enable_debug & DBG_MIME_PARSER && bRead)
     {
       std::string buf ((char *)buffer, bRead);
-      log_mime_parser ("%s:%s: Data: \"%s\"",
-                     SRCNAME, __func__, buf.c_str());
+
+      if (!is_binary (buf))
+        {
+          log_mime_parser ("%s:%s: Data: \n------\n%s\n------",
+                           SRCNAME, __func__, buf.c_str());
+        }
+      else
+        {
+          log_mime_parser ("%s:%s: Hex Data: \n------\n%s\n------",
+                           SRCNAME, __func__,
+                           string_to_hex (buf).c_str ());
+        }
     }
   return bRead;
 }
