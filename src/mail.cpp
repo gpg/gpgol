@@ -1987,7 +1987,8 @@ Mail::updateSigstate ()
       m_is_signed = true;
       m_uid = get_uid_for_sender (sig.key(), sender.c_str());
 
-      if (m_uid.origin() == GpgME::Key::OriginWKD &&
+      if ((sig.summary() & Signature::Summary::Valid) &&
+          m_uid.origin() == GpgME::Key::OriginWKD &&
           (sig.validity() == Signature::Validity::Unknown ||
            sig.validity() == Signature::Validity::Marginal))
         {
