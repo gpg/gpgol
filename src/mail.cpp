@@ -2236,6 +2236,7 @@ level_4_check (const UserID &uid)
     }
   if (uid.validity () == UserID::Validity::Full)
     {
+      const auto ultimate_keys = ParseController::get_ultimate_keys ();
       for (const auto sig: uid.signatures ())
         {
           const char *sigID = sig.signerKeyID ();
@@ -2249,7 +2250,7 @@ level_4_check (const UserID &uid)
              through gnupg so we cached the keys with ultimate
              trust during parsing and now see if we find a direct
              trust path.*/
-          for (const auto secKey: ParseController::get_ultimate_keys ())
+          for (const auto secKey: ultimate_keys)
             {
               /* Check that the Key id of the key matches */
               const char *secKeyID = secKey.keyID ();
