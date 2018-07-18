@@ -448,22 +448,25 @@ ParseController::parse()
              SRCNAME, __func__, this, m_decrypt_result.error().code(),
              m_verify_result.error().code());
 
-  TRACEPOINT;
-
   bool has_valid_encrypted_checksum = false;
   /* Ensure that the Keys for the signatures are available
      and if it has a valid encrypted checksum. */
+  bool ultimate_keys_queried = false;
   for (const auto sig: m_verify_result.signatures())
     {
       has_valid_encrypted_checksum = is_valid_chksum (sig);
 
+      /* FIXME: This is very expensive. We need some caching here
+         or reduce the information */
       sig.key(true, true);
-      if (sig.validity() == Signature::Validity::Full ||
-          sig.validity() == Signature::Validity::Ultimate)
+      if (!ultimate_keys_queried &&
+          (sig.validity() == Signature::Validity::Full ||
+          sig.validity() == Signature::Validity::Ultimate))
         {
           /* Ensure that we have the keys with ultimate
              trust cached for the ui. */
           get_ultimate_keys ();
+          ultimate_keys_queried = true;
         }
     }
 
