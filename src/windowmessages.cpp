@@ -322,6 +322,10 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
    before it reaches outlook. */
   LPCWPSTRUCT cwp = (LPCWPSTRUCT) lParam;
 
+  /* What we do here is that we catch all WM_CLOSE messages that
+     get to Outlook. Then we check if the last open Explorer
+     is the target of the close. In set case we start our shutdown
+     routine before we pass the WM_CLOSE to outlook */
   switch (cwp->message)
     {
       case WM_CLOSE:
@@ -345,42 +349,46 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
           }
         int count = get_oom_int (explorers, "Count");
 
-        for (int i = 1; i <= count; i++)
+        if (count != 1)
           {
-            std::string item = "Item(";
-            item += std::to_string (i) + ")";
-            LPDISPATCH explorer = get_oom_object (explorers, item.c_str());
+            log_debug ("%s:%s: More then one explorer. Not shutting down.",
+                       SRCNAME, __func__);
+            gpgol_release (explorers);
+            break;
+          }
 
-            if (!explorer)
-              {
-                TRACEPOINT;
-                break;
-              }
+        LPDISPATCH explorer = get_oom_object (explorers, "Item(1)");
+        gpgol_release (explorers);
 
-            /* Casting to LPOLEWINDOW and calling GetWindow
-               succeeded in Outlook 2016 but always returned
-               the number 1. So we need this hack. */
-            char *caption = get_oom_string (explorer, "Caption");
-            gpgol_release (explorer);
-            if (!caption)
-              {
-                log_debug ("%s:%s: No caption.",
-                           SRCNAME, __func__);
-                continue;
-              }
-            /* rctrl_renwnd32 is the window class of outlook. */
-            HWND hwnd = FindWindowExA(NULL, lastChild, "rctrl_renwnd32",
-                                      caption);
-            xfree (caption);
-            lastChild = hwnd;
-            if (hwnd == cwp->hwnd)
-              {
-                log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
-                           "Shutting down.",
-                           SRCNAME, __func__);
-                GpgolAddin::get_instance ()->shutdown();
-                break;
-              }
+        if (!explorer)
+          {
+            TRACEPOINT;
+            break;
+          }
+
+        /* Casting to LPOLEWINDOW and calling GetWindow
+           succeeded in Outlook 2016 but always returned
+           the number 1. So we need this hack. */
+        char *caption = get_oom_string (explorer, "Caption");
+        gpgol_release (explorer);
+        if (!caption)
+          {
+            log_debug ("%s:%s: No caption.",
+                       SRCNAME, __func__);
+            break;
+          }
+        /* rctrl_renwnd32 is the window class of outlook. */
+        HWND hwnd = FindWindowExA(NULL, lastChild, "rctrl_renwnd32",
+                                  caption);
+        xfree (caption);
+        lastChild = hwnd;
+        if (hwnd == cwp->hwnd)
+          {
+            log_debug ("%s:%s: WM_CLOSE windowmessage for explorer. "
+                       "Shutting down.",
+                       SRCNAME, __func__);
+            GpgolAddin::get_instance ()->shutdown();
+            break;
           }
         break;
       }
