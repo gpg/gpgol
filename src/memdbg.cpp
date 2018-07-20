@@ -42,28 +42,53 @@ GPGRT_LOCK_DEFINE (memdbg_log);
 # include "oomhelp.h"
 #endif
 
-static void
+/* Returns true on a name change */
+static bool
 register_name (void *obj)
 {
 #ifdef HAVE_W32_SYSTEM
-  auto it = olNames.find (obj);
-
-  if (it != olNames.end())
-    {
-      return;
-    }
 
   char *name = get_object_name ((LPUNKNOWN)obj);
+
   if (!name)
     {
-      return;
+      auto it = olNames.find (obj);
+      if (it != olNames.end())
+        {
+          if (it->second != "unknown")
+            {
+              log_debug ("%s:%s Ptr %p name change from %s to unknown",
+                         SRCNAME, __func__, obj, it->second.c_str());
+              it->second = "unknown";
+              return true;
+            }
+        }
+      return false;
     }
+
   std::string sName = name;
-  olNames.insert (std::make_pair (obj, sName));
   xfree (name);
+
+  auto it = olNames.find (obj);
+  if (it != olNames.end())
+    {
+      if (it->second != sName)
+        {
+          log_debug ("%s:%s Ptr %p name change from %s to %s",
+                     SRCNAME, __func__, obj, it->second.c_str(),
+                     sName.c_str());
+          it->second = sName;
+          return true;
+        }
+    }
+  else
+    {
+      olNames.insert (std::make_pair (obj, sName));
+    }
 #else
   (void) obj;
 #endif
+  return false;
 }
 
 void
@@ -83,7 +108,11 @@ memdbg_addRef (void *obj)
   if (it == olObjs.end())
     {
       it = olObjs.insert (std::make_pair (obj, 0)).first;
-      register_name (obj);
+    }
+  if (register_name (obj) && it->second)
+    {
+      log_error ("%s:%s Name change without null ref on %p!",
+                 SRCNAME, __func__, obj);
     }
   it->second++;
 
