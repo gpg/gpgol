@@ -362,6 +362,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
       pObj = vtResult.pdispVal;
       memdbg_addRef (pObj);
     }
+  gpgol_release (pDisp);
   log_debug ("%s:%s: no object", SRCNAME, __func__);
   return NULL;
 }
