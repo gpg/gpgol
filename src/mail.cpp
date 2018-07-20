@@ -1174,8 +1174,10 @@ Mail::updateBody_o ()
 
           char *converted = ansi_charset_to_utf8 (charset.c_str(), html.c_str(),
                                                   html.size(), codepage);
+          TRACEPOINT;
           int ret = put_oom_string (m_mailitem, "HTMLBody", converted ?
                                                             converted : "");
+          TRACEPOINT;
           xfree (converted);
           if (ret)
             {
@@ -1293,7 +1295,9 @@ Mail::updateBody_o ()
   char *converted = ansi_charset_to_utf8 (plain_charset.c_str(),
                                           body.c_str(), body.size(),
                                           codepage);
+  TRACEPOINT;
   int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
+  TRACEPOINT;
   xfree (converted);
   if (ret)
     {
