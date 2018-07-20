@@ -3369,10 +3369,12 @@ Mail::setDoAutosecure_m (bool value)
                  SRCNAME, __func__, m_mailitem);
       m_first_autosecure_check = false;
       m_manual_crypto_opts = true;
+      gpgol_release (msg);
       return;
     }
   m_first_autosecure_check = false;
   set_gpgol_draft_info_flags (msg, value ? 3 : 0);
+  gpgol_release (msg);
   gpgoladdin_invalidate_ui();
 }
 
