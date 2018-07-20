@@ -176,6 +176,7 @@ LPDISPATCH install_ ## subcls ## _sink (LPDISPATCH object)               \
   pCPC = (LPCONNECTIONPOINTCONTAINER)disp;                               \
   pCP = NULL;                                                            \
   hr = pCPC->FindConnectionPoint (iidcls, &pCP);                         \
+  memdbg_addRef (pCP);                                                   \
   if (hr != S_OK || !pCP)                                                \
     {                                                                    \
       log_error ("%s:%s:%s: ConnectionPoint not found: hr=%#lx",         \
@@ -185,6 +186,7 @@ LPDISPATCH install_ ## subcls ## _sink (LPDISPATCH object)               \
     }                                                                    \
   sink = new subcls; /* Note: Advise does another AddRef.  */            \
   hr = pCP->Advise ((LPUNKNOWN)sink, &cookie);                           \
+  memdbg_addRef (sink);                                                  \
   gpgol_release (pCPC);                                                      \
   if (hr != S_OK)                                                        \
     {                                                                    \
@@ -210,7 +212,7 @@ void detach_ ## subcls ## _sink (LPDISPATCH obj)                         \
                                                                          \
   if (debug_oom_extra)                                                   \
     log_debug ("%s:%s:%s: Called", SRCNAME, #subcls, __func__);          \
-  hr = obj->QueryInterface (iidcls, (void**)&sink);                      \
+  hr = gpgol_queryInterface (obj, iidcls, (void**)&sink);                \
   if (hr != S_OK || !sink)                                               \
     {                                                                    \
       log_error ("%s:%s:%s: invalid object passed: hr=%#lx",             \
