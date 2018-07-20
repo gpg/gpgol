@@ -1048,6 +1048,14 @@ change_message_class_ipm_note (LPMESSAGE message)
              class IPM.Note.  */
           newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
         }
+      else if (!strcmp (ct, "multipart/mixed")
+               && !strcmp (proto, "application/pgp-encrypted"))
+        {
+          /* This case happens if an encrypted mail is moved
+             by outlook local filter rules.
+          */
+          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
+        }
       xfree (proto);
     }
   else if (ct && !strcmp (ct, "application/ms-tnef"))
