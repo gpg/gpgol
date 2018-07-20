@@ -106,13 +106,6 @@ char *mapi_get_message_content_type (LPMESSAGE message,
                                      char **r_protocol, char **r_smtype);
 
 int   mapi_has_last_decrypted (LPMESSAGE message);
-int   mapi_get_gpgol_body_attachment (LPMESSAGE message,
-                                      char **r_body, size_t *r_nbytes,
-                                      int *r_ishtml, int *r_protected);
-
-int   mapi_delete_gpgol_body_attachment (LPMESSAGE message);
-
-int   mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item);
 
 attachtype_t get_gpgolattachtype (LPATTACH obj, ULONG tag);
 

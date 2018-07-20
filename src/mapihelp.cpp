@@ -837,7 +837,8 @@ is_really_cms_encrypted (LPMESSAGE message)
       goto leave;
     }
   hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
-                            NULL, MAPI_BEST_ACCESS, &att);	
+                            NULL, MAPI_BEST_ACCESS, &att);
+  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
@@ -963,6 +964,7 @@ get_first_attach_mime_tag (LPMESSAGE message)
     }
   hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
                             NULL, MAPI_BEST_ACCESS, &att);	
+  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
@@ -2444,6 +2446,7 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
     return NULL;
 
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
+  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
@@ -2588,6 +2591,7 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
     return -1;
 
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
+  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
@@ -3177,36 +3181,6 @@ mapi_has_last_decrypted (LPMESSAGE message)
 }
 
 
-/* Helper for mapi_get_gpgol_body_attachment.  */
-static int
-has_gpgol_body_name (LPATTACH obj)
-{
-  HRESULT hr;
-  LPSPropValue propval;
-  int yes = 0;
-
-  hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
-  if (FAILED(hr))
-    return 0;
-
-  if ( PROP_TYPE (propval->ulPropTag) == PT_UNICODE)
-    {
-      if (!wcscmp (propval->Value.lpszW, L"gpgol000.txt"))
-        yes = 1;
-      else if (!wcscmp (propval->Value.lpszW, L"gpgol000.htm"))
-        yes = 2;
-    }
-  else if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8)
-    {
-      if (!strcmp (propval->Value.lpszA, "gpgol000.txt"))
-        yes = 1;
-      else if (!strcmp (propval->Value.lpszA, "gpgol000.htm"))
-        yes = 2;
-    }
-  MAPIFreeBuffer (propval);
-  return yes;
-}
-
 /* Helper to check whether the file name of OBJ is "smime.p7m".
    Returns on true if so.  */
 static int
@@ -3238,320 +3212,6 @@ has_smime_filename (LPATTACH obj)
   return yes;
 }
 
-
-/* Return the content of the body attachment of MESSAGE.  The body
-   attachment is a hidden attachment created by us for later display.
-   If R_NBYTES is not NULL the number of bytes in the returned buffer
-   is stored there.  If R_ISHTML is not NULL a flag indicating whether
-   the HTML is html formatted is stored there.  If R_PROTECTED is not
-   NULL a flag indicating whether the message was protected is stored
-   there.  If no body attachment can be found or on any other error an
-   error codes is returned and NULL is stored at R_BODY.  Caller must
-   free the returned string.  If NULL is passed for R_BODY, the
-   function will only test whether a body attachment is available and
-   return an error code if not.  R_IS_HTML and R_PROTECTED are not
-   defined in this case.  */
-int
-mapi_get_gpgol_body_attachment (LPMESSAGE message, 
-                                char **r_body, size_t *r_nbytes, 
-                                int *r_ishtml, int *r_protected)
-{    
-  HRESULT hr;
-  SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
-  LPMAPITABLE mapitable;
-  LPSRowSet   mapirows;
-  unsigned int pos, n_attach;
-  ULONG moss_tag;
-  char *body = NULL;
-  int bodytype;
-  int found = 0;
-
-  if (r_body)
-    *r_body = NULL;
-  if (r_ishtml)
-    *r_ishtml = 0;
-  if (r_protected)
-    *r_protected = 0;
-
-  if (get_gpgolattachtype_tag (message, &moss_tag) )
-    return -1;
-
-  hr = message->GetAttachmentTable (0, &mapitable);
-  if (FAILED (hr))
-    {
-      log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      return -1;
-    }
-      
-  hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
-                       NULL, NULL, 0, &mapirows);
-  if (FAILED (hr))
-    {
-      log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      gpgol_release (mapitable);
-      return -1;
-    }
-  n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
-  if (!n_attach)
-    {
-      FreeProws (mapirows);
-      gpgol_release (mapitable);
-      log_debug ("%s:%s: No attachments at all", SRCNAME, __func__);
-      return -1;
-    }
-  log_debug ("%s:%s: message has %u attachments\n",
-             SRCNAME, __func__, n_attach);
-
-  for (pos=0; pos < n_attach; pos++) 
-    {
-      LPATTACH att;
-
-      if (mapirows->aRow[pos].cValues < 1)
-        {
-          log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
-          continue;
-        }
-      if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
-        {
-          log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
-          continue;
-        }
-      hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
-                                NULL, MAPI_BEST_ACCESS, &att);	
-      if (FAILED (hr))
-        {
-          log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
-                     SRCNAME, __func__, pos, 
-                     mapirows->aRow[pos].lpProps[0].Value.l, hr);
-          continue;
-        }
-      if ((bodytype=has_gpgol_body_name (att))
-           && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
-        {
-          found = 1;
-          if (!r_body)
-            ; /* Body content has not been requested. */
-          else
-            {
-              char *charset;
-              
-              if (get_attach_method (att) == ATTACH_BY_VALUE)
-                body = attach_to_buffer (att, r_nbytes);
-              if (body && (charset = mapi_get_gpgol_charset ((LPMESSAGE)att)))
-                {
-                  /* We only support transcoding from Latin-1 for now.  */
-                  if (strcmp (charset, "iso-8859-1") 
-                      && !strcmp (charset, "latin-1"))
-                    log_debug ("%s:%s: Using Latin-1 instead of %s",
-                               SRCNAME, __func__, charset);
-                  xfree (charset);
-                  charset = latin1_to_utf8 (body);
-                  xfree (body);
-                  body = charset;
-                }
-            }
-          gpgol_release (att);
-          if (r_ishtml)
-            *r_ishtml = (bodytype == 2);
-          break;
-        }
-      gpgol_release (att);
-    }
-  FreeProws (mapirows);
-  gpgol_release (mapitable);
-  if (!found)
-    {
-      log_error ("%s:%s: no suitable body attachment found", SRCNAME,__func__);
-      if (r_body)
-        *r_body = native_to_utf8 
-          (_("[The content of this message is not visible"
-             " due to an processing error in GpgOL.]"));
-      return -1;
-    }
-
-  if (r_body)
-    *r_body = body;
-  else
-    xfree (body);  /* (Should not happen.)  */
-  return 0;
-}
-
-
-/* Delete a possible body atatchment.  Returns true if an atatchment
-   has been deleted.  */
-int
-mapi_delete_gpgol_body_attachment (LPMESSAGE message)
-{    
-  HRESULT hr;
-  SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
-  LPMAPITABLE mapitable;
-  LPSRowSet   mapirows;
-  unsigned int pos, n_attach;
-  ULONG moss_tag;
-  int found = 0;
-
-  if (get_gpgolattachtype_tag (message, &moss_tag) )
-    return 0;
-
-  hr = message->GetAttachmentTable (0, &mapitable);
-  if (FAILED (hr))
-    {
-      log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      return 0;
-    }
-      
-  hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
-                       NULL, NULL, 0, &mapirows);
-  if (FAILED (hr))
-    {
-      log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      gpgol_release (mapitable);
-      return 0;
-    }
-  n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
-  if (!n_attach)
-    {
-      FreeProws (mapirows);
-      gpgol_release (mapitable);
-      return 0; /* No Attachments.  */
-    }
-
-  for (pos=0; pos < n_attach; pos++) 
-    {
-      LPATTACH att;
-
-      if (mapirows->aRow[pos].cValues < 1)
-        {
-          log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
-          continue;
-        }
-      if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
-        {
-          log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
-          continue;
-        }
-      hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
-                                NULL, MAPI_BEST_ACCESS, &att);	
-      if (FAILED (hr))
-        {
-          log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
-                     SRCNAME, __func__, pos, 
-                     mapirows->aRow[pos].lpProps[0].Value.l, hr);
-          continue;
-        }
-      if (has_gpgol_body_name (att)
-          && get_gpgolattachtype (att, moss_tag) == ATTACHTYPE_FROMMOSS)
-        {
-          gpgol_release (att);
-          hr = message->DeleteAttach (mapirows->aRow[pos].lpProps[0].Value.l,
-                                      0, NULL, 0);
-          if (hr)
-            log_error ("%s:%s: DeleteAttach failed: hr=%#lx\n",
-                         SRCNAME, __func__, hr); 
-          else
-            {
-              log_debug ("%s:%s: body attachment deleted\n", 
-                         SRCNAME, __func__); 
-              found = 1;
-              
-            }
-          break;
-        }
-      gpgol_release (att);
-    }
-  FreeProws (mapirows);
-  gpgol_release (mapitable);
-  return found;
-}
-
-
-/* Copy the attachment ITEM of the message MESSAGE verbatim to the
-   PR_BODY property.  Returns 0 on success.  This function does not
-   call SaveChanges. */
-int
-mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item)
-{
-  int result = -1;
-  HRESULT hr; 
-  LPATTACH att = NULL;
-  LPSTREAM instream = NULL;
-  LPSTREAM outstream = NULL;
-  LPUNKNOWN punk;
-
-  if (!message || !item || item->end_of_table || item->mapipos == -1)
-    return -1; /* Error.  */
-
-  hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
-  if (FAILED (hr))
-    {
-      log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
-                 SRCNAME, __func__, item->mapipos, hr);
-      goto leave;
-    }
-  if (item->method != ATTACH_BY_VALUE)
-    {
-      log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
-      goto leave;
-    }
-
-  hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream,
-                          0, 0, (LPUNKNOWN*) &instream);
-  if (FAILED (hr))
-    {
-      log_error ("%s:%s: can't open data stream of attachment: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      goto leave;
-    }
-
-
-  punk = (LPUNKNOWN)outstream;
-  hr = gpgol_openProperty (message, PR_BODY_A, &IID_IStream, 0,
-                              MAPI_CREATE|MAPI_MODIFY, &punk);
-  if (FAILED (hr))
-    {
-      log_error ("%s:%s: can't open body stream for update: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      goto leave;
-    }
-  outstream = (LPSTREAM)punk;
-
-  {
-    ULARGE_INTEGER cb;
-    cb.QuadPart = 0xffffffffffffffffll;
-    hr = instream->CopyTo (outstream, cb, NULL, NULL);
-  }
-  if (hr)
-    {
-      log_error ("%s:%s: can't copy streams: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
-      goto leave;
-    }
-  hr = outstream->Commit (0);
-  if (hr)
-    {
-      log_error ("%s:%s: commiting output stream failed: hr=%#lx",
-                 SRCNAME, __func__, hr);
-      goto leave;
-    }
-  result = 0;
-  
- leave:
-  if (outstream)
-    {
-      if (result)
-        outstream->Revert ();
-      gpgol_release (outstream);
-    }
-  if (instream)
-    gpgol_release (instream);
-  if (att)
-    gpgol_release (att);
-  return result;
-}
 
 /* Copy the MAPI body to a PGPBODY type attachment. */
 int
