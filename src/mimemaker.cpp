@@ -214,7 +214,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink,
     }
 
   punk = NULL;
-  hr = att->OpenProperty(PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+  hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream, 0,
                          (MAPI_CREATE|MAPI_MODIFY), &punk);
   if (FAILED (hr))
     {

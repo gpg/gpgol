@@ -44,6 +44,22 @@ gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
   return ret;
 }
 
+HRESULT
+gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
+                    ULONG ulInterfaceOptions, ULONG ulFlags,
+                    LPUNKNOWN FAR * lppUnk)
+{
+  HRESULT ret = obj->OpenProperty (ulPropTag, lpiid,
+                                   ulInterfaceOptions, ulFlags,
+                                   lppUnk);
+  if ((opt.enable_debug & DBG_OOM_EXTRA) && *lppUnk)
+    {
+      memdbg_addRef (*lppUnk);
+      log_debug ("%s:%s: OpenProperty on %p prop %lx result %p",
+                 SRCNAME, __func__, obj,  ulPropTag, *lppUnk);
+    }
+  return ret;
+}
 /* Return a malloced string with the utf-8 encoded name of the object
    or NULL if not available.  */
 char *
@@ -712,7 +728,10 @@ get_oom_iunknown (LPDISPATCH pDisp, const char *name)
         log_debug ("%s:%s: Property `%s' is not of class IUnknown (vt=%d)",
                    SRCNAME, __func__, name, rVariant.vt);
       else
-        return rVariant.punkVal;
+        {
+          memdbg_addRef (rVariant.punkVal);
+          return rVariant.punkVal;
+        }
 
       VariantClear (&rVariant);
     }
@@ -1555,6 +1574,7 @@ get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
   log_oom_extra("%s:%s: About to call GetBaseMessage.",
                 SRCNAME, __func__);
   hr = secureMessage->GetBaseMessage (&message);
+  memdbg_addRef (message);
   gpgol_release (secureMessage);
   if (hr != S_OK)
     {

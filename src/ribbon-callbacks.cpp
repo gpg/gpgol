@@ -134,8 +134,9 @@ getIcon (int id, VARIANT* result)
           IStream* pStream = NULL;
           CopyMemory (pBuffer, pResourceData, imageSize);
 
-          if (CreateStreamOnHGlobal (hBuffer, FALSE, &pStream) == S_OK)
+          if (CreateStreamOnHGlobal (hBuffer, TRUE, &pStream) == S_OK)
             {
+              memdbg_addRef (pStream);
               pbitmap = Gdiplus::Bitmap::FromStream (pStream);
               gpgol_release (pStream);
               if (!pbitmap || pbitmap->GetHBITMAP (0, &pdesc.bmp.hbitmap))

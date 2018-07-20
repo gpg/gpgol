@@ -393,6 +393,7 @@ install_forms (void)
                  SRCNAME, __func__);
       return;
     }
+  memdbg_addRef (formcontainer);
 
   datadir = get_data_dir ();
   if (!datadir)

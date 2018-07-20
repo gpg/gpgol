@@ -53,6 +53,7 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
 
   CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                    IID_IMultiLanguage, (void**)&multilang);
+  memdbg_addRef (multilang);
 
   if (!multilang)
     {

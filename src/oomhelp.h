@@ -372,4 +372,8 @@ char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
 
 /* memtracing query interface */
 HRESULT gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj);
+
+HRESULT gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
+                            ULONG ulInterfaceOptions, ULONG ulFlags,
+                            LPUNKNOWN FAR * lppUnk);
 #endif /*OOMHELP_H*/

@@ -459,7 +459,7 @@ mapi_get_header (LPMESSAGE message)
   if (!message)
     return ret;
 
-  hr = message->OpenProperty (PR_TRANSPORT_MESSAGE_HEADERS_A, &IID_IStream, 0, 0,
+  hr = gpgol_openProperty (message, PR_TRANSPORT_MESSAGE_HEADERS_A, &IID_IStream, 0, 0,
                               (LPUNKNOWN*)&stream);
   if (hr)
     {
@@ -501,7 +501,7 @@ mapi_get_body_as_stream (LPMESSAGE message)
       /* The store knows about the Internet Charset Body property,
          thus try to get the body from this property if it exists.  */
 
-      hr = message->OpenProperty (tag, &IID_IStream, 0, 0, 
+      hr = gpgol_openProperty (message, tag, &IID_IStream, 0, 0,
                                   (LPUNKNOWN*)&stream);
       if (!hr)
         return stream;
@@ -514,7 +514,7 @@ mapi_get_body_as_stream (LPMESSAGE message)
      need to implement some kind of stream filter to translated to
      utf-8 or read everyting into a memory buffer and [provide an
      istream from that memory buffer.  */
-  hr = message->OpenProperty (PR_BODY_A, &IID_IStream, 0, 0, 
+  hr = gpgol_openProperty (message, PR_BODY_A, &IID_IStream, 0, 0,
                               (LPUNKNOWN*)&stream);
   if (hr)
     {
@@ -567,7 +567,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
     }
   else /* Message is large; use an IStream to read it.  */
     {
-      hr = message->OpenProperty (PR_BODY, &IID_IStream, 0, 0, 
+      hr = gpgol_openProperty (message, PR_BODY, &IID_IStream, 0, 0,
                                   (LPUNKNOWN*)&stream);
       if (hr)
         {
@@ -656,7 +656,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
     {
       log_debug ("%s:%s: Failed to get body ASCII stream.",
                  SRCNAME, __func__);
-      hr = message->OpenProperty (PR_BODY_W, &IID_IStream, 0, 0,
+      hr = gpgol_openProperty (message, PR_BODY_W, &IID_IStream, 0, 0,
                                   (LPUNKNOWN*)&stream);
       if (hr)
         {
@@ -856,7 +856,7 @@ is_really_cms_encrypted (LPMESSAGE message)
       goto leave;
     }
   
-  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+  hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream,
                           0, 0, (LPUNKNOWN*) &stream);
   if (FAILED (hr))
     {
@@ -2296,6 +2296,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
 
   /* Open the attachment table.  */
   hr = message->GetAttachmentTable (0, &mapitable);
+  memdbg_addRef (mapitable);
   if (FAILED (hr))
     {
       log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
@@ -2344,7 +2345,8 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
       table[pos].mapipos = mapirows->aRow[pos].lpProps[0].Value.l;
 
       hr = message->OpenAttach (table[pos].mapipos, NULL,
-                                MAPI_BEST_ACCESS, &att);	
+                                MAPI_BEST_ACCESS, &att);
+      memdbg_addRef (att);
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open attachment %d (%d): hr=%#lx",
@@ -2455,7 +2457,7 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
       return NULL;
     }
 
-  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+  hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream,
                           0, 0, (LPUNKNOWN*) &stream);
   if (FAILED (hr))
     {
@@ -2489,7 +2491,7 @@ attach_to_buffer (LPATTACH att, size_t *r_nbytes)
   ULONG nread;
   char *buffer;
 
-  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+  hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream,
                           0, 0, (LPUNKNOWN*) &stream);
   if (FAILED (hr))
     {
@@ -3495,7 +3497,7 @@ mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item)
       goto leave;
     }
 
-  hr = att->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 
+  hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream,
                           0, 0, (LPUNKNOWN*) &instream);
   if (FAILED (hr))
     {
@@ -3506,7 +3508,7 @@ mapi_attachment_to_body (LPMESSAGE message, mapi_attach_item_t *item)
 
 
   punk = (LPUNKNOWN)outstream;
-  hr = message->OpenProperty (PR_BODY_A, &IID_IStream, 0,
+  hr = gpgol_openProperty (message, PR_BODY_A, &IID_IStream, 0,
                               MAPI_CREATE|MAPI_MODIFY, &punk);
   if (FAILED (hr))
     {
@@ -3618,7 +3620,7 @@ mapi_body_to_attachment (LPMESSAGE message)
     }
 
   punk = (LPUNKNOWN)outstream;
-  hr = newatt->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream, 0,
+  hr = gpgol_openProperty (newatt, PR_ATTACH_DATA_BIN, &IID_IStream, 0,
                              MAPI_CREATE|MAPI_MODIFY, &punk);
   if (FAILED (hr))
     {
@@ -3728,6 +3730,7 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
                      SRCNAME, __func__, item->mapipos);
           return -1;
         }
+      memdbg_addRef (att);
       if (!mapi_test_attach_hidden (att))
         {
           mapi_set_attach_hidden (att);

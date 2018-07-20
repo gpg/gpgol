@@ -319,6 +319,7 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
   can_unload = false;
   m_application = Application;
   m_application->AddRef();
+  memdbg_addRef (m_application);
   m_addin = AddInInst;
 
   version = get_oom_string (Application, "Version");
