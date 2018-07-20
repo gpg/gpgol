@@ -35,11 +35,11 @@ extern "C" {
     { \
       log_oom_extra ("%s:%s:%i AddRef on %p", \
                      SRCNAME, __func__, __LINE__, X); \
-      _memdbg_addRef (X); \
+      _memdbg_addRef (X, __func__); \
     } \
 }
 
-void _memdbg_addRef (void *obj);
+void _memdbg_addRef (void *obj, const char *nameSuggestion);
 void memdbg_released (void *obj);
 
 void memdbg_ctor (const char *objName);

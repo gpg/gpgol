@@ -44,12 +44,16 @@ GPGRT_LOCK_DEFINE (memdbg_log);
 
 /* Returns true on a name change */
 static bool
-register_name (void *obj)
+register_name (void *obj, const char *nameSuggestion)
 {
 #ifdef HAVE_W32_SYSTEM
 
   char *name = get_object_name ((LPUNKNOWN)obj);
 
+  if (!name && nameSuggestion)
+    {
+      name = strdup (nameSuggestion);
+    }
   if (!name)
     {
       auto it = olNames.find (obj);
@@ -92,7 +96,7 @@ register_name (void *obj)
 }
 
 void
-_memdbg_addRef (void *obj)
+_memdbg_addRef (void *obj, const char *nameSuggestion)
 {
   DBGGUARD;
 
@@ -109,7 +113,7 @@ _memdbg_addRef (void *obj)
     {
       it = olObjs.insert (std::make_pair (obj, 0)).first;
     }
-  if (register_name (obj) && it->second)
+  if (register_name (obj, nameSuggestion) && it->second)
     {
       log_error ("%s:%s Name change without null ref on %p!",
                  SRCNAME, __func__, obj);
