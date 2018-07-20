@@ -49,10 +49,12 @@ register_name (void *obj, const char *nameSuggestion)
 #ifdef HAVE_W32_SYSTEM
 
   char *name = get_object_name ((LPUNKNOWN)obj);
+  bool suggestionUsed = false;
 
   if (!name && nameSuggestion)
     {
       name = strdup (nameSuggestion);
+      suggestionUsed = true;
     }
   if (!name)
     {
@@ -82,7 +84,7 @@ register_name (void *obj, const char *nameSuggestion)
                      SRCNAME, __func__, obj, it->second.c_str(),
                      sName.c_str());
           it->second = sName;
-          return true;
+          return !suggestionUsed;
         }
     }
   else
