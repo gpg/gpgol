@@ -212,6 +212,7 @@ public:
      crypto mails. */
   void shutdown ();
   LPDISPATCH get_application () { return m_application; }
+  bool isShutdown() { return m_shutdown; };
 
 private:
   ULONG m_lRef;
