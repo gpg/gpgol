@@ -461,9 +461,13 @@ install_explorer_sinks (LPDISPATCH application)
                          SRCNAME, __func__, sink, i);
           GpgolAddin::get_instance ()->registerExplorerSink (sink);
         }
+      gpgol_release (explorer);
     }
   /* Now install the event sink to handle new explorers */
-  return install_ExplorersEvents_sink (explorers);
+  LPDISPATCH ret = install_ExplorersEvents_sink (explorers);
+  gpgol_release (explorers);
+
+  return ret;
 }
 
 static DWORD WINAPI
