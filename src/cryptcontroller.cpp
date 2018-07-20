@@ -116,6 +116,7 @@ CryptController::collect_data ()
                          utf8_gettext ("Can't encrypt / sign an empty message."),
                          utf8_gettext ("GpgOL"), MB_OK);
       gpgol_release (message);
+      mapi_release_attach_table (att_table);
       xfree (body);
       return -1;
     }
@@ -156,11 +157,14 @@ CryptController::collect_data ()
       log_error ("%s:%s: Collecting body and attachments failed.",
                  SRCNAME, __func__);
       gpgol_release (message);
+      mapi_release_attach_table (att_table);
       return -1;
     }
 
   /* Message is no longer needed */
   gpgol_release (message);
+
+  mapi_release_attach_table (att_table);
 
   /* Set the input buffer to start. */
   m_input.seek (0, SEEK_SET);
