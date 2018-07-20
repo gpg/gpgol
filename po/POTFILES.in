@@ -1,7 +1,6 @@
 src/addin-options.cpp
-src/common.c
+src/common.cpp
 src/common.h
-src/config-dialog.c
 src/eventsink.h
 src/gpgoladdin.cpp
 src/gpgoladdin.h
