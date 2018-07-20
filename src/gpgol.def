@@ -5,6 +5,5 @@ EXPORTS
     DllRegisterServer = DllRegisterServer@0      @1	PRIVATE
     DllUnregisterServer = DllUnregisterServer@0  @2	PRIVATE
     DllGetClassObject = DllGetClassObject@12     @3 PRIVATE
-    DllCanUnloadNow = DllCanUnloadNow@0          @4 PRIVATE
 
     gpgol_check_version = gpgol_check_version@4     @11
