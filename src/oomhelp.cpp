@@ -1374,6 +1374,7 @@ get_oom_recipients (LPDISPATCH recipients, bool *r_err)
           gpgol_release (addrEntry);
           continue;
         }
+      gpgol_release (addrEntry);
 
       char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
       if (resolved)
