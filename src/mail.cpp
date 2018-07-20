@@ -3415,7 +3415,7 @@ Mail::installFolderEventHandler_o()
 
   if (s_folder_events_map.find (strPath) == s_folder_events_map.end())
     {
-      log_error ("%s:%s: Install folder events watcher for %s.",
+      log_debug ("%s:%s: Install folder events watcher for %s.",
                  SRCNAME, __func__, strPath.c_str());
       const auto sink = install_FolderEvents_sink (folder);
       s_folder_events_map.insert (std::make_pair (strPath, sink));
