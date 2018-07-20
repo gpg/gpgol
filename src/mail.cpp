@@ -451,8 +451,9 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
                      SRCNAME, __func__);
           return NULL;
         }
-      hr = message->OpenProperty (PR_BODY_A, &IID_IStream, 0, 0,
-                                  (LPUNKNOWN*)&stream);
+      hr = gpgol_openProperty (message, PR_BODY_A, &IID_IStream, 0, 0,
+                               (LPUNKNOWN*)&stream);
+      gpgol_release (message);
       if (hr)
         {
           log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
@@ -473,13 +474,15 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
                  SRCNAME, __func__, attachment);
       return NULL;
     }
-  if (FAILED (mapi_attachment->OpenProperty (PR_ATTACH_DATA_BIN, &IID_IStream,
-                                             0, MAPI_MODIFY, (LPUNKNOWN*) &stream)))
+  if (FAILED (gpgol_openProperty (mapi_attachment, PR_ATTACH_DATA_BIN,
+                                  &IID_IStream, 0, MAPI_MODIFY,
+                                  (LPUNKNOWN*) &stream)))
     {
       log_debug ("%s:%s: Failed to open stream for mapi_attachment: %p",
                  SRCNAME, __func__, mapi_attachment);
       gpgol_release (mapi_attachment);
     }
+  gpgol_release (mapi_attachment);
   return stream;
 }
 
