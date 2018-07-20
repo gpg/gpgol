@@ -103,6 +103,7 @@ STDAPI DllCanUnloadNow()
      unload the Library. Any callbacks will become invalid.
      So we _only_ say it's ok to unload if we were disconnected.
      For the epic story behind the next line see GnuPG-Bug-Id 1837 */
+  TRACEPOINT;
   return can_unload ? S_OK : S_FALSE;
 }
 
@@ -152,6 +153,11 @@ STDMETHODIMP GpgolAddinFactory::CreateInstance (LPUNKNOWN punk, REFIID riid,
     }
 
   return hr;
+}
+
+GpgolAddinFactory::~GpgolAddinFactory()
+{
+  log_debug ("%s:%s: Object deleted\n", SRCNAME, __func__);
 }
 
 /* GpgolAddin definition */
@@ -577,7 +583,7 @@ GpgolRibbonExtender::~GpgolRibbonExtender (void)
 {
   log_debug ("%s:%s: cleaning up GpgolRibbonExtender object;",
              SRCNAME, __func__);
-  log_debug ("%s:%s: Object deleted\n", SRCNAME, __func__);
+  memdbg_dump ();
 }
 
 STDMETHODIMP

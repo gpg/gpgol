@@ -232,7 +232,7 @@ class GpgolAddinFactory: public IClassFactory
 {
 public:
   GpgolAddinFactory(): m_lRef(0){}
-  virtual ~GpgolAddinFactory(){}
+  virtual ~GpgolAddinFactory();
 
   STDMETHODIMP QueryInterface (REFIID riid, LPVOID* ppvObj);
   inline STDMETHODIMP_(ULONG) AddRef() { ++m_lRef;  return m_lRef; };
