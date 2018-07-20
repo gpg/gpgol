@@ -258,7 +258,8 @@ char *trim_trailing_spaces (char *string);
               while(*_vptr) { *_vptr=0; _vptr++; } \
                   } while(0)
 
-#define debug_oom        (opt.enable_debug & DBG_OOM)
+#define debug_oom        ((opt.enable_debug & DBG_OOM) || \
+                          (opt.enable_debug & DBG_OOM_EXTRA))
 #define debug_oom_extra  (opt.enable_debug & DBG_OOM_EXTRA)
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_error (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
@@ -279,8 +280,8 @@ void log_hexdump (const void *buf, size_t buflen, const char *fmt,
 { \
   if (X && opt.enable_debug & DBG_OOM_EXTRA) \
     { \
-      log_debug ("%s:%s: Object: %p released ref: %lu \n", \
-                 SRCNAME, __func__, X, X->Release()); \
+      log_debug ("%s:%s:%i: Object: %p released ref: %lu \n", \
+                 SRCNAME, __func__, __LINE__, X, X->Release()); \
       memdbg_released (X); \
     } \
   else if (X) \
