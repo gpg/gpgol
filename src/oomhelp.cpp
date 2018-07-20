@@ -1817,6 +1817,7 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
           if (!category_obj)
             {
               TRACEPOINT;
+              gpgol_release (categories);
               break;
             }
           char *name = get_oom_string (category_obj, "Name");
@@ -2085,6 +2086,7 @@ get_account_for_mail (const char *mbox)
 
       if (!smtpAddr)
         {
+          gpgol_release (account);
           TRACEPOINT;
           continue;
         }
@@ -2094,6 +2096,7 @@ get_account_for_mail (const char *mbox)
           xfree (smtpAddr);
           return account;
         }
+      gpgol_release (account);
       xfree (smtpAddr);
     }
   gpgol_release (accounts);
