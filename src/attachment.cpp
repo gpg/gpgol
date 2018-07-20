@@ -27,10 +27,12 @@
 
 Attachment::Attachment()
 {
+  memdbg_ctor ("Attachment");
 }
 
 Attachment::~Attachment()
 {
+  memdbg_dtor ("Attachment");
   log_debug ("%s:%s", SRCNAME, __func__);
 }
 

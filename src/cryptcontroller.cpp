@@ -68,6 +68,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
     m_crypto_success (false),
     m_proto (proto)
 {
+  memdbg_ctor ("CryptController");
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
   m_recipient_addrs = vector_to_cArray (mail->getCachedRecipients ());
@@ -75,6 +76,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
 
 CryptController::~CryptController()
 {
+  memdbg_dtor ("CryptController");
   log_debug ("%s:%s:%p",
              SRCNAME, __func__, m_mail);
   release_cArray (m_recipient_addrs);

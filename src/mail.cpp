@@ -126,6 +126,7 @@ Mail::Mail (LPDISPATCH mailitem) :
   s_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
   gpgrt_lock_unlock (&mail_map_lock);
   s_last_mail = this;
+  memdbg_ctor ("Mail");
 }
 
 GPGRT_LOCK_DEFINE(dtor_lock);
@@ -152,6 +153,7 @@ Mail::~Mail()
      that the parser is alive even if the mail is deleted
      while parsing. */
   gpgrt_lock_lock (&dtor_lock);
+  memdbg_dtor ("Mail");
   log_oom_extra ("%s:%s: dtor: Mail: %p item: %p",
                  SRCNAME, __func__, this, m_mailitem);
   std::map<LPDISPATCH, Mail *>::iterator it;

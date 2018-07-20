@@ -80,6 +80,7 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_type (type),
     m_block_html (false)
 {
+  memdbg_ctor ("ParseController");
   log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i"
                    " expect no headers: %i expect no mime: %i",
                    SRCNAME, __func__, instream, type,
@@ -94,6 +95,7 @@ ParseController::ParseController(FILE *instream, msgtype_t type):
     m_type (type),
     m_block_html (false)
 {
+  memdbg_ctor ("ParseController");
   log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
                    SRCNAME, __func__, instream, type);
 }
@@ -101,6 +103,7 @@ ParseController::ParseController(FILE *instream, msgtype_t type):
 ParseController::~ParseController()
 {
   log_debug ("%s:%s", SRCNAME, __func__);
+  memdbg_dtor ("ParseController");
   delete m_inputprovider;
   delete m_outputprovider;
 }

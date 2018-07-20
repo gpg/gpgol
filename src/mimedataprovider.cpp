@@ -489,6 +489,7 @@ MimeDataProvider::MimeDataProvider(bool no_headers) :
   m_has_html_body(false),
   m_collect_everything(no_headers)
 {
+  memdbg_ctor ("MimeDataProvider");
   m_mime_ctx = (mime_context_t) xcalloc (1, sizeof *m_mime_ctx);
   m_mime_ctx->msg = rfc822parse_open (message_cb, this);
   m_mime_ctx->mimestruct_tail = &m_mime_ctx->mimestruct;
@@ -525,6 +526,7 @@ MimeDataProvider::MimeDataProvider(FILE *stream, bool no_headers):
 
 MimeDataProvider::~MimeDataProvider()
 {
+  memdbg_dtor ("MimeDataProvider");
   log_debug ("%s:%s", SRCNAME, __func__);
   while (m_mime_ctx->mimestruct)
     {
