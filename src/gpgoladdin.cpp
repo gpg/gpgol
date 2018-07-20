@@ -1164,6 +1164,9 @@ GpgolAddin::shutdown ()
                   MB_ICONINFORMATION|MB_OK);
     }
   m_shutdown = true;
+
+  gpgol_release (m_application);
+  m_application = nullptr;
 }
 
 void
