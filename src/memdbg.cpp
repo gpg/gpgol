@@ -92,7 +92,7 @@ register_name (void *obj)
 }
 
 void
-memdbg_addRef (void *obj)
+_memdbg_addRef (void *obj)
 {
   DBGGUARD;
 
