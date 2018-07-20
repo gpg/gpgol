@@ -30,6 +30,8 @@
 
 #include "xmalloc.h"
 
+#include "memdbg.h"
+
 #ifdef HAVE_W32_SYSTEM
 /* Not so independenent ;-) need this for logging HANDLE */
 # include <windows.h>
@@ -279,6 +281,7 @@ void log_hexdump (const void *buf, size_t buflen, const char *fmt,
     { \
       log_debug ("%s:%s: Object: %p released ref: %lu \n", \
                  SRCNAME, __func__, X, X->Release()); \
+      memdbg_released (X); \
     } \
   else if (X) \
     { \

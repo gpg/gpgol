@@ -727,6 +727,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
           delete m_mail;
           log_oom_extra ("%s:%s: deletion done",
                          SRCNAME, __func__);
+          memdbg_dump ();
           return S_OK;
         }
       /* Fallthrough */

@@ -33,6 +33,16 @@
 #include "oomhelp.h"
 #include "gpgoladdin.h"
 
+HRESULT
+gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
+{
+  HRESULT ret = pObj->QueryInterface (riid, ppvObj);
+  if ((opt.enable_debug & DBG_OOM_EXTRA) && *ppvObj)
+    {
+      memdbg_addRef (*ppvObj);
+    }
+  return ret;
+}
 
 /* Return a malloced string with the utf-8 encoded name of the object
    or NULL if not available.  */
@@ -48,6 +58,7 @@ get_object_name (LPUNKNOWN obj)
   if (!obj)
     goto leave;
 
+  /* We can't use gpgol_queryInterface here to avoid recursion */
   obj->QueryInterface (IID_IDispatch, (void **)&disp);
   if (!disp)
     goto leave;
@@ -73,9 +84,9 @@ get_object_name (LPUNKNOWN obj)
 
  leave:
   if (tinfo)
-    gpgol_release (tinfo);
+    tinfo->Release ();
   if (disp)
-    gpgol_release (disp);
+    disp->Release ();
 
   return name;
 }
@@ -188,7 +199,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           gpgol_release (pDisp);
           pDisp = NULL;
         }
-      if (pObj->QueryInterface (IID_IDispatch, (LPVOID*)&pDisp) != S_OK)
+      if (gpgol_queryInterface (pObj, IID_IDispatch, (LPVOID*)&pDisp) != S_OK)
         {
           log_error ("%s:%s Object does not support IDispatch",
                      SRCNAME, __func__);
@@ -203,7 +214,13 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         return NULL;  /* The object has no IDispatch interface.  */
       if (!*fullname)
         {
-          log_oom ("%s:%s:         got %p",SRCNAME, __func__, pDisp);
+          if ((opt.enable_debug & DBG_OOM))
+            {
+              pDisp->AddRef ();
+              int ref = pDisp->Release ();
+              log_oom ("%s:%s:         got %p with %i refs",
+                       SRCNAME, __func__, pDisp, ref);
+            }
           return pDisp; /* Ready.  */
         }
       
@@ -327,6 +344,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         }
 
       pObj = vtResult.pdispVal;
+      memdbg_addRef (pObj);
     }
   log_debug ("%s:%s: no object", SRCNAME, __func__);
   return NULL;
@@ -753,7 +771,8 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
   SysFreeString (bstring);
   if (hr == S_OK && rVariant.vt == VT_DISPATCH && rVariant.pdispVal)
     {
-      rVariant.pdispVal->QueryInterface (IID_IDispatch, (LPVOID*)&result);
+      gpgol_queryInterface (rVariant.pdispVal, IID_IDispatch,
+                            (LPVOID*)&result);
       gpgol_release (rVariant.pdispVal);
       if (!result)
         log_debug ("%s:%s: Object with tag `%s' has no dispatch intf.",
@@ -1459,7 +1478,7 @@ get_object_by_id (LPDISPATCH pDisp, REFIID id)
   if (!pDisp)
     return NULL;
 
-  if (pDisp->QueryInterface (id, (void **)&disp) != S_OK)
+  if (gpgol_queryInterface(pDisp, id, (void **)&disp) != S_OK)
     return NULL;
   return disp;
 }
@@ -1636,7 +1655,7 @@ get_oom_mapi_session ()
       return NULL;
     }
   session = NULL;
-  hr = mapiobj->QueryInterface (IID_IMAPISession, (void**)&session);
+  hr = gpgol_queryInterface (mapiobj, IID_IMAPISession, (void**)&session);
   gpgol_release (mapiobj);
   if (hr != S_OK || !session)
     {

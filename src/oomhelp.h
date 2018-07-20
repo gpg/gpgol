@@ -369,4 +369,7 @@ int get_ex_major_version_for_addr (const char *mbox);
 int get_ol_ui_language (void);
 
 char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
+
+/* memtracing query interface */
+HRESULT gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj);
 #endif /*OOMHELP_H*/

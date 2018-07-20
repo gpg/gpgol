@@ -501,6 +501,7 @@ MimeDataProvider::MimeDataProvider(LPSTREAM stream, bool no_headers):
   if (stream)
     {
       stream->AddRef ();
+      memdbg_addRef (stream);
     }
   else
     {

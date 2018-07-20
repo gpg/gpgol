@@ -51,6 +51,7 @@ gpgol_SOURCES = \
     mailitem-events.cpp \
     main.c \
     mapihelp.cpp mapihelp.h \
+    memdbg.cpp memdbg.h \
     mimedataprovider.cpp mimedataprovider.h \
     mimemaker.cpp mimemaker.h \
     mlang-charset.cpp mlang-charset.h \

@@ -165,8 +165,8 @@ LPDISPATCH install_ ## subcls ## _sink (LPDISPATCH object)               \
   DWORD cookie;                                                          \
                                                                          \
   disp = NULL;                                                           \
-  hr = object->QueryInterface (IID_IConnectionPointContainer,            \
-                               (LPVOID*)&disp);                          \
+  hr = gpgol_queryInterface (object, IID_IConnectionPointContainer,      \
+                             (LPVOID*)&disp);                            \
   if (hr != S_OK || !disp)                                               \
     {                                                                    \
       log_error ("%s:%s:%s: IConnectionPoint not supported: hr=%#lx",    \
@@ -199,6 +199,7 @@ LPDISPATCH install_ ## subcls ## _sink (LPDISPATCH object)               \
   sink->m_cookie = cookie;                                               \
   sink->m_pCP = pCP;                                                     \
   object->AddRef ();                                                     \
+  memdbg_addRef (object);                                                \
   sink->m_object = object;                                               \
   return (LPDISPATCH)sink;                                               \
 }                                                                        \
