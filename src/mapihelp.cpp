@@ -2553,6 +2553,7 @@ mapi_get_attach (LPMESSAGE message,
     return NULL;
 
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
+  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment at %d: hr=%#lx",

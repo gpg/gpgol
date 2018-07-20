@@ -143,6 +143,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink,
   sink->cb_data = NULL;
   sink->writefnc = NULL;
   hr = message->CreateAttach(NULL, 0, &pos, &att);
+  memdbg_addRef (att);
   if (hr)
     {
       log_error ("%s:%s: can't create attachment: hr=%#lx\n",
