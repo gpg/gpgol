@@ -107,7 +107,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
           case (INVALIDATE_LAST_MAIL):
             {
-              log_debug ("%s:%s: Invalidating last mail",
+              log_debug ("%s:%s: clearing last mail",
                          SRCNAME, __func__);
               Mail::clearLastMail ();
               break;
@@ -425,6 +425,8 @@ gpgrt_lock_t invalidate_lock = GPGRT_LOCK_INITIALIZER;
 
 static bool invalidation_in_progress;
 
+static int invalidation_blocked = 0;
+
 DWORD WINAPI
 delayed_invalidate_ui (LPVOID)
 {
@@ -434,13 +436,26 @@ delayed_invalidate_ui (LPVOID)
                  SRCNAME, __func__);
       return 0;
     }
-  gpgrt_lock_lock(&invalidate_lock);
+  TRACEPOINT;
   invalidation_in_progress = true;
-  /* We sleep here a bit to prevent invalidation immediately
-     after the selection change before we have started processing
-     the mail. */
-  Sleep (250);
+  gpgrt_lock_lock(&invalidate_lock);
+
+  int i = 0;
+  while (invalidation_blocked)
+    {
+      Sleep (100);
+      i++;
+
+      if (i % 10 == 0)
+        {
+          log_debug ("%s:%s: Waiting for invalidation.",
+                     SRCNAME, __func__);
+        }
+
+      /* Do we need an abort statement here? */
+    }
   do_in_ui_thread (INVALIDATE_UI, nullptr);
+  TRACEPOINT;
   invalidation_in_progress = false;
   gpgrt_lock_unlock(&invalidate_lock);
   return 0;
@@ -451,4 +466,27 @@ close_mail (LPVOID mail)
 {
   do_in_ui_thread (CLOSE, mail);
   return 0;
+}
+
+void
+blockInv()
+{
+  invalidation_blocked++;
+  log_oom_extra ("%s:%s: Invalidation block count %i",
+                 SRCNAME, __func__, invalidation_blocked);
+}
+
+void
+unblockInv()
+{
+  invalidation_blocked--;
+  log_oom_extra ("%s:%s: Invalidation block count %i",
+                 SRCNAME, __func__, invalidation_blocked);
+
+  if (invalidation_blocked < 0)
+    {
+      log_error ("%s:%s: Invalidation block mismatch",
+                 SRCNAME, __func__);
+      invalidation_blocked = 0;
+    }
 }

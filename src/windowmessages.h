@@ -92,6 +92,15 @@ do_in_ui_thread_async (gpgol_wmsg_type type, void *data, int delay = 0);
 HHOOK
 create_message_hook();
 
+/** Block ui invalidation. The idea here is to further reduce
+    UI invalidations because depending on timing they might crash.
+    So we try to block invalidation for as long as it is a bad time
+    for us. */
+void blockInv ();
+
+/** Unblock ui invalidation */
+void unblockInv ();
+
 DWORD WINAPI
 delayed_invalidate_ui (LPVOID);
 

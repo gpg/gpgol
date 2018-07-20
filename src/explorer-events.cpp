@@ -62,6 +62,136 @@ typedef enum
     ViewSwitch = 0xF004
   } ExplorerEvent;
 
+/*
+   We need to avoid UI invalidations as much as possible as invalidations
+   can trigger reloads of mails and at a bad time can crash us.
+
+   So we only invalidate the UI after we have handled the read event of
+   a mail and again after decrypt / verify.
+
+   The problem is that we also need to update the UI when mails are
+   unselected so we don't show "Secure" if nothing is selected.
+
+   On a switch from one Mail to another we see two selection changes.
+   One for the unselect the other for the select immediately after
+   each other.
+
+   When we just have an unselect we see only one selection change.
+
+   So after we detect the unselect we switch the state in our
+   explorerMap to unselect seen and start a WatchDog thread.
+
+   That thread sleeps for 500ms and then checks if the state
+   was switched to select seen in the meantime. If
+   not it triggers the UI Invalidation in the GUI thread.
+   */
+#include <map>
+
+typedef enum
+  {
+    WatchDogActive = 0x01,
+    UnselectSeen = 0x02,
+    SelectSeen = 0x04,
+  } SelectionState;
+
+std::map<LPDISPATCH, int> s_explorerMap;
+
+gpgrt_lock_t explorer_map_lock = GPGRT_LOCK_INITIALIZER;
+
+static bool
+hasSelection (LPDISPATCH explorer)
+{
+  LPDISPATCH selection = get_oom_object (explorer, "Selection");
+
+  if (!selection)
+    {
+      TRACEPOINT;
+      return false;
+    }
+
+  int count = get_oom_int (selection, "Count");
+  gpgol_release (selection);
+
+  if (count)
+    {
+      return true;
+    }
+  return false;
+}
+
+static DWORD WINAPI
+start_watchdog (LPVOID arg)
+{
+  LPDISPATCH explorer = (LPDISPATCH) arg;
+
+  Sleep (500);
+  gpgrt_lock_lock (&explorer_map_lock);
+
+  auto it = s_explorerMap.find (explorer);
+
+  if (it == s_explorerMap.end ())
+    {
+      log_error ("%s:%s: Watchdog for unknwon explorer %p",
+                 SRCNAME, __func__, explorer);
+      gpgrt_lock_unlock (&explorer_map_lock);
+      return 0;
+    }
+
+  if ((it->second & SelectSeen))
+    {
+      log_oom_extra ("%s:%s: Cancel watchdog as we have seen a select %p",
+                     SRCNAME, __func__, explorer);
+      it->second = SelectSeen;
+    }
+  else if ((it->second & UnselectSeen))
+    {
+      log_debug ("%s:%s: Deteced unselect invalidating UI.",
+                 SRCNAME, __func__);
+      it->second = UnselectSeen;
+    }
+  gpgrt_lock_unlock (&explorer_map_lock);
+
+  do_in_ui_thread (INVALIDATE_UI, nullptr);
+  return 0;
+}
+
+static void
+changeSeen (LPDISPATCH explorer)
+{
+  gpgrt_lock_lock (&explorer_map_lock);
+
+  auto it = s_explorerMap.find (explorer);
+
+  if (it == s_explorerMap.end ())
+    {
+      it = s_explorerMap.insert (std::make_pair (explorer, 0)).first;
+    }
+
+  auto state = it->second;
+  bool has_selection = hasSelection (explorer);
+
+  if (has_selection)
+    {
+      it->second = (state & WatchDogActive) + SelectSeen;
+      log_oom_extra ("%s:%s: Seen select for %p",
+                     SRCNAME, __func__, explorer);
+    }
+  else
+    {
+      if ((it->second & WatchDogActive))
+        {
+          log_oom_extra ("%s:%s: Seen unselect for %p but watchdog exists.",
+                         SRCNAME, __func__, explorer);
+        }
+      else
+        {
+          CloseHandle (CreateThread (NULL, 0, start_watchdog, (LPVOID) explorer,
+                                     0, NULL));
+        }
+      it->second = UnselectSeen + WatchDogActive;
+    }
+  gpgrt_lock_unlock (&explorer_map_lock);
+}
 
 EVENT_SINK_INVOKE(ExplorerEvents)
 {
@@ -72,19 +202,7 @@ EVENT_SINK_INVOKE(ExplorerEvents)
         {
           log_oom_extra ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
-
-          HANDLE thread = CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
-                                        NULL);
-
-          if (!thread)
-            {
-              log_error ("%s:%s: Failed to create invalidate_ui thread.",
-                         SRCNAME, __func__);
-            }
-          else
-            {
-              CloseHandle (thread);
-            }
+          changeSeen (m_object);
           break;
         }
       case Close:
@@ -93,6 +211,9 @@ EVENT_SINK_INVOKE(ExplorerEvents)
                          SRCNAME, __func__, this);
 
           GpgolAddin::get_instance ()->unregisterExplorerSink (this);
+          gpgrt_lock_lock (&explorer_map_lock);
+          s_explorerMap.erase (m_object);
+          gpgrt_lock_unlock (&explorer_map_lock);
           delete this;
           return S_OK;
         }

@@ -733,6 +733,8 @@ do_parsing (LPVOID arg)
       gpgrt_lock_unlock (&dtor_lock);
       return 0;
     }
+
+  blockInv ();
   /* This takes a shared ptr of parser. So the parser is
      still valid when the mail is deleted. */
   auto parser = mail->parser ();
@@ -755,6 +757,7 @@ do_parsing (LPVOID arg)
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
+      unblockInv();
       return 0;
     }
 
@@ -764,12 +767,14 @@ do_parsing (LPVOID arg)
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
+      unblockInv();
       return -1;
     }
   parser->parse();
   do_in_ui_thread (PARSING_DONE, arg);
   gpgrt_lock_unlock (&invalidate_lock);
   gpgrt_lock_unlock (&parser_lock);
+  unblockInv();
   return 0;
 }
 
