@@ -158,19 +158,66 @@ memdbg_released (void *obj)
 void
 memdbg_ctor (const char *objName)
 {
-  (void)objName;
+  DBGGUARD;
+
+  if (!objName)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  gpgrt_lock_lock (&memdbg_log);
+
+  const std::string nameStr (objName);
+
+  auto it = cppObjs.find (nameStr);
+
+  if (it == cppObjs.end())
+    {
+      it = cppObjs.insert (std::make_pair (nameStr, 0)).first;
+    }
+  it->second++;
+
+  gpgrt_lock_unlock (&memdbg_log);
 }
 
 void
 memdbg_dtor (const char *objName)
 {
-  (void)objName;
+  DBGGUARD;
+
+  if (!objName)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  const std::string nameStr (objName);
+  auto it = cppObjs.find (nameStr);
+
+  if (it == cppObjs.end())
+    {
+      log_error ("%s:%s Dtor of %s before ctor",
+                 SRCNAME, __func__, nameStr.c_str());
+      gpgrt_lock_unlock (&memdbg_log);
+      return;
+    }
+
+  it->second--;
+
+  if (it->second < 0)
+    {
+      log_error ("%s:%s Dtor of %s more often then ctor",
+                 SRCNAME, __func__, nameStr.c_str());
+    }
+  gpgrt_lock_unlock (&memdbg_log);
 
 }
 
 void
 memdbg_dump ()
 {
+  DBGGUARD;
   gpgrt_lock_lock (&memdbg_log);
   log_debug(""
 "------------------------------MEMORY DUMP----------------------------------");
