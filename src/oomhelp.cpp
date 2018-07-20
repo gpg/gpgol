@@ -2269,9 +2269,11 @@ get_ol_ui_language ()
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 
-  if (invoke_oom_method_with_parms_type (langSettings, "LanguageID", &var,
-                                         &dispparams,
-                                         DISPATCH_PROPERTYGET))
+  int ret = invoke_oom_method_with_parms_type (langSettings, "LanguageID", &var,
+                                               &dispparams,
+                                               DISPATCH_PROPERTYGET);
+  gpgol_release (langSettings);
+  if (ret)
     {
       TRACEPOINT;
       return 0;
