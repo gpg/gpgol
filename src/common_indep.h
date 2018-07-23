@@ -197,6 +197,7 @@ struct
   int reply_crypt;           /* Only for Addin. Encrypt / Sign based on cryptostatus. */
   int automation;            /* General automation */
   int autotrust;             /* TOFU configured for GpgOL */
+  int sync_enc;              /* Disabed async encryption */
   int prefer_smime;          /* S/MIME prefered when autoresolving */
   int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
 
