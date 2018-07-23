@@ -48,6 +48,12 @@
 
 using namespace GpgME;
 
+/* This is so super stupid. I bet even Microsft developers laugh
+   about the definition of VARIANT_BOOL. And then for COM we
+   have to pass pointers to this stuff. */
+static VARIANT_BOOL var_true = VARIANT_TRUE;
+static VARIANT_BOOL var_false = VARIANT_FALSE;
+
 /* Gets the context of a ribbon control. And prints some
    useful debug output */
 HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
@@ -322,7 +328,7 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
 
   value = (get_gpgol_draft_info_flags (message) & flags) == flags;
 
-  *(result->pboolVal) = value ? VARIANT_TRUE : VARIANT_FALSE;
+  *(result->pboolVal) = value ? var_true: var_false;
 
 done:
   gpgol_release (context);
@@ -534,8 +540,7 @@ HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
     }
 
   result->vt = VT_BOOL | VT_BYREF;
-  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-  *(result->pboolVal) = none_selected ? VARIANT_FALSE : VARIANT_TRUE;
+  result->pboolVal = none_selected ? &var_false : &var_true;
 
   TRACEPOINT;
   return S_OK;
@@ -730,9 +735,8 @@ HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
   MY_MAIL_GETTER
 
   result->vt = VT_BOOL | VT_BYREF;
-  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-  *(result->pboolVal) = (mail && (mail->isSigned () || mail->isEncrypted ())) ?
-                          VARIANT_TRUE : VARIANT_FALSE;
+  result->pboolVal = mail && (mail->isSigned () || mail->isEncrypted ()) ?
+                          &var_true : &var_false;
 
   TRACEPOINT;
   return S_OK;
