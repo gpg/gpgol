@@ -489,11 +489,11 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
       // OutNameC is now without an extension and if
       // there is a file ext it now points to the extension.
 
-      outName = tmpPath + outNameC + std::to_string(tries++);
+      outName = outNameC + std::string("_") + std::to_string(tries++);
 
       if (fileExt)
         {
-          outName += fileExt;
+          outName += std::string(".") + fileExt;
         }
       xfree (outNameC);
 
