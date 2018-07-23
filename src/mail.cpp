@@ -997,7 +997,7 @@ Mail::decryptVerify_o ()
 
 
   /* Insert placeholder */
-  char *placeholder_buf;
+  char *placeholder_buf = nullptr;
   if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
     {
       gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
