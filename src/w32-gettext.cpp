@@ -1596,7 +1596,7 @@ get_string (struct loaded_domain *domain, u32 idx, int utf8)
       domain->mapped[idx] = 1;
 
       plen = strlen (p);
-      buf = utf8 ? strdup (p) : utf8_to_native (p);
+      buf = utf8 ? xstrdup (p) : utf8_to_native (p);
       buflen = strlen (buf);
       if (buflen <= plen)
         strcpy (p, buf);

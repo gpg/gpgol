@@ -76,7 +76,7 @@ vector_to_cArray(const std::vector<std::string> &vec)
   char ** ret = (char**) xmalloc (sizeof (char*) * (vec.size() + 1));
   for (size_t i = 0; i < vec.size(); i++)
     {
-      ret[i] = strdup (vec[i].c_str());
+      ret[i] = xstrdup (vec[i].c_str());
     }
   ret[vec.size()] = NULL;
   return ret;

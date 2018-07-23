@@ -198,7 +198,7 @@ read_w32_registry_string (const char *root, const char *dir, const char *name)
     {
       return nullptr;
     }
-  return strdup (ret.c_str ());
+  return xstrdup (ret.c_str ());
 }
 
 /* Return the data dir used for forms etc.   Returns NULL on error. */
@@ -468,7 +468,7 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
       log_debug_w32 (-1, "%s:%s: Failed to open candidate '%s'",
                      SRCNAME, __func__, outName.c_str());
 
-      char *outNameC = strdup (outName.c_str());
+      char *outNameC = xstrdup (outName.c_str());
 
       const auto lastBackslash = strrchr (outNameC, '\\');
       if (!lastBackslash)

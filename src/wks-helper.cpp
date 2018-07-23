@@ -300,7 +300,7 @@ WKSHelper::start_check (const std::string &mbox, bool forced) const
   log_debug ("%s:%s: WKSHelper starting check",
              SRCNAME, __func__);
   /* Start the actual work that can be done in a background thread. */
-  CloseHandle (CreateThread (nullptr, 0, do_check, strdup (mbox.c_str ()), 0,
+  CloseHandle (CreateThread (nullptr, 0, do_check, xstrdup (mbox.c_str ()), 0,
                              nullptr));
   return;
 }
@@ -386,7 +386,7 @@ WKSHelper::allow_notify (int sleepTimeMS) const
       if (pair.second == ConfirmationSeen ||
           pair.second == NeedsPublish)
         {
-          auto *args = new std::pair<char *, int> (strdup (pair.first.c_str()),
+          auto *args = new std::pair<char *, int> (xstrdup (pair.first.c_str()),
                                                    sleepTimeMS);
           CloseHandle (CreateThread (nullptr, 0, do_notify,
                                      args, 0,

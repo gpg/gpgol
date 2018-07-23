@@ -326,7 +326,7 @@ mapi_get_uid (LPMESSAGE msg)
     }
   else if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
     {
-      ret = strdup (propval->Value.lpszA);
+      ret = xstrdup (propval->Value.lpszA);
       log_debug ("%s:%s: Fund uuid in MAPI for %p",
                  SRCNAME, __func__, msg);
     }

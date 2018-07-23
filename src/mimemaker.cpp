@@ -176,7 +176,7 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink,
 
   /* We better insert a short filename. */
   prop.ulPropTag = PR_ATTACH_FILENAME_A;
-  prop.Value.lpszA = strdup (MIMEATTACHFILENAME);
+  prop.Value.lpszA = xstrdup (MIMEATTACHFILENAME);
   hr = HrSetOneProp ((LPMAPIPROP)att, &prop);
   xfree (prop.Value.lpszA);
   if (hr)
@@ -197,8 +197,8 @@ create_mapi_attachment (LPMESSAGE message, sink_t sink,
   if (!hr)
     {
       prop.ulPropTag = PR_ATTACH_MIME_TAG_A;
-      prop.Value.lpszA = overrideMimeTag ? strdup (overrideMimeTag) :
-                         strdup ("multipart/signed");
+      prop.Value.lpszA = overrideMimeTag ? xstrdup (overrideMimeTag) :
+                         xstrdup ("multipart/signed");
       if (overrideMimeTag)
         {
           log_debug ("%s:%s: using override mimetag: %s\n",
@@ -1150,11 +1150,11 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
   if (encrypt)
     {
-      prop.Value.lpszA = strdup ("IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned");
+      prop.Value.lpszA = xstrdup ("IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned");
     }
   else
     {
-      prop.Value.lpszA = strdup ("IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned");
+      prop.Value.lpszA = xstrdup ("IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned");
     }
 
   if (!is_inline)

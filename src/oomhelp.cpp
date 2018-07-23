@@ -1918,7 +1918,7 @@ generate_uid ()
   unsigned char *str;
   UuidToStringA (&uuid, &str);
 
-  char *ret = strdup ((char*)str);
+  char *ret = xstrdup ((char*)str);
   RpcStringFreeA (&str);
 
   return ret;
@@ -1956,7 +1956,7 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
     }
   else
     {
-      newuid = strdup (uuid);
+      newuid = xstrdup (uuid);
     }
   int ret = put_pa_string (mail, GPGOL_UID_DASL, newuid);
 

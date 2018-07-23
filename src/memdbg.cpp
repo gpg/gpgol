@@ -53,7 +53,7 @@ register_name (void *obj, const char *nameSuggestion)
 
   if (!name && nameSuggestion)
     {
-      name = strdup (nameSuggestion);
+      name = xstrdup (nameSuggestion);
       suggestionUsed = true;
     }
   if (!name)

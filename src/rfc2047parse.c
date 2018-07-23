@@ -652,7 +652,7 @@ rfc2047_parse (const char *input)
 {
   char *decoded;
   if (!input)
-    return strdup ("");
+    return xstrdup ("");
 
   log_debug ("%s:%s: Input: \"%s\"",
              SRCNAME, __func__, input);
@@ -665,7 +665,7 @@ rfc2047_parse (const char *input)
   if (!decoded || !strlen (decoded))
     {
       xfree (decoded);
-      return strdup (input);
+      return xstrdup (input);
     }
   return decoded;
 }
