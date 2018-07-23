@@ -64,10 +64,28 @@ static inline const char *gettext_localename (void) { return ""; }
 
 #endif	/* !ENABLE_NLS */
 
-/* Conversion function. */
-char *wchar_to_utf8 (const wchar_t *string);
-wchar_t *utf8_to_wchar (const char *string);
+#define utf8_to_wchar(VAR1) ({wchar_t *retval; \
+  retval = _utf8_to_wchar (VAR1); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    log_debug ("%s:%s:%i wchar_t alloc %p", \
+               SRCNAME, __func__, __LINE__, retval); \
+  } \
+retval;})
 
+#define wchar_to_utf8(VAR1) ({char *retval; \
+  retval = _wchar_to_utf8 (VAR1); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    log_debug ("%s:%s:%i char utf8 alloc %p", \
+               SRCNAME, __func__, __LINE__, retval); \
+  } \
+retval;})
+
+
+/* Conversion function. */
+char *_wchar_to_utf8 (const wchar_t *string);
+wchar_t *_utf8_to_wchar (const char *string);
 char *utf8_to_native (const char *string);
 char *native_to_utf8 (const char *string);
 

@@ -1466,7 +1466,7 @@ native_to_wchar (const char *string)
    The result of calling this function with STRING set to NULL is not
    defined. */
 wchar_t *
-utf8_to_wchar (const char *string)
+_utf8_to_wchar (const char *string)
 {
   int n;
   wchar_t *result;
@@ -1495,7 +1495,7 @@ utf8_to_wchar (const char *string)
    The result of calling this function with STRING set to NULL is not
    defined. */
 char *
-wchar_to_utf8 (const wchar_t *string)
+_wchar_to_utf8 (const wchar_t *string)
 {
   int n;
   char *result;
