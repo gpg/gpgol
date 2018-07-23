@@ -1811,12 +1811,6 @@ Mail::getBody_o () const
   return get_string_o (m_mailitem, "Body");
 }
 
-std::string
-Mail::getHTMLBody_o () const
-{
-  return get_string_o (m_mailitem, "HTMLBody");
-}
-
 std::vector<std::string>
 Mail::getRecipients_o () const
 {

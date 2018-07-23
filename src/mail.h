@@ -391,9 +391,6 @@ public:
   /** Get the body of the mail */
   std::string getBody_o () const;
 
-  /** Get the html of the mail */
-  std::string getHTMLBody_o () const;
-
   /** Get the recipients. */
   std::vector<std::string> getRecipients_o () const;
 
