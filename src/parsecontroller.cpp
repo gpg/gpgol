@@ -576,7 +576,7 @@ ParseController::get_ultimate_keys()
     }
   log_debug ("%s:%s: Starting keylisting.",
              SRCNAME, __func__);
-  auto ctx = Context::createForProtocol (OpenPGP);
+  auto ctx = std::unique_ptr<Context> (Context::createForProtocol (OpenPGP));
   if (!ctx)
     {
       /* Maybe PGP broken and not S/MIME */
@@ -592,7 +592,6 @@ ParseController::get_ultimate_keys()
     {
       log_error ("%s:%s: Failed to start keylisting err: %i: %s",
                  SRCNAME, __func__, err.code (), err.asString());
-      delete ctx;
       gpgrt_lock_unlock (&keylist_lock);
       return s_ultimate_keys;
     }
@@ -626,7 +625,6 @@ ParseController::get_ultimate_keys()
         }
     }
   TRACEPOINT;
-  delete ctx;
   log_debug ("%s:%s: keylisting done.",
              SRCNAME, __func__);
 
