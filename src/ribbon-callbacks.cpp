@@ -288,8 +288,7 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
   LPMESSAGE message = NULL;
 
   result->vt = VT_BOOL | VT_BYREF;
-  result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
-  *(result->pboolVal) = VARIANT_FALSE;
+  result->pboolVal = &var_false;
 
   /* First the usual defensive check about our parameters */
   if (!ctrl || !result)
