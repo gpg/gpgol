@@ -979,6 +979,7 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
 {
   wchar_t *w_value = utf8_to_wchar (value);
   BSTR b_value = SysAllocString(w_value);
+  xfree (w_value);
   VARIANT var;
   VariantInit (&var);
   var.vt = VT_BSTR;
