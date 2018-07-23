@@ -188,7 +188,7 @@ readRegStr (const char *root, const char *dir, const char *name)
 /* Return a string from the Win32 Registry or NULL in case of error.
    Caller must release the return value.  A NULL for root is an alias
    for HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE in turn.  NOTE: The value
-   is allocated with a plain malloc() - use free() and not the usual
+   is allocated with a plain xmalloc () - use xfree () and not the usual
    xfree(). */
 char *
 read_w32_registry_string (const char *root, const char *dir, const char *name)
@@ -215,10 +215,10 @@ get_data_dir (void)
 
   /* Build the key: "<instdir>/share/gpgol".  */
 #define SDDIR "\\share\\gpgol"
-  dname = (char*) malloc (strlen (instdir) + strlen (SDDIR) + 1);
+  dname = (char*) xmalloc (strlen (instdir) + strlen (SDDIR) + 1);
   if (!dname)
     {
-      free (instdir);
+      xfree (instdir);
       return NULL;
     }
   p = dname;
@@ -226,7 +226,7 @@ get_data_dir (void)
   p += strlen (instdir);
   strcpy (p, SDDIR);
 
-  free (instdir);
+  xfree (instdir);
 
 #undef SDDIR
   return dname;
@@ -246,7 +246,7 @@ percent_escape (const char *str, const char *extra)
   for (i=j=0; str[i]; i++)
     if (str[i] == ':' || str[i] == '%' || (extra && strchr (extra, str[i])))
       j++;
-  ptr = (char *) malloc (i + 2 * j + 1);
+  ptr = (char *) xmalloc (i + 2 * j + 1);
   i = 0;
   while (*str)
     {
@@ -762,6 +762,7 @@ gpgol_bug (HWND parent, int code)
                 "or ask your Administrator for support.");
   char *with_code;
   gpgrt_asprintf (&with_code, "%s\nCode: %i", bugmsg, code);
+  memdbg_alloc (with_code);
   gpgol_message_box (parent,
                      with_code,
                      _("GpgOL Error"), MB_OK);
@@ -895,6 +896,7 @@ store_extension_subkey_value (const char *subkey,
   int ret;
   char *path;
   gpgrt_asprintf (&path, "%s\\%s", GPGOL_REGPATH, subkey);
+  memdbg_alloc (path);
   ret = store_config_value (HKEY_CURRENT_USER, path, key, val);
   xfree (path);
   return ret;

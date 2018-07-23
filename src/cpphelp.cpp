@@ -42,7 +42,9 @@ release_cArray (char **carray)
   if (carray)
     {
       for (int idx = 0; carray[idx]; idx++)
-        xfree (carray[idx]);
+        {
+          xfree (carray[idx]);
+        }
       xfree (carray);
     }
 }

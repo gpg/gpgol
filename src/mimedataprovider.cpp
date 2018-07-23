@@ -195,7 +195,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           ctx->is_base64_encoded = 1;
           b64_init (&ctx->base64);
         }
-      free (p);
+      xfree (p);
     }
 
   /* Get the filename from the header.  */

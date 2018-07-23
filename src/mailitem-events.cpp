@@ -315,6 +315,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                   "message is not open in any window and not selected in the "
                                   "messagelist.\n\nFor example by right clicking but not selecting the message.\n"),
                           wchar_to_utf8(prop_name));
+          memdbg_alloc (fmt);
           wchar_t *msg = utf8_to_wchar (fmt);
           xfree (fmt);
           MessageBoxW (get_active_hwnd(), msg, title,

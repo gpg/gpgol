@@ -39,6 +39,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#include "common_indep.h"
 #include "rfc822parse.h"
 
 enum token_type
@@ -184,7 +185,7 @@ new_part (void)
 {
   part_t part;
 
-  part = calloc (1, sizeof *part);
+  part = xcalloc (1, sizeof *part);
   if (part)
     {
       part->hdr_lines_tail = &part->hdr_lines;
@@ -207,10 +208,10 @@ release_part (part_t part)
       for (hdr = part->hdr_lines; hdr; hdr = hdr2)
         {
           hdr2 = hdr->next;
-          free (hdr);
+          xfree (hdr);
         }
-      free (part->boundary);
-      free (part);
+      xfree (part->boundary);
+      xfree (part);
     }
 }
 
@@ -231,13 +232,13 @@ release_handle_data (rfc822parse_t msg)
 rfc822parse_t
 rfc822parse_open (rfc822parse_cb_t cb, void *cb_value)
 {
-  rfc822parse_t msg = calloc (1, sizeof *msg);
+  rfc822parse_t msg = xcalloc (1, sizeof *msg);
   if (msg)
     {
       msg->parts = msg->current_part = new_part ();
       if (!msg->parts)
         {
-          free (msg);
+          xfree (msg);
           msg = NULL;
         }
       else
@@ -247,7 +248,7 @@ rfc822parse_open (rfc822parse_cb_t cb, void *cb_value)
           if (do_callback (msg, RFC822PARSE_OPEN))
             {
               release_handle_data (msg);
-              free (msg);
+              xfree (msg);
               errno = 0;/* Not meaningful after the callback.  */
               msg = NULL;
             }
@@ -264,7 +265,7 @@ rfc822parse_cancel (rfc822parse_t msg)
     {
       do_callback (msg, RFC822PARSE_CANCEL);
       release_handle_data (msg);
-      free (msg);
+      xfree (msg);
     }
 }
 
@@ -276,7 +277,7 @@ rfc822parse_close (rfc822parse_t msg)
     {
       do_callback (msg, RFC822PARSE_CLOSE);
       release_handle_data (msg);
-      free (msg);
+      xfree (msg);
     }
 }
 
@@ -354,7 +355,7 @@ transition_to_body (rfc822parse_t msg)
               if (s)
                 {
                   assert (!msg->current_part->boundary);
-                  msg->current_part->boundary = malloc (strlen (s) + 1);
+                  msg->current_part->boundary = xmalloc (strlen (s) + 1);
                   if (msg->current_part->boundary)
                     {
                       part_t part;
@@ -420,7 +421,7 @@ insert_header (rfc822parse_t msg, const unsigned char *line, size_t length)
     do_callback (msg, RFC822PARSE_BEGIN_HEADER);
 
   length = length_sans_trailing_ws (line, length);
-  hdr = malloc (sizeof (*hdr) + length);
+  hdr = xmalloc (sizeof (*hdr) + length);
   if (!hdr)
     return -1;
   hdr->next = NULL;
@@ -543,7 +544,7 @@ rfc822parse_get_field (rfc822parse_t msg, const char *name, int which,
   for (h2 = h->next; h2 && h2->cont; h2 = h2->next)
     n += strlen (h2->line) + 1;
 
-  buf = p = malloc (n);
+  buf = p = xmalloc (n);
   if (buf)
     {
       p = my_stpcpy (p, h->line);
@@ -694,7 +695,7 @@ release_token_list (TOKEN t)
       TOKEN t2 = t->next;
       /* fixme: If we have owner_pantry, put the token back to
        * this pantry so that it can be reused later */
-      free (t);
+      xfree (t);
       t = t2;
     }
 }
@@ -707,7 +708,7 @@ new_token (enum token_type type, const char *buf, size_t length)
 
   /* fixme: look through our pantries to find a suitable
    * token for reuse */
-  t = malloc (sizeof *t + length);
+  t = xmalloc (sizeof *t + length);
   if (t)
     {
       t->next = NULL;
@@ -731,7 +732,7 @@ append_to_token (TOKEN old, const char *buf, size_t length)
   size_t n = strlen (old->data);
   TOKEN t;
 
-  t = malloc (sizeof *t + n + length);
+  t = xmalloc (sizeof *t + n + length);
   if (t)
     {
       t->next = old->next;

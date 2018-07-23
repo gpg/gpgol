@@ -112,7 +112,7 @@ create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
   HRESULT hr;
   LPSPropTagArray proparr = NULL;
   MAPINAMEID mnid, *pmnid;
-  wchar_t *propname = wcsdup (name);
+  wchar_t *propname = xwcsdup (name);
   /* {31805ab8-3e92-11dc-879c-00061b031004}: GpgOL custom properties.  */
   GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
                                             0x1b, 0x03, 0x10, 0x04}};

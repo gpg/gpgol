@@ -1069,6 +1069,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
 
   if (buffer)
     {
+      memdbg_alloc (buffer);
       wchar_t *wbuf = utf8_to_wchar (buffer);
       xfree (buffer);
       *RibbonXml = SysAllocString (wbuf);

@@ -122,7 +122,7 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 
   /* copy the charset into a buffer */
   n = (size_t) (inptr - tmpchar);
-  buf = malloc (n + 1);
+  buf = xmalloc (n + 1);
   memcpy (buf, tmpchar, n);
   buf[n] = '\0';
   charset = buf;

@@ -33,6 +33,7 @@
 std::map <std::string, int> cppObjs;
 std::map <void *, int> olObjs;
 std::map <void *, std::string> olNames;
+std::map <void *, std::string> allocs;
 
 GPGRT_LOCK_DEFINE (memdbg_log);
 
@@ -213,7 +214,67 @@ memdbg_dtor (const char *objName)
                  SRCNAME, __func__, nameStr.c_str());
     }
   gpgrt_lock_unlock (&memdbg_log);
+}
 
+
+void
+_memdbg_alloc (void *ptr, const char *srcname, const char *func, int line)
+{
+  DBGGUARD;
+
+  if (!ptr)
+    {
+      TRACEPOINT;
+      return;
+    }
+
+  gpgrt_lock_lock (&memdbg_log);
+
+  const std::string identifier = std::string (srcname) + std::string (":") +
+                                  std::string (func) + std::string (":") +
+                                  std::to_string (line);
+
+  auto it = allocs.find (ptr);
+
+  if (it != allocs.end())
+    {
+      TRACEPOINT;
+      gpgrt_lock_unlock (&memdbg_log);
+      return;
+    }
+  allocs.insert (std::make_pair (ptr, identifier));
+
+  gpgrt_lock_unlock (&memdbg_log);
+}
+
+
+int
+memdbg_free (void *ptr)
+{
+  DBGGUARD false;
+
+  if (!ptr)
+    {
+      TRACEPOINT;
+      return false;
+    }
+
+  gpgrt_lock_lock (&memdbg_log);
+
+  auto it = allocs.find (ptr);
+
+  if (it == allocs.end())
+    {
+      log_error ("%s:%s Free unregistered: %p",
+                 SRCNAME, __func__, ptr);
+      gpgrt_lock_unlock (&memdbg_log);
+      return false;
+    }
+
+  allocs.erase (it);
+
+  gpgrt_lock_unlock (&memdbg_log);
+  return true;
 }
 
 void
@@ -249,6 +310,12 @@ memdbg_dump ()
         }
     }
   log_debug("-- OL End --");
+  log_debug("-- Allocated Addresses --");
+  for (const auto &pair: allocs)
+    {
+      log_debug ("%s: %p", pair.second.c_str(), pair.first);
+    }
+  log_debug("-- Allocated Addresses End --");
 
   log_debug(""
 "------------------------------MEMORY END ----------------------------------");

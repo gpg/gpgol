@@ -296,7 +296,7 @@ message_cb (void *opaque, rfc822parse_event_t event, rfc822parse_t msg)
               ctx->is_base64_encoded = 1;
               b64_init (&ctx->base64);
             }
-          free (p);
+          xfree (p);
         }
 
       /* If this is a text part, decide whether we treat it as our body. */

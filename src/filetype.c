@@ -25,6 +25,7 @@
 
 #include "parsetlv.h"
 #include "filetype.h"
+#include "common_indep.h"
 
 
 /* The size of the buffer we use to identify CMS objects.  */
@@ -107,7 +108,7 @@ is_cms_file (const char *fname)
   if (!fp)
     return 0; /* Not found - can't be a CMS file.  */
 
-  data = malloc (CMS_BUFFER_SIZE);
+  data = xmalloc (CMS_BUFFER_SIZE);
   if (!data)
     {
       fclose (fp);
@@ -119,7 +120,7 @@ is_cms_file (const char *fname)
   fclose (fp);
 
   result = detect_cms (data, datalen);
-  free (data);
+  xfree (data);
   return result;
 }
 
@@ -138,13 +139,13 @@ is_cms_data (const char *data, size_t datalen)
   if (datalen > CMS_BUFFER_SIZE - 1)
     datalen = CMS_BUFFER_SIZE - 1;
 
-  buffer = malloc (datalen + 1);
+  buffer = xmalloc (datalen + 1);
   if (!buffer)
     return 0; /* Oops */
   memcpy (buffer, data, datalen);
   buffer[datalen] = 0;
 
   result = detect_cms (buffer, datalen);
-  free (buffer);
+  xfree (buffer);
   return result;
 }

@@ -903,6 +903,7 @@ do_crypt (LPVOID arg)
           char *buf = nullptr;
           gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
                           err.asString());
+          memdbg_alloc (buf);
           gpgol_message_box (mail->getWindow (), buf, _("GpgOL"), MB_OK);
           xfree (buf);
         }
@@ -1037,6 +1038,7 @@ Mail::decryptVerify_o ()
                      SRCNAME, __func__);
         }
     }
+  memdbg_alloc (placeholder_buf);
   xfree (placeholder_buf);
 
   /* Do the actual parsing */
@@ -1837,6 +1839,7 @@ Mail::getRecipients_o () const
               "or ask your Administrator for support.");
       char *buf;
       gpgrt_asprintf (&buf, "Failed to resolve recipients.\n\n%s\n", bugmsg);
+      memdbg_alloc (buf);
       gpgol_message_box (get_active_hwnd (),
                          buf,
                          _("GpgOL"), MB_OK);
@@ -2462,6 +2465,7 @@ Mail::getCryptoDetails_o ()
       /* Level three is the only level for trusted S/MIME keys. */
       gpgrt_asprintf (&buf, _("The senders identity is certified by the trusted issuer:\n'%s'\n"),
                       m_sig.key().issuerName());
+      memdbg_alloc (buf);
       message = buf;
       xfree (buf);
     }
@@ -2488,6 +2492,7 @@ Mail::getCryptoDetails_o ()
                               "You encrypted %i and verified %i messages since."),
                               time, m_uid.tofuInfo().encrCount(),
                               m_uid.tofuInfo().signCount ());
+      memdbg_alloc (buf);
       xfree (time);
       message = buf;
       xfree (buf);
@@ -2510,6 +2515,7 @@ Mail::getCryptoDetails_o ()
                                   "it since %s."),
                                   m_uid.tofuInfo().signCount (),
                                   m_uid.tofuInfo().encrCount (), time);
+          memdbg_alloc (buf);
           xfree (time);
           message = buf;
           xfree (buf);
@@ -2587,6 +2593,7 @@ Mail::getCryptoDetails_o ()
         {
           gpgrt_asprintf (&buf, _("does not claim the address: \"%s\"."),
                           getSender_o ().c_str());
+          memdbg_alloc (buf);
           message += buf;
           xfree (buf);
         }

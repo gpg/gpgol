@@ -315,7 +315,7 @@ do_async (LPVOID arg)
 void
 do_in_ui_thread_async (gpgol_wmsg_type type, void *data, int delay)
 {
-  wm_ctx_t *ctx = (wm_ctx_t *) calloc (1, sizeof (wm_ctx_t));
+  wm_ctx_t *ctx = (wm_ctx_t *) xcalloc (1, sizeof (wm_ctx_t));
   ctx->wmsg_type = type;
   ctx->data = data;
   ctx->delay = delay;

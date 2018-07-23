@@ -33,6 +33,7 @@
 #include <stdint.h>
 
 #include "w32-gettext.h"
+#include "common_indep.h"
 #include "xmalloc.h"
 
 
@@ -1293,14 +1294,14 @@ static void
 free_domain (struct loaded_domain *domain)
 {
   struct overflow_space_s *os, *os2;
-  free (domain->data);
-  free (domain->mapped);
+  xfree (domain->data);
+  xfree (domain->mapped);
   for (os = domain->overflow_space; os; os = os2)
     {
       os2 = os->next;
-      free (os);
+      xfree (os);
     }
-  free (domain);
+  xfree (domain);
 }
 
 
@@ -1329,7 +1330,7 @@ load_domain (const char *filename)
       return NULL;
     }
 
-  data = (mo_file_header*) malloc (size);
+  data = (mo_file_header*) xmalloc (size);
   if (!data)
     {
       fclose (fp);
@@ -1344,7 +1345,7 @@ load_domain (const char *filename)
       if (nb < to_read)
 	{
 	  fclose (fp);
-	  free (data);
+	  xfree (data);
 	  return NULL;
 	}
       read_ptr += nb;
@@ -1358,14 +1359,14 @@ load_domain (const char *filename)
   if (data->magic != MAGIC && data->magic != MAGIC_SWAPPED)
     {
       /* The magic number is wrong: not a message catalog file.  */
-      free (data);
+      xfree (data);
       return NULL;
     }
 
-  domain = (loaded_domain *) calloc (1, sizeof *domain);
+  domain = (loaded_domain *) xcalloc (1, sizeof *domain);
   if (!domain)
     {
-      free (data);
+      xfree (data);
       return NULL;
     }
   domain->data = (char *) data;
@@ -1388,17 +1389,17 @@ load_domain (const char *filename)
 
     default:
       /* This is an invalid revision.	*/
-      free (data);
-      free (domain);
+      xfree (data);
+      xfree (domain);
       return NULL;
     }
 
   /* Allocate an array to keep track of code page mappings.  */
-  domain->mapped = (char *) calloc (1, domain->nstrings);
+  domain->mapped = (char *) xcalloc (1, domain->nstrings);
   if (!domain->mapped)
     {
-      free (data);
-      free (domain);
+      xfree (data);
+      xfree (domain);
       return NULL;
     }
 
@@ -1421,14 +1422,14 @@ wchar_to_native (const wchar_t *string)
   if (n < 0)
     return NULL;
 
-  result = (char*) malloc (n+1);
+  result = (char*) xmalloc (n+1);
   if (!result)
     return NULL;
 
   n = WideCharToMultiByte (CP_ACP, 0, string, -1, result, n, NULL, NULL);
   if (n < 0)
     {
-      free (result);
+      xfree (result);
       return NULL;
     }
   return result;
@@ -1445,14 +1446,14 @@ native_to_wchar (const char *string)
   if (n < 0)
     return NULL;
 
-  result = (wchar_t *) malloc ((n+1) * sizeof *result);
+  result = (wchar_t *) xmalloc ((n+1) * sizeof *result);
   if (!result)
     return NULL;
 
   n = MultiByteToWideChar (CP_ACP, 0, string, -1, result, n);
   if (n < 0)
     {
-      free (result);
+      xfree (result);
       return NULL;
     }
   return result;
@@ -1474,14 +1475,14 @@ utf8_to_wchar (const char *string)
   if (n < 0)
     return NULL;
 
-  result = (wchar_t *) malloc ((n+1) * sizeof *result);
+  result = (wchar_t *) xmalloc ((n+1) * sizeof *result);
   if (!result)
     return NULL;
 
   n = MultiByteToWideChar (CP_UTF8, 0, string, -1, result, n);
   if (n < 0)
     {
-      free (result);
+      xfree (result);
       return NULL;
     }
   return result;
@@ -1549,7 +1550,7 @@ utf8_to_native (const char *string)
     return xstrdup ("[Error: utf8_to_wchar failed]");
 
   result = wchar_to_native (wstring);
-  free (wstring);
+  xfree (wstring);
   if (!result)
     result = xstrdup ("[Error: wchar_to_native failed]");
 
@@ -1572,7 +1573,7 @@ native_to_utf8 (const char *string)
     return xstrdup ("[Error: native_to_wchar failed]");
 
   result = wchar_to_utf8 (wstring);
-  free (wstring);
+  xfree (wstring);
   if (!result)
     result = xstrdup ("[Error: wchar_to_utf8 failed]");
 
@@ -1606,7 +1607,7 @@ get_string (struct loaded_domain *domain, u32 idx, int utf8)
              in the overflow_space else and mark that in the mapped
              array.  Because we expect that this won't happen too
              often, we use a simple linked list.  */
-          os = (overflow_space_s *) malloc (sizeof *os + buflen);
+          os = (overflow_space_s *) xmalloc (sizeof *os + buflen);
           if (os)
             {
               os->idx = idx;
@@ -1618,7 +1619,7 @@ get_string (struct loaded_domain *domain, u32 idx, int utf8)
           else
             p = (char *) "ERROR in GETTEXT MALLOC";
         }
-      free (buf);
+      xfree (buf);
     }
   else if (domain->mapped[idx] == 2)
     {
@@ -1684,10 +1685,10 @@ bindtextdomain (const char *domainname, const char *dirname)
       + strlen (domainname) + 3 + 1;
     char *p;
 
-    fname = (char*) malloc (len);
+    fname = (char*) xmalloc (len);
     if (!fname)
       {
-	free (catval);
+	xfree (catval);
 	return NULL;
       }
 
@@ -1705,8 +1706,8 @@ bindtextdomain (const char *domainname, const char *dirname)
   }
 
   domain = load_domain (fname);
-  free (catval);
-  free (fname);
+  xfree (catval);
+  xfree (fname);
 
   /* We should not be invoked twice, but this is how you would do
      it if it happened.  */

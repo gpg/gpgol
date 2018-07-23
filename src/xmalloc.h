@@ -28,13 +28,62 @@ extern "C" {
 #endif
 
 /*-- common.c --*/
-void* xmalloc (size_t n);
-void* xcalloc (size_t m, size_t n);
-void *xrealloc (void *a, size_t n);
-char* xstrdup (const char *s);
-void  xfree (void *p);
-void out_of_core (void);
+#define xmalloc(VAR1) ({void *retval; \
+  retval = _xmalloc(VAR1); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    memdbg_alloc (retval); \
+  } \
+retval;})
 
+#define xcalloc(VAR1, VAR2) ({void *retval; \
+  retval = _xcalloc(VAR1, VAR2); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    memdbg_alloc (retval);\
+  } \
+retval;})
+
+#define xrealloc(VAR1, VAR2) ({void *retval; \
+  retval = _xrealloc (VAR1, VAR2); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    memdbg_alloc (retval);\
+    memdbg_free ((void*)VAR1); \
+  } \
+retval;})
+
+#define xfree(VAR1) \
+{ \
+  if (VAR1 && (opt.enable_debug & DBG_OOM_EXTRA) && !memdbg_free (VAR1)) \
+    log_debug ("%s:%s:%i %p freed here", \
+               log_srcname (__FILE__), __func__, __LINE__, VAR1); \
+  _xfree (VAR1); \
+}
+
+#define xstrdup(VAR1) ({char *retval; \
+  retval = _xstrdup (VAR1); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    memdbg_alloc ((void *)retval);\
+  } \
+retval;})
+
+#define xwcsdup(VAR1) ({wchar_t *retval; \
+  retval = _xwcsdup (VAR1); \
+  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  { \
+    memdbg_alloc ((void *)retval);\
+  } \
+retval;})
+
+void* _xmalloc (size_t n);
+void* _xcalloc (size_t m, size_t n);
+void *_xrealloc (void *a, size_t n);
+char* _xstrdup (const char *s);
+wchar_t * _xwcsdup (const wchar_t *s);
+void  _xfree (void *p);
+void out_of_core (void);
 
 #ifdef __cplusplus
 }

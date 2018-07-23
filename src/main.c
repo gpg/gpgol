@@ -88,16 +88,19 @@ get_gpgme_w32_inst_dir (void)
   char *gpg4win_dir = get_gpg4win_dir ();
   char *tmp;
   gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32spawn.exe", gpg4win_dir);
+  memdbg_alloc (tmp);
 
   if (!access(tmp, R_OK))
     {
       xfree (tmp);
       gpgrt_asprintf (&tmp, "%s\\bin", gpg4win_dir);
+      memdbg_alloc (tmp);
       xfree (gpg4win_dir);
       return tmp;
     }
   xfree (tmp);
   gpgrt_asprintf (&tmp, "%s\\gpgme-w32spawn.exe", gpg4win_dir);
+  memdbg_alloc (tmp);
 
   if (!access(tmp, R_OK))
     {
@@ -157,10 +160,10 @@ get_locale_dir (void)
 
   /* Build the key: "<instdir>/share/locale".  */
 #define SLDIR "\\share\\locale"
-  dname = malloc (strlen (instdir) + strlen (SLDIR) + 1);
+  dname = xmalloc (strlen (instdir) + strlen (SLDIR) + 1);
   if (!dname)
     {
-      free (instdir);
+      xfree (instdir);
       return NULL;
     }
   p = dname;
@@ -168,7 +171,7 @@ get_locale_dir (void)
   p += strlen (instdir);
   strcpy (p, SLDIR);
 
-  free (instdir);
+  xfree (instdir);
 
   return dname;
 }
@@ -177,7 +180,7 @@ get_locale_dir (void)
 static void
 drop_locale_dir (char *locale_dir)
 {
-  free (locale_dir);
+  xfree (locale_dir);
 }
 
 
@@ -253,7 +256,9 @@ read_options (void)
          after using the configuration dialog.  */
       store_extension_value ("enableDebug", "0");
     }
-  xfree (val); val = NULL;
+  /* Yes we use free here because memtracing did not track the alloc
+     as the option for debuging was not read before. */
+  free (val); val = NULL;
   if (opt.enable_debug)
     log_debug ("enabled debug flags:%s%s%s%s%s%s%s%s%s%s\n",
                (opt.enable_debug & DBG_IOWORKER)? " ioworker":"",

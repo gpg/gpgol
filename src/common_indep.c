@@ -68,7 +68,7 @@ out_of_core (void)
 }
 
 void*
-xmalloc (size_t n)
+_xmalloc (size_t n)
 {
   void *p = malloc (n);
   if (!p)
@@ -77,7 +77,7 @@ xmalloc (size_t n)
 }
 
 void*
-xcalloc (size_t m, size_t n)
+_xcalloc (size_t m, size_t n)
 {
   void *p = calloc (m, n);
   if (!p)
@@ -86,7 +86,7 @@ xcalloc (size_t m, size_t n)
 }
 
 void *
-xrealloc (void *a, size_t n)
+_xrealloc (void *a, size_t n)
 {
   void *p = realloc (a, n);
   if (!p)
@@ -95,15 +95,26 @@ xrealloc (void *a, size_t n)
 }
 
 char*
-xstrdup (const char *s)
+_xstrdup (const char *s)
 {
-  char *p = xmalloc (strlen (s)+1);
+  char *p = _xmalloc (strlen (s)+1);
   strcpy (p, s);
   return p;
 }
 
+wchar_t*
+_xwcsdup (const wchar_t *s)
+{
+  wchar_t *p = wcsdup (s);
+  if (!s)
+    {
+      out_of_core ();
+    }
+  return p;
+}
+
 void
-xfree (void *p)
+_xfree (void *p)
 {
   if (p)
     free (p);

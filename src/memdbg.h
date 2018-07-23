@@ -45,6 +45,11 @@ void memdbg_released (void *obj);
 void memdbg_ctor (const char *objName);
 void memdbg_dtor (const char *objName);
 
+void _memdbg_alloc (void *ptr, const char *srcname, const char *func, int line);
+#define memdbg_alloc(X) \
+    _memdbg_alloc ((void *)X, log_srcname (__FILE__), __func__, __LINE__);
+int memdbg_free (void *ptr);
+
 void memdbg_dump(void);
 
 #ifdef __cplusplus

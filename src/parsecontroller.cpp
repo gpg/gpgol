@@ -226,6 +226,7 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
                  SRCNAME, __func__);
       return "Failed to Format error.";
     }
+  memdbg_alloc (buf);
   msg = buf;
   return msg;
 }
@@ -304,6 +305,7 @@ ParseController::parse()
           /* Should never happen */
           m_error = std::string("Bad installation");
         }
+      memdbg_alloc (buf);
       m_error = buf;
       xfree (buf);
       return;

@@ -160,6 +160,7 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
           goto done;
         }
 
+      memdbg_alloc (item_str);
       attachment = get_oom_object (attachments, item_str);
       xfree (item_str);
       if (!attachment)
