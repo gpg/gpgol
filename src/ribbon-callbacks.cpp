@@ -537,6 +537,7 @@ HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
   result->pboolVal = (VARIANT_BOOL*) xmalloc (sizeof (VARIANT_BOOL));
   *(result->pboolVal) = none_selected ? VARIANT_FALSE : VARIANT_TRUE;
 
+  TRACEPOINT;
   return S_OK;
 }
 
@@ -558,6 +559,7 @@ HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
   w_result = utf8_to_wchar (mail->getCryptoSummary ().c_str ());
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
+  TRACEPOINT;
   return S_OK;
 }
 
@@ -581,6 +583,7 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
     }
   result->bstrVal = SysAllocString (w_result);
   xfree (w_result);
+  TRACEPOINT;
   return S_OK;
 }
 
@@ -592,6 +595,7 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
   if (none_selected)
     {
       result->bstrVal = SysAllocString (L"");
+      TRACEPOINT;
       return S_OK;
     }
   if (!mail || !mail->isCryptoMail ())
@@ -602,12 +606,14 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
                                   "Click here to learn more."));
       result->bstrVal = SysAllocString (w_result);
       xfree (w_result);
+      TRACEPOINT;
       return S_OK;
     }
   const auto message = mail->getCryptoDetails_o ();
   wchar_t *w_message = utf8_to_wchar (message.c_str());
   result->bstrVal = SysAllocString (w_message);
   xfree (w_message);
+  TRACEPOINT;
   return S_OK;
 }
 
@@ -712,8 +718,10 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result)
 
   if (mail)
     {
+      TRACEPOINT;
       return getIcon (mail->getCryptoIconID (), result);
     }
+  TRACEPOINT;
   return getIcon (IDI_LEVEL_0, result);
 }
 
@@ -726,6 +734,7 @@ HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
   *(result->pboolVal) = (mail && (mail->isSigned () || mail->isEncrypted ())) ?
                           VARIANT_TRUE : VARIANT_FALSE;
 
+  TRACEPOINT;
   return S_OK;
 }
 
