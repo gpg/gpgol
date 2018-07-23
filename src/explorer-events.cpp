@@ -148,10 +148,12 @@ start_watchdog (LPVOID arg)
       log_debug ("%s:%s: Deteced unselect invalidating UI.",
                  SRCNAME, __func__);
       it->second = UnselectSeen;
+      gpgrt_lock_unlock (&explorer_map_lock);
+      do_in_ui_thread (INVALIDATE_UI, nullptr);
+      return 0;
     }
   gpgrt_lock_unlock (&explorer_map_lock);
 
-  do_in_ui_thread (INVALIDATE_UI, nullptr);
   return 0;
 }
 
