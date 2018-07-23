@@ -59,29 +59,6 @@ initialize_main (void)
   return log_mutex? 0 : -1;
 }
 
-/* Return nbytes of cryptographic strong random.  Caller needs to free
-   the returned buffer.  */
-static char *
-get_crypt_random (size_t nbytes)
-{
-  HCRYPTPROV prov;
-  char *buffer;
-
-  if (!CryptAcquireContext (&prov, NULL, NULL, PROV_RSA_FULL,
-                            (CRYPT_VERIFYCONTEXT|CRYPT_SILENT)) )
-    return NULL;
-
-  buffer = xmalloc (nbytes);
-  if (!CryptGenRandom (prov, nbytes, buffer))
-    {
-      xfree (buffer);
-      buffer = NULL;
-    }
-  CryptReleaseContext (prov, 0);
-  return buffer;
-}
-
-
 void
 i18n_init (void)
 {
@@ -165,14 +142,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
     }
 
   return TRUE;
-}
-
-/* Return a new allocated IV of size NBYTES.  Caller must free it.  On
-   error NULL is returned. */
-void *
-create_initialization_vector (size_t nbytes)
-{
-  return get_crypt_random (nbytes);
 }
 
 static char *
