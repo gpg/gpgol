@@ -33,6 +33,7 @@
 
 /* Singleton window */
 static HWND g_responder_window = NULL;
+static int invalidation_blocked = 0;
 
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -98,11 +99,20 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
           case (INVALIDATE_UI):
             {
-              log_debug ("%s:%s: Invalidating UI",
-                         SRCNAME, __func__);
-              gpgoladdin_invalidate_ui();
-              log_debug ("%s:%s: Invalidation done",
-                         SRCNAME, __func__);
+              if (!invalidation_blocked)
+                {
+                  log_debug ("%s:%s: Invalidating UI",
+                             SRCNAME, __func__);
+                  gpgoladdin_invalidate_ui();
+                  log_debug ("%s:%s: Invalidation done",
+                             SRCNAME, __func__);
+                }
+              else
+                {
+                  log_debug ("%s:%s: Received invalidation msg while blocked."
+                             " Ignoring it",
+                             SRCNAME, __func__);
+                }
               break;
             }
           case (INVALIDATE_LAST_MAIL):
@@ -421,14 +431,12 @@ create_message_hook()
                            GetCurrentThreadId());
 }
 
-gpgrt_lock_t invalidate_lock = GPGRT_LOCK_INITIALIZER;
+GPGRT_LOCK_DEFINE (invalidate_lock);
 
 static bool invalidation_in_progress;
 
-static int invalidation_blocked = 0;
-
 DWORD WINAPI
-delayed_invalidate_ui (LPVOID)
+delayed_invalidate_ui (LPVOID minsleep)
 {
   if (invalidation_in_progress)
     {
@@ -440,6 +448,7 @@ delayed_invalidate_ui (LPVOID)
   invalidation_in_progress = true;
   gpgrt_lock_lock(&invalidate_lock);
 
+  Sleep((int) minsleep);
   int i = 0;
   while (invalidation_blocked)
     {

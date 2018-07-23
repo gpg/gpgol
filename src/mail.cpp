@@ -741,7 +741,6 @@ do_parsing (LPVOID arg)
   gpgrt_lock_unlock (&dtor_lock);
 
   gpgrt_lock_lock (&parser_lock);
-  gpgrt_lock_lock (&invalidate_lock);
   /* We lock the parser here to avoid too many
      decryption attempts if there are
      multiple mailobjects which might have already
@@ -755,7 +754,6 @@ do_parsing (LPVOID arg)
     {
       log_debug ("%s:%s: cancel for: %p already deleted",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
       unblockInv();
       return 0;
@@ -765,14 +763,12 @@ do_parsing (LPVOID arg)
     {
       log_error ("%s:%s: no parser found for mail: %p",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&invalidate_lock);
       gpgrt_lock_unlock (&parser_lock);
       unblockInv();
       return -1;
     }
   parser->parse();
   do_in_ui_thread (PARSING_DONE, arg);
-  gpgrt_lock_unlock (&invalidate_lock);
   gpgrt_lock_unlock (&parser_lock);
   unblockInv();
   return 0;
@@ -1410,7 +1406,7 @@ Mail::parsing_done()
 
   log_debug ("%s:%s: Delayed invalidate to update sigstate.",
              SRCNAME, __func__);
-  CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) this, 0,
+  CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
                             NULL));
   TRACEPOINT;
   return;

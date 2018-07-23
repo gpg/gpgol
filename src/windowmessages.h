@@ -102,12 +102,9 @@ void blockInv ();
 void unblockInv ();
 
 DWORD WINAPI
-delayed_invalidate_ui (LPVOID);
+delayed_invalidate_ui (LPVOID minsleep_ms = 0);
 
 DWORD WINAPI
 close_mail (LPVOID);
-
-/* The lock to invalide the ui */
-extern gpgrt_lock_t invalidate_lock;
 
 #endif // WINDOWMESSAGES_H
