@@ -344,6 +344,7 @@ GpgolAddin::OnConnection (LPDISPATCH Application, ext_ConnectMode ConnectMode,
       return S_OK;
     }
 
+  xfree (version);
   setupDoNotDisable ();
 
   if (ConnectMode != ext_cm_Startup)
