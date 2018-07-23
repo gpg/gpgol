@@ -3109,6 +3109,7 @@ mapi_get_message_content_type (LPMESSAGE message,
 
       log_error ("%s:%s: failed to get headers",
                  SRCNAME, __func__);
+      rfc822parse_close (msg);
       return NULL;
     }
 
