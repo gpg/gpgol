@@ -153,8 +153,11 @@ CryptController::collect_data ()
   sink->writefnc = sink_data_write;
 
   /* Collect the mime strucutre */
-  if (add_body_and_attachments (sink, message, att_table, m_mail,
-                                body, n_att_usable))
+  int err = add_body_and_attachments (sink, message, att_table, m_mail,
+                                      body, n_att_usable);
+  xfree (body);
+
+  if (err)
     {
       log_error ("%s:%s: Collecting body and attachments failed.",
                  SRCNAME, __func__);
