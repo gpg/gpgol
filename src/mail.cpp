@@ -1022,7 +1022,14 @@ Mail::decryptVerify_o ()
 
   if (opt.prefer_html)
     {
-      m_orig_body = get_oom_string (m_mailitem, "HTMLBody");
+      char *tmp = get_oom_string (m_mailitem, "HTMLBody");
+      if (!tmp)
+        {
+          TRACEPOINT;
+          return 1;
+        }
+      m_orig_body = tmp;
+      xfree (tmp);
       if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify html body of item.",
@@ -1031,7 +1038,14 @@ Mail::decryptVerify_o ()
     }
   else
     {
-      m_orig_body = get_oom_string (m_mailitem, "Body");
+      char *tmp = get_oom_string (m_mailitem, "Body");
+      if (!tmp)
+        {
+          TRACEPOINT;
+          return 1;
+        }
+      m_orig_body = tmp;
+      xfree (tmp);
       if (put_oom_string (m_mailitem, "Body", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify body of item.",
