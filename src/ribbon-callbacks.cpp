@@ -357,8 +357,15 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
                  hr);
       return NULL;
     }
+  char *name = get_object_name (context);
 
-  const auto ctx_name = std::string (get_object_name (context));
+  std::string ctx_name;
+
+  if (name)
+    {
+      ctx_name = name;
+      xfree (name);
+    }
 
   if (ctx_name.empty())
     {
