@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-07-24 08:32+0200\n"
-"PO-Revision-Date: 2018-06-12 13:40+0100\n"
+"PO-Revision-Date: 2018-07-24 09:32+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -22,29 +22,27 @@ msgstr ""
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
-msgstr ""
+msgstr "GnuPG System"
 
 #: src/addin-options.cpp:40
 msgid "Enable the S/MIME support"
 msgstr "S/MIME-Unterstützung einschalten"
 
 #: src/addin-options.cpp:41 src/addin-options.cpp:147
-#, fuzzy
 msgid "Configure GpgOL"
-msgstr "GnuPG konfigurieren "
+msgstr "GpgOL konfigurieren"
 
 #: src/addin-options.cpp:42
 msgid "Automation"
-msgstr ""
+msgstr "Automatisierung"
 
 #: src/addin-options.cpp:43
 msgid "General"
 msgstr "Allgemein"
 
 #: src/addin-options.cpp:45
-#, fuzzy
 msgid "Automatically secure &messages"
-msgstr "Unsichere Nachricht"
+msgstr "&Nachrichten automatisch absichern"
 
 #: src/addin-options.cpp:46
 msgid "Configure GnuPG"
@@ -81,43 +79,52 @@ msgstr "Krypto-&Einstellungen beim Antworten und Weiterleiten übernehmen"
 #: src/addin-options.cpp:56
 msgid "&Prefer S/MIME when automatically resolving recipients"
 msgstr ""
+"&S/MIME beim automatischen auflösen von Empfänger-Schlüsseln bevorzugen."
 
 #: src/addin-options.cpp:59
 msgid "Enable or disable any automated key handling."
-msgstr ""
+msgstr "Aktiveren oder deaktivieren aller Automatisierungs-Optionen."
 
 #: src/addin-options.cpp:60
 msgid "Automate trust based on communication history."
-msgstr ""
+msgstr "Vertrauen auf basis der Kommunikationshistorie automatisieren."
 
 #: src/addin-options.cpp:61
 msgid ""
 "This changes the trust model to \"tofu+pgp\" which tracks the history of key "
 "usage. Automated trust can <b>never</b> exceed level 2."
 msgstr ""
+"Dies ändert das Vertrauensmodell auf \"tofu+pgp\", welches die"
+" Kommunikationshistorie "
+"des Schlüssels berücksichtigt.  Automatisiertes vertrauen kann <b>niemals</b>"
+" level 2 übersteigen."
 
 #: src/addin-options.cpp:62
 msgid "experimental"
-msgstr ""
+msgstr "experimentell"
 
 #: src/addin-options.cpp:63
 msgid ""
 "Automatically toggles secure if keys with at least level 1 trust were found "
 "for all recipients."
 msgstr ""
+"Sichert Mails automatisch wenn Schlüssel mit min. Level 1 vertrauen für alle "
+"Empfänger gefunden werden konnten."
 
 #: src/addin-options.cpp:64
 msgid "Toggles the encrypt option for all new mails."
-msgstr ""
+msgstr "Wählt die verschlüsseln option für alle neuen Mails."
 
 #: src/addin-options.cpp:65
 msgid "Toggles the sign option for all new mails."
-msgstr ""
+msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:66
 msgid ""
 "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
+"Wählt signieren, verschlüsseln je nachdem ob die original Mail signiert oder"
+" verschlüsselt war."
 
 #: src/addin-options.cpp:67
 msgid ""
@@ -125,6 +132,11 @@ msgid ""
 "encoding, the deprecated PGP/Inline is used.\n"
 "This can be required for compatibility but should generally not be used."
 msgstr ""
+"Anstelle des PGP/MIME Formats, welches Anhänge und encoding richtig"
+" behandelt, "
+"das veraltete PGP/Inline verwenden.\n"
+"Dies kann für kompatibilität manchmal nötig sein, sollte aber generell nicht"
+" verwendet werden."
 
 #: src/common.cpp:768
 msgid "GpgOL Error"
@@ -417,7 +429,7 @@ msgstr ""
 
 #: src/mail.cpp:2484
 msgid "The mail provider of the recipient served this key."
-msgstr ""
+msgstr "Der Mail-Provider des Empfängers lieferte den Schlüssel."
 
 #: src/mail.cpp:2489
 msgid "Some trusted people have certified the senders identity."
@@ -731,7 +743,7 @@ msgstr ""
 "erneut mit der Komponente Kleopatra aktiviert."
 
 #: src/wks-helper.cpp:410
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A Pubkey directory is available for the address:\n"
 "\n"
@@ -744,7 +756,9 @@ msgid ""
 "\n"
 "Register automatically?"
 msgstr ""
-"Ein Öschl Verzeichnis ist für ihre Domäne verfügbar.\n"
+"Ein Verzeichnis öffentlicher Schlüssel ist verfügbar für:\n"
+"\n"
+"\t%s\n"
 "\n"
 "Tragen Sie ihren öffentlichen Schlüssel in diesem\n"
 "Verzeichnis ein um es anderen leicht zu machen ihnen verschlüsselte\n"
