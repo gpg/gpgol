@@ -32,6 +32,7 @@
 #include <windows.h>
 
 #include <map>
+#include <sstream>
 
 GPGRT_LOCK_DEFINE (keycache_lock);
 static KeyCache* singleton = nullptr;
@@ -484,8 +485,13 @@ locate_secret (const char *addr, GpgME::Protocol proto)
       if (key.isRevoked() || key.isExpired() ||
           key.isDisabled() || key.isInvalid())
         {
-          log_mime_parser ("%s:%s: Skipping invalid secret key",
-                           SRCNAME, __func__);
+          if ((opt.enable_debug & DBG_MIME_PARSER))
+            {
+              std::stringstream ss;
+              ss << key;
+              log_mime_parser ("%s:%s: Skipping invalid secret key %s",
+                               SRCNAME, __func__, ss.str().c_str());
+            }
           continue;
         }
       if (proto == GpgME::OpenPGP)
