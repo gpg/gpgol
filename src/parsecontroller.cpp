@@ -463,7 +463,9 @@ ParseController::parse()
 
       /* FIXME: This is very expensive. We need some caching here
          or reduce the information */
+      TRACEPOINT;
       sig.key(true, true);
+      TRACEPOINT;
       if (!ultimate_keys_queried &&
           (sig.validity() == Signature::Validity::Full ||
           sig.validity() == Signature::Validity::Ultimate))
