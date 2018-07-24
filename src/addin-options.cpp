@@ -119,6 +119,7 @@ open_gpgolgui (LPVOID arg)
                                  (GpgME::Context::SpawnFlags) (
                                   GpgME::Context::SpawnAllowSetFg |
                                   GpgME::Context::SpawnShowWindow));
+  release_cArray (cargs);
   if (err)
     {
       log_error ("%s:%s: Err code: %i asString: %s",
