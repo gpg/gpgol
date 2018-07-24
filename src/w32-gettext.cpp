@@ -1666,7 +1666,7 @@ bindtextdomain (const char *domainname, const char *dirname)
     {
       char *p;
 
-      catval = (char *)malloc (strlen (catval_full) + 1);
+      catval = (char *)xmalloc (strlen (catval_full) + 1);
       if (catval)
 	{
 	  strcpy (catval, catval_full);
