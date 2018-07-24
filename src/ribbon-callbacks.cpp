@@ -327,7 +327,7 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result,
 
   value = (get_gpgol_draft_info_flags (message) & flags) == flags;
 
-  *(result->pboolVal) = value ? var_true: var_false;
+  result->pboolVal = value ? &var_true: &var_false;
 
 done:
   gpgol_release (context);
