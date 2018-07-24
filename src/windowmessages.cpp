@@ -450,7 +450,8 @@ delayed_invalidate_ui (LPVOID minsleep)
   invalidation_in_progress = true;
   gpgrt_lock_lock(&invalidate_lock);
 
-  Sleep((int) minsleep);
+  int sleep_ms = (intptr_t)minsleep;
+  Sleep (sleep_ms);
   int i = 0;
   while (invalidation_blocked)
     {
