@@ -38,6 +38,7 @@ static int invalidation_blocked = 0;
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+//  log_debug ("WMG: %x", (unsigned int) message);
   if (message == WM_USER + 42)
     {
       wm_ctx_t *ctx = (wm_ctx_t *) lParam;
@@ -226,7 +227,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);
         }
-        return DefWindowProc(hWnd, message, wParam, lParam);
+        return 0;
     }
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -414,6 +415,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
         } */
        break;
      default:
+//       log_debug ("WM: %x", (unsigned int) cwp->message);
        break;
     }
   return CallNextHookEx (NULL, code, wParam, lParam);
