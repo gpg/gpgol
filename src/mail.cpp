@@ -1322,12 +1322,14 @@ Mail::updateBody_o ()
   return;
 }
 
+static int parsed_count;
+
 void
 Mail::parsing_done()
 {
   TRACEPOINT;
-  log_oom_extra ("Mail %p Parsing done for parser: %p",
-                 this, m_parser.get());
+  log_oom_extra ("Mail %p Parsing done for parser num %i: %p",
+                 this, parsed_count++, m_parser.get());
   if (!m_parser)
     {
       /* This should not happen but it happens when outlook
