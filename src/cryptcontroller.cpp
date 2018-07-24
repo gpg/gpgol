@@ -71,7 +71,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
   memdbg_ctor ("CryptController");
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
-  m_recipient_addrs = vector_to_cArray (mail->getCachedRecipients ());
+  m_recipient_addrs = mail->getCachedRecipients ();
 }
 
 CryptController::~CryptController()
@@ -79,7 +79,6 @@ CryptController::~CryptController()
   memdbg_dtor ("CryptController");
   log_debug ("%s:%s:%p",
              SRCNAME, __func__, m_mail);
-  release_cArray (m_recipient_addrs);
 }
 
 int
@@ -222,6 +221,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   if (err) {
       log_error ("%s:%s: failed to start recipient keylisting",
                  SRCNAME, __func__);
+      release_cArray (cRecps);
       return -1;
   }
 
@@ -322,7 +322,7 @@ CryptController::resolve_keys_cached()
   if (m_encrypt)
     {
       const auto cached_sender = m_mail->getSender ();
-      auto recps = cArray_to_vector ((const char**) m_recipient_addrs);
+      auto recps = m_recipient_addrs;
       recps.push_back (cached_sender);
 
       m_recipients.clear();
@@ -479,9 +479,9 @@ CryptController::resolve_keys ()
     {
       args.push_back (std::string ("--encrypt"));
       // Get the recipients that are cached from OOM
-      for (size_t i = 0; m_recipient_addrs && m_recipient_addrs[i]; i++)
+      for (const auto &addr: m_recipient_addrs)
         {
-          args.push_back (GpgME::UserID::addrSpecFromString (m_recipient_addrs[i]));
+          args.push_back (GpgME::UserID::addrSpecFromString (addr.c_str()));
         }
     }
 

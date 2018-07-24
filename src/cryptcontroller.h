@@ -94,7 +94,7 @@ private:
   GpgME::Key m_signer_key;
   std::vector<GpgME::Key> m_recipients;
   std::unique_ptr<Overlay> m_overlay;
-  char **m_recipient_addrs;
+  std::vector<std::string> m_recipient_addrs;
 };
 
 #endif
