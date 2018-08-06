@@ -262,7 +262,7 @@ create_responder_window ()
   return g_responder_window;
 }
 
-int
+static int
 send_msg_to_ui_thread (wm_ctx_t *ctx)
 {
   size_t cls_name_len = strlen(RESPONDER_CLASS_NAME) + 1;

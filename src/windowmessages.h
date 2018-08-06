@@ -70,11 +70,6 @@ typedef struct
 HWND
 create_responder_window ();
 
-/** Send a message to the UI thread through the responder Window.
-  Returns 0 on success. */
-int
-send_msg_to_ui_thread (wm_ctx_t *ctx);
-
 /** Uses send_msg_to_ui_thread to execute the request
   in the ui thread.  Returns the result. */
 int
