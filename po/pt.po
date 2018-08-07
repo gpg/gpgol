@@ -9,42 +9,40 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-07-24 08:32+0200\n"
-"PO-Revision-Date: 2018-06-12 14:14+0100\n"
-"Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
-"Language-Team: Portuguese <marcoagpinto@mail.telepac.pt>\n"
+"PO-Revision-Date: 2018-07-27 10:44+0100\n"
+"Last-Translator: Marco A.G.Pinto <marcoagpinto@mail.telepac.pt>\n"
+"Language-Team: Portuguese <marcoagpinto@sapo.pt>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Poedit 2.1.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
-msgstr ""
+msgstr "Sistema GnuPG"
 
 #: src/addin-options.cpp:40
 msgid "Enable the S/MIME support"
 msgstr "Ativar o suporte S/MIME"
 
 #: src/addin-options.cpp:41 src/addin-options.cpp:147
-#, fuzzy
 msgid "Configure GpgOL"
-msgstr "Configurar o GnuPG"
+msgstr "Configurar o GpgOL"
 
 #: src/addin-options.cpp:42
 msgid "Automation"
-msgstr ""
+msgstr "Automação"
 
 #: src/addin-options.cpp:43
 msgid "General"
 msgstr "Geral"
 
 #: src/addin-options.cpp:45
-#, fuzzy
 msgid "Automatically secure &messages"
-msgstr "Mensagem insegura"
+msgstr "Proteger automaticamente as &mensagens"
 
 #: src/addin-options.cpp:46
 msgid "Configure GnuPG"
@@ -77,49 +75,56 @@ msgstr "Enviar e-mails OpenPGP sem anexos como PGP/Inline"
 #: src/addin-options.cpp:54
 msgid "S&elect crypto settings automatically for reply and forward"
 msgstr ""
-"Selecionar as definições de criptografia automaticamente para responder e "
-"encaminhar."
+"S&elecionar as definições de criptografia automaticamente para responder e "
+"encaminhar"
 
 #: src/addin-options.cpp:56
 msgid "&Prefer S/MIME when automatically resolving recipients"
-msgstr ""
+msgstr "&Preferir S/MIME ao resolver os destinatários automaticamente"
 
 #: src/addin-options.cpp:59
 msgid "Enable or disable any automated key handling."
-msgstr ""
+msgstr "Ativar ou desativar qualquer manipulação automatizada de chaves."
 
 #: src/addin-options.cpp:60
 msgid "Automate trust based on communication history."
-msgstr ""
+msgstr "Automatizar a confiança com base no histórico de comunicação."
 
 #: src/addin-options.cpp:61
 msgid ""
 "This changes the trust model to \"tofu+pgp\" which tracks the history of key "
 "usage. Automated trust can <b>never</b> exceed level 2."
 msgstr ""
+"Isto altera o modelo de confiança para \"tofu+pgp\" que rastreia o histórico "
+"do uso de chaves. A confiança automatizada <b>nunca</b> pode exceder o nível "
+"2."
 
 #: src/addin-options.cpp:62
 msgid "experimental"
-msgstr ""
+msgstr "experimental"
 
 #: src/addin-options.cpp:63
 msgid ""
 "Automatically toggles secure if keys with at least level 1 trust were found "
 "for all recipients."
 msgstr ""
+"Alterna automaticamente a segurança se chaves com confiança mínima de nível "
+"1 foram encontradas para todos os destinatários."
 
 #: src/addin-options.cpp:64
 msgid "Toggles the encrypt option for all new mails."
-msgstr ""
+msgstr "Alterna a opção de encriptação para todos os e-mails novos."
 
 #: src/addin-options.cpp:65
 msgid "Toggles the sign option for all new mails."
-msgstr ""
+msgstr "Alterna a opção de assinatura para todos os e-mails novos."
 
 #: src/addin-options.cpp:66
 msgid ""
 "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
+"Alterna as opções de assinar e encriptar se o e-mail original foi assinado "
+"ou encriptado."
 
 #: src/addin-options.cpp:67
 msgid ""
@@ -127,11 +132,14 @@ msgid ""
 "encoding, the deprecated PGP/Inline is used.\n"
 "This can be required for compatibility but should generally not be used."
 msgstr ""
+"Em vez de usar o formato PGP/MIME, que manipula corretamente os anexos e a "
+"codificação, o PGP/Inline obsoleto é usado.\n"
+"Isto pode ser necessário para compatibilidade, mas geralmente não deve ser "
+"usado."
 
 #: src/common.cpp:768
-#, fuzzy
 msgid "GpgOL Error"
-msgstr "GpgOL"
+msgstr "Erro GpgOL"
 
 #: src/gpgoladdin.cpp:515 src/mail.cpp:2065 src/mail.cpp:2136
 msgid "GpgOL: Encrypted Message"
@@ -244,13 +252,13 @@ msgid "GpgOL Warning"
 msgstr "Aviso do GpgOL"
 
 #: src/mail.cpp:904
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Crypto operation failed:\n"
 "%s"
 msgstr ""
-"A desencriptação falhou\n"
-"(%s)"
+"A operação criptográfica falhou:\n"
+"%s"
 
 #: src/mail.cpp:1006
 msgid "Pubkey directory confirmation"
@@ -267,13 +275,12 @@ msgstr ""
 "Este é um pedido de confirmação para publicares a tua Pubkey na diretoria "
 "para o teu domínio.\n"
 "\n"
-"<p>Se não pediste para publicar a tua Pubkey na diretoria do teu provedor, "
+"<p>Se não solicitaste publicar a tua Pubkey na diretoria do teu provedor, "
 "simplesmente ignora esta mensagem.</p>\n"
 
 #: src/mail.cpp:1015
-#, fuzzy
 msgid "message"
-msgstr "Mensagem assinada"
+msgstr "mensagem"
 
 #: src/mail.cpp:1016
 msgid "Please wait while the message is being decrypted / verified..."
@@ -390,7 +397,7 @@ msgstr "A encriptação não está em conformidade com VS-NfD."
 #: src/mail.cpp:2427
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
-"Não podes ter certeza de quem enviou a mensagem, porque não está assinada."
+"Não podes ter a certeza de quem enviou a mensagem, porque não está assinada."
 
 #: src/mail.cpp:2450
 msgid "You signed this message."
@@ -420,7 +427,7 @@ msgstr ""
 
 #: src/mail.cpp:2484
 msgid "The mail provider of the recipient served this key."
-msgstr ""
+msgstr "O provedor de e-mail do destinatário forneceu esta chave."
 
 #: src/mail.cpp:2489
 msgid "Some trusted people have certified the senders identity."
@@ -601,8 +608,8 @@ msgid ""
 "For example by right clicking but not selecting the message.\n"
 msgstr ""
 "O GpgOL impediu a alteração para a propriedade \"%s\".\n"
-"As alterações de propriedade não são ainda manipuladas para mensagens de "
-"criptografia.\n"
+"As alterações de propriedade não são ainda manipuladas para mensagens "
+"criptográficas.\n"
 "\n"
 "Para contornar esta limitação, por favor altera a propriedade quando a "
 "mensagem não está aberta em qualquer janela e não está selecionada na lista "
@@ -643,6 +650,9 @@ msgid ""
 "They can't be permanently removed and will be shown again the next time this "
 "message is opened."
 msgstr ""
+"Os anexos fazem parte da mensagem criptográfica.\n"
+"Não podem ser removidos permanentemente e serão mostrados novamente na "
+"próxima vez que esta mensagem for aberta."
 
 #: src/mapihelp.cpp:1927 src/mapihelp.cpp:1935 src/mapihelp.cpp:1943
 msgid "[no subject]"
@@ -654,7 +664,7 @@ msgstr "Chave Desconhecida:"
 
 #: src/parsecontroller.cpp:182
 msgid "Decryption canceled or timed out."
-msgstr "Desencriptação cancelada ou o tempo esgotou."
+msgstr "Desencriptação cancelada ou o tempo expirou."
 
 #: src/parsecontroller.cpp:196
 msgid ""
@@ -670,7 +680,7 @@ msgstr "Não foi possível desencriptar os dados: "
 
 #: src/parsecontroller.cpp:206
 msgid "Failed to parse the mail."
-msgstr "Falha ao analisar o e-mail."
+msgstr "Falha ao interpretar o e-mail."
 
 #: src/parsecontroller.cpp:210
 msgid ""
@@ -704,15 +714,16 @@ msgid ""
 "or if someone faked the sender address."
 msgstr ""
 "A mensagem não foi assinada criptograficamente.\n"
-"Não há nenhuma informação adicional disponível se ela realmente foi enviada "
+"Não há nenhuma informação adicional disponível se ela foi realmente enviada "
 "por '%s' ou se alguém falsificou o endereço do remetente."
 
 #: src/ribbon-callbacks.cpp:665
-#, fuzzy
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
-msgstr "Houve um erro ao verificar a assinatura.\n"
+msgstr ""
+"Houve um erro ao verificar a assinatura.\n"
+"Detalhes completos:\n"
 
 #: src/ribbon-callbacks.cpp:718
 msgid ""
@@ -723,7 +734,7 @@ msgstr ""
 "Por favor, reinstala o Gpg4win com o componente Kleopatra ativado."
 
 #: src/wks-helper.cpp:410
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A Pubkey directory is available for the address:\n"
 "\n"
@@ -736,7 +747,9 @@ msgid ""
 "\n"
 "Register automatically?"
 msgstr ""
-"Uma diretoria de Pubkey está disponível para o teu domínio.\n"
+"Uma diretoria de Pubkey está disponível para o endereço:\n"
+"\n"
+"\t%s\n"
 "\n"
 "Regista a tua Pubkey nessa diretoria para facilitar\n"
 "que outras pessoas te enviem e-mails encriptados.\n"
@@ -779,16 +792,15 @@ msgstr "GpgOL: Confirmação falhou"
 
 #: src/wks-helper.cpp:775
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr "A tua Pubkey pode ser brevemente recuperada do teu domínio."
+msgstr "A tua Pubkey pode ser brevemente extraída do teu domínio."
 
 #: src/wks-helper.cpp:776
 msgid "GpgOL: Request confirmed!"
 msgstr "GpgOL: Pedido confirmado!"
 
 #: src/cryptcontroller.cpp:307
-#, fuzzy
 msgid "No recipients for encryption selected."
-msgstr "Não foram selecionados destinatários para a encriptação"
+msgstr "Não foram selecionados destinatários para a encriptação."
 
 #: src/cryptcontroller.cpp:443
 msgid "Resolving recipients..."
