@@ -46,6 +46,9 @@
 #include <gpgme++/context.h>
 #include <gpgme++/data.h>
 
+#undef _
+#define _(a) utf8_gettext (a)
+
 using namespace GpgME;
 
 /* This is so super stupid. I bet even Microsft developers laugh
