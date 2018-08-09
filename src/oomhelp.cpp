@@ -1529,6 +1529,7 @@ get_strong_reference (LPDISPATCH mail)
       ret = var.pdispVal;
       log_oom ("%s:%s: Got strong ref %p for %p",
                SRCNAME, __func__, ret, mail);
+      memdbg_addRef (ret);
     }
   else
     {
