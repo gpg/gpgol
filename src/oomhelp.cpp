@@ -2373,3 +2373,37 @@ log_addins ()
              activeAddins.c_str ());
   return;
 }
+
+bool
+is_preview_pane_visible (LPDISPATCH explorer)
+{
+  if (!explorer)
+    {
+      TRACEPOINT;
+      return false;
+    }
+  VARIANT var;
+  VariantInit (&var);
+  VARIANT argvars[1];
+  DISPPARAMS args;
+  VariantInit (&argvars[0]);
+  argvars[0].vt = VT_INT;
+  argvars[0].intVal = 3;
+  args.cArgs = 1;
+  args.cNamedArgs = 0;
+  args.rgvarg = argvars;
+
+  if (invoke_oom_method_with_parms (explorer, "IsPaneVisible", &var, &args))
+    {
+      log_error ("%s:%s: Failed to check visibilty.",
+                 SRCNAME, __func__);
+      return false;
+    }
+
+  if (var.vt != VT_BOOL)
+    {
+      TRACEPOINT;
+      return false;
+    }
+  return !!var.boolVal;
+}

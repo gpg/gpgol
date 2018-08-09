@@ -376,4 +376,7 @@ HRESULT gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj);
 HRESULT gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
                             ULONG ulInterfaceOptions, ULONG ulFlags,
                             LPUNKNOWN FAR * lppUnk);
+
+/* Check if the preview pane in the explorer is visible */
+bool is_preview_pane_visible (LPDISPATCH explorer);
 #endif /*OOMHELP_H*/

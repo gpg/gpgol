@@ -387,7 +387,17 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
       /* Avoid showing wrong crypto state if we don't have a reading
          pane. In that case the parser will finish for a mail which is gone
          and the crypto state will not get updated. */
-      if (0 /*g_ol_version_major >= 16 */)
+
+      if (!is_preview_pane_visible (context))
+        {
+          *none_selected = true;
+          gpgol_release (mailitem);
+          mailitem = nullptr;
+          log_debug ("%s:%s: Preview pane invisible", SRCNAME, __func__);
+        }
+
+#if 0
+      if (g_ol_version_major >= 16)
         {
           /* Some Versions of Outlook 2016 crashed when accessing the current view
              of the Explorer. This was even reproducible with
@@ -439,6 +449,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
                 }
             }
         }
+#endif
 
       if (!*none_selected)
         {
