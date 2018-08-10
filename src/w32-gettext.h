@@ -73,7 +73,7 @@ char *native_to_utf8 (const char *string);
 
 #define utf8_to_wchar(VAR1) ({wchar_t *retval; \
   retval = _utf8_to_wchar (VAR1); \
-  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  if ((opt.enable_debug & DBG_OOM_EXTRA) && 0) \
   { \
     log_debug ("%s:%s:%i wchar_t alloc %p:%S", \
                SRCNAME, __func__, __LINE__, retval, retval); \
@@ -82,7 +82,7 @@ retval;})
 
 #define wchar_to_utf8(VAR1) ({char *retval; \
   retval = _wchar_to_utf8 (VAR1); \
-  if ((opt.enable_debug & DBG_OOM_EXTRA)) \
+  if ((opt.enable_debug & DBG_OOM_EXTRA) && 0) \
   { \
     log_debug ("%s:%s:%i char utf8 alloc %p:%s", \
                SRCNAME, __func__, __LINE__, retval, retval); \
