@@ -371,6 +371,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
                          SRCNAME, __func__, m_mail);
 
+              if (!m_mail->isAsyncCryptDisabled())
+                {
+                  /* Obtain a reference of the current item. This prevents
+                   * an early unload which would crash Outlook 2013
+                   *
+                   * As it didn't crash when the mail was opened in Outlook Spy this
+                   * mimics that the mail is inspected somewhere else. */
+                  m_mail->refCurrentItem ();
+                }
+
               // First contact with a mail to encrypt update
               // state and oom data.
               m_mail->updateOOMData_o ();

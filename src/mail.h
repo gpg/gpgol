@@ -591,12 +591,18 @@ public:
   bool isAboutToBeMoved () { return m_is_about_to_be_moved; }
   void setIsAboutToBeMoved (bool value) { m_is_about_to_be_moved = value; }
 
+  /* Releases the current item ref obtained in update oom data */
+  void releaseCurrentItem ();
+  /* Gets an additional reference for GetInspector.CurrentItem */
+  void refCurrentItem ();
+
 private:
   void updateCategories_o ();
   void updateSigstate ();
 
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
+  LPDISPATCH m_currentItemRef;
   bool m_processed,    /* The message has been porcessed by us.  */
        m_needs_wipe,   /* We have added plaintext to the mesage. */
        m_needs_save,   /* A property was changed but not by us. */

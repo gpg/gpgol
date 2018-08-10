@@ -73,6 +73,7 @@ static Mail *s_last_mail;
 
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
+    m_currentItemRef(nullptr),
     m_processed(false),
     m_needs_wipe(false),
     m_needs_save(false),
@@ -201,6 +202,8 @@ Mail::~Mail()
                  SRCNAME, __func__);
   m_parser = nullptr;
   m_crypter = nullptr;
+
+  releaseCurrentItem();
   gpgrt_lock_unlock (&dtor_lock);
   log_oom_extra ("%s:%s: returning",
                  SRCNAME, __func__);
@@ -3453,4 +3456,34 @@ Mail::installFolderEventHandler_o()
 
   /* Folder already registered */
   gpgol_release (folder);
+}
+
+void
+Mail::refCurrentItem()
+{
+  if (m_currentItemRef)
+    {
+      gpgol_release (m_currentItemRef);
+    }
+  /* This prevents a crash in Outlook 2013 when sending a mail as it
+   * would unload too early.
+   *
+   * As it didn't crash when the mail was opened in Outlook Spy this
+   * mimics that the mail is inspected somewhere else. */
+  m_currentItemRef = get_oom_object (m_mailitem, "GetInspector.CurrentItem");
+}
+
+void
+Mail::releaseCurrentItem()
+{
+  if (!m_currentItemRef)
+    {
+      return;
+    }
+  log_oom_extra ("%s:%s: releasing CurrentItem ref %p",
+                 SRCNAME, __func__, m_currentItemRef);
+  LPDISPATCH m_tmp = m_currentItemRef;
+  m_currentItemRef = nullptr;
+  /* This can cause our destruction */
+  gpgol_release (m_tmp);
 }
