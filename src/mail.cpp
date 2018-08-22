@@ -3482,8 +3482,8 @@ Mail::releaseCurrentItem()
     }
   log_oom_extra ("%s:%s: releasing CurrentItem ref %p",
                  SRCNAME, __func__, m_currentItemRef);
-  LPDISPATCH m_tmp = m_currentItemRef;
+  LPDISPATCH tmp = m_currentItemRef;
   m_currentItemRef = nullptr;
   /* This can cause our destruction */
-  gpgol_release (m_tmp);
+  gpgol_release (tmp);
 }
