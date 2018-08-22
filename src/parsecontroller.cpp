@@ -240,20 +240,18 @@ ParseController::setSender(const std::string &sender)
 static bool
 is_valid_chksum(const GpgME::Signature &sig)
 {
-  switch (sig.summary())
-    {
-      case GpgME::Signature::Valid:
-      case GpgME::Signature::Green:
-      case GpgME::Signature::KeyRevoked:
-      case GpgME::Signature::KeyExpired:
-      case GpgME::Signature::SigExpired:
-      case GpgME::Signature::CrlMissing:
-      case GpgME::Signature::CrlTooOld:
-      case GpgME::Signature::TofuConflict:
-        return true;
-      default:
-        return false;
-    }
+  const auto sum = sig.summary();
+  static unsigned int valid_mask = (unsigned int) (
+      GpgME::Signature::Valid |
+      GpgME::Signature::Green |
+      GpgME::Signature::KeyRevoked |
+      GpgME::Signature::KeyExpired |
+      GpgME::Signature::SigExpired |
+      GpgME::Signature::CrlMissing |
+      GpgME::Signature::CrlTooOld |
+      GpgME::Signature::TofuConflict );
+
+  return sum & valid_mask;
 }
 
 void
