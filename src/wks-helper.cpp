@@ -691,16 +691,16 @@ WKSHelper::handle_confirmation_notify (const std::string &mbox) const
   GpgME::Data *mimeData = pair.first;
   Mail *mail = pair.second;
 
-  if (!mail)
+  if (!mail && !mimeData)
     {
-      log_debug ("%s:%s: Confirmation notify without cached mail.",
+      log_debug ("%s:%s: Confirmation notify without cached data.",
                  SRCNAME, __func__);
-    }
 
-  if (!mimeData)
-    {
-      log_error ("%s:%s: Confirmation notify without cached data.",
-                 SRCNAME, __func__);
+      /* This happens when we have seen a confirmation but have
+       * not confirmed it and the state was saved. So we go back
+       * to the confirmation sent state and wait until we see
+       * the confirmation the next time. */
+      update_state (mbox, ConfirmationSent);
       return;
     }
 
