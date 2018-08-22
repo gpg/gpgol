@@ -132,7 +132,11 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              SRCNAME, __func__);
                   break;
                 }
+              mail->refCurrentItem();
               Mail::close (mail);
+              log_debug ("%s:%s: Close finished.",
+                         SRCNAME, __func__);
+              mail->releaseCurrentItem();
               break;
             }
           case (CRYPTO_DONE):
