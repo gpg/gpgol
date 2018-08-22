@@ -3387,7 +3387,10 @@ Mail::setDoAutosecure_m (bool value)
   setUUID_o ();
 
   int old_flags = get_gpgol_draft_info_flags (msg);
-  if (old_flags && m_first_autosecure_check)
+  if (old_flags && m_first_autosecure_check &&
+      /* Someone with always sign and autosecure active
+       * will want to get autoencryption. */
+      !(old_flags == 2 && opt.sign_default))
     {
       /* They were set explicily before us. This can be
        * because they were a draft (which is bad) or
@@ -3401,7 +3404,7 @@ Mail::setDoAutosecure_m (bool value)
       return;
     }
   m_first_autosecure_check = false;
-  set_gpgol_draft_info_flags (msg, value ? 3 : 0);
+  set_gpgol_draft_info_flags (msg, value ? 3 : opt.sign_default ? 2 : 0);
   gpgol_release (msg);
   gpgoladdin_invalidate_ui();
 }
