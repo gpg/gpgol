@@ -25,6 +25,8 @@
 #include <vector>
 #include <map>
 
+#include <gpgme++/global.h>
+
 /* Stuff that should be in common but is c++ so it does not fit in there. */
 
 
@@ -53,4 +55,7 @@ std::string string_to_hex (const std::string& input);
 
 /* Check if a string contains a char < 32 */
 bool is_binary (const std::string &input);
+
+/* Return a string repr of the GpgME Protocol */
+const char *to_cstr (const GpgME::Protocol &prot);
 #endif // CPPHELP_H

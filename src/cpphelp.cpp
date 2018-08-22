@@ -292,3 +292,11 @@ is_binary (const std::string &input)
     }
   return false;
 }
+
+const char *
+to_cstr (const GpgME::Protocol &prot)
+{
+  return prot == GpgME::CMS ? "S/MIME" :
+         prot == GpgME::OpenPGP ? "OpenPGP" :
+         "Unknown Protocol";
+}
