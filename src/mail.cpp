@@ -3033,6 +3033,8 @@ Mail::setWindowEnabled_o (bool value)
 bool
 Mail::check_inline_response ()
 {
+#if 0 // Should be fixed
+
 /* Async sending might lead to crashes when the send invocation is done.
  * For now we treat every mail as an inline response to disable async
  * encryption. :-( For more details see: T3838 */
@@ -3042,6 +3044,7 @@ Mail::check_inline_response ()
       m_async_crypt_disabled = true;
       return m_async_crypt_disabled;
     }
+#endif
 
   m_async_crypt_disabled = false;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
