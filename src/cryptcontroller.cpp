@@ -312,86 +312,105 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
   return lookup_fingerprints (sigFpr, recpFprs);
 }
 
+static bool
+resolve_through_protocol (const GpgME::Protocol &proto, bool sign,
+                          bool encrypt, const std::string &sender,
+                          const std::vector<std::string> &recps,
+                          std::vector<GpgME::Key> &r_keys,
+                          GpgME::Key &r_sig)
+{
+  bool sig_ok = true;
+  bool enc_ok = true;
+
+  const auto cache = KeyCache::instance();
+
+  if (encrypt)
+    {
+      r_keys = cache->getEncryptionKeys(recps, proto);
+      enc_ok = !r_keys.empty();
+    }
+  if (sign && enc_ok)
+    {
+      r_sig = cache->getSigningKey (sender.c_str (), proto);
+      sig_ok = !r_sig.isNull();
+    }
+  return sig_ok && enc_ok;
+}
+
 int
 CryptController::resolve_keys_cached()
 {
-  const auto cache = KeyCache::instance();
-
-  bool fallbackToSMIME = false;
+  // Prepare variables
+  const auto cached_sender = m_mail->getSender ();
+  auto recps = m_recipient_addrs;
 
   if (m_encrypt)
     {
-      const auto cached_sender = m_mail->getSender ();
-      auto recps = m_recipient_addrs;
       recps.push_back (cached_sender);
-
-      m_recipients.clear();
-      if (opt.enable_smime && opt.prefer_smime)
-        {
-          m_recipients = cache->getEncryptionKeys(recps, GpgME::CMS);
-          if (!m_recipients.empty())
-            {
-              fallbackToSMIME = true;
-              m_proto = GpgME::CMS;
-            }
-        }
-
-      if (m_recipients.empty())
-        {
-          m_recipients = cache->getEncryptionKeys(recps, GpgME::OpenPGP);
-          m_proto = GpgME::OpenPGP;
-        }
-
-      if (m_recipients.empty() && (opt.enable_smime && !opt.prefer_smime))
-        {
-          m_recipients = cache->getEncryptionKeys(recps, GpgME::CMS);
-          fallbackToSMIME = true;
-          m_proto = GpgME::CMS;
-        }
-
-      if (m_recipients.empty())
-        {
-          log_debug ("%s:%s: Failed to resolve keys through cache",
-                     SRCNAME, __func__);
-          m_proto = GpgME::UnknownProtocol;
-          return 1;
-        }
     }
 
-  if (m_sign)
+  bool resolved = false;
+  if (opt.enable_smime && opt.prefer_smime)
     {
-      if (!fallbackToSMIME)
+      resolved = resolve_through_protocol (GpgME::CMS, m_sign, m_encrypt,
+                                           cached_sender, recps, m_recipients,
+                                           m_signer_key);
+      if (resolved)
         {
-          m_signer_key = cache->getSigningKey (m_mail->getSender ().c_str (),
-                                               GpgME::OpenPGP);
-          m_proto = GpgME::OpenPGP;
-        }
-      if (m_signer_key.isNull() && opt.enable_smime)
-        {
-          m_signer_key = cache->getSigningKey (m_mail->getSender ().c_str (),
-                                               GpgME::CMS);
+          log_debug ("%s:%s: Resolved with CMS due to preference.",
+                     SRCNAME, __func__);
           m_proto = GpgME::CMS;
         }
-      if (m_signer_key.isNull())
+    }
+  if (!resolved)
+    {
+      resolved = resolve_through_protocol (GpgME::OpenPGP, m_sign, m_encrypt,
+                                           cached_sender, recps, m_recipients,
+                                           m_signer_key);
+      if (resolved)
         {
-          log_debug ("%s:%s: Failed to resolve signer key through cache",
+          log_debug ("%s:%s: Resolved with OpenPGP.",
                      SRCNAME, __func__);
-          m_recipients.clear();
-          m_proto = GpgME::UnknownProtocol;
-          return 1;
+          m_proto = GpgME::OpenPGP;
+        }
+    }
+  if (!resolved && (opt.enable_smime && !opt.prefer_smime))
+    {
+      resolved = resolve_through_protocol (GpgME::CMS, m_sign, m_encrypt,
+                                           cached_sender, recps, m_recipients,
+                                           m_signer_key);
+      if (resolved)
+        {
+          log_debug ("%s:%s: Resolved with CMS as fallback.",
+                     SRCNAME, __func__);
+          m_proto = GpgME::CMS;
         }
     }
 
-  log_debug ("%s:%s: Encrypting to:",
-             SRCNAME, __func__);
+  if (!resolved)
+    {
+      log_debug ("%s:%s: Failed to resolve through cache",
+                 SRCNAME, __func__);
+      m_recipients.clear();
+      m_signer_key = GpgME::Key();
+      m_proto = GpgME::UnknownProtocol;
+      return 1;
+    }
+
+  if (!m_recipients.empty())
+    {
+      log_debug ("%s:%s: Encrypting with protocol %s to:",
+                 SRCNAME, __func__, to_cstr (m_proto));
+    }
   for (const auto &key: m_recipients)
     {
-      log_debug ("%s", key.primaryFingerprint());
+      log_debug ("%s", key.primaryFingerprint ());
     }
   if (!m_signer_key.isNull())
     {
-      log_debug ("%s:%s: Signing key: %s",
-                 SRCNAME, __func__, m_signer_key.primaryFingerprint());
+      log_debug ("%s:%s: Signing key: %s:%s",
+                 SRCNAME, __func__, m_signer_key.primaryFingerprint (),
+                 to_cstr (m_signer_key.protocol()));
     }
   return 0;
 }
