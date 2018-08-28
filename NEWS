@@ -1,5 +1,17 @@
-Noteworthy changes for version 2.2.1 (unreleased)
+Noteworthy changes for version 2.3.0 (unreleased)
 =================================================
+
+ * Massive stability and performance improvements.
+
+ * New configuration dialog.
+
+ * New option to automatically encrypt if possible.
+
+ * Moving mails is now possible.
+
+ * Improvements to attachment handling with long filenames.
+
+ * Support for contact Groups has been added.
 
 Noteworthy changes for version 2.2.0 (2018-06-15)
 =================================================
