@@ -31,7 +31,7 @@
 
 #include <windows.h>
 
-#include <map>
+#include <set>
 #include <unordered_map>
 #include <sstream>
 
@@ -483,9 +483,7 @@ public:
               int i = 0;
 
               gpgrt_lock_lock (&update_lock);
-              while (std::find (m_update_jobs.begin(), m_update_jobs.end(),
-                                sFpr)
-                     != m_update_jobs.end ())
+              while (m_update_jobs.find(sFpr) != m_update_jobs.end ())
                 {
                   i++;
                   if (i % 100 == 0)
@@ -539,15 +537,14 @@ public:
          }
        const std::string sFpr (fpr);
        gpgrt_lock_lock (&update_lock);
-       if (std::find (m_update_jobs.begin(), m_update_jobs.end(), sFpr)
-                      != m_update_jobs.end ())
+       if (m_update_jobs.find(sFpr) != m_update_jobs.end ())
          {
            log_debug ("%s:%s Update for \"%s\" already in progress.",
                       SRCNAME, __func__, fpr);
            gpgrt_lock_unlock (&update_lock);
          }
 
-       m_update_jobs.push_back (sFpr);
+       m_update_jobs.insert (sFpr);
        gpgrt_lock_unlock (&update_lock);
        update_arg_t * args = new update_arg_t;
        args->first = sFpr;
@@ -565,11 +562,8 @@ public:
         }
       TRACEPOINT;
       insertOrUpdateInFprMap (key);
-      const std::string sFpr (fpr);
       gpgrt_lock_lock (&update_lock);
-      const auto it = std::find (m_update_jobs.begin(),
-                                 m_update_jobs.end(),
-                                 sFpr);
+      const auto it = m_update_jobs.find(fpr);
 
       if (it == m_update_jobs.end())
         {
@@ -584,13 +578,13 @@ public:
       return;
     }
 
-  std::map<std::string, GpgME::Key> m_pgp_key_map;
-  std::map<std::string, GpgME::Key> m_smime_key_map;
-  std::map<std::string, GpgME::Key> m_pgp_skey_map;
-  std::map<std::string, GpgME::Key> m_smime_skey_map;
+  std::unordered_map<std::string, GpgME::Key> m_pgp_key_map;
+  std::unordered_map<std::string, GpgME::Key> m_smime_key_map;
+  std::unordered_map<std::string, GpgME::Key> m_pgp_skey_map;
+  std::unordered_map<std::string, GpgME::Key> m_smime_skey_map;
   std::unordered_map<std::string, GpgME::Key> m_fpr_map;
   std::unordered_map<std::string, std::string> m_sub_fpr_map;
-  std::vector<std::string> m_update_jobs;
+  std::set<std::string> m_update_jobs;
 };
 
 KeyCache::KeyCache():
