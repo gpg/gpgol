@@ -499,8 +499,8 @@ ParseController::parse()
 
   if (opt.enable_debug)
     {
-       std::stringstream ss;
-       ss << m_decrypt_result << '\n' << m_verify_result;
+      std::stringstream ss;
+      ss << m_decrypt_result << '\n' << m_verify_result;
       for (const auto sig: m_verify_result.signatures())
         {
           const auto key = sig.key();
