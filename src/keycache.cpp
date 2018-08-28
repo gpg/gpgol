@@ -32,9 +32,12 @@
 #include <windows.h>
 
 #include <map>
+#include <unordered_map>
 #include <sstream>
 
 GPGRT_LOCK_DEFINE (keycache_lock);
+GPGRT_LOCK_DEFINE (fpr_map_lock);
+GPGRT_LOCK_DEFINE (update_lock);
 static KeyCache* singleton = nullptr;
 
 /** At some point we need to set a limit. There
@@ -84,6 +87,53 @@ namespace
     };
 } // namespace
 
+typedef std::pair<std::string, GpgME::Protocol> update_arg_t;
+
+static DWORD WINAPI
+do_update (LPVOID arg)
+{
+  auto args = std::unique_ptr<update_arg_t> ((update_arg_t*) arg);
+
+  log_mime_parser ("%s:%s updating: \"%s\" with protocol %s",
+                   SRCNAME, __func__, args->first.c_str (),
+                   to_cstr (args->second));
+
+  auto ctx = std::unique_ptr<GpgME::Context> (GpgME::Context::createForProtocol
+                                              (args->second));
+
+  if (!ctx)
+    {
+      TRACEPOINT;
+      KeyCache::instance ()->onUpdateJobDone (args->first.c_str(),
+                                              GpgME::Key ());
+      return 0;
+    }
+
+  ctx->setKeyListMode (GpgME::KeyListMode::Local |
+                       GpgME::KeyListMode::Signatures |
+                       GpgME::KeyListMode::Validate |
+                       GpgME::KeyListMode::WithTofu);
+  GpgME::Error err;
+  const auto newKey = ctx->key (args->first.c_str (), err, false);
+  TRACEPOINT;
+
+  if (newKey.isNull())
+    {
+      log_debug ("%s:%s Failed to find key for %s",
+                 SRCNAME, __func__, args->first.c_str ());
+    }
+  if (err)
+    {
+      log_debug ("%s:%s Failed to find key for %s err: ",
+                 SRCNAME, __func__, err.asString ());
+    }
+  KeyCache::instance ()->onUpdateJobDone (args->first.c_str(),
+                                          newKey);
+  log_debug ("%s:%s Update job done",
+             SRCNAME, __func__);
+  return 0;
+}
+
 class KeyCache::Private
 {
 public:
@@ -105,6 +155,7 @@ public:
       {
         it->second = key;
       }
+    insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
   }
 
@@ -121,6 +172,7 @@ public:
       {
         it->second = key;
       }
+    insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
   }
 
@@ -137,6 +189,7 @@ public:
       {
         it->second = key;
       }
+    insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
   }
 
@@ -153,6 +206,7 @@ public:
       {
         it->second = key;
       }
+    insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
   }
 
@@ -260,7 +314,8 @@ public:
     return key;
   }
 
-  std::vector<GpgME::Key> getEncryptionKeys (const std::vector<std::string> &recipients,
+  std::vector<GpgME::Key> getEncryptionKeys (const std::vector<std::string>
+                                             &recipients,
                                              GpgME::Protocol proto)
   {
     std::vector<GpgME::Key> ret;
@@ -323,10 +378,219 @@ public:
     return ret;
   }
 
+  void insertOrUpdateInFprMap (const GpgME::Key &key)
+    {
+      if (key.isNull() || !key.primaryFingerprint())
+        {
+          TRACEPOINT;
+          return;
+        }
+      gpgrt_lock_lock (&fpr_map_lock);
+
+      /* First ensure that we have the subkeys mapped to the primary
+         fpr */
+      const char *primaryFpr = key.primaryFingerprint ();
+
+      for (const auto &sub: key.subkeys())
+        {
+          const char *subFpr = sub.fingerprint();
+          auto it = m_sub_fpr_map.find (subFpr);
+          if (it == m_sub_fpr_map.end ())
+            {
+              m_sub_fpr_map.insert (std::make_pair(
+                                     std::string (subFpr),
+                                     std::string (primaryFpr)));
+            }
+        }
+
+      auto it = m_fpr_map.find (primaryFpr);
+
+      log_mime_parser ("%s:%s \"%s\" updated.",
+                       SRCNAME, __func__, primaryFpr);
+      if (it == m_fpr_map.end ())
+        {
+          m_fpr_map.insert (std::make_pair (primaryFpr, key));
+
+          gpgrt_lock_unlock (&fpr_map_lock);
+          return;
+        }
+
+      if (it->second.hasSecret () && !key.hasSecret())
+        {
+          log_debug ("%s:%s Lost secret info on update. Merging.",
+                     SRCNAME, __func__);
+          auto merged = key;
+          merged.mergeWith (it->second);
+          it->second = merged;
+        }
+      else
+        {
+          it->second = key;
+        }
+      gpgrt_lock_unlock (&fpr_map_lock);
+      return;
+    }
+
+  GpgME::Key getFromMap (const char *fpr) const
+  {
+    if (!fpr)
+      {
+        TRACEPOINT;
+        return GpgME::Key();
+      }
+
+    gpgrt_lock_lock (&fpr_map_lock);
+    std::string primaryFpr;
+    const auto it = m_sub_fpr_map.find (fpr);
+    if (it != m_sub_fpr_map.end ())
+      {
+        log_debug ("%s:%s using \"%s\" for \"%s\"",
+                   SRCNAME, __func__, it->second.c_str(), fpr);
+        primaryFpr = it->second;
+      }
+    else
+      {
+        primaryFpr = fpr;
+      }
+
+    const auto keyIt = m_fpr_map.find (primaryFpr);
+    if (keyIt != m_fpr_map.end ())
+      {
+        gpgrt_lock_unlock (&fpr_map_lock);
+        return keyIt->second;
+      }
+    gpgrt_lock_unlock (&fpr_map_lock);
+    return GpgME::Key();
+  }
+
+  GpgME::Key getByFpr (const char *fpr, bool block) const
+    {
+      if (!fpr)
+        {
+          TRACEPOINT;
+          return GpgME::Key ();
+        }
+
+      TRACEPOINT;
+      const auto ret = getFromMap (fpr);
+      if (ret.isNull())
+        {
+          // If the key was not found we need to check if there is
+          // an update running.
+          if (block)
+            {
+              const std::string sFpr (fpr);
+              int i = 0;
+
+              gpgrt_lock_lock (&update_lock);
+              while (std::find (m_update_jobs.begin(), m_update_jobs.end(),
+                                sFpr)
+                     != m_update_jobs.end ())
+                {
+                  i++;
+                  if (i % 100 == 0)
+                    {
+                      log_debug ("%s:%s Waiting on update for \"%s\"",
+                                 SRCNAME, __func__, fpr);
+                    }
+                  gpgrt_lock_unlock (&update_lock);
+                  Sleep (10);
+                  gpgrt_lock_lock (&update_lock);
+                  if (i == 3000)
+                    {
+                      /* Just to be on the save side */
+                      log_error ("%s:%s Waiting on update for \"%s\" "
+                                 "failed! Bug!",
+                                 SRCNAME, __func__, fpr);
+                      break;
+                    }
+                }
+              gpgrt_lock_unlock (&update_lock);
+
+              TRACEPOINT;
+              const auto ret2 = getFromMap (fpr);
+              if (ret2.isNull ())
+                {
+                  log_debug ("%s:%s Cache miss after blocking check %s.",
+                             SRCNAME, __func__, fpr);
+                }
+              else
+                {
+                  log_debug ("%s:%s Cache hit after wait for %s.",
+                             SRCNAME, __func__, fpr);
+                  return ret2;
+                }
+            }
+          log_debug ("%s:%s Cache miss for %s.",
+                     SRCNAME, __func__, fpr);
+          return GpgME::Key();
+        }
+
+      log_debug ("%s:%s Cache hit for %s.",
+                 SRCNAME, __func__, fpr);
+      return ret;
+    }
+
+  void update (const char *fpr, GpgME::Protocol proto)
+     {
+       if (!fpr)
+         {
+           return;
+         }
+       const std::string sFpr (fpr);
+       gpgrt_lock_lock (&update_lock);
+       if (std::find (m_update_jobs.begin(), m_update_jobs.end(), sFpr)
+                      != m_update_jobs.end ())
+         {
+           log_debug ("%s:%s Update for \"%s\" already in progress.",
+                      SRCNAME, __func__, fpr);
+           gpgrt_lock_unlock (&update_lock);
+         }
+
+       m_update_jobs.push_back (sFpr);
+       gpgrt_lock_unlock (&update_lock);
+       update_arg_t * args = new update_arg_t;
+       args->first = sFpr;
+       args->second = proto;
+       CloseHandle (CreateThread (NULL, 0, do_update,
+                                  (LPVOID) args, 0,
+                                  NULL));
+     }
+
+  void onUpdateJobDone (const char *fpr, const GpgME::Key &key)
+    {
+      if (!fpr)
+        {
+          return;
+        }
+      TRACEPOINT;
+      insertOrUpdateInFprMap (key);
+      const std::string sFpr (fpr);
+      gpgrt_lock_lock (&update_lock);
+      const auto it = std::find (m_update_jobs.begin(),
+                                 m_update_jobs.end(),
+                                 sFpr);
+
+      if (it == m_update_jobs.end())
+        {
+          log_error ("%s:%s Update for \"%s\" already finished.",
+                     SRCNAME, __func__, fpr);
+          gpgrt_lock_unlock (&update_lock);
+          return;
+        }
+      m_update_jobs.erase (it);
+      gpgrt_lock_unlock (&update_lock);
+      TRACEPOINT;
+      return;
+    }
+
   std::map<std::string, GpgME::Key> m_pgp_key_map;
   std::map<std::string, GpgME::Key> m_smime_key_map;
   std::map<std::string, GpgME::Key> m_pgp_skey_map;
   std::map<std::string, GpgME::Key> m_smime_skey_map;
+  std::unordered_map<std::string, GpgME::Key> m_fpr_map;
+  std::unordered_map<std::string, std::string> m_sub_fpr_map;
+  std::vector<std::string> m_update_jobs;
 };
 
 KeyCache::KeyCache():
@@ -392,7 +656,8 @@ do_locate (LPVOID arg)
         }
       // We need to validate here to fetch CRL's
       ctx->setKeyListMode (GpgME::KeyListMode::Local |
-                           GpgME::KeyListMode::Validate);
+                           GpgME::KeyListMode::Validate |
+                           GpgME::KeyListMode::Signatures);
       GpgME::Error e = ctx->startKeyListing (addr.c_str());
       if (e)
         {
@@ -662,4 +927,22 @@ KeyCache::isMailResolvable(Mail *mail)
   encKeys = getEncryptionKeys (recps, GpgME::CMS);
 
   return !encKeys.empty() && !sigKey.isNull();
+}
+
+void
+KeyCache::update (const char *fpr, GpgME::Protocol proto)
+{
+  d->update (fpr, proto);
+}
+
+GpgME::Key
+KeyCache::getByFpr (const char *fpr, bool block) const
+{
+  return d->getByFpr (fpr, block);
+}
+
+void
+KeyCache::onUpdateJobDone (const char *fpr, const GpgME::Key &key)
+{
+  return d->onUpdateJobDone (fpr, key);
 }

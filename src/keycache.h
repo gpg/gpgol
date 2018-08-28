@@ -80,11 +80,29 @@ public:
      **/
     bool isMailResolvable (Mail *mail);
 
+    /* Search / Update a key in the cache. This is meant to be
+       called e.g. after a verify to update the key.
+
+       A known issue is that a get right after it might
+       still return an outdated key but the get after that
+       would return the updated one. This is acceptable as
+       it only poses a minor problem with TOFU while we
+       can show the correct state in the tooltip. */
+    void update (const char *fpr, GpgME::Protocol proto);
+
+    /* Get a cached key. If block is true it will block
+       if the key is currently searched for.
+
+       This function will not search a key. Call update
+       to insert keys into the cache */
+    GpgME::Key getByFpr (const char *fpr, bool block = true) const;
+
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);
     void setPgpKey(const std::string &mbox, const GpgME::Key &key);
     void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key);
     void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key);
+    void onUpdateJobDone (const char *fpr, const GpgME::Key &key);
 
 private:
 
