@@ -25,6 +25,8 @@
 #include "attachment.h"
 #include "mimedataprovider.h"
 
+#include "keycache.h"
+
 #include <gpgme++/context.h>
 #include <gpgme++/decryptionresult.h>
 #include <gpgme++/key.h>
@@ -254,6 +256,19 @@ is_valid_chksum(const GpgME::Signature &sig)
   return sum & valid_mask;
 }
 
+
+/* Note on stability:
+
+   Experiments have shown that we can have a crash if parse
+   returns at time that is not good for the state of Outlook.
+
+   This happend in my test instance after a delay of > 1s < 3s
+   with a < 1% chance :-/
+
+   So if you have really really bad luck this might still crash
+   although it usually should be either much quicker or much slower
+   (slower e.g. when pinentry is requrired).
+*/
 void
 ParseController::parse()
 {
@@ -459,17 +474,16 @@ ParseController::parse()
     {
       has_valid_encrypted_checksum = is_valid_chksum (sig);
 
-      /* FIXME: This is very expensive. We need some caching here
-         or reduce the information */
-      TRACEPOINT;
-      sig.key(true, true);
-      TRACEPOINT;
+      KeyCache::instance ()->update (sig.fingerprint (), protocol);
+
       if (!ultimate_keys_queried &&
           (sig.validity() == Signature::Validity::Full ||
           sig.validity() == Signature::Validity::Ultimate))
         {
           /* Ensure that we have the keys with ultimate
              trust cached for the ui. */
+
+          // TODO this is something for the keycache
           get_ultimate_keys ();
           ultimate_keys_queried = true;
         }
@@ -489,7 +503,16 @@ ParseController::parse()
        ss << m_decrypt_result << '\n' << m_verify_result;
       for (const auto sig: m_verify_result.signatures())
         {
-          ss << '\n' << sig.key();
+          const auto key = sig.key();
+          if (key.isNull())
+            {
+              ss << '\n' << "Cached key:\n" << KeyCache::instance()->getByFpr(
+                  sig.fingerprint(), false);
+            }
+          else
+            {
+              ss << '\n' << key;
+            }
         }
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
     }

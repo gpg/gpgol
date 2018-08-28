@@ -2009,7 +2009,9 @@ Mail::updateSigstate ()
   for (const auto sig: m_verify_result.signatures())
     {
       m_is_signed = true;
-      m_uid = get_uid_for_sender (sig.key(), sender.c_str());
+      const auto key = KeyCache::instance ()->getByFpr (sig.fingerprint(),
+                                                        true);
+      m_uid = get_uid_for_sender (key, sender.c_str());
 
       if ((sig.summary() & Signature::Summary::Valid) &&
           m_uid.origin() == GpgME::Key::OriginWKD &&
@@ -2433,8 +2435,10 @@ Mail::getCryptoDetails_o ()
     }
 
   bool keyFound = true;
-  bool isOpenPGP = m_sig.key().isNull() ? !isSMIME_m () :
-                   m_sig.key().protocol() == Protocol::OpenPGP;
+  const auto sigKey = KeyCache::instance ()->getByFpr (m_sig.fingerprint (),
+                                                       true);
+  bool isOpenPGP = sigKey.isNull() ? !isSMIME_m () :
+                   sigKey.protocol() == Protocol::OpenPGP;
   char *buf;
   bool hasConflict = false;
   int level = get_signature_level ();
@@ -2448,7 +2452,7 @@ Mail::getCryptoDetails_o ()
       /* level 4 check for direct trust */
       int four_check = level_4_check (m_uid);
 
-      if (four_check == 2 && m_sig.key().hasSecret ())
+      if (four_check == 2 && sigKey.hasSecret ())
         {
           message = _("You signed this message.");
         }
@@ -2477,7 +2481,7 @@ Mail::getCryptoDetails_o ()
     {
       /* Level three is the only level for trusted S/MIME keys. */
       gpgrt_asprintf (&buf, _("The senders identity is certified by the trusted issuer:\n'%s'\n"),
-                      m_sig.key().issuerName());
+                      sigKey.issuerName());
       memdbg_alloc (buf);
       message = buf;
       xfree (buf);
