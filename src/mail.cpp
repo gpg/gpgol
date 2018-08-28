@@ -1370,6 +1370,7 @@ Mail::parsing_done()
       m_crypto_flags |= 2;
     }
 
+  TRACEPOINT;
   updateSigstate ();
   m_needs_wipe = !m_is_send_again;
 
