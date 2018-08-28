@@ -460,15 +460,14 @@ delayed_invalidate_ui (LPVOID minsleep)
   int i = 0;
   while (invalidation_blocked)
     {
-      Sleep (100);
       i++;
-
       if (i % 10 == 0)
         {
           log_debug ("%s:%s: Waiting for invalidation.",
                      SRCNAME, __func__);
         }
 
+      Sleep (100);
       /* Do we need an abort statement here? */
     }
   do_in_ui_thread (INVALIDATE_UI, nullptr);
