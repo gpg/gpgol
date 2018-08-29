@@ -456,8 +456,9 @@ public:
     const auto keyIt = m_fpr_map.find (primaryFpr);
     if (keyIt != m_fpr_map.end ())
       {
+        const auto ret = keyIt->second;
         gpgrt_lock_unlock (&fpr_map_lock);
-        return keyIt->second;
+        return ret;
       }
     gpgrt_lock_unlock (&fpr_map_lock);
     return GpgME::Key();
