@@ -41,6 +41,7 @@ i18n_noops[] = {
     N_("Configure GpgOL"),
     N_("Automation"),
     N_("General"),
+    N_("(Technical)"),
 
     N_("Automatically secure &messages"),
     N_("Configure GnuPG"),
