@@ -1601,6 +1601,16 @@ Mail::updateOOMData_o ()
           /* Try the sender Object */
           buf = get_sender_Sender (m_mailitem);
         }
+
+      /* We also want to cache sent representing email address so that
+         we can use it for verification information. */
+      char *buf2 = get_sender_SentRepresentingAddress (m_mailitem);
+
+      if (buf2)
+        {
+          m_sent_on_behalf = buf2;
+          xfree (buf2);
+        }
     }
 
   if (!buf)
@@ -2013,6 +2023,17 @@ Mail::updateSigstate ()
       const auto key = KeyCache::instance ()->getByFpr (sig.fingerprint(),
                                                         true);
       m_uid = get_uid_for_sender (key, sender.c_str());
+
+      if (m_uid.isNull() && !m_sent_on_behalf.empty ())
+        {
+          m_uid = get_uid_for_sender (key, m_sent_on_behalf.c_str ());
+          if (!m_uid.isNull())
+            {
+              log_debug ("%s:%s: Using sent on behalf '%s' instead of '%s'",
+                         SRCNAME, __func__, m_sent_on_behalf.c_str(),
+                         sender.c_str ());
+            }
+        }
 
       if ((sig.summary() & Signature::Summary::Valid) &&
           m_uid.origin() == GpgME::Key::OriginWKD &&

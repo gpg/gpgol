@@ -135,6 +135,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/string/{00020386-0000-0000-C000-000000000046}/content-type/0x0000001F"
 #define PR_BLOCK_STATUS_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x10960003"
+#define PR_SENT_REPRESENTING_EMAIL_ADDRESS_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x0065001F"
 
 #define DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE 11
 
@@ -357,6 +359,7 @@ char *get_sender_CurrentUser (LPDISPATCH mailitem);
 char *get_sender_Sender (LPDISPATCH mailitem);
 char *get_sender_SenderEMailAddress (LPDISPATCH mailitem);
 
+
 /* Get the body of the active inline response */
 char *get_inline_body (void);
 
@@ -369,6 +372,9 @@ int get_ex_major_version_for_addr (const char *mbox);
 int get_ol_ui_language (void);
 
 char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
+
+/* Get the SentRepresentingAddress */
+char *get_sender_SentRepresentingAddress (LPDISPATCH mailitem);
 
 /* memtracing query interface */
 HRESULT gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj);

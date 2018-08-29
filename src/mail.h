@@ -617,6 +617,7 @@ private:
   int m_moss_position; /* The number of the original message attachment. */
   int m_crypto_flags;
   std::string m_sender;
+  std::string m_sent_on_behalf;
   char *m_cached_html_body; /* Cached html body. */
   char *m_cached_plain_body; /* Cached plain body. */
   std::vector<std::string> m_cached_recipients;

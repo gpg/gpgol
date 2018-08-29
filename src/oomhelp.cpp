@@ -2213,6 +2213,21 @@ get_sender_SenderEMailAddress (LPDISPATCH mailitem)
 }
 
 char *
+get_sender_SentRepresentingAddress (LPDISPATCH mailitem)
+{
+  char *buf = get_pa_string (mailitem,
+                             PR_SENT_REPRESENTING_EMAIL_ADDRESS_W_DASL);
+  if (buf && strlen (buf))
+    {
+      log_debug ("%s:%s Found sent representing address \"%s\"",
+                 SRCNAME, __func__, buf);
+      return buf;
+    }
+  xfree (buf);
+  return nullptr;
+}
+
+char *
 get_inline_body ()
 {
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
