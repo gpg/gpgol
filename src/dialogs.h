@@ -75,4 +75,7 @@
 #define IDI_LEVEL_3_ENC                 (IDI_LEVEL_3 + ENCRYPT_ICON_OFFSET)
 #define IDI_LEVEL_4_ENC                 (IDI_LEVEL_4 + ENCRYPT_ICON_OFFSET)
 
+/* Other ids */
+#define DISPID_MLANG_CHARSET            0x7000
+
 #endif /*DIALOGS_H*/

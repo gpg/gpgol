@@ -29,6 +29,9 @@ DEFINE_GUID (IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,
 #include <mlang.h>
 #undef INITGUID
 
+#include "dialogs.h"
+#include "dispcache.h"
+
 #include "mlang-charset.h"
 
 char *ansi_charset_to_utf8 (const char *charset, const char *input,
@@ -51,9 +54,21 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
       return xstrdup (input);
     }
 
-  CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
-                   IID_IMultiLanguage, (void**)&multilang);
-  memdbg_addRef (multilang);
+  auto cache = DispCache::instance ();
+  LPDISPATCH cachedLang = cache->getDisp (DISPID_MLANG_CHARSET);
+
+  if (!cachedLang)
+    {
+      CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
+                       IID_IMultiLanguage, (void**)&multilang);
+      memdbg_addRef (multilang);
+      cache->addDisp (DISPID_MLANG_CHARSET, (LPDISPATCH) multilang);
+    }
+  else
+    {
+      multilang = (LPMULTILANGUAGE) cachedLang;
+    }
+
 
   if (!multilang)
     {
@@ -108,7 +123,6 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
 
   err = multilang->ConvertStringToUnicode(&mode, enc, const_cast<char*>(input),
                                           &uinlen, buf, &wlen);
-  gpgol_release (multilang);
   if (FAILED (err))
     {
       log_error ("%s:%s: Failed conversion 2.",
