@@ -27,9 +27,11 @@
 #include "mymapi.h"
 
 #include <vector>
+#include <memory>
 
 class GpgolAddinRibbonExt;
 class ApplicationEventListener;
+class DispCache;
 
 /* Enums for the IDTExtensibility2 interface*/
 typedef enum
@@ -212,6 +214,7 @@ public:
      crypto mails. */
   void shutdown ();
   LPDISPATCH get_application () { return m_application; }
+  std::shared_ptr<DispCache> get_dispcache () { return m_dispcache; }
   bool isShutdown() { return m_shutdown; };
 
 private:
@@ -227,6 +230,7 @@ private:
   bool m_shutdown;
   HHOOK m_hook;
   std::vector<LPDISPATCH> m_explorerEventSinks;
+  std::shared_ptr<DispCache> m_dispcache;
 };
 
 class GpgolAddinFactory: public IClassFactory

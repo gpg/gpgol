@@ -35,6 +35,7 @@ gpgol_SOURCES = \
     cpphelp.cpp cpphelp.h \
     cryptcontroller.cpp cryptcontroller.h \
     dialogs.h \
+    dispcache.h dispcache.cpp \
     eventsink.h \
     eventsinks.h \
     exechelp.c exechelp.h \

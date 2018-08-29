@@ -47,6 +47,7 @@
 #include "mail.h"
 #include "addin-options.h"
 #include "cpphelp.h"
+#include "dispcache.h"
 
 #include <gpg-error.h>
 #include <list>
@@ -178,7 +179,8 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0),
   m_explorersEventSink(nullptr),
   m_disabled(false),
   m_shutdown(false),
-  m_hook(nullptr)
+  m_hook(nullptr),
+  m_dispcache(new DispCache)
 {
   read_options ();
   /* RibbonExtender is it's own object to avoid the pitfalls of
