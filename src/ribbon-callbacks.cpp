@@ -42,6 +42,7 @@
 #include "mimemaker.h"
 #include "filetype.h"
 #include "mail.h"
+#include "dispcache.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/data.h>
@@ -73,15 +74,15 @@ HRESULT getContext (LPDISPATCH ctrl, LPDISPATCH *context)
   return context ? S_OK : E_FAIL;
 }
 
-/* getIcon
+/* getIconDisp
    Loads a PNG image from the resurce converts it into a Bitmap
    and Wraps it in an PictureDispatcher that is returned as result.
 
    Based on documentation from:
    http://www.codeproject.com/Articles/3537/Loading-JPG-PNG-resources-using-GDI
 */
-HRESULT
-getIcon (int id, VARIANT* result)
+static LPDISPATCH
+getIconDisp (int id)
 {
   PICTDESC pdesc;
   LPDISPATCH pPict;
@@ -98,12 +99,6 @@ getIcon (int id, VARIANT* result)
   pdesc.cbSizeofstruct = sizeof pdesc;
   pdesc.picType = PICTYPE_BITMAP;
 
-  if (!result)
-    {
-      log_error ("getIcon called without result variant.");
-      return E_POINTER;
-    }
-
   /* Initialize GDI */
   gdiplusStartupInput.DebugEventCallback = NULL;
   gdiplusStartupInput.SuppressBackgroundThread = FALSE;
@@ -117,12 +112,12 @@ getIcon (int id, VARIANT* result)
     {
       log_error ("%s:%s: failed to find image: %i",
                  SRCNAME, __func__, id);
-      return E_FAIL;
+      return nullptr;
     }
 
   imageSize = SizeofResource (glob_hinst, hResource);
   if (!imageSize)
-    return E_FAIL;
+    return nullptr;
 
   pResourceData = LockResource (LoadResource(glob_hinst, hResource));
 
@@ -130,7 +125,7 @@ getIcon (int id, VARIANT* result)
     {
       log_error ("%s:%s: failed to load image: %i",
                  SRCNAME, __func__, id);
-      return E_FAIL;
+      return nullptr;
     }
 
   hBuffer = GlobalAlloc (GMEM_MOVEABLE, imageSize);
@@ -168,11 +163,36 @@ getIcon (int id, VARIANT* result)
     {
       log_error ("%s:%s: OleCreatePictureIndirect failed: hr=%#lx\n",
                  SRCNAME, __func__, hr);
-      return -1;
+      return nullptr;
     }
 
-  result->pdispVal = pPict;
-  result->vt = VT_DISPATCH;
+  return pPict;
+}
+
+HRESULT
+getIcon (int id, VARIANT* result)
+{
+  if (!result)
+    {
+      TRACEPOINT;
+      return S_OK;
+    }
+
+  auto cache = DispCache::instance ();
+  result->pdispVal = cache->getDisp (id);
+
+  if (!result->pdispVal)
+    {
+      result->pdispVal = getIconDisp (id);
+      cache->addDisp (id, result->pdispVal);
+      memdbg_addRef (result->pdispVal);
+    }
+
+  if (result->pdispVal)
+    {
+      result->vt = VT_DISPATCH;
+      result->pdispVal->AddRef();
+    }
 
   return S_OK;
 }
