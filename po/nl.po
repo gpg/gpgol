@@ -1,22 +1,23 @@
 # nl.po - Dutch translation for GpgOL
 # Copyright (C) 2018 g10 Code GmbH
 # This file is distributed under the same license as the GpgOL package.
-# Erwin Bronkhorst <erwinbronkhorst@gmail.com>, 2018.
 #
+# Erwin Bronkhorst <erwinbronkhorst@gmail.com>, 2018.
+# aheinecke <aheinecke@gnupg.org>, 2018.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-08-30 14:56+0200\n"
-"PO-Revision-Date: 2018-07-30 23:57+0200\n"
-"Last-Translator: Erwin Bronkhorst <erwinbronkhorst@gmail.com>\n"
-"Language-Team: \n"
+"PO-Revision-Date: 2018-08-30 15:00+0100\n"
+"Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
+"Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Lokalize 2.0\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -40,7 +41,7 @@ msgstr "Algemeen"
 
 #: src/addin-options.cpp:44
 msgid "(Technical)"
-msgstr ""
+msgstr "(Technisch)"
 
 #: src/addin-options.cpp:46
 msgid "Automatically secure &messages"

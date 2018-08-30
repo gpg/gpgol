@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-08-30 14:56+0200\n"
-"PO-Revision-Date: 2018-08-30 08:27+0100\n"
+"PO-Revision-Date: 2018-08-30 14:59+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -42,7 +42,7 @@ msgstr "Allgemein"
 
 #: src/addin-options.cpp:44
 msgid "(Technical)"
-msgstr ""
+msgstr "(Technisch)"
 
 #: src/addin-options.cpp:46
 msgid "Automatically secure &messages"
