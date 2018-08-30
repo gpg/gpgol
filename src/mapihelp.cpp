@@ -1506,6 +1506,29 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
           newvalue = change_message_class_ipm_note_smime_multipartsigned
             (message);
         }
+      else if (!opt.enable_smime && !strcmp (s, "IPM.Note.SMIME"))
+        {
+          /* This is enterprise level gateway encryption stuff.
+
+             E.g. we can have awesome other tools that send pgp
+             inline and a gateway that signs everything with S/MIME.
+
+             So let's look at the body to figure out if we are
+             PGP.
+
+             This won't work usually as the body is not yet accessible.
+             Still it does not hurt to try as the experience is that
+             the message class in outlook is not used consistently.
+             */
+          newvalue = get_msgcls_from_pgp_lines (message);
+
+          if (newvalue)
+            {
+              log_debug ("%s:%s: PGP Inline detected in S/MIME message. "
+                         "Type is now '%s'",
+                         SRCNAME, __func__, newvalue);
+            }
+        }
       else if (sync_override && have_override
                && !strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14]||s[14] =='.'))
         {
