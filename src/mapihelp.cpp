@@ -2639,6 +2639,9 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
   if (!item || item->end_of_table || item->mapipos == -1)
     return -1;
 
+  log_debug ("%s:%s: Marking %i as MOSS attachment",
+             SRCNAME, __func__, item->mapipos);
+
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
   memdbg_addRef (att);
   if (FAILED (hr))
@@ -3279,6 +3282,9 @@ mapi_body_to_attachment (LPMESSAGE message)
   instream = mapi_get_body_as_stream (message);
   if (!instream)
     return -1;
+
+  log_debug ("%s:%s: Creating MOSS body attachment",
+             SRCNAME, __func__);
 
   hr = message->CreateAttach (NULL, 0, &newpos, &newatt);
   if (hr)
