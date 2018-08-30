@@ -1243,24 +1243,6 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
               xfree (attach_mime);
             }
         }
-      else
-        {
-          /* This is enterprise level gateway encryption stuff.
-
-             E.g. we can have awesome other tools that send pgp
-             inline and a gateway that signs everything with S/MIME.
-
-             So let's look at the body to figure out if we are
-             PGP. */
-          newvalue = get_msgcls_from_pgp_lines (message);
-
-          if (newvalue)
-            {
-              log_debug ("%s:%s:   PGP Inline detected in S/MIME message. "
-                         "Type is now '%s'",
-                         SRCNAME, __func__, newvalue);
-            }
-        }
       xfree (proto);
       xfree (ct);
     }
