@@ -58,7 +58,7 @@ msgstr "Debug..."
 
 #: src/addin-options.cpp:49
 msgid "Version "
-msgstr "Version"
+msgstr "Version "
 
 #: src/addin-options.cpp:50
 msgid "&Resolve recipient keys automatically"
