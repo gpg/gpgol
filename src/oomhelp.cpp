@@ -2,19 +2,20 @@
  * Copyright (C) 2009 g10 Code GmbH
  * Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
- * 
+ * Copyright (C) 2018 Intevation GmbH
+ *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -1220,7 +1221,8 @@ get_recipient_addr_fallbacks (LPDISPATCH recipient)
    returns true on success.
 */
 static bool
-try_resolve_group (LPDISPATCH addrEntry, std::vector<std::string> &ret)
+try_resolve_group (LPDISPATCH addrEntry,
+                   std::vector<std::pair<std::string, shared_disp_t> > &ret)
 {
   /* Get the name for debugging */
   std::string name;
@@ -1262,21 +1264,21 @@ try_resolve_group (LPDISPATCH addrEntry, std::vector<std::string> &ret)
   for (int i = 1; i <= count; i++)
     {
       auto item_str = std::string("Item(") + std::to_string (i) + ")";
-      LPDISPATCH entry = get_oom_object (members, item_str.c_str());
+      auto entry = MAKE_SHARED (get_oom_object (members, item_str.c_str()));
       if (!entry)
         {
           TRACEPOINT;
           continue;
         }
       std::string entryName;
-      char *entry_name = get_oom_string (entry, "Name");
+      char *entry_name = get_oom_string (entry.get(), "Name");
       if (entry_name)
         {
           entryName = entry_name;
           xfree (entry_name);
         }
 
-      int subType = get_oom_int (entry, "AddressEntryUserType");
+      int subType = get_oom_int (entry.get(), "AddressEntryUserType");
       /* Resolve recursively, yeah fun. */
       if (subType == DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
         {
@@ -1284,41 +1286,42 @@ try_resolve_group (LPDISPATCH addrEntry, std::vector<std::string> &ret)
                      SRCNAME, __func__,
                      (opt.enable_debug & DBG_MIME_PARSER) ?
                      entryName.c_str() : "omitted");
-          if (try_resolve_group (entry, ret))
+          if (try_resolve_group (entry.get(), ret))
             {
               foundOne = true;
-              gpgol_release (entry);
               continue;
             }
         }
 
+      std::pair<std::string, shared_disp_t> element;
+      element.second = entry;
+
       /* Resolve directly ? */
-      char *addrtype = get_pa_string (entry, PR_ADDRTYPE_DASL);
+      char *addrtype = get_pa_string (entry.get(), PR_ADDRTYPE_DASL);
       if (addrtype && !strcmp (addrtype, "SMTP"))
         {
           xfree (addrtype);
-          char *resolved = get_pa_string (entry, PR_EMAIL_ADDRESS_DASL);
+          char *resolved = get_pa_string (entry.get(), PR_EMAIL_ADDRESS_DASL);
           if (resolved)
             {
-              ret.push_back(resolved);
+              element.first = resolved;
+              ret.push_back (element);
               foundOne = true;
-              gpgol_release (entry);
               continue;
             }
         }
       xfree (addrtype);
 
       /* Resolve through Exchange API */
-      char *ex_resolved = get_recipient_addr_entry_fallbacks_ex (entry);
+      char *ex_resolved = get_recipient_addr_entry_fallbacks_ex (entry.get());
       if (ex_resolved)
         {
-          ret.push_back (ex_resolved);
+          element.first = ex_resolved;
+          ret.push_back (element);
           foundOne = true;
-          gpgol_release (entry);
           continue;
         }
 
-      gpgol_release (entry);
       log_debug ("%s:%s: failed to resolve name %s",
                  SRCNAME, __func__,
                  (opt.enable_debug & DBG_MIME_PARSER) ?
@@ -1335,12 +1338,13 @@ try_resolve_group (LPDISPATCH addrEntry, std::vector<std::string> &ret)
   return foundOne;
 }
 
-/* Gets the resolved smtp addresses of the recpients. */
-std::vector<std::string>
-get_oom_recipients (LPDISPATCH recipients, bool *r_err)
+/* Get the recipient mbox addresses with the addrEntry
+   object corresponding to the resolved address. */
+std::vector<std::pair<std::string, shared_disp_t> >
+get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
 {
   int recipientsCnt = get_oom_int (recipients, "Count");
-  std::vector<std::string> ret;
+  std::vector<std::pair<std::string, shared_disp_t> > ret;
   int i;
 
   if (!recipientsCnt)
@@ -1367,42 +1371,47 @@ get_oom_recipients (LPDISPATCH recipients, bool *r_err)
           break;
         }
 
-      LPDISPATCH addrEntry = get_oom_object (recipient, "AddressEntry");
-      if (addrEntry && try_resolve_group (addrEntry, ret))
+      auto addrEntry = MAKE_SHARED (get_oom_object (recipient, "AddressEntry"));
+      if (addrEntry && try_resolve_group (addrEntry.get (), ret))
         {
           log_debug ("%s:%s: Resolved recipient group",
                      SRCNAME, __func__);
           gpgol_release (recipient);
-          gpgol_release (addrEntry);
           continue;
         }
-      gpgol_release (addrEntry);
+
+      std::pair<std::string, shared_disp_t> entry;
+      entry.second = addrEntry;
 
       char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
       if (resolved)
         {
-          ret.push_back (resolved);
+          entry.first = resolved;
           xfree (resolved);
           gpgol_release (recipient);
+          ret.push_back (entry);
           continue;
         }
       /* No PR_SMTP_ADDRESS first fallback */
       resolved = get_recipient_addr_fallbacks (recipient);
       if (resolved)
         {
-          ret.push_back (resolved);
+          entry.first = resolved;
           xfree (resolved);
           gpgol_release (recipient);
+          ret.push_back (entry);
           continue;
         }
 
       char *address = get_oom_string (recipient, "Address");
       gpgol_release (recipient);
-      log_debug ("%s:%s: Failed to look up Address probably EX addr is returned",
+      log_debug ("%s:%s: Failed to look up Address probably "
+                 "EX addr is returned",
                  SRCNAME, __func__);
       if (address)
         {
-          ret.push_back (address);
+          entry.first = address;
+          ret.push_back (entry);
           xfree (address);
         }
       else if (r_err)
@@ -1410,7 +1419,18 @@ get_oom_recipients (LPDISPATCH recipients, bool *r_err)
           *r_err = true;
         }
     }
+  return ret;
+}
 
+/* Gets the resolved smtp addresses of the recpients. */
+std::vector<std::string>
+get_oom_recipients (LPDISPATCH recipients, bool *r_err)
+{
+  std::vector<std::string> ret;
+  for (const auto pair: get_oom_recipients_with_addrEntry (recipients, r_err))
+    {
+      ret.push_back (pair.first);
+    }
   return ret;
 }
 
@@ -2421,4 +2441,144 @@ is_preview_pane_visible (LPDISPATCH explorer)
       return false;
     }
   return !!var.boolVal;
+}
+
+static LPDISPATCH
+add_user_prop (LPDISPATCH user_props, const char *name)
+{
+  if (!user_props || !name)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  wchar_t *w_name = utf8_to_wchar (name);
+  BSTR b_name = SysAllocString (w_name);
+  xfree (w_name);
+
+  /* Args:
+    0: DisplayFormat int OlUserPropertyType
+    1: AddToFolderFields Bool Should the filed be added to the folder.
+    2: Type int OlUserPropertyType Type of the field.
+    3: Name Bstr Name of the field.
+
+    Returns the added Property.
+  */
+  VARIANT var;
+  VariantInit (&var);
+  DISPPARAMS args;
+  VARIANT argvars[4];
+  VariantInit (&argvars[0]);
+  VariantInit (&argvars[1]);
+  VariantInit (&argvars[2]);
+  VariantInit (&argvars[3]);
+  argvars[0].vt = VT_INT;
+  argvars[0].intVal = 1; // 1 means text.
+  argvars[1].vt = VT_BOOL;
+  argvars[1].boolVal = VARIANT_FALSE;
+  argvars[2].vt = VT_INT;
+  argvars[2].intVal = 1;
+  argvars[3].vt = VT_BSTR;
+  argvars[3].bstrVal = b_name;
+  args.cArgs = 4;
+  args.cNamedArgs = 0;
+  args.rgvarg = argvars;
+
+  int res = invoke_oom_method_with_parms (user_props, "Add", &var, &args);
+  VariantClear (&argvars[0]);
+  VariantClear (&argvars[1]);
+  VariantClear (&argvars[2]);
+  VariantClear (&argvars[3]);
+
+  if (res)
+    {
+      log_oom ("%s:%s: Failed to add property %s.",
+               SRCNAME, __func__, name);
+      return nullptr;
+    }
+
+  if (var.vt != VT_DISPATCH)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  LPDISPATCH ret = var.pdispVal;
+  memdbg_addRef (ret);
+
+  return ret;
+}
+
+LPDISPATCH
+find_user_prop (LPDISPATCH user_props, const char *name)
+{
+  if (!user_props || !name)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+  VARIANT var;
+  VariantInit (&var);
+
+  wchar_t *w_name = utf8_to_wchar (name);
+  BSTR b_name = SysAllocString (w_name);
+  xfree (w_name);
+
+  /* Name -> 1 / Bstr
+     Custom 0 -> Bool True for search in custom properties. False
+                 for builtin properties. */
+  DISPPARAMS args;
+  VARIANT argvars[2];
+  VariantInit (&argvars[0]);
+  VariantInit (&argvars[1]);
+  argvars[1].vt = VT_BSTR;
+  argvars[1].bstrVal = b_name;
+  argvars[0].vt = VT_BOOL;
+  argvars[0].boolVal = VARIANT_TRUE;
+  args.cArgs = 2;
+  args.rgvarg = argvars;
+
+  int res = invoke_oom_method_with_parms (user_props, "Find", &var, &args);
+  VariantClear (&argvars[0]);
+  VariantClear (&argvars[1]);
+  if (res)
+    {
+      log_oom ("%s:%s: Failed to find property %s.",
+               SRCNAME, __func__, name);
+      return nullptr;
+    }
+  if (var.vt != VT_DISPATCH)
+    {
+      TRACEPOINT;
+      return nullptr;
+    }
+
+  LPDISPATCH ret = var.pdispVal;
+  memdbg_addRef (ret);
+
+  return ret;
+}
+
+LPDISPATCH
+find_or_add_text_prop (LPDISPATCH user_props, const char *name)
+{
+  TRACEPOINT;
+  LPDISPATCH ret = find_user_prop (user_props, name);
+
+  TRACEPOINT;
+  if (ret)
+    {
+      return ret;
+    }
+
+  ret = add_user_prop (user_props, name);
+  TRACEPOINT;
+
+  return ret;
+}
+
+void
+release_disp (LPDISPATCH obj)
+{
+  gpgol_release (obj);
 }

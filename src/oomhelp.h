@@ -24,9 +24,11 @@
 
 #include <unknwn.h>
 #include "mymapi.h"
+#include "common.h"
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #define MSOCONTROLBUTTON    1
 #define MSOCONTROLEDIT      2
@@ -140,6 +142,13 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 
 #define DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE 11
 
+typedef std::shared_ptr<IDispatch> shared_disp_t;
+
+/* Function to contain the gpgol_release macro */
+void release_disp (LPDISPATCH obj);
+
+#define MAKE_SHARED(X) shared_disp_t (X, &release_disp)
+
 /* Return the malloced name of an COM+ object.  */
 char *get_object_name (LPUNKNOWN obj);
 
@@ -193,6 +202,12 @@ HWND get_oom_context_window (LPDISPATCH context);
    If r_err is not null it is set to true in case of an error. */
 std::vector<std::string> get_oom_recipients (LPDISPATCH recipients,
                                              bool *r_err = nullptr);
+
+/* Same as above but include the AddrEntry object in the result.
+   Caller needs to release the AddrEntry. */
+std::vector<std::pair<std::string, shared_disp_t> >
+get_oom_recipients_with_addrEntry (LPDISPATCH recipients,
+                                   bool *r_err = nullptr);
 
 /* Add an attachment to a dispatcher */
 int
@@ -385,4 +400,10 @@ HRESULT gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
 
 /* Check if the preview pane in the explorer is visible */
 bool is_preview_pane_visible (LPDISPATCH explorer);
+
+/* Find or add a text user property with that name. */
+LPDISPATCH find_or_add_text_prop (LPDISPATCH props, const char *name);
+
+/* Find a user property and return it if found. */
+LPDISPATCH find_user_prop (LPDISPATCH props, const char *name);
 #endif /*OOMHELP_H*/
