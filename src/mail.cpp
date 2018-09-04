@@ -1519,7 +1519,7 @@ int
 Mail::needs_crypto_m () const
 {
   LPMESSAGE message = get_oom_message (m_mailitem);
-  bool ret;
+  int ret;
   if (!message)
     {
       log_error ("%s:%s: Failed to get message.",
