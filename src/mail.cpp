@@ -2807,7 +2807,7 @@ Mail::locateKeys_o ()
   KeyCache::instance()->startLocateSecret (getSender_o ().c_str (), this);
   KeyCache::instance()->startLocate (getSender_o ().c_str (), this);
   KeyCache::instance()->startLocate (getCachedRecipients (), this);
-  autoresolveCheck ();
+  autosecureCheck ();
 
   locate_in_progress = false;
 }
@@ -3374,14 +3374,14 @@ Mail::decrementLocateCount ()
     }
   if (!m_locate_count)
     {
-      autoresolveCheck ();
+      autosecureCheck ();
     }
 }
 
 void
-Mail::autoresolveCheck ()
+Mail::autosecureCheck ()
 {
-  if (!opt.autoresolve || m_manual_crypto_opts ||
+  if (!opt.autosecure || !opt.autoresolve || m_manual_crypto_opts ||
       m_locate_count)
     {
       return;

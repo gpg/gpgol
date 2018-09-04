@@ -576,7 +576,7 @@ public:
   /* Check if the keys can be resolved automatically and trigger
    * setting the crypto flags accordingly.
    */
-  void autoresolveCheck ();
+  void autosecureCheck ();
 
   /* Set if a mail should be secured (encrypted and signed)
    *
