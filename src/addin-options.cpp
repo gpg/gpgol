@@ -70,7 +70,47 @@ i18n_noops[] = {
        "the deprecated PGP/Inline is used.\n"
        "This can be required for compatibility but should generally not "
        "be used."),
+
+    /* Not options but strings for the key adder */
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       The contacts name follows. */
+    N_("Configure key for:"),
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       An example for a public key follows. */
+    N_("Paste a public key export here. It should look like:"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Failed to parse any public key."),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Error"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Secret key detected."),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("You can only configure public keys in Outlook."
+       " Import secret keys with Kleopatra."),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("The key is unusable for Outlook."
+       " Please check Kleopatra for more information."),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Invalid key detected."),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Created:"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("User Ids:"),
+    /* TRANSLATORS: Part of address book key configuration dialog. %1 is
+        a placeholder for the plual for key / keys. */
+    N_("You are about to configure the following %1 for:"),
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       used in a sentence as plural form. */
+    N_("keys"),
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       used in a sentence as singular form. */
+    N_("key"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Continue?"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Confirm keys"),
 };
+
 
 static bool dlg_open;
 
