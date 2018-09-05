@@ -28,6 +28,8 @@
 #include <gpg-error.h>
 #include <gpgme++/context.h>
 #include <gpgme++/key.h>
+#include <gpgme++/data.h>
+#include <gpgme++/importresult.h>
 
 #include <windows.h>
 
@@ -38,6 +40,7 @@
 GPGRT_LOCK_DEFINE (keycache_lock);
 GPGRT_LOCK_DEFINE (fpr_map_lock);
 GPGRT_LOCK_DEFINE (update_lock);
+GPGRT_LOCK_DEFINE (import_lock);
 static KeyCache* singleton = nullptr;
 
 /** At some point we need to set a limit. There
@@ -89,6 +92,8 @@ namespace
 
 typedef std::pair<std::string, GpgME::Protocol> update_arg_t;
 
+typedef std::pair<std::unique_ptr<LocateArgs>, std::string> import_arg_t;
+
 static DWORD WINAPI
 do_update (LPVOID arg)
 {
@@ -133,6 +138,76 @@ do_update (LPVOID arg)
              SRCNAME, __func__);
   return 0;
 }
+
+static DWORD WINAPI
+do_import (LPVOID arg)
+{
+  auto args = std::unique_ptr<import_arg_t> ((import_arg_t*) arg);
+
+  const std::string mbox = args->first->m_mbox;
+
+  log_mime_parser ("%s:%s importing for: \"%s\" with data \n%s",
+                   SRCNAME, __func__, mbox.c_str (),
+                   args->second.c_str ());
+  auto ctx = std::unique_ptr<GpgME::Context> (GpgME::Context::createForProtocol
+                                              (GpgME::OpenPGP));
+
+  if (!ctx)
+    {
+      TRACEPOINT;
+      return 0;
+    }
+  // We want to avoid unneccessary copies. The c_str will be valid
+  // until args goes out of scope.
+  const char *keyStr = args->second.c_str ();
+  GpgME::Data data (keyStr, strlen (keyStr), /* copy */ false);
+
+  if (data.type () != GpgME::Data::PGPKey)
+    {
+      log_debug ("%s:%s Data for: %s is not a PGP Key",
+                 SRCNAME, __func__, mbox.c_str ());
+      return 0;
+    }
+  data.rewind ();
+
+  const auto result = ctx->importKeys (data);
+
+  std::vector<std::string> fingerprints;
+  for (const auto import: result.imports())
+    {
+      if (import.error())
+        {
+          log_debug ("%s:%s Error importing: %s",
+                     SRCNAME, __func__, import.error().asString());
+          continue;
+        }
+      const char *fpr = import.fingerprint ();
+      if (!fpr)
+        {
+          TRACEPOINT;
+          continue;
+        }
+
+      update_arg_t * update_args = new update_arg_t;
+      update_args->first = std::string (fpr);
+      update_args->second = GpgME::OpenPGP;
+
+      // We do it blocking to be sure that when all imports
+      // are done they are also part of the keycache.
+      do_update ((LPVOID) update_args);
+
+      fingerprints.push_back (fpr);
+      log_debug ("%s:%s Imported: %s from addressbook.",
+                 SRCNAME, __func__, fpr);
+    }
+
+  KeyCache::instance ()->onAddrBookImportJobDone (mbox, fingerprints);
+
+  log_debug ("%s:%s Import job done for: %s",
+             SRCNAME, __func__, mbox.c_str ());
+  return 0;
+}
+
 
 class KeyCache::Private
 {
@@ -208,6 +283,39 @@ public:
       }
     insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
+  }
+
+  std::vector<GpgME::Key> getPGPOverrides (const char *addr)
+  {
+    std::vector<GpgME::Key> ret;
+
+    if (!addr)
+      {
+        return ret;
+      }
+    auto mbox = GpgME::UserID::addrSpecFromString (addr);
+
+    gpgrt_lock_lock (&keycache_lock);
+    const auto it = m_addr_book_overrides.find (mbox);
+    if (it == m_addr_book_overrides.end ())
+      {
+        gpgrt_lock_unlock (&keycache_lock);
+        return ret;
+      }
+    for (const auto fpr: it->second)
+      {
+        const auto key = getByFpr (fpr.c_str (), false);
+        if (key.isNull())
+          {
+            log_debug ("%s:%s: No key for %s in the cache?!",
+                       SRCNAME, __func__, fpr.c_str());
+            continue;
+          }
+        ret.push_back (key);
+      }
+
+    gpgrt_lock_unlock (&keycache_lock);
+    return ret;
   }
 
   GpgME::Key getKey (const char *addr, GpgME::Protocol proto)
@@ -326,6 +434,18 @@ public:
       }
     for (const auto &recip: recipients)
       {
+        if (proto == GpgME::OpenPGP)
+          {
+            const auto overrides = getPGPOverrides (recip.c_str ());
+
+            if (!overrides.empty())
+              {
+                ret.insert (ret.end (), overrides.begin (), overrides.end ());
+                log_mime_parser ("%s:%s: Using overides for %s",
+                                 SRCNAME, __func__, recip.c_str ());
+                continue;
+              }
+          }
         const auto key = getKey (recip.c_str (), proto);
         if (key.isNull())
           {
@@ -579,13 +699,73 @@ public:
       return;
     }
 
+  void importFromAddrBook (const std::string &mbox, const char *data,
+                           Mail *mail)
+    {
+      if (!data || mbox.empty() || !mail)
+        {
+          TRACEPOINT;
+          return;
+        }
+       gpgrt_lock_lock (&import_lock);
+       if (m_import_jobs.find (mbox) != m_import_jobs.end ())
+         {
+           log_debug ("%s:%s import for \"%s\" already in progress.",
+                      SRCNAME, __func__, mbox.c_str ());
+           gpgrt_lock_unlock (&import_lock);
+         }
+       m_import_jobs.insert (mbox);
+       gpgrt_lock_unlock (&import_lock);
+
+       import_arg_t * args = new import_arg_t;
+       args->first = std::unique_ptr<LocateArgs> (new LocateArgs (mbox, mail));
+       args->second = std::string (data);
+       CloseHandle (CreateThread (NULL, 0, do_import,
+                                  (LPVOID) args, 0,
+                                  NULL));
+
+    }
+
+  void onAddrBookImportJobDone (const std::string &mbox,
+                                const std::vector<std::string> &result_fprs)
+    {
+      gpgrt_lock_lock (&keycache_lock);
+      auto it = m_addr_book_overrides.find (mbox);
+      if (it != m_addr_book_overrides.end ())
+        {
+          it->second = result_fprs;
+        }
+      else
+        {
+          m_addr_book_overrides.insert (
+                std::make_pair (mbox, result_fprs));
+        }
+      gpgrt_lock_unlock (&keycache_lock);
+      gpgrt_lock_lock (&import_lock);
+      const auto job_it = m_import_jobs.find(mbox);
+
+      if (job_it == m_import_jobs.end())
+        {
+          log_error ("%s:%s import for \"%s\" already finished.",
+                     SRCNAME, __func__, mbox.c_str ());
+          gpgrt_lock_unlock (&import_lock);
+          return;
+        }
+      m_import_jobs.erase (job_it);
+      gpgrt_lock_unlock (&import_lock);
+      return;
+    }
+
   std::unordered_map<std::string, GpgME::Key> m_pgp_key_map;
   std::unordered_map<std::string, GpgME::Key> m_smime_key_map;
   std::unordered_map<std::string, GpgME::Key> m_pgp_skey_map;
   std::unordered_map<std::string, GpgME::Key> m_smime_skey_map;
   std::unordered_map<std::string, GpgME::Key> m_fpr_map;
   std::unordered_map<std::string, std::string> m_sub_fpr_map;
+  std::unordered_map<std::string, std::vector<std::string> >
+    m_addr_book_overrides;
   std::set<std::string> m_update_jobs;
+  std::set<std::string> m_import_jobs;
 };
 
 KeyCache::KeyCache():
@@ -940,4 +1120,18 @@ void
 KeyCache::onUpdateJobDone (const char *fpr, const GpgME::Key &key)
 {
   return d->onUpdateJobDone (fpr, key);
+}
+
+void
+KeyCache::importFromAddrBook (const std::string &mbox, const char *key_data,
+                              Mail *mail) const
+{
+  return d->importFromAddrBook (mbox, key_data, mail);
+}
+
+void
+KeyCache::onAddrBookImportJobDone (const std::string &mbox,
+                                   const std::vector<std::string> &result_fprs)
+{
+  return d->onAddrBookImportJobDone (mbox, result_fprs);
 }
