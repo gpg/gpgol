@@ -2536,6 +2536,7 @@ find_user_prop (LPDISPATCH user_props, const char *name)
   argvars[0].vt = VT_BOOL;
   argvars[0].boolVal = VARIANT_TRUE;
   args.cArgs = 2;
+  args.cNamedArgs = 0;
   args.rgvarg = argvars;
 
   int res = invoke_oom_method_with_parms (user_props, "Find", &var, &args);
