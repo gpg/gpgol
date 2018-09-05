@@ -38,6 +38,7 @@
 #include "wks-helper.h"
 #include "keycache.h"
 #include "cpphelp.h"
+#include "addressbook.h"
 
 #include <gpgme++/configuration.h>
 #include <gpgme++/tofuinfo.h>
@@ -102,7 +103,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_manual_crypto_opts(false),
     m_first_autosecure_check(true),
     m_locate_count(0),
-    m_is_about_to_be_moved(false)
+    m_is_about_to_be_moved(false),
+    m_locate_in_progress(false)
 {
   if (getMailForItem (mailitem))
     {
@@ -2772,9 +2774,7 @@ Mail::getSigFpr () const
 void
 Mail::locateKeys_o ()
 {
-  static bool locate_in_progress;
-
-  if (locate_in_progress)
+  if (m_locate_in_progress)
     {
       /** XXX
         The strangest thing seems to happen here:
@@ -2800,16 +2800,22 @@ Mail::locateKeys_o ()
                  SRCNAME, __func__, this);
       return;
     }
-  locate_in_progress = true;
+  m_locate_in_progress = true;
 
-  // First update oom data to have recipients and sender updated.
-  updateOOMData_o ();
-  KeyCache::instance()->startLocateSecret (getSender_o ().c_str (), this);
-  KeyCache::instance()->startLocate (getSender_o ().c_str (), this);
-  KeyCache::instance()->startLocate (getCachedRecipients (), this);
+  Addressbook::check_o (this);
+
+  if (opt.autoresolve)
+    {
+      // First update oom data to have recipients and sender updated.
+      updateOOMData_o ();
+      KeyCache::instance()->startLocateSecret (getSender_o ().c_str (), this);
+      KeyCache::instance()->startLocate (getSender_o ().c_str (), this);
+      KeyCache::instance()->startLocate (getCachedRecipients (), this);
+    }
+
   autosecureCheck ();
 
-  locate_in_progress = false;
+  m_locate_in_progress = false;
 }
 
 bool
@@ -3137,11 +3143,6 @@ Mail::clearLastMail ()
 void
 Mail::locateAllCryptoRecipients_o ()
 {
-  if (!opt.autoresolve)
-    {
-      return;
-    }
-
   gpgrt_lock_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *>::iterator it;
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)

@@ -714,6 +714,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getIsDetailsEnabled", ID_GET_IS_DETAILS_ENABLED)
       ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO_MAIL)
       ID_MAPPER (L"printDecrypted", ID_CMD_PRINT_DECRYPTED)
+      ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
     }
 
   if (cNames > 1)
@@ -803,6 +804,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return print_decrypted (parms->rgvarg[0].pdispVal);
       case ID_GET_IS_CRYPTO_MAIL:
         return get_is_crypto_mail (parms->rgvarg[0].pdispVal, result);
+      case ID_CMD_OPEN_CONTACT_KEY:
+        return open_contact_key (parms->rgvarg[0].pdispVal);
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
       case ID_BTN_DECRYPT_LARGE:
@@ -1066,6 +1069,43 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         " </ribbon>"
         "</customUI>",
         _("GpgOL"),
+        optsSTip
+        );
+    }
+  else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Contact"))
+    {
+      gpgrt_asprintf (&buffer,
+        "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
+        " onLoad=\"ribbonLoaded\">"
+        " <ribbon>"
+        "   <tabs>"
+        "    <tab idMso=\"TabContact\">"
+        "     <group id=\"gpgol_contact\""
+        "            label=\"%s\">"
+        "       <button id=\"idContactAddkey\""
+        "               getImage=\"btnSignEncryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"openContactKey\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn_contact\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
+        "     </group>"
+        "    </tab>"
+        "   </tabs>"
+        " </ribbon>"
+        "</customUI>",
+        _("GpgOL"),
+        _("OpenPGP Key"),
+        _(/* TRANSLATORS: Tooltip caption */
+          "Configure the OpenPGP key for this contact."),
+        _(/* TRANSLATORS: Tooltip content */
+          "The configured key or keys will be used for this contact even "
+          "if they are not certified."),
         optsSTip
         );
     }

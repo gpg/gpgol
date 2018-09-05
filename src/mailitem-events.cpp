@@ -228,10 +228,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
           const wchar_t *prop_name = parms->rgvarg[0].bstrVal;
           if (!m_mail->isCryptoMail ())
             {
-              if (!opt.autoresolve)
-                {
-                  break;
-                }
               if (m_mail->hasOverrideMimeData())
                 {
                   /* This is a mail created by us. Ignore propchanges. */

@@ -28,6 +28,7 @@ AM_CXXFLAGS += $(GPGMEPP_CXXFLAGS) -D_FILE_OFFSET_BITS=64
 
 gpgol_SOURCES = \
     addin-options.cpp addin-options.h \
+    addressbook.cpp addressbook.h \
     application-events.cpp \
     attachment.h attachment.cpp \
     common.h common.cpp \

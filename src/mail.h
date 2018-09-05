@@ -394,7 +394,9 @@ public:
   /** Get the recipients. */
   std::vector<std::string> getRecipients_o () const;
 
-  /** Try to locate the keys for all recipients */
+  /** Try to locate the keys for all recipients.
+      This also triggers the Addressbook integration, which we
+      treat as locate jobs. */
   void locateKeys_o ();
 
   /** State variable to check if a close was triggerd by us. */
@@ -646,5 +648,6 @@ private:
   bool m_first_autosecure_check; /* This is the first autoresolve check */
   int m_locate_count; /* The number of key locates pending for this mail. */
   bool m_is_about_to_be_moved;
+  bool m_locate_in_progress; /* Simplified state variable for locate */
 };
 #endif // MAIL_H

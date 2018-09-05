@@ -55,6 +55,7 @@ typedef enum _gpgol_wmsg_type
   CLEAR_REPLY_FORWARD,
   DO_AUTO_SECURE,
   DONT_AUTO_SECURE,
+  CONFIG_KEY_DONE,
 } gpgol_wmsg_type;
 
 typedef struct

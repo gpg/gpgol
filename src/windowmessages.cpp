@@ -26,6 +26,7 @@
 #include "mail.h"
 #include "gpgoladdin.h"
 #include "wks-helper.h"
+#include "addressbook.h"
 
 #include <stdio.h>
 
@@ -226,6 +227,14 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   break;
                 }
               mail->setDoAutosecure_m (false);
+              break;
+            }
+          case (CONFIG_KEY_DONE):
+            {
+              log_debug ("%s:%s: Key configuration done.",
+                         SRCNAME, __func__);
+
+              Addressbook::update_key_o (ctx->data);
               break;
             }
           default:

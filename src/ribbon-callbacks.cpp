@@ -43,6 +43,7 @@
 #include "filetype.h"
 #include "mail.h"
 #include "dispcache.h"
+#include "addressbook.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/data.h>
@@ -793,5 +794,38 @@ HRESULT print_decrypted (LPDISPATCH ctrl)
       return S_OK;
     }
   invoke_oom_method (mail->item(), "PrintOut", NULL);
+  return S_OK;
+}
+
+HRESULT open_contact_key (LPDISPATCH ctrl)
+{
+  if (!ctrl)
+    {
+      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
+      return E_FAIL;
+    }
+  LPDISPATCH inspector = NULL;
+  HRESULT hr = getContext (ctrl, &inspector);
+
+  if (hr)
+    {
+      log_error ("%s:%s:%i : hresult %lx", SRCNAME, __func__, __LINE__,
+                 hr);
+      return S_OK;
+    }
+
+  /* Context is assumed to be the Insepector */
+  LPDISPATCH contact = get_oom_object (inspector, "CurrentItem");
+  gpgol_release (inspector);
+
+  if (!contact)
+    {
+      TRACEPOINT;
+      return S_OK;
+    }
+
+  Addressbook::edit_key_o (contact);
+
+  gpgol_release (contact);
   return S_OK;
 }
