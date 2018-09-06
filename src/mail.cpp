@@ -3487,7 +3487,7 @@ Mail::refCurrentItem()
   if (m_currentItemRef)
     {
       log_debug ("%s:%s: Current item multi ref. Bug?",
-                 SRCNAME, __func__, count);
+                 SRCNAME, __func__);
       return;
     }
   /* This prevents a crash in Outlook 2013 when sending a mail as it
