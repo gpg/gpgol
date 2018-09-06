@@ -420,6 +420,23 @@ CryptController::resolve_keys ()
 {
   m_recipients.clear();
 
+  if (!m_recipient_addrs.size())
+    {
+      /* Should not happen. But we add it for better bug reports. */
+      const char *bugmsg = utf8_gettext ("Operation failed.\n\n"
+              "This is usually caused by a bug in GpgOL or an error in your setup.\n"
+              "Please see https://www.gpg4win.org/reporting-bugs.html "
+              "or ask your Administrator for support.");
+      char *buf;
+      gpgrt_asprintf (&buf, "Failed to resolve recipients.\n\n%s\n", bugmsg);
+      memdbg_alloc (buf);
+      gpgol_message_box (get_active_hwnd (),
+                         buf,
+                         _("GpgOL"), MB_OK);
+      xfree(buf);
+      return -1;
+    }
+
   if (opt.autoresolve && !resolve_keys_cached ())
     {
       log_debug ("%s:%s: resolved keys through the cache",
