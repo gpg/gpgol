@@ -187,9 +187,12 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                  ERR_SEND_FALLBACK_FAILED);
                     }
                 }
+              else
+                {
+                  mail->releaseCurrentItem ();
+                }
               log_debug ("%s:%s:  Send for %p completed.",
                          SRCNAME, __func__, mail);
-              mail->releaseCurrentItem ();
               break;
             }
           case (BRING_TO_FRONT):
