@@ -133,6 +133,8 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   break;
                 }
               mail->refCurrentItem();
+              Mail::closeInspector_o (mail);
+              TRACEPOINT;
               Mail::close (mail);
               log_debug ("%s:%s: Close finished.",
                          SRCNAME, __func__);
