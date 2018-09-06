@@ -514,17 +514,23 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   log_debug ("%s:%s: Message %p - Activating T3656 Workaround",
                              SRCNAME, __func__, m_object);
                   message = get_oom_base_message (m_object);
-                  // It's important we use the _base_ message here.
-                  mapi_save_changes (message, KEEP_OPEN_READWRITE | FORCE_SAVE);
-                  message->SubmitMessage(0);
-                  gpgol_release (message);
-
+                  if (message)
+                    {
+                      // It's important we use the _base_ message here.
+                      mapi_save_changes (message, FORCE_SAVE);
+                      message->SubmitMessage(0);
+                      gpgol_release (message);
+                      // Close the composer and trigger unloads
+                      CloseHandle(CreateThread (NULL, 0, close_mail, (LPVOID) m_mail, 0,
+                                                NULL));
+                    }
+                  else
+                    {
+                      gpgol_bug (nullptr,
+                                 ERR_GET_BASE_MSG_FAILED);
+                    }
                   // Cancel send
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-
-                  // Close the composer and trigger unloads
-                  CloseHandle(CreateThread (NULL, 0, close_mail, (LPVOID) m_mail, 0,
-                                            NULL));
                 }
               MAPIFreeBuffer (propval);
               if (*(parms->rgvarg[0].pboolVal) == VARIANT_TRUE)

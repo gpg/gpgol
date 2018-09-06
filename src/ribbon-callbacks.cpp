@@ -532,6 +532,13 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
   if (!uid)
     {
       LPMESSAGE msg = get_oom_base_message (mailitem);
+      if (!msg)
+        {
+          log_debug ("%s:%s: Failed to get message for %p",
+                   SRCNAME, __func__, mailitem);
+          gpgol_release (mailitem);
+          return NULL;
+        }
       uid = mapi_get_uid (msg);
       gpgol_release (msg);
       if (!uid)

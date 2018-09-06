@@ -124,6 +124,7 @@ void i18n_init (void);
 #define ERR_INLINE_BODY_TO_BODY 4
 #define ERR_INLINE_BODY_INV_STATE 5
 #define ERR_SEND_FALLBACK_FAILED 6
+#define ERR_GET_BASE_MSG_FAILED 7
 #ifdef __cplusplus
 }
 #endif

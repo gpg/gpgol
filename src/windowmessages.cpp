@@ -134,6 +134,8 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   break;
                 }
               mail->refCurrentItem();
+              Mail::closeInspector_o (mail);
+              TRACEPOINT;
               Mail::close (mail);
               log_debug ("%s:%s: Close finished.",
                          SRCNAME, __func__);
@@ -170,9 +172,14 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              "Trying SubmitMessage instead.",
                              SRCNAME, __func__, mail);
                   auto mail_message = get_oom_base_message (mail->item());
+                  if (!mail_message)
+                    {
+                      gpgol_bug (mail->getWindow (),
+                                 ERR_GET_BASE_MSG_FAILED);
+                      break;
+                    }
                   // It's important we use the _base_ message here.
-                  mapi_save_changes (mail_message,
-                                     KEEP_OPEN_READWRITE | FORCE_SAVE);
+                  mapi_save_changes (mail_message, FORCE_SAVE);
                   HRESULT hr = mail_message->SubmitMessage(0);
                   gpgol_release (mail_message);
 
@@ -188,9 +195,12 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                  ERR_SEND_FALLBACK_FAILED);
                     }
                 }
+              else
+                {
+                  mail->releaseCurrentItem ();
+                }
               log_debug ("%s:%s:  Send for %p completed.",
                          SRCNAME, __func__, mail);
-              mail->releaseCurrentItem ();
               break;
             }
           case (BRING_TO_FRONT):

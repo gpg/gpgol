@@ -228,8 +228,9 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
                  SRCNAME, __func__);
       return "Failed to Format error.";
     }
-  memdbg_alloc (buf);
   msg = buf;
+  memdbg_alloc (buf);
+  xfree (buf);
   return msg;
 }
 
