@@ -3486,7 +3486,9 @@ Mail::refCurrentItem()
 {
   if (m_currentItemRef)
     {
-      gpgol_release (m_currentItemRef);
+      log_debug ("%s:%s: Current item multi ref. Bug?",
+                 SRCNAME, __func__, count);
+      return;
     }
   /* This prevents a crash in Outlook 2013 when sending a mail as it
    * would unload too early.
