@@ -163,10 +163,33 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              SRCNAME, __func__, mail);
                 }
               // Finaly this should pass.
-              invoke_oom_method (mail->item (), "Send", NULL);
+              if (invoke_oom_method (mail->item (), "Send", NULL))
+                {
+                  log_error ("%s:%s: Send failed for %p. "
+                             "Trying SubmitMessage instead.",
+                             SRCNAME, __func__, mail);
+                  auto mail_message = get_oom_base_message (mail->item());
+                  // It's important we use the _base_ message here.
+                  mapi_save_changes (mail_message,
+                                     KEEP_OPEN_READWRITE | FORCE_SAVE);
+                  HRESULT hr = mail_message->SubmitMessage(0);
+                  gpgol_release (mail_message);
+
+                  if (hr == S_OK)
+                    {
+                      do_in_ui_thread_async (CLOSE, (LPVOID) mail);
+                    }
+                  else
+                    {
+                      log_error ("%s:%s: SubmitMessage Failed hr=0x%lx.",
+                                 SRCNAME, __func__, hr);
+                      gpgol_bug (mail->getWindow (),
+                                 ERR_SEND_FALLBACK_FAILED);
+                    }
+                }
               log_debug ("%s:%s:  Send for %p completed.",
                          SRCNAME, __func__, mail);
-              mail->releaseCurrentItem();
+              mail->releaseCurrentItem ();
               break;
             }
           case (BRING_TO_FRONT):
