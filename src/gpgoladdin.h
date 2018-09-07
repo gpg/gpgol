@@ -217,6 +217,12 @@ public:
   std::shared_ptr<DispCache> get_dispcache () { return m_dispcache; }
   bool isShutdown() { return m_shutdown; };
 
+  /* Register a ribbon ui component */
+  void addRibbon (LPDISPATCH ribbon);
+
+  /* Invalidate the ribbons. */
+  void invalidateRibbons ();
+
 private:
   ULONG m_lRef;
   GpgolRibbonExtender* m_ribbonExtender;
@@ -231,6 +237,7 @@ private:
   HHOOK m_hook;
   std::vector<LPDISPATCH> m_explorerEventSinks;
   std::shared_ptr<DispCache> m_dispcache;
+  std::vector<LPDISPATCH> m_ribbon_uis;
 };
 
 class GpgolAddinFactory: public IClassFactory
