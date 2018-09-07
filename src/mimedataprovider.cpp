@@ -1030,37 +1030,29 @@ MimeDataProvider::create_attachment()
   /* TODO handle encoding */
 }
 
+void MimeDataProvider::finalize ()
+{
+  if (m_rawbuf.size ())
+    {
+      m_rawbuf += "\r\n";
+      size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
+                                              m_rawbuf.size());
+      m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
+      if (m_rawbuf.size ())
+        {
+          log_error ("%s:%s: Collect left data in buffer.\n",
+                     SRCNAME, __func__);
+        }
+    }
+}
+
 const std::string &MimeDataProvider::get_body ()
 {
-  if (m_rawbuf.size())
-    {
-      /* If there was some data left in the rawbuf this could
-         mean that some plaintext was not finished with a linefeed.
-         In that case we append it to the bodies. */
-      m_body += m_rawbuf;
-      m_html_body += m_rawbuf;
-      m_rawbuf.clear();
-    }
   return m_body;
 }
 
 const std::string &MimeDataProvider::get_html_body ()
 {
-  if (!m_has_html_body)
-    {
-      /* Don't do the last line handling if we don't
-         have html */
-      return m_html_body;
-    }
-  if (m_rawbuf.size())
-    {
-      /* If there was some data left in the rawbuf this could
-         mean that some plaintext was not finished with a linefeed.
-         In that case we append it to the bodies. */
-      m_body += m_rawbuf;
-      m_html_body += m_rawbuf;
-      m_rawbuf.clear();
-    }
   return m_html_body;
 }
 
