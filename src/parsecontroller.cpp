@@ -519,6 +519,11 @@ ParseController::parse()
     }
   TRACEPOINT;
 
+  if (m_outputprovider)
+    {
+      m_outputprovider->finalize ();
+    }
+
   return;
 }
 

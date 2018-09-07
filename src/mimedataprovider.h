@@ -118,6 +118,9 @@ public:
   const std::string &get_body_charset() const;
 
   void set_has_html_body(bool value) {m_has_html_body = value;}
+
+  /* Finalize the bodys */
+  void finalize ();
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */
