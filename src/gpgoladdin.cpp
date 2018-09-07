@@ -63,8 +63,6 @@ ULONG addinLocks = 0;
 
 bool can_unload = false;
 
-static std::list<LPDISPATCH> g_ribbon_uis;
-
 static GpgolAddin * addin_instance = NULL;
 
 /* This is the main entry point for the addin
@@ -792,7 +790,7 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
 
       case ID_ON_LOAD:
           {
-            g_ribbon_uis.push_back (parms->rgvarg[0].pdispVal);
+            GpgolAddin::get_instance ()->addRibbon (parms->rgvarg[0].pdispVal);
             return S_OK;
           }
       case ID_CMD_OPEN_OPTIONS:
@@ -1142,16 +1140,10 @@ GpgolRibbonExtender::GetCustomUI (BSTR RibbonID, BSTR * RibbonXml)
    Updated. Sadly we don't know which ribbon_ui needs updates
    so we have to invalidate everything.
 */
-void gpgoladdin_invalidate_ui ()
+void
+gpgoladdin_invalidate_ui ()
 {
-  std::list<LPDISPATCH>::iterator it;
-
-  for (it = g_ribbon_uis.begin(); it != g_ribbon_uis.end(); ++it)
-    {
-      log_debug ("%s:%s: Invalidating ribbon: %p",
-                 SRCNAME, __func__, *it);
-      invoke_oom_method (*it, "Invalidate", NULL);
-    }
+  GpgolAddin::get_instance ()->invalidateRibbons();
 }
 
 GpgolAddin *
@@ -1167,6 +1159,27 @@ GpgolAddin::get_instance ()
                  SRCNAME, __func__);
     }
   return addin_instance;
+}
+
+void
+GpgolAddin::invalidateRibbons()
+{
+  /* This can only be done in the main thread so no
+     need for locking or copying here. */
+  for (const auto it: m_ribbon_uis)
+    {
+      log_debug ("%s:%s: Invalidating ribbon: %p",
+                 SRCNAME, __func__, it);
+      invoke_oom_method (it, "Invalidate", NULL);
+    }
+  log_debug ("%s:%s: Invalidation done.",
+             SRCNAME, __func__);
+}
+
+void
+GpgolAddin::addRibbon (LPDISPATCH disp)
+{
+  m_ribbon_uis.push_back (disp);
 }
 
 void
