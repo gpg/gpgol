@@ -3056,20 +3056,69 @@ Mail::setWindowEnabled_o (bool value)
 bool
 Mail::check_inline_response ()
 {
-#if 0 // Should be fixed
-
-/* Async sending might lead to crashes when the send invocation is done.
- * For now we treat every mail as an inline response to disable async
- * encryption. :-( For more details see: T3838 */
-
+  /* Async sending is known to cause instabilities. So we keep
+     a hidden option to disable it. */
   if (opt.sync_enc)
     {
       m_async_crypt_disabled = true;
       return m_async_crypt_disabled;
     }
-#endif
 
   m_async_crypt_disabled = false;
+
+  LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
+  if (attachments)
+    {
+      /* This is horrible. But. For some kinds of attachments (we
+         got reports about Office attachments the write in the
+         send event triggered by our crypto done code fails with
+         an exception. There does not appear to be a detectable
+         pattern when this happens.
+         As we can't be sure and do not know for which attachments
+         this really happens we do not use async crypt for any
+         mails with attachments. :-/
+         Better be save (not crash) instead of nice (async).
+
+         TODO: Figure this out.
+
+         The log goes like this. We pass the send event. That triggers
+         a write, which we pass. And then that fails. So it looks like
+         moving to Outbox fails. Because we can save as much as we
+         like before that.
+
+         Using the IMessage::SubmitMessage MAPI interface works, but
+         as it is unstable in our current implementation we do not
+         want to use it.
+
+         mailitem-events.cpp:Invoke: Passing send event for mime-encrypted message 12B7C6E0.
+         application-events.cpp:Invoke: Unhandled Event: f002
+         mailitem-events.cpp:Invoke: Write : 0ED4D058
+         mailitem-events.cpp:Invoke: Passing write event.
+         oomhelp.cpp:invoke_oom_method_with_parms_type: Method 'Send' invokation failed: 0x80020009
+         oomhelp.cpp:dump_excepinfo: Exception:
+         wCode: 0x1000
+         wReserved: 0x0
+         source: Microsoft Outlook
+         desc: The operation failed.  The messaging interfaces have returned an unknown error. If the problem persists, restart Outlook.
+         help: null
+         helpCtx: 0x0
+         deferredFill: 00000000
+         scode: 0x80040119
+      */
+
+      int count = get_oom_int (attachments, "Count");
+      gpgol_release (attachments);
+
+      if (count)
+        {
+          m_async_crypt_disabled = true;
+          log_debug ("%s:%s: Detected attachments. "
+                     "Disabling async crypt due to T4131.",
+                     SRCNAME, __func__);
+          return m_async_crypt_disabled;
+        }
+   }
+
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
   if (!app)
     {
