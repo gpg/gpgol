@@ -283,7 +283,6 @@ read_options (void)
   opt.automation = get_conf_bool ("automation", 1);
   opt.autosecure = get_conf_bool ("autosecure", 1);
   opt.autotrust = get_conf_bool ("autotrust", 0);
-  opt.sync_enc = get_conf_bool ("syncEnc", 0);
   opt.smime_html_warn_shown = get_conf_bool ("smimeHtmlWarnShown", 0);
 
   if (!opt.automation)
@@ -294,6 +293,9 @@ read_options (void)
       opt.autoresolve = 0;
       opt.autotrust = 0;
     }
+
+  /* Hidden options  */
+  opt.sync_enc = get_conf_bool ("_syncEnc", 0);
 }
 
 

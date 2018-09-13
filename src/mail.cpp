@@ -3050,21 +3050,15 @@ Mail::setWindowEnabled_o (bool value)
 bool
 Mail::check_inline_response ()
 {
-#if 0 // Should be fixed
-
-/* Async sending might lead to crashes when the send invocation is done.
- * For now we treat every mail as an inline response to disable async
- * encryption. :-( For more details see: T3838 */
-
+  /* Async sending is known to cause instabilities. So we keep
+     a hidden option to disable it. */
   if (opt.sync_enc)
     {
       m_async_crypt_disabled = true;
       return m_async_crypt_disabled;
     }
-#endif
 
   m_async_crypt_disabled = false;
-
 
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (attachments)
