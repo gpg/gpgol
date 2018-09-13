@@ -168,8 +168,14 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               if (invoke_oom_method (mail->item (), "Send", NULL))
                 {
                   log_error ("%s:%s: Send failed for %p. "
-                             "Trying SubmitMessage instead.",
+                             "Trying SubmitMessage instead.\n"
+                             "This will likely crash.",
                              SRCNAME, __func__, mail);
+
+                  /* What we do here is similar to the T3656 workaround
+                     in mailitem-events.cpp. In our tests this works but
+                     is unstable. So we only use it as a very very last
+                     resort. */
                   auto mail_message = get_oom_base_message (mail->item());
                   if (!mail_message)
                     {
