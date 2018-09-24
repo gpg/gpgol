@@ -55,6 +55,7 @@ extern "C" {
 #define DBG_DATA           (DBG_MIME_PARSER | DBG_MIME_DATA)
 #define DBG_OOM_VAL        (1<<9) // 512 Unified as DBG_OOM
 #define DBG_OOM_EXTRA      (1<<10)// 1024 Unified as DBG_OOM
+#define DBG_SUPERTRACE     (1<<11)// 2048 Very verbose tracing.
 #define DBG_OOM            (DBG_OOM_VAL | DBG_OOM_EXTRA)
 
 #define debug_oom        ((opt.enable_debug & DBG_OOM) || \
@@ -95,6 +96,13 @@ const char *log_srcname (const char *s);
 
 #define TRACEPOINT log_debug ("%s:%s:%d: tracepoint\n", \
                               SRCNAME, __func__, __LINE__);
+#define TSTART if (opt.enable_debug & DBG_SUPERTRACE) \
+                    log_debug ("%s:%s: enter\n", SRCNAME, __func__);
+#define TRETURN(X) if (opt.enable_debug & DBG_SUPERTRACE) \
+                        log_debug ("%s:%s:%d: return\n", SRCNAME, __func__, \
+                                   __LINE__); \
+                   return X
+
 
 const char *get_log_file (void);
 void set_log_file (const char *name);
