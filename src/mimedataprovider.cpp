@@ -567,12 +567,12 @@ MimeDataProvider::read(void *buffer, size_t size)
 
       if (!is_binary (buf))
         {
-          log_mime_data ("%s:%s: Data: \n------\n%s\n------",
+          log_data ("%s:%s: Data: \n------\n%s\n------",
                            SRCNAME, __func__, buf.c_str());
         }
       else
         {
-          log_mime_data ("%s:%s: Hex Data: \n------\n%s\n------",
+          log_data ("%s:%s: Hex Data: \n------\n%s\n------",
                            SRCNAME, __func__,
                            string_to_hex (buf).c_str ());
         }
@@ -614,7 +614,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
               pos--;
             }
 
-          log_mime_data ("%s:%s: Parsing line=`%.*s'\n",
+          log_data ("%s:%s: Parsing line=`%.*s'\n",
                          SRCNAME, __func__, (int)pos, linebuf);
           /* Check the next state */
           if (rfc822parse_insert (m_mime_ctx->msg,
@@ -653,7 +653,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                 {
                   m_crypto_data.write ("\r\n", 2);
                 }
-              log_mime_data ("Writing raw crypto data: %.*s",
+              log_data ("Writing raw crypto data: %.*s",
                                (int)pos, linebuf);
               m_crypto_data.write (linebuf, pos);
               m_mime_ctx->collect_crypto_data = 2;
