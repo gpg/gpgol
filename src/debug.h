@@ -72,16 +72,21 @@ void log_hexdump (const void *buf, size_t buflen, const char *fmt,
                   ...)  __attribute__ ((format (printf,3,4)));
 
 const char *anonstr (const char *data);
-#define log_oom if (opt.enable_debug & DBG_OOM) log_debug
-#define log_data if (opt.enable_debug & DBG_DATA) log_debug
-#define log_memory if (opt.enable_debug & DBG_MEMORY) log_debug
+#define log_oom(format, ...) if ((opt.enable_debug & DBG_OOM)) \
+  log_debug("DBG_OOM/" format, ##__VA_ARGS__)
+
+#define log_data(format, ...) if ((opt.enable_debug & DBG_DATA)) \
+  log_debug("DBG_DATA/" format, ##__VA_ARGS__)
+
+#define log_memory(format, ...) if ((opt.enable_debug & DBG_MEMORY)) \
+  log_debug("DBG_MEM/" format, ##__VA_ARGS__)
 
 #define gpgol_release(X) \
 { \
-  if (X && opt.enable_debug & DBG_OOM_EXTRA) \
+  if (X && opt.enable_debug & DBG_MEMORY) \
     { \
-      log_debug ("%s:%s:%i: Object: %p released ref: %lu \n", \
-                 SRCNAME, __func__, __LINE__, X, X->Release()); \
+      log_memory ("%s:%s:%i: Object: %p released ref: %lu \n", \
+                  SRCNAME, __func__, __LINE__, X, X->Release()); \
       memdbg_released (X); \
     } \
   else if (X) \
