@@ -218,20 +218,25 @@ struct b64_state_s
 typedef struct b64_state_s b64_state_t;
 
 /* Bit values used for extra log file verbosity.  Value 1 is reserved
-   to enable debug menu options.  */
-#define DBG_IOWORKER       (1<<1)
-#define DBG_IOWORKER_EXTRA (1<<2)
-#define DBG_FILTER         (1<<3)
-#define DBG_FILTER_EXTRA   (1<<4)
+   to enable debug menu options.
+
+   Note that the high values here are used for compatibility with
+   old howtos of how to enable debug flags. Based on the old
+   very split up logging categories.
+
+   Categories are meant to be:
+
+   DBG -> Generally useful information.
+   DBG_MEMORY -> Very verbose tracing of Releases / Allocs / Refs.
+   DBG_OOM -> Outlook Object Model events tracing.
+   DBG_DATA -> Including potentially private data and mime parser logging.
+
+   */
 #define DBG_MEMORY         (1<<5)
-#define DBG_COMMANDS       (1<<6)
 #define DBG_MIME_PARSER    (1<<7)
 #define DBG_MIME_DATA      (1<<8)
 #define DBG_OOM            (1<<9)
 #define DBG_OOM_EXTRA      (1<<10)
-
-/* Macros to used in conditionals to enable debug output.  */
-#define debug_commands    (opt.enable_debug & DBG_COMMANDS)
 
 size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
 char *qp_encode (const char *input, size_t length, size_t* outlen);

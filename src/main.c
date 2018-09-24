@@ -225,18 +225,8 @@ read_options (void)
             }
           if (isascii (*p) && isdigit (*p))
             opt.enable_debug |= strtoul (p, NULL, 0);
-          else if (!strcmp (p, "ioworker"))
-            opt.enable_debug |= DBG_IOWORKER;
-          else if (!strcmp (p, "ioworker-extra"))
-            opt.enable_debug |= DBG_IOWORKER_EXTRA;
-          else if (!strcmp (p, "filter"))
-            opt.enable_debug |= DBG_FILTER;
-          else if (!strcmp (p, "filter-extra"))
-            opt.enable_debug |= DBG_FILTER_EXTRA;
           else if (!strcmp (p, "memory"))
             opt.enable_debug |= DBG_MEMORY;
-          else if (!strcmp (p, "commands"))
-            opt.enable_debug |= DBG_COMMANDS;
           else if (!strcmp (p, "mime-parser"))
             opt.enable_debug |= DBG_MIME_PARSER;
           else if (!strcmp (p, "mime-data"))
@@ -260,13 +250,8 @@ read_options (void)
      as the option for debuging was not read before. */
   free (val); val = NULL;
   if (opt.enable_debug)
-    log_debug ("enabled debug flags:%s%s%s%s%s%s%s%s%s%s\n",
-               (opt.enable_debug & DBG_IOWORKER)? " ioworker":"",
-               (opt.enable_debug & DBG_IOWORKER_EXTRA)? " ioworker-extra":"",
-               (opt.enable_debug & DBG_FILTER)? " filter":"",
-               (opt.enable_debug & DBG_FILTER_EXTRA)? " filter-extra":"",
+    log_debug ("enabled debug flags:%s%s%s%s%s\n",
                (opt.enable_debug & DBG_MEMORY)? " memory":"",
-               (opt.enable_debug & DBG_COMMANDS)? " commands":"",
                (opt.enable_debug & DBG_MIME_PARSER)? " mime-parser":"",
                (opt.enable_debug & DBG_MIME_DATA)? " mime-data":"",
                (opt.enable_debug & DBG_OOM)? " oom":"",
