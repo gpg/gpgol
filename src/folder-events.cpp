@@ -49,6 +49,7 @@ EVENT_SINK_INVOKE(FolderEvents)
     {
       case BeforeItemMove:
         {
+          TSTART;
           log_oom ("%s:%s: Item Move in folder: %p",
                          SRCNAME, __func__, this);
 
@@ -65,14 +66,14 @@ EVENT_SINK_INVOKE(FolderEvents)
             {
               log_error ("%s:%s: Invalid args.",
                          SRCNAME, __func__);
-              break;
+              TBREAK;
             }
 
           if (!parms->rgvarg[1].pdispVal)
             {
               log_oom ("%s:%s: Passing delete",
                              SRCNAME, __func__);
-              break;
+              TBREAK;
             }
 
           LPDISPATCH mailitem = parms->rgvarg[2].pdispVal;
@@ -83,7 +84,7 @@ EVENT_SINK_INVOKE(FolderEvents)
               log_debug ("%s:%s: move is not about a mailitem.",
                          SRCNAME, __func__);
               xfree (name);
-              break;
+              TBREAK;
             }
           xfree (name);
 
@@ -97,7 +98,7 @@ EVENT_SINK_INVOKE(FolderEvents)
                 {
                   log_debug ("%s:%s: Failed to get uid for %p",
                              SRCNAME, __func__, mailitem);
-                  break;
+                  TBREAK;
                 }
             }
 
@@ -107,7 +108,7 @@ EVENT_SINK_INVOKE(FolderEvents)
             {
               log_error ("%s:%s: Failed to find mail for uuid",
                          SRCNAME, __func__);
-              break;
+              TBREAK;
             }
           if (mail->isCryptoMail ())
             {
@@ -119,7 +120,7 @@ EVENT_SINK_INVOKE(FolderEvents)
                 {
                   log_error ("%s:%s: Failed to close.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
             }
         }

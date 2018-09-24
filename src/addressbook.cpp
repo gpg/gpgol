@@ -41,6 +41,7 @@ typedef struct
 static DWORD WINAPI
 open_keyadder (LPVOID arg)
 {
+  TSTART;
   auto adder_args = std::unique_ptr<keyadder_args_t> ((keyadder_args_t*) arg);
 
   std::vector<std::string> args;
@@ -50,7 +51,7 @@ open_keyadder (LPVOID arg)
   if (!gpg4win_dir)
     {
       TRACEPOINT;
-      return -1;
+      TRETURN -1;
     }
   const auto keyadder = std::string (gpg4win_dir) + "\\bin\\gpgolkeyadder.exe";
   args.push_back (keyadder);
@@ -66,7 +67,7 @@ open_keyadder (LPVOID arg)
     {
       // can't happen
       TRACEPOINT;
-      return -1;
+      TRETURN -1;
     }
 
   GpgME::Data mystdin (adder_args->data.c_str(), adder_args->data.size(),
@@ -90,7 +91,7 @@ open_keyadder (LPVOID arg)
     {
       log_error ("%s:%s: Err code: %i asString: %s",
                  SRCNAME, __func__, err.code(), err.asString());
-      return 0;
+      TRETURN 0;
     }
 
   auto newKey = mystdout.toString ();
@@ -100,7 +101,7 @@ open_keyadder (LPVOID arg)
   if (newKey.empty())
     {
       log_debug ("%s:%s: keyadder canceled.", SRCNAME, __func__);
-      return 0;
+      TRETURN 0;
     }
   if (newKey == "empty")
     {
@@ -115,16 +116,17 @@ open_keyadder (LPVOID arg)
   cb_args.contact = adder_args->contact;
 
   do_in_ui_thread (CONFIG_KEY_DONE, (void*) &cb_args);
-  return 0;
+  TRETURN 0;
 }
 
 void
 Addressbook::update_key_o (void *callback_args)
 {
+  TSTART;
   if (!callback_args)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   callback_args_t *cb_args = static_cast<callback_args_t *> (callback_args);
   LPDISPATCH contact = cb_args->contact.get();
@@ -133,14 +135,14 @@ Addressbook::update_key_o (void *callback_args)
   if (!user_props)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   LPDISPATCH pgp_key = find_or_add_text_prop (user_props, "OpenPGP Key");
   if (!pgp_key)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   put_oom_string (pgp_key, "Value", cb_args->data);
 
@@ -148,23 +150,24 @@ Addressbook::update_key_o (void *callback_args)
              SRCNAME, __func__);
 
   gpgol_release (pgp_key);
-  return;
+  TRETURN;
 }
 
 void
 Addressbook::edit_key_o (LPDISPATCH contact)
 {
+  TSTART;
   if (!contact)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   LPDISPATCH user_props = get_oom_object (contact, "UserProperties");
   if (!user_props)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   auto pgp_key = MAKE_SHARED (
@@ -174,14 +177,14 @@ Addressbook::edit_key_o (LPDISPATCH contact)
   if (!pgp_key)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   char *key_data = get_oom_string (pgp_key.get(), "Value");
   if (!key_data)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   char *name = get_oom_string (contact, "Subject");
@@ -209,7 +212,7 @@ Addressbook::edit_key_o (LPDISPATCH contact)
   xfree (name);
   xfree (key_data);
 
-  return;
+  TRETURN;
 }
 
 static std::set <std::string> s_checked_entries;
@@ -220,23 +223,24 @@ static std::set <std::string> s_checked_entries;
 void
 Addressbook::check_o (Mail *mail)
 {
+  TSTART;
   if (!mail)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   LPDISPATCH mailitem = mail->item ();
   if (!mailitem)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   auto recipients_obj = MAKE_SHARED (get_oom_object (mailitem, "Recipients"));
 
   if (!recipients_obj)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   bool err = false;
@@ -295,4 +299,5 @@ Addressbook::check_o (Mail *mail)
       xfree (key_data);
       gpgol_release (pgp_key);
     }
+  TRETURN;
 }

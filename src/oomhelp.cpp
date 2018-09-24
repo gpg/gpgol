@@ -37,12 +37,13 @@
 HRESULT
 gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
 {
+  TSTART;
   HRESULT ret = pObj->QueryInterface (riid, ppvObj);
   if ((opt.enable_debug & DBG_OOM_EXTRA) && *ppvObj)
     {
       memdbg_addRef (*ppvObj);
     }
-  return ret;
+  TRETURN ret;
 }
 
 HRESULT
@@ -50,6 +51,7 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
                     ULONG ulInterfaceOptions, ULONG ulFlags,
                     LPUNKNOWN FAR * lppUnk)
 {
+  TSTART;
   HRESULT ret = obj->OpenProperty (ulPropTag, lpiid,
                                    ulInterfaceOptions, ulFlags,
                                    lppUnk);
@@ -59,13 +61,14 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
       log_debug ("%s:%s: OpenProperty on %p prop %lx result %p",
                  SRCNAME, __func__, obj,  ulPropTag, *lppUnk);
     }
-  return ret;
+  TRETURN ret;
 }
 /* Return a malloced string with the utf-8 encoded name of the object
    or NULL if not available.  */
 char *
 get_object_name (LPUNKNOWN obj)
 {
+  TSTART;
   HRESULT hr;
   LPDISPATCH disp = NULL;
   LPTYPEINFO tinfo = NULL;
@@ -105,7 +108,7 @@ get_object_name (LPUNKNOWN obj)
   if (disp)
     disp->Release ();
 
-  return name;
+  TRETURN name;
 }
 
 
@@ -114,16 +117,21 @@ get_object_name (LPUNKNOWN obj)
 DISPID
 lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
 {
+  TSTART;
   HRESULT hr;
   DISPID dispid;
   wchar_t *wname;
 
   if (!pDisp || !name)
-    return DISPID_UNKNOWN; /* Error: Invalid arg.  */
+    {
+      TRETURN DISPID_UNKNOWN; /* Error: Invalid arg.  */
+    }
 
   wname = utf8_to_wchar (name);
   if (!wname)
-    return DISPID_UNKNOWN;/* Error:  Out of memory.  */
+    {
+      TRETURN DISPID_UNKNOWN;/* Error:  Out of memory.  */
+    }
 
   hr = pDisp->GetIDsOfNames (IID_NULL, &wname, 1, 
                              LOCALE_SYSTEM_DEFAULT, &dispid);
@@ -134,15 +142,16 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
   if (hr != S_OK)
     dispid = DISPID_UNKNOWN;
 
-  return dispid;
+  TRETURN dispid;
 }
 
 static void
 init_excepinfo (EXCEPINFO *err)
 {
+  TSTART;
   if (!err)
     {
-      return;
+      TRETURN;
     }
   err->wCode = 0;
   err->wReserved = 0;
@@ -186,6 +195,7 @@ dump_excepinfo (EXCEPINFO err)
 LPDISPATCH
 get_oom_object (LPDISPATCH pStart, const char *fullname)
 {
+  TSTART;
   HRESULT hr;
   LPDISPATCH pObj = pStart;
   LPDISPATCH pDisp = NULL;
@@ -221,14 +231,16 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           log_error ("%s:%s Object does not support IDispatch",
                      SRCNAME, __func__);
           gpgol_release (pObj);
-          return NULL;
+          TRETURN NULL;
         }
       /* Confirmed through testing that the retval needs a release */
       if (pObj != pStart)
         gpgol_release (pObj);
       pObj = NULL;
       if (!pDisp)
-        return NULL;  /* The object has no IDispatch interface.  */
+        {
+          TRETURN NULL;  /* The object has no IDispatch interface.  */
+        }
       if (!*fullname)
         {
           if ((opt.enable_debug & DBG_MEMORY))
@@ -238,7 +250,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
               log_oom ("%s:%s:         got %p with %i refs",
                        SRCNAME, __func__, pDisp, ref);
             }
-          return pDisp; /* Ready.  */
+          TRETURN pDisp; /* Ready.  */
         }
       
       /* Break out the next name part.  */
@@ -250,7 +262,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         if (dot == fullname)
           {
             gpgol_release (pDisp);
-            return NULL;  /* Empty name part: error.  */
+            TRETURN NULL;  /* Empty name part: error.  */
           }
         else if (dot)
           n = dot - fullname;
@@ -298,7 +310,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
               if (!parmstr)
                 {
                   gpgol_release (pDisp);
-                  return NULL; /* Error:  Out of memory.  */
+                  TRETURN NULL; /* Error:  Out of memory.  */
                 }
               n_parms = 1;
             }
@@ -314,7 +326,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           if (parmstr)
             SysFreeString (parmstr);
           gpgol_release (pDisp);
-          return NULL;  /* Name not found.  */
+          TRETURN NULL;  /* Name not found.  */
         }
 
       /* Invoke the method.  */
@@ -357,7 +369,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           dump_excepinfo (execpinfo);
           VariantClear (&vtResult);
           gpgol_release (pDisp);
-          return NULL;  /* Invoke failed.  */
+          TRETURN NULL;  /* Invoke failed.  */
         }
 
       pObj = vtResult.pdispVal;
@@ -365,7 +377,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
     }
   gpgol_release (pDisp);
   log_debug ("%s:%s: no object", SRCNAME, __func__);
-  return NULL;
+  TRETURN NULL;
 }
 
 
@@ -373,6 +385,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
 static int
 put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
 {
+  TSTART;
   HRESULT hr;
   PICTDESC pdesc;
   LPDISPATCH pPict;
@@ -399,7 +412,7 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
     {
       log_error_w32 (-1, "%s:%s: LoadImage(%d) failed\n", 
                      SRCNAME, __func__, resource);
-      return -1;
+      TRETURN -1;
     }
 
   /* Wrap the image into an OLE object.  */
@@ -409,7 +422,7 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
     {
       log_error ("%s:%s: OleCreatePictureIndirect failed: hr=%#lx\n",
                  SRCNAME, __func__, hr);
-      return -1;
+      TRETURN -1;
     }
         
   /* Store to the Picture or Mask property of the CommandBarButton.  */
@@ -427,9 +440,9 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
   if (hr != S_OK)
     {
       log_debug ("%s:%s: Putting icon failed: %#lx", SRCNAME, __func__, hr);
-      return -1;
+      TRETURN -1;
     }
-  return 0;
+  TRETURN 0;
 }
 
 
@@ -439,6 +452,7 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
 int
 put_oom_icon (LPDISPATCH pDisp, int resource_id, int size)
 {
+  TSTART;
   int rc;
 
   /* This code is only relevant for Outlook < 2010.
@@ -450,7 +464,7 @@ put_oom_icon (LPDISPATCH pDisp, int resource_id, int size)
   if (!rc)
     rc = put_picture_or_mask (pDisp, resource_id + 1, size, 1);
 
-  return rc;
+  TRETURN rc;
 }
 
 
@@ -458,6 +472,7 @@ put_oom_icon (LPDISPATCH pDisp, int resource_id, int size)
 int
 put_oom_bool (LPDISPATCH pDisp, const char *name, int value)
 {
+  TSTART;
   HRESULT hr;
   DISPID dispid_put = DISPID_PROPERTYPUT;
   DISPID dispid;
@@ -466,7 +481,9 @@ put_oom_bool (LPDISPATCH pDisp, const char *name, int value)
 
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid == DISPID_UNKNOWN)
-    return -1;
+    {
+      TRETURN -1;
+    }
 
   dispparams.rgvarg = aVariant;
   dispparams.rgvarg[0].vt = VT_BOOL;
@@ -481,9 +498,9 @@ put_oom_bool (LPDISPATCH pDisp, const char *name, int value)
     {
       log_debug ("%s:%s: Putting '%s' failed: %#lx", 
                  SRCNAME, __func__, name, hr);
-      return -1;
+      TRETURN -1;
     }
-  return 0;
+  TRETURN 0;
 }
 
 
@@ -491,6 +508,7 @@ put_oom_bool (LPDISPATCH pDisp, const char *name, int value)
 int
 put_oom_int (LPDISPATCH pDisp, const char *name, int value)
 {
+  TSTART;
   HRESULT hr;
   DISPID dispid_put = DISPID_PROPERTYPUT;
   DISPID dispid;
@@ -499,7 +517,9 @@ put_oom_int (LPDISPATCH pDisp, const char *name, int value)
 
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid == DISPID_UNKNOWN)
-    return -1;
+    {
+      TRETURN -1;
+    }
 
   dispparams.rgvarg = aVariant;
   dispparams.rgvarg[0].vt = VT_INT;
@@ -514,9 +534,9 @@ put_oom_int (LPDISPATCH pDisp, const char *name, int value)
     {
       log_debug ("%s:%s: Putting '%s' failed: %#lx", 
                  SRCNAME, __func__, name, hr);
-      return -1;
+      TRETURN -1;
     }
-  return 0;
+  TRETURN 0;
 }
 
 
@@ -524,6 +544,7 @@ put_oom_int (LPDISPATCH pDisp, const char *name, int value)
 int
 put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
 {
+  TSTART;
   HRESULT hr;
   DISPID dispid_put = DISPID_PROPERTYPUT;
   DISPID dispid;
@@ -535,7 +556,9 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
   init_excepinfo (&execpinfo);
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid == DISPID_UNKNOWN)
-    return -1;
+    {
+      TRETURN -1;
+    }
 
   {
     wchar_t *tmp = utf8_to_wchar (string);
@@ -544,7 +567,7 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
     if (!bstring)
       {
         log_error_w32 (-1, "%s:%s: SysAllocString failed", SRCNAME, __func__);
-        return -1;
+        TRETURN -1;
       }
   }
 
@@ -563,15 +586,16 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
       log_debug ("%s:%s: Putting '%s' failed: %#lx", 
                  SRCNAME, __func__, name, hr);
       dump_excepinfo (execpinfo);
-      return -1;
+      TRETURN -1;
     }
-  return 0;
+  TRETURN 0;
 }
 
 /* Set the property NAME to DISP.  */
 int
 put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH disp)
 {
+  TSTART;
   HRESULT hr;
   DISPID dispid_put = DISPID_PROPERTYPUT;
   DISPID dispid;
@@ -582,7 +606,9 @@ put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH disp)
   init_excepinfo (&execpinfo);
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid == DISPID_UNKNOWN)
-    return -1;
+    {
+      TRETURN -1;
+    }
 
   dispparams.rgvarg = aVariant;
   dispparams.rgvarg[0].vt = VT_DISPATCH;
@@ -598,9 +624,9 @@ put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH disp)
       log_debug ("%s:%s: Putting '%s' failed: %#lx",
                  SRCNAME, __func__, name, hr);
       dump_excepinfo (execpinfo);
-      return -1;
+      TRETURN -1;
     }
-  return 0;
+  TRETURN 0;
 }
 
 /* Get the boolean property NAME of the object PDISP.  Returns False if
@@ -608,6 +634,7 @@ put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH disp)
 int
 get_oom_bool (LPDISPATCH pDisp, const char *name)
 {
+  TSTART;
   HRESULT hr;      
   int result = 0;
   DISPID dispid;
@@ -633,7 +660,7 @@ get_oom_bool (LPDISPATCH pDisp, const char *name)
       VariantClear (&rVariant);
     }
 
-  return result;
+  TRETURN result;
 }
 
 
@@ -642,6 +669,7 @@ get_oom_bool (LPDISPATCH pDisp, const char *name)
 int
 get_oom_int (LPDISPATCH pDisp, const char *name)
 {
+  TSTART;
   HRESULT hr;      
   int result = 0;
   DISPID dispid;
@@ -667,7 +695,7 @@ get_oom_int (LPDISPATCH pDisp, const char *name)
       VariantClear (&rVariant);
     }
 
-  return result;
+  TRETURN result;
 }
 
 
@@ -676,6 +704,7 @@ get_oom_int (LPDISPATCH pDisp, const char *name)
 char *
 get_oom_string (LPDISPATCH pDisp, const char *name)
 {
+  TSTART;
   HRESULT hr;      
   char *result = NULL;
   DISPID dispid;
@@ -701,7 +730,7 @@ get_oom_string (LPDISPATCH pDisp, const char *name)
       VariantClear (&rVariant);
     }
 
-  return result;
+  TRETURN result;
 }
 
 
@@ -710,6 +739,7 @@ get_oom_string (LPDISPATCH pDisp, const char *name)
 LPUNKNOWN
 get_oom_iunknown (LPDISPATCH pDisp, const char *name)
 {
+  TSTART;
   HRESULT hr;      
   DISPID dispid;
   
@@ -732,13 +762,13 @@ get_oom_iunknown (LPDISPATCH pDisp, const char *name)
       else
         {
           memdbg_addRef (rVariant.punkVal);
-          return rVariant.punkVal;
+          TRETURN rVariant.punkVal;
         }
 
       VariantClear (&rVariant);
     }
 
-  return NULL;
+  TRETURN NULL;
 }
 
 
@@ -748,6 +778,7 @@ get_oom_iunknown (LPDISPATCH pDisp, const char *name)
 LPDISPATCH
 get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
 {
+  TSTART;
   HRESULT hr;      
   DISPID dispid;
   DISPPARAMS dispparams;
@@ -761,7 +792,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
     {
       log_debug ("%s:%s: Object %p has no FindControl method",
                  SRCNAME, __func__, pDisp);
-      return NULL;
+      TRETURN NULL;
     }
 
   {
@@ -771,7 +802,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
     if (!bstring)
       {
         log_error_w32 (-1, "%s:%s: SysAllocString failed", SRCNAME, __func__);
-        return NULL;
+        TRETURN NULL;
       }
   }
   dispparams.rgvarg = aVariant;
@@ -806,7 +837,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
       VariantClear (&rVariant);
     }
 
-  return result;
+  TRETURN result;
 }
 
 
@@ -815,6 +846,7 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
 LPDISPATCH
 add_oom_button (LPDISPATCH pObj)
 {
+  TSTART;
   HRESULT hr;      
   DISPID dispid;
   DISPPARAMS dispparams;
@@ -845,9 +877,9 @@ add_oom_button (LPDISPATCH pObj)
       log_error ("%s:%s: Adding Control failed: %#lx - vt=%d",
                  SRCNAME, __func__, hr, rVariant.vt);
       VariantClear (&rVariant);
-      return NULL;
+      TRETURN NULL;
     }
-  return rVariant.pdispVal;
+  TRETURN rVariant.pdispVal;
 }
 
 
@@ -856,6 +888,7 @@ add_oom_button (LPDISPATCH pObj)
 void
 del_oom_button (LPDISPATCH pObj)
 {
+  TSTART;
   HRESULT hr;      
   DISPID dispid;
   DISPPARAMS dispparams;
@@ -874,12 +907,14 @@ del_oom_button (LPDISPATCH pObj)
   if (hr != S_OK)
     log_error ("%s:%s: Deleting Control failed: %#lx",
                SRCNAME, __func__, hr);
+  TRETURN;
 }
 
 /* Gets the current contexts HWND. Returns NULL on error */
 HWND
 get_oom_context_window (LPDISPATCH context)
 {
+  TSTART;
   LPOLEWINDOW actExplorer;
   HWND ret = NULL;
   actExplorer = (LPOLEWINDOW) get_oom_object(context,
@@ -892,12 +927,13 @@ get_oom_context_window (LPDISPATCH context)
                  SRCNAME, __func__);
     }
   gpgol_release (actExplorer);
-  return ret;
+  TRETURN ret;
 }
 
 int
 put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
 {
+  TSTART;
   LPDISPATCH propertyAccessor;
   VARIANT cVariant[2];
   VARIANT rVariant;
@@ -919,7 +955,7 @@ put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
     {
       log_error ("%s:%s: Failed to look up property accessor.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
 
   dispid = lookup_oom_dispid (propertyAccessor, "SetProperty");
@@ -928,7 +964,7 @@ put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
   {
     log_error ("%s:%s: could not find SetProperty DISPID",
                SRCNAME, __func__);
-    return -1;
+    TRETURN -1;
   }
 
   /* Prepare the parameter */
@@ -942,7 +978,7 @@ put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
     {
       log_error ("%s:%s: Falied to copy value.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
 
   /* Variant 1 is the DASL as found out by experiments. */
@@ -969,15 +1005,16 @@ put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
                  (unsigned int)argErr);
       VariantClear (&rVariant);
       dump_excepinfo (execpinfo);
-      return -1;
+      TRETURN -1;
     }
   VariantClear (&rVariant);
-  return 0;
+  TRETURN 0;
 }
 
 int
 put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
 {
+  TSTART;
   wchar_t *w_value = utf8_to_wchar (value);
   BSTR b_value = SysAllocString(w_value);
   xfree (w_value);
@@ -987,19 +1024,20 @@ put_pa_string (LPDISPATCH pDisp, const char *dasl_id, const char *value)
   var.bstrVal = b_value;
   int ret = put_pa_variant (pDisp, dasl_id, &var);
   VariantClear (&var);
-  return ret;
+  TRETURN ret;
 }
 
 int
 put_pa_int (LPDISPATCH pDisp, const char *dasl_id, int value)
 {
+  TSTART;
   VARIANT var;
   VariantInit (&var);
   var.vt = VT_INT;
   var.intVal = value;
   int ret = put_pa_variant (pDisp, dasl_id, &var);
   VariantClear (&var);
-  return ret;
+  TRETURN ret;
 }
 
 /* Get a MAPI property through OOM using the PropertyAccessor
@@ -1009,6 +1047,7 @@ put_pa_int (LPDISPATCH pDisp, const char *dasl_id, int value)
  */
 int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
 {
+  TSTART;
   LPDISPATCH propertyAccessor;
   VARIANT cVariant[1];
   DISPID dispid;
@@ -1028,7 +1067,7 @@ int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
     {
       log_error ("%s:%s: Failed to look up property accessor.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
 
   dispid = lookup_oom_dispid (propertyAccessor, "GetProperty");
@@ -1037,7 +1076,7 @@ int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
   {
     log_error ("%s:%s: could not find GetProperty DISPID",
                SRCNAME, __func__);
-    return -1;
+    TRETURN -1;
   }
 
   /* Prepare the parameter */
@@ -1069,22 +1108,23 @@ int get_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *rVariant)
                  (unsigned int)argErr);
       dump_excepinfo (execpinfo);
       VariantClear (rVariant);
-      return -1;
+      TRETURN -1;
     }
-  return 0;
+  TRETURN 0;
 }
 
 /* Get a property string by using the PropertyAccessor of pDisp
- * returns NULL on error or a newly allocated result. */
+ * Returns NULL on error or a newly allocated result. */
 char *
 get_pa_string (LPDISPATCH pDisp, const char *property)
 {
+  TSTART;
   VARIANT rVariant;
   char *result = NULL;
 
   if (get_pa_variant (pDisp, property, &rVariant))
     {
-      return NULL;
+      TRETURN NULL;
     }
 
   if (rVariant.vt == VT_BSTR && rVariant.bstrVal)
@@ -1104,7 +1144,7 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
         {
           log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
           VariantClear (&rVariant);
-          return NULL;
+          TRETURN NULL;
         }
 
       result = (char *)xmalloc (uBound - lBound + 1);
@@ -1120,36 +1160,38 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
 
   VariantClear (&rVariant);
 
-  return result;
+  TRETURN result;
 }
 
 int
 get_pa_int (LPDISPATCH pDisp, const char *property, int *rInt)
 {
+  TSTART;
   VARIANT rVariant;
 
   if (get_pa_variant (pDisp, property, &rVariant))
     {
-      return -1;
+      TRETURN -1;
     }
 
   if (rVariant.vt != VT_I4)
     {
       log_debug ("%s:%s: Property `%s' is not a int (vt=%d)",
                  SRCNAME, __func__, property, rVariant.vt);
-      return -1;
+      TRETURN -1;
     }
 
   *rInt = rVariant.lVal;
 
   VariantClear (&rVariant);
-  return 0;
+  TRETURN 0;
 }
 
 /* Helper for exchange address lookup. */
 static char *
 get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
 {
+  TSTART;
   /* Maybe check for type here? We are pretty sure that we are exchange */
 
   /* According to MSDN Message Boards the PR_EMS_AB_PROXY_ADDRESSES_DASL
@@ -1165,7 +1207,7 @@ get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
         {
           ret += 5;
         }
-      return ret;
+      TRETURN ret;
     }
   else
     {
@@ -1178,7 +1220,7 @@ get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
     {
       log_debug ("%s:%s: Failed to find ExchangeUser",
                  SRCNAME, __func__);
-      return nullptr;
+      TRETURN nullptr;
     }
 
   ret = get_oom_string (ex_user, "PrimarySmtpAddress");
@@ -1187,18 +1229,19 @@ get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
     {
       log_debug ("%s:%s: Found recipient through exchange user primary smtp address: %s",
                  SRCNAME, __func__, anonstr (ret));
-      return ret;
+      TRETURN ret;
     }
-  return nullptr;
+  TRETURN nullptr;
 }
 
 /* Helper for additional fallbacks in recipient lookup */
 static char *
 get_recipient_addr_fallbacks (LPDISPATCH recipient)
 {
+  TSTART;
   if (!recipient)
     {
-      return nullptr;
+      TRETURN nullptr;
     }
   LPDISPATCH addr_entry = get_oom_object (recipient, "AddressEntry");
 
@@ -1206,24 +1249,25 @@ get_recipient_addr_fallbacks (LPDISPATCH recipient)
     {
       log_debug ("%s:%s: Failed to find AddressEntry",
                  SRCNAME, __func__);
-      return nullptr;
+      TRETURN nullptr;
     }
 
   char *ret = get_recipient_addr_entry_fallbacks_ex (addr_entry);
 
   gpgol_release (addr_entry);
 
-  return ret;
+  TRETURN ret;
 }
 
 /* Try to resolve a recipient group and add it to the recipients vector.
 
-   returns true on success.
+   Returns true on success.
 */
 static bool
 try_resolve_group (LPDISPATCH addrEntry,
                    std::vector<std::pair<std::string, shared_disp_t> > &ret)
 {
+  TSTART;
   /* Get the name for debugging */
   std::string name;
   char *cname = get_oom_string (addrEntry, "Name");
@@ -1239,7 +1283,7 @@ try_resolve_group (LPDISPATCH addrEntry,
     {
       log_data ("%s:%s: type of %s is %i",
                        SRCNAME, __func__, anonstr (name.c_str()), type);
-      return false;
+      TRETURN false;
     }
 
   LPDISPATCH members = get_oom_object (addrEntry, "Members");
@@ -1248,7 +1292,7 @@ try_resolve_group (LPDISPATCH addrEntry,
   if (!members)
     {
       TRACEPOINT;
-      return false;
+      TRETURN false;
     }
 
   int count = get_oom_int (members, "Count");
@@ -1257,7 +1301,7 @@ try_resolve_group (LPDISPATCH addrEntry,
     {
       TRACEPOINT;
       gpgol_release (members);
-      return false;
+      TRETURN false;
     }
 
   bool foundOne = false;
@@ -1332,7 +1376,7 @@ try_resolve_group (LPDISPATCH addrEntry,
                  SRCNAME, __func__,
                  anonstr (name.c_str()));
     }
-  return foundOne;
+  TRETURN foundOne;
 }
 
 /* Get the recipient mbox addresses with the addrEntry
@@ -1340,13 +1384,14 @@ try_resolve_group (LPDISPATCH addrEntry,
 std::vector<std::pair<std::string, shared_disp_t> >
 get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
 {
+  TSTART;
   int recipientsCnt = get_oom_int (recipients, "Count");
   std::vector<std::pair<std::string, shared_disp_t> > ret;
   int i;
 
   if (!recipientsCnt)
     {
-      return ret;
+      TRETURN ret;
     }
 
   /* Get the recipients */
@@ -1416,19 +1461,20 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
           *r_err = true;
         }
     }
-  return ret;
+  TRETURN ret;
 }
 
 /* Gets the resolved smtp addresses of the recpients. */
 std::vector<std::string>
 get_oom_recipients (LPDISPATCH recipients, bool *r_err)
 {
+  TSTART;
   std::vector<std::string> ret;
   for (const auto pair: get_oom_recipients_with_addrEntry (recipients, r_err))
     {
       ret.push_back (pair.first);
     }
-  return ret;
+  TRETURN ret;
 }
 
 /* Add an attachment to the outlook dispatcher disp
@@ -1439,6 +1485,7 @@ int
 add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
                     const wchar_t* displayName)
 {
+  TSTART;
   LPDISPATCH attachments = get_oom_object (disp, "Attachments");
 
   DISPID dispid;
@@ -1458,7 +1505,7 @@ add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
   {
     log_error ("%s:%s: could not find attachment dispatcher",
                SRCNAME, __func__);
-    return -1;
+    TRETURN -1;
   }
 
   if (inFileW)
@@ -1506,25 +1553,31 @@ add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
   VariantClear (&vtResult);
   gpgol_release (attachments);
 
-  return hr == S_OK ? 0 : -1;
+  TRETURN hr == S_OK ? 0 : -1;
 }
 
 LPDISPATCH
 get_object_by_id (LPDISPATCH pDisp, REFIID id)
 {
+  TSTART;
   LPDISPATCH disp = NULL;
 
   if (!pDisp)
-    return NULL;
+    {
+      TRETURN NULL;
+    }
 
   if (gpgol_queryInterface(pDisp, id, (void **)&disp) != S_OK)
-    return NULL;
-  return disp;
+    {
+      TRETURN NULL;
+    }
+  TRETURN disp;
 }
 
 LPDISPATCH
 get_strong_reference (LPDISPATCH mail)
 {
+  TSTART;
   VARIANT var;
   VariantInit (&var);
   DISPPARAMS args;
@@ -1554,25 +1607,27 @@ get_strong_reference (LPDISPATCH mail)
                  SRCNAME, __func__);
     }
   VariantClear (&var);
-  return ret;
+  TRETURN ret;
 }
 
 LPMESSAGE
 get_oom_message (LPDISPATCH mailitem)
 {
+  TSTART;
   LPUNKNOWN mapi_obj = get_oom_iunknown (mailitem, "MapiObject");
   if (!mapi_obj)
     {
       log_error ("%s:%s: Failed to obtain MAPI Message.",
                  SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
-  return (LPMESSAGE) mapi_obj;
+  TRETURN (LPMESSAGE) mapi_obj;
 }
 
 static LPMESSAGE
 get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
 {
+  TSTART;
   HRESULT hr;
   LPDISPATCH secureItem = NULL;
   LPMESSAGE message = NULL;
@@ -1584,7 +1639,7 @@ get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
     {
       log_error ("%s:%s: Failed to obtain SecureItem.",
                  SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
 
   secureMessage = (LPMAPISECUREMESSAGE) secureItem;
@@ -1600,26 +1655,27 @@ get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
   if (hr != S_OK)
     {
       log_error_w32 (hr, "Failed to GetBaseMessage.");
-      return NULL;
+      TRETURN NULL;
     }
 
-  return message;
+  TRETURN message;
 }
 
 LPMESSAGE
 get_oom_base_message (LPDISPATCH mailitem)
 {
+  TSTART;
   LPMESSAGE mapi_message = get_oom_message (mailitem);
   LPMESSAGE ret = NULL;
   if (!mapi_message)
     {
       log_error ("%s:%s: Failed to obtain mapi_message.",
                  SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
   ret = get_oom_base_message_from_mapi ((LPDISPATCH)mapi_message);
   gpgol_release (mapi_message);
-  return ret;
+  TRETURN ret;
 }
 
 static int
@@ -1627,6 +1683,7 @@ invoke_oom_method_with_parms_type (LPDISPATCH pDisp, const char *name,
                                    VARIANT *rVariant, DISPPARAMS *params,
                                    int type)
 {
+  TSTART;
   HRESULT hr;
   DISPID dispid;
 
@@ -1645,30 +1702,33 @@ invoke_oom_method_with_parms_type (LPDISPATCH pDisp, const char *name,
           log_debug ("%s:%s: Method '%s' invokation failed: %#lx",
                      SRCNAME, __func__, name, hr);
           dump_excepinfo (execpinfo);
-          return -1;
+          TRETURN -1;
         }
     }
 
-  return 0;
+  TRETURN 0;
 }
 
 int
 invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
                               VARIANT *rVariant, DISPPARAMS *params)
 {
-  return invoke_oom_method_with_parms_type (pDisp, name, rVariant, params,
+  TSTART;
+  TRETURN invoke_oom_method_with_parms_type (pDisp, name, rVariant, params,
                                             DISPATCH_METHOD);
 }
 
 int
 invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
 {
-  return invoke_oom_method_with_parms (pDisp, name, rVariant, NULL);
+  TSTART;
+  TRETURN invoke_oom_method_with_parms (pDisp, name, rVariant, NULL);
 }
 
 LPMAPISESSION
 get_oom_mapi_session ()
 {
+  TSTART;
   LPDISPATCH application = GpgolAddin::get_instance ()->get_application ();
   LPDISPATCH oom_session = NULL;
   LPMAPISESSION session = NULL;
@@ -1678,14 +1738,14 @@ get_oom_mapi_session ()
   if (!application)
     {
       log_debug ("%s:%s: Not implemented for Ol < 14", SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
 
   oom_session = get_oom_object (application, "Session");
   if (!oom_session)
     {
       log_error ("%s:%s: session object not found", SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
   mapiobj = get_oom_iunknown (oom_session, "MAPIOBJECT");
   gpgol_release (oom_session);
@@ -1693,7 +1753,7 @@ get_oom_mapi_session ()
   if (!mapiobj)
     {
       log_error ("%s:%s: error getting Session.MAPIOBJECT", SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
   session = NULL;
   hr = gpgol_queryInterface (mapiobj, IID_IMAPISession, (void**)&session);
@@ -1702,14 +1762,15 @@ get_oom_mapi_session ()
     {
       log_error ("%s:%s: error getting IMAPISession: hr=%#lx",
                  SRCNAME, __func__, hr);
-      return NULL;
+      TRETURN NULL;
     }
-  return session;
+  TRETURN session;
 }
 
 static int
 create_category (LPDISPATCH categories, const char *category, int color)
 {
+  TSTART;
   VARIANT cVariant[3];
   VARIANT rVariant;
   DISPID dispid;
@@ -1725,7 +1786,7 @@ create_category (LPDISPATCH categories, const char *category, int color)
   if (!categories || !category)
     {
       TRACEPOINT;
-      return 1;
+      TRETURN 1;
     }
 
   dispid = lookup_oom_dispid (categories, "Add");
@@ -1733,7 +1794,7 @@ create_category (LPDISPATCH categories, const char *category, int color)
   {
     log_error ("%s:%s: could not find Add DISPID",
                SRCNAME, __func__);
-    return -1;
+    TRETURN -1;
   }
 
   /* Do the string dance */
@@ -1777,21 +1838,22 @@ create_category (LPDISPATCH categories, const char *category, int color)
                  (unsigned int)argErr);
       dump_excepinfo (execpinfo);
       VariantClear (&rVariant);
-      return -1;
+      TRETURN -1;
     }
   VariantClear (&rVariant);
   log_oom ("%s:%s: Created category '%s'",
              SRCNAME, __func__, category);
-  return 0;
+  TRETURN 0;
 }
 
 void
 ensure_category_exists (LPDISPATCH application, const char *category, int color)
 {
+  TSTART;
   if (!application || !category)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   log_oom ("Ensure category exists called for %s, %i", category, color);
@@ -1801,7 +1863,7 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
     {
       log_error ("%s:%s: No stores found.",
                  SRCNAME, __func__);
-      return;
+      TRETURN;
     }
   auto store_count = get_oom_int (stores, "Count");
 
@@ -1864,23 +1926,25 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
       gpgol_release (categories);
     }
   gpgol_release (stores);
+  TRETURN;
 }
 
 int
 add_category (LPDISPATCH mail, const char *category)
 {
+  TSTART;
   char *tmp = get_oom_string (mail, "Categories");
   if (!tmp)
     {
       TRACEPOINT;
-      return 1;
+      TRETURN 1;
     }
 
   if (strstr (tmp, category))
     {
       log_oom ("%s:%s: category '%s' already added.",
                SRCNAME, __func__, category);
-      return 0;
+      TRETURN 0;
     }
 
   std::string newstr (tmp);
@@ -1891,17 +1955,18 @@ add_category (LPDISPATCH mail, const char *category)
     }
   newstr += category;
 
-  return put_oom_string (mail, "Categories", newstr.c_str ());
+  TRETURN put_oom_string (mail, "Categories", newstr.c_str ());
 }
 
 int
 remove_category (LPDISPATCH mail, const char *category)
 {
+  TSTART;
   char *tmp = get_oom_string (mail, "Categories");
   if (!tmp)
     {
       TRACEPOINT;
-      return 1;
+      TRETURN 1;
     }
   std::string newstr (tmp);
   xfree (tmp);
@@ -1913,7 +1978,7 @@ remove_category (LPDISPATCH mail, const char *category)
     {
       log_oom ("%s:%s: category '%s' not found.",
                SRCNAME, __func__, category);
-      return 0;
+      TRETURN 0;
     }
 
   size_t len = cat.size();
@@ -1925,12 +1990,13 @@ remove_category (LPDISPATCH mail, const char *category)
   log_oom ("%s:%s: removing category '%s'",
            SRCNAME, __func__, category);
 
-  return put_oom_string (mail, "Categories", newstr.c_str ());
+  TRETURN put_oom_string (mail, "Categories", newstr.c_str ());
 }
 
 static char *
 generate_uid ()
 {
+  TSTART;
   UUID uuid;
   UuidCreate (&uuid);
 
@@ -1940,15 +2006,16 @@ generate_uid ()
   char *ret = xstrdup ((char*)str);
   RpcStringFreeA (&str);
 
-  return ret;
+  TRETURN ret;
 }
 
 char *
 get_unique_id (LPDISPATCH mail, int create, const char *uuid)
 {
+  TSTART;
   if (!mail)
     {
-      return NULL;
+      TRETURN NULL;
     }
 
   /* Get the User Properties. */
@@ -1959,13 +2026,13 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
         {
           log_debug ("%s:%s: No uuid found in oom for '%p'",
                      SRCNAME, __func__, mail);
-          return NULL;
+          TRETURN NULL;
         }
       else
         {
           log_debug ("%s:%s: Found uid '%s' for '%p'",
                      SRCNAME, __func__, uid, mail);
-          return uid;
+          TRETURN uid;
         }
     }
   char *newuid;
@@ -1984,24 +2051,25 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
       log_debug ("%s:%s: failed to set uid '%s' for '%p'",
                  SRCNAME, __func__, newuid, mail);
       xfree (newuid);
-      return NULL;
+      TRETURN NULL;
     }
 
 
   log_debug ("%s:%s: '%p' has now the uid: '%s' ",
              SRCNAME, __func__, mail, newuid);
-  return newuid;
+  TRETURN newuid;
 }
 
 HWND
 get_active_hwnd ()
 {
+  TSTART;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
 
   if (!app)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   LPDISPATCH activeWindow = get_oom_object (app, "ActiveWindow");
@@ -2014,7 +2082,7 @@ get_active_hwnd ()
           if (!activeWindow)
             {
               TRACEPOINT;
-              return nullptr;
+              TRETURN nullptr;
             }
         }
     }
@@ -2025,7 +2093,7 @@ get_active_hwnd ()
   if (!caption)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
   /* Might not be completly true for multiple explorers
      on the same folder but good enugh. */
@@ -2033,18 +2101,19 @@ get_active_hwnd ()
                             caption);
   xfree (caption);
 
-  return hwnd;
+  TRETURN hwnd;
 }
 
 LPDISPATCH
 create_mail ()
 {
+  TSTART;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
 
   if (!app)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
    }
 
   VARIANT var;
@@ -2064,22 +2133,23 @@ create_mail ()
     {
       log_error ("%s:%s: Failed to create mailitem.",
                  SRCNAME, __func__);
-      return ret;
+      TRETURN ret;
     }
 
   ret = var.pdispVal;
-  return ret;
+  TRETURN ret;
 }
 
 LPDISPATCH
 get_account_for_mail (const char *mbox)
 {
+  TSTART;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
 
   if (!app)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
    }
 
   LPDISPATCH accounts = get_oom_object (app, "Session.Accounts");
@@ -2087,7 +2157,7 @@ get_account_for_mail (const char *mbox)
   if (!accounts)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   int count = get_oom_int (accounts, "Count");
@@ -2114,7 +2184,7 @@ get_account_for_mail (const char *mbox)
         {
           gpgol_release (accounts);
           xfree (smtpAddr);
-          return account;
+          TRETURN account;
         }
       gpgol_release (account);
       xfree (smtpAddr);
@@ -2124,16 +2194,17 @@ get_account_for_mail (const char *mbox)
   log_error ("%s:%s: Failed to find account for '%s'.",
              SRCNAME, __func__, anonstr (mbox));
 
-  return nullptr;
+  TRETURN nullptr;
 }
 
 char *
 get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite)
 {
+  TSTART;
   LPDISPATCH sender = get_oom_object (mailitem, "SendUsingAccount");
   if (!sender)
     {
-      return nullptr;
+      TRETURN nullptr;
     }
 
   char *buf = get_oom_string (sender, "SmtpAddress");
@@ -2149,26 +2220,27 @@ get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite)
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s: found sender", SRCNAME, __func__);
-      return buf;
+      TRETURN buf;
     }
   xfree (buf);
-  return nullptr;
+  TRETURN nullptr;
 }
 
 char *
 get_sender_Sender (LPDISPATCH mailitem)
 {
+  TSTART;
   LPDISPATCH sender = get_oom_object (mailitem, "Sender");
   if (!sender)
     {
-      return nullptr;
+      TRETURN nullptr;
     }
   char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
   gpgol_release (sender);
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s Sender fallback 2", SRCNAME, __func__);
-      return buf;
+      TRETURN buf;
     }
   xfree (buf);
   /* We have a sender object but not yet an smtp address likely
@@ -2177,42 +2249,44 @@ get_sender_Sender (LPDISPATCH mailitem)
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s Sender fallback 3", SRCNAME, __func__);
-      return buf;
+      TRETURN buf;
     }
   xfree (buf);
   buf = get_pa_string (mailitem, PR_TAG_RECEIVED_REPRESENTING_SMTP_ADDRESS);
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s Sender fallback 4", SRCNAME, __func__);
-      return buf;
+      TRETURN buf;
     }
   xfree (buf);
-  return nullptr;
+  TRETURN nullptr;
 }
 
 char *
 get_sender_CurrentUser (LPDISPATCH mailitem)
 {
+  TSTART;
   LPDISPATCH sender = get_oom_object (mailitem,
                                       "Session.CurrentUser");
   if (!sender)
     {
-      return nullptr;
+      TRETURN nullptr;
     }
   char *buf = get_pa_string (sender, PR_SMTP_ADDRESS_DASL);
   gpgol_release (sender);
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s Sender fallback 5", SRCNAME, __func__);
-      return buf;
+      TRETURN buf;
     }
   xfree (buf);
-  return nullptr;
+  TRETURN nullptr;
 }
 
 char *
 get_sender_SenderEMailAddress (LPDISPATCH mailitem)
 {
+  TSTART;
 
   char *type = get_oom_string (mailitem, "SenderEmailType");
   if (type && !strcmp ("SMTP", type))
@@ -2222,36 +2296,38 @@ get_sender_SenderEMailAddress (LPDISPATCH mailitem)
         {
           log_debug ("%s:%s: Sender found", SRCNAME, __func__);
           xfree (type);
-          return senderMail;
+          TRETURN senderMail;
         }
     }
   xfree (type);
-  return nullptr;
+  TRETURN nullptr;
 }
 
 char *
 get_sender_SentRepresentingAddress (LPDISPATCH mailitem)
 {
+  TSTART;
   char *buf = get_pa_string (mailitem,
                              PR_SENT_REPRESENTING_EMAIL_ADDRESS_W_DASL);
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s Found sent representing address \"%s\"",
                  SRCNAME, __func__, buf);
-      return buf;
+      TRETURN buf;
     }
   xfree (buf);
-  return nullptr;
+  TRETURN nullptr;
 }
 
 char *
 get_inline_body ()
 {
+  TSTART;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
   if (!app)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   LPDISPATCH explorer = get_oom_object (app, "ActiveExplorer");
@@ -2259,7 +2335,7 @@ get_inline_body ()
   if (!explorer)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   LPDISPATCH inlineResponse = get_oom_object (explorer, "ActiveInlineResponse");
@@ -2267,23 +2343,24 @@ get_inline_body ()
 
   if (!inlineResponse)
     {
-      return nullptr;
+      TRETURN nullptr;
     }
 
   char *body = get_oom_string (inlineResponse, "Body");
   gpgol_release (inlineResponse);
 
-  return body;
+  TRETURN body;
 }
 
 int
 get_ex_major_version_for_addr (const char *mbox)
 {
+  TSTART;
   LPDISPATCH account = get_account_for_mail (mbox);
   if (!account)
     {
       TRACEPOINT;
-      return -1;
+      TRETURN -1;
     }
 
   char *version_str = get_oom_string (account, "ExchangeMailboxServerVersion");
@@ -2291,29 +2368,30 @@ get_ex_major_version_for_addr (const char *mbox)
 
   if (!version_str)
     {
-      return -1;
+      TRETURN -1;
     }
   long int version = strtol (version_str, nullptr, 10);
   xfree (version_str);
 
-  return (int) version;
+  TRETURN (int) version;
 }
 
 int
 get_ol_ui_language ()
 {
+  TSTART;
   LPDISPATCH app = GpgolAddin::get_instance()->get_application();
   if (!app)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
 
   LPDISPATCH langSettings = get_oom_object (app, "LanguageSettings");
   if (!langSettings)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
 
   VARIANT var;
@@ -2335,29 +2413,30 @@ get_ol_ui_language ()
   if (ret)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
   if (var.vt != VT_INT && var.vt != VT_I4)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
 
   int result = var.intVal;
 
   VariantClear (&var);
-  return result;
+  TRETURN result;
 }
 
 void
 log_addins ()
 {
+  TSTART;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
 
   if (!app)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
    }
 
   LPDISPATCH addins = get_oom_object (app, "COMAddins");
@@ -2365,7 +2444,7 @@ log_addins ()
   if (!addins)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   std::string activeAddins;
@@ -2403,16 +2482,17 @@ log_addins ()
 
   log_debug ("%s:%s:Active Addins:\n%s", SRCNAME, __func__,
              activeAddins.c_str ());
-  return;
+  TRETURN;
 }
 
 bool
 is_preview_pane_visible (LPDISPATCH explorer)
 {
+  TSTART;
   if (!explorer)
     {
       TRACEPOINT;
-      return false;
+      TRETURN false;
     }
   VARIANT var;
   VariantInit (&var);
@@ -2429,24 +2509,25 @@ is_preview_pane_visible (LPDISPATCH explorer)
     {
       log_error ("%s:%s: Failed to check visibilty.",
                  SRCNAME, __func__);
-      return false;
+      TRETURN false;
     }
 
   if (var.vt != VT_BOOL)
     {
       TRACEPOINT;
-      return false;
+      TRETURN false;
     }
-  return !!var.boolVal;
+  TRETURN !!var.boolVal;
 }
 
 static LPDISPATCH
 add_user_prop (LPDISPATCH user_props, const char *name)
 {
+  TSTART;
   if (!user_props || !name)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   wchar_t *w_name = utf8_to_wchar (name);
@@ -2491,28 +2572,29 @@ add_user_prop (LPDISPATCH user_props, const char *name)
     {
       log_oom ("%s:%s: Failed to add property %s.",
                SRCNAME, __func__, name);
-      return nullptr;
+      TRETURN nullptr;
     }
 
   if (var.vt != VT_DISPATCH)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   LPDISPATCH ret = var.pdispVal;
   memdbg_addRef (ret);
 
-  return ret;
+  TRETURN ret;
 }
 
 LPDISPATCH
 find_user_prop (LPDISPATCH user_props, const char *name)
 {
+  TSTART;
   if (!user_props || !name)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
   VARIANT var;
   VariantInit (&var);
@@ -2543,40 +2625,40 @@ find_user_prop (LPDISPATCH user_props, const char *name)
     {
       log_oom ("%s:%s: Failed to find property %s.",
                SRCNAME, __func__, name);
-      return nullptr;
+      TRETURN nullptr;
     }
   if (var.vt != VT_DISPATCH)
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   LPDISPATCH ret = var.pdispVal;
   memdbg_addRef (ret);
 
-  return ret;
+  TRETURN ret;
 }
 
 LPDISPATCH
 find_or_add_text_prop (LPDISPATCH user_props, const char *name)
 {
-  TRACEPOINT;
+  TSTART;
   LPDISPATCH ret = find_user_prop (user_props, name);
 
-  TRACEPOINT;
   if (ret)
     {
-      return ret;
+      TRETURN ret;
     }
 
   ret = add_user_prop (user_props, name);
-  TRACEPOINT;
 
-  return ret;
+  TRETURN ret;
 }
 
 void
 release_disp (LPDISPATCH obj)
 {
+  TSTART;
   gpgol_release (obj);
+  TRETURN;
 }

@@ -106,11 +106,12 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_about_to_be_moved(false),
     m_locate_in_progress(false)
 {
+  TSTART;
   if (getMailForItem (mailitem))
     {
       log_error ("Mail object for item: %p already exists. Bug.",
                  mailitem);
-      return;
+      TRETURN;
     }
 
   m_event_sink = install_MailItemEvents_sink (mailitem);
@@ -121,13 +122,14 @@ Mail::Mail (LPDISPATCH mailitem) :
       log_error ("%s:%s: Failed to install MailItemEvents sink.",
                  SRCNAME, __func__);
       gpgol_release(mailitem);
-      return;
+      TRETURN;
     }
   gpgrt_lock_lock (&mail_map_lock);
   s_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
   gpgrt_lock_unlock (&mail_map_lock);
   s_last_mail = this;
   memdbg_ctor ("Mail");
+  TRETURN;
 }
 
 GPGRT_LOCK_DEFINE(dtor_lock);
@@ -136,18 +138,23 @@ GPGRT_LOCK_DEFINE(dtor_lock);
 void
 Mail::lockDelete ()
 {
+  TSTART;
   gpgrt_lock_lock (&dtor_lock);
+  TRETURN;
 }
 
 // static
 void
 Mail::unlockDelete ()
 {
+  TSTART;
   gpgrt_lock_unlock (&dtor_lock);
+  TRETURN;
 }
 
 Mail::~Mail()
 {
+  TSTART;
   /* This should fix a race condition where the mail is
      deleted before the parser is accessed in the decrypt
      thread. The shared_ptr of the parser then ensures
@@ -209,15 +216,17 @@ Mail::~Mail()
   gpgrt_lock_unlock (&dtor_lock);
   log_oom ("%s:%s: returning",
                  SRCNAME, __func__);
+  TRETURN;
 }
 
 //static
 Mail *
 Mail::getMailForItem (LPDISPATCH mailitem)
 {
+  TSTART;
   if (!mailitem)
     {
-      return NULL;
+      TRETURN NULL;
     }
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
@@ -225,33 +234,35 @@ Mail::getMailForItem (LPDISPATCH mailitem)
   gpgrt_lock_unlock (&mail_map_lock);
   if (it == s_mail_map.end())
     {
-      return NULL;
+      TRETURN NULL;
     }
-  return it->second;
+  TRETURN it->second;
 }
 
 //static
 Mail *
 Mail::getMailForUUID (const char *uuid)
 {
+  TSTART;
   if (!uuid)
     {
-      return NULL;
+      TRETURN NULL;
     }
   gpgrt_lock_lock (&uid_map_lock);
   auto it = s_uid_map.find(std::string(uuid));
   gpgrt_lock_unlock (&uid_map_lock);
   if (it == s_uid_map.end())
     {
-      return NULL;
+      TRETURN NULL;
     }
-  return it->second;
+  TRETURN it->second;
 }
 
 //static
 bool
 Mail::isValidPtr (const Mail *mail)
 {
+  TSTART;
   gpgrt_lock_lock (&mail_map_lock);
   auto it = s_mail_map.begin();
   while (it != s_mail_map.end())
@@ -259,23 +270,24 @@ Mail::isValidPtr (const Mail *mail)
       if (it->second == mail)
         {
           gpgrt_lock_unlock (&mail_map_lock);
-          return true;
+          TRETURN true;
         }
       ++it;
     }
   gpgrt_lock_unlock (&mail_map_lock);
-  return false;
+  TRETURN false;
 }
 
 int
 Mail::preProcessMessage_m ()
 {
+  TSTART;
   LPMESSAGE message = get_oom_base_message (m_mailitem);
   if (!message)
     {
       log_error ("%s:%s: Failed to get base message.",
                  SRCNAME, __func__);
-      return 0;
+      TRETURN 0;
     }
   log_oom ("%s:%s: GetBaseMessage OK for %p.",
                  SRCNAME, __func__, m_mailitem);
@@ -291,7 +303,7 @@ Mail::preProcessMessage_m ()
   if (m_type == MSGTYPE_UNKNOWN)
     {
       gpgol_release (message);
-      return 0;
+      TRETURN 0;
     }
 
   /* Create moss attachments here so that they are properly
@@ -305,19 +317,20 @@ Mail::preProcessMessage_m ()
     }
 
   gpgol_release (message);
-  return 0;
+  TRETURN 0;
 }
 
 static LPDISPATCH
 get_attachment_o (LPDISPATCH mailitem, int pos)
 {
+  TSTART;
   LPDISPATCH attachment;
   LPDISPATCH attachments = get_oom_object (mailitem, "Attachments");
   if (!attachments)
     {
       log_debug ("%s:%s: Failed to get attachments.",
                  SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
 
   std::string item_str;
@@ -327,7 +340,7 @@ get_attachment_o (LPDISPATCH mailitem, int pos)
       log_debug ("%s:%s: Invalid attachment count: %i.",
                  SRCNAME, __func__, count);
       gpgol_release (attachments);
-      return NULL;
+      TRETURN NULL;
     }
   if (pos > 0)
     {
@@ -340,7 +353,7 @@ get_attachment_o (LPDISPATCH mailitem, int pos)
   attachment = get_oom_object (attachments, item_str.c_str());
   gpgol_release (attachments);
 
-  return attachment;
+  TRETURN attachment;
 }
 
 /** Helper to check that all attachments are hidden, to be
@@ -348,18 +361,19 @@ get_attachment_o (LPDISPATCH mailitem, int pos)
 int
 Mail::checkAttachments_o () const
 {
+  TSTART;
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (!attachments)
     {
       log_debug ("%s:%s: Failed to get attachments.",
                  SRCNAME, __func__);
-      return 1;
+      TRETURN 1;
     }
   int count = get_oom_int (attachments, "Count");
   if (!count)
     {
       gpgol_release (attachments);
-      return 0;
+      TRETURN 0;
     }
 
   std::string message;
@@ -382,7 +396,7 @@ Mail::checkAttachments_o () const
   else
     {
       gpgol_release (attachments);
-      return 0;
+      TRETURN 0;
     }
 
   bool foundOne = false;
@@ -425,18 +439,19 @@ Mail::checkAttachments_o () const
       xfree (wmsg);
       xfree (wtitle);
     }
-  return 0;
+  TRETURN 0;
 }
 
 /** Get the cipherstream of the mailitem. */
 static LPSTREAM
 get_attachment_stream_o (LPDISPATCH mailitem, int pos)
 {
+  TSTART;
   if (!pos)
     {
       log_debug ("%s:%s: Called with zero pos.",
                  SRCNAME, __func__);
-      return NULL;
+      TRETURN NULL;
     }
   LPDISPATCH attachment = get_attachment_o (mailitem, pos);
   LPSTREAM stream = NULL;
@@ -454,7 +469,7 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
         {
           log_debug ("%s:%s: Failed to get MAPI Interface.",
                      SRCNAME, __func__);
-          return NULL;
+          TRETURN NULL;
         }
       hr = gpgol_openProperty (message, PR_BODY_A, &IID_IStream, 0, 0,
                                (LPUNKNOWN*)&stream);
@@ -463,9 +478,9 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
         {
           log_debug ("%s:%s: OpenProperty failed: hr=%#lx",
                      SRCNAME, __func__, hr);
-          return NULL;
+          TRETURN NULL;
         }
-      return stream;
+      TRETURN stream;
     }
 
   LPATTACH mapi_attachment = NULL;
@@ -477,7 +492,7 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
     {
       log_debug ("%s:%s: Failed to get MapiObject of attachment: %p",
                  SRCNAME, __func__, attachment);
-      return NULL;
+      TRETURN NULL;
     }
   if (FAILED (gpgol_openProperty (mapi_attachment, PR_ATTACH_DATA_BIN,
                                   &IID_IStream, 0, MAPI_MODIFY,
@@ -488,7 +503,7 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
       gpgol_release (mapi_attachment);
     }
   gpgol_release (mapi_attachment);
-  return stream;
+  TRETURN stream;
 }
 
 #if 0
@@ -500,6 +515,7 @@ safearrays and how this probably should work.
 static int
 copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
 {
+  TSTART;
   VARIANT var;
   VariantInit (&var);
 
@@ -510,7 +526,7 @@ copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
   if (!size)
     {
       TRACEPOINT;
-      return 1;
+      TRETURN 1;
     }
 
   if (!get_pa_variant (target, PR_ATTACH_DATA_BIN_DASL, &var))
@@ -536,7 +552,7 @@ copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
     {
       TRACEPOINT;
       VariantClear(&var);
-      return 1;
+      TRETURN 1;
     }
 
   void *buffer = NULL;
@@ -545,7 +561,7 @@ copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
     {
       TRACEPOINT;
       VariantClear(&var);
-      return 1;
+      TRETURN 1;
     }
 
   /* Copy data to it */
@@ -555,7 +571,7 @@ copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
     {
       TRACEPOINT;
       VariantClear(&var);
-      return 1;
+      TRETURN 1;
     }
 
   /*/ Unlock the variant data */
@@ -563,24 +579,25 @@ copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
     {
       TRACEPOINT;
       VariantClear(&var);
-      return 1;
+      TRETURN 1;
     }
 
   if (set_pa_variant (target, PR_ATTACH_DATA_BIN_DASL, &var))
     {
       TRACEPOINT;
       VariantClear(&var);
-      return 1;
+      TRETURN 1;
     }
 
   VariantClear(&var);
-  return 0;
+  TRETURN 0;
 }
 #endif
 
 static int
 copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
 {
+  TSTART;
   char copybuf[COPYBUFSIZE];
   size_t nread;
 
@@ -610,16 +627,16 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
         {
           log_error ("%s:%s: Failed to write in tmp attachment.",
                      SRCNAME, __func__);
-          return 1;
+          TRETURN 1;
         }
       if (nread != nwritten)
         {
           log_error ("%s:%s: Write truncated.",
                      SRCNAME, __func__);
-          return 1;
+          TRETURN 1;
         }
     }
-  return 0;
+  TRETURN 0;
 }
 
 /** Sets some meta data on the last attachment added. The meta
@@ -627,12 +644,13 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
 static int
 fixup_last_attachment_o (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
 {
+  TSTART;
   /* Currently we only set content id */
   if (attachment->get_content_id ().empty())
     {
       log_debug ("%s:%s: Content id not found.",
                  SRCNAME, __func__);
-      return 0;
+      TRETURN 0;
     }
 
   LPDISPATCH attach = get_attachment_o (mail, -1);
@@ -640,13 +658,13 @@ fixup_last_attachment_o (LPDISPATCH mail, std::shared_ptr<Attachment> attachment
     {
       log_error ("%s:%s: No attachment.",
                  SRCNAME, __func__);
-      return 1;
+      TRETURN 1;
     }
   int ret = put_pa_string (attach,
                            PR_ATTACH_CONTENT_ID_DASL,
                            attachment->get_content_id ().c_str());
   gpgol_release (attach);
-  return ret;
+  TRETURN ret;
 }
 
 /** Helper to update the attachments of a mail object in oom.
@@ -655,6 +673,7 @@ static int
 add_attachments_o(LPDISPATCH mail,
                 std::vector<std::shared_ptr<Attachment> > attachments)
 {
+  TSTART;
   bool anyError = false;
   for (auto att: attachments)
     {
@@ -717,7 +736,7 @@ add_attachments_o(LPDISPATCH mail,
           anyError = true;
         }
     }
-  return anyError;
+  TRETURN anyError;
 }
 
 GPGRT_LOCK_DEFINE(parser_lock);
@@ -725,6 +744,7 @@ GPGRT_LOCK_DEFINE(parser_lock);
 static DWORD WINAPI
 do_parsing (LPVOID arg)
 {
+  TSTART;
   gpgrt_lock_lock (&dtor_lock);
   /* We lock with mail dtors so we can be sure the mail->parser
      call is valid. */
@@ -734,7 +754,7 @@ do_parsing (LPVOID arg)
       log_debug ("%s:%s: canceling parsing for: %p already deleted",
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&dtor_lock);
-      return 0;
+      TRETURN 0;
     }
 
   blockInv ();
@@ -759,7 +779,7 @@ do_parsing (LPVOID arg)
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&parser_lock);
       unblockInv();
-      return 0;
+      TRETURN 0;
     }
 
   if (!parser)
@@ -768,13 +788,13 @@ do_parsing (LPVOID arg)
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&parser_lock);
       unblockInv();
-      return -1;
+      TRETURN -1;
     }
   parser->parse();
   do_in_ui_thread (PARSING_DONE, arg);
   gpgrt_lock_unlock (&parser_lock);
   unblockInv();
-  return 0;
+  TRETURN 0;
 }
 
 /* How encryption is done:
@@ -851,6 +871,7 @@ do_parsing (LPVOID arg)
 static DWORD WINAPI
 do_crypt (LPVOID arg)
 {
+  TSTART;
   gpgrt_lock_lock (&dtor_lock);
   /* We lock with mail dtors so we can be sure the mail->parser
      call is valid. */
@@ -860,7 +881,7 @@ do_crypt (LPVOID arg)
       log_debug ("%s:%s: canceling crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&dtor_lock);
-      return 0;
+      TRETURN 0;
     }
   if (mail->cryptState () != Mail::NeedsActualCrypt)
     {
@@ -868,7 +889,7 @@ do_crypt (LPVOID arg)
                  SRCNAME, __func__, mail->cryptState ());
       mail->setWindowEnabled_o (true);
       gpgrt_lock_unlock (&dtor_lock);
-      return -1;
+      TRETURN -1;
     }
 
   /* This takes a shared ptr of crypter. So the crypter is
@@ -882,7 +903,7 @@ do_crypt (LPVOID arg)
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&parser_lock);
       mail->setWindowEnabled_o (true);
-      return -1;
+      TRETURN -1;
     }
 
   GpgME::Error err;
@@ -894,7 +915,7 @@ do_crypt (LPVOID arg)
       log_debug ("%s:%s: aborting crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
       gpgrt_lock_unlock (&dtor_lock);
-      return 0;
+      TRETURN 0;
     }
 
   mail->setWindowEnabled_o (true);
@@ -927,7 +948,7 @@ do_crypt (LPVOID arg)
       mail->resetCrypter ();
       crypter = nullptr;
       gpgrt_lock_unlock (&dtor_lock);
-      return rc;
+      TRETURN rc;
     }
 
   if (!mail->isAsyncCryptDisabled ())
@@ -967,35 +988,37 @@ do_crypt (LPVOID arg)
   do_in_ui_thread_async (BRING_TO_FRONT, nullptr, 250);
   log_debug ("%s:%s: crypto thread for %p finished",
              SRCNAME, __func__, arg);
-  return 0;
+  TRETURN 0;
 }
 
 bool
 Mail::isCryptoMail () const
 {
+  TSTART;
   if (m_type == MSGTYPE_UNKNOWN || m_type == MSGTYPE_GPGOL ||
       m_type == MSGTYPE_SMIME)
     {
       /* Not a message for us. */
-      return false;
+      TRETURN false;
     }
-  return true;
+  TRETURN true;
 }
 
 int
 Mail::decryptVerify_o ()
 {
+  TSTART;
   if (!isCryptoMail ())
     {
       log_debug ("%s:%s: Decrypt Verify for non crypto mail: %p.",
                  SRCNAME, __func__, m_mailitem);
-      return 0;
+      TRETURN 0;
     }
   if (m_needs_wipe)
     {
       log_error ("%s:%s: Decrypt verify called for msg that needs wipe: %p",
                  SRCNAME, __func__, m_mailitem);
-      return 1;
+      TRETURN 1;
     }
   setUUID_o ();
   m_processed = true;
@@ -1022,7 +1045,7 @@ Mail::decryptVerify_o ()
     {
       log_error ("%s:%s: Failed to format placeholder.",
                  SRCNAME, __func__);
-      return 1;
+      TRETURN 1;
     }
 
   if (opt.prefer_html)
@@ -1031,7 +1054,7 @@ Mail::decryptVerify_o ()
       if (!tmp)
         {
           TRACEPOINT;
-          return 1;
+          TRETURN 1;
         }
       m_orig_body = tmp;
       xfree (tmp);
@@ -1047,7 +1070,7 @@ Mail::decryptVerify_o ()
       if (!tmp)
         {
           TRACEPOINT;
-          return 1;
+          TRETURN 1;
         }
       m_orig_body = tmp;
       xfree (tmp);
@@ -1066,14 +1089,14 @@ Mail::decryptVerify_o ()
   if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
     {
       WKSHelper::instance ()->handle_confirmation_read (this, cipherstream);
-      return 0;
+      TRETURN 0;
     }
 
   if (!cipherstream)
     {
       log_debug ("%s:%s: Failed to get cipherstream.",
                  SRCNAME, __func__);
-      return 1;
+      TRETURN 1;
     }
 
   m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
@@ -1092,26 +1115,29 @@ Mail::decryptVerify_o ()
     }
   CloseHandle (parser_thread);
 
-  return 0;
+  TRETURN 0;
 }
 
 void find_and_replace(std::string& source, const std::string &find,
                       const std::string &replace)
 {
+  TSTART;
   for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
     {
       source.replace(i, find.length(), replace);
       i += replace.length();
     }
+  TRETURN;
 }
 
 void
 Mail::updateBody_o ()
 {
+  TSTART;
   if (!m_parser)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   const auto error = m_parser->get_formatted_error ();
@@ -1146,7 +1172,7 @@ Mail::updateBody_o ()
                          SRCNAME, __func__, error.c_str ());
             }
         }
-      return;
+      TRETURN;
     }
   if (m_verify_result.error())
     {
@@ -1168,7 +1194,7 @@ Mail::updateBody_o ()
                          SRCNAME, __func__);
             }
         }
-      return;
+      TRETURN;
     }
   // No need to carry body anymore
   m_orig_body = std::string();
@@ -1205,7 +1231,7 @@ Mail::updateBody_o ()
                          SRCNAME, __func__);
             }
 
-          return;
+          TRETURN;
         }
       else if (!body.empty())
         {
@@ -1278,7 +1304,7 @@ Mail::updateBody_o ()
                 }
               else
                 {
-                  return;
+                  TRETURN;
                 }
             }
         }
@@ -1324,7 +1350,7 @@ Mail::updateBody_o ()
       log_error ("%s:%s: Failed to modify body of item.",
                  SRCNAME, __func__);
     }
-  return;
+  TRETURN;
 }
 
 static int parsed_count;
@@ -1332,6 +1358,7 @@ static int parsed_count;
 void
 Mail::parsing_done()
 {
+  TSTART;
   TRACEPOINT;
   log_oom ("Mail %p Parsing done for parser num %i: %p",
                  this, parsed_count++, m_parser.get());
@@ -1356,7 +1383,7 @@ Mail::parsing_done()
          */
       log_error ("%s:%s: No parser obj. For mail: %p",
                  SRCNAME, __func__, this);
-      return;
+      TRETURN;
     }
   /* Store the results. */
   m_decrypt_result = m_parser->decrypt_result ();
@@ -1431,29 +1458,30 @@ Mail::parsing_done()
   CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
                             NULL));
   TRACEPOINT;
-  return;
+  TRETURN;
 }
 
 int
 Mail::encryptSignStart_o ()
 {
+  TSTART;
   if (m_crypt_state != NeedsActualCrypt)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
-      return -1;
+      TRETURN -1;
     }
   int flags = 0;
   if (!needs_crypto_m ())
     {
-      return 0;
+      TRETURN 0;
     }
   LPMESSAGE message = get_oom_base_message (m_mailitem);
   if (!message)
     {
       log_error ("%s:%s: Failed to get base message.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
   flags = get_gpgol_draft_info_flags (message);
   gpgol_release (message);
@@ -1482,7 +1510,7 @@ Mail::encryptSignStart_o ()
                        MB_ICONINFORMATION|MB_OK);
           xfree (msg);
           xfree (w_title);
-          return -1;
+          TRETURN -1;
         }
     }
 
@@ -1501,7 +1529,7 @@ Mail::encryptSignStart_o ()
       log_error ("%s:%s: Crypter for mail %p failed to collect data.",
                  SRCNAME, __func__, this);
       setWindowEnabled_o (true);
-      return -1;
+      TRETURN -1;
     }
 
   if (!m_async_crypt_disabled)
@@ -1514,31 +1542,33 @@ Mail::encryptSignStart_o ()
     {
       do_crypt (this);
     }
-  return 0;
+  TRETURN 0;
 }
 
 int
 Mail::needs_crypto_m () const
 {
+  TSTART;
   LPMESSAGE message = get_oom_message (m_mailitem);
   int ret;
   if (!message)
     {
       log_error ("%s:%s: Failed to get message.",
                  SRCNAME, __func__);
-      return false;
+      TRETURN false;
     }
   ret = get_gpgol_draft_info_flags (message);
   gpgol_release(message);
-  return ret;
+  TRETURN ret;
 }
 
 int
 Mail::wipe_o (bool force)
 {
+  TSTART;
   if (!m_needs_wipe && !force)
     {
-      return 0;
+      TRETURN 0;
     }
   log_debug ("%s:%s: Removing plaintext from mailitem: %p.",
              SRCNAME, __func__, m_mailitem);
@@ -1550,21 +1580,22 @@ Mail::wipe_o (bool force)
         {
           log_debug ("%s:%s: Failed to wipe mailitem: %p.",
                      SRCNAME, __func__, m_mailitem);
-          return -1;
+          TRETURN -1;
         }
-      return -1;
+      TRETURN -1;
     }
   else
     {
       put_oom_string (m_mailitem, "Body", "");
     }
   m_needs_wipe = false;
-  return 0;
+  TRETURN 0;
 }
 
 int
 Mail::updateOOMData_o ()
 {
+  TSTART;
   char *buf = nullptr;
   log_debug ("%s:%s", SRCNAME, __func__);
 
@@ -1634,30 +1665,33 @@ Mail::updateOOMData_o ()
     {
       log_debug ("%s:%s: All fallbacks failed.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
   m_sender = buf;
   xfree (buf);
-  return 0;
+  TRETURN 0;
 }
 
 std::string
 Mail::getSender_o ()
 {
+  TSTART;
   if (m_sender.empty())
     updateOOMData_o ();
-  return m_sender;
+  TRETURN m_sender;
 }
 
 std::string
 Mail::getSender () const
 {
-  return m_sender;
+  TSTART;
+  TRETURN m_sender;
 }
 
 int
 Mail::closeAllMails_o ()
 {
+  TSTART;
   int err = 0;
 
   /* Detach Folder sinks */
@@ -1700,11 +1734,12 @@ Mail::closeAllMails_o ()
             }
         }
     }
-  return err;
+  TRETURN err;
 }
 int
 Mail::revertAllMails_o ()
 {
+  TSTART;
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
@@ -1726,12 +1761,13 @@ Mail::revertAllMails_o ()
         }
     }
   gpgrt_lock_unlock (&mail_map_lock);
-  return err;
+  TRETURN err;
 }
 
 int
 Mail::wipeAllMails_o ()
 {
+  TSTART;
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
@@ -1744,16 +1780,17 @@ Mail::wipeAllMails_o ()
         }
     }
   gpgrt_lock_unlock (&mail_map_lock);
-  return err;
+  TRETURN err;
 }
 
 int
 Mail::revert_o ()
 {
+  TSTART;
   int err = 0;
   if (!m_processed)
     {
-      return 0;
+      TRETURN 0;
     }
 
   m_disable_att_remove_warning = true;
@@ -1763,24 +1800,25 @@ Mail::revert_o ()
     {
       log_error ("%s:%s: Message revert failed falling back to wipe.",
                  SRCNAME, __func__);
-      return wipe_o ();
+      TRETURN wipe_o ();
     }
   /* We need to reprocess the mail next time around. */
   m_processed = false;
   m_needs_wipe = false;
   m_disable_att_remove_warning = false;
-  return 0;
+  TRETURN 0;
 }
 
 bool
 Mail::isSMIME_m ()
 {
+  TSTART;
   msgtype_t msgtype;
   LPMESSAGE message;
 
   if (m_is_smime_checked)
     {
-      return m_is_smime;
+      TRETURN m_is_smime;
     }
 
   message = get_oom_message (m_mailitem);
@@ -1789,7 +1827,7 @@ Mail::isSMIME_m ()
     {
       log_error ("%s:%s: No message?",
                  SRCNAME, __func__);
-      return false;
+      TRETURN false;
     }
 
   msgtype = mapi_get_message_type (message);
@@ -1817,35 +1855,41 @@ Mail::isSMIME_m ()
     }
   gpgol_release (message);
   m_is_smime_checked  = true;
-  return m_is_smime;
+  TRETURN m_is_smime;
 }
 
 static std::string
 get_string_o (LPDISPATCH item, const char *str)
 {
+  TSTART;
   char *buf = get_oom_string (item, str);
   if (!buf)
-    return std::string();
+    {
+      TRETURN std::string();
+    }
   std::string ret = buf;
   xfree (buf);
-  return ret;
+  TRETURN ret;
 }
 
 std::string
 Mail::getSubject_o () const
 {
-  return get_string_o (m_mailitem, "Subject");
+  TSTART;
+  TRETURN get_string_o (m_mailitem, "Subject");
 }
 
 std::string
 Mail::getBody_o () const
 {
-  return get_string_o (m_mailitem, "Body");
+  TSTART;
+  TRETURN get_string_o (m_mailitem, "Body");
 }
 
 std::vector<std::string>
 Mail::getRecipients_o () const
 {
+  TSTART;
   LPDISPATCH recipients = get_oom_object (m_mailitem, "Recipients");
   if (!recipients)
     {
@@ -1863,12 +1907,13 @@ Mail::getRecipients_o () const
 
     }
 
-  return ret;
+  TRETURN ret;
 }
 
 int
 Mail::closeInspector_o (Mail *mail)
 {
+  TSTART;
   LPDISPATCH inspector = get_oom_object (mail->item(), "GetInspector");
   HRESULT hr;
   DISPID dispid;
@@ -1876,7 +1921,7 @@ Mail::closeInspector_o (Mail *mail)
     {
       log_debug ("%s:%s: No inspector.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
 
   dispid = lookup_oom_dispid (inspector, "Close");
@@ -1899,17 +1944,18 @@ Mail::closeInspector_o (Mail *mail)
           log_debug ("%s:%s: Failed to close inspector: %#lx",
                      SRCNAME, __func__, hr);
           gpgol_release (inspector);
-          return -1;
+          TRETURN -1;
         }
     }
   gpgol_release (inspector);
-  return 0;
+  TRETURN 0;
 }
 
 /* static */
 int
 Mail::close (Mail *mail)
 {
+  TSTART;
   VARIANT aVariant[1];
   DISPPARAMS dispparams;
 
@@ -1925,38 +1971,42 @@ Mail::close (Mail *mail)
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                        NULL, &dispparams);
 
-  log_oom ("%s:%s: Returned from close",
+  log_oom ("%s:%s: returned from close",
                  SRCNAME, __func__);
-  return rc;
+  TRETURN rc;
 }
 
 void
 Mail::setCloseTriggered (bool value)
 {
+  TSTART;
   m_close_triggered = value;
+  TRETURN;
 }
 
 bool
 Mail::getCloseTriggered () const
 {
-  return m_close_triggered;
+  TSTART;
+  TRETURN m_close_triggered;
 }
 
 static const UserID
 get_uid_for_sender (const Key &k, const char *sender)
 {
+  TSTART;
   UserID ret;
 
   if (!sender)
     {
-      return ret;
+      TRETURN ret;
     }
 
   if (!k.numUserIDs())
     {
       log_debug ("%s:%s: Key without uids",
                  SRCNAME, __func__);
-      return ret;
+      TRETURN ret;
     }
 
   for (const auto uid: k.userIDs())
@@ -1983,32 +2033,33 @@ get_uid_for_sender (const Key &k, const char *sender)
           ret = uid;
         }
     }
-  return ret;
+  TRETURN ret;
 }
 
 void
 Mail::updateSigstate ()
 {
+  TSTART;
   std::string sender = getSender ();
 
   if (sender.empty())
     {
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
-      return;
+      TRETURN;
     }
 
   if (m_verify_result.isNull())
     {
       log_debug ("%s:%s: No verify result.",
                  SRCNAME, __func__);
-      return;
+      TRETURN;
     }
 
   if (m_verify_result.error())
     {
       log_debug ("%s:%s: verify error.",
                  SRCNAME, __func__);
-      return;
+      TRETURN;
     }
 
   for (const auto sig: m_verify_result.signatures())
@@ -2065,28 +2116,31 @@ Mail::updateSigstate ()
                  SRCNAME, __func__, m_uid.validity(), m_uid.origin());
       m_sig = sig;
       m_is_valid = true;
-      return;
+      TRETURN;
     }
 
   log_debug ("%s:%s: No signature with enough trust. Using first",
              SRCNAME, __func__);
   m_sig = m_verify_result.signature(0);
-  return;
+  TRETURN;
 }
 
 bool
 Mail::isValidSig () const
 {
-   return m_is_valid;
+  TSTART;
+  TRETURN m_is_valid;
 }
 
 void
 Mail::removeCategories_o ()
 {
+  TSTART;
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Trusted Sender Address");
   remove_category (m_mailitem, decCategory);
   remove_category (m_mailitem, verifyCategory);
+  TRETURN;
 }
 
 /* Now for some tasty hack: Outlook sometimes does
@@ -2101,6 +2155,7 @@ Mail::removeCategories_o ()
 static void
 resize_active_window ()
 {
+  TSTART;
   HWND wnd = get_active_hwnd ();
   static std::vector<HWND> resized_windows;
   if(std::find(resized_windows.begin(), resized_windows.end(), wnd) != resized_windows.end()) {
@@ -2108,19 +2163,19 @@ resize_active_window ()
          need to do this once per view of the explorer. So for now this might
          break but we reduce the flicker. A better solution would be to find
          the current view and track that. */
-      return;
+      TRETURN;
   }
 
   if (!wnd)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   RECT oldpos;
   if (!GetWindowRect (wnd, &oldpos))
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   if (!SetWindowPos (wnd, nullptr,
@@ -2136,7 +2191,7 @@ resize_active_window ()
                      (int)oldpos.bottom - oldpos.top, 0))
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   if (!SetWindowPos (wnd, nullptr,
@@ -2146,14 +2201,16 @@ resize_active_window ()
                      (int)oldpos.bottom - oldpos.top, 0))
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   resized_windows.push_back(wnd);
+  TRETURN;
 }
 
 void
 Mail::updateCategories_o ()
 {
+  TSTART;
   const char *decCategory = _("GpgOL: Encrypted Message");
   const char *verifyCategory = _("GpgOL: Trusted Sender Address");
   if (isValidSig ())
@@ -2178,24 +2235,27 @@ Mail::updateCategories_o ()
 
   resize_active_window();
 
-  return;
+  TRETURN;
 }
 
 bool
 Mail::isSigned () const
 {
-  return m_verify_result.numSignatures() > 0;
+  TSTART;
+  TRETURN m_verify_result.numSignatures() > 0;
 }
 
 bool
 Mail::isEncrypted () const
 {
-  return !m_decrypt_result.isNull();
+  TSTART;
+  TRETURN !m_decrypt_result.isNull();
 }
 
 int
 Mail::setUUID_o ()
 {
+  TSTART;
   char *uuid;
   if (!m_uuid.empty())
     {
@@ -2219,7 +2279,7 @@ Mail::setUUID_o ()
     {
       log_debug ("%s:%s: Failed to get/set uuid for %p",
                  SRCNAME, __func__, m_mailitem);
-      return -1;
+      TRETURN -1;
     }
   if (m_uuid.empty())
     {
@@ -2255,12 +2315,12 @@ Mail::setUUID_o ()
                  m_uuid.c_str());
     }
   xfree (uuid);
-  return 0;
+  TRETURN 0;
 }
 
-/* Returns 2 if the userid is ultimately trusted.
+/* TRETURNs 2 if the userid is ultimately trusted.
 
-   Returns 1 if the userid is fully trusted but has
+   TRETURNs 1 if the userid is fully trusted but has
    a signature by a key for which we have a secret
    and which is ultimately trusted. (Direct trust)
 
@@ -2268,13 +2328,14 @@ Mail::setUUID_o ()
 static int
 level_4_check (const UserID &uid)
 {
+  TSTART;
   if (uid.isNull())
     {
-      return 0;
+      TRETURN 0;
     }
   if (uid.validity () == UserID::Validity::Ultimate)
     {
-      return 2;
+      TRETURN 2;
     }
   if (uid.validity () == UserID::Validity::Full)
     {
@@ -2331,48 +2392,49 @@ level_4_check (const UserID &uid)
                                  SRCNAME, __func__, anonstr (signer_uid_str),
                                  anonstr (sig_uid_str),
                                  anonstr (secKeyID));
-                      return 1;
+                      TRETURN 1;
                     }
                 }
             }
         }
     }
-  return 0;
+  TRETURN 0;
 }
 
 std::string
 Mail::getCryptoSummary () const
 {
+  TSTART;
   const int level = get_signature_level ();
 
   bool enc = isEncrypted ();
   if (level == 4 && enc)
     {
-      return _("Security Level 4");
+      TRETURN _("Security Level 4");
     }
   if (level == 4)
     {
-      return _("Trust Level 4");
+      TRETURN _("Trust Level 4");
     }
   if (level == 3 && enc)
     {
-      return _("Security Level 3");
+      TRETURN _("Security Level 3");
     }
   if (level == 3)
     {
-      return _("Trust Level 3");
+      TRETURN _("Trust Level 3");
     }
   if (level == 2 && enc)
     {
-      return _("Security Level 2");
+      TRETURN _("Security Level 2");
     }
   if (level == 2)
     {
-      return _("Trust Level 2");
+      TRETURN _("Trust Level 2");
     }
   if (enc)
     {
-      return _("Encrypted");
+      TRETURN _("Encrypted");
     }
   if (isSigned ())
     {
@@ -2381,37 +2443,39 @@ Mail::getCryptoSummary () const
          could have signed this. So we avoid the label
          "signed" here as this word already implies some
          security. */
-      return _("Insecure");
+      TRETURN _("Insecure");
     }
-  return _("Insecure");
+  TRETURN _("Insecure");
 }
 
 std::string
 Mail::getCryptoOneLine () const
 {
+  TSTART;
   bool sig = isSigned ();
   bool enc = isEncrypted ();
   if (sig || enc)
     {
       if (sig && enc)
         {
-          return _("Signed and encrypted message");
+          TRETURN _("Signed and encrypted message");
         }
       else if (sig)
         {
-          return _("Signed message");
+          TRETURN _("Signed message");
         }
       else if (enc)
         {
-          return _("Encrypted message");
+          TRETURN _("Encrypted message");
         }
     }
-  return _("Insecure message");
+  TRETURN _("Insecure message");
 }
 
 std::string
 Mail::getCryptoDetails_o ()
 {
+  TSTART;
   std::string message;
 
   /* No signature with keys but error */
@@ -2423,12 +2487,12 @@ Mail::getCryptoDetails_o ()
       message += _("The message was signed but the verification failed with:");
       message += "\n";
       message += m_verify_result.error().asString();
-      return message;
+      TRETURN message;
     }
   /* No crypo, what are we doing here? */
   if (!isEncrypted () && !isSigned ())
     {
-      return _("You cannot be sure who sent, "
+      TRETURN _("You cannot be sure who sent, "
                "modified and read the message in transit.");
     }
   /* Handle encrypt only */
@@ -2448,7 +2512,7 @@ Mail::getCryptoDetails_o ()
       message += "\n\n";
       message += _("You cannot be sure who sent the message because "
                    "it is not signed.");
-      return message;
+      TRETURN message;
     }
 
   bool keyFound = true;
@@ -2485,7 +2549,7 @@ Mail::getCryptoDetails_o ()
         {
           log_error ("%s:%s:%i BUG: Invalid sigstate.",
                      SRCNAME, __func__, __LINE__);
-          return message;
+          TRETURN message;
         }
     }
   else if (level == 3 && isOpenPGP)
@@ -2701,72 +2765,76 @@ Mail::getCryptoDetails_o ()
       message +=  isOpenPGP ? _("Click here to search the key on the configured keyserver.") :
                               _("Click here to search the certificate on the configured X509 keyserver.");
     }
-  return message;
+  TRETURN message;
 }
 
 int
 Mail::get_signature_level () const
 {
+  TSTART;
   if (!m_is_signed)
     {
-      return 0;
+      TRETURN 0;
     }
 
   if (m_uid.isNull ())
     {
       /* No m_uid matches our sender. */
-      return 0;
+      TRETURN 0;
     }
 
   if (m_is_valid && (m_uid.validity () == UserID::Validity::Ultimate ||
       (m_uid.validity () == UserID::Validity::Full &&
       level_4_check (m_uid))) && (!in_de_vs_mode () || m_sig.isDeVs()))
     {
-      return 4;
+      TRETURN 4;
     }
   if (m_is_valid && m_uid.validity () == UserID::Validity::Full &&
       (!in_de_vs_mode () || m_sig.isDeVs()))
     {
-      return 3;
+      TRETURN 3;
     }
   if (m_is_valid)
     {
-      return 2;
+      TRETURN 2;
     }
   if (m_sig.validity() == Signature::Validity::Marginal)
     {
-      return 1;
+      TRETURN 1;
     }
   if (m_sig.summary() & Signature::Summary::TofuConflict ||
       m_uid.tofuInfo().validity() == TofuInfo::Conflict)
     {
-      return 0;
+      TRETURN 0;
     }
-  return 0;
+  TRETURN 0;
 }
 
 int
 Mail::getCryptoIconID () const
 {
+  TSTART;
   int level = get_signature_level ();
   int offset = isEncrypted () ? ENCRYPT_ICON_OFFSET : 0;
-  return IDI_LEVEL_0 + level + offset;
+  TRETURN IDI_LEVEL_0 + level + offset;
 }
 
 const char*
 Mail::getSigFpr () const
 {
+  TSTART;
   if (!m_is_signed || m_sig.isNull())
     {
-      return nullptr;
+      TRETURN nullptr;
     }
-  return m_sig.fingerprint();
+  TRETURN m_sig.fingerprint();
 }
 
 /** Try to locate the keys for all recipients */
 void
 Mail::locateKeys_o ()
 {
+  TSTART;
   if (m_locate_in_progress)
     {
       /** XXX
@@ -2791,7 +2859,7 @@ Mail::locateKeys_o ()
         */
       log_debug ("%s:%s: Locate for %p already in progress.",
                  SRCNAME, __func__, this);
-      return;
+      TRETURN;
     }
   m_locate_in_progress = true;
 
@@ -2809,74 +2877,86 @@ Mail::locateKeys_o ()
   autosecureCheck ();
 
   m_locate_in_progress = false;
+  TRETURN;
 }
 
 bool
 Mail::isHTMLAlternative () const
 {
-  return m_is_html_alternative;
+  TSTART;
+  TRETURN m_is_html_alternative;
 }
 
 char *
 Mail::takeCachedHTMLBody ()
 {
+  TSTART;
   char *ret = m_cached_html_body;
   m_cached_html_body = nullptr;
-  return ret;
+  TRETURN ret;
 }
 
 char *
 Mail::takeCachedPlainBody ()
 {
+  TSTART;
   char *ret = m_cached_plain_body;
   m_cached_plain_body = nullptr;
-  return ret;
+  TRETURN ret;
 }
 
 int
 Mail::getCryptoFlags () const
 {
-  return m_crypto_flags;
+  TSTART;
+  TRETURN m_crypto_flags;
 }
 
 void
 Mail::setNeedsEncrypt (bool value)
 {
+  TSTART;
   m_needs_encrypt = value;
+  TRETURN;
 }
 
 bool
 Mail::getNeedsEncrypt () const
 {
-  return m_needs_encrypt;
+  TSTART;
+  TRETURN m_needs_encrypt;
 }
 
 std::vector<std::string>
 Mail::getCachedRecipients ()
 {
-  return m_cached_recipients;
+  TSTART;
+  TRETURN m_cached_recipients;
 }
 
 void
 Mail::appendToInlineBody (const std::string &data)
 {
+  TSTART;
   m_inline_body += data;
+  TRETURN;
 }
 
 int
 Mail::inlineBodyToBody_o ()
 {
+  TSTART;
   if (!m_crypter)
     {
       log_error ("%s:%s: No crypter.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
 
   const auto body = m_crypter->get_inline_data ();
   if (body.empty())
     {
-      return 0;
+      TRETURN 0;
     }
 
   /* For inline we always work with UTF-8 */
@@ -2884,19 +2964,20 @@ Mail::inlineBodyToBody_o ()
 
   int ret = put_oom_string (m_mailitem, "Body",
                             body.c_str ());
-  return ret;
+  TRETURN ret;
 }
 
 void
 Mail::updateCryptMAPI_m ()
 {
+  TSTART;
   log_debug ("%s:%s: Update crypt mapi",
              SRCNAME, __func__);
   if (m_crypt_state != NeedsUpdateInMAPI)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
-      return;
+      TRETURN;
     }
   if (!m_crypter)
     {
@@ -2913,7 +2994,7 @@ Mail::updateCryptMAPI_m ()
           log_error ("%s:%s: No crypter.",
                      SRCNAME, __func__);
           m_crypt_state = NoCryptMail;
-          return;
+          TRETURN;
         }
     }
 
@@ -2934,6 +3015,7 @@ Mail::updateCryptMAPI_m ()
       // We don't need the crypter anymore.
       resetCrypter ();
     }
+  TRETURN;
 }
 
 /** Checks in OOM if the body is either
@@ -2943,6 +3025,7 @@ Mail::updateCryptMAPI_m ()
 static std::pair<bool, bool>
 has_crypt_or_empty_body_oom (Mail *mail)
 {
+  TSTART;
   auto body = mail->getBody_o ();
   std::pair<bool, bool> ret;
   ret.first = false;
@@ -2951,7 +3034,7 @@ has_crypt_or_empty_body_oom (Mail *mail)
   if (body.size() > 10 && !strncmp (body.c_str(), "-----BEGIN", 10))
     {
       ret.first = true;
-      return ret;
+      TRETURN ret;
     }
   if (!body.size())
     {
@@ -2962,12 +3045,13 @@ has_crypt_or_empty_body_oom (Mail *mail)
       log_data ("%s:%s: Body found in %p : \"%s\"",
                        SRCNAME, __func__, mail, body.c_str ());
     }
-  return ret;
+  TRETURN ret;
 }
 
 void
 Mail::updateCryptOOM_o ()
 {
+  TSTART;
   log_debug ("%s:%s: Update crypt oom for %p",
              SRCNAME, __func__, this);
   if (m_crypt_state != NeedsUpdateInOOM)
@@ -2975,7 +3059,7 @@ Mail::updateCryptOOM_o ()
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
       resetCrypter ();
-      return;
+      TRETURN;
     }
 
   if (getDoPGPInline ())
@@ -2986,7 +3070,7 @@ Mail::updateCryptOOM_o ()
                      SRCNAME, __func__, this);
           gpgol_bug (get_active_hwnd(), ERR_INLINE_BODY_TO_BODY);
           m_crypt_state = NoCryptMail;
-          return;
+          TRETURN;
         }
     }
 
@@ -3017,7 +3101,7 @@ Mail::updateCryptOOM_o ()
       log_debug ("%s:%s: Looks like inline body. You can pass %p.",
                  SRCNAME, __func__, this);
       m_crypt_state = WantsSendInline;
-      return;
+      TRETURN;
     }
 
   // We are in MIME land. Wipe the body.
@@ -3036,15 +3120,16 @@ Mail::updateCryptOOM_o ()
       xfree (msg);
       xfree (title);
       m_crypt_state = NoCryptMail;
-      return;
+      TRETURN;
     }
   m_crypt_state = NeedsSecondAfterWrite;
-  return;
+  TRETURN;
 }
 
 void
 Mail::setWindowEnabled_o (bool value)
 {
+  TSTART;
   if (!value)
     {
       m_window = get_active_hwnd ();
@@ -3053,17 +3138,19 @@ Mail::setWindowEnabled_o (bool value)
              SRCNAME, __func__, m_window, value);
 
   EnableWindow (m_window, value ? TRUE : FALSE);
+  TRETURN;
 }
 
 bool
 Mail::check_inline_response ()
 {
+  TSTART;
   /* Async sending is known to cause instabilities. So we keep
      a hidden option to disable it. */
   if (opt.sync_enc)
     {
       m_async_crypt_disabled = true;
-      return m_async_crypt_disabled;
+      TRETURN m_async_crypt_disabled;
     }
 
   m_async_crypt_disabled = false;
@@ -3117,7 +3204,7 @@ Mail::check_inline_response ()
           log_debug ("%s:%s: Detected attachments. "
                      "Disabling async crypt due to T4131.",
                      SRCNAME, __func__);
-          return m_async_crypt_disabled;
+          TRETURN m_async_crypt_disabled;
         }
    }
 
@@ -3125,7 +3212,7 @@ Mail::check_inline_response ()
   if (!app)
     {
       TRACEPOINT;
-      return false;
+      TRETURN false;
     }
 
   LPDISPATCH explorer = get_oom_object (app, "ActiveExplorer");
@@ -3133,7 +3220,7 @@ Mail::check_inline_response ()
   if (!explorer)
     {
       TRACEPOINT;
-      return false;
+      TRETURN false;
     }
 
   LPDISPATCH inlineResponse = get_oom_object (explorer, "ActiveInlineResponse");
@@ -3141,7 +3228,7 @@ Mail::check_inline_response ()
 
   if (!inlineResponse)
     {
-      return false;
+      TRETURN false;
     }
 
   // We have inline response
@@ -3160,31 +3247,35 @@ Mail::check_inline_response ()
     }
   xfree (inlineSubject);
 
-  return m_async_crypt_disabled;
+  TRETURN m_async_crypt_disabled;
 }
 
 // static
 Mail *
 Mail::getLastMail ()
 {
+  TSTART;
   if (!s_last_mail || !isValidPtr (s_last_mail))
     {
       s_last_mail = nullptr;
     }
-  return s_last_mail;
+  TRETURN s_last_mail;
 }
 
 // static
 void
 Mail::clearLastMail ()
 {
+  TSTART;
   s_last_mail = nullptr;
+  TRETURN;
 }
 
 // static
 void
 Mail::locateAllCryptoRecipients_o ()
 {
+  TSTART;
   gpgrt_lock_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *>::iterator it;
   for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
@@ -3195,17 +3286,19 @@ Mail::locateAllCryptoRecipients_o ()
         }
     }
   gpgrt_lock_unlock (&mail_map_lock);
+  TRETURN;
 }
 
 int
 Mail::removeAllAttachments_o ()
 {
+  TSTART;
   int ret = 0;
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (!attachments)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
   int count = get_oom_int (attachments, "Count");
   LPDISPATCH to_delete[count];
@@ -3239,17 +3332,18 @@ Mail::removeAllAttachments_o ()
         }
       gpgol_release (attachment);
     }
-  return ret;
+  TRETURN ret;
 }
 
 int
 Mail::removeOurAttachments_o ()
 {
+  TSTART;
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (!attachments)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
   int count = get_oom_int (attachments, "Count");
   LPDISPATCH to_delete[count];
@@ -3299,7 +3393,7 @@ Mail::removeOurAttachments_o ()
         }
       gpgol_release (attachment);
     }
-  return ret;
+  TRETURN ret;
 }
 
 /* We are very verbose because if we fail it might mean
@@ -3307,20 +3401,21 @@ Mail::removeOurAttachments_o ()
 bool
 Mail::hasCryptedOrEmptyBody_o ()
 {
+  TSTART;
   const auto pair = has_crypt_or_empty_body_oom (this);
 
   if (pair.first /* encrypted marker */)
     {
       log_debug ("%s:%s: Crypt Marker detected in OOM body. Return true %p.",
                  SRCNAME, __func__, this);
-      return true;
+      TRETURN true;
     }
 
   if (!pair.second)
     {
       log_debug ("%s:%s: Unexpected content detected. Return false %p.",
                  SRCNAME, __func__, this);
-      return false;
+      TRETURN false;
     }
 
   // Pair second == true (is empty) can happen on OOM error.
@@ -3331,7 +3426,7 @@ Mail::hasCryptedOrEmptyBody_o ()
         {
           gpgol_release (message);
         }
-      return true;
+      TRETURN true;
     }
 
   size_t r_nbytes = 0;
@@ -3344,7 +3439,7 @@ Mail::hasCryptedOrEmptyBody_o ()
       xfree (mapi_body);
       log_debug ("%s:%s: MAPI error or empty message. Return true. %p.",
                  SRCNAME, __func__, this);
-      return true;
+      TRETURN true;
     }
   if (r_nbytes > 10 && !strncmp (mapi_body, "-----BEGIN", 10))
     {
@@ -3352,7 +3447,7 @@ Mail::hasCryptedOrEmptyBody_o ()
       log_debug ("%s:%s: MAPI Crypt marker detected. Return true. %p.",
                  SRCNAME, __func__, this);
       xfree (mapi_body);
-      return true;
+      TRETURN true;
     }
 
   xfree (mapi_body);
@@ -3360,20 +3455,22 @@ Mail::hasCryptedOrEmptyBody_o ()
   log_debug ("%s:%s: Found mapi body. Return false. %p.",
              SRCNAME, __func__, this);
 
-  return false;
+  TRETURN false;
 }
 
 std::string
 Mail::getVerificationResultDump ()
 {
+  TSTART;
   std::stringstream ss;
   ss << m_verify_result;
-  return ss.str();
+  TRETURN ss.str();
 }
 
 void
 Mail::setBlockStatus_m ()
 {
+  TSTART;
   SPropValue prop;
 
   LPMESSAGE message = get_oom_base_message (m_mailitem);
@@ -3389,24 +3486,29 @@ Mail::setBlockStatus_m ()
     }
 
   gpgol_release (message);
-  return;
+  TRETURN;
 }
 
 void
 Mail::setBlockHTML (bool value)
 {
+  TSTART;
   m_block_html = value;
+  TRETURN;
 }
 
 void
 Mail::incrementLocateCount ()
 {
+  TSTART;
   m_locate_count++;
+  TRETURN;
 }
 
 void
 Mail::decrementLocateCount ()
 {
+  TSTART;
   m_locate_count--;
 
   if (m_locate_count < 0)
@@ -3419,15 +3521,17 @@ Mail::decrementLocateCount ()
     {
       autosecureCheck ();
     }
+  TRETURN;
 }
 
 void
 Mail::autosecureCheck ()
 {
+  TSTART;
   if (!opt.autosecure || !opt.autoresolve || m_manual_crypto_opts ||
       m_locate_count)
     {
-      return;
+      TRETURN;
     }
   bool ret = KeyCache::instance()->isMailResolvable (this);
 
@@ -3440,19 +3544,20 @@ Mail::autosecureCheck ()
    * the ui thread. */
   do_in_ui_thread (ret ? DO_AUTO_SECURE : DONT_AUTO_SECURE,
                    this);
-  return;
+  TRETURN;
 }
 
 void
 Mail::setDoAutosecure_m (bool value)
 {
+  TSTART;
   TRACEPOINT;
   LPMESSAGE msg = get_oom_base_message (m_mailitem);
 
   if (!msg)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   /* We need to set a uuid so that autosecure can
      be disabled manually */
@@ -3473,24 +3578,26 @@ Mail::setDoAutosecure_m (bool value)
       m_first_autosecure_check = false;
       m_manual_crypto_opts = true;
       gpgol_release (msg);
-      return;
+      TRETURN;
     }
   m_first_autosecure_check = false;
   set_gpgol_draft_info_flags (msg, value ? 3 : opt.sign_default ? 2 : 0);
   gpgol_release (msg);
   gpgoladdin_invalidate_ui();
+  TRETURN;
 }
 
 void
 Mail::installFolderEventHandler_o()
 {
+  TSTART;
   TRACEPOINT;
   LPDISPATCH folder = get_oom_object (m_mailitem, "Parent");
 
   if (!folder)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   char *objName = get_object_name (folder);
@@ -3500,7 +3607,7 @@ Mail::installFolderEventHandler_o()
                  SRCNAME, __func__, m_mailitem);
       xfree (objName);
       gpgol_release (folder);
-      return;
+      TRETURN;
     }
   xfree (objName);
 
@@ -3515,7 +3622,7 @@ Mail::installFolderEventHandler_o()
       log_error ("%s:%s: Mail %p parent has no folder path.",
                  SRCNAME, __func__, m_mailitem);
       gpgol_release (folder);
-      return;
+      TRETURN;
     }
 
   std::string strPath (path);
@@ -3531,16 +3638,18 @@ Mail::installFolderEventHandler_o()
 
   /* Folder already registered */
   gpgol_release (folder);
+  TRETURN;
 }
 
 void
 Mail::refCurrentItem()
 {
+  TSTART;
   if (m_currentItemRef)
     {
       log_debug ("%s:%s: Current item multi ref. Bug?",
                  SRCNAME, __func__);
-      return;
+      TRETURN;
     }
   /* This prevents a crash in Outlook 2013 when sending a mail as it
    * would unload too early.
@@ -3548,14 +3657,16 @@ Mail::refCurrentItem()
    * As it didn't crash when the mail was opened in Outlook Spy this
    * mimics that the mail is inspected somewhere else. */
   m_currentItemRef = get_oom_object (m_mailitem, "GetInspector.CurrentItem");
+  TRETURN;
 }
 
 void
 Mail::releaseCurrentItem()
 {
+  TSTART;
   if (!m_currentItemRef)
     {
-      return;
+      TRETURN;
     }
   log_oom ("%s:%s: releasing CurrentItem ref %p",
                  SRCNAME, __func__, m_currentItemRef);
@@ -3563,4 +3674,5 @@ Mail::releaseCurrentItem()
   m_currentItemRef = nullptr;
   /* This can cause our destruction */
   gpgol_release (tmp);
+  TRETURN;
 }

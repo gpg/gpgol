@@ -69,6 +69,7 @@ EVENT_SINK_INVOKE(ApplicationEvents)
     {
       case ItemLoad:
         {
+          TSTART;
           LPDISPATCH mailItem;
           /* The mailItem should be the first argument */
           if (!parms || parms->cArgs != 1 ||
@@ -76,7 +77,7 @@ EVENT_SINK_INVOKE(ApplicationEvents)
             {
               log_error ("%s:%s: ItemLoad with unexpected Arguments.",
                          SRCNAME, __func__);
-              break;
+              TBREAK;
             }
 
           log_debug ("%s:%s: ItemLoad event. Getting object.",
@@ -87,18 +88,19 @@ EVENT_SINK_INVOKE(ApplicationEvents)
             {
               log_debug ("%s:%s: ItemLoad event without mailitem.",
                          SRCNAME, __func__);
-              break;
+              TBREAK;
             }
           log_debug ("%s:%s: Creating mail object for item: %p",
                      SRCNAME, __func__, mailItem);
           new Mail (mailItem);
           do_in_ui_thread_async (INVALIDATE_LAST_MAIL, nullptr);
-          break;
+          TBREAK;
         }
       case Quit:
         {
+          TSTART;
           log_debug ("%s:%s: Quit event", SRCNAME, __func__);
-          break;
+          TBREAK;
         }
       default:
         log_oom ("%s:%s: Unhandled Event: %lx \n",

@@ -132,30 +132,37 @@ debug_message_event (rfc822parse_event_t event)
   log_data ("%s: rfc822 event %s\n", SRCNAME, s);
 }
 
-/* Returns true if the BER encoded data in BUFFER is CMS signed data.
+/* returns true if the BER encoded data in BUFFER is CMS signed data.
    LENGTH gives the length of the buffer, for correct detection LENGTH
    should be at least about 24 bytes.  */
 #if 0
 static int
 is_cms_signed_data (const char *buffer, size_t length)
 {
+  TSTART;
   const char *p = buffer;
   size_t n = length;
   tlvinfo_t ti;
 
   if (parse_tlv (&p, &n, &ti))
-    return 0;
+    {
+      TRETURN 0;
+    }
   if (!(ti.cls == ASN1_CLASS_UNIVERSAL && ti.tag == ASN1_TAG_SEQUENCE
         && ti.is_cons) )
-    return 0;
+    TRETURN 0;
   if (parse_tlv (&p, &n, &ti))
-    return 0;
+    {
+      TRETURN 0;
+    }
   if (!(ti.cls == ASN1_CLASS_UNIVERSAL && ti.tag == ASN1_TAG_OBJECT_ID
         && !ti.is_cons && ti.length) || ti.length > n)
-    return 0;
+    TRETURN 0;
   if (ti.length == 9 && !memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02", 9))
-    return 1;
-  return 0;
+    {
+      TRETURN 1;
+    }
+  TRETURN 0;
 }
 #endif
 
@@ -170,6 +177,7 @@ is_cms_signed_data (const char *buffer, size_t length)
 static int
 t2body (MimeDataProvider *provider, rfc822parse_t msg)
 {
+  TSTART;
   rfc822parse_field_t field;
   mime_context_t ctx = provider->mime_context ();
   const char *ctmain, *ctsub;
@@ -410,13 +418,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
                        SRCNAME, __func__);
     }
 
-  return 0;
+  TRETURN 0;
 }
 
 static int
 message_cb (void *opaque, rfc822parse_event_t event,
             rfc822parse_t msg)
 {
+  TSTART;
   int retval = 0;
 
   MimeDataProvider *provider = static_cast<MimeDataProvider*> (opaque);
@@ -481,7 +490,7 @@ message_cb (void *opaque, rfc822parse_event_t event,
       break;
     }
 
-  return retval;
+  TRETURN retval;
 }
 
 MimeDataProvider::MimeDataProvider(bool no_headers) :
@@ -489,16 +498,19 @@ MimeDataProvider::MimeDataProvider(bool no_headers) :
   m_has_html_body(false),
   m_collect_everything(no_headers)
 {
+  TSTART;
   memdbg_ctor ("MimeDataProvider");
   m_mime_ctx = (mime_context_t) xcalloc (1, sizeof *m_mime_ctx);
   m_mime_ctx->msg = rfc822parse_open (message_cb, this);
   m_mime_ctx->mimestruct_tail = &m_mime_ctx->mimestruct;
+  TRETURN;
 }
 
 #ifdef HAVE_W32_SYSTEM
 MimeDataProvider::MimeDataProvider(LPSTREAM stream, bool no_headers):
   MimeDataProvider(no_headers)
 {
+  TSTART;
   if (stream)
     {
       stream->AddRef ();
@@ -507,25 +519,29 @@ MimeDataProvider::MimeDataProvider(LPSTREAM stream, bool no_headers):
   else
     {
       log_error ("%s:%s called without stream ", SRCNAME, __func__);
-      return;
+      TRETURN;
     }
   log_data ("%s:%s Collecting data.", SRCNAME, __func__);
   collect_data (stream);
   log_data ("%s:%s Data collected.", SRCNAME, __func__);
   gpgol_release (stream);
+  TRETURN;
 }
 #endif
 
 MimeDataProvider::MimeDataProvider(FILE *stream, bool no_headers):
   MimeDataProvider(no_headers)
 {
+  TSTART;
   log_data ("%s:%s Collecting data from file.", SRCNAME, __func__);
   collect_data (stream);
   log_data ("%s:%s Data collected.", SRCNAME, __func__);
+  TRETURN;
 }
 
 MimeDataProvider::~MimeDataProvider()
 {
+  TSTART;
   memdbg_dtor ("MimeDataProvider");
   log_debug ("%s:%s", SRCNAME, __func__);
   while (m_mime_ctx->mimestruct)
@@ -544,12 +560,14 @@ MimeDataProvider::~MimeDataProvider()
     {
       delete m_signature;
     }
+  TRETURN;
 }
 
 bool
 MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
 {
-  return op == GpgME::DataProvider::Read ||
+  TSTART;
+  TRETURN op == GpgME::DataProvider::Read ||
          op == GpgME::DataProvider::Seek ||
          op == GpgME::DataProvider::Write ||
          op == GpgME::DataProvider::Release;
@@ -558,6 +576,7 @@ MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
 ssize_t
 MimeDataProvider::read(void *buffer, size_t size)
 {
+  TSTART;
   log_data ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
                  SRCNAME, __func__, size);
   ssize_t bRead = m_crypto_data.read (buffer, size);
@@ -577,15 +596,16 @@ MimeDataProvider::read(void *buffer, size_t size)
                            string_to_hex (buf).c_str ());
         }
     }
-  return bRead;
+  TRETURN bRead;
 }
 
 /* Split some raw data into lines and handle them accordingly.
-   returns the amount of bytes not taken from the input buffer.
+   Returns the amount of bytes not taken from the input buffer.
 */
 size_t
 MimeDataProvider::collect_input_lines(const char *input, size_t insize)
 {
+  TSTART;
   char linebuf[LINEBUFSIZE];
   const char *s = input;
   size_t pos = 0;
@@ -601,7 +621,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
           log_error ("%s:%s: rfc822 parser failed: line too long\n",
                      SRCNAME, __func__);
           GpgME::Error::setSystemError (GPG_ERR_EIO);
-          return not_taken;
+          TRETURN not_taken;
         }
       if (*s != '\n')
         linebuf[pos++] = *s;
@@ -623,7 +643,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
             {
               log_error ("%s:%s: rfc822 parser failed: %s\n",
                          SRCNAME, __func__, strerror (errno));
-              return not_taken;
+              TRETURN not_taken;
             }
 
           /* Check if the first line of the body is actually
@@ -769,16 +789,17 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
           pos = 0;
         }
     }
-  return not_taken;
+  TRETURN not_taken;
 }
 
 #ifdef HAVE_W32_SYSTEM
 void
 MimeDataProvider::collect_data(LPSTREAM stream)
 {
+  TSTART;
   if (!stream)
     {
-      return;
+      TRETURN;
     }
   HRESULT hr;
   char buf[BUFSIZE];
@@ -910,15 +931,17 @@ MimeDataProvider::collect_data(LPSTREAM stream)
           m_crypto_data.write (line.c_str (), line.size ());
         }
     }
+  TRETURN;
 }
 #endif
 
 void
 MimeDataProvider::collect_data(FILE *stream)
 {
+  TSTART;
   if (!stream)
     {
-      return;
+      TRETURN;
     }
   char buf[BUFSIZE];
   size_t bRead;
@@ -946,16 +969,18 @@ MimeDataProvider::collect_data(FILE *stream)
           log_error ("%s:%s: Collect failed to consume anything.\n"
                      "Buffer too small?",
                      SRCNAME, __func__);
-          return;
+          TRETURN;
         }
       log_data ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
                        SRCNAME, __func__, m_rawbuf.size() - not_taken);
       m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
     }
+  TRETURN;
 }
 
 ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
 {
+  TSTART;
   if (m_collect_everything)
     {
       /* Writing with collect everything one means that we are outputprovider.
@@ -963,7 +988,7 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
       log_data ("%s:%s: Using complete input as body " SIZE_T_FORMAT " bytes.",
                        SRCNAME, __func__, bufSize);
       m_body += std::string ((const char *) buffer, bufSize);
-      return bufSize;
+      TRETURN bufSize;
     }
   m_rawbuf += std::string ((const char*)buffer, bufSize);
   size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
@@ -974,29 +999,32 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
       log_error ("%s:%s: Write failed to consume anything.\n"
                  "Buffer too small? or no newlines in text?",
                  SRCNAME, __func__);
-      return bufSize;
+      TRETURN bufSize;
     }
   log_data ("%s:%s: Write Consumed: " SIZE_T_FORMAT " bytes",
                    SRCNAME, __func__, m_rawbuf.size() - not_taken);
   m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
-  return bufSize;
+  TRETURN bufSize;
 }
 
 off_t
 MimeDataProvider::seek(off_t offset, int whence)
 {
-  return m_crypto_data.seek (offset, whence);
+  TSTART;
+  TRETURN m_crypto_data.seek (offset, whence);
 }
 
 GpgME::Data *
 MimeDataProvider::signature() const
 {
-  return m_signature;
+  TSTART;
+  TRETURN m_signature;
 }
 
 std::shared_ptr<Attachment>
 MimeDataProvider::create_attachment()
 {
+  TSTART;
   log_data ("%s:%s: Creating attachment.",
                    SRCNAME, __func__);
 
@@ -1026,12 +1054,13 @@ MimeDataProvider::create_attachment()
     }
   m_attachments.push_back (attach);
 
-  return attach;
+  TRETURN attach;
   /* TODO handle encoding */
 }
 
 void MimeDataProvider::finalize ()
 {
+  TSTART;
   if (m_rawbuf.size ())
     {
       m_rawbuf += "\r\n";
@@ -1044,24 +1073,29 @@ void MimeDataProvider::finalize ()
                      SRCNAME, __func__);
         }
     }
+  TRETURN;
 }
 
 const std::string &MimeDataProvider::get_body ()
 {
-  return m_body;
+  TSTART;
+  TRETURN m_body;
 }
 
 const std::string &MimeDataProvider::get_html_body ()
 {
-  return m_html_body;
+  TSTART;
+  TRETURN m_html_body;
 }
 
 const std::string &MimeDataProvider::get_html_charset() const
 {
-  return m_html_charset;
+  TSTART;
+  TRETURN m_html_charset;
 }
 
 const std::string &MimeDataProvider::get_body_charset() const
 {
-  return m_body_charset;
+  TSTART;
+  TRETURN m_body_charset;
 }

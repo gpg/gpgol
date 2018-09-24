@@ -39,9 +39,11 @@ static int invalidation_blocked = 0;
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+  TSTART;
 //  log_debug ("WMG: %x", (unsigned int) message);
   if (message == WM_USER + 42)
     {
+      TSTART;
       wm_ctx_t *ctx = (wm_ctx_t *) lParam;
       log_debug ("%s:%s: Recieved user msg: %i",
                  SRCNAME, __func__, ctx->wmsg_type);
@@ -54,10 +56,10 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Parsing done for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               mail->parsing_done();
-              break;
+              TBREAK;
             }
           case (RECIPIENT_ADDED):
             {
@@ -66,10 +68,10 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Recipient add for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               mail->locateKeys_o ();
-              break;
+              TBREAK;
             }
           case (REVERT_MAIL):
             {
@@ -78,7 +80,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Revert mail for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
 
               mail->setNeedsSave (true);
@@ -97,7 +99,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->updateBody_o ();
               log_debug ("%s:%s: Revert mail done.",
                          SRCNAME, __func__);
-              break;
+              TBREAK;
             }
           case (INVALIDATE_UI):
             {
@@ -115,14 +117,14 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              " Ignoring it",
                              SRCNAME, __func__);
                 }
-              break;
+              TBREAK;
             }
           case (INVALIDATE_LAST_MAIL):
             {
               log_debug ("%s:%s: clearing last mail",
                          SRCNAME, __func__);
               Mail::clearLastMail ();
-              break;
+              TBREAK;
             }
           case (CLOSE):
             {
@@ -131,7 +133,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Close for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               mail->refCurrentItem();
               Mail::closeInspector_o (mail);
@@ -140,7 +142,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               log_debug ("%s:%s: Close finished.",
                          SRCNAME, __func__);
               mail->releaseCurrentItem();
-              break;
+              TBREAK;
             }
           case (CRYPTO_DONE):
             {
@@ -149,7 +151,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Crypto done for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               // modify the mail.
               if (mail->cryptState () == Mail::NeedsUpdateInOOM)
@@ -182,7 +184,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     {
                       gpgol_bug (mail->getWindow (),
                                  ERR_GET_BASE_MSG_FAILED);
-                      break;
+                      TBREAK;
                     }
                   // It's important we use the _base_ message here.
                   mapi_save_changes (mail_message, FORCE_SAVE);
@@ -207,7 +209,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
               log_debug ("%s:%s:  Send for %p completed.",
                          SRCNAME, __func__, mail);
-              break;
+              TBREAK;
             }
           case (BRING_TO_FRONT):
             {
@@ -223,13 +225,13 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   log_debug ("%s:%s: No active window found for bring to front.",
                              SRCNAME, __func__);
                 }
-              break;
+              TBREAK;
             }
           case (WKS_NOTIFY):
             {
               WKSHelper::instance ()->notify ((const char *) ctx->data);
               xfree (ctx->data);
-              break;
+              TBREAK;
             }
           case (CLEAR_REPLY_FORWARD):
             {
@@ -238,11 +240,11 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: Clear reply forward for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               mail->wipe_o (true);
               mail->removeAllAttachments_o ();
-              break;
+              TBREAK;
             }
           case (DO_AUTO_SECURE):
             {
@@ -251,10 +253,10 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: DO_AUTO_SECURE for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               mail->setDoAutosecure_m (true);
-              break;
+              TBREAK;
             }
           case (DONT_AUTO_SECURE):
             {
@@ -263,10 +265,10 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                   log_debug ("%s:%s: DO_AUTO_SECURE for mail which is gone.",
                              SRCNAME, __func__);
-                  break;
+                  TBREAK;
                 }
               mail->setDoAutosecure_m (false);
-              break;
+              TBREAK;
             }
           case (CONFIG_KEY_DONE):
             {
@@ -274,13 +276,13 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                          SRCNAME, __func__);
 
               Addressbook::update_key_o (ctx->data);
-              break;
+              TBREAK;
             }
           default:
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);
         }
-        return 0;
+        TRETURN 0;
     }
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -288,11 +290,12 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 HWND
 create_responder_window ()
 {
+  TSTART;
   size_t cls_name_len = strlen(RESPONDER_CLASS_NAME) + 1;
   char cls_name[cls_name_len];
   if (g_responder_window)
     {
-      return g_responder_window;
+      TRETURN g_responder_window;
     }
   /* Create Window wants a mutable string as the first parameter */
   snprintf (cls_name, cls_name_len, "%s", RESPONDER_CLASS_NAME);
@@ -312,12 +315,13 @@ create_responder_window ()
   g_responder_window = CreateWindow (cls_name, RESPONDER_CLASS_NAME, 0, 0, 0,
                                      0, 0, 0, (HMENU) 0,
                                      (HINSTANCE) GetModuleHandle(NULL), 0);
-  return g_responder_window;
+  TRETURN g_responder_window;
 }
 
 static int
 send_msg_to_ui_thread (wm_ctx_t *ctx)
 {
+  TSTART;
   size_t cls_name_len = strlen(RESPONDER_CLASS_NAME) + 1;
   char cls_name[cls_name_len];
   snprintf (cls_name, cls_name_len, "%s", RESPONDER_CLASS_NAME);
@@ -327,15 +331,16 @@ send_msg_to_ui_thread (wm_ctx_t *ctx)
   {
     log_error ("%s:%s: Failed to find responder window.",
                SRCNAME, __func__);
-    return -1;
+    TRETURN -1;
   }
   SendMessage (responder, WM_USER + 42, 0, (LPARAM) ctx);
-  return 0;
+  TRETURN 0;
 }
 
 int
 do_in_ui_thread (gpgol_wmsg_type type, void *data)
 {
+  TSTART;
   wm_ctx_t ctx = {NULL, UNKNOWN, 0, 0};
   ctx.wmsg_type = type;
   ctx.data = data;
@@ -345,14 +350,15 @@ do_in_ui_thread (gpgol_wmsg_type type, void *data)
 
   if (send_msg_to_ui_thread (&ctx))
     {
-      return -1;
+      TRETURN -1;
     }
-  return ctx.err;
+  TRETURN ctx.err;
 }
 
 static DWORD WINAPI
 do_async (LPVOID arg)
 {
+  TSTART;
   wm_ctx_t *ctx = (wm_ctx_t*) arg;
   log_debug ("%s:%s: Do async with type %i after %i ms",
              SRCNAME, __func__, ctx ? ctx->wmsg_type : -1,
@@ -363,18 +369,20 @@ do_async (LPVOID arg)
     }
   send_msg_to_ui_thread (ctx);
   xfree (ctx);
-  return 0;
+  TRETURN 0;
 }
 
 void
 do_in_ui_thread_async (gpgol_wmsg_type type, void *data, int delay)
 {
+  TSTART;
   wm_ctx_t *ctx = (wm_ctx_t *) xcalloc (1, sizeof (wm_ctx_t));
   ctx->wmsg_type = type;
   ctx->data = data;
   ctx->delay = delay;
 
   CloseHandle (CreateThread (NULL, 0, do_async, (LPVOID) ctx, 0, NULL));
+  TRETURN;
 }
 
 LRESULT CALLBACK
@@ -400,7 +408,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
         if (!GpgolAddin::get_instance() || !GpgolAddin::get_instance ()->get_application())
           {
             TRACEPOINT;
-            break;
+            TBREAK;
           }
         LPDISPATCH explorers = get_oom_object (GpgolAddin::get_instance ()->get_application(),
                                                "Explorers");
@@ -409,7 +417,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
           {
             log_error ("%s:%s: No explorers object",
                        SRCNAME, __func__);
-            break;
+            TBREAK;
           }
         int count = get_oom_int (explorers, "Count");
 
@@ -418,7 +426,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
             log_debug ("%s:%s: More then one explorer. Not shutting down.",
                        SRCNAME, __func__);
             gpgol_release (explorers);
-            break;
+            TBREAK;
           }
 
         LPDISPATCH explorer = get_oom_object (explorers, "Item(1)");
@@ -427,11 +435,11 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
         if (!explorer)
           {
             TRACEPOINT;
-            break;
+            TBREAK;
           }
 
         /* Casting to LPOLEWINDOW and calling GetWindow
-           succeeded in Outlook 2016 but always returned
+           succeeded in Outlook 2016 but always TRETURNed
            the number 1. So we need this hack. */
         char *caption = get_oom_string (explorer, "Caption");
         gpgol_release (explorer);
@@ -439,7 +447,7 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
           {
             log_debug ("%s:%s: No caption.",
                        SRCNAME, __func__);
-            break;
+            TBREAK;
           }
         /* rctrl_renwnd32 is the window class of outlook. */
         HWND hwnd = FindWindowExA(NULL, lastChild, "rctrl_renwnd32",
@@ -452,9 +460,9 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
                        "Shutting down.",
                        SRCNAME, __func__);
             GpgolAddin::get_instance ()->shutdown();
-            break;
+            TBREAK;
           }
-        break;
+        TBREAK;
       }
      case WM_SYSCOMMAND:
         /*
@@ -480,7 +488,8 @@ gpgol_hook(int code, WPARAM wParam, LPARAM lParam)
 HHOOK
 create_message_hook()
 {
-  return SetWindowsHookEx (WH_CALLWNDPROC,
+  TSTART;
+  TRETURN SetWindowsHookEx (WH_CALLWNDPROC,
                            gpgol_hook,
                            NULL,
                            GetCurrentThreadId());
@@ -493,11 +502,12 @@ static bool invalidation_in_progress;
 DWORD WINAPI
 delayed_invalidate_ui (LPVOID minsleep)
 {
+  TSTART;
   if (invalidation_in_progress)
     {
       log_debug ("%s:%s: Invalidation canceled as it is in progress.",
                  SRCNAME, __func__);
-      return 0;
+      TRETURN 0;
     }
   TRACEPOINT;
   invalidation_in_progress = true;
@@ -522,27 +532,31 @@ delayed_invalidate_ui (LPVOID minsleep)
   TRACEPOINT;
   invalidation_in_progress = false;
   gpgrt_lock_unlock(&invalidate_lock);
-  return 0;
+  TRETURN 0;
 }
 
 DWORD WINAPI
 close_mail (LPVOID mail)
 {
+  TSTART;
   do_in_ui_thread (CLOSE, mail);
-  return 0;
+  TRETURN 0;
 }
 
 void
 blockInv()
 {
+  TSTART;
   invalidation_blocked++;
   log_oom ("%s:%s: Invalidation block count %i",
                  SRCNAME, __func__, invalidation_blocked);
+  TRETURN;
 }
 
 void
 unblockInv()
 {
+  TSTART;
   invalidation_blocked--;
   log_oom ("%s:%s: Invalidation block count %i",
                  SRCNAME, __func__, invalidation_blocked);
@@ -553,4 +567,5 @@ unblockInv()
                  SRCNAME, __func__);
       invalidation_blocked = 0;
     }
+  TRETURN;
 }

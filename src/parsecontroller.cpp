@@ -64,13 +64,15 @@ using namespace GpgME;
 static bool
 expect_no_headers (msgtype_t type)
 {
-  return type != MSGTYPE_GPGOL_MULTIPART_SIGNED;
+  TSTART;
+  TRETURN type != MSGTYPE_GPGOL_MULTIPART_SIGNED;
 }
 
 static bool
 expect_no_mime (msgtype_t type)
 {
-  return type == MSGTYPE_GPGOL_PGP_MESSAGE ||
+  TSTART;
+  TRETURN type == MSGTYPE_GPGOL_PGP_MESSAGE ||
          type == MSGTYPE_GPGOL_CLEAR_SIGNED;
 }
 
@@ -82,11 +84,13 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_type (type),
     m_block_html (false)
 {
+  TSTART;
   memdbg_ctor ("ParseController");
   log_data ("%s:%s: Creating parser for stream: %p of type %i"
                    " expect no headers: %i expect no mime: %i",
                    SRCNAME, __func__, instream, type,
                    expect_no_headers (type), expect_no_mime (type));
+  TRETURN;
 }
 #endif
 
@@ -97,17 +101,21 @@ ParseController::ParseController(FILE *instream, msgtype_t type):
     m_type (type),
     m_block_html (false)
 {
+  TSTART;
   memdbg_ctor ("ParseController");
   log_data ("%s:%s: Creating parser for stream: %p of type %i",
                    SRCNAME, __func__, instream, type);
+  TRETURN;
 }
 
 ParseController::~ParseController()
 {
+  TSTART;
   log_debug ("%s:%s", SRCNAME, __func__);
   memdbg_dtor ("ParseController");
   delete m_inputprovider;
   delete m_outputprovider;
+  TRETURN;
 }
 
 static void
@@ -141,15 +149,17 @@ operation_for_type(msgtype_t type, bool *decrypt,
 static bool
 is_smime (Data &data)
 {
+  TSTART;
   data.seek (0, SEEK_SET);
   auto id = data.type();
   data.seek (0, SEEK_SET);
-  return id == Data::CMSSigned || id == Data::CMSEncrypted;
+  TRETURN id == Data::CMSSigned || id == Data::CMSEncrypted;
 }
 
 static std::string
 format_recipients(GpgME::DecryptionResult result, Protocol protocol)
 {
+  TSTART;
   std::string msg;
   for (const auto recipient: result.recipients())
     {
@@ -168,12 +178,13 @@ format_recipients(GpgME::DecryptionResult result, Protocol protocol)
       }
       msg += std::string("<br/>") + _("Unknown Key:") + " 0x" + recipient.keyID();
     }
-  return msg;
+  TRETURN msg;
 }
 
 static std::string
 format_error(GpgME::DecryptionResult result, Protocol protocol)
 {
+  TSTART;
   char *buf;
   bool no_sec = false;
   std::string msg;
@@ -226,23 +237,26 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
     {
       log_error ("%s:%s:Failed to Format error.",
                  SRCNAME, __func__);
-      return "Failed to Format error.";
+      TRETURN "Failed to Format error.";
     }
   msg = buf;
   memdbg_alloc (buf);
   xfree (buf);
-  return msg;
+  TRETURN msg;
 }
 
 void
 ParseController::setSender(const std::string &sender)
 {
+  TSTART;
   m_sender = sender;
+  TRETURN;
 }
 
 static bool
 is_valid_chksum(const GpgME::Signature &sig)
 {
+  TSTART;
   const auto sum = sig.summary();
   static unsigned int valid_mask = (unsigned int) (
       GpgME::Signature::Valid |
@@ -254,14 +268,14 @@ is_valid_chksum(const GpgME::Signature &sig)
       GpgME::Signature::CrlTooOld |
       GpgME::Signature::TofuConflict );
 
-  return sum & valid_mask;
+  TRETURN sum & valid_mask;
 }
 
 
 /* Note on stability:
 
    Experiments have shown that we can have a crash if parse
-   returns at time that is not good for the state of Outlook.
+   Returns at time that is not good for the state of Outlook.
 
    This happend in my test instance after a delay of > 1s < 3s
    with a < 1% chance :-/
@@ -273,6 +287,7 @@ is_valid_chksum(const GpgME::Signature &sig)
 void
 ParseController::parse()
 {
+  TSTART;
   // Wrap the input stream in an attachment / GpgME Data
   Protocol protocol;
   bool decrypt, verify;
@@ -322,7 +337,7 @@ ParseController::parse()
       memdbg_alloc (buf);
       m_error = buf;
       xfree (buf);
-      return;
+      TRETURN;
     }
 
   /* Maybe a different option for this ? */
@@ -530,71 +545,76 @@ ParseController::parse()
       m_outputprovider->finalize ();
     }
 
-  return;
+  TRETURN;
 }
 
 const std::string
 ParseController::get_html_body () const
 {
+  TSTART;
   if (m_outputprovider)
     {
-      return m_outputprovider->get_html_body ();
+      TRETURN m_outputprovider->get_html_body ();
     }
   else
     {
-      return std::string();
+      TRETURN std::string();
     }
 }
 
 const std::string
 ParseController::get_body () const
 {
+  TSTART;
   if (m_outputprovider)
     {
-      return m_outputprovider->get_body ();
+      TRETURN m_outputprovider->get_body ();
     }
   else
     {
-      return std::string();
+      TRETURN std::string();
     }
 }
 
 const std::string
 ParseController::get_body_charset() const
 {
+  TSTART;
   if (m_outputprovider)
     {
-      return m_outputprovider->get_body_charset();
+      TRETURN m_outputprovider->get_body_charset();
     }
   else
     {
-      return std::string();
+      TRETURN std::string();
     }
 }
 
 const std::string
 ParseController::get_html_charset() const
 {
+  TSTART;
   if (m_outputprovider)
     {
-      return m_outputprovider->get_html_charset();
+      TRETURN m_outputprovider->get_html_charset();
     }
   else
     {
-      return std::string();
+      TRETURN std::string();
     }
 }
 
 std::vector<std::shared_ptr<Attachment> >
 ParseController::get_attachments() const
 {
+  TSTART;
   if (m_outputprovider)
     {
-      return m_outputprovider->get_attachments();
+      TRETURN m_outputprovider->get_attachments();
     }
   else
     {
-      return std::vector<std::shared_ptr<Attachment> >();
+      TRETURN std::vector<std::shared_ptr<Attachment> >();
     }
 }
 
@@ -603,13 +623,14 @@ GPGRT_LOCK_DEFINE(keylist_lock);
 std::vector<Key>
 ParseController::get_ultimate_keys()
 {
+  TSTART;
   static bool s_keys_listed;
   static std::vector<Key> s_ultimate_keys;
   gpgrt_lock_lock (&keylist_lock);
   if (s_keys_listed)
     {
       gpgrt_lock_unlock (&keylist_lock);
-      return s_ultimate_keys;
+      TRETURN s_ultimate_keys;
     }
   log_debug ("%s:%s: Starting keylisting.",
              SRCNAME, __func__);
@@ -620,7 +641,7 @@ ParseController::get_ultimate_keys()
       log_error ("%s:%s: broken installation no ctx.",
                  SRCNAME, __func__);
       gpgrt_lock_unlock (&keylist_lock);
-      return s_ultimate_keys;
+      TRETURN s_ultimate_keys;
     }
   ctx->setKeyListMode (KeyListMode::Local);
   Error err;
@@ -630,7 +651,7 @@ ParseController::get_ultimate_keys()
       log_error ("%s:%s: Failed to start keylisting err: %i: %s",
                  SRCNAME, __func__, err.code (), err.asString());
       gpgrt_lock_unlock (&keylist_lock);
-      return s_ultimate_keys;
+      TRETURN s_ultimate_keys;
     }
   TRACEPOINT;
   while (!err)
@@ -667,5 +688,5 @@ ParseController::get_ultimate_keys()
 
   s_keys_listed = true;
   gpgrt_lock_unlock (&keylist_lock);
-  return s_ultimate_keys;
+  TRETURN s_ultimate_keys;
 }

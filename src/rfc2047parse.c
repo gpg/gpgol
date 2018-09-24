@@ -83,12 +83,13 @@ rfc2047_token_new (const char *text, size_t len)
 {
   rfc2047_token *token;
 
+  TSTART;
   token = xmalloc (sizeof (rfc2047_token));
   memset (token, 0, sizeof (rfc2047_token));
   token->length = len;
   token->text = text;
 
-  return token;
+  TRETURN token;
 }
 
 static rfc2047_token *
@@ -103,9 +104,12 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
   char encoding;
   size_t n;
 
+  TSTART;
   /* check that this could even be an encoded-word token */
   if (len < 7 || strncmp (word, "=?", 2) != 0 || strncmp (word + len - 2, "?=", 2) != 0)
-    return NULL;
+    {
+      TRETURN NULL;
+    }
 
   /* skip over '=?' */
   inptr = word + 2;
@@ -113,12 +117,14 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 
   if (*tmpchar == '?' || *tmpchar == '*') {
       /* this would result in an empty charset */
-      return NULL;
+      TRETURN NULL;
   }
 
   /* skip to the end of the charset */
   if (!(inptr = memchr (inptr, '?', len - 2)) || inptr[2] != '?')
-    return NULL;
+    {
+      TRETURN NULL;
+    }
 
   /* copy the charset into a buffer */
   n = (size_t) (inptr - tmpchar);
@@ -143,7 +149,9 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 
   /* make sure the first char after the encoding is another '?' */
   if (inptr[1] != '?')
-    return NULL;
+    {
+      TRETURN NULL;
+    }
 
   switch (*inptr++) {
     case 'B': case 'b':
@@ -153,7 +161,7 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
       encoding = 'Q';
       break;
     default:
-      return NULL;
+      TRETURN NULL;
   }
 
   /* the payload begins right after the '?' */
@@ -164,24 +172,28 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 
   /* make sure that we don't have something like: =?iso-8859-1?Q?= */
   if (payload > inptr)
-    return NULL;
+    {
+      TRETURN NULL;
+    }
 
   token = rfc2047_token_new (payload, inptr - payload);
   token->charset = charset;
   token->encoding = encoding;
 
-  return token;
+  TRETURN token;
 }
 
 static void
 rfc2047_token_free (rfc2047_token * tok)
 {
+  TSTART;
   if (!tok)
     {
-      return;
+      TRETURN;
     }
   xfree (tok->charset);
   xfree (tok);
+  TRETURN;
 }
 
 static rfc2047_token *
@@ -195,6 +207,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
   bool ascii;
   size_t n;
 
+  TSTART;
   tail = (rfc2047_token *) &list;
   list.next = NULL;
   lwsp = NULL;
@@ -315,12 +328,13 @@ non_rfc2047:
 
   *len = (size_t) (inptr - in);
 
-  return list.next;
+  TRETURN list.next;
 }
 
 static void
 rfc2047_token_list_free (rfc2047_token * tokens)
 {
+  TSTART;
   rfc2047_token * cur = tokens;
   while (cur)
     {
@@ -328,6 +342,7 @@ rfc2047_token_list_free (rfc2047_token * tokens)
       rfc2047_token_free (cur);
       cur = next;
     }
+  TRETURN;
 }
 
 /* this decodes rfc2047's version of quoted-printable */
@@ -341,8 +356,11 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out, int *sta
   unsigned int saved;
   int need;
 
+  TSTART;
   if (len == 0)
-    return 0;
+    {
+      TRETURN 0;
+    }
 
   inend = in + len;
   outptr = out;
@@ -421,7 +439,7 @@ decode:
   *state = need;
   *save = saved;
 
-  return (size_t) (outptr - out);
+  TRETURN (size_t) (outptr - out);
 }
 
 /**
@@ -447,6 +465,7 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
   unsigned char c;
   int npad, n, i;
 
+  TSTART;
   inend = inbuf + inlen;
   outptr = outbuf;
   inptr = inbuf;
@@ -499,7 +518,7 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
   *state = (npad << 8) | n;
   *save = n ? saved : 0;
 
-  return (outptr - outbuf);
+  TRETURN (outptr - outbuf);
 }
 
 static size_t
@@ -508,10 +527,15 @@ rfc2047_token_decode (rfc2047_token *token, unsigned char *outbuf, int *state, u
   const unsigned char *inbuf = (const unsigned char *) token->text;
   size_t len = token->length;
 
+  TSTART;
   if (token->encoding == 'B')
-    return g_mime_encoding_base64_decode_step (inbuf, len, outbuf, state, save);
+    {
+      TRETURN g_mime_encoding_base64_decode_step (inbuf, len, outbuf, state, save);
+    }
   else
-    return quoted_decode (inbuf, len, outbuf, state, save);
+    {
+      TRETURN quoted_decode (inbuf, len, outbuf, state, save);
+    }
 }
 
 static char *
@@ -528,6 +552,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
   int state;
   char *str;
 
+  TSTART;
   decoded = xmalloc (buflen + 1);
   memset (decoded, 0, buflen + 1);
   tmplen = 76;
@@ -613,7 +638,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
 
   xfree (outbuf);
 
-  return decoded;
+  TRETURN decoded;
 }
 
 
@@ -637,22 +662,26 @@ g_mime_utils_header_decode_phrase (const char *phrase)
   char *decoded;
   size_t len;
 
+  TSTART;
   tokens = tokenize_rfc2047_phrase (phrase, &len);
   decoded = rfc2047_decode_tokens (tokens, len);
   rfc2047_token_list_free (tokens);
 
-  return decoded;
+  TRETURN decoded;
 }
 
 /* Try to parse an rfc 2047 filename for attachment handling.
-   returns the parsed string. On errors the input string is just
+   Returns the parsed string. On errors the input string is just
    copied with strdup */
 char *
 rfc2047_parse (const char *input)
 {
   char *decoded;
+  TSTART;
   if (!input)
-    return xstrdup ("");
+    {
+      TRETURN xstrdup ("");
+    }
 
   log_data ("%s:%s: Input: \"%s\"",
             SRCNAME, __func__, input);
@@ -665,7 +694,7 @@ rfc2047_parse (const char *input)
   if (!decoded || !strlen (decoded))
     {
       xfree (decoded);
-      return xstrdup (input);
+      TRETURN xstrdup (input);
     }
-  return decoded;
+  TRETURN decoded;
 }

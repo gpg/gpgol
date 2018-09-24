@@ -42,9 +42,10 @@
 static int
 sink_data_write (sink_t sink, const void *data, size_t datalen)
 {
+  TSTART;
   GpgME::Data *d = static_cast<GpgME::Data *>(sink->cb_data);
   d->write (data, datalen);
-  return 0;
+  TRETURN 0;
 }
 
 static int
@@ -66,22 +67,27 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
     m_crypto_success (false),
     m_proto (proto)
 {
+  TSTART;
   memdbg_ctor ("CryptController");
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
   m_recipient_addrs = mail->getCachedRecipients ();
+  TRETURN;
 }
 
 CryptController::~CryptController()
 {
+  TSTART;
   memdbg_dtor ("CryptController");
   log_debug ("%s:%s:%p",
              SRCNAME, __func__, m_mail);
+  TRETURN;
 }
 
 int
 CryptController::collect_data ()
 {
+  TSTART;
   /* Get the attachment info and the body.  We need to do this before
      creating the engine's filter because sending the cancel to
      the engine with nothing for the engine to process.  Will result
@@ -117,7 +123,7 @@ CryptController::collect_data ()
       gpgol_release (message);
       mapi_release_attach_table (att_table);
       xfree (body);
-      return -1;
+      TRETURN -1;
     }
 
   bool do_inline = m_mail->getDoPGPInline ();
@@ -160,7 +166,7 @@ CryptController::collect_data ()
                  SRCNAME, __func__);
       gpgol_release (message);
       mapi_release_attach_table (att_table);
-      return -1;
+      TRETURN -1;
     }
 
   /* Message is no longer needed */
@@ -170,13 +176,14 @@ CryptController::collect_data ()
 
   /* Set the input buffer to start. */
   m_input.seek (0, SEEK_SET);
-  return 0;
+  TRETURN 0;
 }
 
 int
 CryptController::lookup_fingerprints (const std::string &sigFpr,
                                       const std::vector<std::string> recpFprs)
 {
+  TSTART;
   auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
 
   if (!ctx)
@@ -186,7 +193,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
                  m_proto == GpgME::CMS ? "smime" :
                  m_proto == GpgME::OpenPGP ? "openpgp" :
                  "unknown");
-      return -1;
+      TRETURN -1;
     }
 
   ctx->setKeyListMode (GpgME::Local);
@@ -200,7 +207,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
                      m_proto == GpgME::CMS ? "smime" :
                      m_proto == GpgME::OpenPGP ? "openpgp" :
                      "unknown");
-          return -1;
+          TRETURN -1;
       }
       // reset context
       ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
@@ -208,7 +215,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   }
 
   if (!recpFprs.size()) {
-      return 0;
+     TRETURN 0;
   }
 
   // Convert recipient fingerprints
@@ -220,7 +227,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
       log_error ("%s:%s: failed to start recipient keylisting",
                  SRCNAME, __func__);
       release_cArray (cRecps);
-      return -1;
+      TRETURN -1;
   }
 
   do {
@@ -231,13 +238,14 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
 
   release_cArray (cRecps);
 
-  return 0;
+  TRETURN 0;
 }
 
 
 int
 CryptController::parse_output (GpgME::Data &resolverOutput)
 {
+  TSTART;
   // Todo: Use Data::toString
   std::istringstream ss(resolverOutput.toString());
   std::string line;
@@ -251,13 +259,13 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
         {
           log_debug ("%s:%s: resolver canceled",
                      SRCNAME, __func__);
-          return -2;
+          TRETURN -2;
         }
       if (line == "unencrypted")
         {
           log_debug ("%s:%s: FIXME resolver wants unencrypted",
                      SRCNAME, __func__);
-          return -1;
+          TRETURN -1;
         }
       std::istringstream lss (line);
 
@@ -304,10 +312,10 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
                  SRCNAME, __func__);
       gpgol_message_box (m_mail->getWindow (), _("No recipients for encryption selected."),
                          _("GpgOL"), MB_OK);
-      return -2;
+      TRETURN -2;
     }
 
-  return lookup_fingerprints (sigFpr, recpFprs);
+  TRETURN lookup_fingerprints (sigFpr, recpFprs);
 }
 
 static bool
@@ -317,6 +325,7 @@ resolve_through_protocol (const GpgME::Protocol &proto, bool sign,
                           std::vector<GpgME::Key> &r_keys,
                           GpgME::Key &r_sig)
 {
+  TSTART;
   bool sig_ok = true;
   bool enc_ok = true;
 
@@ -332,12 +341,13 @@ resolve_through_protocol (const GpgME::Protocol &proto, bool sign,
       r_sig = cache->getSigningKey (sender.c_str (), proto);
       sig_ok = !r_sig.isNull();
     }
-  return sig_ok && enc_ok;
+  TRETURN sig_ok && enc_ok;
 }
 
 int
 CryptController::resolve_keys_cached()
 {
+  TSTART;
   // Prepare variables
   const auto cached_sender = m_mail->getSender ();
   auto recps = m_recipient_addrs;
@@ -392,7 +402,7 @@ CryptController::resolve_keys_cached()
       m_recipients.clear();
       m_signer_key = GpgME::Key();
       m_proto = GpgME::UnknownProtocol;
-      return 1;
+      TRETURN 1;
     }
 
   if (!m_recipients.empty())
@@ -410,12 +420,13 @@ CryptController::resolve_keys_cached()
                  SRCNAME, __func__, anonstr (m_signer_key.primaryFingerprint ()),
                  to_cstr (m_signer_key.protocol()));
     }
-  return 0;
+  TRETURN 0;
 }
 
 int
 CryptController::resolve_keys ()
 {
+  TSTART;
   m_recipients.clear();
 
   if (!m_recipient_addrs.size())
@@ -432,7 +443,7 @@ CryptController::resolve_keys ()
                          buf,
                          _("GpgOL"), MB_OK);
       xfree(buf);
-      return -1;
+      TRETURN -1;
     }
 
   if (opt.autoresolve && !resolve_keys_cached ())
@@ -440,7 +451,7 @@ CryptController::resolve_keys ()
       log_debug ("%s:%s: resolved keys through the cache",
                  SRCNAME, __func__);
       start_crypto_overlay();
-      return 0;
+      TRETURN 0;
     }
 
   std::vector<std::string> args;
@@ -450,7 +461,7 @@ CryptController::resolve_keys ()
   if (!gpg4win_dir)
     {
       TRACEPOINT;
-      return -1;
+      TRETURN -1;
     }
   const auto resolver = std::string (gpg4win_dir) + "\\bin\\resolver.exe";
   args.push_back (resolver);
@@ -528,7 +539,7 @@ CryptController::resolve_keys ()
     {
       // can't happen
       TRACEPOINT;
-      return -1;
+      TRETURN -1;
     }
 
 
@@ -574,15 +585,16 @@ CryptController::resolve_keys ()
                  SRCNAME, __func__);
       log_data ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
       log_data ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
-      return -1;
+      TRETURN -1;
     }
 
-  return ret;
+  TRETURN ret;
 }
 
 int
 CryptController::do_crypto (GpgME::Error &err)
 {
+  TSTART;
   log_debug ("%s:%s",
              SRCNAME, __func__);
 
@@ -595,12 +607,12 @@ CryptController::do_crypto (GpgME::Error &err)
       //error
       log_debug ("%s:%s: Failure to resolve keys.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
   if (ret == -2)
     {
       // Cancel
-      return -2;
+      TRETURN -2;
     }
   bool do_inline = m_mail->getDoPGPInline ();
 
@@ -622,7 +634,7 @@ CryptController::do_crypto (GpgME::Error &err)
       gpgol_message_box (m_mail->getWindow (),
                          "Failure to create context.",
                          utf8_gettext ("GpgOL"), MB_OK);
-      return -1;
+      TRETURN -1;
     }
   if (!m_signer_key.isNull())
     {
@@ -648,7 +660,7 @@ CryptController::do_crypto (GpgME::Error &err)
                      SRCNAME, __func__, result_pair.first.error().asString(),
                      result_pair.second.error().asString());
           err = err1 ? err1 : err2;
-          return -1;
+          TRETURN -1;
         }
 
       if (err1.isCanceled() || err2.isCanceled())
@@ -656,7 +668,7 @@ CryptController::do_crypto (GpgME::Error &err)
           err = err1.isCanceled() ? err1 : err2;
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
-          return -2;
+          TRETURN -2;
         }
     }
   else if (m_encrypt && m_sign)
@@ -669,13 +681,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Signing error %s.",
                      SRCNAME, __func__, sigResult.error().asString());
-          return -1;
+          TRETURN -1;
         }
       if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
-          return -2;
+          TRETURN -2;
         }
       parse_micalg (sigResult);
 
@@ -696,7 +708,7 @@ CryptController::do_crypto (GpgME::Error &err)
                               m_output, m_input, m_micalg.c_str ()))
         {
           TRACEPOINT;
-          return -1;
+          TRETURN -1;
         }
 
       // Now we have the multipart throw away the rest.
@@ -711,13 +723,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Encryption error %s.",
                      SRCNAME, __func__, err.asString());
-          return -1;
+          TRETURN -1;
         }
       if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
-          return -2;
+          TRETURN -2;
         }
       // Now we have encrypted output just treat it like encrypted.
     }
@@ -731,13 +743,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Encryption error %s.",
                      SRCNAME, __func__, err.asString());
-          return -1;
+          TRETURN -1;
         }
       if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
-          return -2;
+          TRETURN -2;
         }
     }
   else if (m_sign)
@@ -750,13 +762,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Signing error %s.",
                      SRCNAME, __func__, err.asString());
-          return -1;
+          TRETURN -1;
         }
       if (err.isCanceled())
         {
           log_debug ("%s:%s: User cancled",
                      SRCNAME, __func__);
-          return -2;
+          TRETURN -2;
         }
       parse_micalg (result);
     }
@@ -772,15 +784,16 @@ CryptController::do_crypto (GpgME::Error &err)
              SRCNAME, __func__);
   m_crypto_success = true;
 
-  return 0;
+  TRETURN 0;
 }
 
 static int
 write_data (sink_t sink, GpgME::Data &data)
 {
+  TSTART;
   if (!sink || !sink->writefnc)
     {
-      return -1;
+      TRETURN -1;
     }
 
   char buf[4096];
@@ -791,7 +804,7 @@ write_data (sink_t sink, GpgME::Data &data)
       sink->writefnc (sink, buf, nread);
     }
 
-  return 0;
+  TRETURN 0;
 }
 
 int
@@ -800,6 +813,7 @@ create_sign_attach (sink_t sink, protocol_t protocol,
                     GpgME::Data &signedData,
                     const char *micalg)
 {
+  TSTART;
   char boundary[BOUNDARYSIZE+1];
   char top_header[BOUNDARYSIZE+200];
   int rc = 0;
@@ -813,28 +827,28 @@ create_sign_attach (sink_t sink, protocol_t protocol,
   if ((rc = write_string (sink, top_header)))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   /* Write the boundary so that it is not included in the hashing.  */
   if ((rc = write_boundary (sink, boundary, 0)))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   /* Write the signed mime structure */
   if ((rc = write_data (sink, signedData)))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   /* Write the signature attachment */
   if ((rc = write_boundary (sink, boundary, 0)))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   if (protocol == PROTOCOL_OPENPGP)
@@ -859,13 +873,13 @@ create_sign_attach (sink_t sink, protocol_t protocol,
   if (rc)
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   if ((rc = write_string (sink, "\r\n")))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   // Write the signature data
@@ -875,30 +889,30 @@ create_sign_attach (sink_t sink, protocol_t protocol,
       if ((rc = write_b64 (sink, (const void *) sigStr.c_str (), sigStr.size())))
         {
           TRACEPOINT;
-          return rc;
+          TRETURN rc;
         }
     }
   else if ((rc = write_data (sink, signature)))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   // Add an extra linefeed with should not harm.
   if ((rc = write_string (sink, "\r\n")))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
   /* Write the final boundary.  */
   if ((rc = write_boundary (sink, boundary, 1)))
     {
       TRACEPOINT;
-      return rc;
+      TRETURN rc;
     }
 
-  return rc;
+  TRETURN rc;
 }
 
 static int
@@ -906,6 +920,7 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
                        GpgME::Data &encryptedData,
                        int exchange_major_version)
 {
+  TSTART;
   char boundary[BOUNDARYSIZE+1];
   int rc = create_top_encryption_header (sink, protocol, boundary,
                                          false, exchange_major_version);
@@ -914,7 +929,7 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
     {
       log_error ("%s:%s: Failed to create top header.",
                  SRCNAME, __func__);
-      return rc;
+      TRETURN rc;
     }
 
   if (protocol == PROTOCOL_OPENPGP ||
@@ -934,7 +949,7 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
     {
       log_error ("%s:%s: Failed to create top header.",
                  SRCNAME, __func__);
-      return rc;
+      TRETURN rc;
     }
 
   /* Write the final boundary (for OpenPGP) and finish the attachment.  */
@@ -943,12 +958,13 @@ create_encrypt_attach (sink_t sink, protocol_t protocol,
       log_error ("%s:%s: Failed to write boundary.",
                  SRCNAME, __func__);
     }
-  return rc;
+  TRETURN rc;
 }
 
 int
 CryptController::update_mail_mapi ()
 {
+  TSTART;
   log_debug ("%s:%s", SRCNAME, __func__);
 
   LPMESSAGE message = get_oom_base_message (m_mail->item());
@@ -956,7 +972,7 @@ CryptController::update_mail_mapi ()
     {
       log_error ("%s:%s: Failed to obtain message.",
                  SRCNAME, __func__);
-      return -1;
+      TRETURN -1;
     }
 
   if (m_mail->getDoPGPInline ())
@@ -974,7 +990,7 @@ CryptController::update_mail_mapi ()
                      SRCNAME, __func__);
         }
 
-      return 0;
+      TRETURN 0;
     }
 
   mapi_attach_item_t *att_table = mapi_create_attach_table (message, 0);
@@ -1011,7 +1027,7 @@ CryptController::update_mail_mapi ()
       log_error ("%s:%s: Failed to create moss attach.",
                  SRCNAME, __func__);
       gpgol_release (message);
-      return -1;
+      TRETURN -1;
     }
 
   protocol_t protocol = m_proto == GpgME::CMS ?
@@ -1062,16 +1078,17 @@ CryptController::update_mail_mapi ()
   gpgol_release (attach);
   gpgol_release (message);
 
-  return rc;
+  TRETURN rc;
 }
 
 std::string
 CryptController::get_inline_data ()
 {
+  TSTART;
   std::string ret;
   if (!m_mail->getDoPGPInline ())
     {
-      return ret;
+      TRETURN ret;
     }
   m_output.seek (0, SEEK_SET);
   char buf[4096];
@@ -1080,29 +1097,30 @@ CryptController::get_inline_data ()
     {
       ret += std::string (buf, nread);
     }
-  return ret;
+  TRETURN ret;
 }
 
 void
 CryptController::parse_micalg (const GpgME::SigningResult &result)
 {
+  TSTART;
   if (result.isNull())
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   const auto signature = result.createdSignature(0);
   if (signature.isNull())
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   const char *hashAlg = signature.hashAlgorithmAsString ();
   if (!hashAlg)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   if (m_proto == GpgME::OpenPGP)
     {
@@ -1116,11 +1134,13 @@ CryptController::parse_micalg (const GpgME::SigningResult &result)
 
   log_debug ("%s:%s: micalg is: '%s'.",
              SRCNAME, __func__, m_micalg.c_str ());
+  TRETURN;
 }
 
 void
 CryptController::start_crypto_overlay ()
 {
+  TSTART;
   auto wid = m_mail->getWindow ();
 
   std::string text;
@@ -1134,4 +1154,5 @@ CryptController::start_crypto_overlay ()
       text = _("Signing...");
     }
   m_overlay = std::unique_ptr<Overlay> (new Overlay (wid, text));
+  TRETURN;
 }
