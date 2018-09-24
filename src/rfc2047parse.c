@@ -590,7 +590,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
               if (!str)
                 {
                   log_error ("%s:%s: Failed conversion from: %s for word: %s.",
-                             SRCNAME, __func__, charset, outptr);
+                             SRCNAME, __func__, charset, anonstr (outptr));
                 }
               else
                 {
@@ -654,13 +654,13 @@ rfc2047_parse (const char *input)
   if (!input)
     return xstrdup ("");
 
-  log_debug ("%s:%s: Input: \"%s\"",
-             SRCNAME, __func__, input);
+  log_data ("%s:%s: Input: \"%s\"",
+            SRCNAME, __func__, input);
 
   decoded = g_mime_utils_header_decode_phrase (input);
 
-  log_debug ("%s:%s: Decoded: \"%s\"",
-             SRCNAME, __func__, decoded);
+  log_data ("%s:%s: Decoded: \"%s\"",
+            SRCNAME, __func__, decoded);
 
   if (!decoded || !strlen (decoded))
     {

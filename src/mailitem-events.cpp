@@ -679,7 +679,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->setCryptState (Mail::NeedsActualCrypt);
               if (m_mail->encryptSignStart_o ())
                 {
-                  log_debug ("%s:%s: Encrypt sign start failes.",
+                  log_debug ("%s:%s: Encrypt sign start failed.",
                              SRCNAME, __func__);
                   m_mail->setCryptState (Mail::NoCryptMail);
                 }

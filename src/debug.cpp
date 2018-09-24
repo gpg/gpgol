@@ -337,7 +337,7 @@ const char *anonstr (const char *data)
 
   if (it == str_map.end ())
     {
-      const auto anon = std::string ("gpgol_string_") + std::to_string (cnt);
+      const auto anon = std::string ("gpgol_string_") + std::to_string (++cnt);
       str_map.insert (std::make_pair (strData, anon));
       it = str_map.find (strData);
     }

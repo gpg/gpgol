@@ -74,10 +74,10 @@ open_keyadder (LPVOID arg)
   GpgME::Data mystdout, mystderr;
 
   char **cargs = vector_to_cArray (args);
-  log_debug ("%s:%s: launching keyadder args:", SRCNAME, __func__);
+  log_data ("%s:%s: launching keyadder args:", SRCNAME, __func__);
   for (size_t i = 0; cargs && cargs[i]; i++)
     {
-      log_debug (SIZE_T_FORMAT ": '%s'", i, cargs[i]);
+      log_data (SIZE_T_FORMAT ": '%s'", i, cargs[i]);
     }
 
   GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char**> (cargs),
@@ -261,8 +261,7 @@ Addressbook::check_o (Mail *mail)
         {
           log_debug ("%s:%s: failed to resolve contact for %s",
                      SRCNAME, __func__,
-                     (opt.enable_debug & DBG_MIME_PARSER) ?
-                     pair.first.c_str() : "omitted");
+                     anonstr (pair.first.c_str()));
           continue;
         }
 
@@ -283,8 +282,7 @@ Addressbook::check_o (Mail *mail)
 
       log_debug ("%s:%s: found configured pgp key for %s",
                  SRCNAME, __func__,
-                 (opt.enable_debug & DBG_MIME_PARSER) ?
-                 pair.first.c_str() : "omitted");
+                 anonstr (pair.first.c_str()));
 
       char *key_data = get_oom_string (pgp_key, "Value");
       if (!key_data || !strlen (key_data))

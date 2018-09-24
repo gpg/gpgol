@@ -670,7 +670,7 @@ add_attachments_o(LPDISPATCH mail,
       if (!wchar_name)
         {
           log_error ("%s:%s: Failed to convert '%s' to wchar.",
-                     SRCNAME, __func__, dispName.c_str());
+                     SRCNAME, __func__, anonstr (dispName.c_str()));
           continue;
         }
 
@@ -680,19 +680,19 @@ add_attachments_o(LPDISPATCH mail,
       if (!wchar_file)
         {
           log_error ("%s:%s: Failed to obtain a tmp filename for: %s",
-                     SRCNAME, __func__, dispName.c_str());
+                     SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
       if (!err && copy_attachment_to_file (att, hFile))
         {
           log_error ("%s:%s: Failed to copy attachment %s to temp file",
-                     SRCNAME, __func__, dispName.c_str());
+                     SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
       if (!err && add_oom_attachment (mail, wchar_file, wchar_name))
         {
           log_error ("%s:%s: Failed to add attachment: %s",
-                     SRCNAME, __func__, dispName.c_str());
+                     SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
       if (hFile && hFile != INVALID_HANDLE_VALUE)
@@ -702,7 +702,7 @@ add_attachments_o(LPDISPATCH mail,
       if (wchar_file && !DeleteFileW (wchar_file))
         {
           log_error ("%s:%s: Failed to delete tmp attachment for: %s",
-                     SRCNAME, __func__, dispName.c_str());
+                     SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
       xfree (wchar_file);
@@ -1974,7 +1974,8 @@ get_uid_for_sender (const Key &k, const char *sender)
       if (normalized_sender.empty() || normalized_uid.empty())
         {
           log_error ("%s:%s: normalizing '%s' or '%s' failed.",
-                     SRCNAME, __func__, uid.email(), sender);
+                     SRCNAME, __func__, anonstr (uid.email()),
+                     anonstr (sender));
           continue;
         }
       if (normalized_sender == normalized_uid)
@@ -2023,8 +2024,8 @@ Mail::updateSigstate ()
           if (!m_uid.isNull())
             {
               log_debug ("%s:%s: Using sent on behalf '%s' instead of '%s'",
-                         SRCNAME, __func__, m_sent_on_behalf.c_str(),
-                         sender.c_str ());
+                         SRCNAME, __func__, anonstr (m_sent_on_behalf.c_str()),
+                         anonstr (sender.c_str ()));
             }
         }
 
@@ -2327,8 +2328,9 @@ level_4_check (const UserID &uid)
                       /* We have a match */
                       log_debug ("%s:%s: classified %s as ultimate because "
                                  "it was signed by uid %s of key %s",
-                                 SRCNAME, __func__, signer_uid_str, sig_uid_str,
-                                 secKeyID);
+                                 SRCNAME, __func__, anonstr (signer_uid_str),
+                                 anonstr (sig_uid_str),
+                                 anonstr (secKeyID));
                       return 1;
                     }
                 }
@@ -3522,7 +3524,7 @@ Mail::installFolderEventHandler_o()
   if (s_folder_events_map.find (strPath) == s_folder_events_map.end())
     {
       log_debug ("%s:%s: Install folder events watcher for %s.",
-                 SRCNAME, __func__, strPath.c_str());
+                 SRCNAME, __func__, anonstr (strPath.c_str()));
       const auto sink = install_FolderEvents_sink (folder);
       s_folder_events_map.insert (std::make_pair (strPath, sink));
     }

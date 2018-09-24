@@ -53,7 +53,7 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
   HRESULT ret = obj->OpenProperty (ulPropTag, lpiid,
                                    ulInterfaceOptions, ulFlags,
                                    lppUnk);
-  if ((opt.enable_debug & DBG_OOM_EXTRA) && *lppUnk)
+  if ((opt.enable_debug & DBG_MEMORY) && *lppUnk)
     {
       memdbg_addRef (*lppUnk);
       log_debug ("%s:%s: OpenProperty on %p prop %lx result %p",
@@ -158,7 +158,7 @@ init_excepinfo (EXCEPINFO *err)
 void
 dump_excepinfo (EXCEPINFO err)
 {
-  log_debug ("%s:%s: Exception: \n"
+  log_oom ("%s:%s: Exception: \n"
              "              wCode: 0x%x\n"
              "              wReserved: 0x%x\n"
              "              source: %S\n"
@@ -231,7 +231,7 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         return NULL;  /* The object has no IDispatch interface.  */
       if (!*fullname)
         {
-          if ((opt.enable_debug & DBG_OOM))
+          if ((opt.enable_debug & DBG_MEMORY))
             {
               pDisp->AddRef ();
               int ref = pDisp->Release ();
@@ -962,7 +962,7 @@ put_pa_variant (LPDISPATCH pDisp, const char *dasl_id, VARIANT *value)
   gpgol_release (propertyAccessor);
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: error: invoking SetProperty p=%p vt=%d"
+      log_debug ("%s:%s: failure: invoking SetProperty p=%p vt=%d"
                  " hr=0x%x argErr=0x%x",
                  SRCNAME, __func__,
                  rVariant.pdispVal, rVariant.vt, (unsigned int)hr,
@@ -1158,7 +1158,7 @@ get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
   if (ret)
     {
       log_debug ("%s:%s: Found recipient through AB_PROXY: %s",
-                 SRCNAME, __func__, ret);
+                 SRCNAME, __func__, anonstr (ret));
 
       char *smtpbegin = strstr(ret, "SMTP:");
       if (smtpbegin == ret)
@@ -1186,7 +1186,7 @@ get_recipient_addr_entry_fallbacks_ex (LPDISPATCH addr_entry)
   if (ret)
     {
       log_debug ("%s:%s: Found recipient through exchange user primary smtp address: %s",
-                 SRCNAME, __func__, ret);
+                 SRCNAME, __func__, anonstr (ret));
       return ret;
     }
   return nullptr;
@@ -1238,7 +1238,7 @@ try_resolve_group (LPDISPATCH addrEntry,
   if (type != DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
     {
       log_data ("%s:%s: type of %s is %i",
-                       SRCNAME, __func__, name.c_str(), type);
+                       SRCNAME, __func__, anonstr (name.c_str()), type);
       return false;
     }
 
@@ -1284,8 +1284,7 @@ try_resolve_group (LPDISPATCH addrEntry,
         {
           log_debug ("%s:%s: recursive address entry %s",
                      SRCNAME, __func__,
-                     (opt.enable_debug & DBG_MIME_PARSER) ?
-                     entryName.c_str() : "omitted");
+                     anonstr (entryName.c_str()));
           if (try_resolve_group (entry.get(), ret))
             {
               foundOne = true;
@@ -1324,16 +1323,14 @@ try_resolve_group (LPDISPATCH addrEntry,
 
       log_debug ("%s:%s: failed to resolve name %s",
                  SRCNAME, __func__,
-                 (opt.enable_debug & DBG_MIME_PARSER) ?
-                 entryName.c_str() : "omitted");
+                 anonstr (entryName.c_str()));
     }
   gpgol_release (members);
   if (!foundOne)
     {
       log_debug ("%s:%s: failed to resolve group %s",
                  SRCNAME, __func__,
-                 (opt.enable_debug & DBG_MIME_PARSER) ?
-                 name.c_str() : "omitted");
+                 anonstr (name.c_str()));
     }
   return foundOne;
 }
@@ -1783,7 +1780,7 @@ create_category (LPDISPATCH categories, const char *category, int color)
       return -1;
     }
   VariantClear (&rVariant);
-  log_debug ("%s:%s: Created category '%s'",
+  log_oom ("%s:%s: Created category '%s'",
              SRCNAME, __func__, category);
   return 0;
 }
@@ -1797,7 +1794,7 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
       return;
     }
 
-  log_debug ("Ensure category exists called for %s, %i", category, color);
+  log_oom ("Ensure category exists called for %s, %i", category, color);
 
   LPDISPATCH stores = get_oom_object (application, "Session.Stores");
   if (!stores)
@@ -1846,8 +1843,8 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
           char *name = get_oom_string (category_obj, "Name");
           if (name && !strcmp (category, name))
             {
-              log_debug ("%s:%s: Found category '%s'",
-                         SRCNAME, __func__, name);
+              log_oom ("%s:%s: Found category '%s'",
+                       SRCNAME, __func__, name);
               found = true;
             }
           /* We don't check the color here as the user may change that. */
@@ -1859,8 +1856,8 @@ ensure_category_exists (LPDISPATCH application, const char *category, int color)
         {
           if (create_category (categories, category, color))
             {
-              log_debug ("%s:%s: Found category '%s'",
-                         SRCNAME, __func__, category);
+              log_oom ("%s:%s: Found category '%s'",
+                       SRCNAME, __func__, category);
             }
         }
       /* Otherwise we have to create the category */
@@ -1881,8 +1878,8 @@ add_category (LPDISPATCH mail, const char *category)
 
   if (strstr (tmp, category))
     {
-      log_debug ("%s:%s: category '%s' already added.",
-                 SRCNAME, __func__, category);
+      log_oom ("%s:%s: category '%s' already added.",
+               SRCNAME, __func__, category);
       return 0;
     }
 
@@ -1914,8 +1911,8 @@ remove_category (LPDISPATCH mail, const char *category)
   size_t pos2 = newstr.find (std::string(", ") + cat);
   if (pos1 == std::string::npos && pos2 == std::string::npos)
     {
-      log_debug ("%s:%s: category '%s' not found.",
-                 SRCNAME, __func__, category);
+      log_oom ("%s:%s: category '%s' not found.",
+               SRCNAME, __func__, category);
       return 0;
     }
 
@@ -1925,8 +1922,8 @@ remove_category (LPDISPATCH mail, const char *category)
       len += 2;
     }
   newstr.erase (pos2 != std::string::npos ? pos2 : pos1, len);
-  log_debug ("%s:%s: removing category '%s'",
-             SRCNAME, __func__, category);
+  log_oom ("%s:%s: removing category '%s'",
+           SRCNAME, __func__, category);
 
   return put_oom_string (mail, "Categories", newstr.c_str ());
 }
@@ -2125,7 +2122,7 @@ get_account_for_mail (const char *mbox)
   gpgol_release (accounts);
 
   log_error ("%s:%s: Failed to find account for '%s'.",
-             SRCNAME, __func__, mbox);
+             SRCNAME, __func__, anonstr (mbox));
 
   return nullptr;
 }

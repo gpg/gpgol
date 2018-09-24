@@ -344,7 +344,7 @@ ParseController::parse()
              decrypt, verify,
              protocol == OpenPGP ? "OpenPGP" :
              protocol == CMS ? "CMS" : "Unknown",
-             m_sender.empty() ? "none" : m_sender.c_str(), inputType);
+             m_sender.empty() ? "none" : anonstr (m_sender.c_str()), inputType);
   if (decrypt)
     {
       input.seek (0, SEEK_SET);
@@ -498,7 +498,7 @@ ParseController::parse()
       m_block_html = true;
     }
 
-  if (opt.enable_debug)
+  if (opt.enable_debug & DBG_DATA)
     {
       std::stringstream ss;
       ss << m_decrypt_result << '\n' << m_verify_result;
@@ -516,6 +516,12 @@ ParseController::parse()
             }
         }
        log_debug ("Decrypt / Verify result: %s", ss.str().c_str());
+    }
+  else
+    {
+      log_debug ("%s:%s:%p Decrypt / verify done errs: %i / %i numsigs: %i.",
+                 SRCNAME, __func__, this, m_decrypt_result.error().code(),
+                 m_verify_result.error().code(), m_verify_result.numSignatures());
     }
   TRACEPOINT;
 
@@ -650,7 +656,7 @@ ParseController::get_ultimate_keys()
               log_debug ("%s:%s: Adding ultimate uid.",
                          SRCNAME, __func__);
               log_data ("%s:%s: Added uid %s.",
-                               SRCNAME, __func__, uid.id());
+                        SRCNAME, __func__, uid.id());
               break;
             }
         }

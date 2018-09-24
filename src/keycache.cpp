@@ -99,9 +99,9 @@ do_update (LPVOID arg)
 {
   auto args = std::unique_ptr<update_arg_t> ((update_arg_t*) arg);
 
-  log_data ("%s:%s updating: \"%s\" with protocol %s",
-                   SRCNAME, __func__, args->first.c_str (),
-                   to_cstr (args->second));
+  log_debug ("%s:%s updating: \"%s\" with protocol %s",
+             SRCNAME, __func__, anonstr (args->first.c_str ()),
+             to_cstr (args->second));
 
   auto ctx = std::unique_ptr<GpgME::Context> (GpgME::Context::createForProtocol
                                               (args->second));
@@ -125,7 +125,7 @@ do_update (LPVOID arg)
   if (newKey.isNull())
     {
       log_debug ("%s:%s Failed to find key for %s",
-                 SRCNAME, __func__, args->first.c_str ());
+                 SRCNAME, __func__, anonstr (args->first.c_str ()));
     }
   if (err)
     {
@@ -146,9 +146,9 @@ do_import (LPVOID arg)
 
   const std::string mbox = args->first->m_mbox;
 
-  log_data ("%s:%s importing for: \"%s\" with data \n%s",
-                   SRCNAME, __func__, mbox.c_str (),
-                   args->second.c_str ());
+  log_debug ("%s:%s importing for: \"%s\" with data \n%s",
+             SRCNAME, __func__, anonstr (mbox.c_str ()),
+             anonstr (args->second.c_str ()));
   auto ctx = std::unique_ptr<GpgME::Context> (GpgME::Context::createForProtocol
                                               (GpgME::OpenPGP));
 
@@ -165,7 +165,7 @@ do_import (LPVOID arg)
   if (data.type () != GpgME::Data::PGPKey)
     {
       log_debug ("%s:%s Data for: %s is not a PGP Key",
-                 SRCNAME, __func__, mbox.c_str ());
+                 SRCNAME, __func__, anonstr (mbox.c_str ()));
       return 0;
     }
   data.rewind ();
@@ -198,13 +198,13 @@ do_import (LPVOID arg)
 
       fingerprints.push_back (fpr);
       log_debug ("%s:%s Imported: %s from addressbook.",
-                 SRCNAME, __func__, fpr);
+                 SRCNAME, __func__, anonstr (fpr));
     }
 
   KeyCache::instance ()->onAddrBookImportJobDone (mbox, fingerprints);
 
   log_debug ("%s:%s Import job done for: %s",
-             SRCNAME, __func__, mbox.c_str ());
+             SRCNAME, __func__, anonstr (mbox.c_str ()));
   return 0;
 }
 
@@ -308,7 +308,7 @@ public:
         if (key.isNull())
           {
             log_debug ("%s:%s: No key for %s in the cache?!",
-                       SRCNAME, __func__, fpr.c_str());
+                       SRCNAME, __func__, anonstr (fpr.c_str()));
             continue;
           }
         ret.push_back (key);
@@ -397,26 +397,26 @@ public:
     const auto key = getSKey (addr, proto);
     if (key.isNull())
       {
-        log_data ("%s:%s: secret key for %s is null",
-                   SRCNAME, __func__, addr);
+        log_debug ("%s:%s: secret key for %s is null",
+                   SRCNAME, __func__, anonstr (addr));
         return key;
       }
     if (!key.canReallySign())
       {
-        log_data ("%s:%s: Discarding key for %s because it can't sign",
-                   SRCNAME, __func__, addr);
+        log_debug ("%s:%s: Discarding key for %s because it can't sign",
+                   SRCNAME, __func__, anonstr (addr));
         return GpgME::Key();
       }
     if (!key.hasSecret())
       {
-        log_data ("%s:%s: Discarding key for %s because it has no secret",
-                   SRCNAME, __func__, addr);
+        log_debug ("%s:%s: Discarding key for %s because it has no secret",
+                   SRCNAME, __func__, anonstr (addr));
         return GpgME::Key();
       }
     if (in_de_vs_mode () && !key.isDeVs())
       {
-        log_data ("%s:%s: signing key for %s is not deVS",
-                   SRCNAME, __func__, addr);
+        log_debug ("%s:%s: signing key for %s is not deVS",
+                   SRCNAME, __func__, anonstr (addr));
         return GpgME::Key();
       }
     return key;
@@ -441,16 +441,16 @@ public:
             if (!overrides.empty())
               {
                 ret.insert (ret.end (), overrides.begin (), overrides.end ());
-                log_data ("%s:%s: Using overides for %s",
-                                 SRCNAME, __func__, recip.c_str ());
+                log_debug ("%s:%s: Using overides for %s",
+                           SRCNAME, __func__, anonstr (recip.c_str ()));
                 continue;
               }
           }
         const auto key = getKey (recip.c_str (), proto);
         if (key.isNull())
           {
-            log_data ("%s:%s: No key for %s. no internal encryption",
-                       SRCNAME, __func__, recip.c_str ());
+            log_debug ("%s:%s: No key for %s. no internal encryption",
+                       SRCNAME, __func__, anonstr (recip.c_str ()));
             return std::vector<GpgME::Key>();
           }
 
@@ -458,14 +458,14 @@ public:
             key.isExpired() || key.isDisabled() || key.isInvalid())
           {
             log_data ("%s:%s: Invalid key for %s. no internal encryption",
-                       SRCNAME, __func__, recip.c_str ());
+                       SRCNAME, __func__, anonstr (recip.c_str ()));
             return std::vector<GpgME::Key>();
           }
 
         if (in_de_vs_mode () && !key.isDeVs ())
           {
             log_data ("%s:%s: key for %s is not deVS",
-                       SRCNAME, __func__, recip.c_str ());
+                      SRCNAME, __func__, anonstr (recip.c_str ()));
             return std::vector<GpgME::Key>();
           }
 
@@ -488,8 +488,8 @@ public:
           }
         if (!validEnough)
           {
-            log_data ("%s:%s: UID for %s does not have at least marginal trust",
-                             SRCNAME, __func__, recip.c_str ());
+            log_debug ("%s:%s: UID for %s does not have at least marginal trust",
+                       SRCNAME, __func__, anonstr (recip.c_str ()));
             return std::vector<GpgME::Key>();
           }
         // Accepting key
@@ -525,8 +525,8 @@ public:
 
       auto it = m_fpr_map.find (primaryFpr);
 
-      log_data ("%s:%s \"%s\" updated.",
-                       SRCNAME, __func__, primaryFpr);
+      log_debug ("%s:%s \"%s\" updated.",
+                 SRCNAME, __func__, anonstr (primaryFpr));
       if (it == m_fpr_map.end ())
         {
           m_fpr_map.insert (std::make_pair (primaryFpr, key));
@@ -565,7 +565,8 @@ public:
     if (it != m_sub_fpr_map.end ())
       {
         log_debug ("%s:%s using \"%s\" for \"%s\"",
-                   SRCNAME, __func__, it->second.c_str(), fpr);
+                   SRCNAME, __func__, anonstr (it->second.c_str()),
+                   anonstr (fpr));
         primaryFpr = it->second;
       }
     else
@@ -610,7 +611,7 @@ public:
                   if (i % 100 == 0)
                     {
                       log_debug ("%s:%s Waiting on update for \"%s\"",
-                                 SRCNAME, __func__, fpr);
+                                 SRCNAME, __func__, anonstr (fpr));
                     }
                   gpgrt_lock_unlock (&update_lock);
                   Sleep (10);
@@ -620,7 +621,7 @@ public:
                       /* Just to be on the save side */
                       log_error ("%s:%s Waiting on update for \"%s\" "
                                  "failed! Bug!",
-                                 SRCNAME, __func__, fpr);
+                                 SRCNAME, __func__, anonstr (fpr));
                       break;
                     }
                 }
@@ -631,22 +632,22 @@ public:
               if (ret2.isNull ())
                 {
                   log_debug ("%s:%s Cache miss after blocking check %s.",
-                             SRCNAME, __func__, fpr);
+                             SRCNAME, __func__, anonstr (fpr));
                 }
               else
                 {
                   log_debug ("%s:%s Cache hit after wait for %s.",
-                             SRCNAME, __func__, fpr);
+                             SRCNAME, __func__, anonstr (fpr));
                   return ret2;
                 }
             }
           log_debug ("%s:%s Cache miss for %s.",
-                     SRCNAME, __func__, fpr);
+                     SRCNAME, __func__, anonstr (fpr));
           return GpgME::Key();
         }
 
       log_debug ("%s:%s Cache hit for %s.",
-                 SRCNAME, __func__, fpr);
+                 SRCNAME, __func__, anonstr (fpr));
       return ret;
     }
 
@@ -661,7 +662,7 @@ public:
        if (m_update_jobs.find(sFpr) != m_update_jobs.end ())
          {
            log_debug ("%s:%s Update for \"%s\" already in progress.",
-                      SRCNAME, __func__, fpr);
+                      SRCNAME, __func__, anonstr (fpr));
            gpgrt_lock_unlock (&update_lock);
          }
 
@@ -689,7 +690,7 @@ public:
       if (it == m_update_jobs.end())
         {
           log_error ("%s:%s Update for \"%s\" already finished.",
-                     SRCNAME, __func__, fpr);
+                     SRCNAME, __func__, anonstr (fpr));
           gpgrt_lock_unlock (&update_lock);
           return;
         }
@@ -711,7 +712,7 @@ public:
        if (m_import_jobs.find (mbox) != m_import_jobs.end ())
          {
            log_debug ("%s:%s import for \"%s\" already in progress.",
-                      SRCNAME, __func__, mbox.c_str ());
+                      SRCNAME, __func__, anonstr (mbox.c_str ()));
            gpgrt_lock_unlock (&import_lock);
          }
        m_import_jobs.insert (mbox);
@@ -747,7 +748,7 @@ public:
       if (job_it == m_import_jobs.end())
         {
           log_error ("%s:%s import for \"%s\" already finished.",
-                     SRCNAME, __func__, mbox.c_str ());
+                     SRCNAME, __func__, anonstr (mbox.c_str ()));
           gpgrt_lock_unlock (&import_lock);
           return;
         }
@@ -807,16 +808,16 @@ do_locate (LPVOID arg)
 
   const auto addr = args->m_mbox;
 
-  log_data ("%s:%s searching key for addr: \"%s\"",
-                   SRCNAME, __func__, addr.c_str());
+  log_debug ("%s:%s searching key for addr: \"%s\"",
+             SRCNAME, __func__, anonstr (addr.c_str()));
 
   const auto k = GpgME::Key::locate (addr.c_str());
 
   if (!k.isNull ())
     {
-      log_data ("%s:%s found key for addr: \"%s\":%s",
-                       SRCNAME, __func__, addr.c_str(),
-                       k.primaryFingerprint());
+      log_debug ("%s:%s found key for addr: \"%s\":%s",
+                 SRCNAME, __func__, anonstr (addr.c_str()),
+                 anonstr (k.primaryFingerprint()));
       KeyCache::instance ()->setPgpKey (addr, k);
     }
 
@@ -853,8 +854,8 @@ do_locate (LPVOID arg)
           if (key.isRevoked() || key.isExpired() ||
               key.isDisabled() || key.isInvalid())
             {
-              log_data ("%s:%s: Skipping invalid S/MIME key",
-                               SRCNAME, __func__);
+              log_debug ("%s:%s: Skipping invalid S/MIME key",
+                         SRCNAME, __func__);
               continue;
             }
           if (candidate.isNull() || !candidate.numUserIDs())
@@ -868,9 +869,9 @@ do_locate (LPVOID arg)
         }
       if (!candidate.isNull())
         {
-          log_data ("%s:%s found SMIME key for addr: \"%s\":%s",
-                           SRCNAME, __func__, addr.c_str(),
-                           candidate.primaryFingerprint());
+          log_debug ("%s:%s found SMIME key for addr: \"%s\":%s",
+                     SRCNAME, __func__, anonstr (addr.c_str()),
+                     anonstr (candidate.primaryFingerprint()));
           KeyCache::instance()->setSmimeKey (addr, candidate);
         }
     }
@@ -899,7 +900,7 @@ locate_secret (const char *addr, GpgME::Protocol proto)
   if (mbox.empty())
     {
       log_debug ("%s:%s: Empty mbox for addr %s",
-                 SRCNAME, __func__, addr);
+                 SRCNAME, __func__, anonstr (addr));
       return;
     }
 
@@ -930,23 +931,23 @@ locate_secret (const char *addr, GpgME::Protocol proto)
               std::stringstream ss;
               ss << key;
               log_data ("%s:%s: Skipping invalid secret key %s",
-                               SRCNAME, __func__, ss.str().c_str());
+                        SRCNAME, __func__, ss.str().c_str());
             }
           continue;
         }
       if (proto == GpgME::OpenPGP)
         {
-          log_data ("%s:%s found pgp skey for addr: \"%s\":%s",
-                           SRCNAME, __func__, mbox.c_str(),
-                           key.primaryFingerprint());
+          log_debug ("%s:%s found pgp skey for addr: \"%s\":%s",
+                     SRCNAME, __func__, anonstr (mbox.c_str()),
+                     anonstr (key.primaryFingerprint()));
           KeyCache::instance()->setPgpKeySecret (mbox, key);
           return;
         }
       if (proto == GpgME::CMS)
         {
-          log_data ("%s:%s found cms skey for addr: \"%s\":%s",
-                           SRCNAME, __func__, mbox.c_str (),
-                           key.primaryFingerprint());
+          log_debug ("%s:%s found cms skey for addr: \"%s\":%s",
+                     SRCNAME, __func__, anonstr (mbox.c_str ()),
+                     anonstr (key.primaryFingerprint()));
           KeyCache::instance()->setSmimeKeySecret (mbox, key);
           return;
         }
@@ -959,8 +960,8 @@ do_locate_secret (LPVOID arg)
 {
   auto args = std::unique_ptr<LocateArgs> ((LocateArgs *) arg);
 
-  log_data ("%s:%s searching secret key for addr: \"%s\"",
-                   SRCNAME, __func__, args->m_mbox.c_str ());
+  log_debug ("%s:%s searching secret key for addr: \"%s\"",
+             SRCNAME, __func__, anonstr (args->m_mbox.c_str ()));
 
   locate_secret (args->m_mbox.c_str(), GpgME::OpenPGP);
   if (opt.enable_smime)

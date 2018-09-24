@@ -1725,7 +1725,7 @@ mapi_get_sender (LPMESSAGE message)
   if (!p)
     {
       log_error ("%s:%s: unknown format of the value `%s'\n",
-                 SRCNAME, __func__, buf);
+                 SRCNAME, __func__, anonstr (buf));
       xfree (buf);
       return NULL;
     }
@@ -1741,7 +1741,8 @@ mapi_get_sender (LPMESSAGE message)
   if (strstr (buf, "/o=") && strstr (buf, "/ou=") &&
       (p = strstr (buf, "/cn=Recipients")) && (p = strstr (p+1, "/cn=")))
     {
-      log_debug ("%s:%s: orig address is `%s'\n", SRCNAME, __func__, buf);
+      log_debug ("%s:%s: orig address is `%s'\n", SRCNAME, __func__,
+                 anonstr (buf));
       memmove (buf, p+4, strlen (p+4)+1);
       if (!strchr (buf, '@'))
         {
@@ -1755,7 +1756,7 @@ mapi_get_sender (LPMESSAGE message)
         }
       
     }
-  log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, buf);
+  log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, anonstr (buf));
   return buf;
 }
 
@@ -2403,7 +2404,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
           log_debug ("\t%d mt=%d fname=`%s' ct=`%s' ct_parms=`%s'\n",
                      table[pos].mapipos,
                      table[pos].attach_type,
-                     table[pos].filename, table[pos].content_type,
+                     anonstr (table[pos].filename), table[pos].content_type,
                      table[pos].content_type_parms);
         }
     }

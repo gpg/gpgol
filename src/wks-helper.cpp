@@ -40,8 +40,6 @@
 #define CHECK_MIN_INTERVAL (60 * 60 * 24 * 7)
 #define WKS_REG_KEY "webkey"
 
-#define DEBUG_WKS 1
-
 #undef _
 #define _(a) utf8_gettext (a)
 
@@ -248,14 +246,14 @@ do_check (LPVOID arg)
   if (success)
     {
       log_debug ("%s:%s: WKS client: '%s' is supported",
-                 SRCNAME, __func__, mbox.c_str ());
+                 SRCNAME, __func__, anonstr (mbox.c_str ()));
       isPublished = check_published (mbox);
     }
 
   if (isPublished)
     {
       log_debug ("%s:%s: WKS client: '%s' is published",
-                 SRCNAME, __func__, mbox.c_str ());
+                 SRCNAME, __func__, anonstr (mbox.c_str ()));
       state = WKSHelper::IsPublished;
     }
 
@@ -319,7 +317,8 @@ WKSHelper::load () const
       if (states.size() != 2)
         {
           log_error ("%s:%s: Invalid state '%s' for '%s'",
-                     SRCNAME, __func__, mbox.c_str (), pair.second.c_str ());
+                     SRCNAME, __func__, anonstr (mbox.c_str ()),
+                     anonstr (pair.second.c_str ()));
           continue;
         }
 
@@ -434,7 +433,7 @@ WKSHelper::notify (const char *cBox) const
     }
 
   log_debug ("%s:%s: Unhandled notify state: %i for '%s'",
-             SRCNAME, __func__, state, cBox);
+             SRCNAME, __func__, state, anonstr (cBox));
   return;
 }
 
@@ -505,10 +504,8 @@ WKSHelper::start_publish (const std::string &mbox) const
       return;
     }
 
-#ifdef DEBUG_WKS
-  log_debug ("%s:%s: WKS client: returned '%s'",
+  log_data ("%s:%s: WKS client: returned '%s'",
              SRCNAME, __func__, data.c_str ());
-#endif
 
   if (!send_mail (data))
     {
@@ -643,7 +640,7 @@ WKSHelper::send_mail (const std::string &mimeData) const
   if (account)
     {
       log_debug ("%s:%s: Found account to change for '%s'.",
-                 SRCNAME, __func__, from.c_str ());
+                 SRCNAME, __func__, anonstr (from.c_str ()));
       put_oom_disp (mail, "SendUsingAccount", account);
     }
   gpgol_release (account);
@@ -765,10 +762,9 @@ WKSHelper::handle_confirmation_notify (const std::string &mbox) const
       return;
     }
 
-#ifdef DEBUG_WKS
-  log_debug ("%s:%s: WKS client: returned '%s'",
-             SRCNAME, __func__, data.c_str ());
-#endif
+  log_data ("%s:%s: WKS client: returned '%s'",
+            SRCNAME, __func__, data.c_str ());
+
   if (!send_mail (data))
    {
      gpgol_message_box (get_active_hwnd (),

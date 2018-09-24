@@ -39,8 +39,6 @@
 
 #include <sstream>
 
-#define DEBUG_RESOLVER 1
-
 static int
 sink_data_write (sink_t sink, const void *data, size_t datalen)
 {
@@ -198,7 +196,7 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
       m_signer_key = ctx->key (sigFpr.c_str (), err, true);
       if (err || m_signer_key.isNull ()) {
           log_error ("%s:%s: failed to lookup key for '%s' with protocol '%s'",
-                     SRCNAME, __func__, sigFpr.c_str (),
+                     SRCNAME, __func__, anonstr (sigFpr.c_str ()),
                      m_proto == GpgME::CMS ? "smime" :
                      m_proto == GpgME::OpenPGP ? "openpgp" :
                      "unknown");
@@ -404,12 +402,12 @@ CryptController::resolve_keys_cached()
     }
   for (const auto &key: m_recipients)
     {
-      log_debug ("%s", key.primaryFingerprint ());
+      log_debug ("%s", anonstr (key.primaryFingerprint ()));
     }
   if (!m_signer_key.isNull())
     {
       log_debug ("%s:%s: Signing key: %s:%s",
-                 SRCNAME, __func__, m_signer_key.primaryFingerprint (),
+                 SRCNAME, __func__, anonstr (m_signer_key.primaryFingerprint ()),
                  to_cstr (m_signer_key.protocol()));
     }
   return 0;
@@ -538,13 +536,12 @@ CryptController::resolve_keys ()
   // It's a bit overhead but should be quick for such small
   // data.
   char **cargs = vector_to_cArray (args);
-#ifdef DEBUG_RESOLVER
-  log_debug ("Spawning args:");
+  log_data ("%s:%s: Spawn args:",
+            SRCNAME, __func__);
   for (size_t i = 0; cargs && cargs[i]; i++)
     {
-      log_debug (SIZE_T_FORMAT ": '%s'", i, cargs[i]);
+      log_data (SIZE_T_FORMAT ": '%s'", i, cargs[i]);
     }
-#endif
 
   GpgME::Data mystdin (GpgME::Data::null), mystdout, mystderr;
   GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char**> (cargs),
@@ -559,10 +556,8 @@ CryptController::resolve_keys ()
   // We need to create an overlay while encrypting as pinentry can take a while
   start_crypto_overlay();
 
-#ifdef DEBUG_RESOLVER
-  log_debug ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
-  log_debug ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
-#endif
+  log_data ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
+  log_data ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
 
   release_cArray (cargs);
 
@@ -577,8 +572,8 @@ CryptController::resolve_keys ()
     {
       log_debug ("%s:%s: Failed to parse / resolve keys.",
                  SRCNAME, __func__);
-      log_debug ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
-      log_debug ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
+      log_data ("Resolver stdout:\n'%s'", mystdout.toString ().c_str ());
+      log_data ("Resolver stderr:\n'%s'", mystderr.toString ().c_str ());
       return -1;
     }
 

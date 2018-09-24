@@ -37,7 +37,7 @@ std::unordered_map <void *, std::string> allocs;
 
 GPGRT_LOCK_DEFINE (memdbg_log);
 
-#define DBGGUARD if (!(opt.enable_debug & DBG_OOM_EXTRA)) return
+#define DBGGUARD if (!(opt.enable_debug & DBG_MEMORY)) return
 
 #ifdef HAVE_W32_SYSTEM
 # include "oomhelp.h"
@@ -64,8 +64,8 @@ register_name (void *obj, const char *nameSuggestion)
         {
           if (it->second != "unknown")
             {
-              log_debug ("%s:%s Ptr %p name change from %s to unknown",
-                         SRCNAME, __func__, obj, it->second.c_str());
+              log_memory ("%s:%s Ptr %p name change from %s to unknown",
+                          SRCNAME, __func__, obj, it->second.c_str());
               it->second = "unknown";
               return true;
             }
@@ -81,7 +81,7 @@ register_name (void *obj, const char *nameSuggestion)
     {
       if (it->second != sName)
         {
-          log_debug ("%s:%s Ptr %p name change from %s to %s",
+          log_memory ("%s:%s Ptr %p name change from %s to %s",
                      SRCNAME, __func__, obj, it->second.c_str(),
                      sName.c_str());
           it->second = sName;
@@ -282,16 +282,16 @@ memdbg_dump ()
 {
   DBGGUARD;
   gpgrt_lock_lock (&memdbg_log);
-  log_debug(""
+  log_memory (""
 "------------------------------MEMORY DUMP----------------------------------");
 
-  log_debug("-- C++ Objects --");
+  log_memory("-- C++ Objects --");
   for (const auto &pair: cppObjs)
     {
-      log_debug("%s\t: %i", pair.first.c_str(), pair.second);
+      log_memory("%s\t: %i", pair.first.c_str(), pair.second);
     }
-  log_debug("-- C++ End --");
-  log_debug("-- OL Objects --");
+  log_memory("-- C++ End --");
+  log_memory("-- OL Objects --");
   for (const auto &pair: olObjs)
     {
       if (!pair.second)
@@ -301,23 +301,23 @@ memdbg_dump ()
       const auto it = olNames.find (pair.first);
       if (it == olNames.end())
         {
-          log_debug("%p\t: %i", pair.first, pair.second);
+          log_memory("%p\t: %i", pair.first, pair.second);
         }
       else
         {
-          log_debug("%p:%s\t: %i", pair.first,
+          log_memory("%p:%s\t: %i", pair.first,
                     it->second.c_str (), pair.second);
         }
     }
-  log_debug("-- OL End --");
-  log_debug("-- Allocated Addresses --");
+  log_memory("-- OL End --");
+  log_memory("-- Allocated Addresses --");
   for (const auto &pair: allocs)
     {
-      log_debug ("%s: %p", pair.second.c_str(), pair.first);
+      log_memory ("%s: %p", pair.second.c_str(), pair.first);
     }
-  log_debug("-- Allocated Addresses End --");
+  log_memory("-- Allocated Addresses End --");
 
-  log_debug(""
+  log_memory(""
 "------------------------------MEMORY END ----------------------------------");
   gpgrt_lock_unlock (&memdbg_log);
 }
