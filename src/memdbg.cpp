@@ -27,13 +27,13 @@
 
 #include <gpg-error.h>
 
-#include <map>
+#include <unordered_map>
 #include <string>
 
-std::map <std::string, int> cppObjs;
-std::map <void *, int> olObjs;
-std::map <void *, std::string> olNames;
-std::map <void *, std::string> allocs;
+std::unordered_map <std::string, int> cppObjs;
+std::unordered_map <void *, int> olObjs;
+std::unordered_map <void *, std::string> olNames;
+std::unordered_map <void *, std::string> allocs;
 
 GPGRT_LOCK_DEFINE (memdbg_log);
 
