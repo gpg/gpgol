@@ -33,7 +33,7 @@ extern "C" {
 { \
   if (X) \
     { \
-      log_oom_extra ("%s:%s:%i AddRef on %p", \
+      log_oom ("%s:%s:%i AddRef on %p", \
                      SRCNAME, __func__, __LINE__, X); \
       _memdbg_addRef (X, __func__); \
     } \

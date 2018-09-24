@@ -142,7 +142,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
     {
       case Open:
         {
-          log_oom_extra ("%s:%s: Open : %p",
+          log_oom ("%s:%s: Open : %p",
                          SRCNAME, __func__, m_mail);
           int draft_flags = 0;
           if (!opt.encrypt_default && !opt.sign_default)
@@ -170,7 +170,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case BeforeRead:
         {
-          log_oom_extra ("%s:%s: BeforeRead : %p",
+          log_oom ("%s:%s: BeforeRead : %p",
                          SRCNAME, __func__, m_mail);
           if (m_mail->preProcessMessage_m ())
             {
@@ -181,7 +181,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Read:
         {
-          log_oom_extra ("%s:%s: Read : %p",
+          log_oom ("%s:%s: Read : %p",
                          SRCNAME, __func__, m_mail);
           if (!m_mail->isCryptoMail ())
             {
@@ -323,7 +323,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case CustomPropertyChange:
         {
-          log_oom_extra ("%s:%s: CustomPropertyChange : %p",
+          log_oom ("%s:%s: CustomPropertyChange : %p",
                          SRCNAME, __func__, m_mail);
           /* TODO */
           break;
@@ -345,7 +345,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
              If this encryption is successful and we pass the send
              as then the encrypted data is sent.
            */
-          log_oom_extra ("%s:%s: Send : %p",
+          log_oom ("%s:%s: Send : %p",
                          SRCNAME, __func__, m_mail);
           if (!m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NoCryptMail)
             {
@@ -553,7 +553,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Write:
         {
-          log_oom_extra ("%s:%s: Write : %p",
+          log_oom ("%s:%s: Write : %p",
                          SRCNAME, __func__, m_mail);
           /* This is a bit strange. We sometimes get multiple write events
              without a read in between. When we access the message in
@@ -671,7 +671,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case AfterWrite:
         {
-          log_oom_extra ("%s:%s: AfterWrite : %p",
+          log_oom ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
           if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite)
             {
@@ -695,7 +695,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Close:
         {
-          log_oom_extra ("%s:%s: Close : %p",
+          log_oom ("%s:%s: Close : %p",
                          SRCNAME, __func__, m_mail);
           if (m_mail->isCryptoMail ())
             {
@@ -721,7 +721,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   return S_OK;
                 }
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-              log_oom_extra ("%s:%s: Canceling close event.",
+              log_oom ("%s:%s: Canceling close event.",
                              SRCNAME, __func__);
               if (Mail::close(m_mail))
                 {
@@ -733,12 +733,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Unload:
         {
-          log_oom_extra ("%s:%s: Unload : %p",
+          log_oom ("%s:%s: Unload : %p",
                          SRCNAME, __func__, m_mail);
           log_debug ("%s:%s: Removing Mail for message: %p.",
                      SRCNAME, __func__, m_object);
           delete m_mail;
-          log_oom_extra ("%s:%s: deletion done",
+          log_oom ("%s:%s: deletion done",
                          SRCNAME, __func__);
           memdbg_dump ();
           return S_OK;
@@ -751,7 +751,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Forward:
         {
-          log_oom_extra ("%s:%s: %s : %p",
+          log_oom ("%s:%s: %s : %p",
                          SRCNAME, __func__, is_reply ? "reply" : "forward", m_mail);
           int draft_flags = 0;
           if (opt.encrypt_default)
@@ -867,7 +867,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               Mail::clearLastMail ();
             }
 
-          log_oom_extra ("%s:%s: Reply Forward ReplyAll: %p",
+          log_oom ("%s:%s: Reply Forward ReplyAll: %p",
                          SRCNAME, __func__, m_mail);
           if (!opt.reply_crypt)
             {
@@ -900,7 +900,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case AttachmentRemove:
         {
-          log_oom_extra ("%s:%s: AttachmentRemove: %p",
+          log_oom ("%s:%s: AttachmentRemove: %p",
                          SRCNAME, __func__, m_mail);
           if (!m_mail->isCryptoMail () || attachRemoveWarnShown ||
               m_mail->attachmentRemoveWarningDisabled ())
@@ -917,7 +917,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
 
       default:
-        log_oom_extra ("%s:%s: Message:%p Unhandled Event: %lx \n",
+        log_oom ("%s:%s: Message:%p Unhandled Event: %lx \n",
                        SRCNAME, __func__, m_object, dispid);
     }
   return S_OK;

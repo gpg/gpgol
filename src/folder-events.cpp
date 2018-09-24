@@ -49,7 +49,7 @@ EVENT_SINK_INVOKE(FolderEvents)
     {
       case BeforeItemMove:
         {
-          log_oom_extra ("%s:%s: Item Move in folder: %p",
+          log_oom ("%s:%s: Item Move in folder: %p",
                          SRCNAME, __func__, this);
 
           /* Parameters should be
@@ -70,7 +70,7 @@ EVENT_SINK_INVOKE(FolderEvents)
 
           if (!parms->rgvarg[1].pdispVal)
             {
-              log_oom_extra ("%s:%s: Passing delete",
+              log_oom ("%s:%s: Passing delete",
                              SRCNAME, __func__);
               break;
             }
@@ -126,7 +126,7 @@ EVENT_SINK_INVOKE(FolderEvents)
       default:
         break;
 #if 0
-        log_oom_extra ("%s:%s: Unhandled Event: %lx \n",
+        log_oom ("%s:%s: Unhandled Event: %lx \n",
                        SRCNAME, __func__, dispid);
 #endif
     }

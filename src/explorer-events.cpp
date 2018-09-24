@@ -139,7 +139,7 @@ start_watchdog (LPVOID arg)
 
   if ((it->second & SelectSeen))
     {
-      log_oom_extra ("%s:%s: Cancel watchdog as we have seen a select %p",
+      log_oom ("%s:%s: Cancel watchdog as we have seen a select %p",
                      SRCNAME, __func__, explorer);
       it->second = SelectSeen;
     }
@@ -175,14 +175,14 @@ changeSeen (LPDISPATCH explorer)
   if (has_selection)
     {
       it->second = (state & WatchDogActive) + SelectSeen;
-      log_oom_extra ("%s:%s: Seen select for %p",
+      log_oom ("%s:%s: Seen select for %p",
                      SRCNAME, __func__, explorer);
     }
   else
     {
       if ((it->second & WatchDogActive))
         {
-          log_oom_extra ("%s:%s: Seen unselect for %p but watchdog exists.",
+          log_oom ("%s:%s: Seen unselect for %p but watchdog exists.",
                          SRCNAME, __func__, explorer);
         }
       else
@@ -202,14 +202,14 @@ EVENT_SINK_INVOKE(ExplorerEvents)
     {
       case SelectionChange:
         {
-          log_oom_extra ("%s:%s: Selection change in explorer: %p",
+          log_oom ("%s:%s: Selection change in explorer: %p",
                          SRCNAME, __func__, this);
           changeSeen (m_object);
           break;
         }
       case Close:
         {
-          log_oom_extra ("%s:%s: Deleting event handler: %p",
+          log_oom ("%s:%s: Deleting event handler: %p",
                          SRCNAME, __func__, this);
 
           GpgolAddin::get_instance ()->unregisterExplorerSink (this);
@@ -222,7 +222,7 @@ EVENT_SINK_INVOKE(ExplorerEvents)
       default:
         break;
 #if 0
-        log_oom_extra ("%s:%s: Unhandled Event: %lx \n",
+        log_oom ("%s:%s: Unhandled Event: %lx \n",
                        SRCNAME, __func__, dispid);
 #endif
     }

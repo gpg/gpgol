@@ -155,16 +155,16 @@ Mail::~Mail()
      while parsing. */
   gpgrt_lock_lock (&dtor_lock);
   memdbg_dtor ("Mail");
-  log_oom_extra ("%s:%s: dtor: Mail: %p item: %p",
+  log_oom ("%s:%s: dtor: Mail: %p item: %p",
                  SRCNAME, __func__, this, m_mailitem);
   std::map<LPDISPATCH, Mail *>::iterator it;
 
-  log_oom_extra ("%s:%s: Detaching event sink",
+  log_oom ("%s:%s: Detaching event sink",
                  SRCNAME, __func__);
   detach_MailItemEvents_sink (m_event_sink);
   gpgol_release(m_event_sink);
 
-  log_oom_extra ("%s:%s: Erasing mail",
+  log_oom ("%s:%s: Erasing mail",
                  SRCNAME, __func__);
   gpgrt_lock_lock (&mail_map_lock);
   it = s_mail_map.find(m_mailitem);
@@ -185,29 +185,29 @@ Mail::~Mail()
       gpgrt_lock_unlock (&uid_map_lock);
     }
 
-  log_oom_extra ("%s:%s: releasing mailitem",
+  log_oom ("%s:%s: releasing mailitem",
                  SRCNAME, __func__);
   gpgol_release(m_mailitem);
   xfree (m_cached_html_body);
   xfree (m_cached_plain_body);
   if (!m_uuid.empty())
     {
-      log_oom_extra ("%s:%s: destroyed: %p uuid: %s",
+      log_oom ("%s:%s: destroyed: %p uuid: %s",
                      SRCNAME, __func__, this, m_uuid.c_str());
     }
   else
     {
-      log_oom_extra ("%s:%s: non crypto (or sent) mail: %p destroyed",
+      log_oom ("%s:%s: non crypto (or sent) mail: %p destroyed",
                      SRCNAME, __func__, this);
     }
-  log_oom_extra ("%s:%s: nulling shared pointer",
+  log_oom ("%s:%s: nulling shared pointer",
                  SRCNAME, __func__);
   m_parser = nullptr;
   m_crypter = nullptr;
 
   releaseCurrentItem();
   gpgrt_lock_unlock (&dtor_lock);
-  log_oom_extra ("%s:%s: returning",
+  log_oom ("%s:%s: returning",
                  SRCNAME, __func__);
 }
 
@@ -277,7 +277,7 @@ Mail::preProcessMessage_m ()
                  SRCNAME, __func__);
       return 0;
     }
-  log_oom_extra ("%s:%s: GetBaseMessage OK for %p.",
+  log_oom ("%s:%s: GetBaseMessage OK for %p.",
                  SRCNAME, __func__, m_mailitem);
   /* Change the message class here. It is important that
      we change the message class in the before read event
@@ -1333,7 +1333,7 @@ void
 Mail::parsing_done()
 {
   TRACEPOINT;
-  log_oom_extra ("Mail %p Parsing done for parser num %i: %p",
+  log_oom ("Mail %p Parsing done for parser num %i: %p",
                  this, parsed_count++, m_parser.get());
   if (!m_parser)
     {
@@ -1919,13 +1919,13 @@ Mail::close (Mail *mail)
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 
-  log_oom_extra ("%s:%s: Invoking close for: %p",
+  log_oom ("%s:%s: Invoking close for: %p",
                  SRCNAME, __func__, mail->item());
   mail->setCloseTriggered (true);
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                        NULL, &dispparams);
 
-  log_oom_extra ("%s:%s: Returned from close",
+  log_oom ("%s:%s: Returned from close",
                  SRCNAME, __func__);
   return rc;
 }
@@ -3555,7 +3555,7 @@ Mail::releaseCurrentItem()
     {
       return;
     }
-  log_oom_extra ("%s:%s: releasing CurrentItem ref %p",
+  log_oom ("%s:%s: releasing CurrentItem ref %p",
                  SRCNAME, __func__, m_currentItemRef);
   LPDISPATCH tmp = m_currentItemRef;
   m_currentItemRef = nullptr;

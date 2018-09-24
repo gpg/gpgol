@@ -101,7 +101,7 @@ EVENT_SINK_INVOKE(ApplicationEvents)
           break;
         }
       default:
-        log_oom_extra ("%s:%s: Unhandled Event: %lx \n",
+        log_oom ("%s:%s: Unhandled Event: %lx \n",
                        SRCNAME, __func__, dispid);
     }
   /* We always return S_OK even on error so that outlook

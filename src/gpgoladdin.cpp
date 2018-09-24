@@ -458,7 +458,7 @@ install_explorer_sinks (LPDISPATCH application)
         }
       else
         {
-          log_oom_extra ("%s:%s: created sink %p for explorer %i",
+          log_oom ("%s:%s: created sink %p for explorer %i",
                          SRCNAME, __func__, sink, i);
           GpgolAddin::get_instance ()->registerExplorerSink (sink);
         }

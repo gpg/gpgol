@@ -1595,7 +1595,7 @@ get_oom_base_message_from_mapi (LPDISPATCH mapi_message)
   /* The call to GetBaseMessage is pretty much a jump
      in the dark. So it would not be surprising to get
      crashes here in the future. */
-  log_oom_extra("%s:%s: About to call GetBaseMessage.",
+  log_oom("%s:%s: About to call GetBaseMessage.",
                 SRCNAME, __func__);
   hr = secureMessage->GetBaseMessage (&message);
   memdbg_addRef (message);

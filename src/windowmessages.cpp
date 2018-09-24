@@ -536,7 +536,7 @@ void
 blockInv()
 {
   invalidation_blocked++;
-  log_oom_extra ("%s:%s: Invalidation block count %i",
+  log_oom ("%s:%s: Invalidation block count %i",
                  SRCNAME, __func__, invalidation_blocked);
 }
 
@@ -544,7 +544,7 @@ void
 unblockInv()
 {
   invalidation_blocked--;
-  log_oom_extra ("%s:%s: Invalidation block count %i",
+  log_oom ("%s:%s: Invalidation block count %i",
                  SRCNAME, __func__, invalidation_blocked);
 
   if (invalidation_blocked < 0)
