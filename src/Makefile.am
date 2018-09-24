@@ -40,7 +40,6 @@ gpgol_SOURCES = \
     dispcache.h dispcache.cpp \
     eventsink.h \
     eventsinks.h \
-    exechelp.c exechelp.h \
     explorer-events.cpp \
     explorers-events.cpp \
     filetype.c filetype.h \
