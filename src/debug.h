@@ -71,6 +71,7 @@ void log_error_w32 (int w32err, const char *fmt,
 void log_hexdump (const void *buf, size_t buflen, const char *fmt,
                   ...)  __attribute__ ((format (printf,3,4)));
 
+const char *anonstr (const char *data);
 #define log_oom if (opt.enable_debug & DBG_OOM) log_debug
 #define log_data if (opt.enable_debug & DBG_DATA) log_debug
 #define log_memory if (opt.enable_debug & DBG_MEMORY) log_debug

@@ -19,6 +19,10 @@
 
 #include "common_indep.h"
 
+#include <gpg-error.h>
+
+#include <string>
+#include <unordered_map>
 
 /* The malloced name of the logfile and the logging stream.  If
    LOGFILE is NULL, no logging is done. */
@@ -304,3 +308,45 @@ log_window_hierarchy (HWND window, const char *fmt, ...)
     }
 }
 #endif
+
+GPGRT_LOCK_DEFINE (anon_str_lock);
+
+/* Weel ok this survives unload but we don't want races
+   and it makes a bit of sense to keep the strings constant. */
+static std::unordered_map<std::string, std::string> str_map;
+
+const char *anonstr (const char *data)
+{
+  static int64_t cnt;
+  if (opt.enable_debug & DBG_DATA)
+    {
+      return data;
+    }
+  if (!data)
+    {
+      return "gpgol_str_null";
+    }
+  if (!strlen (data))
+    {
+      return "gpgol_str_empty";
+    }
+
+  gpgrt_lock_lock (&anon_str_lock);
+  const std::string strData (data);
+  auto it = str_map.find (strData);
+
+  if (it == str_map.end ())
+    {
+      const auto anon = std::string ("gpgol_string_") + std::to_string (cnt);
+      str_map.insert (std::make_pair (strData, anon));
+      it = str_map.find (strData);
+    }
+
+  // As the data is saved in our map we can return
+  // the c_str as it won't be touched as const.
+
+  gpgrt_lock_unlock (&anon_str_lock);
+
+  TRACEPOINT;
+  return it->second.c_str();
+}
