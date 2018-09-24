@@ -31,7 +31,7 @@ static FILE *logfp;
 static int
 lock_log (void)
 {
-  int code = WaitForSingleObject (log_mutex, INFINITE);
+  int code = WaitForSingleObject (log_mutex, 10000);
   return code != WAIT_OBJECT_0;
 }
 
@@ -86,7 +86,10 @@ do_log (const char *fmt, va_list a, int w32err, int err,
     return;
 
   if (lock_log ())
-    return;
+    {
+      OutputDebugStringA ("GpgOL: Failed to log.");
+      return;
+    }
 #endif
 
   if (!strcmp (logfile, "stdout"))
