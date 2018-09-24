@@ -83,7 +83,7 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_block_html (false)
 {
   memdbg_ctor ("ParseController");
-  log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i"
+  log_data ("%s:%s: Creating parser for stream: %p of type %i"
                    " expect no headers: %i expect no mime: %i",
                    SRCNAME, __func__, instream, type,
                    expect_no_headers (type), expect_no_mime (type));
@@ -98,7 +98,7 @@ ParseController::ParseController(FILE *instream, msgtype_t type):
     m_block_html (false)
 {
   memdbg_ctor ("ParseController");
-  log_mime_parser ("%s:%s: Creating parser for stream: %p of type %i",
+  log_data ("%s:%s: Creating parser for stream: %p of type %i",
                    SRCNAME, __func__, instream, type);
 }
 
@@ -649,7 +649,7 @@ ParseController::get_ultimate_keys()
               s_ultimate_keys.push_back (key);
               log_debug ("%s:%s: Adding ultimate uid.",
                          SRCNAME, __func__);
-              log_mime_parser ("%s:%s: Added uid %s.",
+              log_data ("%s:%s: Added uid %s.",
                                SRCNAME, __func__, uid.id());
               break;
             }

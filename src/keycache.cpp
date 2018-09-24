@@ -99,7 +99,7 @@ do_update (LPVOID arg)
 {
   auto args = std::unique_ptr<update_arg_t> ((update_arg_t*) arg);
 
-  log_mime_parser ("%s:%s updating: \"%s\" with protocol %s",
+  log_data ("%s:%s updating: \"%s\" with protocol %s",
                    SRCNAME, __func__, args->first.c_str (),
                    to_cstr (args->second));
 
@@ -146,7 +146,7 @@ do_import (LPVOID arg)
 
   const std::string mbox = args->first->m_mbox;
 
-  log_mime_parser ("%s:%s importing for: \"%s\" with data \n%s",
+  log_data ("%s:%s importing for: \"%s\" with data \n%s",
                    SRCNAME, __func__, mbox.c_str (),
                    args->second.c_str ());
   auto ctx = std::unique_ptr<GpgME::Context> (GpgME::Context::createForProtocol
@@ -397,25 +397,25 @@ public:
     const auto key = getSKey (addr, proto);
     if (key.isNull())
       {
-        log_mime_parser ("%s:%s: secret key for %s is null",
+        log_data ("%s:%s: secret key for %s is null",
                    SRCNAME, __func__, addr);
         return key;
       }
     if (!key.canReallySign())
       {
-        log_mime_parser ("%s:%s: Discarding key for %s because it can't sign",
+        log_data ("%s:%s: Discarding key for %s because it can't sign",
                    SRCNAME, __func__, addr);
         return GpgME::Key();
       }
     if (!key.hasSecret())
       {
-        log_mime_parser ("%s:%s: Discarding key for %s because it has no secret",
+        log_data ("%s:%s: Discarding key for %s because it has no secret",
                    SRCNAME, __func__, addr);
         return GpgME::Key();
       }
     if (in_de_vs_mode () && !key.isDeVs())
       {
-        log_mime_parser ("%s:%s: signing key for %s is not deVS",
+        log_data ("%s:%s: signing key for %s is not deVS",
                    SRCNAME, __func__, addr);
         return GpgME::Key();
       }
@@ -441,7 +441,7 @@ public:
             if (!overrides.empty())
               {
                 ret.insert (ret.end (), overrides.begin (), overrides.end ());
-                log_mime_parser ("%s:%s: Using overides for %s",
+                log_data ("%s:%s: Using overides for %s",
                                  SRCNAME, __func__, recip.c_str ());
                 continue;
               }
@@ -449,7 +449,7 @@ public:
         const auto key = getKey (recip.c_str (), proto);
         if (key.isNull())
           {
-            log_mime_parser ("%s:%s: No key for %s. no internal encryption",
+            log_data ("%s:%s: No key for %s. no internal encryption",
                        SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
@@ -457,14 +457,14 @@ public:
         if (!key.canEncrypt() || key.isRevoked() ||
             key.isExpired() || key.isDisabled() || key.isInvalid())
           {
-            log_mime_parser ("%s:%s: Invalid key for %s. no internal encryption",
+            log_data ("%s:%s: Invalid key for %s. no internal encryption",
                        SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
 
         if (in_de_vs_mode () && !key.isDeVs ())
           {
-            log_mime_parser ("%s:%s: key for %s is not deVS",
+            log_data ("%s:%s: key for %s is not deVS",
                        SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
@@ -488,7 +488,7 @@ public:
           }
         if (!validEnough)
           {
-            log_mime_parser ("%s:%s: UID for %s does not have at least marginal trust",
+            log_data ("%s:%s: UID for %s does not have at least marginal trust",
                              SRCNAME, __func__, recip.c_str ());
             return std::vector<GpgME::Key>();
           }
@@ -525,7 +525,7 @@ public:
 
       auto it = m_fpr_map.find (primaryFpr);
 
-      log_mime_parser ("%s:%s \"%s\" updated.",
+      log_data ("%s:%s \"%s\" updated.",
                        SRCNAME, __func__, primaryFpr);
       if (it == m_fpr_map.end ())
         {
@@ -807,14 +807,14 @@ do_locate (LPVOID arg)
 
   const auto addr = args->m_mbox;
 
-  log_mime_parser ("%s:%s searching key for addr: \"%s\"",
+  log_data ("%s:%s searching key for addr: \"%s\"",
                    SRCNAME, __func__, addr.c_str());
 
   const auto k = GpgME::Key::locate (addr.c_str());
 
   if (!k.isNull ())
     {
-      log_mime_parser ("%s:%s found key for addr: \"%s\":%s",
+      log_data ("%s:%s found key for addr: \"%s\":%s",
                        SRCNAME, __func__, addr.c_str(),
                        k.primaryFingerprint());
       KeyCache::instance ()->setPgpKey (addr, k);
@@ -853,7 +853,7 @@ do_locate (LPVOID arg)
           if (key.isRevoked() || key.isExpired() ||
               key.isDisabled() || key.isInvalid())
             {
-              log_mime_parser ("%s:%s: Skipping invalid S/MIME key",
+              log_data ("%s:%s: Skipping invalid S/MIME key",
                                SRCNAME, __func__);
               continue;
             }
@@ -868,7 +868,7 @@ do_locate (LPVOID arg)
         }
       if (!candidate.isNull())
         {
-          log_mime_parser ("%s:%s found SMIME key for addr: \"%s\":%s",
+          log_data ("%s:%s found SMIME key for addr: \"%s\":%s",
                            SRCNAME, __func__, addr.c_str(),
                            candidate.primaryFingerprint());
           KeyCache::instance()->setSmimeKey (addr, candidate);
@@ -929,14 +929,14 @@ locate_secret (const char *addr, GpgME::Protocol proto)
             {
               std::stringstream ss;
               ss << key;
-              log_mime_parser ("%s:%s: Skipping invalid secret key %s",
+              log_data ("%s:%s: Skipping invalid secret key %s",
                                SRCNAME, __func__, ss.str().c_str());
             }
           continue;
         }
       if (proto == GpgME::OpenPGP)
         {
-          log_mime_parser ("%s:%s found pgp skey for addr: \"%s\":%s",
+          log_data ("%s:%s found pgp skey for addr: \"%s\":%s",
                            SRCNAME, __func__, mbox.c_str(),
                            key.primaryFingerprint());
           KeyCache::instance()->setPgpKeySecret (mbox, key);
@@ -944,7 +944,7 @@ locate_secret (const char *addr, GpgME::Protocol proto)
         }
       if (proto == GpgME::CMS)
         {
-          log_mime_parser ("%s:%s found cms skey for addr: \"%s\":%s",
+          log_data ("%s:%s found cms skey for addr: \"%s\":%s",
                            SRCNAME, __func__, mbox.c_str (),
                            key.primaryFingerprint());
           KeyCache::instance()->setSmimeKeySecret (mbox, key);
@@ -959,7 +959,7 @@ do_locate_secret (LPVOID arg)
 {
   auto args = std::unique_ptr<LocateArgs> ((LocateArgs *) arg);
 
-  log_mime_parser ("%s:%s searching secret key for addr: \"%s\"",
+  log_data ("%s:%s searching secret key for addr: \"%s\"",
                    SRCNAME, __func__, args->m_mbox.c_str ());
 
   locate_secret (args->m_mbox.c_str(), GpgME::OpenPGP);

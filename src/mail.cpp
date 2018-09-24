@@ -1078,7 +1078,7 @@ Mail::decryptVerify_o ()
 
   m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
   m_parser->setSender(GpgME::UserID::addrSpecFromString(getSender_o ().c_str()));
-  log_mime_parser ("%s:%s: Parser for \"%s\" is %p",
+  log_data ("%s:%s: Parser for \"%s\" is %p",
                    SRCNAME, __func__, getSubject_o ().c_str(), m_parser.get());
   gpgol_release (cipherstream);
 
@@ -2957,7 +2957,7 @@ has_crypt_or_empty_body_oom (Mail *mail)
     }
   else
     {
-      log_mime_parser ("%s:%s: Body found in %p : \"%s\"",
+      log_data ("%s:%s: Body found in %p : \"%s\"",
                        SRCNAME, __func__, mail, body.c_str ());
     }
   return ret;

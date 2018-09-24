@@ -129,7 +129,7 @@ debug_message_event (rfc822parse_event_t event)
     case RFC822PARSE_EPILOGUE: s= "Epilogue"; break;
     default: s= "[unknown event]"; break;
     }
-  log_mime_parser ("%s: rfc822 event %s\n", SRCNAME, s);
+  log_data ("%s: rfc822 event %s\n", SRCNAME, s);
 }
 
 /* Returns true if the BER encoded data in BUFFER is CMS signed data.
@@ -244,7 +244,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       ctsub  = "plain";
     }
 
-  log_mime_parser ("%s:%s: ctx=%p, ct=`%s/%s'\n",
+  log_data ("%s:%s: ctx=%p, ct=`%s/%s'\n",
                    SRCNAME, __func__, ctx, ctmain, ctsub);
 
   s = rfc822parse_query_parameter (field, "charset", 0);
@@ -337,7 +337,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
          sig_data has not been set yet).  We also do this only while
          in verify mode because we don't want to write a full MUA.  */
       ctx->collect_signature = 1;
-      log_mime_parser ("%s:%s: Collecting signature.",
+      log_data ("%s:%s: Collecting signature.",
                        SRCNAME, __func__);
     }
   else if (ctx->nesting_level == 1 && ctx->is_encrypted
@@ -345,7 +345,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
            && (ctx->protocol == PROTOCOL_OPENPGP
                && !strcmp (ctsub, "octet-stream")))
     {
-      log_mime_parser ("%s:%s: Collecting encrypted PGP data.",
+      log_data ("%s:%s: Collecting encrypted PGP data.",
                        SRCNAME, __func__);
       ctx->collect_crypto_data = 1;
     }
@@ -358,7 +358,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           && (!strcmp (ctsub, "pkcs7-mime")
               || !strcmp (ctsub, "x-pkcs7-mime")))
         {
-          log_mime_parser ("%s:%s: Collecting crypted S/MIME data.",
+          log_data ("%s:%s: Collecting crypted S/MIME data.",
                            SRCNAME, __func__);
           ctx->collect_crypto_data = 1;
         }
@@ -366,7 +366,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   rfc822parse_release_field (field); /* (Content-type) */
   ctx->in_data = 1;
 
-  log_mime_parser ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
+  log_data ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
                    " charset=\"%s\"\n body_seen=%d is_text_attachment=%d",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
@@ -406,7 +406,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       ctx->current_attachment = provider->create_attachment();
       ctx->collect_body = 0;
       ctx->collect_html_body = 0;
-      log_mime_parser ("%s:%s: Collecting attachment.",
+      log_data ("%s:%s: Collecting attachment.",
                        SRCNAME, __func__);
     }
 
@@ -509,9 +509,9 @@ MimeDataProvider::MimeDataProvider(LPSTREAM stream, bool no_headers):
       log_error ("%s:%s called without stream ", SRCNAME, __func__);
       return;
     }
-  log_mime_parser ("%s:%s Collecting data.", SRCNAME, __func__);
+  log_data ("%s:%s Collecting data.", SRCNAME, __func__);
   collect_data (stream);
-  log_mime_parser ("%s:%s Data collected.", SRCNAME, __func__);
+  log_data ("%s:%s Data collected.", SRCNAME, __func__);
   gpgol_release (stream);
 }
 #endif
@@ -519,9 +519,9 @@ MimeDataProvider::MimeDataProvider(LPSTREAM stream, bool no_headers):
 MimeDataProvider::MimeDataProvider(FILE *stream, bool no_headers):
   MimeDataProvider(no_headers)
 {
-  log_mime_parser ("%s:%s Collecting data from file.", SRCNAME, __func__);
+  log_data ("%s:%s Collecting data from file.", SRCNAME, __func__);
   collect_data (stream);
-  log_mime_parser ("%s:%s Data collected.", SRCNAME, __func__);
+  log_data ("%s:%s Data collected.", SRCNAME, __func__);
 }
 
 MimeDataProvider::~MimeDataProvider()
@@ -558,7 +558,7 @@ MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
 ssize_t
 MimeDataProvider::read(void *buffer, size_t size)
 {
-  log_mime_parser ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
+  log_data ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
                  SRCNAME, __func__, size);
   ssize_t bRead = m_crypto_data.read (buffer, size);
   if (opt.enable_debug & DBG_MIME_DATA && bRead)
@@ -717,7 +717,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                 }
               else
                 {
-                  log_mime_parser ("%s:%s Collecting ended / failed.",
+                  log_data ("%s:%s Collecting ended / failed.",
                                    SRCNAME, __func__);
                 }
             }
@@ -791,11 +791,11 @@ MimeDataProvider::collect_data(LPSTREAM stream)
     {
       if (!bRead)
         {
-          log_mime_parser ("%s:%s: Input stream at EOF.",
+          log_data ("%s:%s: Input stream at EOF.",
                            SRCNAME, __func__);
           break;
         }
-      log_mime_parser ("%s:%s: Read %lu bytes.",
+      log_data ("%s:%s: Read %lu bytes.",
                        SRCNAME, __func__, bRead);
       allRead += bRead;
       if (first_read)
@@ -849,7 +849,7 @@ MimeDataProvider::collect_data(LPSTREAM stream)
           /* For S/MIME, Clearsigned, PGP MESSAGES we just pass everything
              on. Only the Multipart classes need parsing. And the output
              of course. */
-          log_mime_parser ("%s:%s: Just copying data.",
+          log_data ("%s:%s: Just copying data.",
                            SRCNAME, __func__);
           m_crypto_data.write ((void*)buf, (size_t) bRead);
           continue;
@@ -865,7 +865,7 @@ MimeDataProvider::collect_data(LPSTREAM stream)
                      SRCNAME, __func__);
           break;
         }
-      log_mime_parser ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
+      log_data ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
                        SRCNAME, __func__, m_rawbuf.size() - not_taken);
       m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
     }
@@ -902,7 +902,7 @@ MimeDataProvider::collect_data(LPSTREAM stream)
             }
           if (line.find (':') != std::string::npos)
             {
-              log_mime_parser ("%s:%s: Removing comment '%s'.",
+              log_data ("%s:%s: Removing comment '%s'.",
                                SRCNAME, __func__, line.c_str ());
               continue;
             }
@@ -924,7 +924,7 @@ MimeDataProvider::collect_data(FILE *stream)
   size_t bRead;
   while ((bRead = fread (buf, 1, BUFSIZE, stream)) > 0)
     {
-      log_mime_parser ("%s:%s: Read " SIZE_T_FORMAT " bytes.",
+      log_data ("%s:%s: Read " SIZE_T_FORMAT " bytes.",
                        SRCNAME, __func__, bRead);
 
       if (m_collect_everything)
@@ -932,7 +932,7 @@ MimeDataProvider::collect_data(FILE *stream)
           /* For S/MIME, Clearsigned, PGP MESSAGES we just pass everything
              on. Only the Multipart classes need parsing. And the output
              of course. */
-          log_mime_parser ("%s:%s: Making verbatim copy" SIZE_T_FORMAT " bytes.",
+          log_data ("%s:%s: Making verbatim copy" SIZE_T_FORMAT " bytes.",
                            SRCNAME, __func__, bRead);
           m_crypto_data.write ((void*)buf, bRead);
           continue;
@@ -948,7 +948,7 @@ MimeDataProvider::collect_data(FILE *stream)
                      SRCNAME, __func__);
           return;
         }
-      log_mime_parser ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
+      log_data ("%s:%s: Consumed: " SIZE_T_FORMAT " bytes",
                        SRCNAME, __func__, m_rawbuf.size() - not_taken);
       m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
     }
@@ -960,7 +960,7 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
     {
       /* Writing with collect everything one means that we are outputprovider.
          In this case for inline messages we want to collect everything. */
-      log_mime_parser ("%s:%s: Using complete input as body " SIZE_T_FORMAT " bytes.",
+      log_data ("%s:%s: Using complete input as body " SIZE_T_FORMAT " bytes.",
                        SRCNAME, __func__, bufSize);
       m_body += std::string ((const char *) buffer, bufSize);
       return bufSize;
@@ -976,7 +976,7 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
                  SRCNAME, __func__);
       return bufSize;
     }
-  log_mime_parser ("%s:%s: Write Consumed: " SIZE_T_FORMAT " bytes",
+  log_data ("%s:%s: Write Consumed: " SIZE_T_FORMAT " bytes",
                    SRCNAME, __func__, m_rawbuf.size() - not_taken);
   m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
   return bufSize;
@@ -997,7 +997,7 @@ MimeDataProvider::signature() const
 std::shared_ptr<Attachment>
 MimeDataProvider::create_attachment()
 {
-  log_mime_parser ("%s:%s: Creating attachment.",
+  log_data ("%s:%s: Creating attachment.",
                    SRCNAME, __func__);
 
   auto attach = std::shared_ptr<Attachment> (new Attachment());
@@ -1015,7 +1015,7 @@ MimeDataProvider::create_attachment()
         }
       else
         {
-          log_mime_parser ("%s:%s: Attachment filename: %s",
+          log_data ("%s:%s: Attachment filename: %s",
                            SRCNAME, __func__, m_mime_ctx->mimestruct_cur->filename);
           attach->set_display_name (m_mime_ctx->mimestruct_cur->filename);
         }

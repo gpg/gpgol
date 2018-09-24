@@ -30,6 +30,8 @@
 
 #include "xmalloc.h"
 
+#include "debug.h"
+
 #include "memdbg.h"
 
 #ifdef HAVE_W32_SYSTEM
@@ -217,27 +219,6 @@ struct b64_state_s
 };
 typedef struct b64_state_s b64_state_t;
 
-/* Bit values used for extra log file verbosity.  Value 1 is reserved
-   to enable debug menu options.
-
-   Note that the high values here are used for compatibility with
-   old howtos of how to enable debug flags. Based on the old
-   very split up logging categories.
-
-   Categories are meant to be:
-
-   DBG -> Generally useful information.
-   DBG_MEMORY -> Very verbose tracing of Releases / Allocs / Refs.
-   DBG_OOM -> Outlook Object Model events tracing.
-   DBG_DATA -> Including potentially private data and mime parser logging.
-
-   */
-#define DBG_MEMORY         (1<<5)
-#define DBG_MIME_PARSER    (1<<7)
-#define DBG_MIME_DATA      (1<<8)
-#define DBG_OOM            (1<<9)
-#define DBG_OOM_EXTRA      (1<<10)
-
 size_t qp_decode (char *buffer, size_t length, int *r_slbrk);
 char *qp_encode (const char *input, size_t length, size_t* outlen);
 void b64_init (b64_state_t *state);
@@ -264,46 +245,6 @@ char *trim_trailing_spaces (char *string);
               while(*_vptr) { *_vptr=0; _vptr++; } \
                   } while(0)
 
-#define debug_oom        ((opt.enable_debug & DBG_OOM) || \
-                          (opt.enable_debug & DBG_OOM_EXTRA))
-#define debug_oom_extra  (opt.enable_debug & DBG_OOM_EXTRA)
-void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
-void log_error (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
-void log_vdebug (const char *fmt, va_list a);
-void log_debug_w32 (int w32err, const char *fmt,
-                    ...) __attribute__ ((format (printf,2,3)));
-void log_error_w32 (int w32err, const char *fmt,
-                    ...) __attribute__ ((format (printf,2,3)));
-void log_hexdump (const void *buf, size_t buflen, const char *fmt,
-                  ...)  __attribute__ ((format (printf,3,4)));
-
-#define log_oom if (opt.enable_debug & DBG_OOM) log_debug
-#define log_oom_extra if (opt.enable_debug & DBG_OOM_EXTRA) log_debug
-#define log_mime_parser if (opt.enable_debug & DBG_MIME_PARSER) log_debug
-#define log_mime_data if (opt.enable_debug & DBG_MIME_DATA) log_debug
-
-#define gpgol_release(X) \
-{ \
-  if (X && opt.enable_debug & DBG_OOM_EXTRA) \
-    { \
-      log_debug ("%s:%s:%i: Object: %p released ref: %lu \n", \
-                 SRCNAME, __func__, __LINE__, X, X->Release()); \
-      memdbg_released (X); \
-    } \
-  else if (X) \
-    { \
-      X->Release(); \
-    } \
-}
-
-const char *log_srcname (const char *s);
-#define SRCNAME log_srcname (__FILE__)
-
-#define TRACEPOINT log_debug ("%s:%s:%d: tracepoint\n", \
-                              SRCNAME, __func__, __LINE__);
-
-const char *get_log_file (void);
-void set_log_file (const char *name);
 void set_default_key (const char *name);
 
 /*-- Convenience macros. -- */
@@ -368,16 +309,6 @@ _gpgol_stpcpy (char *a, const char *b)
 }
 #define stpcpy(a,b) _gpgol_stpcpy ((a), (b))
 #endif /*!HAVE_STPCPY*/
-
-#ifdef _WIN64
-#define SIZE_T_FORMAT "%I64u"
-#else
-# ifdef HAVE_W32_SYSTEM
-#  define SIZE_T_FORMAT "%u"
-# else
-#  define SIZE_T_FORMAT "%lu"
-# endif
-#endif
 
 /* The length of the boundary - the buffer needs to be allocated one
    byte larger. */

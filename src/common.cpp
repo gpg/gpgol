@@ -459,7 +459,7 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
 
   auto outName = tmpPath + utf8Name;
 
-  log_mime_parser("%s:%s: Attachment candidate is %s",
+  log_data("%s:%s: Attachment candidate is %s",
                   SRCNAME, __func__, outName.c_str ());
 
   int tries = 1;

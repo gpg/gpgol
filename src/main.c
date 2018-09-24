@@ -232,7 +232,7 @@ read_options (void)
           else if (!strcmp (p, "mime-data"))
             opt.enable_debug |= DBG_MIME_DATA;
           else if (!strcmp (p, "oom"))
-            opt.enable_debug |= DBG_OOM;
+            opt.enable_debug |= DBG_OOM_VAL;
           else if (!strcmp (p, "oom-extra"))
             opt.enable_debug |= DBG_OOM_EXTRA;
           else
@@ -250,12 +250,10 @@ read_options (void)
      as the option for debuging was not read before. */
   free (val); val = NULL;
   if (opt.enable_debug)
-    log_debug ("enabled debug flags:%s%s%s%s%s\n",
+    log_debug ("enabled debug flags:%s%s%s\n",
                (opt.enable_debug & DBG_MEMORY)? " memory":"",
-               (opt.enable_debug & DBG_MIME_PARSER)? " mime-parser":"",
-               (opt.enable_debug & DBG_MIME_DATA)? " mime-data":"",
-               (opt.enable_debug & DBG_OOM)? " oom":"",
-               (opt.enable_debug & DBG_OOM_EXTRA)? " oom-extra":""
+               (opt.enable_debug & DBG_DATA)? " data":"",
+               (opt.enable_debug & DBG_OOM)? " oom":""
                );
 
   opt.enable_smime = get_conf_bool ("enableSmime", 0);

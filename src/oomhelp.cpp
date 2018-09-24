@@ -1237,7 +1237,7 @@ try_resolve_group (LPDISPATCH addrEntry,
 
   if (type != DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
     {
-      log_mime_parser ("%s:%s: type of %s is %i",
+      log_data ("%s:%s: type of %s is %i",
                        SRCNAME, __func__, name.c_str(), type);
       return false;
     }
