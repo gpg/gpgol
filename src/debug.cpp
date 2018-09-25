@@ -67,11 +67,12 @@ set_log_file (const char *name)
           fclose (logfp);
           logfp = NULL;
         }
-      xfree (logfile);
+      free (logfile);
       if (!name || *name == '\"' || !*name)
         logfile = NULL;
       else
-        logfile = xstrdup (name);
+        logfile = strdup (name);
+
 #ifdef HAVE_W32_SYSTEM
       unlock_log ();
     }
