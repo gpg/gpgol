@@ -2792,7 +2792,9 @@ mapi_set_attach_hidden (LPATTACH attach)
   if (SUCCEEDED (hr) 
       && PROP_TYPE (propval->ulPropTag) == PT_BOOLEAN
       && propval->Value.b)
-    TRETURN 0;/* Already set to hidden. */
+    {
+      TRETURN 0;/* Already set to hidden. */
+    }
 
   prop.ulPropTag = PR_ATTACHMENT_HIDDEN;
   prop.Value.b = TRUE;
