@@ -425,7 +425,6 @@ static int
 message_cb (void *opaque, rfc822parse_event_t event,
             rfc822parse_t msg)
 {
-  TSTART;
   int retval = 0;
 
   MimeDataProvider *provider = static_cast<MimeDataProvider*> (opaque);
@@ -490,7 +489,7 @@ message_cb (void *opaque, rfc822parse_event_t event,
       break;
     }
 
-  TRETURN retval;
+  return retval;
 }
 
 MimeDataProvider::MimeDataProvider(bool no_headers) :
@@ -566,8 +565,7 @@ MimeDataProvider::~MimeDataProvider()
 bool
 MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
 {
-  TSTART;
-  TRETURN op == GpgME::DataProvider::Read ||
+  return op == GpgME::DataProvider::Read ||
          op == GpgME::DataProvider::Seek ||
          op == GpgME::DataProvider::Write ||
          op == GpgME::DataProvider::Release;
@@ -1010,8 +1008,7 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
 off_t
 MimeDataProvider::seek(off_t offset, int whence)
 {
-  TSTART;
-  TRETURN m_crypto_data.seek (offset, whence);
+  return m_crypto_data.seek (offset, whence);
 }
 
 GpgME::Data *

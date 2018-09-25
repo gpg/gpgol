@@ -39,7 +39,6 @@ static int invalidation_blocked = 0;
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  TSTART;
 //  log_debug ("WMG: %x", (unsigned int) message);
   if (message == WM_USER + 42)
     {

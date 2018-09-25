@@ -347,6 +347,5 @@ const char *anonstr (const char *data)
 
   gpgrt_lock_unlock (&anon_str_lock);
 
-  TRACEPOINT;
   return it->second.c_str();
 }

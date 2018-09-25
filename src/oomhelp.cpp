@@ -37,13 +37,12 @@
 HRESULT
 gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
 {
-  TSTART;
   HRESULT ret = pObj->QueryInterface (riid, ppvObj);
   if ((opt.enable_debug & DBG_OOM_EXTRA) && *ppvObj)
     {
       memdbg_addRef (*ppvObj);
     }
-  TRETURN ret;
+  return ret;
 }
 
 HRESULT
@@ -51,7 +50,6 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
                     ULONG ulInterfaceOptions, ULONG ulFlags,
                     LPUNKNOWN FAR * lppUnk)
 {
-  TSTART;
   HRESULT ret = obj->OpenProperty (ulPropTag, lpiid,
                                    ulInterfaceOptions, ulFlags,
                                    lppUnk);
@@ -61,7 +59,7 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
       log_debug ("%s:%s: OpenProperty on %p prop %lx result %p",
                  SRCNAME, __func__, obj,  ulPropTag, *lppUnk);
     }
-  TRETURN ret;
+  return ret;
 }
 /* Return a malloced string with the utf-8 encoded name of the object
    or NULL if not available.  */
@@ -117,7 +115,6 @@ get_object_name (LPUNKNOWN obj)
 DISPID
 lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
 {
-  TSTART;
   HRESULT hr;
   DISPID dispid;
   wchar_t *wname;
@@ -142,13 +139,12 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
   if (hr != S_OK)
     dispid = DISPID_UNKNOWN;
 
-  TRETURN dispid;
+  return dispid;
 }
 
 static void
 init_excepinfo (EXCEPINFO *err)
 {
-  TSTART;
   if (!err)
     {
       TRETURN;
