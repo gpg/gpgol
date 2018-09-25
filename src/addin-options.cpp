@@ -109,13 +109,42 @@ i18n_noops[] = {
     N_("Continue?"),
     /* TRANSLATORS: Part of address book key configuration dialog. */
     N_("Confirm keys"),
+    /* TRANSLATORS: Part of debugging configuration. */
+    N_("Enable Logging"),
+    N_("Default"),
+    /* TRANSLATORS: Part of debugging configuration.  The plus should
+    mean in the combo box that it is added to the above. */
+    N_("+Outlook API calls"),
+    /* TRANSLATORS: Part of debugging configuration.  The plus should
+    mean in the combo box that it is added to the above. */
+    N_("+Memory analysis"),
+    /* TRANSLATORS: Part of debugging configuration.  The plus should
+    mean in the combo box that it is added to the above. */
+    N_("+Call tracing"),
+    /* TRANSLATORS: Part of debugging configuration. */
+    N_("Log File (required):"),
+    /* TRANSLATORS: Part of debugging configuration.  This is a checkbox
+    to select if even potentially private data should be included in the
+    debug log. */
+    N_("Include Mail contents (decrypted!) and meta information."),
+    /* TRANSLATORS: Dialog title for the log file selection */
+    N_("Select log file"),
+    /* TRANSLATORS: Part of debugging configuration. */
+    N_("Log level:"),
+    /* TRANSLATORS: Part of debugging configuration. Warning shown
+       in case the highest log level is selected. Please try to
+       keep the string ~ the size of the english version as the
+       warning is shown in line with the combo box to select the
+       level. */
+    N_("<b>Warning:</b> Decreased performance. Huge logs!"),
+
 };
 
 
 static bool dlg_open;
 
 static DWORD WINAPI
-open_gpgolgui (LPVOID arg)
+open_gpgolconfig (LPVOID arg)
 {
   HWND wnd = (HWND) arg;
 
@@ -128,8 +157,8 @@ open_gpgolgui (LPVOID arg)
       TRACEPOINT;
       return -1;
     }
-  const auto gpgolgui = std::string (gpg4win_dir) + "\\bin\\gpgolgui.exe";
-  args.push_back (gpgolgui);
+  const auto gpgolconfig = std::string (gpg4win_dir) + "\\bin\\gpgolconfig.exe";
+  args.push_back (gpgolconfig);
 
   args.push_back (std::string ("--hwnd"));
   args.push_back (std::to_string ((int) (intptr_t) wnd));
@@ -184,11 +213,11 @@ options_dialog_box (HWND parent)
 
   if (dlg_open)
     {
-      log_debug ("%s:%s: Gpgolgui open. Not launching new dialog.",
+      log_debug ("%s:%s: Gpgolconfig open. Not launching new dialog.",
                  SRCNAME, __func__);
       HWND optWindow = FindWindow (nullptr, _("Configure GpgOL"));
       if (!optWindow) {
-        log_debug ("%s:%s: Gpgolgui open but could not find window.",
+        log_debug ("%s:%s: Gpgolconfig open but could not find window.",
                  SRCNAME, __func__);
         return;
       }
@@ -197,9 +226,9 @@ options_dialog_box (HWND parent)
       return;
     }
 
-  log_debug ("%s:%s: Launching gpgolgui.",
+  log_debug ("%s:%s: Launching gpgolconfig.",
              SRCNAME, __func__);
 
-  CloseHandle (CreateThread (NULL, 0, open_gpgolgui, (LPVOID) parent, 0,
+  CloseHandle (CreateThread (NULL, 0, open_gpgolconfig, (LPVOID) parent, 0,
                              NULL));
 }
