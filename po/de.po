@@ -182,8 +182,8 @@ msgstr ""
 msgid ""
 "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
-"Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra"
-" für mehr informationen."
+"Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
+"für mehr informationen."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:94
