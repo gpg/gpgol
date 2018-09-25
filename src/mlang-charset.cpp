@@ -81,7 +81,6 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
     {
       log_error ("%s:%s: Inlen too long. Bug.",
                  SRCNAME, __func__);
-      gpgol_release (multilang);
       return NULL;
     }
 
@@ -98,7 +97,6 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
         {
           log_error ("%s:%s: Failed to find charset for: %s",
                      SRCNAME, __func__, charset);
-          gpgol_release (multilang);
           return xstrdup (input);
         }
       enc = (mime_info.uiInternetEncoding == 0) ? mime_info.uiCodePage :
@@ -116,7 +114,6 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
     {
       log_error ("%s:%s: Failed conversion.",
                  SRCNAME, __func__);
-      gpgol_release (multilang);
       return NULL;
   }
   buf = (wchar_t*) xmalloc(sizeof(wchar_t) * (wlen + 1));
