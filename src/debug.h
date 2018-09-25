@@ -49,18 +49,11 @@ extern "C" {
    544 -> OOM and Memory.
    800 -> Full debugging.
    */
-#define DBG_MEMORY         (1<<5) // 32
-#define DBG_MIME_PARSER    (1<<7) // 128 Unified as DBG_DATA
-#define DBG_MIME_DATA      (1<<8) // 256 Unified as DBG_DATA
-#define DBG_DATA           (DBG_MIME_PARSER | DBG_MIME_DATA)
-#define DBG_OOM_VAL        (1<<9) // 512 Unified as DBG_OOM
-#define DBG_OOM_EXTRA      (1<<10)// 1024 Unified as DBG_OOM
-#define DBG_TRACE          (1<<11)// 2048 Very verbose tracing.
-#define DBG_OOM            (DBG_OOM_VAL | DBG_OOM_EXTRA)
+#define DBG_OOM            (1<<1) // 2
+#define DBG_MEMORY         (1<<2) // 4
+#define DBG_TRACE          (1<<3) // 8
+#define DBG_DATA           (1<<4) // 16
 
-#define debug_oom        ((opt.enable_debug & DBG_OOM) || \
-                          (opt.enable_debug & DBG_OOM_EXTRA))
-#define debug_oom_extra  (opt.enable_debug & DBG_OOM_EXTRA)
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_error (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_vdebug (const char *fmt, va_list a);

@@ -38,7 +38,7 @@ HRESULT
 gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
 {
   HRESULT ret = pObj->QueryInterface (riid, ppvObj);
-  if ((opt.enable_debug & DBG_OOM_EXTRA) && *ppvObj)
+  if ((opt.enable_debug & DBG_MEMORY) && *ppvObj)
     {
       memdbg_addRef (*ppvObj);
     }

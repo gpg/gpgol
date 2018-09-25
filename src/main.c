@@ -195,6 +195,57 @@ get_conf_bool (const char *name, int defaultVal)
   return ret;
 }
 
+static int
+dbg_compat (int oldval)
+{
+  // We broke the debug levels at some point
+  // This is cmpatibility code with the old
+  // levels.
+
+#define DBG_MEMORY_OLD     (1<<5) // 32
+#define DBG_MIME_PARSER_OLD (1<<7) // 128 Unified as DBG_DATA
+#define DBG_MIME_DATA_OLD   (1<<8) // 256 Unified in read_options
+#define DBG_OOM_OLD        (1<<9) // 512 Unified as DBG_OOM
+#define DBG_OOM_EXTRA_OLD  (1<<10)// 1024 Unified in read_options
+  int new_dbg = oldval;
+  if ((oldval & DBG_MEMORY_OLD))
+    {
+      new_dbg |= DBG_MEMORY;
+      new_dbg -= DBG_MEMORY_OLD;
+    }
+  if ((oldval & DBG_OOM_OLD))
+    {
+      new_dbg |= DBG_OOM;
+      new_dbg -= DBG_OOM_OLD;
+    }
+  if ((oldval & DBG_MIME_PARSER_OLD))
+    {
+      new_dbg |= DBG_DATA;
+      new_dbg -= DBG_MIME_PARSER_OLD;
+    }
+  if ((oldval & DBG_MIME_DATA_OLD))
+    {
+      new_dbg |= DBG_DATA;
+      new_dbg -= DBG_MIME_DATA_OLD;
+    }
+  if ((oldval & DBG_OOM_OLD))
+    {
+      new_dbg |= DBG_OOM;
+      new_dbg -= DBG_OOM_OLD;
+    }
+  if ((oldval & DBG_OOM_EXTRA_OLD))
+    {
+      new_dbg |= DBG_OOM;
+      new_dbg -= DBG_OOM_EXTRA_OLD;
+    }
+#undef DBG_MEMORY_OLD
+#undef DBG_MIME_PARSER_OLD
+#undef DBG_MIME_DATA_OLD
+#undef DBG_OOM_OLD
+#undef DBG_OOM_EXTRA_OLD
+  return new_dbg;
+}
+
 /* Read option settings from the Registry. */
 void
 read_options (void)
@@ -224,17 +275,20 @@ read_options (void)
               pend += strspn (pend, ", \t\n\r\f");
             }
           if (isascii (*p) && isdigit (*p))
-            opt.enable_debug |= strtoul (p, NULL, 0);
+            {
+              opt.enable_debug |= dbg_compat (strtoul (p, NULL, 0));
+
+            }
           else if (!strcmp (p, "memory"))
             opt.enable_debug |= DBG_MEMORY;
           else if (!strcmp (p, "mime-parser"))
-            opt.enable_debug |= DBG_MIME_PARSER;
+            opt.enable_debug |= DBG_DATA;
           else if (!strcmp (p, "mime-data"))
-            opt.enable_debug |= DBG_MIME_DATA;
+            opt.enable_debug |= DBG_DATA;
           else if (!strcmp (p, "oom"))
-            opt.enable_debug |= DBG_OOM_VAL;
+            opt.enable_debug |= DBG_OOM;
           else if (!strcmp (p, "oom-extra"))
-            opt.enable_debug |= DBG_OOM_EXTRA;
+            opt.enable_debug |= DBG_OOM;
           else
             log_debug ("invalid debug flag `%s' ignored", p);
         }

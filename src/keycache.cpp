@@ -926,7 +926,7 @@ locate_secret (const char *addr, GpgME::Protocol proto)
       if (key.isRevoked() || key.isExpired() ||
           key.isDisabled() || key.isInvalid())
         {
-          if ((opt.enable_debug & DBG_MIME_PARSER))
+          if ((opt.enable_debug & DBG_DATA))
             {
               std::stringstream ss;
               ss << key;

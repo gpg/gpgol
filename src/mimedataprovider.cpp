@@ -578,7 +578,7 @@ MimeDataProvider::read(void *buffer, size_t size)
   log_data ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
                  SRCNAME, __func__, size);
   ssize_t bRead = m_crypto_data.read (buffer, size);
-  if (opt.enable_debug & DBG_MIME_DATA && bRead)
+  if ((opt.enable_debug & DBG_DATA) && bRead)
     {
       std::string buf ((char *)buffer, bRead);
 
