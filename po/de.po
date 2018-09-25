@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-09-25 14:14+0200\n"
-"PO-Revision-Date: 2018-08-30 14:59+0100\n"
+"PO-Revision-Date: 2018-09-25 14:23+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -143,32 +143,30 @@ msgstr ""
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
 #: src/addin-options.cpp:77
-#, fuzzy
 msgid "Configure key for:"
-msgstr "GpgOL konfigurieren"
+msgstr "Schlüssel für:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public key follows.
 #: src/addin-options.cpp:80
 msgid "Paste a public key export here. It should look like:"
 msgstr ""
+"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:82
-#, fuzzy
 msgid "Failed to parse any public key."
-msgstr "Konnte die Mail nicht verarbeiten."
+msgstr "Keine OpenPGP public key daten."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:84
-#, fuzzy
 msgid "Error"
-msgstr "Ein-/Ausgabefehler"
+msgstr "Fehler"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:86
 msgid "Secret key detected."
-msgstr ""
+msgstr "Geheimer Schlüssel gefunden."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:88
@@ -176,39 +174,43 @@ msgid ""
 "You can only configure public keys in Outlook. Import secret keys with "
 "Kleopatra."
 msgstr ""
+"Sie können ausschließlich öffentliche Schlüssel in Outlook konfigurieren. "
+"Importieren Sie geheime Schlüssel mit Kleopatra."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:91
 msgid ""
 "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
+"Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra"
+" für mehr informationen."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:94
 msgid "Invalid key detected."
-msgstr ""
+msgstr "Invalider Schlüssel gefunden."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:96
 msgid "Created:"
-msgstr ""
+msgstr "Erstellt:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:98
 msgid "User Ids:"
-msgstr ""
+msgstr "Benutzerkennungen:"
 
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for key / keys.
 #: src/addin-options.cpp:101
 msgid "You are about to configure the following %1 for:"
-msgstr ""
+msgstr "Sie konfigurieren folgende %1 für:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
 #: src/addin-options.cpp:104
 msgid "keys"
-msgstr ""
+msgstr "Schlüssel"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as singular form.
@@ -219,63 +221,61 @@ msgstr "Schlüssel "
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:109
 msgid "Continue?"
-msgstr ""
+msgstr "Fortsetzen?"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:111
-#, fuzzy
 msgid "Confirm keys"
-msgstr "Eintragung bestätigen?"
+msgstr "Schlüssel bestätigen?"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:113
 msgid "Enable Logging"
-msgstr ""
+msgstr "Logging aktivieren"
 
 #: src/addin-options.cpp:114
 msgid "Default"
-msgstr ""
+msgstr "Standard"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:117
 msgid "+Outlook API calls"
-msgstr ""
+msgstr "+Outlook API aufrufen"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:120
 msgid "+Memory analysis"
-msgstr ""
+msgstr "+Speicher Analyse"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:123
 msgid "+Call tracing"
-msgstr ""
+msgstr "+Code verfolgung"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:125
 msgid "Log File (required):"
-msgstr ""
+msgstr "Log Datei (erforderlich):"
 
 #. TRANSLATORS: Part of debugging configuration.  This is a checkbox
 #. to select if even potentially private data should be included in the
 #. debug log.
 #: src/addin-options.cpp:129
 msgid "Include Mail contents (decrypted!) and meta information."
-msgstr ""
+msgstr "Inklusive Mail inhalten (entschlüsselt!) und Meta-Informationen."
 
 #. TRANSLATORS: Dialog title for the log file selection
 #: src/addin-options.cpp:131
-#, fuzzy
 msgid "Select log file"
-msgstr "Signaturschlüssel auswählen"
+msgstr "Log Datei auswählen"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:133
 msgid "Log level:"
-msgstr ""
+msgstr "Log-Stufe:"
 
 #. TRANSLATORS: Part of debugging configuration. Warning shown
 #. in case the highest log level is selected. Please try to
@@ -284,7 +284,7 @@ msgstr ""
 #. level.
 #: src/addin-options.cpp:139
 msgid "<b>Warning:</b> Decreased performance. Huge logs!"
-msgstr ""
+msgstr "<b>Warnung:</b> Schlechtere Leistung. Riesige Logs!"
 
 #: src/common.cpp:768
 msgid "GpgOL Error"
@@ -359,14 +359,13 @@ msgid "&amp;Print decrypted"
 msgstr "Entschlüsselt &amp;Drucken"
 
 #: src/gpgoladdin.cpp:1101
-#, fuzzy
 msgid "OpenPGP Key"
-msgstr "OpenPGP"
+msgstr "OpenPGP Schlüssel"
 
 #. TRANSLATORS: Tooltip caption
 #: src/gpgoladdin.cpp:1103
 msgid "Configure the OpenPGP key for this contact."
-msgstr ""
+msgstr "OpenPGP Schlüssel für diesen Kontakt konfigurieren."
 
 #. TRANSLATORS: Tooltip content
 #: src/gpgoladdin.cpp:1105
@@ -374,6 +373,8 @@ msgid ""
 "The configured key or keys will be used for this contact even if they are "
 "not certified."
 msgstr ""
+"Der konfigurierte Schlüssel oder die Schlüssel werden für diesen Kontakt "
+"verwendet auch wenn sie nicht beglaubigt sind."
 
 #: src/mail.cpp:383
 msgid ""
