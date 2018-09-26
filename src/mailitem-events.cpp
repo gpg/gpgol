@@ -263,6 +263,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   TRETURN S_OK;
                 }
             }
+          if (m_mail->flagChangeTriggered () &&
+              (!wcscmp (prop_name, L"FlagStatus") || !wcscmp (prop_name, L"FlagRequest") ||
+               !wcscmp (prop_name, L"FlagIcon") || !wcscmp (prop_name, L"FlagDueBy")))
+            {
+              log_oom ("%s:%s: Message %p propchange: %ls was requested.",
+                       SRCNAME, __func__, m_object, prop_name);
+              TRETURN S_OK;
+            }
           log_oom ("%s:%s: Message %p propchange: %ls.",
                    SRCNAME, __func__, m_object, prop_name);
 
