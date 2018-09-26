@@ -140,6 +140,11 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 #define PR_SENT_REPRESENTING_EMAIL_ADDRESS_W_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x0065001F"
 
+#define PR_SENDER_NAME_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x0C1A001F"
+#define PR_SENT_REPRESENTING_NAME_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x0042001F"
+
 #define DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE 11
 
 typedef std::shared_ptr<IDispatch> shared_disp_t;
