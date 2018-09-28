@@ -643,7 +643,8 @@ copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
 /** Sets some meta data on the last attachment added. The meta
   data is taken from the attachment object. */
 static int
-fixup_last_attachment_o (LPDISPATCH mail, std::shared_ptr<Attachment> attachment)
+fixup_last_attachment_o (LPDISPATCH mail,
+                         std::shared_ptr<Attachment> attachment)
 {
   TSTART;
   /* Currently we only set content id */
@@ -661,9 +662,46 @@ fixup_last_attachment_o (LPDISPATCH mail, std::shared_ptr<Attachment> attachment
                  SRCNAME, __func__);
       TRETURN 1;
     }
+  const std::string cid = attachment->get_content_id ();
   int ret = put_pa_string (attach,
                            PR_ATTACH_CONTENT_ID_DASL,
-                           attachment->get_content_id ().c_str());
+                           cid.c_str());
+
+  log_debug ("%s:%s: Set attachment content id to: '%s'",
+             SRCNAME, __func__, anonstr (cid.c_str()));
+  if (ret)
+    {
+      log_error ("%s:%s: Failed.", SRCNAME, __func__);
+      gpgol_release (attach);
+    }
+#if 0
+
+  The following was an experiement to delete the ATTACH_FLAGS values
+  so that we are not hiding attachments.
+
+  LPATTACH mapi_attach = (LPATTACH) get_oom_iunknown (attach, "MAPIOBJECT");
+  if (mapi_attach)
+    {
+      SPropTagArray proparray;
+      HRESULT hr;
+
+      proparray.cValues = 1;
+      proparray.aulPropTag[0] = 0x37140003;
+      hr = mapi_attach->DeleteProps (&proparray, NULL);
+      if (hr)
+        {
+          log_error ("%s:%s: can't delete property attach flags: hr=%#lx\n",
+                     SRCNAME, __func__, hr);
+          ret = -1;
+        }
+      gpgol_release (mapi_attach);
+    }
+  else
+    {
+      log_error ("%s:%s: Failed to get mapi attachment.",
+                 SRCNAME, __func__);
+    }
+#endif
   gpgol_release (attach);
   TRETURN ret;
 }
@@ -730,6 +768,8 @@ add_attachments_o(LPDISPATCH mail,
 
       if (!err)
         {
+          log_debug ("%s:%s: Added attachment '%s'",
+                     SRCNAME, __func__, anonstr (dispName.c_str()));
           err = fixup_last_attachment_o (mail, att);
         }
       if (err)
