@@ -96,6 +96,10 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
   msgcls = get_pa_string (mailitem, PR_MESSAGE_CLASS_W_DASL);
   log_debug ("%s:%s: message class is `%s'\n",
              SRCNAME, __func__, msgcls? msgcls:"[none]");
+  if (!msgcls)
+    {
+      return -1;
+    }
   if ( !( !strncmp (msgcls, "IPM.Note.GpgOL", 14)
           && (!msgcls[14] || msgcls[14] == '.') ) )
     {
