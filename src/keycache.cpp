@@ -129,8 +129,9 @@ do_update (LPVOID arg)
     }
   if (err)
     {
-      log_debug ("%s:%s Failed to find key for %s err: ",
-                 SRCNAME, __func__, err.asString ());
+      log_debug ("%s:%s Failed to find key for %s err: %s",
+                 SRCNAME, __func__, anonstr (args->first.c_str()),
+                 err.asString ());
     }
   KeyCache::instance ()->onUpdateJobDone (args->first.c_str(),
                                           newKey);
