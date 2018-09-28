@@ -189,6 +189,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   char *filename = NULL;
   char *cid = NULL;
   char *charset = NULL;
+  bool ignore_cid = false;
 
   /* Figure out the encoding.  */
   ctx->is_qp_encoded = 0;
@@ -214,6 +215,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       if (s)
         filename = rfc2047_parse (s);
       s = rfc822parse_query_parameter (field, NULL, 1);
+
+      if (s && strstr (s, "attachment"))
+        {
+          log_debug ("%s:%s: Found Content-Disposition attachment."
+                     " Ignoring content-id to avoid hiding.",
+                     SRCNAME, __func__);
+          ignore_cid = true;
+        }
 
       /* This is a bit of a taste matter how to treat inline
          attachments. Outlook does not show them inline so we
@@ -269,13 +278,15 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     }
 
   /* Parse a Content Id header */
-  p = rfc822parse_get_field (msg, "Content-Id", -1, &off);
-  if (p)
+  if (!ignore_cid)
     {
-       cid = xstrdup (p+off);
-       xfree (p);
+      p = rfc822parse_get_field (msg, "Content-Id", -1, &off);
+      if (p)
+        {
+           cid = xstrdup (p+off);
+           xfree (p);
+        }
     }
-
   /* Update our idea of the entire MIME structure.  */
   {
     mimestruct_item_t ms;
