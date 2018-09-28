@@ -696,9 +696,13 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
       gpgrt_asprintf (&buf, _("The message was not cryptographically signed.\n"
                       "There is no additional information available if it "
                       "was actually sent by '%s' or if someone faked the sender address."), mail->getSender_o ().c_str());
-      MessageBox (NULL, buf, _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
+      wchar_t *w_msg = utf8_to_wchar (buf);
+      wchar_t *w_title = utf8_to_wchar (_("GpgOL"));
+      MessageBoxW (NULL, w_msg, w_title,
+                   MB_ICONINFORMATION|MB_OK);
       xfree (buf);
+      xfree (w_msg);
+      xfree (w_title);
       return S_OK;
     }
 
@@ -756,11 +760,13 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
 
   if (showError)
     {
-      MessageBox (NULL,
-                  _("Could not find Kleopatra.\n"
-                  "Please reinstall Gpg4win with the Kleopatra component enabled."),
-                  _("GpgOL"),
-                  MB_ICONINFORMATION|MB_OK);
+      wchar_t *w_title = utf8_to_wchar (_("GpgOL"));
+      wchar_t *w_msg = utf8_to_wchar (_("Could not find Kleopatra.\n"
+                  "Please reinstall Gpg4win with the Kleopatra component enabled."));
+      MessageBoxW (NULL, w_msg, w_title,
+                   MB_ICONINFORMATION|MB_OK);
+      xfree (w_title);
+      xfree (w_msg);
     }
   return S_OK;
 }
