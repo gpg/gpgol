@@ -173,6 +173,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: BeforeRead : %p",
                          SRCNAME, __func__, m_mail);
+          if (GpgolAddin::get_instance ()->isShutdown())
+            {
+              log_debug ("%s:%s: Ignoring read after shutdown.",
+                         SRCNAME, __func__);
+              TBREAK;
+            }
+
           if (m_mail->preProcessMessage_m ())
             {
               log_error ("%s:%s: Pre process message failed.",

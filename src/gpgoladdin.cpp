@@ -1192,6 +1192,7 @@ GpgolAddin::shutdown ()
       return;
     }
 
+  m_shutdown = true;
   /* Disabling message hook */
   UnhookWindowsHookEx (m_hook);
 
@@ -1225,7 +1226,6 @@ GpgolAddin::shutdown ()
                   _("GpgOL"),
                   MB_ICONINFORMATION|MB_OK);
     }
-  m_shutdown = true;
 
   gpgol_release (m_application);
   m_application = nullptr;
