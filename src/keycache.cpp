@@ -65,6 +65,7 @@ namespace
           m_mbox (mbox),
           m_mail (mail)
         {
+          TSTART;
           s_thread_cnt++;
           Mail::lockDelete ();
           if (Mail::isValidPtr (m_mail))
@@ -72,10 +73,12 @@ namespace
               m_mail->incrementLocateCount ();
             }
           Mail::unlockDelete ();
+          TRETURN;
         };
 
         ~LocateArgs()
         {
+          TSTART;
           s_thread_cnt--;
           Mail::lockDelete ();
           if (Mail::isValidPtr (m_mail))
@@ -83,6 +86,7 @@ namespace
               m_mail->decrementLocateCount ();
             }
           Mail::unlockDelete ();
+          TRETURN;
         }
 
         std::string m_mbox;
@@ -97,6 +101,7 @@ typedef std::pair<std::unique_ptr<LocateArgs>, std::string> import_arg_t;
 static DWORD WINAPI
 do_update (LPVOID arg)
 {
+  TSTART;
   auto args = std::unique_ptr<update_arg_t> ((update_arg_t*) arg);
 
   log_debug ("%s:%s updating: \"%s\" with protocol %s",
@@ -111,7 +116,7 @@ do_update (LPVOID arg)
       TRACEPOINT;
       KeyCache::instance ()->onUpdateJobDone (args->first.c_str(),
                                               GpgME::Key ());
-      return 0;
+      TRETURN 0;
     }
 
   ctx->setKeyListMode (GpgME::KeyListMode::Local |
@@ -137,12 +142,13 @@ do_update (LPVOID arg)
                                           newKey);
   log_debug ("%s:%s Update job done",
              SRCNAME, __func__);
-  return 0;
+  TRETURN 0;
 }
 
 static DWORD WINAPI
 do_import (LPVOID arg)
 {
+  TSTART;
   auto args = std::unique_ptr<import_arg_t> ((import_arg_t*) arg);
 
   const std::string mbox = args->first->m_mbox;
@@ -156,7 +162,7 @@ do_import (LPVOID arg)
   if (!ctx)
     {
       TRACEPOINT;
-      return 0;
+      TRETURN 0;
     }
   // We want to avoid unneccessary copies. The c_str will be valid
   // until args goes out of scope.
@@ -167,7 +173,7 @@ do_import (LPVOID arg)
     {
       log_debug ("%s:%s Data for: %s is not a PGP Key",
                  SRCNAME, __func__, anonstr (mbox.c_str ()));
-      return 0;
+      TRETURN 0;
     }
   data.rewind ();
 
@@ -206,7 +212,7 @@ do_import (LPVOID arg)
 
   log_debug ("%s:%s Import job done for: %s",
              SRCNAME, __func__, anonstr (mbox.c_str ()));
-  return 0;
+  TRETURN 0;
 }
 
 
@@ -220,6 +226,7 @@ public:
 
   void setPgpKey(const std::string &mbox, const GpgME::Key &key)
   {
+    TSTART;
     gpgrt_lock_lock (&keycache_lock);
     auto it = m_pgp_key_map.find (mbox);
 
@@ -233,10 +240,12 @@ public:
       }
     insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
+    TRETURN;
   }
 
   void setSmimeKey(const std::string &mbox, const GpgME::Key &key)
   {
+    TSTART;
     gpgrt_lock_lock (&keycache_lock);
     auto it = m_smime_key_map.find (mbox);
 
@@ -250,10 +259,12 @@ public:
       }
     insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
+    TRETURN;
   }
 
   void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
   {
+    TSTART;
     gpgrt_lock_lock (&keycache_lock);
     auto it = m_pgp_skey_map.find (mbox);
 
@@ -267,10 +278,12 @@ public:
       }
     insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
+    TRETURN;
   }
 
   void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key)
   {
+    TSTART;
     gpgrt_lock_lock (&keycache_lock);
     auto it = m_smime_skey_map.find (mbox);
 
@@ -284,15 +297,17 @@ public:
       }
     insertOrUpdateInFprMap (key);
     gpgrt_lock_unlock (&keycache_lock);
+    TRETURN;
   }
 
   std::vector<GpgME::Key> getPGPOverrides (const char *addr)
   {
+    TSTART;
     std::vector<GpgME::Key> ret;
 
     if (!addr)
       {
-        return ret;
+        TRETURN ret;
       }
     auto mbox = GpgME::UserID::addrSpecFromString (addr);
 
@@ -301,7 +316,7 @@ public:
     if (it == m_addr_book_overrides.end ())
       {
         gpgrt_lock_unlock (&keycache_lock);
-        return ret;
+        TRETURN ret;
       }
     for (const auto fpr: it->second)
       {
@@ -316,14 +331,15 @@ public:
       }
 
     gpgrt_lock_unlock (&keycache_lock);
-    return ret;
+    TRETURN ret;
   }
 
   GpgME::Key getKey (const char *addr, GpgME::Protocol proto)
   {
+    TSTART;
     if (!addr)
       {
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
     auto mbox = GpgME::UserID::addrSpecFromString (addr);
 
@@ -335,12 +351,12 @@ public:
         if (it == m_pgp_key_map.end ())
           {
             gpgrt_lock_unlock (&keycache_lock);
-            return GpgME::Key();
+            TRETURN GpgME::Key();
           }
         const auto ret = it->second;
         gpgrt_lock_unlock (&keycache_lock);
 
-        return ret;
+        TRETURN ret;
       }
     gpgrt_lock_lock (&keycache_lock);
     const auto it = m_smime_key_map.find (mbox);
@@ -348,19 +364,20 @@ public:
     if (it == m_smime_key_map.end ())
       {
         gpgrt_lock_unlock (&keycache_lock);
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
     const auto ret = it->second;
     gpgrt_lock_unlock (&keycache_lock);
 
-    return ret;
+    TRETURN ret;
   }
 
   GpgME::Key getSKey (const char *addr, GpgME::Protocol proto)
   {
+    TSTART;
     if (!addr)
       {
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
     auto mbox = GpgME::UserID::addrSpecFromString (addr);
 
@@ -372,12 +389,12 @@ public:
         if (it == m_pgp_skey_map.end ())
           {
             gpgrt_lock_unlock (&keycache_lock);
-            return GpgME::Key();
+            TRETURN GpgME::Key();
           }
         const auto ret = it->second;
         gpgrt_lock_unlock (&keycache_lock);
 
-        return ret;
+        TRETURN ret;
       }
     gpgrt_lock_lock (&keycache_lock);
     const auto it = m_smime_skey_map.find (mbox);
@@ -385,53 +402,55 @@ public:
     if (it == m_smime_skey_map.end ())
       {
         gpgrt_lock_unlock (&keycache_lock);
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
     const auto ret = it->second;
     gpgrt_lock_unlock (&keycache_lock);
 
-    return ret;
+    TRETURN ret;
   }
 
   GpgME::Key getSigningKey (const char *addr, GpgME::Protocol proto)
   {
+    TSTART;
     const auto key = getSKey (addr, proto);
     if (key.isNull())
       {
         log_debug ("%s:%s: secret key for %s is null",
                    SRCNAME, __func__, anonstr (addr));
-        return key;
+        TRETURN key;
       }
     if (!key.canReallySign())
       {
         log_debug ("%s:%s: Discarding key for %s because it can't sign",
                    SRCNAME, __func__, anonstr (addr));
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
     if (!key.hasSecret())
       {
         log_debug ("%s:%s: Discarding key for %s because it has no secret",
                    SRCNAME, __func__, anonstr (addr));
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
     if (in_de_vs_mode () && !key.isDeVs())
       {
         log_debug ("%s:%s: signing key for %s is not deVS",
                    SRCNAME, __func__, anonstr (addr));
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
-    return key;
+    TRETURN key;
   }
 
   std::vector<GpgME::Key> getEncryptionKeys (const std::vector<std::string>
                                              &recipients,
                                              GpgME::Protocol proto)
   {
+    TSTART;
     std::vector<GpgME::Key> ret;
     if (recipients.empty ())
       {
         TRACEPOINT;
-        return ret;
+        TRETURN ret;
       }
     for (const auto &recip: recipients)
       {
@@ -452,7 +471,7 @@ public:
           {
             log_debug ("%s:%s: No key for %s. no internal encryption",
                        SRCNAME, __func__, anonstr (recip.c_str ()));
-            return std::vector<GpgME::Key>();
+            TRETURN std::vector<GpgME::Key>();
           }
 
         if (!key.canEncrypt() || key.isRevoked() ||
@@ -460,14 +479,14 @@ public:
           {
             log_data ("%s:%s: Invalid key for %s. no internal encryption",
                        SRCNAME, __func__, anonstr (recip.c_str ()));
-            return std::vector<GpgME::Key>();
+            TRETURN std::vector<GpgME::Key>();
           }
 
         if (in_de_vs_mode () && !key.isDeVs ())
           {
             log_data ("%s:%s: key for %s is not deVS",
                       SRCNAME, __func__, anonstr (recip.c_str ()));
-            return std::vector<GpgME::Key>();
+            TRETURN std::vector<GpgME::Key>();
           }
 
         bool validEnough = false;
@@ -491,20 +510,21 @@ public:
           {
             log_debug ("%s:%s: UID for %s does not have at least marginal trust",
                        SRCNAME, __func__, anonstr (recip.c_str ()));
-            return std::vector<GpgME::Key>();
+            TRETURN std::vector<GpgME::Key>();
           }
         // Accepting key
         ret.push_back (key);
       }
-    return ret;
+    TRETURN ret;
   }
 
   void insertOrUpdateInFprMap (const GpgME::Key &key)
     {
+      TSTART;
       if (key.isNull() || !key.primaryFingerprint())
         {
           TRACEPOINT;
-          return;
+          TRETURN;
         }
       gpgrt_lock_lock (&fpr_map_lock);
 
@@ -533,7 +553,7 @@ public:
           m_fpr_map.insert (std::make_pair (primaryFpr, key));
 
           gpgrt_lock_unlock (&fpr_map_lock);
-          return;
+          TRETURN;
         }
 
       if (it->second.hasSecret () && !key.hasSecret())
@@ -549,15 +569,16 @@ public:
           it->second = key;
         }
       gpgrt_lock_unlock (&fpr_map_lock);
-      return;
+      TRETURN;
     }
 
   GpgME::Key getFromMap (const char *fpr) const
   {
+    TSTART;
     if (!fpr)
       {
         TRACEPOINT;
-        return GpgME::Key();
+        TRETURN GpgME::Key();
       }
 
     gpgrt_lock_lock (&fpr_map_lock);
@@ -580,18 +601,19 @@ public:
       {
         const auto ret = keyIt->second;
         gpgrt_lock_unlock (&fpr_map_lock);
-        return ret;
+        TRETURN ret;
       }
     gpgrt_lock_unlock (&fpr_map_lock);
-    return GpgME::Key();
+    TRETURN GpgME::Key();
   }
 
   GpgME::Key getByFpr (const char *fpr, bool block) const
     {
+      TSTART;
       if (!fpr)
         {
           TRACEPOINT;
-          return GpgME::Key ();
+          TRETURN GpgME::Key ();
         }
 
       TRACEPOINT;
@@ -639,24 +661,25 @@ public:
                 {
                   log_debug ("%s:%s Cache hit after wait for %s.",
                              SRCNAME, __func__, anonstr (fpr));
-                  return ret2;
+                  TRETURN ret2;
                 }
             }
           log_debug ("%s:%s Cache miss for %s.",
                      SRCNAME, __func__, anonstr (fpr));
-          return GpgME::Key();
+          TRETURN GpgME::Key();
         }
 
       log_debug ("%s:%s Cache hit for %s.",
                  SRCNAME, __func__, anonstr (fpr));
-      return ret;
+      TRETURN ret;
     }
 
   void update (const char *fpr, GpgME::Protocol proto)
      {
+       TSTART;
        if (!fpr)
          {
-           return;
+           TRETURN;
          }
        const std::string sFpr (fpr);
        gpgrt_lock_lock (&update_lock);
@@ -675,13 +698,15 @@ public:
        CloseHandle (CreateThread (NULL, 0, do_update,
                                   (LPVOID) args, 0,
                                   NULL));
+       TRETURN;
      }
 
   void onUpdateJobDone (const char *fpr, const GpgME::Key &key)
     {
+      TSTART;
       if (!fpr)
         {
-          return;
+          TRETURN;
         }
       TRACEPOINT;
       insertOrUpdateInFprMap (key);
@@ -693,21 +718,22 @@ public:
           log_error ("%s:%s Update for \"%s\" already finished.",
                      SRCNAME, __func__, anonstr (fpr));
           gpgrt_lock_unlock (&update_lock);
-          return;
+          TRETURN;
         }
       m_update_jobs.erase (it);
       gpgrt_lock_unlock (&update_lock);
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   void importFromAddrBook (const std::string &mbox, const char *data,
                            Mail *mail)
     {
+      TSTART;
       if (!data || mbox.empty() || !mail)
         {
           TRACEPOINT;
-          return;
+          TRETURN;
         }
        gpgrt_lock_lock (&import_lock);
        if (m_import_jobs.find (mbox) != m_import_jobs.end ())
@@ -726,11 +752,13 @@ public:
                                   (LPVOID) args, 0,
                                   NULL));
 
+      TRETURN;
     }
 
   void onAddrBookImportJobDone (const std::string &mbox,
                                 const std::vector<std::string> &result_fprs)
     {
+      TSTART;
       gpgrt_lock_lock (&keycache_lock);
       auto it = m_addr_book_overrides.find (mbox);
       if (it != m_addr_book_overrides.end ())
@@ -751,11 +779,11 @@ public:
           log_error ("%s:%s import for \"%s\" already finished.",
                      SRCNAME, __func__, anonstr (mbox.c_str ()));
           gpgrt_lock_unlock (&import_lock);
-          return;
+          TRETURN;
         }
       m_import_jobs.erase (job_it);
       gpgrt_lock_unlock (&import_lock);
-      return;
+      TRETURN;
     }
 
   std::unordered_map<std::string, GpgME::Key> m_pgp_key_map;
@@ -800,9 +828,10 @@ KeyCache::getEncryptionKeys (const std::vector<std::string> &recipients, GpgME::
 static DWORD WINAPI
 do_locate (LPVOID arg)
 {
+  TSTART;
   if (!arg)
     {
-      return 0;
+      TRETURN 0;
     }
 
   auto args = std::unique_ptr<LocateArgs> ((LocateArgs *) arg);
@@ -829,7 +858,7 @@ do_locate (LPVOID arg)
       if (!ctx)
         {
           TRACEPOINT;
-          return 0;
+          TRETURN 0;
         }
       // We need to validate here to fetch CRL's
       ctx->setKeyListMode (GpgME::KeyListMode::Local |
@@ -839,7 +868,7 @@ do_locate (LPVOID arg)
       if (e)
         {
           TRACEPOINT;
-          return 0;
+          TRETURN 0;
         }
 
       std::vector<GpgME::Key> keys;
@@ -878,23 +907,24 @@ do_locate (LPVOID arg)
     }
   log_debug ("%s:%s locator thread done",
              SRCNAME, __func__);
-  return 0;
+  TRETURN 0;
 }
 
 static void
 locate_secret (const char *addr, GpgME::Protocol proto)
 {
+  TSTART;
   auto ctx = std::unique_ptr<GpgME::Context> (
                       GpgME::Context::createForProtocol (proto));
   if (!ctx)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   if (!addr)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   const auto mbox = GpgME::UserID::addrSpecFromString (addr);
 
@@ -902,7 +932,7 @@ locate_secret (const char *addr, GpgME::Protocol proto)
     {
       log_debug ("%s:%s: Empty mbox for addr %s",
                  SRCNAME, __func__, anonstr (addr));
-      return;
+      TRETURN;
     }
 
   // We need to validate here to fetch CRL's
@@ -912,7 +942,7 @@ locate_secret (const char *addr, GpgME::Protocol proto)
   if (e)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
 
   std::vector<GpgME::Key> keys;
@@ -942,7 +972,7 @@ locate_secret (const char *addr, GpgME::Protocol proto)
                      SRCNAME, __func__, anonstr (mbox.c_str()),
                      anonstr (key.primaryFingerprint()));
           KeyCache::instance()->setPgpKeySecret (mbox, key);
-          return;
+          TRETURN;
         }
       if (proto == GpgME::CMS)
         {
@@ -950,15 +980,16 @@ locate_secret (const char *addr, GpgME::Protocol proto)
                      SRCNAME, __func__, anonstr (mbox.c_str ()),
                      anonstr (key.primaryFingerprint()));
           KeyCache::instance()->setSmimeKeySecret (mbox, key);
-          return;
+          TRETURN;
         }
     } while (!err);
-  return;
+  TRETURN;
 }
 
 static DWORD WINAPI
 do_locate_secret (LPVOID arg)
 {
+  TSTART;
   auto args = std::unique_ptr<LocateArgs> ((LocateArgs *) arg);
 
   log_debug ("%s:%s searching secret key for addr: \"%s\"",
@@ -971,7 +1002,7 @@ do_locate_secret (LPVOID arg)
     }
   log_debug ("%s:%s locator sthread thread done",
              SRCNAME, __func__);
-  return 0;
+  TRETURN 0;
 }
 
 void
@@ -986,15 +1017,16 @@ KeyCache::startLocate (const std::vector<std::string> &addrs, Mail *mail) const
 void
 KeyCache::startLocate (const char *addr, Mail *mail) const
 {
+  TSTART;
   if (!addr)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   std::string recp = GpgME::UserID::addrSpecFromString (addr);
   if (recp.empty ())
     {
-      return;
+      TRETURN;
     }
   gpgrt_lock_lock (&keycache_lock);
   if (d->m_pgp_key_map.find (recp) == d->m_pgp_key_map.end ())
@@ -1011,20 +1043,22 @@ KeyCache::startLocate (const char *addr, Mail *mail) const
       CloseHandle (thread);
     }
   gpgrt_lock_unlock (&keycache_lock);
+  TRETURN;
 }
 
 void
 KeyCache::startLocateSecret (const char *addr, Mail *mail) const
 {
+  TSTART;
   if (!addr)
     {
       TRACEPOINT;
-      return;
+      TRETURN;
     }
   std::string recp = GpgME::UserID::addrSpecFromString (addr);
   if (recp.empty ())
     {
-      return;
+      TRETURN;
     }
   gpgrt_lock_lock (&keycache_lock);
   if (d->m_pgp_skey_map.find (recp) == d->m_pgp_skey_map.end ())
@@ -1042,6 +1076,7 @@ KeyCache::startLocateSecret (const char *addr, Mail *mail) const
       CloseHandle (thread);
     }
   gpgrt_lock_unlock (&keycache_lock);
+  TRETURN;
 }
 
 
@@ -1072,6 +1107,7 @@ KeyCache::setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
 bool
 KeyCache::isMailResolvable(Mail *mail)
 {
+  TSTART;
   /* Get the data from the mail. */
   const auto sender = mail->getSender ();
   auto recps = mail->getCachedRecipients ();
@@ -1080,7 +1116,7 @@ KeyCache::isMailResolvable(Mail *mail)
     {
       log_debug ("%s:%s: Mail has no sender or no recipients.",
                  SRCNAME, __func__);
-      return false;
+      TRETURN false;
     }
 
 
@@ -1089,12 +1125,12 @@ KeyCache::isMailResolvable(Mail *mail)
 
   if (!encKeys.empty())
     {
-      return true;
+      TRETURN true;
     }
 
   if (!opt.enable_smime)
     {
-      return false;
+      TRETURN false;
     }
 
   /* Check S/MIME instead here we need to include the sender
@@ -1103,7 +1139,7 @@ KeyCache::isMailResolvable(Mail *mail)
   GpgME::Key sigKey= getSigningKey (sender.c_str(), GpgME::CMS);
   encKeys = getEncryptionKeys (recps, GpgME::CMS);
 
-  return !encKeys.empty() && !sigKey.isNull();
+  TRETURN !encKeys.empty() && !sigKey.isNull();
 }
 
 void
