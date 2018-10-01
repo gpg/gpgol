@@ -202,6 +202,7 @@ struct
   int sync_enc;              /* Disabed async encryption */
   int prefer_smime;          /* S/MIME prefered when autoresolving */
   int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
+  int autoretrieve;           /* Use --auto-key-retrieve. */
 
   /* The forms revision number of the binary.  */
   int forms_revision;

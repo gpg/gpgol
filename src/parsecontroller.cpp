@@ -341,7 +341,7 @@ ParseController::parse()
     }
 
   /* Maybe a different option for this ? */
-  if (opt.autoresolve)
+  if (opt.autoretrieve)
     {
       ctx->setFlag("auto-key-retrieve", "1");
     }

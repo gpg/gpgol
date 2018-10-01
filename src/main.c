@@ -317,6 +317,7 @@ read_options (void)
   opt.reply_crypt = get_conf_bool ("replyCrypt", 1);
   opt.prefer_smime = get_conf_bool ("preferSmime", 0);
   opt.autoresolve = get_conf_bool ("autoresolve", 1);
+  opt.autoretrieve = get_conf_bool ("autoretrieve", 0);
   opt.automation = get_conf_bool ("automation", 1);
   opt.autosecure = get_conf_bool ("autosecure", 1);
   opt.autotrust = get_conf_bool ("autotrust", 0);
@@ -329,6 +330,7 @@ read_options (void)
       opt.autosecure = 0;
       opt.autoresolve = 0;
       opt.autotrust = 0;
+      opt.autoretrieve = 0;
     }
 
   /* Hidden options  */
