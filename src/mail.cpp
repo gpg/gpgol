@@ -832,7 +832,10 @@ do_parsing (LPVOID arg)
       TRETURN -1;
     }
   parser->parse();
-  do_in_ui_thread (PARSING_DONE, arg);
+  if (!opt.sync_dec)
+    {
+      do_in_ui_thread (PARSING_DONE, arg);
+    }
   gpgrt_lock_unlock (&parser_lock);
   unblockInv();
   TRETURN 0;
@@ -1146,17 +1149,26 @@ Mail::decryptVerify_o ()
                    SRCNAME, __func__, getSubject_o ().c_str(), m_parser.get());
   gpgol_release (cipherstream);
 
-  HANDLE parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
-                                       NULL);
-
-  if (!parser_thread)
+  if (!opt.sync_dec)
     {
-      log_error ("%s:%s: Failed to create decrypt / verify thread.",
-                 SRCNAME, __func__);
-    }
-  CloseHandle (parser_thread);
+      HANDLE parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
+                                           NULL);
 
-  TRETURN 0;
+      if (!parser_thread)
+        {
+          log_error ("%s:%s: Failed to create decrypt / verify thread.",
+                     SRCNAME, __func__);
+        }
+      CloseHandle (parser_thread);
+      TRETURN 0;
+    }
+  else
+    {
+      /* Parse synchronously */
+      do_parsing ((LPVOID) this);
+      parsing_done ();
+      TRETURN 0;
+    }
 }
 
 void find_and_replace(std::string& source, const std::string &find,

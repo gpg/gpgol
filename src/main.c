@@ -334,7 +334,8 @@ read_options (void)
     }
 
   /* Hidden options  */
-  opt.sync_enc = get_conf_bool ("_syncEnc", 0);
+  opt.sync_enc = get_conf_bool ("syncEnc", 0);
+  opt.sync_dec = get_conf_bool ("syncDec", 0);
 }
 
 
