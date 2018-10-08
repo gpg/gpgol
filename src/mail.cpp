@@ -1800,7 +1800,9 @@ Mail::revertAllMails_o ()
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
-  for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
+  auto mail_map_copy = s_mail_map;
+  gpgrt_lock_unlock (&mail_map_lock);
+  for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (it->second->revert_o ())
         {
@@ -1817,7 +1819,6 @@ Mail::revertAllMails_o ()
           continue;
         }
     }
-  gpgrt_lock_unlock (&mail_map_lock);
   TRETURN err;
 }
 
@@ -1828,7 +1829,9 @@ Mail::wipeAllMails_o ()
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
   gpgrt_lock_lock (&mail_map_lock);
-  for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
+  auto mail_map_copy = s_mail_map;
+  gpgrt_lock_unlock (&mail_map_lock);
+  for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (it->second->wipe_o ())
         {
@@ -1836,7 +1839,6 @@ Mail::wipeAllMails_o ()
           err++;
         }
     }
-  gpgrt_lock_unlock (&mail_map_lock);
   TRETURN err;
 }
 
