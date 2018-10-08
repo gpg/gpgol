@@ -124,9 +124,9 @@ Mail::Mail (LPDISPATCH mailitem) :
       gpgol_release(mailitem);
       TRETURN;
     }
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   s_mail_map.insert (std::pair<LPDISPATCH, Mail *> (mailitem, this));
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   s_last_mail = this;
   memdbg_ctor ("Mail");
   TRETURN;
@@ -139,7 +139,7 @@ void
 Mail::lockDelete ()
 {
   TSTART;
-  gpgrt_lock_lock (&dtor_lock);
+  gpgol_lock (&dtor_lock);
   TRETURN;
 }
 
@@ -148,7 +148,7 @@ void
 Mail::unlockDelete ()
 {
   TSTART;
-  gpgrt_lock_unlock (&dtor_lock);
+  gpgol_unlock (&dtor_lock);
   TRETURN;
 }
 
@@ -160,7 +160,7 @@ Mail::~Mail()
      thread. The shared_ptr of the parser then ensures
      that the parser is alive even if the mail is deleted
      while parsing. */
-  gpgrt_lock_lock (&dtor_lock);
+  gpgol_lock (&dtor_lock);
   memdbg_dtor ("Mail");
   log_oom ("%s:%s: dtor: Mail: %p item: %p",
                  SRCNAME, __func__, this, m_mailitem);
@@ -173,23 +173,23 @@ Mail::~Mail()
 
   log_oom ("%s:%s: Erasing mail",
                  SRCNAME, __func__);
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   it = s_mail_map.find(m_mailitem);
   if (it != s_mail_map.end())
     {
       s_mail_map.erase (it);
     }
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
 
   if (!m_uuid.empty())
     {
-      gpgrt_lock_lock (&uid_map_lock);
+      gpgol_lock (&uid_map_lock);
       auto it2 = s_uid_map.find(m_uuid);
       if (it2 != s_uid_map.end())
         {
           s_uid_map.erase (it2);
         }
-      gpgrt_lock_unlock (&uid_map_lock);
+      gpgol_unlock (&uid_map_lock);
     }
 
   log_oom ("%s:%s: releasing mailitem",
@@ -213,7 +213,7 @@ Mail::~Mail()
   m_crypter = nullptr;
 
   releaseCurrentItem();
-  gpgrt_lock_unlock (&dtor_lock);
+  gpgol_unlock (&dtor_lock);
   log_oom ("%s:%s: returning",
                  SRCNAME, __func__);
   TRETURN;
@@ -229,9 +229,9 @@ Mail::getMailForItem (LPDISPATCH mailitem)
       TRETURN NULL;
     }
   std::map<LPDISPATCH, Mail *>::iterator it;
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   it = s_mail_map.find(mailitem);
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   if (it == s_mail_map.end())
     {
       TRETURN NULL;
@@ -248,9 +248,9 @@ Mail::getMailForUUID (const char *uuid)
     {
       TRETURN NULL;
     }
-  gpgrt_lock_lock (&uid_map_lock);
+  gpgol_lock (&uid_map_lock);
   auto it = s_uid_map.find(std::string(uuid));
-  gpgrt_lock_unlock (&uid_map_lock);
+  gpgol_unlock (&uid_map_lock);
   if (it == s_uid_map.end())
     {
       TRETURN NULL;
@@ -263,18 +263,18 @@ bool
 Mail::isValidPtr (const Mail *mail)
 {
   TSTART;
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   auto it = s_mail_map.begin();
   while (it != s_mail_map.end())
     {
       if (it->second == mail)
         {
-          gpgrt_lock_unlock (&mail_map_lock);
+          gpgol_unlock (&mail_map_lock);
           TRETURN true;
         }
       ++it;
     }
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   TRETURN false;
 }
 
@@ -785,7 +785,7 @@ static DWORD WINAPI
 do_parsing (LPVOID arg)
 {
   TSTART;
-  gpgrt_lock_lock (&dtor_lock);
+  gpgol_lock (&dtor_lock);
   /* We lock with mail dtors so we can be sure the mail->parser
      call is valid. */
   Mail *mail = (Mail *)arg;
@@ -793,7 +793,7 @@ do_parsing (LPVOID arg)
     {
       log_debug ("%s:%s: canceling parsing for: %p already deleted",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
       TRETURN 0;
     }
 
@@ -801,9 +801,9 @@ do_parsing (LPVOID arg)
   /* This takes a shared ptr of parser. So the parser is
      still valid when the mail is deleted. */
   auto parser = mail->parser ();
-  gpgrt_lock_unlock (&dtor_lock);
+  gpgol_unlock (&dtor_lock);
 
-  gpgrt_lock_lock (&parser_lock);
+  gpgol_lock (&parser_lock);
   /* We lock the parser here to avoid too many
      decryption attempts if there are
      multiple mailobjects which might have already
@@ -817,7 +817,7 @@ do_parsing (LPVOID arg)
     {
       log_debug ("%s:%s: cancel for: %p already deleted",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&parser_lock);
+      gpgol_unlock (&parser_lock);
       unblockInv();
       TRETURN 0;
     }
@@ -826,7 +826,7 @@ do_parsing (LPVOID arg)
     {
       log_error ("%s:%s: no parser found for mail: %p",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&parser_lock);
+      gpgol_unlock (&parser_lock);
       unblockInv();
       TRETURN -1;
     }
@@ -835,7 +835,7 @@ do_parsing (LPVOID arg)
     {
       do_in_ui_thread (PARSING_DONE, arg);
     }
-  gpgrt_lock_unlock (&parser_lock);
+  gpgol_unlock (&parser_lock);
   unblockInv();
   TRETURN 0;
 }
@@ -915,7 +915,7 @@ static DWORD WINAPI
 do_crypt (LPVOID arg)
 {
   TSTART;
-  gpgrt_lock_lock (&dtor_lock);
+  gpgol_lock (&dtor_lock);
   /* We lock with mail dtors so we can be sure the mail->parser
      call is valid. */
   Mail *mail = (Mail *)arg;
@@ -923,7 +923,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: canceling crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
       TRETURN 0;
     }
   if (mail->cryptState () != Mail::NeedsActualCrypt)
@@ -931,20 +931,20 @@ do_crypt (LPVOID arg)
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, mail->cryptState ());
       mail->setWindowEnabled_o (true);
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
       TRETURN -1;
     }
 
   /* This takes a shared ptr of crypter. So the crypter is
      still valid when the mail is deleted. */
   auto crypter = mail->cryper ();
-  gpgrt_lock_unlock (&dtor_lock);
+  gpgol_unlock (&dtor_lock);
 
   if (!crypter)
     {
       log_error ("%s:%s: no crypter found for mail: %p",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&parser_lock);
+      gpgol_unlock (&parser_lock);
       mail->setWindowEnabled_o (true);
       TRETURN -1;
     }
@@ -952,12 +952,12 @@ do_crypt (LPVOID arg)
   GpgME::Error err;
   int rc = crypter->do_crypto(err);
 
-  gpgrt_lock_lock (&dtor_lock);
+  gpgol_lock (&dtor_lock);
   if (!Mail::isValidPtr (mail))
     {
       log_debug ("%s:%s: aborting crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
       TRETURN 0;
     }
 
@@ -990,14 +990,14 @@ do_crypt (LPVOID arg)
       mail->setCryptState (Mail::NoCryptMail);
       mail->resetCrypter ();
       crypter = nullptr;
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
       TRETURN rc;
     }
 
   if (!mail->isAsyncCryptDisabled ())
     {
       mail->setCryptState (Mail::NeedsUpdateInOOM);
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
       // This deletes the Mail in Outlook 2010
       do_in_ui_thread (CRYPTO_DONE, arg);
       log_debug ("%s:%s: UI thread finished for %p",
@@ -1020,7 +1020,7 @@ do_crypt (LPVOID arg)
           crypter = nullptr;
           mail->resetCrypter ();
         }
-      gpgrt_lock_unlock (&dtor_lock);
+      gpgol_unlock (&dtor_lock);
     }
   /* This works around a bug in pinentry that it might
      bring the wrong window to front. So after encryption /
@@ -1757,9 +1757,9 @@ Mail::closeAllMails_o ()
 
   std::map<LPDISPATCH, Mail *>::iterator it;
   TRACEPOINT;
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *> mail_map_copy = s_mail_map;
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       /* XXX For non racy code the is_valid_ptr check should not
@@ -1794,9 +1794,9 @@ Mail::revertAllMails_o ()
   TSTART;
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   auto mail_map_copy = s_mail_map;
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (it->second->revert_o ())
@@ -1823,9 +1823,9 @@ Mail::wipeAllMails_o ()
   TSTART;
   int err = 0;
   std::map<LPDISPATCH, Mail *>::iterator it;
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   auto mail_map_copy = s_mail_map;
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (it->second->wipe_o ())
@@ -2361,9 +2361,9 @@ Mail::setUUID_o ()
           delete other;
         }
 
-      gpgrt_lock_lock (&uid_map_lock);
+      gpgol_lock (&uid_map_lock);
       s_uid_map.insert (std::pair<std::string, Mail *> (m_uuid, this));
-      gpgrt_lock_unlock (&uid_map_lock);
+      gpgol_unlock (&uid_map_lock);
       log_debug ("%s:%s: uuid for %p is now %s",
                  SRCNAME, __func__, this,
                  m_uuid.c_str());
@@ -3330,10 +3330,10 @@ void
 Mail::locateAllCryptoRecipients_o ()
 {
   TSTART;
-  gpgrt_lock_lock (&mail_map_lock);
+  gpgol_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *>::iterator it;
   auto mail_map_copy = s_mail_map;
-  gpgrt_lock_unlock (&mail_map_lock);
+  gpgol_unlock (&mail_map_lock);
   for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (it->second->needs_crypto_m ())

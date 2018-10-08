@@ -41,7 +41,7 @@ public:
          TRACEPOINT;
          return;
        }
-     gpgrt_lock_lock (&cache_lock);
+     gpgol_lock (&cache_lock);
      auto it = m_cache.find (id);
      if (it != m_cache.end ())
        {
@@ -49,11 +49,11 @@ public:
                     SRCNAME, __func__, id);
          gpgol_release (it->second);
          it->second = obj;
-         gpgrt_lock_unlock (&cache_lock);
+         gpgol_unlock (&cache_lock);
          return;
        }
      m_cache.insert (std::make_pair (id, obj));
-     gpgrt_lock_unlock (&cache_lock);
+     gpgol_unlock (&cache_lock);
      return;
    }
 
@@ -64,27 +64,27 @@ public:
           TRACEPOINT;
           return nullptr;
         }
-      gpgrt_lock_lock (&cache_lock);
+      gpgol_lock (&cache_lock);
 
       const auto it = m_cache.find (id);
       if (it != m_cache.end())
         {
           LPDISPATCH ret = it->second;
-          gpgrt_lock_unlock (&cache_lock);
+          gpgol_unlock (&cache_lock);
           return ret;
         }
-      gpgrt_lock_unlock (&cache_lock);
+      gpgol_unlock (&cache_lock);
       return nullptr;
     }
 
   ~Private ()
     {
-      gpgrt_lock_lock (&cache_lock);
+      gpgol_lock (&cache_lock);
       for (const auto it: m_cache)
         {
           gpgol_release (it.second);
         }
-      gpgrt_lock_unlock (&cache_lock);
+      gpgol_unlock (&cache_lock);
     }
 
 private:

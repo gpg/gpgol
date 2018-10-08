@@ -626,10 +626,10 @@ ParseController::get_ultimate_keys()
   TSTART;
   static bool s_keys_listed;
   static std::vector<Key> s_ultimate_keys;
-  gpgrt_lock_lock (&keylist_lock);
+  gpgol_lock (&keylist_lock);
   if (s_keys_listed)
     {
-      gpgrt_lock_unlock (&keylist_lock);
+      gpgol_unlock (&keylist_lock);
       TRETURN s_ultimate_keys;
     }
   log_debug ("%s:%s: Starting keylisting.",
@@ -640,7 +640,7 @@ ParseController::get_ultimate_keys()
       /* Maybe PGP broken and not S/MIME */
       log_error ("%s:%s: broken installation no ctx.",
                  SRCNAME, __func__);
-      gpgrt_lock_unlock (&keylist_lock);
+      gpgol_unlock (&keylist_lock);
       TRETURN s_ultimate_keys;
     }
   ctx->setKeyListMode (KeyListMode::Local);
@@ -650,7 +650,7 @@ ParseController::get_ultimate_keys()
     {
       log_error ("%s:%s: Failed to start keylisting err: %i: %s",
                  SRCNAME, __func__, err.code (), err.asString());
-      gpgrt_lock_unlock (&keylist_lock);
+      gpgol_unlock (&keylist_lock);
       TRETURN s_ultimate_keys;
     }
   TRACEPOINT;
@@ -687,6 +687,6 @@ ParseController::get_ultimate_keys()
              SRCNAME, __func__);
 
   s_keys_listed = true;
-  gpgrt_lock_unlock (&keylist_lock);
+  gpgol_unlock (&keylist_lock);
   TRETURN s_ultimate_keys;
 }

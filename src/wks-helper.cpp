@@ -60,8 +60,8 @@ WKSHelper::~WKSHelper ()
 {
   // Ensure that we are not destroyed while
   // worker is running.
-  gpgrt_lock_lock (&wks_lock);
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_lock (&wks_lock);
+  gpgol_unlock (&wks_lock);
 }
 
 const WKSHelper*
@@ -77,10 +77,10 @@ WKSHelper::instance ()
 WKSHelper::WKSState
 WKSHelper::get_state (const std::string &mbox) const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   const auto it = s_states.find(mbox);
   const auto dataEnd = s_states.end();
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
   if (it == dataEnd)
     {
       return NotChecked;
@@ -91,10 +91,10 @@ WKSHelper::get_state (const std::string &mbox) const
 time_t
 WKSHelper::get_check_time (const std::string &mbox) const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   const auto it = s_last_checked.find(mbox);
   const auto dataEnd = s_last_checked.end();
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
   if (it == dataEnd)
     {
       return 0;
@@ -105,18 +105,18 @@ WKSHelper::get_check_time (const std::string &mbox) const
 std::pair <GpgME::Data *, Mail *>
 WKSHelper::get_cached_confirmation (const std::string &mbox) const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   const auto it = s_confirmation_cache.find(mbox);
   const auto dataEnd = s_confirmation_cache.end();
 
   if (it == dataEnd)
     {
-      gpgrt_lock_unlock (&wks_lock);
+      gpgol_unlock (&wks_lock);
       return std::make_pair (nullptr, nullptr);
     }
   auto ret = it->second;
   s_confirmation_cache.erase (it);
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
   return ret;
 }
 
@@ -339,7 +339,7 @@ WKSHelper::load () const
 void
 WKSHelper::save () const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   for (const auto &pair: s_states)
     {
       auto state = std::to_string (pair.second) + ';';
@@ -360,7 +360,7 @@ WKSHelper::save () const
                      SRCNAME, __func__);
         }
     }
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
 }
 
 static DWORD WINAPI
@@ -379,7 +379,7 @@ do_notify (LPVOID arg)
 void
 WKSHelper::allow_notify (int sleepTimeMS) const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   for (auto &pair: s_states)
     {
       if (pair.second == ConfirmationSeen ||
@@ -393,7 +393,7 @@ WKSHelper::allow_notify (int sleepTimeMS) const
           break;
         }
     }
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
 }
 
 void
@@ -523,7 +523,7 @@ void
 WKSHelper::update_state (const std::string &mbox, WKSState state,
                          bool store) const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   auto it = s_states.find(mbox);
 
   if (it != s_states.end())
@@ -534,7 +534,7 @@ WKSHelper::update_state (const std::string &mbox, WKSState state,
     {
       s_states.insert (std::make_pair (mbox, state));
     }
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
 
   if (store)
     {
@@ -546,7 +546,7 @@ void
 WKSHelper::update_last_checked (const std::string &mbox, time_t time,
                                 bool store) const
 {
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   auto it = s_last_checked.find(mbox);
   if (it != s_last_checked.end())
     {
@@ -556,7 +556,7 @@ WKSHelper::update_last_checked (const std::string &mbox, time_t time,
     {
       s_last_checked.insert (std::make_pair (mbox, time));
     }
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
 
   if (store)
     {
@@ -837,9 +837,9 @@ WKSHelper::handle_confirmation_read (Mail *mail, LPSTREAM stream) const
   /* And reset it to start */
   mystdin->seek (0, SEEK_SET);
 
-  gpgrt_lock_lock (&wks_lock);
+  gpgol_lock (&wks_lock);
   s_confirmation_cache.insert (std::make_pair (mbox, std::make_pair (mystdin, mail)));
-  gpgrt_lock_unlock (&wks_lock);
+  gpgol_unlock (&wks_lock);
 
   update_state (mbox, ConfirmationSeen);
 

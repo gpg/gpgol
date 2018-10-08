@@ -125,7 +125,7 @@ start_watchdog (LPVOID arg)
   LPDISPATCH explorer = (LPDISPATCH) arg;
 
   Sleep (500);
-  gpgrt_lock_lock (&explorer_map_lock);
+  gpgol_lock (&explorer_map_lock);
 
   auto it = s_explorerMap.find (explorer);
 
@@ -133,7 +133,7 @@ start_watchdog (LPVOID arg)
     {
       log_error ("%s:%s: Watchdog for unknwon explorer %p",
                  SRCNAME, __func__, explorer);
-      gpgrt_lock_unlock (&explorer_map_lock);
+      gpgol_unlock (&explorer_map_lock);
       return 0;
     }
 
@@ -148,11 +148,11 @@ start_watchdog (LPVOID arg)
       log_debug ("%s:%s: Deteced unselect invalidating UI.",
                  SRCNAME, __func__);
       it->second = UnselectSeen;
-      gpgrt_lock_unlock (&explorer_map_lock);
+      gpgol_unlock (&explorer_map_lock);
       do_in_ui_thread (INVALIDATE_UI, nullptr);
       return 0;
     }
-  gpgrt_lock_unlock (&explorer_map_lock);
+  gpgol_unlock (&explorer_map_lock);
 
   return 0;
 }
@@ -160,7 +160,7 @@ start_watchdog (LPVOID arg)
 static void
 changeSeen (LPDISPATCH explorer)
 {
-  gpgrt_lock_lock (&explorer_map_lock);
+  gpgol_lock (&explorer_map_lock);
 
   auto it = s_explorerMap.find (explorer);
 
@@ -192,7 +192,7 @@ changeSeen (LPDISPATCH explorer)
         }
       it->second = UnselectSeen + WatchDogActive;
     }
-  gpgrt_lock_unlock (&explorer_map_lock);
+  gpgol_unlock (&explorer_map_lock);
 }
 
 EVENT_SINK_INVOKE(ExplorerEvents)
@@ -213,9 +213,9 @@ EVENT_SINK_INVOKE(ExplorerEvents)
                          SRCNAME, __func__, this);
 
           GpgolAddin::get_instance ()->unregisterExplorerSink (this);
-          gpgrt_lock_lock (&explorer_map_lock);
+          gpgol_lock (&explorer_map_lock);
           s_explorerMap.erase (m_object);
-          gpgrt_lock_unlock (&explorer_map_lock);
+          gpgol_unlock (&explorer_map_lock);
           delete this;
           return S_OK;
         }

@@ -227,7 +227,7 @@ public:
   void setPgpKey(const std::string &mbox, const GpgME::Key &key)
   {
     TSTART;
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     auto it = m_pgp_key_map.find (mbox);
 
     if (it == m_pgp_key_map.end ())
@@ -239,14 +239,14 @@ public:
         it->second = key;
       }
     insertOrUpdateInFprMap (key);
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
     TRETURN;
   }
 
   void setSmimeKey(const std::string &mbox, const GpgME::Key &key)
   {
     TSTART;
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     auto it = m_smime_key_map.find (mbox);
 
     if (it == m_smime_key_map.end ())
@@ -258,14 +258,14 @@ public:
         it->second = key;
       }
     insertOrUpdateInFprMap (key);
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
     TRETURN;
   }
 
   void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
   {
     TSTART;
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     auto it = m_pgp_skey_map.find (mbox);
 
     if (it == m_pgp_skey_map.end ())
@@ -277,14 +277,14 @@ public:
         it->second = key;
       }
     insertOrUpdateInFprMap (key);
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
     TRETURN;
   }
 
   void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key)
   {
     TSTART;
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     auto it = m_smime_skey_map.find (mbox);
 
     if (it == m_smime_skey_map.end ())
@@ -296,7 +296,7 @@ public:
         it->second = key;
       }
     insertOrUpdateInFprMap (key);
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
     TRETURN;
   }
 
@@ -311,11 +311,11 @@ public:
       }
     auto mbox = GpgME::UserID::addrSpecFromString (addr);
 
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     const auto it = m_addr_book_overrides.find (mbox);
     if (it == m_addr_book_overrides.end ())
       {
-        gpgrt_lock_unlock (&keycache_lock);
+        gpgol_unlock (&keycache_lock);
         TRETURN ret;
       }
     for (const auto fpr: it->second)
@@ -330,7 +330,7 @@ public:
         ret.push_back (key);
       }
 
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
     TRETURN ret;
   }
 
@@ -345,29 +345,29 @@ public:
 
     if (proto == GpgME::OpenPGP)
       {
-        gpgrt_lock_lock (&keycache_lock);
+        gpgol_lock (&keycache_lock);
         const auto it = m_pgp_key_map.find (mbox);
 
         if (it == m_pgp_key_map.end ())
           {
-            gpgrt_lock_unlock (&keycache_lock);
+            gpgol_unlock (&keycache_lock);
             TRETURN GpgME::Key();
           }
         const auto ret = it->second;
-        gpgrt_lock_unlock (&keycache_lock);
+        gpgol_unlock (&keycache_lock);
 
         TRETURN ret;
       }
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     const auto it = m_smime_key_map.find (mbox);
 
     if (it == m_smime_key_map.end ())
       {
-        gpgrt_lock_unlock (&keycache_lock);
+        gpgol_unlock (&keycache_lock);
         TRETURN GpgME::Key();
       }
     const auto ret = it->second;
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
 
     TRETURN ret;
   }
@@ -383,29 +383,29 @@ public:
 
     if (proto == GpgME::OpenPGP)
       {
-        gpgrt_lock_lock (&keycache_lock);
+        gpgol_lock (&keycache_lock);
         const auto it = m_pgp_skey_map.find (mbox);
 
         if (it == m_pgp_skey_map.end ())
           {
-            gpgrt_lock_unlock (&keycache_lock);
+            gpgol_unlock (&keycache_lock);
             TRETURN GpgME::Key();
           }
         const auto ret = it->second;
-        gpgrt_lock_unlock (&keycache_lock);
+        gpgol_unlock (&keycache_lock);
 
         TRETURN ret;
       }
-    gpgrt_lock_lock (&keycache_lock);
+    gpgol_lock (&keycache_lock);
     const auto it = m_smime_skey_map.find (mbox);
 
     if (it == m_smime_skey_map.end ())
       {
-        gpgrt_lock_unlock (&keycache_lock);
+        gpgol_unlock (&keycache_lock);
         TRETURN GpgME::Key();
       }
     const auto ret = it->second;
-    gpgrt_lock_unlock (&keycache_lock);
+    gpgol_unlock (&keycache_lock);
 
     TRETURN ret;
   }
@@ -526,7 +526,7 @@ public:
           TRACEPOINT;
           TRETURN;
         }
-      gpgrt_lock_lock (&fpr_map_lock);
+      gpgol_lock (&fpr_map_lock);
 
       /* First ensure that we have the subkeys mapped to the primary
          fpr */
@@ -552,7 +552,7 @@ public:
         {
           m_fpr_map.insert (std::make_pair (primaryFpr, key));
 
-          gpgrt_lock_unlock (&fpr_map_lock);
+          gpgol_unlock (&fpr_map_lock);
           TRETURN;
         }
 
@@ -568,7 +568,7 @@ public:
         {
           it->second = key;
         }
-      gpgrt_lock_unlock (&fpr_map_lock);
+      gpgol_unlock (&fpr_map_lock);
       TRETURN;
     }
 
@@ -581,7 +581,7 @@ public:
         TRETURN GpgME::Key();
       }
 
-    gpgrt_lock_lock (&fpr_map_lock);
+    gpgol_lock (&fpr_map_lock);
     std::string primaryFpr;
     const auto it = m_sub_fpr_map.find (fpr);
     if (it != m_sub_fpr_map.end ())
@@ -600,10 +600,10 @@ public:
     if (keyIt != m_fpr_map.end ())
       {
         const auto ret = keyIt->second;
-        gpgrt_lock_unlock (&fpr_map_lock);
+        gpgol_unlock (&fpr_map_lock);
         TRETURN ret;
       }
-    gpgrt_lock_unlock (&fpr_map_lock);
+    gpgol_unlock (&fpr_map_lock);
     TRETURN GpgME::Key();
   }
 
@@ -627,7 +627,7 @@ public:
               const std::string sFpr (fpr);
               int i = 0;
 
-              gpgrt_lock_lock (&update_lock);
+              gpgol_lock (&update_lock);
               while (m_update_jobs.find(sFpr) != m_update_jobs.end ())
                 {
                   i++;
@@ -636,9 +636,9 @@ public:
                       log_debug ("%s:%s Waiting on update for \"%s\"",
                                  SRCNAME, __func__, anonstr (fpr));
                     }
-                  gpgrt_lock_unlock (&update_lock);
+                  gpgol_unlock (&update_lock);
                   Sleep (10);
-                  gpgrt_lock_lock (&update_lock);
+                  gpgol_lock (&update_lock);
                   if (i == 3000)
                     {
                       /* Just to be on the save side */
@@ -648,7 +648,7 @@ public:
                       break;
                     }
                 }
-              gpgrt_lock_unlock (&update_lock);
+              gpgol_unlock (&update_lock);
 
               TRACEPOINT;
               const auto ret2 = getFromMap (fpr);
@@ -682,16 +682,16 @@ public:
            TRETURN;
          }
        const std::string sFpr (fpr);
-       gpgrt_lock_lock (&update_lock);
+       gpgol_lock (&update_lock);
        if (m_update_jobs.find(sFpr) != m_update_jobs.end ())
          {
            log_debug ("%s:%s Update for \"%s\" already in progress.",
                       SRCNAME, __func__, anonstr (fpr));
-           gpgrt_lock_unlock (&update_lock);
+           gpgol_unlock (&update_lock);
          }
 
        m_update_jobs.insert (sFpr);
-       gpgrt_lock_unlock (&update_lock);
+       gpgol_unlock (&update_lock);
        update_arg_t * args = new update_arg_t;
        args->first = sFpr;
        args->second = proto;
@@ -710,18 +710,18 @@ public:
         }
       TRACEPOINT;
       insertOrUpdateInFprMap (key);
-      gpgrt_lock_lock (&update_lock);
+      gpgol_lock (&update_lock);
       const auto it = m_update_jobs.find(fpr);
 
       if (it == m_update_jobs.end())
         {
           log_error ("%s:%s Update for \"%s\" already finished.",
                      SRCNAME, __func__, anonstr (fpr));
-          gpgrt_lock_unlock (&update_lock);
+          gpgol_unlock (&update_lock);
           TRETURN;
         }
       m_update_jobs.erase (it);
-      gpgrt_lock_unlock (&update_lock);
+      gpgol_unlock (&update_lock);
       TRACEPOINT;
       TRETURN;
     }
@@ -735,15 +735,15 @@ public:
           TRACEPOINT;
           TRETURN;
         }
-       gpgrt_lock_lock (&import_lock);
+       gpgol_lock (&import_lock);
        if (m_import_jobs.find (mbox) != m_import_jobs.end ())
          {
            log_debug ("%s:%s import for \"%s\" already in progress.",
                       SRCNAME, __func__, anonstr (mbox.c_str ()));
-           gpgrt_lock_unlock (&import_lock);
+           gpgol_unlock (&import_lock);
          }
        m_import_jobs.insert (mbox);
-       gpgrt_lock_unlock (&import_lock);
+       gpgol_unlock (&import_lock);
 
        import_arg_t * args = new import_arg_t;
        args->first = std::unique_ptr<LocateArgs> (new LocateArgs (mbox, mail));
@@ -759,7 +759,7 @@ public:
                                 const std::vector<std::string> &result_fprs)
     {
       TSTART;
-      gpgrt_lock_lock (&keycache_lock);
+      gpgol_lock (&keycache_lock);
       auto it = m_addr_book_overrides.find (mbox);
       if (it != m_addr_book_overrides.end ())
         {
@@ -770,19 +770,19 @@ public:
           m_addr_book_overrides.insert (
                 std::make_pair (mbox, result_fprs));
         }
-      gpgrt_lock_unlock (&keycache_lock);
-      gpgrt_lock_lock (&import_lock);
+      gpgol_unlock (&keycache_lock);
+      gpgol_lock (&import_lock);
       const auto job_it = m_import_jobs.find(mbox);
 
       if (job_it == m_import_jobs.end())
         {
           log_error ("%s:%s import for \"%s\" already finished.",
                      SRCNAME, __func__, anonstr (mbox.c_str ()));
-          gpgrt_lock_unlock (&import_lock);
+          gpgol_unlock (&import_lock);
           TRETURN;
         }
       m_import_jobs.erase (job_it);
-      gpgrt_lock_unlock (&import_lock);
+      gpgol_unlock (&import_lock);
       TRETURN;
     }
 
@@ -1028,7 +1028,7 @@ KeyCache::startLocate (const char *addr, Mail *mail) const
     {
       TRETURN;
     }
-  gpgrt_lock_lock (&keycache_lock);
+  gpgol_lock (&keycache_lock);
   if (d->m_pgp_key_map.find (recp) == d->m_pgp_key_map.end ())
     {
       // It's enough to look at the PGP Key map. We marked
@@ -1042,7 +1042,7 @@ KeyCache::startLocate (const char *addr, Mail *mail) const
                                     NULL);
       CloseHandle (thread);
     }
-  gpgrt_lock_unlock (&keycache_lock);
+  gpgol_unlock (&keycache_lock);
   TRETURN;
 }
 
@@ -1060,7 +1060,7 @@ KeyCache::startLocateSecret (const char *addr, Mail *mail) const
     {
       TRETURN;
     }
-  gpgrt_lock_lock (&keycache_lock);
+  gpgol_lock (&keycache_lock);
   if (d->m_pgp_skey_map.find (recp) == d->m_pgp_skey_map.end ())
     {
       // It's enough to look at the PGP Key map. We marked
@@ -1075,7 +1075,7 @@ KeyCache::startLocateSecret (const char *addr, Mail *mail) const
                                     NULL);
       CloseHandle (thread);
     }
-  gpgrt_lock_unlock (&keycache_lock);
+  gpgol_unlock (&keycache_lock);
   TRETURN;
 }
 

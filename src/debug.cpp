@@ -332,7 +332,7 @@ const char *anonstr (const char *data)
       return "gpgol_str_empty";
     }
 
-  gpgrt_lock_lock (&anon_str_lock);
+  gpgol_lock (&anon_str_lock);
   const std::string strData (data);
   auto it = str_map.find (strData);
 
@@ -346,7 +346,7 @@ const char *anonstr (const char *data)
   // As the data is saved in our map we can return
   // the c_str as it won't be touched as const.
 
-  gpgrt_lock_unlock (&anon_str_lock);
+  gpgol_unlock (&anon_str_lock);
 
   return it->second.c_str();
 }

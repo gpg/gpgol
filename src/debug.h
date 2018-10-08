@@ -91,6 +91,28 @@ const char *anonstr (const char *data);
     } \
 }
 
+
+#define gpgol_lock(X) \
+{ \
+  if (opt.enable_debug & DBG_TRACE) \
+    { \
+      log_trace ("%s:%s:%i: lock %p lock", \
+                  SRCNAME, __func__, __LINE__, X); \
+    } \
+  gpgrt_lock_lock(X); \
+}
+
+
+#define gpgol_unlock(X) \
+{ \
+  if (opt.enable_debug & DBG_TRACE) \
+    { \
+      log_trace ("%s:%s:%i: lock %p unlock.", \
+                  SRCNAME, __func__, __LINE__, X); \
+    } \
+  gpgrt_lock_unlock(X); \
+}
+
 const char *log_srcname (const char *s);
 #define SRCNAME log_srcname (__FILE__)
 

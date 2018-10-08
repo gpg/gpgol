@@ -510,7 +510,7 @@ delayed_invalidate_ui (LPVOID minsleep)
     }
   TRACEPOINT;
   invalidation_in_progress = true;
-  gpgrt_lock_lock(&invalidate_lock);
+  gpgol_lock(&invalidate_lock);
 
   int sleep_ms = (intptr_t)minsleep;
   Sleep (sleep_ms);
@@ -530,7 +530,7 @@ delayed_invalidate_ui (LPVOID minsleep)
   do_in_ui_thread (INVALIDATE_UI, nullptr);
   TRACEPOINT;
   invalidation_in_progress = false;
-  gpgrt_lock_unlock(&invalidate_lock);
+  gpgol_unlock(&invalidate_lock);
   TRETURN 0;
 }
 
