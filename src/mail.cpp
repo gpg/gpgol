@@ -3413,14 +3413,15 @@ Mail::locateAllCryptoRecipients_o ()
   TSTART;
   gpgrt_lock_lock (&mail_map_lock);
   std::map<LPDISPATCH, Mail *>::iterator it;
-  for (it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
+  auto mail_map_copy = s_mail_map;
+  gpgrt_lock_unlock (&mail_map_lock);
+  for (it = mail_map_copy.begin(); it != mail_map_copy.end(); ++it)
     {
       if (it->second->needs_crypto_m ())
         {
           it->second->locateKeys_o ();
         }
     }
-  gpgrt_lock_unlock (&mail_map_lock);
   TRETURN;
 }
 
