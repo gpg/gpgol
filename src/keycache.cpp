@@ -715,7 +715,7 @@ public:
 
       if (it == m_update_jobs.end())
         {
-          log_error ("%s:%s Update for \"%s\" already finished.",
+          log_debug ("%s:%s Update for \"%s\" already finished.",
                      SRCNAME, __func__, anonstr (fpr));
           gpgol_unlock (&update_lock);
           TRETURN;
