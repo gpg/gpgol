@@ -137,7 +137,18 @@ i18n_noops[] = {
        warning is shown in line with the combo box to select the
        level. */
     N_("<b>Warning:</b> Decreased performance. Huge logs!"),
-
+    /* TRANSLATORS: Config dialog category for debug options. */
+    N_("Debug"),
+    /* TRANSLATORS: Config dialog category for debug options. */
+    N_("Configuaration of debug options"),
+    /* TRANSLATORS: Config dialog debug page, can be technical. */
+    N_("Potential workarounds"),
+    /* TRANSLATORS: Config dialog debug page, can be technical. */
+    N_("Block Outlook during encrypt / sign"),
+    /* TRANSLATORS: Config dialog debug page, can be technical. */
+    N_("Block Outlook during decrypt / verify"),
+    /* TRANSLATORS: Config dialog debug page, link to report bug page. */
+    N_("How to report a problem?"),
 };
 
 
