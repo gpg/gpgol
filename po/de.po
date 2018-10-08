@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-10-08 18:03+0200\n"
-"PO-Revision-Date: 2018-09-25 14:23+0100\n"
+"PO-Revision-Date: 2018-10-08 18:09+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -288,34 +288,33 @@ msgstr "<b>Warnung:</b> Schlechtere Leistung. Riesige Logs!"
 
 #. TRANSLATORS: Config dialog category for debug options.
 #: src/addin-options.cpp:141
-#, fuzzy
 msgid "Debug"
-msgstr "Debug..."
+msgstr "Fehlersuche"
 
 #. TRANSLATORS: Config dialog category for debug options.
 #: src/addin-options.cpp:143
 msgid "Configuaration of debug options"
-msgstr ""
+msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:145
 msgid "Potential workarounds"
-msgstr ""
+msgstr "Mögliche workarounds"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:147
 msgid "Block Outlook during encrypt / sign"
-msgstr ""
+msgstr "Outlook während des entschlüsselns / verifizierens blockieren"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:149
 msgid "Block Outlook during decrypt / verify"
-msgstr ""
+msgstr "Outlook während des verschlüsselns / signierens blockieren"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:151
 msgid "How to report a problem?"
-msgstr ""
+msgstr "Ein Problem berichten?"
 
 #: src/common.cpp:768
 msgid "GpgOL Error"
