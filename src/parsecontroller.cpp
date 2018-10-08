@@ -363,6 +363,7 @@ ParseController::parse()
   if (decrypt)
     {
       input.seek (0, SEEK_SET);
+      TRACEPOINT;
       auto combined_result = ctx->decryptAndVerify(input, output);
       log_debug ("%s:%s:%p decrypt / verify done.",
                  SRCNAME, __func__, this);
@@ -375,6 +376,7 @@ ParseController::parse()
           is_smime (output) ||
           output.type() == Data::Type::PGPSigned)
         {
+          TRACEPOINT;
           /* There is a signature in the output. So we have
              to verify it now as an extra step. */
           input = Data (m_outputprovider);
@@ -383,11 +385,13 @@ ParseController::parse()
           m_outputprovider = new MimeDataProvider();
           output = Data(m_outputprovider);
           verify = true;
+          TRACEPOINT;
         }
       else
         {
           verify = false;
         }
+      TRACEPOINT;
       if (m_decrypt_result.error () || m_decrypt_result.isNull () ||
           m_decrypt_result.error ().isCanceled ())
         {
@@ -396,11 +400,13 @@ ParseController::parse()
     }
   if (verify)
     {
-      const auto sig = m_inputprovider->signature();
+      TRACEPOINT;
+      GpgME::Data *sig = m_inputprovider->signature();
       input.seek (0, SEEK_SET);
       if (sig)
         {
           sig->seek (0, SEEK_SET);
+          TRACEPOINT;
           m_verify_result = ctx->verifyDetachedSignature(*sig, input);
           log_debug ("%s:%s:%p verify done.",
                      SRCNAME, __func__, this);
@@ -416,7 +422,9 @@ ParseController::parse()
         }
       else
         {
+          TRACEPOINT;
           m_verify_result = ctx->verifyOpaqueSignature(input, output);
+          TRACEPOINT;
 
           const auto sigs = m_verify_result.signatures();
           bool allBad = sigs.size();
@@ -488,6 +496,7 @@ ParseController::parse()
   bool ultimate_keys_queried = false;
   for (const auto sig: m_verify_result.signatures())
     {
+      TRACEPOINT;
       has_valid_encrypted_checksum = is_valid_chksum (sig);
 
       KeyCache::instance ()->update (sig.fingerprint (), protocol);
@@ -503,6 +512,7 @@ ParseController::parse()
           get_ultimate_keys ();
           ultimate_keys_queried = true;
         }
+      TRACEPOINT;
     }
 
   if (protocol == Protocol::CMS && decrypt && !m_decrypt_result.error() &&
@@ -516,6 +526,7 @@ ParseController::parse()
   if (opt.enable_debug & DBG_DATA)
     {
       std::stringstream ss;
+      TRACEPOINT;
       ss << m_decrypt_result << '\n' << m_verify_result;
       for (const auto sig: m_verify_result.signatures())
         {
