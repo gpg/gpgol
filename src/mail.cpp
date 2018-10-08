@@ -104,8 +104,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_first_autosecure_check(true),
     m_locate_count(0),
     m_is_about_to_be_moved(false),
-    m_locate_in_progress(false),
-    m_flag_change_triggered(false)
+    m_locate_in_progress(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -1461,10 +1460,6 @@ Mail::parsing_done()
   updateCategories_o ();
 
   TRACEPOINT;
-  /* Show the signers uid as a flag */
-  updateSigFlag_o ();
-  TRACEPOINT;
-
   m_block_html = m_parser->shouldBlockHtml ();
 
   if (m_block_html)
@@ -2294,84 +2289,6 @@ Mail::updateCategories_o ()
 
   resize_active_window();
 
-  TRETURN;
-}
-
-static std::string
-pretty_id (const char *keyId)
-{
-  /* Three spaces, four quads and a NULL */
-  char buf[20];
-  buf[19] = '\0';
-  if (!keyId)
-    {
-      return std::string ("null");
-    }
-  size_t len = strlen (keyId);
-  if (!len)
-    {
-      return std::string ("empty");
-    }
-  if (len < 16)
-    {
-      return std::string (_("Invalid Key"));
-    }
-  const char *p = keyId + (len - 16);
-  int j = 0;
-  for (size_t i = 0; i < 16; i++)
-    {
-      if (i && i % 4 == 0)
-        {
-          buf[j++] = ' ';
-        }
-      buf[j++] = *(p + i);
-    }
-  return std::string (buf);
-}
-
-void
-Mail::updateSigFlag_o ()
-{
-  TSTART;
-  if (isValidSig ())
-    {
-      char *buf;
-      /* Resolve to the primary fingerprint */
-      const auto sigKey = KeyCache::instance ()->getByFpr (m_sig.fingerprint (),
-                                                           true);
-      const char *sigFpr;
-      if (sigKey.isNull())
-        {
-          sigFpr = m_sig.fingerprint ();
-        }
-      else
-        {
-          sigFpr = sigKey.primaryFingerprint ();
-        }
-
-      gpgrt_asprintf (&buf, "%s: %s (%s)", _("Signer"), m_uid.email(),
-                      pretty_id (sigFpr).c_str ());
-      memdbg_alloc (buf);
-      log_debug ("%s:%s: Setting signer flag %s",
-                 SRCNAME, __func__, anonstr (buf));
-      m_flag_change_triggered = true;
-      put_oom_string (m_mailitem, "FlagRequest", buf);
-      m_flag_change_triggered = false;
-      xfree (buf);
-    }
-  else
-    {
-      char *flag = get_oom_string (m_mailitem, "FlagRequest");
-      if (flag && (strstr (flag, _("Signer")) || strstr (flag, "Signer")))
-        {
-          m_flag_change_triggered = true;
-          log_debug ("%s:%s: Removing flag containting Signer.",
-                     SRCNAME, __func__);
-          put_oom_string (m_mailitem, "FlagRequest", "");
-          m_flag_change_triggered = false;
-        }
-      xfree (flag);
-    }
   TRETURN;
 }
 

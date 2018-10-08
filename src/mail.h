@@ -598,11 +598,7 @@ public:
   /* Gets an additional reference for GetInspector.CurrentItem */
   void refCurrentItem ();
 
-  /* Check if a flag change was triggered and can be ignored. */
-  bool flagChangeTriggered () const { return m_flag_change_triggered; }
-
 private:
-  void updateSigFlag_o ();
   void updateCategories_o ();
   void updateSigstate ();
 
@@ -653,6 +649,5 @@ private:
   int m_locate_count; /* The number of key locates pending for this mail. */
   bool m_is_about_to_be_moved;
   bool m_locate_in_progress; /* Simplified state variable for locate */
-  bool m_flag_change_triggered; /* We trigger a flagrequest change */
 };
 #endif // MAIL_H
