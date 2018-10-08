@@ -885,7 +885,14 @@ store_extension_value (const char *key, const char *val)
 int
 load_extension_value (const char *key, char **val)
 {
-  return load_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
+  int ret = load_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
+  if (val)
+    {
+      log_debug ("%s:%s: LoadReg '%s' val '%s'",
+                 SRCNAME, __func__, key ? key : "null",
+                 *val ? *val : "null");
+    }
+  return ret;
 }
 
 int
