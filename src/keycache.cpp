@@ -825,6 +825,109 @@ KeyCache::getEncryptionKeys (const std::vector<std::string> &recipients, GpgME::
   return d->getEncryptionKeys (recipients, proto);
 }
 
+static GpgME::Key
+get_most_valid_key_simple (const std::vector<GpgME::Key> &keys)
+{
+  GpgME::Key candidate;
+  for (const auto &key: keys)
+    {
+      if (key.isRevoked() || key.isExpired() ||
+          key.isDisabled() || key.isInvalid())
+        {
+          log_debug ("%s:%s: Skipping invalid S/MIME key",
+                     SRCNAME, __func__);
+          continue;
+        }
+      if (candidate.isNull() || !candidate.numUserIDs())
+        {
+          if (key.numUserIDs() &&
+              candidate.userID(0).validity() <= key.userID(0).validity())
+            {
+              candidate = key;
+            }
+        }
+    }
+  return candidate;
+}
+
+static std::vector<GpgME::Key>
+get_local_smime_keys (const std::string &addr)
+{
+  TSTART;
+  std::vector<GpgME::Key> keys;
+  auto ctx = std::unique_ptr<GpgME::Context> (
+                                              GpgME::Context::createForProtocol (GpgME::CMS));
+  if (!ctx)
+    {
+      TRACEPOINT;
+      TRETURN keys;
+    }
+  // We need to validate here to fetch CRL's
+  ctx->setKeyListMode (GpgME::KeyListMode::Local |
+                       GpgME::KeyListMode::Validate |
+                       GpgME::KeyListMode::Signatures);
+  GpgME::Error e = ctx->startKeyListing (addr.c_str());
+  if (e)
+    {
+      TRACEPOINT;
+      TRETURN keys;
+    }
+
+  GpgME::Error err;
+  do {
+      keys.push_back(ctx->nextKey(err));
+  } while (!err);
+  keys.pop_back();
+
+  TRETURN keys;
+}
+
+static std::vector<GpgME::Key>
+get_extern_smime_keys (const std::string &addr, bool import)
+{
+  TSTART;
+  std::vector<GpgME::Key> keys;
+  auto ctx = std::unique_ptr<GpgME::Context> (
+                                              GpgME::Context::createForProtocol (GpgME::CMS));
+  if (!ctx)
+    {
+      TRACEPOINT;
+      TRETURN keys;
+    }
+  // We need to validate here to fetch CRL's
+  ctx->setKeyListMode (GpgME::KeyListMode::Extern);
+  GpgME::Error e = ctx->startKeyListing (addr.c_str());
+  if (e)
+    {
+      TRACEPOINT;
+      TRETURN keys;
+    }
+
+  GpgME::Error err;
+  do
+    {
+      const auto key = ctx->nextKey (err);
+      if (!err && !key.isNull())
+        {
+          keys.push_back (key);
+          log_debug ("%s:%s: Found extern S/MIME key for %s with fpr: %s",
+                     SRCNAME, __func__, anonstr (addr.c_str()),
+                     anonstr (key.primaryFingerprint()));
+        }
+    } while (!err);
+
+  if (import && keys.size ())
+    {
+      const GpgME::ImportResult res = ctx->importKeys(keys);
+      log_debug ("%s:%s: Import result for %s: err: %s",
+                 SRCNAME, __func__, anonstr (addr.c_str()),
+                 res.error ().asString ());
+
+    }
+
+  TRETURN keys;
+}
+
 static DWORD WINAPI
 do_locate (LPVOID arg)
 {
@@ -853,60 +956,40 @@ do_locate (LPVOID arg)
 
   if (opt.enable_smime)
     {
-      auto ctx = std::unique_ptr<GpgME::Context> (
-                          GpgME::Context::createForProtocol (GpgME::CMS));
-      if (!ctx)
-        {
-          TRACEPOINT;
-          TRETURN 0;
-        }
-      // We need to validate here to fetch CRL's
-      ctx->setKeyListMode (GpgME::KeyListMode::Local |
-                           GpgME::KeyListMode::Validate |
-                           GpgME::KeyListMode::Signatures);
-      GpgME::Error e = ctx->startKeyListing (addr.c_str());
-      if (e)
-        {
-          TRACEPOINT;
-          TRETURN 0;
-        }
-
-      std::vector<GpgME::Key> keys;
-      GpgME::Error err;
-      do {
-          keys.push_back(ctx->nextKey(err));
-      } while (!err);
-      keys.pop_back();
-
-      GpgME::Key candidate;
-      for (const auto &key: keys)
-        {
-          if (key.isRevoked() || key.isExpired() ||
-              key.isDisabled() || key.isInvalid())
-            {
-              log_debug ("%s:%s: Skipping invalid S/MIME key",
-                         SRCNAME, __func__);
-              continue;
-            }
-          if (candidate.isNull() || !candidate.numUserIDs())
-            {
-              if (key.numUserIDs() &&
-                  candidate.userID(0).validity() <= key.userID(0).validity())
-                {
-                  candidate = key;
-                }
-            }
-        }
+      GpgME::Key candidate = get_most_valid_key_simple (
+                                    get_local_smime_keys (addr));
       if (!candidate.isNull())
         {
           log_debug ("%s:%s found SMIME key for addr: \"%s\":%s",
                      SRCNAME, __func__, anonstr (addr.c_str()),
                      anonstr (candidate.primaryFingerprint()));
           KeyCache::instance()->setSmimeKey (addr, candidate);
+          TRETURN 0;
+        }
+      /* Search for extern keys and import them */
+      const auto externs = get_extern_smime_keys (addr, true);
+      if (externs.empty())
+        {
+          TRETURN 0;
+        }
+      /* We found and imported external keys. We need to get them
+         locally now to ensure that they are valid etc. */
+      candidate = get_most_valid_key_simple (
+                                    get_local_smime_keys (addr));
+      if (!candidate.isNull())
+        {
+          log_debug ("%s:%s found ext. SMIME key for addr: \"%s\":%s",
+                     SRCNAME, __func__, anonstr (addr.c_str()),
+                     anonstr (candidate.primaryFingerprint()));
+          KeyCache::instance()->setSmimeKey (addr, candidate);
+          TRETURN 0;
+        }
+      else
+        {
+          log_debug ("%s:%s: Found no valid key in extern S/MIME certs",
+                     SRCNAME, __func__);
         }
     }
-  log_debug ("%s:%s locator thread done",
-             SRCNAME, __func__);
   TRETURN 0;
 }
 
