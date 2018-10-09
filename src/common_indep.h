@@ -204,6 +204,8 @@ struct
   int prefer_smime;          /* S/MIME prefered when autoresolving */
   int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
   int autoretrieve;           /* Use --auto-key-retrieve. */
+  int search_smime_servers;  /* Search for S/MIME keys on all configured S/MIME keyservers
+                                for each new unknown mail */
 
   /* The forms revision number of the binary.  */
   int forms_revision;

@@ -953,6 +953,8 @@ do_locate (LPVOID arg)
                  anonstr (k.primaryFingerprint()));
       KeyCache::instance ()->setPgpKey (addr, k);
     }
+  log_debug ("%s:%s pgp locate done",
+             SRCNAME, __func__);
 
   if (opt.enable_smime)
     {
@@ -964,6 +966,12 @@ do_locate (LPVOID arg)
                      SRCNAME, __func__, anonstr (addr.c_str()),
                      anonstr (candidate.primaryFingerprint()));
           KeyCache::instance()->setSmimeKey (addr, candidate);
+          TRETURN 0;
+        }
+      if (!opt.search_smime_servers || (!k.isNull() && !opt.prefer_smime))
+        {
+          log_debug ("%s:%s Found no S/MIME key locally and external "
+                     "search is disabled.", SRCNAME, __func__);
           TRETURN 0;
         }
       /* Search for extern keys and import them */
