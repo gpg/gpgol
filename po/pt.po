@@ -9,15 +9,15 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-10-08 18:03+0200\n"
-"PO-Revision-Date: 2018-08-30 15:00+0100\n"
-"Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
+"PO-Revision-Date: 2018-10-09 16:56+0100\n"
+"Last-Translator: Marco A.G.Pinto <marcoagpinto@sapo.pt>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Poedit 2.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/addin-options.cpp:39
@@ -66,11 +66,11 @@ msgstr "&Resolver automaticamente as chaves dos destinatários"
 
 #: src/addin-options.cpp:51
 msgid "&Encrypt new messages by default"
-msgstr "&Encriptar novas mensagens por omissão"
+msgstr "&Encriptar novas mensagens por padrão"
 
 #: src/addin-options.cpp:52
 msgid "&Sign new messages by default"
-msgstr "Assinar novas mensagens por omissão"
+msgstr "Assinar novas mensagens por padrão"
 
 #: src/addin-options.cpp:53
 msgid "&Send OpenPGP mails without attachments as PGP/Inline"
@@ -144,32 +144,29 @@ msgstr ""
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
 #: src/addin-options.cpp:77
-#, fuzzy
 msgid "Configure key for:"
-msgstr "Configurar o GpgOL"
+msgstr "Configurar a chave para:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public key follows.
 #: src/addin-options.cpp:80
 msgid "Paste a public key export here. It should look like:"
-msgstr ""
+msgstr "Cola uma exportação de chave pública aqui. Deve parecer assim:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:82
-#, fuzzy
 msgid "Failed to parse any public key."
-msgstr "Falha ao interpretar o e-mail."
+msgstr "Falha ao interpretar qualquer chave pública."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:84
-#, fuzzy
 msgid "Error"
-msgstr "I/O-Erro"
+msgstr "Erro"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:86
 msgid "Secret key detected."
-msgstr ""
+msgstr "Chave secreta detetada."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:88
@@ -177,106 +174,108 @@ msgid ""
 "You can only configure public keys in Outlook. Import secret keys with "
 "Kleopatra."
 msgstr ""
+"Só podes configurar chaves públicas no Outlook. Importa chaves secretas com "
+"o Kleopatra."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:91
 msgid ""
 "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
+"A chave é inutilizável para o Outlook. Por favor, verifica o Kleopatra para "
+"obter mais informações."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:94
 msgid "Invalid key detected."
-msgstr ""
+msgstr "Chave inválida detetada."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:96
 msgid "Created:"
-msgstr ""
+msgstr "Criada:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:98
 msgid "User Ids:"
-msgstr ""
+msgstr "IDs de utilizador:"
 
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for key / keys.
 #: src/addin-options.cpp:101
 msgid "You are about to configure the following %1 for:"
-msgstr ""
+msgstr "Estás prestes a configurar o seguinte %1 para:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
 #: src/addin-options.cpp:104
 msgid "keys"
-msgstr ""
+msgstr "chaves"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as singular form.
 #: src/addin-options.cpp:107
 msgid "key"
-msgstr ""
+msgstr "chave"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:109
 msgid "Continue?"
-msgstr ""
+msgstr "Continuar?"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:111
-#, fuzzy
 msgid "Confirm keys"
-msgstr "Confirmar o registo?"
+msgstr "Confirmar chaves"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:113
 msgid "Enable Logging"
-msgstr ""
+msgstr "Ativar logs"
 
 #: src/addin-options.cpp:114
 msgid "Default"
-msgstr ""
+msgstr "Padrão"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:117
 msgid "+Outlook API calls"
-msgstr ""
+msgstr "+Chamadas da API do Outlook"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:120
 msgid "+Memory analysis"
-msgstr ""
+msgstr "+Análise de memória"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:123
 msgid "+Call tracing"
-msgstr ""
+msgstr "+Rastreamento de chamadas"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:125
 msgid "Log File (required):"
-msgstr ""
+msgstr "Ficheiro de log (obrigatório):"
 
 #. TRANSLATORS: Part of debugging configuration.  This is a checkbox
 #. to select if even potentially private data should be included in the
 #. debug log.
 #: src/addin-options.cpp:129
 msgid "Include Mail contents (decrypted!) and meta information."
-msgstr ""
+msgstr "Incluir conteúdo do e-mail (decifrado!) e meta-informação."
 
 #. TRANSLATORS: Dialog title for the log file selection
 #: src/addin-options.cpp:131
-#, fuzzy
 msgid "Select log file"
-msgstr "Selecciona chave de assinatura"
+msgstr "Selecionar ficheiro de log"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:133
 msgid "Log level:"
-msgstr ""
+msgstr "Nível de log:"
 
 #. TRANSLATORS: Part of debugging configuration. Warning shown
 #. in case the highest log level is selected. Please try to
@@ -285,38 +284,37 @@ msgstr ""
 #. level.
 #: src/addin-options.cpp:139
 msgid "<b>Warning:</b> Decreased performance. Huge logs!"
-msgstr ""
+msgstr "<b>Aviso:</b> Desempenho reduzido. Logs enormes!"
 
 #. TRANSLATORS: Config dialog category for debug options.
 #: src/addin-options.cpp:141
-#, fuzzy
 msgid "Debug"
-msgstr "Debug..."
+msgstr "Debug"
 
 #. TRANSLATORS: Config dialog category for debug options.
 #: src/addin-options.cpp:143
 msgid "Configuaration of debug options"
-msgstr ""
+msgstr "Configuração de opções de debug"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:145
 msgid "Potential workarounds"
-msgstr ""
+msgstr "Possíveis soluções alternativas"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:147
 msgid "Block Outlook during encrypt / sign"
-msgstr ""
+msgstr "Bloquear o Outlook durante a encriptação / assinatura"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:149
 msgid "Block Outlook during decrypt / verify"
-msgstr ""
+msgstr "Bloquear o Outlook durante a desencriptação / verificação"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:151
 msgid "How to report a problem?"
-msgstr ""
+msgstr "Como relatar um problema?"
 
 #: src/common.cpp:768
 msgid "GpgOL Error"
@@ -391,14 +389,13 @@ msgid "&amp;Print decrypted"
 msgstr "&amp;Imprimir desencriptado"
 
 #: src/gpgoladdin.cpp:1101
-#, fuzzy
 msgid "OpenPGP Key"
-msgstr "Die GPG Schlüsselverwaltung öffnen"
+msgstr "Chave OpenPGP"
 
 #. TRANSLATORS: Tooltip caption
 #: src/gpgoladdin.cpp:1103
 msgid "Configure the OpenPGP key for this contact."
-msgstr ""
+msgstr "Configurar a chave OpenPGP para este contacto."
 
 #. TRANSLATORS: Tooltip content
 #: src/gpgoladdin.cpp:1105
@@ -406,6 +403,8 @@ msgid ""
 "The configured key or keys will be used for this contact even if they are "
 "not certified."
 msgstr ""
+"A chave ou chaves configuradas serão utilizadas para este contacto, mesmo "
+"que não sejam certificadas."
 
 #: src/mail.cpp:383
 msgid ""
@@ -483,8 +482,7 @@ msgstr "mensagem"
 #: src/mail.cpp:1087
 msgid "Please wait while the message is being decrypted / verified..."
 msgstr ""
-"Por favor, aguarda enquanto a mensagem está a ser desencriptada / "
-"verificada..."
+"Por favor, aguarda enquanto a mensagem está a ser desencriptada / verificada…"
 
 #: src/mail.cpp:1297 src/mail.cpp:1366
 msgid "HTML display disabled."
@@ -492,7 +490,7 @@ msgstr "Mostrar HTML desativado."
 
 #: src/mail.cpp:1298 src/mail.cpp:1367
 msgid "HTML content in unsigned S/MIME mails is insecure."
-msgstr "O conteúdo HTML em e-mails S/MIME não assinados é inseguro."
+msgstr "O conteúdo HTML em e-mails S/MIME não-assinados é inseguro."
 
 #: src/mail.cpp:1301 src/mail.cpp:1370
 msgid "GpgOL will only show such mails as text."
@@ -772,7 +770,7 @@ msgstr ""
 
 #: src/mail.cpp:3166
 msgid "GpgOL: Encryption not possible!"
-msgstr "GpgOL: Encriptação não possível!"
+msgstr "GpgOL: Encriptação não é possível!"
 
 #: src/mail.cpp:3168
 msgid ""
@@ -806,7 +804,7 @@ msgid ""
 "For example by right clicking but not selecting the message.\n"
 msgstr ""
 "O GpgOL impediu a alteração para a propriedade \"%s\".\n"
-"As alterações de propriedade não são ainda manipuladas para mensagens "
+"As alterações de propriedades não são ainda manipuladas para mensagens "
 "criptográficas.\n"
 "\n"
 "Para contornar esta limitação, por favor altera a propriedade quando a "
@@ -1002,19 +1000,19 @@ msgstr "Não foram selecionados destinatários para a encriptação."
 
 #: src/cryptcontroller.cpp:488
 msgid "Resolving recipients..."
-msgstr "A resolver destinatários..."
+msgstr "A resolver destinatários…"
 
 #: src/cryptcontroller.cpp:492
 msgid "Resolving signers..."
-msgstr "A resolver assinantes..."
+msgstr "A resolver signatários…"
 
 #: src/cryptcontroller.cpp:1150
 msgid "Encrypting..."
-msgstr "A encriptar..."
+msgstr "A encriptar…"
 
 #: src/cryptcontroller.cpp:1154
 msgid "Signing..."
-msgstr "A assinar..."
+msgstr "A assinar…"
 
 #~ msgid "Message sending"
 #~ msgstr "Envio de mensagem"
