@@ -534,12 +534,28 @@ CryptController::resolve_keys ()
       // Get the recipients that are cached from OOM
       for (const auto &addr: m_recipient_addrs)
         {
-          args.push_back (GpgME::UserID::addrSpecFromString (addr.c_str()));
+          const auto mbox = GpgME::UserID::addrSpecFromString (addr.c_str());
+          const auto overrides = KeyCache::instance ()->getOverrides (mbox);
+          if (overrides.size())
+            {
+              std::string overrideStr = mbox + ":";
+              for (const auto &key: overrides)
+                {
+                  if (key.isNull())
+                    {
+                      TRACEPOINT;
+                      continue;
+                    }
+                  overrideStr += key.primaryFingerprint();
+                  overrideStr += ",";
+                }
+              overrideStr.erase(overrideStr.size() - 1, 1);
+              args.push_back (std::string ("-o"));
+              args.push_back (overrideStr);
+            }
+          args.push_back (mbox);
         }
     }
-
-  args.push_back (std::string ("--lang"));
-  args.push_back (std::string (gettext_localename ()));
 
   // Args are prepared. Spawn the resolver.
   auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);

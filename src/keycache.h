@@ -121,6 +121,10 @@ public:
                              const char *key_data,
                              Mail *mail) const;
 
+    /* Get optional overrides for an address. */
+    std::vector<GpgME::Key> getOverrides (const std::string &mbox);
+
+
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);
     void setPgpKey(const std::string &mbox, const GpgME::Key &key);

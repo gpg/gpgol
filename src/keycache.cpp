@@ -1264,3 +1264,9 @@ KeyCache::onAddrBookImportJobDone (const std::string &mbox,
 {
   return d->onAddrBookImportJobDone (mbox, result_fprs);
 }
+
+std::vector<GpgME::Key>
+KeyCache::getOverrides (const std::string &mbox)
+{
+  return d->getPGPOverrides (mbox.c_str ());
+}
