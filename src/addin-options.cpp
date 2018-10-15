@@ -54,7 +54,7 @@ i18n_noops[] = {
        "attachments as PGP/Inline"),
     N_("S&elect crypto settings automatically "
        "for reply and forward"),
-    N_("&Prefer S/MIME when automatically resolving recipients"),
+    N_("&Prefer S/MIME"),
 
     /* Tooltips */
     N_("Enable or disable any automated key handling."),
@@ -70,6 +70,14 @@ i18n_noops[] = {
        "the deprecated PGP/Inline is used.\n"
        "This can be required for compatibility but should generally not "
        "be used."),
+    N_("Prefer S/MIME over OpenPGP if both are possible."),
+
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Search and import &X509 certificates in the configured directory services"),
+    /* TRANSLATORS: Part of the config dialog. Tooltip */
+    N_("Searches for X509 certificates automatically and imports them. This option searches in all configured services."),
+    /* TRANSLATORS: Part of the config dialog. Warning about privacy leak. */
+    N_("<b>Warning:</b> The configured services will receive information about whom you send Emails!"),
 
     /* Not options but strings for the key adder */
     /* TRANSLATORS: Part of address book key configuration dialog.
