@@ -519,6 +519,14 @@ CryptController::resolve_keys ()
       args.push_back (std::string ("--alwaysShow"));
     }
 
+  if (opt.prefer_smime)
+    {
+      args.push_back (std::string ("--preferred-protocol"));
+      args.push_back (std::string ("cms"));
+    }
+
+  args.push_back (std::string ("--lang"));
+  args.push_back (std::string (gettext_localename ()));
 
   if (m_encrypt)
     {
