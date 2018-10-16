@@ -148,8 +148,8 @@ msgstr "Bevorzuge S/MIME gegenüber OpenPGP, wenn beide möglich sind."
 msgid ""
 "Search and import &X509 certificates in the configured directory services"
 msgstr ""
-"&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und"
-" importieren."
+"&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
+"importieren."
 
 #. TRANSLATORS: Part of the config dialog. Tooltip
 #: src/addin-options.cpp:78
@@ -157,9 +157,8 @@ msgid ""
 "Searches for X509 certificates automatically and imports them. This option "
 "searches in all configured services."
 msgstr ""
-"Sucht automatisch nach X509 Zertifikaten und importiert diese. Diese Option"
-" sucht "
-"in alle konfigurierten Diensten."
+"Sucht automatisch nach X509 Zertifikaten und importiert diese. Diese Option "
+"sucht in alle konfigurierten Diensten."
 
 #. TRANSLATORS: Part of the config dialog. Warning about privacy leak.
 #: src/addin-options.cpp:80
@@ -167,8 +166,8 @@ msgid ""
 "<b>Warning:</b> The configured services will receive information about whom "
 "you send Emails!"
 msgstr ""
-"<b>Warnung:</b> Die konfigurierten Dienste erhalten Informationen darüber wem"
-" Sie Mails schreiben!"
+"<b>Warnung:</b> Die konfigurierten Dienste erhalten Informationen darüber "
+"wem Sie Mails schreiben!"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
