@@ -735,22 +735,29 @@ public:
           TRACEPOINT;
           TRETURN;
         }
-       gpgol_lock (&import_lock);
-       if (m_import_jobs.find (mbox) != m_import_jobs.end ())
-         {
-           log_debug ("%s:%s import for \"%s\" already in progress.",
-                      SRCNAME, __func__, anonstr (mbox.c_str ()));
-           gpgol_unlock (&import_lock);
-         }
-       m_import_jobs.insert (mbox);
-       gpgol_unlock (&import_lock);
 
-       import_arg_t * args = new import_arg_t;
-       args->first = std::unique_ptr<LocateArgs> (new LocateArgs (mbox, mail));
-       args->second = std::string (data);
-       CloseHandle (CreateThread (NULL, 0, do_import,
-                                  (LPVOID) args, 0,
-                                  NULL));
+      std::string sdata (data);
+      trim (sdata);
+      if (sdata.empty())
+        {
+          TRETURN;
+        }
+      gpgol_lock (&import_lock);
+      if (m_import_jobs.find (mbox) != m_import_jobs.end ())
+        {
+          log_debug ("%s:%s import for \"%s\" already in progress.",
+                     SRCNAME, __func__, anonstr (mbox.c_str ()));
+          gpgol_unlock (&import_lock);
+        }
+      m_import_jobs.insert (mbox);
+      gpgol_unlock (&import_lock);
+
+      import_arg_t * args = new import_arg_t;
+      args->first = std::unique_ptr<LocateArgs> (new LocateArgs (mbox, mail));
+      args->second = sdata;
+      CloseHandle (CreateThread (NULL, 0, do_import,
+                                 (LPVOID) args, 0,
+                                 NULL));
 
       TRETURN;
     }
