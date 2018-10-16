@@ -2110,7 +2110,7 @@ create_mail ()
     {
       TRACEPOINT;
       TRETURN nullptr;
-   }
+    }
 
   VARIANT var;
   VariantInit (&var);
@@ -2146,7 +2146,7 @@ get_account_for_mail (const char *mbox)
     {
       TRACEPOINT;
       TRETURN nullptr;
-   }
+    }
 
   LPDISPATCH accounts = get_oom_object (app, "Session.Accounts");
 
@@ -2433,7 +2433,7 @@ log_addins ()
     {
       TRACEPOINT;
       TRETURN;
-   }
+    }
 
   LPDISPATCH addins = get_oom_object (app, "COMAddins");
 
