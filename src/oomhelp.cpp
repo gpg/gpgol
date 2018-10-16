@@ -1879,12 +1879,14 @@ get_store_for_id (const char *storeID)
       if (id && !strcmp (id, storeID))
         {
           gpgol_release (stores);
+          xfree (id);
           return store;
         }
+      xfree (id);
       gpgol_release (store);
     }
   gpgol_release (stores);
-  return nullptr;
+  TRETURN nullptr;
 }
 
 void
@@ -2106,6 +2108,7 @@ delete_category (LPDISPATCH store, const char *category)
               log_debug ("%s:%s: Deleted category '%s'",
                          SRCNAME, __func__, anonstr (category));
             }
+          xfree (name);
           break;
         }
       xfree (name);

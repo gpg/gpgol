@@ -48,8 +48,10 @@ public:
         {
           log_debug ("%s:%s: Failed to create category %s",
                      SRCNAME, __func__, anonstr (category.c_str()));
+          gpgol_release (categories);
           TRETURN;
         }
+      gpgol_release (categories);
       TRETURN;
     }
 
@@ -131,6 +133,7 @@ public:
               TRETURN;
             }
           delete_category (store, category.c_str ());
+          gpgol_release (store);
           storeIt->second.erase (categoryIt);
         }
       TRETURN;
