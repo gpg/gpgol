@@ -38,6 +38,9 @@ void rtrim (std::string &s);
 void ltrim (std::string &s);
 void trim (std::string &s);
 
+/* Join a string vector */
+void join(const std::vector<std::string>& v, const char *c, std::string& s);
+
 /* Convert a string vector to a null terminated char array */
 char **vector_to_cArray (const std::vector<std::string> &vec);
 std::vector <std::string> cArray_to_vector (const char **cArray);

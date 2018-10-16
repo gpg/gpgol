@@ -598,6 +598,9 @@ public:
   /* Gets an additional reference for GetInspector.CurrentItem */
   void refCurrentItem ();
 
+  /* Get the storeID for this mail */
+  std::string storeID() { return m_store_id; }
+
 private:
   void updateCategories_o ();
   void updateSigstate ();
@@ -649,5 +652,7 @@ private:
   int m_locate_count; /* The number of key locates pending for this mail. */
   bool m_is_about_to_be_moved;
   bool m_locate_in_progress; /* Simplified state variable for locate */
+  std::string m_store_id; /* Store id for categories */
+  std::string m_verify_category; /* The category string for the verify result */
 };
 #endif // MAIL_H

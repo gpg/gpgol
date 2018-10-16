@@ -27,11 +27,14 @@
 #include <windows.h>
 #include <olectl.h>
 #include <string>
+#include <sstream>
+#include <algorithm>
 #include <rpc.h>
 
 #include "common.h"
 
 #include "oomhelp.h"
+#include "cpphelp.h"
 #include "gpgoladdin.h"
 
 HRESULT
@@ -1763,7 +1766,7 @@ get_oom_mapi_session ()
   TRETURN session;
 }
 
-static int
+int
 create_category (LPDISPATCH categories, const char *category, int color)
 {
   TSTART;
@@ -1838,21 +1841,66 @@ create_category (LPDISPATCH categories, const char *category, int color)
     }
   VariantClear (&rVariant);
   log_oom ("%s:%s: Created category '%s'",
-             SRCNAME, __func__, category);
+             SRCNAME, __func__, anonstr (category));
   TRETURN 0;
 }
 
-void
-ensure_category_exists (LPDISPATCH application, const char *category, int color)
+LPDISPATCH
+get_store_for_id (const char *storeID)
 {
   TSTART;
+  LPDISPATCH application = GpgolAddin::get_instance ()->get_application ();
+  if (!application || !storeID)
+    {
+      TRACEPOINT;
+      TRETURN nullptr;
+    }
+
+  LPDISPATCH stores = get_oom_object (application, "Session.Stores");
+  if (!stores)
+    {
+      log_error ("%s:%s: No stores found.",
+                 SRCNAME, __func__);
+      TRETURN nullptr;
+    }
+  auto store_count = get_oom_int (stores, "Count");
+
+  for (int n = 1; n <= store_count; n++)
+    {
+      const auto store_str = std::string("Item(") + std::to_string(n) + ")";
+      LPDISPATCH store = get_oom_object (stores, store_str.c_str());
+
+      if (!store)
+        {
+          TRACEPOINT;
+          continue;
+        }
+      char *id = get_oom_string (store, "StoreID");
+      if (id && !strcmp (id, storeID))
+        {
+          gpgol_release (stores);
+          return store;
+        }
+      gpgol_release (store);
+    }
+  gpgol_release (stores);
+  return nullptr;
+}
+
+void
+ensure_category_exists (const char *category, int color)
+{
+  TSTART;
+  LPDISPATCH application = GpgolAddin::get_instance ()->get_application ();
   if (!application || !category)
     {
       TRACEPOINT;
       TRETURN;
     }
 
-  log_oom ("Ensure category exists called for %s, %i", category, color);
+  log_oom ("%s:%s: Ensure category exists called for %s, %i",
+           SRCNAME, __func__,
+           category, color);
 
   LPDISPATCH stores = get_oom_object (application, "Session.Stores");
   if (!stores)
@@ -1955,7 +2003,7 @@ add_category (LPDISPATCH mail, const char *category)
 }
 
 int
-remove_category (LPDISPATCH mail, const char *category)
+remove_category (LPDISPATCH mail, const char *category, bool exactMatch)
 {
   TSTART;
   char *tmp = get_oom_string (mail, "Categories");
@@ -1964,29 +2012,192 @@ remove_category (LPDISPATCH mail, const char *category)
       TRACEPOINT;
       TRETURN 1;
     }
-  std::string newstr (tmp);
+
+  std::vector<std::string> categories;
+  std::istringstream f(tmp);
+  std::string s;
+  while (std::getline(f, s, ','))
+    {
+      ltrim(s);
+      categories.push_back(s);
+    }
   xfree (tmp);
-  std::string cat (category);
 
-  size_t pos1 = newstr.find (cat);
-  size_t pos2 = newstr.find (std::string(", ") + cat);
-  if (pos1 == std::string::npos && pos2 == std::string::npos)
+  const std::string categoryStr = category;
+
+  categories.erase (std::remove_if (categories.begin(),
+                                    categories.end(),
+                                    [categoryStr, exactMatch] (const std::string &cat)
     {
-      log_oom ("%s:%s: category '%s' not found.",
-               SRCNAME, __func__, category);
-      TRETURN 0;
+      if (exactMatch)
+        {
+          return cat == categoryStr;
+        }
+      return cat.compare (0, categoryStr.size(), categoryStr) == 0;
+    }), categories.end ());
+  std::string newCategories;
+  join (categories, ", ", newCategories);
+
+  TRETURN put_oom_string (mail, "Categories", newCategories.c_str ());
+}
+
+static int
+_delete_category (LPDISPATCH categories, int idx)
+{
+  TSTART;
+  VARIANT aVariant[1];
+  DISPPARAMS dispparams;
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_INT;
+  dispparams.rgvarg[0].intVal = idx;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  TRETURN invoke_oom_method_with_parms (categories, "Remove", NULL,
+                                        &dispparams);
+}
+
+int
+delete_category (LPDISPATCH store, const char *category)
+{
+  TSTART;
+  if (!store || !category)
+    {
+      TRETURN -1;
     }
 
-  size_t len = cat.size();
-  if (pos2)
+  LPDISPATCH categories = get_oom_object (store, "Categories");
+  if (!categories)
     {
-      len += 2;
+      categories = get_oom_object (
+                      GpgolAddin::get_instance ()->get_application (),
+                      "Session.Categories");
+      if (!categories)
+        {
+          TRACEPOINT;
+          TRETURN -1;
+        }
     }
-  newstr.erase (pos2 != std::string::npos ? pos2 : pos1, len);
-  log_oom ("%s:%s: removing category '%s'",
-           SRCNAME, __func__, category);
 
-  TRETURN put_oom_string (mail, "Categories", newstr.c_str ());
+  auto count = get_oom_int (categories, "Count");
+  int ret = 0;
+  for (int i = 1; i <= count; i++)
+    {
+      const auto item_str = std::string("Item(") + std::to_string(i) + ")";
+      LPDISPATCH category_obj = get_oom_object (categories, item_str.c_str());
+      if (!category_obj)
+        {
+          TRACEPOINT;
+          gpgol_release (categories);
+          break;
+        }
+      char *name = get_oom_string (category_obj, "Name");
+      gpgol_release (category_obj);
+      if (name && !strcmp (category, name))
+        {
+          if ((ret = _delete_category (categories, i)))
+            {
+              log_error ("%s:%s: Failed to delete category '%s'",
+                         SRCNAME, __func__, anonstr (category));
+            }
+          else
+            {
+              log_debug ("%s:%s: Deleted category '%s'",
+                         SRCNAME, __func__, anonstr (category));
+            }
+          break;
+        }
+      xfree (name);
+    }
+
+  gpgol_release (categories);
+  TRETURN ret;
+}
+
+void
+delete_all_categories_starting_with (const char *string)
+{
+  LPDISPATCH application = GpgolAddin::get_instance ()->get_application ();
+  if (!application || !string)
+    {
+      TRACEPOINT;
+      TRETURN;
+    }
+
+  log_oom ("%s:%s: Delete categories starting with: \"%s\"",
+           SRCNAME, __func__, string);
+
+  LPDISPATCH stores = get_oom_object (application, "Session.Stores");
+  if (!stores)
+    {
+      log_error ("%s:%s: No stores found.",
+                 SRCNAME, __func__);
+      TRETURN;
+    }
+
+  auto store_count = get_oom_int (stores, "Count");
+
+  for (int n = 1; n <= store_count; n++)
+    {
+      const auto store_str = std::string("Item(") + std::to_string(n) + ")";
+      LPDISPATCH store = get_oom_object (stores, store_str.c_str());
+
+      if (!store)
+        {
+          TRACEPOINT;
+          continue;
+        }
+
+      LPDISPATCH categories = get_oom_object (store, "Categories");
+      if (!categories)
+        {
+          categories = get_oom_object (application, "Session.Categories");
+          if (!categories)
+            {
+              TRACEPOINT;
+              gpgol_release (store);
+              continue;
+            }
+        }
+
+      auto count = get_oom_int (categories, "Count");
+      std::vector<std::string> to_delete;
+      for (int i = 1; i <= count; i++)
+        {
+          const auto item_str = std::string("Item(") + std::to_string(i) + ")";
+          LPDISPATCH category_obj = get_oom_object (categories, item_str.c_str());
+          if (!category_obj)
+            {
+              TRACEPOINT;
+              gpgol_release (categories);
+              break;
+            }
+          char *name = get_oom_string (category_obj, "Name");
+          if (name && !strncmp (string, name, strlen (string)))
+            {
+              log_oom ("%s:%s: Found category for deletion '%s'",
+                       SRCNAME, __func__, anonstr(name));
+              to_delete.push_back (name);
+            }
+          /* We don't check the color here as the user may change that. */
+          gpgol_release (category_obj);
+          xfree (name);
+        }
+
+      /* Do this one after another to avoid messing with indexes. */
+      for (const auto &str: to_delete)
+        {
+          delete_category (store, str.c_str ());
+        }
+
+      gpgol_release (store);
+      /* Otherwise we have to create the category */
+      gpgol_release (categories);
+    }
+  gpgol_release (stores);
+  TRETURN;
+
 }
 
 static char *

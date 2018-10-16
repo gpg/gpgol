@@ -48,6 +48,7 @@
 #include "addin-options.h"
 #include "cpphelp.h"
 #include "dispcache.h"
+#include "categorymanager.h"
 
 #include <gpg-error.h>
 #include <list>
@@ -511,11 +512,11 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
                  SRCNAME, __func__);
     }
 
-  /* Set up categories */
-  const char *decCategory = _("GpgOL: Encrypted Message");
-  const char *verifyCategory = _("GpgOL: Trusted Sender Address");
-  ensure_category_exists (m_application, decCategory, 8);
-  ensure_category_exists (m_application, verifyCategory, 5);
+  /* Clean GpgOL prefixed categories.
+     They might be left over from a crash or something unexpected
+     error. We want to avoid pollution with the signed by categories.
+  */
+  CategoryManager::removeAllGpgOLCategories ();
   install_forms ();
   m_applicationEventSink = install_ApplicationEvents_sink (m_application);
   m_explorersEventSink = install_explorer_sinks (m_application);
@@ -1250,4 +1251,15 @@ GpgolAddin::unregisterExplorerSink (LPDISPATCH sink)
     }
   log_error ("%s:%s: Unregister %p which was not registered.",
              SRCNAME, __func__, sink);
+}
+
+std::shared_ptr <CategoryManager>
+GpgolAddin::get_category_mngr ()
+{
+  if (!m_category_mngr)
+    {
+      m_category_mngr = std::shared_ptr<CategoryManager> (
+                                                  new CategoryManager ());
+    }
+  return m_category_mngr;
 }

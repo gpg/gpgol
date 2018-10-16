@@ -21,6 +21,8 @@
  */
 
 #include "config.h"
+
+#include "categorymanager.h"
 #include "dialogs.h"
 #include "common.h"
 #include "mail.h"
@@ -50,6 +52,7 @@
 #include <gpg-error.h>
 
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <memory>
@@ -191,6 +194,10 @@ Mail::~Mail()
         }
       gpgol_unlock (&uid_map_lock);
     }
+
+  log_oom ("%s:%s: removing categories",
+                 SRCNAME, __func__);
+  removeCategories_o ();
 
   log_oom ("%s:%s: releasing mailitem",
                  SRCNAME, __func__);
@@ -2133,7 +2140,8 @@ Mail::updateSigstate ()
                          anonstr (sender.c_str ()));
             }
         }
-
+      /* Sigsum valid or green is somehow not set in this case.
+       * Which is strange as AFAIK this worked in the past. */
       if ((sig.summary() & Signature::Summary::Valid) &&
           m_uid.origin() == GpgME::Key::OriginWKD &&
           (sig.validity() == Signature::Validity::Unknown ||
@@ -2190,10 +2198,20 @@ void
 Mail::removeCategories_o ()
 {
   TSTART;
-  const char *decCategory = _("GpgOL: Encrypted Message");
-  const char *verifyCategory = _("GpgOL: Trusted Sender Address");
-  remove_category (m_mailitem, decCategory);
-  remove_category (m_mailitem, verifyCategory);
+  if (!m_store_id.empty () && !m_verify_category.empty ())
+    {
+      log_oom ("%s:%s: Unreffing verify category",
+                       SRCNAME, __func__);
+      CategoryManager::instance ()->removeCategory (this,
+                                                    m_verify_category);
+    }
+  if (!m_store_id.empty () && !m_decrypt_result.isNull())
+    {
+      log_oom ("%s:%s: Unreffing dec category",
+                       SRCNAME, __func__);
+      CategoryManager::instance ()->removeCategory (this,
+                                CategoryManager::getEncMailCategory ());
+    }
   TRETURN;
 }
 
@@ -2261,30 +2279,116 @@ resize_active_window ()
   TRETURN;
 }
 
+#if 0
+static std::string
+pretty_id (const char *keyId)
+{
+  /* Three spaces, four quads and a NULL */
+  char buf[20];
+  buf[19] = '\0';
+  if (!keyId)
+    {
+      return std::string ("null");
+    }
+  size_t len = strlen (keyId);
+  if (!len)
+    {
+      return std::string ("empty");
+    }
+  if (len < 16)
+    {
+      return std::string (_("Invalid Key"));
+    }
+  const char *p = keyId + (len - 16);
+  int j = 0;
+  for (size_t i = 0; i < 16; i++)
+    {
+      if (i && i % 4 == 0)
+        {
+          buf[j++] = ' ';
+        }
+      buf[j++] = *(p + i);
+    }
+  return std::string (buf);
+}
+#endif
+
 void
 Mail::updateCategories_o ()
 {
   TSTART;
-  const char *decCategory = _("GpgOL: Encrypted Message");
-  const char *verifyCategory = _("GpgOL: Trusted Sender Address");
+
+  auto mngr = CategoryManager::instance ();
   if (isValidSig ())
     {
-      add_category (m_mailitem, verifyCategory);
+      char *buf;
+      /* Resolve to the primary fingerprint */
+#if 0
+      const auto sigKey = KeyCache::instance ()->getByFpr (m_sig.fingerprint (),
+                                                           true);
+      const char *sigFpr;
+      if (sigKey.isNull())
+        {
+          sigFpr = m_sig.fingerprint ();
+        }
+      else
+        {
+          sigFpr = sigKey.primaryFingerprint ();
+        }
+#endif
+      /* If m_uid addrSpec would not return a result we would never
+       * have gotten the UID. */
+      int lvl = get_signature_level ();
+      gpgrt_asprintf (&buf, "GpgOL: %s %i %s '%s'", _("Level"), lvl,
+                      _("trust in"),
+                      m_uid.addrSpec ().c_str ());
+      memdbg_alloc (buf);
+
+      int color = 0;
+      if (lvl == 2)
+        {
+          color = 7;
+        }
+      if (lvl == 3)
+        {
+          color = 5;
+        }
+      if (lvl == 4)
+        {
+          color = 20;
+        }
+      m_store_id = mngr->addCategoryToMail (this, buf, color);
+      m_verify_category = buf;
+      xfree (buf);
     }
   else
     {
-      remove_category (m_mailitem, verifyCategory);
+      remove_category (m_mailitem, "GpgOL: ", false);
     }
 
   if (!m_decrypt_result.isNull())
     {
-      add_category (m_mailitem, decCategory);
+      const auto id = mngr->addCategoryToMail (this,
+                                 CategoryManager::getEncMailCategory (),
+                                 8);
+      if (m_store_id.empty())
+        {
+          m_store_id = id;
+        }
+      if (m_store_id != id)
+        {
+          log_error ("%s:%s unexpected store mismatch "
+                     "between '%s' and dec cat '%s'",
+                     SRCNAME, __func__, m_store_id.c_str(), id.c_str());
+        }
     }
   else
     {
       /* As a small safeguard against fakes we remove our
          categories */
-      remove_category (m_mailitem, decCategory);
+      remove_category (m_mailitem,
+                       CategoryManager::getEncMailCategory ().c_str (),
+                       true);
     }
 
   resize_active_window();

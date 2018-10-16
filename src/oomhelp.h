@@ -333,14 +333,13 @@ invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
 LPMAPISESSION
 get_oom_mapi_session (void);
 
-/* Ensure a category of the name name exists in
-  the session for the Mail mail.
+/* Ensure a category of the name name exists.
 
   Creates the category with the specified color if required.
 
   returns 0 on success. */
 void
-ensure_category_exists (LPDISPATCH mail, const char *category, int color);
+ensure_category_exists (const char *category, int color);
 
 /* Add a category to a mail if it is not already added. */
 int
@@ -348,7 +347,21 @@ add_category (LPDISPATCH mail, const char *category);
 
 /* Remove a category from a mail if it was added. */
 int
-remove_category (LPDISPATCH mail, const char *category);
+remove_category (LPDISPATCH mail, const char *category, bool exactMatch);
+
+/* Create the category */
+int
+create_category (LPDISPATCH categories, const char *category, int color);
+
+/* Delete a category from the store. */
+int delete_category (LPDISPATCH store, const char *category);
+
+/* Delete categories starting with "string" from all stores. */
+void delete_all_categories_starting_with (const char *string);
+
+/* Iterate over application stores and return the one with the ID
+   @storeID */
+LPDISPATCH get_store_for_id (const char *storeID);
 
 /* Get a unique identifier for a mail object. The
    uuid is a custom property. If create is set

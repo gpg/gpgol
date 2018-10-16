@@ -31,6 +31,7 @@ gpgol_SOURCES = \
     addressbook.cpp addressbook.h \
     application-events.cpp \
     attachment.h attachment.cpp \
+    categorymanager.h categorymanager.cpp \
     common.h common.cpp \
     common_indep.h common_indep.c \
     cpphelp.cpp cpphelp.h \

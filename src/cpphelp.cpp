@@ -72,6 +72,20 @@ trim(std::string &s)
   rtrim (s);
 }
 
+void
+join(const std::vector<std::string>& v, const char *c, std::string& s)
+{
+  s.clear();
+  for (auto p = v.begin(); p != v.end(); ++p)
+    {
+      s += *p;
+      if (p != v.end() - 1)
+        {
+          s += c;
+        }
+    }
+}
+
 char **
 vector_to_cArray(const std::vector<std::string> &vec)
 {

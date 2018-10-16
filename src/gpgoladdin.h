@@ -32,6 +32,7 @@
 class GpgolAddinRibbonExt;
 class ApplicationEventListener;
 class DispCache;
+class CategoryManager;
 
 /* Enums for the IDTExtensibility2 interface*/
 typedef enum
@@ -223,6 +224,8 @@ public:
   /* Invalidate the ribbons. */
   void invalidateRibbons ();
 
+  std::shared_ptr<CategoryManager> get_category_mngr ();
+
 private:
   ULONG m_lRef;
   GpgolRibbonExtender* m_ribbonExtender;
@@ -238,6 +241,7 @@ private:
   std::vector<LPDISPATCH> m_explorerEventSinks;
   std::shared_ptr<DispCache> m_dispcache;
   std::vector<LPDISPATCH> m_ribbon_uis;
+  std::shared_ptr<CategoryManager> m_category_mngr;
 };
 
 class GpgolAddinFactory: public IClassFactory
