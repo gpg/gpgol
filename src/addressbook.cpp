@@ -38,6 +38,8 @@ typedef struct
   shared_disp_t contact;
 } keyadder_args_t;
 
+static std::set <std::string> s_checked_entries;
+
 static DWORD WINAPI
 open_keyadder (LPVOID arg)
 {
@@ -150,6 +152,8 @@ Addressbook::update_key_o (void *callback_args)
              SRCNAME, __func__);
 
   gpgol_release (pgp_key);
+
+  s_checked_entries.clear ();
   TRETURN;
 }
 
@@ -215,7 +219,6 @@ Addressbook::edit_key_o (LPDISPATCH contact)
   TRETURN;
 }
 
-static std::set <std::string> s_checked_entries;
 /* For each new recipient check the address book to look for a potentially
    configured key for this recipient and import / register
    it into the keycache.
@@ -252,7 +255,6 @@ Addressbook::check_o (Mail *mail)
         {
           continue;
         }
-      s_checked_entries.insert (pair.first);
 
       if (!pair.second)
         {
@@ -268,6 +270,7 @@ Addressbook::check_o (Mail *mail)
                      anonstr (pair.first.c_str()));
           continue;
         }
+      s_checked_entries.insert (pair.first);
 
       LPDISPATCH user_props = get_oom_object (contact.get (), "UserProperties");
       if (!user_props)
