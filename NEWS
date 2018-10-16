@@ -1,6 +1,17 @@
-Noteworthy changes for version 2.3.1 (unreleased)
+Noteworthy changes for version 2.3.1 (2018-10-16)
 =================================================
 
+ * Fixed attachement handling for office and pdf attachments.
+
+ * Improved signature info display.
+
+ * Added address book integration for OpenPGP.
+
+ * Added auto import capabilities for S/MIME.
+
+ * Added generic prefer S/MIME mode.
+
+ * Various bugfixes and regression fixes.
 
 Noteworthy changes for version 2.3.0 (2018-08-31)
 =================================================
