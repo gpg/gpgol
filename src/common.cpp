@@ -770,78 +770,6 @@ gpgol_bug (HWND parent, int code)
   return;
 }
 
-static char*
-expand_path (const char *path)
-{
-  DWORD len;
-  char *p;
-
-  len = ExpandEnvironmentStrings (path, NULL, 0);
-  if (!len)
-    {
-      return NULL;
-    }
-  len += 1;
-  p = (char *) xcalloc (1, len+1);
-  if (!p)
-    {
-      return NULL;
-    }
-  len = ExpandEnvironmentStrings (path, p, len);
-  if (!len)
-    {
-      xfree (p);
-      return NULL;
-    }
-  return p;
-}
-
-static int
-load_config_value (HKEY hk, const char *path, const char *key, char **val)
-{
-  HKEY h;
-  DWORD size=0, type;
-  int ec;
-
-  *val = NULL;
-  if (hk == NULL)
-    {
-      hk = HKEY_CURRENT_USER;
-    }
-  ec = RegOpenKeyEx (hk, path, 0, KEY_READ, &h);
-  if (ec != ERROR_SUCCESS)
-    {
-      return -1;
-    }
-
-  ec = RegQueryValueEx(h, key, NULL, &type, NULL, &size);
-  if (ec != ERROR_SUCCESS)
-    {
-      RegCloseKey (h);
-      return -1;
-    }
-  if (type == REG_EXPAND_SZ)
-    {
-      char tmp[256];
-      RegQueryValueEx (h, key, NULL, NULL, (BYTE*)tmp, &size);
-      *val = expand_path (tmp);
-    }
-  else
-    {
-      *val = (char *) xcalloc(1, size+1);
-      ec = RegQueryValueEx (h, key, NULL, &type, (BYTE*)*val, &size);
-      if (ec != ERROR_SUCCESS)
-        {
-          xfree (*val);
-          *val = NULL;
-          RegCloseKey (h);
-          return -1;
-        }
-    }
-  RegCloseKey (h);
-  return 0;
-}
-
 static int
 store_config_value (HKEY hk, const char *path, const char *key, const char *val)
 {
@@ -885,14 +813,16 @@ store_extension_value (const char *key, const char *val)
 int
 load_extension_value (const char *key, char **val)
 {
-  int ret = load_config_value (HKEY_CURRENT_USER, GPGOL_REGPATH, key, val);
-  if (val)
+  if (!val)
     {
-      log_debug ("%s:%s: LoadReg '%s' val '%s'",
-                 SRCNAME, __func__, key ? key : "null",
-                 *val ? *val : "null");
+      STRANGEPOINT;
+      return -1;
     }
-  return ret;
+  *val = read_w32_registry_string (nullptr, GPGOL_REGPATH, key);
+  log_debug ("%s:%s: LoadReg '%s' val '%s'",
+             SRCNAME, __func__, key ? key : "null",
+             *val ? *val : "null");
+  return 0;
 }
 
 int
