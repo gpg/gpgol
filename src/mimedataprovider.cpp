@@ -787,7 +787,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                 len = b64_decode (&m_mime_ctx->base64, linebuf, pos);
               else
                 len = pos;
-              log_debug ("Writing crypto data: %.*s",
+              log_data ("Writing crypto data: %.*s",
                          (int)pos, linebuf);
               if (len)
                 m_crypto_data.write(linebuf, len);
