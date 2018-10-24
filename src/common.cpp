@@ -108,15 +108,6 @@ get_root_key(const char *root)
   return root_key;
 }
 
-const char *nullguard (const char *str)
-{
-  if (str)
-    {
-      return str;
-    }
-  return "null";
-}
-
 static std::string
 readRegStr (const char *root, const char *dir, const char *name)
 {
@@ -129,47 +120,34 @@ readRegStr (const char *root, const char *dir, const char *name)
     DWORD n1, nbytes, type;
     std::string ret;
 
-    log_debug ("Read reg str root: '%s', '%s', '%s'",
-               nullguard(root), nullguard(dir), nullguard(name));
-
     if (!(root_key = get_root_key(root))) {
-        log_debug("Failed to get root key");
         return ret;
     }
 
     if (RegOpenKeyExA(root_key, dir, 0, KEY_READ, &key_handle)) {
-        log_debug("Failed to open root");
         if (root) {
-            log_debug("Failed to open root with forced root");
             /* no need for a RegClose, so return direct */
             return ret;
         }
         /* Fallback to HKLM */
 
-        log_debug("Fallback to HKLM");
         if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
-            log_debug("HKLM open failed");
             return ret;
         }
     }
 
     nbytes = 1;
     if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
-        log_debug("Query Value failed");
         if (root) {
-            log_debug("Forced root: bail!");
             RegCloseKey (key_handle);
             return ret;
         }
         /* Try to fallback to HKLM also vor a missing value.  */
-        log_debug("HKLM Value fallback!");
         RegCloseKey (key_handle);
         if (RegOpenKeyExA (HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
-            log_debug("Failed to open key");
             return ret;
         }
         if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
-            log_debug("Failed to open fallback value for %s", nullguard(name));
             RegCloseKey(key_handle);
             return ret;
         }
@@ -177,7 +155,6 @@ readRegStr (const char *root, const char *dir, const char *name)
     n1 = nbytes+1;
     char result[n1];
     if (RegQueryValueExA(key_handle, name, 0, &type, (LPBYTE)result, &n1)) {
-        log_debug ("Query Value real failed");
         RegCloseKey(key_handle);
         return ret;
     }
@@ -204,7 +181,6 @@ readRegStr (const char *root, const char *dir, const char *name)
             ret = tmp;
         }
     }
-    log_debug ("returning: %s", ret.c_str ());
     return ret;
 #endif
 }
