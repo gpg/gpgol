@@ -901,7 +901,7 @@ write_part (sink_t sink, const char *data, size_t datalen,
 
   log_debug ("Writing part of length %d%s filename=`%s'\n",
              (int)datalen, is_mapibody? " (body)":"",
-             filename?filename:"[none]");
+             filename ? anonstr (filename) : "[none]");
 
   ct = infer_content_type (data, datalen, filename, is_mapibody, &use_b64);
   use_qp = 0;

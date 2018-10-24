@@ -2522,7 +2522,7 @@ get_sender_SentRepresentingAddress (LPDISPATCH mailitem)
   if (buf && strlen (buf))
     {
       log_debug ("%s:%s Found sent representing address \"%s\"",
-                 SRCNAME, __func__, buf);
+                 SRCNAME, __func__, anonstr (buf));
       TRETURN buf;
     }
   xfree (buf);
