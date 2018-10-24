@@ -132,22 +132,14 @@ readRegStr (const char *root, const char *dir, const char *name)
     log_debug ("Read reg str root: '%s', '%s', '%s'",
                nullguard(root), nullguard(dir), nullguard(name));
 
-    OutputDebugStringA ("----GPGOL Registry load one value start ----");
-    OutputDebugStringA (nullguard (root));
-    OutputDebugStringA (nullguard (dir));
-    OutputDebugStringA (nullguard (name));
-
     if (!(root_key = get_root_key(root))) {
-        OutputDebugStringA ("TRACE 1");
         log_debug("Failed to get root key");
         return ret;
     }
 
     if (RegOpenKeyExA(root_key, dir, 0, KEY_READ, &key_handle)) {
-        OutputDebugStringA ("TRACE 2");
         log_debug("Failed to open root");
         if (root) {
-            OutputDebugStringA ("TRACE 3");
             log_debug("Failed to open root with forced root");
             /* no need for a RegClose, so return direct */
             return ret;
@@ -155,9 +147,7 @@ readRegStr (const char *root, const char *dir, const char *name)
         /* Fallback to HKLM */
 
         log_debug("Fallback to HKLM");
-        OutputDebugStringA ("TRACE 4");
         if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
-            OutputDebugStringA ("TRACE 5");
             log_debug("HKLM open failed");
             return ret;
         }
@@ -165,25 +155,20 @@ readRegStr (const char *root, const char *dir, const char *name)
 
     nbytes = 1;
     if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
-        OutputDebugStringA ("TRACE 6");
         log_debug("Query Value failed");
         if (root) {
             log_debug("Forced root: bail!");
-            OutputDebugStringA ("TRACE 7");
             RegCloseKey (key_handle);
             return ret;
         }
         /* Try to fallback to HKLM also vor a missing value.  */
         log_debug("HKLM Value fallback!");
-        OutputDebugStringA ("TRACE 8");
         RegCloseKey (key_handle);
         if (RegOpenKeyExA (HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
-            OutputDebugStringA ("TRACE 9");
             log_debug("Failed to open key");
             return ret;
         }
         if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
-            OutputDebugStringA ("TRACE 10");
             log_debug("Failed to open fallback value for %s", nullguard(name));
             RegCloseKey(key_handle);
             return ret;
@@ -192,7 +177,6 @@ readRegStr (const char *root, const char *dir, const char *name)
     n1 = nbytes+1;
     char result[n1];
     if (RegQueryValueExA(key_handle, name, 0, &type, (LPBYTE)result, &n1)) {
-        OutputDebugStringA ("TRACE 11");
         log_debug ("Query Value real failed");
         RegCloseKey(key_handle);
         return ret;
@@ -220,9 +204,6 @@ readRegStr (const char *root, const char *dir, const char *name)
             ret = tmp;
         }
     }
-    OutputDebugStringA ("Value is:");
-    OutputDebugStringA (ret.c_str ());
-    OutputDebugStringA ("-------------- Load one value end ----------");
     log_debug ("returning: %s", ret.c_str ());
     return ret;
 #endif
