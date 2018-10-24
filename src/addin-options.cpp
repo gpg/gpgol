@@ -188,6 +188,10 @@ open_gpgolconfig (LPVOID arg)
   args.push_back (std::string ("--lang"));
   args.push_back (std::string (gettext_localename ()));
 
+#ifdef _WIN64
+  args.push_back (std::string ("--w64"));
+#endif
+
   auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
   if (!ctx)
     {
