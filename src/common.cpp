@@ -109,8 +109,10 @@ get_root_key(const char *root)
 }
 #if defined(_WIN64)
 #define CROSS_ACCESS KEY_WOW64_32KEY
+#define REAL_ACCESS KEY_WOW64_64KEY
 #else
 #define CROSS_ACCESS KEY_WOW64_64KEY
+#define REAL_ACCESS KEY_WOW32_64KEY
 #endif
 
 std::string
@@ -129,6 +131,8 @@ _readRegStr (HKEY root_key, const char *dir,
 
     if (alternate) {
         flags |= CROSS_ACCESS;
+    } else {
+        flags |= REAL_ACCESS
     }
 
     if (RegOpenKeyExA(root_key, dir, 0, flags, &key_handle)) {
