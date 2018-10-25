@@ -107,50 +107,38 @@ get_root_key(const char *root)
     return NULL;
   return root_key;
 }
+#if defined(_WIN64)
+#define CROSS_ACCESS KEY_WOW64_32KEY
+#else
+#define CROSS_ACCESS KEY_WOW64_64KEY
+#endif
 
-static std::string
-readRegStr (const char *root, const char *dir, const char *name)
+std::string
+_readRegStr (HKEY root_key, const char *dir,
+             const char *name, bool alternate)
 {
 #ifndef _WIN32
-    (void)root; (void)dir; (void)name;
+    (void) root_key; (void)alternate; (void)dir; (void)name;
     return std::string();
 #else
-
-    HKEY root_key, key_handle;
+    HKEY key_handle;
     DWORD n1, nbytes, type;
     std::string ret;
 
-    if (!(root_key = get_root_key(root))) {
-        return ret;
+    DWORD flags = KEY_READ;
+
+    if (alternate) {
+        flags |= CROSS_ACCESS;
     }
 
-    if (RegOpenKeyExA(root_key, dir, 0, KEY_READ, &key_handle)) {
-        if (root) {
-            /* no need for a RegClose, so return direct */
-            return ret;
-        }
-        /* Fallback to HKLM */
-
-        if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
-            return ret;
-        }
+    if (RegOpenKeyExA(root_key, dir, 0, flags, &key_handle)) {
+        return ret;
     }
 
     nbytes = 1;
     if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
-        if (root) {
-            RegCloseKey (key_handle);
-            return ret;
-        }
-        /* Try to fallback to HKLM also vor a missing value.  */
         RegCloseKey (key_handle);
-        if (RegOpenKeyExA (HKEY_LOCAL_MACHINE, dir, 0, KEY_READ, &key_handle)) {
-            return ret;
-        }
-        if (RegQueryValueExA(key_handle, name, 0, nullptr, nullptr, &nbytes)) {
-            RegCloseKey(key_handle);
-            return ret;
-        }
+        return ret;
     }
     n1 = nbytes+1;
     char result[n1];
@@ -179,6 +167,33 @@ readRegStr (const char *root, const char *dir, const char *name)
         } else if (nbytes) { /* okay, reduce the length */
             tmp[nbytes] = 0;
             ret = tmp;
+        }
+    }
+    return ret;
+
+#endif
+}
+
+std::string
+readRegStr (const char *root, const char *dir, const char *name)
+{
+#ifndef _WIN32
+    (void)root; (void)dir; (void)name;
+    return std::string();
+#else
+    HKEY root_key;
+    std::string ret;
+    if (!(root_key = get_root_key(root))) {
+        return ret;
+    }
+    ret = _readRegStr (root_key, dir, name, false);
+
+    if (ret.empty()) {
+        // Try local machine as fallback.
+        ret = _readRegStr (HKEY_LOCAL_MACHINE, dir, name, false);
+        if (ret.empty()) {
+            // Try alternative registry view as fallback
+            ret = _readRegStr (HKEY_LOCAL_MACHINE, dir, name, true);
         }
     }
     return ret;
