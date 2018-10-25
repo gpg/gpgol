@@ -49,6 +49,7 @@
 #include "cpphelp.h"
 #include "dispcache.h"
 #include "categorymanager.h"
+#include "keycache.h"
 
 #include <gpg-error.h>
 #include <list>
@@ -524,6 +525,8 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
 
   CloseHandle (CreateThread (NULL, 0, init_gpgme_config, nullptr, 0,
                              NULL));
+
+  KeyCache::instance ()->populate ();
   return S_OK;
 }
 

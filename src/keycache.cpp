@@ -215,6 +215,65 @@ do_import (LPVOID arg)
   TRETURN 0;
 }
 
+static void
+do_populate_protocol (GpgME::Protocol proto, bool secret)
+{
+  log_debug ("%s:%s: Starting keylisting for proto %s",
+             SRCNAME, __func__, to_cstr (proto));
+  auto ctx = GpgME::Context::create (proto);
+  if (!ctx)
+    {
+      /* Maybe PGP broken and not S/MIME */
+      log_error ("%s:%s: broken installation no ctx.",
+                 SRCNAME, __func__);
+      TRETURN;
+    }
+
+  ctx->setKeyListMode (GpgME::KeyListMode::Local);
+  GpgME::Error err;
+
+   if ((err = ctx->startKeyListing ((const char*)nullptr, secret)))
+    {
+      log_error ("%s:%s: Failed to start keylisting err: %i: %s",
+                 SRCNAME, __func__, err.code (), err.asString());
+      TRETURN;
+    }
+
+  while (!err)
+    {
+      const auto key = ctx->nextKey(err);
+      if (err || key.isNull())
+        {
+          TRACEPOINT;
+          break;
+        }
+      KeyCache::instance()->onUpdateJobDone (key.primaryFingerprint(),
+                                             key);
+
+    }
+  TRETURN;
+}
+
+static DWORD WINAPI
+do_populate (LPVOID)
+{
+  TSTART;
+
+  log_debug ("%s:%s: Populating keycache",
+             SRCNAME, __func__);
+  do_populate_protocol (GpgME::OpenPGP, false);
+  do_populate_protocol (GpgME::OpenPGP, true);
+  if (opt.enable_smime)
+    {
+      do_populate_protocol (GpgME::CMS, false);
+      do_populate_protocol (GpgME::CMS, true);
+    }
+  log_debug ("%s:%s: Keycache populated",
+             SRCNAME, __func__);
+
+  TRETURN 0;
+}
+
 
 class KeyCache::Private
 {
@@ -262,7 +321,8 @@ public:
     TRETURN;
   }
 
-  void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key)
+  void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key,
+                       bool insert = true)
   {
     TSTART;
     gpgol_lock (&keycache_lock);
@@ -276,12 +336,16 @@ public:
       {
         it->second = key;
       }
-    insertOrUpdateInFprMap (key);
+    if (insert)
+      {
+        insertOrUpdateInFprMap (key);
+      }
     gpgol_unlock (&keycache_lock);
     TRETURN;
   }
 
-  void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key)
+  void setSmimeKeySecret(const std::string &mbox, const GpgME::Key &key,
+                         bool insert = true)
   {
     TSTART;
     gpgol_lock (&keycache_lock);
@@ -295,7 +359,10 @@ public:
       {
         it->second = key;
       }
-    insertOrUpdateInFprMap (key);
+    if (insert)
+      {
+        insertOrUpdateInFprMap (key);
+      }
     gpgol_unlock (&keycache_lock);
     TRETURN;
   }
@@ -546,14 +613,57 @@ public:
 
       auto it = m_fpr_map.find (primaryFpr);
 
-      log_debug ("%s:%s \"%s\" updated.",
-                 SRCNAME, __func__, anonstr (primaryFpr));
       if (it == m_fpr_map.end ())
         {
           m_fpr_map.insert (std::make_pair (primaryFpr, key));
 
           gpgol_unlock (&fpr_map_lock);
           TRETURN;
+        }
+
+      for (const auto &uid: key.userIDs())
+        {
+          if (key.isBad() || uid.isBad())
+            {
+              continue;
+            }
+          /* Update ultimate keys map */
+          if (uid.validity() == GpgME::UserID::Validity::Ultimate &&
+              uid.id())
+            {
+              const char *fpr = key.primaryFingerprint();
+              if (!fpr)
+                {
+                  STRANGEPOINT;
+                  continue;
+                }
+              TRACEPOINT;
+              m_ultimate_keys.erase (std::remove_if (m_ultimate_keys.begin(),
+                                     m_ultimate_keys.end(),
+                                     [fpr] (const GpgME::Key &ult)
+                {
+                  return ult.primaryFingerprint() && !strcmp (fpr, ult.primaryFingerprint());
+                }), m_ultimate_keys.end());
+              TRACEPOINT;
+              m_ultimate_keys.push_back (key);
+            }
+
+          /* Update skey maps */
+          if (key.hasSecret ())
+            {
+              if (key.protocol () == GpgME::OpenPGP)
+                {
+                  setPgpKeySecret (uid.addrSpec(), key, false);
+                }
+              else if (key.protocol () == GpgME::CMS)
+                {
+                  setSmimeKeySecret (uid.addrSpec(), key, false);
+                }
+              else
+                {
+                  STRANGEPOINT;
+                }
+            }
         }
 
       if (it->second.hasSecret () && !key.hasSecret())
@@ -715,8 +825,6 @@ public:
 
       if (it == m_update_jobs.end())
         {
-          log_debug ("%s:%s Update for \"%s\" already finished.",
-                     SRCNAME, __func__, anonstr (fpr));
           gpgol_unlock (&update_lock);
           TRETURN;
         }
@@ -793,6 +901,18 @@ public:
       TRETURN;
     }
 
+  void populate ()
+    {
+      TSTART;
+      gpgrt_lock_lock (&keycache_lock);
+      m_ultimate_keys.clear ();
+      gpgrt_lock_unlock (&keycache_lock);
+      CloseHandle (CreateThread (nullptr, 0, do_populate,
+                                 nullptr, 0,
+                                 nullptr));
+      TRETURN;
+    }
+
   std::unordered_map<std::string, GpgME::Key> m_pgp_key_map;
   std::unordered_map<std::string, GpgME::Key> m_smime_key_map;
   std::unordered_map<std::string, GpgME::Key> m_pgp_skey_map;
@@ -801,6 +921,7 @@ public:
   std::unordered_map<std::string, std::string> m_sub_fpr_map;
   std::unordered_map<std::string, std::vector<std::string> >
     m_addr_book_overrides;
+  std::vector<GpgME::Key> m_ultimate_keys;
   std::set<std::string> m_update_jobs;
   std::set<std::string> m_import_jobs;
 };
@@ -1276,4 +1397,19 @@ std::vector<GpgME::Key>
 KeyCache::getOverrides (const std::string &mbox)
 {
   return d->getPGPOverrides (mbox.c_str ());
+}
+
+void
+KeyCache::populate ()
+{
+  return d->populate ();
+}
+
+std::vector<GpgME::Key>
+KeyCache::getUltimateKeys ()
+{
+  gpgrt_lock_lock (&fpr_map_lock);
+  const auto ret = d->m_ultimate_keys;
+  gpgrt_lock_unlock (&fpr_map_lock);
+  return ret;
 }

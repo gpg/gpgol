@@ -124,6 +124,11 @@ public:
     /* Get optional overrides for an address. */
     std::vector<GpgME::Key> getOverrides (const std::string &mbox);
 
+    /* Populate the fingerprint and secret key maps */
+    void populate ();
+
+    /* Get a vector of ultimately trusted keys. */
+    std::vector<GpgME::Key> getUltimateKeys ();
 
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);

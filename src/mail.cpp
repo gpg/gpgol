@@ -2497,7 +2497,7 @@ level_4_check (const UserID &uid)
     }
   if (uid.validity () == UserID::Validity::Full)
     {
-      const auto ultimate_keys = ParseController::get_ultimate_keys ();
+      const auto ultimate_keys = KeyCache::instance()->getUltimateKeys ();
       for (const auto sig: uid.signatures ())
         {
           const char *sigID = sig.signerKeyID ();

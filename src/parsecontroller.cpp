@@ -493,25 +493,12 @@ ParseController::parse()
   bool has_valid_encrypted_checksum = false;
   /* Ensure that the Keys for the signatures are available
      and if it has a valid encrypted checksum. */
-  bool ultimate_keys_queried = false;
   for (const auto sig: m_verify_result.signatures())
     {
       TRACEPOINT;
       has_valid_encrypted_checksum = is_valid_chksum (sig);
 
       KeyCache::instance ()->update (sig.fingerprint (), protocol);
-
-      if (!ultimate_keys_queried &&
-          (sig.validity() == Signature::Validity::Full ||
-          sig.validity() == Signature::Validity::Ultimate))
-        {
-          /* Ensure that we have the keys with ultimate
-             trust cached for the ui. */
-
-          // TODO this is something for the keycache
-          get_ultimate_keys ();
-          ultimate_keys_queried = true;
-        }
       TRACEPOINT;
     }
 
@@ -627,77 +614,4 @@ ParseController::get_attachments() const
     {
       TRETURN std::vector<std::shared_ptr<Attachment> >();
     }
-}
-
-GPGRT_LOCK_DEFINE(keylist_lock);
-/* static */
-std::vector<Key>
-ParseController::get_ultimate_keys()
-{
-  TSTART;
-  static bool s_keys_listed;
-  static std::vector<Key> s_ultimate_keys;
-  gpgol_lock (&keylist_lock);
-  if (s_keys_listed)
-    {
-      gpgol_unlock (&keylist_lock);
-      TRETURN s_ultimate_keys;
-    }
-  log_debug ("%s:%s: Starting keylisting.",
-             SRCNAME, __func__);
-  auto ctx = std::unique_ptr<Context> (Context::createForProtocol (OpenPGP));
-  if (!ctx)
-    {
-      /* Maybe PGP broken and not S/MIME */
-      log_error ("%s:%s: broken installation no ctx.",
-                 SRCNAME, __func__);
-      gpgol_unlock (&keylist_lock);
-      TRETURN s_ultimate_keys;
-    }
-  ctx->setKeyListMode (KeyListMode::Local);
-  Error err;
-  TRACEPOINT;
-  if ((err = ctx->startKeyListing ()))
-    {
-      log_error ("%s:%s: Failed to start keylisting err: %i: %s",
-                 SRCNAME, __func__, err.code (), err.asString());
-      gpgol_unlock (&keylist_lock);
-      TRETURN s_ultimate_keys;
-    }
-  TRACEPOINT;
-  while (!err)
-    {
-      const auto key = ctx->nextKey(err);
-      if (err || key.isNull())
-        {
-          TRACEPOINT;
-          break;
-        }
-      if (key.isInvalid ())
-        {
-          log_debug ("%s:%s: skipping invalid key.",
-                     SRCNAME, __func__);
-          continue;
-        }
-      for (const auto uid: key.userIDs())
-        {
-          if (uid.validity() == UserID::Validity::Ultimate &&
-              uid.id())
-            {
-              s_ultimate_keys.push_back (key);
-              log_debug ("%s:%s: Adding ultimate uid.",
-                         SRCNAME, __func__);
-              log_data ("%s:%s: Added uid %s.",
-                        SRCNAME, __func__, uid.id());
-              break;
-            }
-        }
-    }
-  TRACEPOINT;
-  log_debug ("%s:%s: keylisting done.",
-             SRCNAME, __func__);
-
-  s_keys_listed = true;
-  gpgol_unlock (&keylist_lock);
-  TRETURN s_ultimate_keys;
 }
