@@ -34,6 +34,50 @@ DEFINE_GUID (IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,
 
 #include "mlang-charset.h"
 
+static char *
+iconv_to_utf8 (const char *charset, const char *input, size_t inlen)
+{
+  if (!charset || !input)
+    {
+      STRANGEPOINT;
+      return nullptr;
+    }
+
+  gpgrt_w32_iconv_t ctx = gpgrt_w32_iconv_open ("UTF-8", charset);
+  if (!ctx || ctx == (gpgrt_w32_iconv_t)-1)
+    {
+      log_debug ("%s:%s: Failed to open iconv ctx for '%s'",
+                 SRCNAME, __func__, charset);
+      return nullptr;
+    }
+
+  size_t len = 0;
+
+  for (const unsigned char *s = (const unsigned char*) input; *s; s++)
+    {
+      len++;
+      if ((*s & 0x80))
+        {
+          len += 5; /* We may need up to 6 bytes for the utf8 output. */
+        }
+    }
+
+  char *buffer = (char*) xmalloc (len + 1);
+  char *outptr = buffer;
+  size_t outbytes = len;
+  size_t ret = gpgrt_w32_iconv (ctx, (const char **)&input, &inlen,
+                                &outptr, &outbytes);
+  gpgrt_w32_iconv_close (ctx);
+  if (ret == -1)
+    {
+      log_error ("%s:%s: Conversion failed for '%s'",
+                 SRCNAME, __func__, charset);
+      xfree (buffer);
+      return nullptr;
+    }
+  return buffer;
+}
+
 char *ansi_charset_to_utf8 (const char *charset, const char *input,
                             size_t inlen, int codepage)
 {
@@ -95,8 +139,16 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
       xfree (w_charset);
       if (err != S_OK)
         {
-          log_error ("%s:%s: Failed to find charset for: %s",
+          log_debug ("%s:%s: Failed to find charset for: %s fallback to iconv",
                      SRCNAME, __func__, charset);
+          /* We only use this as a fallback as the old code was older and
+             known to work in most cases. */
+          ret = iconv_to_utf8 (charset, input, inlen);
+          if (ret)
+            {
+              return ret;
+            }
+
           return xstrdup (input);
         }
       enc = (mime_info.uiInternetEncoding == 0) ? mime_info.uiCodePage :
