@@ -605,12 +605,12 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
           if (!strcasecmp (charset, "UTF-8")) {
               strncat (decoded, (char *) outptr, outlen);
           } else {
-#ifdef HAVE_W32_SYSTEM
+#ifndef BUILD_TESTS
               str = ansi_charset_to_utf8 (charset, outptr, outlen, 0);
 #else
-              log_debug ("%s:%s: Conversion not available on non W32 systems",
+              log_debug ("%s:%s: Conversion not available for testing",
                          SRCNAME, __func__);
-              str = strndup (outptr, outlen);
+              str = strdup (outptr);
 #endif
               if (!str)
                 {

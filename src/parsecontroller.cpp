@@ -43,7 +43,6 @@
 #endif
 
 
-
 const char decrypt_template_html[] = {
 "<html><head></head><body>"
 "<table border=\"0\" width=\"100%%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#0069cc\">"
@@ -75,6 +74,39 @@ expect_no_mime (msgtype_t type)
   TRETURN type == MSGTYPE_GPGOL_PGP_MESSAGE ||
          type == MSGTYPE_GPGOL_CLEAR_SIGNED;
 }
+
+#ifdef BUILD_TESTS
+static void
+get_and_print_key_test (const char *fingerprint, GpgME::Protocol proto)
+{
+  if (!fingerprint)
+    {
+      STRANGEPOINT;
+      return;
+    }
+  auto ctx = std::unique_ptr<GpgME::Context> (GpgME::Context::createForProtocol
+                                              (proto));
+
+  if (!ctx)
+    {
+      STRANGEPOINT;
+      return;
+    }
+  ctx->setKeyListMode (GpgME::KeyListMode::Local |
+                       GpgME::KeyListMode::Signatures |
+                       GpgME::KeyListMode::Validate |
+                       GpgME::KeyListMode::WithTofu);
+
+  GpgME::Error err;
+  const auto newKey = ctx->key (fingerprint, err, false);
+
+  std::stringstream ss;
+  ss << newKey;
+
+  log_debug ("Key: %s", ss.str().c_str());
+  return;
+}
+#endif
 
 #ifdef HAVE_W32_SYSTEM
 ParseController::ParseController(LPSTREAM instream, msgtype_t type):
@@ -498,7 +530,9 @@ ParseController::parse()
       TRACEPOINT;
       has_valid_encrypted_checksum = is_valid_chksum (sig);
 
+#ifndef BUILD_TESTS
       KeyCache::instance ()->update (sig.fingerprint (), protocol);
+#endif
       TRACEPOINT;
     }
 
@@ -520,8 +554,12 @@ ParseController::parse()
           const auto key = sig.key();
           if (key.isNull())
             {
+#ifndef BUILD_TESTS
               ss << '\n' << "Cached key:\n" << KeyCache::instance()->getByFpr(
                   sig.fingerprint(), false);
+#else
+              get_and_print_key_test (sig.fingerprint (), protocol);
+#endif
             }
           else
             {

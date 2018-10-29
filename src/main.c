@@ -39,26 +39,6 @@ static void drop_locale_dir (char *locale_dir);
 int g_ol_version_major;
 
 
-/* For certain operations we need to acquire a log on the logging
-   functions.  This lock is controlled by this Mutex. */
-HANDLE log_mutex;
-
-/* Early initialization of this module.  This is done right at startup
-   with only one thread running.  Should be called only once. Returns
-   0 on success. */
-static int
-initialize_main (void)
-{
-  SECURITY_ATTRIBUTES sa;
-
-  memset (&sa, 0, sizeof sa);
-  sa.bInheritHandle = FALSE;
-  sa.lpSecurityDescriptor = NULL;
-  sa.nLength = sizeof sa;
-  log_mutex = CreateMutex (&sa, FALSE, NULL);
-  return log_mutex? 0 : -1;
-}
-
 void
 i18n_init (void)
 {
@@ -134,10 +114,6 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
          version string) is not used here.  It may be called at any
          time later for this. */
       gpgme_check_version (NULL);
-
-      /* Early initializations of our subsystems. */
-      if (initialize_main ())
-        return FALSE;
     }
   else if (reason == DLL_PROCESS_DETACH)
     {

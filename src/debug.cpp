@@ -29,14 +29,14 @@
 static char *logfile;
 static FILE *logfp;
 
-#ifdef HAVE_W32_SYSTEM
+GPGRT_LOCK_DEFINE (log_lock);
 
 /* Acquire the mutex for logging.  Returns 0 on success. */
 static int
 lock_log (void)
 {
-  int code = WaitForSingleObject (log_mutex, 10000);
-  return code != WAIT_OBJECT_0;
+  gpgrt_lock_lock (&log_lock);
+  return 0;
 }
 
 /* Release the mutex for logging. No error return is done because this
@@ -45,9 +45,8 @@ lock_log (void)
 static void
 unlock_log (void)
 {
-  ReleaseMutex (log_mutex);
+  gpgrt_lock_unlock (&log_lock);
 }
-#endif
 
 const char *
 get_log_file (void)

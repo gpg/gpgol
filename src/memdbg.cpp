@@ -39,7 +39,7 @@ GPGRT_LOCK_DEFINE (memdbg_log);
 
 #define DBGGUARD if (!(opt.enable_debug & DBG_MEMORY)) return
 
-#ifdef HAVE_W32_SYSTEM
+#ifndef BUILD_TESTS
 # include "oomhelp.h"
 #endif
 
@@ -47,7 +47,7 @@ GPGRT_LOCK_DEFINE (memdbg_log);
 static bool
 register_name (void *obj, const char *nameSuggestion)
 {
-#ifdef HAVE_W32_SYSTEM
+#ifndef BUILD_TESTS
 
   char *name = get_object_name ((LPUNKNOWN)obj);
   bool suggestionUsed = false;
@@ -94,6 +94,7 @@ register_name (void *obj, const char *nameSuggestion)
     }
 #else
   (void) obj;
+  (void) nameSuggestion;
 #endif
   return false;
 }

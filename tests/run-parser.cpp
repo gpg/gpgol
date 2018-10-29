@@ -63,7 +63,7 @@ int main(int argc, char **argv)
         show_usage (0);
       else if (!strcmp (*argv, "--verbose"))
         {
-          opt.enable_debug |= DBG_MIME_PARSER;
+          opt.enable_debug |= DBG_DATA;
           opt.enable_debug |= 1;
           set_log_file ("stderr");
           argc--; argv++;

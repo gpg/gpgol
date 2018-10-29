@@ -21,14 +21,25 @@
 
 GPG = gpg
 
+if HAVE_W32_SYSTEM
 TESTS = t-parser
+endif
 
 AM_LDFLAGS = @GPGME_LIBS@ -lgpgmepp
 
-AM_CFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS)
+AM_CFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -DBUILD_TESTS
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
-			  $(LIBASSUAN_CFLAGS) -std=c++11 -DDATADIR=\"$(abs_srcdir)/data\" \
-			  -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\"
+			  $(LIBASSUAN_CFLAGS) -std=c++11  -D_FILE_OFFSET_BITS=64 \
+			  -DBUILD_TESTS
+LDADD = ../src/gpgol.la @GPG_ERROR_LIBS@
+
+if HAVE_W32_SYSTEM
+run_parser_LDADD =  \
+	-L ../src -lgpgmepp -lgpgme -lassuan -lgpg-error \
+	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
+	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
+	-luuid -lgdiplus -lrpcrt4
+endif
 
 parser_SRC= ../src/parsecontroller.cpp \
 			../src/parsecontroller.h \
@@ -37,9 +48,19 @@ parser_SRC= ../src/parsecontroller.cpp \
 			../src/rfc822parse.c ../src/rfc822parse.h \
 			../src/rfc2047parse.c ../src/rfc2047parse.h \
 			../src/common_indep.c ../src/common_indep.h \
+			../src/debug.cpp ../src/debug.h \
+			../src/memdbg.cpp ../src/memdbg.h \
+			../src/cpphelp.cpp ../src/cpphelp.h \
+			../src/w32-gettext.cpp ../src/w32-gettext.h \
 			../src/xmalloc.h
 
+if !HAVE_W32_SYSTEM
 t_parser_SOURCES = t-parser.cpp $(parser_SRC)
+endif
 run_parser_SOURCES = run-parser.cpp $(parser_SRC)
 
+if !HAVE_W32_SYSTEM
 noinst_PROGRAMS = t-parser run-parser
+else
+noinst_PROGRAMS = run-parser
+endif

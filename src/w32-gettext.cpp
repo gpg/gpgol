@@ -791,7 +791,11 @@ _nl_locale_name (int category, const char *categoryname)
     return retval;
 
   /* Prefer the Ui language of Outlook. */
+#ifndef BUILD_TESTS
   lcid = get_ol_ui_language ();
+#else
+  lcid = 0;
+#endif
 
   if (!lcid)
     {
