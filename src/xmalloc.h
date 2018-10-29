@@ -33,6 +33,8 @@ extern "C" {
   if ((opt.enable_debug & DBG_MEMORY)) \
   { \
     memdbg_alloc (retval); \
+    if ((opt.enable_debug & DBG_TRACE)) \
+      memset (retval, 'X', VAR1); \
   } \
 retval;})
 
