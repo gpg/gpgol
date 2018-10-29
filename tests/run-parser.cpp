@@ -36,6 +36,7 @@ show_usage (int ex)
          "  --opaque-encrypted    SMIME opaque encrypted\n"
          "  --clear-signed        clearsigned\n"
          "  --pgp-message         inline pgp message\n"
+         "  --repeat N            repeat N times\n"
          , stderr);
   exit (ex);
 }
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
   int last_argc = -1;
   msgtype_t msgtype = MSGTYPE_UNKNOWN;
   FILE *fp_in = NULL;
+  int repeats = 1;
 
   gpgme_check_version (NULL);
 
@@ -98,29 +100,43 @@ int main(int argc, char **argv)
           msgtype = MSGTYPE_GPGOL_PGP_MESSAGE;
           argc--; argv++;
         }
+      else if (!strcmp (*argv, "--repeat"))
+        {
+            argc--; argv++;
+            if (!argc)
+                show_usage (1);
+            repeats = atoi (*argv);
+            argc--; argv++;
+        }
     }
   if (argc < 1 || argc > 2)
     show_usage (1);
 
-  fp_in = fopen (argv[0], "rb");
+  for (int i = 0; i < repeats; i++)
+    {
+      std::cout << "Run: " << i;
+      fp_in = fopen (argv[0], "rb");
 
-  if (fp_in)
-    {
-      ParseController parser(fp_in, msgtype);
-      parser.parse();
-      std::cout << "Parse error: " << parser.get_formatted_error ();
-      std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
-                << "\nVerify result:\n" << parser.verify_result()
-                << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
-                << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
-      for (auto attach: parser.get_attachments())
+      if (fp_in)
         {
-          std::cout << "Attachment: " << attach->get_display_name();
+          ParseController parser(fp_in, msgtype);
+          parser.setSender("test@example.com");
+          parser.parse();
+          std::cout << "Parse error: " << parser.get_formatted_error ();
+          std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
+            << "\nVerify result:\n" << parser.verify_result()
+            << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
+            << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
+          for (auto attach: parser.get_attachments())
+            {
+              std::cout << "Attachment: " << attach->get_display_name();
+            }
+          fclose (fp_in);
         }
-      fclose (fp_in);
-    }
-  else
-    {
-      std::cout << "failed to open input: " << argv[0];
+      else
+        {
+          std::cout << "failed to open input: " << argv[0];
+        }
+
     }
 }
