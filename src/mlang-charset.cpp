@@ -35,7 +35,7 @@ DEFINE_GUID (IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,
 #include "mlang-charset.h"
 
 static char *
-iconv_to_utf8 (const char *charset, const char *input, size_t inlen)
+iconv_to_utf8 (const char *charset, const char *input)
 {
   if (!charset || !input)
     {
@@ -63,6 +63,7 @@ iconv_to_utf8 (const char *charset, const char *input, size_t inlen)
     }
 
   char *buffer = (char*) xmalloc (len + 1);
+  size_t inlen = strlen (input) + 1; // Need to add 1 for the zero
   char *outptr = buffer;
   size_t outbytes = len;
   size_t ret = gpgrt_w32_iconv (ctx, (const char **)&input, &inlen,
@@ -143,7 +144,7 @@ char *ansi_charset_to_utf8 (const char *charset, const char *input,
                      SRCNAME, __func__, charset);
           /* We only use this as a fallback as the old code was older and
              known to work in most cases. */
-          ret = iconv_to_utf8 (charset, input, inlen);
+          ret = iconv_to_utf8 (charset, input);
           if (ret)
             {
               return ret;
