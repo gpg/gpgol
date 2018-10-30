@@ -19,7 +19,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include "cpphelp.h"
 
@@ -28,13 +30,18 @@
 #include <vector>
 #include <iterator>
 
-#include "common.h"
+#include "common_indep.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/error.h>
 #include <gpgme++/configuration.h>
 
-#include <windows.h>
+#ifdef HAVE_W32_SYSTEM
+# include "common.h"
+# include <windows.h>
+#else
+#include "common_indep.h"
+#endif
 
 void
 release_cArray (char **carray)
@@ -148,7 +155,11 @@ in_de_vs_mode()
             {
               if (option.name () && !strcmp (option.name (), "compliance") &&
                   option.currentValue ().stringValue () &&
+#ifdef HAVE_W32_SYSTEM
                   !stricmp (option.currentValue ().stringValue (), "de-vs"))
+#else
+                  !strcasecmp (option.currentValue ().stringValue (), "de-vs"))
+#endif
                 {
                   log_debug ("%s:%s: Detected de-vs mode",
                              SRCNAME, __func__);
@@ -164,6 +175,7 @@ in_de_vs_mode()
   return false;
 }
 
+#ifdef HAVE_W32_SYSTEM
 std::map<std::string, std::string>
 get_registry_subkeys (const char *path)
 {
@@ -252,6 +264,7 @@ get_registry_subkeys (const char *path)
   RegCloseKey (theKey);
   return ret;
 }
+#endif
 
 template<typename Out> void
 internal_split (const std::string &s, char delim, Out result) {

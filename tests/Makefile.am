@@ -28,10 +28,18 @@ endif
 AM_LDFLAGS = @GPGME_LIBS@ -lgpgmepp
 
 AM_CFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -DBUILD_TESTS
+if !HAVE_W32_SYSTEM
+AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
+			  $(LIBASSUAN_CFLAGS) -std=c++11  -D_FILE_OFFSET_BITS=64 \
+			  -DBUILD_TESTS -DDATADIR=\"$(abs_srcdir)/data\" \
+              -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\"
+else
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
 			  $(LIBASSUAN_CFLAGS) -std=c++11  -D_FILE_OFFSET_BITS=64 \
 			  -DBUILD_TESTS
-LDADD = ../src/gpgol.la @GPG_ERROR_LIBS@
+endif
+LDADD = @GPG_ERROR_LIBS@
+
 
 if HAVE_W32_SYSTEM
 run_parser_LDADD =  \
@@ -51,13 +59,15 @@ parser_SRC= ../src/parsecontroller.cpp \
 			../src/debug.cpp ../src/debug.h \
 			../src/memdbg.cpp ../src/memdbg.h \
 			../src/cpphelp.cpp ../src/cpphelp.h \
-			../src/w32-gettext.cpp ../src/w32-gettext.h \
 			../src/xmalloc.h
 
 if !HAVE_W32_SYSTEM
 t_parser_SOURCES = t-parser.cpp $(parser_SRC)
-endif
 run_parser_SOURCES = run-parser.cpp $(parser_SRC)
+else
+run_parser_SOURCES = run-parser.cpp $(parser_SRC) \
+			../src/w32-gettext.cpp ../src/w32-gettext.h
+endif
 
 if !HAVE_W32_SYSTEM
 noinst_PROGRAMS = t-parser run-parser

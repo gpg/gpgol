@@ -57,10 +57,8 @@ get_log_file (void)
 void
 set_log_file (const char *name)
 {
-#ifdef HAVE_W32_SYSTEM
   if (!lock_log ())
     {
-#endif
       if (logfp)
         {
           fclose (logfp);
@@ -72,10 +70,8 @@ set_log_file (const char *name)
       else
         logfile = strdup (name);
 
-#ifdef HAVE_W32_SYSTEM
       unlock_log ();
     }
-#endif
 }
 
 static void
@@ -152,6 +148,8 @@ do_log (const char *fmt, va_list a, int w32err, int err,
         tmpbuf[strlen (tmpbuf)-1] = 0;
       fprintf (logfp, "%s (%d)", tmpbuf, w32err);
     }
+#else
+  (void) w32err;
 #endif
   if (buf)
     {

@@ -24,6 +24,7 @@
 #include <windows.h>
 #endif
 
+#include <wchar.h>
 #include <stdlib.h>
 #include <ctype.h>
 

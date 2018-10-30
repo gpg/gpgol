@@ -515,6 +515,8 @@ ParseController::parse()
                   m_verify_result = ctx->verifyOpaqueSignature(input, output);
                 }
             }
+#else
+(void)allBad;
 #endif
         }
     }
