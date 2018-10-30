@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
   for (int i = 0; i < repeats; i++)
     {
-      std::cout << "Run: " << i;
+      std::cout << std::endl << "Run: " << i << std::endl;
       fp_in = fopen (argv[0], "rb");
 
       if (fp_in)
