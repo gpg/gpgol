@@ -2872,3 +2872,60 @@ release_disp (LPDISPATCH obj)
   gpgol_release (obj);
   TRETURN;
 }
+
+bool
+is_junk_mail (LPDISPATCH mailitem)
+{
+  TSTART;
+  if (!mailitem)
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+
+  auto mapi_namespace = MAKE_SHARED (get_oom_object (mailitem, "Session"));
+
+  if (!mapi_namespace)
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+
+  auto spam_folder = MAKE_SHARED (get_oom_object (mapi_namespace.get(),
+                                                  "GetDefaultFolder(23)"));
+
+  if (!spam_folder)
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+
+  auto mail_folder = MAKE_SHARED (get_oom_object (mailitem, "Parent"));
+
+  if (!mail_folder)
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+
+  char *spam_id = get_oom_string (spam_folder.get(), "entryID");
+  if (!spam_id)
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+  char *folder_id = get_oom_string (mail_folder.get(), "entryID");
+  if (!folder_id)
+    {
+      STRANGEPOINT;
+      free (spam_id);
+      TRETURN false;
+    }
+
+  bool ret = !strcmp (spam_id, folder_id);
+
+  free (spam_id);
+  free (folder_id);
+
+  TRETURN ret;
+}

@@ -427,4 +427,7 @@ LPDISPATCH find_or_add_text_prop (LPDISPATCH props, const char *name);
 
 /* Find a user property and return it if found. */
 LPDISPATCH find_user_prop (LPDISPATCH props, const char *name);
+
+/* Return true if this message is in the junk folder for this account */
+bool is_junk_mail (LPDISPATCH mailitem);
 #endif /*OOMHELP_H*/
