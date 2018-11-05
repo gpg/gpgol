@@ -32,11 +32,11 @@ if !HAVE_W32_SYSTEM
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
 			  $(LIBASSUAN_CFLAGS) -std=c++11  -D_FILE_OFFSET_BITS=64 \
 			  -DBUILD_TESTS -DDATADIR=\"$(abs_srcdir)/data\" \
-              -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\"
+              -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\" $(GPGMEPP_CXXFLAGS)
 else
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
-			  $(LIBASSUAN_CFLAGS) -std=c++11  -D_FILE_OFFSET_BITS=64 \
-			  -DBUILD_TESTS
+			  $(LIBASSUAN_CFLAGS) $(GPGMEPP_CXXFLAGS) -std=c++11 \
+			  -D_FILE_OFFSET_BITS=64 -DBUILD_TESTS
 endif
 LDADD = @GPG_ERROR_LIBS@
 
