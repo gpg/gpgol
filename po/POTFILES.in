@@ -1,4 +1,6 @@
 src/addin-options.cpp
+src/categorymanager.cpp
+src/addressbook.cpp
 src/common.cpp
 src/common.h
 src/eventsink.h
