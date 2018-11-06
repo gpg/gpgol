@@ -61,6 +61,8 @@ public:
     /** Get the name of the encryption category. */
     static const std::string & getEncMailCategory ();
 
+    /** Get the name of the junk category. */
+    static const std::string & getJunkMailCategory ();
 private:
     class Private;
     std::shared_ptr<Private> d;

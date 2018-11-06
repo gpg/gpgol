@@ -107,7 +107,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_first_autosecure_check(true),
     m_locate_count(0),
     m_is_about_to_be_moved(false),
-    m_locate_in_progress(false)
+    m_locate_in_progress(false),
+    m_is_junk(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -1058,6 +1059,7 @@ int
 Mail::decryptVerify_o ()
 {
   TSTART;
+
   if (!isCryptoMail ())
     {
       log_debug ("%s:%s: Decrypt Verify for non crypto mail: %p.",
@@ -1070,9 +1072,30 @@ Mail::decryptVerify_o ()
                  SRCNAME, __func__, m_mailitem);
       TRETURN 1;
     }
+
+  auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
+  if (!cipherstream)
+    {
+      m_is_junk = is_junk_mail (m_mailitem);
+      if (m_is_junk)
+        {
+          log_debug ("%s:%s: Detected: %p as junk",
+                     SRCNAME, __func__, m_mailitem);
+          auto mngr = CategoryManager::instance ();
+          m_store_id = mngr->addCategoryToMail (this,
+                                   CategoryManager::getJunkMailCategory (),
+                                   3 /* peach */);
+          installFolderEventHandler_o ();
+          TRETURN 0;
+        }
+      log_debug ("%s:%s: Failed to get cipherstream. Aborting handling.",
+                 SRCNAME, __func__);
+      m_type = MSGTYPE_UNKNOWN;
+      TRETURN 1;
+    }
+
   setUUID_o ();
   m_processed = true;
-
 
   /* Insert placeholder */
   char *placeholder_buf = nullptr;
@@ -1133,20 +1156,10 @@ Mail::decryptVerify_o ()
   memdbg_alloc (placeholder_buf);
   xfree (placeholder_buf);
 
-  /* Do the actual parsing */
-  auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
-
   if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
     {
       WKSHelper::instance ()->handle_confirmation_read (this, cipherstream);
       TRETURN 0;
-    }
-
-  if (!cipherstream)
-    {
-      log_debug ("%s:%s: Failed to get cipherstream.",
-                 SRCNAME, __func__);
-      TRETURN 1;
     }
 
   m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
@@ -2212,6 +2225,13 @@ Mail::removeCategories_o ()
       CategoryManager::instance ()->removeCategory (this,
                                 CategoryManager::getEncMailCategory ());
     }
+  if (m_is_junk)
+    {
+      log_oom ("%s:%s: Unreffing junk category",
+                       SRCNAME, __func__);
+      CategoryManager::instance ()->removeCategory (this,
+                                CategoryManager::getJunkMailCategory ());
+    }
   TRETURN;
 }
 
@@ -2347,15 +2367,15 @@ Mail::updateCategories_o ()
       int color = 0;
       if (lvl == 2)
         {
-          color = 7;
+          color = 7; /* Olive */
         }
       if (lvl == 3)
         {
-          color = 5;
+          color = 5; /* Green */
         }
       if (lvl == 4)
         {
-          color = 20;
+          color = 20; /* Dark Green */
         }
       m_store_id = mngr->addCategoryToMail (this, buf, color);
       m_verify_category = buf;
@@ -2370,7 +2390,7 @@ Mail::updateCategories_o ()
     {
       const auto id = mngr->addCategoryToMail (this,
                                  CategoryManager::getEncMailCategory (),
-                                 8);
+                                 8 /* Blue */);
       if (m_store_id.empty())
         {
           m_store_id = id;

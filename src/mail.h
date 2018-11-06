@@ -654,5 +654,6 @@ private:
   bool m_locate_in_progress; /* Simplified state variable for locate */
   std::string m_store_id; /* Store id for categories */
   std::string m_verify_category; /* The category string for the verify result */
+  bool m_is_junk; /* Mail is in the junk folder */
 };
 #endif // MAIL_H

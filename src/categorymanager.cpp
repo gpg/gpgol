@@ -251,3 +251,16 @@ CategoryManager::getEncMailCategory ()
     }
   return decStr;
 }
+
+/* static */
+const std::string &
+CategoryManager::getJunkMailCategory ()
+{
+  static std::string decStr;
+  if (decStr.empty())
+    {
+      decStr = std::string ("GpgOL: ") +
+                            std::string (_("Junk Email cannot be processed"));
+    }
+  return decStr;
+}
