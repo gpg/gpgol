@@ -676,7 +676,7 @@ HRESULT launch_cert_details (LPDISPATCH ctrl)
 
   if (!mail || (!mail->isSigned () && !mail->isEncrypted ()))
     {
-      ShellExecuteA(NULL, NULL, "https://emailselfdefense.fsf.org/infographic",
+      ShellExecuteA(NULL, NULL, "https://emailselfdefense.fsf.org/en/infographic.html",
                     0, 0, SW_SHOWNORMAL);
       return S_OK;
     }
