@@ -655,5 +655,6 @@ private:
   std::string m_store_id; /* Store id for categories */
   std::string m_verify_category; /* The category string for the verify result */
   bool m_is_junk; /* Mail is in the junk folder */
+  LPDISPATCH m_inspector_events; /* Inspector event sink */
 };
 #endif // MAIL_H
