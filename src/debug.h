@@ -116,7 +116,7 @@ const char *anonstr (const char *data);
 const char *log_srcname (const char *s);
 #define SRCNAME log_srcname (__FILE__)
 
-#define STRANGEPOINT log_debug ("%s:%s:%d:_trace_", \
+#define STRANGEPOINT log_debug ("%s:%s:%d:UNEXPECTED", \
                            SRCNAME, __func__, __LINE__);
 #define TRACEPOINT log_trace ("%s:%s:%d", \
                               SRCNAME, __func__, __LINE__);

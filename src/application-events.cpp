@@ -98,9 +98,8 @@ EVENT_SINK_INVOKE(ApplicationEvents)
         }
       case Quit:
         {
-          TSTART;
-          log_debug ("%s:%s: Quit event", SRCNAME, __func__);
-          TBREAK;
+          log_debug ("%s:%s: Quit event. Shutting down",
+                     SRCNAME, __func__);
         }
       default:
         log_oom ("%s:%s: Unhandled Event: %lx \n",
