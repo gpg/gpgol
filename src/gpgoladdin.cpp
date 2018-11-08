@@ -1189,11 +1189,12 @@ GpgolAddin::addRibbon (LPDISPATCH disp)
 void
 GpgolAddin::shutdown ()
 {
+  TSTART;
   if (m_shutdown)
     {
       log_debug ("%s:%s: Already shutdown",
                  SRCNAME, __func__);
-      return;
+      TRETURN;
     }
 
   m_shutdown = true;
@@ -1233,6 +1234,7 @@ GpgolAddin::shutdown ()
 
   gpgol_release (m_application);
   m_application = nullptr;
+  TRETURN;
 }
 
 void
