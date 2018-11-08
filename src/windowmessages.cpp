@@ -303,7 +303,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
           default:
             log_debug ("%s:%s: Unknown external msg %i",
-                       SRCNAME, __func__, wParam);
+                       SRCNAME, __func__, (int) wParam);
         }
     }
   else if (message == WM_COPYDATA)
