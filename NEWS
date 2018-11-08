@@ -1,6 +1,17 @@
 Noteworthy changes for version 2.3.2 (unreleased)
 =================================================
 
+ * Reduced leakage of private information without
+   DBG_DATA. (T4193)
+
+ * Added handling for Junk folders. (T4188)
+
+ * Added a fallback for encoding problems. (T4156)
+
+ * Fixed system wide default configuration.
+
+ * Added WindowMessage API for external use. (T4241)
+
 
 Noteworthy changes for version 2.3.1 (2018-10-16)
 =================================================
