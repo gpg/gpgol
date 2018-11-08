@@ -229,7 +229,9 @@ do_populate_protocol (GpgME::Protocol proto, bool secret)
       TRETURN;
     }
 
-  ctx->setKeyListMode (GpgME::KeyListMode::Local);
+  ctx->setKeyListMode (GpgME::KeyListMode::Local |
+                       GpgME::KeyListMode::Validate);
+  ctx->setOffline (true);
   GpgME::Error err;
 
    if ((err = ctx->startKeyListing ((const char*)nullptr, secret)))
