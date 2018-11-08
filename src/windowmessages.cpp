@@ -43,6 +43,13 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
   if (message == WM_USER + 42)
     {
       TSTART;
+
+      if (!lParam)
+        {
+          log_error ("%s:%s: Recieved user msg without lparam",
+                     SRCNAME, __func__);
+          TRETURN DefWindowProc(hWnd, message, wParam, lParam);
+        }
       wm_ctx_t *ctx = (wm_ctx_t *) lParam;
       log_debug ("%s:%s: Recieved user msg: %i",
                  SRCNAME, __func__, ctx->wmsg_type);
@@ -282,6 +289,58 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                        SRCNAME, __func__, ctx->wmsg_type);
         }
         TRETURN 0;
+    }
+  else if (message == WM_USER + 43)
+    {
+      switch (wParam)
+        {
+          case (EXT_API_CLOSE_ALL):
+            {
+              log_debug ("%s:%s: Closing all mails.",
+                         SRCNAME, __func__);
+              Mail::closeAllMails_o ();
+              TRETURN 0;
+            }
+          default:
+            log_debug ("%s:%s: Unknown external msg %i",
+                       SRCNAME, __func__, wParam);
+        }
+    }
+  else if (message == WM_COPYDATA)
+    {
+      log_debug ("%s:%s Received copydata message.",
+                 SRCNAME, __func__);
+      if (!lParam)
+        {
+          STRANGEPOINT;
+          TRETURN DefWindowProc(hWnd, message, wParam, lParam);
+        }
+      const COPYDATASTRUCT *cds = (COPYDATASTRUCT*)lParam;
+
+      if (cds->dwData == EXT_API_CLOSE)
+        {
+          log_debug ("%s:%s CopyData with external close. Payload: %.*s",
+                     SRCNAME, __func__, (int)cds->cbData, (char *) cds->lpData);
+
+          std::string uid ((char*) cds->lpData, cds->cbData);
+          auto mail = Mail::getMailForUUID (uid.c_str ());
+          if (!mail)
+            {
+              log_error ("%s:%s Failed to find mail for: %s",
+                         SRCNAME, __func__, uid.c_str() );
+              TRETURN DefWindowProc(hWnd, message, wParam, lParam);
+            }
+
+          mail->refCurrentItem ();
+          Mail::closeInspector_o (mail);
+          TRACEPOINT;
+          Mail::close (mail);
+          log_debug ("%s:%s: Close for %p uid: %s finished.",
+                     SRCNAME, __func__, mail, uid.c_str ());
+          mail->releaseCurrentItem();
+          TRETURN 0;
+        }
+
     }
   return DefWindowProc(hWnd, message, wParam, lParam);
 }

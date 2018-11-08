@@ -67,10 +67,11 @@ run_parser_SOURCES = run-parser.cpp $(parser_SRC)
 else
 run_parser_SOURCES = run-parser.cpp $(parser_SRC) \
 			../src/w32-gettext.cpp ../src/w32-gettext.h
+run_messenger_SOURCES = run-messenger.cpp
 endif
 
 if !HAVE_W32_SYSTEM
 noinst_PROGRAMS = t-parser run-parser
 else
-noinst_PROGRAMS = run-parser
+noinst_PROGRAMS = run-parser run-messenger
 endif
