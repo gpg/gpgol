@@ -108,8 +108,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_locate_count(0),
     m_is_about_to_be_moved(false),
     m_locate_in_progress(false),
-    m_is_junk(false),
-    m_inspector_events(nullptr)
+    m_is_junk(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -221,12 +220,6 @@ Mail::~Mail()
   m_parser = nullptr;
   m_crypter = nullptr;
 
-  if (m_inspector_events)
-    {
-      log_oom ("%s:%s: Detaching inspector event handler",
-               SRCNAME, __func__);
-      detach_InspectorEvents_sink (m_inspector_events);
-    }
   releaseCurrentItem();
   gpgol_unlock (&dtor_lock);
   log_oom ("%s:%s: returning",
@@ -1099,17 +1092,6 @@ Mail::decryptVerify_o ()
                  SRCNAME, __func__);
       m_type = MSGTYPE_UNKNOWN;
       TRETURN 1;
-    }
-
-  auto inspector = get_oom_object (m_mailitem, "GetInspector");
-  if (!inspector)
-    {
-      STRANGEPOINT;
-    }
-  else
-    {
-      m_inspector_events = install_InspectorEvents_sink (inspector);
-      gpgol_release (inspector);
     }
 
   setUUID_o ();

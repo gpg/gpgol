@@ -49,7 +49,6 @@ gpgol_SOURCES = \
     gpgoladdin.cpp gpgoladdin.h \
     gpgol.def \
     gpgol-ids.h \
-    inspector-events.cpp \
     keycache.cpp keycache.h \
     mail.h mail.cpp \
     mailitem-events.cpp \
