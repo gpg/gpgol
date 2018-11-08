@@ -290,7 +290,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         TRETURN 0;
     }
-  else if (message == WM_USER + 43)
+  else if (message == WM_USER)
     {
       switch (wParam)
         {

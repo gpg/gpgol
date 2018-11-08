@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   if (argc == 1)
     {
       printf ("Sending message: %i\n", id);
-      SendMessage (gpgol, WM_USER + 43, id, NULL);
+      SendMessage (gpgol, WM_USER, id, NULL);
       exit (0);
     }
 
