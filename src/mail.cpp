@@ -3334,6 +3334,19 @@ Mail::check_inline_response ()
 
   m_async_crypt_disabled = false;
 
+  const auto subject = getSubject_o ();
+
+  /* Check for an empty subject. Otherwise the question for it
+     might be hidden behind our overlay. */
+  if (subject.empty())
+    {
+      log_debug ("%s:%s: Detected empty subject. "
+                 "Disabling async crypt due to T4150.",
+                 SRCNAME, __func__);
+      m_async_crypt_disabled = true;
+      TRETURN m_async_crypt_disabled;
+    }
+
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (attachments)
     {
@@ -3417,7 +3430,6 @@ Mail::check_inline_response ()
   char * inlineSubject = get_oom_string (inlineResponse, "Subject");
   gpgol_release (inlineResponse);
 
-  const auto subject = getSubject_o ();
   if (inlineResponse && !subject.empty() && !strcmp (subject.c_str (), inlineSubject))
     {
       log_debug ("%s:%s: Detected inline response for '%p'",
