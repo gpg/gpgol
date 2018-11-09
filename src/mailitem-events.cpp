@@ -576,9 +576,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
              TBREAK;
            }
 
-          if (m_mail->isAboutToBeMoved())
+          if (m_mail->passWrite())
             {
-              log_debug ("%s:%s: Mail is about to be moved. Passing write for %p",
+              log_debug ("%s:%s: Passing write because passNextWrite was set for %p",
                          SRCNAME, __func__, m_mail);
               TBREAK;
             }

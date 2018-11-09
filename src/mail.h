@@ -590,8 +590,8 @@ public:
   void installFolderEventHandler_o ();
 
   /* Marker for a "Move" of this mail */
-  bool isAboutToBeMoved () { return m_is_about_to_be_moved; }
-  void setIsAboutToBeMoved (bool value) { m_is_about_to_be_moved = value; }
+  bool passWrite () { return m_pass_write; }
+  void setPassWrite(bool value) { m_pass_write = value; }
 
   /* Releases the current item ref obtained in update oom data */
   void releaseCurrentItem ();
@@ -650,7 +650,7 @@ private:
   bool m_manual_crypto_opts; /* Crypto options (sign/encrypt) have been set manually. */
   bool m_first_autosecure_check; /* This is the first autoresolve check */
   int m_locate_count; /* The number of key locates pending for this mail. */
-  bool m_is_about_to_be_moved;
+  bool m_pass_write; /* Danger the next write will be passed. This is for closed mails */
   bool m_locate_in_progress; /* Simplified state variable for locate */
   std::string m_store_id; /* Store id for categories */
   std::string m_verify_category; /* The category string for the verify result */

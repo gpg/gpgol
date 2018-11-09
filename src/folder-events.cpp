@@ -115,7 +115,6 @@ EVENT_SINK_INVOKE(FolderEvents)
               log_debug ("%s:%s: Detected move of crypto mail. %p Closing",
                           SRCNAME, __func__, mail);
 
-              mail->setIsAboutToBeMoved (true);
               if (Mail::close (mail))
                 {
                   log_error ("%s:%s: Failed to close.",

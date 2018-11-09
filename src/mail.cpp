@@ -106,7 +106,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_manual_crypto_opts(false),
     m_first_autosecure_check(true),
     m_locate_count(0),
-    m_is_about_to_be_moved(false),
+    m_pass_write(false),
     m_locate_in_progress(false),
     m_is_junk(false)
 {
@@ -1096,6 +1096,7 @@ Mail::decryptVerify_o ()
 
   setUUID_o ();
   m_processed = true;
+  m_pass_write = false;
 
   /* Insert placeholder */
   char *placeholder_buf = nullptr;
@@ -2045,6 +2046,12 @@ Mail::close (Mail *mail)
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                        NULL, &dispparams);
 
+  if (!rc)
+    {
+      log_debug ("%s:%s: Close successful. Next write may pass.",
+                 SRCNAME, __func__);
+      mail->setPassWrite (true);
+    }
   log_oom ("%s:%s: returned from close",
                  SRCNAME, __func__);
   TRETURN rc;
