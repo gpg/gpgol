@@ -842,3 +842,18 @@ HRESULT open_contact_key (LPDISPATCH ctrl)
   gpgol_release (contact);
   return S_OK;
 }
+
+HRESULT override_file_close ()
+{
+  TSTART;
+  auto inst = GpgolAddin::get_instance ();
+  /* We need to get it first as shutdown releases the reference */
+  auto app = inst->get_application ();
+  app->AddRef ();
+  inst->shutdown();
+  log_debug ("%s:%s: Shutdown complete. Quitting.",
+             SRCNAME, __func__);
+  invoke_oom_method (app, "Quit", nullptr);
+
+  TRETURN S_OK;
+}
