@@ -1066,12 +1066,6 @@ Mail::decryptVerify_o ()
                  SRCNAME, __func__, m_mailitem);
       TRETURN 0;
     }
-  if (m_needs_wipe)
-    {
-      log_error ("%s:%s: Decrypt verify called for msg that needs wipe: %p",
-                 SRCNAME, __func__, m_mailitem);
-      TRETURN 1;
-    }
 
   auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
   if (!cipherstream)

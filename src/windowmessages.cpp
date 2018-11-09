@@ -340,6 +340,25 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           mail->releaseCurrentItem();
           TRETURN 0;
         }
+      else if (cds->dwData == EXT_API_DECRYPT)
+        {
+          log_debug ("%s:%s CopyData with external decrypt. Payload: %.*s",
+                     SRCNAME, __func__, (int)cds->cbData, (char *) cds->lpData);
+
+          std::string uid ((char*) cds->lpData, cds->cbData);
+          auto mail = Mail::getMailForUUID (uid.c_str ());
+          if (!mail)
+            {
+              log_error ("%s:%s Failed to find mail for: %s",
+                         SRCNAME, __func__, uid.c_str() );
+              TRETURN DefWindowProc(hWnd, message, wParam, lParam);
+            }
+
+          log_debug ("%s:%s: Decrypting %p again.",
+                     SRCNAME, __func__, mail);
+          mail->decryptVerify_o ();
+          TRETURN 0;
+        }
 
     }
   return DefWindowProc(hWnd, message, wParam, lParam);

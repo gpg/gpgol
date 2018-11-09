@@ -59,6 +59,7 @@ typedef enum _gpgol_wmsg_type
   /* External API, keep it stable! */
   EXT_API_CLOSE = 1301,
   EXT_API_CLOSE_ALL = 1302,
+  EXT_API_DECRYPT = 1303,
 } gpgol_wmsg_type;
 
 typedef struct
