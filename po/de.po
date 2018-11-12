@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2018-11-12 12:52+0100\n"
-"PO-Revision-Date: 2018-11-06 11:51+0100\n"
+"PO-Revision-Date: 2018-11-12 13:01+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -875,11 +875,11 @@ msgstr ""
 #. reply and forward with contents
 #: src/mailitem-events.cpp:853
 msgid "You are replying to an unsigned S/MIME email."
-msgstr ""
+msgstr "Sie antworten einer unsignierten S/MIME Mail."
 
 #: src/mailitem-events.cpp:855
 msgid "You are forwarding an unsigned S/MIME email."
-msgstr ""
+msgstr "Sie leiten eine unsignierte S/MIME email weiter. "
 
 #: src/mailitem-events.cpp:858
 msgid ""
@@ -888,10 +888,17 @@ msgid ""
 "email and place it in the quote so they can get hold of it.\n"
 "This is why we only allow quoting to be done manually."
 msgstr ""
+"In dieser Version von S/MIME kann ein Angreifer das fehlen der Signatur dazu "
+"verwenden Inhalte einer vollkommen anderen Mail zu entschlüsseln. Diese "
+"würden dann in der Antwort zitiert und möglicherweise dem Angreifer "
+"zugänglich.\n"
+"Aus diesem Grund erlauben wir in diesem Fall nur manuelles zitieren."
 
 #: src/mailitem-events.cpp:865
 msgid "Please copy the relevant contents and insert them into the new email."
 msgstr ""
+"Bitte kopieren Sie die relevanten Inhalte und fügen diese in die neue Mail "
+"ein."
 
 #: src/mailitem-events.cpp:919
 msgid ""
