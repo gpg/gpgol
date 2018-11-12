@@ -1,4 +1,4 @@
-Noteworthy changes for version 2.3.2 (unreleased)
+Noteworthy changes for version 2.3.2 (2018-11-12)
 =================================================
 
  * Reduced leakage of private information without
@@ -10,8 +10,9 @@ Noteworthy changes for version 2.3.2 (unreleased)
 
  * Fixed system wide default configuration.
 
- * Added WindowMessage API for external use. (T4241)
+ * Improved S/MIME handling.
 
+ * Populate keycache on startup.
 
 Noteworthy changes for version 2.3.1 (2018-10-16)
 =================================================
