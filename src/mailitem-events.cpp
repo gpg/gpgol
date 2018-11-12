@@ -847,23 +847,23 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     }
                   if (m_mail->isBlockHTML ())
                     {
-                      std::string caption = _("GpgOL") + std::string (": ");
-                      caption += is_reply ? _("Dangerous reply") :
-                                            _("Dangerous forward");
-                      std::string buf = _("Unsigned S/MIME mails are not integrity "
-                                          "protected.");
+                      std::string buf;
+                      /** TRANSLATORS: Part of a warning dialog that disallows
+                        reply and forward with contents */
+                      buf = is_reply ? _("You are replying to an unsigned S/MIME "
+                                         "email.") :
+                                       _("You are forwarding an unsigned S/MIME "
+                                         "email.");
+                      buf +="\n\n";
+                      buf += _("In this version of S/MIME an attacker could "
+                               "use the missing signature to have you "
+                               "decrypt contents from a different, otherwise "
+                               "completely unrelated email and place it in the "
+                               "quote so they can get hold of it.\n"
+                               "This is why we only allow quoting to be done manually.");
                       buf += "\n\n";
-
-                      if (is_reply)
-                        {
-                          buf += _("For security reasons no decrypted contents"
-                                   " are included in this reply.");
-                        }
-                      else
-                        {
-                          buf += _("For security reasons no decrypted contents"
-                                   " are included in the forwarded mail.");
-                        }
+                      buf += _("Please copy the relevant contents and insert "
+                               "them into the new email.");
 
                       gpgol_message_box (get_active_hwnd (), buf.c_str(),
                                          _("GpgOL"), MB_OK);
