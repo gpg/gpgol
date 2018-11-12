@@ -27,6 +27,9 @@
 
 #include <unordered_map>
 
+#undef _
+#define _(a) utf8_gettext (a)
+
 class CategoryManager::Private
 {
 public:
