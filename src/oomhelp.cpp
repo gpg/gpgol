@@ -2661,15 +2661,46 @@ log_addins ()
   int count = get_oom_int (addins, "Count");
   for (int i = 1; i <= count; i++)
     {
-      std::string item = std::string ("Item(") + std::to_string (i) + ")";
+      VARIANT aVariant[1];
+      VARIANT rVariant;
 
-      LPDISPATCH addin = get_oom_object (addins, item.c_str ());
+      VariantInit (&rVariant);
+      DISPPARAMS dispparams;
+
+      dispparams.rgvarg = aVariant;
+      dispparams.rgvarg[0].vt = VT_INT;
+      dispparams.rgvarg[0].intVal = i;
+      dispparams.cArgs = 1;
+      dispparams.cNamedArgs = 0;
+
+      /* We need this instead of get_oom_object item(1) as usual becase
+         the item method accepts a string or an int. String would
+         be the ProgID and int is just the index. So Fun. */
+      if (invoke_oom_method_with_parms_type (addins, "Item", &rVariant,
+                                             &dispparams,
+                                             DISPATCH_METHOD |
+                                             DISPATCH_PROPERTYGET))
+        {
+          log_error ("%s:%s: Failed to invoke item func.",
+                     SRCNAME, __func__);
+          continue;
+        }
+
+      if (rVariant.vt != (VT_DISPATCH))
+        {
+          log_error ("%s:%s: Invalid ret val",
+                     SRCNAME, __func__);
+          continue;
+        }
+
+      LPDISPATCH addin = rVariant.pdispVal;
 
       if (!addin)
         {
           TRACEPOINT;
           continue;
         }
+      memdbg_addRef (addin);
       bool connected = get_oom_bool (addin, "Connect");
       if (!connected)
         {

@@ -106,6 +106,7 @@ MailItemEvents::~MailItemEvents()
 
 static bool propchangeWarnShown = false;
 static bool attachRemoveWarnShown = false;
+static bool addinsLogged = false;
 
 static DWORD WINAPI
 do_delayed_locate (LPVOID arg)
@@ -191,6 +192,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: Read : %p",
                          SRCNAME, __func__, m_mail);
+          if (!addinsLogged)
+            {
+              // We do it here as this nearly always comes and we want to remove
+              // as much as possible from the startup time.
+              log_addins ();
+              addinsLogged = true;
+            }
           if (!m_mail->isCryptoMail ())
             {
               log_debug ("%s:%s: Non crypto mail %p opened. Updating sigstatus.",
