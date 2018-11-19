@@ -493,7 +493,7 @@ mapi_get_header (LPMESSAGE message)
 {
   TSTART;
   HRESULT hr;
-  LPSTREAM stream;
+  LPSTREAM stream = nullptr;
   ULONG bRead;
   std::string ret;
 
