@@ -41,7 +41,12 @@ HRESULT
 gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
 {
   HRESULT ret = pObj->QueryInterface (riid, ppvObj);
-  if ((opt.enable_debug & DBG_MEMORY) && *ppvObj)
+  if (ret)
+    {
+      log_debug ("%s:%s: QueryInterface failed hr=%#lx",
+                 SRCNAME, __func__, ret);
+    }
+  else if ((opt.enable_debug & DBG_MEMORY) && *ppvObj)
     {
       memdbg_addRef (*ppvObj);
     }
@@ -56,7 +61,12 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
   HRESULT ret = obj->OpenProperty (ulPropTag, lpiid,
                                    ulInterfaceOptions, ulFlags,
                                    lppUnk);
-  if ((opt.enable_debug & DBG_MEMORY) && *lppUnk)
+  if (ret)
+    {
+      log_debug ("%s:%s: OpenProperty failed hr=%#lx",
+                 SRCNAME, __func__, ret);
+    }
+  else if ((opt.enable_debug & DBG_MEMORY) && *lppUnk)
     {
       memdbg_addRef (*lppUnk);
       log_debug ("%s:%s: OpenProperty on %p prop %lx result %p",
