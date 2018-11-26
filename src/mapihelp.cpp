@@ -1248,7 +1248,7 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
 
   /* If we did not found anything but let's change the class anyway.  */
   if (!newvalue && opt.enable_smime)
-    newvalue = xstrdup ("IPM.Note.GpgOL");
+    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
 
   TRETURN newvalue;
 }
@@ -1412,7 +1412,7 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
     }
 
   if (!newvalue)
-    newvalue = xstrdup ("IPM.Note.GpgOL");
+    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
 
   TRETURN newvalue;
 }
@@ -1528,7 +1528,8 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
         {
           newvalue = change_message_class_ipm_note (message);
         }
-      else if (opt.enable_smime && !strcmp (s, "IPM.Note.SMIME"))
+      else if (opt.enable_smime && (!strcmp (s, "IPM.Note.SMIME") ||
+                                    !strcmp (s, "IPM.Note.GpgOL")))
         {
           newvalue = change_message_class_ipm_note_smime (message);
         }
