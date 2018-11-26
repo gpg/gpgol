@@ -856,7 +856,8 @@ is_really_cms_encrypted (LPMESSAGE message)
                  SRCNAME, __func__, hr);
       TRETURN -1;
     }
-      
+  memdbg_addRef (mapitable);
+
   hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
                        NULL, NULL, 0, &mapirows);
   if (FAILED (hr))
@@ -916,6 +917,7 @@ is_really_cms_encrypted (LPMESSAGE message)
       goto leave;
     }
 
+  memdbg_addRef (stream);
   hr = stream->Read (buffer, sizeof buffer, &nread);
   if ( hr != S_OK )
     {
