@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2018-11-12 12:52+0100\n"
-"PO-Revision-Date: 2018-09-19 23:00+0200\n"
+"POT-Creation-Date: 2019-01-03 22:51+0100\n"
+"PO-Revision-Date: 2019-01-03 23:12+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: nl\n"
@@ -83,7 +83,7 @@ msgstr ""
 
 #: src/addin-options.cpp:57
 msgid "&Prefer S/MIME"
-msgstr ""
+msgstr "S/MIME voorkeur geven"
 
 #: src/addin-options.cpp:60
 msgid "Enable or disable any automated key handling."
@@ -142,15 +142,14 @@ msgstr ""
 
 #: src/addin-options.cpp:73
 msgid "Prefer S/MIME over OpenPGP if both are possible."
-msgstr ""
+msgstr "S/MIME de voorkeur geven boven OpenPGP als beiden beschikbaar zijn."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:76
-#, fuzzy
 msgid ""
 "Search and import &X509 certificates in the configured directory services"
 msgstr ""
-"Klik hier om het certificaat op de geconfigureerde X509 keyserver te zoeken."
+"X509-certificaten in de geconfigureerde mapservices zoeken en imporeren"
 
 #. TRANSLATORS: Part of the config dialog. Tooltip
 #: src/addin-options.cpp:78
@@ -158,6 +157,8 @@ msgid ""
 "Searches for X509 certificates automatically and imports them. This option "
 "searches in all configured services."
 msgstr ""
+"Zoekt automatisch naar X509-certificaten en importeert deze. Deze optie "
+"doorzoekt alle geconfigureerde services."
 
 #. TRANSLATORS: Part of the config dialog. Warning about privacy leak.
 #: src/addin-options.cpp:80
@@ -165,6 +166,8 @@ msgid ""
 "<b>Warning:</b> The configured services will receive information about whom "
 "you send Emails!"
 msgstr ""
+"<b>Waarschuwing:</b> De geconfigureerde services ontvangen informatie over "
+"wie u e-mailberichten stuurt!"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
@@ -257,51 +260,51 @@ msgstr "Sleutels bevestigen"
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:121
 msgid "Enable Logging"
-msgstr ""
+msgstr "Logging inschakelen"
 
 #: src/addin-options.cpp:122
 msgid "Default"
-msgstr ""
+msgstr "Standaard"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:125
 msgid "+Outlook API calls"
-msgstr ""
+msgstr "+Outlook API-aanroepen"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:128
 msgid "+Memory analysis"
-msgstr ""
+msgstr "+Geheugen-analyze"
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
 #: src/addin-options.cpp:131
 msgid "+Call tracing"
-msgstr ""
+msgstr "+Aanroepen volgen"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:133
 msgid "Log File (required):"
-msgstr ""
+msgstr "Logbestand (verplicht):"
 
 #. TRANSLATORS: Part of debugging configuration.  This is a checkbox
 #. to select if even potentially private data should be included in the
 #. debug log.
 #: src/addin-options.cpp:137
 msgid "Include Mail contents (decrypted!) and meta information."
-msgstr ""
+msgstr "(Versleutelde) inhoud van e-mail en meta-informatie bijvoegen."
 
 #. TRANSLATORS: Dialog title for the log file selection
 #: src/addin-options.cpp:139
 msgid "Select log file"
-msgstr ""
+msgstr "Selecteer logbestand"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:141
 msgid "Log level:"
-msgstr ""
+msgstr "Log-niveau:"
 
 #. TRANSLATORS: Part of debugging configuration. Warning shown
 #. in case the highest log level is selected. Please try to
@@ -310,53 +313,51 @@ msgstr ""
 #. level.
 #: src/addin-options.cpp:147
 msgid "<b>Warning:</b> Decreased performance. Huge logs!"
-msgstr ""
+msgstr "<b>Waarschuwing:</b> Verlaagt prestaties. Enorme logbestanden!"
 
 #. TRANSLATORS: Config dialog category for debug options.
 #: src/addin-options.cpp:149
-#, fuzzy
 msgid "Debug"
-msgstr "Debug..."
+msgstr "Debug"
 
 #. TRANSLATORS: Config dialog category for debug options.
 #: src/addin-options.cpp:151
 msgid "Configuaration of debug options"
-msgstr ""
+msgstr "Configuratie van debug-opties"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:153
 msgid "Potential workarounds"
-msgstr ""
+msgstr "Mogelijke tijdelijke oplossingen"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:155
 msgid "Block Outlook during encrypt / sign"
-msgstr ""
+msgstr "Outlook blokkeren tijdens versleutelen / ondertekenen"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:157
 msgid "Block Outlook during decrypt / verify"
-msgstr ""
+msgstr "Outlook blokkeren tijdens ontcijferen / verifiëren"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:159
 msgid "How to report a problem?"
-msgstr ""
+msgstr "Hoe kan ik een probleem rapporteren?"
 
-#: src/categorymanager.cpp:250
-#, fuzzy
+#: src/categorymanager.cpp:253
 msgid "Encrypted Message"
 msgstr "Versleuteld bericht"
 
-#: src/categorymanager.cpp:263
+#: src/categorymanager.cpp:266
 msgid "Junk Email cannot be processed"
-msgstr ""
+msgstr "Ongewenste e-mail kan niet worden verwerkt"
 
 #. TRANSLATORS: Placeholder for a contact without
 #. a configured name
 #: src/addressbook.cpp:202
 msgid "Unknown contact"
-msgstr ""
+msgstr "Onbekend contact"
 
 #: src/common.cpp:783
 msgid "GpgOL Error"
@@ -399,7 +400,7 @@ msgstr "Het instellingen-scherm voor GpgOL openen"
 #: src/gpgoladdin.cpp:918 src/gpgoladdin.cpp:953 src/gpgoladdin.cpp:1041
 #: src/gpgoladdin.cpp:1043 src/gpgoladdin.cpp:1080 src/gpgoladdin.cpp:1111
 #: src/gpgoladdin.cpp:1238 src/mail.cpp:984 src/mail.cpp:1311 src/mail.cpp:1380
-#: src/mailitem-events.cpp:869 src/ribbon-callbacks.cpp:700
+#: src/mailitem-events.cpp:877 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
 #: src/wks-helper.cpp:453 src/cryptcontroller.cpp:314
 #: src/cryptcontroller.cpp:444
@@ -558,17 +559,16 @@ msgstr ""
 "Zie: https://dev.gnupg.org/T3545 voor details."
 
 #: src/mail.cpp:2321
-#, fuzzy
 msgid "Invalid Key"
-msgstr "Ongeldige sleutel gedetecteerd."
+msgstr "Ongeldige sleutel"
 
 #: src/mail.cpp:2363
 msgid "Level"
-msgstr ""
+msgstr "Niveau"
 
 #: src/mail.cpp:2364
 msgid "trust in"
-msgstr ""
+msgstr "vertrouwen in"
 
 #: src/mail.cpp:2592
 msgid "Security Level 4"
@@ -842,11 +842,11 @@ msgstr ""
 "te gebruiken,\n"
 "of stap over naar PGP/Inline in de opties van GpgOL."
 
-#: src/mailitem-events.cpp:314 src/mailitem-events.cpp:922
+#: src/mailitem-events.cpp:322 src/mailitem-events.cpp:930
 msgid "Sorry, that's not possible, yet"
 msgstr "Sorry, dat is nog niet mogelijk"
 
-#: src/mailitem-events.cpp:316
+#: src/mailitem-events.cpp:324
 #, c-format
 msgid ""
 "GpgOL has prevented the change to the \"%s\" property.\n"
@@ -870,27 +870,32 @@ msgstr ""
 
 #. TRANSLATORS: Part of a warning dialog that disallows
 #. reply and forward with contents
-#: src/mailitem-events.cpp:853
+#: src/mailitem-events.cpp:861
 msgid "You are replying to an unsigned S/MIME email."
-msgstr ""
+msgstr "U beantwoordt een niet-ondertekende S/MIME e-mail."
 
-#: src/mailitem-events.cpp:855
+#: src/mailitem-events.cpp:863
 msgid "You are forwarding an unsigned S/MIME email."
-msgstr ""
+msgstr "U stuurt een niet-ondertekende S/MIME e-mail door."
 
-#: src/mailitem-events.cpp:858
+#: src/mailitem-events.cpp:866
 msgid ""
 "In this version of S/MIME an attacker could use the missing signature to "
 "have you decrypt contents from a different, otherwise completely unrelated "
 "email and place it in the quote so they can get hold of it.\n"
 "This is why we only allow quoting to be done manually."
 msgstr ""
+"In deze versie van S/MIME kan een aanvaller de ontbrekende handtekening "
+"gebruiken om inhoud van een andere, eventueel volledig ongerelateerde e-"
+"mail, te ontcijferen en in de quote te stoppen om er toegang toe te "
+"krijgen.\n"
+"Dit is waarom we alleen toestaan om handmatig te quoten."
 
-#: src/mailitem-events.cpp:865
+#: src/mailitem-events.cpp:873
 msgid "Please copy the relevant contents and insert them into the new email."
-msgstr ""
+msgstr "Kopieer de relevante inhoud en voeg deze toe aan de nieuwe e-mail."
 
-#: src/mailitem-events.cpp:919
+#: src/mailitem-events.cpp:927
 msgid ""
 "Attachments are part of the crypto message.\n"
 "They can't be permanently removed and will be shown again the next time this "
@@ -900,7 +905,7 @@ msgstr ""
 "Ze kunnen niet permanent verwijderd worden en zullen de volgende keer dat "
 "dit bericht wordt geopend, weer getoond worden."
 
-#: src/mapihelp.cpp:2027 src/mapihelp.cpp:2035 src/mapihelp.cpp:2043
+#: src/mapihelp.cpp:2030 src/mapihelp.cpp:2038 src/mapihelp.cpp:2046
 msgid "[no subject]"
 msgstr "[geen onderwerp]"
 
