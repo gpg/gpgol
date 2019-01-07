@@ -2360,6 +2360,13 @@ Mail::updateCategories_o ()
       /* If m_uid addrSpec would not return a result we would never
        * have gotten the UID. */
       int lvl = get_signature_level ();
+
+      /* TRANSLATORS: The first placeholder is for tranlsation of "Level".
+         The second one is for the level number. The third is for the
+         translation of "trust in" and the last one is for the mail
+         address used for verification. The result is used as the
+         text on the green bar for signed mails. e.g.:
+         "GpgOL: Level 3 trust in 'john.doe@example.org'" */
       gpgrt_asprintf (&buf, "GpgOL: %s %i %s '%s'", _("Level"), lvl,
                       _("trust in"),
                       m_uid.addrSpec ().c_str ());
