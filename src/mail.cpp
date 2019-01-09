@@ -2818,7 +2818,12 @@ Mail::getCryptoDetails_o ()
       /* First the general stuff. */
       if (m_sig.summary() & Signature::Summary::Red)
         {
-          message += _("The signature is invalid: \n");
+            message += _("The signature is invalid: \n");
+            if (m_sig.status().code() == GPG_ERR_BAD_SIGNATURE)
+              {
+                message += std::string("\n") + _("The signature does not match.");
+                return message;
+              }
         }
       else if (m_sig.summary() & Signature::Summary::SysError ||
                m_verify_result.numSignatures() < 1)
