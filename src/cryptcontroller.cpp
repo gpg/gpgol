@@ -1019,6 +1019,25 @@ CryptController::update_mail_mapi ()
 
   mapi_attach_item_t *att_table = mapi_create_attach_table (message, 0);
 
+  /* When we forward e.g. a crypto mail we have sent the message
+     has a MOSSTEMPL. We need to remove that. T4321 */
+  for (ULONG pos=0; !att_table[pos].end_of_table; pos++)
+    {
+      if (att_table[pos].attach_type == ATTACHTYPE_MOSSTEMPL)
+        {
+          log_debug ("%s:%s: Found existing moss attachment at "
+                     "pos %i removing it.", SRCNAME, __func__,
+                     att_table[pos].mapipos);
+          if (message->DeleteAttach (att_table[pos].mapipos, 0,
+                                     nullptr, 0) != S_OK)
+            {
+              log_error ("%s:%s: Failed to remove attachment.",
+                         SRCNAME, __func__);
+            }
+
+        }
+    }
+
   // Set up the sink object for our MSOXSMIME attachment.
   struct sink_s sinkmem;
   sink_t sink = &sinkmem;
