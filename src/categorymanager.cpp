@@ -225,7 +225,7 @@ CategoryManager::removeCategory (Mail *mail, const std::string &category)
     }
   if (remove_category (mail->item (), category.c_str (), true))
     {
-      log_debug ("%s:%s Failed to remvoe category.",
+      log_debug ("%s:%s Failed to remove category.",
                  SRCNAME, __func__);
     }
   d->unregisterCategory (mail->storeID (), category.c_str ());
