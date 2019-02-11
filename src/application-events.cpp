@@ -98,7 +98,6 @@ EVENT_SINK_INVOKE(ApplicationEvents)
         }
       case Quit:
         {
-          TSTART;
           log_debug ("%s:%s: Quit event", SRCNAME, __func__);
           TBREAK;
         }
