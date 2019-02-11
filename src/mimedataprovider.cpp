@@ -1059,6 +1059,14 @@ MimeDataProvider::create_attachment()
   if (m_mime_ctx->mimestruct_cur && m_mime_ctx->mimestruct_cur->cid)
     {
       attach->set_content_id (m_mime_ctx->mimestruct_cur->cid);
+      log_data ("%s:%s: content-id: %s",
+                SRCNAME, __func__, m_mime_ctx->mimestruct_cur->cid);
+    }
+  if (m_mime_ctx->mimestruct_cur && m_mime_ctx->mimestruct_cur->content_type)
+    {
+      attach->set_content_type (m_mime_ctx->mimestruct_cur->content_type);
+      log_data ("%s:%s: content-type: %s",
+                SRCNAME, __func__, m_mime_ctx->mimestruct_cur->content_type);
     }
   m_attachments.push_back (attach);
 

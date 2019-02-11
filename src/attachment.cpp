@@ -77,3 +77,15 @@ Attachment::get_content_id() const
 {
   return m_cid;
 }
+
+void
+Attachment::set_content_type(const char *ctype)
+{
+  m_ctype = ctype;
+}
+
+std::string
+Attachment::get_content_type() const
+{
+  return m_ctype;
+}
