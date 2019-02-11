@@ -78,6 +78,16 @@ i18n_noops[] = {
     N_("Searches for X509 certificates automatically and imports them. This option searches in all configured services."),
     /* TRANSLATORS: Part of the config dialog. Warning about privacy leak. */
     N_("<b>Warning:</b> The configured services will receive information about whom you send Emails!"),
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Also automatically toggles secure if keys with level 0 trust were found."),
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Also &with untrusted keys"),
+    /* TRANSLATORS: Included means here both attached keys and keys from the
+     * headers */
+    N_("&Import any keys included in mails.");
+    /* TRANSLATORS: Included means here both attached keys and keys from the
+     * headers */
+    N_("Import OpenPGP keys from mail attachments or from mail headers.");
 
     /* Not options but strings for the key adder */
     /* TRANSLATORS: Part of address book key configuration dialog.
