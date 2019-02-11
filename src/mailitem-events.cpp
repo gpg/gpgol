@@ -762,9 +762,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
       /* Fallthrough */
       case ReplyAll:
       case Reply:
-        {
           is_reply = true;
-        }
+          __attribute__ ((fallthrough));
       case Forward:
         {
           log_oom ("%s:%s: %s : %p",
