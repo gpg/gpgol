@@ -30,13 +30,13 @@
 extern "C" {
 #endif
 /* The filename of the attachment we create as the result of sign or
-   encrypt operations.  Don't change this name as some tests rely on
-   it.  */
-#define MIMEATTACHFILENAME "gpgolXXX.dat"
+   encrypt operations. */
+#define MIMEATTACHFILENAME "GpgOL_MIME_structure.txt"
+
 /* The name of the file we use to store the original body of PGP
    encrypted messages.  Note that PGP/MIME message don't need that
    because Outlook carries them as 2 attachments.  */
-#define PGPBODYFILENAME    "gpgolPGP.dat"
+#define PGPBODYFILENAME    "GpgOL_original_OpenPGP_message.txt"
 
 void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
 int get_gpgololdmsgclass_tag (LPMESSAGE message, ULONG *r_tag);
