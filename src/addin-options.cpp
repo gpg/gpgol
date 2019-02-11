@@ -84,10 +84,10 @@ i18n_noops[] = {
     N_("Also &with untrusted keys"),
     /* TRANSLATORS: Included means here both attached keys and keys from the
      * headers */
-    N_("&Import any keys included in mails.");
+    N_("&Import any keys included in mails."),
     /* TRANSLATORS: Included means here both attached keys and keys from the
      * headers */
-    N_("Import OpenPGP keys from mail attachments or from mail headers.");
+    N_("Import OpenPGP keys from mail attachments or from mail headers."),
 
     /* Not options but strings for the key adder */
     /* TRANSLATORS: Part of address book key configuration dialog.
