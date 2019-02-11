@@ -574,6 +574,14 @@ public:
                 validEnough = true;
                 break;
               }
+            if (opt.auto_unstrusted &&
+                uid.validity() == GpgME::UserID::Unknown)
+              {
+                log_debug ("%s:%s: Passing unknown trust key for %s because of option",
+                           SRCNAME, __func__, anonstr (recip.c_str ()));
+                validEnough = true;
+                break;
+              }
           }
         if (!validEnough)
           {
