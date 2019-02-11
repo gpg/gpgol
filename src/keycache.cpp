@@ -1423,3 +1423,54 @@ KeyCache::getUltimateKeys ()
   gpgrt_lock_unlock (&fpr_map_lock);
   return ret;
 }
+
+/* static */
+bool
+KeyCache::import_pgp_key_data (const GpgME::Data &data)
+{
+  TSTART;
+  if (data.isNull())
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+  auto ctx = GpgME::Context::create(GpgME::OpenPGP);
+
+  if (!ctx)
+    {
+      STRANGEPOINT;
+      TRETURN false;
+    }
+
+  const auto type = data.type();
+
+  if (type != GpgME::Data::PGPKey)
+    {
+      log_debug ("%s:%s: Data does not look like PGP Keys",
+                 SRCNAME, __func__);
+      TRETURN false;
+    }
+  const auto keys = data.toKeys();
+
+  if (keys.empty())
+    {
+      log_debug ("%s:%s: Data does not contain PGP Keys",
+                 SRCNAME, __func__);
+      TRETURN false;
+    }
+
+  if (opt.enable_debug & DBG_DATA)
+    {
+      std::stringstream ss;
+      for (const auto &key: keys)
+        {
+          ss << key << '\n';
+        }
+      log_debug ("Importing keys: %s", ss.str().c_str());
+    }
+  const auto result = ctx->importKeys(keys);
+
+  log_debug ("%s:%s: Import result from attached key err: %s",
+             SRCNAME, __func__, result.error ().asString ());
+  TRETURN !result.error();
+}

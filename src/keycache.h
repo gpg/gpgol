@@ -32,6 +32,7 @@
 namespace GpgME
 {
   class Key;
+  class Data;
 };
 
 class Mail;
@@ -129,6 +130,10 @@ public:
 
     /* Get a vector of ultimately trusted keys. */
     std::vector<GpgME::Key> getUltimateKeys ();
+
+    /* Import PGP Keys from a Data object. Returns
+       true on success. */
+    static bool import_pgp_key_data(const GpgME::Data &data);
 
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);

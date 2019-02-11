@@ -546,6 +546,20 @@ ParseController::parse()
       m_block_html = true;
     }
 
+  /* Import any application/pgp-keys attachments if the option is set. */
+  if (opt.autoimport)
+    {
+      for (const auto &attach: get_attachments())
+        {
+          if (attach->get_content_type () == "application/pgp-keys")
+            {
+#ifndef BUILD_TESTS
+              KeyCache::import_pgp_key_data (attach->get_data());
+#endif
+            }
+        }
+    }
+
   if (opt.enable_debug & DBG_DATA)
     {
       std::stringstream ss;
