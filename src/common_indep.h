@@ -206,6 +206,8 @@ struct
   int autoretrieve;           /* Use --auto-key-retrieve. */
   int search_smime_servers;  /* Search for S/MIME keys on all configured S/MIME keyservers
                                 for each new unknown mail */
+  int auto_unstrusted;       /* Automatically encrypt even to untrusted keys. */
+  int autoimport;            /* Automatically import keys from headers or attachments. */
 
   /* The forms revision number of the binary.  */
   int forms_revision;
