@@ -155,7 +155,7 @@ typedef std::shared_ptr<IDispatch> shared_disp_t;
 /* Function to contain the gpgol_release macro */
 void release_disp (LPDISPATCH obj);
 
-#define MAKE_SHARED(X) shared_disp_t (X, &release_disp)
+#define MAKE_SHARED(X) shared_disp_t ((LPDISPATCH)X, &release_disp)
 
 /* Return the malloced name of an COM+ object.  */
 char *get_object_name (LPUNKNOWN obj);
