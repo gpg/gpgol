@@ -101,6 +101,8 @@ public:
   void setAutocryptInfo (const autocrypt_s & info)
   { m_autocrypt_info = info; }
 
+  std::string get_internal_subject() const;
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;

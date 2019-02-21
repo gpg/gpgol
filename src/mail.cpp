@@ -1495,6 +1495,12 @@ Mail::parsing_done()
   m_decrypt_result = m_parser->decrypt_result ();
   m_verify_result = m_parser->verify_result ();
 
+  const auto subject = m_parser->get_internal_subject ();
+  if (!subject.empty ())
+    {
+      put_oom_string (m_mailitem, "Subject", subject.c_str ());
+    }
+
   m_crypto_flags = 0;
   if (!m_decrypt_result.isNull())
     {

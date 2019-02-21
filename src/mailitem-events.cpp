@@ -47,6 +47,8 @@ const wchar_t *prop_blacklist[] = {
   L"OutlookInternalVersion",
   L"ReceivedTime",
   L"InternetCodepage",
+  L"ConversationIndex",
+  L"Subject",
   NULL };
 
 typedef enum

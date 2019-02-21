@@ -116,11 +116,14 @@ public:
     {return m_attachments;}
   const std::string &get_html_charset() const;
   const std::string &get_body_charset() const;
+  const std::string &get_internal_subject() const;
 
   void set_has_html_body(bool value) {m_has_html_body = value;}
 
   /* Finalize the bodys */
   void finalize ();
+
+  bool m_had_protected_headers;
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */
@@ -154,5 +157,7 @@ private:
   bool m_has_html_body;
   /* Collect everything */
   bool m_collect_everything;
+  /* Internal Protected Headers subject */
+  std::string m_internal_subject;
 };
 #endif // MIMEDATAPROVIDER_H

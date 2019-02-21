@@ -696,3 +696,14 @@ ParseController::get_attachments() const
       TRETURN std::vector<std::shared_ptr<Attachment> >();
     }
 }
+
+std::string
+ParseController::get_internal_subject() const
+{
+  TSTART;
+  if (m_outputprovider)
+    {
+      TRETURN m_outputprovider->get_internal_subject ();
+    }
+  TRETURN std::string();
+}

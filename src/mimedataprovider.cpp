@@ -186,6 +186,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   char *p;
   int is_text = 0;
   int is_text_attachment = 0;
+  int is_protected_headers = 0;
   char *filename = NULL;
   char *cid = NULL;
   char *charset = NULL;
@@ -341,6 +342,15 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   else if (!strcmp (ctmain, "text"))
     {
       is_text = !strcmp (ctsub, "html")? 2:1;
+      is_protected_headers = (!strcmp (ctsub, "rfc822-headers") &&
+                              rfc822parse_query_parameter (field,
+                                                    "protected-headers", -1));
+      if (is_protected_headers)
+        {
+          log_data ("%s:%s: Found protected headers.",
+                           SRCNAME, __func__);
+          provider->m_had_protected_headers = true;
+        }
     }
   else if (ctx->nesting_level == 1 && !provider->signature()
            && !strcmp (ctmain, "application")
@@ -383,14 +393,18 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
         }
     }
   rfc822parse_release_field (field); /* (Content-type) */
-  ctx->in_data = 1;
+  if (!is_protected_headers)
+    {
+      ctx->in_data = 1;
+    }
 
   log_data ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
-                   " charset=\"%s\"\n body_seen=%d is_text_attachment=%d",
+                   " charset=\"%s\"\n body_seen=%d is_text_attachment=%d"
+                   " is_protected_headers=%d",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
                    ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"",
-                   ctx->body_seen, is_text_attachment);
+                   ctx->body_seen, is_text_attachment, is_protected_headers);
 
   /* If this is a text part, decide whether we treat it as one
      of our bodies.
@@ -1077,6 +1091,25 @@ MimeDataProvider::create_attachment()
 void MimeDataProvider::finalize ()
 {
   TSTART;
+
+  if (m_had_protected_headers)
+    {
+      const char *subject = rfc822parse_get_field (m_mime_ctx->msg,
+                                                   "Subject", -1,
+                                                   nullptr);
+      if (subject)
+        {
+          log_debug ("%s:%s: Found subject %s", SRCNAME, __func__, subject);
+          if (strlen (subject) <= strlen ("Subject: "))
+            {
+              STRANGEPOINT;
+            }
+          else
+            {
+              m_internal_subject = subject + strlen ("Subject: ");
+            }
+        }
+    }
   if (m_rawbuf.size ())
     {
       m_rawbuf += "\r\n";
@@ -1114,4 +1147,10 @@ const std::string &MimeDataProvider::get_body_charset() const
 {
   TSTART;
   TRETURN m_body_charset;
+}
+
+const std::string &MimeDataProvider::get_internal_subject () const
+{
+  TSTART;
+  TRETURN m_internal_subject;
 }
