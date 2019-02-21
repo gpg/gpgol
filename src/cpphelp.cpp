@@ -80,6 +80,12 @@ trim(std::string &s)
 }
 
 void
+remove_whitespace (std::string &s)
+{
+  s.erase(remove_if(s.begin(), s.end(), isspace), s.end());
+}
+
+void
 join(const std::vector<std::string>& v, const char *c, std::string& s)
 {
   s.clear();

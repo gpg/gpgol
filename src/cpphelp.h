@@ -37,6 +37,7 @@ void release_cArray (char **carray);
 void rtrim (std::string &s);
 void ltrim (std::string &s);
 void trim (std::string &s);
+void remove_whitespace (std::string &s);
 
 /* Join a string vector */
 void join(const std::vector<std::string>& v, const char *c, std::string& s);
