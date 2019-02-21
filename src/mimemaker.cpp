@@ -1193,15 +1193,6 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
       return -1;
     }
 
-  /* Set a special property so that we are later able to identify
-     messages signed or encrypted by us.  */
-  if (mapi_set_sig_status (message, "@"))
-    {
-      log_error ("%s:%s: error setting sigstatus",
-                 SRCNAME, __func__);
-      return -1;
-    }
-
   /* We also need to set the message class into our custom
      property. This override is at least required for encrypted
      messages.  */
@@ -1617,14 +1608,6 @@ restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
     }
 
   if (close_mapi_attachment (&new_attach, sink))
-    {
-      log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
-      goto done;
-    }
-
-  /* Set a special property so that we are later able to identify
-     messages signed or encrypted by us.  */
-  if (mapi_set_sig_status (message, "@"))
     {
       log_error ("%s:%s: Error: %i", SRCNAME, __func__, __LINE__);
       goto done;

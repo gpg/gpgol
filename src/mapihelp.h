@@ -41,7 +41,6 @@ extern "C" {
 void log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname);
 int get_gpgololdmsgclass_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag);
-int get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag);
 int get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag);
@@ -82,11 +81,6 @@ LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message,
 char *mapi_get_attach (LPMESSAGE message,
                        mapi_attach_item_t *item, size_t *r_nbytes);
 int mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item);
-int mapi_has_sig_status (LPMESSAGE msg);
-int mapi_test_sig_status (LPMESSAGE msg);
-char *mapi_get_sig_status (LPMESSAGE msg);
-
-int mapi_set_sig_status (LPMESSAGE message, const char *status_string);
 
 int mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name);
 

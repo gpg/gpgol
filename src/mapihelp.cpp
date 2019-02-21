@@ -190,20 +190,6 @@ get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
 }
 
 
-/* Return the property tag for GpgOL Sig Status. */
-int 
-get_gpgolsigstatus_tag (LPMESSAGE message, ULONG *r_tag)
-{
-  TSTART;
-  if (!(*r_tag = create_gpgol_tag (message, L"GpgOL Sig Status", __func__)))
-    {
-      TRETURN -1;
-    }
-  *r_tag |= PT_STRING8;
-  TRETURN 0;
-}
-
-
 /* Return the property tag for GpgOL Protect IV. */
 int 
 get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag)
@@ -1621,13 +1607,8 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
 
   if (!newvalue)
     {
-      /* We use our Sig-Status property to mark messages which passed
-         this function.  This helps us to avoid later tests.  */
-      if (!mapi_has_sig_status (message))
-        {
-          mapi_set_sig_status (message, "#");
-          need_save = 1;
-        }
+      log_debug ("%s:%s Message is not a crypto message.",
+                 SRCNAME, __func__);
     }
   else
     {
@@ -2846,138 +2827,6 @@ mapi_test_attach_hidden (LPATTACH attach)
   TRETURN result;
 }
 
-
-
-
-/* Returns True if MESSAGE has the GpgOL Sig Status property.  */
-int
-mapi_has_sig_status (LPMESSAGE msg)
-{
-  TSTART;
-  HRESULT hr;
-  LPSPropValue propval = NULL;
-  ULONG tag;
-  int yes;
-
-  if (get_gpgolsigstatus_tag (msg, &tag) )
-    {
-      TRETURN 0; /* Error:  Assume No.  */
-    }
-  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
-  if (FAILED (hr))
-    {
-      TRETURN 0; /* No.  */
-    }
-  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
-    yes = 1;
-  else
-    yes = 0;
-
-  MAPIFreeBuffer (propval);
-  TRETURN yes;
-}
-
-
-/* Returns True if MESSAGE has a GpgOL Sig Status property and that it
-   is not set to unchecked.  */
-int
-mapi_test_sig_status (LPMESSAGE msg)
-{
-  TSTART;
-  HRESULT hr;
-  LPSPropValue propval = NULL;
-  ULONG tag;
-  int yes;
-
-  if (get_gpgolsigstatus_tag (msg, &tag) )
-    {
-      TRETURN 0; /* Error:  Assume No.  */
-    }
-  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
-  if (FAILED (hr))
-    {
-      TRETURN 0; /* No.  */
-    }
-
-  /* We TRETURN False if we have an unknown signature status (?) or the
-     message has been sent by us and not yet checked (@).  */
-  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
-    yes = !(propval->Value.lpszA && (!strcmp (propval->Value.lpszA, "?")
-                                     || !strcmp (propval->Value.lpszA, "@")));
-  else
-    yes = 0;
-
-  MAPIFreeBuffer (propval);
-  TRETURN yes;
-}
-
-
-/* Return the signature status as an allocated string.  Will never
-   return NULL.  */
-char *
-mapi_get_sig_status (LPMESSAGE msg)
-{
-  TSTART;
-  HRESULT hr;
-  LPSPropValue propval = NULL;
-  ULONG tag;
-  char *retstr;
-
-  if (get_gpgolsigstatus_tag (msg, &tag) )
-    {
-      TRETURN xstrdup ("[Error getting tag for sig status]");
-    }
-  hr = HrGetOneProp ((LPMAPIPROP)msg, tag, &propval);
-  if (FAILED (hr))
-    {
-      TRETURN xstrdup ("");
-    }
-  if (PROP_TYPE (propval->ulPropTag) == PT_STRING8)
-    retstr = xstrdup (propval->Value.lpszA);
-  else
-    retstr = xstrdup ("[Sig status has an invalid type]");
-
-  MAPIFreeBuffer (propval);
-  TRETURN retstr;
-}
-
-
-
-
-/* Set the signature status property to STATUS_STRING.  There are a
-   few special values:
-
-     "#" The message is not of interest to us.
-     "@" The message has been created and signed or encrypted by us.
-     "?" The signature status has not been checked.
-     "!" The signature verified okay 
-     "~" The signature was not fully verified.
-     "-" The signature is bad
-
-   Note that this function does not call SaveChanges.  */
-int 
-mapi_set_sig_status (LPMESSAGE message, const char *status_string)
-{
-  TSTART;
-  HRESULT hr;
-  SPropValue prop;
-
-  if (get_gpgolsigstatus_tag (message, &prop.ulPropTag) )
-    {
-      TRETURN -1;
-    }
-  prop.Value.lpszA = xstrdup (status_string);
-  hr = HrSetOneProp (message, &prop);	
-  xfree (prop.Value.lpszA);
-  if (hr)
-    {
-      log_error ("%s:%s: can't set %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Sig Status", hr); 
-      TRETURN -1;
-    }
-
-  TRETURN 0;
-}
 
 
 /* When sending a message we need to fake the message class so that OL
