@@ -310,6 +310,19 @@ Mail::preProcessMessage_m ()
 
   if (m_type == MSGTYPE_UNKNOWN)
     {
+      /* For unknown messages we still need to check for autocrypt
+         headers. If the mails are crypto messages the autocrypt
+         stuff is handled in the parsecontroller. */
+      autocrypt_s ac;
+      if (mapi_get_header_info (message, ac))
+        {
+          if (ac.exists)
+            {
+              log_debug ("%s:%s: Importing autocrypt header from unencrypted "
+                         "mail.", SRCNAME, __func__);
+              KeyCache::import_pgp_key_data (ac.data);
+            }
+        }
       gpgol_release (message);
       TRETURN 0;
     }
@@ -1159,6 +1172,32 @@ Mail::decryptVerify_o ()
 
   m_parser = std::shared_ptr <ParseController> (new ParseController (cipherstream, m_type));
   m_parser->setSender(GpgME::UserID::addrSpecFromString(getSender_o ().c_str()));
+
+  if (opt.autoimport)
+    {
+      /* Handle autocrypt header. As we want to have the import
+         of the header in the same thread as the parser we leave it
+         to the parser. */
+      auto message = MAKE_SHARED (get_oom_message (m_mailitem));
+      if (!message)
+        {
+          /* Hmmm */
+          STRANGEPOINT;
+        }
+      else
+        {
+          autocrypt_s ainfo;
+          if (!mapi_get_header_info ((LPMESSAGE)message.get(), ainfo))
+            {
+              STRANGEPOINT;
+            }
+          else if (ainfo.exists)
+            {
+              m_parser->setAutocryptInfo (ainfo);
+            }
+        }
+    }
+
   log_data ("%s:%s: Parser for \"%s\" is %p",
                    SRCNAME, __func__, getSubject_o ().c_str(), m_parser.get());
   gpgol_release (cipherstream);

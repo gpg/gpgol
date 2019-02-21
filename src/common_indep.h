@@ -323,6 +323,16 @@ char *generate_boundary (char *buffer);
 
 #ifdef __cplusplus
 }
+
+#include <string>
+#include <gpgme++/data.h>
+struct autocrypt_s
+{
+  bool exists;
+  std::string pref;
+  std::string addr;
+  GpgME::Data data;
+};
 #endif
 
 #endif // COMMON_INDEP_H

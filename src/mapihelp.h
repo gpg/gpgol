@@ -117,9 +117,20 @@ int mapi_body_to_attachment (LPMESSAGE message);
 
 /* Get malloced uid of a message */
 char * mapi_get_uid (LPMESSAGE message);
+
 #ifdef __cplusplus
 }
 #include <string>
+
+/* Parse the headers for additional useful fields.
+
+  r_autocrypt_info: Information about the autocrypt header.
+
+  A return value of false indicates an error. Check the
+  individual info fields "exists" values to check if
+  the header exists in the message */
+bool mapi_get_header_info (LPMESSAGE message,
+                           autocrypt_s &r_autocrypt_info);
 std::string mapi_get_header (LPMESSAGE message);
 #endif
 #endif /*MAPIHELP_H*/

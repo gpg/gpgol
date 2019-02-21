@@ -1468,9 +1468,34 @@ KeyCache::import_pgp_key_data (const GpgME::Data &data)
         }
       log_debug ("Importing keys: %s", ss.str().c_str());
     }
-  const auto result = ctx->importKeys(keys);
+  const auto result = ctx->importKeys(data);
 
-  log_debug ("%s:%s: Import result from attached key err: %s",
-             SRCNAME, __func__, result.error ().asString ());
+  if ((opt.enable_debug & DBG_DATA))
+    {
+      std::stringstream ss;
+      ss << result;
+      log_debug ("%s:%s: Import result: %s details:\n %s",
+                 SRCNAME, __func__, result.error ().asString (),
+                 ss.str().c_str());
+      if (result.error())
+        {
+          GpgME::Data out;
+          if (ctx->getAuditLog(out, GpgME::Context::DiagnosticAuditLog))
+            {
+              log_error ("%s:%s: Failed to get diagnostics",
+                         SRCNAME, __func__);
+            }
+          else
+            {
+              log_debug ("%s:%s: Diagnostics: \n%s\n",
+                         SRCNAME, __func__, out.toString().c_str());
+            }
+        }
+    }
+  else
+    {
+      log_debug ("%s:%s: Import result: %s",
+                 SRCNAME, __func__, result.error ().asString ());
+    }
   TRETURN !result.error();
 }

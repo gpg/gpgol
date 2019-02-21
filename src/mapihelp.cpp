@@ -3094,7 +3094,7 @@ set_gpgol_draft_info_flags (LPMESSAGE message, int flags)
 
 /* Helper for mapi_get_msg_content_type() */
 static int
-get_message_content_type_cb (void *dummy_arg,
+parse_headers_cb (void *dummy_arg,
                              rfc822parse_event_t event, rfc822parse_t msg)
 {
   TSTART;
@@ -3133,7 +3133,7 @@ mapi_get_message_content_type (LPMESSAGE message,
     *r_smtype = NULL;
 
   /* Read the headers into an rfc822 object. */
-  msg = rfc822parse_open (get_message_content_type_cb, NULL);
+  msg = rfc822parse_open (parse_headers_cb, NULL);
   if (!msg)
     {
       log_error ("%s:%s: rfc822parse_open failed",
@@ -3558,4 +3558,130 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
 
    mapi_release_attach_table (table);
    TRETURN 0; /* No original attachment - this should not happen.  */
+}
+
+static std::string
+ac_get_value (const char *header, const char *what)
+{
+  TSTART;
+  if (!header || !what)
+    {
+      STRANGEPOINT;
+      TRETURN std::string();
+    }
+
+  const char *s = strstr (header, what);
+  if (!s)
+    {
+      log_debug ("%s:%s: could not find %s in autocrypt header",
+                 SRCNAME, __func__, what);
+      TRETURN std::string();
+    }
+  /* As we found it we can be sure that this is not out
+     of bounds. */
+  s += strlen (what);
+
+  if (*s != '=')
+    {
+      log_debug ("%s:%s: No equal sign after %s in autocrypt header %s",
+                 SRCNAME, __func__, what, s);
+      TRETURN std::string();
+    }
+
+  /* Move over the = sign. */
+  s++;
+
+  /* Find the sep */
+  const char *s2 = strchr (s, ';');
+  if (!s2)
+    {
+      /* No seperator found. Assume the rest is the value */
+      TRETURN s;
+    }
+
+  /* From the equal to the ; is our value. */
+  TRETURN std::string (s, s2 - s);
+}
+
+static GpgME::Data
+prepare_key_data (const std::string &d)
+{
+  TSTART;
+  if (d.empty())
+    {
+      STRANGEPOINT;
+      TRETURN GpgME::Data();
+    }
+
+  /* Prepare the keydata */
+  b64_state_t base64;     /* The state of the Base-64 decoder.  */
+  b64_init (&base64);
+
+  /* strdup and not xstrdup as we want GpgME to take over */
+  char *b64decoded = strdup (d.c_str());
+  size_t len = b64_decode (&base64, b64decoded, strlen(b64decoded));
+
+  if (!len)
+    {
+      log_error ("%s:%s: Invalid base64 in %s", SRCNAME, __func__,
+                 b64decoded);
+      xfree (b64decoded);
+      TRETURN GpgME::Data();
+    }
+
+  auto data = GpgME::Data (b64decoded, len, false /* take ownership */);
+
+  TRETURN data;
+}
+
+bool
+mapi_get_header_info (LPMESSAGE message,
+                      autocrypt_s &r_autocrypt)
+{
+  TSTART;
+  rfc822parse_t msg;
+
+  /* Read the headers into an rfc822 object. */
+  msg = rfc822parse_open (parse_headers_cb, NULL);
+  if (!msg)
+    {
+      log_error ("%s:%s: rfc822parse_open failed",
+                 SRCNAME, __func__);
+      TRETURN false;
+    }
+
+  const std::string hdrStr = mapi_get_header (message);
+  if (hdrStr.empty())
+    {
+
+      log_error ("%s:%s: failed to get headers",
+                 SRCNAME, __func__);
+      rfc822parse_close (msg);
+      TRETURN false;
+    }
+
+  size_t length;
+  const char *header_lines = hdrStr.c_str();
+  const char *s;
+  while ((s = strchr (header_lines, '\n')))
+    {
+      length = (s - header_lines);
+      if (length && s[-1] == '\r')
+        length--;
+
+      rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
+      header_lines = s+1;
+    }
+
+  const char *ac_field = rfc822parse_get_field (msg, "Autocrypt", -1, 0);
+  if (ac_field)
+    {
+      r_autocrypt.exists = true;
+      r_autocrypt.addr = ac_get_value (ac_field, "addr");
+      r_autocrypt.data = prepare_key_data (ac_get_value (ac_field, "keydata"));
+      r_autocrypt.pref = ac_get_value (ac_field, "prefer-encrypt");
+    }
+
+  rfc822parse_close (msg);
+  TRETURN true;
 }

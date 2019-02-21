@@ -285,6 +285,28 @@ ParseController::setSender(const std::string &sender)
   TRETURN;
 }
 
+static void
+handle_autocrypt_info (const autocrypt_s &info)
+{
+  TSTART;
+  if (info.pref.size() && info.pref != "mutual")
+    {
+      log_debug ("%s:%s: Autocrypt preference is %s which is unhandled.",
+                 SRCNAME, __func__, info.pref.c_str());
+      TRETURN;
+    }
+
+#ifndef BUILD_TESTS
+  if (!KeyCache::import_pgp_key_data (info.data))
+    {
+      log_error ("%s:%s: Failed to import", SRCNAME, __func__);
+    }
+#endif
+  /* No need to free b64decoded as gpgme_data_release handles it */
+
+  TRETURN;
+}
+
 static bool
 is_valid_chksum(const GpgME::Signature &sig)
 {
@@ -327,6 +349,11 @@ ParseController::parse()
   Data input (m_inputprovider);
 
   auto inputType = input.type ();
+
+  if (m_autocrypt_info.exists)
+    {
+      handle_autocrypt_info (m_autocrypt_info);
+    }
 
   if (inputType == Data::Type::PGPSigned)
     {

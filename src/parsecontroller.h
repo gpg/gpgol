@@ -98,6 +98,9 @@ public:
   bool shouldBlockHtml() const
   { return m_block_html; }
 
+  void setAutocryptInfo (const autocrypt_s & info)
+  { m_autocrypt_info = info; }
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;
@@ -108,6 +111,7 @@ private:
   GpgME::VerificationResult m_verify_result;
   std::string m_sender;
   bool m_block_html;
+  autocrypt_s m_autocrypt_info; /* Autocrypt info about the mail */
 };
 
 #endif /* PARSECONTROLLER_H */
