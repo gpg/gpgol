@@ -1021,7 +1021,7 @@ CryptController::update_mail_mapi ()
 
   /* When we forward e.g. a crypto mail we have sent the message
      has a MOSSTEMPL. We need to remove that. T4321 */
-  for (ULONG pos=0; !att_table[pos].end_of_table; pos++)
+  for (ULONG pos=0; att_table && !att_table[pos].end_of_table; pos++)
     {
       if (att_table[pos].attach_type == ATTACHTYPE_MOSSTEMPL)
         {
