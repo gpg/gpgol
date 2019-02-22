@@ -51,6 +51,7 @@
 #define ID_GET_IS_CRYPTO_MAIL 35
 #define ID_CMD_OPEN_CONTACT_KEY 36
 #define ID_CMD_FILE_CLOSE 37
+#define ID_CMD_DECRYPT_PERMANENTLY 38
 
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -91,4 +92,6 @@ HRESULT print_decrypted (LPDISPATCH ctrl);
 HRESULT open_contact_key (LPDISPATCH ctrl);
 /* An explorer is closed by File->Close */
 HRESULT override_file_close ();
+/* Decrypt permanently */
+HRESULT decrypt_permanently (LPDISPATCH ctrl);
 #endif

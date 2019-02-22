@@ -718,6 +718,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"printDecrypted", ID_CMD_PRINT_DECRYPTED)
       ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
       ID_MAPPER (L"overrideFileClose", ID_CMD_FILE_CLOSE)
+      ID_MAPPER (L"decryptPermanently", ID_CMD_DECRYPT_PERMANENTLY)
     }
 
   if (cNames > 1)
@@ -805,6 +806,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
           }
       case ID_CMD_PRINT_DECRYPTED:
         return print_decrypted (parms->rgvarg[0].pdispVal);
+      case ID_CMD_DECRYPT_PERMANENTLY:
+        return decrypt_permanently (parms->rgvarg[0].pdispVal);
       case ID_GET_IS_CRYPTO_MAIL:
         return get_is_crypto_mail (parms->rgvarg[0].pdispVal, result);
       case ID_CMD_OPEN_CONTACT_KEY:
@@ -1035,6 +1038,13 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "           getVisible=\"getIsCrypto\""
         "           insertAfterMso=\"FilePrintQuick\""
         "   />"
+        "   <button id=\"decryptPermanentlyBtn\""
+        "           label=\"%s\""
+        "           onAction=\"decryptPermanently\""
+        "           getImage=\"btnEncryptSmall\""
+        "           getVisible=\"getIsCrypto\""
+//"           insertAfterMso=\"FilePrintQuick\""
+        "   />"
         "  </contextMenu>"
         " </contextMenus>"
         "</customUI>",
@@ -1045,7 +1055,8 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip,
-        _("&amp;Print decrypted")
+        _("&amp;Print decrypted"),
+        _("Permanenlty &amp;decrypt")
         );
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))

@@ -601,6 +601,9 @@ public:
   /* Get the storeID for this mail */
   std::string storeID() { return m_store_id; }
 
+  /* Remove encryption permanently. */
+  void decryptPermanently_o ();
+
 private:
   void updateCategories_o ();
   void updateSigstate ();

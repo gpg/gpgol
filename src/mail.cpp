@@ -3925,3 +3925,45 @@ Mail::releaseCurrentItem()
   gpgol_release (tmp);
   TRETURN;
 }
+
+void
+Mail::decryptPermanently_o()
+{
+  if (!m_needs_wipe)
+    {
+      log_debug ("%s:%s: Mail does not yet need wipe. Called to early?",
+                 SRCNAME, __func__);
+      return;
+    }
+
+  /* Drop our state variables */
+  m_decrypt_result = GpgME::DecryptionResult();
+  m_verify_result = GpgME::VerificationResult();
+  m_needs_wipe = false;
+  m_processed = false;
+  m_is_smime = false;
+  m_type = MSGTYPE_UNKNOWN;
+
+  /* Remove our own attachments */
+  removeOurAttachments_o ();
+
+  updateSigstate();
+
+  removeCategories_o ();
+
+  auto msg = MAKE_SHARED (get_oom_base_message (m_mailitem));
+  if (!msg)
+    {
+      STRANGEPOINT;
+      return;
+    }
+  mapi_delete_gpgol_tags ((LPMESSAGE)msg.get());
+
+  mapi_set_mesage_class ((LPMESSAGE)msg.get(), "IPM.Note");
+
+  if (invoke_oom_method (m_mailitem, "Save", NULL))
+    {
+      log_error ("Failed to save decrypted mail: %p ", m_mailitem);
+    }
+  return;
+}

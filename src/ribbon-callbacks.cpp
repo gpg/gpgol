@@ -810,6 +810,21 @@ HRESULT print_decrypted (LPDISPATCH ctrl)
   return S_OK;
 }
 
+HRESULT decrypt_permanently (LPDISPATCH ctrl)
+{
+  MY_MAIL_GETTER
+
+  if (!mail)
+    {
+      log_error ("%s:%s: Failed to get mail.",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+
+  mail->decryptPermanently_o ();
+  return S_OK;
+}
+
 HRESULT open_contact_key (LPDISPATCH ctrl)
 {
   if (!ctrl)
