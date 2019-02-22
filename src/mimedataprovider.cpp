@@ -1107,6 +1107,10 @@ void MimeDataProvider::finalize ()
           else
             {
               m_internal_subject = subject + strlen ("Subject: ");
+              if (m_internal_subject.size())
+                {
+                  m_internal_subject = rfc2047_parse (m_internal_subject.c_str ());
+                }
             }
         }
     }
