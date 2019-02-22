@@ -118,6 +118,12 @@ int mapi_body_to_attachment (LPMESSAGE message);
 /* Get malloced uid of a message */
 char * mapi_get_uid (LPMESSAGE message);
 
+/* Remove the gpgol specific mapi tags */
+void mapi_delete_gpgol_tags (LPMESSAGE message);
+
+/* Explicitly change the message class */
+void mapi_set_mesage_class (LPMESSAGE message, const char *cls);
+
 #ifdef __cplusplus
 }
 #include <string>

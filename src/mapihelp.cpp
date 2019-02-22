@@ -3685,3 +3685,60 @@ mapi_get_header_info (LPMESSAGE message,
   rfc822parse_close (msg);
   TRETURN true;
 }
+
+void
+mapi_delete_gpgol_tags (LPMESSAGE message)
+{
+  if (!message)
+    {
+      STRANGEPOINT;
+      return;
+    }
+
+  ULONG tag;
+  if (!get_gpgolmsgclass_tag (message, &tag))
+    {
+      HRESULT hr;
+      SPropTagArray proparray;
+      proparray.cValues = 1;
+      proparray.aulPropTag[0] = tag;
+      hr = message->DeleteProps (&proparray, NULL);
+      if (hr)
+        {
+          log_error ("%s:%s: deleteprops failed: hr=%#lx\n",
+                     SRCNAME, __func__, hr);
+
+        }
+    }
+}
+
+void
+mapi_set_mesage_class (LPMESSAGE message, const char *cls)
+{
+  if (!message || !cls)
+    {
+      STRANGEPOINT;
+      return;
+    }
+  HRESULT hr;
+  SPropValue prop;
+  prop.ulPropTag = PR_MESSAGE_CLASS_A;
+  prop.Value.lpszA = xstrdup (cls);
+  hr = HrSetOneProp (message, &prop);
+  xfree (prop.Value.lpszA);
+
+  if (hr)
+    {
+      log_error ("%s:%s: set msg class failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+
+    }
+
+  hr = mapi_save_changes (message, KEEP_OPEN_READWRITE);
+  if (hr)
+    {
+      log_error ("%s:%s: save failed: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+
+    }
+}
