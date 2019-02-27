@@ -3934,12 +3934,16 @@ Mail::releaseCurrentItem()
 void
 Mail::decryptPermanently_o()
 {
+  TSTART;
   if (!m_needs_wipe)
     {
       log_debug ("%s:%s: Mail does not yet need wipe. Called to early?",
                  SRCNAME, __func__);
       return;
     }
+
+  /* Remove the existing categories */
+  removeCategories_o ();
 
   /* Drop our state variables */
   m_decrypt_result = GpgME::DecryptionResult();
@@ -3954,13 +3958,11 @@ Mail::decryptPermanently_o()
 
   updateSigstate();
 
-  removeCategories_o ();
-
   auto msg = MAKE_SHARED (get_oom_base_message (m_mailitem));
   if (!msg)
     {
       STRANGEPOINT;
-      return;
+      TRETURN;
     }
   mapi_delete_gpgol_tags ((LPMESSAGE)msg.get());
 
@@ -3970,5 +3972,10 @@ Mail::decryptPermanently_o()
     {
       log_error ("Failed to save decrypted mail: %p ", m_mailitem);
     }
-  return;
+
+  log_debug ("%s:%s: Delayed invalidate to update sigstate after perm dec.",
+             SRCNAME, __func__);
+  CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
+                            NULL));
+  TRETURN;
 }
