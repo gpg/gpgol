@@ -1969,6 +1969,11 @@ Mail::isSMIME_m ()
     }
   gpgol_release (message);
   m_is_smime_checked  = true;
+
+  log_debug ("%s:%s: Detected %s mail",
+             SRCNAME, __func__,
+             m_is_smime ? "S/MIME" : "not S/MIME");
+
   TRETURN m_is_smime;
 }
 
