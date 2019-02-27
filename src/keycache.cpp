@@ -609,6 +609,15 @@ public:
          fpr */
       const char *primaryFpr = key.primaryFingerprint ();
 
+#if 0
+        {
+          std::stringstream ss;
+          ss << key;
+          log_debug ("%s:%s: Inserting key\n%s",
+                     SRCNAME, __func__, ss.str().c_str ());
+        }
+#endif
+
       for (const auto &sub: key.subkeys())
         {
           const char *subFpr = sub.fingerprint();
