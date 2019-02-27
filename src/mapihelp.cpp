@@ -3095,18 +3095,17 @@ set_gpgol_draft_info_flags (LPMESSAGE message, int flags)
 /* Helper for mapi_get_msg_content_type() */
 static int
 parse_headers_cb (void *dummy_arg,
-                             rfc822parse_event_t event, rfc822parse_t msg)
+                  rfc822parse_event_t event, rfc822parse_t msg)
 {
-  TSTART;
   (void)dummy_arg;
   (void)msg;
 
   if (event == RFC822PARSE_T2BODY)
     {
-      TRETURN 42; /* Hack to stop the parsing after having read the
+      return 42; /* Hack to stop the parsing after having read the
                      outer headers. */
     }
-  TRETURN 0;
+  return 0;
 }
 
 
