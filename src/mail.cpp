@@ -951,7 +951,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, mail->cryptState ());
-      mail->setWindowEnabled_o (true);
+      mail->enableWindow ();
       gpgol_unlock (&dtor_lock);
       TRETURN -1;
     }
@@ -966,7 +966,7 @@ do_crypt (LPVOID arg)
       log_error ("%s:%s: no crypter found for mail: %p",
                  SRCNAME, __func__, arg);
       gpgol_unlock (&parser_lock);
-      mail->setWindowEnabled_o (true);
+      mail->enableWindow ();
       TRETURN -1;
     }
 
@@ -982,7 +982,7 @@ do_crypt (LPVOID arg)
       TRETURN 0;
     }
 
-  mail->setWindowEnabled_o (true);
+  mail->enableWindow ();
 
   if (rc == -1 || err)
     {
@@ -1635,12 +1635,12 @@ Mail::encryptSignStart_o ()
 
   // Careful from here on we have to check every
   // error condition with window enabling again.
-  setWindowEnabled_o (false);
+  disableWindow_o ();
   if (m_crypter->collect_data ())
     {
       log_error ("%s:%s: Crypter for mail %p failed to collect data.",
                  SRCNAME, __func__, this);
-      setWindowEnabled_o (true);
+      enableWindow ();
       TRETURN -1;
     }
 
@@ -3368,17 +3368,30 @@ Mail::updateCryptOOM_o ()
 }
 
 void
-Mail::setWindowEnabled_o (bool value)
+Mail::enableWindow ()
 {
   TSTART;
-  if (!value)
+  if (!m_window)
     {
-      m_window = get_active_hwnd ();
+      log_error ("%s:%s:enable window which was not disabled",
+                 SRCNAME, __func__);
     }
-  log_debug ("%s:%s: enable window %p %i",
-             SRCNAME, __func__, m_window, value);
+  log_debug ("%s:%s: enable window %p",
+             SRCNAME, __func__, m_window);
 
-  EnableWindow (m_window, value ? TRUE : FALSE);
+  EnableWindow (m_window, TRUE);
+  TRETURN;
+}
+
+void
+Mail::disableWindow_o ()
+{
+  TSTART;
+  m_window = get_active_hwnd ();
+  log_debug ("%s:%s: disable window %p",
+             SRCNAME, __func__, m_window);
+
+  EnableWindow (m_window, FALSE);
   TRETURN;
 }
 

@@ -470,10 +470,10 @@ public:
 
   /** Enable / Disable the window of this mail.
 
-    When value is false the active window will
-    be disabled and the handle stored for a later
-    enable. */
-  void setWindowEnabled_o (bool value);
+    When the window gets disabled the
+    handle is stored for a later enable. */
+  void disableWindow_o ();
+  void enableWindow ();
 
   /** Determine if the mail is an inline response.
 
