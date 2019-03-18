@@ -280,10 +280,11 @@ read_options (void)
      as the option for debuging was not read before. */
   free (val); val = NULL;
   if (opt.enable_debug)
-    log_debug ("enabled debug flags:%s%s%s\n",
+    log_debug ("enabled debug flags:%s%s%s%s\n",
                (opt.enable_debug & DBG_MEMORY)? " memory":"",
                (opt.enable_debug & DBG_DATA)? " data":"",
-               (opt.enable_debug & DBG_OOM)? " oom":""
+               (opt.enable_debug & DBG_OOM)? " oom":"",
+               (opt.enable_debug & DBG_TRACE)? " trace":""
                );
 
   opt.enable_smime = get_conf_bool ("enableSmime", 0);
