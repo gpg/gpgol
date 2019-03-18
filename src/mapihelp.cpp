@@ -471,6 +471,54 @@ mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
   TRETURN result;
 }
 
+/* Return the data of the first attachment as string. Returns empty
+   string on failure. */
+static std::string
+mapi_get_first_attach_data (LPMESSAGE message)
+{
+  TSTART;
+  HRESULT hr;
+  LPSTREAM stream = nullptr;
+  ULONG bRead;
+  std::string ret;
+  if (!message)
+    {
+      STRANGEPOINT;
+      TRETURN ret;
+    }
+
+  mapi_attach_item_t *table = mapi_create_attach_table (message, 0);
+  if (table->end_of_table)
+    {
+      log_debug ("%s:%s: Message has no attachments",
+                 SRCNAME, __func__);
+      mapi_release_attach_table (table);
+      TRETURN ret;
+    }
+
+  stream = mapi_get_attach_as_stream (message, table, nullptr);
+  mapi_release_attach_table (table);
+  if (!stream)
+    {
+      log_debug ("%s:%s: Failed to get attachment as stream",
+                 SRCNAME, __func__);
+      TRETURN ret;
+    }
+  char buf[8192];
+  while ((hr = stream->Read (buf, 8192, &bRead)) == S_OK ||
+         hr == S_FALSE)
+    {
+      if (!bRead)
+        {
+          // EOF
+          break;
+        }
+      ret += std::string (buf, bRead);
+    }
+  gpgol_release (stream);
+
+  TRETURN ret;
+}
 
 /* Return the headers as ASCII string. Returns empty
    string on failure. */
@@ -1162,22 +1210,6 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
         {
           newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
         }
-      else if (ct && !strcmp (ct, "application/ms-tnef"))
-        {
-          /* So no PGP Inline. Lets look at the attachment. */
-          char *attach_mime = get_first_attach_mime_tag (message);
-          if (!attach_mime)
-            {
-              xfree (ct);
-              xfree (proto);
-              TRETURN nullptr;
-            }
-          if (!strcmp (attach_mime, "multipart/signed"))
-            {
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-              xfree (attach_mime);
-            }
-        }
       else if (!opt.enable_smime)
         ; /* S/MIME not enabled; thus no further checks.  */
       else if (smtype)
@@ -1192,6 +1224,13 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
               else if (!strcmp (smtype, "enveloped-data"))
                 newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
             }
+        }
+      else if (proto && !strcmp (ct, "multipart/signed")
+               && (!strcmp (proto, "application/pkcs7-signature")
+                   || !strcmp (proto, "application/x-pkcs7-signature")))
+        {
+          log_debug ("%s:%s:   protocol is '%s'", SRCNAME, __func__, proto);
+          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
         }
       else
         {
@@ -1237,7 +1276,11 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
 
   /* If we did not found anything but let's change the class anyway.  */
   if (!newvalue && opt.enable_smime)
-    newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+    {
+      log_debug ("%s:%s WARNING: Failed to detect smime. Fallback "
+                 "to OpaqueEncrypted", SRCNAME, __func__);
+      newvalue = xstrdup ("IPM.Note.GpgOL.OpaqueEncrypted");
+    }
 
   TRETURN newvalue;
 }
@@ -1269,22 +1312,6 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
       else if (!strcmp (ct, "wks.confirmation.mail"))
         {
           newvalue = xstrdup ("IPM.Note.GpgOL.WKSConfirmation");
-        }
-      else if (ct && !strcmp (ct, "application/ms-tnef"))
-        {
-          /* So no PGP Inline. Lets look at the attachment. */
-          char *attach_mime = get_first_attach_mime_tag (message);
-          if (!attach_mime)
-            {
-              xfree (ct);
-              xfree (proto);
-              TRETURN nullptr;
-            }
-          if (!strcmp (attach_mime, "multipart/signed"))
-            {
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-              xfree (attach_mime);
-            }
         }
       xfree (proto);
       xfree (ct);
@@ -3109,6 +3136,59 @@ parse_headers_cb (void *dummy_arg,
   return 0;
 }
 
+/* Parses a std::string and returns an rfc822_parse_t with
+   the result. Can return NULL on error. Caller must
+   free the returned context.
+
+   r_is_wks is set to true in case of a WKS Confirmation mail.
+   */
+static
+rfc822parse_t parse_header_data (const std::string &hdrStr,
+                                 bool &r_is_wks)
+{
+  TSTART;
+  rfc822parse_t msg = nullptr;
+
+  if (hdrStr.empty())
+    {
+      log_error ("%s:%s: called with empty string",
+                 SRCNAME, __func__);
+      TRETURN nullptr;
+    }
+
+  /* Read the headers into an rfc822 object. */
+  msg = rfc822parse_open (parse_headers_cb, NULL);
+  if (!msg)
+    {
+      log_error ("%s:%s: rfc822parse_open failed",
+                 SRCNAME, __func__);
+      TRETURN nullptr;
+    }
+
+  const char *s = nullptr;
+  const char *header_lines = hdrStr.c_str();
+  size_t length;
+  while ((s = strchr (header_lines, '\n')))
+    {
+      length = (s - header_lines);
+      if (length && s[-1] == '\r')
+        length--;
+
+      if (!strncmp ("Wks-Phase: confirm", header_lines,
+                    std::max (18, (int) length)))
+        {
+          log_debug ("%s:%s: detected wks confirmation mail",
+                     SRCNAME, __func__);
+          rfc822parse_close (msg);
+          r_is_wks = true;
+          TRETURN nullptr;
+        }
+
+      rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
+      header_lines = s+1;
+    }
+  TRETURN msg;
+}
 
 /* Return Content-Type of the current message.  This one is taken
    directly from the rfc822 header.  If R_PROTOCOL is not NULL a
@@ -3121,25 +3201,15 @@ mapi_get_message_content_type (LPMESSAGE message,
                                char **r_protocol, char **r_smtype)
 {
   TSTART;
-  rfc822parse_t msg;
-  const char *header_lines, *s;
-  rfc822parse_field_t ctx;
-  size_t length;
+  const char *s;
   char *retstr = NULL;
+
+  bool isWks = false;
 
   if (r_protocol)
     *r_protocol = NULL;
   if (r_smtype)
     *r_smtype = NULL;
-
-  /* Read the headers into an rfc822 object. */
-  msg = rfc822parse_open (parse_headers_cb, NULL);
-  if (!msg)
-    {
-      log_error ("%s:%s: rfc822parse_open failed",
-                 SRCNAME, __func__);
-      TRETURN NULL;
-    }
 
   const std::string hdrStr = mapi_get_header (message);
   if (hdrStr.empty())
@@ -3147,41 +3217,82 @@ mapi_get_message_content_type (LPMESSAGE message,
 
       log_error ("%s:%s: failed to get headers",
                  SRCNAME, __func__);
-      rfc822parse_close (msg);
       TRETURN NULL;
     }
 
-  header_lines = hdrStr.c_str();
-  while ((s = strchr (header_lines, '\n')))
+  rfc822parse_t msg = parse_header_data (hdrStr, isWks);
+  if (!msg)
     {
-      length = (s - header_lines);
-      if (length && s[-1] == '\r')
-        length--;
-
-      if (!strncmp ("Wks-Phase: confirm", header_lines,
-                    std::max (18, (int) length)))
+      if (isWks)
         {
-          log_debug ("%s:%s: detected wks confirmation mail",
-                     SRCNAME, __func__);
-          retstr = xstrdup ("wks.confirmation.mail");
-          rfc822parse_close (msg);
-          TRETURN retstr;
+          TRETURN xstrdup ("wks.confirmation.mail");
         }
-
-      rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
-      header_lines = s+1;
+      log_error ("%s:%s: failed to parse headers",
+                 SRCNAME, __func__);
+      TRETURN NULL;
     }
-
   /* Parse the content-type field. */
-  ctx = rfc822parse_parse_field (msg, "Content-Type", -1);
+  rfc822parse_field_t ctx = rfc822parse_parse_field (msg, "Content-Type", -1);
   if (ctx)
     {
       const char *s1, *s2;
+      rfc822parse_t tnef_msg = nullptr;
       s1 = rfc822parse_query_media_type (ctx, &s2);
       if (s1)
         {
           retstr = (char*)xmalloc (strlen (s1) + 1 + strlen (s2) + 1);
           strcpy (stpcpy (stpcpy (retstr, s1), "/"), s2);
+
+          if (!strcmp (retstr, "application/ms-tnef"))
+            {
+              char *attach_mime = get_first_attach_mime_tag (message);
+              if (attach_mime && !strcmp (attach_mime, "multipart/signed"))
+                {
+                  log_debug ("%s:%s: Found multipart signed ms-tnef mail.",
+                             SRCNAME, __func__);
+                  /* Let's look in the first attachment for the real
+                     message to figure out the real content type. */
+                  const auto attach_data = mapi_get_first_attach_data (message);
+                  tnef_msg = parse_header_data (attach_data, isWks);
+                  if (tnef_msg)
+                    {
+                      rfc822parse_field_t ctx2;
+                      ctx2 = rfc822parse_parse_field (tnef_msg,
+                                                      "Content-Type", -1);
+                      if (ctx2)
+                        {
+                          s1 = rfc822parse_query_media_type (ctx2, &s2);
+                          if (s1)
+                            {
+                              xfree (retstr);
+                              retstr = (char*)xmalloc (strlen (s1) + 1 +
+                                                       strlen (s2) + 1);
+                              strcpy (stpcpy (stpcpy (retstr, s1), "/"), s2);
+                              rfc822parse_release_field (ctx);
+                              ctx = ctx2;
+                            }
+                          else
+                            {
+                              log_error ("%s:%s: Failed to find ct in ms-tnef.",
+                                         SRCNAME, __func__);
+                              rfc822parse_release_field (ctx2);
+                            }
+                        }
+                    }
+                  else
+                    {
+                      log_error ("%s:%s: Failed to parse ms-tnef.",
+                                 SRCNAME, __func__);
+                      if (isWks)
+                        {
+                          xfree (retstr);
+                          rfc822parse_close (msg);
+                          TRETURN xstrdup ("wks.confirmation.mail");
+                        }
+                    }
+                }
+              xfree (attach_mime);
+            }
 
           if (r_protocol)
             {
@@ -3197,6 +3308,10 @@ mapi_get_message_content_type (LPMESSAGE message,
             }
         }
       rfc822parse_release_field (ctx);
+      if (tnef_msg)
+        {
+          rfc822parse_close (tnef_msg);
+        }
     }
 
   rfc822parse_close (msg);
