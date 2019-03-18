@@ -970,7 +970,8 @@ get_first_attach_mime_tag (LPMESSAGE message)
                  SRCNAME, __func__, hr);
       TRETURN NULL;
     }
-      
+  memdbg_addRef (mapitable);
+
   hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
                        NULL, NULL, 0, &mapirows);
   if (FAILED (hr))
