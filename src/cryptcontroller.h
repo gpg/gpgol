@@ -26,6 +26,7 @@
 #endif
 
 #include <gpgme++/data.h>
+#include <string.h>
 
 class Mail;
 class Overlay;
@@ -55,11 +56,12 @@ public:
       Can be called in a different thread then the UI Thread.
 
       An operational error is returned in the passed err
-      variable.
+      variable. Additional diagnostic output is passed
+      through r_diag.
 
       @returns 0 on success.
   */
-  int do_crypto (GpgME::Error &err);
+  int do_crypto (GpgME::Error &err, std::string &r_diag);
 
   /** @brief Update the MAPI structure of the mail with
     the result. */

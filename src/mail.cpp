@@ -971,7 +971,8 @@ do_crypt (LPVOID arg)
     }
 
   GpgME::Error err;
-  int rc = crypter->do_crypto(err);
+  std::string diag;
+  int rc = crypter->do_crypto(err, diag);
 
   gpgol_lock (&dtor_lock);
   if (!Mail::isValidPtr (mail))
@@ -993,9 +994,18 @@ do_crypt (LPVOID arg)
           char *buf = nullptr;
           gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
                           err.asString());
+          std::string msg = buf;
           memdbg_alloc (buf);
-          gpgol_message_box (mail->getWindow (), buf, _("GpgOL"), MB_OK);
           xfree (buf);
+          if (!diag.empty())
+            {
+              msg += "\n\n";
+              msg += _("Diagnostics");
+              msg += ":\n";
+              msg += diag;
+            }
+          gpgol_message_box (mail->getWindow (), msg.c_str (),
+                             _("GpgOL"), MB_OK);
         }
       else
         {

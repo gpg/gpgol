@@ -616,7 +616,7 @@ CryptController::resolve_keys ()
 }
 
 int
-CryptController::do_crypto (GpgME::Error &err)
+CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
 {
   TSTART;
   log_debug ("%s:%s",
@@ -649,7 +649,7 @@ CryptController::do_crypto (GpgME::Error &err)
       m_bodyInput = GpgME::Data(GpgME::Data::null);
     }
 
-  auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol(m_proto));
+  auto ctx = GpgME::Context::create(m_proto);
 
   if (!ctx)
     {
@@ -684,6 +684,13 @@ CryptController::do_crypto (GpgME::Error &err)
                      SRCNAME, __func__, result_pair.first.error().asString(),
                      result_pair.second.error().asString());
           err = err1 ? err1 : err2;
+          GpgME::Data log;
+          const auto err3 = ctx->getAuditLog (log,
+                                              GpgME::Context::DiagnosticAuditLog);
+          if (!err3)
+            {
+              r_diag = log.toString();
+            }
           TRETURN -1;
         }
 
@@ -705,6 +712,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Signing error %s.",
                      SRCNAME, __func__, sigResult.error().asString());
+          GpgME::Data log;
+          const auto err3 = ctx->getAuditLog (log,
+                                              GpgME::Context::DiagnosticAuditLog);
+          if (!err3)
+            {
+              r_diag = log.toString();
+            }
           TRETURN -1;
         }
       if (err.isCanceled())
@@ -747,6 +761,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Encryption error %s.",
                      SRCNAME, __func__, err.asString());
+          GpgME::Data log;
+          const auto err3 = ctx->getAuditLog (log,
+                                              GpgME::Context::DiagnosticAuditLog);
+          if (!err3)
+            {
+              r_diag = log.toString();
+            }
           TRETURN -1;
         }
       if (err.isCanceled())
@@ -767,6 +788,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Encryption error %s.",
                      SRCNAME, __func__, err.asString());
+          GpgME::Data log;
+          const auto err3 = ctx->getAuditLog (log,
+                                              GpgME::Context::DiagnosticAuditLog);
+          if (!err3)
+            {
+              r_diag = log.toString();
+            }
           TRETURN -1;
         }
       if (err.isCanceled())
@@ -786,6 +814,13 @@ CryptController::do_crypto (GpgME::Error &err)
         {
           log_error ("%s:%s: Signing error %s.",
                      SRCNAME, __func__, err.asString());
+          GpgME::Data log;
+          const auto err3 = ctx->getAuditLog (log,
+                                              GpgME::Context::DiagnosticAuditLog);
+          if (!err3)
+            {
+              r_diag = log.toString();
+            }
           TRETURN -1;
         }
       if (err.isCanceled())
