@@ -3962,7 +3962,14 @@ Mail::decryptPermanently_o()
     {
       log_debug ("%s:%s: Mail does not yet need wipe. Called to early?",
                  SRCNAME, __func__);
-      return;
+      TRETURN;
+    }
+
+  if (!m_decrypt_result.isNull() && m_decrypt_result.error())
+    {
+      log_debug ("%s:%s: Decrypt result had error. Can't decrypt permanently.",
+                 SRCNAME, __func__);
+      TRETURN;
     }
 
   /* Remove the existing categories */
