@@ -36,6 +36,7 @@
 #include "oomhelp.h"
 #include "cpphelp.h"
 #include "gpgoladdin.h"
+#include "categorymanager.h"
 
 HRESULT
 gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
@@ -2007,7 +2008,7 @@ add_category (LPDISPATCH mail, const char *category)
   xfree (tmp);
   if (!newstr.empty ())
     {
-      newstr += ", ";
+      newstr += CategoryManager::getSeperator () + std::string (" ");
     }
   newstr += category;
 
@@ -2028,7 +2029,8 @@ remove_category (LPDISPATCH mail, const char *category, bool exactMatch)
   std::vector<std::string> categories;
   std::istringstream f(tmp);
   std::string s;
-  while (std::getline(f, s, ','))
+  const std::string sep = CategoryManager::getSeperator();
+  while (std::getline(f, s, *(sep.c_str())))
     {
       ltrim(s);
       categories.push_back(s);
@@ -2048,7 +2050,8 @@ remove_category (LPDISPATCH mail, const char *category, bool exactMatch)
       return cat.compare (0, categoryStr.size(), categoryStr) == 0;
     }), categories.end ());
   std::string newCategories;
-  join (categories, ", ", newCategories);
+  std::string newsep = sep + " ";
+  join (categories, newsep.c_str (), newCategories);
 
   TRETURN put_oom_string (mail, "Categories", newCategories.c_str ());
 }

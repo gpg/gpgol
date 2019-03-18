@@ -44,6 +44,9 @@ public:
     /** Get the CategoryManager */
     static std::shared_ptr<CategoryManager> instance ();
 
+    /** Get the Category seperator from the registry. */
+    static const std::string& getSeperator ();
+
     /** Add a category to a mail.
 
       @returns the storeID of the mail / category.

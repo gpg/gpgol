@@ -267,3 +267,20 @@ CategoryManager::getJunkMailCategory ()
     }
   return decStr;
 }
+
+/* static */
+const std::string&
+CategoryManager::getSeperator ()
+{
+  /* This is fun. I have no idea what
+    all breaks if this is changed at runtime so
+    we check it only once per run.*/
+  static std::string sep = readRegStr ("HKEY_CURRENT_USER",
+                                       "Control Panel\\International",
+                                       "sList");
+  if (sep.empty ())
+    {
+      sep = std::string (",");
+    }
+  return sep;
+}
