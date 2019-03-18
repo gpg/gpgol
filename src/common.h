@@ -43,6 +43,9 @@
 #define GPGOL_REGPATH "Software\\GNU\\GpgOL"
 
 #ifdef __cplusplus
+#include <string.h>
+std::string readRegStr (const char *root, const char *dir, const char *name);
+
 extern "C" {
 #if 0
 }
