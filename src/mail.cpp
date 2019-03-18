@@ -1956,7 +1956,8 @@ Mail::isSMIME_m ()
 
   msgtype = mapi_get_message_type (message);
   m_is_smime = msgtype == MSGTYPE_GPGOL_OPAQUE_ENCRYPTED ||
-               msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED;
+               msgtype == MSGTYPE_GPGOL_OPAQUE_SIGNED ||
+               msgtype == MSGTYPE_SMIME;
 
   /* Check if it is an smime mail. Multipart signed can
      also be true. */
