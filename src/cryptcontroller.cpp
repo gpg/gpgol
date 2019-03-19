@@ -913,13 +913,17 @@ create_sign_attach (sink_t sink, protocol_t protocol,
   if (protocol == PROTOCOL_OPENPGP)
     {
       rc = write_string (sink,
-                         "Content-Type: application/pgp-signature\r\n");
+                         "Content-Type: application/pgp-signature;\r\n"
+                         "\tname=\"" OPENPGP_SIG_NAME "\"\r\n"
+                         "Content-Transfer-Encoding: 7Bit\r\n");
     }
   else
     {
       rc = write_string (sink,
                          "Content-Transfer-Encoding: base64\r\n"
-                         "Content-Type: application/pkcs7-signature\r\n");
+                         "Content-Type: application/pkcs7-signature\r\n"
+                         "Content-Disposition: inline;\r\n"
+                         "\tfilename=\"" SMIME_SIG_NAME "\"\r\n");
       /* rc = write_string (sink, */
       /*                    "Content-Type: application/x-pkcs7-signature\r\n" */
       /*                    "\tname=\"smime.p7s\"\r\n" */

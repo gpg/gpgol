@@ -30,6 +30,11 @@ extern "C" {
 #endif
 #endif
 
+/* Names for our attachments */
+#define OPENPGP_ENC_NAME "openpgp-encrypted-message.asc"
+#define OPENPGP_SIG_NAME "openpgp-digital-signature.asc"
+#define SMIME_SIG_NAME "smime.p7s"
+
 /* The object we use instead of IStream.  It allows us to have a
    callback method for output and thus for processing stuff
    recursively.  */

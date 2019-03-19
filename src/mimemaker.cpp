@@ -1544,6 +1544,9 @@ create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
         return rc;
       rc = write_multistring (sink,
                               "Content-Type: application/octet-stream\r\n"
+                              "Content-Disposition: inline;\r\n"
+                              "\tfilename=\"" OPENPGP_ENC_NAME "\"\r\n"
+                              "Content-Transfer-Encoding: 7Bit\r\n"
                               "\r\n", NULL);
      }
 
