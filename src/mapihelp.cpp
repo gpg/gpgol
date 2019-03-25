@@ -2279,6 +2279,8 @@ get_attach_filename (LPATTACH obj)
   if (FAILED(hr)) 
     hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
   if (FAILED(hr))
+    hr = HrGetOneProp ((LPMAPIPROP)obj, PR_DISPLAY_NAME_W, &propval);
+  if (FAILED(hr))
     {
       log_debug ("%s:%s: no filename property found", SRCNAME, __func__);
       TRETURN NULL;
