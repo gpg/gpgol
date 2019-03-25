@@ -1078,7 +1078,7 @@ write_attachments (sink_t sink,
                 xfree (fmt);
 
                 msg += "\n\n";
-                msg += _("Send this message anyway?");
+                msg += _("Send anyway?");
                 warning_shown = true;
 
                 if (gpgol_message_box (get_active_hwnd (),

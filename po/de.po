@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2019-03-25 09:27+0100\n"
-"PO-Revision-Date: 2019-03-25 09:26+0100\n"
+"PO-Revision-Date: 2019-03-25 09:31+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -179,19 +179,19 @@ msgstr ""
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:84
 msgid "Also &with untrusted keys"
-msgstr ""
+msgstr "Auch &mit nicht vertrauenswürdigen Schlüsseln"
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
 #: src/addin-options.cpp:87
 msgid "&Import any keys included in mails"
-msgstr ""
+msgstr "Alle in Mails enthaltene Schlüssel &importieren"
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
 #: src/addin-options.cpp:90
 msgid "Import OpenPGP keys from mail attachments or from mail headers."
-msgstr ""
+msgstr "Importiert OpenPGP Schlüssel aus Anhägen oder aus den Mail Headern."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
@@ -449,7 +449,7 @@ msgstr "Entschlüsselt &amp;Drucken"
 
 #: src/gpgoladdin.cpp:1059
 msgid "Permanenlty &amp;decrypt"
-msgstr ""
+msgstr "Dauerhaft &amp;entschlüsseln"
 
 #: src/gpgoladdin.cpp:1123
 msgid "OpenPGP Key"
@@ -522,7 +522,7 @@ msgstr ""
 
 #: src/mail.cpp:1003
 msgid "Diagnostics"
-msgstr ""
+msgstr "Diagnose"
 
 #: src/mail.cpp:1125
 msgid "Pubkey directory confirmation"
@@ -963,6 +963,8 @@ msgid ""
 "The attachment '%s' is an Outlook item which is currently unsupported in "
 "crypto mails."
 msgstr ""
+"Der Anhang '%s' ist ein Outlook-Element das derzeit nicht in Krypto-Mails "
+"unterstützt wird."
 
 #: src/mimemaker.cpp:1068 src/mimemaker.cpp:1076
 msgid "Unknown"
@@ -971,12 +973,11 @@ msgstr "Unbekannt"
 #: src/mimemaker.cpp:1073
 #, c-format
 msgid "Please encrypt '%s' with Kleopatra and attach it as a file."
-msgstr ""
+msgstr "Bitte verschlüsseln Sie '%s' mit Kleopatra und hängen es als Datei an."
 
 #: src/mimemaker.cpp:1081
-#, fuzzy
 msgid "Send anyway?"
-msgstr "Trozdem senden?"
+msgstr "Trotzdem senden?"
 
 #: src/parsecontroller.cpp:211
 msgid "Unknown Key:"
