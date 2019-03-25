@@ -43,6 +43,9 @@
 #include "oomhelp.h"
 #include "mail.h"
 
+#undef _
+#define _(a) utf8_gettext (a)
+
 static const unsigned char oid_mimetag[] =
     {0x2A, 0x86, 0x48, 0x86, 0xf7, 0x14, 0x03, 0x0a, 0x04};
 
@@ -994,8 +997,15 @@ count_usable_attachments (mapi_attach_item_t *table)
   if (table)
     for (idx=0; !table[idx].end_of_table; idx++)
       if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
-          && table[idx].method == ATTACH_BY_VALUE)
-        count++;
+          && (table[idx].method == ATTACH_BY_VALUE
+              || table[idx].method == ATTACH_OLE
+              || table[idx].method == ATTACH_EMBEDDED_MSG))
+        {
+          /* OLE and embedded are usable becase we plan to
+             add support later. First version only handled
+             them with a warning in write attachments. */
+          count++;
+        }
   return count;
 }
 
@@ -1011,35 +1021,76 @@ write_attachments (sink_t sink,
   int idx, rc;
   char *buffer;
   size_t buflen;
+  bool warning_shown = false;
 
   if (table)
     for (idx=0; !table[idx].end_of_table; idx++)
-      if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
-          && table[idx].method == ATTACH_BY_VALUE)
-        {
-          if (only_related && !table[idx].content_id)
-            {
-              continue;
-            }
-          else if (!only_related && table[idx].content_id)
-            {
-              continue;
-            }
-          buffer = mapi_get_attach (message, table+idx, &buflen);
-          if (!buffer)
-            log_debug ("Attachment at index %d not found\n", idx);
-          else
-            log_debug ("Attachment at index %d: length=%d\n", idx, (int)buflen);
-          if (!buffer)
-            return -1;
-          rc = write_part (sink, buffer, buflen, boundary,
-                           table[idx].filename, 0, table[idx].content_id);
-          if (rc)
-            {
-              log_error ("Write part returned err: %i", rc);
-            }
-          xfree (buffer);
-        }
+      {
+        if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
+            && table[idx].method == ATTACH_BY_VALUE)
+          {
+            if (only_related && !table[idx].content_id)
+              {
+                continue;
+              }
+            else if (!only_related && table[idx].content_id)
+              {
+                continue;
+              }
+            buffer = mapi_get_attach (message, table+idx, &buflen);
+            if (!buffer)
+              log_debug ("Attachment at index %d not found\n", idx);
+            else
+              log_debug ("Attachment at index %d: length=%d\n", idx, (int)buflen);
+            if (!buffer)
+              return -1;
+            rc = write_part (sink, buffer, buflen, boundary,
+                             table[idx].filename, 0, table[idx].content_id);
+            if (rc)
+              {
+                log_error ("Write part returned err: %i", rc);
+              }
+            xfree (buffer);
+          }
+        else
+          {
+            if (!only_related && !warning_shown
+                && table[idx].attach_type == ATTACHTYPE_UNKNOWN
+                && (table[idx].method == ATTACH_OLE
+                    || table[idx].method == ATTACH_EMBEDDED_MSG))
+              {
+                char *fmt;
+                log_debug ("%s:%s: detected OLE attachment. Showing warning.",
+                           SRCNAME, __func__);
+                gpgrt_asprintf (&fmt, _("The attachment '%s' is an Outlook item "
+                                        "which is currently unsupported in crypto mails."),
+                                table[idx].filename ?
+                                table[idx].filename : _("Unknown"));
+                std::string msg = fmt;
+                msg += "\n\n";
+                xfree (fmt);
+
+                gpgrt_asprintf (&fmt, _("Please encrypt '%s' with Kleopatra "
+                                        "and attach it as a file."),
+                                table[idx].filename ?
+                                table[idx].filename : _("Unknown"));
+                msg += fmt;
+                xfree (fmt);
+
+                msg += "\n\n";
+                msg += _("Send this message anyway?");
+                warning_shown = true;
+
+                if (gpgol_message_box (get_active_hwnd (),
+                                       msg.c_str (),
+                                       _("Sorry, that's not possible, yet"),
+                                       MB_APPLMODAL | MB_YESNO) == IDNO)
+                  {
+                    return -1;
+                  }
+              }
+          }
+      }
   return 0;
 }
 
@@ -1452,6 +1503,10 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
   if (!rc && n_att_usable)
     rc = write_attachments (sink, message, att_table,
                             *outer_boundary? outer_boundary : NULL, 0);
+  if (rc)
+    {
+      return rc;
+    }
 
   /* Finish the possible multipart/mixed. */
   if (*outer_boundary && (rc = write_boundary (sink, outer_boundary, 1)))

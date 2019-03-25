@@ -10,6 +10,7 @@ src/mail.cpp
 src/mailitem-events.cpp
 src/main.c
 src/mapihelp.cpp
+src/mimemaker.cpp
 src/mymapi.h
 src/olflange.cpp
 src/olflange.h
