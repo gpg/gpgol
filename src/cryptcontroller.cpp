@@ -310,7 +310,8 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
     {
       log_error ("%s:%s: Encrypt requested but no recipient fingerprints",
                  SRCNAME, __func__);
-      gpgol_message_box (m_mail->getWindow (), _("No recipients for encryption selected."),
+      gpgol_message_box (m_mail->getWindow (),
+                         utf8_gettext ("No recipients for encryption selected."),
                          _("GpgOL"), MB_OK);
       TRETURN -2;
     }
