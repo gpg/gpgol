@@ -1,6 +1,31 @@
-Noteworthy changes for version 2.3.3 (unreleased)
+Noteworthy changes for version 2.3.3 (2019-03-26)
 =================================================
 
+ * Fixed external API for sent mails. (T4241)
+
+ * Fixed a crash in debug API. (T4262)
+
+ * Fixed some cases where S/MIME was not detected
+   correctly. (T4267, T4403)
+
+ * Fixed tooltip for bad signatures. (T4299)
+
+ * Fixed forwarding of sent mails. (T4321)
+
+ * Improved generated attachment names. (T4258)
+
+ * Added more, less secure automation options.
+
+ * Added minimalistic protected headers support.
+
+ * Added an option to decrypt mails permanently.
+
+ * Improved error handling in case encryption failed.
+
+ * No longer silently ignores unsupported attachments.
+ (T4184)
+
+ * Added external API to re-encrypt and decrypt. (T4241)
 
 Noteworthy changes for version 2.3.2 (2018-11-12)
 =================================================
