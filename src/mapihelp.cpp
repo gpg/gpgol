@@ -3521,8 +3521,29 @@ mapi_body_to_attachment (LPMESSAGE message)
   TRETURN hr? -1:0;
 }
 
+static int
+hide_attachment_mapipos (LPMESSAGE message, int pos)
+{
+  LPATTACH att = nullptr;
+  HRESULT hr = message->OpenAttach (pos, nullptr,
+                                    MAPI_BEST_ACCESS, &att);
+  if (hr != S_OK)
+    {
+      log_error ("%s:%s: can't open attachment at %d hr=%#lx",
+                 SRCNAME, __func__, pos, hr);
+      TRETURN -1;
+    }
+  memdbg_addRef (att);
+  log_debug ("%s:%s: Hiding attachment %i.",
+             SRCNAME, __func__, pos);
+  mapi_set_attach_hidden (att);
+  gpgol_release (att);
+  return 0;
+}
+
 int
-mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
+mapi_mark_or_create_moss_attach (LPMESSAGE message, LPMESSAGE parsed_message,
+                                 msgtype_t msgtype)
 {
   TSTART;
   int i;
@@ -3536,8 +3557,10 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
   mapi_attach_item_t *table = mapi_create_attach_table (message, 0);
   int part1 = 0,
       part2 = 0;
+  int have_mosstempl = 0;
   for (i = 0; table && !table[i].end_of_table; i++)
     {
+      have_mosstempl |= (table[i].attach_type == ATTACHTYPE_MOSSTEMPL);
       if (table[i].attach_type == ATTACHTYPE_PGPBODY ||
           table[i].attach_type == ATTACHTYPE_MOSS ||
           table[i].attach_type == ATTACHTYPE_MOSSTEMPL)
@@ -3545,6 +3568,11 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
           if (!part1)
             {
               part1 = i + 1;
+              if (have_mosstempl)
+                {
+                  /* If we have a MOSSTEMPL use that one. */
+                  break;
+                }
             }
           else if (!part2)
             {
@@ -3555,32 +3583,55 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
             }
         }
     }
+
+  if (have_mosstempl && parsed_message)
+    {
+      /* If we have a mosstempl. This means that we created
+         this message. Sometimes we get the situation in
+         sent mails that we have a mosstempl but the
+         pgp version header and octet streams also
+         attached in the parsed_message. We can't
+         trigger a reread from the base message so
+         in that case we want to hide everything
+         as we rebuild the message from our MOSS.
+
+         We don't delete here to avoid bugs where data loss
+         might occur.
+
+         See also: T4241
+         */
+      log_debug ("%s:%s: Found mosstempl. Hiding all other attachments.",
+                 SRCNAME, __func__);
+      mapi_attach_item_t *table2 = mapi_create_attach_table (parsed_message,
+                                                             0);
+      for (i = 0; table2 && !table2[i].end_of_table; i++)
+        {
+          hide_attachment_mapipos (parsed_message, table2[i].mapipos);
+        }
+      if (table2)
+        {
+          mapi_release_attach_table (table2);
+          /* GpgOL works on the OOM so we have to use
+             the MOSS parts from the parsed message. */
+          int parsed_part = mapi_mark_or_create_moss_attach (parsed_message,
+                                                             nullptr,
+                                                             msgtype);
+          if (parsed_part)
+            {
+              TRETURN parsed_part;
+            }
+        }
+    }
   if (part1 || part2)
     {
-      /* Found existing moss attachment */
-      mapi_release_attach_table (table);
       /* Remark to ensure that it is hidden. As our revert
          code must unhide it so that it is not stored in winmail.dat
          but used as the mosstmpl. */
       mapi_attach_item_t *item = table - 1 + (part2 ? part2 : part1);
-      LPATTACH att;
-      if (message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att) != S_OK)
-        {
-          log_error ("%s:%s: can't open attachment at %d",
-                     SRCNAME, __func__, item->mapipos);
-          TRETURN -1;
-        }
-      memdbg_addRef (att);
-      if (!mapi_test_attach_hidden (att))
-        {
-          mapi_set_attach_hidden (att);
-        }
-      gpgol_release (att);
-      if (part2)
-        {
-          TRETURN part2;
-        }
-      TRETURN part1;
+      hide_attachment_mapipos (message, item->mapipos);
+      mapi_release_attach_table (table);
+
+      TRETURN part2 ? part2 : part1;
     }
 
   if (msgtype == MSGTYPE_GPGOL_CLEAR_SIGNED ||
@@ -3599,7 +3650,8 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype)
       /* The position of the MOSS attach might change depending on
          the attachment count of the mail. So repeat the check to get
          the right position. */
-      TRETURN mapi_mark_or_create_moss_attach (message, msgtype);
+      TRETURN mapi_mark_or_create_moss_attach (message, parsed_message,
+                                               msgtype);
     }
   if (!table)
     {

@@ -110,7 +110,9 @@ int set_gpgol_draft_info_flags (LPMESSAGE message, int flags);
 /* Mark crypto attachments as hidden. And mark the moss
  attachment for later use. Returns the attachments position
  (1 is the first attachment) or 0 in case no attachment was found. */
-int mapi_mark_or_create_moss_attach (LPMESSAGE message, msgtype_t msgtype);
+int mapi_mark_or_create_moss_attach (LPMESSAGE base_message,
+                                     LPMESSAGE parsed_message,
+                                     msgtype_t msgtype);
 
 /* Copy the MAPI body to a PGPBODY type attachment. */
 int mapi_body_to_attachment (LPMESSAGE message);

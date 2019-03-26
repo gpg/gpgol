@@ -329,7 +329,10 @@ Mail::preProcessMessage_m ()
 
   /* Create moss attachments here so that they are properly
      hidden when the item is read into the model. */
-  m_moss_position = mapi_mark_or_create_moss_attach (message, m_type);
+  LPMESSAGE parsed_message = get_oom_message (m_mailitem);
+  m_moss_position = mapi_mark_or_create_moss_attach (message, parsed_message,
+                                                     m_type);
+  gpgol_release (parsed_message);
   if (!m_moss_position)
     {
       log_error ("%s:%s: Failed to find moss attachment.",
