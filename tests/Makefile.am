@@ -21,7 +21,7 @@
 
 GPG = gpg
 
-if HAVE_W32_SYSTEM
+if !HAVE_W32_SYSTEM
 TESTS = t-parser
 endif
 
