@@ -761,11 +761,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
           memdbg_dump ();
           TRETURN S_OK;
         }
-      /* Fallthrough */
       case ReplyAll:
       case Reply:
           is_reply = true;
-          __attribute__ ((fallthrough));
+          /* fall through */
       case Forward:
         {
           log_oom ("%s:%s: %s : %p",
