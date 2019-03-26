@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2019-03-25 09:27+0100\n"
-"PO-Revision-Date: 2018-10-09 16:56+0100\n"
+"PO-Revision-Date: 2019-03-25 13:09+0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@sapo.pt>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Poedit 2.2\n"
+"X-Generator: Poedit 2.2.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/addin-options.cpp:39
@@ -83,9 +83,8 @@ msgstr ""
 "encaminhar"
 
 #: src/addin-options.cpp:57
-#, fuzzy
 msgid "&Prefer S/MIME"
-msgstr "S/MIME"
+msgstr "&Preferir S/MIME"
 
 #: src/addin-options.cpp:60
 msgid "Enable or disable any automated key handling."
@@ -144,16 +143,14 @@ msgstr ""
 
 #: src/addin-options.cpp:73
 msgid "Prefer S/MIME over OpenPGP if both are possible."
-msgstr ""
+msgstr "Preferir S/MIME sobre OpenPGP se ambos são possíveis."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:76
-#, fuzzy
 msgid ""
 "Search and import &X509 certificates in the configured directory services"
 msgstr ""
-"Clica aqui para localizar o certificado no servidor de chaves X509 "
-"configurado."
+"Localiza e importa certificados &X509 nos serviços de diretoria configurados"
 
 #. TRANSLATORS: Part of the config dialog. Tooltip
 #: src/addin-options.cpp:78
@@ -161,6 +158,8 @@ msgid ""
 "Searches for X509 certificates automatically and imports them. This option "
 "searches in all configured services."
 msgstr ""
+"Localiza certificados X509 automaticamente e importa-os. Esta opção procura "
+"em todos os serviços configurados."
 
 #. TRANSLATORS: Part of the config dialog. Warning about privacy leak.
 #: src/addin-options.cpp:80
@@ -168,32 +167,33 @@ msgid ""
 "<b>Warning:</b> The configured services will receive information about whom "
 "you send Emails!"
 msgstr ""
+"<b>Aviso:</b> Os serviços configurados receberão informação sobre a quem "
+"envias e-mails!"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:82
-#, fuzzy
 msgid ""
 "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
-"Alterna automaticamente a segurança se chaves com confiança mínima de nível "
-"1 foram encontradas para todos os destinatários."
+"Também alterna automaticamente a segurança se chaves com confiança de nível "
+"0 foram encontradas."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:84
 msgid "Also &with untrusted keys"
-msgstr ""
+msgstr "Também com chaves não confiáveis"
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
 #: src/addin-options.cpp:87
 msgid "&Import any keys included in mails"
-msgstr ""
+msgstr "&Importar quaisquer chaves incluídas em e-mails"
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
 #: src/addin-options.cpp:90
 msgid "Import OpenPGP keys from mail attachments or from mail headers."
-msgstr ""
+msgstr "Importar chaves OpenPGP de anexos ou de cabeçalhos de e-mails."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
@@ -371,19 +371,18 @@ msgid "How to report a problem?"
 msgstr "Como relatar um problema?"
 
 #: src/categorymanager.cpp:253
-#, fuzzy
 msgid "Encrypted Message"
-msgstr "Mensagem encriptada"
+msgstr "Mensagem Encriptada"
 
 #: src/categorymanager.cpp:266
 msgid "Junk Email cannot be processed"
-msgstr ""
+msgstr "Os e-mails de lixo não podem ser processados"
 
 #. TRANSLATORS: Placeholder for a contact without
 #. a configured name
 #: src/addressbook.cpp:202
 msgid "Unknown contact"
-msgstr ""
+msgstr "Contacto desconhecido"
 
 #: src/common.cpp:783
 msgid "GpgOL Error"
@@ -447,11 +446,11 @@ msgstr "Encriptar"
 
 #: src/gpgoladdin.cpp:1058
 msgid "&amp;Print decrypted"
-msgstr "&amp;Imprimir desencriptado"
+msgstr "&amp;Imprimir decifrado"
 
 #: src/gpgoladdin.cpp:1059
 msgid "Permanenlty &amp;decrypt"
-msgstr ""
+msgstr "Permanentemente &amp;decifrar"
 
 #: src/gpgoladdin.cpp:1123
 msgid "OpenPGP Key"
@@ -524,7 +523,7 @@ msgstr ""
 
 #: src/mail.cpp:1003
 msgid "Diagnostics"
-msgstr ""
+msgstr "Diagnósticos"
 
 #: src/mail.cpp:1125
 msgid "Pubkey directory confirmation"
@@ -594,9 +593,8 @@ msgstr ""
 "Vê: https://dev.gnupg.org/T3545 para detalhes."
 
 #: src/mail.cpp:2382
-#, fuzzy
 msgid "Invalid Key"
-msgstr "Chave inválida detetada."
+msgstr "Chave Inválida"
 
 #. TRANSLATORS: The first placeholder is for tranlsation of "Level".
 #. The second one is for the level number. The third is for the
@@ -605,13 +603,12 @@ msgstr "Chave inválida detetada."
 #. text on the green bar for signed mails. e.g.:
 #. "GpgOL: Level 3 trust in 'john.doe@example.org'"
 #: src/mail.cpp:2431
-#, fuzzy
 msgid "Level"
-msgstr "Nível de log:"
+msgstr "Nível"
 
 #: src/mail.cpp:2432
 msgid "trust in"
-msgstr ""
+msgstr "confiança em"
 
 #: src/mail.cpp:2660
 msgid "Security Level 4"
@@ -755,9 +752,8 @@ msgid "The signature is invalid: \n"
 msgstr "A assinatura é inválida: \n"
 
 #: src/mail.cpp:2885
-#, fuzzy
 msgid "The signature does not match."
-msgstr "A assinatura não está em conformidade com VS-NfD."
+msgstr "A assinatura não coincide."
 
 #: src/mail.cpp:2892
 msgid "There was an error verifying the signature.\n"
@@ -913,11 +909,11 @@ msgstr ""
 #. reply and forward with contents
 #: src/mailitem-events.cpp:862
 msgid "You are replying to an unsigned S/MIME email."
-msgstr ""
+msgstr "Estás a responder a um e-mail S/MIME não assinado."
 
 #: src/mailitem-events.cpp:864
 msgid "You are forwarding an unsigned S/MIME email."
-msgstr ""
+msgstr "Estás a encaminhar um e-mail S/MIME não assinado."
 
 #: src/mailitem-events.cpp:867
 msgid ""
@@ -926,10 +922,15 @@ msgid ""
 "email and place it in the quote so they can get hold of it.\n"
 "This is why we only allow quoting to be done manually."
 msgstr ""
+"Nesta versão de S/MIME, um atacante pode usar a assinatura em falta para que "
+"desencriptes o conteúdo de um e-mail diferente, de outra forma completamente "
+"não relacionado e colocá-lo na citação para que eles se possam apropriar "
+"dele.\n"
+"É por isso que só permitimos que a citação seja feita manualmente."
 
 #: src/mailitem-events.cpp:874
 msgid "Please copy the relevant contents and insert them into the new email."
-msgstr ""
+msgstr "Por favor, copia os conteúdos relevantes e insere-los no novo e-mail."
 
 #: src/mailitem-events.cpp:928
 msgid ""
@@ -951,21 +952,21 @@ msgid ""
 "The attachment '%s' is an Outlook item which is currently unsupported in "
 "crypto mails."
 msgstr ""
+"O anexo '%s' é um item do Outlook que atualmente não é suportado em e-mails "
+"de criptografia."
 
 #: src/mimemaker.cpp:1068 src/mimemaker.cpp:1076
-#, fuzzy
 msgid "Unknown"
-msgstr "Chave Desconhecida:"
+msgstr "Desconhecido"
 
 #: src/mimemaker.cpp:1073
 #, c-format
 msgid "Please encrypt '%s' with Kleopatra and attach it as a file."
-msgstr ""
+msgstr "Por favor, encripta '%s' com o Kleopatra e anexa-o como um ficheiro."
 
 #: src/mimemaker.cpp:1081
-#, fuzzy
 msgid "Send anyway?"
-msgstr "Assinar a mensagem"
+msgstr "Enviar mesmo assim?"
 
 #: src/parsecontroller.cpp:211
 msgid "Unknown Key:"
