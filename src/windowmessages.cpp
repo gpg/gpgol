@@ -356,6 +356,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
           log_debug ("%s:%s: Decrypting %p again.",
                      SRCNAME, __func__, mail);
+          mail->preProcessMessage_m ();
           mail->decryptVerify_o ();
           TRETURN 0;
         }
