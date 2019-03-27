@@ -3213,13 +3213,19 @@ mapi_get_message_content_type (LPMESSAGE message,
   if (r_smtype)
     *r_smtype = NULL;
 
-  const std::string hdrStr = mapi_get_header (message);
+  std::string hdrStr = mapi_get_header (message);
   if (hdrStr.empty())
     {
 
-      log_error ("%s:%s: failed to get headers",
+      log_debug  ("%s:%s: failed to get headers. Looking at first attach",
                  SRCNAME, __func__);
-      TRETURN NULL;
+      hdrStr = mapi_get_first_attach_data (message);
+      if (hdrStr.empty())
+        {
+          log_error ("%s:%s: failed to get headers. And attachment.",
+                     SRCNAME, __func__);
+          TRETURN NULL;
+        }
     }
 
   rfc822parse_t msg = parse_header_data (hdrStr, isWks);
