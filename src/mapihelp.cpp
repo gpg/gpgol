@@ -488,6 +488,12 @@ mapi_get_first_attach_data (LPMESSAGE message)
     }
 
   mapi_attach_item_t *table = mapi_create_attach_table (message, 0);
+  if (!table)
+    {
+      log_debug ("%s:%s: Message has no attachments",
+                 SRCNAME, __func__);
+      TRETURN ret;
+    }
   if (table->end_of_table)
     {
       log_debug ("%s:%s: Message has no attachments",
