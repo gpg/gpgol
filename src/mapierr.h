@@ -1,0 +1,100 @@
+#ifndef SRC_MAPIERR_H
+#define SRC_MAPIERR_H
+/* mapierr.h - MAPI error codes
+ * Copyright (C) 2019 g10 Code GmbH
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.:
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
+
+
+/* Error codes */
+#define MAPI_W_NO_SERVICE (0x40203)
+#define MAPI_W_ERRORS_RETURNED (0x40380)
+#define MAPI_W_POSITION_CHANGED (0x40481)
+#define MAPI_W_APPROX_COUNT (0x40482)
+#define MAPI_W_CANCEL_MESSAGE (0x40580)
+#define MAPI_W_PARTIAL_COMPLETION (0x40680)
+#define MAPI_E_INTERFACE_NOT_SUPPORTED (0x80004002)
+#define MAPI_E_CALL_FAILED (0x80004005)
+#define MAPI_E_NO_SUPPORT (0x80040102)
+#define MAPI_E_BAD_CHARWIDTH (0x80040103)
+#define MAPI_E_STRING_TOO_LONG (0x80040105)
+#define MAPI_E_UNKNOWN_FLAGS (0x80040106)
+#define MAPI_E_INVALID_ENTRYID (0x80040107)
+#define MAPI_E_INVALID_OBJECT (0x80040108)
+#define MAPI_E_OBJECT_CHANGED (0x80040109)
+#define MAPI_E_OBJECT_DELETED (0x8004010a)
+#define MAPI_E_BUSY (0x8004010b)
+#define MAPI_E_NOT_ENOUGH_DISK (0x8004010d)
+#define MAPI_E_NOT_ENOUGH_RESOURCES (0x8004010e)
+#define MAPI_E_NOT_FOUND (0x8004010f)
+#define MAPI_E_VERSION (0x80040110)
+#define MAPI_E_LOGON_FAILED (0x80040111)
+#define MAPI_E_SESSION_LIMIT (0x80040112)
+#define MAPI_E_USER_CANCEL (0x80040113)
+#define MAPI_E_UNABLE_TO_ABORT (0x80040114)
+#define MAPI_E_NETWORK_ERROR (0x80040115)
+#define MAPI_E_DISK_ERROR (0x80040116)
+#define MAPI_E_TOO_COMPLEX (0x80040117)
+#define MAPI_E_BAD_COLUMN (0x80040118)
+#define MAPI_E_EXTENDED_ERROR (0x80040119)
+#define MAPI_E_COMPUTED (0x8004011a)
+#define MAPI_E_CORRUPT_DATA (0x8004011b)
+#define MAPI_E_UNCONFIGURED (0x8004011c)
+#define MAPI_E_FAILONEPROVIDER (0x8004011d)
+#define MAPI_E_UNKNOWN_CPID (0x8004011e)
+#define MAPI_E_UNKNOWN_LCID (0x8004011f)
+#define MAPI_E_PASSWORD_CHANGE_REQUIRED (0x80040120)
+#define MAPI_E_PASSWORD_EXPIRED (0x80040121)
+#define MAPI_E_INVALID_WORKSTATION_ACCOUNT (0x80040122)
+#define MAPI_E_INVALID_ACCESS_TIME (0x80040123)
+#define MAPI_E_ACCOUNT_DISABLED (0x80040124)
+#define MAPI_E_END_OF_SESSION (0x80040200)
+#define MAPI_E_UNKNOWN_ENTRYID (0x80040201)
+#define MAPI_E_MISSING_REQUIRED_COLUMN (0x80040202)
+#define MAPI_E_BAD_VALUE (0x80040301)
+#define MAPI_E_INVALID_TYPE (0x80040302)
+#define MAPI_E_TYPE_NO_SUPPORT (0x80040303)
+#define MAPI_E_UNEXPECTED_TYPE (0x80040304)
+#define MAPI_E_TOO_BIG (0x80040305)
+#define MAPI_E_DECLINE_COPY (0x80040306)
+#define MAPI_E_UNEXPECTED_ID (0x80040307)
+#define MAPI_E_UNABLE_TO_COMPLETE (0x80040400)
+#define MAPI_E_TIMEOUT (0x80040401)
+#define MAPI_E_TABLE_EMPTY (0x80040402)
+#define MAPI_E_TABLE_TOO_BIG (0x80040403)
+#define MAPI_E_INVALID_BOOKMARK (0x80040405)
+#define MAPI_E_WAIT (0x80040500)
+#define MAPI_E_CANCEL (0x80040501)
+#define MAPI_E_NOT_ME (0x80040502)
+#define MAPI_E_CORRUPT_STORE (0x80040600)
+#define MAPI_E_NOT_IN_QUEUE (0x80040601)
+#define MAPI_E_NO_SUPPRESS (0x80040602)
+#define MAPI_E_COLLISION (0x80040604)
+#define MAPI_E_NOT_INITIALIZED (0x80040605)
+#define MAPI_E_NON_STANDARD (0x80040606)
+#define MAPI_E_NO_RECIPIENTS (0x80040607)
+#define MAPI_E_SUBMITTED (0x80040608)
+#define MAPI_E_HAS_FOLDERS (0x80040609)
+#define MAPI_E_HAS_MESSAGES (0x8004060a)
+#define MAPI_E_FOLDER_CYCLE (0x8004060b)
+#define MAPI_E_STORE_FULL (0x8004060c)
+#define MAPI_E_AMBIGUOUS_RECIP (0x80040700)
+#define MAPI_E_INVALID_PARAMETER (0x80070057)
+#define MAPI_E_NOT_ENOUGH_MEMORY (0x8007000e)
+#define MAPI_E_NO_ACCESS (0x80070005)
+
+const char *mapi_err_to_string (int err);
+
+#endif // SRC_MAPIERR_H

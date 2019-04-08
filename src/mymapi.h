@@ -40,6 +40,8 @@
 #ifndef MAPI_H
 #define MAPI_H
 
+#include "mapierr.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -102,11 +104,6 @@ struct MapiMessage_s
 };
 typedef struct MapiMessage_s MapiMessage;
 typedef struct MapiMessage_s *lpMapiMessage;
-
-
-/* Error codes */
-#define MAPI_E_NO_ACCESS                   E_ACCESSDENIED
-#define MAPI_E_NOT_FOUND                   ((SCODE)0x8004010F)
 
 
 /* Object types.  */
