@@ -64,8 +64,8 @@ gpgol_openProperty (LPMAPIPROP obj, ULONG ulPropTag, LPCIID lpiid,
                                    lppUnk);
   if (ret)
     {
-      log_debug ("%s:%s: OpenProperty failed hr=%#lx",
-                 SRCNAME, __func__, ret);
+      log_debug ("%s:%s: OpenProperty failed hr=%#lx %s",
+                 SRCNAME, __func__, ret, mapi_err_to_string (ret));
     }
   else if ((opt.enable_debug & DBG_MEMORY) && *lppUnk)
     {
