@@ -1212,7 +1212,8 @@ cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 /* Do the final processing for a message. */
 int
 finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
-                  protocol_t protocol, int encrypt, bool is_inline)
+                  protocol_t protocol, int encrypt, bool is_inline,
+                  bool is_draft)
 {
   HRESULT hr = 0;
   SPropValue prop;
@@ -1298,8 +1299,16 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
     }
 
   /* Remove the draft info so that we don't leak the information on
-     whether the message has been signed etc.  */
-  mapi_set_gpgol_draft_info (message, NULL);
+     whether the message has been signed etc. when we send it.
+     If it is a draft we are encrypting we want to keep them.
+
+     To avoid confusion: draft_info for us means the state of
+     the secure toggle button.
+     */
+  if (!is_draft)
+    {
+      mapi_set_gpgol_draft_info (message, NULL);
+    }
 
   if (mapi_save_changes (message, KEEP_OPEN_READWRITE|FORCE_SAVE))
     {

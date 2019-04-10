@@ -1175,7 +1175,7 @@ CryptController::update_mail_mapi ()
   if (!rc)
     {
       rc = finalize_message (message, att_table, protocol, m_encrypt ? 1 : 0,
-                             false);
+                             false, m_mail->isDraftEncrypt ());
     }
 
   // only on error.
