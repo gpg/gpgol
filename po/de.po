@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2019-03-26 13:13+0100\n"
-"PO-Revision-Date: 2019-03-25 09:31+0100\n"
+"PO-Revision-Date: 2019-04-10 14:35+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -357,12 +357,12 @@ msgstr "Mögliche workarounds"
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:165
 msgid "Block Outlook during encrypt / sign"
-msgstr "Outlook während des entschlüsselns / verifizierens blockieren"
+msgstr "Outlook während des verschlüsselns / signierens blockieren"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:167
 msgid "Block Outlook during decrypt / verify"
-msgstr "Outlook während des verschlüsselns / signierens blockieren"
+msgstr "Outlook während des entschlüsselns / verifizierens blockieren"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:169
