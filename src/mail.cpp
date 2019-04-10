@@ -1045,6 +1045,9 @@ do_crypt (LPVOID arg)
       mail->updateCryptMAPI_m ();
       mail->setIsDraftEncrypt (false);
       mail->setCryptState (Mail::NoCryptMail);
+      log_debug ("%s:%s: Synchronous draft encrypt finished for %p",
+                 SRCNAME, __func__, arg);
+      gpgol_unlock (&dtor_lock);
     }
   else
     {
@@ -1675,6 +1678,8 @@ Mail::encryptSignStart_o ()
     }
   else
     {
+      log_debug ("%s:%s: Starting sync crypt",
+                 SRCNAME, __func__);
       do_crypt (this);
     }
   TRETURN 0;
