@@ -430,4 +430,7 @@ LPDISPATCH find_user_prop (LPDISPATCH props, const char *name);
 
 /* Return true if this message is in the junk folder for this account */
 bool is_junk_mail (LPDISPATCH mailitem);
+
+/* Return true if this message is in the draft folder for this account */
+bool is_draft_mail (LPDISPATCH mailitem);
 #endif /*OOMHELP_H*/

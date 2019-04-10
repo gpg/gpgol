@@ -2917,8 +2917,32 @@ release_disp (LPDISPATCH obj)
   TRETURN;
 }
 
-bool
-is_junk_mail (LPDISPATCH mailitem)
+enum FolderID
+{
+  olFolderCalendar = 9,
+  olFolderConflicts = 19,
+  olFolderContacts = 10,
+  olFolderDeletedItems = 3,
+  olFolderDrafts = 16,
+  olFolderInbox = 6,
+  olFolderJournal = 11,
+  olFolderJunk = 23,
+  olFolderLocalFailures = 21,
+  olFolderManagedEmail = 29,
+  olFolderNotes = 12,
+  olFolderOutbox = 4,
+  olFolderSentMail = 5,
+  olFolderServerFailures = 22,
+  olFolderSuggestedContacts = 30,
+  olFolderSyncIssues = 20,
+  olFolderTasks = 13,
+  olFolderToDo = 28,
+  olPublicFoldersAllPublicFolders = 18,
+  olFolderRssFeeds = 25,
+};
+
+static bool
+is_mail_in_folder (LPDISPATCH mailitem, int folder)
 {
   TSTART;
   if (!mailitem)
@@ -2935,10 +2959,12 @@ is_junk_mail (LPDISPATCH mailitem)
       TRETURN false;
     }
 
-  auto spam_folder = MAKE_SHARED (get_oom_object (mapi_namespace.get(),
-                                                  "GetDefaultFolder(23)"));
+  std::string tmp = std::string("GetDefaultFolder(") + std::to_string (folder) +
+                    std::string(")");
+  auto target_folder = MAKE_SHARED (get_oom_object (mapi_namespace.get(),
+                                                    tmp.c_str()));
 
-  if (!spam_folder)
+  if (!target_folder)
     {
       STRANGEPOINT;
       TRETURN false;
@@ -2952,8 +2978,8 @@ is_junk_mail (LPDISPATCH mailitem)
       TRETURN false;
     }
 
-  char *spam_id = get_oom_string (spam_folder.get(), "entryID");
-  if (!spam_id)
+  char *target_id = get_oom_string (target_folder.get(), "entryID");
+  if (!target_id)
     {
       STRANGEPOINT;
       TRETURN false;
@@ -2962,14 +2988,27 @@ is_junk_mail (LPDISPATCH mailitem)
   if (!folder_id)
     {
       STRANGEPOINT;
-      free (spam_id);
+      free (target_id);
       TRETURN false;
     }
 
-  bool ret = !strcmp (spam_id, folder_id);
+  bool ret = !strcmp (target_id, folder_id);
 
-  free (spam_id);
+  free (target_id);
   free (folder_id);
-
   TRETURN ret;
+}
+
+bool
+is_junk_mail (LPDISPATCH mailitem)
+{
+  TSTART;
+  TRETURN is_mail_in_folder (mailitem, FolderID::olFolderJunk);
+}
+
+bool
+is_draft_mail (LPDISPATCH mailitem)
+{
+  TSTART;
+  TRETURN is_mail_in_folder (mailitem, FolderID::olFolderDrafts);
 }
