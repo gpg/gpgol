@@ -144,6 +144,20 @@ EVENT_SINK_INVOKE(MailItemEvents)
   bool is_reply = false;
   switch(dispid)
     {
+      case BeforeAutoSave:
+        {
+          log_oom ("%s:%s: BeforeAutoSave : %p",
+                   SRCNAME, __func__, m_mail);
+          if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
+              !m_mail->isDraftEncrypt())
+            {
+              log_debug ("%s:%s: Draft encryption for autosave starting now.",
+                         SRCNAME, __func__);
+              m_mail->setIsDraftEncrypt (true);
+              m_mail->prepareCrypto_o ();
+            }
+          TRETURN S_OK;
+        }
       case Open:
         {
           log_oom ("%s:%s: Open : %p",
@@ -385,24 +399,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
                          SRCNAME, __func__, m_mail);
 
-              if (!m_mail->isAsyncCryptDisabled())
-                {
-                  /* Obtain a reference of the current item. This prevents
-                   * an early unload which would crash Outlook 2013
-                   *
-                   * As it didn't crash when the mail was opened in Outlook Spy this
-                   * mimics that the mail is inspected somewhere else. */
-                  m_mail->refCurrentItem ();
-                }
+              m_mail->prepareCrypto_o ();
 
-              // First contact with a mail to encrypt update
-              // state and oom data.
-              m_mail->updateOOMData_o ();
-
-              m_mail->setCryptState (Mail::NeedsFirstAfterWrite);
-
-              // Check inline response state before the write.
-              m_mail->check_inline_response ();
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
 
@@ -682,8 +680,28 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->setIsForwardedCryptoMail (false);
             }
 
-          log_debug ("%s:%s: Passing write event.",
-                     SRCNAME, __func__);
+          if (m_mail->isDraftEncrypt () &&
+              m_mail->cryptState () != Mail::NeedsFirstAfterWrite &&
+              m_mail->cryptState () != Mail::NeedsSecondAfterWrite)
+            {
+              log_debug ("%s:%s: Canceling write because draft encrypt is on"
+                         " progress.",
+                         SRCNAME, __func__);
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              TRETURN S_OK;
+            }
+
+          if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
+              !m_mail->isDraftEncrypt())
+            {
+              log_debug ("%s:%s: Draft encryption starting now.",
+                         SRCNAME, __func__);
+              m_mail->setIsDraftEncrypt (true);
+              m_mail->prepareCrypto_o ();
+            }
+
+          log_debug ("%s:%s: Passing write event. %i %i",
+                     SRCNAME, __func__, m_mail->isDraftEncrypt(), m_mail->cryptState());
           m_mail->setNeedsSave (false);
           TBREAK;
         }
@@ -707,6 +725,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               m_mail->setCryptState (Mail::NeedsUpdateInMAPI);
               m_mail->updateCryptMAPI_m ();
+              log_debug ("%s:%s: Second after write done.",
+                         SRCNAME, __func__);
               TRETURN S_OK;
             }
           TBREAK;

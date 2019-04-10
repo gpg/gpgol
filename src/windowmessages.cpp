@@ -159,6 +159,18 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              SRCNAME, __func__);
                   TBREAK;
                 }
+              if (mail->isDraftEncrypt())
+                {
+                  mail->updateCryptOOM_o ();
+                  invoke_oom_method (mail->item (), "Save", NULL);
+                  log_debug ("%s:%s: Second save done for %p finished draft "
+                             "encryption.",
+                             SRCNAME, __func__, mail);
+                  mail->setIsDraftEncrypt (false);
+                  mail->setCryptState (Mail::NoCryptMail);
+                  mail->releaseCurrentItem ();
+                  TBREAK;
+                }
               // modify the mail.
               if (mail->cryptState () == Mail::NeedsUpdateInOOM)
                 {

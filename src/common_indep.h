@@ -208,6 +208,7 @@ struct
                                 for each new unknown mail */
   int auto_unstrusted;       /* Automatically encrypt even to untrusted keys. */
   int autoimport;            /* Automatically import keys from headers or attachments. */
+  char *draft_key;           /* Encrypt drafts with this key (fingerprint) */
 
   /* The forms revision number of the binary.  */
   int forms_revision;

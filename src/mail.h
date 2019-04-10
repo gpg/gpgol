@@ -604,6 +604,12 @@ public:
   /* Remove encryption permanently. */
   void decryptPermanently_o ();
 
+  /* Prepare for encrypt / sign. Updates data. */
+  void prepareCrypto_o ();
+
+  /* State variable to check if we are about to encrypt a draft. */
+  void setIsDraftEncrypt (bool value) { m_is_draft_encrypt = value; }
+  bool isDraftEncrypt () { return m_is_draft_encrypt; }
 private:
   void updateCategories_o ();
   void updateSigstate ();
@@ -658,5 +664,6 @@ private:
   std::string m_store_id; /* Store id for categories */
   std::string m_verify_category; /* The category string for the verify result */
   bool m_is_junk; /* Mail is in the junk folder */
+  bool m_is_draft_encrypt; /* Mail is a draft that should be encrypted */
 };
 #endif // MAIL_H

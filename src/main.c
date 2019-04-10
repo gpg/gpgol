@@ -315,6 +315,23 @@ read_options (void)
       opt.auto_unstrusted = 0;
     }
 
+  /* Draft encryption handling. */
+  if (get_conf_bool ("draftEnc", 0))
+    {
+      load_extension_value ("draftKey", &val);
+      if (val)
+        {
+          xfree (opt.draft_key);
+          opt.draft_key = val;
+          val = NULL;
+        }
+    }
+  else
+    {
+      xfree (opt.draft_key);
+      opt.draft_key = NULL;
+    }
+
   /* Hidden options  */
   opt.sync_enc = get_conf_bool ("syncEnc", 0);
   opt.sync_dec = get_conf_bool ("syncDec", 0);

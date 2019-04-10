@@ -427,7 +427,29 @@ int
 CryptController::resolve_keys ()
 {
   TSTART;
+
   m_recipients.clear();
+
+  if (m_mail->isDraftEncrypt() && opt.draft_key)
+    {
+      const auto key = KeyCache::instance()->getByFpr (opt.draft_key);
+      if (key.isNull())
+        {
+          const char *buf = utf8_gettext ("Failed to encrypt draft.\n\n"
+                                          "The configured encryption key for drafts "
+                                          "could not be found.\n"
+                                          "Please check your configuration or "
+                                          "turn off draft encryption in the settings.");
+          gpgol_message_box (get_active_hwnd (),
+                             buf,
+                             _("GpgOL"), MB_OK);
+          TRETURN -1;
+        }
+      log_debug ("%s:%s: resolved draft encryption key protocol is: %s",
+                 SRCNAME, __func__, to_cstr (key.protocol()));
+      m_recipients.push_back (key);
+      TRETURN 0;
+    }
 
   if (!m_recipient_addrs.size())
     {
@@ -621,6 +643,13 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
   TSTART;
   log_debug ("%s:%s",
              SRCNAME, __func__);
+
+  if (m_mail->isDraftEncrypt ())
+    {
+      log_debug ("%s:%s Disabling sign because of draft encrypt",
+                 SRCNAME, __func__);
+      m_sign = false;
+    }
 
   /* Start a WKS check if necessary. */
   WKSHelper::instance()->start_check (m_mail->getSender ());

@@ -108,7 +108,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_locate_count(0),
     m_pass_write(false),
     m_locate_in_progress(false),
-    m_is_junk(false)
+    m_is_junk(false),
+    m_is_draft_encrypt(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -1037,6 +1038,13 @@ do_crypt (LPVOID arg)
       log_debug ("%s:%s: UI thread finished for %p",
                  SRCNAME, __func__, arg);
     }
+  else if (mail->isDraftEncrypt ())
+    {
+      mail->setCryptState (Mail::NeedsUpdateInMAPI);
+      mail->updateCryptMAPI_m ();
+      mail->setIsDraftEncrypt (false);
+      mail->setCryptState (Mail::NoCryptMail);
+    }
   else
     {
       mail->setCryptState (Mail::NeedsUpdateInMAPI);
@@ -1639,7 +1647,8 @@ Mail::encryptSignStart_o ()
         }
     }
 
-  m_do_inline = m_is_gsuite ? true : opt.inline_pgp;
+  m_do_inline = m_is_draft_encrypt ? false :
+                m_is_gsuite ? true : opt.inline_pgp;
 
   GpgME::Protocol proto = opt.enable_smime ? GpgME::UnknownProtocol: GpgME::OpenPGP;
   m_crypter = std::shared_ptr <CryptController> (new CryptController (this, flags & 1,
@@ -3359,8 +3368,17 @@ Mail::updateCryptOOM_o ()
       TRETURN;
     }
 
+  /* Draft encryption we do not want to wipe the oom but we have
+     to modify it to trigger the wirte / second after write. */
+  if (m_is_draft_encrypt)
+    {
+      char *subject = get_oom_string (m_mailitem, "Subject");
+      put_oom_string (m_mailitem, "Subject", subject ? subject : "");
+      xfree (subject);
+    }
+
   // We are in MIME land. Wipe the body.
-  if (wipe_o (true))
+  if (!m_is_draft_encrypt && wipe_o (true))
     {
       log_debug ("%s:%s: Cancel send for %p.",
                  SRCNAME, __func__, this);
@@ -4011,5 +4029,32 @@ Mail::decryptPermanently_o()
              SRCNAME, __func__);
   CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
                             NULL));
+  TRETURN;
+}
+
+void
+Mail::prepareCrypto_o ()
+{
+  TSTART;
+
+  if (!isAsyncCryptDisabled())
+    {
+      /* Obtain a reference of the current item. This prevents
+       * an early unload which would crash Outlook 2013
+       *
+       * As it didn't crash when the mail was opened in Outlook Spy this
+       * mimics that the mail is inspected somewhere else. */
+      refCurrentItem ();
+    }
+
+  // First contact with a mail to encrypt update
+  // state and oom data.
+  updateOOMData_o ();
+
+  setCryptState (Mail::NeedsFirstAfterWrite);
+
+  // Check inline response state before the write.
+  check_inline_response ();
+
   TRETURN;
 }
