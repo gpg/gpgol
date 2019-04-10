@@ -42,10 +42,9 @@
 static int
 sink_data_write (sink_t sink, const void *data, size_t datalen)
 {
-  TSTART;
   GpgME::Data *d = static_cast<GpgME::Data *>(sink->cb_data);
   d->write (data, datalen);
-  TRETURN 0;
+  return 0;
 }
 
 static int
