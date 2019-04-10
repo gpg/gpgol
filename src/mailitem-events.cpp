@@ -594,6 +594,18 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
           if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
+              if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
+                  is_draft_mail (m_object))
+                {
+                  /* This is the case for a modified draft */
+                  log_debug ("%s:%s: Draft re-encryption starting now.",
+                             SRCNAME, __func__);
+                  m_mail->setIsDraftEncrypt (true);
+                  m_mail->prepareCrypto_o ();
+                  /* Passing write to trigger encrypt in after write */
+                  TBREAK;
+                }
+
               Mail *last_mail = Mail::getLastMail ();
               if (Mail::isValidPtr (last_mail))
                 {
@@ -686,7 +698,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->cryptState () != Mail::NeedsFirstAfterWrite &&
               m_mail->cryptState () != Mail::NeedsSecondAfterWrite)
             {
-              log_debug ("%s:%s: Canceling write because draft encrypt is on"
+              log_debug ("%s:%s: Canceling write because draft encrypt is in"
                          " progress.",
                          SRCNAME, __func__);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
@@ -737,7 +749,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: Close : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->isCryptoMail ())
+          if (m_mail->isCryptoMail () && !is_draft_mail (m_object))
             {
               /* Close. This happens when an Opened mail is closed.
                  To prevent the question of wether or not to save the changes

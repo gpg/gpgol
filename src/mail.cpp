@@ -1739,7 +1739,7 @@ Mail::updateOOMData_o ()
   char *buf = nullptr;
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  if (!isCryptoMail ())
+  if (!isCryptoMail () || isDraftEncrypt ())
     {
       /* Update the body format. */
       m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
