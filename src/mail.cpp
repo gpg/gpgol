@@ -1023,6 +1023,7 @@ do_crypt (LPVOID arg)
       log_debug ("%s:%s: crypto failed for: %p with: %i err: %i",
                  SRCNAME, __func__, arg, rc, err.code());
       mail->setCryptState (Mail::NoCryptMail);
+      mail->setIsDraftEncrypt (false);
       mail->resetCrypter ();
       crypter = nullptr;
       gpgol_unlock (&dtor_lock);
