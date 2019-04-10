@@ -655,9 +655,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
               /* An error cleaning the mail should not happen normally.
                  But just in case there is an error we cancel the
                  write here. */
-              log_debug ("%s:%s: Failed to remove plaintext.",
+              log_debug ("%s:%s: Failed to remove plaintext. Canceling.",
                          SRCNAME, __func__);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              TRETURN S_OK;
             }
 
           if (!m_mail->isCryptoMail () && m_mail->is_forwarded_crypto_mail () &&
