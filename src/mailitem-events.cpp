@@ -49,6 +49,7 @@ const wchar_t *prop_blacklist[] = {
   L"InternetCodepage",
   L"ConversationIndex",
   L"Subject",
+  L"SentOnBehalfOfName",
   NULL };
 
 typedef enum
