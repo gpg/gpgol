@@ -642,6 +642,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   /* Passing write to trigger encrypt in after write */
                   TBREAK;
                 }
+              if (m_mail->cryptState() == Mail::WantsSendMIME)
+                {
+                  log_debug ("%s:%s: Mail wants send mime. Passing.",
+                             SRCNAME, __func__);
+                  TBREAK;
+                }
 
               Mail *last_mail = Mail::getLastMail ();
               if (Mail::isValidPtr (last_mail))
