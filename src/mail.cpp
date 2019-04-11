@@ -1733,13 +1733,15 @@ Mail::wipe_o (bool force)
 }
 
 int
-Mail::updateOOMData_o ()
+Mail::updateOOMData_o (bool for_encryption)
 {
   TSTART;
   char *buf = nullptr;
   log_debug ("%s:%s", SRCNAME, __func__);
 
-  if (!isCryptoMail () || isDraftEncrypt ())
+  for_encryption |= !isCryptoMail();
+
+  if (for_encryption)
     {
       /* Update the body format. */
       m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
@@ -1757,10 +1759,7 @@ Mail::updateOOMData_o ()
 
       m_cached_recipients = getRecipients_o ();
     }
-  /* For some reason outlook may store the recipient address
-     in the send using account field. If we have SMTP we prefer
-     the SenderEmailAddress string. */
-  if (isCryptoMail ())
+  else
     {
       /* This is the case where we are reading a mail and not composing.
          When composing we need to use the SendUsingAccount because if

@@ -281,10 +281,14 @@ public:
    * store the sender address for later events that do not allow us to
    * access the OOM but enable us to work with the underlying MAPI structure.
    *
+   * for_encryption can be used to override that data should be collected
+   * for encryption. Otherwise it depends on "isCryptoMail" to decide which
+   * data should be collected.
+   *
    * It also updated the is_html_alternative value.
    *
    * @returns 0 on success */
-  int updateOOMData_o ();
+  int updateOOMData_o (bool for_encryption = false);
 
   /** @brief get sender SMTP address (UTF-8 encoded).
    *
