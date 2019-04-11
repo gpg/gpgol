@@ -792,8 +792,15 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: Close : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->isCryptoMail () && !is_draft_mail (m_object))
+          if (m_mail->isCryptoMail ())
             {
+              if (is_draft_mail (m_object))
+                {
+                  /* In that case we want to ask the question to avoid data loss
+                    */
+                  log_oom ("%s:%s: Passing close because of draft status: %p",
+                           SRCNAME, __func__, m_mail);
+                }
               /* Close. This happens when an Opened mail is closed.
                  To prevent the question of wether or not to save the changes
                  (Which would save the decrypted data without an event to
