@@ -405,9 +405,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__, m_mail);
           if (!m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NoCryptMail)
             {
-             log_debug ("%s:%s: No crypto neccessary. Passing send for %p obj %p",
-                        SRCNAME, __func__, m_mail, m_object);
-             TBREAK;
+              if (m_mail->isCryptoMail ())
+                {
+                  log_debug ("%s:%s: Want to send crypto mail without crypto. "
+                             "Decrypting.", SRCNAME, __func__);
+                  m_mail->decryptPermanently_o ();
+                  TBREAK;
+                }
+              log_debug ("%s:%s: No crypto neccessary. Passing send for %p obj %p",
+                         SRCNAME, __func__, m_mail, m_object);
+              TBREAK;
             }
 
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
