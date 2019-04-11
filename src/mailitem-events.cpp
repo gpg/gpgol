@@ -149,6 +149,23 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: BeforeAutoSave : %p",
                    SRCNAME, __func__, m_mail);
+          if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
+           {
+             /* This happens in the weird case */
+             log_debug ("%s:%s: Uncancellable BeforeAutoSave.",
+                        SRCNAME, __func__);
+             TBREAK;
+           }
+
+          if (m_mail->isCryptoMail() && !m_mail->decryptedSuccessfully ())
+            {
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              log_debug ("%s:%s: Autosave for not successfuly decrypted mail."
+                         "Cancel it.",
+                         SRCNAME, __func__);
+              TBREAK;
+            }
+
           if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
               !m_mail->isDraftEncrypt())
             {
@@ -601,8 +618,15 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
               if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
-                  is_draft_mail (m_object))
+                  is_draft_mail (m_object) && m_mail->decryptedSuccessfully ())
                 {
+                  if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite ||
+                      m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
+                    {
+                      log_debug ("%s:%s: re-encryption in progress. Passing.",
+                                 SRCNAME, __func__);
+                      TBREAK;
+                    }
                   /* This is the case for a modified draft */
                   log_debug ("%s:%s: Draft re-encryption starting now.",
                              SRCNAME, __func__);

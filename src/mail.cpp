@@ -3892,6 +3892,12 @@ Mail::setDoAutosecure_m (bool value)
   TRETURN;
 }
 
+bool
+Mail::decryptedSuccessfully () const
+{
+  return m_decrypt_result.isNull() || !m_decrypt_result.error();
+}
+
 void
 Mail::installFolderEventHandler_o()
 {

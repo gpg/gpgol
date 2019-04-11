@@ -610,6 +610,10 @@ public:
   /* State variable to check if we are about to encrypt a draft. */
   void setIsDraftEncrypt (bool value) { m_is_draft_encrypt = value; }
   bool isDraftEncrypt () { return m_is_draft_encrypt; }
+
+  /* Was this mail decrypted without error. Also returns true
+     if the mail was not encrypted. */
+  bool decryptedSuccessfully () const;
 private:
   void updateCategories_o ();
   void updateSigstate ();
