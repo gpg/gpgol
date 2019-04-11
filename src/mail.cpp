@@ -4048,6 +4048,9 @@ Mail::prepareCrypto_o ()
 {
   TSTART;
 
+  // Check inline response state to fill out asynccryptdisabled.
+  check_inline_response ();
+
   if (!isAsyncCryptDisabled())
     {
       /* Obtain a reference of the current item. This prevents
@@ -4060,12 +4063,9 @@ Mail::prepareCrypto_o ()
 
   // First contact with a mail to encrypt update
   // state and oom data.
-  updateOOMData_o ();
+  updateOOMData_o (true);
 
   setCryptState (Mail::NeedsFirstAfterWrite);
-
-  // Check inline response state before the write.
-  check_inline_response ();
 
   TRETURN;
 }
