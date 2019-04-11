@@ -312,6 +312,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
               m_mail->setIsSendAgain (true);
               TRETURN S_OK;
             }
+          if (is_draft_mail (m_object))
+            {
+              log_oom ("%s:%s: Change allowed for draft",
+                       SRCNAME, __func__);
+              TRETURN S_OK;
+            }
 
           /* We have tried several scenarios to handle propery changes.
              Only save the property in MAPI and call MAPI SaveChanges
