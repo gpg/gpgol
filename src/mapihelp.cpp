@@ -3589,7 +3589,21 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, LPMESSAGE parsed_message,
           else if (!part2)
             {
               /* If we have two MOSS attachments we use
-                 the second one. */
+                 the second one if the first one is not the octet-stream. */
+              if (table[part1 - 1].content_type &&
+                    !strcmp (table[part1 - 1].content_type, "application/octet-stream"))
+                {
+                  /* This is rare so debug it. Happend when drafts were
+                     encrypted / decrypted and another client was running */
+                  log_debug ("%s:%s: Have two MOSS attachments but the "
+                             "first one is the octet stream", SRCNAME,
+                             __func__);
+                  int tmp = part1;
+                  part1 = i + 1;
+                  part2 = tmp;
+                  break;
+                }
+
               part2 = i + 1;
               break;
             }
