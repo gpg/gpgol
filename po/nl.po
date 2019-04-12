@@ -450,7 +450,7 @@ msgid "&amp;Print decrypted"
 msgstr "Ontcijferd afdrukken"
 
 #: src/gpgoladdin.cpp:1059
-msgid "Permanenlty &amp;decrypt"
+msgid "Permanently &amp;decrypt"
 msgstr ""
 
 #: src/gpgoladdin.cpp:1123

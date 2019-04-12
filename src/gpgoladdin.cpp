@@ -1056,7 +1056,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip,
         _("&amp;Print decrypted"),
-        _("Permanenlty &amp;decrypt")
+        _("Permanently &amp;decrypt")
         );
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))

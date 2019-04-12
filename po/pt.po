@@ -449,7 +449,7 @@ msgid "&amp;Print decrypted"
 msgstr "&amp;Imprimir decifrado"
 
 #: src/gpgoladdin.cpp:1059
-msgid "Permanenlty &amp;decrypt"
+msgid "Permanently &amp;decrypt"
 msgstr "Permanentemente &amp;decifrar"
 
 #: src/gpgoladdin.cpp:1123
