@@ -307,13 +307,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               if (!wcscmp (prop_name, *cur))
                 {
-                  log_oom ("%s:%s: Message %p propchange: %ls discarded.",
-                           SRCNAME, __func__, m_object, prop_name);
+                  log_oom ("%s:%s: Mail %p propchange: %ls discarded.",
+                           SRCNAME, __func__, m_mail, prop_name);
                   TRETURN S_OK;
                 }
             }
-          log_oom ("%s:%s: Message %p propchange: %ls.",
-                   SRCNAME, __func__, m_object, prop_name);
+          log_oom ("%s:%s: Mail %p propchange: %ls.",
+                   SRCNAME, __func__, m_mail, prop_name);
 
           if (!wcscmp (prop_name, L"SendUsingAccount"))
             {
