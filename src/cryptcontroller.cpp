@@ -105,10 +105,12 @@ CryptController::collect_data ()
       body = nullptr;
     }
 
-  LPMESSAGE message = get_oom_base_message (m_mail->item ());
+  LPMESSAGE message = m_mail->isCryptoMail() ?
+                      get_oom_base_message (m_mail->item ()) :
+                      get_oom_message (m_mail->item ());
   if (!message)
     {
-      log_error ("%s:%s: Failed to get base message.",
+      log_error ("%s:%s: Failed to get message.",
                  SRCNAME, __func__);
     }
 
