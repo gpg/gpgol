@@ -881,7 +881,7 @@ do_parsing (LPVOID arg)
    -> Yes:
       mail->update_oom_data
       State = Mail::NeedsFirstAfterWrite
-      check_inline_response
+      checkSyncCrypto_o
       invoke_oom_method (m_object, "Save", NULL);
 
       > Write Event <
@@ -3433,7 +3433,53 @@ Mail::disableWindow_o ()
 }
 
 bool
-Mail::check_inline_response ()
+Mail::isActiveInlineResponse_o ()
+{
+  const auto subject = getSubject_o ();
+  bool ret = false;
+  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
+  if (!app)
+    {
+      TRACEPOINT;
+      TRETURN false;
+    }
+
+  LPDISPATCH explorer = get_oom_object (app, "ActiveExplorer");
+
+  if (!explorer)
+    {
+      TRACEPOINT;
+      TRETURN false;
+    }
+
+  LPDISPATCH inlineResponse = get_oom_object (explorer, "ActiveInlineResponse");
+  gpgol_release (explorer);
+
+  if (!inlineResponse)
+    {
+      TRETURN false;
+    }
+
+  // We have inline response
+  // Check if we are it. It's a bit naive but meh. Worst case
+  // is that we think inline response too often and do sync
+  // crypt where we could do async crypt.
+  char * inlineSubject = get_oom_string (inlineResponse, "Subject");
+  gpgol_release (inlineResponse);
+
+  if (inlineResponse && !subject.empty() && !strcmp (subject.c_str (), inlineSubject))
+    {
+      log_debug ("%s:%s: Detected inline response for '%p'",
+                 SRCNAME, __func__, this);
+      ret = true;
+    }
+
+  xfree (inlineSubject);
+  TRETURN ret;
+}
+
+bool
+Mail::checkSyncCrypto_o ()
 {
   TSTART;
   /* Async sending is known to cause instabilities. So we keep
@@ -3512,43 +3558,10 @@ Mail::check_inline_response ()
         }
    }
 
-  LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
-  if (!app)
+  if (isActiveInlineResponse_o ())
     {
-      TRACEPOINT;
-      TRETURN false;
-    }
-
-  LPDISPATCH explorer = get_oom_object (app, "ActiveExplorer");
-
-  if (!explorer)
-    {
-      TRACEPOINT;
-      TRETURN false;
-    }
-
-  LPDISPATCH inlineResponse = get_oom_object (explorer, "ActiveInlineResponse");
-  gpgol_release (explorer);
-
-  if (!inlineResponse)
-    {
-      TRETURN false;
-    }
-
-  // We have inline response
-  // Check if we are it. It's a bit naive but meh. Worst case
-  // is that we think inline response too often and do sync
-  // crypt where we could do async crypt.
-  char * inlineSubject = get_oom_string (inlineResponse, "Subject");
-  gpgol_release (inlineResponse);
-
-  if (inlineResponse && !subject.empty() && !strcmp (subject.c_str (), inlineSubject))
-    {
-      log_debug ("%s:%s: Detected inline response for '%p'",
-                 SRCNAME, __func__, this);
       m_async_crypt_disabled = true;
     }
-  xfree (inlineSubject);
 
   TRETURN m_async_crypt_disabled;
 }
@@ -4049,7 +4062,7 @@ Mail::prepareCrypto_o ()
   TSTART;
 
   // Check inline response state to fill out asynccryptdisabled.
-  check_inline_response ();
+  checkSyncCrypto_o ();
 
   if (!isAsyncCryptDisabled())
     {

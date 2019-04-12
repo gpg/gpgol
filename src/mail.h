@@ -488,12 +488,16 @@ public:
   bool isAsyncCryptDisabled () { return m_async_crypt_disabled; }
 
   /** Check through OOM if the current mail is an inline
-    response.
+    response. Meaning editable in the message list.
+  */
+  bool isActiveInlineResponse_o ();
+
+  /* Check if we can't do async crypto. E.g. for inline responses.
 
     Caches the state which can then be queried through
-    async_crypt_disabled
+    isAsyncCryptDisabled;
   */
-  bool check_inline_response ();
+  bool checkSyncCrypto_o ();
 
   /** Get the window for the mail. Caution! This is only
     really valid in the time that the window is disabled.
