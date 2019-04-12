@@ -778,24 +778,27 @@ _nl_locale_name (int category, const char *categoryname)
 
   (void)category;
 
-  /* Let the user override the system settings through environment
-     variables, as on POSIX systems.  */
-  retval = getenv ("LC_ALL");
-  if (retval != NULL && retval[0] != '\0')
-    return retval;
-  retval = getenv (categoryname);
-  if (retval != NULL && retval[0] != '\0')
-    return retval;
-  retval = getenv ("LANG");
-  if (retval != NULL && retval[0] != '\0')
-    return retval;
-
   /* Prefer the Ui language of Outlook. */
 #ifndef BUILD_TESTS
   lcid = get_ol_ui_language ();
 #else
   lcid = 0;
 #endif
+
+  /* Let the user override the system settings through environment
+     variables, as on POSIX systems.  */
+  if (!lcid)
+    {
+      retval = getenv ("LC_ALL");
+      if (retval != NULL && retval[0] != '\0')
+        return retval;
+      retval = getenv (categoryname);
+      if (retval != NULL && retval[0] != '\0')
+        return retval;
+      retval = getenv ("LANG");
+      if (retval != NULL && retval[0] != '\0')
+        return retval;
+    }
 
   if (!lcid)
     {
