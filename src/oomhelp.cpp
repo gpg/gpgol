@@ -2951,17 +2951,18 @@ is_mail_in_folder (LPDISPATCH mailitem, int folder)
       TRETURN false;
     }
 
-  auto mapi_namespace = MAKE_SHARED (get_oom_object (mailitem, "Session"));
+  auto store = MAKE_SHARED (get_oom_object (mailitem, "Parent.Store"));
 
-  if (!mapi_namespace)
+  if (!store)
     {
-      STRANGEPOINT;
+      log_debug ("%s:%s: Mail has no parent folder. Probably unsafed",
+                 SRCNAME, __func__);
       TRETURN false;
     }
 
   std::string tmp = std::string("GetDefaultFolder(") + std::to_string (folder) +
                     std::string(")");
-  auto target_folder = MAKE_SHARED (get_oom_object (mapi_namespace.get(),
+  auto target_folder = MAKE_SHARED (get_oom_object (store.get(),
                                                     tmp.c_str()));
 
   if (!target_folder)
