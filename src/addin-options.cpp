@@ -88,6 +88,10 @@ i18n_noops[] = {
     /* TRANSLATORS: Included means here both attached keys and keys from the
      * headers */
     N_("Import OpenPGP keys from mail attachments or from mail headers."),
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Encrypt &drafts of secure mails to this key:"),
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Encrypt drafts and autosaved mails if the secure button is toggled."),
 
     /* Not options but strings for the key adder */
     /* TRANSLATORS: Part of address book key configuration dialog.
