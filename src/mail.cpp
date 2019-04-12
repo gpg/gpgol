@@ -109,7 +109,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_pass_write(false),
     m_locate_in_progress(false),
     m_is_junk(false),
-    m_is_draft_encrypt(false)
+    m_is_draft_encrypt(false),
+    m_decrypt_again(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -1104,6 +1105,7 @@ Mail::decryptVerify_o ()
                  SRCNAME, __func__, m_mailitem);
       TRETURN 0;
     }
+  m_decrypt_again = false;
 
   auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
   if (!cipherstream)

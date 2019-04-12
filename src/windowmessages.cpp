@@ -296,6 +296,22 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               Addressbook::update_key_o (ctx->data);
               TBREAK;
             }
+          case (DECRYPT):
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::isValidPtr (mail))
+                {
+                  log_debug ("%s:%s: DECRYPT for mail which is gone.",
+                             SRCNAME, __func__);
+                  TBREAK;
+                }
+
+              log_debug ("%s:%s: Decrypting %p again.",
+                         SRCNAME, __func__, mail);
+              mail->preProcessMessage_m ();
+              mail->decryptVerify_o ();
+              TBREAK;
+            }
           default:
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);

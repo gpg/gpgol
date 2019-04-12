@@ -56,6 +56,7 @@ typedef enum _gpgol_wmsg_type
   DO_AUTO_SECURE,
   DONT_AUTO_SECURE,
   CONFIG_KEY_DONE,
+  DECRYPT,
   /* External API, keep it stable! */
   EXT_API_CLOSE = 1301,
   EXT_API_CLOSE_ALL = 1302,

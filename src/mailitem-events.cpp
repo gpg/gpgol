@@ -220,6 +220,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_error ("%s:%s: Pre process message failed.",
                          SRCNAME, __func__);
             }
+
+          if (m_mail->isDecryptAgain ())
+            {
+              log_debug ("%s:%s: Decrypting after 500ms",
+                         SRCNAME, __func__);
+              do_in_ui_thread_async (DECRYPT, m_mail, 500);
+            }
           TBREAK;
         }
       case Read:
@@ -800,6 +807,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                     */
                   log_oom ("%s:%s: Passing close because of draft status: %p",
                            SRCNAME, __func__, m_mail);
+                  m_mail->setDecryptAgain (true);
+                  TBREAK;
                 }
               /* Close. This happens when an Opened mail is closed.
                  To prevent the question of wether or not to save the changes

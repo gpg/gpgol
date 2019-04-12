@@ -622,6 +622,13 @@ public:
   /* Was this mail decrypted without error. Also returns true
      if the mail was not encrypted. */
   bool decryptedSuccessfully () const;
+
+  /* The mail should be decrypted again after the next
+   * encryption. So that we can save it for example and
+   * still work on it. */
+  void setDecryptAgain (bool value) { m_decrypt_again = value; }
+  bool isDecryptAgain () const { return m_decrypt_again; }
+
 private:
   void updateCategories_o ();
   void updateSigstate ();
@@ -677,5 +684,7 @@ private:
   std::string m_verify_category; /* The category string for the verify result */
   bool m_is_junk; /* Mail is in the junk folder */
   bool m_is_draft_encrypt; /* Mail is a draft that should be encrypted */
+  bool m_decrypt_again; /* Mail should be decrypted again if it sees
+                           another beforeread */
 };
 #endif // MAIL_H
