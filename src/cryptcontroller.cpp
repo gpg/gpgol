@@ -452,6 +452,7 @@ CryptController::resolve_keys ()
         }
       log_debug ("%s:%s: resolved draft encryption key protocol is: %s",
                  SRCNAME, __func__, to_cstr (key.protocol()));
+      m_proto = key.protocol ();
       m_recipients.push_back (key);
       TRETURN 0;
     }
