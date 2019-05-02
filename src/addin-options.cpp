@@ -120,17 +120,30 @@ i18n_noops[] = {
     N_("User Ids:"),
     /* TRANSLATORS: Part of address book key configuration dialog. %1 is
         a placeholder for the plual for key / keys. */
-    N_("You are about to configure the following %1 for:"),
+    N_("You are about to configure the following OpenPGP %1 for:"),
     /* TRANSLATORS: Part of address book key configuration dialog.
        used in a sentence as plural form. */
     N_("keys"),
     /* TRANSLATORS: Part of address book key configuration dialog.
        used in a sentence as singular form. */
     N_("key"),
+    /* TRANSLATORS: Part of address book key configuration dialog. %1 is
+        a placeholder for the plual for certificate / certificates. */
+    N_("You are about to configure the following S/MIME %1 for:"),
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       used in a sentence as plural form. */
+    N_("certificates"),
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       used in a sentence as singular form. */
+    N_("certificate"),
+
+    N_("This may take several minutes..."),
+    N_("Validating S/MIME certificates"),
+
     /* TRANSLATORS: Part of address book key configuration dialog. */
     N_("Continue?"),
     /* TRANSLATORS: Part of address book key configuration dialog. */
-    N_("Confirm keys"),
+    N_("Confirm"),
     /* TRANSLATORS: Part of debugging configuration. */
     N_("Enable Logging"),
     N_("Default"),
