@@ -1221,7 +1221,17 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
 
   /* Set the message class.  */
   prop.ulPropTag = PR_MESSAGE_CLASS_A;
-  if (encrypt)
+  if (protocol == PROTOCOL_SMIME)
+    {
+      /* When sending over exchange to the same server the recipient
+         might see the message class we set here. So for S/MIME
+         we keep the original. This makes the sent folder icon
+         not immediately showing the GpgOL icon but gives other
+         clients that do not have GpgOL installed a better chance
+         to handle the mail. */
+      prop.Value.lpszA = xstrdup ("IPM.Note.SMIME.MultipartSigned");
+    }
+  else if (encrypt)
     {
       prop.Value.lpszA = xstrdup ("IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned");
     }
