@@ -756,7 +756,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
 
           if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
-              !m_mail->isDraftEncrypt())
+              !m_mail->isDraftEncrypt() &&
+              m_mail->cryptState() != Mail::NeedsFirstAfterWrite)
             {
               log_debug ("%s:%s: Draft encryption starting now.",
                          SRCNAME, __func__);
