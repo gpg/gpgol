@@ -561,10 +561,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   gpgol_release (message);
                   TBREAK;
                 }
-              if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL"))
+              if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL") &&
+                  strcmp (propval->Value.lpszA, "IPM.Note.SMIME.MultipartSigned"))
                 {
                   // Does not have a message class by us.
-                  log_debug ("%s:%s: Message %p - No GpgOL Message class after encryption. cls is: '%s'",
+                  log_debug ("%s:%s: Message %p - No GpgOL Message class "
+                             "after crypto. cls is: '%s'",
                              SRCNAME, __func__, m_object, propval->Value.lpszA);
                   log_debug ("%s:%s: Message %p - Activating T3656 Workaround",
                              SRCNAME, __func__, m_object);
