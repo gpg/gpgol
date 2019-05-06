@@ -73,6 +73,11 @@ i18n_noops[] = {
     N_("Prefer S/MIME over OpenPGP if both are possible."),
 
     /* TRANSLATORS: Part of the config dialog. */
+    N_("Configuration of GnuPG System options"),
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Configuration of debug options"),
+
+    /* TRANSLATORS: Part of the config dialog. */
     N_("Search and import &X509 certificates in the configured directory services"),
     /* TRANSLATORS: Part of the config dialog. Tooltip */
     N_("Searches for X509 certificates automatically and imports them. This option searches in all configured services."),
@@ -96,10 +101,13 @@ i18n_noops[] = {
     /* Not options but strings for the key adder */
     /* TRANSLATORS: Part of address book key configuration dialog.
        The contacts name follows. */
-    N_("Configure key for:"),
+    N_("Settings for:"),
     /* TRANSLATORS: Part of address book key configuration dialog.
        An example for a public key follows. */
     N_("Paste a public key export here. It should look like:"),
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       An example for a public certificate follows. */
+    _("Paste certificates here. They should look like:"),
     /* TRANSLATORS: Part of address book key configuration dialog. */
     N_("Failed to parse any public key."),
     /* TRANSLATORS: Part of address book key configuration dialog. */
@@ -144,6 +152,18 @@ i18n_noops[] = {
     N_("Continue?"),
     /* TRANSLATORS: Part of address book key configuration dialog. */
     N_("Confirm"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Always secure mails"),
+    /* TRANSLATORS: Part of address book key configuration dialog. */
+    N_("Use these keys for this contact:"),
+
+    /* TRANSLATORS: Part of address book key configuration dialog.
+       Info box for the key configuration. */
+    N_("You can use this to override the keys "
+       "for this contact. The keys will be imported and used "
+       "regardless of their trust level."),
+    N_("For S/MIME the root certificate has to be trusted."),
+    N_("Place multiple keys in here to encrypt to all of them."),
     /* TRANSLATORS: Part of debugging configuration. */
     N_("Enable Logging"),
     N_("Default"),
