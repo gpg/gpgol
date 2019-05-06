@@ -1112,7 +1112,8 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn_contact\""
         "                 onAction=\"openOptions\""
-        "                 screentip=\"%s\"/>"
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\"/>"
         "       </dialogBoxLauncher>"
         "     </group>"
         "    </tab>"
@@ -1120,15 +1121,21 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         " </ribbon>"
         "</customUI>",
         _("GpgOL"),
-        _("OpenPGP Key"),
+        _("Settings"),
         _(/* TRANSLATORS: Tooltip caption */
-          "Configure the OpenPGP key for this contact."),
+          "Configure GpgOL keys and settings for this contact."),
         _(/* TRANSLATORS: Tooltip content */
-          "The configured key or keys will be used for this contact even "
-          "if they are not certified."),
+          "Configure contact specific keys and settings to override "
+          "the default behavior for this contact."),
+        _("GpgOL Settings"),
         optsSTip
         );
     }
+        //_(/* TRANSLATORS: Tooltip caption */
+        //  "Configure the OpenPGP key for this contact."),
+       // _(/* TRANSLATORS: Tooltip content */
+        //  "The configured key or keys will be used for this contact even "
+        //  "if they are not certified."),
 
   if (buffer)
     {
