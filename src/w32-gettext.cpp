@@ -772,18 +772,23 @@ _nl_locale_name (int category, const char *categoryname)
      context, because message catalogs are not specific to a single
      codeset.  */
 
-  LCID lcid;
+  static LCID lcid = 0;
   LANGID langid;
   int primary, sub;
 
   (void)category;
 
-  /* Prefer the Ui language of Outlook. */
+  if (!lcid)
+    {
+      /* We only check once because Outlook also requires
+         a restart after switching the language. This fixes
+         a problem that in some callbacks
+         Application.LanguageSettings is not available.*/
+        /* Prefer the Ui language of Outlook. */
 #ifndef BUILD_TESTS
-  lcid = get_ol_ui_language ();
-#else
-  lcid = 0;
+        lcid = get_ol_ui_language ();
 #endif
+    }
 
   /* Let the user override the system settings through environment
      variables, as on POSIX systems.  */
