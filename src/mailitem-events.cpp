@@ -438,6 +438,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__, m_mail);
 
               m_mail->prepareCrypto_o ();
+              m_mail->setIsDraftEncrypt (false);
 
               // Save the Mail
               invoke_oom_method (m_object, "Save", NULL);
@@ -757,7 +758,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
 
           if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
               !m_mail->isDraftEncrypt() &&
-              m_mail->cryptState() != Mail::NeedsFirstAfterWrite)
+              m_mail->cryptState() == Mail::NoCryptMail)
             {
               log_debug ("%s:%s: Draft encryption starting now.",
                          SRCNAME, __func__);
@@ -783,6 +784,10 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   log_debug ("%s:%s: Encrypt sign start failed.",
                              SRCNAME, __func__);
                   m_mail->setCryptState (Mail::NoCryptMail);
+                  if (!m_mail->isAsyncCryptDisabled())
+                    {
+                      m_mail->releaseCurrentItem();
+                    }
                 }
               TRETURN S_OK;
             }
