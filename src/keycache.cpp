@@ -1451,10 +1451,13 @@ KeyCache::isMailResolvable(Mail *mail)
     }
 
 
+  GpgME::Key sigKey = getSigningKey (sender.c_str(), GpgME::OpenPGP);
   std::vector<GpgME::Key> encKeys = getEncryptionKeys (recps,
                                                        GpgME::OpenPGP);
 
-  if (!encKeys.empty())
+  /* If S/MIME is prefrerred we only toggle auto encrypt for PGP if
+     we both have a signing key and encryption keys. */
+  if (!encKeys.empty() && (!opt.prefer_smime || !sigKey.isNull()))
     {
       TRETURN true;
     }
@@ -1467,8 +1470,8 @@ KeyCache::isMailResolvable(Mail *mail)
   /* Check S/MIME instead here we need to include the sender
      as we can't just generate a key. */
   recps.push_back (sender);
-  GpgME::Key sigKey= getSigningKey (sender.c_str(), GpgME::CMS);
   encKeys = getEncryptionKeys (recps, GpgME::CMS);
+  sigKey = getSigningKey (sender.c_str(), GpgME::CMS);
 
   TRETURN !encKeys.empty() && !sigKey.isNull();
 }
