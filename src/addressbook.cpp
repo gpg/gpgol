@@ -29,16 +29,125 @@
 #include <gpgme++/data.h>
 
 #include <set>
+#include <sstream>
 
 typedef struct
 {
   std::string name;
-  std::string data;
+  std::string pgp_data;
+  std::string cms_data;
   HWND hwnd;
   shared_disp_t contact;
 } keyadder_args_t;
 
 static std::set <std::string> s_checked_entries;
+
+static Addressbook::callback_args_t
+parse_output (const std::string &output)
+{
+  Addressbook::callback_args_t ret;
+
+  std::istringstream ss(output);
+  std::string line;
+
+  std::string pgp_data;
+  std::string cms_data;
+
+  bool in_pgp_data = false;
+  bool in_options = false;
+  bool in_cms_data = false;
+  while (std::getline (ss, line))
+    {
+      rtrim (line);
+      if (in_pgp_data)
+        {
+          if (line == "empty")
+            {
+              pgp_data = "";
+            }
+          else if (line != "END KEYADDER PGP DATA")
+            {
+              pgp_data += line + std::string("\n");
+            }
+          else
+            {
+              in_pgp_data = false;
+            }
+        }
+      else if (in_cms_data)
+        {
+          if (line == "empty")
+            {
+              in_cms_data = false;
+              cms_data = "";
+            }
+          else if (line != "END KEYADDER CMS DATA")
+            {
+              cms_data += line + std::string("\n");
+            }
+          else
+            {
+              in_cms_data = false;
+            }
+        }
+      else if (in_options)
+        {
+          if (line == "END KEYADDER OPTIONS")
+            {
+              in_options = false;
+              continue;
+            }
+          std::istringstream lss (line);
+          std::string key, value;
+
+          std::getline (lss, key, '=');
+          std::getline (lss, value, '=');
+
+          if (key == "secure")
+            {
+              int val = atoi (value.c_str());
+              if (val > 3 || val < 0)
+                {
+                  log_error ("%s:%s: Loading secure value: %s failed",
+                             SRCNAME, __func__, value.c_str ());
+                  continue;
+                }
+              ret.crypto_flags = val;
+            }
+          else
+            {
+              log_debug ("%s:%s: Unknown setting: %s",
+                         SRCNAME, __func__, key.c_str ());
+            }
+          continue;
+        }
+      else
+        {
+          if (line == "BEGIN KEYADDER OPTIONS")
+            {
+              in_options = true;
+            }
+          else if (line == "BEGIN KEYADDER CMS DATA")
+            {
+              in_cms_data = true;
+            }
+          else if (line == "BEGIN KEYADDER PGP DATA")
+            {
+              in_pgp_data = true;
+            }
+          else
+            {
+              log_debug ("%s:%s: Unknown line: %s",
+                         SRCNAME, __func__, line.c_str ());
+            }
+        }
+    }
+
+  ret.pgp_data = xstrdup (pgp_data.c_str ());
+  ret.cms_data = xstrdup (cms_data.c_str ());
+
+  return ret;
+}
 
 static DWORD WINAPI
 open_keyadder (LPVOID arg)
@@ -64,6 +173,11 @@ open_keyadder (LPVOID arg)
   args.push_back (std::string ("--username"));
   args.push_back (adder_args->name);
 
+  if (opt.enable_smime)
+    {
+      args.push_back (std::string ("--cms"));
+    }
+
   auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
   if (!ctx)
     {
@@ -72,7 +186,11 @@ open_keyadder (LPVOID arg)
       TRETURN -1;
     }
 
-  GpgME::Data mystdin (adder_args->data.c_str(), adder_args->data.size(),
+  std::string input = adder_args->pgp_data;
+  input += "BEGIN CMS DATA\n";
+  input += adder_args->cms_data;
+
+  GpgME::Data mystdin (input.c_str(), input.size(),
                        false);
   GpgME::Data mystdout, mystderr;
 
@@ -96,28 +214,22 @@ open_keyadder (LPVOID arg)
       TRETURN 0;
     }
 
-  auto newKey = mystdout.toString ();
+  auto output = mystdout.toString ();
 
-  rtrim(newKey);
+  rtrim(output);
 
-  if (newKey.empty())
+  if (output.empty())
     {
       log_debug ("%s:%s: keyadder canceled.", SRCNAME, __func__);
       TRETURN 0;
     }
-  if (newKey == "empty")
-    {
-      log_debug ("%s:%s: keyadder empty.", SRCNAME, __func__);
-      newKey = "";
-    }
 
-  Addressbook::callback_args_t cb_args;
-
-  /* cb args are valid in the same scope as newKey */
-  cb_args.data = newKey.c_str();
+  Addressbook::callback_args_t cb_args = parse_output (output);
   cb_args.contact = adder_args->contact;
 
   do_in_ui_thread (CONFIG_KEY_DONE, (void*) &cb_args);
+  xfree (cb_args.pgp_data);
+  xfree (cb_args.cms_data);
   TRETURN 0;
 }
 
@@ -144,15 +256,32 @@ Addressbook::update_key_o (void *callback_args)
   if (!pgp_key)
     {
       TRACEPOINT;
+      gpgol_release (user_props);
       TRETURN;
     }
-  put_oom_string (pgp_key, "Value", cb_args->data);
+  put_oom_string (pgp_key, "Value", cb_args->pgp_data);
+  gpgol_release (pgp_key);
 
   log_debug ("%s:%s: PGP key data updated",
              SRCNAME, __func__);
 
-  gpgol_release (pgp_key);
+  if (opt.enable_smime)
+    {
+      LPDISPATCH cms_data = find_or_add_text_prop (user_props,
+                                                   "GpgOL CMS Cert");
+      if (!cms_data)
+        {
+          TRACEPOINT;
+          gpgol_release (user_props);
+          TRETURN;
+        }
+      put_oom_string (cms_data, "Value", cb_args->cms_data);
+      gpgol_release (cms_data);
+      log_debug ("%s:%s: CMS key data updated",
+                 SRCNAME, __func__);
+    }
 
+  gpgol_release (user_props);
   s_checked_entries.clear ();
   TRETURN;
 }
@@ -167,16 +296,15 @@ Addressbook::edit_key_o (LPDISPATCH contact)
       TRETURN;
     }
 
-  LPDISPATCH user_props = get_oom_object (contact, "UserProperties");
+  auto user_props = MAKE_SHARED (get_oom_object (contact, "UserProperties"));
   if (!user_props)
     {
       TRACEPOINT;
       TRETURN;
     }
 
-  auto pgp_key = MAKE_SHARED (
-                      find_or_add_text_prop (user_props, "OpenPGP Key"));
-  gpgol_release (user_props);
+  auto pgp_key = MAKE_SHARED (find_or_add_text_prop (user_props.get (),
+                                                     "OpenPGP Key"));
 
   if (!pgp_key)
     {
@@ -189,6 +317,19 @@ Addressbook::edit_key_o (LPDISPATCH contact)
     {
       TRACEPOINT;
       TRETURN;
+    }
+
+  char *cms_data = nullptr;
+  if (opt.enable_smime)
+    {
+      auto cms_key = MAKE_SHARED (find_or_add_text_prop (user_props.get (),
+                                                         "GpgOL CMS Cert"));
+      cms_data = get_oom_string (cms_key.get(), "Value");
+      if (!cms_data)
+        {
+          TRACEPOINT;
+          TRETURN;
+        }
     }
 
   char *name = get_oom_string (contact, "Subject");
@@ -205,7 +346,8 @@ Addressbook::edit_key_o (LPDISPATCH contact)
 
   keyadder_args_t *args = new keyadder_args_t;
   args->name = name;
-  args->data = key_data;
+  args->pgp_data = key_data;
+  args->cms_data = cms_data ? cms_data : "";
   args->hwnd = get_active_hwnd ();
   contact->AddRef ();
   memdbg_addRef (contact);
@@ -215,6 +357,7 @@ Addressbook::edit_key_o (LPDISPATCH contact)
                              NULL));
   xfree (name);
   xfree (key_data);
+  xfree (cms_data);
 
   TRETURN;
 }
@@ -280,27 +423,51 @@ Addressbook::check_o (Mail *mail)
         }
 
       LPDISPATCH pgp_key = find_or_add_text_prop (user_props, "OpenPGP Key");
+      LPDISPATCH cms_prop = nullptr;
+
+      if (opt.enable_smime)
+        {
+          cms_prop = find_or_add_text_prop (user_props, "GpgOL CMS Cert");
+        }
+
       gpgol_release (user_props);
 
-      if (!pgp_key)
+      if (!pgp_key && !cms_prop)
         {
           continue;
         }
 
-      log_debug ("%s:%s: found configured pgp key for %s",
+      log_debug ("%s:%s: found configured key for %s",
                  SRCNAME, __func__,
                  anonstr (pair.first.c_str()));
 
-      char *key_data = get_oom_string (pgp_key, "Value");
-      if (!key_data || !strlen (key_data))
+      char *pgp_data = get_oom_string (pgp_key, "Value");
+      char *cms_data = nullptr;
+      if (cms_prop)
+        {
+          cms_data = get_oom_string (cms_prop, "Value");
+        }
+
+      if ((!pgp_data || !strlen (pgp_data))
+          && (!cms_data || !strlen (cms_data)))
         {
           log_debug ("%s:%s: No key data",
                      SRCNAME, __func__);
         }
-      KeyCache::instance ()->importFromAddrBook (pair.first, key_data,
-                                                 mail);
-      xfree (key_data);
+      if (pgp_data && strlen (pgp_data))
+        {
+          KeyCache::instance ()->importFromAddrBook (pair.first, pgp_data,
+                                                     mail, GpgME::OpenPGP);
+        }
+      if (cms_data && strlen (cms_data))
+        {
+          KeyCache::instance ()->importFromAddrBook (pair.first, cms_data,
+                                                     mail, GpgME::CMS);
+        }
+      xfree (pgp_data);
+      xfree (cms_data);
       gpgol_release (pgp_key);
+      gpgol_release (cms_prop);
     }
   TRETURN;
 }

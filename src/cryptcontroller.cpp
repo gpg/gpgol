@@ -556,6 +556,8 @@ CryptController::resolve_keys ()
   args.push_back (std::string ("--lang"));
   args.push_back (std::string (gettext_localename ()));
 
+  bool has_smime_override = false;
+
   if (m_encrypt)
     {
       args.push_back (std::string ("--encrypt"));
@@ -563,7 +565,14 @@ CryptController::resolve_keys ()
       for (const auto &addr: m_recipient_addrs)
         {
           const auto mbox = GpgME::UserID::addrSpecFromString (addr.c_str());
-          const auto overrides = KeyCache::instance ()->getOverrides (mbox);
+          auto overrides =
+            KeyCache::instance ()->getOverrides (mbox, GpgME::OpenPGP);
+          const auto cms_overrides =
+            KeyCache::instance ()->getOverrides (mbox, GpgME::CMS);
+
+          overrides.insert(overrides.end(), cms_overrides.begin(),
+                           cms_overrides.end());
+
           if (overrides.size())
             {
               std::string overrideStr = mbox + ":";
@@ -574,6 +583,7 @@ CryptController::resolve_keys ()
                       TRACEPOINT;
                       continue;
                     }
+                  has_smime_override |= key.protocol() == GpgME::CMS;
                   overrideStr += key.primaryFingerprint();
                   overrideStr += ",";
                 }
@@ -583,6 +593,13 @@ CryptController::resolve_keys ()
             }
           args.push_back (mbox);
         }
+    }
+
+  if (!opt.prefer_smime && has_smime_override)
+    {
+      /* Prefer S/MIME if there was an S/MIME override */
+      args.push_back (std::string ("--preferred-protocol"));
+      args.push_back (std::string ("cms"));
     }
 
   // Args are prepared. Spawn the resolver.

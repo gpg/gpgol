@@ -32,7 +32,9 @@ namespace Addressbook
 typedef struct
 {
   shared_disp_t contact;
-  const char *data;
+  char *pgp_data;
+  char *cms_data;
+  int crypto_flags;
 } callback_args_t;
 
 /* Configure the OpenPGP Key for this contact. */

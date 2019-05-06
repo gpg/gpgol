@@ -120,10 +120,11 @@ public:
     */
     void importFromAddrBook (const std::string &mbox,
                              const char *key_data,
-                             Mail *mail) const;
+                             Mail *mail, GpgME::Protocol proto) const;
 
     /* Get optional overrides for an address. */
-    std::vector<GpgME::Key> getOverrides (const std::string &mbox);
+    std::vector<GpgME::Key> getOverrides (const std::string &mbox,
+                                          GpgME::Protocol proto);
 
     /* Populate the fingerprint and secret key maps */
     void populate ();
@@ -142,7 +143,8 @@ public:
     void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key);
     void onUpdateJobDone(const char *fpr, const GpgME::Key &key);
     void onAddrBookImportJobDone (const std::string &fpr,
-                                  const std::vector<std::string> &result_fprs);
+                                  const std::vector<std::string> &result_fprs,
+                                  GpgME::Protocol proto);
 
 private:
 
