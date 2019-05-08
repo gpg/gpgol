@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2019-05-08 07:59+0200\n"
-"PO-Revision-Date: 2019-04-10 14:35+0100\n"
+"PO-Revision-Date: 2019-05-08 08:24+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -145,13 +145,11 @@ msgstr "Bevorzuge S/MIME gegenüber OpenPGP, wenn beide möglich sind."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:76
-#, fuzzy
 msgid "Configuration of GnuPG System options"
-msgstr "Konfiguration der Fehlersuche"
+msgstr "Konfiguration des GnuPG Systems"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:78
-#, fuzzy
 msgid "Configuration of debug options"
 msgstr "Konfiguration der Fehlersuche"
 
@@ -208,18 +206,20 @@ msgstr "Importiert OpenPGP Schlüssel aus Anhägen oder aus den Mail Headern."
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:97
 msgid "Encrypt &drafts of secure mails to this key:"
-msgstr ""
+msgstr "Entwürfe von abgesicherten Mails mit diesem Schlüssel verschlüsseln:"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:99
 msgid "Encrypt drafts and autosaved mails if the secure button is toggled."
 msgstr ""
+"Verschlüsselt automatische Sicherungen und Entwürfe wenn der Absichern-Knopf"
+" gedrückt ist."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
 #: src/addin-options.cpp:104
 msgid "Settings for:"
-msgstr ""
+msgstr "Einstellungen für:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public key follows.
@@ -231,10 +231,8 @@ msgstr ""
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
 #: src/addin-options.cpp:110
-#, fuzzy
 msgid "Paste certificates here. They should look like:"
-msgstr ""
-"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr "Fügen Sie Zertifikate ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:112
@@ -286,9 +284,8 @@ msgstr "Benutzerkennungen:"
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for key / keys.
 #: src/addin-options.cpp:131
-#, fuzzy
 msgid "You are about to configure the following OpenPGP %1 for:"
-msgstr "Sie konfigurieren folgende %1 für:"
+msgstr "Sie konfigurieren folgende OpenPGP %1 für:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
@@ -305,16 +302,14 @@ msgstr "Schlüssel "
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for certificate / certificates.
 #: src/addin-options.cpp:140
-#, fuzzy
 msgid "You are about to configure the following S/MIME %1 for:"
-msgstr "Sie konfigurieren folgende %1 für:"
+msgstr "Sie konfigurieren folgende S/MIM E %1 für:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
 #: src/addin-options.cpp:143
-#, fuzzy
 msgid "certificates"
-msgstr "Zertifikat"
+msgstr "Zertifikate"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as singular form.
@@ -324,12 +319,11 @@ msgstr "Zertifikat"
 
 #: src/addin-options.cpp:148
 msgid "This may take several minutes..."
-msgstr ""
+msgstr "Dies kann mehrere Minuten dauern..."
 
 #: src/addin-options.cpp:149
-#, fuzzy
 msgid "Validating S/MIME certificates"
-msgstr "S/MIME Prüfungsresultat"
+msgstr "Überprüfe S/MIME Zertifikate"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:152
@@ -338,20 +332,18 @@ msgstr "Fortsetzen?"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:154
-#, fuzzy
 msgid "Confirm"
-msgstr "Schlüssel bestätigen?"
+msgstr "Bestätigen"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:156
 msgid "Always secure mails"
-msgstr ""
+msgstr "Mails immer absichern"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:158
-#, fuzzy
 msgid "Use these keys for this contact:"
-msgstr "OpenPGP Schlüssel für diesen Kontakt konfigurieren."
+msgstr "Diese Schlüssel für den Kontakt verwenden:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. Info box for the key configuration.
@@ -360,14 +352,18 @@ msgid ""
 "You can use this to override the keys for this contact. The keys will be "
 "imported and used regardless of their trust level."
 msgstr ""
+"Sie können dies verwenden um die Schlüssel für diesen Kontakt zu"
+" überschreiben. "
+"Die Schlüssel werden importiert und unabhängig ihrer Vertrauensstufe"
+" verwendet."
 
 #: src/addin-options.cpp:165
 msgid "For S/MIME the root certificate has to be trusted."
-msgstr ""
+msgstr "Für S/MIME muss das Wurzelzertifikat vertrauenswürdig sein."
 
 #: src/addin-options.cpp:166
 msgid "Place multiple keys in here to encrypt to all of them."
-msgstr ""
+msgstr "Fügen Sie mehrere Schlüssel ein um an alle zu verschlüsseln."
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:168
@@ -440,17 +436,17 @@ msgstr "Konfiguration der Fehlersuche"
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:200
 msgid "Potential workarounds"
-msgstr "Mögliche workarounds"
+msgstr "Mögliche Workarounds"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:202
 msgid "Block Outlook during encrypt / sign"
-msgstr "Outlook während des verschlüsselns / signierens blockieren"
+msgstr "Outlook während des Verschlüsselns / Signierens blockieren"
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:204
 msgid "Block Outlook during decrypt / verify"
-msgstr "Outlook während des entschlüsselns / verifizierens blockieren"
+msgstr "Outlook während des Entschlüsselns / Verifizierens blockieren"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:206
@@ -541,13 +537,12 @@ msgstr "Dauerhaft &amp;entschlüsseln"
 
 #: src/gpgoladdin.cpp:1124
 msgid "Settings"
-msgstr ""
+msgstr "Einstellungen"
 
 #. TRANSLATORS: Tooltip caption
 #: src/gpgoladdin.cpp:1126
-#, fuzzy
 msgid "Configure GpgOL keys and settings for this contact."
-msgstr "OpenPGP Schlüssel für diesen Kontakt konfigurieren."
+msgstr "Schlüssel und GpgOL Einstellungen für diesen Kontakt konfigurieren."
 
 #. TRANSLATORS: Tooltip content
 #: src/gpgoladdin.cpp:1128
@@ -555,11 +550,12 @@ msgid ""
 "Configure contact specific keys and settings to override the default "
 "behavior for this contact."
 msgstr ""
+"Konfigurieren Sie spezifische Schlüssel und Einstellungen um das "
+"Standardverhalten für diesen Kontakt zu ändern."
 
 #: src/gpgoladdin.cpp:1130
-#, fuzzy
 msgid "GpgOL Settings"
-msgstr "GpgOL Warnung"
+msgstr "GpgOL Einstellungen"
 
 #: src/mail.cpp:409
 msgid ""
