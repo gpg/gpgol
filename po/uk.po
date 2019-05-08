@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-04-12 12:10+0200\n"
+"POT-Creation-Date: 2019-05-08 07:59+0200\n"
 "PO-Revision-Date: 2018-06-12 19:38+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -27,7 +27,7 @@ msgstr ""
 msgid "Enable the S/MIME support"
 msgstr "Увімкнути підтримку S/MIME"
 
-#: src/addin-options.cpp:41 src/addin-options.cpp:254
+#: src/addin-options.cpp:41 src/addin-options.cpp:287
 #, fuzzy
 msgid "Configure GpgOL"
 msgstr "Налаштувати GnuPG"
@@ -135,6 +135,16 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:76
+msgid "Configuration of GnuPG System options"
+msgstr ""
+
+#. TRANSLATORS: Part of the config dialog.
+#: src/addin-options.cpp:78
+msgid "Configuration of debug options"
+msgstr ""
+
+#. TRANSLATORS: Part of the config dialog.
+#: src/addin-options.cpp:81
 #, fuzzy
 msgid ""
 "Search and import &X509 certificates in the configured directory services"
@@ -142,185 +152,244 @@ msgstr ""
 "Натисніть тут, щоб пошукати сертифікат на налаштованому сервері ключів X509."
 
 #. TRANSLATORS: Part of the config dialog. Tooltip
-#: src/addin-options.cpp:78
+#: src/addin-options.cpp:83
 msgid ""
 "Searches for X509 certificates automatically and imports them. This option "
 "searches in all configured services."
 msgstr ""
 
 #. TRANSLATORS: Part of the config dialog. Warning about privacy leak.
-#: src/addin-options.cpp:80
+#: src/addin-options.cpp:85
 msgid ""
 "<b>Warning:</b> The configured services will receive information about whom "
 "you send Emails!"
 msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
-#: src/addin-options.cpp:82
+#: src/addin-options.cpp:87
 msgid ""
 "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
-#: src/addin-options.cpp:84
+#: src/addin-options.cpp:89
 msgid "Also &with untrusted keys"
 msgstr ""
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
-#: src/addin-options.cpp:87
+#: src/addin-options.cpp:92
 msgid "&Import any keys included in mails"
 msgstr ""
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
-#: src/addin-options.cpp:90
+#: src/addin-options.cpp:95
 msgid "Import OpenPGP keys from mail attachments or from mail headers."
 msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
-#: src/addin-options.cpp:92
+#: src/addin-options.cpp:97
 msgid "Encrypt &drafts of secure mails to this key:"
 msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
-#: src/addin-options.cpp:94
+#: src/addin-options.cpp:99
 msgid "Encrypt drafts and autosaved mails if the secure button is toggled."
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
-#: src/addin-options.cpp:99
-#, fuzzy
-msgid "Configure key for:"
-msgstr "Налаштувати GnuPG"
+#: src/addin-options.cpp:104
+msgid "Settings for:"
+msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public key follows.
-#: src/addin-options.cpp:102
+#: src/addin-options.cpp:107
 msgid "Paste a public key export here. It should look like:"
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:104
+#. An example for a public certificate follows.
+#: src/addin-options.cpp:110
+msgid "Paste certificates here. They should look like:"
+msgstr ""
+
+#. TRANSLATORS: Part of address book key configuration dialog.
+#: src/addin-options.cpp:112
 #, fuzzy
 msgid "Failed to parse any public key."
 msgstr "Не вдалося обробити повідомлення."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:106
+#: src/addin-options.cpp:114
 #, fuzzy
 msgid "Error"
 msgstr "Помилка GpgOL"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:108
+#: src/addin-options.cpp:116
 msgid "Secret key detected."
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:110
+#: src/addin-options.cpp:118
 msgid ""
 "You can only configure public keys in Outlook. Import secret keys with "
 "Kleopatra."
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:113
+#: src/addin-options.cpp:121
 msgid ""
 "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:116
+#: src/addin-options.cpp:124
 msgid "Invalid key detected."
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:118
+#: src/addin-options.cpp:126
 msgid "Created:"
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:120
+#: src/addin-options.cpp:128
 msgid "User Ids:"
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for key / keys.
-#: src/addin-options.cpp:123
-msgid "You are about to configure the following %1 for:"
+#: src/addin-options.cpp:131
+msgid "You are about to configure the following OpenPGP %1 for:"
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
-#: src/addin-options.cpp:126
+#: src/addin-options.cpp:134
 msgid "keys"
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as singular form.
-#: src/addin-options.cpp:129
+#: src/addin-options.cpp:137
 msgid "key"
 msgstr ""
 
+#. TRANSLATORS: Part of address book key configuration dialog. %1 is
+#. a placeholder for the plual for certificate / certificates.
+#: src/addin-options.cpp:140
+msgid "You are about to configure the following S/MIME %1 for:"
+msgstr ""
+
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:131
+#. used in a sentence as plural form.
+#: src/addin-options.cpp:143
+#, fuzzy
+msgid "certificates"
+msgstr "Використаний сертифікат"
+
+#. TRANSLATORS: Part of address book key configuration dialog.
+#. used in a sentence as singular form.
+#: src/addin-options.cpp:146
+#, fuzzy
+msgid "certificate"
+msgstr "Використаний сертифікат"
+
+#: src/addin-options.cpp:148
+msgid "This may take several minutes..."
+msgstr ""
+
+#: src/addin-options.cpp:149
+msgid "Validating S/MIME certificates"
+msgstr ""
+
+#. TRANSLATORS: Part of address book key configuration dialog.
+#: src/addin-options.cpp:152
 msgid "Continue?"
 msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
-#: src/addin-options.cpp:133
+#: src/addin-options.cpp:154
 #, fuzzy
-msgid "Confirm keys"
+msgid "Confirm"
 msgstr "Підтвердити реєстрацію?"
 
+#. TRANSLATORS: Part of address book key configuration dialog.
+#: src/addin-options.cpp:156
+msgid "Always secure mails"
+msgstr ""
+
+#. TRANSLATORS: Part of address book key configuration dialog.
+#: src/addin-options.cpp:158
+msgid "Use these keys for this contact:"
+msgstr ""
+
+#. TRANSLATORS: Part of address book key configuration dialog.
+#. Info box for the key configuration.
+#: src/addin-options.cpp:162
+msgid ""
+"You can use this to override the keys for this contact. The keys will be "
+"imported and used regardless of their trust level."
+msgstr ""
+
+#: src/addin-options.cpp:165
+msgid "For S/MIME the root certificate has to be trusted."
+msgstr ""
+
+#: src/addin-options.cpp:166
+msgid "Place multiple keys in here to encrypt to all of them."
+msgstr ""
+
 #. TRANSLATORS: Part of debugging configuration.
-#: src/addin-options.cpp:135
+#: src/addin-options.cpp:168
 msgid "Enable Logging"
 msgstr ""
 
-#: src/addin-options.cpp:136
+#: src/addin-options.cpp:169
 msgid "Default"
 msgstr ""
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
-#: src/addin-options.cpp:139
+#: src/addin-options.cpp:172
 msgid "+Outlook API calls"
 msgstr ""
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
-#: src/addin-options.cpp:142
+#: src/addin-options.cpp:175
 msgid "+Memory analysis"
 msgstr ""
 
 #. TRANSLATORS: Part of debugging configuration.  The plus should
 #. mean in the combo box that it is added to the above.
-#: src/addin-options.cpp:145
+#: src/addin-options.cpp:178
 msgid "+Call tracing"
 msgstr ""
 
 #. TRANSLATORS: Part of debugging configuration.
-#: src/addin-options.cpp:147
+#: src/addin-options.cpp:180
 msgid "Log File (required):"
 msgstr ""
 
 #. TRANSLATORS: Part of debugging configuration.  This is a checkbox
 #. to select if even potentially private data should be included in the
 #. debug log.
-#: src/addin-options.cpp:151
+#: src/addin-options.cpp:184
 msgid "Include Mail contents (decrypted!) and meta information."
 msgstr ""
 
 #. TRANSLATORS: Dialog title for the log file selection
-#: src/addin-options.cpp:153
+#: src/addin-options.cpp:186
 msgid "Select log file"
 msgstr ""
 
 #. TRANSLATORS: Part of debugging configuration.
-#: src/addin-options.cpp:155
+#: src/addin-options.cpp:188
 msgid "Log level:"
 msgstr ""
 
@@ -329,38 +398,38 @@ msgstr ""
 #. keep the string ~ the size of the english version as the
 #. warning is shown in line with the combo box to select the
 #. level.
-#: src/addin-options.cpp:161
+#: src/addin-options.cpp:194
 msgid "<b>Warning:</b> Decreased performance. Huge logs!"
 msgstr ""
 
 #. TRANSLATORS: Config dialog category for debug options.
-#: src/addin-options.cpp:163
+#: src/addin-options.cpp:196
 #, fuzzy
 msgid "Debug"
 msgstr "Діагностика…"
 
 #. TRANSLATORS: Config dialog category for debug options.
-#: src/addin-options.cpp:165
+#: src/addin-options.cpp:198
 msgid "Configuaration of debug options"
 msgstr ""
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
-#: src/addin-options.cpp:167
+#: src/addin-options.cpp:200
 msgid "Potential workarounds"
 msgstr ""
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
-#: src/addin-options.cpp:169
+#: src/addin-options.cpp:202
 msgid "Block Outlook during encrypt / sign"
 msgstr ""
 
 #. TRANSLATORS: Config dialog debug page, can be technical.
-#: src/addin-options.cpp:171
+#: src/addin-options.cpp:204
 msgid "Block Outlook during decrypt / verify"
 msgstr ""
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
-#: src/addin-options.cpp:173
+#: src/addin-options.cpp:206
 msgid "How to report a problem?"
 msgstr ""
 
@@ -375,7 +444,7 @@ msgstr ""
 
 #. TRANSLATORS: Placeholder for a contact without
 #. a configured name
-#: src/addressbook.cpp:202
+#: src/addressbook.cpp:343
 msgid "Unknown contact"
 msgstr ""
 
@@ -418,12 +487,12 @@ msgid "Open the settings dialog for GpgOL"
 msgstr "Відкрити діалогове вікно параметрів GpgOL"
 
 #: src/gpgoladdin.cpp:921 src/gpgoladdin.cpp:956 src/gpgoladdin.cpp:1051
-#: src/gpgoladdin.cpp:1053 src/gpgoladdin.cpp:1091 src/gpgoladdin.cpp:1122
-#: src/gpgoladdin.cpp:1249 src/mail.cpp:1013 src/mail.cpp:1377
-#: src/mail.cpp:1446 src/mailitem-events.cpp:970 src/ribbon-callbacks.cpp:700
+#: src/gpgoladdin.cpp:1053 src/gpgoladdin.cpp:1091 src/gpgoladdin.cpp:1123
+#: src/gpgoladdin.cpp:1256 src/mail.cpp:1013 src/mail.cpp:1377
+#: src/mail.cpp:1446 src/mailitem-events.cpp:978 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
 #: src/wks-helper.cpp:453 src/cryptcontroller.cpp:319
-#: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:471
+#: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:472
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -447,21 +516,26 @@ msgstr "&amp;Надрукувати розшифроване"
 msgid "Permanently &amp;decrypt"
 msgstr ""
 
-#: src/gpgoladdin.cpp:1123
-msgid "OpenPGP Key"
+#: src/gpgoladdin.cpp:1124
+msgid "Settings"
 msgstr ""
 
 #. TRANSLATORS: Tooltip caption
-#: src/gpgoladdin.cpp:1125
-msgid "Configure the OpenPGP key for this contact."
+#: src/gpgoladdin.cpp:1126
+msgid "Configure GpgOL keys and settings for this contact."
 msgstr ""
 
 #. TRANSLATORS: Tooltip content
-#: src/gpgoladdin.cpp:1127
+#: src/gpgoladdin.cpp:1128
 msgid ""
-"The configured key or keys will be used for this contact even if they are "
-"not certified."
+"Configure contact specific keys and settings to override the default "
+"behavior for this contact."
 msgstr ""
+
+#: src/gpgoladdin.cpp:1130
+#, fuzzy
+msgid "GpgOL Settings"
+msgstr "Попередження GpgOL"
 
 #: src/mail.cpp:409
 msgid ""
@@ -875,7 +949,7 @@ msgstr ""
 "зашифрованим\n"
 "долученням даних або перемкніться на PGP/Inline у параметрах GpgOL."
 
-#: src/mailitem-events.cpp:369 src/mailitem-events.cpp:1023
+#: src/mailitem-events.cpp:369 src/mailitem-events.cpp:1031
 #: src/mimemaker.cpp:1086
 msgid "Sorry, that's not possible, yet"
 msgstr "Вибачте, це ще неможливо"
@@ -903,15 +977,15 @@ msgstr ""
 
 #. TRANSLATORS: Part of a warning dialog that disallows
 #. reply and forward with contents
-#: src/mailitem-events.cpp:954
+#: src/mailitem-events.cpp:962
 msgid "You are replying to an unsigned S/MIME email."
 msgstr ""
 
-#: src/mailitem-events.cpp:956
+#: src/mailitem-events.cpp:964
 msgid "You are forwarding an unsigned S/MIME email."
 msgstr ""
 
-#: src/mailitem-events.cpp:959
+#: src/mailitem-events.cpp:967
 msgid ""
 "In this version of S/MIME an attacker could use the missing signature to "
 "have you decrypt contents from a different, otherwise completely unrelated "
@@ -919,11 +993,11 @@ msgid ""
 "This is why we only allow quoting to be done manually."
 msgstr ""
 
-#: src/mailitem-events.cpp:966
+#: src/mailitem-events.cpp:974
 msgid "Please copy the relevant contents and insert them into the new email."
 msgstr ""
 
-#: src/mailitem-events.cpp:1020
+#: src/mailitem-events.cpp:1028
 msgid ""
 "Attachments are part of the crypto message.\n"
 "They can't be permanently removed and will be shown again the next time this "
@@ -1100,21 +1174,25 @@ msgstr "Невдовзі ваш відкритий ключ можна буде 
 msgid "GpgOL: Request confirmed!"
 msgstr "GpgOL: запит підтверджено!"
 
-#: src/cryptcontroller.cpp:515
+#: src/cryptcontroller.cpp:516
 msgid "Resolving recipients..."
 msgstr "Визначаємо отримувачів…"
 
-#: src/cryptcontroller.cpp:519
+#: src/cryptcontroller.cpp:520
 msgid "Resolving signers..."
 msgstr "Визначаємо підписників…"
 
-#: src/cryptcontroller.cpp:1266
+#: src/cryptcontroller.cpp:1284
 msgid "Encrypting..."
 msgstr "Зашифровуємо…"
 
-#: src/cryptcontroller.cpp:1270
+#: src/cryptcontroller.cpp:1288
 msgid "Signing..."
 msgstr "Підписуємо…"
+
+#, fuzzy
+#~ msgid "Configure key for:"
+#~ msgstr "Налаштувати GnuPG"
 
 #~ msgid "No recipients for encryption selected."
 #~ msgstr "Не вибрано жодного отримувача для шифрування."
