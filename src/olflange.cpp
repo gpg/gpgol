@@ -379,6 +379,10 @@ install_forms (void)
           to do the S/MIME handling. */
       "gpgol-form-signed",
       "gpgol-form-encrypted",
+      /* SMIME Forms with similar icons to outlooks S/MIME */
+      "gpgol-form-signed-smime",
+      "gpgol-form-signed-smime-opaque",
+      "gpgol-form-encrypted-smime",
       NULL,
     };
   int formidx;

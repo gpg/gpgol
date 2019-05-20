@@ -1229,9 +1229,7 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
          not immediately showing the GpgOL icon but gives other
          clients that do not have GpgOL installed a better chance
          to handle the mail. */
-      /* FIXME according to MSOXSMIME it should be possible to use
-       * IPM.Note.SMIME here for encrypted mails */
-      prop.Value.lpszA = encrypt ? xstrdup ("IPM.Note.SMIME.MultipartSigned") :
+      prop.Value.lpszA = encrypt ? xstrdup ("IPM.Note.SMIME") :
                                    xstrdup ("IPM.Note.SMIME.MultipartSigned");
     }
   else if (encrypt)

@@ -1236,7 +1236,7 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
                    || !strcmp (proto, "application/x-pkcs7-signature")))
         {
           log_debug ("%s:%s:   protocol is '%s'", SRCNAME, __func__, proto);
-          newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+          newvalue = xstrdup ("IPM.Note.GpgOL.SM.MultipartSigned");
         }
       else
         {
@@ -1369,7 +1369,7 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
               && (!strcmp (proto, "application/pkcs7-signature")
                   || !strcmp (proto, "application/x-pkcs7-signature")))
             {
-              newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
+              newvalue = xstrdup ("IPM.Note.GpgOL.SM.MultipartSigned");
             }
           else if (!strcmp (ct, "multipart/signed")
                    && (!strcmp (proto, "application/pgp-signature")))
@@ -1453,6 +1453,10 @@ string_to_type (const char *s)
       if (!*s)
         {
           TRETURN MSGTYPE_GPGOL;
+        }
+      else if (!strcmp (s, ".SM.MultipartSigned"))
+        {
+          TRETURN MSGTYPE_GPGOL_MULTIPART_SIGNED;
         }
       else if (!strcmp (s, ".MultipartSigned"))
         {
@@ -1578,8 +1582,8 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
           else
             {
               xfree (tmp);
-              newvalue = (char*)xmalloc (strlen (s) + 1);
-              strcpy (stpcpy (newvalue, "IPM.Note.GpgOL"), s+14);
+              gpgrt_asprintf (&newvalue, "IPM.Note.GpgOL.SM%s", s+14);
+              memdbg_alloc (newvalue);
             }
         }
       else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))

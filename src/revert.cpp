@@ -326,13 +326,13 @@ gpgol_mailitem_revert (LPDISPATCH mailitem)
       else if (msgtype == MSGTYPE_GPGOL_MULTIPART_SIGNED)
         {
           prop.Value.lpszA =
-            (char*) "IPM.Note.InfoPathForm.GpgOLS.SMIME.MultipartSigned";
+            (char*) "IPM.Note.SMIME.MultipartSigned";
           hr = HrSetOneProp (message, &prop);
         }
       else
         {
           prop.Value.lpszA =
-            (char*) "IPM.Note.InfoPathForm.GpgOL.SMIME.MultipartSigned";
+            (char*) "IPM.Note.SMIME";
           hr = HrSetOneProp (message, &prop);
         }
       if (hr)
