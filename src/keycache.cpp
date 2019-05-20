@@ -374,6 +374,83 @@ public:
     TRETURN;
   }
 
+  time_t getLastSubkeyCreation(const GpgME::Key &k)
+  {
+    TSTART;
+    time_t ret = 0;
+
+    for (const auto &sub: k.subkeys())
+      {
+        if (sub.isBad())
+          {
+            continue;
+          }
+        if (sub.creationTime() > ret)
+          {
+            ret = sub.creationTime();
+          }
+      }
+    TRETURN ret;
+  }
+
+  GpgME::Key compareSkeys(const GpgME::Key &old, const GpgME::Key &newKey)
+  {
+    TSTART;
+
+    if (newKey.isNull())
+      {
+        return old;
+      }
+    if (old.isNull())
+      {
+        return newKey;
+      }
+
+    if (old.primaryFingerprint() && newKey.primaryFingerprint() &&
+        !strcmp (old.primaryFingerprint(), newKey.primaryFingerprint()))
+      {
+        // Both are the same. Take the newer one.
+        return newKey;
+      }
+
+    if (old.canSign() && !newKey.canSign())
+      {
+        log_debug ("%s:%s Keeping old skey with "
+                   "fpr %s over %s because it can sign.",
+                   SRCNAME, __func__,
+                   anonstr (old.primaryFingerprint()),
+                   anonstr (newKey.primaryFingerprint()));
+        TRETURN old;
+      }
+
+    if (!old.canSign() && newKey.canSign())
+      {
+        log_debug ("%s:%s Using new skey with "
+                   "fpr %s over %s because it can sign.",
+                   SRCNAME, __func__,
+                   anonstr (newKey.primaryFingerprint()),
+                   anonstr (old.primaryFingerprint()));
+        TRETURN newKey;
+      }
+
+    // Both can or can't sign. Use the newest one.
+    if (getLastSubkeyCreation (old) >= getLastSubkeyCreation (newKey))
+      {
+        log_debug ("%s:%s Keeping old skey with "
+                   "fpr %s over %s because it is newer.",
+                   SRCNAME, __func__,
+                   anonstr (old.primaryFingerprint()),
+                   anonstr (newKey.primaryFingerprint()));
+        TRETURN old;
+      }
+    log_debug ("%s:%s Using new skey with "
+               "fpr %s over %s because it is newer.",
+               SRCNAME, __func__,
+               anonstr (newKey.primaryFingerprint()),
+               anonstr (old.primaryFingerprint()));
+    TRETURN newKey;
+  }
+
   void setPgpKeySecret(const std::string &mbox, const GpgME::Key &key,
                        bool insert = true)
   {
@@ -387,7 +464,7 @@ public:
       }
     else
       {
-        it->second = key;
+        it->second = compareSkeys (it->second, key);
       }
     if (insert)
       {
@@ -410,7 +487,7 @@ public:
       }
     else
       {
-        it->second = key;
+        it->second = compareSkeys (it->second, key);
       }
     if (insert)
       {
@@ -619,8 +696,9 @@ public:
         const auto key = getKey (recip.c_str (), proto);
         if (key.isNull())
           {
-            log_debug ("%s:%s: No key for %s. no internal encryption",
-                       SRCNAME, __func__, anonstr (recip.c_str ()));
+            log_debug ("%s:%s: No key for %s in proto %s. no internal encryption",
+                       SRCNAME, __func__, anonstr (recip.c_str ()),
+                       to_cstr (proto));
             TRETURN std::vector<GpgME::Key>();
           }
 
