@@ -929,7 +929,6 @@ is_really_cms_encrypted (LPMESSAGE message)
     }
   hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
                             NULL, MAPI_BEST_ACCESS, &att);
-  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
@@ -937,6 +936,7 @@ is_really_cms_encrypted (LPMESSAGE message)
                  mapirows->aRow[pos].lpProps[0].Value.l, hr);
       goto leave;
     }
+  memdbg_addRef (att);
   if (!has_smime_filename (att))
     {
       log_debug ("%s:%s: no smime filename", SRCNAME, __func__);
@@ -1057,7 +1057,6 @@ get_first_attach_mime_tag (LPMESSAGE message)
     }
   hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
                             NULL, MAPI_BEST_ACCESS, &att);	
-  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
@@ -1065,6 +1064,7 @@ get_first_attach_mime_tag (LPMESSAGE message)
                  mapirows->aRow[pos].lpProps[0].Value.l, hr);
       goto leave;
     }
+  memdbg_addRef (att);
 
   /* Note: We do not expect a filename.  */
 
@@ -2441,14 +2441,14 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
 
   /* Open the attachment table.  */
   hr = message->GetAttachmentTable (0, &mapitable);
-  memdbg_addRef (mapitable);
   if (FAILED (hr))
     {
       log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
                  SRCNAME, __func__, hr);
       TRETURN NULL;
     }
-      
+  memdbg_addRef (mapitable);
+
   hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
                        NULL, NULL, 0, &mapirows);
   if (FAILED (hr))
@@ -2491,7 +2491,6 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
 
       hr = message->OpenAttach (table[pos].mapipos, NULL,
                                 MAPI_BEST_ACCESS, &att);
-      memdbg_addRef (att);
       if (FAILED (hr))
         {
           log_error ("%s:%s: can't open attachment %d (%d): hr=%#lx",
@@ -2499,6 +2498,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
           table[pos].mapipos = -1;
           continue;
         }
+      memdbg_addRef (att);
 
       table[pos].method = get_attach_method (att);
       table[pos].filename = fast? NULL : get_attach_filename (att);
@@ -2596,13 +2596,13 @@ mapi_get_attach_as_stream (LPMESSAGE message, mapi_attach_item_t *item,
     }
 
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
-  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
                  SRCNAME, __func__, item->mapipos, hr);
       TRETURN NULL;
     }
+  memdbg_addRef (att);
   if (item->method != ATTACH_BY_VALUE)
     {
       log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
@@ -2710,13 +2710,13 @@ mapi_get_attach (LPMESSAGE message,
     }
 
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
-  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
                  SRCNAME, __func__, item->mapipos, hr);
       TRETURN NULL;
     }
+  memdbg_addRef (att);
   if (item->method != ATTACH_BY_VALUE)
     {
       log_error ("%s:%s: attachment: method not supported", SRCNAME, __func__);
@@ -2751,13 +2751,13 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
              SRCNAME, __func__, item->mapipos);
 
   hr = message->OpenAttach (item->mapipos, NULL, MAPI_BEST_ACCESS, &att);
-  memdbg_addRef (att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment at %d: hr=%#lx",
                  SRCNAME, __func__, item->mapipos, hr);
       TRETURN -1;
     }
+  memdbg_addRef (att);
 
   if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
     goto leave;
