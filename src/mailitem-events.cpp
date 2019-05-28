@@ -561,7 +561,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   TBREAK;
                 }
               if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL") &&
-                  strcmp (propval->Value.lpszA, "IPM.Note.SMIME.MultipartSigned"))
+                  strcmp (propval->Value.lpszA, "IPM.Note.SMIME.MultipartSigned") &&
+                  strcmp (propval->Value.lpszA, "IPM.Note.SMIME"))
                 {
                   // Does not have a message class by us.
                   log_debug ("%s:%s: Message %p - No GpgOL Message class "
