@@ -2539,11 +2539,12 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
       log_debug ("%s:%s: attachment info:\n", SRCNAME, __func__);
       for (pos=0; !table[pos].end_of_table; pos++)
         {
-          log_debug ("\t%d mt=%d fname=`%s' ct=`%s' ct_parms=`%s'\n",
+          log_debug ("\t%d mt=%d fname=`%s' ct=`%s' ct_parms=`%s' method:%d\n",
                      table[pos].mapipos,
                      table[pos].attach_type,
                      anonstr (table[pos].filename), table[pos].content_type,
-                     table[pos].content_type_parms);
+                     table[pos].content_type_parms,
+                     table[pos].method);
         }
     }
 

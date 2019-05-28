@@ -1052,43 +1052,47 @@ write_attachments (sink_t sink,
               }
             xfree (buffer);
           }
-        else
-          {
-            if (!only_related && !warning_shown
+        else if (!only_related && !warning_shown
                 && table[idx].attach_type == ATTACHTYPE_UNKNOWN
                 && (table[idx].method == ATTACH_OLE
                     || table[idx].method == ATTACH_EMBEDDED_MSG))
+          {
+            char *fmt;
+            log_debug ("%s:%s: detected OLE attachment. Showing warning.",
+                       SRCNAME, __func__);
+            gpgrt_asprintf (&fmt, _("The attachment '%s' is an Outlook item "
+                                    "which is currently unsupported in crypto mails."),
+                            table[idx].filename ?
+                            table[idx].filename : _("Unknown"));
+            std::string msg = fmt;
+            msg += "\n\n";
+            xfree (fmt);
+
+            gpgrt_asprintf (&fmt, _("Please encrypt '%s' with Kleopatra "
+                                    "and attach it as a file."),
+                            table[idx].filename ?
+                            table[idx].filename : _("Unknown"));
+            msg += fmt;
+            xfree (fmt);
+
+            msg += "\n\n";
+            msg += _("Send anyway?");
+            warning_shown = true;
+
+            if (gpgol_message_box (get_active_hwnd (),
+                                   msg.c_str (),
+                                   _("Sorry, that's not possible, yet"),
+                                   MB_APPLMODAL | MB_YESNO) == IDNO)
               {
-                char *fmt;
-                log_debug ("%s:%s: detected OLE attachment. Showing warning.",
-                           SRCNAME, __func__);
-                gpgrt_asprintf (&fmt, _("The attachment '%s' is an Outlook item "
-                                        "which is currently unsupported in crypto mails."),
-                                table[idx].filename ?
-                                table[idx].filename : _("Unknown"));
-                std::string msg = fmt;
-                msg += "\n\n";
-                xfree (fmt);
-
-                gpgrt_asprintf (&fmt, _("Please encrypt '%s' with Kleopatra "
-                                        "and attach it as a file."),
-                                table[idx].filename ?
-                                table[idx].filename : _("Unknown"));
-                msg += fmt;
-                xfree (fmt);
-
-                msg += "\n\n";
-                msg += _("Send anyway?");
-                warning_shown = true;
-
-                if (gpgol_message_box (get_active_hwnd (),
-                                       msg.c_str (),
-                                       _("Sorry, that's not possible, yet"),
-                                       MB_APPLMODAL | MB_YESNO) == IDNO)
-                  {
-                    return -1;
-                  }
+                return -1;
               }
+          }
+        else
+          {
+            log_debug ("%s:%s: Skipping unknown attachment at idx: %d type: %d"
+                       " with method: %d",
+                       SRCNAME, __func__, idx, table[idx].attach_type,
+                       table[idx].method);
           }
       }
   return 0;
