@@ -632,6 +632,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
               TBREAK;
             }
 
+          if (m_mail->cryptState() == Mail::NeedsFirstAfterWrite)
+            {
+              log_debug ("%s:%s: Crypto mail needs first after write. "
+                         "Auto-Passing but removing our categories.",
+                         SRCNAME, __func__);
+
+              m_mail->removeCategories_o ();
+              TBREAK;
+            }
+
           if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
               if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
