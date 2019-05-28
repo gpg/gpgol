@@ -629,6 +629,8 @@ public:
   void setDecryptAgain (bool value) { m_decrypt_again = value; }
   bool isDecryptAgain () const { return m_decrypt_again; }
 
+  msgtype_t msgtype () const { return m_type; }
+
 private:
   void updateCategories_o ();
   void updateSigstate ();
