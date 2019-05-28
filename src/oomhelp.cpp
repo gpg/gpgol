@@ -240,7 +240,8 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         {
           log_error ("%s:%s Object does not support IDispatch",
                      SRCNAME, __func__);
-          gpgol_release (pObj);
+          if (pObj != pStart)
+            gpgol_release (pObj);
           TRETURN NULL;
         }
       /* Confirmed through testing that the retval needs a release */
