@@ -723,7 +723,7 @@ fixup_last_attachment_o (LPDISPATCH mail,
     }
   int ret = put_pa_string (attach,
                            PR_ATTACH_CONTENT_ID_DASL,
-                           attachment->get_content_id ().c_str ());
+                           cid.c_str ());
 
   log_debug ("%s:%s: Set attachment content id to: '%s'",
              SRCNAME, __func__, anonstr (cid.c_str()));
