@@ -558,7 +558,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 {
                   log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
                              SRCNAME, __func__, hr);
-                  gpgol_release (message);
                   TBREAK;
                 }
               if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL") &&
