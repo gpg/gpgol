@@ -2147,11 +2147,55 @@ Mail::close (Mail *mail)
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 
+  if (mail->isSMIME_m ())
+    {
+      LPDISPATCH attachments = get_oom_object (mail->item(), "Attachments");
+      if (attachments)
+        {
+          int count = get_oom_int (attachments, "Count");
+          gpgol_release (attachments);
+          if (count)
+            {
+              /* On exchange Outlook sometimes detects that an S/MIME mail
+               * is an S/MIME Mail. When this mail is then modified by
+               * us and the mail should be moved or closed Outlook will try
+               * to save it. This fails and the user gets an error.
+               *
+               * So we save here, which should not be dangerous as we do not
+               * put plaintext in mapi.
+               *
+               * Still better only do it if it is really
+               * necessary as the changed message class can hurt.
+               *
+               * Tests show no plaintext leaks. The save saves the
+               * message class and in that way outlook no longer
+               * thinks the mails are S/MIME mails and we can
+               * use our own handling. See T4525
+               */
+              mail->removeCategories_o ();
+              LPMESSAGE mapi_msg = get_oom_message (mail->item ());
+              HRESULT hr = 0;
+              if (mapi_msg)
+                {
+                  log_debug ("%s:%s: MAPI Save for: %p",
+                             SRCNAME, __func__, mail->item());
+                  mapi_msg->SaveChanges (KEEP_OPEN_READWRITE);
+                  gpgol_release (mapi_msg);
+                }
+              if (!mapi_msg || hr)
+                {
+                  log_error ("%s:%s: Failed to save mapi for %p hr=%#lx",
+                             SRCNAME, __func__, mail, hr);
+                }
+            }
+        }
+    }
+
   log_oom ("%s:%s: Invoking close for: %p",
                  SRCNAME, __func__, mail->item());
   mail->setCloseTriggered (true);
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
-                                       NULL, &dispparams);
+                                         nullptr, &dispparams);
 
   if (!rc)
     {
