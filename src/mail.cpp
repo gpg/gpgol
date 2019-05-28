@@ -673,10 +673,44 @@ fixup_last_attachment_o (LPDISPATCH mail,
 {
   TSTART;
   /* Currently we only set content id */
-  if (attachment->get_content_id ().empty())
+  std::string cid = attachment->get_content_id ();
+  if (cid.empty())
     {
       log_debug ("%s:%s: Content id not found.",
                  SRCNAME, __func__);
+      TRETURN 0;
+    }
+
+  /* We add this safeguard here was we somehow can't trigger Outlook
+   * not to hide attachments with content id (see below). So we
+   * have to make double sure that the attachment is actually referenced
+   * in the HTML before we hide it. In doubt it is better to "break"
+   * the content id reference but show the Attachment as a hidden
+   * attachment can appear to be data loss. See T4526 T4203. */
+  char *body = get_oom_string (mail, "HTMLBody");
+  if (!body)
+    {
+      log_debug ("%s:%s: No HTML Body.",
+                 SRCNAME, __func__);
+      TRETURN 0;
+    }
+
+  if (cid.front () == '<')
+    {
+      cid.erase (0, 1);
+    }
+  if (cid.back() == '>')
+    {
+      cid.pop_back ();
+    }
+
+  char *cid_pos = strstr (body, cid.c_str ());
+  xfree (body);
+  if (!cid_pos)
+    {
+      log_debug ("%s:%s: Failed to find cid: '%s' in body. Not setting cid.",
+                 SRCNAME, __func__, anonstr (cid.c_str ()));
+
       TRETURN 0;
     }
 
@@ -687,10 +721,9 @@ fixup_last_attachment_o (LPDISPATCH mail,
                  SRCNAME, __func__);
       TRETURN 1;
     }
-  const std::string cid = attachment->get_content_id ();
   int ret = put_pa_string (attach,
                            PR_ATTACH_CONTENT_ID_DASL,
-                           cid.c_str());
+                           attachment->get_content_id ().c_str ());
 
   log_debug ("%s:%s: Set attachment content id to: '%s'",
              SRCNAME, __func__, anonstr (cid.c_str()));
