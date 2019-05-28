@@ -1012,7 +1012,9 @@ count_usable_attachments (mapi_attach_item_t *table)
 /* Write out all attachments from TABLE separated by BOUNDARY to SINK.
    This function needs to be syncronized with count_usable_attachments.
    If only_related is 1 only include attachments for multipart/related they
-   are excluded otherwise. */
+   are excluded otherwise.
+   If only_related is 2 all attachments are included regardless of
+   content-id. */
 static int
 write_attachments (sink_t sink,
                    LPMESSAGE message, mapi_attach_item_t *table,
@@ -1029,7 +1031,7 @@ write_attachments (sink_t sink,
         if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
             && table[idx].method == ATTACH_BY_VALUE)
           {
-            if (only_related && !table[idx].content_id)
+            if (only_related == 1 && !table[idx].content_id)
               {
                 continue;
               }
@@ -1523,10 +1525,22 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
         }
     }
 
-  /* Now write the other attachments */
+  /* Now write the other attachments.
+
+     If we are multipart related the related attachments were already
+     written above. If we are not related we pass 2 to the write_attachements
+     function to force that even attachments with a content id are written
+     out.
+
+     This happens for example when forwarding a plain text mail with
+     attachments.
+     */
   if (!rc && n_att_usable)
-    rc = write_attachments (sink, message, att_table,
-                            *outer_boundary? outer_boundary : NULL, 0);
+    {
+      rc = write_attachments (sink, message, att_table,
+                              *outer_boundary? outer_boundary : NULL,
+                              related ? 0 : 2);
+    }
   if (rc)
     {
       return rc;
