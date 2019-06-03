@@ -103,7 +103,6 @@ filter_chain (const std::vector<GpgME::Key> &input)
 {
    std::vector<GpgME::Key> leaves;
 
-   log_debug ("filter_chain: %i", input.size());
    std::remove_copy_if(input.begin(), input.end(),
            std::back_inserter(leaves),
            [input] (const auto &k)
