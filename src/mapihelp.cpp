@@ -1645,7 +1645,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
 
   if (!newvalue)
     {
-      log_debug ("%s:%s Message is not a crypto message.",
+      log_debug ("%s:%s Message is not a crypto message or already in the right class.",
                  SRCNAME, __func__);
     }
   else
