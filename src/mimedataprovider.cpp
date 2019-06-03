@@ -34,12 +34,15 @@
 #define stricmp strcasecmp
 #endif
 
-/* The maximum length of a line we are able to process.  RFC822 allows
-   only for 1000 bytes; thus 2000 seems to be a reasonable value. */
-#define LINEBUFSIZE 2000
-
 /* How much data is read at once in collect */
-#define BUFSIZE 8192
+#define BUFSIZE 65536
+
+/* The maximum length of a line we are able to process.  RFC822 allows
+   only for 1000 bytes; thus 2000 seemed to be a reasonable value until
+   we worked with a MUA that sent whole HTML mails in a single line
+   now we read more at once and allow the line to be the full size of
+   our read. -1 */
+#define LINEBUFSIZE (BUFSIZE - 1)
 
 #include <gpgme++/error.h>
 
