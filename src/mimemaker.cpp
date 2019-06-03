@@ -1219,7 +1219,7 @@ cancel_mapi_attachment (LPATTACH *attach, sink_t sink)
 int
 finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
                   protocol_t protocol, int encrypt, bool is_inline,
-                  bool is_draft)
+                  bool is_draft, int exchange_major_version)
 {
   HRESULT hr = 0;
   SPropValue prop;
@@ -1235,8 +1235,15 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
          not immediately showing the GpgOL icon but gives other
          clients that do not have GpgOL installed a better chance
          to handle the mail. */
-      prop.Value.lpszA = encrypt ? xstrdup ("IPM.Note.SMIME") :
-                                   xstrdup ("IPM.Note.SMIME.MultipartSigned");
+      if (encrypt && exchange_major_version >= 15)
+        {
+          /* This only appears to work with later exchange versions */
+          prop.Value.lpszA = xstrdup ("IPM.Note.SMIME");
+        }
+      else
+        {
+          prop.Value.lpszA = xstrdup ("IPM.Note.SMIME.MultipartSigned");
+        }
     }
   else if (encrypt)
     {
