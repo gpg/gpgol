@@ -2594,6 +2594,9 @@ get_ex_major_version_for_addr (const char *mbox)
     {
       TRETURN -1;
     }
+
+  log_debug ("%s:%s: Detected exchange major version: %s",
+             SRCNAME, __func__, version_str);
   long int version = strtol (version_str, nullptr, 10);
   xfree (version_str);
 
