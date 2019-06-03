@@ -1,6 +1,23 @@
 Noteworthy changes for version 2.3.4 (unreleased)
 =================================================
 
+ * S/MIME Mails now use the same icons as Outlook
+
+ * Message classes in GpgOL have been changed to
+   improve compatibility with other clients.
+
+ * Draft encryption was added as an experimental feature.
+
+ * GpgOL autosecure no longer triggers for users
+   without an S/MIME certificate.
+
+ * Forwarding of crypto and non crypto mails has been
+   very much improved.
+
+ * Mails without headers are now handled better.
+
+ * S/MIME Address book integration was added.
+
 
 Noteworthy changes for version 2.3.3 (2019-03-26)
 =================================================
