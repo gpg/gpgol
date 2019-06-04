@@ -1235,12 +1235,9 @@ finalize_message (LPMESSAGE message, mapi_attach_item_t *att_table,
          not immediately showing the GpgOL icon but gives other
          clients that do not have GpgOL installed a better chance
          to handle the mail. */
-      if (encrypt && /* exchange_major_version >= 15*/ 0)
+      if (encrypt && exchange_major_version >= 15)
         {
-          (void) exchange_major_version;
-          /* This only appears to work with later exchange versions and
-          caused other Problems with incompatibilities. MultipartSigned
-          seemd to work better, even if it now has the wrong icon. */
+          /* This only appears to work with later exchange versions */
           prop.Value.lpszA = xstrdup ("IPM.Note.SMIME");
         }
       else
