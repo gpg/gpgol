@@ -3017,3 +3017,66 @@ is_draft_mail (LPDISPATCH mailitem)
   TSTART;
   TRETURN is_mail_in_folder (mailitem, FolderID::olFolderDrafts);
 }
+
+void
+format_variant (std::stringstream &stream, VARIANT* var)
+{
+  if (!var)
+    {
+      stream << " (null) ";
+    }
+  stream << "VT: " << std::hex << var->vt << " Value: ";
+
+  VARTYPE vt = var->vt;
+
+  if (vt == VT_BOOL)
+    {
+      stream << (var->boolVal == VARIANT_FALSE ? "false" : "true");
+    }
+  else if (vt == (VT_BOOL | VT_BYREF))
+    {
+      stream << (*(var->pboolVal) == VARIANT_FALSE ? "false" : "true");
+    }
+  else if (vt == VT_BSTR)
+    {
+      char *buf = wchar_to_utf8 (var->bstrVal);
+      stream << "BStr: " << buf;
+      xfree (buf);
+    }
+  else if (vt == VT_INT || vt == VT_I4)
+    {
+      stream << var->intVal;
+    }
+  else if (vt == VT_DISPATCH)
+    {
+      char *buf = get_object_name ((LPUNKNOWN) var->pdispVal);
+      stream << "IDispatch: " << buf;
+      xfree (buf);
+    }
+  else if (vt == (VT_VARIANT | VT_BYREF))
+    {
+      format_variant (stream, var->pvarVal);
+    }
+  else
+    {
+      stream << "?";
+    }
+  stream << std::endl;
+}
+
+std::string
+format_dispparams (DISPPARAMS *p)
+{
+  if (!p)
+    {
+      return "(null)";
+    }
+  std::stringstream stream;
+  stream << "Count: " << p->cArgs << " CNamed: " << p->cNamedArgs << std::endl;
+
+  for (int i = 0; i < p->cArgs; i++)
+    {
+      format_variant (stream, p->rgvarg + i);
+    }
+  return stream.str ();
+}

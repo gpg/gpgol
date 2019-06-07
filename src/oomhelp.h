@@ -435,4 +435,8 @@ bool is_junk_mail (LPDISPATCH mailitem);
 
 /* Return true if this message is in the draft folder for this account */
 bool is_draft_mail (LPDISPATCH mailitem);
+
+/* Returns info about a dispparms variable for debugging. */
+void format_variant (std::istringstream &stream, VARIANT *var);
+std::string format_dispparams (DISPPARAMS *p);
 #endif /*OOMHELP_H*/
