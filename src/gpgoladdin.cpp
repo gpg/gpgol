@@ -718,6 +718,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"printDecrypted", ID_CMD_PRINT_DECRYPTED)
       ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
       ID_MAPPER (L"overrideFileClose", ID_CMD_FILE_CLOSE)
+      ID_MAPPER (L"overrideFileSaveAs", ID_CMD_FILE_SAVE_AS)
       ID_MAPPER (L"decryptPermanently", ID_CMD_DECRYPT_PERMANENTLY)
     }
 
@@ -819,6 +820,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return open_contact_key (parms->rgvarg[0].pdispVal);
       case ID_CMD_FILE_CLOSE :
         return override_file_close ();
+      case ID_CMD_FILE_SAVE_AS:
+        return override_file_save_as (parms);
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
       case ID_BTN_DECRYPT_LARGE:
@@ -962,14 +965,14 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         optsSTip
         );
     }
-  /* We don't use this code currently because calling the send
-     event for Inline Response mailitems fails. */
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer") && g_ol_version_major > 14)
     {
       gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
         " onLoad=\"ribbonLoaded\">"
         " <commands>"
+        "  <command idMso=\"FileSaveAs\""
+        "           onAction=\"overrideFileSaveAs\"/>"
         "  <command idMso=\"FileCloseAndLogOff\""
         "           onAction=\"overrideFileClose\"/>"
         " </commands>"

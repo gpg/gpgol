@@ -55,6 +55,10 @@ typedef enum
   }
 ext_DisconnectMode;
 
+
+/* Global variables */
+extern bool g_ignore_next_load;
+
 /* Global class locks */
 extern ULONG addinLocks;
 

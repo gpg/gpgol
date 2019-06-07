@@ -874,3 +874,19 @@ HRESULT override_file_close ()
 
   TRETURN S_OK;
 }
+
+bool g_ignore_next_load = false;
+
+HRESULT override_file_save_as (DISPPARAMS *parms)
+{
+  TSTART;
+  if (!parms)
+    {
+      STRANGEPOINT;
+      TRETURN S_OK;
+    }
+  // Do not cancel the event so that the underlying File Save As works.
+  parms->rgvarg[0].pvarVal->boolVal = VARIANT_FALSE;
+  g_ignore_next_load = true;
+  TRETURN S_OK;
+}

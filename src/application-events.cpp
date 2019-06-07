@@ -80,6 +80,13 @@ EVENT_SINK_INVOKE(ApplicationEvents)
       case ItemLoad:
         {
           TSTART;
+          if (g_ignore_next_load)
+            {
+              log_debug ("%s:%s: Ignore ItemLoad because ignore next "
+                         "load is true", SRCNAME, __func__);
+              g_ignore_next_load = false;
+              TBREAK;
+            }
           LPDISPATCH mailItem;
           /* The mailItem should be the first argument */
           if (!parms || parms->cArgs != 1 ||

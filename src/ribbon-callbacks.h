@@ -52,6 +52,7 @@
 #define ID_CMD_OPEN_CONTACT_KEY 36
 #define ID_CMD_FILE_CLOSE 37
 #define ID_CMD_DECRYPT_PERMANENTLY 38
+#define ID_CMD_FILE_SAVE_AS 39
 
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -94,4 +95,6 @@ HRESULT open_contact_key (LPDISPATCH ctrl);
 HRESULT override_file_close ();
 /* Decrypt permanently */
 HRESULT decrypt_permanently (LPDISPATCH ctrl);
+/* SaveAs from the file menu */
+HRESULT override_file_save_as (DISPPARAMS *parms);
 #endif
