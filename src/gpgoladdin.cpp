@@ -735,8 +735,13 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
                              EXCEPINFO *exepinfo, UINT *argerr)
 {
   USE_INVOKE_ARGS
-  log_debug ("%s:%s: enter with dispid: %x",
-             SRCNAME, __func__, (int)dispid);
+  log_oom ("%s:%s: enter with dispid: %x",
+           SRCNAME, __func__, (int)dispid);
+
+  /*
+  log_oom ("%s:%s: Parms: %s",
+           SRCNAME, __func__, format_dispparams (parms).c_str ());
+  */
 
   if (!(flags & DISPATCH_METHOD))
     {
