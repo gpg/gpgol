@@ -885,8 +885,15 @@ HRESULT override_file_save_as (DISPPARAMS *parms)
       STRANGEPOINT;
       TRETURN S_OK;
     }
-  // Do not cancel the event so that the underlying File Save As works.
+
+  /* Do not cancel the event so that the underlying File Save As works. */
   parms->rgvarg[0].pvarVal->boolVal = VARIANT_FALSE;
+  /* File->SaveAs triggers an ItemLoad event immediately after this
+     callback. To avoid attaching our decrypt / save prevention code
+     on that mail we set this global variable so that application-events
+     knows that it should ignore the next item load. That way we do
+     not interfere and it can just save what is in MAPI (the encrypted
+     mail). */
   g_ignore_next_load = true;
   TRETURN S_OK;
 }
