@@ -63,11 +63,20 @@ typedef enum
     ViewContextMenuDisplay = 0xFB40
   } ApplicationEvent;
 
+static bool beforePrintSeen;
+
 EVENT_SINK_INVOKE(ApplicationEvents)
 {
   USE_INVOKE_ARGS
   switch(dispid)
     {
+      case BeforePrint:
+        {
+          log_debug ("%s:%s: BeforePrint seen.",
+                     SRCNAME, __func__);
+          beforePrintSeen = true;
+          break;
+        }
       case ItemLoad:
         {
           TSTART;
@@ -87,13 +96,19 @@ EVENT_SINK_INVOKE(ApplicationEvents)
                                        IID_MailItem);
           if (!mailItem)
             {
-              log_debug ("%s:%s: ItemLoad event without mailitem.",
+              beforePrintSeen = false;
+              log_debug ("%s:%s: ItemLoad is not for a mail.",
                          SRCNAME, __func__);
               TBREAK;
             }
           log_debug ("%s:%s: Creating mail object for item: %p",
                      SRCNAME, __func__, mailItem);
-          new Mail (mailItem);
+          auto mail = new Mail (mailItem);
+          if (beforePrintSeen)
+            {
+              mail->setIsPrint (true);
+            }
+          beforePrintSeen = false;
           do_in_ui_thread_async (INVALIDATE_LAST_MAIL, nullptr);
           TBREAK;
         }

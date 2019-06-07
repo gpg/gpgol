@@ -110,7 +110,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_locate_in_progress(false),
     m_is_junk(false),
     m_is_draft_encrypt(false),
-    m_decrypt_again(false)
+    m_decrypt_again(false),
+    m_printing(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -1262,7 +1263,15 @@ Mail::decryptVerify_o ()
                    SRCNAME, __func__, getSubject_o ().c_str(), m_parser.get());
   gpgol_release (cipherstream);
 
-  if (!opt.sync_dec)
+  /* Printing happens in two steps. First a Mail is loaded after the
+     BeforePrint event, then it is loaded a second time when the actual print
+     happens. We have to catch both. */
+  if (!m_printing)
+    {
+      m_printing = checkIfMailIsChildOfPrintMail_o ();
+    }
+
+  if (!opt.sync_dec && !m_printing)
     {
       HANDLE parser_thread = CreateThread (NULL, 0, do_parsing, (LPVOID) this, 0,
                                            NULL);
@@ -2495,6 +2504,13 @@ void
 Mail::updateCategories_o ()
 {
   TSTART;
+
+  if (m_printing)
+    {
+      log_debug ("%s:%s: Not updating categories as we are printing.",
+                 SRCNAME, __func__);
+      return;
+    }
 
   auto mngr = CategoryManager::instance ();
   if (isValidSig ())
@@ -4160,4 +4176,57 @@ Mail::prepareCrypto_o ()
   setCryptState (Mail::NeedsFirstAfterWrite);
 
   TRETURN;
+}
+
+/* Printing happens in two steps. First a Mail is loaded after the
+BeforePrint event, then it is loaded a second time when the actual print
+happens. We have to catch both.
+This functions looks over all mails and checks if one is currently
+printing. If so we compare our EntryID's and if they match. Bingo,
+we are printing, too.*/
+bool
+Mail::checkIfMailIsChildOfPrintMail_o ()
+{
+  gpgol_lock (&mail_map_lock);
+  for (auto it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
+    {
+      auto mail = it->second;
+      if (mail->isPrint ())
+        {
+          /* This happens so rarely that we only fetch our
+             entry id if we are in here. */
+          char *entryID = get_oom_string (mail->item (), "EntryID");
+          if (!entryID)
+            {
+              log_error ("%s:%s: Printing mail %p has no EntryID",
+                         SRCNAME, __func__, mail);
+              continue;
+            }
+
+          char *ourID = get_oom_string (m_mailitem, "EntryID");
+          if (!ourID)
+            {
+              log_error ("%s:%s: Mail %p has no EntryID",
+                         SRCNAME, __func__, this);
+              xfree (entryID);
+              continue;
+            }
+          int cmp = strcmp (ourID, entryID);
+          xfree (ourID);
+          xfree (entryID);
+
+          if (cmp)
+            {
+              log_debug ("%s:%s: The current print is not us.",
+                         SRCNAME, __func__);
+              continue;
+            }
+          gpgrt_lock_unlock (&mail_map_lock);
+          log_debug ("%s:%s: Mail %p is the actual print of %p.",
+                     SRCNAME, __func__, this, mail);
+          return true;
+        }
+    }
+  gpgrt_lock_unlock (&mail_map_lock);
+  return false;
 }

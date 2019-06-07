@@ -629,9 +629,15 @@ public:
   void setDecryptAgain (bool value) { m_decrypt_again = value; }
   bool isDecryptAgain () const { return m_decrypt_again; }
 
+  /* The type of the message. */
   msgtype_t msgtype () const { return m_type; }
 
+  /* The mail was loaded after we have seen a BeforePrint event. */
+  void setIsPrint (bool value) { m_printing = value; }
+  bool isPrint () const { return m_printing; }
+
 private:
+  bool checkIfMailIsChildOfPrintMail_o ();
   void updateCategories_o ();
   void updateSigstate ();
 
@@ -688,5 +694,6 @@ private:
   bool m_is_draft_encrypt; /* Mail is a draft that should be encrypted */
   bool m_decrypt_again; /* Mail should be decrypted again if it sees
                            another beforeread */
+  bool m_printing; /* Mail is decrypted for printing */
 };
 #endif // MAIL_H
