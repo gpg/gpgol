@@ -44,6 +44,7 @@ typedef enum
     AdvancedSearchComplete = 0xFA6A,
     AdvancedSearchStopped = 0xFA6B,
     AttachmentContextMenuDisplay = 0xFB3E,
+    BeforePrint = 0xFC8E,
     BeforeFolderSharingDialog = 0xFC01,
     ContextMenuClose = 0xFBA6,
     FolderContextMenuDisplay = 0xFB42,
@@ -112,4 +113,4 @@ EVENT_SINK_INVOKE(ApplicationEvents)
      anyway if everything works as documented. */
   return S_OK;
 }
-END_EVENT_SINK(ApplicationEvents, IID_ApplicationEvents)
+END_EVENT_SINK(ApplicationEvents, IID_ApplicationEvents_11)
