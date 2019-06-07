@@ -806,7 +806,9 @@ HRESULT print_decrypted (LPDISPATCH ctrl)
                  SRCNAME, __func__);
       return S_OK;
     }
+  mail->removeCategories_o ();
   invoke_oom_method (mail->item(), "PrintOut", NULL);
+  mail->updateCategories_o ();
   return S_OK;
 }
 

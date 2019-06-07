@@ -636,9 +636,12 @@ public:
   void setIsPrint (bool value) { m_printing = value; }
   bool isPrint () const { return m_printing; }
 
+  /* Update the catgories (encrypted / trust in) based on the
+     crypt results. */
+  void updateCategories_o ();
+
 private:
   bool checkIfMailIsChildOfPrintMail_o ();
-  void updateCategories_o ();
   void updateSigstate ();
 
   LPDISPATCH m_mailitem;
