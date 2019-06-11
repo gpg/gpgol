@@ -715,7 +715,6 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"launchDetails", ID_LAUNCH_CERT_DETAILS)
       ID_MAPPER (L"getIsDetailsEnabled", ID_GET_IS_DETAILS_ENABLED)
       ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO_MAIL)
-      ID_MAPPER (L"printDecrypted", ID_CMD_PRINT_DECRYPTED)
       ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
       ID_MAPPER (L"overrideFileClose", ID_CMD_FILE_CLOSE)
       ID_MAPPER (L"overrideFileSaveAs", ID_CMD_FILE_SAVE_AS)
@@ -810,8 +809,6 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
             options_dialog_box (NULL);
             return S_OK;
           }
-      case ID_CMD_PRINT_DECRYPTED:
-        return print_decrypted (parms->rgvarg[0].pdispVal);
       case ID_CMD_DECRYPT_PERMANENTLY:
         return decrypt_permanently (parms->rgvarg[0].pdispVal);
       case ID_GET_IS_CRYPTO_MAIL:
@@ -1038,14 +1035,6 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         " </ribbon>"
         " <contextMenus>"
         "  <contextMenu idMso=\"ContextMenuMailItem\">"
-        "   <button id=\"decryptedPrintBtn\""
-//        "idMso=\"FilePrintQuick\""
-        "           label=\"%s\""
-        "           onAction=\"printDecrypted\""
-        "           getImage=\"btnEncryptSmall\""
-        "           getVisible=\"getIsCrypto\""
-        "           insertAfterMso=\"FilePrintQuick\""
-        "   />"
         "   <button id=\"decryptPermanentlyBtn\""
         "           label=\"%s\""
         "           onAction=\"decryptPermanently\""
@@ -1063,7 +1052,6 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip,
-        _("&amp;Print decrypted"),
         _("Permanently &amp;decrypt")
         );
     }

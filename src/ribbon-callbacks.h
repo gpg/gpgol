@@ -47,7 +47,6 @@
 #define ID_GET_SIGN_ENCRYPT_PRESSED_EX 31
 #define ID_CMD_SIGN_ENCRYPT_MIME 32
 #define ID_CMD_SIGN_ENCRYPT_MIME_EX 33
-#define ID_CMD_PRINT_DECRYPTED 34
 #define ID_GET_IS_CRYPTO_MAIL 35
 #define ID_CMD_OPEN_CONTACT_KEY 36
 #define ID_CMD_FILE_CLOSE 37
@@ -87,8 +86,6 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result);
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 /* Is the currently selected mail a crypto mail ? */
 HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result);
-/* Print out the decrypted mail */
-HRESULT print_decrypted (LPDISPATCH ctrl);
 /* Open key configuration for a contact */
 HRESULT open_contact_key (LPDISPATCH ctrl);
 /* An explorer is closed by File->Close */

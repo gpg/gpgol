@@ -796,22 +796,6 @@ HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
   return S_OK;
 }
 
-HRESULT print_decrypted (LPDISPATCH ctrl)
-{
-  MY_MAIL_GETTER
-
-  if (!mail)
-    {
-      log_error ("%s:%s: Failed to get mail.",
-                 SRCNAME, __func__);
-      return S_OK;
-    }
-  mail->removeCategories_o ();
-  invoke_oom_method (mail->item(), "PrintOut", NULL);
-  mail->updateCategories_o ();
-  return S_OK;
-}
-
 HRESULT decrypt_permanently (LPDISPATCH ctrl)
 {
   MY_MAIL_GETTER
