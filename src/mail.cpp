@@ -1627,8 +1627,13 @@ Mail::parsing_done()
   updateBody_o ();
   TRACEPOINT;
 
-  /* Check that there are no unsigned / unencrypted messages. */
-  checkAttachments_o ();
+  /* When printing we have already shown the warning. So we
+     should not show it again but silently remove any attachments
+     that are not hidden before our add_attachments. This
+     also fixes an issue that when printing sometimes the
+     child mails which are created for preview and print already
+     have the decrypted attachments. */
+  checkAttachments_o (isPrint ());
 
   /* Update attachments */
   if (add_attachments_o (m_mailitem, m_parser->get_attachments()))
