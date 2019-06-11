@@ -440,8 +440,12 @@ public:
   int get_signature_level () const;
 
   /** Check if all attachments are hidden and show a warning
-    message appropiate to the crypto state if necessary. */
-  int checkAttachments_o () const;
+    message appropiate to the crypto state if necessary.
+
+    If silent is true it will not show a warning but silently
+    remove the bad attachments.
+    */
+  int checkAttachments_o (bool silent);
 
   /** Check if the mail should be encrypted "inline" */
   bool getDoPGPInline () const {return m_do_inline;}

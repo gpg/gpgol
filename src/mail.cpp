@@ -386,7 +386,7 @@ get_attachment_o (LPDISPATCH mailitem, int pos)
 /** Helper to check that all attachments are hidden, to be
   called before crypto. */
 int
-Mail::checkAttachments_o () const
+Mail::checkAttachments_o (bool silent)
 {
   TSTART;
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
@@ -427,7 +427,7 @@ Mail::checkAttachments_o () const
     }
 
   bool foundOne = false;
-
+  std::vector <LPDISPATCH> to_delete;
   for (int i = 1; i <= count; i++)
     {
       std::string item_str;
@@ -449,12 +449,37 @@ Mail::checkAttachments_o () const
           message += dispName ? dispName : "Unknown";
           xfree (dispName);
           message += "\n";
+          to_delete.push_back (oom_attach);
+        }
+      else
+        {
+          gpgol_release (oom_attach);
         }
       VariantClear (&var);
-      gpgol_release (oom_attach);
+    }
+
+  /* In silent mode we remove the unencrypted attachments silently */
+  if (foundOne)
+    {
+      for (auto attachment: to_delete)
+        {
+          if (silent)
+            {
+              m_disable_att_remove_warning = true;
+              log_debug ("%s:%s: Deleting bad attachment",
+                         SRCNAME, __func__);
+              if (invoke_oom_method (attachment, "Delete", NULL))
+                {
+                  log_error ("%s:%s: Error deleting attachment: %i",
+                             SRCNAME, __func__, __LINE__);
+                }
+              m_disable_att_remove_warning = false;
+            }
+          gpgol_release (attachment);
+        }
     }
   gpgol_release (attachments);
-  if (foundOne)
+  if (foundOne && !silent)
     {
       message += "\n";
       message += _("Note: The attachments may be encrypted or signed "
