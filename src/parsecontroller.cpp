@@ -322,7 +322,13 @@ is_valid_chksum(const GpgME::Signature &sig)
       GpgME::Signature::CrlTooOld |
       GpgME::Signature::TofuConflict );
 
-  TRETURN sum & valid_mask;
+  bool valid = (sum & valid_mask);
+  if (!valid)
+    {
+      log_debug ("%s:%s: Treating sig as invalid because status is %x",
+                 SRCNAME, __func__, sum);
+    }
+  TRETURN valid;
 }
 
 
