@@ -285,4 +285,7 @@ STDAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID* ppvObj);
 /* Invalidates the UI XML to trigger a reload of the UI Elements. */
 void gpgoladdin_invalidate_ui ();
 
+/* Check in the Outlook settings HTML is enabled. Modifies opt.prefer_html */
+void check_html_preferred ();
+
 #endif /*GPGOLADDIN_H*/

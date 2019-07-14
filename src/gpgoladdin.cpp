@@ -381,7 +381,7 @@ GpgolAddin::OnAddInsUpdate (SAFEARRAY** custom)
   return S_OK;
 }
 
-static void
+void
 check_html_preferred()
 {
   /* Check if HTML Mail should be enabled. */

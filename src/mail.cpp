@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
+ * Copyright (C) 2019 g10code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -1165,6 +1166,8 @@ Mail::decryptVerify_o ()
       TRETURN 0;
     }
   m_decrypt_again = false;
+
+  check_html_preferred ();
 
   auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
   if (!cipherstream)
