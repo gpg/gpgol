@@ -2229,6 +2229,8 @@ Mail::close (Mail *mail)
                   log_error ("%s:%s: Failed to save mapi for %p hr=%#lx",
                              SRCNAME, __func__, mail, hr);
                 }
+              /* In case the mail is still visible in a different window */
+              mail->updateCategories_o ();
             }
         }
     }
@@ -2238,12 +2240,48 @@ Mail::close (Mail *mail)
   mail->setCloseTriggered (true);
   int rc = invoke_oom_method_with_parms (mail->item(), "Close",
                                          nullptr, &dispparams);
+  mail->setCloseTriggered (false);
 
   if (!rc)
     {
-      log_debug ("%s:%s: Close successful. Next write may pass.",
-                 SRCNAME, __func__);
-      mail->setPassWrite (true);
+      /* Saveguard against oom writes when our data is in OOM. This
+       * can happen when the mail was opened in a new window. But
+       * also shown in the preview.
+       * We get a close event and discard changes but the data is
+       * still in oom because it is still visible in the opened
+       * window.
+       *
+       * In that case we may not write! Otherwise the plaintext
+       * might be leaked back to the server if the folder is synced.
+       * */
+      char *body = get_oom_string (mail->item (), "Body");
+      LPDISPATCH attachments = get_oom_object (mail->item (), "Attachments");
+      int att_count = 0;
+      if (attachments)
+        {
+          att_count = get_oom_int (attachments, "Count");
+          gpgol_release (attachments);
+        }
+
+      if (body && strlen (body))
+        {
+          log_debug ("%s:%s: Close successful. But body found. "
+                     "Mail still open.",
+                     SRCNAME, __func__);
+        }
+      else if (att_count)
+        {
+          log_debug ("%s:%s: Close successful. But attachments found. "
+                     "Mail still open.",
+                     SRCNAME, __func__);
+        }
+      else
+        {
+          mail->setPassWrite (true);
+          log_debug ("%s:%s: Close successful. Next write may pass.",
+                     SRCNAME, __func__);
+        }
+      xfree (body);
     }
   log_oom ("%s:%s: returned from close",
                  SRCNAME, __func__);
