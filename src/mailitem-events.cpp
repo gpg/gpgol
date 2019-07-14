@@ -629,6 +629,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               log_debug ("%s:%s: Passing write because passNextWrite was set for %p",
                          SRCNAME, __func__, m_mail);
+              m_mail->setPassWrite (false);
               TBREAK;
             }
 
