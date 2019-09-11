@@ -91,8 +91,8 @@ get_object_name (LPUNKNOWN obj)
     goto leave;
 
   /* We can't use gpgol_queryInterface here to avoid recursion */
-  obj->QueryInterface (IID_IDispatch, (void **)&disp);
-  if (!disp)
+  hr = obj->QueryInterface (IID_IDispatch, (void **)&disp);
+  if (!disp || hr != S_OK)
     goto leave;
 
   disp->GetTypeInfo (0, 0, &tinfo);
