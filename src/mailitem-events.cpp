@@ -50,6 +50,7 @@ const wchar_t *prop_blacklist[] = {
   L"ConversationIndex",
   L"Subject",
   L"SentOnBehalfOfName",
+  L"MessageClass",
   NULL };
 
 typedef enum
@@ -314,7 +315,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               if (!wcscmp (prop_name, *cur))
                 {
-                  log_oom ("%s:%s: Mail %p propchange: %ls discarded.",
+                  log_oom ("%s:%s: Mail %p propchange: %ls no warning.",
                            SRCNAME, __func__, m_mail, prop_name);
                   TRETURN S_OK;
                 }
@@ -853,7 +854,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
               log_oom ("%s:%s: Canceling close event.",
                              SRCNAME, __func__);
-              if (Mail::close(m_mail))
+              if (m_mail->close ())
                 {
                   log_debug ("%s:%s: Close request failed.",
                              SRCNAME, __func__);

@@ -1167,6 +1167,47 @@ Mail::decryptVerify_o ()
     }
   m_decrypt_again = false;
 
+  if (isSMIME_m ())
+    {
+      LPMESSAGE oom_message = get_oom_message (m_mailitem);
+      if (oom_message)
+        {
+          char *old_class = mapi_get_old_message_class (oom_message);
+          char *current_class = mapi_get_message_class (oom_message);
+          if (current_class)
+            {
+              /* Store our own class for an eventual close */
+              m_gpgol_class = current_class;
+              xfree (current_class);
+              current_class = nullptr;
+            }
+          if (old_class)
+            {
+              const char *new_class = old_class;
+              /* Workaround that our own class might be the original */
+              if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted"))
+                {
+                  new_class = "IPM.Note.SMIME";
+                }
+              else if (!strcmp (old_class, "IPM.Note.GpgOL.MultipartSigned"))
+                {
+                  new_class = "IPM.Note.SMIME.MultipartSigned";
+                }
+
+              log_debug ("%s:%s:Restoring message class to %s in decverify.",
+                         SRCNAME, __func__, new_class);
+
+              put_oom_string (m_mailitem, "MessageClass", new_class);
+              xfree (old_class);
+              setPassWrite (true);
+              /* Sync to MAPI */
+              invoke_oom_method (m_mailitem, "Save", nullptr);
+              setPassWrite (false);
+            }
+          gpgol_release (oom_message);
+        }
+    }
+
   check_html_preferred ();
 
   auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
@@ -1564,7 +1605,7 @@ Mail::parsing_done()
   TSTART;
   TRACEPOINT;
   log_oom ("Mail %p Parsing done for parser num %i: %p",
-                 this, parsed_count++, m_parser.get());
+           this, parsed_count++, m_parser.get());
   if (!m_parser)
     {
       /* This should not happen but it happens when outlook
@@ -1940,7 +1981,7 @@ Mail::closeAllMails_o ()
         {
           continue;
         }
-      if (closeInspector_o (it->second) || close (it->second))
+      if (closeInspector_o (it->second) || it->second->close ())
         {
           log_error ("Failed to close mail: %p ", it->first);
           /* Should not happen */
@@ -2175,9 +2216,8 @@ Mail::closeInspector_o (Mail *mail)
   TRETURN 0;
 }
 
-/* static */
 int
-Mail::close (Mail *mail)
+Mail::close ()
 {
   TSTART;
   VARIANT aVariant[1];
@@ -2189,9 +2229,27 @@ Mail::close (Mail *mail)
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 
-  if (mail->isSMIME_m ())
+  if (isSMIME_m ())
     {
-      LPDISPATCH attachments = get_oom_object (mail->item(), "Attachments");
+      LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
+      LPMESSAGE mapi_msg = get_oom_message (m_mailitem);
+
+      /* This is strangely important. Because Outlook apparently treats
+       * S/MIME Mails differently we need to change our message class
+       * here again so that discard changes works properly. */
+      if (mapi_msg && !m_gpgol_class.empty ())
+        {
+          char *current = mapi_get_message_class (mapi_msg);
+
+          if (current && strcmp (current, m_gpgol_class.c_str ()))
+            {
+              log_debug ("%s:%s:Restoring message class to %s on close.",
+                         SRCNAME, __func__, m_gpgol_class.c_str ());
+              mapi_set_mesage_class (mapi_msg, m_gpgol_class.c_str ());
+            }
+          xfree (current);
+        }
+
       if (attachments)
         {
           int count = get_oom_int (attachments, "Count");
@@ -2214,33 +2272,33 @@ Mail::close (Mail *mail)
                * thinks the mails are S/MIME mails and we can
                * use our own handling. See T4525
                */
-              mail->removeCategories_o ();
-              LPMESSAGE mapi_msg = get_oom_message (mail->item ());
+              removeCategories_o ();
               HRESULT hr = 0;
               if (mapi_msg)
                 {
                   log_debug ("%s:%s: MAPI Save for: %p",
-                             SRCNAME, __func__, mail->item());
+                             SRCNAME, __func__, m_mailitem);
                   mapi_msg->SaveChanges (KEEP_OPEN_READWRITE);
-                  gpgol_release (mapi_msg);
                 }
               if (!mapi_msg || hr)
                 {
                   log_error ("%s:%s: Failed to save mapi for %p hr=%#lx",
-                             SRCNAME, __func__, mail, hr);
+                             SRCNAME, __func__, this, hr);
                 }
               /* In case the mail is still visible in a different window */
-              mail->updateCategories_o ();
+              updateCategories_o ();
             }
         }
+
+      gpgol_release (mapi_msg);
     }
 
   log_oom ("%s:%s: Invoking close for: %p",
-                 SRCNAME, __func__, mail->item());
-  mail->setCloseTriggered (true);
-  int rc = invoke_oom_method_with_parms (mail->item(), "Close",
+                 SRCNAME, __func__, m_mailitem);
+  setCloseTriggered (true);
+  int rc = invoke_oom_method_with_parms (m_mailitem, "Close",
                                          nullptr, &dispparams);
-  mail->setCloseTriggered (false);
+  setCloseTriggered (false);
 
   if (!rc)
     {
@@ -2254,8 +2312,8 @@ Mail::close (Mail *mail)
        * In that case we may not write! Otherwise the plaintext
        * might be leaked back to the server if the folder is synced.
        * */
-      char *body = get_oom_string (mail->item (), "Body");
-      LPDISPATCH attachments = get_oom_object (mail->item (), "Attachments");
+      char *body = get_oom_string (m_mailitem, "Body");
+      LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
       int att_count = 0;
       if (attachments)
         {
@@ -2277,7 +2335,7 @@ Mail::close (Mail *mail)
         }
       else
         {
-          mail->setPassWrite (true);
+          setPassWrite (true);
           log_debug ("%s:%s: Close successful. Next write may pass.",
                      SRCNAME, __func__);
         }

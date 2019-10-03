@@ -208,7 +208,7 @@ public:
       call. This may have delete the mail if the close
       triggers an unload.
   */
-  static int close (Mail *mail);
+  int close ();
 
   /** @brief locate recipients for all crypto mails
     *
@@ -702,5 +702,6 @@ private:
   bool m_decrypt_again; /* Mail should be decrypted again if it sees
                            another beforeread */
   bool m_printing; /* Mail is decrypted for printing */
+  std::string m_gpgol_class; /* The GpgOL Message class */
 };
 #endif // MAIL_H
