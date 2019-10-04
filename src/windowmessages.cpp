@@ -312,6 +312,53 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->decryptVerify_o ();
               TBREAK;
             }
+          case (AFTER_MOVE):
+            {
+              /* What happens here is that after moving an S/MIME mail
+                 we restore the message class to the value it was before the
+                 close that initiated the move. See where this message is sent
+                 in folder events for more details. */
+              auto data = (wm_after_move_data_t *) ctx->data;
+
+              log_debug ("%s:%s: AfterMove.",
+                         SRCNAME, __func__);
+
+              /* Try to get the message object that was moved. */
+              LPMESSAGE mapi_message = nullptr;
+              ULONG utype = 0;
+              HRESULT hr;
+              hr = data->target_folder->OpenEntry (data->entry_id_len,
+                                                   (LPENTRYID) data->entry_id,
+                                                   &IID_IMessage,
+                                                   MAPI_BEST_ACCESS, &utype,
+                                                   (IUnknown **) &mapi_message);
+
+              if (FAILED (hr) || !mapi_message)
+                {
+                  log_error ("%s:%s: Failed to open mail in target folder: hr=0x%lx",
+                             SRCNAME, __func__, hr);
+                  gpgol_release (data->target_folder);
+                  xfree (data->entry_id);
+                  xfree (data);
+                  TBREAK;
+                }
+              log_debug ("%s:%s: Restoring message class after move to: %s",
+                         SRCNAME, __func__, data->old_class);
+              mapi_set_mesage_class (mapi_message, data->old_class);
+              hr = mapi_message->SaveChanges (FORCE_SAVE);
+              if (FAILED (hr))
+                {
+                  log_error ("%s:%s: Failed to save mail in target folder: hr=0x%lx",
+                             SRCNAME, __func__, hr);
+                }
+
+              gpgol_release (mapi_message);
+              gpgol_release (data->target_folder);
+              xfree (data->old_class);
+              xfree (data->entry_id);
+              xfree (data);
+              TBREAK;
+            }
           default:
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);

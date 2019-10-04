@@ -23,6 +23,7 @@
 #include <windows.h>
 
 #include "config.h"
+#include "mapihelp.h"
 
 #include <gpg-error.h>
 
@@ -57,6 +58,7 @@ typedef enum _gpgol_wmsg_type
   DONT_AUTO_SECURE,
   CONFIG_KEY_DONE,
   DECRYPT,
+  AFTER_MOVE,
   /* External API, keep it stable! */
   EXT_API_CLOSE = 1301,
   EXT_API_CLOSE_ALL = 1302,
@@ -70,6 +72,14 @@ typedef struct
   int err; /* Set to true on error */
   int delay;
 } wm_ctx_t;
+
+typedef struct
+{
+  LPMAPIFOLDER target_folder;
+  char *entry_id;
+  char *old_class;
+  size_t entry_id_len;
+} wm_after_move_data_t;
 
 /** Create and register the responder window.
   The responder window should be */

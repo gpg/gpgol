@@ -31,6 +31,8 @@
 #include "common.h"
 #include "oomhelp.h"
 #include "mail.h"
+#include "windowmessages.h"
+#include "mymapitags.h"
 
 /* Folder Events */
 BEGIN_EVENT_SINK(FolderEvents, IDispatch)
@@ -115,12 +117,57 @@ EVENT_SINK_INVOKE(FolderEvents)
               log_debug ("%s:%s: Detected move of crypto mail. %p Closing",
                           SRCNAME, __func__, mail);
 
+              size_t entryIDLen = 0;
+              char *entryID = nullptr;
+              char *old_class = nullptr;
+              if (mail->isSMIME_m ())
+                {
+                  LPMESSAGE msg = get_oom_message (mail->item ());
+                  if (msg)
+                    {
+                      entryID = mapi_get_binary_prop (msg, PR_ENTRYID,
+                                                      &entryIDLen);
+                      old_class = mapi_get_message_class (msg);
+                    }
+                }
+
               if (mail->close ())
                 {
                   log_error ("%s:%s: Failed to close.",
                              SRCNAME, __func__);
+                  xfree (entryID);
+                  xfree (old_class);
                   TBREAK;
                 }
+              /* Beware: The mail object might be destroyed now. */
+
+              if (!entryID || !old_class)
+                {
+                  /* This is not an S/MIME mail so we are done. */
+                  TBREAK;
+                }
+
+              auto target = (LPMAPIFOLDER) get_oom_iunknown (
+                      parms->rgvarg[1].pdispVal, "MAPIOBJECT");
+              if (!target)
+                {
+                  log_error ("%s:%s: Failed to obtain target folder.",
+                             SRCNAME, __func__);
+                  xfree (entryID);
+                  xfree (old_class);
+                  TBREAK;
+                }
+              memdbg_addRef (target);
+
+              auto *data = (wm_after_move_data_t *)
+                xmalloc (sizeof (wm_after_move_data_t));
+
+              data->target_folder = target;
+              data->entry_id = entryID;
+              data->entry_id_len = entryIDLen;
+              data->old_class = old_class;
+
+              do_in_ui_thread_async (AFTER_MOVE, data, 500);
             }
         }
       default:
