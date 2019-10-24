@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-07-14 11:40+0200\n"
-"PO-Revision-Date: 2019-01-03 23:12+0100\n"
+"POT-Creation-Date: 2019-10-24 15:07+0200\n"
+"PO-Revision-Date: 2019-10-24 15:28+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: nl\n"
@@ -146,13 +146,11 @@ msgstr "S/MIME de voorkeur geven boven OpenPGP als beiden beschikbaar zijn."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:76
-#, fuzzy
 msgid "Configuration of GnuPG System options"
-msgstr "Configuratie van debug-opties"
+msgstr "Configuratie van GnuPG-systeem-opties"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:78
-#, fuzzy
 msgid "Configuration of debug options"
 msgstr "Configuratie van debug-opties"
 
@@ -183,45 +181,47 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:87
-#, fuzzy
 msgid ""
 "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
-"Automatisch beveiligen als sleutels met ten minste vertrouwensniveau 1 zijn "
-"gevonden voor alle ontvangers."
+"Ook automatisch naar 'veilig' wisselen als sleutels met vertrouwensniveau 0 "
+"zijn gevonden."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
 msgid "Also &with untrusted keys"
-msgstr ""
+msgstr "Ook met niet-vertrouwde sleutels"
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
 #: src/addin-options.cpp:92
 msgid "&Import any keys included in mails"
-msgstr ""
+msgstr "Elke sleutel die in mails is bijgevoegd importeren"
 
 #. TRANSLATORS: Included means here both attached keys and keys from the
 #. * headers
 #: src/addin-options.cpp:95
 msgid "Import OpenPGP keys from mail attachments or from mail headers."
-msgstr ""
+msgstr "OpenPGP-sleutels importeren van e-mailbijlagen of van e-mailheaders."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:97
 msgid "Encrypt &drafts of secure mails to this key:"
 msgstr ""
+"Concepten van beveiligde mails automatisch versleutelen met deze sleutel:"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:99
 msgid "Encrypt drafts and autosaved mails if the secure button is toggled."
 msgstr ""
+"Concepten en automatisch opgeslagen mails versleutelen als de knop "
+"'Beveiligen' is ingeschakeld."
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. The contacts name follows.
 #: src/addin-options.cpp:104
 msgid "Settings for:"
-msgstr ""
+msgstr "Instellingen voor:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public key follows.
@@ -233,10 +233,8 @@ msgstr ""
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
 #: src/addin-options.cpp:110
-#, fuzzy
 msgid "Paste certificates here. They should look like:"
-msgstr ""
-"Plak hier een geëxporteerde publieke sleutel. Die zou er zo uit moeten zien:"
+msgstr "Plak hier certificaten. Die zouden er zo uit moeten zien:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:112
@@ -288,9 +286,8 @@ msgstr "Gebruikers-id's:"
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for key / keys.
 #: src/addin-options.cpp:131
-#, fuzzy
 msgid "You are about to configure the following OpenPGP %1 for:"
-msgstr "U staat op het punt om de volgende %1 te configureren voor:"
+msgstr "U staat op het punt om de volgende OpenPGP %1 te configureren voor:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
@@ -307,31 +304,28 @@ msgstr "sleutel"
 #. TRANSLATORS: Part of address book key configuration dialog. %1 is
 #. a placeholder for the plual for certificate / certificates.
 #: src/addin-options.cpp:140
-#, fuzzy
 msgid "You are about to configure the following S/MIME %1 for:"
-msgstr "U staat op het punt om de volgende %1 te configureren voor:"
+msgstr "U staat op het punt om de volgende S/MIME %1 te configureren voor:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as plural form.
 #: src/addin-options.cpp:143
-#, fuzzy
 msgid "certificates"
-msgstr "Het gebruikte certificaat"
+msgstr "certificaten"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. used in a sentence as singular form.
 #: src/addin-options.cpp:146
-#, fuzzy
 msgid "certificate"
-msgstr "Het gebruikte certificaat"
+msgstr "certificaat"
 
 #: src/addin-options.cpp:148
 msgid "This may take several minutes..."
-msgstr ""
+msgstr "Dit kan even duren..."
 
 #: src/addin-options.cpp:149
 msgid "Validating S/MIME certificates"
-msgstr ""
+msgstr "S/MIME-certificaten valideren"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:152
@@ -340,20 +334,18 @@ msgstr "Doorgaan?"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:154
-#, fuzzy
 msgid "Confirm"
-msgstr "Sleutels bevestigen"
+msgstr "Bevestigen"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:156
 msgid "Always secure mails"
-msgstr ""
+msgstr "Altijd mails beveiligen"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:158
-#, fuzzy
 msgid "Use these keys for this contact:"
-msgstr "De OpenPGP-sleutel voor dit contact configureren."
+msgstr "Deze sleutels voor dit contact gebruiken:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. Info box for the key configuration.
@@ -362,14 +354,16 @@ msgid ""
 "You can use this to override the keys for this contact. The keys will be "
 "imported and used regardless of their trust level."
 msgstr ""
+"Je kunt dit gebruiken om de sleutels voor dit contact te overschrijven. De "
+"sleutels worden geïmporteerd en gebruikt, ongeacht hun vertrouwensniveau."
 
 #: src/addin-options.cpp:165
 msgid "For S/MIME the root certificate has to be trusted."
-msgstr ""
+msgstr "Voor S/MIME moet het basiscertificaat vertrouwd worden."
 
 #: src/addin-options.cpp:166
 msgid "Place multiple keys in here to encrypt to all of them."
-msgstr ""
+msgstr "Plaats hier meerdere sleutels in om ze allemaal te versleutelen."
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:168
@@ -513,8 +507,8 @@ msgstr "Het instellingen-scherm voor GpgOL openen"
 
 #: src/gpgoladdin.cpp:926 src/gpgoladdin.cpp:961 src/gpgoladdin.cpp:1048
 #: src/gpgoladdin.cpp:1050 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1119
-#: src/gpgoladdin.cpp:1252 src/mail.cpp:1073 src/mail.cpp:1447
-#: src/mail.cpp:1516 src/mailitem-events.cpp:989 src/ribbon-callbacks.cpp:700
+#: src/gpgoladdin.cpp:1252 src/mail.cpp:1073 src/mail.cpp:1488
+#: src/mail.cpp:1557 src/mailitem-events.cpp:990 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
 #: src/wks-helper.cpp:453 src/cryptcontroller.cpp:319
 #: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:472
@@ -535,17 +529,16 @@ msgstr "Versleutelen"
 
 #: src/gpgoladdin.cpp:1055
 msgid "Permanently &amp;decrypt"
-msgstr ""
+msgstr "Permanent ontcijferen"
 
 #: src/gpgoladdin.cpp:1120
 msgid "Settings"
-msgstr ""
+msgstr "Instellingen"
 
 #. TRANSLATORS: Tooltip caption
 #: src/gpgoladdin.cpp:1122
-#, fuzzy
 msgid "Configure GpgOL keys and settings for this contact."
-msgstr "De OpenPGP-sleutel voor dit contact configureren."
+msgstr "De GpgOL-sleutels en instellingen voor dit contact configureren."
 
 #. TRANSLATORS: Tooltip content
 #: src/gpgoladdin.cpp:1124
@@ -553,11 +546,12 @@ msgid ""
 "Configure contact specific keys and settings to override the default "
 "behavior for this contact."
 msgstr ""
+"Contact-specifieke sleutels in instellingen configureren om het standaard-"
+"gedrag voor dit contact te overschrijven."
 
 #: src/gpgoladdin.cpp:1126
-#, fuzzy
 msgid "GpgOL Settings"
-msgstr "GpgOL Waarschuwing"
+msgstr "GpgOL-instellingen"
 
 #: src/mail.cpp:411
 msgid ""
@@ -612,13 +606,13 @@ msgstr ""
 
 #: src/mail.cpp:1068
 msgid "Diagnostics"
-msgstr ""
+msgstr "Diagnostiek"
 
-#: src/mail.cpp:1204
+#: src/mail.cpp:1245
 msgid "Pubkey directory confirmation"
 msgstr "Bevestiging van map publieke sleutel"
 
-#: src/mail.cpp:1205
+#: src/mail.cpp:1246
 msgid ""
 "This is a confirmation request to publish your Pubkey in the directory for "
 "your domain.\n"
@@ -632,31 +626,31 @@ msgstr ""
 "<p>Als u niet heeft verzocht om uw publieke sleutel in de map van uw "
 "provider te publiceren, negeer dan dit bericht.</p>\n"
 
-#: src/mail.cpp:1213
+#: src/mail.cpp:1254
 msgid "message"
 msgstr "bericht"
 
-#: src/mail.cpp:1214
+#: src/mail.cpp:1255
 msgid "Please wait while the message is being decrypted / verified..."
 msgstr "Een moment geduld voordat het bericht is ontcijferd / geverifieerd..."
 
-#: src/mail.cpp:1448 src/mail.cpp:1517
+#: src/mail.cpp:1489 src/mail.cpp:1558
 msgid "HTML display disabled."
 msgstr "Weergave van HTML uitgeschakeld."
 
-#: src/mail.cpp:1449 src/mail.cpp:1518
+#: src/mail.cpp:1490 src/mail.cpp:1559
 msgid "HTML content in unsigned S/MIME mails is insecure."
 msgstr "HTML-inhoud in niet-ondertekende S/MIME e-mail is onveilig."
 
-#: src/mail.cpp:1452 src/mail.cpp:1521
+#: src/mail.cpp:1493 src/mail.cpp:1562
 msgid "GpgOL will only show such mails as text."
 msgstr "GpgOL zal dergelijke e-mailberichten alleen als tekst weergeven."
 
-#: src/mail.cpp:1455
+#: src/mail.cpp:1496
 msgid "This message is shown only once."
 msgstr "Dit bericht wordt eenmalig weergegeven."
 
-#: src/mail.cpp:1524
+#: src/mail.cpp:1565
 msgid ""
 "Please ask the sender to sign the message or\n"
 "to send it with a plain text alternative."
@@ -664,11 +658,11 @@ msgstr ""
 "Vraag de verzender om het bericht te ondertekenen of\n"
 " het als platte tekst te versturen."
 
-#: src/mail.cpp:1715
+#: src/mail.cpp:1756
 msgid "GpgOL: Oops, G Suite Sync account detected"
 msgstr "GpgOL: Oeps, G Suite Sync account gevonden"
 
-#: src/mail.cpp:1717
+#: src/mail.cpp:1758
 msgid ""
 "G Suite Sync breaks outgoing crypto mails with attachments.\n"
 "Using crypto and attachments with G Suite Sync is not supported.\n"
@@ -680,7 +674,7 @@ msgstr ""
 "\n"
 "Zie: https://dev.gnupg.org/T3545 voor details."
 
-#: src/mail.cpp:2558
+#: src/mail.cpp:2616
 msgid "Invalid Key"
 msgstr "Ongeldige sleutel"
 
@@ -690,105 +684,105 @@ msgstr "Ongeldige sleutel"
 #. address used for verification. The result is used as the
 #. text on the green bar for signed mails. e.g.:
 #. "GpgOL: Level 3 trust in 'john.doe@example.org'"
-#: src/mail.cpp:2614
+#: src/mail.cpp:2672
 msgid "Level"
 msgstr "Niveau"
 
-#: src/mail.cpp:2615
+#: src/mail.cpp:2673
 msgid "trust in"
 msgstr "vertrouwen in"
 
-#: src/mail.cpp:2843
+#: src/mail.cpp:2901
 msgid "Security Level 4"
 msgstr "Veiligheidsniveau 4"
 
-#: src/mail.cpp:2847
+#: src/mail.cpp:2905
 msgid "Trust Level 4"
 msgstr "Vertrouwensniveau 4"
 
-#: src/mail.cpp:2851
+#: src/mail.cpp:2909
 msgid "Security Level 3"
 msgstr "Veiligheidsniveau 3"
 
-#: src/mail.cpp:2855
+#: src/mail.cpp:2913
 msgid "Trust Level 3"
 msgstr "Vertrouwensniveau 3"
 
-#: src/mail.cpp:2859
+#: src/mail.cpp:2917
 msgid "Security Level 2"
 msgstr "Veiligheidsniveau 2"
 
-#: src/mail.cpp:2863
+#: src/mail.cpp:2921
 msgid "Trust Level 2"
 msgstr "Vertrouwensniveau 2"
 
-#: src/mail.cpp:2867
+#: src/mail.cpp:2925
 msgid "Encrypted"
 msgstr "Versleuteld"
 
-#: src/mail.cpp:2876 src/mail.cpp:2878 src/ribbon-callbacks.cpp:607
+#: src/mail.cpp:2934 src/mail.cpp:2936 src/ribbon-callbacks.cpp:607
 msgid "Insecure"
 msgstr "Onveilig"
 
-#: src/mail.cpp:2891
+#: src/mail.cpp:2949
 msgid "Signed and encrypted message"
 msgstr "Ondertekend en versleuteld bericht"
 
-#: src/mail.cpp:2895
+#: src/mail.cpp:2953
 msgid "Signed message"
 msgstr "Ondertekend bericht"
 
-#: src/mail.cpp:2899
+#: src/mail.cpp:2957
 msgid "Encrypted message"
 msgstr "Versleuteld bericht"
 
-#: src/mail.cpp:2902 src/ribbon-callbacks.cpp:631
+#: src/mail.cpp:2960 src/ribbon-callbacks.cpp:631
 msgid "Insecure message"
 msgstr "Onveilig bericht"
 
-#: src/mail.cpp:2914 src/mail.cpp:2925
+#: src/mail.cpp:2972 src/mail.cpp:2983
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
 "Het is niet zeker wie het bericht heeft verzonden of onderweg aangepast of "
 "gelezen heeft."
 
-#: src/mail.cpp:2917
+#: src/mail.cpp:2975
 msgid "The message was signed but the verification failed with:"
 msgstr "Het bericht is ondertekend, maar de verificatie is mislukt met:"
 
-#: src/mail.cpp:2935
+#: src/mail.cpp:2993
 msgid "The encryption was VS-NfD-compliant."
 msgstr "De versleuteling is conform VS-NfD."
 
-#: src/mail.cpp:2939
+#: src/mail.cpp:2997
 msgid "The encryption was not VS-NfD-compliant."
 msgstr "De versleuteling is niet conform VS-NfD."
 
-#: src/mail.cpp:2943
+#: src/mail.cpp:3001
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
 "Het is niet zeker wie dit bericht heeft verzonden omdat het niet is "
 "ondertekend"
 
-#: src/mail.cpp:2968
+#: src/mail.cpp:3026
 msgid "You signed this message."
 msgstr "U heeft dit bericht ondertekend."
 
-#: src/mail.cpp:2972
+#: src/mail.cpp:3030
 msgid "The senders identity was certified by yourself."
 msgstr "De identiteit van de verzender is door uzelf gecertificeerd."
 
-#: src/mail.cpp:2976
+#: src/mail.cpp:3034
 msgid "The sender is allowed to certify identities for you."
 msgstr "De verzender heeft toestemming om identiteiten voor u te certificeren."
 
-#: src/mail.cpp:2989
+#: src/mail.cpp:3047
 msgid "The senders identity was certified by several trusted people."
 msgstr ""
 "De identiteit van de verzender is gecertificeerd door verschillende "
 "vertrouwde mensen."
 
-#: src/mail.cpp:2994
+#: src/mail.cpp:3052
 #, c-format
 msgid ""
 "The senders identity is certified by the trusted issuer:\n"
@@ -798,17 +792,17 @@ msgstr ""
 "verlener:\n"
 "'%s'\n"
 
-#: src/mail.cpp:3002
+#: src/mail.cpp:3060
 msgid "The mail provider of the recipient served this key."
 msgstr "De e-mailprovider van de ontvanger heeft deze sleutel aangeboden."
 
-#: src/mail.cpp:3007
+#: src/mail.cpp:3065
 msgid "Some trusted people have certified the senders identity."
 msgstr ""
 "Enkele vertrouwde personen hebben de identiteit van de verzender "
 "gecertificeerd."
 
-#: src/mail.cpp:3017
+#: src/mail.cpp:3075
 #, c-format
 msgid ""
 "The senders address is trusted, because you have established a communication "
@@ -819,11 +813,11 @@ msgstr ""
 "geschiedenis heb opgebouwd met dit adres vanaf %s.\n"
 "U heeft sindsdien %i berichten versleuteld en %i berichten geverifieerd."
 
-#: src/mail.cpp:3034
+#: src/mail.cpp:3092
 msgid "The senders signature was verified for the first time."
 msgstr "De handtekening van de verzender is voor het eerst geverifieerd."
 
-#: src/mail.cpp:3041
+#: src/mail.cpp:3099
 #, c-format
 msgid ""
 "The senders address is not trustworthy yet because you only verified %i "
@@ -832,75 +826,74 @@ msgstr ""
 "Het adres van de verzender is nog niet betrouwbaar omdat u nog maar %i "
 "berichten heeft geverifieerd en %i berichten heeft versleuteld sinds %s."
 
-#: src/mail.cpp:3056
+#: src/mail.cpp:3114
 msgid "But the sender address is not trustworthy because:"
 msgstr "Maar het adres van de verzender is niet betrouwbaar vanwege:"
 
-#: src/mail.cpp:3057
+#: src/mail.cpp:3115
 msgid "The sender address is not trustworthy because:"
 msgstr "Het adres van de verzender is niet betrouwbaar vanwege:"
 
-#: src/mail.cpp:3065
+#: src/mail.cpp:3123
 msgid "The signature is invalid: \n"
 msgstr "De handtekening is ongeldig:\n"
 
-#: src/mail.cpp:3068
-#, fuzzy
+#: src/mail.cpp:3126
 msgid "The signature does not match."
-msgstr "De handtekening is niet conform VS-NfD."
+msgstr "De handtekening komt niet overeen."
 
-#: src/mail.cpp:3075
+#: src/mail.cpp:3133
 msgid "There was an error verifying the signature.\n"
 msgstr "Fout bij het verifiëren van de handtekening.\n"
 
-#: src/mail.cpp:3084
+#: src/mail.cpp:3142
 msgid "The signature is expired.\n"
 msgstr "De handtekening is verlopen.\n"
 
-#: src/mail.cpp:3088
+#: src/mail.cpp:3146
 msgid "The used key"
 msgstr "De gebruikte sleutel"
 
-#: src/mail.cpp:3088
+#: src/mail.cpp:3146
 msgid "The used certificate"
 msgstr "Het gebruikte certificaat"
 
-#: src/mail.cpp:3096
+#: src/mail.cpp:3154
 msgid "is not available."
 msgstr "is niet beschikbaar."
 
-#: src/mail.cpp:3100
+#: src/mail.cpp:3158
 msgid "is revoked."
 msgstr "is ingetrokken."
 
-#: src/mail.cpp:3104
+#: src/mail.cpp:3162
 msgid "is expired."
 msgstr "is verlopen."
 
-#: src/mail.cpp:3108
+#: src/mail.cpp:3166
 msgid "is not meant for signing."
 msgstr "is niet bedoeld voor ondertekening."
 
-#: src/mail.cpp:3112 src/mail.cpp:3116
+#: src/mail.cpp:3170 src/mail.cpp:3174
 msgid "could not be checked for revocation."
 msgstr "kan niet worden geverifieerd op intrekking."
 
-#: src/mail.cpp:3121
+#: src/mail.cpp:3179
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
 "is niet dezelfde als de sleutel die in het verleden voor dit adres is "
 "gebruikt."
 
-#: src/mail.cpp:3127
+#: src/mail.cpp:3185
 #, c-format
 msgid "does not claim the address: \"%s\"."
 msgstr "claimt het adres: \"%s\" niet."
 
-#: src/mail.cpp:3141
+#: src/mail.cpp:3199
 msgid "is not certified by any trustworthy key."
 msgstr "is niet certificeerd door een betrouwbare sleutel."
 
-#: src/mail.cpp:3145
+#: src/mail.cpp:3203
 msgid ""
 "is not certified by a trustworthy Certificate Authority or the Certificate "
 "Authority is unknown."
@@ -908,56 +901,56 @@ msgstr ""
 "is niet gecertificeerd door een betrouwbare certificeringsinstantie of de "
 "certificeringsinstantie is onbekend."
 
-#: src/mail.cpp:3150
+#: src/mail.cpp:3208
 msgid "The sender marked this address as revoked."
 msgstr "De verzender heeft dit adres als ingetrokken gemarkeerd."
 
-#: src/mail.cpp:3154
+#: src/mail.cpp:3212
 msgid "is marked as not trustworthy."
 msgstr "is gemarkeerd als onbetrouwbaar."
 
-#: src/mail.cpp:3164
+#: src/mail.cpp:3222
 msgid "The signature is VS-NfD-compliant."
 msgstr "De handtekening is conform VS-NfD."
 
-#: src/mail.cpp:3168
+#: src/mail.cpp:3226
 msgid "The signature is not VS-NfD-compliant."
 msgstr "De handtekening is niet conform VS-NfD."
 
-#: src/mail.cpp:3176
+#: src/mail.cpp:3234
 msgid "The encryption is VS-NfD-compliant."
 msgstr "De versleuteling is conform VS-NfD."
 
-#: src/mail.cpp:3180
+#: src/mail.cpp:3238
 msgid "The encryption is not VS-NfD-compliant."
 msgstr "De versleuteling is niet conform VS-NfD."
 
-#: src/mail.cpp:3191
+#: src/mail.cpp:3249
 msgid "Click here to change the key used for this address."
 msgstr "Klik hier om de sleutel voor dit adres te wijzigen."
 
-#: src/mail.cpp:3195
+#: src/mail.cpp:3253
 msgid "Click here for details about the key."
 msgstr "Klik hier voor details over de sleutel."
 
-#: src/mail.cpp:3196
+#: src/mail.cpp:3254
 msgid "Click here for details about the certificate."
 msgstr "Klik hier voor details over het certificaat."
 
-#: src/mail.cpp:3200
+#: src/mail.cpp:3258
 msgid "Click here to search the key on the configured keyserver."
 msgstr "Klik hier om de sleutel op de geconfigureerde keyserver te zoeken."
 
-#: src/mail.cpp:3201
+#: src/mail.cpp:3259
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 "Klik hier om het certificaat op de geconfigureerde X509 keyserver te zoeken."
 
-#: src/mail.cpp:3556
+#: src/mail.cpp:3614
 msgid "GpgOL: Encryption not possible!"
 msgstr "GpgOL: Versleutelen niet mogelijk!"
 
-#: src/mail.cpp:3558
+#: src/mail.cpp:3616
 msgid ""
 "Outlook returned an error when trying to send the encrypted mail.\n"
 "\n"
@@ -975,12 +968,12 @@ msgstr ""
 "te gebruiken,\n"
 "of stap over naar PGP/Inline in de opties van GpgOL."
 
-#: src/mailitem-events.cpp:369 src/mailitem-events.cpp:1042
+#: src/mailitem-events.cpp:370 src/mailitem-events.cpp:1043
 #: src/mimemaker.cpp:1086
 msgid "Sorry, that's not possible, yet"
 msgstr "Sorry, dat is nog niet mogelijk"
 
-#: src/mailitem-events.cpp:371
+#: src/mailitem-events.cpp:372
 #, c-format
 msgid ""
 "GpgOL has prevented the change to the \"%s\" property.\n"
@@ -1004,15 +997,15 @@ msgstr ""
 
 #. TRANSLATORS: Part of a warning dialog that disallows
 #. reply and forward with contents
-#: src/mailitem-events.cpp:973
+#: src/mailitem-events.cpp:974
 msgid "You are replying to an unsigned S/MIME email."
 msgstr "U beantwoordt een niet-ondertekende S/MIME e-mail."
 
-#: src/mailitem-events.cpp:975
+#: src/mailitem-events.cpp:976
 msgid "You are forwarding an unsigned S/MIME email."
 msgstr "U stuurt een niet-ondertekende S/MIME e-mail door."
 
-#: src/mailitem-events.cpp:978
+#: src/mailitem-events.cpp:979
 msgid ""
 "In this version of S/MIME an attacker could use the missing signature to "
 "have you decrypt contents from a different, otherwise completely unrelated "
@@ -1025,11 +1018,11 @@ msgstr ""
 "krijgen.\n"
 "Dit is waarom we alleen toestaan om handmatig te quoten."
 
-#: src/mailitem-events.cpp:985
+#: src/mailitem-events.cpp:986
 msgid "Please copy the relevant contents and insert them into the new email."
 msgstr "Kopieer de relevante inhoud en voeg deze toe aan de nieuwe e-mail."
 
-#: src/mailitem-events.cpp:1039
+#: src/mailitem-events.cpp:1040
 msgid ""
 "Attachments are part of the crypto message.\n"
 "They can't be permanently removed and will be shown again the next time this "
@@ -1049,21 +1042,21 @@ msgid ""
 "The attachment '%s' is an Outlook item which is currently unsupported in "
 "crypto mails."
 msgstr ""
+"De bijlage '%s' is een Outlook-item dat momenteel niet ondersteund wordt in "
+"crypto-mails."
 
 #: src/mimemaker.cpp:1068 src/mimemaker.cpp:1076
-#, fuzzy
 msgid "Unknown"
-msgstr "Onbekende sleutel:"
+msgstr "Onbekend"
 
 #: src/mimemaker.cpp:1073
 #, c-format
 msgid "Please encrypt '%s' with Kleopatra and attach it as a file."
-msgstr ""
+msgstr "'%s' met Kleopatra versleutelen en als bestand bijvoegen."
 
 #: src/mimemaker.cpp:1081
-#, fuzzy
 msgid "Send anyway?"
-msgstr "Het bericht ondertekenen"
+msgstr "Toch verzenden?"
 
 #: src/parsecontroller.cpp:211
 msgid "Unknown Key:"
