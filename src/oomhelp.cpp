@@ -3085,3 +3085,64 @@ format_dispparams (DISPPARAMS *p)
     }
   return stream.str ();
 }
+
+int
+remove_hidden_attachments_oom (LPDISPATCH mailitem)
+{
+  TSTART;
+
+  LPDISPATCH attachments = get_oom_object (mailitem, "Attachments");
+  if (!attachments)
+    {
+      log_debug ("%s:%s: Failed to get attachments.",
+                 SRCNAME, __func__);
+      TRETURN 1;
+    }
+  int count = get_oom_int (attachments, "Count");
+  if (!count)
+    {
+      gpgol_release (attachments);
+      TRETURN 0;
+    }
+  std::vector <LPDISPATCH> to_delete;
+  for (int i = 1; i <= count; i++)
+    {
+      std::string item_str;
+      item_str = std::string("Item(") + std::to_string (i) + ")";
+      LPDISPATCH oom_attach = get_oom_object (attachments, item_str.c_str ());
+      if (!oom_attach)
+        {
+          log_error ("%s:%s: Failed to get attachment.",
+                     SRCNAME, __func__);
+          continue;
+        }
+      VARIANT var;
+      VariantInit (&var);
+      if (!get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var) &&
+          (var.vt == VT_BOOL && var.boolVal == VARIANT_TRUE))
+        {
+          to_delete.push_back (oom_attach);
+        }
+      else
+        {
+          gpgol_release (oom_attach);
+        }
+      VariantClear (&var);
+    }
+  int err = 0;
+  for (auto attachment: to_delete)
+    {
+      log_debug ("%s:%s: Deleting hidden attachment",
+                 SRCNAME, __func__);
+      if (invoke_oom_method (attachment, "Delete", NULL))
+        {
+          log_error ("%s:%s: Error deleting attachment: %i",
+                     SRCNAME, __func__, __LINE__);
+          err = 1;
+        }
+      gpgol_release (attachment);
+    }
+  gpgol_release (attachments);
+
+  TRETURN err;
+}

@@ -439,4 +439,7 @@ bool is_draft_mail (LPDISPATCH mailitem);
 /* Returns info about a dispparms variable for debugging. */
 void format_variant (std::istringstream &stream, VARIANT *var);
 std::string format_dispparams (DISPPARAMS *p);
+
+/* Removes all hidden attachments from a mailitem in the OOM */
+int remove_hidden_attachments_oom (LPDISPATCH m_mailitem);
 #endif /*OOMHELP_H*/
