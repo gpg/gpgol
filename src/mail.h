@@ -33,6 +33,7 @@
 
 class ParseController;
 class CryptController;
+class Attachment;
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -647,6 +648,7 @@ public:
 private:
   bool checkIfMailIsChildOfPrintMail_o ();
   void updateSigstate ();
+  int add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments);
 
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;

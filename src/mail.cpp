@@ -793,15 +793,17 @@ fixup_last_attachment_o (LPDISPATCH mail,
 
 /** Helper to update the attachments of a mail object in oom.
   does not modify the underlying mapi structure. */
-static int
-add_attachments_o(LPDISPATCH mail,
-                std::vector<std::shared_ptr<Attachment> > attachments)
+int
+Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
 {
   TSTART;
   bool anyError = false;
+  bool addErrShown = false;
+  m_disable_att_remove_warning = true;
   for (auto att: attachments)
     {
       int err = 0;
+      char *errStr = nullptr;
       const auto dispName = att->get_display_name ();
       if (dispName.empty())
         {
@@ -832,10 +834,22 @@ add_attachments_o(LPDISPATCH mail,
                      SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
-      if (!err && add_oom_attachment (mail, wchar_file, wchar_name))
+      if (!err && add_oom_attachment (m_mailitem, wchar_file, wchar_name, &errStr))
         {
           log_error ("%s:%s: Failed to add attachment: %s",
                      SRCNAME, __func__, anonstr (dispName.c_str()));
+          if (errStr)
+            {
+              if (!addErrShown)
+                {
+                  std::string msg = _("Not all attachments can be shown.\n\n"
+                                      "Error: ") + std::string (errStr);
+                  gpgol_message_box (getWindow (),
+                                     msg.c_str (), _("GpgOL"), MB_OK);
+                  addErrShown = true;
+                }
+              xfree (errStr);
+            }
           err = 1;
         }
       if (hFile && hFile != INVALID_HANDLE_VALUE)
@@ -855,13 +869,14 @@ add_attachments_o(LPDISPATCH mail,
         {
           log_debug ("%s:%s: Added attachment '%s'",
                      SRCNAME, __func__, anonstr (dispName.c_str()));
-          err = fixup_last_attachment_o (mail, att);
+          err = fixup_last_attachment_o (m_mailitem, att);
         }
       if (err)
         {
           anyError = true;
         }
     }
+  m_disable_att_remove_warning = false;
   TRETURN anyError;
 }
 
@@ -1680,7 +1695,7 @@ Mail::parsing_done()
   checkAttachments_o (isPrint ());
 
   /* Update attachments */
-  if (add_attachments_o (m_mailitem, m_parser->get_attachments()))
+  if (add_attachments_o (m_parser->get_attachments()))
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
