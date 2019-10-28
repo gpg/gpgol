@@ -513,11 +513,11 @@ CryptController::resolve_keys ()
   args.push_back (std::string ("--overlayText"));
   if (m_encrypt)
     {
-      args.push_back (std::string (_("Resolving recipients...")));
+      args.push_back (std::string (utf8_gettext ("Resolving recipients...")));
     }
   else if (m_sign)
     {
-      args.push_back (std::string (_("Resolving signers...")));
+      args.push_back (std::string (utf8_gettext ("Resolving signers...")));
     }
 
   if (!opt.enable_smime)
@@ -1281,11 +1281,11 @@ CryptController::start_crypto_overlay ()
 
   if (m_encrypt)
     {
-      text = _("Encrypting...");
+      text = utf8_gettext ("Encrypting...");
     }
   else if (m_sign)
     {
-      text = _("Signing...");
+      text = utf8_gettext ("Signing...");
     }
   m_overlay = std::unique_ptr<Overlay> (new Overlay (wid, text));
   TRETURN;
