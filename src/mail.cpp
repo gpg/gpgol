@@ -1694,15 +1694,6 @@ Mail::parsing_done()
      have the decrypted attachments. */
   checkAttachments_o (isPrint ());
 
-  /* Remove the hidden attachments to avoid size problems. See: T4731 */
-  m_disable_att_remove_warning = true;
-  if (remove_hidden_attachments_oom (m_mailitem))
-    {
-      log_error ("%s:%s: Failed to remove hidden attachments.",
-                 SRCNAME, __func__);
-    }
-  m_disable_att_remove_warning = false;
-
   /* Update attachments */
   if (add_attachments_o (m_parser->get_attachments()))
     {
