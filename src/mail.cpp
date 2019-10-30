@@ -554,6 +554,7 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
       log_debug ("%s:%s: Failed to open stream for mapi_attachment: %p",
                  SRCNAME, __func__, mapi_attachment);
       gpgol_release (mapi_attachment);
+      TRETURN nullptr;
     }
   gpgol_release (mapi_attachment);
   TRETURN stream;
