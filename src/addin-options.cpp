@@ -204,6 +204,12 @@ i18n_noops[] = {
     N_("Block Outlook during decrypt / verify"),
     /* TRANSLATORS: Config dialog debug page, link to report bug page. */
     N_("How to report a problem?"),
+    /* TRANSLATORS: Config dialog. */
+    N_("&Always show security approval dialog."),
+    N_("(slow)"),
+    /* TRANSLATORS: Config dialog tooltip. */
+    N_("Always show the security approval and certificate selection dialog. "
+       "This slows down the encryption / signing process, especially with large keyrings."),
 };
 
 
