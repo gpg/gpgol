@@ -51,6 +51,7 @@ const wchar_t *prop_blacklist[] = {
   L"Subject",
   L"SentOnBehalfOfName",
   L"MessageClass",
+  L"BodyFormat",
   NULL };
 
 typedef enum

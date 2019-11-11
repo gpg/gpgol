@@ -1290,6 +1290,7 @@ Mail::decryptVerify_o ()
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
         }
+      put_oom_int (m_mailitem, "BodyFormat", 2);
     }
   else
     {
@@ -1306,6 +1307,7 @@ Mail::decryptVerify_o ()
           log_error ("%s:%s: Failed to modify body of item.",
                      SRCNAME, __func__);
         }
+      put_oom_int (m_mailitem, "BodyFormat", 1);
     }
   memdbg_alloc (placeholder_buf);
   xfree (placeholder_buf);
@@ -1390,6 +1392,50 @@ void find_and_replace(std::string& source, const std::string &find,
   TRETURN;
 }
 
+static void
+set_body (LPDISPATCH item, const std::string &plain, const std::string &html)
+{
+  if (opt.prefer_html && !html.empty())
+    {
+      if (put_oom_string (item, "HTMLBody", html.c_str ()))
+        {
+          log_error ("%s:%s: Failed to modify html body of item.",
+                     SRCNAME, __func__);
+          if (!plain.empty ())
+            {
+              if (put_oom_string (item, "Body", plain.c_str ()))
+                {
+                  log_error ("%s:%s: Failed to put plaintext into body of item.",
+                             SRCNAME, __func__);
+                }
+              put_oom_int (item, "BodyFormat", 1);
+            }
+          else
+            {
+              if (put_oom_string (item, "HTMLBody", plain.c_str ()))
+                {
+                  log_error ("%s:%s: Failed to put plaintext into html of item.",
+                             SRCNAME, __func__);
+                }
+              put_oom_int (item, "BodyFormat", 2);
+            }
+        }
+      else
+        {
+          put_oom_int (item, "BodyFormat", 2);
+        }
+    }
+  else if (!plain.empty ())
+    {
+      if (put_oom_string (item, "Body", plain.c_str ()))
+        {
+          log_error ("%s:%s: Failed to put plaintext into body of item.",
+                     SRCNAME, __func__);
+        }
+      put_oom_int (item, "BodyFormat", 1);
+    }
+}
+
 void
 Mail::updateBody_o ()
 {
@@ -1403,57 +1449,14 @@ Mail::updateBody_o ()
   const auto error = m_parser->get_formatted_error ();
   if (!error.empty())
     {
-      if (opt.prefer_html)
-        {
-          if (put_oom_string (m_mailitem, "HTMLBody",
-                              error.c_str ()))
-            {
-              log_error ("%s:%s: Failed to modify html body of item.",
-                         SRCNAME, __func__);
-            }
-          else
-            {
-              log_debug ("%s:%s: Set error html to: '%s'",
-                         SRCNAME, __func__, error.c_str ());
-            }
-
-        }
-      else
-        {
-          if (put_oom_string (m_mailitem, "Body",
-                              error.c_str ()))
-            {
-              log_error ("%s:%s: Failed to modify html body of item.",
-                         SRCNAME, __func__);
-            }
-          else
-            {
-              log_debug ("%s:%s: Set error plain to: '%s'",
-                         SRCNAME, __func__, error.c_str ());
-            }
-        }
+      set_body (m_mailitem, error, error);
       TRETURN;
     }
   if (m_verify_result.error())
     {
       log_error ("%s:%s: Verification failed. Restoring Body.",
                  SRCNAME, __func__);
-      if (opt.prefer_html)
-        {
-          if (put_oom_string (m_mailitem, "HTMLBody", m_orig_body.c_str ()))
-            {
-              log_error ("%s:%s: Failed to modify html body of item.",
-                         SRCNAME, __func__);
-            }
-        }
-      else
-        {
-          if (put_oom_string (m_mailitem, "Body", m_orig_body.c_str ()))
-            {
-              log_error ("%s:%s: Failed to modify html body of item.",
-                         SRCNAME, __func__);
-            }
-        }
+      set_body (m_mailitem, m_orig_body, m_orig_body);
       TRETURN;
     }
   // No need to carry body anymore
@@ -1483,8 +1486,9 @@ Mail::updateBody_o ()
           TRACEPOINT;
           int ret = put_oom_string (m_mailitem, "HTMLBody", converted ?
                                                             converted : "");
-          TRACEPOINT;
           xfree (converted);
+          put_oom_int (m_mailitem, "BodyFormat", 2);
+          TRACEPOINT;
           if (ret)
             {
               log_error ("%s:%s: Failed to modify html body of item.",
@@ -1603,6 +1607,7 @@ Mail::updateBody_o ()
                                           codepage);
   TRACEPOINT;
   int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
+  put_oom_int (m_mailitem, "BodyFormat", 1);
   TRACEPOINT;
   xfree (converted);
   if (ret)
