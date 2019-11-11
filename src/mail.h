@@ -208,8 +208,12 @@ public:
       plaintext. returns the value of the oom close
       call. This may have delete the mail if the close
       triggers an unload.
+
+      Set restoreSMIMEClass to resotre the S/MIME
+      Message class IPM.Note.SMIME etc. for S/MIME
+      mails.
   */
-  int close ();
+  int close (bool restoreSMIMEClass = true);
 
   /** @brief locate recipients for all crypto mails
     *

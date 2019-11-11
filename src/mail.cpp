@@ -2238,9 +2238,10 @@ Mail::closeInspector_o (Mail *mail)
 }
 
 int
-Mail::close ()
+Mail::close (bool restoreSMIMEClass)
 {
   TSTART;
+  wm_after_move_data_t *move_data = nullptr;
   VARIANT aVariant[1];
   DISPPARAMS dispparams;
 
@@ -2255,6 +2256,17 @@ Mail::close ()
       LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
       LPMESSAGE mapi_msg = get_oom_message (m_mailitem);
 
+      if (!mapi_msg)
+        {
+          log_error ("%s:%s:Failed to obtain mapi message for %p on close.",
+                     SRCNAME, __func__, m_mailitem);
+        }
+      if (m_gpgol_class.empty())
+        {
+          log_debug ("%s:%s: GpgOL Class empty for S/MIME Mail.",
+                     SRCNAME, __func__);
+        }
+
       /* This is strangely important. Because Outlook apparently treats
        * S/MIME Mails differently we need to change our message class
        * here again so that discard changes works properly. */
@@ -2264,11 +2276,57 @@ Mail::close ()
 
           if (current && strcmp (current, m_gpgol_class.c_str ()))
             {
-              log_debug ("%s:%s:Restoring message class to %s on close.",
+              log_debug ("%s:%s:Setting message class to %s on close.",
                          SRCNAME, __func__, m_gpgol_class.c_str ());
               mapi_set_mesage_class (mapi_msg, m_gpgol_class.c_str ());
+
+              if (restoreSMIMEClass)
+                {
+                  /* After the close we need to change the message class back
+                     again so as to not break compatibility with other clients. */
+                  move_data = (wm_after_move_data_t *)
+                    xmalloc (sizeof (wm_after_move_data_t));
+
+                  size_t entryIDLen = 0;
+                  char *entryID = nullptr;
+                  entryID = mapi_get_binary_prop (mapi_msg, PR_ENTRYID,
+                                                  &entryIDLen);
+
+                  LPDISPATCH folder = get_oom_object (m_mailitem, "Parent");
+                  if (folder)
+                    {
+                      char *name = get_object_name ((LPUNKNOWN) folder);
+                      if (!name || strcmp (name, "MAPIFolder"))
+                        {
+                          log_error ("%s:%s: Failed to obtain folder on close object is %s",
+                                     SRCNAME, __func__, name ? name : "(null)");
+                        }
+                      else
+                        {
+                          xfree (name);
+                          move_data->target_folder = (LPMAPIFOLDER) get_oom_iunknown (
+                                                      folder, "MAPIOBJECT");
+                          if (!move_data->target_folder)
+                            {
+                              log_error ("%s:%s: Failed to obtain target folder.",
+                                         SRCNAME, __func__);
+                              xfree (entryID);
+                              xfree (current);
+                              xfree (move_data);
+                              move_data = nullptr;
+                            }
+                          else
+                            {
+                              memdbg_addRef (move_data->target_folder);
+                            }
+                        }
+                    }
+
+                  move_data->entry_id = entryID;
+                  move_data->entry_id_len = entryIDLen;
+                  move_data->old_class = current;
+                }
             }
-          xfree (current);
         }
 
       if (attachments)
@@ -2319,6 +2377,13 @@ Mail::close ()
   setCloseTriggered (true);
   int rc = invoke_oom_method_with_parms (m_mailitem, "Close",
                                          nullptr, &dispparams);
+
+  if (move_data)
+    {
+      log_debug ("%s:%s:Restoring message class to %s after close.",
+                 SRCNAME, __func__, move_data->old_class);
+      do_in_ui_thread_async (AFTER_MOVE, move_data, 0);
+    }
   setCloseTriggered (false);
 
   if (!rc)

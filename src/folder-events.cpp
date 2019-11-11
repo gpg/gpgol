@@ -128,10 +128,11 @@ EVENT_SINK_INVOKE(FolderEvents)
                       entryID = mapi_get_binary_prop (msg, PR_ENTRYID,
                                                       &entryIDLen);
                       old_class = mapi_get_message_class (msg);
+                      gpgol_release (msg);
                     }
                 }
 
-              if (mail->close ())
+              if (mail->close (false))
                 {
                   log_error ("%s:%s: Failed to close.",
                              SRCNAME, __func__);
