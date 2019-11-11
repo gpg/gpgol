@@ -331,6 +331,7 @@ read_options (void)
       xfree (opt.draft_key);
       opt.draft_key = NULL;
     }
+  opt.alwaysShowApproval = get_conf_bool ("alwaysShowApproval", 0);
 
   /* Hidden options  */
   opt.sync_enc = get_conf_bool ("syncEnc", 0);

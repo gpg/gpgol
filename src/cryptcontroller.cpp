@@ -474,7 +474,7 @@ CryptController::resolve_keys ()
       TRETURN -1;
     }
 
-  if (opt.autoresolve && !resolve_keys_cached ())
+  if (opt.autoresolve && !opt.alwaysShowApproval && !resolve_keys_cached ())
     {
       log_debug ("%s:%s: resolved keys through the cache",
                  SRCNAME, __func__);
@@ -542,7 +542,7 @@ CryptController::resolve_keys ()
       args.push_back (cached_sender);
     }
 
-  if (!opt.autoresolve)
+  if (!opt.autoresolve || opt.alwaysShowApproval)
     {
       args.push_back (std::string ("--alwaysShow"));
     }
