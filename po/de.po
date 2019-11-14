@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2019-11-14 12:24+0100\n"
-"PO-Revision-Date: 2019-05-08 08:24+0100\n"
+"PO-Revision-Date: 2019-11-14 12:27+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -455,11 +455,11 @@ msgstr "Ein Problem berichten?"
 #. TRANSLATORS: Config dialog.
 #: src/addin-options.cpp:208
 msgid "&Always show security approval dialog."
-msgstr ""
+msgstr "&Zeige den Sicherheitsbestätigungs-Dialog immer an."
 
 #: src/addin-options.cpp:209
 msgid "(slow)"
-msgstr ""
+msgstr "(langsam)"
 
 #. TRANSLATORS: Config dialog tooltip.
 #: src/addin-options.cpp:211
@@ -467,6 +467,9 @@ msgid ""
 "Always show the security approval and certificate selection dialog. This "
 "slows down the encryption / signing process, especially with large keyrings."
 msgstr ""
+"Zeigt den Sicherheitsbestätigungs- bzw. Zertifikatsauswahl-Dialog immer an. "
+"Dies verlangsamt den verschlüsseln / signieren Vorgang. Besonders bei"
+" größeren Schlüsselringen."
 
 #: src/categorymanager.cpp:253
 msgid "Encrypted Message"
@@ -616,6 +619,9 @@ msgid ""
 "\n"
 "Error: "
 msgstr ""
+"Nicht alle Anhänge können angezeigt werden.\n"
+"\n"
+"Fehler: "
 
 #: src/mail.cpp:1076
 #, c-format
