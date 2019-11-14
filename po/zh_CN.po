@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-07-14 11:40+0200\n"
+"POT-Creation-Date: 2019-11-14 12:24+0100\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -26,7 +26,7 @@ msgstr ""
 msgid "Enable the S/MIME support"
 msgstr "启用 S/MIME 支持"
 
-#: src/addin-options.cpp:41 src/addin-options.cpp:287
+#: src/addin-options.cpp:41 src/addin-options.cpp:293
 msgid "Configure GpgOL"
 msgstr ""
 
@@ -428,6 +428,22 @@ msgstr ""
 msgid "How to report a problem?"
 msgstr ""
 
+#. TRANSLATORS: Config dialog.
+#: src/addin-options.cpp:208
+msgid "&Always show security approval dialog."
+msgstr ""
+
+#: src/addin-options.cpp:209
+msgid "(slow)"
+msgstr ""
+
+#. TRANSLATORS: Config dialog tooltip.
+#: src/addin-options.cpp:211
+msgid ""
+"Always show the security approval and certificate selection dialog. This "
+"slows down the encryption / signing process, especially with large keyrings."
+msgstr ""
+
 #: src/categorymanager.cpp:253
 #, fuzzy
 msgid "Encrypted Message"
@@ -484,8 +500,8 @@ msgstr ""
 
 #: src/gpgoladdin.cpp:926 src/gpgoladdin.cpp:961 src/gpgoladdin.cpp:1048
 #: src/gpgoladdin.cpp:1050 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1119
-#: src/gpgoladdin.cpp:1252 src/mail.cpp:1073 src/mail.cpp:1447
-#: src/mail.cpp:1516 src/mailitem-events.cpp:989 src/ribbon-callbacks.cpp:700
+#: src/gpgoladdin.cpp:1252 src/mail.cpp:849 src/mail.cpp:1089 src/mail.cpp:1508
+#: src/mail.cpp:1577 src/mailitem-events.cpp:991 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
 #: src/wks-helper.cpp:453 src/cryptcontroller.cpp:319
 #: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:472
@@ -559,7 +575,14 @@ msgstr ""
 msgid "GpgOL Warning"
 msgstr ""
 
-#: src/mail.cpp:1060
+#: src/mail.cpp:846
+msgid ""
+"Not all attachments can be shown.\n"
+"\n"
+"Error: "
+msgstr ""
+
+#: src/mail.cpp:1076
 #, fuzzy, c-format
 msgid ""
 "Crypto operation failed:\n"
@@ -568,15 +591,15 @@ msgstr ""
 "解密失败\n"
 "（%s）"
 
-#: src/mail.cpp:1068
+#: src/mail.cpp:1084
 msgid "Diagnostics"
 msgstr ""
 
-#: src/mail.cpp:1204
+#: src/mail.cpp:1261
 msgid "Pubkey directory confirmation"
 msgstr ""
 
-#: src/mail.cpp:1205
+#: src/mail.cpp:1262
 msgid ""
 "This is a confirmation request to publish your Pubkey in the directory for "
 "your domain.\n"
@@ -585,43 +608,43 @@ msgid ""
 "directory, simply ignore this message.</p>\n"
 msgstr ""
 
-#: src/mail.cpp:1213
+#: src/mail.cpp:1270
 #, fuzzy
 msgid "message"
 msgstr "解密消息"
 
-#: src/mail.cpp:1214
+#: src/mail.cpp:1271
 msgid "Please wait while the message is being decrypted / verified..."
 msgstr ""
 
-#: src/mail.cpp:1448 src/mail.cpp:1517
+#: src/mail.cpp:1509 src/mail.cpp:1578
 msgid "HTML display disabled."
 msgstr ""
 
-#: src/mail.cpp:1449 src/mail.cpp:1518
+#: src/mail.cpp:1510 src/mail.cpp:1579
 msgid "HTML content in unsigned S/MIME mails is insecure."
 msgstr ""
 
-#: src/mail.cpp:1452 src/mail.cpp:1521
+#: src/mail.cpp:1513 src/mail.cpp:1582
 msgid "GpgOL will only show such mails as text."
 msgstr ""
 
-#: src/mail.cpp:1455
+#: src/mail.cpp:1516
 #, fuzzy
 msgid "This message is shown only once."
 msgstr "此消息未被加密。"
 
-#: src/mail.cpp:1524
+#: src/mail.cpp:1585
 msgid ""
 "Please ask the sender to sign the message or\n"
 "to send it with a plain text alternative."
 msgstr ""
 
-#: src/mail.cpp:1715
+#: src/mail.cpp:1777
 msgid "GpgOL: Oops, G Suite Sync account detected"
 msgstr ""
 
-#: src/mail.cpp:1717
+#: src/mail.cpp:1779
 msgid ""
 "G Suite Sync breaks outgoing crypto mails with attachments.\n"
 "Using crypto and attachments with G Suite Sync is not supported.\n"
@@ -629,7 +652,7 @@ msgid ""
 "See: https://dev.gnupg.org/T3545 for details."
 msgstr ""
 
-#: src/mail.cpp:2558
+#: src/mail.cpp:2702
 msgid "Invalid Key"
 msgstr ""
 
@@ -639,122 +662,122 @@ msgstr ""
 #. address used for verification. The result is used as the
 #. text on the green bar for signed mails. e.g.:
 #. "GpgOL: Level 3 trust in 'john.doe@example.org'"
-#: src/mail.cpp:2614
+#: src/mail.cpp:2758
 msgid "Level"
 msgstr ""
 
-#: src/mail.cpp:2615
+#: src/mail.cpp:2759
 msgid "trust in"
 msgstr ""
 
-#: src/mail.cpp:2843
+#: src/mail.cpp:2987
 msgid "Security Level 4"
 msgstr ""
 
-#: src/mail.cpp:2847
+#: src/mail.cpp:2991
 msgid "Trust Level 4"
 msgstr ""
 
-#: src/mail.cpp:2851
+#: src/mail.cpp:2995
 msgid "Security Level 3"
 msgstr ""
 
-#: src/mail.cpp:2855
+#: src/mail.cpp:2999
 msgid "Trust Level 3"
 msgstr ""
 
-#: src/mail.cpp:2859
+#: src/mail.cpp:3003
 msgid "Security Level 2"
 msgstr ""
 
-#: src/mail.cpp:2863
+#: src/mail.cpp:3007
 msgid "Trust Level 2"
 msgstr ""
 
-#: src/mail.cpp:2867
+#: src/mail.cpp:3011
 #, fuzzy
 msgid "Encrypted"
 msgstr "加密"
 
-#: src/mail.cpp:2876 src/mail.cpp:2878 src/ribbon-callbacks.cpp:607
+#: src/mail.cpp:3020 src/mail.cpp:3022 src/ribbon-callbacks.cpp:607
 msgid "Insecure"
 msgstr ""
 
-#: src/mail.cpp:2891
+#: src/mail.cpp:3035
 #, fuzzy
 msgid "Signed and encrypted message"
 msgstr "解密消息"
 
-#: src/mail.cpp:2895
+#: src/mail.cpp:3039
 #, fuzzy
 msgid "Signed message"
 msgstr "解密消息"
 
-#: src/mail.cpp:2899
+#: src/mail.cpp:3043
 #, fuzzy
 msgid "Encrypted message"
 msgstr "解密消息"
 
-#: src/mail.cpp:2902 src/ribbon-callbacks.cpp:631
+#: src/mail.cpp:3046 src/ribbon-callbacks.cpp:631
 #, fuzzy
 msgid "Insecure message"
 msgstr "解密消息"
 
-#: src/mail.cpp:2914 src/mail.cpp:2925
+#: src/mail.cpp:3058 src/mail.cpp:3069
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
 
-#: src/mail.cpp:2917
+#: src/mail.cpp:3061
 msgid "The message was signed but the verification failed with:"
 msgstr ""
 
-#: src/mail.cpp:2935
+#: src/mail.cpp:3079
 #, fuzzy
 msgid "The encryption was VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:2939
+#: src/mail.cpp:3083
 #, fuzzy
 msgid "The encryption was not VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:2943
+#: src/mail.cpp:3087
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
 
-#: src/mail.cpp:2968
+#: src/mail.cpp:3112
 #, fuzzy
 msgid "You signed this message."
 msgstr "解密消息"
 
-#: src/mail.cpp:2972
+#: src/mail.cpp:3116
 msgid "The senders identity was certified by yourself."
 msgstr ""
 
-#: src/mail.cpp:2976
+#: src/mail.cpp:3120
 msgid "The sender is allowed to certify identities for you."
 msgstr ""
 
-#: src/mail.cpp:2989
+#: src/mail.cpp:3133
 msgid "The senders identity was certified by several trusted people."
 msgstr ""
 
-#: src/mail.cpp:2994
+#: src/mail.cpp:3138
 #, c-format
 msgid ""
 "The senders identity is certified by the trusted issuer:\n"
 "'%s'\n"
 msgstr ""
 
-#: src/mail.cpp:3002
+#: src/mail.cpp:3146
 msgid "The mail provider of the recipient served this key."
 msgstr ""
 
-#: src/mail.cpp:3007
+#: src/mail.cpp:3151
 msgid "Some trusted people have certified the senders identity."
 msgstr ""
 
-#: src/mail.cpp:3017
+#: src/mail.cpp:3161
 #, c-format
 msgid ""
 "The senders address is trusted, because you have established a communication "
@@ -762,147 +785,147 @@ msgid ""
 "You encrypted %i and verified %i messages since."
 msgstr ""
 
-#: src/mail.cpp:3034
+#: src/mail.cpp:3178
 msgid "The senders signature was verified for the first time."
 msgstr ""
 
-#: src/mail.cpp:3041
+#: src/mail.cpp:3185
 #, c-format
 msgid ""
 "The senders address is not trustworthy yet because you only verified %i "
 "messages and encrypted %i messages to it since %s."
 msgstr ""
 
-#: src/mail.cpp:3056
+#: src/mail.cpp:3200
 msgid "But the sender address is not trustworthy because:"
 msgstr ""
 
-#: src/mail.cpp:3057
+#: src/mail.cpp:3201
 msgid "The sender address is not trustworthy because:"
 msgstr ""
 
-#: src/mail.cpp:3065
+#: src/mail.cpp:3209
 #, fuzzy
 msgid "The signature is invalid: \n"
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3068
+#: src/mail.cpp:3212
 #, fuzzy
 msgid "The signature does not match."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3075
+#: src/mail.cpp:3219
 msgid "There was an error verifying the signature.\n"
 msgstr ""
 
-#: src/mail.cpp:3084
+#: src/mail.cpp:3228
 #, fuzzy
 msgid "The signature is expired.\n"
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3088
+#: src/mail.cpp:3232
 msgid "The used key"
 msgstr ""
 
-#: src/mail.cpp:3088
+#: src/mail.cpp:3232
 #, fuzzy
 msgid "The used certificate"
 msgstr "验证出错"
 
-#: src/mail.cpp:3096
+#: src/mail.cpp:3240
 #, fuzzy
 msgid "is not available."
 msgstr "证书吊销列表（CRL）不可用\n"
 
-#: src/mail.cpp:3100
+#: src/mail.cpp:3244
 msgid "is revoked."
 msgstr ""
 
-#: src/mail.cpp:3104
+#: src/mail.cpp:3248
 msgid "is expired."
 msgstr ""
 
-#: src/mail.cpp:3108
+#: src/mail.cpp:3252
 msgid "is not meant for signing."
 msgstr ""
 
-#: src/mail.cpp:3112 src/mail.cpp:3116
+#: src/mail.cpp:3256 src/mail.cpp:3260
 msgid "could not be checked for revocation."
 msgstr ""
 
-#: src/mail.cpp:3121
+#: src/mail.cpp:3265
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
 
-#: src/mail.cpp:3127
+#: src/mail.cpp:3271
 #, c-format
 msgid "does not claim the address: \"%s\"."
 msgstr ""
 
-#: src/mail.cpp:3141
+#: src/mail.cpp:3285
 msgid "is not certified by any trustworthy key."
 msgstr ""
 
-#: src/mail.cpp:3145
+#: src/mail.cpp:3289
 msgid ""
 "is not certified by a trustworthy Certificate Authority or the Certificate "
 "Authority is unknown."
 msgstr ""
 
-#: src/mail.cpp:3150
+#: src/mail.cpp:3294
 msgid "The sender marked this address as revoked."
 msgstr ""
 
-#: src/mail.cpp:3154
+#: src/mail.cpp:3298
 msgid "is marked as not trustworthy."
 msgstr ""
 
-#: src/mail.cpp:3164
+#: src/mail.cpp:3308
 #, fuzzy
 msgid "The signature is VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3168
+#: src/mail.cpp:3312
 #, fuzzy
 msgid "The signature is not VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3176
+#: src/mail.cpp:3320
 #, fuzzy
 msgid "The encryption is VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3180
+#: src/mail.cpp:3324
 #, fuzzy
 msgid "The encryption is not VS-NfD-compliant."
 msgstr "签名有效\n"
 
-#: src/mail.cpp:3191
+#: src/mail.cpp:3335
 msgid "Click here to change the key used for this address."
 msgstr ""
 
-#: src/mail.cpp:3195
+#: src/mail.cpp:3339
 msgid "Click here for details about the key."
 msgstr ""
 
-#: src/mail.cpp:3196
+#: src/mail.cpp:3340
 msgid "Click here for details about the certificate."
 msgstr ""
 
-#: src/mail.cpp:3200
+#: src/mail.cpp:3344
 msgid "Click here to search the key on the configured keyserver."
 msgstr ""
 
-#: src/mail.cpp:3201
+#: src/mail.cpp:3345
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 
-#: src/mail.cpp:3556
+#: src/mail.cpp:3700
 #, fuzzy
 msgid "GpgOL: Encryption not possible!"
 msgstr "解密消息"
 
-#: src/mail.cpp:3558
+#: src/mail.cpp:3702
 msgid ""
 "Outlook returned an error when trying to send the encrypted mail.\n"
 "\n"
@@ -912,12 +935,12 @@ msgid ""
 "switching to PGP/Inline in GpgOL's options."
 msgstr ""
 
-#: src/mailitem-events.cpp:369 src/mailitem-events.cpp:1042
+#: src/mailitem-events.cpp:371 src/mailitem-events.cpp:1044
 #: src/mimemaker.cpp:1086
 msgid "Sorry, that's not possible, yet"
 msgstr ""
 
-#: src/mailitem-events.cpp:371
+#: src/mailitem-events.cpp:373
 #, c-format
 msgid ""
 "GpgOL has prevented the change to the \"%s\" property.\n"
@@ -931,15 +954,15 @@ msgstr ""
 
 #. TRANSLATORS: Part of a warning dialog that disallows
 #. reply and forward with contents
-#: src/mailitem-events.cpp:973
+#: src/mailitem-events.cpp:975
 msgid "You are replying to an unsigned S/MIME email."
 msgstr ""
 
-#: src/mailitem-events.cpp:975
+#: src/mailitem-events.cpp:977
 msgid "You are forwarding an unsigned S/MIME email."
 msgstr ""
 
-#: src/mailitem-events.cpp:978
+#: src/mailitem-events.cpp:980
 msgid ""
 "In this version of S/MIME an attacker could use the missing signature to "
 "have you decrypt contents from a different, otherwise completely unrelated "
@@ -947,11 +970,11 @@ msgid ""
 "This is why we only allow quoting to be done manually."
 msgstr ""
 
-#: src/mailitem-events.cpp:985
+#: src/mailitem-events.cpp:987
 msgid "Please copy the relevant contents and insert them into the new email."
 msgstr ""
 
-#: src/mailitem-events.cpp:1039
+#: src/mailitem-events.cpp:1041
 msgid ""
 "Attachments are part of the crypto message.\n"
 "They can't be permanently removed and will be shown again the next time this "
@@ -1100,23 +1123,13 @@ msgstr ""
 msgid "GpgOL: Request confirmed!"
 msgstr ""
 
-#: src/cryptcontroller.cpp:516
 #, fuzzy
-msgid "Resolving recipients..."
-msgstr "当前收件人："
+#~ msgid "Resolving recipients..."
+#~ msgstr "当前收件人："
 
-#: src/cryptcontroller.cpp:520
-msgid "Resolving signers..."
-msgstr ""
-
-#: src/cryptcontroller.cpp:1284
 #, fuzzy
-msgid "Encrypting..."
-msgstr "加密"
-
-#: src/cryptcontroller.cpp:1288
-msgid "Signing..."
-msgstr ""
+#~ msgid "Encrypting..."
+#~ msgstr "加密"
 
 #, fuzzy
 #~ msgid "No recipients for encryption selected."
