@@ -468,8 +468,8 @@ msgid ""
 "slows down the encryption / signing process, especially with large keyrings."
 msgstr ""
 "Zeigt den Sicherheitsbestätigungs- bzw. Zertifikatsauswahl-Dialog immer an. "
-"Dies verlangsamt den verschlüsseln / signieren Vorgang. Besonders bei"
-" größeren Schlüsselringen."
+"Dies verlangsamt den verschlüsseln / signieren Vorgang. Besonders bei "
+"größeren Schlüsselringen."
 
 #: src/categorymanager.cpp:253
 msgid "Encrypted Message"
