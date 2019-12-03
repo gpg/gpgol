@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-11-14 12:24+0100\n"
+"POT-Creation-Date: 2019-12-03 12:20+0100\n"
 "PO-Revision-Date: 2019-03-25 13:09+0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@sapo.pt>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
@@ -488,6 +488,15 @@ msgstr "Os e-mails de lixo não podem ser processados"
 msgid "Unknown contact"
 msgstr "Contacto desconhecido"
 
+#: src/common.cpp:774 src/cryptcontroller.cpp:463
+msgid ""
+"Operation failed.\n"
+"\n"
+"This is usually caused by a bug in GpgOL or an error in your setup.\n"
+"Please see https://www.gpg4win.org/reporting-bugs.html or ask your "
+"Administrator for support."
+msgstr ""
+
 #: src/common.cpp:783
 msgid "GpgOL Error"
 msgstr "Erro GpgOL"
@@ -531,8 +540,9 @@ msgstr "Abrir o diálogo de definições para o GpgOL"
 #: src/gpgoladdin.cpp:1252 src/mail.cpp:849 src/mail.cpp:1089 src/mail.cpp:1508
 #: src/mail.cpp:1577 src/mailitem-events.cpp:991 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
-#: src/wks-helper.cpp:453 src/cryptcontroller.cpp:319
-#: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:472
+#: src/wks-helper.cpp:453 src/cryptcontroller.cpp:125
+#: src/cryptcontroller.cpp:319 src/cryptcontroller.cpp:450
+#: src/cryptcontroller.cpp:472 src/cryptcontroller.cpp:712
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -1127,6 +1137,16 @@ msgstr ""
 msgid "No message selected"
 msgstr "Nenhuma mensagem selecionada"
 
+#: src/ribbon-callbacks.cpp:657
+msgid ""
+"You cannot be sure who sent, modified and read the message in transit.\n"
+"\n"
+"Click here to learn more."
+msgstr ""
+"Não podes ter certeza quem enviou, modificou e leu a mensagem em trânsito.\n"
+"\n"
+"Clica aqui para saber mais."
+
 #: src/ribbon-callbacks.cpp:696
 #, c-format
 msgid ""
@@ -1219,17 +1239,38 @@ msgstr "A tua Pubkey pode ser brevemente extraída do teu domínio."
 msgid "GpgOL: Request confirmed!"
 msgstr "GpgOL: Pedido confirmado!"
 
-#~ msgid "Resolving recipients..."
-#~ msgstr "A resolver destinatários…"
+#: src/cryptcontroller.cpp:124
+#, fuzzy
+msgid "Can't encrypt / sign an empty message."
+msgstr "Encriptar ou assinar uma mensagem em branco não é possível."
 
-#~ msgid "Resolving signers..."
-#~ msgstr "A resolver signatários…"
+#: src/cryptcontroller.cpp:318
+msgid "No recipients for encryption selected."
+msgstr "Não foram selecionados destinatários para a encriptação."
 
-#~ msgid "Encrypting..."
-#~ msgstr "A encriptar…"
+#: src/cryptcontroller.cpp:443
+msgid ""
+"Failed to encrypt draft.\n"
+"\n"
+"The configured encryption key for drafts could not be found.\n"
+"Please check your configuration or turn off draft encryption in the settings."
+msgstr ""
 
-#~ msgid "Signing..."
-#~ msgstr "A assinar…"
+#: src/cryptcontroller.cpp:516
+msgid "Resolving recipients..."
+msgstr "A resolver destinatários…"
+
+#: src/cryptcontroller.cpp:520
+msgid "Resolving signers..."
+msgstr "A resolver signatários…"
+
+#: src/cryptcontroller.cpp:1284
+msgid "Encrypting..."
+msgstr "A encriptar…"
+
+#: src/cryptcontroller.cpp:1288
+msgid "Signing..."
+msgstr "A assinar…"
 
 #~ msgid "&amp;Print decrypted"
 #~ msgstr "&amp;Imprimir decifrado"
@@ -1246,9 +1287,6 @@ msgstr "GpgOL: Pedido confirmado!"
 #~ msgstr ""
 #~ "A chave ou chaves configuradas serão utilizadas para este contacto, mesmo "
 #~ "que não sejam certificadas."
-
-#~ msgid "No recipients for encryption selected."
-#~ msgstr "Não foram selecionados destinatários para a encriptação."
 
 #~ msgid "Dangerous reply"
 #~ msgstr "Resposta perigosa"
@@ -1587,9 +1625,6 @@ msgstr "GpgOL: Pedido confirmado!"
 #~ msgid "No recipients to encrypt to are given"
 #~ msgstr "Não foram selecionados destinatários para a encriptação"
 
-#~ msgid "Encrypting or signing an empty message is not possible."
-#~ msgstr "Encriptar ou assinar uma mensagem em branco não é possível."
-
 #~ msgid "Encryption failed (%s)"
 #~ msgstr "A encriptação falhou (%s)"
 
@@ -1733,16 +1768,6 @@ msgstr "GpgOL: Pedido confirmado!"
 
 #~ msgid "[PGP/MIME signature]"
 #~ msgstr "[Assinatura PGP/MIME]"
-
-#~ msgid ""
-#~ "You cannot be sure who sent, modified and read the message in transit.\n"
-#~ "\n"
-#~ "Click here to learn more."
-#~ msgstr ""
-#~ "Não podes ter certeza quem enviou, modificou e leu a mensagem em "
-#~ "trânsito.\n"
-#~ "\n"
-#~ "Clica aqui para saber mais."
 
 #, fuzzy
 #~ msgid "This message is not signed.\n"

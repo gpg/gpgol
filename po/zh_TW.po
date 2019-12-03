@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-11-14 12:24+0100\n"
+"POT-Creation-Date: 2019-12-03 12:20+0100\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -459,6 +459,15 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
+#: src/common.cpp:774 src/cryptcontroller.cpp:463
+msgid ""
+"Operation failed.\n"
+"\n"
+"This is usually caused by a bug in GpgOL or an error in your setup.\n"
+"Please see https://www.gpg4win.org/reporting-bugs.html or ask your "
+"Administrator for support."
+msgstr ""
+
 #: src/common.cpp:783
 #, fuzzy
 msgid "GpgOL Error"
@@ -503,8 +512,9 @@ msgstr ""
 #: src/gpgoladdin.cpp:1252 src/mail.cpp:849 src/mail.cpp:1089 src/mail.cpp:1508
 #: src/mail.cpp:1577 src/mailitem-events.cpp:991 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
-#: src/wks-helper.cpp:453 src/cryptcontroller.cpp:319
-#: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:472
+#: src/wks-helper.cpp:453 src/cryptcontroller.cpp:125
+#: src/cryptcontroller.cpp:319 src/cryptcontroller.cpp:450
+#: src/cryptcontroller.cpp:472 src/cryptcontroller.cpp:712
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -1050,6 +1060,13 @@ msgstr ""
 msgid "No message selected"
 msgstr "此訊息未被加密。"
 
+#: src/ribbon-callbacks.cpp:657
+msgid ""
+"You cannot be sure who sent, modified and read the message in transit.\n"
+"\n"
+"Click here to learn more."
+msgstr ""
+
 #: src/ribbon-callbacks.cpp:696
 #, c-format
 msgid ""
@@ -1123,17 +1140,43 @@ msgstr ""
 msgid "GpgOL: Request confirmed!"
 msgstr ""
 
+#: src/cryptcontroller.cpp:124
 #, fuzzy
-#~ msgid "Resolving recipients..."
-#~ msgstr "當前收件人："
+msgid "Can't encrypt / sign an empty message."
+msgstr "不可加密或簽名空訊息。"
 
+#: src/cryptcontroller.cpp:318
 #, fuzzy
-#~ msgid "Encrypting..."
-#~ msgstr "加密"
+msgid "No recipients for encryption selected."
+msgstr "沒有指定要加密給的收件人"
 
+#: src/cryptcontroller.cpp:443
+msgid ""
+"Failed to encrypt draft.\n"
+"\n"
+"The configured encryption key for drafts could not be found.\n"
+"Please check your configuration or turn off draft encryption in the settings."
+msgstr ""
+
+#: src/cryptcontroller.cpp:516
 #, fuzzy
-#~ msgid "No recipients for encryption selected."
-#~ msgstr "沒有指定要加密給的收件人"
+msgid "Resolving recipients..."
+msgstr "當前收件人："
+
+#: src/cryptcontroller.cpp:520
+#, fuzzy
+msgid "Resolving signers..."
+msgstr "當前收件人："
+
+#: src/cryptcontroller.cpp:1284
+#, fuzzy
+msgid "Encrypting..."
+msgstr "加密"
+
+#: src/cryptcontroller.cpp:1288
+#, fuzzy
+msgid "Signing..."
+msgstr "加密"
 
 #, fuzzy
 #~ msgid "GpgOL: Encrypted Message"
@@ -1411,9 +1454,6 @@ msgstr ""
 
 #~ msgid "No recipients to encrypt to are given"
 #~ msgstr "沒有指定要加密給的收件人"
-
-#~ msgid "Encrypting or signing an empty message is not possible."
-#~ msgstr "不可加密或簽名空訊息。"
 
 #~ msgid "Encryption failed (%s)"
 #~ msgstr "加密失敗 (%s)"

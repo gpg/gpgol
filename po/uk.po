@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-11-14 12:24+0100\n"
+"POT-Creation-Date: 2019-12-03 12:20+0100\n"
 "PO-Revision-Date: 2018-06-12 19:38+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -464,6 +464,15 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
+#: src/common.cpp:774 src/cryptcontroller.cpp:463
+msgid ""
+"Operation failed.\n"
+"\n"
+"This is usually caused by a bug in GpgOL or an error in your setup.\n"
+"Please see https://www.gpg4win.org/reporting-bugs.html or ask your "
+"Administrator for support."
+msgstr ""
+
 #: src/common.cpp:783
 msgid "GpgOL Error"
 msgstr "Помилка GpgOL"
@@ -507,8 +516,9 @@ msgstr "Відкрити діалогове вікно параметрів GpgO
 #: src/gpgoladdin.cpp:1252 src/mail.cpp:849 src/mail.cpp:1089 src/mail.cpp:1508
 #: src/mail.cpp:1577 src/mailitem-events.cpp:991 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
-#: src/wks-helper.cpp:453 src/cryptcontroller.cpp:319
-#: src/cryptcontroller.cpp:450 src/cryptcontroller.cpp:472
+#: src/wks-helper.cpp:453 src/cryptcontroller.cpp:125
+#: src/cryptcontroller.cpp:319 src/cryptcontroller.cpp:450
+#: src/cryptcontroller.cpp:472 src/cryptcontroller.cpp:712
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -1101,6 +1111,16 @@ msgstr ""
 msgid "No message selected"
 msgstr "Не позначено жодного повідомлення"
 
+#: src/ribbon-callbacks.cpp:657
+#, fuzzy
+msgid ""
+"You cannot be sure who sent, modified and read the message in transit.\n"
+"\n"
+"Click here to learn more."
+msgstr ""
+"Ви не можете бути певні щодо того, хто надіслав, змінив чи читав "
+"повідомлення під час пересилання."
+
 #: src/ribbon-callbacks.cpp:696
 #, c-format
 msgid ""
@@ -1193,17 +1213,38 @@ msgstr "Невдовзі ваш відкритий ключ можна буде 
 msgid "GpgOL: Request confirmed!"
 msgstr "GpgOL: запит підтверджено!"
 
-#~ msgid "Resolving recipients..."
-#~ msgstr "Визначаємо отримувачів…"
+#: src/cryptcontroller.cpp:124
+#, fuzzy
+msgid "Can't encrypt / sign an empty message."
+msgstr "Підписати і зашифрувати повідомлення"
 
-#~ msgid "Resolving signers..."
-#~ msgstr "Визначаємо підписників…"
+#: src/cryptcontroller.cpp:318
+msgid "No recipients for encryption selected."
+msgstr "Не вибрано жодного отримувача для шифрування."
 
-#~ msgid "Encrypting..."
-#~ msgstr "Зашифровуємо…"
+#: src/cryptcontroller.cpp:443
+msgid ""
+"Failed to encrypt draft.\n"
+"\n"
+"The configured encryption key for drafts could not be found.\n"
+"Please check your configuration or turn off draft encryption in the settings."
+msgstr ""
 
-#~ msgid "Signing..."
-#~ msgstr "Підписуємо…"
+#: src/cryptcontroller.cpp:516
+msgid "Resolving recipients..."
+msgstr "Визначаємо отримувачів…"
+
+#: src/cryptcontroller.cpp:520
+msgid "Resolving signers..."
+msgstr "Визначаємо підписників…"
+
+#: src/cryptcontroller.cpp:1284
+msgid "Encrypting..."
+msgstr "Зашифровуємо…"
+
+#: src/cryptcontroller.cpp:1288
+msgid "Signing..."
+msgstr "Підписуємо…"
 
 #~ msgid "&amp;Print decrypted"
 #~ msgstr "&amp;Надрукувати розшифроване"
@@ -1211,9 +1252,6 @@ msgstr "GpgOL: запит підтверджено!"
 #, fuzzy
 #~ msgid "Configure key for:"
 #~ msgstr "Налаштувати GnuPG"
-
-#~ msgid "No recipients for encryption selected."
-#~ msgstr "Не вибрано жодного отримувача для шифрування."
 
 #~ msgid "Dangerous reply"
 #~ msgstr "Небезпечна відповідь"
