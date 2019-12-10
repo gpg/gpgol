@@ -3841,6 +3841,8 @@ mapi_get_header_info (LPMESSAGE message,
   TSTART;
   rfc822parse_t msg;
 
+  r_autocrypt.exists = false;
+
   /* Read the headers into an rfc822 object. */
   msg = rfc822parse_open (parse_headers_cb, NULL);
   if (!msg)
