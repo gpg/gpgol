@@ -807,12 +807,14 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
 {
   TSTART;
   bool anyError = false;
-  bool addErrShown = false;
   m_disable_att_remove_warning = true;
+
+  std::string addErrStr;
+  int addErrCode = 0;
+  std::vector<std::string> failedNames;
   for (auto att: attachments)
     {
       int err = 0;
-      char *errStr = nullptr;
       const auto dispName = att->get_display_name ();
       if (dispName.empty())
         {
@@ -843,22 +845,12 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
                      SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
-      if (!err && add_oom_attachment (m_mailitem, wchar_file, wchar_name, &errStr))
+      if (!err && add_oom_attachment (m_mailitem, wchar_file, wchar_name,
+                                      addErrStr, &addErrCode))
         {
           log_error ("%s:%s: Failed to add attachment: %s",
                      SRCNAME, __func__, anonstr (dispName.c_str()));
-          if (errStr)
-            {
-              if (!addErrShown)
-                {
-                  std::string msg = _("Not all attachments can be shown.\n\n"
-                                      "Error: ") + std::string (errStr);
-                  gpgol_message_box (getWindow (),
-                                     msg.c_str (), _("GpgOL"), MB_OK);
-                  addErrShown = true;
-                }
-              xfree (errStr);
-            }
+          failedNames.push_back (dispName);
           err = 1;
         }
       if (hFile && hFile != INVALID_HANDLE_VALUE)
@@ -884,6 +876,30 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
         {
           anyError = true;
         }
+    }
+  if (anyError)
+    {
+      std::string msg = _("Not all attachments can be shown.\n\n"
+                          "The hidden attachments are:");
+      msg += "\n";
+
+      std::string filenames;
+      join (failedNames, "\n", filenames);
+      msg += filenames;
+      msg += "\n\n";
+
+      if (addErrCode == 0x80004005)
+        {
+          msg += _("The mail exeeds the maximum size GpgOL "
+                   "can handle on this server.");
+        }
+      else
+        {
+          msg += _("Error: ") + addErrStr;
+        }
+      gpgol_message_box (getWindow (),
+                         msg.c_str (), _("GpgOL"), MB_OK);
+
     }
   m_disable_att_remove_warning = false;
   TRETURN anyError;

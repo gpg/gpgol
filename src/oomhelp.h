@@ -222,7 +222,8 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients,
 /* Add an attachment to a dispatcher */
 int
 add_oom_attachment (LPDISPATCH disp, const wchar_t* inFile,
-                    const wchar_t *displayName, char **r_err_str);
+                    const wchar_t *displayName, std::string &r_err_str,
+                    int *r_err_code);
 
 /* Look up a string with the propertyAccessor interface */
 char *

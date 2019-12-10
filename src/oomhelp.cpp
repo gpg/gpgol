@@ -1494,7 +1494,8 @@ get_oom_recipients (LPDISPATCH recipients, bool *r_err)
    name that should be used in outlook. */
 int
 add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
-                    const wchar_t* displayName, char **r_error_str)
+                    const wchar_t* displayName, std::string &r_error_str,
+                    int *r_err_code)
 {
   TSTART;
   LPDISPATCH attachments = get_oom_object (disp, "Attachments");
@@ -1556,9 +1557,18 @@ add_oom_attachment (LPDISPATCH disp, const wchar_t* inFileW,
                  (unsigned int)argErr);
       dump_excepinfo (execpinfo);
 
-      if (r_error_str && execpinfo.bstrDescription)
+      if (r_err_code)
         {
-          *r_error_str = wchar_to_utf8 (execpinfo.bstrDescription);
+          *r_err_code = (int) execpinfo.scode;
+        }
+      if (execpinfo.bstrDescription)
+        {
+          char *utf8Err = wchar_to_utf8 (execpinfo.bstrDescription);
+          if (utf8Err)
+            {
+              r_error_str = utf8Err;
+            }
+          xfree (utf8Err);
         }
     }
 
