@@ -331,6 +331,14 @@ Mail::preProcessMessage_m ()
       TRETURN 0;
     }
 
+  /* We could check PR_ACCESS here in MAPI to figure out if we can
+     modify a mail or not. But this strangely does not fully tell
+     us the truth. For example for a read only mail we can modify
+     the body of the mail but "add oom attachments" will fail.
+
+     Add OOM attachments has error handling and it will show the
+     user that missing rights are an issue. */
+
   /* Create moss attachments here so that they are properly
      hidden when the item is read into the model. */
   LPMESSAGE parsed_message = get_oom_message (m_mailitem);
