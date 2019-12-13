@@ -412,6 +412,32 @@ Mail::checkAttachments_o (bool silent)
       TRETURN 0;
     }
 
+  /* Saveguard not to warn about our own attachment */
+  if (count == 1)
+    {
+      LPDISPATCH oom_attach = get_oom_object (attachments, "Item(1)");
+      if (oom_attach)
+        {
+          char *dispName = get_oom_string (oom_attach, "DisplayName");
+          gpgol_release (oom_attach);
+
+          if (dispName && !strcmp (dispName, MIMEATTACHFILENAME))
+            {
+              xfree (dispName);
+              gpgol_release (attachments);
+              log_debug ("%s:%s: Found only our hidden mime structure.",
+                         SRCNAME, __func__);
+              TRETURN 0;
+            }
+          else if (dispName)
+            {
+              log_debug ("%s:%s: Found %s as attachment.",
+                         SRCNAME, __func__, anonstr (dispName));
+              xfree (dispName);
+            }
+        }
+    }
+
   std::string message;
 
   if (isEncrypted () && isSigned ())
@@ -2429,9 +2455,9 @@ Mail::close (bool restoreSMIMEClass)
       if (attachments)
         {
           att_count = get_oom_int (attachments, "Count");
-          gpgol_release (attachments);
         }
 
+      bool foundOne = false;
       if (body && strlen (body))
         {
           log_debug ("%s:%s: Close successful. But body found. "
@@ -2440,16 +2466,44 @@ Mail::close (bool restoreSMIMEClass)
         }
       else if (att_count)
         {
-          log_debug ("%s:%s: Close successful. But attachments found. "
-                     "Mail still open.",
-                     SRCNAME, __func__);
+          for (int i = 1; i <= att_count && !foundOne; i++)
+            {
+              std::string item_str;
+              item_str = std::string("Item(") + std::to_string (i) + ")";
+              LPDISPATCH oom_attach = get_oom_object (attachments, item_str.c_str ());
+              if (!oom_attach)
+                {
+                  log_error ("%s:%s: Failed to get attachment.",
+                             SRCNAME, __func__);
+                  continue;
+                }
+              VARIANT var;
+              VariantInit (&var);
+              if (get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var) ||
+                  (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE))
+                {
+                  foundOne = true;
+                }
+              else
+                {
+                  gpgol_release (oom_attach);
+                }
+              VariantClear (&var);
+            }
+          if (foundOne)
+            {
+              log_debug ("%s:%s: Close successful. But attachments found. "
+                         "Mail still open.",
+                         SRCNAME, __func__);
+            }
         }
-      else
+      if (!foundOne)
         {
           setPassWrite (true);
           log_debug ("%s:%s: Close successful. Next write may pass.",
                      SRCNAME, __func__);
         }
+      gpgol_release (attachments);
       xfree (body);
     }
   log_oom ("%s:%s: returned from close",

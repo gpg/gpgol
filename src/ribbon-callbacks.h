@@ -52,6 +52,7 @@
 #define ID_CMD_FILE_CLOSE 37
 #define ID_CMD_DECRYPT_PERMANENTLY 38
 #define ID_CMD_FILE_SAVE_AS 39
+#define ID_CMD_FILE_SAVE_AS_IN_WINDOW 40
 
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -94,4 +95,7 @@ HRESULT override_file_close ();
 HRESULT decrypt_permanently (LPDISPATCH ctrl);
 /* SaveAs from the file menu */
 HRESULT override_file_save_as (DISPPARAMS *parms);
+/* Like above but for mails opened in their own window as they
+   behave differently. */
+HRESULT override_file_save_as_in_window (DISPPARAMS *parms);
 #endif

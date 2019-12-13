@@ -718,6 +718,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
       ID_MAPPER (L"overrideFileClose", ID_CMD_FILE_CLOSE)
       ID_MAPPER (L"overrideFileSaveAs", ID_CMD_FILE_SAVE_AS)
+      ID_MAPPER (L"overrideFileSaveAsWindowed", ID_CMD_FILE_SAVE_AS_IN_WINDOW)
       ID_MAPPER (L"decryptPermanently", ID_CMD_DECRYPT_PERMANENTLY)
     }
 
@@ -819,6 +820,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return override_file_close ();
       case ID_CMD_FILE_SAVE_AS:
         return override_file_save_as (parms);
+      case ID_CMD_FILE_SAVE_AS_IN_WINDOW:
+        return override_file_save_as_in_window (parms);
       case ID_BTN_ENCRYPT:
       case ID_BTN_DECRYPT:
       case ID_BTN_DECRYPT_LARGE:
@@ -935,6 +938,10 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
       gpgrt_asprintf (&buffer,
         "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\""
         " onLoad=\"ribbonLoaded\">"
+        " <commands>"
+        "  <command idMso=\"FileSaveAs\""
+        "           onAction=\"overrideFileSaveAsWindowed\"/>"
+        " </commands>"
         " <ribbon>"
         "   <tabs>"
         "    <tab idMso=\"TabReadMessage\">"

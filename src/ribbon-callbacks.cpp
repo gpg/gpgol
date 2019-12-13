@@ -44,6 +44,7 @@
 #include "mail.h"
 #include "dispcache.h"
 #include "addressbook.h"
+#include "windowmessages.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/data.h>
@@ -870,6 +871,28 @@ HRESULT override_file_save_as (DISPPARAMS *parms)
       TRETURN S_OK;
     }
 
+  /* Check if we are in a dedicated window which we must treat differently. */
+  LPDISPATCH context = nullptr;
+  if (parms->cArgs == 2 &&
+      getContext (parms->rgvarg[1].pdispVal, &context) == S_OK)
+    {
+      char *name = get_object_name (context);
+
+      std::string ctx_name;
+
+      if (name)
+        {
+          ctx_name = name;
+          xfree (name);
+        }
+      if (ctx_name == "_Inspector")
+        {
+          gpgol_release (context);
+          TRETURN override_file_save_as_in_window (parms);
+        }
+    }
+  gpgol_release (context);
+
   /* Do not cancel the event so that the underlying File Save As works. */
   parms->rgvarg[0].pvarVal->boolVal = VARIANT_FALSE;
   /* File->SaveAs triggers an ItemLoad event immediately after this
@@ -879,5 +902,34 @@ HRESULT override_file_save_as (DISPPARAMS *parms)
      not interfere and it can just save what is in MAPI (the encrypted
      mail). */
   g_ignore_next_load = true;
+  TRETURN S_OK;
+}
+
+HRESULT override_file_save_as_in_window (DISPPARAMS *parms)
+{
+  TSTART;
+  if (!parms)
+    {
+      STRANGEPOINT;
+      TRETURN S_OK;
+    }
+
+  /* Do not cancel the event so that the underlying File Save As works. */
+  parms->rgvarg[0].pvarVal->boolVal = VARIANT_FALSE;
+
+  LPDISPATCH ctrl = parms->rgvarg[1].pdispVal;
+
+  MY_MAIL_GETTER
+
+  if (!mail)
+    {
+      log_debug ("%s:%s: No mail.",
+                 SRCNAME, __func__);
+      TRETURN S_OK;
+    }
+
+  /* Close the mail async to allow the save as. */
+  do_in_ui_thread_async (CLOSE, mail);
+
   TRETURN S_OK;
 }
