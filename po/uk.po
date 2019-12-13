@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2019-12-13 09:45+0100\n"
+"POT-Creation-Date: 2019-12-13 10:00+0100\n"
 "PO-Revision-Date: 2018-06-12 19:38+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -513,8 +513,8 @@ msgstr "Відкрити діалогове вікно параметрів GpgO
 
 #: src/gpgoladdin.cpp:926 src/gpgoladdin.cpp:961 src/gpgoladdin.cpp:1048
 #: src/gpgoladdin.cpp:1050 src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1119
-#: src/gpgoladdin.cpp:1252 src/mail.cpp:901 src/mail.cpp:1113 src/mail.cpp:1532
-#: src/mail.cpp:1601 src/mailitem-events.cpp:991 src/ribbon-callbacks.cpp:700
+#: src/gpgoladdin.cpp:1252 src/mail.cpp:902 src/mail.cpp:1114 src/mail.cpp:1533
+#: src/mail.cpp:1602 src/mailitem-events.cpp:991 src/ribbon-callbacks.cpp:700
 #: src/ribbon-callbacks.cpp:714 src/ribbon-callbacks.cpp:763
 #: src/wks-helper.cpp:453 src/cryptcontroller.cpp:125
 #: src/cryptcontroller.cpp:319 src/cryptcontroller.cpp:450
@@ -613,15 +613,14 @@ msgstr ""
 "\n"
 
 #: src/mail.cpp:893
-msgid "The mail exeeds the maximum size GpgOL can handle on this server."
+msgid "The mail exceeds the maximum size GpgOL can handle on this server."
 msgstr ""
 
 #: src/mail.cpp:898
-#, fuzzy
-msgid "Error: "
-msgstr "Помилка GpgOL"
+msgid "Reason:"
+msgstr ""
 
-#: src/mail.cpp:1100
+#: src/mail.cpp:1101
 #, c-format
 msgid ""
 "Crypto operation failed:\n"
@@ -630,15 +629,15 @@ msgstr ""
 "Помилка криптографічної дії:\n"
 "%s"
 
-#: src/mail.cpp:1108
+#: src/mail.cpp:1109
 msgid "Diagnostics"
 msgstr ""
 
-#: src/mail.cpp:1285
+#: src/mail.cpp:1286
 msgid "Pubkey directory confirmation"
 msgstr "Підтвердження каталогу відкритих ключів"
 
-#: src/mail.cpp:1286
+#: src/mail.cpp:1287
 msgid ""
 "This is a confirmation request to publish your Pubkey in the directory for "
 "your domain.\n"
@@ -652,32 +651,32 @@ msgstr ""
 "<p>Якщо ви не надсилали запиту щодо оприлюднення вашого відкритого ключа у "
 "каталозі вашого надавача послуг, просто проігноруйте це повідомлення.</p>\n"
 
-#: src/mail.cpp:1294
+#: src/mail.cpp:1295
 msgid "message"
 msgstr "повідомлення"
 
-#: src/mail.cpp:1295
+#: src/mail.cpp:1296
 msgid "Please wait while the message is being decrypted / verified..."
 msgstr ""
 "Будь ласка, зачекайте, доки повідомлення буде розшифровано або перевірено…"
 
-#: src/mail.cpp:1533 src/mail.cpp:1602
+#: src/mail.cpp:1534 src/mail.cpp:1603
 msgid "HTML display disabled."
 msgstr "Показ HTML вимкнено."
 
-#: src/mail.cpp:1534 src/mail.cpp:1603
+#: src/mail.cpp:1535 src/mail.cpp:1604
 msgid "HTML content in unsigned S/MIME mails is insecure."
 msgstr "Показ даних HTML у непідписаних повідомленнях S/MIME не є безпечним."
 
-#: src/mail.cpp:1537 src/mail.cpp:1606
+#: src/mail.cpp:1538 src/mail.cpp:1607
 msgid "GpgOL will only show such mails as text."
 msgstr "GpgOL показуватиме лише текст з таких повідомлень."
 
-#: src/mail.cpp:1540
+#: src/mail.cpp:1541
 msgid "This message is shown only once."
 msgstr "Це повідомлення буде показано лише один раз."
 
-#: src/mail.cpp:1609
+#: src/mail.cpp:1610
 msgid ""
 "Please ask the sender to sign the message or\n"
 "to send it with a plain text alternative."
@@ -685,11 +684,11 @@ msgstr ""
 "Будь ласка, попросіть відправника підписати повідомлення\n"
 "або надіслати його у форматі простого тексту."
 
-#: src/mail.cpp:1801
+#: src/mail.cpp:1802
 msgid "GpgOL: Oops, G Suite Sync account detected"
 msgstr "GpgOL: оце тобі, виявлено обліковий запис G Suite Sync"
 
-#: src/mail.cpp:1803
+#: src/mail.cpp:1804
 msgid ""
 "G Suite Sync breaks outgoing crypto mails with attachments.\n"
 "Using crypto and attachments with G Suite Sync is not supported.\n"
@@ -702,7 +701,7 @@ msgstr ""
 "\n"
 "Докладніше про це тут: https://dev.gnupg.org/T3545"
 
-#: src/mail.cpp:2726
+#: src/mail.cpp:2727
 msgid "Invalid Key"
 msgstr ""
 
@@ -712,103 +711,103 @@ msgstr ""
 #. address used for verification. The result is used as the
 #. text on the green bar for signed mails. e.g.:
 #. "GpgOL: Level 3 trust in 'john.doe@example.org'"
-#: src/mail.cpp:2782
+#: src/mail.cpp:2783
 msgid "Level"
 msgstr ""
 
-#: src/mail.cpp:2783
+#: src/mail.cpp:2784
 msgid "trust in"
 msgstr ""
 
-#: src/mail.cpp:3011
+#: src/mail.cpp:3012
 msgid "Security Level 4"
 msgstr "Рівень безпеки 4"
 
-#: src/mail.cpp:3015
+#: src/mail.cpp:3016
 msgid "Trust Level 4"
 msgstr "Рівень надійності 4"
 
-#: src/mail.cpp:3019
+#: src/mail.cpp:3020
 msgid "Security Level 3"
 msgstr "Рівень безпеки 3"
 
-#: src/mail.cpp:3023
+#: src/mail.cpp:3024
 msgid "Trust Level 3"
 msgstr "Рівень надійності 3"
 
-#: src/mail.cpp:3027
+#: src/mail.cpp:3028
 msgid "Security Level 2"
 msgstr "Рівень безпеки 2"
 
-#: src/mail.cpp:3031
+#: src/mail.cpp:3032
 msgid "Trust Level 2"
 msgstr "Рівень надійності 2"
 
-#: src/mail.cpp:3035
+#: src/mail.cpp:3036
 msgid "Encrypted"
 msgstr "Зашифровано"
 
-#: src/mail.cpp:3044 src/mail.cpp:3046 src/ribbon-callbacks.cpp:607
+#: src/mail.cpp:3045 src/mail.cpp:3047 src/ribbon-callbacks.cpp:607
 msgid "Insecure"
 msgstr "Незахищена"
 
-#: src/mail.cpp:3059
+#: src/mail.cpp:3060
 msgid "Signed and encrypted message"
 msgstr "Підписане і зашифроване повідомлення"
 
-#: src/mail.cpp:3063
+#: src/mail.cpp:3064
 msgid "Signed message"
 msgstr "Підписане повідомлення"
 
-#: src/mail.cpp:3067
+#: src/mail.cpp:3068
 msgid "Encrypted message"
 msgstr "Зашифроване повідомлення"
 
-#: src/mail.cpp:3070 src/ribbon-callbacks.cpp:631
+#: src/mail.cpp:3071 src/ribbon-callbacks.cpp:631
 msgid "Insecure message"
 msgstr "Незахищене повідомлення"
 
-#: src/mail.cpp:3082 src/mail.cpp:3093
+#: src/mail.cpp:3083 src/mail.cpp:3094
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
 "Ви не можете бути певні щодо того, хто надіслав, змінив чи читав "
 "повідомлення під час пересилання."
 
-#: src/mail.cpp:3085
+#: src/mail.cpp:3086
 msgid "The message was signed but the verification failed with:"
 msgstr "Повідомлення було підписано, але воно не пройшло перевірку:"
 
-#: src/mail.cpp:3103
+#: src/mail.cpp:3104
 msgid "The encryption was VS-NfD-compliant."
 msgstr "Шифрування сумісне із VS-NfD."
 
-#: src/mail.cpp:3107
+#: src/mail.cpp:3108
 msgid "The encryption was not VS-NfD-compliant."
 msgstr "Шифрування не сумісне із VS-NfD."
 
-#: src/mail.cpp:3111
+#: src/mail.cpp:3112
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
 "Ви не можете бути певні того, хто надіслав це повідомлення, оскільки його не "
 "підписано."
 
-#: src/mail.cpp:3136
+#: src/mail.cpp:3137
 msgid "You signed this message."
 msgstr "Ви підписали це повідомлення."
 
-#: src/mail.cpp:3140
+#: src/mail.cpp:3141
 msgid "The senders identity was certified by yourself."
 msgstr "Профіль відправника сертифіковано вами."
 
-#: src/mail.cpp:3144
+#: src/mail.cpp:3145
 msgid "The sender is allowed to certify identities for you."
 msgstr "Відправнику дозволено сертифікувати профілі для вас."
 
-#: src/mail.cpp:3157
+#: src/mail.cpp:3158
 msgid "The senders identity was certified by several trusted people."
 msgstr "Профіль відправника сертифіковано декількома довіреними особами."
 
-#: src/mail.cpp:3162
+#: src/mail.cpp:3163
 #, c-format
 msgid ""
 "The senders identity is certified by the trusted issuer:\n"
@@ -817,15 +816,15 @@ msgstr ""
 "Профіль відправника сертифіковано довіреним видавцем сертифікатів:\n"
 "«%s»\n"
 
-#: src/mail.cpp:3170
+#: src/mail.cpp:3171
 msgid "The mail provider of the recipient served this key."
 msgstr ""
 
-#: src/mail.cpp:3175
+#: src/mail.cpp:3176
 msgid "Some trusted people have certified the senders identity."
 msgstr "Профіль відправника сертифіковано декількома довіреними особами."
 
-#: src/mail.cpp:3185
+#: src/mail.cpp:3186
 #, c-format
 msgid ""
 "The senders address is trusted, because you have established a communication "
@@ -836,11 +835,11 @@ msgstr ""
 "спілкування з цим, починаючи з %s.\n"
 "З того часу було зашифровано %i і перевірено %i повідомлень."
 
-#: src/mail.cpp:3202
+#: src/mail.cpp:3203
 msgid "The senders signature was verified for the first time."
 msgstr "Підпис відправника перевірено уперше."
 
-#: src/mail.cpp:3209
+#: src/mail.cpp:3210
 #, c-format
 msgid ""
 "The senders address is not trustworthy yet because you only verified %i "
@@ -849,74 +848,74 @@ msgstr ""
 "Адреса відправника не є ще гідною довіри, оскільки вами перевірено %i "
 "повідомлень із зашифровано %i повідомлень до нього з %s."
 
-#: src/mail.cpp:3224
+#: src/mail.cpp:3225
 msgid "But the sender address is not trustworthy because:"
 msgstr "Але адреса відправника не є гідною довіри, оскільки:"
 
-#: src/mail.cpp:3225
+#: src/mail.cpp:3226
 msgid "The sender address is not trustworthy because:"
 msgstr "Адреса відправника не є гідною довіри, оскільки:"
 
-#: src/mail.cpp:3233
+#: src/mail.cpp:3234
 msgid "The signature is invalid: \n"
 msgstr "Підпис є некоректним: \n"
 
-#: src/mail.cpp:3236
+#: src/mail.cpp:3237
 #, fuzzy
 msgid "The signature does not match."
 msgstr "Підпис не є сумісним із VS-NfD."
 
-#: src/mail.cpp:3243
+#: src/mail.cpp:3244
 msgid "There was an error verifying the signature.\n"
 msgstr "Під час спроби перевірити підпис сталася помилка.\n"
 
-#: src/mail.cpp:3252
+#: src/mail.cpp:3253
 msgid "The signature is expired.\n"
 msgstr "Строк дії підпису вичерпано.\n"
 
-#: src/mail.cpp:3256
+#: src/mail.cpp:3257
 msgid "The used key"
 msgstr "Використаний ключ"
 
-#: src/mail.cpp:3256
+#: src/mail.cpp:3257
 msgid "The used certificate"
 msgstr "Використаний сертифікат"
 
-#: src/mail.cpp:3264
+#: src/mail.cpp:3265
 msgid "is not available."
 msgstr "є недоступним."
 
-#: src/mail.cpp:3268
+#: src/mail.cpp:3269
 msgid "is revoked."
 msgstr "відкликано."
 
-#: src/mail.cpp:3272
+#: src/mail.cpp:3273
 msgid "is expired."
 msgstr ", строк дії вичерпано."
 
-#: src/mail.cpp:3276
+#: src/mail.cpp:3277
 msgid "is not meant for signing."
 msgstr "не призначено для підписування."
 
-#: src/mail.cpp:3280 src/mail.cpp:3284
+#: src/mail.cpp:3281 src/mail.cpp:3285
 msgid "could not be checked for revocation."
 msgstr "не може бути перевірено на відкликання."
 
-#: src/mail.cpp:3289
+#: src/mail.cpp:3290
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
 "не є тим самим, що і ключ, який використовувався для цієї адреси у минулому."
 
-#: src/mail.cpp:3295
+#: src/mail.cpp:3296
 #, c-format
 msgid "does not claim the address: \"%s\"."
 msgstr "не відповідає адресі: «%s»."
 
-#: src/mail.cpp:3309
+#: src/mail.cpp:3310
 msgid "is not certified by any trustworthy key."
 msgstr "не є сертифікованим будь-яким гідним довіри ключем."
 
-#: src/mail.cpp:3313
+#: src/mail.cpp:3314
 msgid ""
 "is not certified by a trustworthy Certificate Authority or the Certificate "
 "Authority is unknown."
@@ -924,56 +923,56 @@ msgstr ""
 "не посвідчено гідною довіри службою сертифікації або служба сертифікації є "
 "невідомою."
 
-#: src/mail.cpp:3318
+#: src/mail.cpp:3319
 msgid "The sender marked this address as revoked."
 msgstr "Відправником позначено цю адресу як відкликану."
 
-#: src/mail.cpp:3322
+#: src/mail.cpp:3323
 msgid "is marked as not trustworthy."
 msgstr "позначено як не гідну довіри."
 
-#: src/mail.cpp:3332
+#: src/mail.cpp:3333
 msgid "The signature is VS-NfD-compliant."
 msgstr "Підпис є сумісним із VS-NfD."
 
-#: src/mail.cpp:3336
+#: src/mail.cpp:3337
 msgid "The signature is not VS-NfD-compliant."
 msgstr "Підпис не є сумісним із VS-NfD."
 
-#: src/mail.cpp:3344
+#: src/mail.cpp:3345
 msgid "The encryption is VS-NfD-compliant."
 msgstr "Шифрування є сумісним із VS-NfD."
 
-#: src/mail.cpp:3348
+#: src/mail.cpp:3349
 msgid "The encryption is not VS-NfD-compliant."
 msgstr "Шифрування не сумісне із VS-NfD."
 
-#: src/mail.cpp:3359
+#: src/mail.cpp:3360
 msgid "Click here to change the key used for this address."
 msgstr "Натисніть тут, щоб змінити ключ, який використано для цієї адреси."
 
-#: src/mail.cpp:3363
+#: src/mail.cpp:3364
 msgid "Click here for details about the key."
 msgstr "Натисніть тут, щоб дізнатися більше про ключ."
 
-#: src/mail.cpp:3364
+#: src/mail.cpp:3365
 msgid "Click here for details about the certificate."
 msgstr "Натисніть тут, щоб дізнатися більше про сертифікат."
 
-#: src/mail.cpp:3368
+#: src/mail.cpp:3369
 msgid "Click here to search the key on the configured keyserver."
 msgstr "Натисніть тут, щоб пошукати ключ на налаштованому сервері ключів."
 
-#: src/mail.cpp:3369
+#: src/mail.cpp:3370
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 "Натисніть тут, щоб пошукати сертифікат на налаштованому сервері ключів X509."
 
-#: src/mail.cpp:3724
+#: src/mail.cpp:3725
 msgid "GpgOL: Encryption not possible!"
 msgstr "GpgOL: шифрування неможливе!"
 
-#: src/mail.cpp:3726
+#: src/mail.cpp:3727
 msgid ""
 "Outlook returned an error when trying to send the encrypted mail.\n"
 "\n"
@@ -1258,6 +1257,10 @@ msgstr "Зашифровуємо…"
 #: src/cryptcontroller.cpp:1288
 msgid "Signing..."
 msgstr "Підписуємо…"
+
+#, fuzzy
+#~ msgid "Error: "
+#~ msgstr "Помилка GpgOL"
 
 #~ msgid "&amp;Print decrypted"
 #~ msgstr "&amp;Надрукувати розшифроване"

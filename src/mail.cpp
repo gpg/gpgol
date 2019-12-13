@@ -890,12 +890,13 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
 
       if (addErrCode == 0x80004005)
         {
-          msg += _("The mail exeeds the maximum size GpgOL "
+          msg += _("The mail exceeds the maximum size GpgOL "
                    "can handle on this server.");
         }
       else
         {
-          msg += _("Error: ") + addErrStr;
+          msg += _("Reason:");
+          msg += " " + addErrStr;
         }
       gpgol_message_box (getWindow (),
                          msg.c_str (), _("GpgOL"), MB_OK);
