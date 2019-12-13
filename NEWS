@@ -1,5 +1,17 @@
-Noteworthy changes for version 2.4.3 (unreleased)
+Noteworthy changes for version 2.4.3 (2019-12-13)
 =================================================
+
+ * Improved compatibilty with OWA and other Mail
+ clients working with the same S/MIME mails. (T4525)
+
+ * Added user friendly error handling when attachments
+ cannot be added. (T4731)
+
+ * Fix a crash that could happen in rare cases when opening
+ broken mails.
+
+ * Crypto mails are no longer always classified as
+ HTML. (T4639)
 
 
 Noteworthy changes for version 2.4.2 (2019-07-14)
