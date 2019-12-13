@@ -643,8 +643,8 @@ msgstr ""
 #: src/mail.cpp:893
 msgid "The mail exceeds the maximum size GpgOL can handle on this server."
 msgstr ""
-"Die E-Mail überschreitet die maximale Größe welche GpgOL auf diesem "
-"Server verarbeiten kann."
+"Die E-Mail überschreitet die maximale Größe welche GpgOL auf diesem Server "
+"verarbeiten kann."
 
 #: src/mail.cpp:898
 msgid "Reason:"
