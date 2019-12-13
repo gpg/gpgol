@@ -602,7 +602,6 @@ MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
 ssize_t
 MimeDataProvider::read(void *buffer, size_t size)
 {
-  TSTART;
   log_data ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
                  SRCNAME, __func__, size);
   ssize_t bRead = m_crypto_data.read (buffer, size);
@@ -622,7 +621,7 @@ MimeDataProvider::read(void *buffer, size_t size)
                            string_to_hex (buf).c_str ());
         }
     }
-  TRETURN bRead;
+  return bRead;
 }
 
 /* Split some raw data into lines and handle them accordingly.
