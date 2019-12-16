@@ -440,4 +440,7 @@ bool is_draft_mail (LPDISPATCH mailitem);
 /* Returns info about a dispparms variable for debugging. */
 void format_variant (std::istringstream &stream, VARIANT *var);
 std::string format_dispparams (DISPPARAMS *p);
+
+/* Returns the count of attachments that are not hidden. */
+int count_visible_attachments (LPDISPATCH attachments);
 #endif /*OOMHELP_H*/

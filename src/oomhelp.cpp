@@ -3095,3 +3095,41 @@ format_dispparams (DISPPARAMS *p)
     }
   return stream.str ();
 }
+
+int
+count_visible_attachments (LPDISPATCH attachments)
+{
+  int ret = 0;
+
+  if (!attachments)
+    {
+      return 0;
+    }
+
+  int att_count = get_oom_int (attachments, "Count");
+  for (int i = 1; i <= att_count; i++)
+    {
+      std::string item_str;
+      item_str = std::string("Item(") + std::to_string (i) + ")";
+      LPDISPATCH oom_attach = get_oom_object (attachments, item_str.c_str ());
+      if (!oom_attach)
+        {
+          log_error ("%s:%s: Failed to get attachment.",
+                     SRCNAME, __func__);
+          continue;
+        }
+      VARIANT var;
+      VariantInit (&var);
+      if (get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var) ||
+          (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE))
+        {
+           ret++;
+        }
+      else
+        {
+          gpgol_release (oom_attach);
+        }
+      VariantClear (&var);
+    }
+  return ret;
+}

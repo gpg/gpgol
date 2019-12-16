@@ -405,37 +405,11 @@ Mail::checkAttachments_o (bool silent)
                  SRCNAME, __func__);
       TRETURN 1;
     }
-  int count = get_oom_int (attachments, "Count");
+  int count = count_visible_attachments (attachments);
   if (!count)
     {
       gpgol_release (attachments);
       TRETURN 0;
-    }
-
-  /* Saveguard not to warn about our own attachment */
-  if (count == 1)
-    {
-      LPDISPATCH oom_attach = get_oom_object (attachments, "Item(1)");
-      if (oom_attach)
-        {
-          char *dispName = get_oom_string (oom_attach, "DisplayName");
-          gpgol_release (oom_attach);
-
-          if (dispName && !strcmp (dispName, MIMEATTACHFILENAME))
-            {
-              xfree (dispName);
-              gpgol_release (attachments);
-              log_debug ("%s:%s: Found only our hidden mime structure.",
-                         SRCNAME, __func__);
-              TRETURN 0;
-            }
-          else if (dispName)
-            {
-              log_debug ("%s:%s: Found %s as attachment.",
-                         SRCNAME, __func__, anonstr (dispName));
-              xfree (dispName);
-            }
-        }
     }
 
   std::string message;
@@ -2288,6 +2262,7 @@ Mail::closeInspector_o (Mail *mail)
   TRETURN 0;
 }
 
+
 int
 Mail::close (bool restoreSMIMEClass)
 {
@@ -2451,57 +2426,24 @@ Mail::close (bool restoreSMIMEClass)
        * */
       char *body = get_oom_string (m_mailitem, "Body");
       LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
-      int att_count = 0;
-      if (attachments)
-        {
-          att_count = get_oom_int (attachments, "Count");
-        }
 
-      bool foundOne = false;
       if (body && strlen (body))
         {
           log_debug ("%s:%s: Close successful. But body found. "
                      "Mail still open.",
                      SRCNAME, __func__);
         }
-      else if (att_count)
+      else if (count_visible_attachments (attachments))
         {
-          for (int i = 1; i <= att_count && !foundOne; i++)
-            {
-              std::string item_str;
-              item_str = std::string("Item(") + std::to_string (i) + ")";
-              LPDISPATCH oom_attach = get_oom_object (attachments, item_str.c_str ());
-              if (!oom_attach)
-                {
-                  log_error ("%s:%s: Failed to get attachment.",
-                             SRCNAME, __func__);
-                  continue;
-                }
-              VARIANT var;
-              VariantInit (&var);
-              if (get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var) ||
-                  (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE))
-                {
-                  foundOne = true;
-                }
-              else
-                {
-                  gpgol_release (oom_attach);
-                }
-              VariantClear (&var);
-            }
-          if (foundOne)
-            {
               log_debug ("%s:%s: Close successful. But attachments found. "
                          "Mail still open.",
                          SRCNAME, __func__);
-            }
         }
-      if (!foundOne)
+      else
         {
-          setPassWrite (true);
-          log_debug ("%s:%s: Close successful. Next write may pass.",
-                     SRCNAME, __func__);
+           setPassWrite (true);
+           log_debug ("%s:%s: Close successful. Next write may pass.",
+                      SRCNAME, __func__);
         }
       gpgol_release (attachments);
       xfree (body);
