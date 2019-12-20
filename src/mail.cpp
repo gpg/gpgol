@@ -2050,11 +2050,20 @@ Mail::closeAllMails_o ()
         {
           log_debug ("%s:%s: Mail gone after inspector close.",
                      SRCNAME, __func__);
+          close_failed = false;
         }
+      /* Beware: The close code removes our Plaintext from the
+         Outlook Object Model and temporary MAPI. If there
+         is an error we might put Plaintext into permanent
+         storage and leak it to the server. So we have
+         an extra safeguard below. The revert is likely
+         to fail if close and closeInspector fails but
+         to guard against a bug in our close code we
+         try it anyway as revert will also try to remove
+         the plaintext from memory and restore the original
+         message. */
       if (close_failed)
         {
-          /* Should not happen but lets try revert as the last
-             line of defence. */
           if (isValidPtr (it->second) && it->second->revert_o ())
             {
               err++;
