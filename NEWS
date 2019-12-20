@@ -1,5 +1,7 @@
-Noteworthy changes for version 2.4.5 (unreleased)
+Noteworthy changes for version 2.4.5 (2019-12-20)
 =================================================
+
+ * Fix a crash when closing Outlook. (T4787)
 
 Noteworthy changes for version 2.4.4 (2019-12-13)
 =================================================
