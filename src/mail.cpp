@@ -2027,10 +2027,34 @@ Mail::closeAllMails_o ()
         {
           continue;
         }
-      if (closeInspector_o (it->second) || it->second->close ())
+      bool close_failed = false;
+      if (closeInspector_o (it->second))
         {
-          log_error ("Failed to close mail: %p ", it->first);
-          /* Should not happen */
+          log_error ("%s:%s: Failed to close mail inspector: %p ",
+                     SRCNAME, __func__, it->first);
+          close_failed = true;
+        }
+
+      if (isValidPtr (it->second))
+        {
+          log_debug ("%s:%s: Inspector closed for %p closing object.",
+                     SRCNAME, __func__, it->first);
+          if (it->second->close ())
+            {
+              log_error ("%s:%s: Failed to close mail itself: %p ",
+                         SRCNAME, __func__, it->first);
+              close_failed = true;
+            }
+        }
+      else
+        {
+          log_debug ("%s:%s: Mail gone after inspector close.",
+                     SRCNAME, __func__);
+        }
+      if (close_failed)
+        {
+          /* Should not happen but lets try revert as the last
+             line of defence. */
           if (isValidPtr (it->second) && it->second->revert_o ())
             {
               err++;
