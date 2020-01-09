@@ -77,6 +77,9 @@ const char *anonstr (const char *data);
 #define log_trace(format, ...) if ((opt.enable_debug & DBG_TRACE)) \
   log_debug("TRACE/" format, ##__VA_ARGS__)
 
+#define log_warn(format, ...) if (opt.enable_debug) \
+  log_debug("WARNING/" format, ##__VA_ARGS__)
+
 #define gpgol_release(X) \
 { \
   if (X && opt.enable_debug & DBG_MEMORY) \

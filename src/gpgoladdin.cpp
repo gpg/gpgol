@@ -1187,7 +1187,7 @@ GpgolAddin::get_instance ()
     }
   if (addin_instance->isShutdown ())
     {
-      log_error ("%s:%s: Get instance after shutdown",
+      log_warn ("%s:%s: Get instance after shutdown",
                  SRCNAME, __func__);
     }
   return addin_instance;
