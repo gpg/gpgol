@@ -3133,3 +3133,33 @@ count_visible_attachments (LPDISPATCH attachments)
     }
   return ret;
 }
+
+int invoke_oom_method_with_string (LPDISPATCH pDisp, const char *name,
+                                   const char *arg,
+                                   VARIANT *rVariant)
+{
+  TSTART;
+  if (!arg)
+    {
+      TRETURN 0;
+    }
+  wchar_t *warg = utf8_to_wchar (arg);
+  if (!warg)
+    {
+      TRETURN 1;
+    }
+  VARIANT aVariant[1];
+  VariantInit (&aVariant[0]);
+  aVariant[0].vt = VT_BSTR;
+  aVariant[0].bstrVal = SysAllocString (warg);
+  xfree (warg);
+
+  DISPPARAMS dispparams;
+  dispparams.rgvarg = aVariant;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  int ret = invoke_oom_method_with_parms (pDisp, name, rVariant, &dispparams);
+  VariantClear(&aVariant[0]);
+  return ret;
+}

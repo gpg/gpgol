@@ -31,6 +31,7 @@
 #endif
 
 #include <string>
+#include <map>
 struct mime_context;
 typedef struct mime_context *mime_context_t;
 class Attachment;
@@ -116,14 +117,14 @@ public:
     {return m_attachments;}
   const std::string &get_html_charset() const;
   const std::string &get_body_charset() const;
-  const std::string &get_internal_subject() const;
+  std::string get_protected_header (const std::string &which) const;
 
   void set_has_html_body(bool value) {m_has_html_body = value;}
 
   /* Finalize the bodys */
   void finalize ();
 
-  bool m_had_protected_headers;
+  int m_protected_headers_version;
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */
@@ -158,6 +159,8 @@ private:
   /* Collect everything */
   bool m_collect_everything;
   /* Internal Protected Headers subject */
-  std::string m_internal_subject;
+  std::map <std::string, std::string> m_protected_headers;
+  /* Helper buffer for protected headers legacy part. */
+  std::string m_ph_helpbuf;
 };
 #endif // MIMEDATAPROVIDER_H

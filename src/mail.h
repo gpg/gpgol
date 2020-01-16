@@ -558,6 +558,9 @@ public:
 
   void updateBody_o ();
 
+  /** Update information from protected headers in OOM */
+  void updateHeaders_o ();
+
   /** Set if this mail looks like the send again of a crypto mail.
       This will mean that after it is decrypted it is treated
       like an unencrypted mail so that it can be encrypted again

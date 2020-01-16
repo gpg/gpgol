@@ -101,7 +101,7 @@ public:
   void setAutocryptInfo (const autocrypt_s & info)
   { m_autocrypt_info = info; }
 
-  std::string get_internal_subject() const;
+  std::string get_protected_header (const std::string &which) const;
 
 private:
   /* State variables */

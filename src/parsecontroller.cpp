@@ -704,12 +704,12 @@ ParseController::get_attachments() const
 }
 
 std::string
-ParseController::get_internal_subject() const
+ParseController::get_protected_header (const std::string &which) const
 {
   TSTART;
   if (m_outputprovider)
     {
-      TRETURN m_outputprovider->get_internal_subject ();
+      TRETURN m_outputprovider->get_protected_header (which);
     }
-  TRETURN std::string();
+  TRETURN std::string ();
 }

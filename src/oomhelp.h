@@ -331,6 +331,11 @@ int
 invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
                               VARIANT *rVariant, DISPPARAMS *params);
 
+/* Same as invoke oom method but do the string marshalling for arg */
+int invoke_oom_method_with_string (LPDISPATCH pDisp, const char *name,
+                                   const char *arg,
+                                   VARIANT *rVariant = nullptr);
+
 /* Try to obtain the mapisession through the Application.
   returns NULL on error.*/
 LPMAPISESSION

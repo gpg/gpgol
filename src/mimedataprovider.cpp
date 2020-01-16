@@ -93,6 +93,8 @@ struct mime_context
                              boundary which means that we are actually
                              working on a MIME message and not just on
                              plain rfc822 message.  */
+  int in_protected_headers; /* Indicates if we are in a mime part that was
+                               marked by a protected headers header. */
 
   /* A linked list describing the structure of the mime message.  This
      list gets build up while parsing the message.  */
@@ -266,7 +268,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     }
 
   log_data ("%s:%s: ctx=%p, ct=`%s/%s'\n",
-                   SRCNAME, __func__, ctx, ctmain, ctsub);
+            SRCNAME, __func__, ctx, ctmain, ctsub);
 
   s = rfc822parse_query_parameter (field, "charset", 0);
   if (s)
@@ -345,14 +347,21 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   else if (!strcmp (ctmain, "text"))
     {
       is_text = !strcmp (ctsub, "html")? 2:1;
-      is_protected_headers = (!strcmp (ctsub, "rfc822-headers") &&
-                              rfc822parse_query_parameter (field,
-                                                    "protected-headers", -1));
-      if (is_protected_headers)
+      s = rfc822parse_query_parameter (field,
+                                       "protected-headers", -1);
+      if (s)
         {
-          log_data ("%s:%s: Found protected headers.",
-                           SRCNAME, __func__);
-          provider->m_had_protected_headers = true;
+          log_data ("%s:%s: Found protected headers: '%s'",
+                           SRCNAME, __func__, s);
+          if (!strncmp (s, "v", 1))
+            {
+              provider->m_protected_headers_version = atoi (s + 1);
+            }
+          is_protected_headers = 1;
+        }
+      else
+        {
+          is_protected_headers = 0;
         }
     }
   else if (ctx->nesting_level == 1 && !provider->signature()
@@ -396,10 +405,11 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
         }
     }
   rfc822parse_release_field (field); /* (Content-type) */
-  if (!is_protected_headers)
-    {
-      ctx->in_data = 1;
-    }
+
+  /* Reset the in_data marker */
+  ctx->in_data = 1;
+
+  ctx->in_protected_headers = is_protected_headers;
 
   log_data ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
                    " charset=\"%s\"\n body_seen=%d is_text_attachment=%d"
@@ -521,6 +531,7 @@ message_cb (void *opaque, rfc822parse_event_t event,
 }
 
 MimeDataProvider::MimeDataProvider(bool no_headers) :
+  m_protected_headers_version(0),
   m_signature(nullptr),
   m_has_html_body(false),
   m_collect_everything(no_headers)
@@ -706,7 +717,7 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
           if (m_mime_ctx->in_data && !m_mime_ctx->collect_signature &&
               !m_mime_ctx->collect_crypto_data)
             {
-              /* We are inside of an attachment part.  Write it out. */
+              /* We are inside of a plain part.  Write it out. */
               if (m_mime_ctx->in_data == 1)  /* Skip the first line. */
                 m_mime_ctx->in_data = 2;
 
@@ -720,12 +731,20 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
 
               if (m_mime_ctx->collect_body)
                 {
+                  /* For protected headers to filter out the legacy display part
+                     we have to first collect it in its own buffer and then later
+                     decide if it should be hidden or not. Depending on the
+                     reset of the mime structure. The legacy display part must
+                     be either text/plain or text/rfc822-headers so we only
+                     have to handle this case and not the HTML case below. */
                   if (m_mime_ctx->collect_body == 2)
                     {
-                      m_body += std::string(linebuf, len);
+                      std::string *target_buf =
+                        (m_mime_ctx->in_protected_headers ? &m_ph_helpbuf : &m_body);
+                      *target_buf += std::string(linebuf, len);
                       if (!m_mime_ctx->is_base64_encoded && !slbrk)
                         {
-                          m_body += "\r\n";
+                          *target_buf += "\r\n";
                         }
                     }
                   if (m_body_charset.empty())
@@ -1090,32 +1109,74 @@ MimeDataProvider::create_attachment()
   /* TODO handle encoding */
 }
 
+static std::string
+get_header (rfc822parse_t msg, const std::string &which)
+{
+  TSTART;
+  const char *buf = rfc822parse_get_field (msg,
+                                           which.c_str (), -1,
+                                           nullptr);
+  if (buf)
+    {
+      /* String is "which: " so the + 3 is the colon, the space and one
+         extra to ensure that we do not construct a std::string from null
+         below. */
+      if (strlen (buf) <= which.size() + 3)
+        {
+          log_error ("%s:%s: Invalid header value '%s'", SRCNAME, __func__,
+                     buf);
+          TRETURN std::string ();
+        }
+      std::string ret = buf + which.size () + 2;
+      if (ret.size())
+        {
+          ret = rfc2047_parse (ret.c_str ());
+        }
+      TRETURN ret;
+    }
+  TRETURN std::string ();
+}
+
 void MimeDataProvider::finalize ()
 {
   TSTART;
 
-  if (m_had_protected_headers)
+  if (m_protected_headers_version)
     {
-      const char *subject = rfc822parse_get_field (m_mime_ctx->msg,
-                                                   "Subject", -1,
-                                                   nullptr);
-      if (subject)
+      static std::vector<std::string> user_headers = {"Subject", "From",
+                                                      "To", "Cc", "Date",
+                                                      "Reply-To",
+                                                      "Followup-To"};
+      for (const auto &hdr: user_headers)
         {
-          log_debug ("%s:%s: Found subject %s", SRCNAME, __func__, subject);
-          if (strlen (subject) <= strlen ("Subject: "))
-            {
-              STRANGEPOINT;
-            }
-          else
-            {
-              m_internal_subject = subject + strlen ("Subject: ");
-              if (m_internal_subject.size())
-                {
-                  m_internal_subject = rfc2047_parse (m_internal_subject.c_str ());
-                }
-            }
+          m_protected_headers.emplace (hdr, get_header (m_mime_ctx->msg, hdr));
         }
     }
+  /* Now check the mime strucutre for that legacy-display handling of
+     protected headers.
+
+     If the mime structure is:
+     multipart/mixed and the first subpart is text/plain or text/rfc822-headers
+     that we hide the first text part as we parsed the headers above
+     from that part. */
+  if (m_protected_headers_version == 1 && m_ph_helpbuf.size () &&
+      m_mime_ctx->mimestruct && m_mime_ctx->mimestruct->content_type &&
+      !strcmp (m_mime_ctx->mimestruct->content_type, "multipart/mixed") &&
+      m_mime_ctx->mimestruct->next && m_mime_ctx->mimestruct->next->content_type && (
+      !strcmp (m_mime_ctx->mimestruct->next->content_type, "text/plain") ||
+      !strcmp (m_mime_ctx->mimestruct->next->content_type, "text/rfc822-headers")))
+    {
+      log_debug ("%s:%s: Detected protected headers legacy part. It will be hidden.",
+                 SRCNAME, __func__);
+      log_data ("%s:%s: PH legacy part: '%s'", SRCNAME, __func__, m_ph_helpbuf.c_str ());
+    }
+  else if (m_ph_helpbuf.size ())
+    {
+      log_debug ("%s:%s: Prepending protected headers part to buffer.",
+                 SRCNAME, __func__);
+      m_body = m_ph_helpbuf + m_body;
+    }
+
   if (m_rawbuf.size ())
     {
       m_rawbuf += "\r\n";
@@ -1155,8 +1216,14 @@ const std::string &MimeDataProvider::get_body_charset() const
   TRETURN m_body_charset;
 }
 
-const std::string &MimeDataProvider::get_internal_subject () const
+std::string
+MimeDataProvider::get_protected_header (const std::string &which) const
 {
   TSTART;
-  TRETURN m_internal_subject;
+  const auto it = m_protected_headers.find (which);
+  if (it != m_protected_headers.end ())
+    {
+      TRETURN it->second;
+    }
+  TRETURN std::string ();
 }

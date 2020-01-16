@@ -1643,6 +1643,85 @@ Mail::updateBody_o ()
   TRETURN;
 }
 
+void
+Mail::updateHeaders_o ()
+{
+  TSTART;
+  if (!m_parser)
+    {
+      STRANGEPOINT;
+      TRETURN;
+    }
+
+  const auto subject = m_parser->get_protected_header ("Subject");
+  if (!subject.empty ())
+    {
+      put_oom_string (m_mailitem, "Subject", subject.c_str ());
+    }
+
+  const auto to = m_parser->get_protected_header ("To");
+  if (!to.empty())
+    {
+      put_oom_string (m_mailitem, "To", to.c_str ());
+    }
+
+  const auto cc = m_parser->get_protected_header ("Cc");
+  if (!cc.empty())
+    {
+      put_oom_string (m_mailitem, "CC", cc.c_str ());
+    }
+
+  /* TODO: What about Date ? */
+
+  const auto reply_to = m_parser->get_protected_header ("Reply-To");
+  const auto followup_to = m_parser->get_protected_header ("Followup-To");
+  if (!reply_to.empty () || !followup_to.empty())
+    {
+      auto recipients = MAKE_SHARED (get_oom_object (m_mailitem, "ReplyRecipents"));
+      if (recipients)
+        {
+          if (!reply_to.empty ())
+            {
+              invoke_oom_method_with_string (recipients.get (), "Add",
+                                             reply_to.c_str ());
+            }
+          if (!followup_to.empty ())
+            {
+              invoke_oom_method_with_string (recipients.get (), "Add",
+                                             followup_to.c_str ());
+            }
+        }
+    }
+
+  const auto from = m_parser->get_protected_header ("From");
+  if (!from.empty ())
+    {
+      LPDISPATCH sender = get_oom_object (m_mailitem, "Sender");
+      if (!sender)
+        {
+          log_debug ("%s:%s: Sender not found. From not set.", SRCNAME, __func__);
+          TRETURN;
+        }
+
+      /* Declare that the address is SMTP */
+      put_oom_int (sender, "AddressEntryUserType", 30);
+      const auto mail_start = from.find (" <");
+      if (mail_start == std::string::npos)
+        {
+          put_oom_string (sender, "Address", from.c_str ());
+          put_oom_string (sender, "Name", "");
+        }
+      else
+        {
+          put_oom_string (sender, "Address",
+                          GpgME::UserID::addrSpecFromString (from.c_str ()).c_str ());
+          put_oom_string (sender, "Name", from.substr (0,
+                          mail_start).c_str ());
+        }
+      gpgol_release (sender);
+    }
+}
+
 static int parsed_count;
 
 void
@@ -1679,11 +1758,9 @@ Mail::parsing_done()
   m_decrypt_result = m_parser->decrypt_result ();
   m_verify_result = m_parser->verify_result ();
 
-  const auto subject = m_parser->get_internal_subject ();
-  if (!subject.empty ())
-    {
-      put_oom_string (m_mailitem, "Subject", subject.c_str ());
-    }
+  /* Handle protected headers */
+  updateHeaders_o ();
+
 
   m_crypto_flags = 0;
   if (!m_decrypt_result.isNull())
