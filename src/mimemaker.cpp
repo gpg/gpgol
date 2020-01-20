@@ -558,8 +558,8 @@ write_plain (sink_t sink, const void *data, size_t datalen)
 }
 
 
-/* Infer the conent type from the FILENAME.  The return value is
-   a static string there won't be an error return.  In case Bae 64
+/* Infer the content type from the FILENAME.  The return value is
+   a static string there won't be an error return.  In case Base 64
    encoding is required for the type true will be stored at FORCE_B64;
    however, this is only a shortcut and if that is not set, the caller
    should infer the encoding by other means. */
