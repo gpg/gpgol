@@ -29,11 +29,11 @@
 #include "gpgme++/key.h"
 
 #include <string>
-#include <future>
 
 class ParseController;
 class CryptController;
 class Attachment;
+class Recipient;
 
 /** @brief Data wrapper around a mailitem.
  *
@@ -400,9 +400,6 @@ public:
   /** Get the body of the mail */
   std::string getBody_o () const;
 
-  /** Get the recipients. */
-  std::vector<std::string> getRecipients_o () const;
-
   /** Try to locate the keys for all recipients.
       This also triggers the Addressbook integration, which we
       treat as locate jobs. */
@@ -427,7 +424,16 @@ public:
   char *takeCachedPlainBody ();
 
   /** Get the cached recipients. It is updated in update_oom_data.*/
-  std::vector<std::string> getCachedRecipients ();
+  std::vector<Recipient> getCachedRecipients ();
+  /** Only get the Mail addresses from the recipient objects. */
+  std::vector<std::string> getCachedRecipientAddresses ();
+
+  /** Set an override for recipients. If they have keys the
+   keys will not be resolved again. */
+  void setRecipients (const std::vector<Recipient> &recps);
+
+  /** Get the recipients. */
+  std::vector<Recipient> getRecipients_o () const;
 
   /** Returns 1 if the mail was encrypted, 2 if signed, 3 if both.
       Only valid after decrypt_verify.
@@ -652,6 +658,14 @@ public:
      crypt results. */
   void updateCategories_o ();
 
+  /* Set the signing key for the mail. This overrides any other
+     key resolution. */
+  void setSigningKey (const GpgME::Key &key);
+
+  /* Set the encryption keys for this mail. Needs to match the protocol
+     of the signing key. This overrides any other key resolution. */
+  void setEncryptionKeys (std::vector<GpgME::Key> keys);
+
 private:
   bool checkIfMailIsChildOfPrintMail_o ();
   void updateSigstate ();
@@ -677,7 +691,7 @@ private:
   std::string m_sent_on_behalf;
   char *m_cached_html_body; /* Cached html body. */
   char *m_cached_plain_body; /* Cached plain body. */
-  std::vector<std::string> m_cached_recipients;
+  std::vector<Recipient> m_cached_recipients;
   msgtype_t m_type; /* Our messagetype as set in mapi */
   std::shared_ptr <ParseController> m_parser;
   std::shared_ptr <CryptController> m_crypter;
@@ -712,5 +726,6 @@ private:
                            another beforeread */
   bool m_printing; /* Mail is decrypted for printing */
   std::string m_gpgol_class; /* The GpgOL Message class */
+  GpgME::Key m_resolved_signing_key; /* A prepared / resolved key for signing. */
 };
 #endif // MAIL_H

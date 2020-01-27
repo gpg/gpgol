@@ -28,6 +28,7 @@
 #include <gpgme++/data.h>
 #include <string.h>
 
+class Recipient;
 class Mail;
 class Overlay;
 
@@ -94,9 +95,9 @@ private:
   bool m_encrypt, m_sign, m_crypto_success;
   GpgME::Protocol m_proto;
   GpgME::Key m_signer_key;
-  std::vector<GpgME::Key> m_recipients;
+  std::vector<GpgME::Key> m_enc_keys;
   std::unique_ptr<Overlay> m_overlay;
-  std::vector<std::string> m_recipient_addrs;
+  std::vector<Recipient> m_recipients;
 };
 
 #endif

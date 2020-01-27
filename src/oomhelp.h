@@ -36,6 +36,8 @@
 #define MSOCONTROLCOMBOBOX  4
 #define MSOCONTROLPOPUP    10
 
+class Recipient;
+
 enum 
   {
     msoButtonAutomatic = 0,
@@ -209,13 +211,15 @@ void del_oom_button (LPDISPATCH button);
 HWND get_oom_context_window (LPDISPATCH context);
 
 /* Get the address of the recipients as string list.
+   The second part of the pair returned is the recipient type
+   which corresponds in value to Mail::recipientType.
    If r_err is not null it is set to true in case of an error. */
-std::vector<std::string> get_oom_recipients (LPDISPATCH recipients,
-                                             bool *r_err = nullptr);
+std::vector<Recipient> get_oom_recipients (LPDISPATCH recipients,
+                                           bool *r_err = nullptr);
 
 /* Same as above but include the AddrEntry object in the result.
    Caller needs to release the AddrEntry. */
-std::vector<std::pair<std::string, shared_disp_t> >
+std::vector<std::pair<Recipient, shared_disp_t> >
 get_oom_recipients_with_addrEntry (LPDISPATCH recipients,
                                    bool *r_err = nullptr);
 

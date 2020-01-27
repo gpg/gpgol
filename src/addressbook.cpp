@@ -24,6 +24,7 @@
 #include "mail.h"
 #include "cpphelp.h"
 #include "windowmessages.h"
+#include "recipient.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/data.h>
@@ -394,7 +395,8 @@ Addressbook::check_o (Mail *mail)
                                                                     &err);
   for (const auto pair: recipient_entries)
     {
-      if (s_checked_entries.find (pair.first) != s_checked_entries.end ())
+      const auto mbox = pair.first.mbox ();
+      if (s_checked_entries.find (mbox) != s_checked_entries.end ())
         {
           continue;
         }
@@ -410,10 +412,10 @@ Addressbook::check_o (Mail *mail)
         {
           log_debug ("%s:%s: failed to resolve contact for %s",
                      SRCNAME, __func__,
-                     anonstr (pair.first.c_str()));
+                     anonstr (mbox.c_str()));
           continue;
         }
-      s_checked_entries.insert (pair.first);
+      s_checked_entries.insert (mbox);
 
       LPDISPATCH user_props = get_oom_object (contact.get (), "UserProperties");
       if (!user_props)
@@ -439,7 +441,7 @@ Addressbook::check_o (Mail *mail)
 
       log_debug ("%s:%s: found configured key for %s",
                  SRCNAME, __func__,
-                 anonstr (pair.first.c_str()));
+                 anonstr (mbox.c_str()));
 
       char *pgp_data = get_oom_string (pgp_key, "Value");
       char *cms_data = nullptr;
@@ -456,12 +458,12 @@ Addressbook::check_o (Mail *mail)
         }
       if (pgp_data && strlen (pgp_data))
         {
-          KeyCache::instance ()->importFromAddrBook (pair.first, pgp_data,
+          KeyCache::instance ()->importFromAddrBook (mbox, pgp_data,
                                                      mail, GpgME::OpenPGP);
         }
       if (cms_data && strlen (cms_data))
         {
-          KeyCache::instance ()->importFromAddrBook (pair.first, cms_data,
+          KeyCache::instance ()->importFromAddrBook (mbox, cms_data,
                                                      mail, GpgME::CMS);
         }
       xfree (pgp_data);

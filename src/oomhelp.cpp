@@ -37,6 +37,7 @@
 #include "cpphelp.h"
 #include "gpgoladdin.h"
 #include "categorymanager.h"
+#include "recipient.h"
 
 HRESULT
 gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj)
@@ -1276,7 +1277,8 @@ get_recipient_addr_fallbacks (LPDISPATCH recipient)
 */
 static bool
 try_resolve_group (LPDISPATCH addrEntry,
-                   std::vector<std::pair<std::string, shared_disp_t> > &ret)
+                   std::vector<std::pair<Recipient, shared_disp_t> >&ret,
+                   int recipient_type)
 {
   TSTART;
   /* Get the name for debugging */
@@ -1288,12 +1290,12 @@ try_resolve_group (LPDISPATCH addrEntry,
     }
   xfree (cname);
 
-  int type = get_oom_int (addrEntry, "AddressEntryUserType");
+  int user_type = get_oom_int (addrEntry, "AddressEntryUserType");
 
-  if (type != DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
+  if (user_type != DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE)
     {
       log_data ("%s:%s: type of %s is %i",
-                       SRCNAME, __func__, anonstr (name.c_str()), type);
+                       SRCNAME, __func__, anonstr (name.c_str()), user_type);
       TRETURN false;
     }
 
@@ -1340,14 +1342,14 @@ try_resolve_group (LPDISPATCH addrEntry,
           log_debug ("%s:%s: recursive address entry %s",
                      SRCNAME, __func__,
                      anonstr (entryName.c_str()));
-          if (try_resolve_group (entry.get(), ret))
+          if (try_resolve_group (entry.get(), ret, recipient_type))
             {
               foundOne = true;
               continue;
             }
         }
 
-      std::pair<std::string, shared_disp_t> element;
+      std::pair<Recipient, shared_disp_t> element;
       element.second = entry;
 
       /* Resolve directly ? */
@@ -1358,7 +1360,7 @@ try_resolve_group (LPDISPATCH addrEntry,
           char *resolved = get_pa_string (entry.get(), PR_EMAIL_ADDRESS_DASL);
           if (resolved)
             {
-              element.first = resolved;
+              element.first = Recipient (resolved, recipient_type);
               ret.push_back (element);
               foundOne = true;
               continue;
@@ -1370,7 +1372,7 @@ try_resolve_group (LPDISPATCH addrEntry,
       char *ex_resolved = get_recipient_addr_entry_fallbacks_ex (entry.get());
       if (ex_resolved)
         {
-          element.first = ex_resolved;
+          element.first = Recipient (ex_resolved, recipient_type);
           ret.push_back (element);
           foundOne = true;
           continue;
@@ -1392,12 +1394,12 @@ try_resolve_group (LPDISPATCH addrEntry,
 
 /* Get the recipient mbox addresses with the addrEntry
    object corresponding to the resolved address. */
-std::vector<std::pair<std::string, shared_disp_t> >
+std::vector<std::pair<Recipient, shared_disp_t> >
 get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
 {
   TSTART;
   int recipientsCnt = get_oom_int (recipients, "Count");
-  std::vector<std::pair<std::string, shared_disp_t> > ret;
+  std::vector<std::pair<Recipient, shared_disp_t> > ret;
   int i;
 
   if (!recipientsCnt)
@@ -1424,8 +1426,11 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
           break;
         }
 
+      int recipient_type = get_oom_int (recipient, "Type");
+
       auto addrEntry = MAKE_SHARED (get_oom_object (recipient, "AddressEntry"));
-      if (addrEntry && try_resolve_group (addrEntry.get (), ret))
+      if (addrEntry && try_resolve_group (addrEntry.get (), ret,
+                                          recipient_type))
         {
           log_debug ("%s:%s: Resolved recipient group",
                      SRCNAME, __func__);
@@ -1433,13 +1438,13 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
           continue;
         }
 
-      std::pair<std::string, shared_disp_t> entry;
+      std::pair<Recipient, shared_disp_t> entry;
       entry.second = addrEntry;
 
       char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
       if (resolved)
         {
-          entry.first = resolved;
+          entry.first = Recipient (resolved, recipient_type);
           xfree (resolved);
           gpgol_release (recipient);
           ret.push_back (entry);
@@ -1449,7 +1454,7 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
       resolved = get_recipient_addr_fallbacks (recipient);
       if (resolved)
         {
-          entry.first = resolved;
+          entry.first = Recipient (resolved, recipient_type);
           xfree (resolved);
           gpgol_release (recipient);
           ret.push_back (entry);
@@ -1463,7 +1468,7 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
                  SRCNAME, __func__);
       if (address)
         {
-          entry.first = address;
+          entry.first = Recipient (resolved, recipient_type);
           ret.push_back (entry);
           xfree (address);
         }
@@ -1476,11 +1481,11 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
 }
 
 /* Gets the resolved smtp addresses of the recpients. */
-std::vector<std::string>
+std::vector<Recipient>
 get_oom_recipients (LPDISPATCH recipients, bool *r_err)
 {
   TSTART;
-  std::vector<std::string> ret;
+  std::vector<Recipient> ret;
   for (const auto pair: get_oom_recipients_with_addrEntry (recipients, r_err))
     {
       ret.push_back (pair.first);

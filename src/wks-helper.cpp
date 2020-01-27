@@ -25,6 +25,7 @@
 #include "windowmessages.h"
 #include "mail.h"
 #include "mapihelp.h"
+#include "recipient.h"
 
 #include <map>
 #include <sstream>
@@ -806,7 +807,7 @@ WKSHelper::handle_confirmation_read (Mail *mail, LPSTREAM stream) const
       return;
     }
 
-  std::string mbox = recipients[0];
+  std::string mbox = recipients[0].mbox ();
 
   /* Prepare stdin for the wks-client process */
 

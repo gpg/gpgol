@@ -42,6 +42,7 @@
 #include "keycache.h"
 #include "cpphelp.h"
 #include "addressbook.h"
+#include "recipient.h"
 
 #include <gpgme++/configuration.h>
 #include <gpgme++/tofuinfo.h>
@@ -2307,7 +2308,7 @@ Mail::getBody_o () const
   TRETURN get_string_o (m_mailitem, "Body");
 }
 
-std::vector<std::string>
+std::vector<Recipient>
 Mail::getRecipients_o () const
 {
   TSTART;
@@ -3581,7 +3582,7 @@ Mail::locateKeys_o ()
       updateOOMData_o ();
       KeyCache::instance()->startLocateSecret (getSender_o ().c_str (), this);
       KeyCache::instance()->startLocate (getSender_o ().c_str (), this);
-      KeyCache::instance()->startLocate (getCachedRecipients (), this);
+      KeyCache::instance()->startLocate (getCachedRecipientAddresses (), this);
     }
 
   autosecureCheck ();
@@ -3637,11 +3638,23 @@ Mail::getNeedsEncrypt () const
   TRETURN m_needs_encrypt;
 }
 
-std::vector<std::string>
+std::vector<Recipient>
 Mail::getCachedRecipients ()
 {
   TSTART;
   TRETURN m_cached_recipients;
+}
+
+std::vector<std::string>
+Mail::getCachedRecipientAddresses ()
+{
+  TSTART;
+  std::vector <std::string> ret;
+  for (const auto &recp: m_cached_recipients)
+    {
+      ret.push_back (recp.mbox());
+    }
+  return ret;
 }
 
 void
@@ -4575,4 +4588,10 @@ Mail::checkIfMailIsChildOfPrintMail_o ()
     }
   gpgrt_lock_unlock (&mail_map_lock);
   return false;
+}
+
+void
+Mail::setSigningKey (const GpgME::Key &key)
+{
+  m_resolved_signing_key = key;
 }

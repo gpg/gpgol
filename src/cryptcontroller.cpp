@@ -30,6 +30,7 @@
 #include "overlay.h"
 #include "keycache.h"
 #include "mymapitags.h"
+#include "recipient.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/signingresult.h>
@@ -70,7 +71,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
   memdbg_ctor ("CryptController");
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
-  m_recipient_addrs = mail->getCachedRecipients ();
+  m_recipients = mail->getCachedRecipients ();
   TRETURN;
 }
 
@@ -235,10 +236,10 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   }
 
   do {
-      m_recipients.push_back(ctx->nextKey(err));
+      m_enc_keys.push_back(ctx->nextKey(err));
   } while (!err);
 
-  m_recipients.pop_back();
+  m_enc_keys.pop_back();
 
   release_cArray (cRecps);
 
@@ -355,7 +356,11 @@ CryptController::resolve_keys_cached()
   TSTART;
   // Prepare variables
   const auto cached_sender = m_mail->getSender ();
-  auto recps = m_recipient_addrs;
+  std::vector <std::string> recps;
+  for (const auto &recp: m_recipients)
+    {
+      recps.push_back (recp.mbox());
+    }
 
   if (m_encrypt)
     {
@@ -366,7 +371,7 @@ CryptController::resolve_keys_cached()
   if (opt.enable_smime && opt.prefer_smime)
     {
       resolved = resolve_through_protocol (GpgME::CMS, m_sign, m_encrypt,
-                                           cached_sender, recps, m_recipients,
+                                           cached_sender, recps, m_enc_keys,
                                            m_signer_key);
       if (resolved)
         {
@@ -378,7 +383,7 @@ CryptController::resolve_keys_cached()
   if (!resolved)
     {
       resolved = resolve_through_protocol (GpgME::OpenPGP, m_sign, m_encrypt,
-                                           cached_sender, recps, m_recipients,
+                                           cached_sender, recps, m_enc_keys,
                                            m_signer_key);
       if (resolved)
         {
@@ -390,7 +395,7 @@ CryptController::resolve_keys_cached()
   if (!resolved && (opt.enable_smime && !opt.prefer_smime))
     {
       resolved = resolve_through_protocol (GpgME::CMS, m_sign, m_encrypt,
-                                           cached_sender, recps, m_recipients,
+                                           cached_sender, recps, m_enc_keys,
                                            m_signer_key);
       if (resolved)
         {
@@ -404,18 +409,18 @@ CryptController::resolve_keys_cached()
     {
       log_debug ("%s:%s: Failed to resolve through cache",
                  SRCNAME, __func__);
-      m_recipients.clear();
+      m_enc_keys.clear();
       m_signer_key = GpgME::Key();
       m_proto = GpgME::UnknownProtocol;
       TRETURN 1;
     }
 
-  if (!m_recipients.empty())
+  if (!m_enc_keys.empty())
     {
       log_debug ("%s:%s: Encrypting with protocol %s to:",
                  SRCNAME, __func__, to_cstr (m_proto));
     }
-  for (const auto &key: m_recipients)
+  for (const auto &key: m_enc_keys)
     {
       log_debug ("%s", anonstr (key.primaryFingerprint ()));
     }
@@ -433,7 +438,7 @@ CryptController::resolve_keys ()
 {
   TSTART;
 
-  m_recipients.clear();
+  m_enc_keys.clear();
 
   if (m_mail->isDraftEncrypt() && opt.draft_key)
     {
@@ -453,11 +458,11 @@ CryptController::resolve_keys ()
       log_debug ("%s:%s: resolved draft encryption key protocol is: %s",
                  SRCNAME, __func__, to_cstr (key.protocol()));
       m_proto = key.protocol ();
-      m_recipients.push_back (key);
+      m_enc_keys.push_back (key);
       TRETURN 0;
     }
 
-  if (!m_recipient_addrs.size())
+  if (!m_recipients.size())
     {
       /* Should not happen. But we add it for better bug reports. */
       const char *bugmsg = utf8_gettext ("Operation failed.\n\n"
@@ -562,9 +567,9 @@ CryptController::resolve_keys ()
     {
       args.push_back (std::string ("--encrypt"));
       // Get the recipients that are cached from OOM
-      for (const auto &addr: m_recipient_addrs)
+      for (const auto &recp: m_recipients)
         {
-          const auto mbox = GpgME::UserID::addrSpecFromString (addr.c_str());
+          const auto mbox = recp.mbox ();
           auto overrides =
             KeyCache::instance ()->getOverrides (mbox, GpgME::OpenPGP);
           const auto cms_overrides =
@@ -678,6 +683,10 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
   WKSHelper::instance()->start_check (m_mail->getSender ());
 
   int ret = resolve_keys ();
+
+  /* If we need to send multiple emails we jump back from
+     here into the main event loop. Copy the mail object
+     and send it out mutiple times. */
   if (ret == -1)
     {
       //error
@@ -723,7 +732,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
   if (m_encrypt && m_sign && do_inline)
     {
       // Sign encrypt combined
-      const auto result_pair = ctx->signAndEncrypt (m_recipients,
+      const auto result_pair = ctx->signAndEncrypt (m_enc_keys,
                                                     do_inline ? m_bodyInput : m_input,
                                                     m_output,
                                                     GpgME::Context::AlwaysTrust);
@@ -805,7 +814,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       m_output = GpgME::Data ();
       m_input = GpgME::Data ();
       multipart.seek (0, SEEK_SET);
-      const auto encResult = ctx->encrypt (m_recipients, multipart,
+      const auto encResult = ctx->encrypt (m_enc_keys, multipart,
                                            m_output,
                                            GpgME::Context::AlwaysTrust);
       err = encResult.error();
@@ -832,7 +841,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
     }
   else if (m_encrypt)
     {
-      const auto result = ctx->encrypt (m_recipients, do_inline ? m_bodyInput : m_input,
+      const auto result = ctx->encrypt (m_enc_keys, do_inline ? m_bodyInput : m_input,
                                         m_output,
                                         GpgME::Context::AlwaysTrust);
       err = result.error();

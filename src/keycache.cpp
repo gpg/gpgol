@@ -1518,7 +1518,7 @@ KeyCache::isMailResolvable(Mail *mail)
   TSTART;
   /* Get the data from the mail. */
   const auto sender = mail->getSender ();
-  auto recps = mail->getCachedRecipients ();
+  auto recps = mail->getCachedRecipientAddresses ();
 
   if (sender.empty() || recps.empty())
     {

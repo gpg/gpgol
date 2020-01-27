@@ -66,6 +66,7 @@ gpgol_SOURCES = \
     overlay.cpp overlay.h \
     parsecontroller.cpp parsecontroller.h \
     parsetlv.h parsetlv.c \
+    recipient.h recipient.cpp \
     resource.rc \
     revert.cpp revert.h \
     rfc2047parse.h rfc2047parse.c \
