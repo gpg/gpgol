@@ -186,8 +186,8 @@ CryptController::collect_data ()
 }
 
 int
-CryptController::lookup_fingerprints (const std::string &sigFpr,
-                                      const std::vector<std::string> recpFprs)
+CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
+                                      const std::vector<std::pair <std::string, std::string> > &recpFprs)
 {
   TSTART;
   auto ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
@@ -205,44 +205,110 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   ctx->setKeyListMode (GpgME::Local);
   GpgME::Error err;
 
-  if (!sigFpr.empty()) {
-      m_signer_keys.push_back(ctx->key (sigFpr.c_str (), err, true));
-      if (err || m_signer_keys.empty ()) {
+  if (sigFprs.size())
+    {
+      char **cSigners = vector_to_cArray (sigFprs);
+      err = ctx->startKeyListing (const_cast<const char **> (cSigners), true);
+      if (err)
+        {
+          log_error ("%s:%s: failed to start signer keylisting",
+                     SRCNAME, __func__);
+          release_cArray (cSigners);
+          TRETURN -1;
+        }
+      do
+        {
+          m_signer_keys.push_back(ctx->nextKey(err));
+        }
+      while (!err);
+
+      release_cArray (cSigners);
+
+      m_signer_keys.pop_back();
+
+      if (m_signer_keys.empty())
+        {
           log_error ("%s:%s: failed to lookup key for '%s' with protocol '%s'",
-                     SRCNAME, __func__, anonstr (sigFpr.c_str ()),
+                     SRCNAME, __func__, anonstr (sigFprs[0].c_str ()),
                      m_proto == GpgME::CMS ? "smime" :
                      m_proto == GpgME::OpenPGP ? "openpgp" :
                      "unknown");
           TRETURN -1;
-      }
+        }
       // reset context
       ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
       ctx->setKeyListMode (GpgME::Local);
-  }
+    }
 
-  if (!recpFprs.size()) {
-     TRETURN 0;
-  }
+  if (!recpFprs.size())
+    {
+      TRETURN 0;
+    }
 
-  // Convert recipient fingerprints
-  char **cRecps = vector_to_cArray (recpFprs);
+  std::vector<std::string> all_fingerprints;
+  for (const auto &pair: recpFprs)
+    {
+      all_fingerprints.push_back (pair.second);
+    }
 
-  err = ctx->startKeyListing (const_cast<const char **> (cRecps));
+  for (auto &recp: m_recipients)
+    {
+      std::vector <std::string> fingerprintsToLookup;
+      /* Find the matching fingerprints for the recpient. */
+      for (const auto &pair: recpFprs)
+        {
+          if (pair.first.empty())
+            {
+              log_error ("%s:%s Recipient mbox is empty. Wrong Resolver Version?",
+                         SRCNAME, __func__);
+              TRETURN -1;
+            }
+          if (pair.first == recp.mbox ())
+            {
+              fingerprintsToLookup.push_back (pair.second);
+              all_fingerprints.erase(std::remove_if(all_fingerprints.begin(),
+                                                    all_fingerprints.end(),
+                              [&pair](const std::string &x){return x == pair.second;}));
+            }
+        }
+      // Convert recipient fingerprints
+      char **cRecps = vector_to_cArray (fingerprintsToLookup);
+      err = ctx->startKeyListing (const_cast<const char **> (cRecps));
+      if (err)
+        {
+          log_error ("%s:%s: failed to start recipient keylisting",
+                     SRCNAME, __func__);
+          release_cArray (cRecps);
+          TRETURN -1;
+        }
 
-  if (err) {
-      log_error ("%s:%s: failed to start recipient keylisting",
-                 SRCNAME, __func__);
+      std::vector <GpgME::Key> keys;
+      do {
+          keys.push_back(ctx->nextKey(err));
+      } while (!err);
+
+      keys.pop_back ();
       release_cArray (cRecps);
+      recp.setKeys (keys);
+      // reset context
+      ctx = std::shared_ptr<GpgME::Context> (GpgME::Context::createForProtocol (m_proto));
+      ctx->setKeyListMode (GpgME::Local);
+    }
+  if (!all_fingerprints.empty())
+    {
+      log_error ("%s:%s: BUG: Not all fingerprints could be matched "
+                 "to a recipient.",
+                 SRCNAME, __func__);
+      for (const auto &fpr: all_fingerprints)
+        {
+          log_debug ("%s:%s Failed to find: %s", SRCNAME, __func__,
+                     anonstr (fpr.c_str ()));
+        }
+      clear_keys ();
       TRETURN -1;
-  }
+    }
 
-  do {
-      m_enc_keys.push_back(ctx->nextKey(err));
-  } while (!err);
-
-  m_enc_keys.pop_back();
-
-  release_cArray (cRecps);
+  prepare_encryption ();
 
   TRETURN 0;
 }
@@ -252,12 +318,11 @@ int
 CryptController::parse_output (GpgME::Data &resolverOutput)
 {
   TSTART;
-  // Todo: Use Data::toString
   std::istringstream ss(resolverOutput.toString());
   std::string line;
 
-  std::string sigFpr;
-  std::vector<std::string> recpFprs;
+  std::vector<std::string> sigFprs;
+  std::vector<std::pair<std::string, std::string>> recpFprs;
   while (std::getline (ss, line))
     {
       rtrim (line);
@@ -279,34 +344,31 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
       std::string what;
       std::string how;
       std::string fingerprint;
+      std::string mbox;
 
       std::getline (lss, what, ':');
       std::getline (lss, how, ':');
       std::getline (lss, fingerprint, ':');
+      std::getline (lss, mbox, ':');
 
       if (m_proto == GpgME::UnknownProtocol)
         {
+          /* TODO: Allow mixed */
           m_proto = (how == "smime") ? GpgME::CMS : GpgME::OpenPGP;
         }
 
       if (what == "sig")
         {
-          if (!sigFpr.empty ())
-            {
-              log_error ("%s:%s: multiple signing keys not supported",
-                         SRCNAME, __func__);
-
-            }
-          sigFpr = fingerprint;
+          sigFprs.push_back (fingerprint);
           continue;
         }
       if (what == "enc")
         {
-          recpFprs.push_back (fingerprint);
+          recpFprs.push_back(std::make_pair(mbox, fingerprint));
         }
     }
 
-  if (m_sign && sigFpr.empty())
+  if (m_sign && sigFprs.empty())
     {
       log_error ("%s:%s: Sign requested but no signing fingerprint - sending unsigned",
                  SRCNAME, __func__);
@@ -322,7 +384,7 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
       TRETURN -2;
     }
 
-  TRETURN lookup_fingerprints (sigFpr, recpFprs);
+  TRETURN lookup_fingerprints (sigFprs, recpFprs);
 }
 
 /* Combines all recipient keys for this operation
@@ -478,7 +540,8 @@ CryptController::resolve_keys_cached()
 
   for (const auto &recp: m_recipients)
     {
-      log_debug ("Enc Key for: '%s' Type: %i", anonstr (recp.mbox ().c_str ()), recp.type ());
+      log_debug ("Enc Key for: '%s' Type: %i", anonstr (recp.mbox ().c_str ()),
+                                                        recp.type ());
       for (const auto &key: recp.keys ())
         {
           log_debug ("%s:%s", to_cstr (key.protocol ()),

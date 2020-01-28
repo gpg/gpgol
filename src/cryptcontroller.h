@@ -88,8 +88,8 @@ private:
   int resolve_keys_cached ();
   bool resolve_through_protocol (GpgME::Protocol proto);
   int parse_output (GpgME::Data &resolverOutput);
-  int lookup_fingerprints (const std::string &sigFpr,
-                           const std::vector<std::string> recpFprs);
+  int lookup_fingerprints (const std::vector<std::string> &sigFprs,
+                           const std::vector<std::pair<std::string, std::string> > &recpFprs);
 
   void parse_micalg (const GpgME::SigningResult &sResult);
 
