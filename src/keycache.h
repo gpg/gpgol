@@ -59,6 +59,8 @@ public:
        */
     std::vector<GpgME::Key> getEncryptionKeys (const std::vector<std::string> &recipients,
                                                GpgME::Protocol proto) const;
+    std::vector<GpgME::Key> getEncryptionKeys (const std::string &recipient,
+                                               GpgME::Protocol proto) const;
 
     /* Start a key location in a background thread filling
        the key cache.

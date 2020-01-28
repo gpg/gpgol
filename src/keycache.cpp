@@ -1142,6 +1142,14 @@ KeyCache::getEncryptionKeys (const std::vector<std::string> &recipients, GpgME::
   return d->getEncryptionKeys (recipients, proto);
 }
 
+std::vector<GpgME::Key>
+KeyCache::getEncryptionKeys (const std::string &recipient, GpgME::Protocol proto) const
+{
+  std::vector<std::string> vec;
+  vec.push_back (recipient);
+  return d->getEncryptionKeys (vec, proto);
+}
+
 static GpgME::Key
 get_most_valid_key_simple (const std::vector<GpgME::Key> &keys)
 {
