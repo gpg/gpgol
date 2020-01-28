@@ -77,9 +77,16 @@ public:
   /** @brief check weather something was encrypted. */
   bool is_encrypter () const { return m_encrypt; }
 
+  /** @brief check if the cryptcontroller has all keys for
+    the operation. */
+  bool is_resolved () const;
+
 private:
+  void clear_keys ();
+  void prepare_encryption ();
   int resolve_keys ();
   int resolve_keys_cached ();
+  bool resolve_through_protocol (GpgME::Protocol proto);
   int parse_output (GpgME::Data &resolverOutput);
   int lookup_fingerprints (const std::string &sigFpr,
                            const std::vector<std::string> recpFprs);
@@ -94,7 +101,8 @@ private:
   std::string m_micalg;
   bool m_encrypt, m_sign, m_crypto_success;
   GpgME::Protocol m_proto;
-  GpgME::Key m_signer_key;
+  std::string m_sender;
+  std::vector<GpgME::Key> m_signer_keys;
   std::vector<GpgME::Key> m_enc_keys;
   std::unique_ptr<Overlay> m_overlay;
   std::vector<Recipient> m_recipients;

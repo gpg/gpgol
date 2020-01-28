@@ -2049,6 +2049,12 @@ Mail::updateOOMData_o (bool for_encryption)
       TRETURN -1;
     }
   m_sender = buf;
+
+  if (for_encryption)
+    {
+      m_cached_recipients.push_back (Recipient (buf, Recipient::olOriginator));
+    }
+
   xfree (buf);
   TRETURN 0;
 }

@@ -72,6 +72,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
   m_recipients = mail->getCachedRecipients ();
+  m_sender = mail->getSender ();
   TRETURN;
 }
 
@@ -205,8 +206,8 @@ CryptController::lookup_fingerprints (const std::string &sigFpr,
   GpgME::Error err;
 
   if (!sigFpr.empty()) {
-      m_signer_key = ctx->key (sigFpr.c_str (), err, true);
-      if (err || m_signer_key.isNull ()) {
+      m_signer_keys.push_back(ctx->key (sigFpr.c_str (), err, true));
+      if (err || m_signer_keys.empty ()) {
           log_error ("%s:%s: failed to lookup key for '%s' with protocol '%s'",
                      SRCNAME, __func__, anonstr (sigFpr.c_str ()),
                      m_proto == GpgME::CMS ? "smime" :
@@ -324,30 +325,117 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
   TRETURN lookup_fingerprints (sigFpr, recpFprs);
 }
 
-static bool
-resolve_through_protocol (const GpgME::Protocol &proto, bool sign,
-                          bool encrypt, const std::string &sender,
-                          const std::vector<std::string> &recps,
-                          std::vector<GpgME::Key> &r_keys,
-                          GpgME::Key &r_sig)
+/* Combines all recipient keys for this operation
+   into a list. Handles BCC recipients by creating
+   new Mail objects for them. */
+void
+CryptController::prepare_encryption ()
 {
   TSTART;
-  bool sig_ok = true;
-  bool enc_ok = true;
+  m_enc_keys.clear ();
 
-  const auto cache = KeyCache::instance();
+  for (const auto &recp: m_recipients)
+    {
+      const auto &keys = recp.keys ();
+      m_enc_keys.insert (m_enc_keys.end (), keys.begin (), keys.end ());
 
-  if (encrypt)
-    {
-      r_keys = cache->getEncryptionKeys(recps, proto);
-      enc_ok = !r_keys.empty();
+      if (recp.type () == Recipient::olBCC)
+        {
+          log_debug ("%s:%s: BCC Recipient found. Preparing new mail.",
+                     SRCNAME, __func__);
+        }
     }
-  if (sign && enc_ok)
+  TRETURN;
+}
+
+bool
+CryptController::resolve_through_protocol (GpgME::Protocol proto)
+{
+  TSTART;
+
+  const auto cache = KeyCache::instance ();
+
+  if (m_encrypt)
     {
-      r_sig = cache->getSigningKey (sender.c_str (), proto);
-      sig_ok = !r_sig.isNull();
+      for (auto &recp: m_recipients)
+        {
+          recp.setKeys(cache->getEncryptionKeys(recp.mbox (), proto));
+        }
     }
-  TRETURN sig_ok && enc_ok;
+  if (m_sign)
+    {
+      if (m_sender.empty())
+        {
+          log_error ("%s:%s: Asked to sign but sender is empty.",
+                     SRCNAME, __func__);
+          return false;
+        }
+      const auto key = cache->getSigningKey (m_sender.c_str (), proto);
+      if (m_signer_keys.empty ())
+        {
+          m_signer_keys.push_back (key);
+        }
+      for (const auto &k: m_signer_keys)
+        {
+          if (k.protocol () != proto)
+            {
+              m_signer_keys.push_back (key);
+              break;
+            }
+        }
+    }
+  TRETURN is_resolved ();
+}
+
+
+/* Check that the crypt operation is resolved. This
+   supports combined S/MIME and OpenPGP operations. */
+bool
+CryptController::is_resolved () const
+{
+  /* Check that we have signing keys if necessary and at
+     least one encryption key for each recipient. */
+  bool hasOpenPGPSignKey = false;
+  bool hasSMIMESignKey = false;
+  if (m_sign)
+    {
+      for (const auto &sig_key: m_signer_keys)
+        {
+          hasOpenPGPSignKey |= (!sig_key.isNull() &&
+                                sig_key.protocol () == GpgME::OpenPGP);
+          hasSMIMESignKey |= (!sig_key.isNull() &&
+                              sig_key.protocol () == GpgME::CMS);
+        }
+    }
+
+  if (m_encrypt)
+    {
+      for (const auto &recp: m_recipients)
+        {
+          if (!recp.keys ().size () || recp.keys ()[0].isNull ())
+            {
+              /* No keys or the first key in the list is null. */
+              return false;
+            }
+          /* If we don't sign we need no more checks. */
+          if (!m_sign)
+            {
+              continue;
+            }
+          for (const auto &key: recp.keys())
+            {
+              if (key.protocol () == GpgME::OpenPGP && !hasOpenPGPSignKey)
+                {
+                  return false;
+                }
+              if (key.protocol () == GpgME::CMS && !hasSMIMESignKey)
+                {
+                  return false;
+                }
+            }
+        }
+    }
+  return true;
 }
 
 int
@@ -355,24 +443,11 @@ CryptController::resolve_keys_cached()
 {
   TSTART;
   // Prepare variables
-  const auto cached_sender = m_mail->getSender ();
-  std::vector <std::string> recps;
-  for (const auto &recp: m_recipients)
-    {
-      recps.push_back (recp.mbox());
-    }
-
-  if (m_encrypt)
-    {
-      recps.push_back (cached_sender);
-    }
-
+  const auto recps = m_mail->getCachedRecipientAddresses ();
   bool resolved = false;
   if (opt.enable_smime && opt.prefer_smime)
     {
-      resolved = resolve_through_protocol (GpgME::CMS, m_sign, m_encrypt,
-                                           cached_sender, recps, m_enc_keys,
-                                           m_signer_key);
+      resolved = resolve_through_protocol (GpgME::CMS);
       if (resolved)
         {
           log_debug ("%s:%s: Resolved with CMS due to preference.",
@@ -382,9 +457,7 @@ CryptController::resolve_keys_cached()
     }
   if (!resolved)
     {
-      resolved = resolve_through_protocol (GpgME::OpenPGP, m_sign, m_encrypt,
-                                           cached_sender, recps, m_enc_keys,
-                                           m_signer_key);
+      resolved = resolve_through_protocol (GpgME::OpenPGP);
       if (resolved)
         {
           log_debug ("%s:%s: Resolved with OpenPGP.",
@@ -394,9 +467,7 @@ CryptController::resolve_keys_cached()
     }
   if (!resolved && (opt.enable_smime && !opt.prefer_smime))
     {
-      resolved = resolve_through_protocol (GpgME::CMS, m_sign, m_encrypt,
-                                           cached_sender, recps, m_enc_keys,
-                                           m_signer_key);
+      resolved = resolve_through_protocol (GpgME::CMS);
       if (resolved)
         {
           log_debug ("%s:%s: Resolved with CMS as fallback.",
@@ -405,32 +476,49 @@ CryptController::resolve_keys_cached()
         }
     }
 
+  for (const auto &recp: m_recipients)
+    {
+      log_debug ("Enc Key for: '%s' Type: %i", anonstr (recp.mbox ().c_str ()), recp.type ());
+      for (const auto &key: recp.keys ())
+        {
+          log_debug ("%s:%s", to_cstr (key.protocol ()),
+                     anonstr (key.primaryFingerprint ()));
+        }
+    }
+  for (const auto &sig_key: m_signer_keys)
+    {
+      log_debug ("%s:%s: Signing key: %s:%s",
+                 SRCNAME, __func__,
+                 to_cstr (sig_key.protocol()),
+                 anonstr (sig_key.primaryFingerprint ()));
+    }
+
   if (!resolved)
     {
       log_debug ("%s:%s: Failed to resolve through cache",
                  SRCNAME, __func__);
-      m_enc_keys.clear();
-      m_signer_key = GpgME::Key();
+      m_enc_keys.clear ();
+      m_signer_keys.clear ();
       m_proto = GpgME::UnknownProtocol;
       TRETURN 1;
     }
 
-  if (!m_enc_keys.empty())
+  if (m_encrypt)
     {
       log_debug ("%s:%s: Encrypting with protocol %s to:",
                  SRCNAME, __func__, to_cstr (m_proto));
     }
-  for (const auto &key: m_enc_keys)
-    {
-      log_debug ("%s", anonstr (key.primaryFingerprint ()));
-    }
-  if (!m_signer_key.isNull())
-    {
-      log_debug ("%s:%s: Signing key: %s:%s",
-                 SRCNAME, __func__, anonstr (m_signer_key.primaryFingerprint ()),
-                 to_cstr (m_signer_key.protocol()));
-    }
   TRETURN 0;
+}
+
+void
+CryptController::clear_keys ()
+{
+  for (auto &recp: m_recipients)
+    {
+      recp.setKeys (std::vector<GpgME::Key> ());
+    }
+  m_signer_keys.clear ();
 }
 
 int
@@ -484,6 +572,7 @@ CryptController::resolve_keys ()
       log_debug ("%s:%s: resolved keys through the cache",
                  SRCNAME, __func__);
       start_crypto_overlay();
+      prepare_encryption ();
       TRETURN 0;
     }
 
@@ -721,9 +810,15 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
                          utf8_gettext ("GpgOL"), MB_OK);
       TRETURN -1;
     }
-  if (!m_signer_key.isNull())
+  if (!m_signer_keys.empty ())
     {
-      ctx->addSigningKey (m_signer_key);
+      for (const auto &key: m_signer_keys)
+        {
+          if (key.protocol () == m_proto)
+            {
+              ctx->addSigningKey (key);
+            }
+        }
     }
 
   ctx->setTextMode (m_proto == GpgME::OpenPGP);
