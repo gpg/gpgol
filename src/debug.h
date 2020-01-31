@@ -57,6 +57,7 @@ extern "C" {
 
 void log_debug (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 void log_error (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+
 void log_vdebug (const char *fmt, va_list a);
 void log_debug_w32 (int w32err, const char *fmt,
                     ...) __attribute__ ((format (printf,2,3)));
@@ -80,6 +81,12 @@ const char *anonstr (const char *data);
 
 #define log_warn(format, ...) if (opt.enable_debug) \
   log_debug("WARNING/" format, ##__VA_ARGS__)
+
+#define log_dbg(format, ...) if (opt.enable_debug) \
+  log_debug("%s:%s:" format, SRCNAME, __func__, ##__VA_ARGS__)
+
+#define log_err(format, ...) if (opt.enable_debug) \
+  log_debug("%s:%s:" format, SRCNAME, __func__, ##__VA_ARGS__)
 
 #define gpgol_release(X) \
 { \
