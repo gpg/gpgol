@@ -3188,5 +3188,102 @@ int invoke_oom_method_with_string (LPDISPATCH pDisp, const char *name,
 
   int ret = invoke_oom_method_with_parms (pDisp, name, rVariant, &dispparams);
   VariantClear(&aVariant[0]);
-  return ret;
+  TRETURN ret;
+}
+
+int
+set_oom_recipients (LPDISPATCH item, const std::vector<Recipient> &recps)
+{
+  if (!item)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+
+  auto oom_recps = MAKE_SHARED (get_oom_object (item, "Recipients"));
+
+  if (!oom_recps)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+
+  /* First clear out the current recipients. */
+  int ret = invoke_oom_method (oom_recps.get (), "RemoveAll", nullptr);
+
+  if (ret)
+    {
+      STRANGEPOINT;
+      TRETURN ret;
+    }
+
+  for (const auto &recp: recps)
+    {
+      if (recp.type() == Recipient::olOriginator)
+        {
+          /* Skip the originator, we only add it internally but
+             it does not need to be in OOM. */
+          continue;
+        }
+      VARIANT result;
+      VariantInit (&result);
+      ret = invoke_oom_method_with_string (oom_recps.get (), "Add",
+                                           recp.mbox ().c_str (),
+                                           &result);
+      if (ret)
+        {
+          log_err ("Failed to add recipient.");
+          TRETURN ret;
+        }
+      if (result.vt != VT_DISPATCH || !result.pdispVal)
+        {
+          log_err ("No recipient result.");
+          continue;
+        }
+      if (put_oom_int (result.pdispVal, "Type", recp.type()))
+        {
+          log_err ("Failed to set recipient type.");
+        }
+      /* This releases the recipient. */
+      VariantClear (&result);
+    }
+  TRETURN 0;
+}
+
+int
+remove_oom_recipient (LPDISPATCH item, const std::string &mbox)
+{
+  TSTART;
+  if (!item)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+
+  auto oom_recps = MAKE_SHARED (get_oom_object (item, "Recipients"));
+
+  if (!oom_recps)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+
+  bool r_err = false;
+  const auto recps = get_oom_recipients (oom_recps.get (), &r_err);
+  if (r_err)
+    {
+      log_debug ("Failure to lookup recipients via OOM");
+      TRETURN -1;
+    }
+
+  for (const auto &recp: recps)
+    {
+      if (recp.mbox () == mbox && recp.index () != -1)
+        {
+          TRETURN invoke_oom_method_with_int (oom_recps.get (),
+                                              "Remove", recp.index (),
+                                              nullptr);
+        }
+    }
+  TRETURN -1;
 }

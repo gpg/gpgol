@@ -457,4 +457,10 @@ std::string format_dispparams (DISPPARAMS *p);
 
 /* Returns the count of attachments that are not hidden. */
 int count_visible_attachments (LPDISPATCH attachments);
+
+/* Remove a recipient from the OOM. */
+int remove_oom_recipient (LPDISPATCH item, const std::string &mbox);
+
+/* Remove all recipients and replace them with the list of our objects. */
+int set_oom_recipients (LPDISPATCH item, const std::vector<Recipient> &recps);
 #endif /*OOMHELP_H*/
