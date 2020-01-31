@@ -1445,6 +1445,7 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
       if (resolved)
         {
           entry.first = Recipient (resolved, recipient_type);
+          entry.first.setIndex (i);
           xfree (resolved);
           gpgol_release (recipient);
           ret.push_back (entry);
@@ -1455,6 +1456,7 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
       if (resolved)
         {
           entry.first = Recipient (resolved, recipient_type);
+          entry.first.setIndex (i);
           xfree (resolved);
           gpgol_release (recipient);
           ret.push_back (entry);
@@ -1469,6 +1471,7 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
       if (address)
         {
           entry.first = Recipient (resolved, recipient_type);
+          entry.first.setIndex (i);
           ret.push_back (entry);
           xfree (address);
         }
