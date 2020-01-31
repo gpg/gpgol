@@ -302,6 +302,8 @@ read_options (void)
   opt.smime_html_warn_shown = get_conf_bool ("smimeHtmlWarnShown", 0);
   opt.auto_unstrusted = get_conf_bool ("autoencryptUntrusted", 0);
   opt.autoimport = get_conf_bool ("autoimport", 0);
+  opt.splitBCCMails = get_conf_bool ("splitBCCMails", 1);
+  opt.combinedOpsEnabled = get_conf_bool ("combinedOpsEnabled", 0);
 
   if (!opt.automation)
     {

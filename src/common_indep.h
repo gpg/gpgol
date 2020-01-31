@@ -210,6 +210,8 @@ struct
   int autoimport;            /* Automatically import keys from headers or attachments. */
   char *draft_key;           /* Encrypt drafts with this key (fingerprint) */
   int alwaysShowApproval;    /* Always show the certificate approval dialog. */
+  int combinedOpsEnabled;    /* Enable S/MIME and OpenPGP combined operations. */
+  int splitBCCMails;         /* Split BCC recipients in their own mails. */
 
   /* The forms revision number of the binary.  */
   int forms_revision;
