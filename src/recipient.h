@@ -32,28 +32,35 @@ namespace GpgME
 class Recipient
 {
 public:
-  Recipient ();
-  explicit Recipient (const char *addr, int type);
+    Recipient ();
+    Recipient (const Recipient &other);
+    explicit Recipient (const char *addr, int type);
 
-  enum recipientType
-    {
-      olOriginator = 0, /* Originator (sender) of the Item */
-      olCC = 2, /* Specified in the CC property */
-      olTo = 1, /* Specified in the To property */
-      olBCC = 3, /* BCC */
-      invalidType = -1, /* indicates that the type was not set or the
-                           recipient is somehow invalid */
-    };
+    enum recipientType
+      {
+        olOriginator = 0, /* Originator (sender) of the Item */
+        olCC = 2, /* Specified in the CC property */
+        olTo = 1, /* Specified in the To property */
+        olBCC = 3, /* BCC */
+        invalidType = -1, /* indicates that the type was not set or the
+                             recipient is somehow invalid */
+      };
 
-  void setKeys (const std::vector <GpgME::Key> &keys);
-  std::vector<GpgME::Key> keys () const;
+    void setKeys (const std::vector <GpgME::Key> &keys);
+    std::vector<GpgME::Key> keys () const;
 
-  std::string mbox () const;
-  recipientType type () const;
-  void setType (int type);
+    std::string mbox () const;
+    recipientType type () const;
+    void setType (int type);
+    void setIndex (int index);
+    int index() const;
+
+    /* For debugging */
+    static void dump(const std::vector<Recipient> &recps);
 private:
     std::string m_mbox;
     recipientType m_type;
     std::vector<GpgME::Key> m_keys;
+    int m_index;
 };
 #endif

@@ -20,10 +20,11 @@
  */
 #include "recipient.h"
 #include "debug.h"
+#include "cpphelp.h"
 
 #include <gpgme++/key.h>
 
-Recipient::Recipient(const char *addr, int type)
+Recipient::Recipient(const char *addr, int type) : m_index (-1)
 {
   TSTART;
   if (addr)
@@ -38,6 +39,14 @@ Recipient::Recipient(const char *addr, int type)
       m_type = invalidType;
     }
   TRETURN;
+}
+
+Recipient::Recipient(const Recipient &other)
+{
+  m_type = other.type();
+  m_mbox = other.mbox();
+  m_keys = other.keys();
+  m_index = other.index();
 }
 
 Recipient::Recipient() : m_type (invalidType)
@@ -78,4 +87,40 @@ std::vector<GpgME::Key>
 Recipient::keys () const
 {
   return m_keys;
+}
+
+void
+Recipient::setIndex (int i)
+{
+  m_index = i;
+}
+
+int
+Recipient::index () const
+{
+  return m_index;
+}
+
+void
+Recipient::dump (const std::vector<Recipient> &recps)
+{
+  log_data ("--- Begin recipient dump ---");
+  if (recps.empty())
+    {
+      log_data ("Empty recipient list.");
+    }
+  for (const auto &recp: recps)
+    {
+      log_data ("Type: %i Mail: '%s'", recp.type (), recp.mbox ().c_str ());
+      for (const auto &key: recp.keys ())
+        {
+          log_data ("Key: %s: %s", to_cstr (key.protocol ()),
+                    key.primaryFingerprint ());
+        }
+      if (recp.keys().empty())
+        {
+          log_data ("unresolved");
+        }
+    }
+  log_data ("--- End recipient dump ---");
 }
