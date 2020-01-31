@@ -3142,6 +3142,25 @@ count_visible_attachments (LPDISPATCH attachments)
   return ret;
 }
 
+int invoke_oom_method_with_int (LPDISPATCH pDisp, const char *name,
+                                int arg,
+                                VARIANT *rVariant)
+{
+  TSTART;
+  DISPPARAMS parms;
+  VARIANT argvars[1];
+  VariantInit (&argvars[0]);
+  argvars[0].vt = VT_INT;
+  argvars[0].intVal = arg;
+  parms.cArgs = 1;
+  parms.cNamedArgs = 0;
+  parms.rgvarg = argvars;
+
+  TRETURN invoke_oom_method_with_parms (pDisp, name,
+                                        rVariant, &parms);
+
+}
+
 int invoke_oom_method_with_string (LPDISPATCH pDisp, const char *name,
                                    const char *arg,
                                    VARIANT *rVariant)

@@ -340,6 +340,11 @@ int invoke_oom_method_with_string (LPDISPATCH pDisp, const char *name,
                                    const char *arg,
                                    VARIANT *rVariant = nullptr);
 
+/* Same as invoke oom method but with a single int argument */
+int invoke_oom_method_with_int (LPDISPATCH pDisp, const char *name,
+                                int arg,
+                                VARIANT *rVariant = nullptr);
+
 /* Try to obtain the mapisession through the Application.
   returns NULL on error.*/
 LPMAPISESSION
