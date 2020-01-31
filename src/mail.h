@@ -520,9 +520,9 @@ public:
   */
   HWND getWindow () { return m_window; }
 
-  /** Cleanup any attached crypter object. Useful
+  /** Cleanup any attached crypter objects. Useful
     on error. */
-  void resetCrypter () { m_crypter = nullptr; }
+  void resetCrypter ();
 
   /** Set special crypto mime data that should be used as the
     mime structure when sending. */
@@ -660,13 +660,34 @@ public:
 
   /* Set the signing key for the mail. This overrides any other
      key resolution. */
-  void setSigningKey (const GpgME::Key &key);
+  void setSigningKeys (const std::vector<GpgME::Key> &keys);
+  std::vector <GpgME::Key> getSigningKeys () const;
 
-  /* Set the encryption keys for this mail. Needs to match the protocol
-     of the signing key. This overrides any other key resolution. */
-  void setEncryptionKeys (std::vector<GpgME::Key> keys);
+  /* Set the recipients for this mail. If they all have keys
+  set then this overrides the cryptcontroller resolutions*/
+  void setRecipients (const std::vector<GpgME::Key> &keys);
 
+  /* Split a mail according to recipients, hidden, different protocols
+     and so on and then send the multiple mails. */
+  void splitAndSend_o ();
+
+  /* A callback for another mail that was created as
+     a split from us. */
+  void splitCopyMailCallback (Mail *copy);
+
+  /* Reset recipient and resolved key data. */
+  void resetRecipients ();
+
+  /* Returns true if a mail is a copy that was split of
+     a different mail. */
+  bool isSplitCopy () const;
+  /* Setter for isSplitCopy */
+  void setSplitCopy (bool val);
 private:
+  /* Returns a copy of the mailitem object. This copy
+     is sadly not the same as in the ItemLoad event
+     so we cannot find it in our map of mailitems. */
+  LPDISPATCH copy ();
   bool checkIfMailIsChildOfPrintMail_o ();
   void updateSigstate ();
   int add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments);
@@ -726,6 +747,12 @@ private:
                            another beforeread */
   bool m_printing; /* Mail is decrypted for printing */
   std::string m_gpgol_class; /* The GpgOL Message class */
-  GpgME::Key m_resolved_signing_key; /* A prepared / resolved key for signing. */
+  std::vector<GpgME::Key> m_resolved_signing_keys; /* Prepared / resolved keys for signing. */
+  bool m_recipients_set; /* Recipients were explictly set. */
+  bool m_is_split_copy; /* Is the a copy mail that was part of a split. */
 };
+
+/* A state variable to capture which mail triggered a copy to
+   use our own objects in the ItemLoad event. */
+extern Mail *g_mail_copy_triggerer;
 #endif // MAIL_H

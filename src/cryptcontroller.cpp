@@ -31,6 +31,7 @@
 #include "keycache.h"
 #include "mymapitags.h"
 #include "recipient.h"
+#include "windowmessages.h"
 
 #include <gpgme++/context.h>
 #include <gpgme++/signingresult.h>
@@ -915,6 +916,37 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       // Cancel
       TRETURN -2;
     }
+
+  /* If we need to send multiple emails we jump back from
+     here into the main event loop. Copy the mail object
+     and send it out mutiple times. */
+  if (opt.splitBCCMails)
+    {
+      bool foundOneNormalRecp = false;
+      bool foundOneBCCRecp = false;
+      for (const auto &recp: m_recipients)
+        {
+          if (foundOneBCCRecp && foundOneNormalRecp)
+            {
+              log_debug ("%s:%s: Have both BCC and normal recipients."
+                         " Need to send multiple mails.",
+                         SRCNAME, __func__);
+              do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
+              /* Cancel the crypto of this mail */
+              TRETURN -3;
+            }
+          if (recp.type() == Recipient::olCC ||
+              recp.type() == Recipient::olTo)
+            {
+              foundOneNormalRecp = true;
+            }
+          if (recp.type() == Recipient::olBCC)
+            {
+              foundOneBCCRecp = true;
+            }
+        }
+    }
+
   bool do_inline = m_mail->getDoPGPInline ();
 
   if (m_proto == GpgME::CMS && do_inline)

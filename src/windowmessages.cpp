@@ -359,6 +359,37 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               xfree (data);
               TBREAK;
             }
+          case SEND_MULTIPLE_MAILS:
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::isValidPtr (mail))
+                {
+                  log_debug ("%s:%s: SEND_MULTIPLE_MAILS for mail which is gone.",
+                             SRCNAME, __func__);
+                  TBREAK;
+                }
+
+              log_debug ("%s:%s: Send multiple mails for %p.",
+                         SRCNAME, __func__, mail);
+              mail->splitAndSend_o ();
+              TBREAK;
+            }
+          case SEND:
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::isValidPtr (mail))
+                {
+                  log_debug ("%s:%s: SEND for mail %p which is gone.",
+                             SRCNAME, __func__, mail);
+                  TBREAK;
+                }
+
+              log_debug ("%s:%s: Send for %p.",
+                         SRCNAME, __func__, mail);
+              invoke_oom_method (mail->item (), "Send", nullptr);
+              TBREAK;
+            }
+
           default:
             log_debug ("%s:%s: Unknown msg %x",
                        SRCNAME, __func__, ctx->wmsg_type);

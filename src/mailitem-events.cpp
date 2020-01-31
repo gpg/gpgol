@@ -610,6 +610,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
           TRETURN S_OK;
         }
+      case ReadComplete:
+        {
+          log_oom ("%s:%s: ReadComplete: %p",
+                         SRCNAME, __func__, m_mail);
+          TRETURN S_OK;
+        }
       case Write:
         {
           log_oom ("%s:%s: Write : %p",
@@ -642,6 +648,11 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
 
               m_mail->removeCategories_o ();
+              if (g_mail_copy_triggerer)
+                {
+                  log_dbg ("Needs first after write for copied mail.");
+                  g_mail_copy_triggerer->splitCopyMailCallback (m_mail);
+                }
               TBREAK;
             }
 

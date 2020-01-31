@@ -59,6 +59,8 @@ typedef enum _gpgol_wmsg_type
   CONFIG_KEY_DONE,
   DECRYPT,
   AFTER_MOVE,
+  SEND_MULTIPLE_MAILS,
+  SEND,
   /* External API, keep it stable! */
   EXT_API_CLOSE = 1301,
   EXT_API_CLOSE_ALL = 1302,

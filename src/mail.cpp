@@ -74,6 +74,7 @@ GPGRT_LOCK_DEFINE (mail_map_lock);
 GPGRT_LOCK_DEFINE (uid_map_lock);
 
 static Mail *s_last_mail;
+Mail *g_mail_copy_triggerer = nullptr;
 
 #define COPYBUFSIZE (8 * 1024)
 
@@ -113,7 +114,9 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_is_junk(false),
     m_is_draft_encrypt(false),
     m_decrypt_again(false),
-    m_printing(false)
+    m_printing(false),
+    m_recipients_set(false),
+    m_is_split_copy(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -295,6 +298,12 @@ int
 Mail::preProcessMessage_m ()
 {
   TSTART;
+  if (m_is_split_copy)
+    {
+      log_dbg ("Mail was created as a copy by gpgol. Addr: %p",
+               this);
+      TRETURN 0;
+    }
   LPMESSAGE message = get_oom_base_message (m_mailitem);
   if (!message)
     {
@@ -1130,6 +1139,11 @@ do_crypt (LPVOID arg)
       mail->resetCrypter ();
       crypter = nullptr;
       gpgol_unlock (&dtor_lock);
+
+      if (rc != -3)
+        {
+          mail->resetRecipients ();
+        }
       TRETURN rc;
     }
 
@@ -1897,6 +1911,7 @@ Mail::encryptSignStart_o ()
                 m_is_gsuite ? true : opt.inline_pgp;
 
   GpgME::Protocol proto = opt.enable_smime ? GpgME::UnknownProtocol: GpgME::OpenPGP;
+
   m_crypter = std::shared_ptr <CryptController> (new CryptController (this, flags & 1,
                                                                       flags & 2,
                                                                       proto));
@@ -1999,7 +2014,16 @@ Mail::updateOOMData_o (bool for_encryption)
       xfree (m_cached_plain_body);
       m_cached_plain_body = get_oom_string (m_mailitem, "Body");
 
-      m_cached_recipients = getRecipients_o ();
+      if (!m_recipients_set)
+        {
+          m_cached_recipients = getRecipients_o ();
+        }
+      else
+        {
+          log_dbg ("Not updating cached recipients because recipients were "
+                   "set explicitly.");
+          Recipient::dump (m_cached_recipients);
+        }
     }
   else
     {
@@ -2052,7 +2076,22 @@ Mail::updateOOMData_o (bool for_encryption)
 
   if (for_encryption)
     {
-      m_cached_recipients.push_back (Recipient (buf, Recipient::olOriginator));
+      bool sender_is_recipient = false;
+      for (const auto &recp: m_cached_recipients)
+        {
+          if (recp.mbox () == m_sender)
+            {
+              sender_is_recipient = true;
+              log_debug ("%s:%s: Sender already recipient.",
+                         SRCNAME, __func__);
+              break;
+            }
+        }
+      if (!sender_is_recipient)
+        {
+          m_cached_recipients.push_back (Recipient (buf,
+                                                    Recipient::olOriginator));
+        }
     }
 
   xfree (buf);
@@ -3651,6 +3690,22 @@ Mail::getCachedRecipients ()
   TRETURN m_cached_recipients;
 }
 
+void
+Mail::setRecipients (const std::vector<Recipient> &recps)
+{
+  TSTART;
+  m_recipients_set = !recps.empty ();
+
+  if ((opt.enable_debug & DBG_DATA))
+    {
+      Recipient::dump (recps);
+    }
+
+  m_cached_recipients = recps;
+  TRETURN;
+}
+
+
 std::vector<std::string>
 Mail::getCachedRecipientAddresses ()
 {
@@ -3788,6 +3843,7 @@ Mail::updateCryptOOM_o ()
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
       resetCrypter ();
+      resetRecipients ();
       TRETURN;
     }
 
@@ -3822,6 +3878,7 @@ Mail::updateCryptOOM_o ()
   if (isAsyncCryptDisabled ())
     {
       resetCrypter ();
+      resetRecipients ();
     }
 
   const auto pair = has_crypt_or_empty_body_oom (this);
@@ -4597,7 +4654,215 @@ Mail::checkIfMailIsChildOfPrintMail_o ()
 }
 
 void
-Mail::setSigningKey (const GpgME::Key &key)
+Mail::setSigningKeys (const std::vector<GpgME::Key> &keys)
 {
-  m_resolved_signing_key = key;
+  m_resolved_signing_keys = keys;
+}
+
+std::vector<GpgME::Key>
+Mail::getSigningKeys () const
+{
+  return m_resolved_signing_keys;
+}
+
+LPDISPATCH
+Mail::copy ()
+{
+  TSTART;
+  VARIANT result;
+  VariantInit (&result);
+
+  if (g_mail_copy_triggerer)
+    {
+      log_err ("BUG: Copy already in progress.");
+      TRETURN nullptr;
+    }
+  g_mail_copy_triggerer = this;
+  int err = invoke_oom_method (m_mailitem, "Copy", &result);
+
+  if (err)
+    {
+      log_error ("%s:%s Failed to copy mail.",
+                 SRCNAME, __func__);
+      TRETURN nullptr;
+    }
+
+  if (result.vt != VT_DISPATCH || !result.pdispVal)
+    {
+      log_error ("%s:%s Unexpected result type %x.",
+                 SRCNAME, __func__, result.vt);
+      TRETURN nullptr;
+    }
+  return result.pdispVal;
+}
+
+static std::vector<GpgME::Key>
+getKeysForProtocol (const std::vector<GpgME::Key> keys, GpgME::Protocol proto)
+{
+  std::vector<GpgME::Key> ret;
+
+  std::copy_if (keys.begin(), keys.end(),
+                std::back_inserter (ret),
+                [proto] (const auto &k)
+                {
+                  return k.protocol () == proto;
+                });
+
+  return ret;
+}
+
+
+/* A callback of a copied mail to update our Mail objects
+   after the split */
+void
+Mail::splitCopyMailCallback (Mail *copied_mail)
+{
+  log_dbg ("Copy mail callback reached with mail %p", copied_mail);
+  g_mail_copy_triggerer = nullptr;
+  copied_mail->setSplitCopy (true);
+
+  std::vector<Recipient> newRecipientsForCopy;
+  std::vector<Recipient> newRecipientsForUs;
+  GpgME::Protocol copyProtocol = GpgME::UnknownProtocol;
+
+  /* Now split out recipients */
+  bool bccFound = false;
+  bool normalRecipientsFound = false;
+  log_debug ("Dump before split.");
+  Recipient::dump (m_cached_recipients);
+  bool failureToRemoveBCC = false;
+  for (const auto &recp: m_cached_recipients)
+    {
+      /* We want to always include the originator */
+      if (recp.type () == Recipient::olOriginator)
+        {
+          newRecipientsForCopy.push_back (recp);
+          newRecipientsForUs.push_back (recp);
+        }
+      else if (recp.type () == Recipient::olBCC && !bccFound)
+        {
+          const auto bccKeys = recp.keys ();
+          if (bccKeys.empty())
+            {
+              log_err ("Empty keylist for recipient!");
+              continue;
+            }
+
+          const auto pgpKeys = getKeysForProtocol (bccKeys, GpgME::OpenPGP);
+          const auto cmsKeys = getKeysForProtocol (bccKeys, GpgME::CMS);
+
+          if (!pgpKeys.empty () && !cmsKeys.empty())
+            {
+              log_dbg ("Detected BCC Recipient with both PGP and CMS keys."
+                       " splitting recipient.");
+              /* Copy it and keep it as BCC recipient with only PGP keys */
+              auto splitRecipient = recp;
+              splitRecipient.setKeys (pgpKeys);
+              newRecipientsForUs.push_back (splitRecipient);
+
+              /* For the copy use the CMS keys */
+              auto splitRecipient2 = recp;
+              splitRecipient2.setKeys (cmsKeys);
+              newRecipientsForCopy.push_back (splitRecipient2);
+              copyProtocol = GpgME::CMS;
+            }
+          else
+            {
+              newRecipientsForCopy.push_back (recp);
+              /* Our keylist is of a single protocol so we can take that. */
+              copyProtocol = bccKeys[0].protocol ();
+              log_dbg ("Recipient '%s' is BCC. Gets its own mail with "
+                       "protocol: %s", anonstr (recp.mbox().c_str ()),
+                       to_cstr (copyProtocol));
+            }
+          int err = remove_oom_recipient (m_mailitem, recp.mbox());
+          if (err)
+            {
+              log_dbg ("Failure to remove recipient '%s' possibly a group."
+                       "overwriting with our recipients.",
+                       anonstr (recp.mbox ().c_str ()));
+              failureToRemoveBCC = true;
+            }
+          bccFound = true;
+        }
+      else
+        {
+          newRecipientsForUs.push_back (recp);
+        }
+    }
+  if (failureToRemoveBCC)
+    {
+      set_oom_recipients (m_mailitem, newRecipientsForUs);
+    }
+  setRecipients(newRecipientsForUs);
+  copied_mail->setRecipients(newRecipientsForCopy);
+  set_oom_recipients (copied_mail->item(), newRecipientsForCopy);
+  if (copyProtocol != GpgME::UnknownProtocol)
+    {
+      copied_mail->setSigningKeys (getKeysForProtocol (m_resolved_signing_keys,
+                                                       copyProtocol));
+    }
+  else
+    {
+      copied_mail->setSigningKeys (m_resolved_signing_keys);
+    }
+
+  if (!bccFound)
+    {
+      /* TODO: Split more for S/MIME OpenPGP Mix. */
+    }
+
+  if (bccFound && normalRecipientsFound)
+    {
+      /* Recurse */
+      log_dbg ("Both normal and hidden recipients found. "
+               "Creating another copy.");
+      copy ();
+      TRETURN;
+    }
+}
+
+void
+Mail::splitAndSend_o ()
+{
+  TSTART;
+  log_dbg ("Split and send for: %p", this);
+  LPDISPATCH copied_mailitem = copy ();
+
+  if (!copied_mailitem)
+    {
+      log_err ("Failed to copy mail. Aboring.");
+      TRETURN;
+    }
+  /* This triggers the copyMailCallback in the write event */
+  invoke_oom_method (copied_mailitem, "Send", nullptr);
+  invoke_oom_method (m_mailitem, "Send", nullptr);
+  TRETURN;
+}
+
+void
+Mail::resetCrypter ()
+{
+  m_crypter = nullptr;
+}
+
+void
+Mail::resetRecipients ()
+{
+  /* Clear recipient data */
+  m_cached_recipients.clear ();
+  m_resolved_signing_keys.clear ();
+  m_recipients_set = false;
+}
+
+void
+Mail::setSplitCopy (bool val)
+{
+  m_is_split_copy = val;
+}
+
+bool
+Mail::isSplitCopy () const
+{
+  return m_is_split_copy;
 }
