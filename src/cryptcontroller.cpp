@@ -72,6 +72,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
   log_debug ("%s:%s: CryptController ctor for %p encrypt %i sign %i inline %i.",
              SRCNAME, __func__, mail, encrypt, sign, mail->getDoPGPInline ());
   m_recipients = mail->getCachedRecipients ();
+  m_signer_keys = mail->getSigningKeys ();
   m_sender = mail->getSender ();
   TRETURN;
 }
@@ -268,7 +269,8 @@ CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
               fingerprintsToLookup.push_back (pair.second);
               all_fingerprints.erase(std::remove_if(all_fingerprints.begin(),
                                                     all_fingerprints.end(),
-                              [&pair](const std::string &x){return x == pair.second;}));
+                              [&pair](const std::string &x){return x == pair.second;}),
+                              all_fingerprints.end());
             }
         }
       // Convert recipient fingerprints
@@ -308,7 +310,7 @@ CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
       TRETURN -1;
     }
 
-  prepare_encryption ();
+  resolving_done ();
 
   TRETURN 0;
 }
@@ -388,10 +390,10 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
 }
 
 /* Combines all recipient keys for this operation
-   into a list. Handles BCC recipients by creating
-   new Mail objects for them. */
+   into a list and copys the resolved recipients
+   back. */
 void
-CryptController::prepare_encryption ()
+CryptController::resolving_done ()
 {
   TSTART;
   m_enc_keys.clear ();
@@ -400,13 +402,10 @@ CryptController::prepare_encryption ()
     {
       const auto &keys = recp.keys ();
       m_enc_keys.insert (m_enc_keys.end (), keys.begin (), keys.end ());
-
-      if (recp.type () == Recipient::olBCC)
-        {
-          log_debug ("%s:%s: BCC Recipient found. Preparing new mail.",
-                     SRCNAME, __func__);
-        }
     }
+  /* Copy the resolved recipients back to the mail */
+  m_mail->setRecipients (m_recipients);
+  m_mail->setSigningKeys (m_signer_keys);
   TRETURN;
 }
 
@@ -449,6 +448,60 @@ CryptController::resolve_through_protocol (GpgME::Protocol proto)
   TRETURN is_resolved ();
 }
 
+/* Check if we can be resolved by a single protocol
+   and return it. */
+GpgME::Protocol
+CryptController::get_resolved_protocol () const
+{
+  TSTART;
+  GpgME::Protocol ret = GpgME::UnknownProtocol;
+
+  bool hasOpenPGPSignKey = false;
+  bool hasSMIMESignKey = false;
+  if (m_sign)
+    {
+      for (const auto &sig_key: m_signer_keys)
+        {
+          hasOpenPGPSignKey |= (!sig_key.isNull() &&
+                                sig_key.protocol () == GpgME::OpenPGP);
+          hasSMIMESignKey |= (!sig_key.isNull() &&
+                              sig_key.protocol () == GpgME::CMS);
+        }
+    }
+
+  if (m_encrypt)
+    {
+      for (const auto &recp: m_recipients)
+        {
+          if (!recp.keys ().size () || recp.keys ()[0].isNull ())
+            {
+              /* No keys or the first key in the list is null. */
+              TRETURN GpgME::UnknownProtocol;
+            }
+          for (const auto &key: recp.keys())
+            {
+              if (key.protocol () == GpgME::OpenPGP &&
+                  (!m_sign || hasOpenPGPSignKey) &&
+                  (ret == GpgME::UnknownProtocol || ret == GpgME::OpenPGP))
+                {
+                  ret = GpgME::OpenPGP;
+                  continue;
+                }
+              if (key.protocol () == GpgME::CMS &&
+                  (!m_sign || hasSMIMESignKey) &&
+                  (ret == GpgME::UnknownProtocol || ret == GpgME::CMS))
+                {
+                  ret = GpgME::CMS;
+                  continue;
+                }
+              // Unresolvable
+              TRETURN GpgME::UnknownProtocol;
+            }
+        }
+    }
+  TRETURN ret;
+}
+
 
 /* Check that the crypt operation is resolved. This
    supports combined S/MIME and OpenPGP operations. */
@@ -470,8 +523,12 @@ CryptController::is_resolved () const
         }
     }
 
+  log_dbg ("Has OpenPGP Sig Key: %i SMIME: %i",
+           hasOpenPGPSignKey, hasSMIMESignKey);
+
   if (m_encrypt)
     {
+      Recipient::dump (m_recipients);
       for (const auto &recp: m_recipients)
         {
           if (!recp.keys ().size () || recp.keys ()[0].isNull ())
@@ -589,6 +646,16 @@ CryptController::resolve_keys ()
 {
   TSTART;
 
+  m_proto = get_resolved_protocol ();
+  if (m_proto != GpgME::UnknownProtocol)
+    {
+      log_debug ("%s:%s: Already resolved by %s Not resolving again.",
+                 SRCNAME, __func__, to_cstr (m_proto));
+      start_crypto_overlay();
+      resolving_done ();
+      TRETURN 0;
+    }
+
   m_enc_keys.clear();
 
   if (m_mail->isDraftEncrypt() && opt.draft_key)
@@ -635,7 +702,7 @@ CryptController::resolve_keys ()
       log_debug ("%s:%s: resolved keys through the cache",
                  SRCNAME, __func__);
       start_crypto_overlay();
-      prepare_encryption ();
+      resolving_done ();
       TRETURN 0;
     }
 
@@ -836,9 +903,6 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
 
   int ret = resolve_keys ();
 
-  /* If we need to send multiple emails we jump back from
-     here into the main event loop. Copy the mail object
-     and send it out mutiple times. */
   if (ret == -1)
     {
       //error

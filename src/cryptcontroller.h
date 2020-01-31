@@ -60,6 +60,11 @@ public:
       variable. Additional diagnostic output is passed
       through r_diag.
 
+      -1 return value on error.
+      -2 on cancel.
+      -3 When we need additional mails to resolve all
+         recipients.
+
       @returns 0 on success.
   */
   int do_crypto (GpgME::Error &err, std::string &r_diag);
@@ -81,9 +86,15 @@ public:
     the operation. */
   bool is_resolved () const;
 
+  /** @brief check if the cryptcontroller can actually do
+    the work with a single protocol. This is different
+    to is_resolved which is also true when multiple mails
+    might be necessary to fulfil the operation.
+    */
+  GpgME::Protocol get_resolved_protocol () const;
 private:
   void clear_keys ();
-  void prepare_encryption ();
+  void resolving_done ();
   int resolve_keys ();
   int resolve_keys_cached ();
   bool resolve_through_protocol (GpgME::Protocol proto);
@@ -104,8 +115,8 @@ private:
   std::string m_sender;
   std::vector<GpgME::Key> m_signer_keys;
   std::vector<GpgME::Key> m_enc_keys;
-  std::unique_ptr<Overlay> m_overlay;
   std::vector<Recipient> m_recipients;
+  std::unique_ptr<Overlay> m_overlay;
 };
 
 #endif
