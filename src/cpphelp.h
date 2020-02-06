@@ -64,4 +64,8 @@ bool is_binary (const std::string &input);
 
 /* Return a string repr of the GpgME Protocol */
 const char *to_cstr (const GpgME::Protocol &prot);
+
+/* Modify source and find and replace stuff */
+void find_and_replace(std::string& source, const std::string &find,
+                      const std::string &replace);
 #endif // CPPHELP_H

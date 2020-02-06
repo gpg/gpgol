@@ -333,3 +333,16 @@ to_cstr (const GpgME::Protocol &prot)
          prot == GpgME::OpenPGP ? "OpenPGP" :
          "Unknown Protocol";
 }
+
+void
+find_and_replace(std::string& source, const std::string &find,
+                 const std::string &replace)
+{
+  TSTART;
+  for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+    {
+      source.replace(i, find.length(), replace);
+      i += replace.length();
+    }
+  TRETURN;
+}
