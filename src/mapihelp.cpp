@@ -1127,7 +1127,13 @@ change_message_class_ipm_note (LPMESSAGE message)
   ct = mapi_get_message_content_type (message, &proto, NULL);
   log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__,
              ct ? ct : "null");
-  if (ct && proto)
+  /* First the simplest check */
+  if (ct && !strcmp (ct, "wks.confirmation.mail"))
+    {
+      log_dbg ("Setting WKSConfirmation");
+      newvalue = xstrdup ("IPM.Note.GpgOL.WKSConfirmation");
+    }
+  else if (ct && proto)
     {
       log_debug ("%s:%s:     protocol is '%s'", SRCNAME, __func__, proto);
 
