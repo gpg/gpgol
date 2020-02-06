@@ -2022,7 +2022,6 @@ Mail::updateOOMData_o (bool for_encryption)
         {
           log_dbg ("Not updating cached recipients because recipients were "
                    "set explicitly.");
-          Recipient::dump (m_cached_recipients);
         }
     }
   else
@@ -3695,12 +3694,6 @@ Mail::setRecipients (const std::vector<Recipient> &recps)
 {
   TSTART;
   m_recipients_set = !recps.empty ();
-
-  if ((opt.enable_debug & DBG_DATA))
-    {
-      Recipient::dump (recps);
-    }
-
   m_cached_recipients = recps;
   TRETURN;
 }
@@ -4717,6 +4710,7 @@ getKeysForProtocol (const std::vector<GpgME::Key> keys, GpgME::Protocol proto)
 void
 Mail::splitCopyMailCallback (Mail *copied_mail)
 {
+  TSTART;
   log_dbg ("Copy mail callback reached with mail %p", copied_mail);
   g_mail_copy_triggerer = nullptr;
   copied_mail->setSplitCopy (true);
