@@ -873,7 +873,8 @@ utf8_to_rfc2047b (const char *input)
 static int
 write_part (sink_t sink, const char *data, size_t datalen,
             const char *boundary, const char *filename, int is_mapibody,
-            const char *content_id = NULL)
+            const char *content_id = nullptr,
+            const char *added_headers = nullptr)
 {
   int rc;
   const char *ct;
@@ -966,6 +967,15 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                "\tfilename=\"", encoded_filename, "\"\r\n",
                                NULL)))
       return rc;
+
+  /* Add any injected additional headers */
+  if (added_headers)
+    {
+      if ((rc = write_multistring (sink, added_headers, nullptr)))
+        {
+          return rc;
+        }
+    }
 
   xfree(encoded_filename);
 
@@ -1391,7 +1401,9 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
       if (plain_body)
         {
           rc = write_part (sink, plain_body, strlen (plain_body),
-                           boundary, NULL, 1);
+                           boundary, NULL, 1, nullptr,
+                           mail ? mail->protectedHeaders ().c_str () :
+                           nullptr);
         }
       /* Just the plain body or no body. We are done. */
       return rc;
@@ -1420,7 +1432,9 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
 
   /* Now the plain body part */
   if ((rc = write_part (sink, plain_body, strlen (plain_body),
-                       alt_boundary, NULL, 1)))
+                       alt_boundary, NULL, 1, nullptr,
+                       mail ? mail->protectedHeaders().c_str() :
+                       nullptr)))
     {
       TRACEPOINT;
       return rc;
