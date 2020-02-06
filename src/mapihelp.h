@@ -133,12 +133,13 @@ void mapi_set_mesage_class (LPMESSAGE message, const char *cls);
 /* Parse the headers for additional useful fields.
 
   r_autocrypt_info: Information about the autocrypt header.
+  r_header_info: Just a generic struct for other stuff.
 
   A return value of false indicates an error. Check the
   individual info fields "exists" values to check if
   the header exists in the message */
 bool mapi_get_header_info (LPMESSAGE message,
-                           autocrypt_s &r_autocrypt_info);
+                           header_info_s &r_header_info);
 std::string mapi_get_header (LPMESSAGE message);
 #endif
 #endif /*MAPIHELP_H*/

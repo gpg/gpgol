@@ -822,7 +822,7 @@ infer_content_encoding (const void *data, size_t datalen)
    is the subset of RFC2047 outlook likes.
    Return value needs to be freed.
    */
-static char *
+char *
 utf8_to_rfc2047b (const char *input)
 {
   char *ret,
@@ -837,8 +837,6 @@ utf8_to_rfc2047b (const char *input)
     {
       return xstrdup (input);
     }
-  log_debug ("%s:%s: Encoding attachment filename. With: %s ",
-             SRCNAME, __func__, inferred_encoding == 2 ? "Base64" : "QP");
 
   if (inferred_encoding == 2)
     {

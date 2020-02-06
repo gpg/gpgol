@@ -22,9 +22,13 @@
 #include "debug.h"
 #include "cpphelp.h"
 
+#include "mimemaker.h"
+
 #include <gpgme++/key.h>
 
-Recipient::Recipient(const char *addr, int type) : m_index (-1)
+Recipient::Recipient(const char *addr,
+                     const char *name, int type):
+  m_index (-1)
 {
   TSTART;
   if (addr)
@@ -38,7 +42,18 @@ Recipient::Recipient(const char *addr, int type) : m_index (-1)
                  SRCNAME, __func__);
       m_type = invalidType;
     }
+  if (name && !strcmp (name, addr))
+    {
+      m_name = name;
+    }
+
   TRETURN;
+}
+
+Recipient::Recipient(const char *addr, int type):
+  Recipient(addr, nullptr, type)
+{
+
 }
 
 Recipient::Recipient(const Recipient &other)
@@ -47,6 +62,8 @@ Recipient::Recipient(const Recipient &other)
   m_mbox = other.mbox();
   m_keys = other.keys();
   m_index = other.index();
+  m_name = other.name();
+  m_addr = other.addr();
 }
 
 Recipient::Recipient() : m_type (invalidType)
@@ -123,4 +140,42 @@ Recipient::dump (const std::vector<Recipient> &recps)
         }
     }
   log_data ("--- End recipient dump ---");
+}
+
+std::string
+Recipient::encodedDisplayName () const
+{
+  std::string ret;
+  if (m_name.empty())
+    {
+      char *encoded = utf8_to_rfc2047b (m_addr.c_str ());
+      if (encoded)
+        {
+          ret = encoded;
+          xfree (encoded);
+        }
+      return ret;
+    }
+  std::string displayName = m_name + std::string (" <") +
+                            m_addr + std::string (">");
+
+  char *encDisp = utf8_to_rfc2047b (displayName.c_str ());
+  if (encDisp)
+    {
+      ret = encDisp;
+      xfree (encDisp);
+    }
+  return ret;
+}
+
+std::string
+Recipient::name () const
+{
+  return m_name;
+}
+
+std::string
+Recipient::addr () const
+{
+  return m_addr;
 }

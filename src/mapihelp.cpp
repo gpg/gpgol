@@ -3779,7 +3779,7 @@ ac_get_value (const char *header, const char *what)
   const char *s = strstr (header, what);
   if (!s)
     {
-      log_debug ("%s:%s: could not find %s in autocrypt header",
+      log_debug ("%s:%s: could not find %s in header",
                  SRCNAME, __func__, what);
       TRETURN std::string();
     }
@@ -3789,7 +3789,7 @@ ac_get_value (const char *header, const char *what)
 
   if (*s != '=')
     {
-      log_debug ("%s:%s: No equal sign after %s in autocrypt header %s",
+      log_debug ("%s:%s: No equal sign after %s in header %s",
                  SRCNAME, __func__, what, s);
       TRETURN std::string();
     }
@@ -3842,10 +3842,11 @@ prepare_key_data (const std::string &d)
 
 bool
 mapi_get_header_info (LPMESSAGE message,
-                      autocrypt_s &r_autocrypt)
+                      header_info_s &r_header_info)
 {
   TSTART;
   rfc822parse_t msg;
+  autocrypt_s r_autocrypt;
 
   r_autocrypt.exists = false;
 
@@ -3857,7 +3858,6 @@ mapi_get_header_info (LPMESSAGE message,
                  SRCNAME, __func__);
       TRETURN false;
     }
-
   const std::string hdrStr = mapi_get_header (message);
   if (hdrStr.empty())
     {
@@ -3890,6 +3890,29 @@ mapi_get_header_info (LPMESSAGE message,
       r_autocrypt.pref = ac_get_value (ac_field, "prefer-encrypt");
     }
 
+  rfc822parse_field_t field = rfc822parse_parse_field (msg, "Content-Type",
+                                                       -1);
+  if (field)
+    {
+      const char *boundary = rfc822parse_query_parameter (field, "boundary",
+                                                          -1);
+      if (boundary)
+        {
+          r_header_info.boundary = boundary;
+          log_dbg ("Found Boundary. '%s'", boundary);
+        }
+      else
+        {
+          log_dbg ("Failed to find top level boundary.");
+        }
+      rfc822parse_release_field (field);
+    }
+  else
+    {
+      log_dbg ("Failed to get content type field.");
+    }
+
+  r_header_info.acInfo = r_autocrypt;
   rfc822parse_close (msg);
   TRETURN true;
 }

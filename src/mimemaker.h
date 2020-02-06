@@ -22,6 +22,8 @@
 #ifndef MIMEMAKER_H
 #define MIMEMAKER_H
 
+#include "mapihelp.h"
+
 class Mail;
 #ifdef __cplusplus
 extern "C" {
@@ -91,6 +93,10 @@ void create_top_signing_header (char *buffer, size_t buflen, protocol_t protocol
                            int first, const char *boundary, const char *micalg);
 int write_string (sink_t sink, const char *text);
 int write_b64 (sink_t sink, const void *data, size_t datalen);
+
+/* Encode an input string according to rfc2047
+   caller needs to free result. */
+char *utf8_to_rfc2047b (const char *input);
 
 #ifdef __cplusplus
 }

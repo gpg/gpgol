@@ -338,6 +338,14 @@ struct autocrypt_s
   std::string addr;
   GpgME::Data data;
 };
+
+/* A general way to transfer some header infos around
+   without having to parse them multiple times. */
+struct header_info_s
+{
+  std::string boundary;
+  autocrypt_s acInfo;
+};
 #endif
 
 #endif // COMMON_INDEP_H

@@ -1360,7 +1360,8 @@ try_resolve_group (LPDISPATCH addrEntry,
           char *resolved = get_pa_string (entry.get(), PR_EMAIL_ADDRESS_DASL);
           if (resolved)
             {
-              element.first = Recipient (resolved, recipient_type);
+              element.first = Recipient (resolved, entryName.c_str (),
+                                         recipient_type);
               ret.push_back (element);
               foundOne = true;
               continue;
@@ -1372,7 +1373,8 @@ try_resolve_group (LPDISPATCH addrEntry,
       char *ex_resolved = get_recipient_addr_entry_fallbacks_ex (entry.get());
       if (ex_resolved)
         {
-          element.first = Recipient (ex_resolved, recipient_type);
+          element.first = Recipient (ex_resolved, entryName.c_str (),
+                                     recipient_type);
           ret.push_back (element);
           foundOne = true;
           continue;
@@ -1427,6 +1429,14 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
         }
 
       int recipient_type = get_oom_int (recipient, "Type");
+      std::string entryName;
+      char *entry_name = get_oom_string (recipient, "Name");
+      if (entry_name)
+        {
+          entryName = entry_name;
+          xfree (entry_name);
+        }
+
 
       auto addrEntry = MAKE_SHARED (get_oom_object (recipient, "AddressEntry"));
       if (addrEntry && try_resolve_group (addrEntry.get (), ret,
@@ -1444,7 +1454,8 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
       char *resolved = get_pa_string (recipient, PR_SMTP_ADDRESS_DASL);
       if (resolved)
         {
-          entry.first = Recipient (resolved, recipient_type);
+          entry.first = Recipient (resolved, entryName.c_str (),
+                                   recipient_type);
           entry.first.setIndex (i);
           xfree (resolved);
           gpgol_release (recipient);
@@ -1455,7 +1466,8 @@ get_oom_recipients_with_addrEntry (LPDISPATCH recipients, bool *r_err)
       resolved = get_recipient_addr_fallbacks (recipient);
       if (resolved)
         {
-          entry.first = Recipient (resolved, recipient_type);
+          entry.first = Recipient (resolved, entryName.c_str (),
+                                   recipient_type);
           entry.first.setIndex (i);
           xfree (resolved);
           gpgol_release (recipient);

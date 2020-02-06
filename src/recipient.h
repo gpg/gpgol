@@ -35,6 +35,7 @@ public:
     Recipient ();
     Recipient (const Recipient &other);
     explicit Recipient (const char *addr, int type);
+    explicit Recipient (const char *addr, const char *name, int type);
 
     enum recipientType
       {
@@ -50,15 +51,22 @@ public:
     std::vector<GpgME::Key> keys () const;
 
     std::string mbox () const;
+    std::string name () const;
+    std::string addr () const;
     recipientType type () const;
     void setType (int type);
     void setIndex (int index);
     int index() const;
 
+    /* Returns an RFC2047 encoded name / email pair of the recipient. */
+    std::string encodedDisplayName () const;
+
     /* For debugging */
     static void dump(const std::vector<Recipient> &recps);
 private:
     std::string m_mbox;
+    std::string m_name;
+    std::string m_addr;
     recipientType m_type;
     std::vector<GpgME::Key> m_keys;
     int m_index;

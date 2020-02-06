@@ -681,8 +681,20 @@ public:
   /* Returns true if a mail is a copy that was split of
      a different mail. */
   bool isSplitCopy () const;
+
   /* Setter for isSplitCopy */
   void setSplitCopy (bool val);
+
+  /* Set protected headers data */
+  void setProtectedHeaders (const std::string &hdrs);
+  std::string protectedHeaders () const;
+
+  /* Parse the headers so that the header_info_s
+     becomes valid.*/
+  int parseHeaders_m ();
+  /* Get the header info struct. Only valid
+     afer parseHeaders_m */
+  header_info_s headerInfo () const;
 private:
   /* Returns a copy of the mailitem object. This copy
      is sadly not the same as in the ItemLoad event
@@ -691,6 +703,7 @@ private:
   bool checkIfMailIsChildOfPrintMail_o ();
   void updateSigstate ();
   int add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments);
+  int buildProtectedHeaders_o ();
 
   LPDISPATCH m_mailitem;
   LPDISPATCH m_event_sink;
@@ -750,6 +763,8 @@ private:
   std::vector<GpgME::Key> m_resolved_signing_keys; /* Prepared / resolved keys for signing. */
   bool m_recipients_set; /* Recipients were explictly set. */
   bool m_is_split_copy; /* Is the a copy mail that was part of a split. */
+  std::string m_protected_headers;
+  header_info_s m_header_info; /* Information about the original headers */
 };
 
 /* A state variable to capture which mail triggered a copy to

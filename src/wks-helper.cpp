@@ -829,8 +829,27 @@ WKSHelper::handle_confirmation_read (Mail *mail, LPSTREAM stream) const
   mystdin->write (headers.c_str (), headers.size ());
 
   /* Then the MIME data */
-  copy_stream_to_data (stream, mystdin);
+  GpgME::Data mimeData;
+  header_info_s mime_info = mail->headerInfo ();
+  copy_stream_to_data (stream, &mimeData);
   gpgol_release (stream);
+  auto stringData = mimeData.toString ();
+  if (stringData.rfind ("-----BEGIN PGP", 0) == 0)
+    {
+      log_dbg ("Found PGP marker at the beginning. Adding Ct"
+               "MIME");
+      std::stringstream ss;
+      ss << "MIME-Version: 1.0\r\n\r\n\r\n"
+         << "--" <<mime_info.boundary << "\r\n"
+         << "Content-Type: application/pgp-encrypted\r\n\r\n"
+         << "Version: 1" << "\r\n\r\n"
+         << "--" << mime_info.boundary << "\r\n"
+         << "Content-Type: application/octet-stream\r\n\r\n"
+         << stringData << "\r\n"
+         << "--" << mime_info.boundary << "--\r\n";
+      stringData = ss.str ();
+    }
+  mystdin->write (stringData.c_str (), stringData.size ());
 
   /* Then lets make sure its flushy */
   mystdin->write (nullptr, 0);

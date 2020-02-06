@@ -328,14 +328,12 @@ Mail::preProcessMessage_m ()
          headers. If the mails are crypto messages the autocrypt
          stuff is handled in the parsecontroller. */
       autocrypt_s ac;
-      if (mapi_get_header_info (message, ac))
+      parseHeaders_m ();
+      if (m_header_info.acInfo.exists)
         {
-          if (ac.exists)
-            {
-              log_debug ("%s:%s: Importing autocrypt header from unencrypted "
-                         "mail.", SRCNAME, __func__);
-              KeyCache::import_pgp_key_data (ac.data);
-            }
+          log_debug ("%s:%s: Importing autocrypt header from unencrypted "
+                     "mail.", SRCNAME, __func__);
+          KeyCache::import_pgp_key_data (m_header_info.acInfo.data);
         }
       gpgol_release (message);
       TRETURN 0;
@@ -1354,6 +1352,10 @@ Mail::decryptVerify_o ()
 
   if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
     {
+      if (m_header_info.boundary.empty())
+        {
+          parseHeaders_m ();
+        }
       WKSHelper::instance ()->handle_confirmation_read (this, cipherstream);
       TRETURN 0;
     }
@@ -1366,23 +1368,13 @@ Mail::decryptVerify_o ()
       /* Handle autocrypt header. As we want to have the import
          of the header in the same thread as the parser we leave it
          to the parser. */
-      auto message = MAKE_SHARED (get_oom_message (m_mailitem));
-      if (!message)
+      if (m_header_info.boundary.empty())
         {
-          /* Hmmm */
-          STRANGEPOINT;
+          parseHeaders_m ();
         }
-      else
+      if (m_header_info.acInfo.exists)
         {
-          autocrypt_s ainfo;
-          if (!mapi_get_header_info ((LPMESSAGE)message.get(), ainfo))
-            {
-              STRANGEPOINT;
-            }
-          else if (ainfo.exists)
-            {
-              m_parser->setAutocryptInfo (ainfo);
-            }
+          m_parser->setAutocryptInfo (m_header_info.acInfo);
         }
     }
 
@@ -1420,16 +1412,27 @@ Mail::decryptVerify_o ()
     }
 }
 
-void find_and_replace(std::string& source, const std::string &find,
-                      const std::string &replace)
+int
+Mail::parseHeaders_m ()
 {
-  TSTART;
-  for(std::string::size_type i = 0; (i = source.find(find, i)) != std::string::npos;)
+  /* Parse the headers first so that the handler for
+     confirmation read can access them.
+     Should be put in its own function.
+     */
+  auto message = MAKE_SHARED (get_oom_message (m_mailitem));
+  if (!message)
     {
-      source.replace(i, find.length(), replace);
-      i += replace.length();
+      /* Hmmm */
+      STRANGEPOINT;
+      TRETURN -1;
     }
-  TRETURN;
+  if (!mapi_get_header_info ((LPMESSAGE)message.get(),
+                             m_header_info))
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+  TRETURN 0;
 }
 
 static void
@@ -4859,4 +4862,82 @@ bool
 Mail::isSplitCopy () const
 {
   return m_is_split_copy;
+}
+
+int
+Mail::buildProtectedHeaders_o ()
+{
+  TSTART;
+  std::stringstream ss;
+  std::vector <std::string> toRecps;
+  std::vector <std::string> ccRecps;
+  std::vector <std::string> bccRecps;
+  ss << "protected-headers=\"v1\"\r\n";
+  for (const auto &recp: m_cached_recipients)
+    {
+      if (recp.type() == Recipient::olCC)
+        {
+          ccRecps.push_back (recp.encodedDisplayName ());
+        }
+      else if (recp.type() == Recipient::olTo)
+        {
+          toRecps.push_back (recp.encodedDisplayName ());
+        }
+      else if (recp.type() == Recipient::olOriginator)
+        {
+          ss << "From: " << recp.encodedDisplayName () << "\r\n";
+        }
+    }
+  std::string buf;
+  if (toRecps.size ())
+    {
+      join(toRecps, ";", buf);
+      ss << "To: " << buf << "\r\n";
+    }
+  if (ccRecps.size ())
+    {
+      join(toRecps, ";", buf);
+      ss << "CC: " << buf << "\r\n";
+    }
+
+  if (opt.encryptSubject)
+    {
+      char *subject = get_oom_string (m_mailitem, "Subject");
+      if (subject)
+        {
+          char *encodedSubject = utf8_to_rfc2047b (subject);
+          if (encodedSubject)
+            {
+              ss << "Subject: " << encodedSubject << "\r\n";
+            }
+          xfree (encodedSubject);
+        }
+      if (!put_oom_string (m_mailitem, "Subject", "..."))
+        {
+          STRANGEPOINT;
+          TRETURN -1;
+        }
+      xfree (subject);
+    }
+
+  m_protected_headers = ss.str ();
+  TRETURN 0;
+}
+
+void
+Mail::setProtectedHeaders (const std::string &hdr)
+{
+  m_protected_headers = hdr;
+}
+
+std::string
+Mail::protectedHeaders () const
+{
+  return m_protected_headers;
+}
+
+header_info_s
+Mail::headerInfo () const
+{
+  return m_header_info;
 }
