@@ -304,6 +304,7 @@ read_options (void)
   opt.autoimport = get_conf_bool ("autoimport", 0);
   opt.splitBCCMails = get_conf_bool ("splitBCCMails", 1);
   opt.combinedOpsEnabled = get_conf_bool ("combinedOpsEnabled", 0);
+  opt.encryptSubject = get_conf_bool ("encryptSubject", 0);
 
   if (!opt.automation)
     {

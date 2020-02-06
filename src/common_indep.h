@@ -212,6 +212,7 @@ struct
   int alwaysShowApproval;    /* Always show the certificate approval dialog. */
   int combinedOpsEnabled;    /* Enable S/MIME and OpenPGP combined operations. */
   int splitBCCMails;         /* Split BCC recipients in their own mails. */
+  int encryptSubject;        /* Encrypt the subject with protected headers. */
 
   /* The forms revision number of the binary.  */
   int forms_revision;
