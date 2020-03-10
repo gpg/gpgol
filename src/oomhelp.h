@@ -164,6 +164,7 @@ void release_disp (LPDISPATCH obj);
 /* Return the malloced name of an COM+ object.  */
 char *get_object_name (LPUNKNOWN obj);
 std::string get_object_name_s (LPUNKNOWN obj);
+std::string get_object_name_s (shared_disp_t obj);
 
 /* Helper to lookup a dispid.  */
 DISPID lookup_oom_dispid (LPDISPATCH pDisp, const char *name);

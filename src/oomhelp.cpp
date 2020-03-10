@@ -137,6 +137,12 @@ get_object_name_s (LPUNKNOWN obj)
   return ret;
 }
 
+std::string
+get_object_name_s (shared_disp_t obj)
+{
+  return get_object_name_s (obj.get ());
+}
+
 /* Lookup the dispid of object PDISP for member NAME.  Returns
    DISPID_UNKNOWN on error.  */
 DISPID
