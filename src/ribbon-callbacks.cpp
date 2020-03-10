@@ -819,19 +819,63 @@ HRESULT open_contact_key (LPDISPATCH ctrl)
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
       return E_FAIL;
     }
-  LPDISPATCH inspector = NULL;
-  HRESULT hr = getContext (ctrl, &inspector);
+  LPDISPATCH context_disp = nullptr;
+  HRESULT hr = getContext (ctrl, &context_disp);
+  auto context = MAKE_SHARED (context_disp);
 
-  if (hr)
+  if (hr || !context)
     {
-      log_error ("%s:%s:%i : hresult %lx", SRCNAME, __func__, __LINE__,
-                 hr);
+      log_error ("%s:%s:%i :Failed to get context hresult %lx",
+                 SRCNAME, __func__, __LINE__, hr);
       return S_OK;
     }
 
-  /* Context is assumed to be the Insepector */
-  LPDISPATCH contact = get_oom_object (inspector, "CurrentItem");
-  gpgol_release (inspector);
+  char *name = get_object_name (context.get ());
+
+  std::string ctx_name;
+
+  if (name)
+    {
+      ctx_name = name;
+      xfree (name);
+    }
+
+  if (ctx_name.empty())
+    {
+      log_error ("%s:%s: Failed to get context name",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+
+  shared_disp_t contact = nullptr;
+  if (!strcmp (ctx_name.c_str(), "_Inspector"))
+    {
+      contact = get_oom_object_s (context, "CurrentItem");
+    }
+  else if (!strcmp (ctx_name.c_str(), "_Explorer"))
+    {
+      auto selection = get_oom_object_s (context, "Selection");
+      if (!selection)
+        {
+          log_error ("%s:%s: Failed to get selection.",
+                     SRCNAME, __func__);
+          return S_OK;
+        }
+      int count = get_oom_int (selection, "Count");
+
+      if (!count)
+        {
+          log_err ("Nothing selected, button should have been inactive.");
+          return S_OK;
+        }
+      else if (count != 1)
+        {
+          log_err ("More then one selected. Button should have been inactive.");
+          return S_OK;
+        }
+      contact = get_oom_object_s (selection, "Item(1)");
+    }
+
 
   if (!contact)
     {
@@ -839,9 +883,8 @@ HRESULT open_contact_key (LPDISPATCH ctrl)
       return S_OK;
     }
 
-  Addressbook::edit_key_o (contact);
+  Addressbook::edit_key_o (contact.get ());
 
-  gpgol_release (contact);
   return S_OK;
 }
 
