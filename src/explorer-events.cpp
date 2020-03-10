@@ -160,6 +160,14 @@ start_watchdog (LPVOID arg)
 static void
 changeSeen (LPDISPATCH explorer)
 {
+  auto view = get_oom_object_s (explorer, "CurrentView");
+  if (view && get_object_name_s (view.get ()) == "_PeopleView")
+    {
+      log_oom ("Selection change in people view. Invalidating.");
+      gpgoladdin_invalidate_ui ();
+      return;
+    }
+
   gpgol_lock (&explorer_map_lock);
 
   auto it = s_explorerMap.find (explorer);

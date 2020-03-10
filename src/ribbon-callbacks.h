@@ -53,6 +53,7 @@
 #define ID_CMD_DECRYPT_PERMANENTLY 38
 #define ID_CMD_FILE_SAVE_AS 39
 #define ID_CMD_FILE_SAVE_AS_IN_WINDOW 40
+#define ID_GET_IS_ADDR_BOOK_ENABLED 41
 
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -73,6 +74,8 @@ HRESULT get_crypt_pressed (LPDISPATCH ctrl, int flags, VARIANT *result, bool is_
 HRESULT mark_mime_action (LPDISPATCH ctrl, int flags, bool is_explorer);
 /* Check the if the gpgol button should be enabled */
 HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result);
+/* Check the if the gpgol address book button should be enabled */
+HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result);
 /* Get the label for the signature. Returns BSTR */
 HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result);
 /* Get the tooltip for the signature. Returns BSTR */

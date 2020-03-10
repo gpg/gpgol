@@ -714,6 +714,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getSigTip", ID_GET_SIG_TTIP)
       ID_MAPPER (L"launchDetails", ID_LAUNCH_CERT_DETAILS)
       ID_MAPPER (L"getIsDetailsEnabled", ID_GET_IS_DETAILS_ENABLED)
+      ID_MAPPER (L"getIsAddrBookEnabled", ID_GET_IS_ADDR_BOOK_ENABLED)
       ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO_MAIL)
       ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
       ID_MAPPER (L"overrideFileClose", ID_CMD_FILE_CLOSE)
@@ -799,6 +800,8 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
         return launch_cert_details (parms->rgvarg[0].pdispVal);
       case ID_GET_IS_DETAILS_ENABLED:
         return get_is_details_enabled (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_IS_ADDR_BOOK_ENABLED:
+        return get_is_addr_book_enabled (parms->rgvarg[0].pdispVal, result);
 
       case ID_ON_LOAD:
           {
@@ -1009,6 +1012,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "               label=\"%s\""
         "               screentip=\"%s\""
         "               supertip=\"%s\""
+        "               getEnabled=\"getIsAddrBookEnabled\""
         "               onAction=\"openContactKey\"/>"
         "       <dialogBoxLauncher>"
         "         <button id=\"optsBtn_contact_ex\""

@@ -595,6 +595,44 @@ HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
   return S_OK;
 }
 
+HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
+{
+  log_dbg ("Check for address book enable state.");
+  if (!ctrl)
+   {
+     log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
+     return E_FAIL;
+   }
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = &var_false;
+  LPDISPATCH context = nullptr;
+  HRESULT hr = getContext (ctrl, &context);
+
+  if (hr || !context)
+    {
+      log_error ("%s:%s:%i :Failed to get context hresult %lx",
+                 SRCNAME, __func__, __LINE__, hr);
+      return S_OK;
+    }
+  auto selection = get_oom_object (context, "Selection");
+  gpgol_release (context);
+  if (!selection)
+    {
+      log_error ("%s:%s: Failed to get selection.",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+  int count = get_oom_int (selection, "Count");
+  gpgol_release (selection);
+  if (count == 1)
+    {
+      result->pboolVal = &var_true;
+      log_dbg ("Selection count is one, return true.");
+      return S_OK;
+    }
+  return S_OK;
+}
+
 HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
