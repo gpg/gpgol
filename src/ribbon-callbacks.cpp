@@ -597,7 +597,6 @@ HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
 
 HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
 {
-  log_dbg ("Check for address book enable state.");
   if (!ctrl)
    {
      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
@@ -614,7 +613,7 @@ HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
                  SRCNAME, __func__, __LINE__, hr);
       return S_OK;
     }
-  auto selection = get_oom_object (context, "Selection");
+  auto selection = get_oom_object_s (context, "Selection");
   gpgol_release (context);
   if (!selection)
     {
@@ -623,11 +622,16 @@ HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
       return S_OK;
     }
   int count = get_oom_int (selection, "Count");
-  gpgol_release (selection);
   if (count == 1)
     {
-      result->pboolVal = &var_true;
-      log_dbg ("Selection count is one, return true.");
+      auto contact = get_oom_object_s (selection, "Item(1)");
+      const auto obj_name = get_object_name_s (contact);
+      if (obj_name == "_ContactItem")
+        {
+          result->pboolVal = &var_true;
+          log_dbg ("One contact selected");
+        }
+
       return S_OK;
     }
   return S_OK;
