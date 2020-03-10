@@ -124,6 +124,18 @@ get_object_name (LPUNKNOWN obj)
   TRETURN name;
 }
 
+std::string
+get_object_name_s (LPUNKNOWN obj)
+{
+  char *name = get_object_name (obj);
+  std::string ret;
+  if (name)
+    {
+      ret = name;
+    }
+  xfree (name);
+  return ret;
+}
 
 /* Lookup the dispid of object PDISP for member NAME.  Returns
    DISPID_UNKNOWN on error.  */
