@@ -392,6 +392,17 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
   TRETURN NULL;
 }
 
+shared_disp_t
+get_oom_object_s (shared_disp_t pStart, const char *fullname)
+{
+  return MAKE_SHARED (get_oom_object (pStart.get (), fullname));
+}
+
+shared_disp_t
+get_oom_object_s (LPDISPATCH pStart, const char *fullname)
+{
+  return MAKE_SHARED (get_oom_object (pStart, fullname));
+}
 
 /* Helper for put_oom_icon.  */
 static int
@@ -710,6 +721,11 @@ get_oom_int (LPDISPATCH pDisp, const char *name)
   TRETURN result;
 }
 
+int
+get_oom_int (shared_disp_t pDisp, const char *name)
+{
+  return get_oom_int (pDisp.get (), name);
+}
 
 /* Get the string property NAME of the object PDISP.  Returns NULL if
    not found or if it is not a string property.  */
@@ -745,7 +761,24 @@ get_oom_string (LPDISPATCH pDisp, const char *name)
   TRETURN result;
 }
 
+std::string
+get_oom_string_s (LPDISPATCH pDisp, const char *name)
+{
+  char *ret_c =  get_oom_string (pDisp, name);
+  std::string ret;
+  if (ret_c)
+    {
+       ret = ret_c;
+       xfree (ret_c);
+    }
+  return ret;
+}
 
+std::string
+get_oom_string_s (shared_disp_t pDisp, const char *name)
+{
+  return get_oom_string_s (pDisp.get (), name);
+}
 /* Get the object property NAME of the object PDISP.  Returns NULL if
    not found or if it is not an object perty.  */
 LPUNKNOWN

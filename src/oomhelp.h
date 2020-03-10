@@ -169,6 +169,9 @@ DISPID lookup_oom_dispid (LPDISPATCH pDisp, const char *name);
 
 /* Return the OOM object's IDispatch interface described by FULLNAME.  */
 LPDISPATCH get_oom_object (LPDISPATCH pStart, const char *fullname);
+/* Do the same but with a shared disp return value */
+shared_disp_t get_oom_object_s (LPDISPATCH pStart, const char *fullname);
+shared_disp_t get_oom_object_s (shared_disp_t pStart, const char *fullname);
 
 /* Set the Icon of a CommandBarControl.  */
 int put_oom_icon (LPDISPATCH pDisp, int rsource_id, int size);
@@ -190,9 +193,12 @@ int get_oom_bool (LPDISPATCH pDisp, const char *name);
 
 /* Get the integer property NAME of the object PDISP.  */
 int get_oom_int (LPDISPATCH pDisp, const char *name);
+int get_oom_int (shared_disp_t pDisp, const char *name);
 
 /* Get the string property NAME of the object PDISP.  */
 char *get_oom_string (LPDISPATCH pDisp, const char *name);
+std::string get_oom_string_s (LPDISPATCH pDisp, const char *name);
+std::string get_oom_string_s (shared_disp_t pDisp, const char *name);
 
 /* Get an IUnknown object from property NAME of PDISP.  */
 LPUNKNOWN get_oom_iunknown (LPDISPATCH pDisp, const char *name);
