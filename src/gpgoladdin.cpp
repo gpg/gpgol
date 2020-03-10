@@ -1000,6 +1000,24 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "       </dialogBoxLauncher>"
         "     </group>"
         "    </tab>"
+        "    <tab idMso=\"TabContacts\">"
+        "     <group id=\"contacts_gpgol_ex\""
+        "            label=\"%s\">"
+        "       <button id=\"idContactAddkeyEx\""
+        "               getImage=\"btnSignEncryptLarge\""
+        "               size=\"large\""
+        "               label=\"%s\""
+        "               screentip=\"%s\""
+        "               supertip=\"%s\""
+        "               onAction=\"openContactKey\"/>"
+        "       <dialogBoxLauncher>"
+        "         <button id=\"optsBtn_contact_ex\""
+        "                 onAction=\"openOptions\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\"/>"
+        "       </dialogBoxLauncher>"
+        "     </group>"
+        "    </tab>"
         "   </tabs>"
         "   <contextualTabs>"
         "   <tabSet idMso=\"TabComposeTools\">"
@@ -1053,6 +1071,15 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         " </contextMenus>"
         "</customUI>",
         _("GpgOL"),
+        optsSTip,
+        _("GpgOL"),
+        _("Settings"),
+        _(/* TRANSLATORS: Tooltip caption */
+          "Configure GpgOL keys and settings for this contact."),
+        _(/* TRANSLATORS: Tooltip content */
+          "Configure contact specific keys and settings to override "
+          "the default behavior for this contact."),
+        _("GpgOL Settings"),
         optsSTip,
         _("GpgOL"),
         _("Secure"), secureTTip, secureSTip,
