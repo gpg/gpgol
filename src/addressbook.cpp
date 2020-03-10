@@ -37,11 +37,14 @@ typedef struct
   std::string name;
   std::string pgp_data;
   std::string cms_data;
+  std::string entry_id;
   HWND hwnd;
   shared_disp_t contact;
 } keyadder_args_t;
 
 static std::set <std::string> s_checked_entries;
+static std::vector <std::string> s_opened_contacts_vec;
+GPGRT_LOCK_DEFINE (s_opened_contacts_lock);
 
 static Addressbook::callback_args_t
 parse_output (const std::string &output)
@@ -208,6 +211,19 @@ open_keyadder (LPVOID arg)
                                   GpgME::Context::SpawnAllowSetFg |
                                   GpgME::Context::SpawnShowWindow));
   release_cArray (cargs);
+  if (!adder_args->entry_id.empty ())
+    {
+      log_dbg ("Removing entry from list of opened contacts.");
+      gpgrt_lock_lock (&s_opened_contacts_lock);
+      const auto id = adder_args->entry_id;
+      std::remove_if (s_opened_contacts_vec.begin(),
+                      s_opened_contacts_vec.end (),
+                      [id] (const auto &val) {
+                        return val == id;
+                      });
+      gpgrt_lock_unlock (&s_opened_contacts_lock);
+    }
+
   if (err)
     {
       log_error ("%s:%s: Err code: %i asString: %s",
@@ -296,6 +312,30 @@ Addressbook::edit_key_o (LPDISPATCH contact)
       TRACEPOINT;
       TRETURN;
     }
+  /* First check that we have not already opened an editor.
+     This can happen when starting the editor takes a while
+     and the user clicks multiple times because nothing
+     happens. */
+  const auto entry_id = get_oom_string_s (contact, "EntryID");
+
+  if (!entry_id.empty())
+    {
+      gpgrt_lock_lock (&s_opened_contacts_lock);
+      if (std::find (s_opened_contacts_vec.begin (),
+                     s_opened_contacts_vec.end (),
+                     entry_id) != s_opened_contacts_vec.end ())
+        {
+          log_dbg ("Contact already opened.");
+          /* TODO: Find the window if it exists and bring it to front. */
+          gpgrt_lock_unlock (&s_opened_contacts_lock);
+          TRETURN;
+        }
+      gpgrt_lock_unlock (&s_opened_contacts_lock);
+    }
+  else
+    {
+      log_dbg ("Empty EntryID.");
+    }
 
   auto user_props = MAKE_SHARED (get_oom_object (contact, "UserProperties"));
   if (!user_props)
@@ -333,6 +373,11 @@ Addressbook::edit_key_o (LPDISPATCH contact)
         }
     }
 
+  /* Insert into our vec of opened contacts. */
+  gpgrt_lock_lock (&s_opened_contacts_lock);
+  s_opened_contacts_vec.push_back (entry_id);
+  gpgrt_lock_unlock (&s_opened_contacts_lock);
+
   char *name = get_oom_string (contact, "Subject");
   if (!name)
     {
@@ -353,6 +398,7 @@ Addressbook::edit_key_o (LPDISPATCH contact)
   contact->AddRef ();
   memdbg_addRef (contact);
   args->contact = MAKE_SHARED (contact);
+  args->entry_id = entry_id;
 
   CloseHandle (CreateThread (NULL, 0, open_keyadder, (LPVOID) args, 0,
                              NULL));
