@@ -46,6 +46,10 @@ void join(const std::vector<std::string>& v, const char *c, std::string& s);
 char **vector_to_cArray (const std::vector<std::string> &vec);
 std::vector <std::string> cArray_to_vector (const char **cArray);
 
+/* More string helpers */
+bool starts_with(const std::string &s, const char *prefix);
+bool starts_with(const std::string &s, const char prefix);
+
 /* Check if we are in de_vs mode. */
 bool in_de_vs_mode ();
 

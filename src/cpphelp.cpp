@@ -346,3 +346,17 @@ find_and_replace(std::string& source, const std::string &find,
     }
   TRETURN;
 }
+
+bool starts_with(const std::string &s, const char *prefix)
+{
+  if (!prefix || s.empty ())
+    {
+      return false;
+    }
+  return s.substr(0, strlen (prefix)) == prefix;
+}
+
+bool starts_with(const std::string &s, const char prefix)
+{
+  return !s.empty() && s.front() == prefix;
+}
