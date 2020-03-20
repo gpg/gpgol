@@ -30,6 +30,8 @@
 #include <gpgme++/key.h>
 #include <gpgme++/data.h>
 #include <gpgme++/importresult.h>
+#include <gpgme++/engineinfo.h>
+#include <gpgme++/defaultassuantransaction.h>
 
 #include <windows.h>
 
@@ -306,6 +308,143 @@ do_populate_protocol (GpgME::Protocol proto, bool secret)
   TRETURN;
 }
 
+const std::vector< std::pair<std::string, std::string> >
+gpgagent_transact (std::unique_ptr <GpgME::Context> &ctx,
+                   const char *command)
+{
+  GpgME::Error err;
+  err = ctx->assuanTransact (command);
+  std::unique_ptr<GpgME::AssuanTransaction> t = ctx->takeLastAssuanTransaction();
+  std::unique_ptr<GpgME::DefaultAssuanTransaction> d (dynamic_cast<GpgME::DefaultAssuanTransaction*>(t.release()));
+
+  if (d)
+    {
+      return d->statusLines ();
+    }
+  return std::vector< std::pair<std::string, std::string> > ();
+}
+
+static void
+gpgsm_learn ()
+{
+  TSTART;
+  const GpgME::EngineInfo ei = GpgME::engineInfo (GpgME::CMS);
+
+  if (!ei.fileName ())
+    {
+      STRANGEPOINT;
+      TRETURN;
+    }
+
+  std::vector<std::string> args;
+
+  args.push_back (ei.fileName ());
+  args.push_back ("--learn-card");
+
+  // Spawn the process
+  auto ctx = GpgME::Context::createForEngine (GpgME::SpawnEngine);
+
+  if (!ctx)
+    {
+      STRANGEPOINT;
+      TRETURN;
+    }
+
+  GpgME::Data mystdin, mystdout, mystderr;
+
+  char **cargs = vector_to_cArray (args);
+
+  GpgME::Error err = ctx->spawn (cargs[0], const_cast <const char **> (cargs),
+                                 mystdin, mystdout, mystderr,
+                                 GpgME::Context::SpawnNone);
+  release_cArray (cargs);
+
+  if (err)
+    {
+      log_debug ("%s:%s: gpgsm learn spawn code: %i asString: %s",
+                 SRCNAME, __func__, err.code(), err.asString());
+    }
+  if ((opt.enable_debug & DBG_DATA))
+    {
+      log_data ("stdout:\n'%s'\nstderr:\n%s", mystdout.toString ().c_str (),
+                mystderr.toString ().c_str ());
+    }
+  TRETURN;
+}
+
+static void
+do_populate_smartcards (GpgME::Protocol proto)
+{
+  TSTART;
+  if (proto != GpgME::CMS)
+    {
+      TRETURN;
+    }
+
+  GpgME::Error err;
+  auto ctx = GpgME::Context::createForEngine (GpgME::AssuanEngine, &err);
+
+  if (err)
+    {
+      log_dbg ("Failed to create assuan engine. %s",
+               err.asString ());
+      TRETURN;
+    }
+  const auto serials = gpgagent_transact (ctx, "scd serialno");
+  if (serials.empty ())
+    {
+      log_dbg ("No smartcard found.");
+    }
+
+  const auto pairinfo = gpgagent_transact (ctx, "scd learn --keypairinfo");
+  /* If we have a supported card output looks like this:
+     S KEYPAIRINFO 84DC19DC8A563302DA14FF33D42FBBB815170E19 NKS-NKS3.4531 sa
+     S KEYPAIRINFO CD9C93F2C76CCA935BC47114C5B527491BA4896D NKS-NKS3.45B1 e
+     S KEYPAIRINFO 033829E72E9007213FE3E1D9FD3D286DB5D07599 NKS-NKS3.45B2 e
+     S KEYPAIRINFO 0404417F832BE6266585190843B38204431EE26A NKS-SIGG.4531 sae
+  */
+  if (pairinfo.empty ())
+    {
+      log_dbg ("Did not find any smartcards.");
+      TRETURN;
+    }
+
+  auto search_ctx = GpgME::Context::create (GpgME::CMS);
+
+  bool need_to_learn = false;
+  for (const auto &info: pairinfo)
+    {
+      if (info.first != "KEYPAIRINFO")
+        {
+          log_dbg ("Unexpected keypairinfo line '%s'", info.second.c_str ());
+          continue;
+        }
+
+      const auto vec = gpgol_split (info.second, ' ');
+      if (!vec.size ())
+        {
+          log_dbg ("Unexpected keypairinfo line '%s'", info.second.c_str ());
+          continue;
+        }
+      const auto keygrip = std::string ("&") + vec[0];
+
+      const auto key = search_ctx->key (keygrip.c_str (), err, true);
+      if (err || key.isNull ())
+        {
+          log_debug ("Key for grip: %s not found. Searching.",
+                     keygrip.c_str ());
+          need_to_learn = true;
+          break;
+        }
+    }
+
+  if (need_to_learn)
+    {
+      gpgsm_learn ();
+    }
+  TRETURN;
+}
+
 static DWORD WINAPI
 do_populate (LPVOID)
 {
@@ -319,6 +458,7 @@ do_populate (LPVOID)
     {
       do_populate_protocol (GpgME::CMS, false);
       do_populate_protocol (GpgME::CMS, true);
+      do_populate_smartcards (GpgME::CMS);
     }
   log_debug ("%s:%s: Keycache populated",
              SRCNAME, __func__);
