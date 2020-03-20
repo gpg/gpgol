@@ -416,7 +416,6 @@ do_populate_smartcards (GpgME::Protocol proto)
     {
       if (info.first != "KEYPAIRINFO")
         {
-          log_dbg ("Unexpected keypairinfo line '%s'", info.second.c_str ());
           continue;
         }
 
@@ -425,6 +424,14 @@ do_populate_smartcards (GpgME::Protocol proto)
         {
           log_dbg ("Unexpected keypairinfo line '%s'", info.second.c_str ());
           continue;
+        }
+      if (vec.size () >= 2)
+        {
+          if (starts_with (vec[1], "OPENPGP"))
+            {
+              log_dbg ("Skipping OpenPGP key %s", anonstr (vec[0].c_str ()));
+              continue;
+            }
         }
       const auto keygrip = std::string ("&") + vec[0];
 
