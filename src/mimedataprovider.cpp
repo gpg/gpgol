@@ -446,8 +446,12 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           ctx->collect_html_body = 0;
         }
     }
-  else if (!ctx->collect_crypto_data && ctx->nesting_level >= 1)
+  else if (!ctx->collect_crypto_data)
     {
+      if (!ctx->nesting_level)
+        {
+          log_dbg ("Data found that has no body. Treating it as attachment.");
+        }
       /* Treat it as an attachment.  */
       ctx->current_attachment = provider->create_attachment();
       ctx->collect_body = 0;
