@@ -459,6 +459,10 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       log_data ("%s:%s: Collecting attachment.",
                        SRCNAME, __func__);
     }
+  else
+    {
+      log_dbg ("Don't know what to collect, invalid mail?.");
+    }
 
   TRETURN 0;
 }
