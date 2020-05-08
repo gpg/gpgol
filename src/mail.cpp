@@ -2057,10 +2057,52 @@ Mail::updateOOMData_o (bool for_encryption)
     {
       buf = get_sender_SendUsingAccount (m_mailitem, &m_is_gsuite);
     }
-  if (!buf && !isCryptoMail ())
+  if (!isCryptoMail ())
     {
-      /* Try the sender Object */
-      buf = get_sender_Sender (m_mailitem);
+      /* Try the sender Object and handle the case that someone
+         changed the identity but not the account. */
+      char *buf2 = get_sender_Sender (m_mailitem);
+      char *tmp = buf;
+      if (buf && buf2)
+        {
+          if (*buf == '/' && *buf2 != '/' && *buf2)
+            {
+              log_dbg ("Send account could not be resolved. Using sender.");
+              buf = buf2;
+              xfree (tmp);
+            }
+          else if (*buf && *buf != '/' && *buf2 && *buf2 != '/')
+            {
+              log_dbg ("SendUsingAccount: '%s' Sender: '%s'",
+                       anonstr (buf), anonstr (buf2));
+              auto key = KeyCache::instance()->getSigningKey (buf2, GpgME::OpenPGP);
+              if (!key.isNull())
+                {
+                  log_dbg ("Found OpenPGP Key for %s using that identity",
+                           anonstr (buf2));
+                  buf = buf2;
+                  xfree (tmp);
+                }
+              else if (opt.enable_smime)
+                {
+                  key = KeyCache::instance()->getSigningKey (buf2, GpgME::CMS);
+                  log_dbg ("Found S/MIME Key for %s using that identity",
+                           anonstr (buf2));
+                  buf = buf2;
+                  xfree (tmp);
+                }
+            }
+        }
+      else if (!buf)
+        {
+          buf = buf2;
+        }
+      else if (buf2 && buf != buf2)
+        {
+          log_dbg ("Keeping SendUsingAccount %s",
+                   anonstr (buf));
+          xfree (buf2);
+        }
     }
   if (!buf)
     {
