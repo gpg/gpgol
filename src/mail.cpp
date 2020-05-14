@@ -76,6 +76,25 @@ GPGRT_LOCK_DEFINE (uid_map_lock);
 static Mail *s_last_mail;
 Mail *g_mail_copy_triggerer = nullptr;
 
+#define COLOR_DARK_GREY  "#f0f0f0"
+#define COLOR_LIGHT_GREY "#f8f8f8"
+
+const char *HTML_PREVIEW_PLACEHOLDER =
+"<html><head></head><body>"
+"<table border=\"0\" width=\"100%%\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"" COLOR_DARK_GREY "\">"
+"<tr>"
+"<td bgcolor=\"" COLOR_DARK_GREY "\">"
+"<p><span style=\"font-weight:600; background-color:" COLOR_DARK_GREY ";\"><center>%s %s</center><span></p></td></tr>"
+"<tr>"
+"<td bgcolor=\"" COLOR_DARK_GREY "\">"
+"<p><span style=\"font-weight:600; background-color:" COLOR_DARK_GREY ";\"><center>%s</center><span></p></td></tr>"
+"<tr>"
+"<td bgcolor=\"" COLOR_LIGHT_GREY "\">"
+"%s"
+"</td></tr>"
+"</table></body></html>";
+
+const char *TEXT_PREVIEW_PLACEHOLDER = "%s %s %s\n\n%s";
 #define COPYBUFSIZE (8 * 1024)
 
 Mail::Mail (LPDISPATCH mailitem) :
@@ -116,7 +135,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_decrypt_again(false),
     m_printing(false),
     m_recipients_set(false),
-    m_is_split_copy(false)
+    m_is_split_copy(false),
+    m_attachs_added(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -814,6 +834,11 @@ int
 Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
 {
   TSTART;
+  if (m_attachs_added)
+    {
+      log_dbg ("Not adding attachments as they are already there.");
+      TRETURN 0;
+    }
   bool anyError = false;
   m_disable_att_remove_warning = true;
 
@@ -911,6 +936,7 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
 
     }
   m_disable_att_remove_warning = false;
+  m_attachs_added = true;
   TRETURN anyError;
 }
 
@@ -965,10 +991,46 @@ do_parsing (LPVOID arg)
       unblockInv();
       TRETURN -1;
     }
-  parser->parse();
-  if (!opt.sync_dec)
+
+  bool is_smime = mail->isSMIME ();
+
+  std::vector<GpgME::Key> senderKey;
+  if (!is_smime)
     {
-      do_in_ui_thread (PARSING_DONE, arg);
+      senderKey = KeyCache::instance ()->getEncryptionKeys (mail->getSender (),
+                                                            GpgME::OpenPGP);
+    }
+  bool has_already_preview = (mail->msgtype () == MSGTYPE_GPGOL_MULTIPART_SIGNED &&
+                              !mail->getOriginalBody ().empty ());
+  if (!has_already_preview && (senderKey.empty () || is_smime) &&
+      KeyCache::instance ()->protocolIsOnline (is_smime ? GpgME::CMS :
+                                                          GpgME::OpenPGP) &&
+      !opt.sync_dec)
+    {
+      log_dbg ("Op might be online. Doing two pass verify.");
+      parser->parse (true);
+      const auto verify_result = parser->verify_result ();
+      if (verify_result.numSignatures ())
+        {
+          log_dbg ("Have signature, needs second pass.");
+          do_in_ui_thread (SHOW_PREVIEW, arg);
+          log_dbg ("Preview updated.");
+          /* Sleep (10000); */
+          parser->parse (false);
+          log_dbg ("Second parse done.");
+        }
+      if (!opt.sync_dec)
+        {
+          do_in_ui_thread (PARSING_DONE, arg);
+        }
+    }
+  else
+    {
+      parser->parse (false);
+      if (!opt.sync_dec)
+        {
+          do_in_ui_thread (PARSING_DONE, arg);
+        }
     }
   gpgol_unlock (&parser_lock);
   unblockInv();
@@ -1290,6 +1352,19 @@ Mail::decryptVerify_o ()
   m_pass_write = false;
 
   /* Insert placeholder */
+  m_orig_body = get_oom_string_s (m_mailitem, "Body");
+  rtrim (m_orig_body);
+  if (m_orig_body.empty ())
+    {
+      log_dbg ("Empty body.");
+      /* We only need to check the HTML body if the plain body
+         is not empty as outlook would convert the html to plain. */
+    }
+  else if (opt.prefer_html)
+    {
+      m_orig_body = get_oom_string_s (m_mailitem, "HTMLBody");
+    }
+
   char *placeholder_buf = nullptr;
   if (m_type == MSGTYPE_GPGOL_WKS_CONFIRMATION)
     {
@@ -1302,27 +1377,27 @@ Mail::decryptVerify_o ()
                         "<p>If you did not request to publish your Pubkey in your providers "
                         "directory, simply ignore this message.</p>\n"));
     }
-  else if (gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
+  else if (m_type == MSGTYPE_GPGOL_MULTIPART_SIGNED &&
+           !m_orig_body.empty ())
+    {
+      log_dbg ("Multipart signed inserting body in placeholder.");
+      gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? HTML_PREVIEW_PLACEHOLDER :
+                      TEXT_PREVIEW_PLACEHOLDER,
+                      isSMIME_m () ? "S/MIME" : "OpenPGP",
+                      _("message"),
+                      _("Please wait while the message is being verified..."),
+                      m_orig_body.c_str ());
+    }
+  else
+    {
+      gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
                       decrypt_template,
                       isSMIME_m () ? "S/MIME" : "OpenPGP",
                       _("message"),
-                      _("Please wait while the message is being decrypted / verified...")) == -1)
-    {
-      log_error ("%s:%s: Failed to format placeholder.",
-                 SRCNAME, __func__);
-      TRETURN 1;
+                      _("Please wait while the message is being decrypted / verified..."));
     }
-
   if (opt.prefer_html)
     {
-      char *tmp = get_oom_string (m_mailitem, "HTMLBody");
-      if (!tmp)
-        {
-          TRACEPOINT;
-          TRETURN 1;
-        }
-      m_orig_body = tmp;
-      xfree (tmp);
       if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify html body of item.",
@@ -1407,7 +1482,7 @@ Mail::decryptVerify_o ()
     {
       /* Parse synchronously */
       do_parsing ((LPVOID) this);
-      parsing_done ();
+      parsingDone_o ();
       TRETURN 0;
     }
 }
@@ -1480,7 +1555,7 @@ set_body (LPDISPATCH item, const std::string &plain, const std::string &html)
 }
 
 void
-Mail::updateBody_o ()
+Mail::updateBody_o (bool is_preview)
 {
   TSTART;
   if (!m_parser)
@@ -1503,17 +1578,20 @@ Mail::updateBody_o ()
       TRETURN;
     }
   // No need to carry body anymore
-  m_orig_body = std::string();
+  if (!is_preview)
+    {
+      m_orig_body = std::string();
+    }
   auto html = m_parser->get_html_body ();
   auto body = m_parser->get_body ();
   /** Outlook does not show newlines if \r\r\n is a newline. We replace
     these as apparently some other buggy MUA sends this. */
   find_and_replace (html, "\r\r\n", "\r\n");
-  if (opt.prefer_html && !html.empty())
+  if (opt.prefer_html && (!html.empty() || (is_preview && !m_block_html)))
     {
       if (!m_block_html)
         {
-          const auto charset = m_parser->get_html_charset();
+          auto charset = m_parser->get_html_charset();
 
           int codepage = 0;
           if (charset.empty())
@@ -1524,8 +1602,39 @@ Mail::updateBody_o ()
                          SRCNAME, __func__, codepage);
             }
 
-          char *converted = ansi_charset_to_utf8 (charset.c_str(), html.c_str(),
-                                                  html.size(), codepage);
+          char *converted = nullptr;
+
+          if (!html.empty () || !is_preview)
+            {
+              converted = ansi_charset_to_utf8 (charset.c_str(), html.c_str(),
+                                                html.size(), codepage);
+
+            }
+          if (is_preview)
+            {
+              char *buf;
+              if (!converted)
+                {
+                  /* Convert plaintext to HTML for preview using outlook. */
+                  charset = m_parser->get_body_charset ();
+                  converted = ansi_charset_to_utf8 (charset.c_str(), body.c_str(),
+                                                    body.size(), codepage);
+                  put_oom_string (m_mailitem, "Body", converted);
+                  xfree (converted);
+                  converted = get_oom_string (m_mailitem, "HTMLBody");
+                }
+              if (converted)
+              {
+                gpgrt_asprintf (&buf, HTML_PREVIEW_PLACEHOLDER,
+                                isSMIME_m () ? "S/MIME" : "OpenPGP",
+                                _("message"),
+                                _("Please wait while the message is being verified..."),
+                                converted);
+                memdbg_alloc (buf);
+                xfree (converted);
+                converted = buf;
+              }
+            }
           TRACEPOINT;
           int ret = put_oom_string (m_mailitem, "HTMLBody", converted ?
                                                             converted : "");
@@ -1648,6 +1757,18 @@ Mail::updateBody_o ()
   char *converted = ansi_charset_to_utf8 (plain_charset.c_str(),
                                           body.c_str(), body.size(),
                                           codepage);
+  if (is_preview)
+    {
+      char *buf;
+      gpgrt_asprintf (&buf, TEXT_PREVIEW_PLACEHOLDER,
+                      isSMIME_m () ? "S/MIME" : "OpenPGP",
+                      _("message"),
+                      _("Please wait while the message is being verified..."),
+                      converted);
+      memdbg_alloc (buf);
+      xfree (converted);
+      converted = buf;
+    }
   TRACEPOINT;
   int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
   put_oom_int (m_mailitem, "BodyFormat", 1);
@@ -1743,7 +1864,7 @@ Mail::updateHeaders_o ()
 static int parsed_count;
 
 void
-Mail::parsing_done()
+Mail::parsingDone_o (bool is_preview)
 {
   TSTART;
   TRACEPOINT;
@@ -1774,8 +1895,14 @@ Mail::parsing_done()
     }
   /* Store the results. */
   m_decrypt_result = m_parser->decrypt_result ();
-  m_verify_result = m_parser->verify_result ();
-
+  if (is_preview)
+    {
+      log_dbg ("Parser is not completely done. In Preview mode.");
+    }
+  else
+    {
+      m_verify_result = m_parser->verify_result ();
+    }
   /* Handle protected headers */
   updateHeaders_o ();
 
@@ -1809,7 +1936,7 @@ Mail::parsing_done()
 
   TRACEPOINT;
   /* Update the body */
-  updateBody_o ();
+  updateBody_o (is_preview);
   TRACEPOINT;
 
   /* When printing we have already shown the warning. So we
@@ -1849,10 +1976,13 @@ Mail::parsing_done()
 
   installFolderEventHandler_o ();
 
-  log_debug ("%s:%s: Delayed invalidate to update sigstate.",
-             SRCNAME, __func__);
-  CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
-                            NULL));
+  if (!is_preview)
+    {
+      log_debug ("%s:%s: Delayed invalidate to update sigstate.",
+                 SRCNAME, __func__);
+      CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
+                                NULL));
+    }
   TRACEPOINT;
   TRETURN;
 }
@@ -2312,6 +2442,17 @@ Mail::revert_o ()
   m_needs_wipe = false;
   m_disable_att_remove_warning = false;
   TRETURN 0;
+}
+
+bool
+Mail::isSMIME () const
+{
+  if (!m_is_smime_checked)
+    {
+      log_dbg ("WARNING: SMIME check before isSMIME_m was called.");
+      return false;
+    }
+  return m_is_smime;
 }
 
 bool
@@ -4982,4 +5123,10 @@ header_info_s
 Mail::headerInfo () const
 {
   return m_header_info;
+}
+
+const std::string&
+Mail::getOriginalBody () const
+{
+  return m_orig_body;
 }

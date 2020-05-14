@@ -331,7 +331,6 @@ is_valid_chksum(const GpgME::Signature &sig)
   TRETURN valid;
 }
 
-
 /* Note on stability:
 
    Experiments have shown that we can have a crash if parse
@@ -345,7 +344,7 @@ is_valid_chksum(const GpgME::Signature &sig)
    (slower e.g. when pinentry is requrired).
 */
 void
-ParseController::parse()
+ParseController::parse(bool offline)
 {
   TSTART;
   // Wrap the input stream in an attachment / GpgME Data
@@ -416,6 +415,10 @@ ParseController::parse()
   if (!m_sender.empty())
     {
       ctx->setSender(m_sender.c_str());
+    }
+  if (offline)
+    {
+      ctx->setOffline (true);
     }
 
   Data output (m_outputprovider);

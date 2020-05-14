@@ -61,6 +61,7 @@ typedef enum _gpgol_wmsg_type
   AFTER_MOVE,
   SEND_MULTIPLE_MAILS,
   SEND,
+  SHOW_PREVIEW, /* Show mail contents before a verify is done */
   /* External API, keep it stable! */
   EXT_API_CLOSE = 1301,
   EXT_API_CLOSE_ALL = 1302,

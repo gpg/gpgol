@@ -340,6 +340,10 @@ public:
     */
   bool isSMIME_m ();
 
+  /* Same as above but does not touch MAPI. isSMIME_m needs to
+     be called before this can return a true value. */
+  bool isSMIME () const;
+
   /** @brief get the associated parser.
     only valid while the actual parsing happens. */
   std::shared_ptr<ParseController> parser () { return m_parser; }
@@ -352,8 +356,11 @@ public:
    In Qt this would be a slot that is called once it is finished
    we hack around that a bit by calling it from our windowmessages
    handler.
+
+   Parsing done can be called twice, once for the preview of
+   a signed message and once when everything is finished.
   */
-  void parsing_done ();
+  void parsingDone_o (bool is_preview = false);
 
   /** Returns true if the mail was verified and has at least one
     signature. Regardless of the validity of the mail */
@@ -562,7 +569,7 @@ public:
     */
   bool hasCryptedOrEmptyBody_o ();
 
-  void updateBody_o ();
+  void updateBody_o (bool is_preview);
 
   /** Update information from protected headers in OOM */
   void updateHeaders_o ();
@@ -695,6 +702,9 @@ public:
   /* Get the header info struct. Only valid
      afer parseHeaders_m */
   header_info_s headerInfo () const;
+
+  /* Get the original body of the mail. */
+  const std::string &getOriginalBody () const;
 private:
   /* Returns a copy of the mailitem object. This copy
      is sadly not the same as in the ItemLoad event
@@ -765,6 +775,7 @@ private:
   bool m_is_split_copy; /* Is the a copy mail that was part of a split. */
   std::string m_protected_headers;
   header_info_s m_header_info; /* Information about the original headers */
+  bool m_attachs_added; /* State variable to track if we have added attachments to this mail. */
 };
 
 /* A state variable to capture which mail triggered a copy to

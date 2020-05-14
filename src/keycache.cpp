@@ -32,6 +32,7 @@
 #include <gpgme++/importresult.h>
 #include <gpgme++/engineinfo.h>
 #include <gpgme++/defaultassuantransaction.h>
+#include <gpgme++/configuration.h>
 
 #include <windows.h>
 
@@ -43,6 +44,7 @@ GPGRT_LOCK_DEFINE (keycache_lock);
 GPGRT_LOCK_DEFINE (fpr_map_lock);
 GPGRT_LOCK_DEFINE (update_lock);
 GPGRT_LOCK_DEFINE (import_lock);
+GPGRT_LOCK_DEFINE (config_lock);
 static KeyCache* singleton = nullptr;
 
 /** At some point we need to set a limit. There
@@ -457,6 +459,11 @@ do_populate (LPVOID)
 {
   TSTART;
 
+  log_dbg ("Populating config");
+  gpgrt_lock_lock (&config_lock);
+  GpgME::Error err;
+  KeyCache::instance ()->setConfig (GpgME::Configuration::Component::load (err));
+  gpgrt_lock_unlock (&config_lock);
   log_debug ("%s:%s: Populating keycache",
              SRCNAME, __func__);
   do_populate_protocol (GpgME::OpenPGP, false);
@@ -828,6 +835,10 @@ public:
       }
     for (const auto &recip: recipients)
       {
+        if (recip.empty ())
+          {
+            continue;
+          }
         const auto overrides = getOverrides (recip.c_str (), proto);
 
         if (!overrides.empty())
@@ -1234,6 +1245,8 @@ public:
       TRETURN;
     }
 
+
+
   void populate ()
     {
       TSTART;
@@ -1244,6 +1257,19 @@ public:
                                  nullptr, 0,
                                  nullptr));
       TRETURN;
+    }
+
+  const std::vector<GpgME::Configuration::Component> get_cached_config () const
+    {
+      /* Quick hack to ensure that the config is loaded. */
+      gpgrt_lock_lock (&config_lock);
+      gpgrt_lock_unlock (&config_lock);
+      return m_cached_config;
+    }
+
+  void setConfig (const std::vector<GpgME::Configuration::Component> &conf)
+    {
+      m_cached_config = conf;
     }
 
   std::unordered_map<std::string, GpgME::Key> m_pgp_key_map;
@@ -1260,6 +1286,7 @@ public:
   std::set<std::string> m_update_jobs;
   std::set<std::string> m_pgp_import_jobs;
   std::set<std::string> m_cms_import_jobs;
+  std::vector<GpgME::Configuration::Component> m_cached_config;
 };
 
 KeyCache::KeyCache():
@@ -1836,4 +1863,76 @@ KeyCache::import_pgp_key_data (const GpgME::Data &data)
                  SRCNAME, __func__, result.error ().asString ());
     }
   TRETURN !result.error();
+}
+
+const std::vector<GpgME::Configuration::Component>
+KeyCache::get_cached_config () const
+{
+  return d->get_cached_config ();
+}
+
+void
+KeyCache::setConfig (const std::vector<GpgME::Configuration::Component>& conf)
+{
+  d->setConfig (conf);
+}
+
+bool
+KeyCache::protocolIsOnline (GpgME::Protocol proto) const
+{
+  TSTART;
+  if (proto == GpgME::OpenPGP && opt.autoretrieve)
+    {
+      return true;
+    }
+  for (const auto &component: d->get_cached_config ())
+    {
+      if (proto == GpgME::OpenPGP && component.name () && !strcmp (component.name (), "gpg"))
+        {
+          for (const auto &option: component.options ())
+            {
+              if (option.name () && !strcmp (option.name (), "auto-key-retrieve") &&
+                  option.currentValue().boolValue ())
+                {
+                  log_debug ("%s:%s: Detected auto-key-retrieve -> online",
+                             SRCNAME, __func__);
+                  TRETURN true;
+                }
+              if (option.name () && !strcmp (option.name (), "disable-dirmngr") &&
+                  option.currentValue().boolValue ())
+                {
+                  log_debug ("%s:%s: Detected disable-dirmngr -> offline",
+                             SRCNAME, __func__);
+                  TRETURN false;
+                }
+            }
+        }
+      if (proto == GpgME::CMS && component.name () && !strcmp (component.name (), "gpgsm"))
+        {
+          for (const auto &option: component.options ())
+            {
+              if (option.name () && !strcmp (option.name (), "disable-crl-checks") &&
+                  option.currentValue().boolValue ())
+                {
+                  log_debug ("%s:%s: Detected disable-crl-checks -> offline",
+                             SRCNAME, __func__);
+                  TRETURN false;
+                }
+              if (option.name () && !strcmp (option.name (), "disable-dirmngr") &&
+                  option.currentValue().boolValue ())
+                {
+                  log_debug ("%s:%s: Detected disable-dirmngr -> offline",
+                             SRCNAME, __func__);
+                  TRETURN false;
+                }
+            }
+          /* By default S/MIME is online. */
+          log_dbg ("No options found. So assume CRL checks -> online");
+          TRETURN true;
+        }
+    }
+
+  log_dbg ("Detected no online options.");
+
+  TRETURN false;
 }

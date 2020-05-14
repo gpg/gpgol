@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <gpgme++/global.h>
+#include <gpgme++/configuration.h>
 
 namespace GpgME
 {
@@ -138,6 +139,14 @@ public:
        true on success. */
     static bool import_pgp_key_data(const GpgME::Data &data);
 
+    /* Get the cached GnuPG configuration that is only loaded
+       once on start for quick checks. */
+    const std::vector<GpgME::Configuration::Component> get_cached_config () const;
+
+    /* Check the cached configuration if operations might
+       use online calls. */
+    bool protocolIsOnline (GpgME::Protocol proto) const;
+
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);
     void setPgpKey(const std::string &mbox, const GpgME::Key &key);
@@ -147,6 +156,7 @@ public:
     void onAddrBookImportJobDone (const std::string &fpr,
                                   const std::vector<std::string> &result_fprs,
                                   GpgME::Protocol proto);
+    void setConfig(const std::vector<GpgME::Configuration::Component> & comp);
 
 private:
 

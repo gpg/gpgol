@@ -64,7 +64,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              SRCNAME, __func__);
                   TBREAK;
                 }
-              mail->parsing_done();
+              mail->parsingDone_o ();
               TBREAK;
             }
           case (RECIPIENT_ADDED):
@@ -102,7 +102,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               invoke_oom_method (mail->item (), "Save", NULL);
               log_debug ("%s:%s: Revert mail. Save done. Updating body..",
                          SRCNAME, __func__);
-              mail->updateBody_o ();
+              mail->updateBody_o (false);
               log_debug ("%s:%s: Revert mail done.",
                          SRCNAME, __func__);
               TBREAK;
@@ -387,6 +387,19 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               log_debug ("%s:%s: Send for %p.",
                          SRCNAME, __func__, mail);
               invoke_oom_method (mail->item (), "Send", nullptr);
+              TBREAK;
+            }
+          case SHOW_PREVIEW:
+            {
+              auto mail = (Mail*) ctx->data;
+              if (!Mail::isValidPtr (mail))
+                {
+                  log_dbg ("SHOW_PREVIEW for mail %p which is gone.",
+                           mail);
+                  TBREAK;
+                }
+              log_dbg ("SHOW_PREVIEW for %p", mail);
+              mail->parsingDone_o (true);
               TBREAK;
             }
 

@@ -64,7 +64,7 @@ public:
 
   /** Main entry point. After execution getters will become
   valid. */
-  void parse();
+  void parse (bool offline);
 
   /** Get the Body. Call parse first. */
   const std::string get_body () const;
