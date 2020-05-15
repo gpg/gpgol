@@ -128,7 +128,7 @@ std::string
 get_object_name_s (LPUNKNOWN obj)
 {
   char *name = get_object_name (obj);
-  std::string ret;
+  std::string ret = "(null)";
   if (name)
     {
       ret = name;
@@ -3349,4 +3349,107 @@ remove_oom_recipient (LPDISPATCH item, const std::string &mbox)
         }
     }
   TRETURN -1;
+}
+
+void
+oom_dump_idispatch (LPDISPATCH obj)
+{
+  log_dbg ("Start infos about %p", obj);
+  if (!obj)
+    {
+      log_dbg ("It's NULL");
+      return;
+    }
+  log_dbg ("Name: '%s'", get_object_name_s (obj).c_str ());
+
+  LPTYPEINFO typeinfo = nullptr;
+  HRESULT hr = obj->GetTypeInfo (0, 0, &typeinfo);
+
+  if (!typeinfo || FAILED (hr))
+    {
+      log_dbg ("No typeinfo.");
+      return;
+    }
+
+  TYPEATTR* pta = NULL;
+  hr = typeinfo->GetTypeAttr(&pta);
+
+  if (!pta || FAILED (hr))
+    {
+      log_dbg ("No type attr");
+      return;
+    }
+
+  /* First the IID to have it clear */
+  LPOLESTR lpsz = NULL;
+  hr = StringFromIID(pta->guid, &lpsz);
+  if(FAILED (hr))
+    {
+      hr = StringFromCLSID (pta->guid, &lpsz);
+    }
+
+  if(SUCCEEDED (hr))
+    {
+      log_dbg ("Interface: %S", lpsz);
+      CoTaskMemFree(lpsz);
+    }
+
+  FUNCDESC *pfd = nullptr;
+  /* Lets see what functions we have. */
+  for(int i = 0; i < pta->cFuncs; i++)
+    {
+      typeinfo->GetFuncDesc(i, &pfd);
+
+      BSTR names[1];
+      unsigned int dumb;
+
+      typeinfo->GetNames(pfd->memid, names, 1, &dumb);
+      if (!names[0])
+        {
+          typeinfo->ReleaseFuncDesc(pfd);
+          continue;
+        }
+
+      log_dbg ("%i: %S id=0x%li With %d param(s)\n", i,
+               (names[0]), pfd->memid, pfd->cParams);
+      typeinfo->ReleaseFuncDesc(pfd);
+      SysFreeString(names[0]);
+    }
+  typeinfo->ReleaseTypeAttr(pta);
+
+  /* Now for some interesting object relations
+     that many oom objecs have. */
+  const char * relations[] = {
+    "Parent",
+    "GetInspector",
+    "Session",
+    "Sender",
+    nullptr
+  };
+
+  for (int i = 0; relations [i]; i++)
+    {
+      LPDISPATCH rel = get_oom_object (obj, relations[i]);
+      log_dbg ("%s: %s", relations [i],
+               get_object_name_s (rel).c_str ());
+      gpgol_release (rel);
+    }
+
+  /* Now for some interesting string values. */
+  const char * stringVals[] = {
+    "EntryID",
+    "Subject",
+    "MessageClass",
+    "Body",
+    nullptr
+  };
+
+  for (int i = 0; stringVals[i]; i++)
+    {
+      const auto str = get_oom_string_s (obj, stringVals[i]);
+      log_dbg ("%s: %s", stringVals[i], str.c_str ());
+    }
+
+  log_dbg ("Object dump done");
+  return;
 }

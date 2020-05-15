@@ -471,4 +471,7 @@ int remove_oom_recipient (LPDISPATCH item, const std::string &mbox);
 
 /* Remove all recipients and replace them with the list of our objects. */
 int set_oom_recipients (LPDISPATCH item, const std::vector<Recipient> &recps);
+
+/* Print some introspective infos about the object. */
+void oom_dump_idispatch (LPDISPATCH obj);
 #endif /*OOMHELP_H*/
