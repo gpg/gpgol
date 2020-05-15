@@ -69,6 +69,7 @@ static std::map<LPDISPATCH, Mail*> s_mail_map;
 static std::map<std::string, Mail*> s_uid_map;
 static std::map<std::string, LPDISPATCH> s_folder_events_map;
 static std::set<std::string> uids_searched;
+static std::set<std::string> s_entry_ids_printing;
 
 GPGRT_LOCK_DEFINE (mail_map_lock);
 GPGRT_LOCK_DEFINE (uid_map_lock);
@@ -1470,7 +1471,12 @@ Mail::decryptVerify_o ()
      happens. We have to catch both. */
   if (!m_printing)
     {
-      m_printing = checkIfMailIsChildOfPrintMail_o ();
+      m_printing = checkIfMailMightBePrinting_o ();
+    }
+  else
+    {
+      /* Register us for printing. */
+      s_entry_ids_printing.insert (get_oom_string_s (m_mailitem, "EntryID"));
     }
 
   if (!opt.sync_dec && !m_printing)
@@ -4794,49 +4800,21 @@ This functions looks over all mails and checks if one is currently
 printing. If so we compare our EntryID's and if they match. Bingo,
 we are printing, too.*/
 bool
-Mail::checkIfMailIsChildOfPrintMail_o ()
+Mail::checkIfMailMightBePrinting_o ()
 {
-  gpgol_lock (&mail_map_lock);
-  for (auto it = s_mail_map.begin(); it != s_mail_map.end(); ++it)
+  const auto ourID = get_oom_string_s (m_mailitem, "EntryID");
+  if (ourID.empty ())
     {
-      auto mail = it->second;
-      if (mail->isPrint ())
-        {
-          /* This happens so rarely that we only fetch our
-             entry id if we are in here. */
-          char *entryID = get_oom_string (mail->item (), "EntryID");
-          if (!entryID)
-            {
-              log_error ("%s:%s: Printing mail %p has no EntryID",
-                         SRCNAME, __func__, mail);
-              continue;
-            }
-
-          char *ourID = get_oom_string (m_mailitem, "EntryID");
-          if (!ourID)
-            {
-              log_error ("%s:%s: Mail %p has no EntryID",
-                         SRCNAME, __func__, this);
-              xfree (entryID);
-              continue;
-            }
-          int cmp = strcmp (ourID, entryID);
-          xfree (ourID);
-          xfree (entryID);
-
-          if (cmp)
-            {
-              log_debug ("%s:%s: The current print is not us.",
-                         SRCNAME, __func__);
-              continue;
-            }
-          gpgrt_lock_unlock (&mail_map_lock);
-          log_debug ("%s:%s: Mail %p is the actual print of %p.",
-                     SRCNAME, __func__, this, mail);
-          return true;
-        }
+      log_error ("%s:%s: Mail %p has no accessible EntryID",
+                 SRCNAME, __func__, this);
+      return false;
     }
-  gpgrt_lock_unlock (&mail_map_lock);
+  if (s_entry_ids_printing.find (ourID) != s_entry_ids_printing.end ())
+    {
+      log_dbg ("Found %s in printing map. This might be a printing child.",
+               ourID.c_str ());
+      return true;
+    }
   return false;
 }
 

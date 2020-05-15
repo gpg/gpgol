@@ -114,6 +114,7 @@ EVENT_SINK_INVOKE(ApplicationEvents)
           if (beforePrintSeen)
             {
               mail->setIsPrint (true);
+              log_dbg ("Mail pointer %p item: %p is print", mail, mailItem);
             }
           beforePrintSeen = false;
           do_in_ui_thread_async (INVALIDATE_LAST_MAIL, nullptr);

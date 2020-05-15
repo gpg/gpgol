@@ -710,7 +710,7 @@ private:
      is sadly not the same as in the ItemLoad event
      so we cannot find it in our map of mailitems. */
   LPDISPATCH copy ();
-  bool checkIfMailIsChildOfPrintMail_o ();
+  bool checkIfMailMightBePrinting_o ();
   void updateSigstate ();
   int add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments);
   int buildProtectedHeaders_o ();
