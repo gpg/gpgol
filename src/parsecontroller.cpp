@@ -114,7 +114,9 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
                           expect_no_headers(type))),
     m_outputprovider (new MimeDataProvider(expect_no_mime(type))),
     m_type (type),
-    m_block_html (false)
+    m_block_html (false),
+    m_second_pass (false)
+
 {
   TSTART;
   memdbg_ctor ("ParseController");
@@ -131,7 +133,8 @@ ParseController::ParseController(FILE *instream, msgtype_t type):
                           expect_no_headers(type))),
     m_outputprovider (new MimeDataProvider(expect_no_mime(type))),
     m_type (type),
-    m_block_html (false)
+    m_block_html (false),
+    m_second_pass (false)
 {
   TSTART;
   memdbg_ctor ("ParseController");
@@ -374,6 +377,12 @@ ParseController::parse(bool offline)
       is_smime (input))
     {
       protocol = Protocol::CMS;
+      if (m_second_pass)
+        {
+          log_dbg ("Second pass parsing for CMS. Only doing verify.");
+          verify = true;
+          decrypt = false;
+        }
     }
   else
     {
@@ -559,6 +568,8 @@ ParseController::parse(bool offline)
   log_debug ("%s:%s:%p: decrypt err: %i verify err: %i",
              SRCNAME, __func__, this, m_decrypt_result.error().code(),
              m_verify_result.error().code());
+  /* If we are called again it is the second pass */
+  m_second_pass = true;
 
   bool has_valid_encrypted_checksum = false;
   /* Ensure that the Keys for the signatures are available

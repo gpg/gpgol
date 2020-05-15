@@ -114,6 +114,7 @@ private:
   std::string m_sender;
   bool m_block_html;
   autocrypt_s m_autocrypt_info; /* Autocrypt info about the mail */
+  bool m_second_pass; /* Second pass parsing with the same controller. */
 };
 
 #endif /* PARSECONTROLLER_H */
