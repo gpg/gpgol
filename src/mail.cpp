@@ -2632,6 +2632,20 @@ Mail::close (bool restoreSMIMEClass)
   dispparams.cArgs = 1;
   dispparams.cNamedArgs = 0;
 
+  /* Remove the mail from the print mail set. So that categories
+     etc work again. */
+  const auto ourID = get_oom_string_s (m_mailitem, "EntryID");
+  if (!ourID.empty ())
+    {
+      const auto it = s_entry_ids_printing.find (ourID);
+      if (it != s_entry_ids_printing.end ())
+        {
+          log_dbg ("Found %s in printing map. Removing it",
+                   ourID.c_str ());
+          s_entry_ids_printing.erase (it);
+        }
+    }
+
   if (isSMIME_m ())
     {
       LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
