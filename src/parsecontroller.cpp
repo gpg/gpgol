@@ -581,9 +581,9 @@ ParseController::parse(bool offline)
 
 #ifndef BUILD_TESTS
       /* For TOFU we would need to update here even when offline. */
-      if (!offline)
+      if (!offline || KeyCache::instance ()->useTofu ())
         {
-          KeyCache::instance ()->update (isig.fingerprint (), protocol);
+          KeyCache::instance ()->update (sig.fingerprint (), protocol);
         }
 #endif
       TRACEPOINT;

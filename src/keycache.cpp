@@ -484,9 +484,8 @@ do_populate (LPVOID)
 class KeyCache::Private
 {
 public:
-  Private()
+  Private() : m_use_tofu (false)
   {
-
   }
 
   void setPgpKey(const std::string &mbox, const GpgME::Key &key)
@@ -1287,6 +1286,7 @@ public:
   std::set<std::string> m_pgp_import_jobs;
   std::set<std::string> m_cms_import_jobs;
   std::vector<GpgME::Configuration::Component> m_cached_config;
+  bool m_use_tofu;
 };
 
 KeyCache::KeyCache():
@@ -1875,6 +1875,36 @@ void
 KeyCache::setConfig (const std::vector<GpgME::Configuration::Component>& conf)
 {
   d->setConfig (conf);
+  for (const auto &component: conf)
+   {
+     if (component.name () && !strcmp (component.name (), "gpg"))
+       {
+         for (const auto &option: component.options ())
+           {
+             if (option.name () && !strcmp (option.name (), "trust-model"))
+               {
+                 const char *val = option.currentValue().stringValue();
+                 if (!val)
+                   {
+                     return;
+                   }
+                 if (!strcmp ("tofu", val) || !strcmp ("tofu+pgp", val))
+                   {
+                     log_dbg ("Keycache detected tofu mode.");
+                     d->m_use_tofu = true;
+                     return;
+                   }
+               }
+           }
+         return;
+       }
+   }
+}
+
+bool
+KeyCache::useTofu () const
+{
+  return d->m_use_tofu;
 }
 
 bool

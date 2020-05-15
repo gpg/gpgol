@@ -147,6 +147,8 @@ public:
        use online calls. */
     bool protocolIsOnline (GpgME::Protocol proto) const;
 
+    bool useTofu () const;
+
     // Internal for thread
     void setSmimeKey(const std::string &mbox, const GpgME::Key &key);
     void setPgpKey(const std::string &mbox, const GpgME::Key &key);
