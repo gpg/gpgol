@@ -1883,7 +1883,7 @@ KeyCache::protocolIsOnline (GpgME::Protocol proto) const
   TSTART;
   if (proto == GpgME::OpenPGP && opt.autoretrieve)
     {
-      return true;
+      TRETURN true;
     }
   for (const auto &component: d->get_cached_config ())
     {
