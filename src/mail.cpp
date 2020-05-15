@@ -1014,6 +1014,14 @@ do_parsing (LPVOID arg)
         {
           log_dbg ("Have signature, needs second pass.");
           do_in_ui_thread (SHOW_PREVIEW, arg);
+          if (!Mail::isValidPtr (mail))
+            {
+              log_debug ("%s:%s: canceling parsing for: %p now deleted",
+                         SRCNAME, __func__, arg);
+              gpgol_unlock (&parser_lock);
+              unblockInv();
+              TRETURN 0;
+            }
           log_dbg ("Preview updated.");
           /* Sleep (10000); */
           parser->parse (false);
