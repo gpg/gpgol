@@ -580,7 +580,11 @@ ParseController::parse(bool offline)
       has_valid_encrypted_checksum = is_valid_chksum (sig);
 
 #ifndef BUILD_TESTS
-      KeyCache::instance ()->update (sig.fingerprint (), protocol);
+      /* For TOFU we would need to update here even when offline. */
+      if (!offline)
+        {
+          KeyCache::instance ()->update (isig.fingerprint (), protocol);
+        }
 #endif
       TRACEPOINT;
     }
