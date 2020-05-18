@@ -194,6 +194,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
               TBREAK;
             }
+          int old_flags = get_gpgol_draft_info_flags (message);
+          if (old_flags)
+            {
+              log_dbg ("Open of already flagged mail. "
+                       "Not overwriting with settings.");
+              gpgol_release (message);
+              TBREAK;
+            }
           if (opt.encrypt_default)
             {
               draft_flags = 1;
