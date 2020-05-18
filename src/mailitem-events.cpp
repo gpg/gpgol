@@ -904,12 +904,25 @@ EVENT_SINK_INVOKE(MailItemEvents)
               draft_flags += 2;
             }
           bool is_crypto_mail = m_mail->isCryptoMail ();
-
+          if (opt.reply_crypt && is_crypto_mail)
+            {
+              int crypto_flags = m_mail->getCryptoFlags ();
+              if (crypto_flags)
+                {
+                  if (opt.sign_default)
+                    {
+                      /* When default signing is on we also sign unsigned encrypted
+                       * mails. */
+                      crypto_flags |= 2;
+                      /* reply / forward flags override the setting flags. */
+                    }
+                  draft_flags = crypto_flags;
+                }
+            }
           /* If it is a crypto mail and the settings should not be taken
            * from the crypto mail and always encrypt / sign is on. Or
            * If it is not a crypto mail and we have automaticalls sign_encrypt. */
-          if ((is_crypto_mail && !opt.reply_crypt && draft_flags) ||
-              (!is_crypto_mail && draft_flags))
+          if (draft_flags)
             {
               /* Check if we can use the dispval */
                 if (parms->cArgs == 2 && parms->rgvarg[1].vt == (VT_DISPATCH) &&
@@ -974,7 +987,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   else
                     {
                       log_debug ("%s:%s: Reply in the same loop as empty "
-                                 "load Marking %p (item %p) as reply.",
+                                 "load treating %p (item %p) as reply.",
                                  SRCNAME, __func__, last_mail,
                                  last_mail->item ());
                     }
@@ -1007,36 +1020,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
               // We can now invalidate the last mail
               Mail::clearLastMail ();
             }
-
-          log_oom ("%s:%s: Reply Forward ReplyAll: %p",
-                         SRCNAME, __func__, m_mail);
-          if (!opt.reply_crypt)
-            {
-              TBREAK;
-            }
-          int crypto_flags = 0;
-          if (!(crypto_flags = m_mail->getCryptoFlags ()))
-            {
-              TBREAK;
-            }
-          if (parms->cArgs != 2 || parms->rgvarg[1].vt != (VT_DISPATCH) ||
-              parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
-            {
-              /* This happens in the weird case */
-              log_debug ("%s:%s: Unexpected args %i %x %x named: %i",
-                         SRCNAME, __func__, parms->cArgs, parms->rgvarg[0].vt, parms->rgvarg[1].vt,
-                         parms->cNamedArgs);
-              TBREAK;
-            }
-          LPMESSAGE msg = get_oom_base_message (parms->rgvarg[1].pdispVal);
-          if (!msg)
-            {
-              log_debug ("%s:%s: Failed to get base message",
-                         SRCNAME, __func__);
-              TBREAK;
-            }
-          set_gpgol_draft_info_flags (msg, crypto_flags);
-          gpgol_release (msg);
           TBREAK;
         }
       case AttachmentRemove:
