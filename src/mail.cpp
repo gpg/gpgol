@@ -123,7 +123,6 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_window(nullptr),
     m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false),
-    m_is_reply_crypto_mail(false),
     m_is_send_again(false),
     m_disable_att_remove_warning(false),
     m_manual_crypto_opts(false),

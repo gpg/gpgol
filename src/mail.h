@@ -543,10 +543,6 @@ public:
   void setIsForwardedCryptoMail (bool value) { m_is_forwarded_crypto_mail = value; }
   bool is_forwarded_crypto_mail () { return m_is_forwarded_crypto_mail; }
 
-  /** Set if this is a reply of a crypto mail. */
-  void setIsReplyCryptoMail (bool value) { m_is_reply_crypto_mail = value; }
-  bool is_reply_crypto_mail () { return m_is_reply_crypto_mail; }
-
   /** Remove the hidden GpgOL attachments. This is needed when forwarding
     without encryption so that our attachments are not included in the forward.
     Returns 0 on success. Works in OOM. */
