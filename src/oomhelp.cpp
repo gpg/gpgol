@@ -3191,15 +3191,38 @@ count_visible_attachments (LPDISPATCH attachments)
         }
       VARIANT var;
       VariantInit (&var);
-      if (get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var) ||
-          (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE))
+      if (get_pa_variant (oom_attach, PR_ATTACHMENT_HIDDEN_DASL, &var))
+        {
+          /* SECURITY: Testing has shown that for all mail types GpgOL
+             handles that might contain an unsigned attachment we always
+             have the MAPIOBJECT / get the hidden state. Only the transient
+             MIME attachments. The ones used for the MAPI to MIME conversion
+             and which are hidden by GpgOL and handled by GpgOL will have
+             no MAPIOBJECT when a mail is opened from file. So this will
+             remove the warning that "smime.p7m" or "gpgol_mime_structure.txt"
+             are unsigned and unencrypted attachments. */
+          log_dbg ("Failed to get hidden state.");
+          LPUNKNOWN mapiobj = get_oom_iunknown (oom_attach, "MAPIOBJECT");
+          if (!mapiobj)
+            {
+              const auto dispName = get_oom_string_s (oom_attach, "DisplayName");
+              log_dbg ("Attachment: %s has no mapiobject. Ignoring it.",
+                       anonstr (dispName.c_str ()));
+            }
+          else
+            {
+              gpgol_release (mapiobj);
+              const auto dispName = get_oom_string_s (oom_attach, "DisplayName");
+              log_dbg ("Attachment %s without hidden state but mapiobj."
+                       "Count as visible.", anonstr (dispName.c_str ()));
+              ret++;
+            }
+        }
+      else if (var.vt == VT_BOOL && var.boolVal == VARIANT_FALSE)
         {
            ret++;
         }
-      else
-        {
-          gpgol_release (oom_attach);
-        }
+      gpgol_release (oom_attach);
       VariantClear (&var);
     }
   return ret;
