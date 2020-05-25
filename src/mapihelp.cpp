@@ -2435,7 +2435,8 @@ get_gpgolattachtype (LPATTACH obj, ULONG tag)
    available.  With FAST set only some information gets collected. */
 mapi_attach_item_t *
 mapi_create_attach_table (LPMESSAGE message, int fast)
-{    
+{
+  TSTART;
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
@@ -3655,6 +3656,7 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, LPMESSAGE parsed_message,
                                                              msgtype);
           if (parsed_part)
             {
+              mapi_release_attach_table (table);
               TRETURN parsed_part;
             }
         }
@@ -3687,6 +3689,7 @@ mapi_mark_or_create_moss_attach (LPMESSAGE message, LPMESSAGE parsed_message,
       /* The position of the MOSS attach might change depending on
          the attachment count of the mail. So repeat the check to get
          the right position. */
+      mapi_release_attach_table (table);
       TRETURN mapi_mark_or_create_moss_attach (message, parsed_message,
                                                msgtype);
     }
