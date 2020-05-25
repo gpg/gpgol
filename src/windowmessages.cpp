@@ -342,6 +342,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   xfree (data);
                   TBREAK;
                 }
+              memdbg_addRef (mapi_message);
               log_debug ("%s:%s: Restoring message class after move to: %s",
                          SRCNAME, __func__, data->old_class);
               mapi_set_mesage_class (mapi_message, data->old_class);
