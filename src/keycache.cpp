@@ -374,12 +374,17 @@ gpgsm_learn ()
   TRETURN;
 }
 
+static bool already_learned = false;
+
 static void
 do_populate_smartcards (GpgME::Protocol proto)
 {
   TSTART;
-  if (proto != GpgME::CMS)
+
+  if (already_learned)
     {
+      /* gpgsm --learn learns for both protocols. */
+      log_dbg ("Already called gpgsm --learn this run.");
       TRETURN;
     }
 
@@ -411,7 +416,7 @@ do_populate_smartcards (GpgME::Protocol proto)
       TRETURN;
     }
 
-  auto search_ctx = GpgME::Context::create (GpgME::CMS);
+  auto search_ctx = GpgME::Context::create (proto);
 
   bool need_to_learn = false;
   for (const auto &info: pairinfo)
@@ -427,13 +432,12 @@ do_populate_smartcards (GpgME::Protocol proto)
           log_dbg ("Unexpected keypairinfo line '%s'", info.second.c_str ());
           continue;
         }
-      if (vec.size () >= 2)
+
+      if (vec.size () >= 2 && starts_with (vec[1], "OPENPGP") &&
+          proto != GpgME::OpenPGP)
         {
-          if (starts_with (vec[1], "OPENPGP"))
-            {
-              log_dbg ("Skipping OpenPGP key %s", anonstr (vec[0].c_str ()));
-              continue;
-            }
+          log_dbg ("Skipping OpenPGP key %s", anonstr (vec[0].c_str ()));
+          continue;
         }
       const auto keygrip = std::string ("&") + vec[0];
 
@@ -449,6 +453,9 @@ do_populate_smartcards (GpgME::Protocol proto)
 
   if (need_to_learn)
     {
+      /* Note: gpgsm learn also works for openpgp as it learns the keygrips
+         for both. */
+      already_learned = true;
       gpgsm_learn ();
     }
   TRETURN;
@@ -467,12 +474,13 @@ do_populate (LPVOID)
   log_debug ("%s:%s: Populating keycache",
              SRCNAME, __func__);
   do_populate_protocol (GpgME::OpenPGP, false);
+  do_populate_smartcards (GpgME::OpenPGP);
   do_populate_protocol (GpgME::OpenPGP, true);
   if (opt.enable_smime)
     {
       do_populate_protocol (GpgME::CMS, false);
-      do_populate_protocol (GpgME::CMS, true);
       do_populate_smartcards (GpgME::CMS);
+      do_populate_protocol (GpgME::CMS, true);
     }
   log_debug ("%s:%s: Keycache populated",
              SRCNAME, __func__);
