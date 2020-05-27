@@ -4079,6 +4079,13 @@ Mail::updateCryptOOM_o ()
         }
     }
 
+  if (get_oom_int (m_mailitem, "BodyFormat") == 3)
+    {
+      log_dbg ("Changing body format from rich text to HTML to "
+               "prevent winmail.dat");
+      put_oom_int (m_mailitem, "BodyFormat", 2);
+    }
+
   /** When doing async update_crypt_mapi follows and needs
     the crypter. */
   if (isAsyncCryptDisabled ())
