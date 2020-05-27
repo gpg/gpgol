@@ -580,6 +580,70 @@ put_oom_int (LPDISPATCH pDisp, const char *name, int value)
   TRETURN 0;
 }
 
+/* Set the property NAME to VALUE.  */
+int
+put_oom_array (LPDISPATCH pDisp, const char *name, unsigned char *value,
+               size_t size)
+{
+  TSTART;
+  HRESULT hr;
+  DISPID dispid_put = DISPID_PROPERTYPUT;
+  DISPID dispid;
+  DISPPARAMS dispparams;
+  VARIANT aVariant[1];
+  unsigned int argErr = 0;
+  EXCEPINFO execpinfo;
+  init_excepinfo (&execpinfo);
+
+  VariantInit (aVariant);
+
+  dispid = lookup_oom_dispid (pDisp, name);
+  if (dispid == DISPID_UNKNOWN)
+    {
+      TRETURN -1;
+    }
+  /* Prepare the savearray */
+  SAFEARRAYBOUND saBound;
+  saBound.lLbound = 0;
+  saBound.cElements = size;
+  SAFEARRAY* psa = SafeArrayCreate(VT_UI1, 1, &saBound);
+
+  if (!psa)
+    {
+      log_err ("Failed to create SafeArray");
+      TRETURN -1;
+    }
+
+  hr = SafeArrayLock(psa);
+  if (!SUCCEEDED (hr))
+    {
+      log_err ("Failed to lock array.");
+    }
+  memcpy (psa->pvData, value, size);
+  SafeArrayUnlock(psa);
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_ARRAY;
+  dispparams.rgvarg[0].parray = psa;
+  dispparams.cArgs = 1;
+  dispparams.rgdispidNamedArgs = &dispid_put;
+  dispparams.cNamedArgs = 1;
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_PROPERTYPUT, &dispparams,
+                      NULL, &execpinfo, &argErr);
+  SafeArrayDestroy(psa);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: putting %s"
+                 " hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__, name,
+                 (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+      TRETURN -1;
+    }
+  TRETURN 0;
+}
 
 /* Set the property NAME to STRING.  */
 int

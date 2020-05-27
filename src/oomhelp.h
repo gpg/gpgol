@@ -190,6 +190,10 @@ int put_oom_string (LPDISPATCH pDisp, const char *name, const char *string);
 /* Set the property NAME to DISP.  */
 int put_oom_disp (LPDISPATCH pDisp, const char *name, LPDISPATCH value);
 
+/* Set the byte array property NAME to VALUE. */
+int put_oom_array (LPDISPATCH pDisp, const char *name,
+                   unsigned char *value, size_t size);
+
 /* Get the boolean property NAME of the object PDISP.  */
 int get_oom_bool (LPDISPATCH pDisp, const char *name);
 
