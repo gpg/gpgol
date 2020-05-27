@@ -809,6 +809,73 @@ get_oom_int (shared_disp_t pDisp, const char *name)
   return get_oom_int (pDisp.get (), name);
 }
 
+int
+get_oom_dirty (LPDISPATCH pDisp)
+{
+  TSTART;
+  HRESULT hr;
+  DISPID dispid = DISPID_DIRTY_RAT;
+
+  DISPPARAMS dispparams = {NULL, NULL, 0, 0};
+  VARIANT rVariant;
+
+  VariantInit (&rVariant);
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_PROPERTYGET | DISPATCH_METHOD,
+                      &dispparams, &rVariant, NULL, NULL);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: Property dirty not found: %#lx",
+                 SRCNAME, __func__, hr);
+      TRETURN -1;
+    }
+  return !!rVariant.bVal;
+}
+
+
+#if 0
+int
+put_oom_dirty (LPDISPATCH pDisp, bool value)
+{
+  TSTART;
+
+  /* NOTE: I have found no scenario where this does
+     not return the exception that the property is
+     write protected. But we can never know when
+     we need such an arcane function so I left it in. */
+
+  HRESULT hr;
+  DISPID dispid_put = DISPID_PROPERTYPUT;
+  DISPID dispid = DISPID_DIRTY_RAT;
+  DISPPARAMS dispparams;
+  VARIANT aVariant[1];
+  unsigned int argErr = 0;
+  EXCEPINFO execpinfo;
+  init_excepinfo (&execpinfo);
+
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_BOOL;
+  dispparams.rgvarg[0].boolVal = value? VARIANT_TRUE:VARIANT_FALSE;
+  dispparams.cArgs = 1;
+  dispparams.rgdispidNamedArgs = &dispid_put;
+  dispparams.cNamedArgs = 1;
+  hr = pDisp->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
+                      DISPATCH_PROPERTYPUT | DISPATCH_METHOD, &dispparams,
+                      NULL, &execpinfo, &argErr);
+  if (hr != S_OK)
+    {
+      log_debug ("%s:%s: error: invoking dirty p=%p vt=%d"
+                 " hr=0x%x argErr=0x%x",
+                 SRCNAME, __func__,
+                 nullptr, 0, (unsigned int)hr,
+                 (unsigned int)argErr);
+      dump_excepinfo (execpinfo);
+      TRETURN -1;
+    }
+  TRETURN 0;
+}
+#endif
+
 /* Get the string property NAME of the object PDISP.  Returns NULL if
    not found or if it is not a string property.  */
 char *

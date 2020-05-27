@@ -154,6 +154,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 
 #define DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE 11
 
+#define DISPID_DIRTY_RAT 0xF024
+
 typedef std::shared_ptr<IDispatch> shared_disp_t;
 
 /* Function to contain the gpgol_release macro */
@@ -478,4 +480,13 @@ int set_oom_recipients (LPDISPATCH item, const std::vector<Recipient> &recps);
 
 /* Print some introspective infos about the object. */
 void oom_dump_idispatch (LPDISPATCH obj);
+
+/* Get the hidden dirty property of the object. */
+int get_oom_dirty (LPDISPATCH pDisp);
+
+/* Setter for dirty - Returns an error that the property
+   is write protected on mails. But maybe we can use it
+   somewhere else. Code is ifdeffed out.
+int put_oom_dirty (LPDISPATCH pDisp, bool val);
+ */
 #endif /*OOMHELP_H*/
