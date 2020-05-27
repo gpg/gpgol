@@ -3205,15 +3205,17 @@ count_visible_attachments (LPDISPATCH attachments)
           LPUNKNOWN mapiobj = get_oom_iunknown (oom_attach, "MAPIOBJECT");
           if (!mapiobj)
             {
-              const auto dispName = get_oom_string_s (oom_attach, "DisplayName");
+              const auto dispName = get_oom_string_s (oom_attach,
+                                                      "DisplayName");
               log_dbg ("Attachment: %s has no mapiobject. Ignoring it.",
                        anonstr (dispName.c_str ()));
             }
           else
             {
               gpgol_release (mapiobj);
-              const auto dispName = get_oom_string_s (oom_attach, "DisplayName");
-              log_dbg ("Attachment %s without hidden state but mapiobj."
+              const auto dispName = get_oom_string_s (oom_attach,
+                                                      "DisplayName");
+              log_dbg ("Attachment %s without hidden state but mapiobj. "
                        "Count as visible.", anonstr (dispName.c_str ()));
               ret++;
             }
