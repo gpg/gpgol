@@ -263,9 +263,10 @@ CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
             {
               log_error ("%s:%s Recipient mbox is empty. Wrong Resolver Version?",
                          SRCNAME, __func__);
-              TRETURN -1;
             }
-          if (pair.first == recp.mbox ())
+          /* We also accept the empty string here for backwards compatibility
+             but we should still log an error to be clear. */
+          if (pair.first.empty() || pair.first == recp.mbox ())
             {
               fingerprintsToLookup.push_back (pair.second);
               all_fingerprints.erase(std::remove_if(all_fingerprints.begin(),
