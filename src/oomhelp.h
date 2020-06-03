@@ -152,6 +152,9 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 #define PR_SENT_REPRESENTING_NAME_W_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x0042001F"
 
+#define PR_SECURITY_FLAGS_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x6E010003"
+
 #define DISTRIBUTION_LIST_ADDRESS_ENTRY_TYPE 11
 
 #define DISPID_DIRTY_RAT 0xF024
@@ -483,6 +486,10 @@ void oom_dump_idispatch (LPDISPATCH obj);
 
 /* Get the hidden dirty property of the object. */
 int get_oom_dirty (LPDISPATCH pDisp);
+
+/* Get the Outlook crypto flags indicating in Outlook if the mail should
+   be encrypted with S/MIME. */
+int get_oom_crypto_flags (LPDISPATCH mailitem);
 
 /* Setter for dirty - Returns an error that the property
    is write protected on mails. But maybe we can use it

@@ -3609,3 +3609,17 @@ oom_dump_idispatch (LPDISPATCH obj)
   log_dbg ("Object dump done");
   return;
 }
+
+int
+get_oom_crypto_flags (LPDISPATCH mailitem)
+{
+  TSTART;
+  int r_val = 0;
+  int err = get_pa_int (mailitem, PR_SECURITY_FLAGS_DASL, &r_val);
+  if (err)
+    {
+      log_dbg ("Failed to get security flags.");
+      TRETURN 0;
+    }
+  TRETURN r_val;
+}
