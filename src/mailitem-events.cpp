@@ -447,7 +447,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
                          SRCNAME, __func__, m_mail);
 
-              m_mail->prepareCrypto_o ();
+              if (m_mail->prepareCrypto_o ())
+                {
+                  log_dbg ("Prepare crypto requested send abort.");
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  /* Reset the crypter state  */
+                  m_mail->setCryptState (Mail::NoCryptMail);
+                  TBREAK;
+                }
               m_mail->setIsDraftEncrypt (false);
 
               // Save the Mail

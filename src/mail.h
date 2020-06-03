@@ -634,7 +634,7 @@ public:
   void decryptPermanently_o ();
 
   /* Prepare for encrypt / sign. Updates data. */
-  void prepareCrypto_o ();
+  int prepareCrypto_o ();
 
   /* State variable to check if we are about to encrypt a draft. */
   void setIsDraftEncrypt (bool value) { m_is_draft_encrypt = value; }

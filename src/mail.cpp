@@ -4784,10 +4784,40 @@ Mail::decryptPermanently_o()
   TRETURN;
 }
 
-void
+int
 Mail::prepareCrypto_o ()
 {
   TSTART;
+
+  int olFlags = get_oom_crypto_flags (m_mailitem);
+  log_dbg ("Outlook internal crypto flags are: %i",
+           olFlags);
+  if (olFlags)
+    {
+      std::string question = _("Should GpgOL override Outlook and continue "
+                               "to process the message?");
+      std::string vs_warning;
+      if (in_de_vs_mode ())
+        {
+          vs_warning = _("Note: For VS-NfD communication you have to select Yes.") + std::string ("\n\n");
+        }
+      std::string msg = _("A crypto operation was selected both using "
+                          "Outlooks internal crypto and with GpgOL / GnuPG.") +
+                          std::string("\n\n") + vs_warning + question;
+      int yesno = gpgol_message_box (get_active_hwnd (), msg.c_str (),
+                                     _("Conflicting crypto settings"),
+                                     MB_YESNO);
+      if (yesno == IDYES)
+        {
+          log_dbg ("Overriding Outlook internal crypto.");
+        }
+      else
+        {
+          log_dbg ("Aborting send.");
+          TRETURN -1;
+        }
+    }
+  put_pa_int (m_mailitem, PR_SECURITY_FLAGS_DASL, 0);
 
   // Check inline response state to fill out asynccryptdisabled.
   checkSyncCrypto_o ();
@@ -4808,7 +4838,7 @@ Mail::prepareCrypto_o ()
 
   setCryptState (Mail::NeedsFirstAfterWrite);
 
-  TRETURN;
+  TRETURN 0;
 }
 
 /* Printing happens in two steps. First a Mail is loaded after the
