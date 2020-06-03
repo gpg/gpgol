@@ -2924,17 +2924,15 @@ Mail::updateSigstate ()
                          anonstr (sender.c_str ()));
             }
         }
-      /* Sigsum valid or green is somehow not set in this case.
-       * Which is strange as AFAIK this worked in the past. */
-      if ((sig.summary() & Signature::Summary::Valid) &&
-          m_uid.origin() == GpgME::Key::OriginWKD &&
+      /* Sigsum valid or green is somehow not set in this case. */
+      if (!sig.status() && m_uid.origin() == GpgME::Key::OriginWKD &&
           (sig.validity() == Signature::Validity::Unknown ||
            sig.validity() == Signature::Validity::Marginal))
         {
           // WKD is a shortcut to Level 2 trust.
           log_debug ("%s:%s: Unknown or marginal from WKD -> Level 2",
                      SRCNAME, __func__);
-         }
+        }
       else if (m_uid.isNull() || (sig.validity() != Signature::Validity::Marginal &&
           sig.validity() != Signature::Validity::Full &&
           sig.validity() != Signature::Validity::Ultimate))
