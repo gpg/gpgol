@@ -470,6 +470,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                  "Crypto failed or canceled.",
                                  SRCNAME, __func__, m_object, m_mail);
                       *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                      /* Reset the crypter state  */
+                      m_mail->setCryptState (Mail::NoCryptMail);
                       TBREAK;
                     }
                   // For inline response we can't trigger send programatically
