@@ -1227,8 +1227,8 @@ put_pa_int (LPDISPATCH pDisp, const char *dasl_id, int value)
   TSTART;
   VARIANT var;
   VariantInit (&var);
-  var.vt = VT_INT;
-  var.intVal = value;
+  var.vt = VT_I4;
+  var.lVal = value;
   int ret = put_pa_variant (pDisp, dasl_id, &var);
   VariantClear (&var);
   TRETURN ret;
