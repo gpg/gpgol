@@ -893,6 +893,26 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         " onLoad=\"ribbonLoaded\">"
         " <ribbon>"
         "   <tabs>"
+/*
+        "    <tab idMso=\"TabOptions\">"
+        "     <group idMso=\"GroupRightsManagement\">"
+        "         <toggleButton idMso=\"EncryptMessage\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 getPressed=\"getSignEncryptPressedEx\""
+        "                 getImage=\"btnSignEncryptLarge\""
+        "                 onAction=\"encryptSignMimeEx\"""/>"
+        "         <toggleButton id=\"DigitallySignMessage\""
+        "                 getImage=\"btnSignSmall\""
+        "                 label=\"%s\""
+        "                 screentip=\"%s\""
+        "                 supertip=\"%s\""
+        "                 onAction=\"signMimeEx\""
+        "                 getPressed=\"getSignPressedEx\"/>"
+        "     </group>"
+        "    </tab>"
+*/
         "    <tab idMso=\"TabNewMailMessage\">"
         "     <group id=\"general\""
         "            label=\"%s\">"
@@ -929,7 +949,12 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "    </tab>"
         "   </tabs>"
         " </ribbon>"
-        "</customUI>", _("GpgOL"),
+        "</customUI>",
+        /*
+        _("Sign"), signTTip, signSTip,
+        _("Encrypt"), encryptTTip, encryptSTip,
+        */
+        _("GpgOL"),
         _("Secure"), secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
