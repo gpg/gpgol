@@ -141,5 +141,9 @@ void mapi_set_mesage_class (LPMESSAGE message, const char *cls);
 bool mapi_get_header_info (LPMESSAGE message,
                            header_info_s &r_header_info);
 std::string mapi_get_header (LPMESSAGE message);
+
+/* Set the content type of a message in transport headers.
+   a value of null for ct removes the content type. */
+int mapi_set_content_type (LPMESSAGE message, const char *ct);
 #endif
 #endif /*MAPIHELP_H*/

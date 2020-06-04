@@ -31,8 +31,10 @@
 #include "mapihelp.h"
 #include "parsetlv.h"
 #include "oomhelp.h"
+#include "cpphelp.h"
 
 #include <string>
+#include <sstream>
 
 #ifndef CRYPT_E_STREAM_INSUFFICIENT_DATA
 #define CRYPT_E_STREAM_INSUFFICIENT_DATA 0x80091011
@@ -524,6 +526,82 @@ mapi_get_first_attach_data (LPMESSAGE message)
   gpgol_release (stream);
 
   TRETURN ret;
+}
+
+static int
+mapi_set_transport_headers (LPMESSAGE message, const char *data)
+{
+  TSTART;
+  if (!message)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+  HRESULT hr;
+  SPropValue prop;
+  prop.ulPropTag = PR_TRANSPORT_MESSAGE_HEADERS;
+  /* MAPI wants a non const value. So we better give it to avoid trouble */
+  prop.Value.lpszA = xstrdup (data);
+  log_data ("Setting transport headers to:\n%s", data);
+  hr = HrSetOneProp (message, &prop);
+  xfree (prop.Value.lpszA);
+
+  if (hr)
+    {
+      log_error ("%s:%s: can't set transport headerrs property: hr=%#lx\n",
+                 SRCNAME, __func__, hr);
+      TRETURN -1;
+    }
+  TRETURN 0;
+}
+
+int
+mapi_set_content_type (LPMESSAGE message, const char *ct)
+{
+  TSTART;
+  if (!message)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+
+  const auto headers = mapi_get_header (message);
+  if (headers.empty ())
+    {
+      log_err ("Failed to obtain original headers");
+      TRETURN -1;
+    }
+  std::stringstream newHeaders;
+  bool inCt = false;
+  for (auto line: gpgol_split (headers, '\n'))
+    {
+      transform(line.begin(), line.end(), line.begin(), ::tolower);
+      if (starts_with (line, "content-type"))
+        {
+          inCt = true;
+          if (ct)
+            {
+              newHeaders << "Content-type: " << ct << "\n";
+            }
+        }
+      else if (inCt)
+        {
+          if (starts_with (line, " ") || starts_with (line, "\t"))
+            {
+              log_data ("Content type header continuation %s ignored.", line.c_str());
+              continue;
+            }
+          else
+            {
+              inCt = false;
+            }
+        }
+      else
+        {
+          newHeaders << line << "\n";
+        }
+    }
+  TRETURN mapi_set_transport_headers (message, newHeaders.str ().c_str ());
 }
 
 /* Return the headers as ASCII string. Returns empty
