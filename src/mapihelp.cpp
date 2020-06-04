@@ -1,18 +1,18 @@
 /* mapihelp.cpp - Helper functions for MAPI
  * Copyright (C) 2005, 2007, 2008 g10 Code GmbH
- * 
+ *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -72,7 +72,7 @@ log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
                  SRCNAME, __func__, propname, hr);
       TRETURN;
     }
-    
+
   switch ( PROP_TYPE (propval->ulPropTag) )
     {
     case PT_BINARY:
@@ -89,7 +89,7 @@ log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
         log_debug ("%s: %20s=`%s'", __func__, propname, buf);
       xfree (buf);
       break;
-      
+
     case PT_STRING8:
       log_debug ("%s: %20s=`%s'", __func__, propname, propval->Value.lpszA);
       break;
@@ -110,7 +110,7 @@ log_mapi_property (LPMESSAGE message, ULONG prop, const char *propname)
 
 
 /* Helper to create a named property. */
-static ULONG 
+static ULONG
 create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
 {
   TSTART;
@@ -122,7 +122,7 @@ create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
   GUID guid = {0x31805ab8, 0x3e92, 0x11dc, {0x87, 0x9c, 0x00, 0x06,
                                             0x1b, 0x03, 0x10, 0x04}};
   ULONG result;
-  
+
   memset (&mnid, 0, sizeof mnid);
   mnid.lpguid = &guid;
   mnid.ulKind = MNID_STRING;
@@ -132,23 +132,23 @@ create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
   xfree (propname);
   if (FAILED (hr))
     proparr = NULL;
-  if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
+  if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) )
     {
       log_error ("%s:%s: can't map GpgOL property: hr=%#lx\n",
-                 SRCNAME, func, hr); 
+                 SRCNAME, func, hr);
       result = 0;
     }
   else
     result = (proparr->aulPropTag[0] & 0xFFFF0000);
   if (proparr)
     MAPIFreeBuffer (proparr);
-    
+
   TRETURN result;
 }
 
 
 /* Return the property tag for GpgOL Msg Class. */
-int 
+int
 get_gpgolmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -163,7 +163,7 @@ get_gpgolmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
 /* Return the property tag for GpgOL Old Msg Class.  The Old Msg Class
    saves the message class as seen before we changed it the first
    time. */
-int 
+int
 get_gpgololdmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -177,7 +177,7 @@ get_gpgololdmsgclass_tag (LPMESSAGE message, ULONG *r_tag)
 
 
 /* Return the property tag for GpgOL Attach Type. */
-int 
+int
 get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -191,7 +191,7 @@ get_gpgolattachtype_tag (LPMESSAGE message, ULONG *r_tag)
 
 
 /* Return the property tag for GpgOL Protect IV. */
-int 
+int
 get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -204,7 +204,7 @@ get_gpgolprotectiv_tag (LPMESSAGE message, ULONG *r_tag)
 }
 
 /* Return the property tag for GpgOL Last Decrypted. */
-int 
+int
 get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -218,7 +218,7 @@ get_gpgollastdecrypted_tag (LPMESSAGE message, ULONG *r_tag)
 
 
 /* Return the property tag for GpgOL MIME structure. */
-int 
+int
 get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -232,7 +232,7 @@ get_gpgolmimeinfo_tag (LPMESSAGE message, ULONG *r_tag)
 
 
 /* Return the property tag for GpgOL Charset. */
-int 
+int
 get_gpgolcharset_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -246,7 +246,7 @@ get_gpgolcharset_tag (LPMESSAGE message, ULONG *r_tag)
 
 
 /* Return the property tag for GpgOL Draft Info.  */
-int 
+int
 get_gpgoldraftinfo_tag (LPMESSAGE message, ULONG *r_tag)
 {
   TSTART;
@@ -268,7 +268,7 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   TSTART;
   HRESULT hr;
   LPSPropTagArray proparr = NULL;
-  MAPINAMEID mnid, *pmnid;	
+  MAPINAMEID mnid, *pmnid;
   /* {4E3A7680-B77A-11D0-9DA5-00C04FD65685} */
   GUID guid = {0x4E3A7680, 0xB77A, 0x11D0, {0x9D, 0xA5, 0x00, 0xC0,
                                             0x4F, 0xD6, 0x56, 0x85}};
@@ -283,10 +283,10 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
   hr = message->GetIDsFromNames (1, &pmnid, 0, &proparr);
   if (FAILED (hr))
     proparr = NULL;
-  if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) ) 
+  if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) )
     {
       log_debug ("%s:%s: can't get the Internet Charset Body property:"
-                 " hr=%#lx\n", SRCNAME, __func__, hr); 
+                 " hr=%#lx\n", SRCNAME, __func__, hr);
       result = -1;
     }
   else
@@ -297,7 +297,7 @@ get_internetcharsetbody_tag (LPMESSAGE message, ULONG *r_tag)
 
   if (proparr)
     MAPIFreeBuffer (proparr);
-  
+
   TRETURN result;
 }
 
@@ -369,7 +369,7 @@ mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
   HRESULT hr;
   SPropTagArray proparray;
   int any = 0;
-  
+
   if (mapi_has_last_decrypted (message))
     {
       proparray.cValues = 1;
@@ -408,11 +408,11 @@ mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
         {
           log_error ("%s:%s: SaveChanges(%lu) failed: hr=%#lx\n",
                      log_srcname (dbg_file), dbg_func,
-                     (unsigned long)flags, hr); 
+                     (unsigned long)flags, hr);
           TRETURN -1;
         }
     }
-  
+
   TRETURN 0;
 }
 
@@ -421,11 +421,11 @@ mapi_do_save_changes (LPMESSAGE message, ULONG flags, int only_del_body,
    VAL. */
 int
 mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
-{  
+{
   HRESULT hr;
   LPSPropTagArray pProps = NULL;
   SPropValue pv;
-  MAPINAMEID mnid, *pmnid;	
+  MAPINAMEID mnid, *pmnid;
   /* {00020386-0000-0000-C000-000000000046}  ->  GUID For X-Headers */
   GUID guid = {0x00020386, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00,
                                             0x00, 0x00, 0x00, 0x46} };
@@ -443,22 +443,22 @@ mapi_set_header (LPMESSAGE msg, const char *name, const char *val)
   pmnid = &mnid;
   hr = msg->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &pProps);
   xfree (mnid.Kind.lpwstrName);
-  if (FAILED (hr)) 
+  if (FAILED (hr))
     {
       pProps = NULL;
       log_error ("%s:%s: can't get mapping for header `%s': hr=%#lx\n",
-                 SRCNAME, __func__, name, hr); 
+                 SRCNAME, __func__, name, hr);
       result = -1;
     }
   else
     {
       pv.ulPropTag = (pProps->aulPropTag[0] & 0xFFFF0000) | PT_STRING8;
       pv.Value.lpszA = (char *)val;
-      hr = HrSetOneProp(msg, &pv);	
+      hr = HrSetOneProp(msg, &pv);
       if (hr)
         {
           log_error ("%s:%s: can't set header `%s': hr=%#lx\n",
-                     SRCNAME, __func__, name, hr); 
+                     SRCNAME, __func__, name, hr);
           result = -1;
         }
       else
@@ -634,7 +634,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
     *r_nbytes = 0;
   hr = HrGetOneProp ((LPMAPIPROP)message, PR_BODY, &lpspvFEID);
   if (SUCCEEDED (hr))  /* Message is small enough to be retrieved directly. */
-    { 
+    {
       switch ( PROP_TYPE (lpspvFEID->ulPropTag) )
         {
         case PT_UNICODE:
@@ -642,11 +642,11 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
           if (!body)
             log_debug ("%s: error converting to utf8\n", __func__);
           break;
-          
+
         case PT_STRING8:
           body = xstrdup (lpspvFEID->Value.lpszA);
           break;
-          
+
         default:
           log_debug ("%s: proptag=0x%08lx not supported\n",
                      __func__, lpspvFEID->ulPropTag);
@@ -664,7 +664,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
                      SRCNAME, __func__, hr);
           TRETURN NULL;
         }
-      
+
       hr = stream->Stat (&statInfo, STATFLAG_NONAME);
       if (hr)
         {
@@ -672,7 +672,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
           gpgol_release (stream);
           TRETURN NULL;
         }
-      
+
       /* Fixme: We might want to read only the first 1k to decide
          whether this is actually an OpenPGP message and only then
          continue reading.  */
@@ -695,7 +695,7 @@ mapi_get_body (LPMESSAGE message, size_t *r_nbytes)
           TRETURN NULL;
         }
       gpgol_release (stream);
-      
+
       {
         char *tmp;
         tmp = wchar_to_utf8 ((wchar_t*)body);
@@ -849,20 +849,20 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
 }
 
 
-/* Check whether the message is really a CMS encrypted message.  
+/* Check whether the message is really a CMS encrypted message.
    We check here whether the message is really encrypted by looking at
    the object identifier inside the CMS data.  Returns:
     -1 := Unknown message type,
      0 := The message is signed,
      1 := The message is encrypted.
 
-   This function is required for two reasons: 
+   This function is required for two reasons:
 
    1. Due to a bug in CryptoEx which sometimes assignes the *.CexEnc
       message class to signed messages and only updates the message
       class after accessing them.  Thus in old stores there may be a
       lot of *.CexEnc message which are actually just signed.
- 
+
    2. If the smime-type parameter is missing we need another way to
       decide whether to decrypt or to verify.
 
@@ -872,7 +872,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
  */
 static int
 is_really_cms_encrypted (LPMESSAGE message)
-{    
+{
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
@@ -932,7 +932,7 @@ is_really_cms_encrypted (LPMESSAGE message)
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
-                 SRCNAME, __func__, pos, 
+                 SRCNAME, __func__, pos,
                  mapirows->aRow[pos].lpProps[0].Value.l, hr);
       goto leave;
     }
@@ -947,7 +947,7 @@ is_really_cms_encrypted (LPMESSAGE message)
       log_debug ("%s:%s: wrong attach method", SRCNAME, __func__);
       goto leave;
     }
-  
+
   hr = gpgol_openProperty (att, PR_ATTACH_DATA_BIN, &IID_IStream,
                           0, 0, (LPUNKNOWN*) &stream);
   if (FAILED (hr))
@@ -991,7 +991,7 @@ is_really_cms_encrypted (LPMESSAGE message)
       else if (!memcmp (p, "\x2A\x86\x48\x86\xF7\x0D\x01\x07\x02", 9))
         result = 0; /* Signed.  */
     }
-  
+
  leave:
   if (stream)
     gpgol_release (stream);
@@ -1008,7 +1008,7 @@ is_really_cms_encrypted (LPMESSAGE message)
    or NULL if it does not exists.  Caller must free. */
 static char *
 get_first_attach_mime_tag (LPMESSAGE message)
-{    
+{
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
@@ -1056,11 +1056,11 @@ get_first_attach_mime_tag (LPMESSAGE message)
       goto leave;
     }
   hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
-                            NULL, MAPI_BEST_ACCESS, &att);	
+                            NULL, MAPI_BEST_ACCESS, &att);
   if (FAILED (hr))
     {
       log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
-                 SRCNAME, __func__, pos, 
+                 SRCNAME, __func__, pos,
                  mapirows->aRow[pos].lpProps[0].Value.l, hr);
       goto leave;
     }
@@ -1075,7 +1075,7 @@ get_first_attach_mime_tag (LPMESSAGE message)
     }
 
   result = get_attach_mime_tag (att);
-  
+
  leave:
   if (att)
     gpgol_release (att);
@@ -1211,7 +1211,7 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
   TSTART;
   char *newvalue = NULL;
   char *ct, *proto, *smtype;
-  
+
   ct = mapi_get_message_content_type (message, &proto, &smtype);
   if (ct)
     {
@@ -1227,7 +1227,7 @@ change_message_class_ipm_note_smime (LPMESSAGE message)
       else if (smtype)
         {
           log_debug ("%s:%s:   smime-type is '%s'", SRCNAME, __func__, smtype);
-          
+
           if (!strcmp (ct, "application/pkcs7-mime")
               || !strcmp (ct, "application/x-pkcs7-mime"))
             {
@@ -1315,7 +1315,7 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
   if (ct)
     {
       log_debug ("%s:%s: content type is '%s'", SRCNAME, __func__, ct);
-      if (proto 
+      if (proto
           && !strcmp (ct, "multipart/signed")
           && !strcmp (proto, "application/pgp-signature"))
         {
@@ -1330,7 +1330,7 @@ change_message_class_ipm_note_smime_multipartsigned (LPMESSAGE message)
     }
   else
     log_debug ("%s:%s: message has no content type", SRCNAME, __func__);
-  
+
   TRETURN newvalue;
 }
 
@@ -1347,7 +1347,7 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
   TSTART;
   char *newvalue = NULL;
   char *ct, *smtype, *proto;
-  
+
   ct = mapi_get_message_content_type (message, &proto, &smtype);
   if (ct)
     {
@@ -1383,14 +1383,14 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
               newvalue = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
             }
         }
-      
+
       if (!newvalue && (!strcmp (ct, "text/plain") ||
                         !strcmp (ct, "multipart/alternative") ||
                         !strcmp (ct, "multipart/mixed")))
         {
           newvalue = get_msgcls_from_pgp_lines (message);
         }
-      
+
       if (!newvalue)
         {
           switch (is_really_cms_encrypted (message))
@@ -1403,7 +1403,7 @@ change_message_class_ipm_note_secure_cex (LPMESSAGE message, int is_cexenc)
               break;
             }
         }
-      
+
       xfree (smtype);
       xfree (proto);
       xfree (ct);
@@ -1548,13 +1548,13 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
       have_override = 1;
       log_debug ("%s:%s: have override message class\n", SRCNAME, __func__);
     }
-    
+
   if ( PROP_TYPE (propval->ulPropTag) == PT_STRING8 )
     {
       const char *s = propval->Value.lpszA;
       int cexenc = 0;
-      
-      log_debug ("%s:%s: checking message class `%s'", 
+
+      log_debug ("%s:%s: checking message class `%s'",
                        SRCNAME, __func__, s);
       if (!strcmp (s, "IPM.Note"))
         {
@@ -1636,7 +1636,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
             }
           MAPIFreeBuffer (propval2);
         }
-      else if (opt.enable_smime 
+      else if (opt.enable_smime
                && (!strcmp (s, "IPM.Note.Secure.CexSig")
                    || (cexenc = !strcmp (s, "IPM.Note.Secure.CexEnc"))))
         {
@@ -1676,7 +1676,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
               log_debug ("%s:%s: saving old message class\n",
                          SRCNAME, __func__);
               prop.ulPropTag = tag;
-              prop.Value.lpszA = propval->Value.lpszA; 
+              prop.Value.lpszA = propval->Value.lpszA;
               hr = message->SetProps (1, &prop, NULL);
               if (hr)
                 {
@@ -1688,12 +1688,12 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
               need_save = 1;
             }
         }
-      
+
       /* Change message class.  */
       log_debug ("%s:%s: setting message class to `%s'\n",
                  SRCNAME, __func__, newvalue);
       prop.ulPropTag = PR_MESSAGE_CLASS_A;
-      prop.Value.lpszA = newvalue; 
+      prop.Value.lpszA = newvalue;
       hr = message->SetProps (1, &prop, NULL);
       xfree (newvalue);
       if (hr)
@@ -1735,7 +1735,7 @@ mapi_get_message_class (LPMESSAGE message)
     {
       TRETURN xstrdup ("[No message]");
     }
-  
+
   hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
   if (FAILED (hr))
     {
@@ -1750,7 +1750,7 @@ mapi_get_message_class (LPMESSAGE message)
     retstr = xstrdup (propval->Value.lpszA);
   else
     retstr = xstrdup ("[Invalid message class property]");
-    
+
   MAPIFreeBuffer (propval);
   TRETURN retstr;
 }
@@ -1771,7 +1771,7 @@ mapi_get_old_message_class (LPMESSAGE message)
     {
       TRETURN NULL;
     }
-  
+
   if (get_gpgololdmsgclass_tag (message, &tag))
     {
       TRETURN NULL;
@@ -1789,7 +1789,7 @@ mapi_get_old_message_class (LPMESSAGE message)
     retstr = xstrdup (propval->Value.lpszA);
   else
     retstr = NULL;
-    
+
   MAPIFreeBuffer (propval);
   TRETURN retstr;
 }
@@ -1798,7 +1798,7 @@ mapi_get_old_message_class (LPMESSAGE message)
 
 /* Return the sender of the message.  According to the specs this is
    an UTF-8 string; we rely on that the UI server handles
-   internationalized domain names.  */ 
+   internationalized domain names.  */
 char *
 mapi_get_sender (LPMESSAGE message)
 {
@@ -1807,7 +1807,7 @@ mapi_get_sender (LPMESSAGE message)
   LPSPropValue propval = NULL;
   char *buf;
   char *p0, *p;
-  
+
   if (!message)
     {
       TRETURN NULL; /* No message: Nop. */
@@ -1820,15 +1820,15 @@ mapi_get_sender (LPMESSAGE message)
                  SRCNAME, __func__, hr);
       TRETURN NULL;
     }
-    
-  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
+
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE)
     {
       log_debug ("%s:%s: HrGetOneProp Returns invalid type %lu\n",
                  SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
       MAPIFreeBuffer (propval);
       TRETURN NULL;
     }
-  
+
   buf = wchar_to_utf8 (propval->Value.lpszW);
   MAPIFreeBuffer (propval);
   if (!buf)
@@ -1874,7 +1874,7 @@ mapi_get_sender (LPMESSAGE message)
           xfree (buf);
           buf = newbuf;
         }
-      
+
     }
   log_debug ("%s:%s: address is `%s'\n", SRCNAME, __func__, anonstr (buf));
   TRETURN buf;
@@ -1996,14 +1996,14 @@ mapi_get_from_address (LPMESSAGE message)
       TRETURN NULL;
     }
 
-  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE)
     {
       log_debug ("%s:%s: HrGetOneProp Returns invalid type %lu\n",
                  SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
       MAPIFreeBuffer (propval);
       TRETURN NULL;
     }
-  
+
   buf = wchar_to_utf8 (propval->Value.lpszW);
   MAPIFreeBuffer (propval);
   if (!buf)
@@ -2041,7 +2041,7 @@ mapi_get_subject (LPMESSAGE message)
   HRESULT hr;
   LPSPropValue propval = NULL;
   char *buf;
-  
+
   if (!message)
     {
       TRETURN xstrdup ("[no message]"); /* Ooops.  */
@@ -2054,15 +2054,15 @@ mapi_get_subject (LPMESSAGE message)
                  SRCNAME, __func__, hr);
       TRETURN xstrdup (_("[no subject]"));
     }
-    
-  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE) 
+
+  if (PROP_TYPE (propval->ulPropTag) != PT_UNICODE)
     {
       log_debug ("%s:%s: HrGetOneProp Returns invalid type %lu\n",
                  SRCNAME, __func__, PROP_TYPE (propval->ulPropTag) );
       MAPIFreeBuffer (propval);
       TRETURN xstrdup (_("[no subject]"));
     }
-  
+
   buf = wchar_to_utf8 (propval->Value.lpszW);
   MAPIFreeBuffer (propval);
   if (!buf)
@@ -2144,11 +2144,11 @@ mapi_to_mime (LPMESSAGE message, const char *filename)
 
   hr = OpenStreamOnFile (MAPIAllocateBuffer, MAPIFreeBuffer,
                          (STGM_CREATE | STGM_READWRITE),
-                         (char*)filename, NULL, &stream); 
-  if (FAILED (hr)) 
+                         (char*)filename, NULL, &stream);
+  if (FAILED (hr))
     {
       log_error ("%s:%s: can't create file `%s': hr=%#lx\n",
-                 SRCNAME, __func__, filename, hr); 
+                 SRCNAME, __func__, filename, hr);
       hr = -1;
     }
   else
@@ -2203,7 +2203,7 @@ mapi_get_binary_prop (LPMESSAGE message, ULONG proptype, size_t *r_nbytes)
       data[propval->Value.bin.cb] = 0;
       *r_nbytes = propval->Value.bin.cb;
       break;
-      
+
     default:
       log_debug ("%s:%s: requested property %#lx has unknown tag %#lx\n",
                  SRCNAME, __func__, proptype, propval->ulPropTag);
@@ -2237,9 +2237,9 @@ mapi_get_int_prop (LPMAPIPROP object, ULONG proptype, LONG *r_value)
     case PT_LONG:
       *r_value = propval->Value.l;
       rc = 0;
-      
+
       break;
-      
+
     default:
       log_debug ("%s:%s: requested property %#lx has unknown tag %#lx\n",
                  SRCNAME, __func__, proptype, propval->ulPropTag);
@@ -2292,7 +2292,7 @@ get_attach_filename (LPATTACH obj)
   char *name = NULL;
 
   hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_LONG_FILENAME, &propval);
-  if (FAILED(hr)) 
+  if (FAILED(hr))
     hr = HrGetOneProp ((LPMAPIPROP)obj, PR_ATTACH_FILENAME, &propval);
   if (FAILED(hr))
     hr = HrGetOneProp ((LPMAPIPROP)obj, PR_DISPLAY_NAME_W, &propval);
@@ -2309,11 +2309,11 @@ get_attach_filename (LPATTACH obj)
       if (!name)
         log_debug ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
       break;
-      
+
     case PT_STRING8:
       name = xstrdup (propval->Value.lpszA);
       break;
-      
+
     default:
       log_debug ("%s:%s: proptag=%#lx not supported\n",
                  SRCNAME, __func__, propval->ulPropTag);
@@ -2389,11 +2389,11 @@ get_attach_mime_tag (LPATTACH obj)
       if (!name)
         log_debug ("%s:%s: error converting to utf8\n", SRCNAME, __func__);
       break;
-      
+
     case PT_STRING8:
       name = xstrdup (propval->Value.lpszA);
       break;
-      
+
     default:
       log_debug ("%s:%s: proptag=%#lx not supported\n",
                  SRCNAME, __func__, propval->ulPropTag);
@@ -2441,7 +2441,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
   LPSRowSet   mapirows;
-  mapi_attach_item_t *table; 
+  mapi_attach_item_t *table;
   unsigned int pos, n_attach;
   ULONG moss_tag;
 
@@ -2482,7 +2482,7 @@ mapi_create_attach_table (LPMESSAGE message, int fast)
 
   /* Allocate our own table.  */
   table = (mapi_attach_item_t *)xcalloc (n_attach+1, sizeof *table);
-  for (pos=0; pos < n_attach; pos++) 
+  for (pos=0; pos < n_attach; pos++)
     {
       LPATTACH att;
 
@@ -2745,7 +2745,7 @@ mapi_get_attach (LPMESSAGE message,
 
 /* Mark this attachment as the original MOSS message.  We set a custom
    property as well as the hidden flag.  */
-int 
+int
 mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
 {
   TSTART;
@@ -2774,11 +2774,11 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
   if (get_gpgolattachtype_tag (message, &prop.ulPropTag) )
     goto leave;
   prop.Value.l = ATTACHTYPE_MOSS;
-  hr = HrSetOneProp (att, &prop);	
+  hr = HrSetOneProp (att, &prop);
   if (hr)
     {
       log_error ("%s:%s: can't set %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Attach Type", hr); 
+                 SRCNAME, __func__, "GpgOL Attach Type", hr);
       TRETURN false;
     }
 
@@ -2788,21 +2788,21 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
   if (hr)
     {
       log_error ("%s:%s: can't set hidden attach flag: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto leave;
     }
-  
+
 
   hr = att->SaveChanges (KEEP_OPEN_READWRITE);
   if (hr)
     {
       log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto leave;
     }
-  
+
   retval = 0;
-    
+
  leave:
   gpgol_release (att);
   TRETURN retval;
@@ -2811,7 +2811,7 @@ mapi_mark_moss_attach (LPMESSAGE message, mapi_attach_item_t *item)
 
 /* If the hidden property has not been set on ATTACH, set it and save
    the changes. */
-int 
+int
 mapi_set_attach_hidden (LPATTACH attach)
 {
   TSTART;
@@ -2821,7 +2821,7 @@ mapi_set_attach_hidden (LPATTACH attach)
   SPropValue prop;
 
   hr = HrGetOneProp ((LPMAPIPROP)attach, PR_ATTACHMENT_HIDDEN, &propval);
-  if (SUCCEEDED (hr) 
+  if (SUCCEEDED (hr)
       && PROP_TYPE (propval->ulPropTag) == PT_BOOLEAN
       && propval->Value.b)
     {
@@ -2834,20 +2834,20 @@ mapi_set_attach_hidden (LPATTACH attach)
   if (hr)
     {
       log_error ("%s:%s: can't set hidden attach flag: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto leave;
     }
-  
+
   hr = attach->SaveChanges (KEEP_OPEN_READWRITE);
   if (hr)
     {
       log_error ("%s:%s: SaveChanges(attachment) failed: hr=%#lx\n",
-                 SRCNAME, __func__, hr); 
+                 SRCNAME, __func__, hr);
       goto leave;
     }
-  
+
   retval = 0;
-    
+
  leave:
   TRETURN retval;
 }
@@ -2861,13 +2861,13 @@ mapi_test_attach_hidden (LPATTACH attach)
   HRESULT hr;
   LPSPropValue propval = NULL;
   int result = 0;
-  
+
   hr = HrGetOneProp ((LPMAPIPROP)attach, PR_ATTACHMENT_HIDDEN, &propval);
   if (FAILED (hr))
     {
       TRETURN result; /* No.  */
     }
-  
+
   if (PROP_TYPE (propval->ulPropTag) == PT_BOOLEAN && propval->Value.b)
     result = 1; /* Yes.  */
 
@@ -2884,7 +2884,7 @@ mapi_test_attach_hidden (LPATTACH attach)
    message and return the message class from the plaintext.  To
    mitigate the problem we define our own msg class override
    property.  */
-int 
+int
 mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name)
 {
   TSTART;
@@ -2896,12 +2896,12 @@ mapi_set_gpgol_msg_class (LPMESSAGE message, const char *name)
       TRETURN -1;
     }
   prop.Value.lpszA = xstrdup (name);
-  hr = HrSetOneProp (message, &prop);	
+  hr = HrSetOneProp (message, &prop);
   xfree (prop.Value.lpszA);
   if (hr)
     {
       log_error ("%s:%s: can't set %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Msg Class", hr); 
+                 SRCNAME, __func__, "GpgOL Msg Class", hr);
       TRETURN -1;
     }
 
@@ -2945,9 +2945,9 @@ mapi_get_gpgol_charset (LPMESSAGE obj)
 }
 
 
-/* Set the GpgOl charset property to an attachment. 
+/* Set the GpgOl charset property to an attachment.
    Note that this function does not call SaveChanges.  */
-int 
+int
 mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset)
 {
   TSTART;
@@ -2967,12 +2967,12 @@ mapi_set_gpgol_charset (LPMESSAGE obj, const char *charset)
     *p = tolower (*(unsigned char*)p);
   if (strlen (prop.Value.lpszA) > 32)
     prop.Value.lpszA[32] = 0;
-  hr = HrSetOneProp ((LPMAPIPROP)obj, &prop);	
+  hr = HrSetOneProp ((LPMAPIPROP)obj, &prop);
   xfree (prop.Value.lpszA);
   if (hr)
     {
       log_error ("%s:%s: can't set %s property: hr=%#lx\n",
-                 SRCNAME, __func__, "GpgOL Charset", hr); 
+                 SRCNAME, __func__, "GpgOL Charset", hr);
       TRETURN -1;
     }
 
@@ -3019,15 +3019,15 @@ mapi_get_gpgol_draft_info (LPMESSAGE msg)
    Character 2:  'S' = sign selected,
                  's' = sign not selected.
                  '-' = don't care
-   Character 3:  'A' = Auto protocol 
+   Character 3:  'A' = Auto protocol
                  'P' = OpenPGP protocol
                  'X' = S/MIME protocol
                  '-' = don't care
-                 
+
    If string is NULL, the property will get deleted.
 
    Note that this function does not call SaveChanges.  */
-int 
+int
 mapi_set_gpgol_draft_info (LPMESSAGE message, const char *string)
 {
   TSTART;
@@ -3042,7 +3042,7 @@ mapi_set_gpgol_draft_info (LPMESSAGE message, const char *string)
   if (string)
     {
       prop.Value.lpszA = xstrdup (string);
-      hr = HrSetOneProp (message, &prop);	
+      hr = HrSetOneProp (message, &prop);
       xfree (prop.Value.lpszA);
     }
   else
@@ -3055,7 +3055,7 @@ mapi_set_gpgol_draft_info (LPMESSAGE message, const char *string)
     {
       log_error ("%s:%s: can't %s %s property: hr=%#lx\n",
                  SRCNAME, __func__, string?"set":"delete",
-                 "GpgOL Draft Info", hr); 
+                 "GpgOL Draft Info", hr);
       TRETURN -1;
     }
 
@@ -3355,7 +3355,7 @@ mapi_has_last_decrypted (LPMESSAGE message)
   LPSPropValue propval = NULL;
   ULONG tag;
   int yes = 0;
-  
+
   if (get_gpgollastdecrypted_tag (message, &tag) )
     {
       TRETURN 0; /* No.  */
@@ -3365,7 +3365,7 @@ mapi_has_last_decrypted (LPMESSAGE message)
     {
       TRETURN 0; /* No.  */
     }
-  
+
   if (PROP_TYPE (propval->ulPropTag) == PT_BINARY)
     yes = 1;
 

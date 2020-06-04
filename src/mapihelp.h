@@ -2,17 +2,17 @@
  * Copyright (C) 2005, 2007, 2008 g10 Code GmbH
  *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -75,8 +75,8 @@ char *mapi_get_body (LPMESSAGE message, size_t *r_nbytes);
 
 mapi_attach_item_t *mapi_create_attach_table (LPMESSAGE message, int fast);
 void mapi_release_attach_table (mapi_attach_item_t *table);
-LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message, 
-                                    mapi_attach_item_t *item, 
+LPSTREAM mapi_get_attach_as_stream (LPMESSAGE message,
+                                    mapi_attach_item_t *item,
                                     LPATTACH *r_attach);
 char *mapi_get_attach (LPMESSAGE message,
                        mapi_attach_item_t *item, size_t *r_nbytes);
@@ -96,7 +96,7 @@ int  mapi_test_attach_hidden (LPATTACH attach);
 
 char *mapi_get_mime_info (LPMESSAGE msg);
 
-char *mapi_get_message_content_type (LPMESSAGE message, 
+char *mapi_get_message_content_type (LPMESSAGE message,
                                      char **r_protocol, char **r_smtype);
 
 int   mapi_has_last_decrypted (LPMESSAGE message);

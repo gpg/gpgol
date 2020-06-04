@@ -99,7 +99,7 @@ get_object_name (LPUNKNOWN obj)
   disp->GetTypeInfo (0, 0, &tinfo);
   if (!tinfo)
     {
-      log_debug ("%s:%s: no typeinfo found for object\n", 
+      log_debug ("%s:%s: no typeinfo found for object\n",
                  SRCNAME, __func__);
       goto leave;
     }
@@ -107,7 +107,7 @@ get_object_name (LPUNKNOWN obj)
   bstrname = NULL;
   hr = tinfo->GetDocumentation (MEMBERID_NIL, &bstrname, 0, 0, 0);
   if (hr || !bstrname)
-    log_debug ("%s:%s: GetDocumentation failed: hr=%#lx\n", 
+    log_debug ("%s:%s: GetDocumentation failed: hr=%#lx\n",
                SRCNAME, __func__, hr);
   if (bstrname)
     {
@@ -163,7 +163,7 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
       TRETURN DISPID_UNKNOWN;/* Error:  Out of memory.  */
     }
 
-  hr = pDisp->GetIDsOfNames (IID_NULL, &wname, 1, 
+  hr = pDisp->GetIDsOfNames (IID_NULL, &wname, 1,
                              LOCALE_SYSTEM_DEFAULT, &dispid);
   xfree (wname);
   if (hr != S_OK || dispid == DISPID_UNKNOWN)
@@ -282,12 +282,12 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
             }
           TRETURN pDisp; /* Ready.  */
         }
-      
+
       /* Break out the next name part.  */
       {
         const char *dot;
         size_t n;
-        
+
         dot = strchr (fullname, '.');
         if (dot == fullname)
           {
@@ -298,18 +298,18 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
           n = dot - fullname;
         else
           n = strlen (fullname);
-        
+
         if (n >= sizeof name)
           n = sizeof name - 1;
         strncpy (name, fullname, n);
         name[n] = 0;
-        
+
         if (dot)
           fullname = dot + 1;
         else
           fullname += strlen (fullname);
       }
-      
+
       if (!strncmp (name, "get_", 4) && name[4])
         {
           dispmethod = DISPATCH_PROPERTYGET;
@@ -366,14 +366,14 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
         {
           if (n_parms == 4)
             {
-              dispparams.rgvarg[0].vt = VT_ERROR; 
-              dispparams.rgvarg[0].scode = DISP_E_PARAMNOTFOUND; 
-              dispparams.rgvarg[1].vt = VT_ERROR; 
-              dispparams.rgvarg[1].scode = DISP_E_PARAMNOTFOUND; 
-              dispparams.rgvarg[2].vt = VT_INT; 
-              dispparams.rgvarg[2].intVal = parmint; 
-              dispparams.rgvarg[3].vt = VT_ERROR; 
-              dispparams.rgvarg[3].scode = DISP_E_PARAMNOTFOUND; 
+              dispparams.rgvarg[0].vt = VT_ERROR;
+              dispparams.rgvarg[0].scode = DISP_E_PARAMNOTFOUND;
+              dispparams.rgvarg[1].vt = VT_ERROR;
+              dispparams.rgvarg[1].scode = DISP_E_PARAMNOTFOUND;
+              dispparams.rgvarg[2].vt = VT_INT;
+              dispparams.rgvarg[2].intVal = parmint;
+              dispparams.rgvarg[3].vt = VT_ERROR;
+              dispparams.rgvarg[3].scode = DISP_E_PARAMNOTFOUND;
               dispparams.cArgs = n_parms;
             }
           else if (n_parms == 1 && parmstr)
@@ -442,7 +442,7 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
   fuload = LR_CREATEDIBSECTION | LR_SHARED;
   if (is_mask)
     fuload |= LR_MONOCHROME;
-  
+
   memset (&pdesc, 0, sizeof pdesc);
   pdesc.cbSizeofstruct = sizeof pdesc;
   pdesc.picType = PICTYPE_BITMAP;
@@ -451,13 +451,13 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
                                            IMAGE_BITMAP, size, size, fuload);
   if (!pdesc.bmp.hbitmap)
     {
-      log_error_w32 (-1, "%s:%s: LoadImage(%d) failed\n", 
+      log_error_w32 (-1, "%s:%s: LoadImage(%d) failed\n",
                      SRCNAME, __func__, resource);
       TRETURN -1;
     }
 
   /* Wrap the image into an OLE object.  */
-  hr = OleCreatePictureIndirect (&pdesc, IID_IPictureDisp, 
+  hr = OleCreatePictureIndirect (&pdesc, IID_IPictureDisp,
                                  TRUE, (void **) &pPict);
   if (hr != S_OK || !pPict)
     {
@@ -465,7 +465,7 @@ put_picture_or_mask (LPDISPATCH pDisp, int resource, int size, int is_mask)
                  SRCNAME, __func__, hr);
       TRETURN -1;
     }
-        
+
   /* Store to the Picture or Mask property of the CommandBarButton.  */
   dispid = lookup_oom_dispid (pDisp, is_mask? "Mask":"Picture");
 
@@ -537,7 +537,7 @@ put_oom_bool (LPDISPATCH pDisp, const char *name, int value)
                       NULL, NULL, NULL);
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: Putting '%s' failed: %#lx", 
+      log_debug ("%s:%s: Putting '%s' failed: %#lx",
                  SRCNAME, __func__, name, hr);
       TRETURN -1;
     }
@@ -573,7 +573,7 @@ put_oom_int (LPDISPATCH pDisp, const char *name, int value)
                       NULL, NULL, NULL);
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: Putting '%s' failed: %#lx", 
+      log_debug ("%s:%s: Putting '%s' failed: %#lx",
                  SRCNAME, __func__, name, hr);
       TRETURN -1;
     }
@@ -688,7 +688,7 @@ put_oom_string (LPDISPATCH pDisp, const char *name, const char *string)
   SysFreeString (bstring);
   if (hr != S_OK)
     {
-      log_debug ("%s:%s: Putting '%s' failed: %#lx", 
+      log_debug ("%s:%s: Putting '%s' failed: %#lx",
                  SRCNAME, __func__, name, hr);
       dump_excepinfo (execpinfo);
       TRETURN -1;
@@ -740,10 +740,10 @@ int
 get_oom_bool (LPDISPATCH pDisp, const char *name)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   int result = 0;
   DISPID dispid;
-  
+
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid != DISPID_UNKNOWN)
     {
@@ -775,10 +775,10 @@ int
 get_oom_int (LPDISPATCH pDisp, const char *name)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   int result = 0;
   DISPID dispid;
-  
+
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid != DISPID_UNKNOWN)
     {
@@ -882,10 +882,10 @@ char *
 get_oom_string (LPDISPATCH pDisp, const char *name)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   char *result = NULL;
   DISPID dispid;
-  
+
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid != DISPID_UNKNOWN)
     {
@@ -934,9 +934,9 @@ LPUNKNOWN
 get_oom_iunknown (LPDISPATCH pDisp, const char *name)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   DISPID dispid;
-  
+
   dispid = lookup_oom_dispid (pDisp, name);
   if (dispid != DISPID_UNKNOWN)
     {
@@ -973,7 +973,7 @@ LPDISPATCH
 get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   DISPID dispid;
   DISPPARAMS dispparams;
   VARIANT aVariant[4];
@@ -1001,13 +1001,13 @@ get_oom_control_bytag (LPDISPATCH pDisp, const char *tag)
   }
   dispparams.rgvarg = aVariant;
   dispparams.rgvarg[0].vt = VT_ERROR; /* Visible */
-  dispparams.rgvarg[0].scode = DISP_E_PARAMNOTFOUND; 
+  dispparams.rgvarg[0].scode = DISP_E_PARAMNOTFOUND;
   dispparams.rgvarg[1].vt = VT_BSTR;  /* Tag */
   dispparams.rgvarg[1].bstrVal = bstring;
   dispparams.rgvarg[2].vt = VT_ERROR; /* Id */
   dispparams.rgvarg[2].scode = DISP_E_PARAMNOTFOUND;
   dispparams.rgvarg[3].vt = VT_ERROR;/* Type */
-  dispparams.rgvarg[3].scode = DISP_E_PARAMNOTFOUND; 
+  dispparams.rgvarg[3].scode = DISP_E_PARAMNOTFOUND;
   dispparams.cArgs = 4;
   dispparams.cNamedArgs = 0;
   VariantInit (&rVariant);
@@ -1041,7 +1041,7 @@ LPDISPATCH
 add_oom_button (LPDISPATCH pObj)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   DISPID dispid;
   DISPPARAMS dispparams;
   VARIANT aVariant[5];
@@ -1053,11 +1053,11 @@ add_oom_button (LPDISPATCH pObj)
   dispparams.rgvarg[0].vt = VT_BOOL;  /* Temporary */
   dispparams.rgvarg[0].boolVal = VARIANT_TRUE;
   dispparams.rgvarg[1].vt = VT_ERROR;  /* Before */
-  dispparams.rgvarg[1].scode = DISP_E_PARAMNOTFOUND; 
+  dispparams.rgvarg[1].scode = DISP_E_PARAMNOTFOUND;
   dispparams.rgvarg[2].vt = VT_ERROR;  /* Parameter */
-  dispparams.rgvarg[2].scode = DISP_E_PARAMNOTFOUND; 
+  dispparams.rgvarg[2].scode = DISP_E_PARAMNOTFOUND;
   dispparams.rgvarg[3].vt = VT_ERROR;  /* Id */
-  dispparams.rgvarg[3].scode = DISP_E_PARAMNOTFOUND; 
+  dispparams.rgvarg[3].scode = DISP_E_PARAMNOTFOUND;
   dispparams.rgvarg[4].vt = VT_INT;    /* Type */
   dispparams.rgvarg[4].intVal = MSOCONTROLBUTTON;
   dispparams.cArgs = 5;
@@ -1083,7 +1083,7 @@ void
 del_oom_button (LPDISPATCH pObj)
 {
   TSTART;
-  HRESULT hr;      
+  HRESULT hr;
   DISPID dispid;
   DISPPARAMS dispparams;
   VARIANT aVariant[5];

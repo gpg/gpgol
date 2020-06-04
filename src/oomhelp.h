@@ -4,17 +4,17 @@
  * Software engineering by Intevation GmbH
  *
  * This file is part of GpgOL.
- * 
+ *
  * GpgOL is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * GpgOL is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
@@ -38,7 +38,7 @@
 
 class Recipient;
 
-enum 
+enum
   {
     msoButtonAutomatic = 0,
     msoButtonIcon = 1,
@@ -47,7 +47,7 @@ enum
     msoButtonIconAndWrapCaption = 7,
     msoButtonIconAndCaptionBelow = 11,
     msoButtonWrapCaption = 14,
-    msoButtonIconAndWrapCaptionBelow = 15 
+    msoButtonIconAndWrapCaptionBelow = 15
   };
 
 enum
@@ -60,10 +60,10 @@ enum
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-DEFINE_GUID(IID_IConnectionPoint, 
+DEFINE_GUID(IID_IConnectionPoint,
             0xb196b286, 0xbab4, 0x101a,
             0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
-DEFINE_GUID(IID_IConnectionPointContainer, 
+DEFINE_GUID(IID_IConnectionPointContainer,
             0xb196b284, 0xbab4, 0x101a,
             0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
 DEFINE_GUID(IID_IPictureDisp,
