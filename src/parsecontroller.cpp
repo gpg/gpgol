@@ -731,3 +731,17 @@ ParseController::get_protected_header (const std::string &which) const
     }
   TRETURN std::string ();
 }
+
+std::string
+ParseController::get_content_type () const
+{
+  TSTART;
+  if (m_outputprovider)
+    {
+      TRETURN m_outputprovider->get_content_type ();
+    }
+  else
+    {
+      TRETURN std::string();
+    }
+}

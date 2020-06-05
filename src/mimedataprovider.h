@@ -125,6 +125,9 @@ public:
   void finalize ();
 
   int m_protected_headers_version;
+
+  std::string get_content_type () const;
+  void set_content_type (const char *ctmain, const char *ctsub);
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */
@@ -162,5 +165,7 @@ private:
   std::map <std::string, std::string> m_protected_headers;
   /* Helper buffer for protected headers legacy part. */
   std::string m_ph_helpbuf;
+  /* Main content type */
+  std::string m_content_type;
 };
 #endif // MIMEDATAPROVIDER_H

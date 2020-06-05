@@ -103,6 +103,8 @@ public:
 
   std::string get_protected_header (const std::string &which) const;
 
+  std::string get_content_type () const;
+
 private:
   /* State variables */
   MimeDataProvider *m_inputprovider;

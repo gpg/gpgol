@@ -772,6 +772,7 @@ private:
   std::string m_protected_headers;
   header_info_s m_header_info; /* Information about the original headers */
   bool m_attachs_added; /* State variable to track if we have added attachments to this mail. */
+  std::string m_dec_content_type; /* Top level content type of the decrypted mail. */
 };
 
 /* A state variable to capture which mail triggered a copy to

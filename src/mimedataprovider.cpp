@@ -269,6 +269,10 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
 
   log_data ("%s:%s: ctx=%p, ct=`%s/%s'\n",
             SRCNAME, __func__, ctx, ctmain, ctsub);
+  if (!ctx->nesting_level)
+    {
+      provider->set_content_type (ctmain, ctsub);
+    }
 
   s = rfc822parse_query_parameter (field, "charset", 0);
   if (s)
@@ -1234,4 +1238,19 @@ MimeDataProvider::get_protected_header (const std::string &which) const
       TRETURN it->second;
     }
   TRETURN std::string ();
+}
+
+std::string
+MimeDataProvider::get_content_type () const
+{
+  return m_content_type;
+}
+
+void
+MimeDataProvider::set_content_type (const char *ctmain, const char *ctsub)
+{
+  std::string main = ctmain ? std::string (ctmain) : std::string ();
+  std::string sub = ctsub ? std::string ("/") + std::string (ctsub) :
+                                                std::string ();
+  m_content_type = main + sub;
 }

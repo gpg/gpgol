@@ -1951,6 +1951,10 @@ Mail::parsingDone_o (bool is_preview)
   /* Update the body */
   updateBody_o (is_preview);
   TRACEPOINT;
+  m_dec_content_type = m_parser->get_content_type ();
+
+  log_dbg ("Decrypted mail has content type: '%s'",
+           m_dec_content_type.c_str ());
 
   /* When printing we have already shown the warning. So we
      should not show it again but silently remove any attachments
@@ -4770,7 +4774,7 @@ Mail::decryptPermanently_o()
     }
   mapi_delete_gpgol_tags ((LPMESSAGE)msg.get());
   /* The content type is wrong now. We remove it.*/
-  mapi_set_content_type ((LPMESSAGE)msg.get(), nullptr);
+  mapi_set_content_type ((LPMESSAGE)msg.get(), m_dec_content_type.c_str ());
 
   mapi_set_mesage_class ((LPMESSAGE)msg.get(), "IPM.Note");
 
