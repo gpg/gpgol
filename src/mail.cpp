@@ -4774,7 +4774,8 @@ Mail::decryptPermanently_o()
     }
   mapi_delete_gpgol_tags ((LPMESSAGE)msg.get());
   /* The content type is wrong now. We remove it.*/
-  mapi_set_content_type ((LPMESSAGE)msg.get(), m_dec_content_type.c_str ());
+  mapi_set_content_type ((LPMESSAGE)msg.get(), m_dec_content_type.empty () ?
+                         "text/plain" : m_dec_content_type.c_str ());
 
   mapi_set_mesage_class ((LPMESSAGE)msg.get(), "IPM.Note");
 
