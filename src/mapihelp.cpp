@@ -572,29 +572,34 @@ mapi_set_content_type (LPMESSAGE message, const char *ct)
       TRETURN -1;
     }
   std::stringstream newHeaders;
-  bool inCt = false;
+  bool inContentHeader = false;
   for (auto line: gpgol_split (headers, '\n'))
     {
       transform(line.begin(), line.end(), line.begin(), ::tolower);
       if (starts_with (line, "content-type"))
         {
-          inCt = true;
+          inContentHeader = true;
           if (ct)
             {
               newHeaders << "Content-type: " << ct << "\n";
             }
         }
-      else if (inCt)
+      else if (inContentHeader)
         {
           if (starts_with (line, " ") || starts_with (line, "\t"))
             {
-              log_data ("Content type header continuation %s ignored.", line.c_str());
+              log_data ("Content header continuation %s ignored.", line.c_str());
               continue;
             }
           else
             {
-              inCt = false;
+              inContentHeader = false;
             }
+        }
+      else if (starts_with (line, "content-"))
+        {
+          inContentHeader = true;
+          continue;
         }
       else
         {
