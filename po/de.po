@@ -90,7 +90,7 @@ msgstr "Aktiveren oder deaktivieren aller Automatisierungs-Optionen."
 
 #: src/addin-options.cpp:61
 msgid "Automate trust based on communication history."
-msgstr "Vertrauen auf basis der Kommunikationshistorie automatisieren."
+msgstr "Vertrauen auf Basis der Kommunikationshistorie automatisieren."
 
 #: src/addin-options.cpp:62
 msgid ""
@@ -99,7 +99,7 @@ msgid ""
 msgstr ""
 "Dies ändert das Vertrauensmodell auf \"tofu+pgp\", welches die "
 "Kommunikationshistorie des Schlüssels berücksichtigt.  Automatisiertes "
-"vertrauen kann <b>niemals</b> level 2 übersteigen."
+"Vertrauen kann <b>niemals</b> Level 2 übersteigen."
 
 #: src/addin-options.cpp:63
 msgid "experimental"
@@ -110,12 +110,12 @@ msgid ""
 "Automatically toggles secure if keys with at least level 1 trust were found "
 "for all recipients."
 msgstr ""
-"Sichert Mails automatisch wenn Schlüssel mit min. Level 1 vertrauen für alle "
+"Sichert Mails automatisch wenn Schlüssel mit min. Level 1 Vertrauen für alle "
 "Empfänger gefunden werden konnten."
 
 #: src/addin-options.cpp:65
 msgid "Toggles the encrypt option for all new mails."
-msgstr "Wählt die verschlüsseln option für alle neuen Mails."
+msgstr "Wählt die Verschlüsseln Option für alle neuen Mails."
 
 #: src/addin-options.cpp:66
 msgid "Toggles the sign option for all new mails."
@@ -125,7 +125,7 @@ msgstr "Wählt die Signieren Option für alle neuen Mails. "
 msgid ""
 "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
-"Wählt signieren, verschlüsseln je nachdem ob die original Mail signiert oder "
+"Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert oder "
 "verschlüsselt war."
 
 #: src/addin-options.cpp:68
@@ -134,7 +134,7 @@ msgid ""
 "encoding, the deprecated PGP/Inline is used.\n"
 "This can be required for compatibility but should generally not be used."
 msgstr ""
-"Anstelle des PGP/MIME Formats, welches Anhänge und encoding richtig "
+"Anstelle des PGP/MIME Formats, welches Anhänge und Encoding richtig "
 "behandelt, das veraltete PGP/Inline verwenden.\n"
 "Dies kann für kompatibilität manchmal nötig sein, sollte aber generell nicht "
 "verwendet werden."
@@ -184,7 +184,7 @@ msgstr ""
 msgid ""
 "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
-"Sichert Mails auch wenn Schlüssel mit Level 0 vertrauen gefunden wurden."
+"Sichert Mails auch wenn Schlüssel mit Level 0 Vertrauen gefunden wurden."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
@@ -734,7 +734,7 @@ msgstr ""
 msgid "Invalid Key"
 msgstr "Invalider Schlüssel"
 
-#. TRANSLATORS: The first placeholder is for tranlsation of "Level".
+#. TRANSLATORS: The first placeholder is for translation of "Level".
 #. The second one is for the level number. The third is for the
 #. translation of "trust in" and the last one is for the mail
 #. address used for verification. The result is used as the
@@ -746,7 +746,7 @@ msgstr "Stufe"
 
 #: src/mail.cpp:2838
 msgid "trust in"
-msgstr "vertrauen in"
+msgstr "Vertrauen in"
 
 #: src/mail.cpp:3066
 msgid "Security Level 4"
