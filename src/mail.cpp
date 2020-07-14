@@ -1406,12 +1406,12 @@ Mail::decryptVerify_o ()
     }
   if (opt.prefer_html)
     {
+      put_oom_int (m_mailitem, "BodyFormat", 2);
       if (put_oom_string (m_mailitem, "HTMLBody", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
         }
-      put_oom_int (m_mailitem, "BodyFormat", 2);
     }
   else
     {
@@ -1423,12 +1423,12 @@ Mail::decryptVerify_o ()
         }
       m_orig_body = tmp;
       xfree (tmp);
+      put_oom_int (m_mailitem, "BodyFormat", 1);
       if (put_oom_string (m_mailitem, "Body", placeholder_buf))
         {
           log_error ("%s:%s: Failed to modify body of item.",
                      SRCNAME, __func__);
         }
-      put_oom_int (m_mailitem, "BodyFormat", 1);
     }
   memdbg_alloc (placeholder_buf);
   xfree (placeholder_buf);
@@ -1534,21 +1534,21 @@ set_body (LPDISPATCH item, const std::string &plain, const std::string &html)
                      SRCNAME, __func__);
           if (!plain.empty ())
             {
+              put_oom_int (item, "BodyFormat", 1);
               if (put_oom_string (item, "Body", plain.c_str ()))
                 {
                   log_error ("%s:%s: Failed to put plaintext into body of item.",
                              SRCNAME, __func__);
                 }
-              put_oom_int (item, "BodyFormat", 1);
             }
           else
             {
+              put_oom_int (item, "BodyFormat", 2);
               if (put_oom_string (item, "HTMLBody", plain.c_str ()))
                 {
                   log_error ("%s:%s: Failed to put plaintext into html of item.",
                              SRCNAME, __func__);
                 }
-              put_oom_int (item, "BodyFormat", 2);
             }
         }
       else
@@ -1558,12 +1558,12 @@ set_body (LPDISPATCH item, const std::string &plain, const std::string &html)
     }
   else if (!plain.empty ())
     {
+      put_oom_int (item, "BodyFormat", 1);
       if (put_oom_string (item, "Body", plain.c_str ()))
         {
           log_error ("%s:%s: Failed to put plaintext into body of item.",
                      SRCNAME, __func__);
         }
-      put_oom_int (item, "BodyFormat", 1);
     }
 }
 
@@ -1649,10 +1649,10 @@ Mail::updateBody_o (bool is_preview)
               }
             }
           TRACEPOINT;
+          put_oom_int (m_mailitem, "BodyFormat", 2);
           int ret = put_oom_string (m_mailitem, "HTMLBody", converted ?
                                                             converted : "");
           xfree (converted);
-          put_oom_int (m_mailitem, "BodyFormat", 2);
           TRACEPOINT;
           if (ret)
             {
@@ -1783,8 +1783,8 @@ Mail::updateBody_o (bool is_preview)
       converted = buf;
     }
   TRACEPOINT;
-  int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
   put_oom_int (m_mailitem, "BodyFormat", 1);
+  int ret = put_oom_string (m_mailitem, "Body", converted ? converted : "");
   TRACEPOINT;
   xfree (converted);
   if (ret)
