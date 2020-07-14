@@ -512,6 +512,19 @@ get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
         }
       xfree (outNameC);
 
+      if (tries == 50)
+        {
+          /* Mmh fishy, maybe the name cannot be created on the file
+             system. Let's switch to a generic name. */
+          log_dbg ("Can't find an attachment name. "
+                   "Switching over to a generic attachment name.");
+          outName = tmpPath + "attachment";
+          if (fileExt)
+            {
+              outName += ".";
+              outName += fileExt;
+            }
+        }
       if (tries > 100)
         {
           /* You have to know when to give up,.. */
