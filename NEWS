@@ -1,5 +1,44 @@
-Noteworthy changes for version 2.4.6 (unreleased)
+Noteworthy changes for version 2.4.6 (2020-07-22)
 =================================================
+
+ * Improved handling of protected headers mails. (T4796)
+
+ * Experimental code for combined S/MIME and OpenPGP
+ operations and protected headers. Options are:
+ combinedOpsEnabled, encryptSubject, splitBCCMails
+
+ * Fixed handling of WKS mails. (T4839)
+
+ * Improved Addressbook integration. (T4874)
+
+ * Automatically learn keys from smartcards. (T4877)
+
+ * Fix signing key selection for group accounts.
+ (T4940)
+
+ * Show a preview when mail verification takes long.
+ (T4944)
+
+ * Allow changing the printer when printing crypto
+ mails. (T4890)
+
+ * Fix reply crypt selection when signing is selcted
+ by default. (T4949)
+
+ * Properly show level 2 validitity for Mails with keys
+ from WKD.
+
+ * Show a warning when both outlooks internal crypto
+ and GpgOL is active für a mail. (T4953)
+
+ * Fix cases where GpgOL would detect permanently decrypted
+ mails as still encrypted. (T4718)
+
+ * Disable automatic when displaying plaintext mails. (T4987)
+
+ * Use a generic filename for attachments that with
+ characters disallowed by Windows. (T4835)
+
 
 Noteworthy changes for version 2.4.5 (2019-12-20)
 =================================================
