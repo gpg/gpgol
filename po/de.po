@@ -1045,8 +1045,8 @@ msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
 msgstr ""
-"Eine Krypto Operation ist sowohl mit Outlooks interner S/MIME Verschlüsselung"
-" ausgewählt und mit GpgOL / GnuPG."
+"Eine Krypto Operation ist sowohl mit Outlooks interner S/MIME "
+"Verschlüsselung ausgewählt und mit GpgOL / GnuPG."
 
 #: src/mail.cpp:4815
 msgid "Conflicting crypto settings"
