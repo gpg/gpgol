@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <fstream>
 
 #define COBJMACROS
 #include <windows.h>
@@ -1017,95 +1018,191 @@ count_usable_attachments (mapi_attach_item_t *table)
   return count;
 }
 
-/* Write out all attachments from TABLE separated by BOUNDARY to SINK.
-   This function needs to be syncronized with count_usable_attachments.
+static int
+write_attachment_fallback (LPDISPATCH attach, sink_t sink, const char *boundary,
+                           const char *filename, const char *cid)
+{
+  TSTART;
+  VARIANT var;
+  VariantInit (&var);
+  int rc = -1;
+
+  if (get_pa_variant (attach, PR_ATTACH_DATA_BIN_DASL, &var))
+    {
+      log_dbg ("Failed to get attach data bin.");
+      TRETURN -1;
+    }
+
+  if (var.vt & VT_ARRAY && !(var.vt & VT_BYREF))
+    {
+      LONG uBound, lBound;
+      VARTYPE vt;
+      SafeArrayGetVartype(var.parray, &vt);
+
+      if (SafeArrayGetUBound (var.parray, 1, &uBound) != S_OK ||
+          SafeArrayGetLBound (var.parray, 1, &lBound) != S_OK ||
+          vt != VT_UI1)
+        {
+          STRANGEPOINT;
+          VariantClear (&var);
+          TRETURN rc;
+        }
+      char *data = (char *) var.parray->pvData;
+      rc = write_part (sink, data + lBound, uBound - lBound, boundary,
+                       filename, 0, cid);
+    }
+  VariantClear (&var);
+  TRETURN rc;
+}
+
+static int
+write_attachment (LPDISPATCH attach, sink_t sink, const char *boundary,
+                  const char *cid)
+{
+  TSTART;
+  std::string fname = get_oom_string_s (attach, "FileName");
+  if (fname.empty())
+    {
+      fname = get_oom_string_s (attach, "DisplayName");
+    }
+  if (fname.empty())
+    {
+      log_dbg ("No filename for attachment. Using generic name.");
+      fname = "Attachment";
+    }
+  HANDLE hFile = INVALID_HANDLE_VALUE;
+  wchar_t* wchar_file = get_tmp_outfile (L"gpgol0.dat",
+                                         &hFile);
+  if (!wchar_file || hFile == INVALID_HANDLE_VALUE)
+    {
+      log_error ("%s:%s: Failed to obtain a tmp filename for: %s",
+                 SRCNAME, __func__, anonstr (fname.c_str()));
+      TRETURN -1;
+    }
+  /* Close the file handle to allow to write in its place. */
+  VARIANT aVariant[1];
+  VariantInit (&aVariant[0]);
+  aVariant[0].vt = VT_BSTR;
+  aVariant[0].bstrVal = SysAllocString (wchar_file);
+  DISPPARAMS dispparams;
+  dispparams.rgvarg = aVariant;
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  CloseHandle (hFile);
+  int ret = invoke_oom_method_with_parms (attach, "SaveAsFile", nullptr,
+                                          &dispparams);
+  VariantClear(&aVariant[0]);
+  if (ret)
+    {
+      log_dbg ("Failed to save attachment %s to file",
+               anonstr (fname.c_str ()));
+      DeleteFileW (wchar_file);
+      xfree (wchar_file);
+
+      TRETURN write_attachment_fallback (attach, sink,
+                                         boundary, fname.c_str (), cid);
+    }
+  /* We now have the data of the attachment under the name wchar_file. */
+  std::ifstream ifs(wchar_file, std::ios_base::in | std::ios_base::binary);
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                       (std::istreambuf_iterator<char>()));
+
+  int rc = 0;
+  if (ifs.is_open ())
+    {
+      /* Now copy the data into sink */
+      rc = write_part (sink, content.c_str (), content.size (), boundary,
+                       fname.c_str (), 0, cid);
+      log_dbg ("Written data %i", (int)content.size());
+    }
+  ifs.close ();
+  if (!DeleteFileW (wchar_file))
+    {
+      log_dbg ("Failed to delete temporary attachment: '%S'",
+               wchar_file);
+    }
+  xfree (wchar_file);
+
+  TRETURN rc;
+}
+
+/* Write out all attachments separated by BOUNDARY to SINK.
    If only_related is 1 only include attachments for multipart/related they
    are excluded otherwise.
    If only_related is 2 all attachments are included regardless of
    content-id. */
 static int
-write_attachments (sink_t sink,
-                   LPMESSAGE message, mapi_attach_item_t *table,
+write_attachments (sink_t sink, LPDISPATCH attachments,
                    const char *boundary, int only_related)
 {
-  int idx, rc;
-  char *buffer;
-  size_t buflen;
+  TSTART;
+  if (!attachments)
+    {
+      TRETURN 0;
+    }
+
+  int count = get_oom_int (attachments, "Count");
   bool warning_shown = false;
+  for (int i = 1; i <= count; i++)
+    {
+      const auto itemStr = std::string ("Item(") + std::to_string (i) + std::string (")");
+      auto attach = get_oom_object_s (attachments, itemStr.c_str ());
+      if (!attach)
+        {
+          log_err ("Failed to open attachment: %i", i);
+          continue;
+        }
+      char *cid = get_pa_string (attach.get (), PR_ATTACH_CONTENT_ID_DASL);
+      if (!cid && only_related == 1)
+        {
+          log_dbg ("Skipping unrelated attachment.");
+          continue;
+        }
+      int ret = write_attachment (attach.get (), sink, boundary, cid);
+      xfree (cid);
+      if (!ret)
+        {
+          continue;
+        }
+      /* Handle error */
+      if (!warning_shown)
+        {
+          std::string fname = get_oom_string_s (attach, "FileName");
+          char *fmt;
+          gpgrt_asprintf (&fmt, _("The attachment '%s' is an Outlook item "
+                                  "which is currently unsupported in crypto mails."),
+                          !fname.empty () ?
+                          fname.c_str () : _("Unknown"));
+          std::string msg = fmt;
+          msg += "\n\n";
+          xfree (fmt);
 
-  if (table)
-    for (idx=0; !table[idx].end_of_table; idx++)
-      {
-        if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
-            && table[idx].method == ATTACH_BY_VALUE)
-          {
-            if (only_related == 1 && !table[idx].content_id)
-              {
-                continue;
-              }
-            else if (!only_related && table[idx].content_id)
-              {
-                continue;
-              }
-            buffer = mapi_get_attach (message, table+idx, &buflen);
-            if (!buffer)
-              log_debug ("Attachment at index %d not found\n", idx);
-            else
-              log_debug ("Attachment at index %d: length=%d\n", idx, (int)buflen);
-            if (!buffer)
-              return -1;
-            rc = write_part (sink, buffer, buflen, boundary,
-                             table[idx].filename, 0, table[idx].content_id);
-            if (rc)
-              {
-                log_error ("Write part returned err: %i", rc);
-              }
-            xfree (buffer);
-          }
-        else if (!only_related && !warning_shown
-                && table[idx].attach_type == ATTACHTYPE_UNKNOWN
-                && (table[idx].method == ATTACH_OLE
-                    || table[idx].method == ATTACH_EMBEDDED_MSG))
-          {
-            char *fmt;
-            log_debug ("%s:%s: detected OLE attachment. Showing warning.",
-                       SRCNAME, __func__);
-            gpgrt_asprintf (&fmt, _("The attachment '%s' is an Outlook item "
-                                    "which is currently unsupported in crypto mails."),
-                            table[idx].filename ?
-                            table[idx].filename : _("Unknown"));
-            std::string msg = fmt;
-            msg += "\n\n";
-            xfree (fmt);
+          gpgrt_asprintf (&fmt, _("Please encrypt '%s' with Kleopatra "
+                                  "and attach it as a file."),
+                          !fname.empty () ?
+                          fname.c_str () : _("Unknown"));
+          msg += fmt;
+          xfree (fmt);
 
-            gpgrt_asprintf (&fmt, _("Please encrypt '%s' with Kleopatra "
-                                    "and attach it as a file."),
-                            table[idx].filename ?
-                            table[idx].filename : _("Unknown"));
-            msg += fmt;
-            xfree (fmt);
+          msg += "\n\n";
+          msg += _("Send anyway?");
+          warning_shown = true;
 
-            msg += "\n\n";
-            msg += _("Send anyway?");
-            warning_shown = true;
-
-            if (gpgol_message_box (get_active_hwnd (),
-                                   msg.c_str (),
-                                   _("Sorry, that's not possible, yet"),
-                                   MB_APPLMODAL | MB_YESNO) == IDNO)
-              {
-                return -1;
-              }
-          }
-        else
-          {
-            log_debug ("%s:%s: Skipping unknown attachment at idx: %d type: %d"
-                       " with method: %d",
-                       SRCNAME, __func__, idx, table[idx].attach_type,
-                       table[idx].method);
-          }
-      }
-  return 0;
+          if (gpgol_message_box (get_active_hwnd (),
+                                 msg.c_str (),
+                                 _("Sorry, that's not possible, yet"),
+                                 MB_APPLMODAL | MB_YESNO) == IDNO)
+            {
+              TRETURN -1;
+            }
+        }
+      else
+        {
+          log_dbg ("Skipping attachment. Unable to save.");
+        }
+    }
+  TRETURN 0;
 }
 
 /* Returns 1 if all attachments are related. 2 if there is a
@@ -1465,16 +1562,17 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
 
 /* Add the body and attachments. Does multipart handling. */
 int
-add_body_and_attachments (sink_t sink, LPMESSAGE message,
-                          mapi_attach_item_t *att_table, Mail *mail,
-                          const char *body, int n_att_usable)
+add_body_and_attachments (sink_t sink,
+                          Mail *mail,
+                          const char *body, LPDISPATCH attachments)
 {
-  int related = is_related (mail, att_table);
+  int related = is_related (mail, nullptr);
   int rc = 0;
   char inner_boundary[BOUNDARYSIZE+1];
   char outer_boundary[BOUNDARYSIZE+1];
   *outer_boundary = 0;
   *inner_boundary = 0;
+  int n_att_usable = attachments ? get_oom_int (attachments, "Count") : 0;
 
   if (((body && n_att_usable) || n_att_usable > 1) && related == 1)
     {
@@ -1530,7 +1628,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
   if (!rc && n_att_usable && related)
     {
       /* Write the related attachments. */
-      rc = write_attachments (sink, message, att_table,
+      rc = write_attachments (sink, attachments,
                               *inner_boundary? inner_boundary :
                               *outer_boundary? outer_boundary : NULL, 1);
       if (rc)
@@ -1556,7 +1654,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
      */
   if (!rc && n_att_usable)
     {
-      rc = write_attachments (sink, message, att_table,
+      rc = write_attachments (sink, attachments,
                               *outer_boundary? outer_boundary : NULL,
                               related ? 0 : 2);
     }

@@ -1062,6 +1062,7 @@ do_parsing (LPVOID arg)
       mail->update_oom_data
       State = Mail::NeedsFirstAfterWrite
       checkSyncCrypto_o
+
       invoke_oom_method (m_object, "Save", NULL);
 
       > Write Event <
@@ -1214,6 +1215,10 @@ do_crypt (LPVOID arg)
         }
       TRETURN rc;
     }
+
+  /* Remove all attachments as we now have them in a crypted
+     state. */
+  mail->removeAllAttachments_o ();
 
   if (!mail->isAsyncCryptDisabled ())
     {
@@ -2056,7 +2061,6 @@ Mail::encryptSignStart_o ()
           TRETURN -1;
         }
     }
-
   m_do_inline = m_is_draft_encrypt ? false :
                 m_is_gsuite ? true : opt.inline_pgp;
 
@@ -4236,7 +4240,7 @@ Mail::checkSyncCrypto_o ()
       m_async_crypt_disabled = true;
       TRETURN m_async_crypt_disabled;
     }
-
+#if 0
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (attachments)
     {
@@ -4289,7 +4293,7 @@ Mail::checkSyncCrypto_o ()
           TRETURN m_async_crypt_disabled;
         }
    }
-
+#endif
   if (isActiveInlineResponse_o ())
     {
       m_async_crypt_disabled = true;

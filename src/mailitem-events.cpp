@@ -457,8 +457,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               m_mail->setIsDraftEncrypt (false);
 
+              log_dbg ("Starting encryption.");
+              m_mail->setCryptState (Mail::NeedsActualCrypt);
+              m_mail->encryptSignStart_o ();
+
               // Save the Mail
-              invoke_oom_method (m_object, "Save", NULL);
+//            invoke_oom_method (m_object, "Save", NULL);
 
               if (!m_mail->isAsyncCryptDisabled ())
                 {
@@ -664,6 +668,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          "Auto-Passing but removing our categories.",
                          SRCNAME, __func__);
 
+              // TODO
               m_mail->removeCategories_o ();
               if (g_mail_copy_triggerer)
                 {

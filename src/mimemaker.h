@@ -72,9 +72,8 @@ int restore_msg_from_moss (LPMESSAGE message, LPDISPATCH moss_att,
 
 int count_usable_attachments (mapi_attach_item_t *table);
 
-int add_body_and_attachments (sink_t sink, LPMESSAGE message,
-                              mapi_attach_item_t *att_table, Mail *mail,
-                              const char *body, int n_att_usable);
+int add_body_and_attachments (sink_t sink, Mail *mail,
+                              const char *body, LPDISPATCH attachments);
 int create_top_encryption_header (sink_t sink, protocol_t protocol, char *boundary,
                               bool is_inline = false, int exchange_major_version = -1);
 
