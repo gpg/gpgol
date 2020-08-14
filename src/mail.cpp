@@ -2070,6 +2070,13 @@ Mail::encryptSignStart_o ()
                                                                       flags & 2,
                                                                       proto));
 
+  if (get_oom_int (m_mailitem, "BodyFormat") == 3)
+    {
+      log_dbg ("Changing body format from rich text to HTML to "
+               "prevent winmail.dat");
+      put_oom_int (m_mailitem, "BodyFormat", 2);
+    }
+
   // Careful from here on we have to check every
   // error condition with window enabling again.
   disableWindow_o ();
@@ -4083,13 +4090,6 @@ Mail::updateCryptOOM_o ()
           log_debug ("%s:%s: Failed to put PIDNameContentType for %p.",
                      SRCNAME, __func__, this);
         }
-    }
-
-  if (get_oom_int (m_mailitem, "BodyFormat") == 3)
-    {
-      log_dbg ("Changing body format from rich text to HTML to "
-               "prevent winmail.dat");
-      put_oom_int (m_mailitem, "BodyFormat", 2);
     }
 
   /** When doing async update_crypt_mapi follows and needs
