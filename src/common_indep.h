@@ -40,16 +40,8 @@
 #endif
 
 /* The Registry key used by Gpg4win.  */
-#ifdef _WIN64
-# define GPG4WIN_REGKEY_2  "Software\\Wow6432Node\\GNU\\GnuPG"
-#else
-# define GPG4WIN_REGKEY_2  "Software\\GNU\\GnuPG"
-#endif
-#ifdef _WIN64
-# define GPG4WIN_REGKEY_3  "Software\\Wow6432Node\\Gpg4win"
-#else
-# define GPG4WIN_REGKEY_3  "Software\\Gpg4win"
-#endif
+#define GPG4WIN_REGKEY_2  "Software\\GNU\\GnuPG"
+#define GPG4WIN_REGKEY_3  "Software\\Gpg4win"
 /* Identifiers for the protocol.  We use different one than those use
    by gpgme.  FIXME: We might want to define an unknown protocol to
    non-null and define such a value also in gpgme. */

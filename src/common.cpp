@@ -187,7 +187,10 @@ readRegStr (const char *root, const char *dir, const char *name)
         return ret;
     }
     ret = _readRegStr (root_key, dir, name, false);
-
+    if (ret.empty()) {
+        // Try alternate as fallback
+        ret = _readRegStr (root_key, dir, name, true);
+    }
     if (ret.empty()) {
         // Try local machine as fallback.
         ret = _readRegStr (HKEY_LOCAL_MACHINE, dir, name, false);
