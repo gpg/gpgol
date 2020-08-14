@@ -66,7 +66,7 @@ int store_extension_subkey_value (const char *subkey, const char *key,
 int load_extension_value (const char *key, char **val);
 
 /* Get a temporary filename with and its name */
-wchar_t *get_tmp_outfile (wchar_t *name, HANDLE *outHandle);
+wchar_t *get_tmp_outfile (const wchar_t *name, HANDLE *outHandle);
 
 wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
                                      int signature);

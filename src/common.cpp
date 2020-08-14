@@ -464,7 +464,7 @@ getTmpPathUtf8 ()
    Returns the actually used file name in case there
    were other files with that name. */
 wchar_t*
-get_tmp_outfile (wchar_t *name, HANDLE *outHandle)
+get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
 {
   const auto utf8Name = wchar_to_utf8_string (name);
   const auto tmpPath = getTmpPathUtf8 ();
