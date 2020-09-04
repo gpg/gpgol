@@ -1,5 +1,9 @@
-Noteworthy changes for version 2.5.0 (unreleased)
+Noteworthy changes for version 2.4.6 (2020-09-03)
 =================================================
+
+ * Fixed an issue that unencrypted drafts were sent
+   to the server even when draft encryption is on.
+   (T5022)
 
 
 Noteworthy changes for version 2.4.6 (2020-07-22)
