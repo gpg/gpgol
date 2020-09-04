@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2020-07-22 10:25+0200\n"
+"POT-Creation-Date: 2020-09-04 13:08+0200\n"
 "PO-Revision-Date: 2006-12-12 23:52+0100\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -459,7 +459,7 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
-#: src/common.cpp:787 src/cryptcontroller.cpp:688
+#: src/common.cpp:790 src/cryptcontroller.cpp:688
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -468,7 +468,7 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:796
+#: src/common.cpp:799
 #, fuzzy
 msgid "GpgOL Error"
 msgstr "In-/Ut-fel"

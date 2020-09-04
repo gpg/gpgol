@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2020-07-22 10:25+0200\n"
+"POT-Creation-Date: 2020-09-04 13:08+0200\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -458,7 +458,7 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
-#: src/common.cpp:787 src/cryptcontroller.cpp:688
+#: src/common.cpp:790 src/cryptcontroller.cpp:688
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -467,7 +467,7 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:796
+#: src/common.cpp:799
 #, fuzzy
 msgid "GpgOL Error"
 msgstr "GpgOL"
