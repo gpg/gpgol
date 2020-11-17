@@ -408,7 +408,6 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
           ctx->collect_crypto_data = 1;
         }
     }
-  rfc822parse_release_field (field); /* (Content-type) */
 
   /* Reset the in_data marker */
   ctx->in_data = 1;
@@ -452,21 +451,30 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     }
   else if (!ctx->collect_crypto_data)
     {
-      if (!ctx->nesting_level)
+      bool isMultipart = (ctmain && !strcmp (ctmain, "multipart"));
+      if (!ctx->nesting_level && !isMultipart)
         {
           log_dbg ("Data found that has no body. Treating it as attachment.");
         }
-      /* Treat it as an attachment.  */
-      ctx->current_attachment = provider->create_attachment();
-      ctx->collect_body = 0;
-      ctx->collect_html_body = 0;
-      log_data ("%s:%s: Collecting attachment.",
-                       SRCNAME, __func__);
+      else if (!ctx->nesting_level && isMultipart)
+        {
+          log_dbg ("Found first multipart transition");
+        }
+      else if (ctx->nesting_level || !isMultipart)
+        {
+          /* Treat it as an attachment.  */
+          ctx->current_attachment = provider->create_attachment();
+          ctx->collect_body = 0;
+          ctx->collect_html_body = 0;
+          log_data ("%s:%s: Collecting attachment.",
+                   SRCNAME, __func__);
+        }
     }
   else
     {
       log_dbg ("Don't know what to collect, invalid mail?.");
     }
+  rfc822parse_release_field (field); /* (Content-type) */
 
   TRETURN 0;
 }
