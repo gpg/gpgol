@@ -490,7 +490,15 @@ ParseController::parse(bool offline)
           /* Copy the input to output to do a mime parsing. */
           char buf[4096];
           input.seek (0, SEEK_SET);
-          output.seek (0, SEEK_SET);
+          // Use a fresh output
+          auto provider = new MimeDataProvider ();
+
+          // Warning: The dtor of the Data object touches
+          // the provider. So we have to delete it after
+          // the assignment.
+          output = Data (provider);
+          delete m_outputprovider;
+          m_outputprovider = provider;
           size_t nread;
           while ((nread = input.read (buf, 4096)) > 0)
             {
