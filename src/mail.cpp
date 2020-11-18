@@ -1583,7 +1583,7 @@ Mail::updateBody_o (bool is_preview)
       set_body (m_mailitem, error, error);
       TRETURN;
     }
-  if (m_verify_result.error())
+  if (m_verify_result.error() && !m_orig_body.empty ())
     {
       log_error ("%s:%s: Verification failed. Restoring Body.",
                  SRCNAME, __func__);
