@@ -426,6 +426,12 @@ int
 Mail::checkAttachments_o (bool silent)
 {
   TSTART;
+  if (m_attachs_added)
+    {
+      log_dbg ("Not rechecking attachments as "
+               "we already added them.");
+      TRETURN 0;
+    }
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
   if (!attachments)
     {
