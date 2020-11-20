@@ -129,7 +129,7 @@ int main()
 
       fclose(input);
 
-      parser.parse();
+      parser.parse(true);
 
       auto decResult = parser.decrypt_result();
       auto verifyResult = parser.verify_result();
