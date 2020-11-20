@@ -1008,7 +1008,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                                  SRCNAME, __func__, last_mail,
                                  last_mail->item ());
                     }
-                  if (m_mail->isBlockHTML ())
+                  if (m_mail->isBlockHTML () && !opt.smime_insecure_reply_fw_allowed)
                     {
                       std::string buf;
                       /** TRANSLATORS: Part of a warning dialog that disallows

@@ -300,6 +300,7 @@ read_options (void)
   opt.autotrust = get_conf_bool ("autotrust", 0);
   opt.search_smime_servers = get_conf_bool ("searchSmimeServers", 0);
   opt.smime_html_warn_shown = get_conf_bool ("smimeHtmlWarnShown", 0);
+  opt.smime_insecure_reply_fw_allowed = get_conf_bool ("smimeInsecureReplyAllowed", 0);
   opt.auto_unstrusted = get_conf_bool ("autoencryptUntrusted", 0);
   opt.autoimport = get_conf_bool ("autoimport", 0);
   opt.splitBCCMails = get_conf_bool ("splitBCCMails", 0);

@@ -195,6 +195,8 @@ struct
   int sync_dec;              /* Disabed async decryption */
   int prefer_smime;          /* S/MIME prefered when autoresolving */
   int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
+  int smime_insecure_reply_fw_allowed ; /* Flag to save if unsigned smime reply forwards
+                                           should be allowed */
   int autoretrieve;           /* Use --auto-key-retrieve. */
   int search_smime_servers;  /* Search for S/MIME keys on all configured S/MIME keyservers
                                 for each new unknown mail */
