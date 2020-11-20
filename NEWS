@@ -1,8 +1,10 @@
-Noteworthy changes for version 2.5.0 (unreleased)
+Noteworthy changes for version 2.4.8 (2020-11-20)
 =================================================
 
+ * Fixed attachment realted isses because of preview.
 
-Noteworthy changes for version 2.4.6 (2020-09-04)
+
+Noteworthy changes for version 2.4.7 (2020-09-04)
 =================================================
 
  * Fixed an issue that unencrypted drafts were sent
