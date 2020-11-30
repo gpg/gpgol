@@ -3623,3 +3623,40 @@ get_oom_crypto_flags (LPDISPATCH mailitem)
     }
   TRETURN r_val;
 }
+
+shared_disp_t
+show_folder_select ()
+{
+  TSTART;
+  VARIANT var;
+  VariantInit (&var);
+  LPDISPATCH rVal;
+
+  auto namespace_obj = get_oom_object_s (oApp (), "Session");
+  if (!namespace_obj)
+    {
+      STRANGEPOINT;
+      TRETURN nullptr;
+    }
+
+  if (!invoke_oom_method (namespace_obj.get (), "PickFolder", &var))
+    {
+      if (!(var.vt & VT_DISPATCH))
+        {
+          log_dbg ("Failed to get disp obj. No folder selected?");
+          TRETURN nullptr;
+        }
+      rVal = var.pdispVal;
+      log_oom ("%s:%s: Got folder ref %p",
+               SRCNAME, __func__, rVal);
+      memdbg_addRef (rVal);
+      TRETURN MAKE_SHARED (rVal);
+    }
+  log_dbg ("No folder returned.");
+  TRETURN nullptr;
+}
+
+LPDISPATCH oApp ()
+{
+  return GpgolAddin::get_instance()->get_application();
+}

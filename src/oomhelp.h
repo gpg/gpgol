@@ -491,6 +491,12 @@ int get_oom_dirty (LPDISPATCH pDisp);
    be encrypted with S/MIME. */
 int get_oom_crypto_flags (LPDISPATCH mailitem);
 
+/* Show a folder picker dialog and return a folder disp or NULL */
+shared_disp_t show_folder_select ();
+
+/* Return the main Application object. Like qApp ;-) */
+LPDISPATCH oApp ();
+
 /* Setter for dirty - Returns an error that the property
    is write protected on mails. But maybe we can use it
    somewhere else. Code is ifdeffed out.
