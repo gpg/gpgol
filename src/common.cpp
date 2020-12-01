@@ -2,6 +2,7 @@
  * Copyright (C) 2005, 2007, 2008 g10 Code GmbH
  * 2015, 2016, 2017  Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
+ * 2020 g10 Code GmbH
  *
  * This file is part of GpgOL.
  *

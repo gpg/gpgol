@@ -379,10 +379,13 @@ install_forms (void)
           to do the S/MIME handling. */
       "gpgol-form-signed",
       "gpgol-form-encrypted",
-      /* SMIME Forms with similar icons to outlooks S/MIME */
-      "gpgol-form-signed-smime",
-      "gpgol-form-signed-smime-opaque",
-      "gpgol-form-encrypted-smime",
+      NULL,
+    };
+  /* A list of old forms that we had registered in the past. */
+  static char const *oldClasses[] =
+    {
+      "IPM.Note.GpgOL.OpaqueSigned",
+      "IPM.Note.GpgOL.SM.MultipartSigned",
       NULL,
     };
   int formidx;
@@ -426,6 +429,13 @@ install_forms (void)
         }
       else
         log_debug ("%s:%s: form `%s' installed\n",  SRCNAME, __func__, buffer);
+    }
+  for (formidx=0; oldClasses[formidx]; formidx++)
+    {
+      if (!formcontainer->RemoveForm (oldClasses[formidx]))
+        {
+          log_dbg ("Removed old message class form: %s", oldClasses[formidx]);
+        }
     }
 
   gpgol_release (formcontainer);
