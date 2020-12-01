@@ -360,3 +360,27 @@ bool starts_with(const std::string &s, const char prefix)
 {
   return !s.empty() && s.front() == prefix;
 }
+
+static std::string
+do_string_printf (const char *fmt, va_list a)
+{
+  char *buf;
+  if (gpgrt_vasprintf (&buf, fmt, a) < 0)
+    {
+      STRANGEPOINT;
+      return std::string ();
+    }
+  std::string ret (buf);
+  free (buf);
+  return ret;
+}
+
+std::string
+string_printf (const char *fmt, ...)
+{
+  va_list a;
+  va_start (a, fmt);
+  std::string ret = do_string_printf (fmt, a);
+  va_end (a);
+  return ret;
+}

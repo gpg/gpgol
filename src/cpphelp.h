@@ -72,4 +72,6 @@ const char *to_cstr (const GpgME::Protocol &prot);
 /* Modify source and find and replace stuff */
 void find_and_replace(std::string& source, const std::string &find,
                       const std::string &replace);
+
+std::string string_printf (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
 #endif // CPPHELP_H
