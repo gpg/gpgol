@@ -130,5 +130,17 @@ void i18n_init (void);
 #define ERR_GET_BASE_MSG_FAILED 7
 #ifdef __cplusplus
 }
+
+/* Check if we are in de_vs mode. */
+bool in_de_vs_mode ();
+/* Get the name of the de_vs compliance mode as configured
+   in libkleopatrarc */
+const char *de_vs_name (bool isCompliant = false);
+
+/* Get a localized string of the compliance of an operation
+   mode is the usual 1 encrypt, 2 sign. isCompliant if the value
+   of the operation was compliant or not. */
+std::string
+compliance_string (bool forVerify, bool forDecrypt, bool isCompliant);
 #endif
 #endif /*GPGOL_COMMON_H*/

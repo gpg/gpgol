@@ -39,8 +39,14 @@
 
 #include "common.h"
 #include "dialogs.h"
+#include "cpphelp.h"
 
 #include <string>
+#include <fstream>
+
+#include <gpgme++/context.h>
+#include <gpgme++/error.h>
+#include <gpgme++/configuration.h>
 
 HINSTANCE glob_hinst = NULL;
 
@@ -869,4 +875,179 @@ store_extension_subkey_value (const char *subkey,
   ret = store_config_value (HKEY_CURRENT_USER, path, key, val);
   xfree (path);
   return ret;
+}
+
+bool
+in_de_vs_mode()
+{
+/* We cache the values only once. A change requires restart.
+     This is because checking this is very expensive as gpgconf
+     spawns each process to query the settings. */
+  static bool checked;
+  static bool vs_mode;
+
+  if (checked)
+    {
+      return vs_mode;
+    }
+  checked = true;
+  GpgME::Error err;
+  const auto components = GpgME::Configuration::Component::load (err);
+  log_debug ("%s:%s: Checking for de-vs mode.",
+             SRCNAME, __func__);
+  if (err)
+    {
+      log_error ("%s:%s: Failed to get gpgconf components: %s",
+                 SRCNAME, __func__, err.asString ());
+      vs_mode = false;
+      return vs_mode;
+    }
+  for (const auto &component: components)
+    {
+      if (component.name () && !strcmp (component.name (), "gpg"))
+        {
+          for (const auto &option: component.options ())
+            {
+              if (option.name () && !strcmp (option.name (), "compliance") &&
+                  option.currentValue ().stringValue () &&
+#ifdef HAVE_W32_SYSTEM
+                  !stricmp (option.currentValue ().stringValue (), "de-vs"))
+#else
+                  !strcasecmp (option.currentValue ().stringValue (), "de-vs"))
+#endif
+                {
+                  log_debug ("%s:%s: Detected de-vs mode",
+                             SRCNAME, __func__);
+                  vs_mode = true;
+                  return vs_mode;
+                }
+            }
+          vs_mode = false;
+          return vs_mode;
+        }
+    }
+  vs_mode = false;
+  return false;
+}
+
+const char *
+de_vs_name (bool isCompliant)
+{
+  static std::string compName;
+  static std::string uncompName;
+  if (!compName.empty() && isCompliant)
+    {
+      return compName.c_str ();
+    }
+  if (!uncompName.empty() && !isCompliant)
+    {
+      return uncompName.c_str ();
+    }
+  TSTART;
+  /* Only look once */
+  compName = _("VS-NfD compliant");
+  uncompName = _("not VS-NfD compliant");
+  /* Find the libkleopatrarc */
+  char *instdir = get_gpg4win_dir();
+  if (!instdir)
+    {
+      STRANGEPOINT;
+      TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
+    }
+  std::string filename = instdir;
+  filename += "\\share\\libkleopatrarc";
+
+  std::ifstream file(filename.c_str ());
+  if (!file.is_open ())
+    {
+      log_err ("Failed to open '%s'", filename.c_str ());
+      TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
+    }
+  std::string line;
+  bool in_de_vs_filter = false;
+  bool in_not_de_vs_filter = false;
+  const char *lname = gettext_localename ();
+  /* lname is never null */
+  std::string localemain = gpgol_split (lname, '_')[0];
+  std::string idealname = std::string ("Name[") +
+    localemain + std::string("]");
+  while (std::getline(file, line))
+    {
+      if (starts_with (line, "["))
+        {
+          in_de_vs_filter = false;
+          in_not_de_vs_filter = false;
+          continue;
+        }
+      if (starts_with (line, "id=de-vs-filter"))
+        {
+          in_de_vs_filter = true;
+          continue;
+        }
+      if (starts_with (line, "id=not-de-vs-filter"))
+        {
+          in_not_de_vs_filter = true;
+          continue;
+        }
+
+      if ((in_de_vs_filter || in_not_de_vs_filter) && starts_with (line, "Name"))
+        {
+          const auto split = gpgol_split (line, '=');
+          if (split.size() != 2)
+            {
+              log_err ("Invalid libkleopatrarc line: %s", line.c_str());
+              continue;
+            }
+          if (split[0] == "Name")
+            {
+              if (in_de_vs_filter)
+                {
+                  compName = split[1];
+                }
+              else
+                {
+                  uncompName = split[1];
+                }
+            }
+          if (split[0] == idealname)
+            {
+              log_dbg ("Found localized de-vs name %s", split[1].c_str ());
+              if (in_de_vs_filter)
+                {
+                  compName = split[1];
+                }
+              else
+                {
+                  uncompName = split[1];
+                }
+            }
+        }
+    }
+  file.close();
+  TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
+}
+
+std::string
+compliance_string (bool forVerify, bool forDecrypt, bool isCompliant)
+{
+  const char *comp_name = de_vs_name (isCompliant);
+  if (forDecrypt && forVerify)
+    {
+      return string_printf (_("The message is %s."), comp_name);
+    }
+  if (forVerify)
+    {
+      /* TRANSLATORS %s is compliance name like VS-NfD */
+      return string_printf (_("The signature is %s."), comp_name);
+    }
+  if (forDecrypt)
+    {
+      /* TRANSLATORS %s is compliance name like VS-NfD */
+      return string_printf (_("The encryption is %s."),
+                            comp_name);
+    }
+  /* Should not happen */
+  log_err ("Invalid call to compliance string.");
+  STRANGEPOINT;
+  return std::string();
 }

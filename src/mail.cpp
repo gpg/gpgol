@@ -3470,15 +3470,8 @@ Mail::getCryptoDetails_o ()
   if (isEncrypted () && !isSigned ())
     {
       if (in_de_vs_mode ())
-       {
-         if (m_sig.isDeVs())
-           {
-             message += _("The encryption was VS-NfD-compliant.");
-           }
-         else
-           {
-             message += _("The encryption was not VS-NfD-compliant.");
-           }
+        {
+          message += compliance_string (false, true, m_decrypt_result.isDeVs ());
         }
       message += "\n\n";
       message += _("You cannot be sure who sent the message because "
@@ -3698,28 +3691,20 @@ Mail::getCryptoDetails_o ()
    message += "\n\n";
    if (in_de_vs_mode ())
      {
-       if (isSigned ())
+       bool isBoth = isSigned () && m_sig.isDeVs() && isEncrypted () && m_decrypt_result.isDeVs ();
+       if (isBoth)
          {
-           if (m_sig.isDeVs ())
-             {
-               message += _("The signature is VS-NfD-compliant.");
-             }
-           else
-             {
-               message += _("The signature is not VS-NfD-compliant.");
-             }
+           message += compliance_string (true, true, true);
+         }
+       if (!isBoth && isSigned ())
+         {
+           message += compliance_string (true, false, m_sig.isDeVs ());
            message += "\n";
          }
-       if (isEncrypted ())
+       if (!isBoth && isEncrypted ())
          {
-           if (m_decrypt_result.isDeVs ())
-             {
-               message += _("The encryption is VS-NfD-compliant.");
-             }
-           else
-             {
-               message += _("The encryption is not VS-NfD-compliant.");
-             }
+           message += compliance_string (false, true, m_decrypt_result.isDeVs ());
+           message += "\n";
            message += "\n\n";
          }
        else
@@ -4812,7 +4797,10 @@ Mail::prepareCrypto_o ()
       std::string vs_warning;
       if (in_de_vs_mode ())
         {
-          vs_warning = _("Note: For VS-NfD communication you have to select Yes.") + std::string ("\n\n");
+          /* TRANSLATORS %s is compliance name like VS-NfD */
+          vs_warning = string_printf (_("Note: For %s communication you have to select Yes."),
+                                      de_vs_name ()) + std::string ("\n\n");
+
         }
       std::string msg = _("A crypto operation was selected both using "
                           "Outlooks internal crypto and with GpgOL / GnuPG.") +

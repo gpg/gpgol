@@ -50,9 +50,6 @@ std::vector <std::string> cArray_to_vector (const char **cArray);
 bool starts_with(const std::string &s, const char *prefix);
 bool starts_with(const std::string &s, const char prefix);
 
-/* Check if we are in de_vs mode. */
-bool in_de_vs_mode ();
-
 #ifdef HAVE_W32_SYSTEM
 /* Get a map of all subkey value pairs in a registry key */
 std::map<std::string, std::string> get_registry_subkeys (const char *path);
