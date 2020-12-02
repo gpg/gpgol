@@ -33,15 +33,18 @@
 
 #include <sstream>
 
+#include "cpphelp.h"
+
 #ifdef HAVE_W32_SYSTEM
 #include "common.h"
 /* We use UTF-8 internally. */
 #undef _
 # define _(a) utf8_gettext (a)
 #else
+# undef S_
+# define S_(a) std::string (a)
 # define _(a) a
 #endif
-
 
 const char decrypt_template_html[] = {
 "<html><head></head><body>"
