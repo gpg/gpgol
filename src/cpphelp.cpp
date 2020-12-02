@@ -305,7 +305,7 @@ bool starts_with(const std::string &s, const char prefix)
 }
 
 static std::string
-do_string_printf (const char *fmt, va_list a)
+do_asprintf_s (const char *fmt, va_list a)
 {
   char *buf;
   if (gpgrt_vasprintf (&buf, fmt, a) < 0)
@@ -319,11 +319,11 @@ do_string_printf (const char *fmt, va_list a)
 }
 
 std::string
-string_printf (const char *fmt, ...)
+asprintf_s (const char *fmt, ...)
 {
   va_list a;
   va_start (a, fmt);
-  std::string ret = do_string_printf (fmt, a);
+  std::string ret = do_asprintf_s (fmt, a);
   va_end (a);
   return ret;
 }

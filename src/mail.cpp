@@ -4798,7 +4798,7 @@ Mail::prepareCrypto_o ()
       if (in_de_vs_mode ())
         {
           /* TRANSLATORS %s is compliance name like VS-NfD */
-          vs_warning = string_printf (_("Note: For %s communication you have to select Yes."),
+          vs_warning = asprintf_s (_("Note: For %s communication you have to select Yes."),
                                       de_vs_name ()) + std::string ("\n\n");
 
         }

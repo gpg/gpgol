@@ -70,5 +70,6 @@ const char *to_cstr (const GpgME::Protocol &prot);
 void find_and_replace(std::string& source, const std::string &find,
                       const std::string &replace);
 
-std::string string_printf (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+std::string asprintf_s (const char *fmt, ...) __attribute__ ((format (printf,1,2)));
+#define S_(a) std::string (utf8_gettext (a))
 #endif // CPPHELP_H

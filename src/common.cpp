@@ -1033,17 +1033,17 @@ compliance_string (bool forVerify, bool forDecrypt, bool isCompliant)
   const char *comp_name = de_vs_name (isCompliant);
   if (forDecrypt && forVerify)
     {
-      return string_printf (_("The message is %s."), comp_name);
+      return asprintf_s (_("The message is %s."), comp_name);
     }
   if (forVerify)
     {
       /* TRANSLATORS %s is compliance name like VS-NfD */
-      return string_printf (_("The signature is %s."), comp_name);
+      return asprintf_s (_("The signature is %s."), comp_name);
     }
   if (forDecrypt)
     {
       /* TRANSLATORS %s is compliance name like VS-NfD */
-      return string_printf (_("The encryption is %s."),
+      return asprintf_s (_("The encryption is %s."),
                             comp_name);
     }
   /* Should not happen */
