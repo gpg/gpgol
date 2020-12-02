@@ -371,6 +371,16 @@ ParseController::parse(bool offline)
       verify = true;
       decrypt = false;
     }
+  else if (m_second_pass && inputType != Data::Type::PGPEncrypted &&
+           /* For CMS there might be combined messages when gnupg supports
+            * this and which is not caught below. */
+           inputType != Data::Type::CMSOther &&
+           inputType != Data::Type::CMSEncrypted)
+    {
+      log_dbg ("Second pass for message. Only doing verify.");
+      verify = true;
+      decrypt = false;
+    }
   else
     {
       operation_for_type (m_type, &decrypt, &verify);
@@ -457,6 +467,7 @@ ParseController::parse(bool offline)
           output.type() == Data::Type::PGPSigned)
         {
           TRACEPOINT;
+          log_dbg ("Did not have combined result parsing output.");
           /* There is a signature in the output. So we have
              to verify it now as an extra step. */
           input = Data (m_outputprovider);
