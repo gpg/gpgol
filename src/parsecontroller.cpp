@@ -472,10 +472,23 @@ ParseController::parse(bool offline)
           verify = false;
         }
       TRACEPOINT;
-      if (m_decrypt_result.error () || m_decrypt_result.isNull () ||
-          m_decrypt_result.error ().isCanceled ())
+      const auto err = m_decrypt_result.error ();
+      if (err || m_decrypt_result.isNull () ||
+          err.isCanceled ())
         {
           m_error = format_error (m_decrypt_result, protocol);
+          if (err.code () == GPG_ERR_NO_DATA)
+            {
+              m_error += std::string ("<pre>") +
+                S_ ("If this data does not look like an encrypted message\n"
+                    "please see the debug tab in the options on how to report\n"
+                    "this for further improvement.") + std::string ("\n\n") +
+                asprintf_s (_("Debug information: Message type: %i Data type: %i"),
+                               m_type, inputType) + std::string ("\n\n") +
+                S_ ("The interpreted data was:") + std::string ("\n</pre><pre>");
+              m_error += input.toString ();
+              m_error += "</pre>";
+            }
         }
     }
   if (verify)
