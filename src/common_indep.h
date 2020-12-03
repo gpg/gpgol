@@ -327,7 +327,7 @@ char *generate_boundary (char *buffer);
 #include <gpgme++/data.h>
 struct autocrypt_s
 {
-  bool exists;
+  bool exists = false;
   std::string pref;
   std::string addr;
   GpgME::Data data;
