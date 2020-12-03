@@ -119,7 +119,6 @@ ParseController::ParseController(LPSTREAM instream, msgtype_t type):
     m_type (type),
     m_block_html (false),
     m_second_pass (false)
-
 {
   TSTART;
   memdbg_ctor ("ParseController");
@@ -441,6 +440,13 @@ ParseController::parse(bool offline)
   if (offline)
     {
       ctx->setOffline (true);
+    }
+
+  if (m_second_pass)
+    {
+      // Always use a fresh output on second pass
+      delete m_outputprovider;
+      m_outputprovider = new MimeDataProvider (expect_no_mime (m_type));
     }
 
   Data output (m_outputprovider);
