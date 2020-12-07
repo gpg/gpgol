@@ -25,10 +25,20 @@
 
 #include <gpgme++/data.h>
 
+#ifdef _WIN32
+# include "oomhelp.h"
+#endif
 /** Helper class for attachment actions. */
 class Attachment
 {
 public:
+  enum olAttachmentType
+    {
+      olByValue = 1,
+      olByReference = 4,
+      olEmbeddeditem = 5,
+      olOLE = 6,
+    };
   /** Creates and opens a new in memory attachment. */
   Attachment();
   ~Attachment();
@@ -36,6 +46,9 @@ public:
   /** Set the display name */
   void set_display_name(const char *name);
   std::string get_display_name() const;
+
+  /** Get file name, usually the same as display name */
+  std::string get_file_name() const;
 
   void set_attach_type(attachtype_t type);
 
@@ -50,9 +63,20 @@ public:
   /* get the underlying data structure */
   GpgME::Data& get_data();
 
+  /** Check if this attachment is bound to an OOM object */
+  bool fromOOM () const;
+
+#ifdef _WIN32
+  /** Create a data struct from OOM attachment */
+  Attachment (LPDISPATCH attach);
+
+  /** Copy the attachment to a file handle */
+  int copy_to (HANDLE hFile);
+#endif
 private:
   GpgME::Data m_data;
   std::string m_utf8DisplayName;
+  std::string m_fileName;
   attachtype_t m_type;
   std::string m_cid;
   std::string m_ctype;

@@ -22,13 +22,72 @@
 #include "config.h"
 #include "common_indep.h"
 #include "attachment.h"
+#include "mymapitags.h"
 
 #include <climits>
+
+#define COPYBUFSIZE (8 * 1024)
 
 Attachment::Attachment()
 {
   memdbg_ctor ("Attachment");
 }
+
+#ifndef BUILD_TESTS
+Attachment::Attachment(LPDISPATCH attach)
+{
+  memdbg_ctor ("Attachment");
+  if (!attach)
+    {
+      STRANGEPOINT;
+      TRETURN;
+    }
+  int type = get_oom_int (attach, "Type");
+  m_utf8DisplayName = get_oom_string (attach, "DisplayName");
+  m_fileName = get_oom_string (attach, "FileName");
+
+  log_dbg ("Creating attachment obj for type: %i for %s",
+           type, m_utf8DisplayName.c_str ());
+  if (type == olByValue)
+    {
+      log_dbg ("Copying attachment by value");
+      LPATTACH mapi_attachment = nullptr;
+      mapi_attachment = (LPATTACH) get_oom_iunknown (attach,
+                                                     "MapiObject");
+      if (!mapi_attachment)
+        {
+          log_debug ("%s:%s: Failed to get MapiObject of attachment: %p",
+                     SRCNAME, __func__, attach);
+          TRETURN;
+        }
+      LPSTREAM stream = nullptr;
+      if (FAILED (gpgol_openProperty (mapi_attachment, PR_ATTACH_DATA_BIN,
+                                      &IID_IStream, 0, MAPI_MODIFY,
+                                      (LPUNKNOWN*) &stream)))
+        {
+          log_debug ("%s:%s: Failed to open stream for mapi_attachment: %p",
+                     SRCNAME, __func__, mapi_attachment);
+          gpgol_release (mapi_attachment);
+          TRETURN;
+        }
+      gpgol_release (mapi_attachment);
+      char buf[COPYBUFSIZE];
+      HRESULT hr;
+      ULONG bRead = 0;
+      while ((hr = stream->Read (buf, 8192, &bRead)) == S_OK ||
+             hr == S_FALSE)
+        {
+          if (!bRead)
+            {
+              // EOF
+              break;
+            }
+          m_data.write (buf, bRead);
+        }
+      gpgol_release (stream);
+    }
+}
+#endif
 
 Attachment::~Attachment()
 {
@@ -52,6 +111,16 @@ Attachment::set_display_name(const char *name)
       return;
     }
   m_utf8DisplayName = std::string(name);
+}
+
+std::string
+Attachment::get_file_name () const
+{
+  if (m_fileName.size ())
+    {
+      return m_fileName;
+    }
+  return m_utf8DisplayName;
 }
 
 void
@@ -88,4 +157,49 @@ std::string
 Attachment::get_content_type() const
 {
   return m_ctype;
+}
+
+int
+Attachment::copy_to (HANDLE hFile)
+{
+  TSTART;
+  char copybuf[COPYBUFSIZE];
+  size_t nread;
+
+  /* Security considerations: Writing the data to a temporary
+     file is necessary as neither MAPI manipulation works in the
+     read event to transmit the data nor Property Accessor
+     works (see above). From a security standpoint there is a
+     short time where the temporary files are on disk. Tempdir
+     should be protected so that only the user can read it. Thus
+     we have a local attack that could also take the data out
+     of Outlook. FILE_SHARE_READ is necessary so that outlook
+     can read the file.
+
+     A bigger concern is that the file is manipulated
+     by another software to fake the signature state. So
+     we keep the write exlusive to us.
+
+     We delete the file before closing the write file handle.
+  */
+
+  /* Make sure we start at the beginning */
+  m_data.seek (0, SEEK_SET);
+  while ((nread = m_data.read (copybuf, COPYBUFSIZE)))
+    {
+      DWORD nwritten;
+      if (!WriteFile (hFile, copybuf, nread, &nwritten, NULL))
+        {
+          log_error ("%s:%s: Failed to write in tmp attachment.",
+                     SRCNAME, __func__);
+          TRETURN 1;
+        }
+      if (nread != nwritten)
+        {
+          log_error ("%s:%s: Write truncated.",
+                     SRCNAME, __func__);
+          TRETURN 1;
+        }
+    }
+  TRETURN 0;
 }

@@ -338,7 +338,7 @@ read_options (void)
   opt.alwaysShowApproval = get_conf_bool ("alwaysShowApproval", 0);
 
   /* Hidden options  */
-  opt.sync_enc = 1; //get_conf_bool ("syncEnc", 0);
+  opt.sync_enc = get_conf_bool ("syncEnc", 0);
   /* Due to an issue where async encryption would leave
      unencrypted mails in the recently deleted folder on the
      server we block it. */

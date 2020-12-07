@@ -701,6 +701,15 @@ public:
 
   /* Get the original body of the mail. */
   const std::string &getOriginalBody () const;
+
+  /* Get the plain attachments for an encrypt / sign operation. Set through
+     updateOOMData_o */
+  std::vector <std::shared_ptr <Attachment> > plainAttachments() const;
+
+  /* True if this is a multipart related mail, 1 if all attachments are
+     related, 2 if there is a related and a mixed attachment. */
+  int isMultipartRelated () const;
+
 private:
   /* Returns a copy of the mailitem object. This copy
      is sadly not the same as in the ItemLoad event
@@ -773,6 +782,7 @@ private:
   header_info_s m_header_info; /* Information about the original headers */
   bool m_attachs_added; /* State variable to track if we have added attachments to this mail. */
   std::string m_dec_content_type; /* Top level content type of the decrypted mail. */
+  std::vector <std::shared_ptr <Attachment> > m_plain_attachments; /* Attachments to encrypt */
 };
 
 /* A state variable to capture which mail triggered a copy to

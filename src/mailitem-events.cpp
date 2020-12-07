@@ -1,6 +1,7 @@
 /* mailitem-events.h - Event handling for mails.
  * Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
+ * Copyright (C) 2019, 2020 g10code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -457,19 +458,28 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               m_mail->setIsDraftEncrypt (false);
 
-              // Save the Mail
-              invoke_oom_method (m_object, "Save", NULL);
-
               if (!m_mail->isAsyncCryptDisabled ())
                 {
-                  // The afterwrite in the save should have triggered
-                  // the encryption. We cancel send for our asyncness.
-                  // Cancel send
+                  /* The afterwrite in the save should have triggered
+                     the encryption. We cancel send for our asyncness. */
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+
+                  /* Do the crypto operation */
+                  m_mail->setCryptState (Mail::NeedsActualCrypt);
+                  if (m_mail->encryptSignStart_o ())
+                    {
+                      log_debug ("%s:%s: Encrypt sign start failed.",
+                                 SRCNAME, __func__);
+                      m_mail->setCryptState (Mail::NoCryptMail);
+                      m_mail->releaseCurrentItem();
+                    }
                   TBREAK;
                 }
               else
                 {
+                  // Save the Mail
+                  invoke_oom_method (m_object, "Save", NULL);
+
                   if (m_mail->cryptState () == Mail::NoCryptMail)
                     {
                       // Crypto failed or was canceled
