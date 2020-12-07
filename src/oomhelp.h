@@ -502,4 +502,13 @@ LPDISPATCH oApp ();
    somewhere else. Code is ifdeffed out.
 int put_oom_dirty (LPDISPATCH pDisp, bool val);
  */
+
+/* Invoke ->SaveAs to a path, path is expected to be
+   in utf-8 returns 0 on success. */
+int oom_save_as (LPDISPATCH obj, const char *path, int type = 0);
+
+/* Convert a utf8 value to a bstr allocated with SysAllocString.
+   Call SysFreeString on the allocated value. VariantClear on
+   a variant with VT_BSTR does this for you. */
+BSTR utf8_to_bstr (const char *val);
 #endif /*OOMHELP_H*/
