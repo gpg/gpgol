@@ -547,6 +547,17 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
   return utf8_to_wchar (outName.c_str ());
 }
 
+char *
+get_tmp_outfile_utf8 (const char *name, HANDLE *outHandle)
+{
+  wchar_t *wname = utf8_to_wchar (name);
+  wchar_t *wret = get_tmp_outfile (wname, outHandle);
+  xfree (wname);
+  char *ret = wchar_to_utf8 (wret);
+  xfree (wret);
+  return ret;
+}
+
 /** Get the Gpg4win Install directory.
  *
  * Looks first for the Gpg4win 3.x registry key. Then for the Gpg4win

@@ -67,6 +67,7 @@ int load_extension_value (const char *key, char **val);
 
 /* Get a temporary filename with and its name */
 wchar_t *get_tmp_outfile (const wchar_t *name, HANDLE *outHandle);
+char *get_tmp_outfile_utf8 (const char *name, HANDLE *outHandle);
 
 wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
                                      int signature);
