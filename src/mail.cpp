@@ -2124,7 +2124,7 @@ Mail::updateOOMData_o (bool for_encryption)
         }
       CloseHandle (hTmpFile);
 
-      if (oom_save_as (m_mailitem, path, 3))
+      if (oom_save_as (m_mailitem, path, olMSG))
         {
           log_dbg ("Failed to call SaveAs.");
           TRETURN -1;

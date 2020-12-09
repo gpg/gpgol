@@ -3675,7 +3675,8 @@ BSTR utf8_to_bstr (const char *string)
   TRETURN bstring;
 }
 
-int oom_save_as (LPDISPATCH obj, const char *path, int type)
+int
+oom_save_as (LPDISPATCH obj, const char *path, oomSaveAsType type)
 {
   if (!obj || !path)
     {
@@ -3693,7 +3694,7 @@ int oom_save_as (LPDISPATCH obj, const char *path, int type)
   DISPPARAMS dispparams;
   dispparams.rgvarg = aVariant;
   dispparams.rgvarg[0].vt = VT_INT;
-  dispparams.rgvarg[0].intVal = type;
+  dispparams.rgvarg[0].intVal = (int) type;
   dispparams.rgvarg[1].vt = VT_BSTR;
   dispparams.rgvarg[1].bstrVal = utf8_to_bstr (path);
   dispparams.cArgs = 2;
@@ -3707,6 +3708,37 @@ int oom_save_as (LPDISPATCH obj, const char *path, int type)
     }
   VariantClear(aVariant);
   VariantClear(aVariant + 1);
+
+  return rc;
+}
+
+int
+oom_save_as_file (LPDISPATCH obj, const char *path)
+{
+  if (!obj || !path)
+    {
+      /* invalid arguments */
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+  VARIANT aVariant[1];
+  VariantInit(aVariant);
+
+  DISPPARAMS dispparams;
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_BSTR;
+  dispparams.rgvarg[0].bstrVal = utf8_to_bstr (path);
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  int rc = invoke_oom_method_with_parms (obj, "SaveAsFile",
+                                         nullptr, &dispparams);
+
+  if (rc)
+    {
+      log_err ("Failed to call SaveAsFile");
+    }
+  VariantClear(aVariant);
 
   return rc;
 }
