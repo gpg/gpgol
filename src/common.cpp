@@ -48,6 +48,8 @@
 #include <gpgme++/error.h>
 #include <gpgme++/configuration.h>
 
+#define COPYBUFSIZE (8 * 1024)
+
 HINSTANCE glob_hinst = NULL;
 
 void
@@ -411,7 +413,7 @@ get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
   return pretty;
 }
 
-static HANDLE
+HANDLE
 CreateFileUtf8 (const char *utf8Name)
 {
   if (!utf8Name)
@@ -435,6 +437,29 @@ CreateFileUtf8 (const char *utf8Name)
                           NULL);
   xfree (wname);
   return ret;
+}
+
+int
+readFullFile (HANDLE hFile, GpgME::Data &data)
+{
+  char buf[COPYBUFSIZE];
+  DWORD bRead = 0;
+  BOOL ret;
+  while ((ret = ReadFile (hFile, buf, COPYBUFSIZE, &bRead, nullptr)))
+    {
+      if (!bRead)
+        {
+          // EOF
+          break;
+        }
+      data.write (buf, bRead);
+    }
+  if (!ret && bRead)
+    {
+      log_err ("Failed to read from file");
+      TRETURN -1;
+    }
+  TRETURN 0;
 }
 
 static std::string
