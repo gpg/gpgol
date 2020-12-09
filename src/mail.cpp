@@ -698,7 +698,7 @@ fixup_last_attachment_o (LPDISPATCH mail,
   TSTART;
   /* Currently we only set content id */
   std::string cid = attachment->get_content_id ();
-  if (cid.empty())
+  if (cid.empty() || cid == "<>")
     {
       log_debug ("%s:%s: Content id not found.",
                  SRCNAME, __func__);
