@@ -1072,7 +1072,7 @@ write_attachments (sink_t sink,
             }
         }
       rc = write_part (sink, buf.c_str (), buf.size (), boundary,
-                       name.c_str (), 0, attach->get_content_id ().c_str ());
+                       name.c_str (), 0, cid.size () ? cid.c_str () : nullptr);
       if (rc)
         {
           log_error ("Write part returned err: %i", rc);
