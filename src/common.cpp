@@ -518,7 +518,7 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
       log_debug_w32 (-1, "%s:%s: Failed to open candidate '%s'",
                      SRCNAME, __func__, anonstr (outName.c_str()));
 
-      char *outNameC = xstrdup (outName.c_str());
+      char *outNameC = xstrdup ((tmpPath + utf8Name).c_str ());
 
       const auto lastBackslash = strrchr (outNameC, '\\');
       if (!lastBackslash)
