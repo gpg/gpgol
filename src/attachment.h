@@ -63,9 +63,6 @@ public:
   /* get the underlying data structure */
   GpgME::Data& get_data();
 
-  /** Check if this attachment is bound to an OOM object */
-  bool fromOOM () const;
-
 #ifdef _WIN32
   /** Create a data struct from OOM attachment */
   Attachment (LPDISPATCH attach);

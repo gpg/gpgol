@@ -575,6 +575,7 @@ infer_content_type (const char * /*data*/, size_t /*datalen*/,
     const char *ct;
   } suffix_table[] =
     {
+      { 1, "msg",   "application/ms-tnef" },
       { 1, "3gp",   "video/3gpp" },
       { 1, "abw",   "application/x-abiword" },
       { 1, "ai",    "application/postscript" },

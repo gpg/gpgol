@@ -47,7 +47,7 @@ Attachment::Attachment(LPDISPATCH attach)
   m_fileName = get_oom_string (attach, "FileName");
 
   log_dbg ("Creating attachment obj for type: %i for %s",
-           type, m_utf8DisplayName.c_str ());
+           type, anonstr (m_utf8DisplayName.c_str ()));
   if (type == olByValue)
     {
       log_dbg ("Copying attachment by value");
@@ -74,7 +74,7 @@ Attachment::Attachment(LPDISPATCH attach)
       char buf[COPYBUFSIZE];
       HRESULT hr;
       ULONG bRead = 0;
-      while ((hr = stream->Read (buf, 8192, &bRead)) == S_OK ||
+      while ((hr = stream->Read (buf, COPYBUFSIZE, &bRead)) == S_OK ||
              hr == S_FALSE)
         {
           if (!bRead)
@@ -85,6 +85,41 @@ Attachment::Attachment(LPDISPATCH attach)
           m_data.write (buf, bRead);
         }
       gpgol_release (stream);
+    }
+  else
+    {
+      log_dbg ("Creating attachment for other type.");
+      HANDLE hTmpFile = INVALID_HANDLE_VALUE;
+      char *path = get_tmp_outfile_utf8 (m_fileName.c_str (), &hTmpFile);
+      if (!path || hTmpFile == INVALID_HANDLE_VALUE)
+        {
+          STRANGEPOINT;
+          TRETURN;
+        }
+      CloseHandle (hTmpFile);
+      if (oom_save_as_file (attach, path))
+        {
+          log_err ("Failed to call SaveAsFile.");
+          TRETURN;
+        }
+      wchar_t *wname = utf8_to_wchar (path);
+      hTmpFile = CreateFileW (wname,
+                              GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_DELETE,
+                              NULL,
+                              OPEN_EXISTING,
+                              FILE_FLAG_DELETE_ON_CLOSE,
+                              NULL);
+      xfree (wname);
+      if (hTmpFile == INVALID_HANDLE_VALUE)
+        {
+          log_debug_w32 (-1, "%s:%s: Failed to open attachment file.",
+                         SRCNAME, __func__);
+        }
+
+      /* Read the attachment file into data */
+      readFullFile (hTmpFile, m_data);
+      CloseHandle (hTmpFile);
     }
 }
 #endif
