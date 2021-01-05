@@ -315,6 +315,26 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     charset = NULL;
   }
 
+  if (!strcmp (ctmain, "multipart") || !strcmp (ctmain, "text"))
+    {
+      s = rfc822parse_query_parameter (field,
+                                       "protected-headers", -1);
+      if (s)
+        {
+          log_data ("%s:%s: Found protected headers: '%s'",
+                           SRCNAME, __func__, s);
+          if (!strncmp (s, "v", 1))
+            {
+              provider->m_protected_headers_version = atoi (s + 1);
+            }
+          is_protected_headers = 1;
+        }
+      else
+        {
+          is_protected_headers = 0;
+        }
+    }
+
   if (!strcmp (ctmain, "multipart"))
     {
       /* We don't care about the top level multipart layer but wait
@@ -351,22 +371,6 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   else if (!strcmp (ctmain, "text"))
     {
       is_text = !strcmp (ctsub, "html")? 2:1;
-      s = rfc822parse_query_parameter (field,
-                                       "protected-headers", -1);
-      if (s)
-        {
-          log_data ("%s:%s: Found protected headers: '%s'",
-                           SRCNAME, __func__, s);
-          if (!strncmp (s, "v", 1))
-            {
-              provider->m_protected_headers_version = atoi (s + 1);
-            }
-          is_protected_headers = 1;
-        }
-      else
-        {
-          is_protected_headers = 0;
-        }
     }
   else if (ctx->nesting_level == 1 && !provider->signature()
            && !strcmp (ctmain, "application")
