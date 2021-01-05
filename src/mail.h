@@ -92,8 +92,7 @@ public:
       BackendDone, /* GnuPG is finished */
       OOMUpdated, /* GnuPG Data has been written to OOM */
       OOMSynced, /* OOM has been synced internally but not MAPI */
-      WantsSendInline, /* We are finished with the mail */
-      WantsSendMIME,
+      CryptFinished, /* The mail is signed and or encrypted and can be sent */
     };
 
   /** @brief Construct a mail object for the item.

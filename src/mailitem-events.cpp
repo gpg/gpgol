@@ -493,23 +493,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               if (m_mail->cryptState () == Mail::OOMUpdated)
                 {
-                  m_mail->setCryptState (Mail::WantsSendMIME);
-                }
-              /* Consistency check */
-              if (m_mail->getDoPGPInline () && m_mail->cryptState () != Mail::WantsSendInline)
-                {
-                  log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                             "Invalid state.",
-                             SRCNAME, __func__, m_object, m_mail);
-                  gpgol_bug (m_mail->getWindow (),
-                             ERR_INLINE_BODY_INV_STATE);
-                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                  TBREAK;
+                  m_mail->setCryptState (Mail::CryptFinished);
                 }
             }
 
           /* Check if updating the body worked for send inline */
-          if (m_mail->cryptState () == Mail::WantsSendInline)
+          if (m_mail->cryptState () == Mail::CryptFinished &&
+              m_mail->getDoPGPInline ())
             {
               if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
@@ -527,8 +517,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               WKSHelper::instance()->allow_notify (1000);
               TBREAK;
             }
-
-          if (m_mail->cryptState () == Mail::WantsSendMIME)
+          else if (m_mail->cryptState () == Mail::CryptFinished)
             {
               if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
@@ -704,7 +693,7 @@ TODO: Handle split copy in another way
                   /* Passing write to trigger encrypt in after write */
                   TBREAK;
                 }
-              if (m_mail->cryptState() == Mail::WantsSendMIME)
+              if (m_mail->cryptState() == Mail::CryptFinished)
                 {
                   log_debug ("%s:%s: Mail wants send mime. Passing.",
                              SRCNAME, __func__);

@@ -1049,7 +1049,7 @@ do_parsing (LPVOID arg)
       <- Back to Send Event
       update_crypt_oom
         -> Cleans body or sets PGP/Inline body. (inline_body_to_body)
-      State = WantsSendMIME or WantsSendInline
+      State = CryptoFinished
 
       -> Saftey check "has_crypted_or_empty_body"
       -> If MIME Mail do the T3656 check.
@@ -1059,23 +1059,23 @@ do_parsing (LPVOID arg)
     State order for "inline_response" (sync) Mails.
     Plaintext
     NeedsFirstAfterWrite
-    DataCollectedo
+    DataCollected
     OOMSynced
     BackendDone
-    WantsSendMIME (or inline for PGP Inline)
+    CryptFinished (or inline for PGP Inline)
     -> Send.
 
     State order for async Mails
     Plaintext
     NeedsFirstAfterWrite
-    DataCollectedo
+    DataCollected
     -> Cancel Send.
     Windowmessages -> Crypto Done
     BackendDone
     OOMUpdated
     trigger Save.
     OOMSynced
-    WantsSendMIME
+    CryptFinished
     trigger Send.
 */
 static DWORD WINAPI
@@ -1200,7 +1200,7 @@ do_crypt (LPVOID arg)
     {
       mail->setCryptState (Mail::OOMSynced);
       mail->updateCryptMAPI_m ();
-      if (mail->cryptState () == Mail::WantsSendMIME)
+      if (mail->cryptState () == Mail::CryptFinished)
         {
           // For sync crypto we need to switch this.
           mail->setCryptState (Mail::BackendDone);
@@ -3991,7 +3991,7 @@ Mail::updateCryptMAPI_m ()
     }
   else
     {
-      m_crypt_state = WantsSendMIME;
+      m_crypt_state = CryptFinished;
     }
 
   /** If sync we need the crypter in update_crypt_oom */
@@ -4094,7 +4094,7 @@ Mail::updateCryptOOM_o ()
     {
       log_debug ("%s:%s: Looks like inline body. You can pass %p.",
                  SRCNAME, __func__, this);
-      m_crypt_state = WantsSendInline;
+      m_crypt_state = CryptFinished;
       TRETURN;
     }
 
