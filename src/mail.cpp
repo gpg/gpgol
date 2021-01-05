@@ -118,7 +118,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false),
-    m_crypt_state(NoCryptMail),
+    m_crypt_state(Plaintext),
     m_window(nullptr),
     m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false),
@@ -1012,7 +1012,7 @@ do_parsing (LPVOID arg)
 
    Synchronous crypto:
 
-   > Send Event < | State NoCryptMail
+   > Send Event < | State Plaintext
    Needs Crypto ? (get_gpgol_draft_info_flags != 0)
 
    -> No:
@@ -1037,7 +1037,7 @@ do_parsing (LPVOID arg)
         do_crypt
           -> Resolve keys / do crypto
 
-          State = NeedsUpdateInMAPI
+          State = OOMSynced
           update_crypt_mapi
           crypter->update_mail_mapi
            if (inline) (Meaning PGP/Inline)
@@ -1045,7 +1045,7 @@ do_parsing (LPVOID arg)
            else
             build MSOXSMIME attachment and clear body / attachments.
 
-          State = NeedsUpdateInOOM
+          State = BackendDone
       <- Back to Send Event
       update_crypt_oom
         -> Cleans body or sets PGP/Inline body. (inline_body_to_body)
@@ -1057,24 +1057,24 @@ do_parsing (LPVOID arg)
     Send.
 
     State order for "inline_response" (sync) Mails.
-    NoCryptMail
+    Plaintext
     NeedsFirstAfterWrite
-    NeedsActualCrypto
-    NeedsUpdateInMAPI
-    NeedsUpdateInOOM
+    DataCollectedo
+    OOMSynced
+    BackendDone
     WantsSendMIME (or inline for PGP Inline)
     -> Send.
 
     State order for async Mails
-    NoCryptMail
+    Plaintext
     NeedsFirstAfterWrite
-    NeedsActualCrypto
+    DataCollectedo
     -> Cancel Send.
     Windowmessages -> Crypto Done
-    NeedsUpdateInOOM
-    NeedsSecondAfterWrite
+    BackendDone
+    OOMUpdated
     trigger Save.
-    NeedsUpdateInMAPI
+    OOMSynced
     WantsSendMIME
     trigger Send.
 */
@@ -1093,7 +1093,7 @@ do_crypt (LPVOID arg)
       gpgol_unlock (&dtor_lock);
       TRETURN 0;
     }
-  if (mail->cryptState () != Mail::NeedsActualCrypt)
+  if (mail->cryptState () != Mail::DataCollected)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, mail->cryptState ());
@@ -1164,7 +1164,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i err: %i",
                  SRCNAME, __func__, arg, rc, err.code());
-      mail->setCryptState (Mail::NoCryptMail);
+      mail->setCryptState (Mail::Plaintext);
       mail->setIsDraftEncrypt (false);
       mail->resetCrypter ();
       crypter = nullptr;
@@ -1179,7 +1179,7 @@ do_crypt (LPVOID arg)
 
   if (!mail->isAsyncCryptDisabled ())
     {
-      mail->setCryptState (Mail::NeedsUpdateInOOM);
+      mail->setCryptState (Mail::BackendDone);
       gpgol_unlock (&dtor_lock);
       // This deletes the Mail in Outlook 2010
       do_in_ui_thread (CRYPTO_DONE, arg);
@@ -1188,22 +1188,22 @@ do_crypt (LPVOID arg)
     }
   else if (mail->isDraftEncrypt ())
     {
-      mail->setCryptState (Mail::NeedsUpdateInMAPI);
+      mail->setCryptState (Mail::OOMSynced);
       mail->updateCryptMAPI_m ();
       mail->setIsDraftEncrypt (false);
-      mail->setCryptState (Mail::NoCryptMail);
+      mail->setCryptState (Mail::Plaintext);
       log_debug ("%s:%s: Synchronous draft encrypt finished for %p",
                  SRCNAME, __func__, arg);
       gpgol_unlock (&dtor_lock);
     }
   else
     {
-      mail->setCryptState (Mail::NeedsUpdateInMAPI);
+      mail->setCryptState (Mail::OOMSynced);
       mail->updateCryptMAPI_m ();
       if (mail->cryptState () == Mail::WantsSendMIME)
         {
           // For sync crypto we need to switch this.
-          mail->setCryptState (Mail::NeedsUpdateInOOM);
+          mail->setCryptState (Mail::BackendDone);
         }
       else
         {
@@ -1970,7 +1970,7 @@ int
 Mail::encryptSignStart_o ()
 {
   TSTART;
-  if (m_crypt_state != NeedsActualCrypt)
+  if (m_crypt_state != DataCollected)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
@@ -3958,7 +3958,7 @@ Mail::updateCryptMAPI_m ()
   TSTART;
   log_debug ("%s:%s: Update crypt mapi",
              SRCNAME, __func__);
-  if (m_crypt_state != NeedsUpdateInMAPI)
+  if (m_crypt_state != OOMSynced)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
@@ -3978,7 +3978,7 @@ Mail::updateCryptMAPI_m ()
         {
           log_error ("%s:%s: No crypter.",
                      SRCNAME, __func__);
-          m_crypt_state = NoCryptMail;
+          m_crypt_state = Plaintext;
           TRETURN;
         }
     }
@@ -3987,7 +3987,7 @@ Mail::updateCryptMAPI_m ()
     {
       log_error ("%s:%s: Failed to update MAPI after crypt",
                  SRCNAME, __func__);
-      m_crypt_state = NoCryptMail;
+      m_crypt_state = Plaintext;
     }
   else
     {
@@ -4039,7 +4039,7 @@ Mail::updateCryptOOM_o ()
   TSTART;
   log_debug ("%s:%s: Update crypt oom for %p",
              SRCNAME, __func__, this);
-  if (m_crypt_state != NeedsUpdateInOOM)
+  if (m_crypt_state != BackendDone)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
@@ -4055,7 +4055,7 @@ Mail::updateCryptOOM_o ()
           log_error ("%s:%s: Inline body to body failed %p.",
                      SRCNAME, __func__, this);
           gpgol_bug (get_active_hwnd(), ERR_INLINE_BODY_TO_BODY);
-          m_crypt_state = NoCryptMail;
+          m_crypt_state = Plaintext;
           TRETURN;
         }
     }
@@ -4122,10 +4122,10 @@ Mail::updateCryptOOM_o ()
                    MB_ICONERROR | MB_OK);
       xfree (msg);
       xfree (title);
-      m_crypt_state = NoCryptMail;
+      m_crypt_state = Plaintext;
       TRETURN;
     }
-  m_crypt_state = NeedsSecondAfterWrite;
+  m_crypt_state = OOMUpdated;
   TRETURN;
 }
 
@@ -4839,7 +4839,7 @@ Mail::prepareCrypto_o ()
   // state and oom data.
   updateOOMData_o (true);
 
-  setCryptState (Mail::NeedsActualCrypt);
+  setCryptState (Mail::DataCollected);
 
   TRETURN 0;
 }

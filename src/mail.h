@@ -87,12 +87,12 @@ class Mail
 public:
   enum CryptState
     {
-      NoCryptMail,
-      NeedsActualCrypt,
-      NeedsUpdateInOOM,
-      NeedsSecondAfterWrite,
-      NeedsUpdateInMAPI,
-      WantsSendInline,
+      Plaintext, /* The mail has not been encrypted or signed by us */
+      DataCollected, /* Data from the OOM / MAPI has been collected */
+      BackendDone, /* GnuPG is finished */
+      OOMUpdated, /* GnuPG Data has been written to OOM */
+      OOMSynced, /* OOM has been synced internally but not MAPI */
+      WantsSendInline, /* We are finished with the mail */
       WantsSendMIME,
     };
 

@@ -621,7 +621,7 @@ WKSHelper::send_mail (const std::string &mimeData) const
   /* Adding to / Subject etc already leads to changes and events so
      we set up the state before this. */
   last_mail->setOverrideMIMEData (mimeData);
-  last_mail->setCryptState (Mail::NeedsSecondAfterWrite);
+  last_mail->setCryptState (Mail::OOMUpdated);
 
   if (put_oom_string (mail, "Subject", subject.c_str ()))
     {

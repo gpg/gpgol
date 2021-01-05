@@ -167,19 +167,19 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              "encryption.",
                              SRCNAME, __func__, mail);
                   mail->setIsDraftEncrypt (false);
-                  mail->setCryptState (Mail::NoCryptMail);
+                  mail->setCryptState (Mail::Plaintext);
                   mail->releaseCurrentItem ();
                   TBREAK;
                 }
               // modify the mail.
-              if (mail->cryptState () == Mail::NeedsUpdateInOOM)
+              if (mail->cryptState () == Mail::BackendDone)
                 {
                   // Save the Mail
                   log_debug ("%s:%s: Crypto done for %p updating oom.",
                              SRCNAME, __func__, mail);
                   mail->updateCryptOOM_o ();
                 }
-              if (mail->cryptState () == Mail::NeedsSecondAfterWrite)
+              if (mail->cryptState () == Mail::OOMUpdated)
                 {
                   invoke_oom_method (mail->item (), "Save", NULL);
                   log_debug ("%s:%s: Second save done for %p Invoking second send.",
