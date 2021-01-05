@@ -445,8 +445,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (m_mail->cryptState () == Mail::NoCryptMail &&
               m_mail->needs_crypto_m ())
             {
-              log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
-                         SRCNAME, __func__, m_mail);
+              log_dbg ("Send event for mail %p to be encrypted starting.",
+                       m_mail);
 
               if (m_mail->prepareCrypto_o ())
                 {
