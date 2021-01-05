@@ -88,7 +88,6 @@ public:
   enum CryptState
     {
       NoCryptMail,
-      NeedsFirstAfterWrite,
       NeedsActualCrypt,
       NeedsUpdateInOOM,
       NeedsSecondAfterWrite,

@@ -664,11 +664,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
               TBREAK;
             }
 
-          if (m_mail->cryptState() == Mail::NeedsFirstAfterWrite)
+#if 0
+TODO: Handle split copy in another way
+        if (m_mail->cryptState() == Mail::NeedsFirstAfterWrite)
             {
               log_debug ("%s:%s: Crypto mail needs first after write. "
                          "Auto-Passing but removing our categories.",
                          SRCNAME, __func__);
+              gpgol_message_box (nullptr, "NeedsFirstAfterWrite detected.",
+                                 "Write event wants first after write.",
+                                 MB_OK);
 
               m_mail->removeCategories_o ();
               if (g_mail_copy_triggerer)
@@ -678,14 +683,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               TBREAK;
             }
+#endif
 
           if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
               if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
                   is_draft_mail (m_object) && m_mail->decryptedSuccessfully ())
                 {
-                  if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite ||
-                      m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
+                  if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
                     {
                       log_debug ("%s:%s: re-encryption in progress. Passing.",
                                  SRCNAME, __func__);
@@ -795,7 +800,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
 
           if (m_mail->isDraftEncrypt () &&
-              m_mail->cryptState () != Mail::NeedsFirstAfterWrite &&
               m_mail->cryptState () != Mail::NeedsSecondAfterWrite)
             {
               log_debug ("%s:%s: Canceling write because draft encrypt is in"
@@ -813,6 +817,13 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
               m_mail->setIsDraftEncrypt (true);
               m_mail->prepareCrypto_o ();
+              m_mail->encryptSignStart_o ();
+              /* Crypto done should trigger second after write */
+              log_debug ("%s:%s: Canceling first write because draft encrypt "
+                         "should have written.",
+                         SRCNAME, __func__);
+              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              TRETURN S_OK;
             }
 
           log_debug ("%s:%s: Passing write event. %i %i",
@@ -824,26 +835,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite)
-            {
-              /* Seen the first after write. Advance the state */
-              m_mail->setCryptState (Mail::NeedsActualCrypt);
-              if (m_mail->encryptSignStart_o ())
-                {
-                  log_debug ("%s:%s: Encrypt sign start failed.",
-                             SRCNAME, __func__);
-                  m_mail->setCryptState (Mail::NoCryptMail);
-                  if (!m_mail->isAsyncCryptDisabled())
-                    {
-                      m_mail->releaseCurrentItem();
-                    }
-                }
-              TRETURN S_OK;
-            }
           if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
             {
               m_mail->setCryptState (Mail::NeedsUpdateInMAPI);
               m_mail->updateCryptMAPI_m ();
+              if (!m_mail->isAsyncCryptDisabled())
+                {
+                  m_mail->releaseCurrentItem();
+                }
               log_debug ("%s:%s: Second after write done.",
                          SRCNAME, __func__);
               TRETURN S_OK;
