@@ -2106,7 +2106,8 @@ Mail::updateOOMData_o (bool for_encryption)
 {
   TSTART;
   char *buf = nullptr;
-  log_debug ("%s:%s", SRCNAME, __func__);
+  log_debug ("%s:%s: Called. For encryption: %i", SRCNAME, __func__,
+             for_encryption);
 
   for_encryption |= !isCryptoMail();
 
@@ -2124,6 +2125,7 @@ Mail::updateOOMData_o (bool for_encryption)
         }
       CloseHandle (hTmpFile);
 
+      m_pass_write = true;
       if (oom_save_as (m_mailitem, path, olMSG))
         {
           log_dbg ("Failed to call SaveAs.");
@@ -4837,7 +4839,7 @@ Mail::prepareCrypto_o ()
   // state and oom data.
   updateOOMData_o (true);
 
-  setCryptState (Mail::NeedsFirstAfterWrite);
+  setCryptState (Mail::NeedsActualCrypt);
 
   TRETURN 0;
 }

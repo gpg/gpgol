@@ -458,62 +458,57 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               m_mail->setIsDraftEncrypt (false);
 
+              /* Do the crypto operation */
+              log_dbg ("Starting crypto.");
+
+              if (m_mail->encryptSignStart_o ())
+                {
+                  log_debug ("%s:%s: Encrypt sign start failed.",
+                             SRCNAME, __func__);
+                  m_mail->setCryptState (Mail::NoCryptMail);
+                  m_mail->releaseCurrentItem();
+                }
+
               if (!m_mail->isAsyncCryptDisabled ())
                 {
-                  /* The afterwrite in the save should have triggered
-                     the encryption. We cancel send for our asyncness. */
+                  /* Cancel sending. CRYPTO_DONE should trigger sending */
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-
-                  /* Do the crypto operation */
-                  m_mail->setCryptState (Mail::NeedsActualCrypt);
-                  if (m_mail->encryptSignStart_o ())
-                    {
-                      log_debug ("%s:%s: Encrypt sign start failed.",
-                                 SRCNAME, __func__);
-                      m_mail->setCryptState (Mail::NoCryptMail);
-                      m_mail->releaseCurrentItem();
-                    }
                   TBREAK;
                 }
-              else
+              /* Only reached for synchronous operation. Mail should now be
+               * encrypted and in a want's send state  or the user aborted /
+               * error */
+              if (m_mail->cryptState () == Mail::NoCryptMail)
                 {
-                  // Save the Mail
-                  invoke_oom_method (m_object, "Save", NULL);
-
-                  if (m_mail->cryptState () == Mail::NoCryptMail)
-                    {
-                      // Crypto failed or was canceled
-                      log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                                 "Crypto failed or canceled.",
-                                 SRCNAME, __func__, m_object, m_mail);
-                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                      /* Reset the crypter state  */
-                      m_mail->setCryptState (Mail::NoCryptMail);
-                      TBREAK;
-                    }
-                  // For inline response we can't trigger send programatically
-                  // so we do the encryption in sync.
-                  if (m_mail->cryptState () == Mail::NeedsUpdateInOOM)
-                    {
-                      m_mail->updateCryptOOM_o ();
-                    }
-                  if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
-                    {
-                      m_mail->setCryptState (Mail::WantsSendMIME);
-                    }
-                  if (m_mail->getDoPGPInline () && m_mail->cryptState () != Mail::WantsSendInline)
-                    {
-                      log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                                 "Invalid state.",
-                                 SRCNAME, __func__, m_object, m_mail);
-                      gpgol_bug (m_mail->getWindow (),
-                                 ERR_INLINE_BODY_INV_STATE);
-                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                      TBREAK;
-                    }
+                  // Crypto failed or was canceled
+                  log_debug ("%s:%s: Message %p mail %p cancelling send - "
+                             "Crypto failed or canceled.",
+                             SRCNAME, __func__, m_object, m_mail);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  TBREAK;
+                }
+              if (m_mail->cryptState () == Mail::NeedsUpdateInOOM)
+                {
+                  m_mail->updateCryptOOM_o ();
+                }
+              if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
+                {
+                  m_mail->setCryptState (Mail::WantsSendMIME);
+                }
+              /* Consistency check */
+              if (m_mail->getDoPGPInline () && m_mail->cryptState () != Mail::WantsSendInline)
+                {
+                  log_debug ("%s:%s: Message %p mail %p cancelling send - "
+                             "Invalid state.",
+                             SRCNAME, __func__, m_object, m_mail);
+                  gpgol_bug (m_mail->getWindow (),
+                             ERR_INLINE_BODY_INV_STATE);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  TBREAK;
                 }
             }
 
+          /* Check if updating the body worked for send inline */
           if (m_mail->cryptState () == Mail::WantsSendInline)
             {
               if (!m_mail->hasCryptedOrEmptyBody_o ())
@@ -631,8 +626,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
           else
             {
               log_debug ("%s:%s: Message %p cancelling send - "
-                         "crypto or second save failed.",
-                         SRCNAME, __func__, m_object);
+                         "crypto or second save failed state: %i.",
+                         SRCNAME, __func__, m_object,
+                         m_mail->cryptState ());
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
           TRETURN S_OK;
