@@ -118,7 +118,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false),
-    m_crypt_state(Plaintext),
+    m_crypt_state(NotStarted),
     m_window(nullptr),
     m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false),
@@ -1012,7 +1012,7 @@ do_parsing (LPVOID arg)
 
    Synchronous crypto:
 
-   > Send Event < | State Plaintext
+   > Send Event < | State NotStarted
    Needs Crypto ? (get_gpgol_draft_info_flags != 0)
 
    -> No:
@@ -1057,7 +1057,7 @@ do_parsing (LPVOID arg)
     Send.
 
     State order for "inline_response" (sync) Mails.
-    Plaintext
+    NotStarted
     NeedsFirstAfterWrite
     DataCollected
     OOMSynced
@@ -1066,7 +1066,7 @@ do_parsing (LPVOID arg)
     -> Send.
 
     State order for async Mails
-    Plaintext
+    NotStarted
     NeedsFirstAfterWrite
     DataCollected
     -> Cancel Send.
@@ -1164,7 +1164,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i err: %i",
                  SRCNAME, __func__, arg, rc, err.code());
-      mail->setCryptState (Mail::Plaintext);
+      mail->setCryptState (Mail::NotStarted);
       mail->setIsDraftEncrypt (false);
       mail->resetCrypter ();
       crypter = nullptr;
@@ -1191,7 +1191,7 @@ do_crypt (LPVOID arg)
       mail->setCryptState (Mail::OOMSynced);
       mail->updateCryptMAPI_m ();
       mail->setIsDraftEncrypt (false);
-      mail->setCryptState (Mail::Plaintext);
+      mail->setCryptState (Mail::NotStarted);
       log_debug ("%s:%s: Synchronous draft encrypt finished for %p",
                  SRCNAME, __func__, arg);
       gpgol_unlock (&dtor_lock);
@@ -2374,9 +2374,9 @@ Mail::closeAllMails_o ()
                      SRCNAME, __func__);
           close_failed = false;
         }
-      /* Beware: The close code removes our Plaintext from the
+      /* Beware: The close code removes our NotStarted from the
          Outlook Object Model and temporary MAPI. If there
-         is an error we might put Plaintext into permanent
+         is an error we might put NotStarted into permanent
          storage and leak it to the server. So we have
          an extra safeguard below. The revert is likely
          to fail if close and closeInspector fails but
@@ -3978,7 +3978,7 @@ Mail::updateCryptMAPI_m ()
         {
           log_error ("%s:%s: No crypter.",
                      SRCNAME, __func__);
-          m_crypt_state = Plaintext;
+          m_crypt_state = NotStarted;
           TRETURN;
         }
     }
@@ -3987,7 +3987,7 @@ Mail::updateCryptMAPI_m ()
     {
       log_error ("%s:%s: Failed to update MAPI after crypt",
                  SRCNAME, __func__);
-      m_crypt_state = Plaintext;
+      m_crypt_state = NotStarted;
     }
   else
     {
@@ -4055,7 +4055,7 @@ Mail::updateCryptOOM_o ()
           log_error ("%s:%s: Inline body to body failed %p.",
                      SRCNAME, __func__, this);
           gpgol_bug (get_active_hwnd(), ERR_INLINE_BODY_TO_BODY);
-          m_crypt_state = Plaintext;
+          m_crypt_state = NotStarted;
           TRETURN;
         }
     }
@@ -4122,7 +4122,7 @@ Mail::updateCryptOOM_o ()
                    MB_ICONERROR | MB_OK);
       xfree (msg);
       xfree (title);
-      m_crypt_state = Plaintext;
+      m_crypt_state = NotStarted;
       TRETURN;
     }
   m_crypt_state = OOMUpdated;

@@ -87,7 +87,7 @@ class Mail
 public:
   enum CryptState
     {
-      Plaintext, /* The mail has not been encrypted or signed by us */
+      NotStarted, /* The mail has not been encrypted or signed by us */
       DataCollected, /* Data from the OOM / MAPI has been collected */
       BackendDone, /* GnuPG is finished */
       OOMUpdated, /* GnuPG Data has been written to OOM */

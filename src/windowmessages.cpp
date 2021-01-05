@@ -167,7 +167,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              "encryption.",
                              SRCNAME, __func__, mail);
                   mail->setIsDraftEncrypt (false);
-                  mail->setCryptState (Mail::Plaintext);
+                  mail->setCryptState (Mail::NotStarted);
                   mail->releaseCurrentItem ();
                   TBREAK;
                 }
