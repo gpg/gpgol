@@ -4217,6 +4217,13 @@ Mail::checkSyncCrypto_o ()
 
   m_async_crypt_disabled = false;
 
+  if (m_is_draft_encrypt)
+    {
+      log_dbg ("Disabling async crypt because of draft encrypt.");
+      m_async_crypt_disabled = true;
+      TRETURN m_async_crypt_disabled;
+    }
+
   const auto subject = getSubject_o ();
 
   /* Check for an empty subject. Otherwise the question for it

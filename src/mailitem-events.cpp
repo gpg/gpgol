@@ -630,8 +630,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Write:
         {
-          log_oom ("%s:%s: Write : %p",
-                         SRCNAME, __func__, m_mail);
+          log_oom ("%s:%s: Write : %p", SRCNAME, __func__, m_mail);
           /* This is a bit strange. We sometimes get multiple write events
              without a read in between. When we access the message in
              the second event it fails and if we cancel the event outlook
@@ -799,19 +798,15 @@ TODO: Handle split copy in another way
             }
 
           if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
-              !m_mail->isDraftEncrypt() &&
-              m_mail->cryptState() == Mail::NotStarted)
+              !m_mail->isDraftEncrypt () &&
+              m_mail->cryptState () == Mail::NotStarted)
             {
               log_debug ("%s:%s: Draft encryption starting now.",
                          SRCNAME, __func__);
               m_mail->setIsDraftEncrypt (true);
               m_mail->prepareCrypto_o ();
               m_mail->encryptSignStart_o ();
-              /* Crypto done should trigger second after write */
-              log_debug ("%s:%s: Canceling first write because draft encrypt "
-                         "should have written.",
-                         SRCNAME, __func__);
-              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+              /* Draft encryption happens synchronously so we pass it. */
               TRETURN S_OK;
             }
 
