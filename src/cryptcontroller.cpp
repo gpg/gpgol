@@ -268,12 +268,23 @@ CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
              but we should still log an error to be clear. */
           if (pair.first.empty() || pair.first == recp.mbox ())
             {
+              if (pair.second.empty ())
+                {
+                  log_err ("Would have added an empty string!");
+                  continue;
+                }
               fingerprintsToLookup.push_back (pair.second);
               all_fingerprints.erase(std::remove_if(all_fingerprints.begin(),
                                                     all_fingerprints.end(),
                               [&pair](const std::string &x){return x == pair.second;}),
                               all_fingerprints.end());
             }
+        }
+      if (!fingerprintsToLookup.size ())
+        {
+          log_dbg ("No key selected for '%s'",
+                   anonstr (recp.mbox().c_str ()));
+          continue;
         }
       // Convert recipient fingerprints
       char **cRecps = vector_to_cArray (fingerprintsToLookup);
@@ -288,7 +299,15 @@ CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
 
       std::vector <GpgME::Key> keys;
       do {
-          keys.push_back(ctx->nextKey(err));
+          const auto key = ctx->nextKey (err);
+          if (key.isNull () || err)
+            {
+              continue;
+            }
+          keys.push_back (key);
+          log_dbg ("Adding '%s' as key for '%s",
+                   anonstr (key.primaryFingerprint ()),
+                   anonstr (recp.mbox ().c_str ()));
       } while (!err);
 
       keys.pop_back ();
