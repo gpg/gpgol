@@ -205,7 +205,7 @@ i18n_noops[] = {
     /* TRANSLATORS: Config dialog debug page, link to report bug page. */
     N_("How to report a problem?"),
     /* TRANSLATORS: Config dialog. */
-    N_("&Always show security approval dialog."),
+    N_("&Always show security approval dialog"),
     N_("(slow)"),
     /* TRANSLATORS: Config dialog tooltip. */
     N_("Always show the security approval and certificate selection dialog. "
