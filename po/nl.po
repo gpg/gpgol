@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2020-12-02 10:55+0100\n"
+"POT-Creation-Date: 2021-01-07 15:19+0100\n"
 "PO-Revision-Date: 2019-10-24 15:28+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
@@ -455,7 +455,7 @@ msgstr "Hoe kan ik een probleem rapporteren?"
 
 #. TRANSLATORS: Config dialog.
 #: src/addin-options.cpp:208
-msgid "&Always show security approval dialog."
+msgid "&Always show security approval dialog"
 msgstr ""
 
 #: src/addin-options.cpp:209
@@ -483,7 +483,7 @@ msgstr "Ongewenste e-mail kan niet worden verwerkt"
 msgid "Unknown contact"
 msgstr "Onbekend contact"
 
-#: src/common.cpp:797 src/cryptcontroller.cpp:688
+#: src/common.cpp:797 src/cryptcontroller.cpp:707
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -562,8 +562,8 @@ msgstr "Het instellingen-scherm voor GpgOL openen"
 #: src/mailitem-events.cpp:1032 src/ribbon-callbacks.cpp:743
 #: src/ribbon-callbacks.cpp:757 src/ribbon-callbacks.cpp:806
 #: src/wks-helper.cpp:454 src/cryptcontroller.cpp:129
-#: src/cryptcontroller.cpp:387 src/cryptcontroller.cpp:675
-#: src/cryptcontroller.cpp:697 src/cryptcontroller.cpp:970
+#: src/cryptcontroller.cpp:406 src/cryptcontroller.cpp:694
+#: src/cryptcontroller.cpp:716 src/cryptcontroller.cpp:989
 msgid "GpgOL"
 msgstr "GpgOL"
 
@@ -1129,15 +1129,15 @@ msgstr "'%s' met Kleopatra versleutelen en als bestand bijvoegen."
 msgid "Send anyway?"
 msgstr "Toch verzenden?"
 
-#: src/parsecontroller.cpp:217
+#: src/parsecontroller.cpp:216
 msgid "Unknown Key:"
 msgstr "Onbekende sleutel:"
 
-#: src/parsecontroller.cpp:233
+#: src/parsecontroller.cpp:232
 msgid "Decryption canceled or timed out."
 msgstr "Ontcijferen afgebroken of verlopen."
 
-#: src/parsecontroller.cpp:247
+#: src/parsecontroller.cpp:246
 msgid ""
 "No secret key found to decrypt the message. It is encrypted to the following "
 "keys:"
@@ -1145,15 +1145,15 @@ msgstr ""
 "Er kon geen geheime sleutel gevonden worden om het bericht te ontcijferen. "
 "Het is versleuteld met de volgende sleutels:"
 
-#: src/parsecontroller.cpp:253
+#: src/parsecontroller.cpp:252
 msgid "Could not decrypt the data: "
 msgstr "De gegevens kunnen niet ontcijferd worden: "
 
-#: src/parsecontroller.cpp:257
+#: src/parsecontroller.cpp:256
 msgid "Failed to parse the mail."
 msgstr "Fout bij het verwerken van de e-mail"
 
-#: src/parsecontroller.cpp:261
+#: src/parsecontroller.cpp:260
 msgid ""
 "Data is not integrity protected. Decrypting it could be a security problem. "
 "(no MDC)"
@@ -1161,11 +1161,11 @@ msgstr ""
 "Gegevens-integriteit is niet beschermd. Ontcijferen kan een "
 "beveiligingsprobleem zijn. (geen MDC)"
 
-#: src/parsecontroller.cpp:273 src/parsecontroller.cpp:404
+#: src/parsecontroller.cpp:272 src/parsecontroller.cpp:413
 msgid "Encrypted message (decryption not possible)"
 msgstr "Versleuteld bericht (ontcijferen niet mogelijk)"
 
-#: src/parsecontroller.cpp:405
+#: src/parsecontroller.cpp:414
 msgid ""
 "Failed to find GnuPG please ensure that GnuPG or Gpg4win is properly "
 "installed."
@@ -1173,19 +1173,19 @@ msgstr ""
 "GnuPG kon niet gevonden worden. Controleer dat GnuPG of Gpg4win correct "
 "geïnstalleerd is."
 
-#: src/parsecontroller.cpp:483
+#: src/parsecontroller.cpp:500
 msgid ""
 "If this data does not look like an encrypted message\n"
-" please see the debug tab in the options on how to report\n"
-" this for further improvement."
+"please see the debug tab in the options on how to report\n"
+"this for further improvement."
 msgstr ""
 
-#: src/parsecontroller.cpp:486
+#: src/parsecontroller.cpp:503
 #, c-format
 msgid "Debug information: Message type: %i Data type: %i"
 msgstr ""
 
-#: src/parsecontroller.cpp:488
+#: src/parsecontroller.cpp:505
 msgid "The interpreted data was:"
 msgstr ""
 
@@ -1301,11 +1301,11 @@ msgid "Can't encrypt / sign an empty message."
 msgstr ""
 "Het versleutelen of ondertekenen van een leeg bericht is niet mogelijk."
 
-#: src/cryptcontroller.cpp:386
+#: src/cryptcontroller.cpp:405
 msgid "No recipients for encryption selected."
 msgstr "Er zijn geen ontvangers voor de versleuteling geselecteerd."
 
-#: src/cryptcontroller.cpp:668
+#: src/cryptcontroller.cpp:687
 msgid ""
 "Failed to encrypt draft.\n"
 "\n"
@@ -1313,19 +1313,19 @@ msgid ""
 "Please check your configuration or turn off draft encryption in the settings."
 msgstr ""
 
-#: src/cryptcontroller.cpp:742
+#: src/cryptcontroller.cpp:761
 msgid "Resolving recipients..."
 msgstr "Ontvangers opzoeken..."
 
-#: src/cryptcontroller.cpp:746
+#: src/cryptcontroller.cpp:765
 msgid "Resolving signers..."
 msgstr "Ondertekenaars opzoeken..."
 
-#: src/cryptcontroller.cpp:1548
+#: src/cryptcontroller.cpp:1567
 msgid "Encrypting..."
 msgstr "Versleutelen..."
 
-#: src/cryptcontroller.cpp:1552
+#: src/cryptcontroller.cpp:1571
 msgid "Signing..."
 msgstr "Ondertekenen..."
 
