@@ -57,7 +57,6 @@ enum
     msoButtonMixed = 2
   };
 
-
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 DEFINE_GUID(IID_IConnectionPoint,
@@ -502,4 +501,31 @@ LPDISPATCH oApp ();
    somewhere else. Code is ifdeffed out.
 int put_oom_dirty (LPDISPATCH pDisp, bool val);
  */
+
+
+
+/* Invoke ->SaveAs to a path, path is expected to be
+   in utf-8 returns 0 on success. */
+enum oomSaveAsType
+{
+  olDoc = 4, /* Microsoft Office Word format (.doc) */
+  olHTML = 5, /* HTML format (.html) */
+  olICal = 8, /* iCal format (.ics) */
+  olMHTML = 10, /* MIME HTML format (.mht) */
+  olMSG = 3, /* Outlook message format (.msg) */
+  olMSGUnicode = 9, /* Outlook Unicode message format (.msg) */
+  olRTF = 1, /* Rich Text format (.rtf) */
+  olTemplate = 2, /* Microsoft Outlook template (.oft) */
+  olTXT = 0, /* Text format (.txt) */
+  olVCal = 7, /* VCal format (.vcs) */
+  olVCard = 6,  /* VCard format (.vcf) */
+};
+int oom_save_as (LPDISPATCH obj, const char *path,
+                 oomSaveAsType type = olMSG);
+int oom_save_as_file (LPDISPATCH obj, const char *path);
+
+/* Convert a utf8 value to a bstr allocated with SysAllocString.
+   Call SysFreeString on the allocated value. VariantClear on
+   a variant with VT_BSTR does this for you. */
+BSTR utf8_to_bstr (const char *val);
 #endif /*OOMHELP_H*/

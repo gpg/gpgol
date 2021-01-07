@@ -1,6 +1,7 @@
 /* mailitem-events.h - Event handling for mails.
  * Copyright (C) 2015 by Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
+ * Copyright (C) 2019, 2020 g10code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -420,7 +421,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
            */
           log_oom ("%s:%s: Send : %p",
                          SRCNAME, __func__, m_mail);
-          if (!m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NoCryptMail)
+          if (!m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NotStarted)
             {
               if (m_mail->isCryptoMail ())
                 {
@@ -441,70 +442,64 @@ EVENT_SINK_INVOKE(MailItemEvents)
              TBREAK;
            }
 
-          if (m_mail->cryptState () == Mail::NoCryptMail &&
+          if (m_mail->cryptState () == Mail::NotStarted &&
               m_mail->needs_crypto_m ())
             {
-              log_debug ("%s:%s: Send event for crypto mail %p saving and starting.",
-                         SRCNAME, __func__, m_mail);
+              log_dbg ("Send event for mail %p to be encrypted starting.",
+                       m_mail);
 
               if (m_mail->prepareCrypto_o ())
                 {
                   log_dbg ("Prepare crypto requested send abort.");
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   /* Reset the crypter state  */
-                  m_mail->setCryptState (Mail::NoCryptMail);
+                  m_mail->setCryptState (Mail::NotStarted);
                   TBREAK;
                 }
               m_mail->setIsDraftEncrypt (false);
 
-              // Save the Mail
-              invoke_oom_method (m_object, "Save", NULL);
+              /* Do the crypto operation */
+              log_dbg ("Starting crypto.");
+
+              if (m_mail->encryptSignStart_o ())
+                {
+                  log_debug ("%s:%s: Encrypt sign start failed.",
+                             SRCNAME, __func__);
+                  m_mail->setCryptState (Mail::NotStarted);
+                  m_mail->releaseCurrentItem();
+                }
 
               if (!m_mail->isAsyncCryptDisabled ())
                 {
-                  // The afterwrite in the save should have triggered
-                  // the encryption. We cancel send for our asyncness.
-                  // Cancel send
+                  /* Cancel sending. CRYPTO_DONE should trigger sending */
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   TBREAK;
                 }
-              else
+              /* Only reached for synchronous operation. Mail should now be
+               * encrypted and in a want's send state  or the user aborted /
+               * error */
+              if (m_mail->cryptState () == Mail::NotStarted)
                 {
-                  if (m_mail->cryptState () == Mail::NoCryptMail)
-                    {
-                      // Crypto failed or was canceled
-                      log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                                 "Crypto failed or canceled.",
-                                 SRCNAME, __func__, m_object, m_mail);
-                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                      /* Reset the crypter state  */
-                      m_mail->setCryptState (Mail::NoCryptMail);
-                      TBREAK;
-                    }
-                  // For inline response we can't trigger send programatically
-                  // so we do the encryption in sync.
-                  if (m_mail->cryptState () == Mail::NeedsUpdateInOOM)
-                    {
-                      m_mail->updateCryptOOM_o ();
-                    }
-                  if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
-                    {
-                      m_mail->setCryptState (Mail::WantsSendMIME);
-                    }
-                  if (m_mail->getDoPGPInline () && m_mail->cryptState () != Mail::WantsSendInline)
-                    {
-                      log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                                 "Invalid state.",
-                                 SRCNAME, __func__, m_object, m_mail);
-                      gpgol_bug (m_mail->getWindow (),
-                                 ERR_INLINE_BODY_INV_STATE);
-                      *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-                      TBREAK;
-                    }
+                  // Crypto failed or was canceled
+                  log_debug ("%s:%s: Message %p mail %p cancelling send - "
+                             "Crypto failed or canceled.",
+                             SRCNAME, __func__, m_object, m_mail);
+                  *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                  TBREAK;
+                }
+              if (m_mail->cryptState () == Mail::BackendDone)
+                {
+                  m_mail->updateCryptOOM_o ();
+                }
+              if (m_mail->cryptState () == Mail::OOMUpdated)
+                {
+                  m_mail->setCryptState (Mail::CryptFinished);
                 }
             }
 
-          if (m_mail->cryptState () == Mail::WantsSendInline)
+          /* Check if updating the body worked for send inline */
+          if (m_mail->cryptState () == Mail::CryptFinished &&
+              m_mail->getDoPGPInline ())
             {
               if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
@@ -513,7 +508,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                              SRCNAME, __func__, m_object, m_mail);
                   gpgol_bug (m_mail->getWindow (),
                              ERR_WANTS_SEND_INLINE_BODY);
-                  m_mail->setCryptState (Mail::NoCryptMail);
+                  m_mail->setCryptState (Mail::NotStarted);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   TBREAK;
                 }
@@ -522,8 +517,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               WKSHelper::instance()->allow_notify (1000);
               TBREAK;
             }
-
-          if (m_mail->cryptState () == Mail::WantsSendMIME)
+          else if (m_mail->cryptState () == Mail::CryptFinished)
             {
               if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
@@ -545,7 +539,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   log_debug ("%s:%s: Message %p mail %p cancelling send mime - "
                              "not encrypted or not empty body detected.",
                              SRCNAME, __func__, m_object, m_mail);
-                  m_mail->setCryptState (Mail::NoCryptMail);
+                  m_mail->setCryptState (Mail::NotStarted);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   TBREAK;
 #else
@@ -621,8 +615,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
           else
             {
               log_debug ("%s:%s: Message %p cancelling send - "
-                         "crypto or second save failed.",
-                         SRCNAME, __func__, m_object);
+                         "crypto or second save failed state: %i.",
+                         SRCNAME, __func__, m_object,
+                         m_mail->cryptState ());
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
           TRETURN S_OK;
@@ -635,8 +630,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
         }
       case Write:
         {
-          log_oom ("%s:%s: Write : %p",
-                         SRCNAME, __func__, m_mail);
+          log_oom ("%s:%s: Write : %p", SRCNAME, __func__, m_mail);
           /* This is a bit strange. We sometimes get multiple write events
              without a read in between. When we access the message in
              the second event it fails and if we cancel the event outlook
@@ -658,11 +652,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
               TBREAK;
             }
 
-          if (m_mail->cryptState() == Mail::NeedsFirstAfterWrite)
+#if 0
+TODO: Handle split copy in another way
+        if (m_mail->cryptState() == Mail::NeedsFirstAfterWrite)
             {
               log_debug ("%s:%s: Crypto mail needs first after write. "
                          "Auto-Passing but removing our categories.",
                          SRCNAME, __func__);
+              gpgol_message_box (nullptr, "NeedsFirstAfterWrite detected.",
+                                 "Write event wants first after write.",
+                                 MB_OK);
 
               m_mail->removeCategories_o ();
               if (g_mail_copy_triggerer)
@@ -672,14 +671,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
                 }
               TBREAK;
             }
+#endif
 
           if (m_mail->isCryptoMail () && !m_mail->needsSave ())
             {
               if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
                   is_draft_mail (m_object) && m_mail->decryptedSuccessfully ())
                 {
-                  if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite ||
-                      m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
+                  if (m_mail->cryptState () == Mail::OOMUpdated)
                     {
                       log_debug ("%s:%s: re-encryption in progress. Passing.",
                                  SRCNAME, __func__);
@@ -693,7 +692,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   /* Passing write to trigger encrypt in after write */
                   TBREAK;
                 }
-              if (m_mail->cryptState() == Mail::WantsSendMIME)
+              if (m_mail->cryptState() == Mail::CryptFinished)
                 {
                   log_debug ("%s:%s: Mail wants send mime. Passing.",
                              SRCNAME, __func__);
@@ -768,7 +767,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
 
           if (!m_mail->isCryptoMail () && m_mail->is_forwarded_crypto_mail () &&
-              !m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NoCryptMail)
+              !m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NotStarted)
             {
               /* We are sure now that while this is a forward of an encrypted
                * mail that the forward should not be signed or encrypted. So
@@ -789,8 +788,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
 
           if (m_mail->isDraftEncrypt () &&
-              m_mail->cryptState () != Mail::NeedsFirstAfterWrite &&
-              m_mail->cryptState () != Mail::NeedsSecondAfterWrite)
+              m_mail->cryptState () != Mail::OOMUpdated)
             {
               log_debug ("%s:%s: Canceling write because draft encrypt is in"
                          " progress.",
@@ -800,13 +798,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
             }
 
           if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
-              !m_mail->isDraftEncrypt() &&
-              m_mail->cryptState() == Mail::NoCryptMail)
+              !m_mail->isDraftEncrypt () &&
+              m_mail->cryptState () == Mail::NotStarted)
             {
               log_debug ("%s:%s: Draft encryption starting now.",
                          SRCNAME, __func__);
               m_mail->setIsDraftEncrypt (true);
               m_mail->prepareCrypto_o ();
+              m_mail->encryptSignStart_o ();
+              /* Draft encryption happens synchronously so we pass it. */
+              TRETURN S_OK;
             }
 
           log_debug ("%s:%s: Passing write event. %i %i",
@@ -818,26 +819,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
         {
           log_oom ("%s:%s: AfterWrite : %p",
                          SRCNAME, __func__, m_mail);
-          if (m_mail->cryptState () == Mail::NeedsFirstAfterWrite)
+          if (m_mail->cryptState () == Mail::OOMUpdated)
             {
-              /* Seen the first after write. Advance the state */
-              m_mail->setCryptState (Mail::NeedsActualCrypt);
-              if (m_mail->encryptSignStart_o ())
-                {
-                  log_debug ("%s:%s: Encrypt sign start failed.",
-                             SRCNAME, __func__);
-                  m_mail->setCryptState (Mail::NoCryptMail);
-                  if (!m_mail->isAsyncCryptDisabled())
-                    {
-                      m_mail->releaseCurrentItem();
-                    }
-                }
-              TRETURN S_OK;
-            }
-          if (m_mail->cryptState () == Mail::NeedsSecondAfterWrite)
-            {
-              m_mail->setCryptState (Mail::NeedsUpdateInMAPI);
+              m_mail->setCryptState (Mail::OOMSynced);
               m_mail->updateCryptMAPI_m ();
+              if (!m_mail->isAsyncCryptDisabled())
+                {
+                  m_mail->releaseCurrentItem();
+                }
               log_debug ("%s:%s: Second after write done.",
                          SRCNAME, __func__);
               TRETURN S_OK;

@@ -48,6 +48,8 @@
 #include <gpgme++/error.h>
 #include <gpgme++/configuration.h>
 
+#define COPYBUFSIZE (8 * 1024)
+
 HINSTANCE glob_hinst = NULL;
 
 void
@@ -411,7 +413,7 @@ get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
   return pretty;
 }
 
-static HANDLE
+HANDLE
 CreateFileUtf8 (const char *utf8Name)
 {
   if (!utf8Name)
@@ -435,6 +437,29 @@ CreateFileUtf8 (const char *utf8Name)
                           NULL);
   xfree (wname);
   return ret;
+}
+
+int
+readFullFile (HANDLE hFile, GpgME::Data &data)
+{
+  char buf[COPYBUFSIZE];
+  DWORD bRead = 0;
+  BOOL ret;
+  while ((ret = ReadFile (hFile, buf, COPYBUFSIZE, &bRead, nullptr)))
+    {
+      if (!bRead)
+        {
+          // EOF
+          break;
+        }
+      data.write (buf, bRead);
+    }
+  if (!ret && bRead)
+    {
+      log_err ("Failed to read from file");
+      TRETURN -1;
+    }
+  TRETURN 0;
 }
 
 static std::string
@@ -493,7 +518,7 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
       log_debug_w32 (-1, "%s:%s: Failed to open candidate '%s'",
                      SRCNAME, __func__, anonstr (outName.c_str()));
 
-      char *outNameC = xstrdup (outName.c_str());
+      char *outNameC = xstrdup ((tmpPath + utf8Name).c_str ());
 
       const auto lastBackslash = strrchr (outNameC, '\\');
       if (!lastBackslash)
@@ -545,6 +570,17 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
     }
 
   return utf8_to_wchar (outName.c_str ());
+}
+
+char *
+get_tmp_outfile_utf8 (const char *name, HANDLE *outHandle)
+{
+  wchar_t *wname = utf8_to_wchar (name);
+  wchar_t *wret = get_tmp_outfile (wname, outHandle);
+  xfree (wname);
+  char *ret = wchar_to_utf8 (wret);
+  xfree (wret);
+  return ret;
 }
 
 /** Get the Gpg4win Install directory.

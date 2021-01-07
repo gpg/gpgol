@@ -42,6 +42,8 @@
 #include "mimemaker.h"
 #include "oomhelp.h"
 #include "mail.h"
+#include "attachment.h"
+#include "cpphelp.h"
 
 #undef _
 #define _(a) utf8_gettext (a)
@@ -573,6 +575,7 @@ infer_content_type (const char * /*data*/, size_t /*datalen*/,
     const char *ct;
   } suffix_table[] =
     {
+      { 1, "msg",   "application/ms-tnef" },
       { 1, "3gp",   "video/3gpp" },
       { 1, "abw",   "application/x-abiword" },
       { 1, "ai",    "application/postscript" },
@@ -1025,115 +1028,59 @@ count_usable_attachments (mapi_attach_item_t *table)
    content-id. */
 static int
 write_attachments (sink_t sink,
-                   LPMESSAGE message, mapi_attach_item_t *table,
+                   Mail *mail,
                    const char *boundary, int only_related)
 {
-  int idx, rc;
-  char *buffer;
-  size_t buflen;
+  TSTART;
+  int rc;
   bool warning_shown = false;
-
-  if (table)
-    for (idx=0; !table[idx].end_of_table; idx++)
-      {
-        if (table[idx].attach_type == ATTACHTYPE_UNKNOWN
-            && table[idx].method == ATTACH_BY_VALUE)
-          {
-            if (only_related == 1 && !table[idx].content_id)
-              {
-                continue;
-              }
-            else if (!only_related && table[idx].content_id)
-              {
-                continue;
-              }
-            buffer = mapi_get_attach (message, table+idx, &buflen);
-            if (!buffer)
-              log_debug ("Attachment at index %d not found\n", idx);
-            else
-              log_debug ("Attachment at index %d: length=%d\n", idx, (int)buflen);
-            if (!buffer)
-              return -1;
-            rc = write_part (sink, buffer, buflen, boundary,
-                             table[idx].filename, 0, table[idx].content_id);
-            if (rc)
-              {
-                log_error ("Write part returned err: %i", rc);
-              }
-            xfree (buffer);
-          }
-        else if (!only_related && !warning_shown
-                && table[idx].attach_type == ATTACHTYPE_UNKNOWN
-                && (table[idx].method == ATTACH_OLE
-                    || table[idx].method == ATTACH_EMBEDDED_MSG))
-          {
-            char *fmt;
-            log_debug ("%s:%s: detected OLE attachment. Showing warning.",
-                       SRCNAME, __func__);
-            gpgrt_asprintf (&fmt, _("The attachment '%s' is an Outlook item "
-                                    "which is currently unsupported in crypto mails."),
-                            table[idx].filename ?
-                            table[idx].filename : _("Unknown"));
-            std::string msg = fmt;
-            msg += "\n\n";
-            xfree (fmt);
-
-            gpgrt_asprintf (&fmt, _("Please encrypt '%s' with Kleopatra "
-                                    "and attach it as a file."),
-                            table[idx].filename ?
-                            table[idx].filename : _("Unknown"));
-            msg += fmt;
-            xfree (fmt);
-
-            msg += "\n\n";
-            msg += _("Send anyway?");
-            warning_shown = true;
-
-            if (gpgol_message_box (get_active_hwnd (),
-                                   msg.c_str (),
-                                   _("Sorry, that's not possible, yet"),
-                                   MB_APPLMODAL | MB_YESNO) == IDNO)
-              {
-                return -1;
-              }
-          }
-        else
-          {
-            log_debug ("%s:%s: Skipping unknown attachment at idx: %d type: %d"
-                       " with method: %d",
-                       SRCNAME, __func__, idx, table[idx].attach_type,
-                       table[idx].method);
-          }
-      }
-  return 0;
-}
-
-/* Returns 1 if all attachments are related. 2 if there is a
-   related and a mixed attachment. 0 if there are no other parts*/
-static int
-is_related (Mail *mail, mapi_attach_item_t *table)
-{
-  if (!mail || !mail->isHTMLAlternative () || !table)
+  for (auto attach: mail->plainAttachments ())
     {
-      return 0;
-    }
-
-  int related = 0;
-  int mixed = 0;
-  for (int idx = 0; !table[idx].end_of_table; idx++)
-    {
-      if (table[idx].content_id)
+      std::string cid = attach->get_content_id ();
+      if (only_related == 1 && !cid.size ())
         {
-          related = 1;
+          continue;
         }
-      else
+      else if (!only_related && cid.size ())
         {
-          mixed = 1;
+          continue;
+        }
+      std::string buf = attach->get_data ().toString ();
+      const auto name = attach->get_file_name ();
+      if (!warning_shown && !only_related && !buf.size ())
+        {
+          log_debug ("%s:%s: detected OLE attachment. Showing warning.",
+                     SRCNAME, __func__);
+          std::string msg = asprintf_s (_("The attachment '%s' is an Outlook item "
+                                          "which is currently unsupported in crypto mails."),
+                                          name.size () ?
+                                          name.c_str (): _("Unknown"));
+          msg += "\n\n";
+          msg += asprintf_s (_("Please encrypt '%s' with Kleopatra "
+                               "and attach it as a file."),
+                               name.size () ?
+                               name.c_str (): _("Unknown"));
+          msg += "\n\n";
+          msg += _("Send anyway?");
+          warning_shown = true;
+
+          if (gpgol_message_box (get_active_hwnd (),
+                                 msg.c_str (),
+                                 _("Sorry, that's not possible, yet"),
+                                 MB_APPLMODAL | MB_YESNO) == IDNO)
+            {
+              TRETURN -1;
+            }
+        }
+      rc = write_part (sink, buf.c_str (), buf.size (), boundary,
+                       name.c_str (), 0, cid.size () ? cid.c_str () : nullptr);
+      if (rc)
+        {
+          log_error ("Write part returned err: %i", rc);
         }
     }
-  return mixed + related;
+  TRETURN 0;
 }
-
 
 /* Delete all attachments from TABLE except for the one we just created */
 static int
@@ -1465,16 +1412,20 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
 
 /* Add the body and attachments. Does multipart handling. */
 int
-add_body_and_attachments (sink_t sink, LPMESSAGE message,
-                          mapi_attach_item_t *att_table, Mail *mail,
-                          const char *body, int n_att_usable)
+add_body_and_attachments (sink_t sink, Mail *mail, const char *body)
 {
-  int related = is_related (mail, att_table);
+  if (!mail)
+    {
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+  int related = mail->isMultipartRelated ();
   int rc = 0;
   char inner_boundary[BOUNDARYSIZE+1];
   char outer_boundary[BOUNDARYSIZE+1];
   *outer_boundary = 0;
   *inner_boundary = 0;
+  int n_att_usable = mail->plainAttachments ().size ();
 
   if (((body && n_att_usable) || n_att_usable > 1) && related == 1)
     {
@@ -1530,7 +1481,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
   if (!rc && n_att_usable && related)
     {
       /* Write the related attachments. */
-      rc = write_attachments (sink, message, att_table,
+      rc = write_attachments (sink, mail,
                               *inner_boundary? inner_boundary :
                               *outer_boundary? outer_boundary : NULL, 1);
       if (rc)
@@ -1556,7 +1507,7 @@ add_body_and_attachments (sink_t sink, LPMESSAGE message,
      */
   if (!rc && n_att_usable)
     {
-      rc = write_attachments (sink, message, att_table,
+      rc = write_attachments (sink, mail,
                               *outer_boundary? outer_boundary : NULL,
                               related ? 0 : 2);
     }

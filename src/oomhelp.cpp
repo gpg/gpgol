@@ -3656,7 +3656,89 @@ show_folder_select ()
   TRETURN nullptr;
 }
 
-LPDISPATCH oApp ()
+LPDISPATCH
+oApp ()
 {
   return GpgolAddin::get_instance()->get_application();
+}
+
+BSTR utf8_to_bstr (const char *string)
+{
+  wchar_t *tmp = utf8_to_wchar (string);
+  BSTR bstring = tmp ? SysAllocString (tmp) : NULL;
+  xfree (tmp);
+  if (!bstring)
+    {
+      log_error_w32 (-1, "%s:%s: SysAllocString failed", SRCNAME, __func__);
+      TRETURN nullptr;
+    }
+  TRETURN bstring;
+}
+
+int
+oom_save_as (LPDISPATCH obj, const char *path, oomSaveAsType type)
+{
+  if (!obj || !path)
+    {
+      /* invalid arguments */
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+  /* Params are first path and then type as optional. With
+     COM Marshalling this means that param 1 is the path
+     and 0 is the type. */
+  VARIANT aVariant[2];
+  VariantInit(aVariant);
+  VariantInit(aVariant + 1);
+
+  DISPPARAMS dispparams;
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_INT;
+  dispparams.rgvarg[0].intVal = (int) type;
+  dispparams.rgvarg[1].vt = VT_BSTR;
+  dispparams.rgvarg[1].bstrVal = utf8_to_bstr (path);
+  dispparams.cArgs = 2;
+  dispparams.cNamedArgs = 0;
+
+  int rc = invoke_oom_method_with_parms (obj, "SaveAs", nullptr, &dispparams);
+
+  if (rc)
+    {
+      log_err ("Failed to call SaveAs");
+    }
+  VariantClear(aVariant);
+  VariantClear(aVariant + 1);
+
+  return rc;
+}
+
+int
+oom_save_as_file (LPDISPATCH obj, const char *path)
+{
+  if (!obj || !path)
+    {
+      /* invalid arguments */
+      STRANGEPOINT;
+      TRETURN -1;
+    }
+  VARIANT aVariant[1];
+  VariantInit(aVariant);
+
+  DISPPARAMS dispparams;
+  dispparams.rgvarg = aVariant;
+  dispparams.rgvarg[0].vt = VT_BSTR;
+  dispparams.rgvarg[0].bstrVal = utf8_to_bstr (path);
+  dispparams.cArgs = 1;
+  dispparams.cNamedArgs = 0;
+
+  int rc = invoke_oom_method_with_parms (obj, "SaveAsFile",
+                                         nullptr, &dispparams);
+
+  if (rc)
+    {
+      log_err ("Failed to call SaveAsFile");
+    }
+  VariantClear(aVariant);
+
+  return rc;
 }

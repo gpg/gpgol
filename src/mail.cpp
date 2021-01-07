@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2015, 2016 by Bundesamt für Sicherheit in der Informationstechnik
  * Software engineering by Intevation GmbH
- * Copyright (C) 2019 g10code GmbH
+ * Copyright (C) 2019, 2020 g10code GmbH
  *
  * This file is part of GpgOL.
  *
@@ -96,7 +96,6 @@ const char *HTML_PREVIEW_PLACEHOLDER =
 "</table></body></html>";
 
 const char *TEXT_PREVIEW_PLACEHOLDER = "%s %s %s\n\n%s";
-#define COPYBUFSIZE (8 * 1024)
 
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
@@ -119,7 +118,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_type(MSGTYPE_UNKNOWN),
     m_do_inline(false),
     m_is_gsuite(false),
-    m_crypt_state(NoCryptMail),
+    m_crypt_state(NotStarted),
     m_window(nullptr),
     m_async_crypt_disabled(false),
     m_is_forwarded_crypto_mail(false),
@@ -690,51 +689,6 @@ copy_data_property(LPDISPATCH target, std::shared_ptr<Attachment> attach)
 }
 #endif
 
-static int
-copy_attachment_to_file (std::shared_ptr<Attachment> att, HANDLE hFile)
-{
-  TSTART;
-  char copybuf[COPYBUFSIZE];
-  size_t nread;
-
-  /* Security considerations: Writing the data to a temporary
-     file is necessary as neither MAPI manipulation works in the
-     read event to transmit the data nor Property Accessor
-     works (see above). From a security standpoint there is a
-     short time where the temporary files are on disk. Tempdir
-     should be protected so that only the user can read it. Thus
-     we have a local attack that could also take the data out
-     of Outlook. FILE_SHARE_READ is necessary so that outlook
-     can read the file.
-
-     A bigger concern is that the file is manipulated
-     by another software to fake the signature state. So
-     we keep the write exlusive to us.
-
-     We delete the file before closing the write file handle.
-  */
-
-  /* Make sure we start at the beginning */
-  att->get_data ().seek (0, SEEK_SET);
-  while ((nread = att->get_data ().read (copybuf, COPYBUFSIZE)))
-    {
-      DWORD nwritten;
-      if (!WriteFile (hFile, copybuf, nread, &nwritten, NULL))
-        {
-          log_error ("%s:%s: Failed to write in tmp attachment.",
-                     SRCNAME, __func__);
-          TRETURN 1;
-        }
-      if (nread != nwritten)
-        {
-          log_error ("%s:%s: Write truncated.",
-                     SRCNAME, __func__);
-          TRETURN 1;
-        }
-    }
-  TRETURN 0;
-}
-
 /** Sets some meta data on the last attachment added. The meta
   data is taken from the attachment object. */
 static int
@@ -744,7 +698,7 @@ fixup_last_attachment_o (LPDISPATCH mail,
   TSTART;
   /* Currently we only set content id */
   std::string cid = attachment->get_content_id ();
-  if (cid.empty())
+  if (cid.empty() || cid == "<>")
     {
       log_debug ("%s:%s: Content id not found.",
                  SRCNAME, __func__);
@@ -878,7 +832,7 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
                      SRCNAME, __func__, anonstr (dispName.c_str()));
           err = 1;
         }
-      if (!err && copy_attachment_to_file (att, hFile))
+      if (!err && att->copy_to (hFile))
         {
           log_error ("%s:%s: Failed to copy attachment %s to temp file",
                      SRCNAME, __func__, anonstr (dispName.c_str()));
@@ -1058,7 +1012,7 @@ do_parsing (LPVOID arg)
 
    Synchronous crypto:
 
-   > Send Event < | State NoCryptMail
+   > Send Event < | State NotStarted
    Needs Crypto ? (get_gpgol_draft_info_flags != 0)
 
    -> No:
@@ -1068,12 +1022,14 @@ do_parsing (LPVOID arg)
       mail->update_oom_data
       State = Mail::NeedsFirstAfterWrite
       checkSyncCrypto_o
-      invoke_oom_method (m_object, "Save", NULL);
+        sync ->
+          invoke_oom_method (m_object, "Save", NULL);
 
-      > Write Event <
-      Pass because is_crypto_mail is false (not a decrypted mail)
+          > Write Event <
+          Pass because is_crypto_mail is false (not a decrypted mail)
 
-      > AfterWrite Event < | State NeedsFirstAfterWrite
+          > AfterWrite Event < | State NeedsFirstAfterWrite
+        async ->  skips ^
       State = NeedsActualCrypo
       encrypt_sign_start
         collect_input_data
@@ -1081,7 +1037,7 @@ do_parsing (LPVOID arg)
         do_crypt
           -> Resolve keys / do crypto
 
-          State = NeedsUpdateInMAPI
+          State = OOMSynced
           update_crypt_mapi
           crypter->update_mail_mapi
            if (inline) (Meaning PGP/Inline)
@@ -1089,11 +1045,11 @@ do_parsing (LPVOID arg)
            else
             build MSOXSMIME attachment and clear body / attachments.
 
-          State = NeedsUpdateInOOM
+          State = BackendDone
       <- Back to Send Event
       update_crypt_oom
         -> Cleans body or sets PGP/Inline body. (inline_body_to_body)
-      State = WantsSendMIME or WantsSendInline
+      State = CryptoFinished
 
       -> Saftey check "has_crypted_or_empty_body"
       -> If MIME Mail do the T3656 check.
@@ -1101,25 +1057,25 @@ do_parsing (LPVOID arg)
     Send.
 
     State order for "inline_response" (sync) Mails.
-    NoCryptMail
+    NotStarted
     NeedsFirstAfterWrite
-    NeedsActualCrypto
-    NeedsUpdateInMAPI
-    NeedsUpdateInOOM
-    WantsSendMIME (or inline for PGP Inline)
+    DataCollected
+    OOMSynced
+    BackendDone
+    CryptFinished (or inline for PGP Inline)
     -> Send.
 
     State order for async Mails
-    NoCryptMail
+    NotStarted
     NeedsFirstAfterWrite
-    NeedsActualCrypto
+    DataCollected
     -> Cancel Send.
     Windowmessages -> Crypto Done
-    NeedsUpdateInOOM
-    NeedsSecondAfterWrite
+    BackendDone
+    OOMUpdated
     trigger Save.
-    NeedsUpdateInMAPI
-    WantsSendMIME
+    OOMSynced
+    CryptFinished
     trigger Send.
 */
 static DWORD WINAPI
@@ -1137,7 +1093,7 @@ do_crypt (LPVOID arg)
       gpgol_unlock (&dtor_lock);
       TRETURN 0;
     }
-  if (mail->cryptState () != Mail::NeedsActualCrypt)
+  if (mail->cryptState () != Mail::DataCollected)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, mail->cryptState ());
@@ -1208,7 +1164,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: crypto failed for: %p with: %i err: %i",
                  SRCNAME, __func__, arg, rc, err.code());
-      mail->setCryptState (Mail::NoCryptMail);
+      mail->setCryptState (Mail::NotStarted);
       mail->setIsDraftEncrypt (false);
       mail->resetCrypter ();
       crypter = nullptr;
@@ -1223,7 +1179,7 @@ do_crypt (LPVOID arg)
 
   if (!mail->isAsyncCryptDisabled ())
     {
-      mail->setCryptState (Mail::NeedsUpdateInOOM);
+      mail->setCryptState (Mail::BackendDone);
       gpgol_unlock (&dtor_lock);
       // This deletes the Mail in Outlook 2010
       do_in_ui_thread (CRYPTO_DONE, arg);
@@ -1232,22 +1188,22 @@ do_crypt (LPVOID arg)
     }
   else if (mail->isDraftEncrypt ())
     {
-      mail->setCryptState (Mail::NeedsUpdateInMAPI);
+      mail->setCryptState (Mail::OOMSynced);
       mail->updateCryptMAPI_m ();
       mail->setIsDraftEncrypt (false);
-      mail->setCryptState (Mail::NoCryptMail);
+      mail->setCryptState (Mail::NotStarted);
       log_debug ("%s:%s: Synchronous draft encrypt finished for %p",
                  SRCNAME, __func__, arg);
       gpgol_unlock (&dtor_lock);
     }
   else
     {
-      mail->setCryptState (Mail::NeedsUpdateInMAPI);
+      mail->setCryptState (Mail::OOMSynced);
       mail->updateCryptMAPI_m ();
-      if (mail->cryptState () == Mail::WantsSendMIME)
+      if (mail->cryptState () == Mail::CryptFinished)
         {
           // For sync crypto we need to switch this.
-          mail->setCryptState (Mail::NeedsUpdateInOOM);
+          mail->setCryptState (Mail::BackendDone);
         }
       else
         {
@@ -2014,7 +1970,7 @@ int
 Mail::encryptSignStart_o ()
 {
   TSTART;
-  if (m_crypt_state != NeedsActualCrypt)
+  if (m_crypt_state != DataCollected)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
@@ -2150,12 +2106,58 @@ Mail::updateOOMData_o (bool for_encryption)
 {
   TSTART;
   char *buf = nullptr;
-  log_debug ("%s:%s", SRCNAME, __func__);
+  log_debug ("%s:%s: Called. For encryption: %i", SRCNAME, __func__,
+             for_encryption);
 
   for_encryption |= !isCryptoMail();
 
   if (for_encryption)
     {
+      /* Write out the mail to a temporary file so that all the
+         properties are set correctly. */
+
+      HANDLE hTmpFile = INVALID_HANDLE_VALUE;
+      char *path = get_tmp_outfile_utf8 ("gpgol_enc.dat", &hTmpFile);
+      if (!path || hTmpFile == INVALID_HANDLE_VALUE)
+        {
+          STRANGEPOINT;
+          TRETURN -1;
+        }
+      CloseHandle (hTmpFile);
+
+      m_pass_write = true;
+      if (oom_save_as (m_mailitem, path, olMSG))
+        {
+          log_dbg ("Failed to call SaveAs.");
+          TRETURN -1;
+        }
+
+      wchar_t *wpath = utf8_to_wchar (path);
+      if (FAILED (DeleteFileW (wpath)))
+        {
+          log_err ("Failed to delete file %S", wpath);
+        }
+      xfree (wpath);
+
+      /* Clear any leftovers */
+      m_plain_attachments.clear ();
+
+      auto attachments = get_oom_object_s (m_mailitem, "Attachments");
+      int count = attachments ? get_oom_int (attachments, "Count") : 0;
+
+      for (int i = 1; i <= count; i++)
+        {
+          std::string item = asprintf_s ("Item(%i)", i);
+          LPDISPATCH attach = get_oom_object (attachments.get (), item.c_str ());
+          if (!attach)
+            {
+              STRANGEPOINT;
+              continue;
+            }
+          m_plain_attachments.push_back (std::shared_ptr <Attachment> (
+                                         new Attachment (attach)));
+        }
+
       /* Update the body format. */
       m_is_html_alternative = get_oom_int (m_mailitem, "BodyFormat") > 1;
 
@@ -2372,9 +2374,9 @@ Mail::closeAllMails_o ()
                      SRCNAME, __func__);
           close_failed = false;
         }
-      /* Beware: The close code removes our Plaintext from the
+      /* Beware: The close code removes our NotStarted from the
          Outlook Object Model and temporary MAPI. If there
-         is an error we might put Plaintext into permanent
+         is an error we might put NotStarted into permanent
          storage and leak it to the server. So we have
          an extra safeguard below. The revert is likely
          to fail if close and closeInspector fails but
@@ -3956,7 +3958,7 @@ Mail::updateCryptMAPI_m ()
   TSTART;
   log_debug ("%s:%s: Update crypt mapi",
              SRCNAME, __func__);
-  if (m_crypt_state != NeedsUpdateInMAPI)
+  if (m_crypt_state != OOMSynced)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
@@ -3976,7 +3978,7 @@ Mail::updateCryptMAPI_m ()
         {
           log_error ("%s:%s: No crypter.",
                      SRCNAME, __func__);
-          m_crypt_state = NoCryptMail;
+          m_crypt_state = NotStarted;
           TRETURN;
         }
     }
@@ -3985,11 +3987,11 @@ Mail::updateCryptMAPI_m ()
     {
       log_error ("%s:%s: Failed to update MAPI after crypt",
                  SRCNAME, __func__);
-      m_crypt_state = NoCryptMail;
+      m_crypt_state = NotStarted;
     }
   else
     {
-      m_crypt_state = WantsSendMIME;
+      m_crypt_state = CryptFinished;
     }
 
   /** If sync we need the crypter in update_crypt_oom */
@@ -4037,7 +4039,7 @@ Mail::updateCryptOOM_o ()
   TSTART;
   log_debug ("%s:%s: Update crypt oom for %p",
              SRCNAME, __func__, this);
-  if (m_crypt_state != NeedsUpdateInOOM)
+  if (m_crypt_state != BackendDone)
     {
       log_debug ("%s:%s: invalid state %i",
                  SRCNAME, __func__, m_crypt_state);
@@ -4053,7 +4055,7 @@ Mail::updateCryptOOM_o ()
           log_error ("%s:%s: Inline body to body failed %p.",
                      SRCNAME, __func__, this);
           gpgol_bug (get_active_hwnd(), ERR_INLINE_BODY_TO_BODY);
-          m_crypt_state = NoCryptMail;
+          m_crypt_state = NotStarted;
           TRETURN;
         }
     }
@@ -4092,7 +4094,7 @@ Mail::updateCryptOOM_o ()
     {
       log_debug ("%s:%s: Looks like inline body. You can pass %p.",
                  SRCNAME, __func__, this);
-      m_crypt_state = WantsSendInline;
+      m_crypt_state = CryptFinished;
       TRETURN;
     }
 
@@ -4120,10 +4122,10 @@ Mail::updateCryptOOM_o ()
                    MB_ICONERROR | MB_OK);
       xfree (msg);
       xfree (title);
-      m_crypt_state = NoCryptMail;
+      m_crypt_state = NotStarted;
       TRETURN;
     }
-  m_crypt_state = NeedsSecondAfterWrite;
+  m_crypt_state = OOMUpdated;
   TRETURN;
 }
 
@@ -4215,6 +4217,13 @@ Mail::checkSyncCrypto_o ()
 
   m_async_crypt_disabled = false;
 
+  if (m_is_draft_encrypt)
+    {
+      log_dbg ("Disabling async crypt because of draft encrypt.");
+      m_async_crypt_disabled = true;
+      TRETURN m_async_crypt_disabled;
+    }
+
   const auto subject = getSubject_o ();
 
   /* Check for an empty subject. Otherwise the question for it
@@ -4229,7 +4238,7 @@ Mail::checkSyncCrypto_o ()
     }
 
   LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
-  if (attachments)
+  if (/* attachments */ false)
     {
       /* This is horrible. But. For some kinds of attachments (we
          got reports about Office attachments the write in the
@@ -4837,7 +4846,7 @@ Mail::prepareCrypto_o ()
   // state and oom data.
   updateOOMData_o (true);
 
-  setCryptState (Mail::NeedsFirstAfterWrite);
+  setCryptState (Mail::DataCollected);
 
   TRETURN 0;
 }
@@ -5164,4 +5173,29 @@ const std::string&
 Mail::getOriginalBody () const
 {
   return m_orig_body;
+}
+
+int
+Mail::isMultipartRelated () const
+{
+  int related = false;
+  int mixed = false;
+  for (const auto attach: m_plain_attachments)
+    {
+      if (attach->get_content_id ().size())
+        {
+          related = 1;
+        }
+      else
+        {
+          mixed = 1;
+        }
+    }
+  return related + mixed;
+}
+
+std::vector <std::shared_ptr<Attachment> >
+Mail::plainAttachments () const
+{
+  return m_plain_attachments;
 }

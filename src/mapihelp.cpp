@@ -1612,7 +1612,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
 
   if (get_gpgolmsgclass_tag (message, &tag) )
     {
-      TRETURN 0; /* Ooops. */
+      log_dbg ("Failed to create msgclass tag. Mail might be read only.");
     }
 
   hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);

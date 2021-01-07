@@ -91,13 +91,7 @@ int
 CryptController::collect_data ()
 {
   TSTART;
-  /* Get the attachment info and the body.  We need to do this before
-     creating the engine's filter because sending the cancel to
-     the engine with nothing for the engine to process.  Will result
-     in an error. This is actually a bug in our engine code but
-     we better avoid triggering this bug because the engine
-     sometimes hangs.  Fixme: Needs a proper fix. */
-
+  int count = m_mail->plainAttachments ().size ();
 
   /* Take the Body from the mail if possible. This is a fix for
      GnuPG-Bug-ID: T3614 because the body is not always properly
@@ -108,19 +102,7 @@ CryptController::collect_data ()
       xfree (body);
       body = nullptr;
     }
-
-  LPMESSAGE message = m_mail->isCryptoMail() ?
-                      get_oom_base_message (m_mail->item ()) :
-                      get_oom_message (m_mail->item ());
-  if (!message)
-    {
-      log_error ("%s:%s: Failed to get message.",
-                 SRCNAME, __func__);
-    }
-
-  auto att_table = mapi_create_attach_table (message, 0);
-  int n_att_usable = count_usable_attachments (att_table);
-  if (!n_att_usable && !body)
+  if (!count && !body)
     {
       if (!m_mail->isDraftEncrypt())
         {
@@ -128,15 +110,13 @@ CryptController::collect_data ()
                              utf8_gettext ("Can't encrypt / sign an empty message."),
                              utf8_gettext ("GpgOL"), MB_OK);
         }
-      gpgol_release (message);
-      mapi_release_attach_table (att_table);
       xfree (body);
       TRETURN -1;
     }
 
   bool do_inline = m_mail->getDoPGPInline ();
 
-  if (n_att_usable && do_inline)
+  if (count && do_inline)
     {
       log_debug ("%s:%s: PGP Inline not supported for attachments."
                  " Using PGP MIME",
@@ -164,23 +144,15 @@ CryptController::collect_data ()
   sink->writefnc = sink_data_write;
 
   /* Collect the mime strucutre */
-  int err = add_body_and_attachments (sink, message, att_table, m_mail,
-                                      body, n_att_usable);
+  int err = add_body_and_attachments (sink, m_mail, body);
   xfree (body);
 
   if (err)
     {
       log_error ("%s:%s: Collecting body and attachments failed.",
                  SRCNAME, __func__);
-      gpgol_release (message);
-      mapi_release_attach_table (att_table);
       TRETURN -1;
     }
-
-  /* Message is no longer needed */
-  gpgol_release (message);
-
-  mapi_release_attach_table (att_table);
 
   /* Set the input buffer to start. */
   m_input.seek (0, SEEK_SET);

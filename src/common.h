@@ -46,6 +46,14 @@
 #include <string.h>
 std::string readRegStr (const char *root, const char *dir, const char *name);
 
+namespace GpgME
+{
+  class Data;
+} // namespace GpgME
+
+/* Read a file into a GpgME::Data object returns 0 on success */
+int readFullFile (HANDLE hFile, GpgME::Data &data);
+
 extern "C" {
 #if 0
 }
@@ -67,6 +75,7 @@ int load_extension_value (const char *key, char **val);
 
 /* Get a temporary filename with and its name */
 wchar_t *get_tmp_outfile (const wchar_t *name, HANDLE *outHandle);
+char *get_tmp_outfile_utf8 (const char *name, HANDLE *outHandle);
 
 wchar_t *get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
                                      int signature);
@@ -142,5 +151,7 @@ const char *de_vs_name (bool isCompliant = false);
    of the operation was compliant or not. */
 std::string
 compliance_string (bool forVerify, bool forDecrypt, bool isCompliant);
+
+HANDLE CreateFileUtf8 (const char *utf8Name);
 #endif
 #endif /*GPGOL_COMMON_H*/
