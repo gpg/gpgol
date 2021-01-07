@@ -4,13 +4,13 @@
 #
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
 # Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
-# aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020.
+# aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2021-01-07 15:19+0100\n"
-"PO-Revision-Date: 2020-07-22 10:28+0100\n"
+"PO-Revision-Date: 2021-01-07 15:23+0100\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -454,9 +454,8 @@ msgstr "Ein Problem berichten?"
 
 #. TRANSLATORS: Config dialog.
 #: src/addin-options.cpp:208
-#, fuzzy
 msgid "&Always show security approval dialog"
-msgstr "&Zeige den Sicherheitsbestätigungs-Dialog immer an."
+msgstr "&Zeige den Sicherheitsbestätigungs-Dialog immer an"
 
 #: src/addin-options.cpp:209
 msgid "(slow)"
@@ -507,29 +506,27 @@ msgid "GpgOL Error"
 msgstr "GpgOL Fehler"
 
 #: src/common.cpp:948
-#, fuzzy
 msgid "VS-NfD compliant"
-msgstr "Die Signatur ist VS-NfD-konform."
+msgstr "VS-NfD-konform"
 
 #: src/common.cpp:949
-#, fuzzy
 msgid "not VS-NfD compliant"
-msgstr "Die Signatur ist VS-NfD-konform."
+msgstr "Nicht VS-NfD-konform"
 
 #: src/common.cpp:1036
-#, fuzzy, c-format
+#, c-format
 msgid "The message is %s."
-msgstr "Diese Nachricht ist nicht signiert.\n"
+msgstr "Die Nachricht ist %s."
 
 #: src/common.cpp:1041
-#, fuzzy, c-format
+#, c-format
 msgid "The signature is %s."
-msgstr "Die Signatur ist abgelaufen.\n"
+msgstr "Die Signatur ist %s."
 
 #: src/common.cpp:1046
-#, fuzzy, c-format
+#, c-format
 msgid "The encryption is %s."
-msgstr "Diese Verschlüsselung ist VS-NfD-konform."
+msgstr "Diese Verschlüsselung ist %s."
 
 #: src/gpgoladdin.cpp:868
 msgid "Encrypt the message"
@@ -1038,10 +1035,9 @@ msgid "Should GpgOL override Outlook and continue to process the message?"
 msgstr "Soll GpgOL Outlook überschreiben und die Nachricht weiter verarbeiten?"
 
 #: src/mail.cpp:4801
-#, fuzzy, c-format
+#, c-format
 msgid "Note: For %s communication you have to select Yes."
-msgstr ""
-"Achtung: Für VS-NfD konforme Kommunikation müssen Sie \"Ja\" auswählen."
+msgstr "Achtung: Für %s Kommunikation müssen Sie \"Ja\" auswählen."
 
 #: src/mail.cpp:4805
 msgid ""
@@ -1197,15 +1193,18 @@ msgid ""
 "please see the debug tab in the options on how to report\n"
 "this for further improvement."
 msgstr ""
+"Wenn diese Daten nicht wie eine verschlüsselte Nachricht aussehen\n"
+"schauen Sie bitte unter \"Fehlersuche\" in den Optionen wie man dies\n"
+"berichtet um die Erkennung zukünftig zu verbessern."
 
 #: src/parsecontroller.cpp:503
 #, c-format
 msgid "Debug information: Message type: %i Data type: %i"
-msgstr ""
+msgstr "Informationen zur Fehlersuche: Nachrichtentyp: %i Datentyp: %i"
 
 #: src/parsecontroller.cpp:505
 msgid "The interpreted data was:"
-msgstr ""
+msgstr "Die untersuchten Daten waren:"
 
 #: src/ribbon-callbacks.cpp:678
 msgid "No message selected"
