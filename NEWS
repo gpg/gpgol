@@ -1,3 +1,16 @@
+Noteworthy changes for version 2.5.0 (2021-01-07)
+=================================================
+
+ * Changed encryption code to work even more on
+ OOM. This avoids temporarily storing unencrypted
+ data to MAPI when asynchronously encrypting.
+ (T5022)
+
+ * Added support to encrypt / sign Outlook internal
+ data objects as attachments like mails, calendar
+ entries and contacts. (T4184)
+
+
 Noteworthy changes for version 2.4.9 (2021-01-07)
 =================================================
 
