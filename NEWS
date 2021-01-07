@@ -1,5 +1,12 @@
-Noteworthy changes for version 2.5.0 (unreleased)
+Noteworthy changes for version 2.4.9 (2021-01-07)
 =================================================
+
+ * Fixed selection of "No Key" for a recipient.
+   (T5223)
+
+ * Fix preview of PGP mails when auto-key-retrieve
+   is enabled. (T5164)
+
 
 Noteworthy changes for version 2.4.8 (2020-11-20)
 =================================================
