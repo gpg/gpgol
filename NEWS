@@ -10,6 +10,11 @@ Noteworthy changes for version 2.5.0 (unreleased)
  data objects as attachments like mails, calendar
  entries and contacts. (T4184)
 
+Noteworthy changes for version 2.4.10 (2021-01-08)
+=================================================
+
+ * Fixed a logic error in GpgOL's recipient selection
+   which caused one recipient to be ignored.
 
 Noteworthy changes for version 2.4.9 (2021-01-07)
 =================================================
