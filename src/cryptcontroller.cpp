@@ -310,7 +310,6 @@ CryptController::lookup_fingerprints (const std::vector<std::string> &sigFprs,
                    anonstr (recp.mbox ().c_str ()));
       } while (!err);
 
-      keys.pop_back ();
       release_cArray (cRecps);
       recp.setKeys (keys);
       // reset context
