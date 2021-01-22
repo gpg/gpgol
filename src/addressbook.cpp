@@ -216,11 +216,12 @@ open_keyadder (LPVOID arg)
       log_dbg ("Removing entry from list of opened contacts.");
       gpgrt_lock_lock (&s_opened_contacts_lock);
       const auto id = adder_args->entry_id;
-      std::remove_if (s_opened_contacts_vec.begin(),
-                      s_opened_contacts_vec.end (),
-                      [id] (const auto &val) {
-                        return val == id;
-                      });
+      s_opened_contacts_vec.erase (
+          std::remove_if (s_opened_contacts_vec.begin(),
+                          s_opened_contacts_vec.end (),
+                          [id] (const auto &val) {
+                            return val == id;
+                          }));
       gpgrt_lock_unlock (&s_opened_contacts_lock);
     }
 
