@@ -31,6 +31,7 @@
 #include "keycache.h"
 #include "mymapitags.h"
 #include "recipient.h"
+#include "recipientmanager.h"
 #include "windowmessages.h"
 
 #include <gpgme++/context.h>
@@ -908,35 +909,17 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       TRETURN -2;
     }
 
-  /* If we need to send multiple emails we jump back from
-     here into the main event loop. Copy the mail object
-     and send it out mutiple times. */
-  if (opt.splitBCCMails)
+  RecipientManager mngr (m_recipients, m_signer_keys);
+  if (mngr.getRequiredMails () > 1)
     {
-      bool foundOneNormalRecp = false;
-      bool foundOneBCCRecp = false;
-      for (const auto &recp: m_recipients)
-        {
-          if (foundOneBCCRecp && foundOneNormalRecp)
-            {
-              log_debug ("%s:%s: Have both BCC and normal recipients."
-                         " Need to send multiple mails.",
-                         SRCNAME, __func__);
-              do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
-              /* Cancel the crypto of this mail this continues
-                 in Mail::splitAndSend_o */
-              TRETURN -3;
-            }
-          if (recp.type() == Recipient::olCC ||
-              recp.type() == Recipient::olTo)
-            {
-              foundOneNormalRecp = true;
-            }
-          if (recp.type() == Recipient::olBCC)
-            {
-              foundOneBCCRecp = true;
-            }
-        }
+      log_dbg ("More then one mail required for this recipient selection.");
+      /* If we need to send multiple emails we jump back from
+         here into the main event loop. Copy the mail object
+         and send it out mutiple times. */
+      do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
+      /* Cancel the crypto of this mail this continues
+         in Mail::splitAndSend_o */
+      TRETURN -3;
     }
 
   bool do_inline = m_mail->getDoPGPInline ();
