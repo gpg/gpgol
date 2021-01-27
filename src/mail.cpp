@@ -3226,17 +3226,22 @@ Mail::isEncrypted () const
 }
 
 int
-Mail::setUUID_o ()
+Mail::setUUID_o (bool reset)
 {
   TSTART;
   char *uuid;
-  if (!m_uuid.empty())
+  if (reset)
+    {
+      m_uuid = std::string ();
+      uuid = reset_unique_id (m_mailitem);
+    }
+  else if (!m_uuid.empty())
     {
       /* This codepath is reached by decrypt again after a
          close with discard changes. The close discarded
          the uuid on the OOM object so we have to set
          it again. */
-      log_debug ("%s:%s: Resetting uuid for %p to %s",
+      log_debug ("%s:%s: Setting uuid for %p to %s again in MAPI",
                  SRCNAME, __func__, this,
                  m_uuid.c_str());
       uuid = get_unique_id (m_mailitem, 1, m_uuid.c_str());

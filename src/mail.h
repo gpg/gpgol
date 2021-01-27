@@ -376,9 +376,11 @@ public:
   const std::string & getUUID () const { return m_uuid; }
 
   /** Returns 0 on success if the mail has a uid alrady or sets
-    the uid. Setting only succeeds if the OOM is currently
+    the uid.
+    If reset is true the mail will get a new UUID.
+    Setting only succeeds if the OOM is currently
     accessible. Returns -1 on error. */
-  int setUUID_o ();
+  int setUUID_o (bool reset = false);
 
   /** Returns a localized string describing in one or two
     words the crypto status of this mail. */
