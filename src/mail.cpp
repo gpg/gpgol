@@ -75,7 +75,6 @@ GPGRT_LOCK_DEFINE (mail_map_lock);
 GPGRT_LOCK_DEFINE (uid_map_lock);
 
 static Mail *s_last_mail;
-Mail *g_mail_copy_triggerer = nullptr;
 
 #define COLOR_DARK_GREY  "#f0f0f0"
 #define COLOR_LIGHT_GREY "#f8f8f8"
@@ -99,6 +98,7 @@ const char *TEXT_PREVIEW_PLACEHOLDER = "%s %s %s\n\n%s";
 
 Mail::Mail (LPDISPATCH mailitem) :
     m_mailitem(mailitem),
+    m_additional_item(nullptr),
     m_currentItemRef(nullptr),
     m_processed(false),
     m_needs_wipe(false),
@@ -230,6 +230,13 @@ Mail::~Mail()
   log_oom ("%s:%s: releasing mailitem",
                  SRCNAME, __func__);
   gpgol_release(m_mailitem);
+
+  if (m_additional_item)
+    {
+      log_oom ("%s:%s: releasing addional reference",
+               SRCNAME, __func__);
+      gpgol_release (m_additional_item);
+    }
   xfree (m_cached_html_body);
   xfree (m_cached_plain_body);
   if (!m_uuid.empty())
@@ -291,6 +298,27 @@ Mail::getMailForUUID (const char *uuid)
       TRETURN NULL;
     }
   TRETURN it->second;
+}
+
+//static
+std::vector<Mail *>
+Mail::searchMailsByUUID (const std::string &uuid)
+{
+  TSTART;
+  std::vector<Mail *> ret;
+  gpgol_lock (&mail_map_lock);
+
+  auto it = s_mail_map.begin();
+  while (it != s_mail_map.end())
+    {
+      if (get_unique_id_s (it->first, 0, nullptr) == uuid)
+        {
+          ret.push_back (it->second);
+        }
+      ++it;
+    }
+  gpgol_unlock (&mail_map_lock);
+  TRETURN ret;
 }
 
 //static
@@ -4893,19 +4921,13 @@ Mail::getSigningKeys () const
   return m_resolved_signing_keys;
 }
 
-LPDISPATCH
+Mail *
 Mail::copy ()
 {
   TSTART;
   VARIANT result;
   VariantInit (&result);
 
-  if (g_mail_copy_triggerer)
-    {
-      log_err ("BUG: Copy already in progress.");
-      TRETURN nullptr;
-    }
-  g_mail_copy_triggerer = this;
   int err = invoke_oom_method (m_mailitem, "Copy", &result);
 
   if (err)
@@ -4921,7 +4943,39 @@ Mail::copy ()
                  SRCNAME, __func__, result.vt);
       TRETURN nullptr;
     }
-  return result.pdispVal;
+  /* The returned dispatch interface has da different address then
+     the one from the ItemLoad event. So we now need to find the
+     mail object for the copied mail.
+
+     The copied mail has an entry id but we are not assured that the
+     current mail has an entry id because it might not have been saved *sigh*
+
+     So we use the GpgOL UUID that is copied in MAPI to identify the copy.
+  */
+  const auto id = get_unique_id_s (m_mailitem, 0, nullptr);
+  const auto mails = searchMailsByUUID (id);
+  log_dbg ("Found %i mails with id '%s'", (int) mails.size (), id.c_str ());
+
+  for (const auto it: mails)
+    {
+      if (it == this)
+        {
+          continue;
+        }
+      /* Transfer the refence from the copy IDispatch to the Mail object
+         IDispatch. This is pretty strange, but doing a VariantClear on
+         the result otherwise results in an unload of the object so
+         we need to track that reference somehow. */
+      LPDISPATCH copyRef = result.pdispVal;
+      memdbg_addRef (copyRef);
+      it->setAdditionalReference (copyRef);
+
+      /* Set a new UID for the copy and enter it in the map */
+      it->setUUID_o (true);
+      TRETURN it;
+    }
+  log_err ("Failed to find copied mail!");
+  TRETURN nullptr;
 }
 
 static std::vector<GpgME::Key>
@@ -4947,7 +5001,6 @@ Mail::splitCopyMailCallback (Mail *copied_mail)
 {
   TSTART;
   log_dbg ("Copy mail callback reached with mail %p", copied_mail);
-  g_mail_copy_triggerer = nullptr;
   copied_mail->setSplitCopy (true);
 
   std::vector<Recipient> newRecipientsForCopy;
@@ -5056,16 +5109,19 @@ Mail::splitAndSend_o ()
 {
   TSTART;
   log_dbg ("Split and send for: %p", this);
-  LPDISPATCH copied_mailitem = copy ();
 
-  if (!copied_mailitem)
+  Mail *copiedMail = copy ();
+  if (!copiedMail)
     {
       log_err ("Failed to copy mail. Aboring.");
       TRETURN;
     }
+  log_dbg ("We are: %p the Copy is: %p", this, copiedMail);
+
   /* This triggers the copyMailCallback in the write event */
-  invoke_oom_method (copied_mailitem, "Send", nullptr);
-  invoke_oom_method (m_mailitem, "Send", nullptr);
+  // invoke_oom_method (copied_mailitem, "Send", nullptr);
+  /* TODO: Close the mail after all others are sent successfully */
+  /* invoke_oom_method (m_mailitem, "Send", nullptr); */
   TRETURN;
 }
 
@@ -5203,4 +5259,10 @@ std::vector <std::shared_ptr<Attachment> >
 Mail::plainAttachments () const
 {
   return m_plain_attachments;
+}
+
+void
+Mail::setAdditionalReference (LPDISPATCH ref)
+{
+  m_additional_item = ref;
 }

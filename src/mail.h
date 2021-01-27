@@ -121,6 +121,17 @@ public:
   */
   static Mail* getMailForUUID (const char *uuid);
 
+  /** @brief Search for all Mail objects with the uuid. This
+    does not use the UUID map as the uuid map assumes tht
+    uuids are unique. The mails are searched in the general
+    mail map.
+
+    This can be used to find copies of the same mail. An
+    empty uuid retuns all mails without a uuid set by us.
+
+    @returns All mails with the same uuid. */
+  static std::vector<Mail *> searchMailsByUUID (const std::string &uuid);
+
   /** @brief Get the last created mail.
 
     @returns A reference to the last created mail or null.
@@ -710,17 +721,20 @@ public:
      related, 2 if there is a related and a mixed attachment. */
   int isMultipartRelated () const;
 
+  /* Set an additional item ref to this object. Different API calls
+     in outlook can return different LPDISPATCH pointer to the same
+     OOM Mailitem. The additional ref will be released on delete. */
+  void setAdditionalReference (LPDISPATCH ref);
 private:
-  /* Returns a copy of the mailitem object. This copy
-     is sadly not the same as in the ItemLoad event
-     so we cannot find it in our map of mailitems. */
-  LPDISPATCH copy ();
+  /* Returns a copy of the mail object. */
+  Mail *copy ();
   bool checkIfMailMightBePrinting_o ();
   void updateSigstate ();
   int add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments);
   int buildProtectedHeaders_o ();
 
   LPDISPATCH m_mailitem;
+  LPDISPATCH m_additional_item;
   LPDISPATCH m_event_sink;
   LPDISPATCH m_currentItemRef;
   bool m_processed,    /* The message has been porcessed by us.  */
@@ -784,8 +798,4 @@ private:
   std::string m_dec_content_type; /* Top level content type of the decrypted mail. */
   std::vector <std::shared_ptr <Attachment> > m_plain_attachments; /* Attachments to encrypt */
 };
-
-/* A state variable to capture which mail triggered a copy to
-   use our own objects in the ItemLoad event. */
-extern Mail *g_mail_copy_triggerer;
 #endif // MAIL_H

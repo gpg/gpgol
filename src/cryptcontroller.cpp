@@ -923,7 +923,8 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
                          " Need to send multiple mails.",
                          SRCNAME, __func__);
               do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
-              /* Cancel the crypto of this mail */
+              /* Cancel the crypto of this mail this continues
+                 in Mail::splitAndSend_o */
               TRETURN -3;
             }
           if (recp.type() == Recipient::olCC ||
