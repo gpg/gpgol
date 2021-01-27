@@ -34,6 +34,7 @@ Recipient::Recipient(const char *addr,
   if (addr)
     {
       m_mbox = GpgME::UserID::addrSpecFromString (addr);
+      m_addr = addr;
     }
   setType (type);
   if (!m_mbox.size ())
@@ -156,8 +157,13 @@ Recipient::encodedDisplayName () const
         }
       return ret;
     }
-  std::string displayName = m_name + std::string (" <") +
-                            m_addr + std::string (">");
+  std::string displayName = m_name;
+
+  if (GpgME::UserID::addrSpecFromString (m_name.c_str ()) !=
+      m_addr)
+    {
+      displayName += std::string (" <") + m_addr + std::string (">");
+    }
 
   char *encDisp = utf8_to_rfc2047b (displayName.c_str ());
   if (encDisp)
