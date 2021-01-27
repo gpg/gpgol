@@ -408,6 +408,13 @@ LPDISPATCH get_store_for_id (const char *storeID);
    */
 char *
 get_unique_id (LPDISPATCH mail, int create, const char* uuid);
+std::string
+get_unique_id_s (LPDISPATCH mail, int create, const char* uuid);
+
+/* Sets a new GpgOL UUID for this mail and returns the
+   value. */
+char *
+reset_unique_id (LPDISPATCH mail);
 
 
 /* Uses the Application->ActiveWindow to determine the hwnd

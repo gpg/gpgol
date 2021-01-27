@@ -2501,6 +2501,34 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
   TRETURN newuid;
 }
 
+char *
+reset_unique_id (LPDISPATCH mail)
+{
+  TSTART;
+  char *newuid = generate_uid ();
+
+  int ret = put_pa_string (mail, GPGOL_UID_DASL, newuid);
+  if (ret)
+    {
+      log_debug ("%s:%s: failed to set uid '%s' for '%p'",
+                 SRCNAME, __func__, newuid, mail);
+      xfree (newuid);
+      TRETURN NULL;
+    }
+  TRETURN newuid;
+}
+
+std::string
+get_unique_id_s (LPDISPATCH mail, int create, const char *uuid)
+{
+  char *val = get_unique_id (mail, create, uuid);
+  if (val)
+    {
+      return val;
+    }
+  return std::string (val);
+}
+
 HWND
 get_active_hwnd ()
 {
