@@ -185,3 +185,9 @@ Recipient::addr () const
 {
   return m_addr;
 }
+
+bool
+Recipient::isNull () const
+{
+  return m_type == invalidType;
+}

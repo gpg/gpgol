@@ -57,6 +57,7 @@ public:
     void setType (int type);
     void setIndex (int index);
     int index() const;
+    bool isNull() const;
 
     /* Returns an RFC2047 encoded name / email pair of the recipient. */
     std::string encodedDisplayName () const;
