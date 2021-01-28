@@ -685,10 +685,6 @@ public:
      and so on and then send the multiple mails. */
   void splitAndSend_o ();
 
-  /* A callback for another mail that was created as
-     a split from us. */
-  void splitCopyMailCallback (Mail *copy);
-
   /* Reset recipient and resolved key data. */
   void resetRecipients ();
 

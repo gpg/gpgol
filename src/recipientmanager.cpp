@@ -48,21 +48,21 @@ RecipientManager::RecipientManager (const RecpList &recps,
 
   if (signing_keys.size () > 2)
     {
-      log_dbg ("Signing with multiple keys is not supported.");
-      for (const auto &key: signing_keys)
+      log_err ("Signing with multiple keys is not supported.");
+    }
+  for (const auto &key: signing_keys)
+    {
+      if (key.protocol () == GpgME::OpenPGP)
         {
-          if (key.protocol () == GpgME::OpenPGP)
-            {
-              m_pgpSigKey = key;
-            }
-          else if (key.protocol () == GpgME::CMS)
-            {
-              m_cmsSigKey = key;
-            }
-          else
-            {
-              STRANGEPOINT;
-            }
+          m_pgpSigKey = key;
+        }
+      else if (key.protocol () == GpgME::CMS)
+        {
+          m_cmsSigKey = key;
+        }
+      else
+        {
+          STRANGEPOINT;
         }
     }
 

@@ -35,6 +35,9 @@
 /* Singleton window */
 static HWND g_responder_window = NULL;
 static int invalidation_blocked = 0;
+static std::vector<Mail *> s_pending_ops;
+static std::vector<Mail *> s_ready_ops;
+GPGRT_LOCK_DEFINE (op_lock);
 
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -765,5 +768,53 @@ unblockInv()
                  SRCNAME, __func__);
       invalidation_blocked = 0;
     }
+  TRETURN;
+}
+
+void
+wm_register_pending_op (Mail *mail)
+{
+  TSTART;
+  gpgrt_lock_lock (&op_lock);
+  const auto it = std::find (s_pending_ops.begin (), s_pending_ops.end (),
+                             mail);
+  if (it != s_pending_ops.end ())
+    {
+      log_err ("BUG: Double register for %p !!!", mail);
+      gpgrt_lock_unlock (&op_lock);
+      TRETURN;
+    }
+  s_pending_ops.push_back (mail);
+  gpgrt_lock_unlock (&op_lock);
+  TRETURN;
+}
+
+void
+wm_abort_pending_ops ()
+{
+  TSTART;
+  gpgrt_lock_lock (&op_lock);
+  log_dbg ("Aborting all pending and ready operations.");
+  std::vector<Mail *> all_mails;
+  all_mails.insert (all_mails.begin (),
+                    s_pending_ops.begin (), s_pending_ops.end ());
+  all_mails.insert (all_mails.begin (),
+                    s_ready_ops.begin (), s_ready_ops.end ());
+  for (Mail *mail: all_mails)
+    {
+      if (!Mail::isValidPtr (mail))
+        {
+          log_dbg ("Mail %p already gone", mail);
+          continue;
+        }
+      log_dbg ("Closing copy %p", mail);
+      if (mail->close ())
+        {
+          log_dbg ("Close failed");
+        }
+    }
+  s_pending_ops.clear ();
+  s_ready_ops.clear ();
+  gpgrt_lock_unlock (&op_lock);
   TRETURN;
 }

@@ -3455,13 +3455,20 @@ set_oom_recipients (LPDISPATCH item, const std::vector<Recipient> &recps)
       TRETURN -1;
     }
 
-  /* First clear out the current recipients. */
-  int ret = invoke_oom_method (oom_recps.get (), "RemoveAll", nullptr);
+  int count = get_oom_int (oom_recps.get (), "Count");
 
-  if (ret)
+  for (int i = 1; i <= count; i++)
     {
-      STRANGEPOINT;
-      TRETURN ret;
+      /* First clear out the current recipients. */
+      int ret = invoke_oom_method_with_int (oom_recps.get (),
+                                            "Remove", 1,
+                                            nullptr);
+
+      if (ret)
+        {
+          STRANGEPOINT;
+          TRETURN ret;
+        }
     }
 
   for (const auto &recp: recps)
@@ -3474,9 +3481,9 @@ set_oom_recipients (LPDISPATCH item, const std::vector<Recipient> &recps)
         }
       VARIANT result;
       VariantInit (&result);
-      ret = invoke_oom_method_with_string (oom_recps.get (), "Add",
-                                           recp.mbox ().c_str (),
-                                           &result);
+      int ret = invoke_oom_method_with_string (oom_recps.get (), "Add",
+                                               recp.mbox ().c_str (),
+                                               &result);
       if (ret)
         {
           log_err ("Failed to add recipient.");

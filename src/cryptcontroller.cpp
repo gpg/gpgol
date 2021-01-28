@@ -894,7 +894,40 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
   /* Start a WKS check if necessary. */
   WKSHelper::instance()->start_check (m_mail->getSender ());
 
-  int ret = resolve_keys ();
+  int ret = 0;
+
+  if (m_mail->isSplitCopy ())
+    {
+      /* Bypass resolving if we are working on a split mail */
+      m_recipients = m_mail->getCachedRecipients ();
+      m_signer_keys = m_mail->getSigningKeys ();
+
+      if (m_recipients.size () && m_recipients[0].keys ().size ())
+        {
+          m_proto = m_recipients[0].keys ()[0].protocol ();
+        }
+      else if (m_signer_keys.size ())
+        {
+          m_proto = m_signer_keys[0].protocol ();
+        }
+
+      m_enc_keys.clear ();
+      for (const auto &recp: m_recipients)
+        {
+          const auto &keys = recp.keys ();
+          m_enc_keys.insert (m_enc_keys.end (), keys.begin (), keys.end ());
+        }
+
+      if ((opt.enable_debug & DBG_DATA))
+        {
+          log_data ("Encrypting to: ");
+          Recipient::dump (m_recipients);
+        }
+    }
+  else
+    {
+      ret = resolve_keys ();
+    }
 
   if (ret == -1)
     {
@@ -909,17 +942,20 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       TRETURN -2;
     }
 
-  RecipientManager mngr (m_recipients, m_signer_keys);
-  if (mngr.getRequiredMails () > 1)
+  if (!m_mail->isSplitCopy ())
     {
-      log_dbg ("More then one mail required for this recipient selection.");
-      /* If we need to send multiple emails we jump back from
-         here into the main event loop. Copy the mail object
-         and send it out mutiple times. */
-      do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
-      /* Cancel the crypto of this mail this continues
-         in Mail::splitAndSend_o */
-      TRETURN -3;
+      RecipientManager mngr (m_recipients, m_signer_keys);
+      if (mngr.getRequiredMails () > 1)
+        {
+          log_dbg ("More then one mail required for this recipient selection.");
+          /* If we need to send multiple emails we jump back from
+             here into the main event loop. Copy the mail object
+             and send it out mutiple times. */
+          do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
+          /* Cancel the crypto of this mail this continues
+             in Mail::splitAndSend_o */
+          TRETURN -3;
+        }
     }
 
   bool do_inline = m_mail->getDoPGPInline ();

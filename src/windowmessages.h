@@ -27,6 +27,8 @@
 
 #include <gpg-error.h>
 
+class Mail;
+
 /** Window Message handling for GpgOL.
   In Outlook only one thread has access to the Outlook Object model
   and this is the UI Thread. We can work in other threads but
@@ -121,4 +123,9 @@ delayed_invalidate_ui (LPVOID minsleep_ms = 0);
 DWORD WINAPI
 close_mail (LPVOID);
 
+void
+wm_register_pending_op (Mail *mail);
+
+void
+wm_abort_pending_ops ();
 #endif // WINDOWMESSAGES_H
