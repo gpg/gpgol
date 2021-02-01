@@ -896,7 +896,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
 
   int ret = 0;
 
-  if (m_mail->isSplitCopy ())
+  if (m_mail->copyParent ())
     {
       /* Bypass resolving if we are working on a split mail */
       m_recipients = m_mail->getCachedRecipients ();
@@ -942,7 +942,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       TRETURN -2;
     }
 
-  if (!m_mail->isSplitCopy ())
+  if (!m_mail->copyParent ())
     {
       RecipientManager mngr (m_recipients, m_signer_keys);
       if (mngr.getRequiredMails () > 1)
@@ -954,6 +954,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
           do_in_ui_thread_async (SEND_MULTIPLE_MAILS, m_mail);
           /* Cancel the crypto of this mail this continues
              in Mail::splitAndSend_o */
+          wm_unregister_pending_op (m_mail);
           TRETURN -3;
         }
     }

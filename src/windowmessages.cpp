@@ -39,6 +39,54 @@ static std::vector<Mail *> s_pending_ops;
 static std::vector<Mail *> s_ready_ops;
 GPGRT_LOCK_DEFINE (op_lock);
 
+static void invoke_send_bottom (Mail *mail)
+{
+  TSTART;
+  // Finaly this should pass.
+  if (invoke_oom_method (mail->item (), "Send", NULL))
+    {
+      log_error ("%s:%s: Send failed for %p. "
+                 "Trying SubmitMessage instead.\n"
+                 "This will likely crash.",
+                 SRCNAME, __func__, mail);
+
+      /* What we do here is similar to the T3656 workaround
+         in mailitem-events.cpp. In our tests this works but
+         is unstable. So we only use it as a very very last
+         resort. */
+      auto mail_message = get_oom_base_message (mail->item());
+      if (!mail_message)
+        {
+          gpgol_bug (mail->getWindow (),
+                     ERR_GET_BASE_MSG_FAILED);
+          TRETURN;
+        }
+      // It's important we use the _base_ message here.
+      mapi_save_changes (mail_message, FORCE_SAVE);
+      HRESULT hr = mail_message->SubmitMessage(0);
+      gpgol_release (mail_message);
+
+      if (hr == S_OK)
+        {
+          do_in_ui_thread_async (CLOSE, (LPVOID) mail);
+        }
+      else
+        {
+          log_error ("%s:%s: SubmitMessage Failed hr=0x%lx.",
+                     SRCNAME, __func__, hr);
+          gpgol_bug (mail->getWindow (),
+                     ERR_SEND_FALLBACK_FAILED);
+        }
+    }
+  else
+    {
+      mail->releaseCurrentItem ();
+    }
+  log_debug ("%s:%s:  Send for %p completed.",
+             SRCNAME, __func__, mail);
+  TRETURN;
+}
+
 LONG_PTR WINAPI
 gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -188,64 +236,52 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                   log_debug ("%s:%s: Second save done for %p Invoking second send.",
                              SRCNAME, __func__, mail);
                 }
-              // Finaly this should pass.
-              if (invoke_oom_method (mail->item (), "Send", NULL))
+              gpgrt_lock_lock (&op_lock);
+              /* Look for the Mail in the pending operations */
+              auto it = std::find (s_pending_ops.begin (),
+                                   s_pending_ops.end (), mail);
+              if (it != s_pending_ops.end ())
                 {
-                  log_error ("%s:%s: Send failed for %p. "
-                             "Trying SubmitMessage instead.\n"
-                             "This will likely crash.",
-                             SRCNAME, __func__, mail);
-
-                  /* What we do here is similar to the T3656 workaround
-                     in mailitem-events.cpp. In our tests this works but
-                     is unstable. So we only use it as a very very last
-                     resort. */
-                  auto mail_message = get_oom_base_message (mail->item());
-                  if (!mail_message)
-                    {
-                      gpgol_bug (mail->getWindow (),
-                                 ERR_GET_BASE_MSG_FAILED);
-                      TBREAK;
-                    }
-                  // It's important we use the _base_ message here.
-                  mapi_save_changes (mail_message, FORCE_SAVE);
-                  HRESULT hr = mail_message->SubmitMessage(0);
-                  gpgol_release (mail_message);
-
-                  if (hr == S_OK)
-                    {
-                      do_in_ui_thread_async (CLOSE, (LPVOID) mail);
-                    }
-                  else
-                    {
-                      log_error ("%s:%s: SubmitMessage Failed hr=0x%lx.",
-                                 SRCNAME, __func__, hr);
-                      gpgol_bug (mail->getWindow (),
-                                 ERR_SEND_FALLBACK_FAILED);
-                    }
+                  s_pending_ops.erase (it);
+                  log_dbg ("Removing %p from pending.", mail);
                 }
               else
                 {
-                  mail->releaseCurrentItem ();
+                  log_dbg ("Crypto op done which was not pending - ignoring.");
+                  gpgrt_lock_unlock (&op_lock);
+                  TBREAK;
                 }
-              log_debug ("%s:%s:  Send for %p completed.",
-                         SRCNAME, __func__, mail);
-              TBREAK;
-            }
-          case (BRING_TO_FRONT):
-            {
-              HWND wnd = get_active_hwnd ();
-              if (wnd)
+              if (!s_pending_ops.empty())
                 {
-                  log_debug ("%s:%s: Bringing window %p to front.",
-                             SRCNAME, __func__, wnd);
-                  bring_to_front (wnd);
+                  log_dbg ("Have pending operations. Adding %p to ready.", mail);
+                  s_ready_ops.push_back (mail);
                 }
               else
                 {
-                  log_debug ("%s:%s: No active window found for bring to front.",
-                             SRCNAME, __func__);
+                  for (Mail *m: s_ready_ops)
+                    {
+                      log_dbg ("Sending out pending mail %p", m);
+                      if (!Mail::isValidPtr (m))
+                        {
+                          log_err ("Mail is gone!");
+                          continue;
+                        }
+                      invoke_send_bottom (m);
+                    }
+                  Mail *copyParent = mail->copyParent ();
+                  invoke_send_bottom (mail);
+                  s_pending_ops.clear ();
+                  if (copyParent && !Mail::isValidPtr (copyParent))
+                    {
+                      log_err ("Basis for copy mails is gone: %p", copyParent);
+                    }
+                  else if (copyParent)
+                    {
+                      copyParent->close ();
+                    }
                 }
+
+              gpgrt_lock_unlock (&op_lock);
               TBREAK;
             }
           case (WKS_NOTIFY):
@@ -784,7 +820,28 @@ wm_register_pending_op (Mail *mail)
       gpgrt_lock_unlock (&op_lock);
       TRETURN;
     }
+  log_dbg ("Adding %p to pending operations.", mail);
   s_pending_ops.push_back (mail);
+  gpgrt_lock_unlock (&op_lock);
+  TRETURN;
+}
+
+void
+wm_unregister_pending_op (Mail *mail)
+{
+  TSTART;
+  gpgrt_lock_lock (&op_lock);
+  const auto it = std::find (s_pending_ops.begin (), s_pending_ops.end (),
+                             mail);
+  if (it != s_pending_ops.end ())
+    {
+      log_dbg ("Unregistering %p", mail);
+      s_pending_ops.erase (it);
+    }
+  else
+    {
+      log_err ("Failed to find %p as pending op.", mail);
+    }
   gpgrt_lock_unlock (&op_lock);
   TRETURN;
 }
@@ -802,15 +859,15 @@ wm_abort_pending_ops ()
                     s_ready_ops.begin (), s_ready_ops.end ());
   for (Mail *mail: all_mails)
     {
+      log_dbg ("Removing %p from pending.", mail);
       if (!Mail::isValidPtr (mail))
         {
           log_dbg ("Mail %p already gone", mail);
           continue;
         }
-      log_dbg ("Closing copy %p", mail);
-      if (mail->close ())
+      if (mail->copyParent() && Mail::isValidPtr (mail->copyParent()))
         {
-          log_dbg ("Close failed");
+          mail->copyParent ()->resetRecipients ();
         }
     }
   s_pending_ops.clear ();

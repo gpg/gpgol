@@ -127,5 +127,8 @@ void
 wm_register_pending_op (Mail *mail);
 
 void
+wm_unregister_pending_op (Mail *mail);
+
+void
 wm_abort_pending_ops ();
 #endif // WINDOWMESSAGES_H

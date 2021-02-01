@@ -688,12 +688,11 @@ public:
   /* Reset recipient and resolved key data. */
   void resetRecipients ();
 
-  /* Returns true if a mail is a copy that was split of
-     a different mail. */
-  bool isSplitCopy () const;
+  /* Returns the mail object of which this mail is a copy */
+  Mail *copyParent () const;
 
   /* Setter for isSplitCopy */
-  void setSplitCopy (bool val);
+  void setCopyParent (Mail *parent);
 
   /* Set protected headers data */
   void setProtectedHeaders (const std::string &hdrs);
@@ -787,7 +786,7 @@ private:
   std::string m_gpgol_class; /* The GpgOL Message class */
   std::vector<GpgME::Key> m_resolved_signing_keys; /* Prepared / resolved keys for signing. */
   bool m_recipients_set; /* Recipients were explictly set. */
-  bool m_is_split_copy; /* Is the a copy mail that was part of a split. */
+  Mail *m_copy_parent; /* The mail object of which this mail is a copy */
   std::string m_protected_headers;
   header_info_s m_header_info; /* Information about the original headers */
   bool m_attachs_added; /* State variable to track if we have added attachments to this mail. */

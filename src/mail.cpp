@@ -135,7 +135,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_decrypt_again(false),
     m_printing(false),
     m_recipients_set(false),
-    m_is_split_copy(false),
+    m_copy_parent(nullptr),
     m_attachs_added(false)
 {
   TSTART;
@@ -346,7 +346,7 @@ int
 Mail::preProcessMessage_m ()
 {
   TSTART;
-  if (m_is_split_copy)
+  if (m_copy_parent)
     {
       log_dbg ("Mail was created as a copy by gpgol. Addr: %p",
                this);
@@ -1154,6 +1154,7 @@ do_crypt (LPVOID arg)
     {
       log_debug ("%s:%s: aborting crypt for: %p already deleted",
                  SRCNAME, __func__, arg);
+      wm_abort_pending_ops ();
       gpgol_unlock (&dtor_lock);
       TRETURN 0;
     }
@@ -2049,6 +2050,7 @@ Mail::encryptSignStart_o ()
         }
     }
 
+  wm_register_pending_op (this);
   m_do_inline = m_is_draft_encrypt ? false :
                 m_is_gsuite ? true : opt.inline_pgp;
 
@@ -5021,10 +5023,9 @@ Mail::splitAndSend_o ()
         }
       log_dbg ("Recipients for %i", i);
       Recipient::dump (mngr.getRecipients (i, sigKey));
-      wm_register_pending_op (copiedMail);
 
       /* Now do the crypto */
-      copiedMail->setSplitCopy (true);
+      copiedMail->setCopyParent (this);
       copiedMail->prepareCrypto_o ();
       copiedMail->encryptSignStart_o ();
     }
@@ -5052,15 +5053,15 @@ Mail::resetRecipients ()
 }
 
 void
-Mail::setSplitCopy (bool val)
+Mail::setCopyParent (Mail *val)
 {
-  m_is_split_copy = val;
+  m_copy_parent = val;
 }
 
-bool
-Mail::isSplitCopy () const
+Mail *
+Mail::copyParent() const
 {
-  return m_is_split_copy;
+  return m_copy_parent;
 }
 
 int
