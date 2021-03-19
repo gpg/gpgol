@@ -46,10 +46,14 @@ public:
   /* Returns the recipients and the signing key for mail X */
   RecpList getRecipients (int x, GpgME::Key &signing_key) const;
 
+  /* Returns true if the split was by the protocol */
+  bool isSplitByProtocol () const;
+
 private:
   std::vector<RecpList> m_recp_lists;
   GpgME::Key m_pgpSigKey,
              m_cmsSigKey;
+  bool m_prot_split;
 };
 
 #endif // RECIPIENTMANAGER_H

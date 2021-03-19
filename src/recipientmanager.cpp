@@ -40,7 +40,8 @@ getKeysForProtocol (const std::vector<GpgME::Key> keys, GpgME::Protocol proto)
 }
 
 RecipientManager::RecipientManager (const RecpList &recps,
-                                    const std::vector<GpgME::Key> &signing_keys)
+                                    const std::vector<GpgME::Key> &signing_keys) :
+  m_prot_split (false)
 {
   TSTART;
   log_dbg ("Recipient manager ctor");
@@ -137,4 +138,10 @@ RecipientManager::getRecipients (int x, GpgME::Key &signing_key) const
       signing_key = (ret[0].keys()[0].protocol () == GpgME::CMS ? m_cmsSigKey : m_pgpSigKey);
     }
   return ret;
+}
+
+bool
+RecipientManager::isSplitByProtocol () const
+{
+  return m_prot_split;
 }

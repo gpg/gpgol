@@ -1165,12 +1165,12 @@ void MimeDataProvider::finalize ()
 {
   TSTART;
 
+  static std::vector<std::string> user_headers = {"Subject", "From",
+                                                  "To", "Cc", "Date",
+                                                  "Reply-To",
+                                                  "Followup-To"};
   if (m_protected_headers_version)
     {
-      static std::vector<std::string> user_headers = {"Subject", "From",
-                                                      "To", "Cc", "Date",
-                                                      "Reply-To",
-                                                      "Followup-To"};
       for (const auto &hdr: user_headers)
         {
           m_protected_headers.emplace (hdr, get_header (m_mime_ctx->msg, hdr));
@@ -1192,6 +1192,26 @@ void MimeDataProvider::finalize ()
     {
       log_debug ("%s:%s: Detected protected headers legacy part. It will be hidden.",
                  SRCNAME, __func__);
+      if (m_protected_headers.empty ())
+        {
+          /* Do a simple parsing of the header data that is displayed. */
+          log_data ("Parsing headers from the legacy part.");
+          std::istringstream ss(m_ph_helpbuf);
+          std::string line;
+          while (std::getline (ss, line))
+            {
+              for (const auto &hdr: user_headers)
+                {
+                  const std::string needle = hdr + std::string (": ");
+                  if (starts_with (line, needle.c_str ()))
+                    {
+                      log_data ("Found line starting with: %s", needle.c_str ());
+                      find_and_replace (line, needle, std::string ());
+                      m_protected_headers.emplace (hdr, line);
+                    }
+                }
+            }
+        }
       log_data ("%s:%s: PH legacy part: '%s'", SRCNAME, __func__, m_ph_helpbuf.c_str ());
     }
   else if (m_ph_helpbuf.size ())

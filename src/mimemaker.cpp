@@ -876,8 +876,7 @@ utf8_to_rfc2047b (const char *input)
 static int
 write_part (sink_t sink, const char *data, size_t datalen,
             const char *boundary, const char *filename, int is_mapibody,
-            const char *content_id = nullptr,
-            const char *added_headers = nullptr)
+            const char *content_id = nullptr)
 {
   int rc;
   const char *ct;
@@ -970,15 +969,6 @@ write_part (sink_t sink, const char *data, size_t datalen,
                                "\tfilename=\"", encoded_filename, "\"\r\n",
                                NULL)))
       return rc;
-
-  /* Add any injected additional headers */
-  if (added_headers)
-    {
-      if ((rc = write_multistring (sink, added_headers, nullptr)))
-        {
-          return rc;
-        }
-    }
 
   xfree(encoded_filename);
 
@@ -1348,9 +1338,7 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
       if (plain_body)
         {
           rc = write_part (sink, plain_body, strlen (plain_body),
-                           boundary, NULL, 1, nullptr,
-                           mail ? mail->protectedHeaders ().c_str () :
-                           nullptr);
+                           boundary, NULL, 1, nullptr);
         }
       /* Just the plain body or no body. We are done. */
       return rc;
@@ -1379,9 +1367,7 @@ add_body (Mail *mail, const char *boundary, sink_t sink,
 
   /* Now the plain body part */
   if ((rc = write_part (sink, plain_body, strlen (plain_body),
-                       alt_boundary, NULL, 1, nullptr,
-                       mail ? mail->protectedHeaders().c_str() :
-                       nullptr)))
+                       alt_boundary, NULL, 1, nullptr)))
     {
       TRACEPOINT;
       return rc;
@@ -1426,6 +1412,9 @@ add_body_and_attachments (sink_t sink, Mail *mail, const char *body)
   *outer_boundary = 0;
   *inner_boundary = 0;
   int n_att_usable = mail->plainAttachments ().size ();
+  const auto protected_headers = mail->protectedHeaders ();
+  const char *protected_headers_line = protected_headers.empty() ? "" :
+                                       "\tprotected-headers=\"v1\"\r\n";
 
   if (((body && n_att_usable) || n_att_usable > 1) && related == 1)
     {
@@ -1434,19 +1423,38 @@ add_body_and_attachments (sink_t sink, Mail *mail, const char *body)
       if ((rc=write_multistring (sink,
                                  "Content-Type: multipart/related;\r\n",
                                  "\tboundary=\"", outer_boundary, "\"\r\n",
+                                 protected_headers_line,
                                  "\r\n", /* <--- Outlook adds an extra line. */
                                  NULL)))
         return rc;
     }
-  else if ((body && n_att_usable) || n_att_usable > 1)
+  else if ((body && n_att_usable) || n_att_usable > 1 || !protected_headers.empty ())
     {
       generate_boundary (outer_boundary);
       if ((rc=write_multistring (sink,
                                  "Content-Type: multipart/mixed;\r\n",
                                  "\tboundary=\"", outer_boundary, "\"\r\n",
+                                 protected_headers_line,
                                  "\r\n", /* <--- Outlook adds an extra line. */
                                  NULL)))
         return rc;
+    }
+
+  if (!protected_headers.empty ())
+    {
+      log_data ("Adding protected headers part:\n'%s'\n",
+                protected_headers.c_str ());
+      if ((rc=write_boundary (sink, outer_boundary, 0)))
+        {
+          return rc;
+        }
+      if ((rc=write_multistring (sink,
+                                 protected_headers.c_str (),
+                                 NULL)))
+        {
+          return rc;
+        }
+
     }
 
   /* Only one part.  */

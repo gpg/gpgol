@@ -5001,6 +5001,9 @@ Mail::splitAndSend_o ()
       TRETURN;
     }
 
+  /* Build the headers to set on the split mails */
+  buildProtectedHeaders_o ();
+
   for (int i = 0; i < count; i++)
     {
       Mail *copiedMail = copy ();
@@ -5021,19 +5024,38 @@ Mail::splitAndSend_o ()
           gpgol_bug (get_active_hwnd(), ERR_SPLIT_RECIPIENTS);
           TRETURN;
         }
-      log_dbg ("Recipients for %i", i);
-      Recipient::dump (mngr.getRecipients (i, sigKey));
+      if (!opt.encryptSubject && !mngr.isSplitByProtocol ())
+        {
+          /* If subject encryption is on we only need to add the
+             original recipients when there is a BCC recipient.
+
+             When we have split by protcol we always need to add
+             the headers to restore the original recipients.
+             */
+          for (const auto &recp: recps)
+            {
+              if (recp.type () == Recipient::olBCC)
+                {
+                  copiedMail->setProtectedHeaders (m_protected_headers);
+                  break;
+                }
+            }
+        }
+      else
+        {
+          /* When subject encryption is on we always need to
+             add the headers */
+          copiedMail->setProtectedHeaders (m_protected_headers);
+        }
 
       /* Now do the crypto */
       copiedMail->setCopyParent (this);
       copiedMail->prepareCrypto_o ();
       copiedMail->encryptSignStart_o ();
     }
+  /* Reset the protected headers */
+  m_protected_headers = std::string ();
 
-  /* This triggers the copyMailCallback in the write event */
-  // invoke_oom_method (copied_mailitem, "Send", nullptr);
-  /* TODO: Close the mail after all others are sent successfully */
-  /* invoke_oom_method (m_mailitem, "Send", nullptr); */
   TRETURN;
 }
 
@@ -5072,7 +5094,9 @@ Mail::buildProtectedHeaders_o ()
   std::vector <std::string> toRecps;
   std::vector <std::string> ccRecps;
   std::vector <std::string> bccRecps;
-  ss << "protected-headers=\"v1\"\r\n";
+  ss << "Content-Type: text/plain;\r\n" <<
+        "\tprotected-headers=\"v1\"\r\n" <<
+        "Content-Disposition: inline\r\n\r\n";
   for (const auto &recp: m_cached_recipients)
     {
       if (recp.type() == Recipient::olCC)
