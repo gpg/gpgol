@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2021-06-09 10:15+0200\n"
-"PO-Revision-Date: 2021-01-07 15:23+0100\n"
+"PO-Revision-Date: 2021-06-11 09:36+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -1032,7 +1032,7 @@ msgstr ""
 
 #: src/mail.cpp:4841
 msgid "Should GpgOL override Outlook and continue to process the message?"
-msgstr "Soll GpgOL Outlook überschreiben und die Nachricht weiter verarbeiten?"
+msgstr "Soll die Outlook Einstellung ignoriert werden und diese Operation nur mit GpgOL durchgeführt werden?"
 
 #: src/mail.cpp:4847
 #, c-format
@@ -1043,13 +1043,11 @@ msgstr "Achtung: Für %s Kommunikation müssen Sie \"Ja\" auswählen."
 msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
-msgstr ""
-"Eine Krypto Operation ist sowohl mit Outlooks interner S/MIME "
-"Verschlüsselung ausgewählt und mit GpgOL / GnuPG."
+msgstr "Eine Krypto Operation soll sowohl mit Outlooks interner S/MIME Verschlüsselung als auch mir der von GpgOL / GnuPG durchgeführt werden."
 
 #: src/mail.cpp:4855
 msgid "Conflicting crypto settings"
-msgstr "Wiedersprüchliche Krypto Einstellungen"
+msgstr "Widersprüchliche Krypto Einstellungen"
 
 #: src/mailitem-events.cpp:380 src/mailitem-events.cpp:1044
 #: src/mimemaker.cpp:1059
