@@ -2157,6 +2157,11 @@ Mail::updateOOMData_o (bool for_encryption)
         }
       CloseHandle (hTmpFile);
 
+      /* Remove our attachments for example if we are a forward of an
+         encrypted message or a previously encrypted draft we do not
+         want to have the gpgol_mime_structure duplicated. */
+      removeOurAttachments_o ();
+
       m_pass_write = true;
       if (oom_save_as (m_mailitem, path, olMSG))
         {
@@ -4466,6 +4471,7 @@ Mail::removeOurAttachments_o ()
 
   int ret = 0;
 
+  m_disable_att_remove_warning = true;
   for (int i = 0; i < del_cnt; i++)
     {
       LPDISPATCH attachment = to_delete[i];
@@ -4479,6 +4485,7 @@ Mail::removeOurAttachments_o ()
         }
       gpgol_release (attachment);
     }
+  m_disable_att_remove_warning = false;
   TRETURN ret;
 }
 
