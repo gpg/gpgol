@@ -4836,7 +4836,7 @@ Mail::prepareCrypto_o ()
   int olFlags = get_oom_crypto_flags (m_mailitem);
   log_dbg ("Outlook internal crypto flags are: %i",
            olFlags);
-  if (olFlags)
+  if ((olFlags & 3))
     {
       std::string question = _("Should GpgOL override Outlook and continue "
                                "to process the message?");
