@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+struct opt_s opt;
+
 /* The base-64 list used for base64 encoding. */
 static unsigned char bintoasc[64+1] = ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                        "abcdefghijklmnopqrstuvwxyz"

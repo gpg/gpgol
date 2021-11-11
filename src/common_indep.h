@@ -172,11 +172,7 @@ extern "C" {
 #endif
 #endif
 
-#ifdef __cplusplus
-extern
-#endif
-
-struct
+struct opt_s
 {
   int enable_debug;	     /* Enable extra debug options.  Values
                                 larger than 1 increases the debug log
@@ -211,8 +207,8 @@ struct
   /* The forms revision number of the binary.  */
   int forms_revision;
 
-} opt;
-
+};
+extern struct opt_s opt;
 
 /* The state object used by b64_decode.  */
 struct b64_state_s
