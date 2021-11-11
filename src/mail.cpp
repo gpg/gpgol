@@ -1523,7 +1523,7 @@ set_body (LPDISPATCH item, const std::string &plain, const std::string &html)
     {
       if (put_oom_string (item, "HTMLBody", html.c_str ()))
         {
-          log_error ("%s:%s: Failed to modify html body of item.",
+          log_error ("%s:%s: Failed to set HTML into HTMLBody.",
                      SRCNAME, __func__);
           if (!plain.empty ())
             {
@@ -1536,10 +1536,10 @@ set_body (LPDISPATCH item, const std::string &plain, const std::string &html)
             }
           else
             {
-              put_oom_int (item, "BodyFormat", 2);
-              if (put_oom_string (item, "HTMLBody", plain.c_str ()))
+              put_oom_int (item, "BodyFormat", 1);
+              if (put_oom_string (item, "Body", _("GpgOL: Failed to update mail body.")))
                 {
-                  log_error ("%s:%s: Failed to put plaintext into html of item.",
+                  log_error ("%s:%s: Failed to insert fallback error into Body.",
                              SRCNAME, __func__);
                 }
             }
