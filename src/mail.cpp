@@ -1652,8 +1652,10 @@ Mail::updateBody_o (bool is_preview)
               log_error ("%s:%s: Failed to modify html body of item.",
                          SRCNAME, __func__);
             }
-
-          TRETURN;
+          else
+            {
+              TRETURN;
+            }
         }
       else if (!body.empty())
         {
