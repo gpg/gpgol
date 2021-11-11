@@ -1811,7 +1811,7 @@ internal_gettext (const char *msgid, int utf8)
 
 /** Get the localized string for msgid in the native 8 bit codepage. */
 const char *
-gettext (const char *msgid)
+w32_gettext (const char *msgid)
 {
   return internal_gettext (msgid, 0);
 }
@@ -1837,7 +1837,7 @@ dgettext (const char *domainname, const char *msgid)
   (void)domainname;
 
   /* For now, support only one domain.  */
-  return (char*)gettext (msgid);
+  return (char*)w32_gettext (msgid);
 }
 
 /* Return the locale name as used by gettext.  The return value will

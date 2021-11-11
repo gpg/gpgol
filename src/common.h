@@ -35,7 +35,7 @@
 
 /* i18n stuff */
 #include "w32-gettext.h"
-#define _(a) gettext (a)
+#define _(a) w32_gettext (a)
 #define N_(a) gettext_noop (a)
 
 

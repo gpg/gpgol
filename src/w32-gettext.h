@@ -36,7 +36,7 @@ extern "C" {
    in DIRNAME rather than in the system locale data base.  */
 char *bindtextdomain (const char *domainname, const char *dirname);
 
-const char *gettext (const char *msgid);
+const char *w32_gettext (const char *msgid);
 const char *utf8_gettext (const char *msgid);
 
 char *textdomain (const char *domainname);
