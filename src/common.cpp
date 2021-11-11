@@ -122,6 +122,57 @@ get_root_key(const char *root)
 #define CROSS_ACCESS KEY_WOW64_64KEY
 #endif
 
+/* Read a registry value from HKLM or HKCU of type dword and
+   return 1 if the value is larger then 0, 0 if it is zero and
+   -1 if it is not set or not found. */
+int
+read_reg_bool (HKEY root, const char *path, const char *value)
+{
+  TSTART;
+  HKEY h;
+  HKEY tmp = root ? root : HKEY_CURRENT_USER;
+
+  int err = RegOpenKeyEx (tmp, path , 0, KEY_READ, &h);
+  if (err != ERROR_SUCCESS)
+    {
+      log_debug ("%s:%s: not found %s",
+                 SRCNAME, __func__, path);
+      if (!root)
+        {
+          TRETURN read_reg_bool (HKEY_LOCAL_MACHINE, path, value);
+        }
+      TRETURN -1;
+    }
+  DWORD type;
+  err = RegQueryValueEx (h, value, NULL, &type, NULL, NULL);
+  if (err != ERROR_SUCCESS || type != REG_DWORD)
+    {
+      log_debug ("%s:%s: No type or key for %s",
+                 SRCNAME, __func__, value);
+      if (!root)
+        {
+          TRETURN read_reg_bool (HKEY_LOCAL_MACHINE, path, value);
+        }
+      TRETURN -1;
+    }
+  DWORD data;
+  DWORD size = sizeof (DWORD);
+  err = RegQueryValueEx (h, value, NULL, NULL, (LPBYTE)&data,
+                         &size);
+  if (err != ERROR_SUCCESS)
+    {
+      log_debug ("%s:%s: Failed to find value of %s",
+                 SRCNAME, __func__, value);
+      if (!root)
+        {
+          TRETURN read_reg_bool (HKEY_LOCAL_MACHINE, path, value);
+        }
+      TRETURN -1;
+    }
+  TRETURN !!data;
+}
+
+
 std::string
 _readRegStr (HKEY root_key, const char *dir,
              const char *name, bool alternate)

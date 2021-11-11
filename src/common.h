@@ -155,5 +155,11 @@ std::string
 compliance_string (bool forVerify, bool forDecrypt, bool isCompliant);
 
 HANDLE CreateFileUtf8 (const char *utf8Name);
+
+/* Read a registry value from HKLM or HKCU of type dword and
+   return 1 if the value is larger then 0, 0 if it is zero and
+   -1 if it is not set or not found. */
+int
+read_reg_bool (HKEY root, const char *path, const char *value);
 #endif
 #endif /*GPGOL_COMMON_H*/

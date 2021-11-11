@@ -385,43 +385,25 @@ void
 check_html_preferred()
 {
   /* Check if HTML Mail should be enabled. */
-  HKEY h;
-  std::string path = "Software\\Microsoft\\Office\\";
-  path += std::to_string (g_ol_version_major);
-  path += ".0\\Outlook\\Options\\Mail";
-  opt.prefer_html = 1;
-  int err = RegOpenKeyEx (HKEY_CURRENT_USER, path.c_str() , 0, KEY_READ, &h);
-  if (err != ERROR_SUCCESS)
+  std::string path = "Software\\Microsoft\\Office\\" +
+    std::to_string (g_ol_version_major) +
+    ".0\\Outlook\\Options\\Mail";
+
+  int val = read_reg_bool (nullptr, path.c_str (), "ReadAsPlain");
+  if (val == -1)
     {
-      log_debug ("%s:%s: no mail options under %s",
-                 SRCNAME, __func__, path.c_str());
-      return;
+      path =  "Software\\policies\\Microsoft\\Office\\" +
+        std::to_string (g_ol_version_major) +
+        ".0\\Outlook\\Options\\Mail";
+      val = read_reg_bool (nullptr, path.c_str (), "ReadAsPlain");
+    }
+  if (val == -1)
+    {
+      opt.prefer_html = 1;
     }
   else
     {
-      DWORD type;
-      err = RegQueryValueEx (h, "ReadAsPlain", NULL, &type, NULL, NULL);
-      if (err != ERROR_SUCCESS || type != REG_DWORD)
-        {
-          log_debug ("%s:%s: No type or key for ReadAsPlain",
-                     SRCNAME, __func__);
-          return;
-        }
-      else
-        {
-          DWORD data;
-          DWORD size = sizeof (DWORD);
-          err = RegQueryValueEx (h, "ReadAsPlain", NULL, NULL, (LPBYTE)&data,
-                                 &size);
-          if (err != ERROR_SUCCESS)
-            {
-              log_debug ("%s:%s: Failed to find out ReadAsPlain",
-                         SRCNAME, __func__);
-              return;
-            }
-          opt.prefer_html = data ? 0 : 1;
-          return;
-        }
+      opt.prefer_html = !val;
     }
 }
 
