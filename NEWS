@@ -1,6 +1,8 @@
-Noteworthy changes for version 2.5.1 (unreleased)
+Noteworthy changes for version 2.5.1 (2021-12-01)
 =================================================
 
+ * Improved ReadAsPlain detection and plaintext
+   handling. (T5681)
 
 Noteworthy changes for version 2.5.0 (2021-06-11)
 =================================================
