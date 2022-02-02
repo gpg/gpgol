@@ -689,7 +689,8 @@ TODO: Handle split copy in another way
                              SRCNAME, __func__);
                   m_mail->setIsDraftEncrypt (true);
                   m_mail->prepareCrypto_o ();
-                  /* Passing write to trigger encrypt in after write */
+                  m_mail->encryptSignStart_o ();
+                  /* Draft encryption happens synchronously so we pass it. */
                   TBREAK;
                 }
               if (m_mail->cryptState() == Mail::CryptFinished)
