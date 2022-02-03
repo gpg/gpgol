@@ -3777,3 +3777,34 @@ oom_save_as_file (LPDISPATCH obj, const char *path)
 
   return rc;
 }
+
+void
+oom_clear_selections ()
+{
+  TSTART;
+  auto explorers_obj = get_oom_object_s (oApp (), "Explorers");
+
+  if (!explorers_obj)
+    {
+      STRANGEPOINT;
+      TRETURN;
+    }
+
+  int count = get_oom_int (explorers_obj.get (), "Count");
+
+  for (int i = 1; i <= count; i++)
+    {
+      auto item_str = std::string("Item(") + std::to_string (i) + ")";
+      auto explorer = get_oom_object_s (explorers_obj, item_str.c_str ());
+      if (!explorer)
+        {
+          STRANGEPOINT;
+          TRETURN;
+        }
+      if (invoke_oom_method (explorer.get (), "ClearSelection", NULL))
+        {
+          log_err ("Clearing Explorers %i", i);
+        }
+    }
+  TRETURN;
+}

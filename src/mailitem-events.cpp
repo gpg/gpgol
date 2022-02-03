@@ -847,7 +847,8 @@ TODO: Handle split copy in another way
                     */
                   log_oom ("%s:%s: Passing close because of draft status: %p",
                            SRCNAME, __func__, m_mail);
-                  m_mail->setDecryptAgain (true);
+                  /* Clear selections to avoid conflicts with inline editors */
+                  oom_clear_selections ();
                   TBREAK;
                 }
               /* Close. This happens when an Opened mail is closed.

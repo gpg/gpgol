@@ -535,4 +535,7 @@ int oom_save_as_file (LPDISPATCH obj, const char *path);
    Call SysFreeString on the allocated value. VariantClear on
    a variant with VT_BSTR does this for you. */
 BSTR utf8_to_bstr (const char *val);
+
+/* Clear the selection in all explorers */
+void oom_clear_selections ();
 #endif /*OOMHELP_H*/
