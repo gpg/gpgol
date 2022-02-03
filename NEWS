@@ -4,6 +4,10 @@ Noteworthy changes for version 2.5.2 (unreleased)
  * Fixed re-encryption of drafts after modification
    if draft encryption is enabled. (T5812)
 
+ * Added setting "auto" for draftKey registry
+   value to autoselect a draft encryption key.
+   (T5564)
+
 Noteworthy changes for version 2.5.1 (2021-12-01)
 =================================================
 

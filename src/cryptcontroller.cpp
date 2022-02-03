@@ -653,7 +653,29 @@ CryptController::resolve_keys ()
 
   if (m_mail->isDraftEncrypt() && opt.draft_key)
     {
-      const auto key = KeyCache::instance()->getByFpr (opt.draft_key);
+      GpgME::Key key;
+      if (opt.draft_key && !strcmp (opt.draft_key, "auto"))
+        {
+          log_dbg ("Autoselecting draft key first ultimate key.");
+          for (const auto &k: KeyCache::instance()->getUltimateKeys ())
+            {
+              if (k.hasSecret () && k.canEncrypt ())
+                {
+                  xfree (opt.draft_key);
+                  gpgrt_asprintf (&opt.draft_key, "%s", k.primaryFingerprint());
+                  log_dbg ("Autoselecting %s as draft encryption key.",
+                           opt.draft_key);
+                  write_options ();
+                  key = k;
+                  break;
+                }
+            }
+        }
+
+      if (key.isNull ())
+        {
+          key = KeyCache::instance()->getByFpr (opt.draft_key);
+        }
       if (key.isNull())
         {
           const char *buf = utf8_gettext ("Failed to encrypt draft.\n\n"

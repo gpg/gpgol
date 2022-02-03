@@ -358,6 +358,7 @@ write_options (void)
     char *s_val;
   } table[] = {
     {"smimeHtmlWarnShown",       0, opt.smime_html_warn_shown, NULL},
+    {"draftKey",       2,        0, opt.draft_key},
     {NULL, 0, 0, NULL}
   };
   char buf[32];
