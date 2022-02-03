@@ -176,6 +176,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          SRCNAME, __func__);
               m_mail->setIsDraftEncrypt (true);
               m_mail->prepareCrypto_o ();
+              m_mail->encryptSignStart_o ();
             }
           TRETURN S_OK;
         }

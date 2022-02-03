@@ -2164,11 +2164,17 @@ Mail::updateOOMData_o (bool for_encryption)
          want to have the gpgol_mime_structure duplicated. */
       removeOurAttachments_o ();
 
-      m_pass_write = true;
+      log_dbg ("Enable pass write for mail serialisation");
+      setPassWrite (true);
       if (oom_save_as (m_mailitem, path, olMSG))
         {
           log_dbg ("Failed to call SaveAs.");
           TRETURN -1;
+        }
+      if (m_pass_write)
+        {
+          log_dbg ("Pass write still set after serialization. Resetting to false.");
+          setPassWrite (false);
         }
 
       wchar_t *wpath = utf8_to_wchar (path);

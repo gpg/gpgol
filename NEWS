@@ -1,6 +1,9 @@
 Noteworthy changes for version 2.5.2 (unreleased)
 =================================================
 
+ * Fixed re-encryption of drafts after modification
+   if draft encryption is enabled. (T5812)
+
 Noteworthy changes for version 2.5.1 (2021-12-01)
 =================================================
 
