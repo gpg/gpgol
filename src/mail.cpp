@@ -2052,7 +2052,10 @@ Mail::encryptSignStart_o ()
         }
     }
 
+  /* register / unregister is not yet implemented for error handling in
+     split sending.
   wm_register_pending_op (this);
+  */
   m_do_inline = m_is_draft_encrypt ? false :
                 m_is_gsuite ? true : opt.inline_pgp;
 
