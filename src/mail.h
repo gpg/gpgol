@@ -792,5 +792,6 @@ private:
   bool m_attachs_added; /* State variable to track if we have added attachments to this mail. */
   std::string m_dec_content_type; /* Top level content type of the decrypted mail. */
   std::vector <std::shared_ptr <Attachment> > m_plain_attachments; /* Attachments to encrypt */
+  std::vector <std::shared_ptr <Attachment> > m_enc_attachments; /* Attachments decrypted */
 };
 #endif // MAIL_H

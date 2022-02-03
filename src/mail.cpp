@@ -823,6 +823,7 @@ int
 Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
 {
   TSTART;
+  m_enc_attachments = attachments;
   if (m_attachs_added)
     {
       log_dbg ("Not adding attachments as they are already there.");
@@ -2202,8 +2203,40 @@ Mail::updateOOMData_o (bool for_encryption)
               STRANGEPOINT;
               continue;
             }
-          m_plain_attachments.push_back (std::shared_ptr <Attachment> (
-                                         new Attachment (attach)));
+
+          /* This is for the case where we try to encrypt a mail decrypted by
+             us again. In that case we might not have access to the attachment
+             data because we cannot access the underlying MAPIOBJECT. Since
+             we take care not to write it into MAPI. Usually this is not
+             an issue as the SaveAs call above works. But we can reach this
+             code in the "BeforeAutoSave" event. In which we cannnot trigger
+             another write. */
+          LPATTACH mapi_attachment = nullptr;
+          mapi_attachment = (LPATTACH) get_oom_iunknown (attach,
+                                                         "MapiObject");
+          bool file_found = false;
+          if (!mapi_attachment)
+            {
+              log_dbg ("Failed to get MapiObject. Possibly decrypted by us.");
+              const auto fname = get_oom_string_s (attach, "FileName");
+              for (const auto &ours: m_enc_attachments)
+                {
+                  if (!fname.empty() && ours->get_file_name () == fname)
+                    {
+                      log_dbg ("Using our decrypted variant of attachment '%s'", fname.c_str ());
+                      m_plain_attachments.push_back (ours);
+                      file_found = true;
+                      break;
+                    }
+                }
+            }
+          gpgol_release (mapi_attachment);
+
+          if (!file_found)
+            {
+              m_plain_attachments.push_back (std::shared_ptr <Attachment> (
+                                             new Attachment (attach)));
+            }
         }
 
       /* Update the body format. */
