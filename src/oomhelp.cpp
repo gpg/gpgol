@@ -2053,7 +2053,6 @@ create_category (LPDISPATCH categories, const char *category, int color)
   hr = categories->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                            DISPATCH_METHOD, &dispparams,
                            &rVariant, &execpinfo, &argErr);
-  SysFreeString (b_name);
   VariantClear (&cVariant[0]);
   VariantClear (&cVariant[1]);
   VariantClear (&cVariant[2]);
