@@ -1,5 +1,9 @@
-Noteworthy changes for version 2.5.3 (unreleased)
+Noteworthy changes for version 2.5.3 (2022-04-20)
 =================================================
+
+ * Fixed a double free error which could lead
+   to random crashes. This double free was not
+   exploitable as a security issue.
 
 Noteworthy changes for version 2.5.2 (2022-02-09)
 =================================================
