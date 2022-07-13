@@ -375,13 +375,16 @@ Mail::preProcessMessage_m ()
       /* For unknown messages we still need to check for autocrypt
          headers. If the mails are crypto messages the autocrypt
          stuff is handled in the parsecontroller. */
-      autocrypt_s ac;
-      parseHeaders_m ();
-      if (m_header_info.acInfo.exists)
+      if (opt.autoimport)
         {
-          log_debug ("%s:%s: Importing autocrypt header from unencrypted "
-                     "mail.", SRCNAME, __func__);
-          KeyCache::import_pgp_key_data (m_header_info.acInfo.data);
+          autocrypt_s ac;
+          parseHeaders_m ();
+          if (m_header_info.acInfo.exists)
+            {
+              log_debug ("%s:%s: Importing autocrypt header from unencrypted "
+                         "mail.", SRCNAME, __func__);
+              KeyCache::import_pgp_key_data (m_header_info.acInfo.data);
+            }
         }
       gpgol_release (message);
       TRETURN 0;
