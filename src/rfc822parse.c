@@ -431,8 +431,15 @@ insert_header (rfc822parse_t msg, const unsigned char *line, size_t length)
 
   /* Transform a field name into canonical format. */
   if (!hdr->cont && strchr (line, ':'))
+    {
      capitalize_header_name (hdr->line);
-
+    }
+  else if (!hdr->cont)
+    {
+      /* Neither continuation nor a header name. Must be invalid. */
+      log_dbg ("Invalid header data: %s", anonstr (hdr->line));
+      return -1;
+    }
   *msg->current_part->hdr_lines_tail = hdr;
   msg->current_part->hdr_lines_tail = &hdr->next;
 

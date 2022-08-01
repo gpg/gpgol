@@ -3270,6 +3270,8 @@ rfc822parse_t parse_header_data (const std::string &hdrStr,
 
   const char *s = nullptr;
   const char *header_lines = hdrStr.c_str();
+
+  log_data ("Parsing header: %s", header_lines);
   size_t length;
   while ((s = strchr (header_lines, '\n')))
     {
@@ -3287,7 +3289,12 @@ rfc822parse_t parse_header_data (const std::string &hdrStr,
           TRETURN nullptr;
         }
 
-      rfc822parse_insert (msg, (const unsigned char*)header_lines, length);
+      if (rfc822parse_insert (msg, (const unsigned char*)header_lines, length))
+        {
+          log_dbg ("Failed to parse headers.");
+          rfc822parse_close (msg);
+          TRETURN nullptr;
+        }
       header_lines = s+1;
     }
   TRETURN msg;
