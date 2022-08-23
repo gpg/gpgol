@@ -246,6 +246,24 @@ readRegStr (const char *root, const char *dir, const char *name)
     if (!(root_key = get_root_key(root))) {
         return ret;
     }
+    if (root == nullptr)
+      {
+        /* Nullptr so we first look into HKLM if we have
+           an override */
+        ret = _readRegStr (HKEY_LOCAL_MACHINE, dir, name, false);
+        if (ret.empty()) {
+            // Try alternate as fallback
+            ret = _readRegStr (HKEY_LOCAL_MACHINE, dir, name, true);
+        }
+        log_dbg ("Size: %i %s name: %s", (int)ret.size(), ret.c_str(), name);
+        if (ret.size() && ret[ret.size() - 1] == '!')
+          {
+            // Using override reg value
+            log_dbg ("Using override for %s", name);
+            ret.pop_back();
+            return ret;
+          }
+      }
     ret = _readRegStr (root_key, dir, name, false);
     if (ret.empty()) {
         // Try alternate as fallback
