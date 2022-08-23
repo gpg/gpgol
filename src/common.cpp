@@ -255,7 +255,6 @@ readRegStr (const char *root, const char *dir, const char *name)
             // Try alternate as fallback
             ret = _readRegStr (HKEY_LOCAL_MACHINE, dir, name, true);
         }
-        log_dbg ("Size: %i %s name: %s", (int)ret.size(), ret.c_str(), name);
         if (ret.size() && ret[ret.size() - 1] == '!')
           {
             // Using override reg value
