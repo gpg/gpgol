@@ -130,10 +130,17 @@ get_wks_client_path ()
       TRACEPOINT;
       return std::string ();
     }
-  const auto ret = std::string (gpg4win_dir) +
-                  "\\..\\GnuPG\\bin\\gpg-wks-client.exe";
+  const auto stringdir = std::string (gpg4win_dir);
   xfree (gpg4win_dir);
+  auto ret = stringdir + "\\..\\GnuPG\\bin\\gpg-wks-client.exe";
 
+  if (!access (ret.c_str (), F_OK))
+    {
+      return ret;
+    }
+
+  /* For GnuPG VS-Desktop GnuPG is in a subdir. */
+  ret = std::string (gpg4win_dir) + "\\GnuPG\\bin\\gpg-wks-client.exe";
   if (!access (ret.c_str (), F_OK))
     {
       return ret;
