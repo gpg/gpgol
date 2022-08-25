@@ -2343,10 +2343,16 @@ Mail::updateOOMData_o (bool for_encryption)
           xfree (buf2);
         }
     }
+
   if (!buf)
     {
-      /* We don't have s sender object or SendUsingAccount,
-         well, in that case fall back to the current user. */
+      /* We don't have s sender object or SendUsingAccount
+         try primary_sender_acct MAPI property */
+      buf = get_sender_primary_send_acct (m_mailitem);
+    }
+  if (!buf)
+    {
+      /* Still nothing. Fall back to last resort. */
       buf = get_sender_CurrentUser (m_mailitem);
     }
   if (!buf)

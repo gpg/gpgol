@@ -2731,6 +2731,41 @@ get_sender_Sender (LPDISPATCH mailitem)
 }
 
 char *
+get_sender_primary_send_acct (LPDISPATCH mailitem)
+{
+  TSTART;
+  char *buf = get_pa_string (mailitem, PR_PRIMARY_SEND_ACCT_W_DASL);
+  if (buf && strlen (buf))
+    {
+      /* The format of this is documented as implementation dependent
+         for exchange this looks like
+         AccountNumber\01ExchangeAddress\01SMTPAddress */
+      char *last = strrchr (buf, 1);
+      if (last && ++last)
+        {
+          char *atChar = strchr (last, '@');
+          if (atChar)
+            {
+              log_debug ("%s:%s Sender fallback 5", SRCNAME, __func__);
+              size_t len = strlen (last) + 1;
+              char *ret = (char *)xmalloc (len);
+              strcpy_s (ret, len, last);
+              xfree (buf);
+              TRETURN ret;
+            }
+          else
+            {
+              log_dbg ("Last part does not contain @ character: %s",
+                       anonstr (last));
+            }
+        }
+      log_dbg ("Failed to parse %s", anonstr (buf));
+    }
+  xfree (buf);
+  TRETURN nullptr;
+}
+
+char *
 get_sender_CurrentUser (LPDISPATCH mailitem)
 {
   TSTART;
@@ -2744,7 +2779,7 @@ get_sender_CurrentUser (LPDISPATCH mailitem)
   gpgol_release (sender);
   if (buf && strlen (buf))
     {
-      log_debug ("%s:%s Sender fallback 5", SRCNAME, __func__);
+      log_debug ("%s:%s Sender fallback 6", SRCNAME, __func__);
       TRETURN buf;
     }
   xfree (buf);

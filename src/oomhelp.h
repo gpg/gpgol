@@ -150,6 +150,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
   "http://schemas.microsoft.com/mapi/proptag/0x0C1A001F"
 #define PR_SENT_REPRESENTING_NAME_W_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x0042001F"
+#define PR_PRIMARY_SEND_ACCT_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x0E28001F"
 
 #define PR_SECURITY_FLAGS_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x6E010003"
@@ -451,6 +453,9 @@ char *get_sender_SendUsingAccount (LPDISPATCH mailitem, bool *r_is_GSuite);
 
 /* Get the SentRepresentingAddress */
 char *get_sender_SentRepresentingAddress (LPDISPATCH mailitem);
+
+/* Get MAPI PR_PRIMARY_SEND_ACCT and parse it to mail. */
+char *get_sender_primary_send_acct (LPDISPATCH mailitem);
 
 /* memtracing query interface */
 HRESULT gpgol_queryInterface (LPUNKNOWN pObj, REFIID riid, LPVOID FAR *ppvObj);
