@@ -1049,8 +1049,8 @@ de_vs_name (bool isCompliant)
     }
   TSTART;
   /* Only look once */
-  compName = _("VS-NfD compliant");
-  uncompName = _("not VS-NfD compliant");
+  compName = utf8_gettext ("VS-NfD compliant");
+  uncompName = utf8_gettext ("not VS-NfD compliant");
   /* Find the libkleopatrarc */
   char *instdir = get_gpg4win_dir();
   if (!instdir)
@@ -1137,17 +1137,17 @@ compliance_string (bool forVerify, bool forDecrypt, bool isCompliant)
   const char *comp_name = de_vs_name (isCompliant);
   if (forDecrypt && forVerify)
     {
-      return asprintf_s (_("The message is %s."), comp_name);
+      return asprintf_s (utf8_gettext ("The message is %s."), comp_name);
     }
   if (forVerify)
     {
       /* TRANSLATORS %s is compliance name like VS-NfD */
-      return asprintf_s (_("The signature is %s."), comp_name);
+      return asprintf_s (utf8_gettext ("The signature is %s."), comp_name);
     }
   if (forDecrypt)
     {
       /* TRANSLATORS %s is compliance name like VS-NfD */
-      return asprintf_s (_("The encryption is %s."),
+      return asprintf_s (utf8_gettext ("The encryption is %s."),
                             comp_name);
     }
   /* Should not happen */
