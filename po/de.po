@@ -4,13 +4,13 @@
 #
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
 # Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
-# aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021.
+# aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2022-08-26 14:12+0200\n"
-"PO-Revision-Date: 2022-08-12 12:49+0200\n"
+"PO-Revision-Date: 2022-08-26 14:15+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Lokalize 20.12.0\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -474,7 +474,7 @@ msgstr ""
 #. TRANSLATORS: Please ignore. Only available for german.
 #: src/addin-options.cpp:214
 msgid "https://gnupg.com/vsd/report.html"
-msgstr ""
+msgstr "https://gnupg.com/vsd/report.de.html"
 
 #: src/categorymanager.cpp:253
 msgid "Encrypted Message"
@@ -723,9 +723,8 @@ msgid "Please wait while the message is being decrypted / verified..."
 msgstr "Bitte warten Sie während die Nachricht entschlüsselt / geprüft wird..."
 
 #: src/mail.cpp:1544
-#, fuzzy
 msgid "GpgOL: Failed to update mail body."
-msgstr "Konnte die Mail nicht verarbeiten."
+msgstr "GpgOL: Konnte Nachricht nicht darstellen."
 
 #: src/mail.cpp:1673 src/mail.cpp:1742
 msgid "HTML display disabled."
@@ -1205,8 +1204,9 @@ msgid ""
 "please see the debug tab in the options on how to report\n"
 "this for further improvement."
 msgstr ""
-"Wenn diese Daten nicht wie eine verschlüsselte Nachricht aussehen,\n"
-"schauen Sie bitte unter \"Fehlersuche\" in den Optionen wie man dies\n"
+"Wenn die folgenden Daten nicht wie eine verschlüsselte Nachricht aussehen,\n"
+"schauen Sie bitte unter \"Fehlersuche\" in der GpgOL Konfiguration wie man"
+" dies\n"
 "berichtet, um die Erkennung zukünftig zu verbessern."
 
 #: src/parsecontroller.cpp:503
