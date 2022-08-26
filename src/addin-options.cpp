@@ -210,6 +210,8 @@ i18n_noops[] = {
     /* TRANSLATORS: Config dialog tooltip. */
     N_("Always show the security approval and certificate selection dialog. "
        "This slows down the encryption / signing process, especially with large keyrings."),
+    /* TRANSLATORS: Please ignore. Only available for german. */
+    N_("https://gnupg.com/vsd/report.html"),
 };
 
 
