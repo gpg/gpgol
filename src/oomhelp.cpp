@@ -1346,7 +1346,7 @@ get_pa_string (LPDISPATCH pDisp, const char *property)
       memcpy (result, data + lBound, uBound - lBound);
       result[uBound - lBound] = '\0';
     }
-  else
+  else if (rVariant.vt != 0)
     {
       log_debug ("%s:%s: Property `%s' is not a string (vt=%d)",
                  SRCNAME, __func__, property, rVariant.vt);
