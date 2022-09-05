@@ -481,9 +481,25 @@ get_pretty_attachment_name (wchar_t *path, protocol_t protocol,
   return pretty;
 }
 
+BOOL
+DeleteFileUtf8 (const char *utf8Name)
+{
+  SetLastError (0);
+  if (!utf8Name)
+    {
+      STRANGEPOINT;
+      return false;
+    }
+  wchar_t *wname = utf8_to_wchar (utf8Name);
+  BOOL ret = DeleteFileW (wname);
+  xfree (wname);
+  return ret;
+}
+
 HANDLE
 CreateFileUtf8 (const char *utf8Name)
 {
+  SetLastError (0);
   if (!utf8Name)
     {
       return INVALID_HANDLE_VALUE;
@@ -498,7 +514,7 @@ CreateFileUtf8 (const char *utf8Name)
 
   auto ret = CreateFileW (wname,
                           GENERIC_WRITE | GENERIC_READ,
-                          FILE_SHARE_READ | FILE_SHARE_DELETE,
+                          FILE_SHARE_READ,
                           NULL,
                           CREATE_NEW,
                           FILE_ATTRIBUTE_TEMPORARY,
@@ -566,13 +582,14 @@ getTmpPathUtf8 ()
 wchar_t*
 get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
 {
-  const auto utf8Name = wchar_to_utf8_string (name);
+  TSTART
+  auto utf8Name = wchar_to_utf8_string (name);
   const auto tmpPath = getTmpPathUtf8 ();
 
   if (utf8Name.empty() || tmpPath.empty())
     {
       TRACEPOINT;
-      return nullptr;
+      TRETURN nullptr;
     }
 
   auto outName = tmpPath + utf8Name;
@@ -581,10 +598,28 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
                   SRCNAME, __func__, outName.c_str ());
 
   int tries = 1;
+  bool deletedFile = false;
   while ((*outHandle = CreateFileUtf8 (outName.c_str ())) == INVALID_HANDLE_VALUE)
     {
-      log_debug_w32 (-1, "%s:%s: Failed to open candidate '%s'",
+
+      DWORD err = GetLastError ();
+      log_debug_w32 (err, "%s:%s: Failed to open candidate '%s'",
                      SRCNAME, __func__, anonstr (outName.c_str()));
+
+      if (!deletedFile && err == ERROR_FILE_EXISTS)
+        {
+          /* Try to delete the file. If someone is reading it we should
+             not be able to delete it. */
+          if (DeleteFileUtf8 (outName.c_str ()))
+            {
+              log_dbg ("Deleted existing tmp file '%s'", anonstr (outName.c_str ()));
+              deletedFile = true;
+              continue;
+            }
+        }
+      /* Just to make sure we do not loop endlessly if we get strange return
+       * values. */
+      deletedFile = false;
 
       char *outNameC = xstrdup ((tmpPath + utf8Name).c_str ());
 
@@ -595,7 +630,7 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
           log_error ("%s:%s: No backslash in origname '%s'",
                      SRCNAME, __func__, outNameC);
           xfree (outNameC);
-          return NULL;
+          TRETURN NULL;
         }
 
       auto fileExt = strchr (lastBackslash, '.');
@@ -622,22 +657,33 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
           log_dbg ("Can't find an attachment name. "
                    "Switching over to a generic attachment name.");
           outName = tmpPath + "attachment";
+          utf8Name = "attachment";
           if (fileExt)
             {
               outName += ".";
               outName += fileExt;
+              utf8Name += ".";
+              utf8Name += fileExt;
             }
         }
       if (tries > 100)
         {
+          char *buf;
+          gpgrt_asprintf (&buf,"Failed to obtain temporary filename '%s'"
+                             " please check that the folder '%s' exists and the file is"
+                             " writable. Look into configuration dialog for debug options.",
+                             wchar_to_utf8_string (name).c_str (), tmpPath.c_str ());
+          memdbg_alloc (buf);
           /* You have to know when to give up,.. */
+          gpgol_message_box (NULL, buf, _("GpgOL Error"), MB_OK);
+          xfree (buf);
           log_error ("%s:%s: Could not get a name out of 100 tries",
                      SRCNAME, __func__);
-          return NULL;
+          TRETURN NULL;
         }
     }
 
-  return utf8_to_wchar (outName.c_str ());
+  TRETURN utf8_to_wchar (outName.c_str ());
 }
 
 char *
