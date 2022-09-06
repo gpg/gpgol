@@ -1,6 +1,20 @@
-Noteworthy changes for version 2.5.4 (unreleased)
+Noteworthy changes for version 2.5.4 (2022-09-06)
 =================================================
 
+ * Fixed some encoding problems.
+
+ * Support sending drafts with modified sender.
+
+ * If an exclamation mark is added to a config
+   value in HKEY_LOCAL_MACHINE it is now forced
+   and cannot be changed by the user. (T5827)
+
+ * Fixed an issue that could cause a rare
+   hang when looking at unencrypted mails.
+   (RT #8917)
+
+ * Delete temporary files on error to avoid
+   problems with existing tmp files. (T5926)
 
 Noteworthy changes for version 2.5.3 (2022-04-20)
 =================================================
