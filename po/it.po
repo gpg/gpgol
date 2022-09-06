@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gpgol 2.4.7\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2022-08-26 14:12+0200\n"
+"POT-Creation-Date: 2022-09-06 09:22+0200\n"
 "PO-Revision-Date: 2020-10-01 22:27+0200\n"
 "Last-Translator: <aheinecke@g10code.com>\n"
 "Language-Team: Italian\n"
@@ -496,7 +496,11 @@ msgstr "La posta indesiderata non puo' essere elaborata"
 msgid "Unknown contact"
 msgstr "Contatto sconosciuto"
 
-#: src/common.cpp:901 src/cryptcontroller.cpp:701
+#: src/common.cpp:678 src/common.cpp:956
+msgid "GpgOL Error"
+msgstr "Errore GpgOL"
+
+#: src/common.cpp:947 src/cryptcontroller.cpp:701
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -511,31 +515,27 @@ msgstr ""
 "Consulta https://www.gpg4win.org/reporting-bugs.html o chiedi assistenza al "
 "tuo amministratore."
 
-#: src/common.cpp:910
-msgid "GpgOL Error"
-msgstr "Errore GpgOL"
-
-#: src/common.cpp:1052
+#: src/common.cpp:1098
 #, fuzzy
 msgid "VS-NfD compliant"
 msgstr "La firma e' conforme a VS-NfD."
 
-#: src/common.cpp:1053
+#: src/common.cpp:1099
 #, fuzzy
 msgid "not VS-NfD compliant"
 msgstr "La firma e' conforme a VS-NfD."
 
-#: src/common.cpp:1140
+#: src/common.cpp:1186
 #, fuzzy, c-format
 msgid "The message is %s."
 msgstr "Questo messaggio viene visualizzato una sola volta."
 
-#: src/common.cpp:1145
+#: src/common.cpp:1191
 #, fuzzy, c-format
 msgid "The signature is %s."
 msgstr "La firma e' scaduta.\n"
 
-#: src/common.cpp:1150
+#: src/common.cpp:1196
 #, fuzzy, c-format
 msgid "The encryption is %s."
 msgstr "La crittografia e' conforme a VS-NfD."
@@ -759,11 +759,11 @@ msgstr ""
 "Chiedi al mittente di firmare il messaggio o\n"
 "per inviarlo con un'alternativa di testo semplice."
 
-#: src/mail.cpp:2051
+#: src/mail.cpp:2043
 msgid "GpgOL: Oops, G Suite Sync account detected"
 msgstr "GpgOL: Oops, e' stato rilevato un account G Suite Sync"
 
-#: src/mail.cpp:2053
+#: src/mail.cpp:2045
 msgid ""
 "G Suite Sync breaks outgoing crypto mails with attachments.\n"
 "Using crypto and attachments with G Suite Sync is not supported.\n"
@@ -775,7 +775,7 @@ msgstr ""
 "\n"
 "Vedere: https://dev.gnupg.org/T3545 per i dettagli."
 
-#: src/mail.cpp:3199
+#: src/mail.cpp:3191
 msgid "Invalid Key"
 msgstr "Chiave invalida"
 
@@ -785,95 +785,95 @@ msgstr "Chiave invalida"
 #. address used for verification. The result is used as the
 #. text on the green bar for signed mails. e.g.:
 #. "GpgOL: Level 3 trust in 'john.doe@example.org'"
-#: src/mail.cpp:3255
+#: src/mail.cpp:3247
 msgid "Level"
 msgstr "Livello"
 
-#: src/mail.cpp:3256
+#: src/mail.cpp:3248
 msgid "trust in"
 msgstr "avere fiducia in"
 
-#: src/mail.cpp:3489
+#: src/mail.cpp:3481
 msgid "Security Level 4"
 msgstr "Livello di sicurezza 4"
 
-#: src/mail.cpp:3493
+#: src/mail.cpp:3485
 msgid "Trust Level 4"
 msgstr "Livello di fiducia 4"
 
-#: src/mail.cpp:3497
+#: src/mail.cpp:3489
 msgid "Security Level 3"
 msgstr "Livello di sicurezza 3"
 
-#: src/mail.cpp:3501
+#: src/mail.cpp:3493
 msgid "Trust Level 3"
 msgstr "Livello di fiducia 3"
 
-#: src/mail.cpp:3505
+#: src/mail.cpp:3497
 msgid "Security Level 2"
 msgstr "Livello di sicurezza 2"
 
-#: src/mail.cpp:3509
+#: src/mail.cpp:3501
 msgid "Trust Level 2"
 msgstr "Livello di fiducia 2"
 
-#: src/mail.cpp:3513
+#: src/mail.cpp:3505
 msgid "Encrypted"
 msgstr "Crittografato"
 
-#: src/mail.cpp:3522 src/mail.cpp:3524 src/ribbon-callbacks.cpp:650
+#: src/mail.cpp:3514 src/mail.cpp:3516 src/ribbon-callbacks.cpp:650
 msgid "Insecure"
 msgstr "Insicuro"
 
-#: src/mail.cpp:3537
+#: src/mail.cpp:3529
 msgid "Signed and encrypted message"
 msgstr "Messaggio firmato e crittografato"
 
-#: src/mail.cpp:3541
+#: src/mail.cpp:3533
 msgid "Signed message"
 msgstr "Messaggio firmato"
 
-#: src/mail.cpp:3545
+#: src/mail.cpp:3537
 msgid "Encrypted message"
 msgstr "Messaggio crittografato"
 
-#: src/mail.cpp:3548 src/ribbon-callbacks.cpp:674
+#: src/mail.cpp:3540 src/ribbon-callbacks.cpp:674
 msgid "Insecure message"
 msgstr "Messaggio insicuro"
 
-#: src/mail.cpp:3560 src/mail.cpp:3571
+#: src/mail.cpp:3552 src/mail.cpp:3563
 msgid "You cannot be sure who sent, modified and read the message in transit."
 msgstr ""
 "Non puoi essere sicuro di chi ha inviato, modificato e letto il messaggio in "
 "transito."
 
-#: src/mail.cpp:3563
+#: src/mail.cpp:3555
 msgid "The message was signed but the verification failed with:"
 msgstr "Il messaggio e' stato firmato ma la verifica non e' riuscita con:"
 
-#: src/mail.cpp:3582
+#: src/mail.cpp:3574
 msgid "You cannot be sure who sent the message because it is not signed."
 msgstr ""
 "Non puoi essere sicuro di chi ha inviato il messaggio perche' non e' firmato."
 
-#: src/mail.cpp:3607
+#: src/mail.cpp:3599
 msgid "You signed this message."
 msgstr "Hai firmato questo messaggio."
 
-#: src/mail.cpp:3611
+#: src/mail.cpp:3603
 msgid "The senders identity was certified by yourself."
 msgstr "L'identita' del mittente e' stata certificata da te."
 
-#: src/mail.cpp:3615
+#: src/mail.cpp:3607
 msgid "The sender is allowed to certify identities for you."
 msgstr "Il mittente e' autorizzato a certificare le identita' per te."
 
-#: src/mail.cpp:3628
+#: src/mail.cpp:3620
 msgid "The senders identity was certified by several trusted people."
 msgstr ""
 "L'identita' del mittente e' stata certificata da diverse persone fidate."
 
-#: src/mail.cpp:3633
+#: src/mail.cpp:3625
 #, c-format
 msgid ""
 "The senders identity is certified by the trusted issuer:\n"
@@ -882,15 +882,15 @@ msgstr ""
 "L'identita' del mittente e' certificata dall'emittente di fiducia:\n"
 "'%s'\n"
 
-#: src/mail.cpp:3641
+#: src/mail.cpp:3633
 msgid "The mail provider of the recipient served this key."
 msgstr "Il provider di posta del destinatario ha fornito questa chiave."
 
-#: src/mail.cpp:3646
+#: src/mail.cpp:3638
 msgid "Some trusted people have certified the senders identity."
 msgstr "Alcune persone fidate hanno certificato l'identita' dei mittenti."
 
-#: src/mail.cpp:3656
+#: src/mail.cpp:3648
 #, c-format
 msgid ""
 "The senders address is trusted, because you have established a communication "
@@ -901,11 +901,11 @@ msgstr ""
 "cronologia delle comunicazioni con questo indirizzo a partire da% s.\n"
 "Da allora hai crittografato% i e verificato% i messaggi."
 
-#: src/mail.cpp:3673
+#: src/mail.cpp:3665
 msgid "The senders signature was verified for the first time."
 msgstr "La firma del mittente e' stata verificata per la prima volta."
 
-#: src/mail.cpp:3680
+#: src/mail.cpp:3672
 #, c-format
 msgid ""
 "The senders address is not trustworthy yet because you only verified %i "
@@ -914,73 +914,73 @@ msgstr ""
 "L'indirizzo del mittente non e' ancora affidabile perche' hai verificato "
 "solo %i messaggi e hai crittografato i messaggi %i a partire da %s."
 
-#: src/mail.cpp:3695
+#: src/mail.cpp:3687
 msgid "But the sender address is not trustworthy because:"
 msgstr "Ma l'indirizzo del mittente non e' affidabile perche':"
 
-#: src/mail.cpp:3696
+#: src/mail.cpp:3688
 msgid "The sender address is not trustworthy because:"
 msgstr "L'indirizzo del mittente non e' affidabile perche':"
 
-#: src/mail.cpp:3704
+#: src/mail.cpp:3696
 msgid "The signature is invalid: \n"
 msgstr "La firma non e' valida:\n"
 
-#: src/mail.cpp:3707
+#: src/mail.cpp:3699
 msgid "The signature does not match."
 msgstr "La firma non corrisponde."
 
-#: src/mail.cpp:3714
+#: src/mail.cpp:3706
 msgid "There was an error verifying the signature.\n"
 msgstr "Si e' verificato un errore durante la verifica della firma.\n"
 
-#: src/mail.cpp:3723
+#: src/mail.cpp:3715
 msgid "The signature is expired.\n"
 msgstr "La firma e' scaduta.\n"
 
-#: src/mail.cpp:3727
+#: src/mail.cpp:3719
 msgid "The used key"
 msgstr "La chiave usata"
 
-#: src/mail.cpp:3727
+#: src/mail.cpp:3719
 msgid "The used certificate"
 msgstr "Il certificato utilizzato"
 
-#: src/mail.cpp:3735
+#: src/mail.cpp:3727
 msgid "is not available."
 msgstr "non e' disponibile."
 
-#: src/mail.cpp:3739
+#: src/mail.cpp:3731
 msgid "is revoked."
 msgstr "e' revocata."
 
-#: src/mail.cpp:3743
+#: src/mail.cpp:3735
 msgid "is expired."
 msgstr "e' scaduta."
 
-#: src/mail.cpp:3747
+#: src/mail.cpp:3739
 msgid "is not meant for signing."
 msgstr "non e' pensato per la firma."
 
-#: src/mail.cpp:3751 src/mail.cpp:3755
+#: src/mail.cpp:3743 src/mail.cpp:3747
 msgid "could not be checked for revocation."
 msgstr "non e' stato possibile verificare la revoca."
 
-#: src/mail.cpp:3760
+#: src/mail.cpp:3752
 msgid "is not the same as the key that was used for this address in the past."
 msgstr ""
 "non e' la stessa della chiave utilizzata in passato per questo indirizzo."
 
-#: src/mail.cpp:3766
+#: src/mail.cpp:3758
 #, c-format
 msgid "does not claim the address: \"%s\"."
 msgstr "non rivendica l'indirizzo: \"%s\"."
 
-#: src/mail.cpp:3780
+#: src/mail.cpp:3772
 msgid "is not certified by any trustworthy key."
 msgstr "non e' certificato da nessuna chiave affidabile."
 
-#: src/mail.cpp:3784
+#: src/mail.cpp:3776
 msgid ""
 "is not certified by a trustworthy Certificate Authority or the Certificate "
 "Authority is unknown."
@@ -988,43 +988,43 @@ msgstr ""
 "non e' certificato da un'autorita' di certificazione affidabile o "
 "l'autorita' di certificazione e' sconosciuta."
 
-#: src/mail.cpp:3789
+#: src/mail.cpp:3781
 msgid "The sender marked this address as revoked."
 msgstr "Il mittente ha contrassegnato questo indirizzo come revocato."
 
-#: src/mail.cpp:3793
+#: src/mail.cpp:3785
 msgid "is marked as not trustworthy."
 msgstr "e' contrassegnato come non affidabile."
 
-#: src/mail.cpp:3822
+#: src/mail.cpp:3814
 msgid "Click here to change the key used for this address."
 msgstr ""
 "Fare clic qui per modificare la chiave utilizzata per questo indirizzo."
 
-#: src/mail.cpp:3826
+#: src/mail.cpp:3818
 msgid "Click here for details about the key."
 msgstr "Fare clic qui per i dettagli sulla chiave."
 
-#: src/mail.cpp:3827
+#: src/mail.cpp:3819
 msgid "Click here for details about the certificate."
 msgstr "Fare clic qui per i dettagli sul certificato."
 
-#: src/mail.cpp:3831
+#: src/mail.cpp:3823
 msgid "Click here to search the key on the configured keyserver."
 msgstr ""
 "Fare clic qui per cercare la chiave sul server delle chiavi configurato."
 
-#: src/mail.cpp:3832
+#: src/mail.cpp:3824
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
 "Fare clic qui per cercare il certificato sul server delle chiavi X509 "
 "configurato."
 
-#: src/mail.cpp:4218
+#: src/mail.cpp:4210
 msgid "GpgOL: Encryption not possible!"
 msgstr "GpgOL: Crittografia non possibile!"
 
-#: src/mail.cpp:4220
+#: src/mail.cpp:4212
 msgid ""
 "Outlook returned an error when trying to send the encrypted mail.\n"
 "\n"
@@ -1042,17 +1042,17 @@ msgstr ""
 "allegato crittografato o\n"
 "passare a PGP/Inline nelle opzioni di GpgOL."
 
-#: src/mail.cpp:4909
+#: src/mail.cpp:4901
 msgid "Should GpgOL override Outlook and continue to process the message?"
 msgstr ""
 "GpgOL dovrebbe sovrascrivere Outlook e continuare a elaborare il messaggio?"
 
-#: src/mail.cpp:4915
+#: src/mail.cpp:4907
 #, fuzzy, c-format
 msgid "Note: For %s communication you have to select Yes."
 msgstr "Nota: per la comunicazione VS-NfD e' necessario selezionare Si'."
 
-#: src/mail.cpp:4919
+#: src/mail.cpp:4911
 msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
@@ -1060,7 +1060,7 @@ msgstr ""
 "Un'operazione di crittografia e' stata selezionata sia utilizzando la "
 "crittografia interna di Outlook che con GpgOL / GnuPG."
 
-#: src/mail.cpp:4923
+#: src/mail.cpp:4915
 msgid "Conflicting crypto settings"
 msgstr "Impostazioni crittografiche in conflitto"
 
