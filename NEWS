@@ -1,5 +1,7 @@
-Noteworthy changes for version 2.5.5 (unreleased)
+Noteworthy changes for version 2.5.5 (2022-10-13)
 =================================================
+
+ * Fixed IMAP access to encrypted mails.  (T6203)
 
 
 Noteworthy changes for version 2.5.4 (2022-09-06)
@@ -943,4 +945,3 @@ Noteworthy changes for version 0.4.0 (2005-05-10)
 
 * Provide a class to encapsulate MAPI messages and high-level functions
   for all crypto operations.
-
