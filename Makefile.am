@@ -16,10 +16,7 @@ AUTOMAKE_OPTIONS = dist-bzip2
 # Because we can only build the w32 version we need to help automake here a bit.
 DISTCHECK_CONFIGURE_FLAGS = --host=@host@  --build=@build@ \
                             SYSROOT=@prefix@ \
-                            PKG_CONFIG_LIBDIR=@prefix@ \
-                            --with-gpg-error-prefix=@prefix@ \
-                            --with-gpgme-prefix=@prefix@ \
-                            --with-libassuan-prefix=@prefix@
+                            PKG_CONFIG_LIBDIR=@prefix@
 
 # Note: Do not put ChangeLog-2011 here - it exists only in the repo.
 EXTRA_DIST = autogen.sh autogen.rc

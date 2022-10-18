@@ -166,16 +166,24 @@ AM_CONDITIONAL(BUILD_W64, test "$host" = "x86_64-w64-mingw32")
 #
 
 
-AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
-               have_gpgme=yes,have_gpgme=no)
-AM_PATH_GPGMEPP(have_gpgmepp=yes,have_gpgmepp=no)
 AM_PATH_GPG_ERROR("$NEED_GPG_ERROR_VERSION",
                   have_gpg_error=yes,have_gpg_error=no)
 AC_DEFINE(GPG_ERR_SOURCE_DEFAULT, GPG_ERR_SOURCE_USER_2,
           [The default error source for GpgOL.])
+AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
+               have_gpgme=yes,have_gpgme=no)
 AM_PATH_LIBASSUAN("$NEED_LIBASSUAN_API:$NEED_LIBASSUAN_VERSION",
                   have_libassuan=yes,have_libassuan=no)
 
+if test "$have_gpgme" = yes; then
+  GPGMEPP_CXXFLAGS="-I `$GPGME_CONFIG --prefix`/include/gpgme++"
+  GPGMEPP_CXXFLAGS="${GPGMEPP_CXXFLAGS} -DGPGMEPP_STATIC_DEFINE"
+  have_gpgmepp=yes
+else
+  have_gpgmepp=no
+fi
+AC_SUBST(GPGMEPP_CXXFLAGS)
+AC_SUBST(GPGMEPP_LIBS)
 
 # Note, that autogen.sh greps for the next line.
 AM_GNU_GETTEXT_VERSION([0.12.1])
