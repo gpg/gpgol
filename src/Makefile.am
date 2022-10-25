@@ -95,17 +95,53 @@ endif
 libmapi32.a: mapi32.def
 	$(DLLTOOL) $(DLLTOOLFLAGS64) --output-lib $@ --def $<
 
+if BUILD_W64
 libgpg-error.a:
-	ln -s $$($(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a .
+	if [ -e "$$($(GPG_ERROR_CONFIG) --prefix)/lib64/libgpg-error.a" ]; then \
+		ln -sf $$($(GPG_ERROR_CONFIG) --prefix)/lib64/libgpg-error.a .; \
+	else \
+		ln -sf $$($(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a .; \
+	fi
+else
+libgpg-error.a:
+	ln -sf $$($(GPG_ERROR_CONFIG) --prefix)/lib/libgpg-error.a .
+endif
 
-libgpgme.a:
-	ln -s $$($(GPGME_CONFIG) --prefix)/lib/libgpgme.a .
-
+if BUILD_W64
 libassuan.a:
-	ln -s $$($(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a .
+	if [ -e "$$($(LIBASSUAN_CONFIG) --prefix)/lib64/libassuan.a" ]; then \
+		ln -sf $$($(LIBASSUAN_CONFIG) --prefix)/lib64/libassuan.a .; \
+	else \
+		ln -sf $$($(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a .; \
+	fi
+else
+libassuan.a:
+	ln -sf $$($(LIBASSUAN_CONFIG) --prefix)/lib/libassuan.a .
+endif
 
+if BUILD_W64
+libgpgme.a:
+	if [ -e "$$($(GPGME_CONFIG) --prefix)/lib64/libgpgme.a" ]; then \
+		ln -sf $$($(GPGME_CONFIG) --prefix)/lib64/libgpgme.a .; \
+	else \
+		ln -sf $$($(GPGME_CONFIG) --prefix)/lib/libgpgme.a .; \
+	fi
+else
+libgpgme.a:
+	ln -sf $$($(GPGME_CONFIG) --prefix)/lib/libgpgme.a .
+endif
+
+if BUILD_W64
 libgpgmepp.a:
-	ln -s $$($(GPGME_CONFIG) --prefix)/lib/libgpgmepp.a .
+	if [ -e "$$($(GPGME_CONFIG) --prefix)/lib64/libgpgmepp.a" ]; then \
+		ln -sf $$($(GPGME_CONFIG) --prefix)/lib64/libgpgmepp.a .; \
+	else \
+		ln -sf $$($(GPGME_CONFIG) --prefix)/lib/libgpgmepp.a .; \
+	fi
+else
+libgpgmepp.a:
+	ln -sf $$($(GPGME_CONFIG) --prefix)/lib/libgpgmepp.a .
+endif
 
 clean-local:
 	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a libgpgmepp.a
