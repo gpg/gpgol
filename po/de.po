@@ -5,13 +5,14 @@
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
 # Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
 # aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021, 2022.
+# Eva Bolten <eva.bolten@gnupg.com>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2022-09-06 09:22+0200\n"
-"PO-Revision-Date: 2022-08-26 14:15+0200\n"
-"Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
+"PO-Revision-Date: 2022-11-03 11:08+0100\n"
+"Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
@@ -201,7 +202,7 @@ msgstr "Alle in Mails enthaltene Schlüssel &importieren"
 #. * headers
 #: src/addin-options.cpp:95
 msgid "Import OpenPGP keys from mail attachments or from mail headers."
-msgstr "Importiert OpenPGP Schlüssel aus Anhägen oder aus den Mail Headern."
+msgstr "Importiert OpenPGP Schlüssel aus Anhängen oder aus den Mail Headern."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:97
