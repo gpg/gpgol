@@ -228,7 +228,7 @@ do_import (LPVOID arg)
   const auto result = ctx->importKeys (data);
 
   std::vector<std::string> fingerprints;
-  for (const auto import: result.imports())
+  for (const auto &import: result.imports())
     {
       if (import.error())
         {
@@ -703,7 +703,7 @@ public:
         gpgol_unlock (&keycache_lock);
         TRETURN ret;
       }
-    for (const auto fpr: it->second)
+    for (const auto &fpr: it->second)
       {
         const auto key = getByFpr (fpr.c_str (), false);
         if (key.isNull())

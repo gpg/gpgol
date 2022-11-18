@@ -1683,7 +1683,7 @@ get_oom_recipients (LPDISPATCH recipients, bool *r_err)
 {
   TSTART;
   std::vector<Recipient> ret;
-  for (const auto pair: get_oom_recipients_with_addrEntry (recipients, r_err))
+  for (const auto &pair: get_oom_recipients_with_addrEntry (recipients, r_err))
     {
       ret.push_back (pair.first);
     }

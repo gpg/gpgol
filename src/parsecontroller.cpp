@@ -198,7 +198,7 @@ format_recipients(GpgME::DecryptionResult result, Protocol protocol)
 {
   TSTART;
   std::string msg;
-  for (const auto recipient: result.recipients())
+  for (const auto &recipient: result.recipients())
     {
       auto ctx = Context::createForProtocol(protocol);
       Error e;
@@ -546,7 +546,7 @@ ParseController::parse(bool offline)
 
           const auto sigs = m_verify_result.signatures();
           bool allBad = sigs.size();
-          for (const auto s :sigs)
+          for (const auto &s:sigs)
             {
               if (!(s.summary() & Signature::Red))
                 {
@@ -615,7 +615,7 @@ ParseController::parse(bool offline)
   bool has_valid_encrypted_checksum = false;
   /* Ensure that the Keys for the signatures are available
      and if it has a valid encrypted checksum. */
-  for (const auto sig: m_verify_result.signatures())
+  for (const auto &sig: m_verify_result.signatures())
     {
       TRACEPOINT;
       has_valid_encrypted_checksum = is_valid_chksum (sig);
@@ -657,7 +657,7 @@ ParseController::parse(bool offline)
       std::stringstream ss;
       TRACEPOINT;
       ss << m_decrypt_result << '\n' << m_verify_result;
-      for (const auto sig: m_verify_result.signatures())
+      for (const auto &sig: m_verify_result.signatures())
         {
           const auto key = sig.key();
           if (key.isNull())

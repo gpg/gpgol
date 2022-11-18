@@ -2956,7 +2956,7 @@ get_uid_for_sender (const Key &k, const char *sender)
       TRETURN ret;
     }
 
-  for (const auto uid: k.userIDs())
+  for (const auto &uid: k.userIDs())
     {
       if (!uid.email() || !*(uid.email()))
         {
@@ -3009,7 +3009,7 @@ Mail::updateSigstate ()
       TRETURN;
     }
 
-  for (const auto sig: m_verify_result.signatures())
+  for (const auto &sig: m_verify_result.signatures())
     {
       m_is_signed = true;
       const auto key = KeyCache::instance ()->getByFpr (sig.fingerprint(),
@@ -3408,7 +3408,7 @@ level_4_check (const UserID &uid)
   if (uid.validity () == UserID::Validity::Full)
     {
       const auto ultimate_keys = KeyCache::instance()->getUltimateKeys ();
-      for (const auto sig: uid.signatures ())
+      for (const auto &sig: uid.signatures ())
         {
           const char *sigID = sig.signerKeyID ();
           if (sig.isNull() || !sigID)
@@ -3421,7 +3421,7 @@ level_4_check (const UserID &uid)
              through gnupg so we cached the keys with ultimate
              trust during parsing and now see if we find a direct
              trust path.*/
-          for (const auto secKey: ultimate_keys)
+          for (const auto &secKey: ultimate_keys)
             {
               /* Check that the Key id of the key matches */
               const char *secKeyID = secKey.keyID ();
@@ -3438,7 +3438,7 @@ level_4_check (const UserID &uid)
                   TRACEPOINT;
                   continue;
                 }
-              for (const auto signer_uid: secKey.userIDs ())
+              for (const auto &signer_uid: secKey.userIDs ())
                 {
                   if (signer_uid.validity() != UserID::Validity::Ultimate)
                     {
@@ -5237,7 +5237,7 @@ Mail::isMultipartRelated () const
 {
   int related = false;
   int mixed = false;
-  for (const auto attach: m_plain_attachments)
+  for (const auto &attach: m_plain_attachments)
     {
       if (attach->get_content_id ().size())
         {

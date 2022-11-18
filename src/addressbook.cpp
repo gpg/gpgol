@@ -440,7 +440,7 @@ Addressbook::check_o (Mail *mail)
   bool err = false;
   const auto recipient_entries = get_oom_recipients_with_addrEntry (recipients_obj.get(),
                                                                     &err);
-  for (const auto pair: recipient_entries)
+  for (const auto &pair: recipient_entries)
     {
       const auto mbox = pair.first.mbox ();
       if (s_checked_entries.find (mbox) != s_checked_entries.end ())
