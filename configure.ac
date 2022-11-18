@@ -236,6 +236,7 @@ if test "$GCC" = yes; then
         CXXFLAGS="$CXXFLAGS -Werror -Wcast-align -Wshadow"
         CXXFLAGS="$CXXFLAGS -Wformat-security"
         CXXFLAGS="$CXXFLAGS -W -Wno-sign-compare -Wno-deprecated-copy"
+        CXXFLAGS="$CXXFLAGS -Wno-address"
     fi
 
     AC_MSG_CHECKING([if gcc supports -Wno-pointer-sign])
