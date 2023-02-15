@@ -222,7 +222,7 @@ if test "$GCC" = yes; then
     # This needs to be analysed but could be an incompatibility between
     # gcc's stack protection and COM / Outlook system calls.
     if test "$have_w32_system" = yes; then
-        HARDENING="-Wl,--dynamicbase -Wl,--nxcompat -fno-exceptions -D_FORTIFY_SOURCE=2 -O0"
+        HARDENING="-Wl,--dynamicbase -Wl,--nxcompat -fno-exceptions -D_FORTIFY_SOURCE=2"
     else
         HARDENING="-fPIC"
     fi
