@@ -301,7 +301,12 @@ get_oom_object (LPDISPATCH pStart, const char *fullname)
 
         if (n >= sizeof name)
           n = sizeof name - 1;
+/* As you can see above n is checked for bounds of name. But
+   GCC warns because it just looked at n = strlen (fullname). */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
         strncpy (name, fullname, n);
+#pragma GCC diagnostic pop
         name[n] = 0;
 
         if (dot)
