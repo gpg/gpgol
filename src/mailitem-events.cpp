@@ -753,7 +753,7 @@ TODO: Handle split copy in another way
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
               log_debug ("%s:%s: Canceling write event.",
                          SRCNAME, __func__);
-              TRETURN E_FAIL;
+              TRETURN S_OK;
             }
 
           if (m_mail->isCryptoMail () && m_mail->needsSave () &&
@@ -765,7 +765,7 @@ TODO: Handle split copy in another way
               log_debug ("%s:%s: Failed to remove plaintext. Canceling.",
                          SRCNAME, __func__);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-              TRETURN E_FAIL;
+              TRETURN S_OK;
             }
 
           if (!m_mail->isCryptoMail () && m_mail->is_forwarded_crypto_mail () &&
