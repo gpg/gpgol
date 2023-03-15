@@ -1288,45 +1288,52 @@ Mail::decryptVerify_o ()
     }
   m_decrypt_again = false;
 
-  if (isSMIME_m ())
+  LPMESSAGE oom_message = get_oom_message (m_mailitem);
+  if (oom_message)
     {
-      LPMESSAGE oom_message = get_oom_message (m_mailitem);
-      if (oom_message)
+      char *old_class = mapi_get_old_message_class (oom_message);
+      char *current_class = mapi_get_message_class (oom_message);
+      if (current_class)
         {
-          char *old_class = mapi_get_old_message_class (oom_message);
-          char *current_class = mapi_get_message_class (oom_message);
-          if (current_class)
+          /* Store our own class for an eventual close */
+          m_gpgol_class = current_class;
+          xfree (current_class);
+          current_class = nullptr;
+        }
+      if (old_class)
+        {
+          const char *new_class = old_class;
+          /* Workaround that our own class might be the original */
+          if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted")/* ||
+              !strcmp (old_class, "IPM.Note.GpgOL.MultipartEncrypted") ||
+              !strcmp (old_class, "IPM.Note.GpgOL.PGPMessage")*/)
             {
-              /* Store our own class for an eventual close */
-              m_gpgol_class = current_class;
-              xfree (current_class);
-              current_class = nullptr;
+              new_class = "IPM.Note.SMIME";
             }
-          if (old_class)
+          else if (!strcmp (old_class, "IPM.Note.GpgOL.MultipartSigned")/* ||
+                   !strcmp (old_class, "IPM.Note.GpgOL.ClearSigned")*/)
             {
-              const char *new_class = old_class;
-              /* Workaround that our own class might be the original */
-              if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted"))
-                {
-                  new_class = "IPM.Note.SMIME";
-                }
-              else if (!strcmp (old_class, "IPM.Note.GpgOL.MultipartSigned"))
-                {
-                  new_class = "IPM.Note.SMIME.MultipartSigned";
-                }
-
+              new_class = "IPM.Note.SMIME.MultipartSigned";
+            }
+          if (strcmp (new_class, old_class))
+            {
               log_debug ("%s:%s:Restoring message class to %s in decverify.",
                          SRCNAME, __func__, new_class);
-
-              put_oom_string (m_mailitem, "MessageClass", new_class);
-              xfree (old_class);
-              setPassWrite (true);
-              /* Sync to MAPI */
-              invoke_oom_method (m_mailitem, "Save", nullptr);
-              setPassWrite (false);
             }
-          gpgol_release (oom_message);
+
+          put_oom_string (m_mailitem, "MessageClass", new_class);
+          xfree (old_class);
+          setPassWrite (true);
+          /* Sync to MAPI */
+          log_dbg ("Invoking save to store potential changes before decryption.");
+          invoke_oom_method (m_mailitem, "Save", nullptr);
+          setPassWrite (false);
         }
+      gpgol_release (oom_message);
+    }
+  else
+    {
+      log_err ("Failed to obtain MAPI message");
     }
 
   check_html_preferred ();
