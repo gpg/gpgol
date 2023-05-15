@@ -82,7 +82,8 @@ typedef enum
     ReplyAll = 0xF467,
     Send = 0xF005,
     Unload = 0xFBAD,
-    Write = 0xF002
+    Write = 0xF002,
+    WriteCancelIgnored = 0xFC99,/* See comment in event handler below */
   } MailEvent;
 
 /* Mail Item Events */
@@ -835,6 +836,17 @@ TODO: Handle split copy in another way
             }
           TBREAK;
         }
+      /* This event ID is completely undocumented, neither in Outlook Spy
+         nor in MSDN. I just observed that this ID was sent when we cancelled
+         a write event but the write was still done and we would have come
+         into the after write event. So we handle this like a close which
+         then loses the changes and we see no AfterWrite afterwards. This
+         is a safeguard against plaintext leak. But this event could
+         mean something different altogether. */
+      case WriteCancelIgnored:
+        log_dbg ("WriteCancelIgnored: %p falling through to close",
+                 m_mail);
+        /* fall through */
       case Close:
         {
           log_oom ("%s:%s: Close : %p",
@@ -880,6 +892,8 @@ TODO: Handle split copy in another way
                   log_debug ("%s:%s: Close request failed.",
                              SRCNAME, __func__);
                 }
+              log_oom ("%s:%s: close finished.",
+                       SRCNAME, __func__);
             }
           TRETURN S_OK;
         }

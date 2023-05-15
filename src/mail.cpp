@@ -1323,12 +1323,24 @@ Mail::decryptVerify_o ()
 
           put_oom_string (m_mailitem, "MessageClass", new_class);
           xfree (old_class);
-          setPassWrite (true);
-          /* Sync to MAPI */
-          log_dbg ("Invoking save to store potential changes before decryption.");
-          invoke_oom_method (m_mailitem, "Save", nullptr);
-          setPassWrite (false);
         }
+      setPassWrite (true);
+      /* Sync to MAPI */
+      log_dbg ("Invoking save to store potential changes before decryption.");
+      invoke_oom_method (m_mailitem, "Save", nullptr);
+      /* This is important. Because even though the "Save" should have synced
+         us with MAPI we observed that without the below change the Read status
+         is not yet synced, only after leaving the mail is it synced. This
+         could cause problems because OL wanted to sync the ReadFlag change
+         but we wanted to prevent it from syncing any decrypted content. So
+         we set this here. This might cause problems with "read reciepts"
+         that are not sent when we do this programatically but no one should
+         use those anway,..
+
+         SetReadFlag does an IMapiMessage save anyway according to doc.
+         */
+      oom_message->SetReadFlag(0);
+      setPassWrite (false);
       gpgol_release (oom_message);
     }
   else
