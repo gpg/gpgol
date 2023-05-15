@@ -1165,6 +1165,19 @@ void MimeDataProvider::finalize ()
 {
   TSTART;
 
+  if (m_rawbuf.size ())
+    {
+      m_rawbuf += "\r\n";
+      size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
+                                              m_rawbuf.size());
+      m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
+      if (m_rawbuf.size ())
+        {
+          log_error ("%s:%s: Collect left data in buffer.\n",
+                     SRCNAME, __func__);
+        }
+    }
+
   static std::vector<std::string> user_headers = {"Subject", "From",
                                                   "To", "Cc", "Date",
                                                   "Reply-To",
@@ -1219,19 +1232,6 @@ void MimeDataProvider::finalize ()
       log_debug ("%s:%s: Prepending protected headers part to buffer.",
                  SRCNAME, __func__);
       m_body = m_ph_helpbuf + m_body;
-    }
-
-  if (m_rawbuf.size ())
-    {
-      m_rawbuf += "\r\n";
-      size_t not_taken = collect_input_lines (m_rawbuf.c_str(),
-                                              m_rawbuf.size());
-      m_rawbuf.erase (0, m_rawbuf.size() - not_taken);
-      if (m_rawbuf.size ())
-        {
-          log_error ("%s:%s: Collect left data in buffer.\n",
-                     SRCNAME, __func__);
-        }
     }
   TRETURN;
 }
