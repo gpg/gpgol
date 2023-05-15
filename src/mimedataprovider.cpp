@@ -695,7 +695,25 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
             }
 
           log_data ("%s:%s: Parsing line=`%.*s'\n",
-                         SRCNAME, __func__, (int)pos, linebuf);
+                    SRCNAME, __func__, (int)pos, linebuf);
+
+#if 0 /* This is even too verbose for data debugging */
+          log_dbg ("Parser state:\n"
+                   "checked:      %d\n"
+                   "col_body:     %d\n"
+                   "crypt_data:   %d\n"
+                   "hashing:      %d\n"
+                   "in_data:      %d\n"
+                   "signature:    %d\n"
+                   "prot_headers: %d\n",
+                   m_mime_ctx->pgp_marker_checked,
+                   m_mime_ctx->collect_body,
+                   m_mime_ctx->collect_crypto_data,
+                   m_mime_ctx->start_hashing,
+                   m_mime_ctx->in_data,
+                   m_mime_ctx->collect_signature,
+                   m_mime_ctx->in_protected_headers);
+#endif
           /* Check the next state */
           if (rfc822parse_insert (m_mime_ctx->msg,
                                   (unsigned char*) linebuf,
@@ -766,6 +784,8 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                       std::string *target_buf =
                         (m_mime_ctx->in_protected_headers ? &m_ph_helpbuf : &m_body);
                       *target_buf += std::string(linebuf, len);
+                      log_data ("Collecting as possibly protected header: %.*s",
+                                (int)len, linebuf);
                       if (!m_mime_ctx->is_base64_encoded && !slbrk)
                         {
                           *target_buf += "\r\n";
