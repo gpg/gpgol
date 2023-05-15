@@ -808,7 +808,7 @@ public:
                    SRCNAME, __func__, anonstr (addr));
         TRETURN key;
       }
-    if (!key.canReallySign())
+    if (!key.canSign())
       {
         log_debug ("%s:%s: Discarding key for %s because it can't sign",
                    SRCNAME, __func__, anonstr (addr));
