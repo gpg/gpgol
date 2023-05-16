@@ -1,5 +1,13 @@
-Noteworthy changes for version 2.5.7 (unreleased)
+Noteworthy changes for version 2.5.7 (2023-05-16)
 =================================================
+
+ * Fix for potential plaintext leaks. (dd3ff839)
+
+ * Ensure category and flag changes are saved
+ before decrypting a mail. (T4127)
+
+ * Fix truncation of short mails with a single
+ "protected-header" text/plain part. (T6357)
 
 
 Noteworthy changes for version 2.5.6 (2022-12-19)
