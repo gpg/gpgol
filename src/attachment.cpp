@@ -43,8 +43,23 @@ Attachment::Attachment(LPDISPATCH attach)
       TRETURN;
     }
   int type = get_oom_int (attach, "Type");
-  m_utf8DisplayName = get_oom_string (attach, "DisplayName");
-  m_fileName = get_oom_string (attach, "FileName");
+  m_utf8DisplayName = get_oom_string_s (attach, "DisplayName");
+  m_fileName = get_oom_string_s (attach, "FileName");
+
+  if (m_fileName.empty())
+    {
+      if (!m_utf8DisplayName.empty())
+        {
+          log_dbg ("No filename found. Using displayName instead.");
+          m_fileName = m_utf8DisplayName;
+        }
+      else
+        {
+          log_dbg ("No filename found and displayName using unknow.");
+          m_fileName = "unknown_attachment.dat";
+          m_utf8DisplayName = m_fileName;
+        }
+    }
 
   log_dbg ("Creating attachment obj for type: %i for %s",
            type, anonstr (m_utf8DisplayName.c_str ()));
