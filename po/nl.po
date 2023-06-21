@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2023-05-16 16:28+0200\n"
+"POT-Creation-Date: 2023-06-21 11:48+0200\n"
 "PO-Revision-Date: 2019-10-24 15:28+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
@@ -27,7 +27,7 @@ msgstr "GnuPG-systeem"
 msgid "Enable the S/MIME support"
 msgstr "S/MIME-ondersteuning inschakelen"
 
-#: src/addin-options.cpp:41 src/addin-options.cpp:295
+#: src/addin-options.cpp:41 src/addin-options.cpp:300
 msgid "Configure GpgOL"
 msgstr "GnuPG configureren"
 
@@ -462,15 +462,26 @@ msgstr ""
 msgid "(slow)"
 msgstr ""
 
-#. TRANSLATORS: Config dialog tooltip.
+#. TRANSLATORS: Config dialog.
 #: src/addin-options.cpp:211
+msgid "Help"
+msgstr ""
+
+#. TRANSLATORS: Only available in german and english please keep
+#. english for other langs
+#: src/addin-options.cpp:214
+msgid "handout_outlook_plugin_gnupg_en.pdf"
+msgstr ""
+
+#. TRANSLATORS: Config dialog tooltip.
+#: src/addin-options.cpp:216
 msgid ""
 "Always show the security approval and certificate selection dialog. This "
 "slows down the encryption / signing process, especially with large keyrings."
 msgstr ""
 
 #. TRANSLATORS: Please ignore. Only available for german.
-#: src/addin-options.cpp:214
+#: src/addin-options.cpp:219
 msgid "https://gnupg.com/vsd/report.html"
 msgstr ""
 

@@ -207,6 +207,11 @@ i18n_noops[] = {
     /* TRANSLATORS: Config dialog. */
     N_("&Always show security approval dialog"),
     N_("(slow)"),
+    /* TRANSLATORS: Config dialog. */
+    N_("Help"),
+    /* TRANSLATORS: Only available in german and english please keep
+       english for other langs */
+    N_("handout_outlook_plugin_gnupg_en.pdf"),
     /* TRANSLATORS: Config dialog tooltip. */
     N_("Always show the security approval and certificate selection dialog. "
        "This slows down the encryption / signing process, especially with large keyrings."),
