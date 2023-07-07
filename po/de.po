@@ -123,7 +123,8 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:67
-msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid ""
+"Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
@@ -155,7 +156,8 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:81
-msgid "Search and import &X509 certificates in the configured directory services"
+msgid ""
+"Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -180,8 +182,10 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:87
-msgid "Also automatically toggles secure if keys with level 0 trust were found."
-msgstr "Sichert Mails auch wenn Schlüssel mit Level 0 Vertrauen gefunden wurden."
+msgid ""
+"Also automatically toggles secure if keys with level 0 trust were found."
+msgstr ""
+"Sichert Mails auch wenn Schlüssel mit Level 0 Vertrauen gefunden wurden."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
@@ -222,7 +226,8 @@ msgstr "Einstellungen für:"
 #. An example for a public key follows.
 #: src/addin-options.cpp:107
 msgid "Paste a public key export here. It should look like:"
-msgstr "Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr ""
+"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
@@ -256,7 +261,8 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:121
-msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid ""
+"The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr informationen."
@@ -1325,7 +1331,8 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:779
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr ""
+"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:780
 msgid "GpgOL: Request confirmed!"
