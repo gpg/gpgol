@@ -1,7 +1,8 @@
-Noteworthy changes for version 2.5.8 (unreleased)
+Noteworthy changes for version 2.5.8 (2023-07-07)
 =================================================
 
-
+ * Fix crash for attachments without filename.
+ (T6546)
 
 Noteworthy changes for version 2.5.7 (2023-05-16)
 =================================================
