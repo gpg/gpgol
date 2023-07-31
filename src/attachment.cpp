@@ -209,6 +209,7 @@ Attachment::get_content_type() const
   return m_ctype;
 }
 
+#ifdef _WIN32
 int
 Attachment::copy_to (HANDLE hFile)
 {
@@ -253,3 +254,4 @@ Attachment::copy_to (HANDLE hFile)
     }
   TRETURN 0;
 }
+#endif
