@@ -171,6 +171,126 @@ is_cms_signed_data (const char *buffer, size_t length)
 }
 #endif
 
+
+/* RFC 2231 and 2047 are very close in their specification so to
+   reuse our established 2047 parser we ignore the part that the
+   2047 parser ignored anyway (language) and then fix up the syntax
+   so that it matches. */
+static std::string
+rfc2231_to_2047 (const std::string &in)
+{
+  TSTART;
+  /* No we do not care about language information in our parameters...
+     since 2231 always uses QP encoding we just make the beginning and
+     end look like 2047 =? ?= enclosed things and remove the language
+     part. */
+  auto i = in.find("'");
+  std::string ret;
+  if (i == std::string::npos)
+    {
+      /* No hyphen, just assume percent encoding */
+      /* Something like: title*1*=%2A%2A%2Afun%2A%2A%2A%20 */
+      ret = std::string ("=?US-ASCII?Q?") + in + std::string ("?=");
+      find_and_replace (ret, "%", "=");
+      log_dbg ("Assuming just QP Encoded ASCII for: '%s'", anonstr (in.c_str ()));
+      TRETURN ret;
+    }
+  /* Something like: title*0*=us-ascii'en'This%20is%20even%20more%20 */
+  /* Decorate as 2047 string */
+  ret = std::string ("=?") + in + std::string ("?=");
+  find_and_replace (ret, "%", "=");
+  /* Insert the QP marker where the language would be */
+  i = ret.find("'");
+  ret.insert(i, "?Q?");
+
+  /* Remove the language part we do not support this */
+  auto langstart = ret.find("'");
+  auto langend = ret.find("'", langstart + 1);
+  if (langstart == std::string::npos || langend == std::string::npos ||
+      langstart == langend)
+    {
+      /* Well whatever, lets just return whatever that is */
+      log_dbg ("Failed to handle '%s'", anonstr (in.c_str ()));
+      TRETURN ret;
+    }
+  ret.erase(langstart, langend - langstart + 1);
+  TRETURN ret;
+}
+
+/* Handle continued parameters according to rfc2231. */
+static char *
+rfc2231_query_parameter (rfc822parse_field_t field, const char *param)
+{
+  TSTART;
+  const char *s = rfc822parse_query_parameter (field, param, 0);
+  if (s)
+    {
+      TRETURN rfc2047_parse (s);
+    }
+  /* First try failed, now the "fun" of 2231 starts */
+  std::string candidate = param + std::string("*");
+  s = rfc822parse_query_parameter (field, candidate.c_str (), 0);
+  if (s)
+    {
+      /* Language / Encoding but no continuation. RFC2047 parse handles this
+         for us but needs to also see the asterisk.
+
+         Example for this is:
+         Content-Type: application/x-stuff;
+         title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A
+      */
+      char *ret = rfc2047_parse (rfc2231_to_2047 (s).c_str());
+      log_dbg ("Found lang parameter '%s' with value: '%s'",
+               candidate.c_str (), anonstr (ret));
+      TRETURN ret;
+    }
+
+  /* Now try the continued parameters. */
+  std::string result;
+  int i = 0;
+  do
+    {
+      char *tmp = nullptr;
+      candidate = param + std::string("*") + std::to_string(i++);
+      s = rfc822parse_query_parameter (field, candidate.c_str (), 0);
+      /* This is foo*0= */
+      if (s)
+        {
+          tmp = rfc2047_parse (s);
+        }
+      else
+        {
+          /* This is continuation and language / encoding combined */
+          candidate = candidate + std::string ("*");
+          s = rfc822parse_query_parameter (field, candidate.c_str (), 0);
+          if (!s)
+            {
+              break;
+            }
+          tmp = rfc2047_parse (rfc2231_to_2047 (s).c_str());
+          log_dbg ("Found lang cont parameter '%s' with value: '%s'",
+                   candidate.c_str (), anonstr (tmp));
+
+        }
+      result += tmp;
+      xfree (tmp);
+    } while (i < 50);
+
+  if (i == 50)
+    {
+      log_warn ("Extremely deep parameter continuation. Aborting");
+      TRETURN nullptr;
+    }
+
+  if (result.empty())
+    {
+      log_dbg ("Parameter '%s' not found.", param);
+      TRETURN nullptr;
+    }
+
+  TRETURN xstrdup (result.c_str());
+}
+
 /* Process the transition to body event.
 
    This means we have received the empty line indicating the body and
@@ -217,11 +337,9 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   field = rfc822parse_parse_field (msg, "Content-Disposition", -1);
   if (field)
     {
-      s = rfc822parse_query_parameter (field, "filename", 0);
-      if (s)
-        filename = rfc2047_parse (s);
-      s = rfc822parse_query_parameter (field, NULL, 1);
+      filename = rfc2231_query_parameter (field, "filename");
 
+      s = rfc822parse_query_parameter (field, NULL, 1);
       if (s && strstr (s, "attachment"))
         {
           log_debug ("%s:%s: Found Content-Disposition attachment."
@@ -282,9 +400,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     {
       /* Check for Content-Type name if Content-Disposition filename
          was not found */
-      s = rfc822parse_query_parameter (field, "name", 0);
-      if (s)
-        filename = rfc2047_parse (s);
+      filename = rfc2231_query_parameter (field, "name");
     }
 
   /* Parse a Content Id header */
