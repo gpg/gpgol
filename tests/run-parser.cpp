@@ -126,10 +126,10 @@ int main(int argc, char **argv)
           std::cout << "\nDecrypt result:\n" << parser.decrypt_result()
             << "\nVerify result:\n" << parser.verify_result()
             << "\nBEGIN BODY\n" << parser.get_body() << "\nEND BODY"
-            << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML";
+            << "\nBEGIN HTML\n" << parser.get_html_body() << "\nEND HTML" << std::endl;
           for (auto attach: parser.get_attachments())
             {
-              std::cout << "Attachment: " << attach->get_display_name();
+              std::cout << "Attachment: " << attach->get_display_name() << std::endl;
             }
           fclose (fp_in);
         }
