@@ -610,7 +610,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
 #else
               log_debug ("%s:%s: Conversion not available for testing",
                          SRCNAME, __func__);
-              str = strdup (outptr);
+              str = mem2str (NULL, outptr, outlen);
 #endif
               if (!str)
                 {
