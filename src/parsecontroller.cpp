@@ -555,9 +555,9 @@ ParseController::parse(bool offline)
                 }
             }
 #ifdef HAVE_W32_SYSTEM
-          if (allBad)
+          if (allBad && protocol == OpenPGP)
             {
-              log_debug ("%s:%s:%p inline verify error trying native to utf8.",
+              log_debug ("%s:%s:%p PGP/inline verify error trying utf8.",
                          SRCNAME, __func__, this);
 
 
