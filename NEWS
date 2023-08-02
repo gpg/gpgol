@@ -1,5 +1,13 @@
-Noteworthy changes for version 2.5.9 (unreleased)
+Noteworthy changes for version 2.5.9 (2023-08-02)
 =================================================
+
+* Additional handling for multiline and language
+  encoded attachment names according to RFC2231.
+  (T6604)
+
+* Fixed an issue with S/MIME opaque signed mails
+  where the contents of invalid signed mails would
+  not be shown. (T6624)
 
 
 Noteworthy changes for version 2.5.8 (2023-07-07)
@@ -7,6 +15,7 @@ Noteworthy changes for version 2.5.8 (2023-07-07)
 
  * Fix crash for attachments without filename.
  (T6546)
+
 
 Noteworthy changes for version 2.5.7 (2023-05-16)
 =================================================
