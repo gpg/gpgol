@@ -5,21 +5,21 @@
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
 # Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
 # aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021, 2022, 2023.
-# Eva Bolten <eva.bolten@gnupg.com>, 2022.
+# Eva Bolten <eva.bolten@gnupg.com>, 2022, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2023-06-21 11:48+0200\n"
-"PO-Revision-Date: 2023-06-21 11:49+0200\n"
-"Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
+"PO-Revision-Date: 2023-08-18 15:18+0200\n"
+"Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 22.11.70\n"
+"X-Generator: Lokalize 20.12.0\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -111,7 +111,7 @@ msgid ""
 "Automatically toggles secure if keys with at least level 1 trust were found "
 "for all recipients."
 msgstr ""
-"Sichert Mails automatisch wenn Schlüssel mit min. Level 1 Vertrauen für alle "
+"Sichert Mails automatisch, wenn Schlüssel mit min. Level 1 Vertrauen für alle "
 "Empfänger gefunden werden konnten."
 
 #: src/addin-options.cpp:65
@@ -123,8 +123,7 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:67
-msgid ""
-"Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
@@ -156,8 +155,7 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:81
-msgid ""
-"Search and import &X509 certificates in the configured directory services"
+msgid "Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -182,10 +180,8 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:87
-msgid ""
-"Also automatically toggles secure if keys with level 0 trust were found."
-msgstr ""
-"Sichert Mails auch wenn Schlüssel mit Level 0 Vertrauen gefunden wurden."
+msgid "Also automatically toggles secure if keys with level 0 trust were found."
+msgstr "Sichert Mails auch automatisch, wenn Schlüssel mit Level 0 Vertrauen gefunden wurden."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
@@ -226,8 +222,7 @@ msgstr "Einstellungen für:"
 #. An example for a public key follows.
 #: src/addin-options.cpp:107
 msgid "Paste a public key export here. It should look like:"
-msgstr ""
-"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr "Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
@@ -261,8 +256,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:121
-msgid ""
-"The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr informationen."
@@ -571,8 +565,8 @@ msgid ""
 "can be sure that no one modified the message and only the recipients can "
 "read it"
 msgstr ""
-"Die Nachricht zu verschlüsseln und zu signieren bedeutet das die Empfänger "
-"sicher sein können das niemand die Nachricht modifiziert hat und das nur die "
+"Die Nachricht zu verschlüsseln und zu signieren bedeutet, dass die Empfänger "
+"sicher sein können, dass niemand die Nachricht modifiziert hat und nur die "
 "Empfänger die Nachricht lesen können"
 
 #: src/gpgoladdin.cpp:865
@@ -1331,8 +1325,7 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:779
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr ""
-"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:780
 msgid "GpgOL: Request confirmed!"
