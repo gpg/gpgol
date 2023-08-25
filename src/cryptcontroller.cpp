@@ -1100,6 +1100,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
 
       // Now we have the multipart throw away the rest.
       m_output = GpgME::Data ();
+      m_output.setEncoding(GpgME::Data::MimeEncoding);
       m_input = GpgME::Data ();
       multipart.seek (0, SEEK_SET);
       const auto encResult = ctx->encrypt (m_enc_keys, multipart,
@@ -1129,6 +1130,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
     }
   else if (m_encrypt)
     {
+      m_output.setEncoding(GpgME::Data::MimeEncoding);
       const auto result = ctx->encrypt (m_enc_keys, do_inline ? m_bodyInput : m_input,
                                         m_output,
                                         GpgME::Context::AlwaysTrust);
