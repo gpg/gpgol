@@ -31,7 +31,7 @@ extern "C" {
 #endif
 /* The filename of the attachment we create as the result of sign or
    encrypt operations. */
-#define MIMEATTACHFILENAME "GpgOL_MIME_structure.txt"
+#define MIMEATTACHFILENAME "GpgOL_MIME_structure.mime"
 
 /* The name of the file we use to store the original body of PGP
    encrypted messages.  Note that PGP/MIME message don't need that
