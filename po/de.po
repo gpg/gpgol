@@ -1042,7 +1042,7 @@ msgstr ""
 "\n"
 "Bitte starten Sie Outlook neu und versuchen Sie es erneut.\n"
 "\n"
-"Wenn es weiterhin fehlschlägt könnten Sie ihre daten gegebenenfalls \n"
+"Wenn es weiterhin fehlschlägt, könnten Sie ihre Daten gegebenenfalls \n"
 "als verschlüsselten Anhang anhängen."
 
 #: src/mail.cpp:4920
