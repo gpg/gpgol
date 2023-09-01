@@ -860,6 +860,13 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
   nbytes = (size_t)statInfo.cbSize.QuadPart;
   if (nbytes > 1024*2)
     nbytes = 1024*2;
+  if (!nbytes)
+    {
+      log_dbg ("Empty body found");
+      gpgol_release (stream);
+      *r_nobody = 1;
+      TRETURN NULL;
+    }
   body = (char*)xmalloc (nbytes + 2);
   hr = stream->Read (body, nbytes, &nread);
   if (hr)
