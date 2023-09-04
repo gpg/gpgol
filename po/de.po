@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2023-06-21 11:48+0200\n"
-"PO-Revision-Date: 2023-08-18 15:18+0200\n"
+"PO-Revision-Date: 2023-09-04 14:38+0200\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -136,7 +136,7 @@ msgid ""
 msgstr ""
 "Anstelle des PGP/MIME Formats, welches Anhänge und Encoding richtig "
 "behandelt, das veraltete PGP/Inline verwenden.\n"
-"Dies kann für kompatibilität manchmal nötig sein, sollte aber generell nicht "
+"Dies kann für Kompatibilität manchmal nötig sein, sollte aber generell nicht "
 "verwendet werden."
 
 #: src/addin-options.cpp:73
@@ -545,7 +545,7 @@ msgstr "Die Nachricht verschlüsseln"
 
 #: src/gpgoladdin.cpp:852
 msgid "Encrypts the message and all attachments before sending"
-msgstr "Verschlüsselt die Nachricht und alle ihre Anhänge vor dem versenden"
+msgstr "Verschlüsselt die Nachricht und alle ihre Anhänge vor dem Versenden"
 
 #: src/gpgoladdin.cpp:854
 msgid "Sign the message"
@@ -553,7 +553,7 @@ msgstr "Die Nachricht signieren"
 
 #: src/gpgoladdin.cpp:856
 msgid "Sign the message and all attachments before sending"
-msgstr "Die Nachricht und alle ihre Anhänge vor dem senden signieren"
+msgstr "Die Nachricht und alle ihre Anhänge vor dem Senden signieren"
 
 #: src/gpgoladdin.cpp:859
 msgid "Sign and encrypt the message"
@@ -612,7 +612,7 @@ msgid ""
 "Configure contact specific keys and settings to override the default "
 "behavior for this contact."
 msgstr ""
-"Konfigurieren Sie spezifische Schlüssel und Einstellungen um das "
+"Konfigurieren Sie spezifische Schlüssel und Einstellungen, um das "
 "Standardverhalten für diesen Kontakt zu ändern."
 
 #: src/gpgoladdin.cpp:1093 src/gpgoladdin.cpp:1171
@@ -753,8 +753,8 @@ msgid ""
 "Please ask the sender to sign the message or\n"
 "to send it with a plain text alternative."
 msgstr ""
-"Bitten Sie den Absender die Nachrichten zu signieren oder\n"
-"sie mit einem alternativen Text Teil zu senden."
+"Bitten Sie den Absender, die Nachrichten zu signieren\n"
+"oder sie zusätzlich als reinen Text zu senden."
 
 #: src/mail.cpp:2062
 msgid "GpgOL: Oops, G Suite Sync account detected"
@@ -936,7 +936,7 @@ msgstr "Die Signatur ist nicht korrekt."
 
 #: src/mail.cpp:3725
 msgid "There was an error verifying the signature.\n"
-msgstr "Beim überprüfen der Signatur ist ein Fehler aufgetreten.\n"
+msgstr "Beim Überprüfen der Signatur ist ein Fehler aufgetreten.\n"
 
 #: src/mail.cpp:3734
 msgid "The signature is expired.\n"
@@ -1022,7 +1022,7 @@ msgstr ""
 #: src/mail.cpp:3843
 msgid "Click here to search the certificate on the configured X509 keyserver."
 msgstr ""
-"Klicken Sie hier um das Zertifikat auf dem konfigurierten X509 "
+"Klicken Sie hier, um das Zertifikat auf dem konfigurierten X509 "
 "Schlüsselserver zu suchen."
 
 #: src/mail.cpp:4229
@@ -1038,12 +1038,12 @@ msgid ""
 "If it still fails consider using an encrypted attachment or\n"
 "switching to PGP/Inline in GpgOL's options."
 msgstr ""
-"Outlook meldete einen Fehler beim senden der Mail.\n"
+"Outlook meldete einen Fehler beim Senden der verschlüsselten Mail.\n"
 "\n"
-"Bitte starten Sie Outlook neu und versuchen Sie es erneut.\n"
+"Bitte starten Sie Outlook neu und versuchen Sie es noch einmal.\n"
 "\n"
-"Wenn es weiterhin fehlschlägt, könnten Sie ihre Daten gegebenenfalls \n"
-"als verschlüsselten Anhang anhängen."
+"Falls es weiterhin fehlschlägt, könnten Sie ihre Daten statt dessen\n"
+"als vorab verschlüsselte Datei anhängen."
 
 #: src/mail.cpp:4920
 msgid "Should GpgOL override Outlook and continue to process the message?"
@@ -1112,11 +1112,11 @@ msgid ""
 "email and place it in the quote so they can get hold of it.\n"
 "This is why we only allow quoting to be done manually."
 msgstr ""
-"In dieser Version von S/MIME kann ein Angreifer das fehlen der Signatur dazu "
-"verwenden Inhalte einer vollkommen anderen Mail zu entschlüsseln. Diese "
+"In dieser Version von S/MIME kann ein Angreifer das Fehlen der Signatur dazu "
+"verwenden, Inhalte einer vollkommen anderen Mail zu entschlüsseln. Diese "
 "würden dann in der Antwort zitiert und möglicherweise dem Angreifer "
 "zugänglich.\n"
-"Aus diesem Grund erlauben wir in diesem Fall nur manuelles zitieren."
+"Aus diesem Grund erlauben wir in diesem Fall nur manuelles Zitieren."
 
 #: src/mailitem-events.cpp:1034
 msgid "Please copy the relevant contents and insert them into the new email."
@@ -1131,7 +1131,7 @@ msgid ""
 "message is opened."
 msgstr ""
 "Anhänge sind Teil der Krypto-Nachricht.\n"
-"Sie können nicht permanent entfernt werden und werden beim nächsten öffnen "
+"Sie können nicht permanent entfernt werden und werden beim nächsten Öffnen "
 "dieser Nachricht wieder angezeigt."
 
 #: src/mapihelp.cpp:2138 src/mapihelp.cpp:2146 src/mapihelp.cpp:2154
@@ -1144,7 +1144,7 @@ msgid ""
 "The attachment '%s' is an Outlook item which is currently unsupported in "
 "crypto mails."
 msgstr ""
-"Der Anhang '%s' ist ein Outlook-Element das derzeit nicht in Krypto-Mails "
+"Der Anhang '%s' ist ein Outlook-Element, das derzeit nicht in Krypto-Mails "
 "unterstützt wird."
 
 #: src/mimemaker.cpp:1047 src/mimemaker.cpp:1052
@@ -1201,7 +1201,7 @@ msgid ""
 "Failed to find GnuPG please ensure that GnuPG or Gpg4win is properly "
 "installed."
 msgstr ""
-"GnuPG konnte nicht gefunden werden. Bitte stellen sie sicher das Gpg4win "
+"GnuPG konnte nicht gefunden werden. Bitte stellen sie sicher, dass Gpg4win "
 "korrekt installiert ist."
 
 #: src/parsecontroller.cpp:500
@@ -1255,7 +1255,7 @@ msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
 msgstr ""
-"Beim überprüfen der Signatur ist ein Fehler aufgetreten.\n"
+"Beim Überprüfen der Signatur ist ein Fehler aufgetreten.\n"
 "Details:\n"
 
 #: src/ribbon-callbacks.cpp:807
@@ -1304,8 +1304,8 @@ msgid ""
 "You might receive a confirmation challenge from\n"
 "your provider to finish the registration."
 msgstr ""
-"Es ist möglich das ihnen ihr Mailprovider noch eine Bestätigungs-Anfrage "
-"sendet um die Eintragung abzuschließen."
+"Es ist möglich, dass Ihnen ihr Mailprovider noch eine Bestätigungs-Anfrage "
+"sendet, um die Eintragung abzuschließen."
 
 #: src/wks-helper.cpp:523
 msgid "GpgOL: Registration request sent!"
