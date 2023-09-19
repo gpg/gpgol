@@ -365,9 +365,13 @@ CryptController::parse_output (GpgME::Data &resolverOutput)
 
   if (m_sign && sigFprs.empty())
     {
-      log_error ("%s:%s: Sign requested but no signing fingerprint - sending unsigned",
+      log_dbg ("%s:%s: Sign requested but no signing fingerprint - sending unsigned",
                  SRCNAME, __func__);
       m_sign = false;
+      if (!m_encrypt)
+        {
+          TRETURN 0;
+        }
     }
   if (m_encrypt && !recpFprs.size())
     {
@@ -505,6 +509,7 @@ CryptController::is_resolved () const
      least one encryption key for each recipient. */
   bool hasOpenPGPSignKey = false;
   bool hasSMIMESignKey = false;
+  static bool errMsgShown = false;
   if (m_sign)
     {
       for (const auto &sig_key: m_signer_keys)
@@ -518,6 +523,30 @@ CryptController::is_resolved () const
 
   log_dbg ("Has OpenPGP Sig Key: %i SMIME: %i",
            hasOpenPGPSignKey, hasSMIMESignKey);
+
+  if (!errMsgShown && m_sign && opt.sign_default && opt.enable_smime && opt.prefer_smime)
+    {
+      std::string msg;
+      if (opt.smimeNoCertSigErr)
+        {
+          msg = opt.smimeNoCertSigErr;
+        }
+      else
+          msg = _("No S/MIME (X509) signing certificate found.\n\n"
+                  "Your organization has configured GpgOL to sign outgoing\n"
+                  "mails with S/MIME certificates but there is no S/MIME\n"
+                  "certificate configured for your mail address.\n\n"
+                  "Please ask your Administrators for assistance or switch\n"
+                  "to OpenPGP in the next dialog.");
+      gpgol_message_box (m_mail->getWindow (), msg.c_str (),
+                         _("GpgOL"), MB_OK);
+      errMsgShown = true;
+    }
+
+  if (m_sign && !hasOpenPGPSignKey && !hasSMIMESignKey)
+    {
+      return false;
+    }
 
   if (m_encrypt)
     {
@@ -963,6 +992,11 @@ CryptController::prepare_crypto()
       // Cancel
       TRETURN -2;
     }
+  if (!m_encrypt && !m_sign)
+    {
+      log_dbg ("Nothing left after resolution. Passing unencrypted.");
+      TRETURN -4;
+    }
 
   if (!m_mail->copyParent ())
     {
@@ -1203,7 +1237,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
         }
       if (err.isCanceled())
         {
-          log_debug ("%s:%s: User cancled",
+          log_debug ("%s:%s: User canceled",
                      SRCNAME, __func__);
           TRETURN -2;
         }
@@ -1216,7 +1250,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
                  SRCNAME, __func__);
     }
 
-  log_debug ("%s:%s: Crypto done sucessfuly.",
+  log_debug ("%s:%s: Crypto done successfully.",
              SRCNAME, __func__);
   m_crypto_success = true;
 

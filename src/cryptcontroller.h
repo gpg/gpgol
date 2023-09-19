@@ -65,6 +65,9 @@ public:
       -2 on cancel.
       -3 When we need additional mails to resolve all
          recipients.
+      -4 no op requested. This could be "send unencrypted" but
+         since we do not offer that it is currently only used
+         if sign is selected but no signing key is resolved.
 
       @returns 0 on success.
   */

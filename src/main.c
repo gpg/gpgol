@@ -343,6 +343,10 @@ read_options (void)
      unencrypted mails in the recently deleted folder on the
      server we block it. */
   opt.sync_dec = get_conf_bool ("syncDec", 0);
+
+  load_extension_value ("smimeNoCertSigErr", &val);
+  opt.smimeNoCertSigErr = val;
+  val = NULL;
 }
 
 

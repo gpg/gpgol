@@ -203,6 +203,8 @@ struct opt_s
   int combinedOpsEnabled;    /* Enable S/MIME and OpenPGP combined operations. */
   int splitBCCMails;         /* Split BCC recipients in their own mails. */
   int encryptSubject;        /* Encrypt the subject with protected headers. */
+  char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured for S/MIME
+                                signing but no cert is found. */
 
   /* The forms revision number of the binary.  */
   int forms_revision;

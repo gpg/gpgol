@@ -1153,6 +1153,33 @@ do_crypt (LPVOID arg)
 
   int resolve_error = crypter->prepare_crypto ();
   if (resolve_error) {
+      if (resolve_error == -4)
+        {
+          log_dbg ("Unencrypted send requested after resolution.");
+          if (mail->isAsyncCryptDisabled())
+            {
+              auto msg = MAKE_SHARED (get_oom_base_message (mail->item()));
+              if (!msg)
+                {
+                  STRANGEPOINT;
+                }
+              mapi_set_mesage_class ((LPMESSAGE)msg.get(), "IPM.Note");
+              set_gpgol_draft_info_flags (LPMESSAGE(msg.get()), 0);
+              mail->setCryptState (Mail::NotStarted);
+              mail->resetCrypter();
+              mail->enableWindow ();
+              gpgol_unlock (&dtor_lock);
+              do_in_ui_thread_async (SEND, arg);
+              TRETURN -1;
+            }
+          else
+            {
+              /* It is 2023 and I don't care anymore in async mode we
+               * may not touch oom or mapi so that is why we don't do
+               * above stuff here.*/
+              log_err ("Async send of unencrypted mail not supported.");
+            }
+        }
       /* User cancelled */
       if (resolve_error == -1) {
           gpgol_bug (mail->getWindow (),
@@ -1311,7 +1338,6 @@ do_crypt (LPVOID arg)
           // A bug!
           log_debug ("%s:%s: Resetting crypter because of state mismatch. %p",
                      SRCNAME, __func__, arg);
-          crypter = nullptr;
           mail->resetCrypter ();
         }
       gpgol_unlock (&dtor_lock);
