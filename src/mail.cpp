@@ -1067,8 +1067,10 @@ do_parsing (LPVOID arg)
       encrypt_sign_start
         collect_input_data
         -> Check if Inline PGP should be used
-        do_crypt
-          -> Resolve keys / do crypto
+        prepare_crypto
+          -> Resolve keys
+        do crypto
+          -> Do the actual GPGME operations
 
           State = OOMSynced
           update_crypt_mapi
@@ -1149,9 +1151,34 @@ do_crypt (LPVOID arg)
       TRETURN -1;
     }
 
+  int resolve_error = crypter->prepare_crypto ();
+  if (resolve_error) {
+      /* User cancelled */
+      if (resolve_error == -1) {
+          gpgol_bug (mail->getWindow (),
+                     ERR_CRYPT_RESOLVER_FAILED);
+          log_error ("%s:%s: Resolver failed unexpectedly",
+                     SRCNAME, __func__);
+      }
+      log_debug ("%s:%s: Cancelled sign/encrypt",
+                 SRCNAME, __func__);
+      mail->setCryptState (Mail::NotStarted);
+      mail->setIsDraftEncrypt (false);
+      mail->resetCrypter ();
+      crypter = nullptr;
+      gpgol_unlock (&dtor_lock);
+
+      if (resolve_error != -3)
+        {
+          mail->resetRecipients ();
+          wm_abort_pending_ops ();
+        }
+      TRETURN resolve_error;
+  }
+
   GpgME::Error err;
   std::string diag;
-  int rc = crypter->do_crypto(err, diag);
+  int rc = crypter->do_crypto(err, diag, false);
 
   gpgol_lock (&dtor_lock);
   if (!Mail::isValidPtr (mail))
@@ -1163,12 +1190,54 @@ do_crypt (LPVOID arg)
       TRETURN 0;
     }
 
-  mail->enableWindow ();
+  crypter->stop_crypto_overlay ();
+  if (rc == -3)
+    {
+      if (err)
+        {
+          char *buf = nullptr;
+          gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
+                          err.asString());
+          std::string msg = buf;
+          memdbg_alloc (buf);
+          xfree (buf);
+          if (!diag.empty())
+            {
+              msg += "\n\n";
+              msg += _("Diagnostics");
+              msg += ":\n";
+              msg += diag;
+            }
+
+          msg += "\n\n";
+          msg += _("You can try the operation again with fewer validity checks on the used certificates.\n");
+          if (in_de_vs_mode ())
+            {
+              msg += "\n\n";
+              char *buf2 = nullptr;
+              gpgrt_asprintf (&buf2, _("WARNING: The mail will be: %s"), de_vs_name (false));
+              msg += buf2;
+              memdbg_alloc (buf2);
+              xfree (buf2);
+           }
+          err = GpgME::Error();
+          diag = std::string();
+          if (gpgol_message_box (mail->getWindow (), msg.c_str (),
+                               _("GpgOL"), MB_RETRYCANCEL) == IDRETRY)
+            {
+              log_dbg ("User requested to force second encryption try after error.");
+              crypter->start_crypto_overlay ();
+              rc = crypter->do_crypto(err, diag, true);
+            }
+        }
+    }
 
   if (rc == -1 || err)
     {
       mail->resetCrypter ();
       crypter = nullptr;
+      mail->setCryptState (Mail::NotStarted);
+      mail->setIsDraftEncrypt (false);
       if (err)
         {
           char *buf = nullptr;
@@ -1186,11 +1255,6 @@ do_crypt (LPVOID arg)
             }
           gpgol_message_box (mail->getWindow (), msg.c_str (),
                              _("GpgOL"), MB_OK);
-        }
-      else
-        {
-          gpgol_bug (mail->getWindow (),
-                     ERR_CRYPT_RESOLVER_FAILED);
         }
     }
 
@@ -1211,6 +1275,8 @@ do_crypt (LPVOID arg)
         }
       TRETURN rc;
     }
+
+  mail->enableWindow ();
 
   if (!mail->isAsyncCryptDisabled ())
     {

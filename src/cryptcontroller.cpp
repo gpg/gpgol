@@ -900,7 +900,7 @@ CryptController::resolve_keys ()
 }
 
 int
-CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
+CryptController::prepare_crypto()
 {
   TSTART;
   log_debug ("%s:%s",
@@ -980,7 +980,18 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
           TRETURN -3;
         }
     }
+  TRETURN 0;
+}
 
+int
+CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
+{
+  TSTART;
+  if (m_signer_keys.empty () && m_enc_keys.empty ()) {
+    log_err ("Do crypto called without prepared keys. Call prepare_crypto "
+             "first.");
+    TRETURN -1;
+  }
   bool do_inline = m_mail->getDoPGPInline ();
 
   if (m_proto == GpgME::CMS && do_inline)
@@ -1017,13 +1028,29 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
   ctx->setTextMode (m_proto == GpgME::OpenPGP);
   ctx->setArmor (m_proto == GpgME::OpenPGP);
 
+  /* Prepare to offer a "Forced encryption for S/MIME errors */
+  GpgME::Context::EncryptionFlags flags = GpgME::Context::EncryptionFlags::None;
+  int errVal = -1;
+  /* For openPGP or when force is used we want to use Always Trust */
+  if (m_proto == GpgME::OpenPGP || force) {
+      if (force)
+        {
+          log_dbg ("Using alwaysTrust force option");
+        }
+      flags = GpgME::Context::AlwaysTrust;
+  } else if (m_proto == GpgME::CMS && !force) {
+      /* This should indicate to the caller that a repeated call with
+         force might work */
+      errVal = -3;
+  }
+
   if (m_encrypt && m_sign && do_inline)
     {
       // Sign encrypt combined
       const auto result_pair = ctx->signAndEncrypt (m_enc_keys,
                                                     do_inline ? m_bodyInput : m_input,
                                                     m_output,
-                                                    GpgME::Context::AlwaysTrust);
+                                                    flags);
       const auto err1 = result_pair.first.error();
       const auto err2 = result_pair.second.error();
 
@@ -1040,13 +1067,13 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
             {
               r_diag = log.toString();
             }
-          TRETURN -1;
+          TRETURN errVal;
         }
 
       if (err1.isCanceled() || err2.isCanceled())
         {
           err = err1.isCanceled() ? err1 : err2;
-          log_debug ("%s:%s: User cancled",
+          log_debug ("%s:%s: User canceled",
                      SRCNAME, __func__);
           TRETURN -2;
         }
@@ -1068,7 +1095,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
             {
               r_diag = log.toString();
             }
-          TRETURN -1;
+          TRETURN errVal;
         }
       if (err.isCanceled())
         {
@@ -1105,7 +1132,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       multipart.seek (0, SEEK_SET);
       const auto encResult = ctx->encrypt (m_enc_keys, multipart,
                                            m_output,
-                                           GpgME::Context::AlwaysTrust);
+                                           flags);
       err = encResult.error();
       if (err)
         {
@@ -1118,11 +1145,11 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
             {
               r_diag = log.toString();
             }
-          TRETURN -1;
+          TRETURN errVal;
         }
       if (err.isCanceled())
         {
-          log_debug ("%s:%s: User cancled",
+          log_debug ("%s:%s: User canceled",
                      SRCNAME, __func__);
           TRETURN -2;
         }
@@ -1133,7 +1160,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       m_output.setEncoding(GpgME::Data::MimeEncoding);
       const auto result = ctx->encrypt (m_enc_keys, do_inline ? m_bodyInput : m_input,
                                         m_output,
-                                        GpgME::Context::AlwaysTrust);
+                                        flags);
       err = result.error();
       if (err)
         {
@@ -1146,7 +1173,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
             {
               r_diag = log.toString();
             }
-          TRETURN -1;
+          TRETURN errVal;
         }
       if (err.isCanceled())
         {
@@ -1188,7 +1215,6 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag)
       log_error ("%s:%s: unreachable code reached.",
                  SRCNAME, __func__);
     }
-
 
   log_debug ("%s:%s: Crypto done sucessfuly.",
              SRCNAME, __func__);
@@ -1588,4 +1614,10 @@ CryptController::start_crypto_overlay ()
     }
   m_overlay = std::unique_ptr<Overlay> (new Overlay (wid, text));
   TRETURN;
+}
+
+void
+CryptController::stop_crypto_overlay ()
+{
+  m_overlay = nullptr;
 }

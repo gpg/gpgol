@@ -53,7 +53,8 @@ public:
       */
   int collect_data ();
 
-  /** @brief Does the actual crypto work according to op.
+  /** @brief Prepare the crypto operation by resolving keys
+      and preparing the date.
       Can be called in a different thread then the UI Thread.
 
       An operational error is returned in the passed err
@@ -67,7 +68,22 @@ public:
 
       @returns 0 on success.
   */
-  int do_crypto (GpgME::Error &err, std::string &r_diag);
+  int prepare_crypto ();
+
+  /** @brief Do the actual crypto operation, prepare crypto
+      needs to be called first.
+
+      @param force will call S/MIME with GpgME::Context::AlwaysTrust,
+      too. To ignore errors which might have occured within an S/MIME
+      context.
+
+      Return values are:
+      -1 error, err and r_diag should be filled.
+      -2 cancel.
+      -3 repeating this operation with force set to true
+      might resolve the error. This is only returned if
+      force is set to false. */
+  int do_crypto (GpgME::Error &err, std::string &r_diag, bool force);
 
   /** @brief Update the MAPI structure of the mail with
     the result. */
@@ -92,6 +108,12 @@ public:
     might be necessary to fulfil the operation.
     */
   GpgME::Protocol get_resolved_protocol () const;
+
+  /** @brief start the crypto overlay */
+  void start_crypto_overlay ();
+
+  /** @brief stop the crypto overlay */
+  void stop_crypto_overlay ();
 private:
   void clear_keys ();
   void resolving_done ();
@@ -103,8 +125,6 @@ private:
                            const std::vector<std::pair<std::string, std::string> > &recpFprs);
 
   void parse_micalg (const GpgME::SigningResult &sResult);
-
-  void start_crypto_overlay ();
 
 private:
   Mail *m_mail;
