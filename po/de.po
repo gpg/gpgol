@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2023-06-21 11:48+0200\n"
-"PO-Revision-Date: 2023-09-04 14:38+0200\n"
+"PO-Revision-Date: 2023-09-19 13:20+0200\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -964,7 +964,7 @@ msgstr "ist veraltet. "
 
 #: src/mail.cpp:3758
 msgid "is not meant for signing."
-msgstr "ist nicht zum signieren vorgesehen. "
+msgstr "ist nicht zum Signieren vorgesehen. "
 
 #: src/mail.cpp:3762 src/mail.cpp:3766
 msgid "could not be checked for revocation."
@@ -1337,7 +1337,7 @@ msgstr "Eine leere Nachricht kann nicht signiert oder verschlüsselt werden."
 
 #: src/cryptcontroller.cpp:377
 msgid "No recipients for encryption selected."
-msgstr "Keine Empfänger zum verschlüsseln ausgewählt."
+msgstr "Keine Empfänger zum Verschlüsseln ausgewählt."
 
 #: src/cryptcontroller.cpp:681
 msgid ""
