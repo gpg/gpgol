@@ -204,12 +204,6 @@ i18n_noops[] = {
     N_("Block Outlook during decrypt / verify"),
     /* TRANSLATORS: Config dialog debug page, can be technical. */
     N_("Do not save encrypted mails before decryption"),
-    /* TRANSLATORS: Config dialog debug page, tooltip for a workaround. */
-    N_("Saving the still encrypted mail can avoid conflicts with other Addins.\n"
-       "As other Addins might force a save bypassing GpgOL to the mail server.\n"
-       "This could lead to plaintext leaks.\n\n"
-       "You can enable this option if you do not see such leaks but want\n"
-       "to avoid additional syncs with the server."),
     /* TRANSLATORS: Config dialog debug page, link to report bug page. */
     N_("How to report a problem?"),
     /* TRANSLATORS: Config dialog. */

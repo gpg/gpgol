@@ -1237,12 +1237,12 @@ do_crypt (LPVOID arg)
             }
 
           msg += "\n\n";
-          msg += _("You can try the operation again with fewer validity checks on the used certificates.\n");
+          msg += _("You can try the operation again with fewer validity checks on the certificates.\n");
           if (in_de_vs_mode ())
             {
               msg += "\n\n";
               char *buf2 = nullptr;
-              gpgrt_asprintf (&buf2, _("WARNING: The mail will be: %s"), de_vs_name (false));
+              gpgrt_asprintf (&buf2, _("WARNING: The mail will be %s"), de_vs_name (false));
               msg += buf2;
               memdbg_alloc (buf2);
               xfree (buf2);

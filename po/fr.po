@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2023-09-20 16:50+0200\n"
+"POT-Creation-Date: 2023-09-20 17:30+0200\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 msgid "Enable the S/MIME support"
 msgstr "Activer le support S/MIME"
 
-#: src/addin-options.cpp:41 src/addin-options.cpp:308
+#: src/addin-options.cpp:41 src/addin-options.cpp:302
 msgid "Configure GpgOL"
 msgstr ""
 
@@ -427,51 +427,40 @@ msgstr ""
 msgid "Do not save encrypted mails before decryption"
 msgstr ""
 
-#. TRANSLATORS: Config dialog debug page, tooltip for a workaround.
-#: src/addin-options.cpp:208
-msgid ""
-"Saving the still encrypted mail can avoid conflicts with other Addins.\n"
-"As other Addins might force a save bypassing GpgOL to the mail server.\n"
-"This could lead to plaintext leaks.\n"
-"\n"
-"You can enable this option if you do not see such leaks but want\n"
-"to avoid additional syncs with the server."
-msgstr ""
-
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
-#: src/addin-options.cpp:214
+#: src/addin-options.cpp:208
 msgid "How to report a problem?"
 msgstr ""
 
 #. TRANSLATORS: Config dialog.
-#: src/addin-options.cpp:216
+#: src/addin-options.cpp:210
 msgid "&Always show security approval dialog"
 msgstr ""
 
-#: src/addin-options.cpp:217
+#: src/addin-options.cpp:211
 msgid "(slow)"
 msgstr ""
 
 #. TRANSLATORS: Config dialog.
-#: src/addin-options.cpp:219
+#: src/addin-options.cpp:213
 msgid "Help"
 msgstr ""
 
 #. TRANSLATORS: Only available in german and english please keep
 #. english for other langs
-#: src/addin-options.cpp:222
+#: src/addin-options.cpp:216
 msgid "handout_outlook_plugin_gnupg_en.pdf"
 msgstr ""
 
 #. TRANSLATORS: Config dialog tooltip.
-#: src/addin-options.cpp:224
+#: src/addin-options.cpp:218
 msgid ""
 "Always show the security approval and certificate selection dialog. This "
 "slows down the encryption / signing process, especially with large keyrings."
 msgstr ""
 
 #. TRANSLATORS: Please ignore. Only available for german.
-#: src/addin-options.cpp:227
+#: src/addin-options.cpp:221
 msgid "https://gnupg.com/vsd/report.html"
 msgstr ""
 
@@ -673,13 +662,13 @@ msgstr ""
 
 #: src/mail.cpp:1240
 msgid ""
-"You can try the operation again with fewer validity checks on the used "
+"You can try the operation again with fewer validity checks on the "
 "certificates.\n"
 msgstr ""
 
 #: src/mail.cpp:1245
 #, c-format
-msgid "WARNING: The mail will be: %s"
+msgid "WARNING: The mail will be %s"
 msgstr ""
 
 #: src/mail.cpp:1493
