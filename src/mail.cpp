@@ -1435,8 +1435,8 @@ Mail::decryptVerify_o ()
              */
           oom_message->SetReadFlag(0);
           setPassWrite (false);
-          gpgol_release (oom_message);
         }
+      gpgol_release (oom_message);
     }
   else
     {
