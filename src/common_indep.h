@@ -174,10 +174,10 @@ extern "C" {
 
 struct opt_s
 {
-  int enable_debug;	     /* Enable extra debug options.  Values
+  int enable_debug;          /* Enable extra debug options.  Values
                                 larger than 1 increases the debug log
                                 verbosity.  */
-  int enable_smime;	     /* Enable S/MIME support. */
+  int enable_smime;          /* Enable S/MIME support. */
   int encrypt_default;       /* Encrypt by default. */
   int sign_default;          /* Sign by default. */
   int prefer_html;           /* Prefer html in html/text alternatives. */
@@ -203,6 +203,12 @@ struct opt_s
   int combinedOpsEnabled;    /* Enable S/MIME and OpenPGP combined operations. */
   int splitBCCMails;         /* Split BCC recipients in their own mails. */
   int encryptSubject;        /* Encrypt the subject with protected headers. */
+  int noSaveBeforeDecrypt;   /* Do not save to MAPI before modifying the mail for decryption.
+                                While this can avoid plaintext leaks in case other plugins
+                                or server addins added properties that they really want
+                                to save and then bypass our save blocks but might
+                                cause excessive syncs. So better have this as a debug
+                                option. */
   char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured for S/MIME
                                 signing but no cert is found. */
 

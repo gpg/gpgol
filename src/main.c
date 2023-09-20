@@ -306,6 +306,7 @@ read_options (void)
   opt.splitBCCMails = get_conf_bool ("splitBCCMails", 0);
   opt.combinedOpsEnabled = get_conf_bool ("combinedOpsEnabled", 0);
   opt.encryptSubject = get_conf_bool ("encryptSubject", 0);
+  opt.noSaveBeforeDecrypt = get_conf_bool ("noSaveBeforeDecrypt", 0);
 
   if (!opt.automation)
     {
