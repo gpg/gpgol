@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2023-09-20 17:30+0200\n"
-"PO-Revision-Date: 2023-09-19 13:20+0200\n"
+"PO-Revision-Date: 2023-09-21 10:21+0200\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
@@ -123,8 +123,7 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:67
-msgid ""
-"Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
@@ -156,8 +155,7 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:81
-msgid ""
-"Search and import &X509 certificates in the configured directory services"
+msgid "Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -182,8 +180,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:87
-msgid ""
-"Also automatically toggles secure if keys with level 0 trust were found."
+msgid "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
 "Sichert Mails auch automatisch, wenn Schlüssel mit Level 0 Vertrauen "
 "gefunden wurden."
@@ -227,8 +224,7 @@ msgstr "Einstellungen für:"
 #. An example for a public key follows.
 #: src/addin-options.cpp:107
 msgid "Paste a public key export here. It should look like:"
-msgstr ""
-"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr "Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
@@ -262,8 +258,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:121
-msgid ""
-"The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr informationen."
@@ -452,7 +447,7 @@ msgstr "Outlook während des Entschlüsselns / Verifizierens blockieren"
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:206
 msgid "Do not save encrypted mails before decryption"
-msgstr ""
+msgstr "Verschlüsselte Mails nicht vor der Entschlüsselung speichern"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:208
@@ -716,11 +711,13 @@ msgid ""
 "You can try the operation again with fewer validity checks on the "
 "certificates.\n"
 msgstr ""
+"Sie können den Vorgang mit weniger Gültigkeitsprüfungen für die Zertifikate "
+"erneut versuchen.\n"
 
 #: src/mail.cpp:1245
 #, c-format
 msgid "WARNING: The mail will be %s"
-msgstr ""
+msgstr "WARNUNG: Die Mail wird %s sein"
 
 #: src/mail.cpp:1493
 msgid "Pubkey directory confirmation"
@@ -1349,8 +1346,7 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:779
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr ""
-"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:780
 msgid "GpgOL: Request confirmed!"
@@ -1375,6 +1371,14 @@ msgid ""
 "Please ask your Administrators for assistance or switch\n"
 "to OpenPGP in the next dialog."
 msgstr ""
+"Es wurde kein S/MIME (X509) Signatur-Zertifikat gefunden.\n"
+"\n"
+"Ihre Organisation hat GpgOL so konfiguriert, dass Mails\n"
+"beim Versand mit S/MIME Zertifikaten signiert werden müssen,\n"
+"aber es ist kein S/MIME Zertifikat für Ihre Mailadresse konfiguriert.\n"
+"\n"
+"Bitte wenden Sie sich an Ihren Administrator oder\n"
+"wechseln Sie im nächsten Dialog auf OpenPGP."
 
 #: src/cryptcontroller.cpp:710
 msgid ""
