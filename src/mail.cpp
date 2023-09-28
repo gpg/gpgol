@@ -786,7 +786,6 @@ fixup_last_attachment_o (LPDISPATCH mail,
   if (ret)
     {
       log_error ("%s:%s: Failed.", SRCNAME, __func__);
-      gpgol_release (attach);
     }
 #if 0
 
