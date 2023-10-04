@@ -509,7 +509,6 @@ CryptController::is_resolved () const
      least one encryption key for each recipient. */
   bool hasOpenPGPSignKey = false;
   bool hasSMIMESignKey = false;
-  static bool errMsgShown = false;
   if (m_sign)
     {
       for (const auto &sig_key: m_signer_keys)
@@ -524,23 +523,36 @@ CryptController::is_resolved () const
   log_dbg ("Has OpenPGP Sig Key: %i SMIME: %i",
            hasOpenPGPSignKey, hasSMIMESignKey);
 
-  if (!errMsgShown && m_sign && opt.sign_default && opt.enable_smime && opt.prefer_smime)
+  if (m_sign && opt.sign_default && opt.enable_smime && opt.prefer_smime)
     {
-      std::string msg;
       if (opt.smimeNoCertSigErr)
         {
-          msg = opt.smimeNoCertSigErr;
+          /* If it comes from opt it comes from the windows registry which we
+             access with native encoding. */
+          char *msg = native_to_utf8 (opt.smimeNoCertSigErr);
+          if (!msg)
+            {
+              log_err ("Invalid setting in opt.smimeNoCertSigErr '%s'",
+                       opt.smimeNoCertSigErr);
+            }
+          else
+            {
+              gpgol_message_box (m_mail->getWindow (), msg,
+                                 _("GpgOL"), MB_OK);
+              xfree (msg);
+            }
         }
       else
-          msg = _("No S/MIME (X509) signing certificate found.\n\n"
+        {
+          const char * msg = utf8_gettext ("No S/MIME (X509) signing certificate found.\n\n"
                   "Your organization has configured GpgOL to sign outgoing\n"
                   "mails with S/MIME certificates but there is no S/MIME\n"
                   "certificate configured for your mail address.\n\n"
                   "Please ask your Administrators for assistance or switch\n"
                   "to OpenPGP in the next dialog.");
-      gpgol_message_box (m_mail->getWindow (), msg.c_str (),
-                         _("GpgOL"), MB_OK);
-      errMsgShown = true;
+          gpgol_message_box (m_mail->getWindow (), msg,
+                             _("GpgOL"), MB_OK);
+        }
     }
 
   if (m_sign && !hasOpenPGPSignKey && !hasSMIMESignKey)
