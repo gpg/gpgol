@@ -132,6 +132,9 @@ public:
     /* Populate the fingerprint and secret key maps */
     void populate ();
 
+    /* Check if the populate function has finished */
+    bool isPopulated ();
+
     /* Get a vector of ultimately trusted keys. */
     std::vector<GpgME::Key> getUltimateKeys ();
 
@@ -159,6 +162,7 @@ public:
                                   const std::vector<std::string> &result_fprs,
                                   GpgME::Protocol proto);
     void setConfig(const std::vector<GpgME::Configuration::Component> & comp);
+    void setIsPopulated(bool val);
 
 private:
 

@@ -482,9 +482,10 @@ do_populate (LPVOID)
       do_populate_smartcards (GpgME::CMS);
       do_populate_protocol (GpgME::CMS, true);
     }
+
   log_debug ("%s:%s: Keycache populated",
              SRCNAME, __func__);
-
+  KeyCache::instance ()->setIsPopulated(true);
   TRETURN 0;
 }
 
@@ -492,7 +493,7 @@ do_populate (LPVOID)
 class KeyCache::Private
 {
 public:
-  Private() : m_use_tofu (false)
+  Private() : m_use_tofu (false), m_is_populated (false)
   {
   }
 
@@ -1295,6 +1296,7 @@ public:
   std::set<std::string> m_cms_import_jobs;
   std::vector<GpgME::Configuration::Component> m_cached_config;
   bool m_use_tofu;
+  bool m_is_populated;
 };
 
 KeyCache::KeyCache():
@@ -1973,4 +1975,16 @@ KeyCache::protocolIsOnline (GpgME::Protocol proto) const
   log_dbg ("Detected no online options.");
 
   TRETURN false;
+}
+
+bool
+KeyCache::isPopulated()
+{
+  return d->m_is_populated;
+}
+
+void
+KeyCache::setIsPopulated(bool val)
+{
+  d->m_is_populated = val;
 }

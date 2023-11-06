@@ -103,7 +103,7 @@ public:
 
   /** @brief check if the cryptcontroller has all keys for
     the operation. */
-  bool is_resolved () const;
+  bool is_resolved ();
 
   /** @brief check if the cryptcontroller can actually do
     the work with a single protocol. This is different
@@ -133,7 +133,7 @@ private:
   Mail *m_mail;
   GpgME::Data m_input, m_bodyInput, m_signedData, m_output;
   std::string m_micalg;
-  bool m_encrypt, m_sign, m_crypto_success;
+  bool m_encrypt, m_sign, m_crypto_success, m_no_smime_shown;
   GpgME::Protocol m_proto;
   std::string m_sender;
   std::vector<GpgME::Key> m_signer_keys;

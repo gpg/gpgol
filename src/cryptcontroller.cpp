@@ -67,6 +67,7 @@ CryptController::CryptController (Mail *mail, bool encrypt, bool sign,
     m_encrypt (encrypt),
     m_sign (sign),
     m_crypto_success (false),
+    m_no_smime_shown (false),
     m_proto (proto)
 {
   TSTART;
@@ -503,7 +504,7 @@ CryptController::get_resolved_protocol () const
 /* Check that the crypt operation is resolved. This
    supports combined S/MIME and OpenPGP operations. */
 bool
-CryptController::is_resolved () const
+CryptController::is_resolved ()
 {
   /* Check that we have signing keys if necessary and at
      least one encryption key for each recipient. */
@@ -523,9 +524,22 @@ CryptController::is_resolved () const
   log_dbg ("Has OpenPGP Sig Key: %i SMIME: %i",
            hasOpenPGPSignKey, hasSMIMESignKey);
 
-  if (m_sign && opt.sign_default && opt.enable_smime && opt.prefer_smime)
+  if (m_no_smime_shown)
     {
-      if (opt.smimeNoCertSigErr)
+      /* We have already shown the message that S/MIME signing is not resolvable
+       * in this setting. Since we then talk about the following dialog we must
+       * block all other protocol resolution tries to show the dialog. */
+      return false;
+    }
+
+  if (!m_no_smime_shown && !hasSMIMESignKey && m_sign && opt.sign_default &&
+      opt.enable_smime && opt.prefer_smime)
+    {
+      if (!KeyCache::instance ()->isPopulated())
+        {
+          log_dbg ("Keycache is not loaded. Showing just the UI resolver.");
+        }
+      else if (opt.smimeNoCertSigErr)
         {
           /* If it comes from opt it comes from the windows registry which we
              access with native encoding. */
@@ -539,7 +553,9 @@ CryptController::is_resolved () const
             {
               gpgol_message_box (m_mail->getWindow (), msg,
                                  _("GpgOL"), MB_OK);
+              m_no_smime_shown = true;
               xfree (msg);
+              return false;
             }
         }
       else
@@ -552,6 +568,8 @@ CryptController::is_resolved () const
                   "to OpenPGP in the next dialog.");
           gpgol_message_box (m_mail->getWindow (), msg,
                              _("GpgOL"), MB_OK);
+          m_no_smime_shown = true;
+          return false;
         }
     }
 
