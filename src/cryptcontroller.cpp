@@ -1100,6 +1100,8 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
       if (force)
         {
           log_dbg ("Using alwaysTrust force option");
+          /* When force is used we don't need any online verification. */
+          ctx->setOffline(true);
         }
       flags = GpgME::Context::AlwaysTrust;
   } else if (m_proto == GpgME::CMS && !force) {
