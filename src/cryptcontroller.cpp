@@ -1097,11 +1097,17 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
   int errVal = -1;
   /* For openPGP or when force is used we want to use Always Trust */
   if (m_proto == GpgME::OpenPGP || force) {
-      if (force)
+      /* Force is currently only used for S/MIME but just to make
+         this clear we add the check here */
+      if (force && m_proto == GpgME::CMS)
         {
           log_dbg ("Using alwaysTrust force option");
           /* When force is used we don't need any online verification. */
           ctx->setOffline(true);
+          /* Rewind the input and start with a fresh output */
+          log_dbg ("Rewinding input");
+          m_input.rewind ();
+          m_output = GpgME::Data ();
         }
       flags = GpgME::Context::AlwaysTrust;
   } else if (m_proto == GpgME::CMS && !force) {
@@ -1191,10 +1197,9 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
           TRETURN -1;
         }
 
-      // Now we have the multipart throw away the rest.
+      // Now we have the multipart we do not need the output anymore.
       m_output = GpgME::Data ();
       m_output.setEncoding(GpgME::Data::MimeEncoding);
-      m_input = GpgME::Data ();
       multipart.seek (0, SEEK_SET);
       const auto encResult = ctx->encrypt (m_enc_keys, multipart,
                                            m_output,
