@@ -1092,16 +1092,17 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
   ctx->setTextMode (m_proto == GpgME::OpenPGP);
   ctx->setArmor (m_proto == GpgME::OpenPGP);
 
-  /* Prepare to offer a "Forced encryption for S/MIME errors */
+  /* Prepare to offer a "Forced encryption for S/MIME errors or drafts */
   GpgME::Context::EncryptionFlags flags = GpgME::Context::EncryptionFlags::None;
   int errVal = -1;
+  bool draft = m_mail->isDraftEncrypt ();
   /* For openPGP or when force is used we want to use Always Trust */
-  if (m_proto == GpgME::OpenPGP || force) {
+  if (m_proto == GpgME::OpenPGP || force || draft) {
       /* Force is currently only used for S/MIME but just to make
          this clear we add the check here */
-      if (force && m_proto == GpgME::CMS)
+      if ((force || draft) && m_proto == GpgME::CMS)
         {
-          log_dbg ("Using alwaysTrust force option");
+          log_dbg ("Using AlwaysTrust %s option", (draft ? "draft" : "force"));
           /* When force is used we don't need any online verification. */
           ctx->setOffline(true);
           /* Rewind the input and start with a fresh output */
