@@ -3009,16 +3009,19 @@ log_addins ()
           continue;
         }
 
-      char *progId = get_oom_string (addin, "ProgId");
+      std::string progId = get_oom_string_s (addin, "ProgId");
+      std::string description = get_oom_string_s (addin, "Description");
       gpgol_release (addin);
 
-      if (!progId)
+      if (progId.empty ())
         {
-          TRACEPOINT;
-          continue;
+          progId = "Unknown ProgID";
         }
-      activeAddins += std::string (progId) + "\n";
-      xfree (progId);
+      if (description.empty ())
+        {
+          description = "No description";
+        }
+      activeAddins += progId + " (" + description + ")"  + "\n";
     }
   gpgol_release (addins);
 
