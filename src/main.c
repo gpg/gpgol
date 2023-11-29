@@ -62,35 +62,6 @@ i18n_init (void)
   textdomain (PACKAGE_GT);
 }
 
-static char *
-get_gpgme_w32_inst_dir (void)
-{
-  char *gpg4win_dir = get_gpg4win_dir ();
-  char *tmp;
-  gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32spawn.exe", gpg4win_dir);
-  memdbg_alloc (tmp);
-
-  if (!access(tmp, R_OK))
-    {
-      xfree (tmp);
-      gpgrt_asprintf (&tmp, "%s\\bin", gpg4win_dir);
-      memdbg_alloc (tmp);
-      xfree (gpg4win_dir);
-      return tmp;
-    }
-  xfree (tmp);
-  gpgrt_asprintf (&tmp, "%s\\gpgme-w32spawn.exe", gpg4win_dir);
-  memdbg_alloc (tmp);
-
-  if (!access(tmp, R_OK))
-    {
-      xfree (tmp);
-      return gpg4win_dir;
-    }
-  OutputDebugString("Failed to find gpgme-w32spawn.exe!");
-  return NULL;
-}
-
 /* Entry point called by DLL loader. */
 int WINAPI
 DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
@@ -99,21 +70,9 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 
   if (reason == DLL_PROCESS_ATTACH)
     {
-      set_global_hinstance (hinst);
-
-      gpg_err_init ();
-
-      /* Set the installation directory for GpgME so that
-         it can find tools like gpgme-w32-spawn correctly. */
-      char *instdir = get_gpgme_w32_inst_dir();
-      gpgme_set_global_flag ("w32-inst-dir", instdir);
-      xfree (instdir);
-
-      /* The next call initializes subsystems of gpgme and should be
-         done as early as possible.  The actual return value (the
-         version string) is not used here.  It may be called at any
-         time later for this. */
-      gpgme_check_version (NULL);
+      /* Do not do anything in here so Outlook does not blame us
+         for a slow start. (See Screenshot in T6856 ) */
+      glob_hinst = hinst;
     }
   else if (reason == DLL_PROCESS_DETACH)
     {

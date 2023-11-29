@@ -62,11 +62,10 @@ extern "C" {
 extern HINSTANCE glob_hinst;
 extern UINT      this_dll;
 
-/*-- common.c --*/
-void set_global_hinstance (HINSTANCE hinst);
-
+/*-- common.cpp --*/
 char *get_data_dir (void);
 char *get_gpg4win_dir (void);
+char *get_gpgme_w32_inst_dir (void);
 
 int store_extension_value (const char *key, const char *val);
 int store_extension_subkey_value (const char *subkey, const char *key,

@@ -182,11 +182,28 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0),
   m_hook(nullptr),
   m_dispcache(new DispCache)
 {
+  /* Required first to start logging */
   read_options ();
+  TRACEPOINT;
+  /* Start initialization */
+  gpg_err_init ();
+
+  /* Set the installation directory for GpgME so that
+     it can find tools like gpgme-w32-spawn correctly. */
+  char *instdir = get_gpgme_w32_inst_dir();
+  gpgme_set_global_flag ("w32-inst-dir", instdir);
+  xfree (instdir);
+
+  /* The next call initializes subsystems of gpgme and should be
+     done as early as possible.  The actual return value (the
+     version string) is not used here.  It may be called at any
+     time later for this. */
+  gpgme_check_version (NULL);
   /* RibbonExtender is it's own object to avoid the pitfalls of
      multiple inheritance
   */
   m_ribbonExtender = new GpgolRibbonExtender();
+  TRACEPOINT;
 }
 
 GpgolAddin::~GpgolAddin (void)

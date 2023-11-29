@@ -1,5 +1,8 @@
-Noteworthy changes for version 2.5.11 (unreleased)
+Noteworthy changes for version 2.5.11 (2023-11-29)
 ==================================================
+
+* Moved initialization code from DLL Load point to
+  COM initialization. (T6856)
 
 
 Noteworthy changes for version 2.5.10 (2023-11-29)

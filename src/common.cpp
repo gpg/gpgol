@@ -53,12 +53,6 @@
 HINSTANCE glob_hinst = NULL;
 
 void
-set_global_hinstance (HINSTANCE hinst)
-{
-    glob_hinst = hinst;
-}
-
-void
 bring_to_front (HWND wid)
 {
   if (wid)
@@ -1200,4 +1194,33 @@ compliance_string (bool forVerify, bool forDecrypt, bool isCompliant)
   log_err ("Invalid call to compliance string.");
   STRANGEPOINT;
   return std::string();
+}
+
+char *
+get_gpgme_w32_inst_dir (void)
+{
+  char *gpg4win_dir = get_gpg4win_dir ();
+  char *tmp;
+  gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32spawn.exe", gpg4win_dir);
+  memdbg_alloc (tmp);
+
+  if (!access(tmp, R_OK))
+    {
+      xfree (tmp);
+      gpgrt_asprintf (&tmp, "%s\\bin", gpg4win_dir);
+      memdbg_alloc (tmp);
+      xfree (gpg4win_dir);
+      return tmp;
+    }
+  xfree (tmp);
+  gpgrt_asprintf (&tmp, "%s\\gpgme-w32spawn.exe", gpg4win_dir);
+  memdbg_alloc (tmp);
+
+  if (!access(tmp, R_OK))
+    {
+      xfree (tmp);
+      return gpg4win_dir;
+    }
+  OutputDebugString("Failed to find gpgme-w32spawn.exe!");
+  return NULL;
 }
