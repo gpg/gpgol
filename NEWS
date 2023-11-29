@@ -1,5 +1,28 @@
-Noteworthy changes for version 2.5.10 (unreleased)
+Noteworthy changes for version 2.5.10 (2023-11-29)
 ==================================================
+
+ * Internal attachments are now called
+ GpgOL_MIME_strucutre.mime to make it easier to
+ link them to Kleopatra. (T6656)
+
+ * Improved compatibility with other mail clients
+ or mails that might have been modified in transfer
+ to still be able to decrypt them. (T6686)
+
+ * It is now possible that after a warning users
+ can encrypt to S/MIME certificates which are not
+ trusted due to CRL errors or an untrusted root
+ CA. This is not VS-NfD compliant. (T6701)
+
+ * The error handling was improved if a preference
+ for S/MIME is set, signing selected but no signing
+ certificate can be found.
+ See: https://gnupg.com/vsd/registry-settings.html
+ How to add a custom message for that case. (T6683)
+
+ * Draft encryption with S/MIME certificates now
+ skips CRL checks and is much faster and reliable
+ now. (T6827)
 
 
 Noteworthy changes for version 2.5.9 (2023-08-02)
