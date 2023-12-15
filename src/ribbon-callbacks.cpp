@@ -365,6 +365,7 @@ done:
 static Mail *
 get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
 {
+  TSTART;
   HRESULT hr;
   LPDISPATCH context = NULL,
              mailitem = NULL;
@@ -372,7 +373,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
   if (!ctrl)
     {
       log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
-      return NULL;
+      TRETURN NULL;
     }
   hr = getContext (ctrl, &context);
 
@@ -380,7 +381,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
     {
       log_error ("%s:%s:%i : hresult %lx", SRCNAME, __func__, __LINE__,
                  hr);
-      return NULL;
+      TRETURN NULL;
     }
   char *name = get_object_name (context);
 
@@ -397,7 +398,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
       log_error ("%s:%s: Failed to get context name",
                  SRCNAME, __func__);
       gpgol_release (context);
-      return NULL;
+      TRETURN NULL;
     }
 
   if (!strcmp (ctx_name.c_str(), "_Inspector"))
@@ -485,7 +486,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
               log_error ("%s:%s: Failed to get selection.",
                          SRCNAME, __func__);
               gpgol_release (context);
-              return NULL;
+              TRETURN NULL;
             }
           int count = get_oom_int (selection, "Count");
           if (count == 1)
@@ -524,7 +525,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
     {
       log_debug ("%s:%s: No mailitem. From %s",
                  SRCNAME, __func__, ctx_name.c_str());
-      return NULL;
+      TRETURN NULL;
     }
 
   char *uid;
@@ -538,7 +539,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
           log_debug ("%s:%s: Failed to get message for %p",
                    SRCNAME, __func__, mailitem);
           gpgol_release (mailitem);
-          return NULL;
+          TRETURN NULL;
         }
       uid = mapi_get_uid (msg);
       gpgol_release (msg);
@@ -547,7 +548,7 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
           log_debug ("%s:%s: Failed to get uid for %p",
                    SRCNAME, __func__, mailitem);
           gpgol_release (mailitem);
-          return NULL;
+          TRETURN NULL;
         }
     }
 
@@ -558,8 +559,15 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
       log_error ("%s:%s: Failed to find mail %p in map.",
                  SRCNAME, __func__, mailitem);
     }
+  /* This release may have killed the Mail object we obtained earlier
+   * if it was just a leftover mail in the ribbon. */
   gpgol_release (mailitem);
-  return ret;
+  if (!Mail::isValidPtr (ret))
+    {
+      log_err ("Mail was only valid for this context.");
+      TRETURN nullptr;
+    }
+  TRETURN ret;
 }
 
 /* Helper to reduce code duplication.*/
