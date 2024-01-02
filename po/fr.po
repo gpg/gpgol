@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2023-11-29 15:20+0100\n"
+"POT-Creation-Date: 2024-01-02 12:49+0100\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -479,12 +479,12 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
-#: src/common.cpp:678 src/common.cpp:956
+#: src/common.cpp:672 src/common.cpp:950
 #, fuzzy
 msgid "GpgOL Error"
 msgstr "GpgOL"
 
-#: src/common.cpp:947 src/cryptcontroller.cpp:760
+#: src/common.cpp:941 src/cryptcontroller.cpp:760
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -493,71 +493,71 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:1098
+#: src/common.cpp:1092
 #, fuzzy
 msgid "VS-NfD compliant"
 msgstr "Cette signature est valide\n"
 
-#: src/common.cpp:1099
+#: src/common.cpp:1093
 #, fuzzy
 msgid "not VS-NfD compliant"
 msgstr "Cette signature est valide\n"
 
-#: src/common.cpp:1186
+#: src/common.cpp:1180
 #, fuzzy, c-format
 msgid "The message is %s."
 msgstr "Ce message n'est pas chiffré"
 
-#: src/common.cpp:1191
+#: src/common.cpp:1185
 #, fuzzy, c-format
 msgid "The signature is %s."
 msgstr "Cette signature est valide\n"
 
-#: src/common.cpp:1196
+#: src/common.cpp:1190
 #, fuzzy, c-format
 msgid "The encryption is %s."
 msgstr "Cette signature est valide\n"
 
-#: src/gpgoladdin.cpp:850
+#: src/gpgoladdin.cpp:867
 #, fuzzy
 msgid "Encrypt the message"
 msgstr "Déchiffrer le message"
 
-#: src/gpgoladdin.cpp:852
+#: src/gpgoladdin.cpp:869
 msgid "Encrypts the message and all attachments before sending"
 msgstr ""
 
-#: src/gpgoladdin.cpp:854
+#: src/gpgoladdin.cpp:871
 #, fuzzy
 msgid "Sign the message"
 msgstr "Déchiffrer le message"
 
-#: src/gpgoladdin.cpp:856
+#: src/gpgoladdin.cpp:873
 msgid "Sign the message and all attachments before sending"
 msgstr ""
 
-#: src/gpgoladdin.cpp:859
+#: src/gpgoladdin.cpp:876
 #, fuzzy
 msgid "Sign and encrypt the message"
 msgstr "Déchiffrer le message"
 
-#: src/gpgoladdin.cpp:861
+#: src/gpgoladdin.cpp:878
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
 "read it"
 msgstr ""
 
-#: src/gpgoladdin.cpp:865
+#: src/gpgoladdin.cpp:882
 msgid "Open the settings dialog for GpgOL"
 msgstr ""
 
-#: src/gpgoladdin.cpp:939 src/gpgoladdin.cpp:978 src/gpgoladdin.cpp:1084
-#: src/gpgoladdin.cpp:1086 src/gpgoladdin.cpp:1095 src/gpgoladdin.cpp:1132
-#: src/gpgoladdin.cpp:1164 src/gpgoladdin.cpp:1297 src/mail.cpp:927
+#: src/gpgoladdin.cpp:956 src/gpgoladdin.cpp:995 src/gpgoladdin.cpp:1101
+#: src/gpgoladdin.cpp:1103 src/gpgoladdin.cpp:1112 src/gpgoladdin.cpp:1149
+#: src/gpgoladdin.cpp:1181 src/gpgoladdin.cpp:1314 src/mail.cpp:927
 #: src/mail.cpp:1252 src/mail.cpp:1283 src/mail.cpp:1785 src/mail.cpp:1854
-#: src/mailitem-events.cpp:1038 src/ribbon-callbacks.cpp:743
-#: src/ribbon-callbacks.cpp:757 src/ribbon-callbacks.cpp:806
+#: src/mailitem-events.cpp:1038 src/ribbon-callbacks.cpp:751
+#: src/ribbon-callbacks.cpp:765 src/ribbon-callbacks.cpp:814
 #: src/wks-helper.cpp:461 src/cryptcontroller.cpp:113
 #: src/cryptcontroller.cpp:383 src/cryptcontroller.cpp:555
 #: src/cryptcontroller.cpp:570 src/cryptcontroller.cpp:747
@@ -565,39 +565,39 @@ msgstr ""
 msgid "GpgOL"
 msgstr "GpgOL"
 
-#: src/gpgoladdin.cpp:940 src/gpgoladdin.cpp:1096
+#: src/gpgoladdin.cpp:957 src/gpgoladdin.cpp:1113
 msgid "Secure"
 msgstr ""
 
-#: src/gpgoladdin.cpp:941 src/gpgoladdin.cpp:1097
+#: src/gpgoladdin.cpp:958 src/gpgoladdin.cpp:1114
 msgid "Sign"
 msgstr "Signer"
 
-#: src/gpgoladdin.cpp:942 src/gpgoladdin.cpp:1098
+#: src/gpgoladdin.cpp:959 src/gpgoladdin.cpp:1115
 msgid "Encrypt"
 msgstr "Chiffrer"
 
-#: src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1165
+#: src/gpgoladdin.cpp:1104 src/gpgoladdin.cpp:1182
 msgid "Settings"
 msgstr ""
 
 #. TRANSLATORS: Tooltip caption
-#: src/gpgoladdin.cpp:1089 src/gpgoladdin.cpp:1167
+#: src/gpgoladdin.cpp:1106 src/gpgoladdin.cpp:1184
 msgid "Configure GpgOL keys and settings for this contact."
 msgstr ""
 
 #. TRANSLATORS: Tooltip content
-#: src/gpgoladdin.cpp:1091 src/gpgoladdin.cpp:1169
+#: src/gpgoladdin.cpp:1108 src/gpgoladdin.cpp:1186
 msgid ""
 "Configure contact specific keys and settings to override the default "
 "behavior for this contact."
 msgstr ""
 
-#: src/gpgoladdin.cpp:1093 src/gpgoladdin.cpp:1171
+#: src/gpgoladdin.cpp:1110 src/gpgoladdin.cpp:1188
 msgid "GpgOL Settings"
 msgstr ""
 
-#: src/gpgoladdin.cpp:1100
+#: src/gpgoladdin.cpp:1117
 msgid "Permanently &amp;decrypt"
 msgstr ""
 
@@ -783,7 +783,7 @@ msgstr ""
 msgid "Encrypted"
 msgstr "Chiffrer"
 
-#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:650
+#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:658
 msgid "Insecure"
 msgstr ""
 
@@ -802,7 +802,7 @@ msgstr "Déchiffrer le message"
 msgid "Encrypted message"
 msgstr "Déchiffrer le message"
 
-#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:674
+#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:682
 #, fuzzy
 msgid "Insecure message"
 msgstr "Déchiffrer le message"
@@ -1134,19 +1134,19 @@ msgstr ""
 msgid "The interpreted data was:"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:678
+#: src/ribbon-callbacks.cpp:686
 #, fuzzy
 msgid "No message selected"
 msgstr "Ce message n'est pas chiffré"
 
-#: src/ribbon-callbacks.cpp:700
+#: src/ribbon-callbacks.cpp:708
 msgid ""
 "You cannot be sure who sent, modified and read the message in transit.\n"
 "\n"
 "Click here to learn more."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:739
+#: src/ribbon-callbacks.cpp:747
 #, c-format
 msgid ""
 "The message was not cryptographically signed.\n"
@@ -1154,13 +1154,13 @@ msgid ""
 "or if someone faked the sender address."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:754
+#: src/ribbon-callbacks.cpp:762
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:807
+#: src/ribbon-callbacks.cpp:815
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."

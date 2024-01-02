@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2023-11-29 15:20+0100\n"
+"POT-Creation-Date: 2024-01-02 12:49+0100\n"
 "PO-Revision-Date: 2019-03-25 13:09+0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@sapo.pt>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
@@ -509,11 +509,11 @@ msgstr "Os e-mails de lixo não podem ser processados"
 msgid "Unknown contact"
 msgstr "Contacto desconhecido"
 
-#: src/common.cpp:678 src/common.cpp:956
+#: src/common.cpp:672 src/common.cpp:950
 msgid "GpgOL Error"
 msgstr "Erro GpgOL"
 
-#: src/common.cpp:947 src/cryptcontroller.cpp:760
+#: src/common.cpp:941 src/cryptcontroller.cpp:760
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -522,52 +522,52 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:1098
+#: src/common.cpp:1092
 #, fuzzy
 msgid "VS-NfD compliant"
 msgstr "A assinatura está em conformidade com VS-NfD."
 
-#: src/common.cpp:1099
+#: src/common.cpp:1093
 #, fuzzy
 msgid "not VS-NfD compliant"
 msgstr "A assinatura está em conformidade com VS-NfD."
 
-#: src/common.cpp:1186
+#: src/common.cpp:1180
 #, fuzzy, c-format
 msgid "The message is %s."
 msgstr "Esta mensagem não está encriptada."
 
-#: src/common.cpp:1191
+#: src/common.cpp:1185
 #, fuzzy, c-format
 msgid "The signature is %s."
 msgstr "A assinatura expirou.\n"
 
-#: src/common.cpp:1196
+#: src/common.cpp:1190
 #, fuzzy, c-format
 msgid "The encryption is %s."
 msgstr "A encriptação está em conformidade com VS-NfD."
 
-#: src/gpgoladdin.cpp:850
+#: src/gpgoladdin.cpp:867
 msgid "Encrypt the message"
 msgstr "Encriptar a mensagem"
 
-#: src/gpgoladdin.cpp:852
+#: src/gpgoladdin.cpp:869
 msgid "Encrypts the message and all attachments before sending"
 msgstr "Encripta a mensagem e todos os anexos antes de enviar"
 
-#: src/gpgoladdin.cpp:854
+#: src/gpgoladdin.cpp:871
 msgid "Sign the message"
 msgstr "Assinar a mensagem"
 
-#: src/gpgoladdin.cpp:856
+#: src/gpgoladdin.cpp:873
 msgid "Sign the message and all attachments before sending"
 msgstr "Assinar a mensagem e todos os anexos antes de enviar"
 
-#: src/gpgoladdin.cpp:859
+#: src/gpgoladdin.cpp:876
 msgid "Sign and encrypt the message"
 msgstr "Assinar e encriptar a mensagem"
 
-#: src/gpgoladdin.cpp:861
+#: src/gpgoladdin.cpp:878
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -577,16 +577,16 @@ msgstr ""
 "destinatários podem ter a certeza que ninguém modificou a mensagem e apenas "
 "os destinatários podem lê-la"
 
-#: src/gpgoladdin.cpp:865
+#: src/gpgoladdin.cpp:882
 msgid "Open the settings dialog for GpgOL"
 msgstr "Abrir o diálogo de definições para o GpgOL"
 
-#: src/gpgoladdin.cpp:939 src/gpgoladdin.cpp:978 src/gpgoladdin.cpp:1084
-#: src/gpgoladdin.cpp:1086 src/gpgoladdin.cpp:1095 src/gpgoladdin.cpp:1132
-#: src/gpgoladdin.cpp:1164 src/gpgoladdin.cpp:1297 src/mail.cpp:927
+#: src/gpgoladdin.cpp:956 src/gpgoladdin.cpp:995 src/gpgoladdin.cpp:1101
+#: src/gpgoladdin.cpp:1103 src/gpgoladdin.cpp:1112 src/gpgoladdin.cpp:1149
+#: src/gpgoladdin.cpp:1181 src/gpgoladdin.cpp:1314 src/mail.cpp:927
 #: src/mail.cpp:1252 src/mail.cpp:1283 src/mail.cpp:1785 src/mail.cpp:1854
-#: src/mailitem-events.cpp:1038 src/ribbon-callbacks.cpp:743
-#: src/ribbon-callbacks.cpp:757 src/ribbon-callbacks.cpp:806
+#: src/mailitem-events.cpp:1038 src/ribbon-callbacks.cpp:751
+#: src/ribbon-callbacks.cpp:765 src/ribbon-callbacks.cpp:814
 #: src/wks-helper.cpp:461 src/cryptcontroller.cpp:113
 #: src/cryptcontroller.cpp:383 src/cryptcontroller.cpp:555
 #: src/cryptcontroller.cpp:570 src/cryptcontroller.cpp:747
@@ -594,41 +594,41 @@ msgstr "Abrir o diálogo de definições para o GpgOL"
 msgid "GpgOL"
 msgstr "GpgOL"
 
-#: src/gpgoladdin.cpp:940 src/gpgoladdin.cpp:1096
+#: src/gpgoladdin.cpp:957 src/gpgoladdin.cpp:1113
 msgid "Secure"
 msgstr "Seguro"
 
-#: src/gpgoladdin.cpp:941 src/gpgoladdin.cpp:1097
+#: src/gpgoladdin.cpp:958 src/gpgoladdin.cpp:1114
 msgid "Sign"
 msgstr "Assinar"
 
-#: src/gpgoladdin.cpp:942 src/gpgoladdin.cpp:1098
+#: src/gpgoladdin.cpp:959 src/gpgoladdin.cpp:1115
 msgid "Encrypt"
 msgstr "Encriptar"
 
-#: src/gpgoladdin.cpp:1087 src/gpgoladdin.cpp:1165
+#: src/gpgoladdin.cpp:1104 src/gpgoladdin.cpp:1182
 msgid "Settings"
 msgstr ""
 
 #. TRANSLATORS: Tooltip caption
-#: src/gpgoladdin.cpp:1089 src/gpgoladdin.cpp:1167
+#: src/gpgoladdin.cpp:1106 src/gpgoladdin.cpp:1184
 #, fuzzy
 msgid "Configure GpgOL keys and settings for this contact."
 msgstr "Configurar a chave OpenPGP para este contacto."
 
 #. TRANSLATORS: Tooltip content
-#: src/gpgoladdin.cpp:1091 src/gpgoladdin.cpp:1169
+#: src/gpgoladdin.cpp:1108 src/gpgoladdin.cpp:1186
 msgid ""
 "Configure contact specific keys and settings to override the default "
 "behavior for this contact."
 msgstr ""
 
-#: src/gpgoladdin.cpp:1093 src/gpgoladdin.cpp:1171
+#: src/gpgoladdin.cpp:1110 src/gpgoladdin.cpp:1188
 #, fuzzy
 msgid "GpgOL Settings"
 msgstr "Aviso do GpgOL"
 
-#: src/gpgoladdin.cpp:1100
+#: src/gpgoladdin.cpp:1117
 msgid "Permanently &amp;decrypt"
 msgstr "Permanentemente &amp;decifrar"
 
@@ -841,7 +841,7 @@ msgstr "Nível de Confiança 2"
 msgid "Encrypted"
 msgstr "Encriptada"
 
-#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:650
+#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:658
 msgid "Insecure"
 msgstr "Insegura"
 
@@ -857,7 +857,7 @@ msgstr "Mensagem assinada"
 msgid "Encrypted message"
 msgstr "Mensagem encriptada"
 
-#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:674
+#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:682
 msgid "Insecure message"
 msgstr "Mensagem insegura"
 
@@ -1226,11 +1226,11 @@ msgstr ""
 msgid "The interpreted data was:"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:678
+#: src/ribbon-callbacks.cpp:686
 msgid "No message selected"
 msgstr "Nenhuma mensagem selecionada"
 
-#: src/ribbon-callbacks.cpp:700
+#: src/ribbon-callbacks.cpp:708
 msgid ""
 "You cannot be sure who sent, modified and read the message in transit.\n"
 "\n"
@@ -1240,7 +1240,7 @@ msgstr ""
 "\n"
 "Clica aqui para saber mais."
 
-#: src/ribbon-callbacks.cpp:739
+#: src/ribbon-callbacks.cpp:747
 #, c-format
 msgid ""
 "The message was not cryptographically signed.\n"
@@ -1251,7 +1251,7 @@ msgstr ""
 "Não há nenhuma informação adicional disponível se ela foi realmente enviada "
 "por '%s' ou se alguém falsificou o endereço do remetente."
 
-#: src/ribbon-callbacks.cpp:754
+#: src/ribbon-callbacks.cpp:762
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
@@ -1259,7 +1259,7 @@ msgstr ""
 "Houve um erro ao verificar a assinatura.\n"
 "Detalhes completos:\n"
 
-#: src/ribbon-callbacks.cpp:807
+#: src/ribbon-callbacks.cpp:815
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
