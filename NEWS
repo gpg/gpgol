@@ -1,5 +1,9 @@
-Noteworthy changes for version 2.5.12 (unreleased)
+Noteworthy changes for version 2.5.12 (2024-01-02)
+==================================================
 
+* Fixed a crash that could occur when switchting to
+  Outlook applications back to mailview while an
+  encrypted mail was visible. (T6861)
 
 Noteworthy changes for version 2.5.11 (2023-11-29)
 ==================================================
