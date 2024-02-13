@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gpgol 2.4.7\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2024-07-03 12:16+0200\n"
-"PO-Revision-Date: 2020-10-01 22:27+0200\n"
-"Last-Translator: <aheinecke@g10code.com>\n"
+"POT-Creation-Date: 2024-01-02 12:49+0100\n"
+"PO-Revision-Date: 2024-02-10 13:55+0100\n"
+"Last-Translator: Denis Renzi <itis05@virgilio.it>\n"
 "Language-Team: Italian\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ASCII\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.4.3\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -455,7 +455,7 @@ msgstr "Blocca Outlook durante la decrittografia / verifica"
 #. TRANSLATORS: Config dialog debug page, can be technical.
 #: src/addin-options.cpp:206
 msgid "Do not save encrypted mails before decryption"
-msgstr ""
+msgstr "Non salvare le e-mail crittografate prima della decrittografia"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:208
@@ -464,9 +464,8 @@ msgstr "Come segnalare un problema?"
 
 #. TRANSLATORS: Config dialog.
 #: src/addin-options.cpp:210
-#, fuzzy
 msgid "&Always show security approval dialog"
-msgstr "&Mostra sempre la finestra di dialogo di approvazione della sicurezza."
+msgstr "&Mostra sempre la finestra di dialogo di approvazione della sicurezza"
 
 #: src/addin-options.cpp:211
 msgid "(slow)"
@@ -475,13 +474,13 @@ msgstr "(lento)"
 #. TRANSLATORS: Config dialog.
 #: src/addin-options.cpp:213
 msgid "Help"
-msgstr ""
+msgstr "Aiuto"
 
 #. TRANSLATORS: Only available in german and english please keep
 #. english for other langs
 #: src/addin-options.cpp:216
 msgid "handout_outlook_plugin_gnupg_en.pdf"
-msgstr ""
+msgstr "handout_outlook_plugin_gnupg_en.pdf"
 
 #. TRANSLATORS: Config dialog tooltip.
 #: src/addin-options.cpp:218
@@ -496,7 +495,7 @@ msgstr ""
 #. TRANSLATORS: Please ignore. Only available for german.
 #: src/addin-options.cpp:221
 msgid "https://gnupg.com/vsd/report.html"
-msgstr ""
+msgstr "https://gnupg.com/vsd/report.html"
 
 #: src/categorymanager.cpp:253
 msgid "Encrypted Message"
@@ -532,29 +531,27 @@ msgstr ""
 "tuo amministratore."
 
 #: src/common.cpp:1092
-#, fuzzy
 msgid "VS-NfD compliant"
-msgstr "La firma e' conforme a VS-NfD."
+msgstr "Conforme a VS-NfD"
 
 #: src/common.cpp:1093
-#, fuzzy
 msgid "not VS-NfD compliant"
-msgstr "La firma e' conforme a VS-NfD."
+msgstr "non conforme a VS-NfD"
 
 #: src/common.cpp:1180
-#, fuzzy, c-format
+#, c-format
 msgid "The message is %s."
-msgstr "Questo messaggio viene visualizzato una sola volta."
+msgstr ""
 
 #: src/common.cpp:1185
-#, fuzzy, c-format
+#, c-format
 msgid "The signature is %s."
-msgstr "La firma e' scaduta.\n"
+msgstr "Firma scaduta il %s."
 
 #: src/common.cpp:1190
-#, fuzzy, c-format
+#, c-format
 msgid "The encryption is %s."
-msgstr "La crittografia e' conforme a VS-NfD."
+msgstr ""
 
 #: src/gpgoladdin.cpp:867
 msgid "Encrypt the message"
@@ -758,9 +755,8 @@ msgid "Please wait while the message is being decrypted / verified..."
 msgstr "Attendi mentre il messaggio viene decrittografato / verificato..."
 
 #: src/mail.cpp:1657
-#, fuzzy
 msgid "GpgOL: Failed to update mail body."
-msgstr "Impossibile analizzare la posta."
+msgstr "GpgOL: Impossibile aggiornare il corpo della posta."
 
 #: src/mail.cpp:1786 src/mail.cpp:1855
 msgid "HTML display disabled."
@@ -1076,9 +1072,9 @@ msgstr ""
 "GpgOL dovrebbe sovrascrivere Outlook e continuare a elaborare il messaggio?"
 
 #: src/mail.cpp:5020
-#, fuzzy, c-format
+#, c-format
 msgid "Note: For %s communication you have to select Yes."
-msgstr "Nota: per la comunicazione VS-NfD e' necessario selezionare Si'."
+msgstr ""
 
 #: src/mail.cpp:5024
 msgid ""
@@ -1234,15 +1230,18 @@ msgid ""
 "please see the debug tab in the options on how to report\n"
 "this for further improvement."
 msgstr ""
+"Se questi dati non hanno l'aspetto di un messaggio crittografato\n"
+"Consulta la scheda Debug nelle opzioni su come segnalare\n"
+"questo per un ulteriore miglioramento."
 
 #: src/parsecontroller.cpp:503
 #, c-format
 msgid "Debug information: Message type: %i Data type: %i"
-msgstr ""
+msgstr "Informazioni di debug: Tipo di messaggio: %i Tipo di dati: %i"
 
 #: src/parsecontroller.cpp:505
 msgid "The interpreted data was:"
-msgstr ""
+msgstr "I dati interpretati sono stati:"
 
 #: src/ribbon-callbacks.cpp:686
 msgid "No message selected"
