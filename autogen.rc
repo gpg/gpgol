@@ -12,14 +12,5 @@ case "$myhost:$myhostsub" in
     ;;
 esac
 
-case "$myhost" in
-  w32|w64)
-    configure_opts="
-      --with-gpg-error-prefix=@SYSROOT@
-      --with-gpgme-prefix=@SYSROOT@
-      --with-libassuan-prefix=@SYSROOT@
-      "
-    ;;
-esac
 
 final_info="./configure --build-{w32,w64} && make"
