@@ -30,12 +30,12 @@ AM_LDFLAGS = @GPGME_LIBS@ -lgpgmepp @GPG_ERROR_LIBS@
 AM_CFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) -DBUILD_TESTS
 if !HAVE_W32_SYSTEM
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
-			  $(LIBASSUAN_CFLAGS) -std=c++11  -D_FILE_OFFSET_BITS=64 \
+			  $(LIBASSUAN_CFLAGS) -std=c++14  -D_FILE_OFFSET_BITS=64 \
 			  -DBUILD_TESTS -DDATADIR=\"$(abs_srcdir)/data\" \
               -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\" $(GPGMEPP_CXXFLAGS)
 else
 AM_CXXFLAGS = -I$(top_srcdir)/src $(GPGME_CFLAGS) $(GPGME_CFLAGS)/gpgme++ \
-			  $(LIBASSUAN_CFLAGS) $(GPGMEPP_CXXFLAGS) -std=c++11 \
+			  $(LIBASSUAN_CFLAGS) $(GPGMEPP_CXXFLAGS) -std=c++14 \
 			  -D_FILE_OFFSET_BITS=64 -DBUILD_TESTS
 endif
 
@@ -52,7 +52,6 @@ parser_SRC= ../src/parsecontroller.cpp \
 			../src/parsecontroller.h \
 			../src/attachment.cpp ../src/attachment.h \
 			../src/mimedataprovider.h ../src/mimedataprovider.cpp \
-			../src/keycache.cpp ../src/keycache.h \
 			../src/rfc822parse.c ../src/rfc822parse.h \
 			../src/rfc2047parse.c ../src/rfc2047parse.h \
 			../src/common_indep.c ../src/common_indep.h \
