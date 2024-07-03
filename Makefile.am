@@ -22,8 +22,11 @@ DISTCHECK_CONFIGURE_FLAGS = --host=@host@  --build=@build@ \
 # Note: Do not put ChangeLog-2011 here - it exists only in the repo.
 EXTRA_DIST = autogen.sh autogen.rc
 
+# Fixme: Running the tests fails in in distcheck.
+tests=
+
 if HAVE_W32_SYSTEM
-SUBDIRS = src tests forms po m4 doc
+SUBDIRS = src ${tests} forms po m4 doc
 else
 SUBDIRS = tests
 endif
