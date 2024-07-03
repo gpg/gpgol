@@ -402,10 +402,11 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
          was not found */
       filename = rfc2231_query_parameter (field, "name");
 
-      if (!filename && !strcmp(ctmain, "message")&& !strcmp(ctsub,"rfc822"))
-      {
-        filename = xstrdup("rfc822_email.eml");
-      }
+      if (!filename && ctmain && ctsub
+          && !strcmp (ctmain, "message") && !strcmp (ctsub, "rfc822"))
+        {
+          filename = xstrdup ("rfc822_email.eml");
+        }
     }
 
   /* Parse a Content Id header */

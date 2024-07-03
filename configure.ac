@@ -53,11 +53,10 @@ VERSION=$PACKAGE_VERSION
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR(src/gpgol.def)
-AM_CONFIG_HEADER(config.h)
 AC_CANONICAL_TARGET()
-AM_INIT_AUTOMAKE
-
-AC_GNU_SOURCE
+AM_INIT_AUTOMAKE([subdir-objects])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 have_gpg_error=no
 have_libassuan=no
@@ -65,6 +64,7 @@ have_libassuan=no
 AC_SUBST(PACKAGE)
 AC_SUBST(PACKAGE_GT)
 AC_SUBST(VERSION)
+AC_SUBST(SYSROOT)
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of this package])
 AC_DEFINE_UNQUOTED(PACKAGE_GT, "$PACKAGE_GT",
                                 [Name of this package for gettext])
@@ -85,7 +85,6 @@ BUILD_FILEVERSION=`echo "$VERSION" | sed 's/\([0-9.]*\).*/\1./;s/\./,/g'`
 changequote([,])dnl
 BUILD_FILEVERSION="${BUILD_FILEVERSION}${GIT_COMMIT_DECIMAL}"
 AC_SUBST(BUILD_FILEVERSION)
-
 
 AH_BOTTOM([
 /* Some global constants. */
@@ -192,7 +191,6 @@ AM_GNU_GETTEXT([external])
 USE_NLS=yes
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS(string.h unistd.h langinfo.h termio.h locale.h)
 
 # Check for functions

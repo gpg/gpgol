@@ -52,6 +52,7 @@ parser_SRC= ../src/parsecontroller.cpp \
 			../src/parsecontroller.h \
 			../src/attachment.cpp ../src/attachment.h \
 			../src/mimedataprovider.h ../src/mimedataprovider.cpp \
+			../src/keycache.cpp ../src/keycache.h \
 			../src/rfc822parse.c ../src/rfc822parse.h \
 			../src/rfc2047parse.c ../src/rfc2047parse.h \
 			../src/common_indep.c ../src/common_indep.h \

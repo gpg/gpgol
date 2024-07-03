@@ -1,5 +1,7 @@
-Noteworthy changes for version 2.5.13 (unreleased)
+Noteworthy changes for version 2.5.13 (2024-07-03)
 ==================================================
+
+* Fix for a missing filename in attachments.
 
 
 Noteworthy changes for version 2.5.12 (2024-01-02)
