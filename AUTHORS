@@ -1,7 +1,7 @@
 Package: gpgol
 Bugs:    https://bugs.gnupg.org
 Security related bug reports: <security@gnupg.org>
-Maintainer: Andre Heinecke <aheinecke@gnupg.org>
+Maintainer: g10 Code GmbH <code@g10code.com>
 License: LGPLv2.1+
 
 
