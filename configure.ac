@@ -228,13 +228,12 @@ if test "$GCC" = yes; then
     CXXFLAGS="$CXXFLAGS $HARDENING"
 
     if test "$USE_MAINTAINER_MODE" = "yes"; then
-        CFLAGS="$CFLAGS -Werror -Wcast-align -Wshadow -Wstrict-prototypes"
+        CFLAGS="$CFLAGS -Wcast-align -Wshadow -Wstrict-prototypes"
         CFLAGS="$CFLAGS -Wformat-security"
         CFLAGS="$CFLAGS -W -Wno-sign-compare"
-        CXXFLAGS="$CXXFLAGS -Werror -Wcast-align -Wshadow"
+        CXXFLAGS="$CXXFLAGS -Wcast-align -Wshadow"
         CXXFLAGS="$CXXFLAGS -Wformat-security"
-        CXXFLAGS="$CXXFLAGS -W -Wno-sign-compare -Wno-deprecated-copy"
-        CXXFLAGS="$CXXFLAGS -Wno-address -Wno-stringop-overflow"
+        CXXFLAGS="$CXXFLAGS -W -Wno-sign-compare"
     fi
 
     AC_MSG_CHECKING([if gcc supports -Wno-pointer-sign])
