@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="48px"
+   height="48px"
+   id="svg3020"
+   version="1.1"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   inkscape:export-filename="/home/aheinecke/arbeit/kf5/src/gpgol/src/icons/secure-64.png"
+   inkscape:export-xdpi="120"
+   inkscape:export-ydpi="120"
+   sodipodi:docname="no-sign-enc.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs3022" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="6.98"
+     inkscape:cx="-23.137536"
+     inkscape:cy="33.166189"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1176"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <metadata
+     id="metadata3025">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <polygon
+       id="polygon4191"
+       points="0,316.6 81.19,316.6 81.19,247.55 40.6,281.41 40.6,281.41 0,247.55 "
+       class="cls-4"
+       style="fill:#1f8ece"
+       transform="matrix(0.44696256,0,0,0.35766585,6.1519517,-65.132907)" />
+    <polygon
+       id="polygon4193"
+       points="0,242.65 40.6,276.5 81.19,242.65 0,242.65 "
+       class="cls-4"
+       style="fill:#1f8ece"
+       transform="matrix(0.44696256,0,0,0.35766585,6.1519517,-65.132907)" />
+    <path
+       id="path4195"
+       d="m 9.4684144,12.888323 v 7.353608 h 6.3200506 v -7.353608 c 0,-4.027318 3.81706,-7.3071137 8.492289,-7.3071137 4.675228,0 8.492289,3.2762188 8.492289,7.3071137 C 35.500477,8.9405958 35.28843,8.7532925 36.99984,6.4758837 34.40942,2.8196987 29.67321,0.37001749 24.267345,0.37001749 v 0 c -8.174945,0 -14.8257472,5.62250781 -14.8257472,12.51830551"
+       class="cls-3"
+       inkscape:connector-curvature="0"
+       style="fill:#3d3d3b"
+       sodipodi:nodetypes="cccssccssc" />
+    <polygon
+       transform="matrix(0.03995009,0,0,0.06006972,22.624966,15.642646)"
+       style="display:none;fill:#d65533;fill-opacity:1"
+       points="173.765,308.602 173.765,512 256.001,459.841 338.235,512 338.235,308.602 "
+       id="polygon3338" />
+    <polygon
+       transform="matrix(0.03995009,0,0,0.03995009,22.624966,21.851606)"
+       style="display:none;fill:#ff9070;fill-opacity:1"
+       points="408.732,143.13 440.064,184.064 408.732,224.999 415.425,276.119 367.779,295.844 348.053,343.49 296.935,336.796 256.001,368.129 215.065,336.796 163.945,343.488 144.221,295.843 96.575,276.119 103.268,224.999 71.936,184.064 103.268,143.13 96.575,92.01 144.221,72.285 163.946,24.639 215.065,31.333 256.001,0 296.935,31.333 348.055,24.639 367.779,72.286 415.425,92.01 "
+       id="polygon3340" />
+    <circle
+       transform="matrix(0.03995009,0,0,0.03995009,22.624966,21.851606)"
+       style="display:none;fill:#d65533;fill-opacity:1"
+       cx="255.996"
+       cy="184.06599"
+       r="112.206"
+       id="circle3342" />
+  </g>
+</svg>

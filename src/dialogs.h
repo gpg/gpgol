@@ -56,10 +56,22 @@
 #define IDI_VERIFY_48_PNG               0x6070
 #define IDI_EMBLEM_WARNING_64_PNG       0x6071
 #define IDI_EMBLEM_QUESTION_64_PNG      0x6074
-#define IDI_SIGN_ENCRYPT_40_PNG         0x6075
 #define IDI_ENCRYPT_20_PNG              0x6076
 #define IDI_SIGN_20_PNG                 0x6077
 #define IDI_GPGOL_LOCK_ICON             0x6078
+
+/* Ids for compose gpg button icon showing selected actions on send*/
+#define IDI_SIGN_ENCRYPT_40_PNG         0x6075
+#define IDI_ONLY_SIGN_40_PNG            0x6085
+#define IDI_ONLY_ENCRYPT_40_PNG         0x6095
+#define IDI_NO_SIGN_ENCRYPT_40_PNG      0x60A5
+#define ACTION_ICON_OFFSET              0x10
+
+/* GPG Actions */
+#define ACTION_NONE                     0
+#define ACTION_ENCRYPT                  1
+#define ACTION_SIGN                     2
+#define ACTION_SIGN_ENCRYPT             3
 
 /* Status icons */
 #define ENCRYPT_ICON_OFFSET             0x10
