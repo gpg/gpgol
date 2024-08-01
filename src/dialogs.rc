@@ -50,7 +50,11 @@ IDI_LEVEL_2                 RCDATA             "icons/level-3.png"
 IDI_LEVEL_3                 RCDATA             "icons/level-3.png"
 IDI_LEVEL_4                 RCDATA             "icons/level-4.png"
 
+IDI_ONLY_SIGN_40_PNG        RCDATA             "icons/sign-only-40.png"
+IDI_ONLY_ENCRYPT_40_PNG     RCDATA             "icons/enc-only-40.png"
+IDI_NO_SIGN_ENCRYPT_40_PNG  RCDATA             "icons/no-sign-enc-40.png"
 IDI_SIGN_ENCRYPT_40_PNG    RCDATA              "icons/sign-enc-40.png"
+
 IDI_ENCRYPT_20_PNG         RCDATA              "icons/encrypt-20.png"
 IDI_SIGN_20_PNG            RCDATA              "icons/sign-20.png"
 

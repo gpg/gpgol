@@ -86,6 +86,8 @@ HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result);
 HRESULT launch_cert_details (LPDISPATCH ctrl);
 /* Callback to get the sigstate icon. */
 HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result);
+/* Callback to get the sigstate icon. */
+HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result);
 /* Callback to get our own control reference */
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 /* Is the currently selected mail a crypto mail ? */

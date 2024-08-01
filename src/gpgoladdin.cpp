@@ -831,10 +831,11 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case ID_BTN_ENCSIGN_LARGE:
       case ID_BTN_SIGN_LARGE:
       case ID_BTN_VERIFY_LARGE:
-      case IDI_SIGN_ENCRYPT_40_PNG:
       case IDI_ENCRYPT_20_PNG:
       case IDI_SIGN_20_PNG:
         return getIcon (dispid, result);
+      case IDI_SIGN_ENCRYPT_40_PNG:
+        return get_action_icon (parms->rgvarg[0].pdispVal, result);
       case ID_BTN_SIGSTATE_LARGE:
         return get_crypto_icon (parms->rgvarg[0].pdispVal, result);
     }

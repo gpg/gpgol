@@ -835,6 +835,47 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result)
   return getIcon (IDI_LEVEL_0, result);
 }
 
+HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result)
+{
+  LPMESSAGE message = NULL;
+  MY_MAIL_GETTER
+  int flags = ACTION_SIGN_ENCRYPT;
+
+  LPDISPATCH context = NULL;
+  if (FAILED(getContext (ctrl, &context)))
+    {
+      TRACEPOINT;
+      return E_FAIL;
+    }
+
+  LPDISPATCH mailitem = get_oom_object (context, "CurrentItem");
+
+  if (mailitem)
+    {
+      TRACEPOINT;
+
+      message = get_oom_base_message (mailitem);
+
+      if (message)
+        {
+          flags = get_gpgol_draft_info_flags (message);
+          gpgol_release (message);
+        }
+      else
+        {
+          log_error ("%s:%s: No message found.",
+                   SRCNAME, __func__);
+        }
+
+        gpgol_release (mailitem);
+    }
+  gpgol_release (context);
+
+  TRACEPOINT;
+
+  return getIcon (IDI_NO_SIGN_ENCRYPT_40_PNG - ACTION_ICON_OFFSET * flags, result);
+}
+
 HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
