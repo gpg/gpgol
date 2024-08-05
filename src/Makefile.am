@@ -149,7 +149,8 @@ endif
 clean-local:
 	rm -f libmapi32.a libgpg-error.a libgpgme.a libassuan.a libgpgmepp.a
 
-gpgol_LDFLAGS = -static-libgcc -static-libstdc++
+gpgol_LDFLAGS = -static-libgcc -static-libstdc++ -static -lpthread
+
 
 gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgmepp -lgpgme -lassuan -lgpg-error \
