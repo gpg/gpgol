@@ -1379,60 +1379,78 @@ Mail::decryptVerify_o ()
     }
   m_decrypt_again = false;
 
+  bool do_save = false;
+
   LPMESSAGE oom_message = get_oom_message (m_mailitem);
   if (oom_message)
     {
-      char *old_class = mapi_get_old_message_class (oom_message);
-      char *current_class = mapi_get_message_class (oom_message);
-      if (current_class)
+      if (isSMIME_m ())
         {
-          /* Store our own class for an eventual close */
-          m_gpgol_class = current_class;
-          xfree (current_class);
-          current_class = nullptr;
+          char *old_class = mapi_get_old_message_class (oom_message);
+          char *current_class = mapi_get_message_class (oom_message);
+          if (current_class)
+            {
+              /* Store our own class for an eventual close */
+              m_gpgol_class = current_class;
+              xfree (current_class);
+              current_class = nullptr;
+            }
+          if (old_class)
+            {
+              /* What we do here is that for S/MIME we try to keep the original
+                 IPM.Note.SMIME message classes in the MAPI system. Sometimes
+                 our gpgol message class is written into mapi (probably when
+                 a write happens between before read and decrypt done). This
+                 breaks our mails for other clients using Outlook MAPI to
+                 detect if a mail is an S/MIME mail.
+                 See: T4278 for reference
+              */
+              const char *new_class = old_class;
+              if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted"))
+                {
+                  new_class = "IPM.Note.SMIME";
+                }
+              else if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueSigned"))
+                {
+                  new_class = "IPM.Note.SMIME.OpaqueSigned";
+                }
+              else if (!strcmp (old_class, "IPM.Note.GpgOL.MultipartSigned") ||
+                       !strcmp (old_class, "IPM.Note.GpgOL.SM.MultipartSigned"))
+                {
+                  /* Before rev. 66d0c18df5414760a3de0f62b4fbe801557a9425 we did
+                     not distinguish between SM.MultipartSigned and
+                     MultipartSigned in the MessageClass.
+                     The check that the Mail is currently detected as an
+                     S/MIME Mail ensures that we do not treat
+                     OpenPGP MultipartSigned afterwards as an S/MIME Mail. */
+                  new_class = "IPM.Note.SMIME.MultipartSigned";
+                }
+              if (strcmp (new_class, old_class))
+                {
+                  log_debug ("%s:%s:Restoring message class to %s in decverify.",
+                             SRCNAME, __func__, new_class);
+                  put_oom_string (m_mailitem, "MessageClass", new_class);
+                  do_save = true;
+                }
+              xfree (old_class);
+            }
         }
-      if (old_class)
-        {
-          const char *new_class = old_class;
-          /* Workaround that our own class might be the original */
-          if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted")/* ||
-              !strcmp (old_class, "IPM.Note.GpgOL.MultipartEncrypted") ||
-              !strcmp (old_class, "IPM.Note.GpgOL.PGPMessage")*/)
-            {
-              new_class = "IPM.Note.SMIME";
-            }
-          else if (!strcmp (old_class, "IPM.Note.GpgOL.MultipartSigned")/* ||
-                   !strcmp (old_class, "IPM.Note.GpgOL.ClearSigned")*/)
-            {
-              new_class = "IPM.Note.SMIME.MultipartSigned";
-            }
-          if (strcmp (new_class, old_class))
-            {
-              log_debug ("%s:%s:Restoring message class to %s in decverify.",
-                         SRCNAME, __func__, new_class);
-            }
 
-          put_oom_string (m_mailitem, "MessageClass", new_class);
-          xfree (old_class);
-        }
-      if (!opt.noSaveBeforeDecrypt)
+
+
+      if (m_gpgol_class == "IPM.Note.GpgOL.MultipartEncrypted" &&
+          !opt.noSaveBeforeDecrypt)
         {
-          setPassWrite (true);
+           log_dbg ("Invoking save to store potential third party changes "
+                    "before decryption.");
+           do_save = true;
+        }
+
+      if (do_save)
+        {
           /* Sync to MAPI */
-          log_dbg ("Invoking save to store potential changes before decryption.");
+          setPassWrite (true);
           invoke_oom_method (m_mailitem, "Save", nullptr);
-          /* This is important. Because even though the "Save" should have synced
-             us with MAPI we observed that without the below change the Read status
-             is not yet synced, only after leaving the mail is it synced. This
-             could cause problems because OL wanted to sync the ReadFlag change
-             but we wanted to prevent it from syncing any decrypted content. So
-             we set this here. This might cause problems with "read reciepts"
-             that are not sent when we do this programatically but no one should
-             use those anway,..
-
-             SetReadFlag does an IMapiMessage save anyway according to doc.
-             */
-          oom_message->SetReadFlag(0);
           setPassWrite (false);
         }
       gpgol_release (oom_message);

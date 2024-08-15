@@ -839,13 +839,25 @@ TODO: Handle split copy in another way
       /* This event ID is completely undocumented, neither in Outlook Spy
          nor in MSDN. I just observed that this ID was sent when we cancelled
          a write event but the write was still done and we would have come
-         into the after write event. So we handle this like a close which
+         into the after write event.
+
+         This event happens when a mail is marked as read and the read
+         marking needs to be synced to the server.
+
+         So when the mail was encrypted we fall through to close.
          then loses the changes and we see no AfterWrite afterwards. This
          is a safeguard against plaintext leak. But this event could
          mean something different altogether. */
       case WriteCancelIgnored:
-        log_dbg ("WriteCancelIgnored: %p falling through to close",
-                 m_mail);
+        log_dbg ("WriteCancelIgnored: %p", m_mail);
+        if (!(m_mail->getCryptoFlags() & 1))
+          {
+            TRETURN S_OK;
+          }
+        else
+          {
+            log_dbg ("Closing mail for safety reasons.");
+          }
         /* fall through */
       case Close:
         {
