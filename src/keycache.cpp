@@ -179,7 +179,7 @@ do_update (LPVOID arg)
     }
   KeyCache::instance ()->onUpdateJobDone (args->first.c_str(),
                                           newKey);
-  log_debug ("%s:%s Update job done",
+  log_debug ("%s:%s Update job done - idling",
              SRCNAME, __func__);
   TRETURN 0;
 }
