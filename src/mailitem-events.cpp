@@ -849,14 +849,15 @@ TODO: Handle split copy in another way
          is a safeguard against plaintext leak. But this event could
          mean something different altogether. */
       case WriteCancelIgnored:
-        log_dbg ("WriteCancelIgnored: %p", m_mail);
-        if (!(m_mail->getCryptoFlags() & 1))
+        log_oom ("%s:%s: WriteCancelIgnored: %p",
+                 SRCNAME, __func__, m_mail);
+        if (!((m_mail->getCryptoFlags() & 1) && opt.closeOnUnknownWriteEvent))
           {
             TRETURN S_OK;
           }
         else
           {
-            log_dbg ("Closing mail for safety reasons.");
+            log_dbg ("Closing mail in WriteCancelIgnoredHandler");
           }
         /* fall through */
       case Close:

@@ -209,6 +209,13 @@ struct opt_s
                                 to save and then bypass our save blocks but might
                                 cause excessive syncs. So better have this as a debug
                                 option. */
+  int closeOnUnknownWriteEvent; /* Observations have shown write events which were
+                                announced by the event: 0xFC99 There might be
+                                an extremely rare plaintext leak associated with
+                                that. So we had code to close and discard changes
+                                to encrypted mails when we see that event. This option
+                                allows to activate this code if an Outlook or Exchange
+                                update or some special configuration make this neccessary. */
   char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured for S/MIME
                                 signing but no cert is found. */
 
