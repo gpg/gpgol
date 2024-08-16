@@ -1655,6 +1655,20 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
         {
           newvalue = change_message_class_ipm_note_smime (message);
         }
+      else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
+        {
+          /* IPM.Note.SMIME.MultipartSigned is set by Exchange for
+             any multipart/signed content type regardgless of the
+             protocol. So we need this handler even if SMIME is
+             disabled to check if it is a PGP Message.*/
+          newvalue = change_message_class_ipm_note_smime_multipartsigned
+            (message);
+          if (!newvalue && opt.enable_smime)
+            {
+              log_dbg ("multipart/signed mail is not a PGP/MIME mail");
+              newvalue = change_message_class_ipm_note_smime (message);
+            }
+        }
       else if (opt.enable_smime
                && !strncmp (s, "IPM.Note.SMIME", 14) && (!s[14]||s[14] =='.'))
         {
@@ -1681,14 +1695,6 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
               gpgrt_asprintf (&newvalue, "IPM.Note.GpgOL.SM%s", s+14);
               memdbg_alloc (newvalue);
             }
-        }
-      else if (!strcmp (s, "IPM.Note.SMIME.MultipartSigned"))
-        {
-          /* This is an S/MIME message class but smime support is not
-             enabled.  We need to check whether this is actually a
-             PGP/MIME message.  */
-          newvalue = change_message_class_ipm_note_smime_multipartsigned
-            (message);
         }
       else if (sync_override && have_override
                && !strncmp (s, "IPM.Note.GpgOL", 14) && (!s[14]||s[14] =='.'))

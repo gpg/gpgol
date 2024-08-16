@@ -1384,10 +1384,25 @@ Mail::decryptVerify_o ()
   LPMESSAGE oom_message = get_oom_message (m_mailitem);
   if (oom_message)
     {
-      if (isSMIME_m ())
+      char *old_class = mapi_get_old_message_class (oom_message);
+      /* The old class is the class "before" the beforeRead event. We
+         want to keep that class even if we moved it around temporarily
+         for S/MIME on the server so that other tools can read them, too.
+         See: T4278 for reference
+
+         IPM.Note.SMIME.MultipartSigned is a special case because this is
+         also set (in more recent versions?) for signed only PGP/MIME mail.
+         This allows Outlook and the Web interface to display the message
+         and the attachments even if GpgOL is disabled. If we would keep
+         it in a custom message class the Mail could no longer be read
+         if GpgOL is disabled, even though it was not encrypted in the
+         first place. */
+      if (isSMIME_m () ||
+          (old_class && !strcmp (old_class, "IPM.Note.SMIME.MultipartSigned")))
         {
-          char *old_class = mapi_get_old_message_class (oom_message);
           char *current_class = mapi_get_message_class (oom_message);
+          log_dbg ("Message classes in MAPI are: old: %s current: %s",
+                   old_class, current_class);
           if (current_class)
             {
               /* Store our own class for an eventual close */
@@ -1397,46 +1412,40 @@ Mail::decryptVerify_o ()
             }
           if (old_class)
             {
-              /* What we do here is that for S/MIME we try to keep the original
-                 IPM.Note.SMIME message classes in the MAPI system. Sometimes
-                 our gpgol message class is written into mapi (probably when
-                 a write happens between before read and decrypt done). This
-                 breaks our mails for other clients using Outlook MAPI to
-                 detect if a mail is an S/MIME mail.
-                 See: T4278 for reference
-              */
+              /* Note that the old_class should be IPM.Note.SMIME.foo and
+                 not IPM.Note.GpgOL.foo since that is set in the
+                 beforeRead event before as the class we initially see.
+
+                 Below checks are just a precaution and to fix broken
+                 mails on the server the next time they are viewed.
+                 */
+
               const char *new_class = old_class;
-              if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted"))
+              /* We do not use Multipart Encrypted for S/MIME so both
+                 these go to IPM.Note.SMIME as they are originally set. */
+              if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueEncrypted") ||
+                  !strcmp (old_class, "IPM.Note.GpgOL.OpaqueSigned"))
                 {
                   new_class = "IPM.Note.SMIME";
                 }
-              else if (!strcmp (old_class, "IPM.Note.GpgOL.OpaqueSigned"))
-                {
-                  new_class = "IPM.Note.SMIME.OpaqueSigned";
-                }
+              /* Before rev. 66d0c18df5414760a3de0f62b4fbe801557a9425 we did
+                 not distinguish between SM.MultipartSigned and
+                 MultipartSigned in the MessageClass.
+                 The check that the Mail is currently detected as an
+                 S/MIME Mail ensures that we do not treat
+                 OpenPGP MultipartSigned afterwards as an S/MIME Mail. */
               else if (!strcmp (old_class, "IPM.Note.GpgOL.MultipartSigned") ||
                        !strcmp (old_class, "IPM.Note.GpgOL.SM.MultipartSigned"))
                 {
-                  /* Before rev. 66d0c18df5414760a3de0f62b4fbe801557a9425 we did
-                     not distinguish between SM.MultipartSigned and
-                     MultipartSigned in the MessageClass.
-                     The check that the Mail is currently detected as an
-                     S/MIME Mail ensures that we do not treat
-                     OpenPGP MultipartSigned afterwards as an S/MIME Mail. */
                   new_class = "IPM.Note.SMIME.MultipartSigned";
                 }
-              if (strcmp (new_class, old_class))
-                {
-                  log_debug ("%s:%s:Restoring message class to %s in decverify.",
-                             SRCNAME, __func__, new_class);
-                  put_oom_string (m_mailitem, "MessageClass", new_class);
-                  do_save = true;
-                }
-              xfree (old_class);
+              log_debug ("%s:%s: Restoring message class to %s from %s in decverify.",
+                         SRCNAME, __func__, new_class, old_class);
+              put_oom_string (m_mailitem, "MessageClass", new_class);
+              do_save = true;
             }
         }
-
-
+      xfree (old_class);
 
       if (m_gpgol_class == "IPM.Note.GpgOL.MultipartEncrypted" &&
           !opt.noSaveBeforeDecrypt)
