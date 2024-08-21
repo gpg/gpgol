@@ -6,8 +6,6 @@ Noteworthy changes for version 2.5.13 (unreleased)
 
 * Fix a regression in the marking of read mails.  [T7223]
 
-* Fix for a missing filename in attachments.  [rO0d16049d41]
-
 * Staticaly link with the threads library for improved robustness.
   [T7241]
 

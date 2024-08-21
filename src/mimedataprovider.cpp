@@ -401,12 +401,6 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       /* Check for Content-Type name if Content-Disposition filename
          was not found */
       filename = rfc2231_query_parameter (field, "name");
-
-      if (!filename && ctmain && ctsub
-          && !strcmp (ctmain, "message") && !strcmp (ctsub, "rfc822"))
-        {
-          filename = xstrdup ("rfc822_email.eml");
-        }
     }
 
   /* Parse a Content Id header */
