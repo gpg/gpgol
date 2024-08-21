@@ -1,7 +1,18 @@
 Noteworthy changes for version 2.5.13 (unreleased)
 ==================================================
 
-* Fix for a missing filename in attachments.
+* Fix duplications of shown attachments and other oddities in signed
+  mails.  Regression was introduced after 2.5.6.  [T7242]
+
+* Fix a regression in the marking of read mails.  [T7223]
+
+* Fix for a missing filename in attachments.  [rO0d16049d41]
+
+* Staticaly link with the threads library for improved robustness.
+  [T7241]
+
+* Update the Italian translation.
+
 
 
 Noteworthy changes for version 2.5.12 (2024-01-02)
