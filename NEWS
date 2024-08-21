@@ -1,20 +1,23 @@
-Noteworthy changes for version 2.5.13 (unreleased)
+Noteworthy changes for version 2.5.13 (2024-08-21)
 ==================================================
 
-* Fix duplications of shown attachments and other oddities in signed
-  mails.  Regression was introduced after 2.5.6.  [T7242]
+* Fix duplications of shown attachments and other
+  oddities in signed mails.
+  Regression was introduced after 2.5.6.  [T7242]
 
-* Fixed additional incompatibilities with third party mail clients
-  where multipart/signed mails would be shown as empty, after
-  opening them with GpgOL. (since 2.4.6) [T7242]
+* Fixed additional incompatibilities with third
+  party mail clients where multipart/signed mails
+  would be shown as empty, after opening them with
+  GpgOL. (since 2.4.6) [T7242]
 
-* Fix a regression in the marking of read mails.  [T7223]
+* Fixed that mails were marked directly as read
+  when viewed in GpgOL, disregarding the Outlook
+  settings. [T7223]
 
-* Staticaly link with the threads library for improved robustness.
-  [T7241]
+* Staticaly link with the threads library for
+  improved robustness. [T7241]
 
 * Update the Italian translation.
-
 
 
 Noteworthy changes for version 2.5.12 (2024-01-02)
