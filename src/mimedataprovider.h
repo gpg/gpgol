@@ -128,6 +128,10 @@ public:
 
   std::string get_content_type () const;
   void set_content_type (const char *ctmain, const char *ctsub);
+
+  /* Search for the MIME Header which. Handles line continuation
+     and encoding to return an UTF-8 encoded header. */
+  std::string get_header (const std::string &which) const;
 private:
 #ifdef HAVE_W32_SYSTEM
   /* Collect the data from mapi. */

@@ -95,6 +95,8 @@ struct mime_context
                              plain rfc822 message.  */
   int in_protected_headers; /* Indicates if we are in a mime part that was
                                marked by a protected headers header. */
+  int in_encapsulated_msg;  /* Indicates that we are currently in an
+                               encapsulated message */
 
   /* A linked list describing the structure of the mime message.  This
      list gets build up while parsing the message.  */
@@ -381,8 +383,14 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     {
       /* Either there is no content type field or it is faulty; in
          both cases we fall back to text/plain.  */
+      log_dbg ("No media type detected - assuming text/plain");
       ctmain = "text";
       ctsub  = "plain";
+    }
+    if (!ctsub)
+    {
+      log_dbg ("No subtype detected. For ctmain: %s", ctmain);
+      ctsub = "";
     }
 
   log_debug ("%s:%s: ctx=%p, ct=`%s/%s'\n",
@@ -514,6 +522,15 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
                  SRCNAME, __func__);
       ctx->collect_crypto_data = 1;
     }
+  else if (ctx->nesting_level >= 1 &&
+           !strcmp (ctmain, "message") &&
+           !strcmp (ctsub, "rfc822"))
+    {
+      /* This is an encapsulated / attached MIME message which
+         we need to treat as a blob to avoid confusing the current
+         mimeparser state. */
+      ctx->in_encapsulated_msg = 1;
+    }
   else /* Other type. */
     {
       /* Check whether this attachment is an opaque signed S/MIME
@@ -536,11 +553,13 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
 
   log_debug ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
                    " charset=\"%s\"\n body_seen=%d is_text_attachment=%d"
-                   " is_protected_headers=%d",
+                   " is_protected_headers=%d in_encapsulated_msg=%d"
+                   " collect_crypto_data=%d",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
                    ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"",
-                   ctx->body_seen, is_text_attachment, is_protected_headers);
+                   ctx->body_seen, is_text_attachment, is_protected_headers,
+                   ctx->in_encapsulated_msg, ctx->collect_crypto_data);
 
   /* If this is a text part, decide whether we treat it as one
      of our bodies.
@@ -584,6 +603,10 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
         {
           /* Treat it as an attachment.  */
           ctx->current_attachment = provider->create_attachment();
+          if (ctx->in_encapsulated_msg)
+            {
+              ctx->current_attachment->set_is_mime (true);
+            }
           ctx->collect_body = 0;
           ctx->collect_html_body = 0;
           log_debug ("%s:%s: Collecting attachment.",
@@ -830,14 +853,51 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                    m_mime_ctx->collect_signature,
                    m_mime_ctx->in_protected_headers);
 #endif
-          /* Check the next state */
-          if (rfc822parse_insert (m_mime_ctx->msg,
+          /* Check the next state if we are not currently parsing
+             an encapsulated mime strucutre. */
+          if (!m_mime_ctx->in_encapsulated_msg &&
+              rfc822parse_insert (m_mime_ctx->msg,
                                   (unsigned char*) linebuf,
                                   pos))
             {
               log_error ("%s:%s: rfc822 parser failed: %s\n",
                          SRCNAME, __func__, strerror (errno));
               TRETURN not_taken;
+            }
+          else if (m_mime_ctx->in_encapsulated_msg)
+            {
+              /* In an encapsulated message only break out when we see the next
+               * boundary. */
+              const char *boundary = rfc822parse_query_boundary (m_mime_ctx->msg);
+              if (!boundary)
+                {
+                  STRANGEPOINT;
+                  TRETURN not_taken;
+                }
+              std::string bound = std::string ("--") + boundary + std::string ("--");
+              std::string line = std::string (linebuf, pos);
+              log_dbg("comparing: '%s' with '%s'", bound.c_str(),
+                      line.c_str());
+
+              if (bound == line)
+                {
+                  log_dbg ("Found outer boundary of encapsulated message."
+                           " Continuing with rfc822parse.");
+                  m_mime_ctx->in_encapsulated_msg = 0;
+                  /* Put an empty line followed by the boundary in the parser */
+
+                  if (rfc822parse_insert (m_mime_ctx->msg,
+                                          (unsigned char*) "\r\n",
+                                          2) ||
+                      rfc822parse_insert (m_mime_ctx->msg,
+                                          (unsigned char*) linebuf,
+                                          pos))
+                    {
+                      log_error ("%s:%s: rfc822 encapsulated parser failed: %s\n",
+                                 SRCNAME, __func__, strerror (errno));
+                      TRETURN not_taken;
+                    }
+                }
             }
 
           /* Check if the first line of the body is actually
@@ -931,12 +991,21 @@ MimeDataProvider::collect_input_lines(const char *input, size_t insize)
                     }
                   m_mime_ctx->collect_html_body = 2;
                 }
-              else if (m_mime_ctx->current_attachment && len)
+              else if (m_mime_ctx->current_attachment &&
+                       (len || m_mime_ctx->in_encapsulated_msg))
                 {
-                  m_mime_ctx->current_attachment->get_data().write(linebuf, len);
-                  if (!m_mime_ctx->is_base64_encoded && !slbrk)
+                  /* skip the first empty line */
+                  if (!len && m_mime_ctx->in_encapsulated_msg == 1)
                     {
-                      m_mime_ctx->current_attachment->get_data().write("\r\n", 2);
+                      m_mime_ctx->in_encapsulated_msg = 2;
+                    }
+                  else
+                    {
+                      m_mime_ctx->current_attachment->get_data().write(linebuf, len);
+                      if (!m_mime_ctx->is_base64_encoded && !slbrk)
+                        {
+                          m_mime_ctx->current_attachment->get_data().write("\r\n", 2);
+                        }
                     }
                 }
               else
@@ -1269,11 +1338,16 @@ MimeDataProvider::create_attachment()
   /* TODO handle encoding */
 }
 
-static std::string
-get_header (rfc822parse_t msg, const std::string &which)
+std::string
+MimeDataProvider::get_header (const std::string &which) const
 {
   TSTART;
-  const char *buf = rfc822parse_get_field (msg,
+  if (!m_mime_ctx || !m_mime_ctx->msg)
+    {
+      STRANGEPOINT;
+      return std::string ();
+    }
+  const char *buf = rfc822parse_get_field (m_mime_ctx->msg,
                                            which.c_str (), -1,
                                            nullptr);
   if (buf)
@@ -1322,7 +1396,7 @@ void MimeDataProvider::finalize ()
     {
       for (const auto &hdr: user_headers)
         {
-          m_protected_headers.emplace (hdr, get_header (m_mime_ctx->msg, hdr));
+          m_protected_headers.emplace (hdr, get_header (hdr));
         }
     }
   /* Now check the mime strucutre for that legacy-display handling of

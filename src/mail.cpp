@@ -839,66 +839,17 @@ Mail::add_attachments_o (std::vector<std::shared_ptr<Attachment> > attachments)
   std::vector<std::string> failedNames;
   for (auto att: attachments)
     {
-      int err = 0;
-      const auto dispName = att->get_display_name ();
-      if (dispName.empty())
-        {
-          log_error ("%s:%s: Ignoring attachment without display name.",
-                     SRCNAME, __func__);
-          continue;
-        }
-      wchar_t* wchar_name = utf8_to_wchar (dispName.c_str());
-      if (!wchar_name)
-        {
-          log_error ("%s:%s: Failed to convert '%s' to wchar.",
-                     SRCNAME, __func__, anonstr (dispName.c_str()));
-          continue;
-        }
-
-      HANDLE hFile;
-      wchar_t* wchar_file = get_tmp_outfile (wchar_name,
-                                             &hFile);
-      if (!wchar_file)
-        {
-          log_error ("%s:%s: Failed to obtain a tmp filename for: %s",
-                     SRCNAME, __func__, anonstr (dispName.c_str()));
-          err = 1;
-        }
-      if (!err && att->copy_to (hFile))
-        {
-          log_error ("%s:%s: Failed to copy attachment %s to temp file",
-                     SRCNAME, __func__, anonstr (dispName.c_str()));
-          err = 1;
-        }
-      if (!err && add_oom_attachment (m_mailitem, wchar_file, wchar_name,
-                                      addErrStr, &addErrCode))
-        {
-          log_error ("%s:%s: Failed to add attachment: %s",
-                     SRCNAME, __func__, anonstr (dispName.c_str()));
-          failedNames.push_back (dispName);
-          err = 1;
-        }
-      if (hFile && hFile != INVALID_HANDLE_VALUE)
-        {
-          CloseHandle (hFile);
-        }
-      if (wchar_file && !DeleteFileW (wchar_file))
-        {
-          log_error ("%s:%s: Failed to delete tmp attachment for: %s",
-                     SRCNAME, __func__, anonstr (dispName.c_str()));
-          err = 1;
-        }
-      xfree (wchar_file);
-      xfree (wchar_name);
-
+      int err = att->attach_to (m_mailitem, addErrStr, &addErrCode);
       if (!err)
         {
           log_debug ("%s:%s: Added attachment '%s'",
-                     SRCNAME, __func__, anonstr (dispName.c_str()));
+                     SRCNAME, __func__,
+                     anonstr (att->get_display_name ().c_str ()));
           err = fixup_last_attachment_o (m_mailitem, att);
         }
       if (err)
         {
+          failedNames.push_back (att->get_display_name ());
           anyError = true;
         }
     }

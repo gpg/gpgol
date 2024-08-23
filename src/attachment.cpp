@@ -23,6 +23,8 @@
 #include "common_indep.h"
 #include "attachment.h"
 #include "mymapitags.h"
+#include "mapihelp.h"
+#include "mimedataprovider.h"
 
 #include <climits>
 
@@ -209,7 +211,135 @@ Attachment::get_content_type() const
   return m_ctype;
 }
 
+void
+Attachment::set_is_mime (const bool &val)
+{
+  m_is_mime = val;
+}
+
+bool
+Attachment::is_mime () const
+{
+  return m_is_mime;
+}
+
 #ifdef _WIN32
+int
+Attachment::attach_to (LPDISPATCH mailitem, std::string &r_errStr,
+                       int *r_errCode)
+{
+  TSTART;
+  int err = 0;
+
+  if (!mailitem)
+    {
+      STRANGEPOINT;
+      TRETURN 1;
+    }
+
+  if (m_is_mime)
+    {
+      log_dbg ("Parsing mime data of embedded mail.");
+      MimeDataProvider mimeinfo;
+      char buf[4096];
+      size_t nread;
+      /* Rewind */
+      m_data.rewind ();
+      while ((nread = m_data.read (buf, 4096)) > 0)
+        {
+          mimeinfo.write (buf, nread);
+        }
+      m_data.rewind ();
+      const auto subject = mimeinfo.get_header ("Subject");
+      if (!subject.size ())
+        {
+          log_dbg ("Could not extract subject");
+          m_utf8DisplayName = _("unknonwn embedded message");
+        }
+      else if (subject.size () >= MAX_PATH - 4)
+        {
+          log_dbg ("Subject too long %s", anonstr (subject.c_str ()));
+          m_utf8DisplayName = subject.substr (0, MAX_PATH - 4);
+        }
+      else
+        {
+          log_dbg ("Using subject '%s' as display name",
+                   anonstr (subject.c_str ()));
+          m_utf8DisplayName = subject;
+        }
+
+      // We have ensured that subject is smaller then MAX_PATH - 4, even
+      // though we are the unicode API to avoid ridicicoulous paths. Now
+      // we can sanitize that display name to get a file name.
+      // Check if the string contains a period
+      m_fileName = sanitizeFileName (m_utf8DisplayName);
+      if (m_fileName.find('.') == std::string::npos)
+        {
+          // If no period is found, append .eml
+          m_fileName += ".eml";
+        }
+      log_data ("Displayname for encapsulated message: '%s' \n Filename: '%s'",
+                m_utf8DisplayName.c_str (), m_fileName.c_str ());
+    }
+
+  /* Looking at this several years after the code was written I
+     do not understand why we don't set a fallback name like
+     unknown attachment in this case. But to keep bug compatibility
+     I am not changing this.   aheinecke - 2024-08-22 */
+  const auto dispName = get_display_name ();
+  if (dispName.empty())
+    {
+      log_dbg ("%s:%s: Ignoring attachment without display name.",
+                 SRCNAME, __func__);
+      TRETURN 0;
+    }
+
+  wchar_t* wchar_name = utf8_to_wchar (m_fileName.empty() ? dispName.c_str ()
+                                                          : m_fileName.c_str ());
+  if (!wchar_name)
+    {
+      log_error ("%s:%s: Failed to convert '%s' to wchar.",
+                 SRCNAME, __func__, anonstr (dispName.c_str()));
+      TRETURN 0;
+    }
+
+  HANDLE hFile;
+  wchar_t* wchar_file = get_tmp_outfile (wchar_name,
+                                         &hFile);
+  if (!wchar_file)
+    {
+      log_error ("%s:%s: Failed to obtain a tmp filename for: %s",
+                 SRCNAME, __func__, anonstr (dispName.c_str()));
+      err = 1;
+    }
+  if (!err && copy_to (hFile))
+    {
+      log_error ("%s:%s: Failed to copy attachment %s to temp file",
+                 SRCNAME, __func__, anonstr (dispName.c_str()));
+      err = 1;
+    }
+  if (!err && add_oom_attachment (mailitem, wchar_file, wchar_name,
+                                  r_errStr, r_errCode))
+    {
+      log_error ("%s:%s: Failed to add attachment: %s",
+                 SRCNAME, __func__, anonstr (dispName.c_str()));
+      err = 1;
+    }
+  if (hFile && hFile != INVALID_HANDLE_VALUE)
+    {
+      CloseHandle (hFile);
+    }
+  if (wchar_file && !DeleteFileW (wchar_file))
+    {
+      log_error ("%s:%s: Failed to delete tmp attachment for: %s",
+                 SRCNAME, __func__, anonstr (dispName.c_str()));
+      err = 1;
+    }
+  xfree (wchar_file);
+  xfree (wchar_name);
+  TRETURN err;
+}
+
 int
 Attachment::copy_to (HANDLE hFile)
 {

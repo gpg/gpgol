@@ -83,6 +83,8 @@ const char *rfc822parse_query_parameter (rfc822parse_field_t ctx,
 const char *rfc822parse_query_media_type (rfc822parse_field_t ctx,
                                           const char **subtype);
 
+const char *rfc822parse_query_boundary (rfc822parse_t msg);
+
 #ifdef __cplusplus
 }
 #endif

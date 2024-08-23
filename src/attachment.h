@@ -60,6 +60,10 @@ public:
   void set_content_type (const char *type);
   std::string get_content_type () const;
 
+  /* Is the data itself in mime encoding */
+  void set_is_mime (const bool &val);
+  bool is_mime () const;
+
   /* get the underlying data structure */
   GpgME::Data& get_data();
 
@@ -69,6 +73,11 @@ public:
 
   /** Copy the attachment to a file handle */
   int copy_to (HANDLE hFile);
+
+  /** Add the attachment to a Mailitem. Returns the error
+   * information of the AddAttachment call in r_errStr and
+   * r_errCode. */
+  int attach_to (LPDISPATCH mailitem, std::string &r_errStr, int *r_errCode);
 #endif
 private:
   GpgME::Data m_data;
@@ -77,6 +86,7 @@ private:
   attachtype_t m_type;
   std::string m_cid;
   std::string m_ctype;
+  bool m_is_mime = false;
 };
 
 #endif // ATTACHMENT_H
