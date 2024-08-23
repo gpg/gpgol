@@ -43,6 +43,9 @@
 
 #include <string>
 #include <fstream>
+#include <regex>
+#include <algorithm>
+#include <vector>
 
 #include <gpgme++/context.h>
 #include <gpgme++/error.h>
@@ -577,7 +580,7 @@ wchar_t*
 get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
 {
   TSTART
-  auto utf8Name = wchar_to_utf8_string (name);
+  auto utf8Name = sanitizeFileName(wchar_to_utf8_string (name));
   const auto tmpPath = getTmpPathUtf8 ();
 
   if (utf8Name.empty() || tmpPath.empty())
@@ -1223,4 +1226,97 @@ get_gpgme_w32_inst_dir (void)
     }
   OutputDebugString("Failed to find gpgme-w32spawn.exe!");
   return NULL;
+}
+
+#define WINDOWS_DEVICES_PATTERN "(CON|AUX|PRN|NUL|COM[1-9]|LPT[1-9])(\\..*)?"
+#define SLASHES "/\\"
+
+static const std::regex&
+windowsDeviceNoSubDirPattern()
+{
+  static const std::regex rc ("^" WINDOWS_DEVICES_PATTERN "$", std::regex_constants::icase);
+  return rc;
+}
+
+static const std::regex&
+windowsDeviceSubDirPattern()
+{
+  static const std::regex rc ("^.*[/\\\\]" WINDOWS_DEVICES_PATTERN "$", std::regex_constants::icase);
+  return rc;
+}
+
+static const char notAllowedCharsSubDir[] = ",^@={}[]~!?:&*\"|#%<>$\"'();`' ";
+static const char notAllowedCharsNoSubDir[] = ",^@={}[]~!?:&*\"|#%<>$\"'();`' " SLASHES;
+static const char* notAllowedSubStrings[] = {".."};
+
+bool
+validateWindowsFileName(const std::string& name, bool allowDirectories)
+{
+  if (name.empty ())
+    {
+      return false;
+    }
+
+  // Characters
+  const char* notAllowedChars = allowDirectories ? notAllowedCharsSubDir
+                                                 : notAllowedCharsNoSubDir;
+  for (const char* c = notAllowedChars; *c; ++c)
+    {
+      if (name.find(*c) != std::string::npos)
+        {
+          return false;
+        }
+    }
+
+  // Substrings
+  for (const auto& subStr : notAllowedSubStrings) {
+      if (name.find(subStr) != std::string::npos)
+        {
+          return false;
+        }
+  }
+
+  // Windows devices
+  bool matchesWinDevice = std::regex_match(name, windowsDeviceNoSubDirPattern());
+  if (!matchesWinDevice && allowDirectories)
+    {
+      matchesWinDevice = std::regex_match(name, windowsDeviceSubDirPattern());
+    }
+  return !matchesWinDevice;
+}
+
+std::string
+sanitizeFileName(std::string name, bool allowDirectories)
+{
+  if (name.empty())
+    {
+      return "attachment";
+    }
+
+  // Characters
+  const char* notAllowedChars = allowDirectories ? notAllowedCharsSubDir
+                                                 : notAllowedCharsNoSubDir;
+  for (const char* c = notAllowedChars; *c; ++c)
+    {
+      name.erase(std::remove(name.begin(), name.end(), *c), name.end());
+    }
+
+  // Substrings
+  for (const auto& subStr : notAllowedSubStrings)
+    {
+      size_t pos;
+      while ((pos = name.find(subStr)) != std::string::npos)
+        {
+          name.erase(pos, std::strlen(subStr));
+        }
+    }
+
+  // Windows devices
+  if (std::regex_match(name, windowsDeviceNoSubDirPattern()) ||
+      (allowDirectories && std::regex_match(name, windowsDeviceSubDirPattern())))
+    {
+      name = "_" + name;
+    }
+
+  return name.empty() ? "_" : name;
 }

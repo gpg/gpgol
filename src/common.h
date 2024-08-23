@@ -160,5 +160,16 @@ HANDLE CreateFileUtf8 (const char *utf8Name);
    -1 if it is not set or not found. */
 int
 read_reg_bool (HKEY root, const char *path, const char *value);
+
+/* Remove characters which may not be a part of a filename from
+   the string @name. If @allowDirectories is set the rules
+   for directories are used. */
+std::string sanitizeFileName(std::string name,
+                             bool allowDirectories = false);
+
+/* Check if the filename @name can be used on Windows. If @allowDirectories
+   is set the check is for directory names. */
+bool validateWindowsFileName(const std::string& name,
+                             bool allowDirectories = false);
 #endif
 #endif /*GPGOL_COMMON_H*/
