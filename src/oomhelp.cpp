@@ -3287,8 +3287,8 @@ is_mail_in_folder (LPDISPATCH mailitem, int folder)
 
   bool ret = !strcmp (target_id, folder_id);
 
-  free (target_id);
-  free (folder_id);
+  xfree (target_id);
+  xfree (folder_id);
   TRETURN ret;
 }
 
