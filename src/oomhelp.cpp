@@ -2055,6 +2055,7 @@ create_category (LPDISPATCH categories, const char *category, int color)
   dispparams.cNamedArgs = 0;
   dispparams.rgvarg = cVariant;
 
+  VariantInit (&rVariant);
   hr = categories->Invoke (dispid, IID_NULL, LOCALE_SYSTEM_DEFAULT,
                            DISPATCH_METHOD, &dispparams,
                            &rVariant, &execpinfo, &argErr);
