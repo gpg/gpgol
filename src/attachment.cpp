@@ -254,7 +254,7 @@ Attachment::attach_to (LPDISPATCH mailitem, std::string &r_errStr,
       if (!subject.size ())
         {
           log_dbg ("Could not extract subject");
-          m_utf8DisplayName = _("unknonwn embedded message");
+          m_utf8DisplayName = _("unknown embedded message");
         }
       else if (subject.size () >= MAX_PATH - 4)
         {

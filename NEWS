@@ -2,7 +2,7 @@ Noteworthy changes for version 2.5.14 (unreleased)
 ==================================================
 
  * Added support for message/rfc822 encapsulated
- MIME parts. They are shown as attachment. T7266
+ MIME parts. They are shown as attachment. (T7266)
 
  * Improved handling of attachments with names
  that cannot be represented on a Windows file
@@ -10,7 +10,8 @@ Noteworthy changes for version 2.5.14 (unreleased)
 
  * Fixed a potential crash which could rarely
  occur after decryption and / or verification.
- (8349fea6)
+ (rO8349fea6)
+
 
 Noteworthy changes for version 2.5.13 (2024-08-21)
 ==================================================
