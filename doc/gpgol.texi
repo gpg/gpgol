@@ -28,7 +28,7 @@ This is @cite{The GpgOL Technical Manual} for @acronym{GpgOL} (version
 
 @iftex
 Published by g10 Code GmbH@*
-Hüttenstr. 61@*
+Bergstr. 3a@*
 40699 Erkrath, Germany
 @end iftex
 
@@ -86,7 +86,7 @@ Outlook MUA.
 
 @menu
 * Introduction::                How to use this manual.
-* Assuan Protocol::             Description of the UI server protocol.
+* External Helper::             Description of external helper tools.
 * MAPI Properties::             MAPI Properties used by GpgOL.
 * Registry Settings::           How GpgOL uses the Registry.
 * MAPI Providers::              What MAPI Storage or Transport providers
@@ -116,6 +116,9 @@ Indices
 @node Introduction
 @chapter Introduction
 
+THE DESCRIPTION HERE IS OUTDATED AND NEEDS TO BE REVISED.
+
+
 To debug GpgOL you should set the Registry entry
 @code{HKCU\Software\Gnu\GpgOL:enableDebug} to the string value @code{1}:
 
@@ -136,14 +139,8 @@ menu and enables a few extra menu items.
 @node Assuan Protocol
 @chapter Description of the UI Server Protocol
 
-All cryptographic operations are done by a server and the server is
-responsible for all dialogs.  If a a server is not available,
-@acronym{GpgOL} does not work.
-
-This protocol used between @acronym{GpgOL} and the User Interface Server
-(UI server) is specified in the `GPGME Reference Manual', under the
-heading `The GnuPG UI Server Protocol'.
-
+Cryptographic operations are either done using the GPGME library or by
+utilizing external helper tools which part of the `Kleopatra' frontend.
 
 
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -361,7 +358,7 @@ after software upgrades.
 
 GpgOL uses some tricks to make decryption of OpenPGP message better fit
 into the Outlook framework.  This is due to a lack of proper Plugin API
-for Outllok and because some features of Outlook --- meant as a security
+for Outlook and because some features of Outlook --- meant as a security
 measure --- hinder a better implementation.  That is not to say that
 Outlook will be less secure when used with GpgOL --- to the opposite:
 Due to encryption and digital signature reading and sending mail with

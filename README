@@ -32,3 +32,8 @@ try this first.  If this does not help, check out the mailing lists
 and also the bug archive at http://bugs.gnupg.org if you did not find any
 information there please send a report, including all relevant version
 numbers to the address given at the top of this AUTHORS file.
+
+Known problems:
+
+- POP3 is not supported and may leed to loops during decryption.  Use
+  IMAP or the Excahnge server.  See https://dev.gnupg.org/T7135
