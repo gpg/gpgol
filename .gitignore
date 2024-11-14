@@ -33,3 +33,5 @@
 /src/libgpg-error.a
 /src/libgpgme.a
 /src/libmapi32.a
+/src/icons/Makefile.in
+/tests/Makefile.in
