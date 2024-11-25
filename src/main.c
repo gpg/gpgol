@@ -267,6 +267,7 @@ read_options (void)
   opt.encryptSubject = get_conf_bool ("encryptSubject", 0);
   opt.noSaveBeforeDecrypt = get_conf_bool ("noSaveBeforeDecrypt", 0);
   opt.closeOnUnknownWriteEvent = get_conf_bool ("closeOnUnknownWriteEvent", 0);
+  opt.dont_autodecrypt_preview = get_conf_bool("disableAutoPreviewHandling",0);
 
   if (!opt.automation)
     {

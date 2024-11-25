@@ -54,6 +54,8 @@
 #define ID_CMD_FILE_SAVE_AS 39
 #define ID_CMD_FILE_SAVE_AS_IN_WINDOW 40
 #define ID_GET_IS_ADDR_BOOK_ENABLED 41
+#define ID_CMD_DECRYPT_MANUAL 42
+#define ID_GET_VD_PROSPONED 43
 
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -90,12 +92,16 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result);
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 /* Is the currently selected mail a crypto mail ? */
 HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result);
+/* Is the currently selected mail a crypto mail ? */
+HRESULT get_is_vd_prosponed (LPDISPATCH ctrl, VARIANT *result);
 /* Open key configuration for a contact */
 HRESULT open_contact_key (LPDISPATCH ctrl);
 /* An explorer is closed by File->Close */
 HRESULT override_file_close ();
 /* Decrypt permanently */
 HRESULT decrypt_permanently (LPDISPATCH ctrl);
+/* manual start decryption */
+HRESULT decrypt_manual (LPDISPATCH ctrl);
 /* SaveAs from the file menu */
 HRESULT override_file_save_as (DISPPARAMS *parms);
 /* Like above but for mails opened in their own window as they

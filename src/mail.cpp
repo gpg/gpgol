@@ -112,6 +112,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_close_triggered(false),
     m_is_html_alternative(false),
     m_needs_encrypt(false),
+    m_vd_prosponed(false),
     m_moss_position(0),
     m_crypto_flags(0),
     m_cached_html_body(nullptr),
@@ -977,6 +978,7 @@ do_parsing (LPVOID arg)
     }
   else
     {
+      log_dbg("call parser->parse(false)");
       parser->parse (false);
       if (!opt.sync_dec)
         {
@@ -1317,8 +1319,15 @@ Mail::isCryptoMail () const
   TRETURN true;
 }
 
+
 int
 Mail::decryptVerify_o ()
+{
+  return decryptVerify_o(false);
+}
+
+int
+Mail::decryptVerify_o (bool doRevertOnly)
 {
   TSTART;
 
@@ -1420,6 +1429,17 @@ Mail::decryptVerify_o ()
       log_err ("Failed to obtain MAPI message");
     }
 
+  if (doRevertOnly)
+    {
+      log_debug ("Don't start cryptohandling for mail");
+      m_vd_prosponed = true;
+      TRETURN 0;
+    }
+  else
+    {
+      m_vd_prosponed = false;
+    }
+
   check_html_preferred ();
 
   auto cipherstream = get_attachment_stream_o (m_mailitem, m_moss_position);
@@ -1486,6 +1506,7 @@ Mail::decryptVerify_o ()
     }
   else
     {
+      log_dbg ("Multipart encrypted/signed inserting body in placeholder.");
       gpgrt_asprintf (&placeholder_buf, opt.prefer_html ? decrypt_template_html :
                       decrypt_template,
                       isSMIME_m () ? "S/MIME" : "OpenPGP",
@@ -1962,6 +1983,7 @@ Mail::updateHeaders_o ()
         }
       gpgol_release (sender);
     }
+    TRETURN;
 }
 
 static int parsed_count;
@@ -5131,6 +5153,15 @@ Mail::copy ()
     }
   log_err ("Failed to find copied mail!");
   TRETURN nullptr;
+}
+
+Mail *
+Mail::getCopy()
+{
+  Mail * copied_mail = copy();
+  copied_mail->setCopyParent(this);
+
+  return copied_mail;
 }
 
 void

@@ -37,61 +37,61 @@
 #define _(a) utf8_gettext (a)
 
 const wchar_t *prop_blacklist[] = {
-  L"Body",
-  L"HTMLBody",
-  L"To", /* Somehow this is done when a mail is opened */
-  L"CC", /* Ditto */
-  L"BCC", /* Ditto */
-  L"Categories",
-  L"UnRead",
-  L"OutlookVersion",
-  L"OutlookInternalVersion",
-  L"ReceivedTime",
-  L"InternetCodepage",
-  L"ConversationIndex",
-  L"Subject",
-  L"SentOnBehalfOfName",
-  L"MessageClass",
-  L"BodyFormat",
-  NULL };
+    L"Body",
+    L"HTMLBody",
+    L"To", /* Somehow this is done when a mail is opened */
+    L"CC", /* Ditto */
+    L"BCC", /* Ditto */
+    L"Categories",
+    L"UnRead",
+    L"OutlookVersion",
+    L"OutlookInternalVersion",
+    L"ReceivedTime",
+    L"InternetCodepage",
+    L"ConversationIndex",
+    L"Subject",
+    L"SentOnBehalfOfName",
+    L"MessageClass",
+    L"BodyFormat",
+    NULL };
 
 typedef enum
-  {
-    AfterWrite = 0xFC8D,
-    AttachmentAdd = 0xF00B,
-    AttachmentRead = 0xF00C,
-    AttachmentRemove = 0xFBAE,
-    BeforeAttachmentAdd = 0xFBB0,
-    BeforeAttachmentPreview = 0xFBAF,
-    BeforeAttachmentRead = 0xFBAB,
-    BeforeAttachmentSave = 0xF00D,
-    BeforeAttachmentWriteToTempFile = 0xFBB2,
-    BeforeAutoSave = 0xFC02,
-    BeforeCheckNames = 0xF00A,
-    BeforeDelete = 0xFA75,
-    BeforeRead = 0xFC8C,
-    Close = 0xF004,
-    CustomAction = 0xF006,
-    CustomPropertyChange = 0xF008,
-    Forward = 0xF468,
-    Open = 0xF003,
-    PropertyChange = 0xF009,
-    Read = 0xF001,
-    ReadComplete = 0xFC8F,
-    Reply = 0xF466,
-    ReplyAll = 0xF467,
-    Send = 0xF005,
-    Unload = 0xFBAD,
-    Write = 0xF002,
-    WriteCancelIgnored = 0xFC99,/* See comment in event handler below */
-  } MailEvent;
+{
+  AfterWrite = 0xFC8D,
+  AttachmentAdd = 0xF00B,
+  AttachmentRead = 0xF00C,
+  AttachmentRemove = 0xFBAE,
+  BeforeAttachmentAdd = 0xFBB0,
+  BeforeAttachmentPreview = 0xFBAF,
+  BeforeAttachmentRead = 0xFBAB,
+  BeforeAttachmentSave = 0xF00D,
+  BeforeAttachmentWriteToTempFile = 0xFBB2,
+  BeforeAutoSave = 0xFC02,
+  BeforeCheckNames = 0xF00A,
+  BeforeDelete = 0xFA75,
+  BeforeRead = 0xFC8C,
+  Close = 0xF004,
+  CustomAction = 0xF006,
+  CustomPropertyChange = 0xF008,
+  Forward = 0xF468,
+  Open = 0xF003,
+  PropertyChange = 0xF009,
+  Read = 0xF001,
+  ReadComplete = 0xFC8F,
+  Reply = 0xF466,
+  ReplyAll = 0xF467,
+  Send = 0xF005,
+  Unload = 0xFBAD,
+  Write = 0xF002,
+  WriteCancelIgnored = 0xFC99,/* See comment in event handler below */
+} MailEvent;
 
 /* Mail Item Events */
 BEGIN_EVENT_SINK(MailItemEvents, IDispatch)
 /* We are still in the class declaration */
 
 private:
-  Mail * m_mail; /* The mail object related to this mailitem */
+Mail * m_mail; /* The mail object related to this mailitem */
 };
 
 MailItemEvents::MailItemEvents() :
@@ -136,15 +136,15 @@ EVENT_SINK_INVOKE(MailItemEvents)
   USE_INVOKE_ARGS
   TSTART;
   if (!m_mail)
+  {
+    m_mail = Mail::getMailForItem (m_object);
+    if (!m_mail)
     {
-      m_mail = Mail::getMailForItem (m_object);
-      if (!m_mail)
-        {
-          log_error ("%s:%s: mail event without mail object known. Bug.",
-                     SRCNAME, __func__);
-          TRETURN S_OK;
-        }
+      log_error ("%s:%s: mail event without mail object known. Bug.",
+                SRCNAME, __func__);
+      TRETURN S_OK;
     }
+  }
 
   bool is_reply = false;
   switch(dispid)
@@ -152,39 +152,52 @@ EVENT_SINK_INVOKE(MailItemEvents)
       case BeforeAutoSave:
         {
           log_oom ("%s:%s: BeforeAutoSave : %p",
-                   SRCNAME, __func__, m_mail);
+                  SRCNAME, __func__, m_mail);
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
-           {
-             /* This happens in the weird case */
-             log_debug ("%s:%s: Uncancellable BeforeAutoSave.",
-                        SRCNAME, __func__);
-             TBREAK;
-           }
+          {
+            /* This happens in the weird case */
+            log_debug ("%s:%s: Uncancellable BeforeAutoSave.",
+                      SRCNAME, __func__);
+            TBREAK;
+          }
 
-          if (m_mail->isCryptoMail() && !m_mail->decryptedSuccessfully ())
-            {
-              *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
-              log_debug ("%s:%s: Autosave for not successfuly decrypted mail."
-                         "Cancel it.",
-                         SRCNAME, __func__);
-              TBREAK;
-            }
+                if (m_mail->isCryptoMail() && !m_mail->decryptedSuccessfully ())
+          {
+            *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
+                    log_debug ("%s:%s: Autosave for not successfuly decrypted mail."
+                      "Cancel it.",
+                      SRCNAME, __func__);
+            TBREAK;
+          }
 
-          if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
+                if (opt.draft_key && (m_mail->needs_crypto_m () & 1) &&
               !m_mail->isDraftEncrypt())
-            {
-              log_debug ("%s:%s: Draft encryption for autosave starting now.",
-                         SRCNAME, __func__);
-              m_mail->setIsDraftEncrypt (true);
-              m_mail->prepareCrypto_o ();
-              m_mail->encryptSignStart_o ();
-            }
+          {
+                    log_debug ("%s:%s: Draft encryption for autosave starting now.",
+                      SRCNAME, __func__);
+                    m_mail->setIsDraftEncrypt (true);
+                    m_mail->prepareCrypto_o ();
+                    m_mail->encryptSignStart_o ();
+          }
           TRETURN S_OK;
         }
       case Open:
         {
           log_oom ("%s:%s: Open : %p",
-                         SRCNAME, __func__, m_mail);
+                    SRCNAME, __func__, m_mail);
+
+          if (m_mail->isCryptoMail () && m_mail->isVdProsponed ())
+            {
+              /* Mail *mail_copy = m_mail->getCopy();
+                allways fails so use original mail */
+
+              if (m_mail->decryptVerify_o ())
+                {
+                  log_error("%s:%s: Decrypt message failed.",
+                            SRCNAME, __func__);
+                }
+           }
+
           int draft_flags = 0;
           if (!opt.encrypt_default && !opt.sign_default)
             {
@@ -194,17 +207,17 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (!message)
             {
               log_error ("%s:%s: Failed to get message.",
-                         SRCNAME, __func__);
+                SRCNAME, __func__);
               TBREAK;
             }
           int old_flags = get_gpgol_draft_info_flags (message);
           if (old_flags)
-            {
-              log_dbg ("Open of already flagged mail. "
-                       "Not overwriting with settings.");
-              gpgol_release (message);
-              TBREAK;
-            }
+          {
+            log_dbg ("Open of already flagged mail. "
+                     "Not overwriting with settings.");
+            gpgol_release (message);
+            TBREAK;
+          }
           if (opt.encrypt_default)
             {
               draft_flags = 1;
@@ -220,24 +233,24 @@ EVENT_SINK_INVOKE(MailItemEvents)
       case BeforeRead:
         {
           log_oom ("%s:%s: BeforeRead : %p",
-                         SRCNAME, __func__, m_mail);
+            SRCNAME, __func__, m_mail);
           if (GpgolAddin::get_instance ()->isShutdown())
             {
               log_debug ("%s:%s: Ignoring read after shutdown.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
               TBREAK;
             }
 
           if (m_mail->preProcessMessage_m ())
             {
               log_error ("%s:%s: Pre process message failed.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
             }
 
           if (m_mail->isDecryptAgain ())
             {
               log_debug ("%s:%s: Decrypting after 500ms",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
               do_in_ui_thread_async (DECRYPT, m_mail, 500);
             }
           TBREAK;
@@ -245,7 +258,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
       case Read:
         {
           log_oom ("%s:%s: Read : %p",
-                         SRCNAME, __func__, m_mail);
+                   SRCNAME, __func__, m_mail);
           if (!addinsLogged)
             {
               // We do it here as this nearly always comes and we want to remove
@@ -256,31 +269,34 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (!m_mail->isCryptoMail ())
             {
               log_debug ("%s:%s: Non crypto mail %p opened. Updating sigstatus.",
-                         SRCNAME, __func__, m_mail);
+                        SRCNAME, __func__, m_mail);
               /* Ensure that no wrong sigstatus is shown */
               CloseHandle(CreateThread (NULL, 0, delayed_invalidate_ui, (LPVOID) 300, 0,
-                                        NULL));
+                                      NULL));
               TBREAK;
             }
           if (m_mail->setUUID_o ())
             {
               log_debug ("%s:%s: Failed to set uuid.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
               delete m_mail; /* deletes this, too */
               TRETURN S_OK;
             }
-          if (m_mail->decryptVerify_o ())
+
+          check_auto_vd_mail (); //
+
+          if (m_mail->decryptVerify_o (opt.dont_autodecrypt_preview > 0))
             {
               log_error ("%s:%s: Decrypt message failed.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
             }
           if (!opt.enable_smime && m_mail->isSMIME_m ())
             {
               /* We want to save the mail when it's an smime mail and smime
-                 is disabled to revert it. */
+                is disabled to revert it. */
               log_debug ("%s:%s: S/MIME mail but S/MIME is disabled."
-                         " Need save.",
-                         SRCNAME, __func__);
+                        " Need save.",
+                        SRCNAME, __func__);
               m_mail->setNeedsSave (true);
             }
           TBREAK;
@@ -292,12 +308,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
               !parms->rgvarg[0].bstrVal)
             {
               log_error ("%s:%s: Unexpected params.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
               TBREAK;
             }
           const wchar_t *prop_name = parms->rgvarg[0].bstrVal;
           if (!m_mail->isCryptoMail ())
             {
+              log_oom ("%s:%s: non crypto Mail %p propchange: %ls.",
+                      SRCNAME, __func__, m_mail, prop_name);
               if (m_mail->hasOverrideMimeData())
                 {
                   /* This is a mail created by us. Ignore propchanges. */
@@ -312,9 +330,9 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   if (opt.autosecure || (m_mail->needs_crypto_m () & 1))
                     {
                       /* XXX Racy race. This is a fix for crashes
-                         that happend if a resolved recipient is copied an pasted.
-                         If we then access the recipients object in the Property
-                         Change event we crash. Thus we do the delay dance. */
+                        that happend if a resolved recipient is copied an pasted.
+                        If we then access the recipients object in the Property
+                        Change event we crash. Thus we do the delay dance. */
                       HANDLE thread = CreateThread (NULL, 0, do_delayed_locate,
                                                     (LPVOID) m_mail, 0,
                                                     NULL);
@@ -328,12 +346,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (!wcscmp (prop_name, *cur))
                 {
                   log_oom ("%s:%s: Mail %p propchange: %ls no warning.",
-                           SRCNAME, __func__, m_mail, prop_name);
+                          SRCNAME, __func__, m_mail, prop_name);
                   TRETURN S_OK;
                 }
             }
           log_oom ("%s:%s: Mail %p propchange: %ls.",
-                   SRCNAME, __func__, m_mail, prop_name);
+                  SRCNAME, __func__, m_mail, prop_name);
 
           if (!wcscmp (prop_name, L"SendUsingAccount"))
             {
@@ -341,7 +359,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (sent)
                 {
                   log_debug ("%s:%s: Ignoring SendUsingAccount change for sent %p ",
-                             SRCNAME, __func__, m_object);
+                            SRCNAME, __func__, m_object);
                   TRETURN S_OK;
                 }
               log_debug ("%s:%s: Message %p looks like send again.",
@@ -352,28 +370,28 @@ EVENT_SINK_INVOKE(MailItemEvents)
           if (is_draft_mail (m_object))
             {
               log_oom ("%s:%s: Change allowed for draft",
-                       SRCNAME, __func__);
+                      SRCNAME, __func__);
               TRETURN S_OK;
             }
 
           /* We have tried several scenarios to handle propery changes.
-             Only save the property in MAPI and call MAPI SaveChanges
-             worked and did not leak plaintext but this caused outlook
-             still to break the attachments of PGP/MIME Mails into two
-             attachments and add them as winmail.dat so other clients
-             are broken.
+            Only save the property in MAPI and call MAPI SaveChanges
+            worked and did not leak plaintext but this caused outlook
+            still to break the attachments of PGP/MIME Mails into two
+            attachments and add them as winmail.dat so other clients
+            are broken.
 
-             Alternatively reverting the mail, saving the property and
-             then decrypt again also worked a bit but there were some
-             weird side effects and breakages. But this has the usual
-             problem of a revert that the mail is created by outlook and
-             e.g. multipart/signed signatures from most MUA's are broken.
+            Alternatively reverting the mail, saving the property and
+            then decrypt again also worked a bit but there were some
+            weird side effects and breakages. But this has the usual
+            problem of a revert that the mail is created by outlook and
+            e.g. multipart/signed signatures from most MUA's are broken.
 
-             Some things to try out might be the close approach and then
-             another open or a selection change. But for now we just warn.
+            Some things to try out might be the close approach and then
+            another open or a selection change. But for now we just warn.
 
-             As a workardound a user should make property changes when
-             the mail was not read by us. */
+            As a workardound a user should make property changes when
+            the mail was not read by us. */
           if (propchangeWarnShown)
             {
               TRETURN S_OK;
@@ -382,25 +400,39 @@ EVENT_SINK_INVOKE(MailItemEvents)
           wchar_t *title = utf8_to_wchar (_("Sorry, that's not possible, yet"));
           char *fmt;
           gpgrt_asprintf (&fmt, _("GpgOL has prevented the change to the \"%s\" property.\n"
-                                  "Property changes are not yet handled for crypto messages.\n\n"
-                                  "To workaround this limitation please change the property when the "
-                                  "message is not open in any window and not selected in the "
-                                  "messagelist.\n\nFor example by right clicking but not selecting the message.\n"),
-                          wchar_to_utf8(prop_name));
+                                "Property changes are not yet handled for crypto messages.\n\n"
+                                "To workaround this limitation please change the property when the "
+                                "message is not open in any window and not selected in the "
+                                "messagelist.\n\nFor example by right clicking but not selecting the message.\n"),
+                        wchar_to_utf8(prop_name));
           memdbg_alloc (fmt);
           wchar_t *msg = utf8_to_wchar (fmt);
           xfree (fmt);
           MessageBoxW (get_active_hwnd(), msg, title,
-                       MB_ICONINFORMATION | MB_OK);
+                      MB_ICONINFORMATION | MB_OK);
           xfree (msg);
           xfree (title);
           propchangeWarnShown = true;
           TRETURN S_OK;
         }
+      case BeforeAttachmentSave:
+        {
+          log_oom("%s:%s: BeforeAttachmentSave : %p",
+                  SRCNAME, __func__, m_mail);
+          /* TODO */
+          TBREAK;
+        }
+      case BeforeCheckNames:
+        {
+          log_oom("%s:%s: BeforeCheckNames : %p",
+                  SRCNAME, __func__, m_mail);
+          /* TODO */
+          TBREAK;
+        }
       case CustomPropertyChange:
         {
           log_oom ("%s:%s: CustomPropertyChange : %p",
-                         SRCNAME, __func__, m_mail);
+                  SRCNAME, __func__, m_mail);
           /* TODO */
           TBREAK;
         }
@@ -422,33 +454,33 @@ EVENT_SINK_INVOKE(MailItemEvents)
              as then the encrypted data is sent.
            */
           log_oom ("%s:%s: Send : %p",
-                         SRCNAME, __func__, m_mail);
+                  SRCNAME, __func__, m_mail);
           if (!m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NotStarted)
             {
               if (m_mail->isCryptoMail ())
-                {
-                  log_debug ("%s:%s: Want to send crypto mail without crypto. "
-                             "Decrypting.", SRCNAME, __func__);
-                  m_mail->decryptPermanently_o ();
-                  TBREAK;
-                }
+              {
+                log_debug ("%s:%s: Want to send crypto mail without crypto. "
+                           "Decrypting.", SRCNAME, __func__);
+                m_mail->decryptPermanently_o ();
+                TBREAK;
+              }
               log_debug ("%s:%s: No crypto neccessary. Passing send for %p obj %p",
                          SRCNAME, __func__, m_mail, m_object);
               TBREAK;
             }
 
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
-           {
-             log_debug ("%s:%s: Uncancellable send event.",
-                        SRCNAME, __func__);
-             TBREAK;
-           }
+            {
+              log_debug ("%s:%s: Uncancellable send event.",
+                         SRCNAME, __func__);
+              TBREAK;
+            }
 
           if (m_mail->cryptState () == Mail::NotStarted &&
               m_mail->needs_crypto_m ())
             {
               log_dbg ("Send event for mail %p to be encrypted starting.",
-                       m_mail);
+                      m_mail);
 
               if (m_mail->prepareCrypto_o ())
                 {
@@ -466,7 +498,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (m_mail->encryptSignStart_o ())
                 {
                   log_debug ("%s:%s: Encrypt sign start failed.",
-                             SRCNAME, __func__);
+                            SRCNAME, __func__);
                   m_mail->setCryptState (Mail::NotStarted);
                   m_mail->releaseCurrentItem();
                 }
@@ -478,14 +510,14 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   TBREAK;
                 }
               /* Only reached for synchronous operation. Mail should now be
-               * encrypted and in a want's send state  or the user aborted /
-               * error */
+              * encrypted and in a want's send state  or the user aborted /
+              * error */
               if (m_mail->cryptState () == Mail::NotStarted)
                 {
                   // Crypto failed or was canceled
                   log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                             "Crypto failed or canceled.",
-                             SRCNAME, __func__, m_object, m_mail);
+                            "Crypto failed or canceled.",
+                            SRCNAME, __func__, m_object, m_mail);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   TBREAK;
                 }
@@ -506,16 +538,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
                   log_debug ("%s:%s: Message %p mail %p cancelling send - "
-                             "not encrypted or not empty body detected.",
-                             SRCNAME, __func__, m_object, m_mail);
+                            "not encrypted or not empty body detected.",
+                            SRCNAME, __func__, m_object, m_mail);
                   gpgol_bug (m_mail->getWindow (),
-                             ERR_WANTS_SEND_INLINE_BODY);
+                            ERR_WANTS_SEND_INLINE_BODY);
                   m_mail->setCryptState (Mail::NotStarted);
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
                   TBREAK;
                 }
               log_debug ("%s:%s: Passing send event for no-mime message %p.",
-                         SRCNAME, __func__, m_object);
+                        SRCNAME, __func__, m_object);
               WKSHelper::instance()->allow_notify (1000);
               TBREAK;
             }
@@ -524,20 +556,20 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (!m_mail->hasCryptedOrEmptyBody_o ())
                 {
 /* The safety checks here trigger too often. Somehow for some
-   users the body is not empty after the encryption but when
-   it is sent it is still sent with the crypto content because
-   the encrypted MIME Structure is used because it is
-   correct in MAPI land.
+  users the body is not empty after the encryption but when
+  it is sent it is still sent with the crypto content because
+  the encrypted MIME Structure is used because it is
+  correct in MAPI land.
 
-   For safety reasons enabling the checks might be better but
-   until we figure out why for some users the body replacement
-   does not work we have to disable them. Otherwise GpgOL
-   is unusuable for such users. GnuPG-Bug-Id: T3875
+  For safety reasons enabling the checks might be better but
+  until we figure out why for some users the body replacement
+  does not work we have to disable them. Otherwise GpgOL
+  is unusuable for such users. GnuPG-Bug-Id: T3875
 */
 #define DISABLE_SAFTEY_CHECKS
 #ifndef DISABLE_SAFTEY_CHECKS
                   gpgol_bug (m_mail->getWindow (),
-                             ERR_WANTS_SEND_MIME_BODY);
+                            ERR_WANTS_SEND_MIME_BODY);
                   log_debug ("%s:%s: Message %p mail %p cancelling send mime - "
                              "not encrypted or not empty body detected.",
                              SRCNAME, __func__, m_object, m_mail);
@@ -551,16 +583,16 @@ EVENT_SINK_INVOKE(MailItemEvents)
 #endif
                 }
               /* Now we adress T3656 if Outlooks internal S/MIME is somehow
-               * mixed in (even if it is enabled and then disabled) it might
-               * cause strange behavior in that it sends the plain message
-               * and not the encrypted message. Tests have shown that we can
-               * bypass that by calling submit message on our base
-               * message.
-               *
-               * We do this conditionally as our other way of using OOM
-               * to send is proven to work and we don't want to mess
-               * with it.
-               */
+              * mixed in (even if it is enabled and then disabled) it might
+              * cause strange behavior in that it sends the plain message
+              * and not the encrypted message. Tests have shown that we can
+              * bypass that by calling submit message on our base
+              * message.
+              *
+              * We do this conditionally as our other way of using OOM
+              * to send is proven to work and we don't want to mess
+              * with it.
+              */
               // Get the Message class.
               HRESULT hr;
               LPSPropValue propval = NULL;
@@ -572,7 +604,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               if (FAILED (hr))
                 {
                   log_error ("%s:%s: HrGetOneProp() failed: hr=%#lx\n",
-                             SRCNAME, __func__, hr);
+                            SRCNAME, __func__, hr);
                   TBREAK;
                 }
               if (propval->Value.lpszA && !strstr (propval->Value.lpszA, "GpgOL") &&
@@ -594,12 +626,12 @@ EVENT_SINK_INVOKE(MailItemEvents)
                       gpgol_release (message);
                       // Close the composer and trigger unloads
                       CloseHandle(CreateThread (NULL, 0, close_mail, (LPVOID) m_mail, 0,
-                                                NULL));
+                                              NULL));
                     }
                   else
                     {
                       gpgol_bug (nullptr,
-                                 ERR_GET_BASE_MSG_FAILED);
+                                ERR_GET_BASE_MSG_FAILED);
                     }
                   // Cancel send
                   *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
@@ -610,7 +642,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
                   TBREAK;
                 }
               log_debug ("%s:%s: Passing send event for mime-encrypted message %p.",
-                         SRCNAME, __func__, m_object);
+                        SRCNAME, __func__, m_object);
               WKSHelper::instance()->allow_notify (1000);
               TBREAK;
             }
@@ -622,29 +654,29 @@ EVENT_SINK_INVOKE(MailItemEvents)
                          m_mail->cryptState ());
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
             }
-          TRETURN S_OK;
+            TRETURN S_OK;
         }
       case ReadComplete:
         {
           log_oom ("%s:%s: ReadComplete: %p",
-                         SRCNAME, __func__, m_mail);
+                   SRCNAME, __func__, m_mail);
           TRETURN S_OK;
         }
       case Write:
         {
           log_oom ("%s:%s: Write : %p", SRCNAME, __func__, m_mail);
           /* This is a bit strange. We sometimes get multiple write events
-             without a read in between. When we access the message in
-             the second event it fails and if we cancel the event outlook
-             crashes. So we have keep the m_needs_wipe state variable
-             to keep track of that. */
+            without a read in between. When we access the message in
+            the second event it fails and if we cancel the event outlook
+            crashes. So we have keep the m_needs_wipe state variable
+            to keep track of that. */
           if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
-           {
-             /* This happens in the weird case */
-             log_debug ("%s:%s: Uncancellable write event.",
-                        SRCNAME, __func__);
-             TBREAK;
-           }
+            {
+              /* This happens in the weird case */
+              log_debug ("%s:%s: Uncancellable write event.",
+                         SRCNAME, __func__);
+              TBREAK;
+            }
 
           if (m_mail->passWrite())
             {
@@ -681,11 +713,11 @@ TODO: Handle split copy in another way
                   is_draft_mail (m_object) && m_mail->decryptedSuccessfully ())
                 {
                   if (m_mail->cryptState () == Mail::OOMUpdated)
-                    {
-                      log_debug ("%s:%s: re-encryption in progress. Passing.",
-                                 SRCNAME, __func__);
-                      TBREAK;
-                    }
+                  {
+                    log_debug ("%s:%s: re-encryption in progress. Passing.",
+                               SRCNAME, __func__);
+                    TBREAK;
+                  }
                   /* This is the case for a modified draft */
                   log_debug ("%s:%s: Draft re-encryption starting now.",
                              SRCNAME, __func__);
@@ -706,21 +738,24 @@ TODO: Handle split copy in another way
               if (Mail::isValidPtr (last_mail))
                 {
                   /* We want to identify here if there was a mail created that
-                     should receive the contents of this mail. For this we check
-                     for a write in the same loop as a mail creation.
-                     Now when switching from one mail to another this is also what
-                     happens. The new mail is loaded and the old mail is written.
-                     To distinguish the two we check that the new mail does not have
-                     an entryID, a Subject and No Size. Maybe just size or entryID
-                     would be enough but better save then sorry.
+                    should receive the contents of this mail. For this we check
+                    for a write in the same loop as a mail creation.
+                    Now when switching from one mail to another this is also what
+                    happens. The new mail is loaded and the old mail is written.
+                    To distinguish the two we check that the new mail does not have
+                    an entryID, a Subject and No Size. Maybe just size or entryID
+                    would be enough but better save then sorry.
 
-                     Security consideration: Worst case we pass the write here but
-                     an unload follows before we get the scheduled revert. This
-                     would leak plaintext. But does not happen in our tests.
+                    Security consideration: Worst case we pass the write here but
+                    an unload follows before we get the scheduled revert. This
+                    would leak plaintext. But does not happen in our tests.
 
-                     Similarly if we crash or Outlook is closed before we see this
-                     revert. But as we immediately revert after the write this should
-                     also not happen. */
+                    Similarly if we crash or Outlook is closed before we see this
+                    revert. But as we immediately revert after the write this should
+                    also not happen. */
+
+                  log_debug("%s:%s: Lastmail: %p.",
+                            SRCNAME, __func__, last_mail);
                   const std::string lastSubject = last_mail->getSubject_o ();
                   char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
                   int lastSize = get_oom_int (last_mail->item (), "Size");
@@ -730,12 +765,14 @@ TODO: Handle split copy in another way
                       lastEntryStr = lastEntryID;
                       xfree (lastEntryID);
                     }
+                  log_debug("%s:%s: Size/Entry/Subject: %d/%s/%s.",
+                            SRCNAME, __func__, lastSize, lastEntryStr.c_str(), lastSubject.c_str());
 
                   if (!lastSize && !lastEntryStr.size () && !lastSubject.size ())
                     {
                       log_debug ("%s:%s: Write in the same loop as empty load."
-                                 " Pass but schedule revert.",
-                                 SRCNAME, __func__);
+                                " Pass but schedule revert.",
+                                SRCNAME, __func__);
 
                       /* This might be a forward. So don't invalidate yet. */
 
@@ -746,11 +783,11 @@ TODO: Handle split copy in another way
                     }
                 }
               /* We cancel the write event to stop outlook from excessively
-                 syncing our changes.
-                 if smime support is disabled and we still have an smime
-                 mail we also don't want to cancel the write event
-                 to enable reverting this mails.
-                 */
+                syncing our changes.
+                if smime support is disabled and we still have an smime
+                mail we also don't want to cancel the write event
+                to enable reverting this mails.
+                */
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
               log_debug ("%s:%s: Canceling write event.",
                          SRCNAME, __func__);
@@ -761,8 +798,8 @@ TODO: Handle split copy in another way
               m_mail->revert_o ())
             {
               /* An error cleaning the mail should not happen normally.
-                 But just in case there is an error we cancel the
-                 write here. */
+                But just in case there is an error we cancel the
+                write here. */
               log_debug ("%s:%s: Failed to remove plaintext. Canceling.",
                          SRCNAME, __func__);
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
@@ -773,12 +810,12 @@ TODO: Handle split copy in another way
               !m_mail->needs_crypto_m () && m_mail->cryptState () == Mail::NotStarted)
             {
               /* We are sure now that while this is a forward of an encrypted
-               * mail that the forward should not be signed or encrypted. So
-               * it's not constructed by us. We need to remove our attachments
-               * though so that they are not included in the forward. */
+              * mail that the forward should not be signed or encrypted. So
+              * it's not constructed by us. We need to remove our attachments
+              * though so that they are not included in the forward. */
               log_debug ("%s:%s: Writing unencrypted forward of crypt mail. "
-                         "Removing attachments. mail: %p item: %p",
-                         SRCNAME, __func__, m_mail, m_object);
+                        "Removing attachments. mail: %p item: %p",
+                        SRCNAME, __func__, m_mail, m_object);
               if (m_mail->removeOurAttachments_o ())
                 {
                   // Worst case we forward some encrypted data here not
@@ -805,7 +842,7 @@ TODO: Handle split copy in another way
               m_mail->cryptState () == Mail::NotStarted)
             {
               log_debug ("%s:%s: Draft encryption starting now.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
               m_mail->setIsDraftEncrypt (true);
               m_mail->prepareCrypto_o ();
               m_mail->encryptSignStart_o ();
@@ -814,14 +851,14 @@ TODO: Handle split copy in another way
             }
 
           log_debug ("%s:%s: Passing write event. %i %i",
-                     SRCNAME, __func__, m_mail->isDraftEncrypt(), m_mail->cryptState());
+                    SRCNAME, __func__, m_mail->isDraftEncrypt(), m_mail->cryptState());
           m_mail->setNeedsSave (false);
           TBREAK;
         }
       case AfterWrite:
         {
           log_oom ("%s:%s: AfterWrite : %p",
-                         SRCNAME, __func__, m_mail);
+                  SRCNAME, __func__, m_mail);
           if (m_mail->cryptState () == Mail::OOMUpdated)
             {
               m_mail->setCryptState (Mail::OOMSynced);
@@ -831,23 +868,23 @@ TODO: Handle split copy in another way
                   m_mail->releaseCurrentItem();
                 }
               log_debug ("%s:%s: Second after write done.",
-                         SRCNAME, __func__);
+                        SRCNAME, __func__);
               TRETURN S_OK;
             }
           TBREAK;
         }
       /* This event ID is completely undocumented, neither in Outlook Spy
-         nor in MSDN. I just observed that this ID was sent when we cancelled
-         a write event but the write was still done and we would have come
-         into the after write event.
+        nor in MSDN. I just observed that this ID was sent when we cancelled
+        a write event but the write was still done and we would have come
+        into the after write event.
 
-         This event happens when a mail is marked as read and the read
-         marking needs to be synced to the server.
+        This event happens when a mail is marked as read and the read
+        marking needs to be synced to the server.
 
-         So when the mail was encrypted we fall through to close.
-         then loses the changes and we see no AfterWrite afterwards. This
-         is a safeguard against plaintext leak. But this event could
-         mean something different altogether. */
+        So when the mail was encrypted we fall through to close.
+        then loses the changes and we see no AfterWrite afterwards. This
+        is a safeguard against plaintext leak. But this event could
+        mean something different altogether. */
       case WriteCancelIgnored:
         log_oom ("%s:%s: WriteCancelIgnored: %p",
                  SRCNAME, __func__, m_mail);
@@ -863,32 +900,32 @@ TODO: Handle split copy in another way
       case Close:
         {
           log_oom ("%s:%s: Close : %p",
-                         SRCNAME, __func__, m_mail);
+                   SRCNAME, __func__, m_mail);
           if (m_mail->isCryptoMail ())
             {
               if (is_draft_mail (m_object))
                 {
                   /* In that case we want to ask the question to avoid data loss
-                    */
+                  */
                   log_oom ("%s:%s: Passing close because of draft status: %p",
-                           SRCNAME, __func__, m_mail);
+                          SRCNAME, __func__, m_mail);
                   /* Clear selections to avoid conflicts with inline editors */
                   oom_clear_selections ();
                   TBREAK;
                 }
               /* Close. This happens when an Opened mail is closed.
-                 To prevent the question of wether or not to save the changes
-                 (Which would save the decrypted data without an event to
-                 prevent it) we cancel the close and then either close it
-                 with discard changes or revert / save it.
-                 Contrary to documentation we can invoke close from
-                 close.
-                 */
+                To prevent the question of wether or not to save the changes
+                (Which would save the decrypted data without an event to
+                prevent it) we cancel the close and then either close it
+                with discard changes or revert / save it.
+                Contrary to documentation we can invoke close from
+                close.
+                */
               if (parms->cArgs != 1 || parms->rgvarg[0].vt != (VT_BOOL | VT_BYREF))
                 {
                   /* This happens in the weird case */
                   log_debug ("%s:%s: Uncancellable close event.",
-                             SRCNAME, __func__);
+                            SRCNAME, __func__);
                   TBREAK;
                 }
               if (m_mail->getCloseTriggered ())
@@ -899,7 +936,7 @@ TODO: Handle split copy in another way
                 }
               *(parms->rgvarg[0].pboolVal) = VARIANT_TRUE;
               log_oom ("%s:%s: Canceling close event.",
-                             SRCNAME, __func__);
+                       SRCNAME, __func__);
               if (m_mail->close ())
                 {
                   log_debug ("%s:%s: Close request failed.",
@@ -913,23 +950,23 @@ TODO: Handle split copy in another way
       case Unload:
         {
           log_oom ("%s:%s: Unload : %p",
-                         SRCNAME, __func__, m_mail);
+                   SRCNAME, __func__, m_mail);
           log_debug ("%s:%s: Removing Mail for message: %p.",
                      SRCNAME, __func__, m_object);
           delete m_mail;
           log_oom ("%s:%s: deletion done",
-                         SRCNAME, __func__);
+                   SRCNAME, __func__);
           memdbg_dump ();
           TRETURN S_OK;
         }
       case ReplyAll:
       case Reply:
-          is_reply = true;
-          /* fall through */
+        is_reply = true;
+        /* fall through */
       case Forward:
         {
           log_oom ("%s:%s: %s : %p",
-                         SRCNAME, __func__, is_reply ? "reply" : "forward", m_mail);
+                   SRCNAME, __func__, is_reply ? "reply" : "forward", m_mail);
           int draft_flags = 0;
           if (opt.encrypt_default)
             {
@@ -948,7 +985,7 @@ TODO: Handle split copy in another way
                   if (opt.sign_default)
                     {
                       /* When default signing is on we also sign unsigned encrypted
-                       * mails. */
+                      * mails. */
                       crypto_flags |= 2;
                       /* reply / forward flags override the setting flags. */
                     }
@@ -956,49 +993,49 @@ TODO: Handle split copy in another way
                 }
             }
           /* If it is a crypto mail and the settings should not be taken
-           * from the crypto mail and always encrypt / sign is on. Or
-           * If it is not a crypto mail and we have automaticalls sign_encrypt. */
+          * from the crypto mail and always encrypt / sign is on. Or
+          * If it is not a crypto mail and we have automaticalls sign_encrypt. */
           if (draft_flags)
             {
               /* Check if we can use the dispval */
-                if (parms->cArgs == 2 && parms->rgvarg[1].vt == (VT_DISPATCH) &&
-                    parms->rgvarg[0].vt == (VT_BOOL | VT_BYREF))
+              if (parms->cArgs == 2 && parms->rgvarg[1].vt == (VT_DISPATCH) &&
+                  parms->rgvarg[0].vt == (VT_BOOL | VT_BYREF))
                 {
                   LPMESSAGE msg = get_oom_base_message (parms->rgvarg[1].pdispVal);
                   if (msg)
-                    {
-                      set_gpgol_draft_info_flags (msg, draft_flags);
-                      gpgol_release (msg);
-                    }
+                  {
+                    set_gpgol_draft_info_flags (msg, draft_flags);
+                    gpgol_release (msg);
+                  }
                   else
-                    {
-                      log_error ("%s:%s: Failed to get base message.",
-                                 SRCNAME, __func__);
-                    }
+                  {
+                    log_error ("%s:%s: Failed to get base message.",
+                              SRCNAME, __func__);
+                  }
                 }
               else
                 {
                   log_error ("%s:%s: Unexpected parameters.",
-                             SRCNAME, __func__);
+                            SRCNAME, __func__);
                 }
             }
 
-          if (!is_crypto_mail)
-            {
-              /* Replys to non crypto mails do not interest us anymore. */
-              TBREAK;
-            }
+    if (!is_crypto_mail)
+    {
+      /* Replys to non crypto mails do not interest us anymore. */
+      TBREAK;
+    }
 
           Mail *last_mail = Mail::getLastMail ();
           if (Mail::isValidPtr (last_mail))
             {
               /* We want to identify here if there was a mail created that
-                 should receive the contents of this mail. For this we check
-                 for a forward in the same loop as a mail creation.
+                should receive the contents of this mail. For this we check
+                for a forward in the same loop as a mail creation.
 
-                 We need to do it this complicated and can't just use
-                 get_mail_for_item because the mailitem pointer we get here
-                 is a different one then the one with which the mail was loaded.
+                We need to do it this complicated and can't just use
+                get_mail_for_item because the mailitem pointer we get here
+                is a different one then the one with which the mail was loaded.
               */
               char *lastEntryID = get_oom_string (last_mail->item (), "EntryID");
               int lastSize = get_oom_int (last_mail->item (), "Size");
@@ -1007,10 +1044,10 @@ TODO: Handle split copy in another way
                 {
                   lastEntryStr = lastEntryID;
                   xfree (lastEntryID);
-                }
+                 }
 
               if (!lastSize && !lastEntryStr.size ())
-                {
+               {
                   if (!is_reply)
                     {
                       log_debug ("%s:%s: Forward in the same loop as empty "
@@ -1035,20 +1072,20 @@ TODO: Handle split copy in another way
                       buf = is_reply ? _("You are replying to an unsigned S/MIME "
                                          "email.") :
                                        _("You are forwarding an unsigned S/MIME "
-                                         "email.");
+                                        "email.");
                       buf +="\n\n";
                       buf += _("In this version of S/MIME an attacker could "
-                               "use the missing signature to have you "
-                               "decrypt contents from a different, otherwise "
-                               "completely unrelated email and place it in the "
-                               "quote so they can get hold of it.\n"
-                               "This is why we only allow quoting to be done manually.");
+                              "use the missing signature to have you "
+                              "decrypt contents from a different, otherwise "
+                              "completely unrelated email and place it in the "
+                              "quote so they can get hold of it.\n"
+                              "This is why we only allow quoting to be done manually.");
                       buf += "\n\n";
                       buf += _("Please copy the relevant contents and insert "
-                               "them into the new email.");
+                              "them into the new email.");
 
                       gpgol_message_box (get_active_hwnd (), buf.c_str(),
-                                         _("GpgOL"), MB_OK);
+                                        _("GpgOL"), MB_OK);
 
                       do_in_ui_thread_async (CLEAR_REPLY_FORWARD, last_mail, 1000);
                     }
@@ -1061,24 +1098,24 @@ TODO: Handle split copy in another way
       case AttachmentRemove:
         {
           log_oom ("%s:%s: AttachmentRemove: %p",
-                         SRCNAME, __func__, m_mail);
+                  SRCNAME, __func__, m_mail);
           if (!m_mail->isCryptoMail () || attachRemoveWarnShown ||
               m_mail->attachmentRemoveWarningDisabled ())
             {
               TRETURN S_OK;
             }
           gpgol_message_box (get_active_hwnd (),
-                             _("Attachments are part of the crypto message.\nThey "
-                               "can't be permanently removed and will be shown again the next "
-                               "time this message is opened."),
-                             _("Sorry, that's not possible, yet"), MB_OK);
+                            _("Attachments are part of the crypto message.\nThey "
+                              "can't be permanently removed and will be shown again the next "
+                              "time this message is opened."),
+                            _("Sorry, that's not possible, yet"), MB_OK);
           attachRemoveWarnShown = true;
           TRETURN S_OK;
         }
 
       default:
         log_oom ("%s:%s: Message:%p Unhandled Event: %lx \n",
-                       SRCNAME, __func__, m_object, dispid);
+                 SRCNAME, __func__, m_object, dispid);
     }
   TRETURN S_OK;
 }

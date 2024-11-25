@@ -219,6 +219,8 @@ struct opt_s
   char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured for S/MIME
                                 signing but no cert is found. */
 
+  int dont_autodecrypt_preview; /* If set disable the autodetyption/verification whenever
+                                   a new mail is selected in explorer*/
   /* The forms revision number of the binary.  */
   int forms_revision;
 

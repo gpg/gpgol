@@ -254,7 +254,8 @@ public:
    * Sets the needs_wipe and was_encrypted variable.
    *
    * @returns 0 on success. */
-  int decryptVerify_o ();
+  int decryptVerify_o (bool doRevertOnly); // only revert message class
+  int decryptVerify_o (); // default with doRevertOnly = false
 
   /** @brief start crypto operations as selected by the user.
    *
@@ -720,6 +721,11 @@ public:
      in outlook can return different LPDISPATCH pointer to the same
      OOM Mailitem. The additional ref will be released on delete. */
   void setAdditionalReference (LPDISPATCH ref);
+  /* returns a copy from copy() with setCopyParent set*/
+  Mail * getCopy();
+
+  bool isVdProsponed () const { return m_vd_prosponed; };
+
 private:
   /* Returns a copy of the mail object. */
   Mail *copy ();
@@ -742,7 +748,8 @@ private:
        m_is_valid, /* Mail is valid signed. */
        m_close_triggered, /* We have programtically triggered a close */
        m_is_html_alternative, /* Body Format is not plain text */
-       m_needs_encrypt; /* Send was triggered we want to encrypt. */
+       m_needs_encrypt, /* Send was triggered we want to encrypt. */
+       m_vd_prosponed; /* decryptVerify prosponed just the messageclass reset */
   int m_moss_position; /* The number of the original message attachment. */
   int m_crypto_flags;
   std::string m_sender;

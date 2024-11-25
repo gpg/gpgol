@@ -398,6 +398,25 @@ GpgolAddin::OnAddInsUpdate (SAFEARRAY** custom)
   return S_OK;
 }
 
+void check_auto_vd_mail()
+{
+  /* Check if Mail should automatical be verified/decrypted. */
+  std::string path = "Software\\GNU\\GpgOL\\";
+
+  int val = read_reg_bool (nullptr, path.c_str (), "disableAutoPreviewHandling");
+
+  log_debug ("%s:%s: check_vd %s %d",
+             SRCNAME, __func__, path.c_str (),val);
+  if (val == -1)
+    {
+      opt.dont_autodecrypt_preview = 0;
+    }
+  else
+    {
+      opt.dont_autodecrypt_preview = val;
+    }
+}
+
 void
 check_html_preferred()
 {
@@ -715,11 +734,13 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"getIsDetailsEnabled", ID_GET_IS_DETAILS_ENABLED)
       ID_MAPPER (L"getIsAddrBookEnabled", ID_GET_IS_ADDR_BOOK_ENABLED)
       ID_MAPPER (L"getIsCrypto", ID_GET_IS_CRYPTO_MAIL)
+      ID_MAPPER (L"getVdProsponed", ID_GET_VD_PROSPONED)
       ID_MAPPER (L"openContactKey", ID_CMD_OPEN_CONTACT_KEY)
       ID_MAPPER (L"overrideFileClose", ID_CMD_FILE_CLOSE)
       ID_MAPPER (L"overrideFileSaveAs", ID_CMD_FILE_SAVE_AS)
       ID_MAPPER (L"overrideFileSaveAsWindowed", ID_CMD_FILE_SAVE_AS_IN_WINDOW)
       ID_MAPPER (L"decryptPermanently", ID_CMD_DECRYPT_PERMANENTLY)
+      ID_MAPPER (L"decryptManually", ID_CMD_DECRYPT_MANUAL)
     }
 
   if (cNames > 1)
@@ -814,8 +835,12 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
           }
       case ID_CMD_DECRYPT_PERMANENTLY:
         return decrypt_permanently (parms->rgvarg[0].pdispVal);
+      case ID_CMD_DECRYPT_MANUAL:
+        return decrypt_manual(parms->rgvarg[0].pdispVal);
       case ID_GET_IS_CRYPTO_MAIL:
         return get_is_crypto_mail (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_VD_PROSPONED:
+        return get_is_vd_prosponed (parms->rgvarg[0].pdispVal, result);
       case ID_CMD_OPEN_CONTACT_KEY:
         return open_contact_key (parms->rgvarg[0].pdispVal);
       case ID_CMD_FILE_CLOSE :
@@ -1095,6 +1120,12 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "           getVisible=\"getIsCrypto\""
 //"           insertAfterMso=\"FilePrintQuick\""
         "   />"
+        "   <button id=\"decryptManuallyBtn\""
+        "           label=\"%s\""
+        "           onAction=\"decryptManually\""
+        "           getImage=\"btnEncryptSmall\""
+        "           getVisible=\"getVdProsponed\""
+        "   />"
         "  </contextMenu>"
         " </contextMenus>"
         "</customUI>",
@@ -1114,7 +1145,8 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip,
-        _("Permanently &amp;decrypt")
+        _("Permanently &amp;decrypt"),
+        _("S&amp;tart decryption")
         );
     }
   else if (!wcscmp (RibbonID, L"Microsoft.Outlook.Explorer"))

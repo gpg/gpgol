@@ -288,4 +288,6 @@ void gpgoladdin_invalidate_ui ();
 /* Check in the Outlook settings HTML is enabled. Modifies opt.prefer_html */
 void check_html_preferred ();
 
+/* Check in the GpgOL settings auto vd is enabled. Modifies opt.prefer_html */
+void check_auto_vd_mail ();
 #endif /*GPGOLADDIN_H*/
