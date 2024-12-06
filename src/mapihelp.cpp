@@ -864,7 +864,10 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
     {
       log_dbg ("Empty body found");
       gpgol_release (stream);
-      *r_nobody = 1;
+      if (r_nobody)
+        {
+          *r_nobody = true;
+        }
       TRETURN NULL;
     }
   body = (char*)xmalloc (nbytes + 2);
