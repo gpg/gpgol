@@ -218,16 +218,17 @@ struct opt_s
                                 better have this as a debug option. */
 
   int closeOnUnknownWriteEvent; /* Observations have shown write
-                                events which were announced by the
-                                event: 0xFC99 There might be an
-                                extremely rare plaintext leak
-                                associated with that. So we had code
-                                to close and discard changes to
-                                encrypted mails when we see that
-                                event. This option allows to activate
-                                this code if an Outlook or Exchange
-                                update or some special configuration
-                                make this neccessary. */
+                                   events which were announced by the
+                                   event: 0xFC99 There might be an
+                                   extremely rare plaintext leak
+                                   associated with that. So we had
+                                   code to close and discard changes
+                                   to encrypted mails when we see that
+                                   event. This option allows to
+                                   activate this code if an Outlook or
+                                   Exchange update or some special
+                                   configuration make this
+                                   neccessary. */
 
   char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured
                                 for S/MIME signing but no cert is
@@ -235,6 +236,10 @@ struct opt_s
 
   int disable_titus_handling; /* Disable the code to detect and handle
                                  Titus processed mails.  */
+
+  int dont_autodecrypt_preview; /* If set disable the autodecryption /
+                                   verification whenever a new mail is
+                                   selected in the explorer.  */
 
   int forms_revision;         /* The forms revision number of the
                                  binary.  */

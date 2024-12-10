@@ -268,6 +268,7 @@ read_options (void)
   opt.noSaveBeforeDecrypt = get_conf_bool ("noSaveBeforeDecrypt", 0);
   opt.closeOnUnknownWriteEvent = get_conf_bool ("closeOnUnknownWriteEvent", 0);
   opt.disable_titus_handling = get_conf_bool("disableTitusHandling", 0);
+  opt.dont_autodecrypt_preview = get_conf_bool("disableAutoPreviewHandling",0);
 
   if (!opt.automation)
     {

@@ -847,6 +847,18 @@ HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
   return S_OK;
 }
 
+HRESULT get_is_vd_postponed (LPDISPATCH ctrl, VARIANT *result)
+{
+  MY_MAIL_GETTER
+
+  result->vt = VT_BOOL | VT_BYREF;
+  result->pboolVal = mail && (mail->isVdPostponed () ) ?
+                          &var_true : &var_false;
+
+  TRACEPOINT;
+  return S_OK;
+}
+
 HRESULT decrypt_permanently (LPDISPATCH ctrl)
 {
   MY_MAIL_GETTER
@@ -861,6 +873,22 @@ HRESULT decrypt_permanently (LPDISPATCH ctrl)
   mail->decryptPermanently_o ();
   return S_OK;
 }
+
+HRESULT decrypt_manual (LPDISPATCH ctrl)
+{
+  MY_MAIL_GETTER
+
+  if (!mail)
+    {
+      log_error ("%s:%s: Failed to get mail.",
+                 SRCNAME, __func__);
+      return S_OK;
+    }
+
+  mail->decryptVerify_o ();
+  return S_OK;
+}
+
 
 HRESULT open_contact_key (LPDISPATCH ctrl)
 {
