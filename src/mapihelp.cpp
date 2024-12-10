@@ -3451,7 +3451,8 @@ get_content_type_from_header ( LPMESSAGE message, std::string hdrStr,
         {
           retstr = (char*)xmalloc (strlen (s1) + 1 + strlen (s2) + 1);
           strcpy (stpcpy (stpcpy (retstr, s1), "/"), s2);
-          if (!strcmp (retstr, "multipart/mixed"))
+          if (!opt.disable_titus_handling
+              && !strcmp (retstr, "multipart/mixed"))
             {
               rfc822parse_field_t titus;
 
