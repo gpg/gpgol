@@ -2423,7 +2423,8 @@ get_attach_filename (LPATTACH obj)
 /* Return the content-type of the first and only attachment of MESSAGE
    or NULL if it does not exists.  Caller must free. */
 static std::string
-get_first_attach_data_with_mime_tag_and_file_name (LPMESSAGE message, const char *mime_tag, const char *file_name)
+get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
+                                 const char *file_name)
 {
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
@@ -2492,7 +2493,7 @@ get_first_attach_data_with_mime_tag_and_file_name (LPMESSAGE message, const char
 
   result = get_attach_mime_tag (att);
 
-  if (strcmp(result, mime_tag))
+  if (!result || strcmp(result, mime_tag))
     {
       log_debug ("%s:%s: wrong mime tag: %s", SRCNAME, __func__, result);
       goto leave;
@@ -2500,7 +2501,7 @@ get_first_attach_data_with_mime_tag_and_file_name (LPMESSAGE message, const char
   xfree (result);
 
   result = get_attach_filename (att);
-  if (!strcmp(result, file_name))
+  if (result && !strcmp(result, file_name))
     {
       FreeProws (mapirows);
       gpgol_release (mapitable);
@@ -3452,20 +3453,26 @@ get_content_type_from_header ( LPMESSAGE message, std::string hdrStr,
           strcpy (stpcpy (stpcpy (retstr, s1), "/"), s2);
           if (!strcmp (retstr, "multipart/mixed"))
             {
-              rfc822parse_field_t titus = rfc822parse_parse_field (msg, "X-Titus-*", -1);
+              rfc822parse_field_t titus;
+
+              titus = rfc822parse_parse_field (msg, "X-Titus-*", -1);
               if (titus)
                 {
-                  std::string orig_mail_att = get_first_attach_data_with_mime_tag_and_file_name( message, "application/octet-stream", MIMEATTACHFILENAME);
+                  std::string orig_mail_att;
+
+                  orig_mail_att= get_first_attach_data_tag_fname
+                    (message, "application/octet-stream", MIMEATTACHFILENAME);
+
                   rfc822parse_release_field (titus);
                   rfc822parse_release_field (ctx);
-                  xfree (retstr);
                   rfc822parse_close (msg);
+                  xfree (retstr);
 
-                  TRETURN get_message_content_type(message, orig_mail_att, r_protocol, r_smtype);
+                  TRETURN get_content_type_from_header (message, orig_mail_att,
+                                                        r_protocol, r_smtype);
                 }
             }
-          else
-          if (!strcmp (retstr, "application/ms-tnef"))
+          else if (!strcmp (retstr, "application/ms-tnef"))
             {
               char *attach_mime = get_first_attach_mime_tag (message);
               if (attach_mime && !strcmp (attach_mime, "multipart/signed"))
