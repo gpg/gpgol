@@ -2423,6 +2423,105 @@ get_attach_filename (LPATTACH obj)
   TRETURN name;
 }
 
+/* Return the content-type of the first and only attachment of MESSAGE
+   or NULL if it does not exists.  Caller must free. */
+static std::string
+get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
+                                 const char *file_name)
+{
+  HRESULT hr;
+  SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
+  LPMAPITABLE mapitable;
+  LPSRowSet   mapirows;
+  unsigned int pos, n_attach;
+  LPATTACH att = NULL;
+  char *result = NULL;
+
+  hr = message->GetAttachmentTable (0, &mapitable);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      TRETURN NULL;
+    }
+  memdbg_addRef (mapitable);
+
+  hr = HrQueryAllRows (mapitable, (LPSPropTagArray)&propAttNum,
+                       NULL, NULL, 0, &mapirows);
+  if (FAILED (hr))
+    {
+      log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
+                 SRCNAME, __func__, hr);
+      gpgol_release (mapitable);
+      TRETURN NULL;
+    }
+  n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
+  if (n_attach < 1)
+    {
+      FreeProws (mapirows);
+      gpgol_release (mapitable);
+      log_debug ("%s:%s: less then one attachment", SRCNAME, __func__);
+      TRETURN NULL;
+    }
+  pos = 0;
+
+  if (mapirows->aRow[pos].cValues < 1)
+    {
+      log_error ("%s:%s: invalid row at pos %d", SRCNAME, __func__, pos);
+      goto leave;
+    }
+  if (mapirows->aRow[pos].lpProps[0].ulPropTag != PR_ATTACH_NUM)
+    {
+      log_error ("%s:%s: invalid prop at pos %d", SRCNAME, __func__, pos);
+      goto leave;
+    }
+  hr = message->OpenAttach (mapirows->aRow[pos].lpProps[0].Value.l,
+                            NULL, MAPI_BEST_ACCESS, &att);
+  if (FAILED (hr))
+    {
+      log_error ("%s:%s: can't open attachment %d (%ld): hr=%#lx",
+                 SRCNAME, __func__, pos,
+                 mapirows->aRow[pos].lpProps[0].Value.l, hr);
+      goto leave;
+    }
+  memdbg_addRef (att);
+
+  /* Note: We do not expect a filename.  */
+
+  if (get_attach_method (att) != ATTACH_BY_VALUE)
+    {
+      log_debug ("%s:%s: wrong attach method", SRCNAME, __func__);
+      goto leave;
+    }
+
+  result = get_attach_mime_tag (att);
+
+  if (!result || strcmp(result, mime_tag))
+    {
+      log_debug ("%s:%s: wrong mime tag: %s", SRCNAME, __func__, result);
+      goto leave;
+    }
+  xfree (result);
+
+  result = get_attach_filename (att);
+  if (result && !strcmp(result, file_name))
+    {
+      FreeProws (mapirows);
+      gpgol_release (mapitable);
+      TRETURN mapi_get_first_attach_data(message);
+    }
+
+  log_debug ("%s:%s: wrong filename: %s", SRCNAME, __func__, result);
+  xfree(result);
+
+ leave:
+  if (att)
+    gpgol_release (att);
+  FreeProws (mapirows);
+  gpgol_release (mapitable);
+  TRETURN NULL;
+}
+
 /* Return the content-id of the attachment OBJ or NULL if it does
    not exists.  Caller must free. */
 static char *
@@ -3320,36 +3419,18 @@ rfc822parse_t parse_header_data (const std::string &hdrStr,
    string with the protocol parameter will be stored at this address,
    if no protocol is given NULL will be stored.  If R_SMTYPE is not
    NULL a string with the smime-type parameter will be stored there.
-   Caller must release all returned strings.  */
+   Caller must release all returned strings.
+   If the Content-Type multipart/mixed and the mail has a header starting
+   with X-Titus- we check for an matching attachment of containing the original
+   mail and return its content type*/
 char *
-mapi_get_message_content_type (LPMESSAGE message,
+get_content_type_from_header ( LPMESSAGE message, std::string hdrStr,
                                char **r_protocol, char **r_smtype)
 {
-  TSTART;
+  TSTART
+  bool isWks = false;
   const char *s;
   char *retstr = NULL;
-
-  bool isWks = false;
-
-  if (r_protocol)
-    *r_protocol = NULL;
-  if (r_smtype)
-    *r_smtype = NULL;
-
-  std::string hdrStr = mapi_get_header (message);
-  if (hdrStr.empty())
-    {
-
-      log_debug  ("%s:%s: failed to get headers. Looking at first attach",
-                 SRCNAME, __func__);
-      hdrStr = mapi_get_first_attach_data (message);
-      if (hdrStr.empty())
-        {
-          log_error ("%s:%s: failed to get headers. And attachment.",
-                     SRCNAME, __func__);
-          TRETURN NULL;
-        }
-    }
 
   rfc822parse_t msg = parse_header_data (hdrStr, isWks);
   if (!msg)
@@ -3373,8 +3454,29 @@ mapi_get_message_content_type (LPMESSAGE message,
         {
           retstr = (char*)xmalloc (strlen (s1) + 1 + strlen (s2) + 1);
           strcpy (stpcpy (stpcpy (retstr, s1), "/"), s2);
+          if (!opt.disable_titus_handling
+              && !strcmp (retstr, "multipart/mixed"))
+            {
+              rfc822parse_field_t titus;
 
-          if (!strcmp (retstr, "application/ms-tnef"))
+              titus = rfc822parse_parse_field (msg, "X-Titus-*", -1);
+              if (titus)
+                {
+                  std::string orig_mail_att;
+
+                  orig_mail_att= get_first_attach_data_tag_fname
+                    (message, "application/octet-stream", MIMEATTACHFILENAME);
+
+                  rfc822parse_release_field (titus);
+                  rfc822parse_release_field (ctx);
+                  rfc822parse_close (msg);
+                  xfree (retstr);
+
+                  TRETURN get_content_type_from_header (message, orig_mail_att,
+                                                        r_protocol, r_smtype);
+                }
+            }
+          else if (!strcmp (retstr, "application/ms-tnef"))
             {
               char *attach_mime = get_first_attach_mime_tag (message);
               if (attach_mime && !strcmp (attach_mime, "multipart/signed"))
@@ -3449,6 +3551,34 @@ mapi_get_message_content_type (LPMESSAGE message,
   TRETURN retstr;
 }
 
+char *
+mapi_get_message_content_type (LPMESSAGE message,
+                               char **r_protocol, char **r_smtype)
+{
+  TSTART;
+
+  if (r_protocol)
+    *r_protocol = NULL;
+  if (r_smtype)
+    *r_smtype = NULL;
+
+  std::string hdrStr = mapi_get_header (message);
+  if (hdrStr.empty())
+    {
+
+      log_debug  ("%s:%s: failed to get headers. Looking at first attach",
+                 SRCNAME, __func__);
+      hdrStr = mapi_get_first_attach_data (message);
+      if (hdrStr.empty())
+        {
+          log_error ("%s:%s: failed to get headers. And attachment.",
+                     SRCNAME, __func__);
+          TRETURN NULL;
+        }
+    }
+
+  TRETURN get_content_type_from_header(message, hdrStr, r_protocol, r_smtype );
+}
 
 /* Returns True if MESSAGE has a GpgOL Last Decrypted property with any value.
    This indicates that there should be no PR_BODY tag.  */

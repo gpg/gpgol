@@ -267,6 +267,7 @@ read_options (void)
   opt.encryptSubject = get_conf_bool ("encryptSubject", 0);
   opt.noSaveBeforeDecrypt = get_conf_bool ("noSaveBeforeDecrypt", 0);
   opt.closeOnUnknownWriteEvent = get_conf_bool ("closeOnUnknownWriteEvent", 0);
+  opt.disable_titus_handling = get_conf_bool("disableTitusHandling", 0);
 
   if (!opt.automation)
     {

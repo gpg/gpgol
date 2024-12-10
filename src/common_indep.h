@@ -190,37 +190,54 @@ struct opt_s
   int sync_enc;              /* Disabed async encryption */
   int sync_dec;              /* Disabed async decryption */
   int prefer_smime;          /* S/MIME prefered when autoresolving */
-  int smime_html_warn_shown; /* Flag to save if unsigned smime warning was shown */
-  int smime_insecure_reply_fw_allowed ; /* Flag to save if unsigned smime reply forwards
-                                           should be allowed */
-  int autoretrieve;           /* Use --auto-key-retrieve. */
-  int search_smime_servers;  /* Search for S/MIME keys on all configured S/MIME keyservers
-                                for each new unknown mail */
+  int smime_html_warn_shown; /* Flag to save if unsigned smime warning
+                                was shown */
+  int smime_insecure_reply_fw_allowed ; /* Flag to save if unsigned
+                                           smime reply forwards should
+                                           be allowed */
+  int autoretrieve;          /* Use --auto-key-retrieve. */
+  int search_smime_servers;  /* Search for S/MIME keys on all
+                                configured S/MIME keyservers for each
+                                new unknown mail */
   int auto_unstrusted;       /* Automatically encrypt even to untrusted keys. */
-  int autoimport;            /* Automatically import keys from headers or attachments. */
+  int autoimport;            /* Automatically import keys from headers
+                                or attachments. */
   char *draft_key;           /* Encrypt drafts with this key (fingerprint) */
   int alwaysShowApproval;    /* Always show the certificate approval dialog. */
-  int combinedOpsEnabled;    /* Enable S/MIME and OpenPGP combined operations. */
+  int combinedOpsEnabled;    /* Enable S/MIME and OpenPGP combined
+                                operations. */
   int splitBCCMails;         /* Split BCC recipients in their own mails. */
   int encryptSubject;        /* Encrypt the subject with protected headers. */
-  int noSaveBeforeDecrypt;   /* Do not save to MAPI before modifying the mail for decryption.
-                                While this can avoid plaintext leaks in case other plugins
-                                or server addins added properties that they really want
-                                to save and then bypass our save blocks but might
-                                cause excessive syncs. So better have this as a debug
-                                option. */
-  int closeOnUnknownWriteEvent; /* Observations have shown write events which were
-                                announced by the event: 0xFC99 There might be
-                                an extremely rare plaintext leak associated with
-                                that. So we had code to close and discard changes
-                                to encrypted mails when we see that event. This option
-                                allows to activate this code if an Outlook or Exchange
-                                update or some special configuration make this neccessary. */
-  char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured for S/MIME
-                                signing but no cert is found. */
+  int noSaveBeforeDecrypt;   /* Do not save to MAPI before modifying
+                                the mail for decryption.  While this
+                                can avoid plaintext leaks in case
+                                other plugins or server addins added
+                                properties that they really want to
+                                save and then bypass our save blocks
+                                but might cause excessive syncs. So
+                                better have this as a debug option. */
 
-  /* The forms revision number of the binary.  */
-  int forms_revision;
+  int closeOnUnknownWriteEvent; /* Observations have shown write
+                                events which were announced by the
+                                event: 0xFC99 There might be an
+                                extremely rare plaintext leak
+                                associated with that. So we had code
+                                to close and discard changes to
+                                encrypted mails when we see that
+                                event. This option allows to activate
+                                this code if an Outlook or Exchange
+                                update or some special configuration
+                                make this neccessary. */
+
+  char *smimeNoCertSigErr;   /* Error to show when GpgOL is configured
+                                for S/MIME signing but no cert is
+                                found. */
+
+  int disable_titus_handling; /* Disable the code to detect and handle
+                                 Titus processed mails.  */
+
+  int forms_revision;         /* The forms revision number of the
+                                 binary.  */
 
 };
 extern struct opt_s opt;

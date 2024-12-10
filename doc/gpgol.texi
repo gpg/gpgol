@@ -136,11 +136,12 @@ menu and enables a few extra menu items.
 @c
 @c  P R O T O C O L  D E S C R I P T I O N
 @c
-@node Assuan Protocol
-@chapter Description of the UI Server Protocol
+@node External Helper
+@chapter Description of external helper tools.
 
 Cryptographic operations are either done using the GPGME library or by
-utilizing external helper tools which part of the `Kleopatra' frontend.
+utilizing external helper tools which are part of the `Kleopatra'
+frontend.
 
 
 @c xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -345,6 +346,9 @@ When leaving GpgOL's options dialog, the GIT commit id of the current
 version will be stored in this entry.  This is used to display a note
 after software upgrades.
 
+@item HKCU\Software\GNU\GpgOL:disableTitusHandling
+If set to the string value of "1" the detection and special processing
+of Titus processed mails is disabled.
 
 @end table
 
