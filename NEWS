@@ -1,6 +1,18 @@
 Noteworthy changes for version 2.5.15 (unreleased)
 ==================================================
 
+ * New feature to handle encrypted mails processed by the Titus data
+   classification software.  This can be disabled by setting the GpgOL
+   Registry key "disableTitusHandling" to the value "1".
+
+ * New optional feature to disable the automatic verification or
+   decryption in the mail preview window.  This feature can be enabled
+   by setting the GpgOL Registry key "disableAutoPreviewHandling" to
+   the value "1".  If enabled the new "Start Decryption" context menu
+   item may be used to decrypt or verify a mail.
+
+ * Fixed a crash on certain mails.  [rO34d53b4309]
+
 
 Noteworthy changes for version 2.5.14 (2024-08-28)
 ==================================================
