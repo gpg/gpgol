@@ -2429,6 +2429,7 @@ static std::string
 get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
                                  const char *file_name)
 {
+  std::string ret;
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
@@ -2442,7 +2443,7 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
     {
       log_debug ("%s:%s: GetAttachmentTable failed: hr=%#lx",
                  SRCNAME, __func__, hr);
-      TRETURN NULL;
+      TRETURN ret;
     }
   memdbg_addRef (mapitable);
 
@@ -2453,7 +2454,7 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
       log_debug ("%s:%s: HrQueryAllRows failed: hr=%#lx",
                  SRCNAME, __func__, hr);
       gpgol_release (mapitable);
-      TRETURN NULL;
+      TRETURN ret;
     }
   n_attach = mapirows->cRows > 0? mapirows->cRows : 0;
   if (n_attach < 1)
@@ -2461,7 +2462,7 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
       FreeProws (mapirows);
       gpgol_release (mapitable);
       log_debug ("%s:%s: less then one attachment", SRCNAME, __func__);
-      TRETURN NULL;
+      TRETURN ret;
     }
   pos = 0;
 
@@ -2486,8 +2487,6 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
     }
   memdbg_addRef (att);
 
-  /* Note: We do not expect a filename.  */
-
   if (get_attach_method (att) != ATTACH_BY_VALUE)
     {
       log_debug ("%s:%s: wrong attach method", SRCNAME, __func__);
@@ -2508,7 +2507,7 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
     {
       FreeProws (mapirows);
       gpgol_release (mapitable);
-      TRETURN mapi_get_first_attach_data(message);
+      TRETURN mapi_get_first_attach_data(message);  /* Success.  */
     }
 
   log_debug ("%s:%s: wrong filename: %s", SRCNAME, __func__, result);
@@ -2519,7 +2518,7 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
     gpgol_release (att);
   FreeProws (mapirows);
   gpgol_release (mapitable);
-  TRETURN NULL;
+  TRETURN ret;
 }
 
 /* Return the content-id of the attachment OBJ or NULL if it does
