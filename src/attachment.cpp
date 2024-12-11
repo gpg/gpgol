@@ -47,6 +47,12 @@ Attachment::Attachment(LPDISPATCH attach)
   int type = get_oom_int (attach, "Type");
   m_utf8DisplayName = get_oom_string_s (attach, "DisplayName");
   m_fileName = get_oom_string_s (attach, "FileName");
+  char *cid = get_pa_string (attach, PR_ATTACH_CONTENT_ID_DASL);
+  if (cid)
+    {
+      m_cid = cid;
+      xfree (cid);
+    }
 
   if (m_fileName.empty())
     {
