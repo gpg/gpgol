@@ -119,9 +119,10 @@ get_root_key(const char *root)
 #define CROSS_ACCESS KEY_WOW64_64KEY
 #endif
 
-/* Read a registry value from HKLM or HKCU of type dword and
-   return 1 if the value is larger then 0, 0 if it is zero and
-   -1 if it is not set or not found. */
+/* Read a registry value from HKLM or HKCU of type DWORD and return 1
+   if the value is larger then 0, 0 if it is zero and -1 if it is not
+   set or not found.  Do not use this fucntion for GpgOL specific
+   Registry keys.  */
 int
 read_reg_bool (HKEY root, const char *path, const char *value)
 {

@@ -347,10 +347,10 @@ version will be stored in this entry.  This is used to display a note
 after software upgrades.
 
 @item HKCU\Software\GNU\GpgOL:disableTitusHandling
-If set to the string value of "1" the detection and special processing
-of Titus processed mails is disabled.
+If set to the string value "1" the detection and special processing of
+Titus processed mails is disabled.
 
-@item HKCU\Software\GNU\GpgOL:disableAutoPreviewHandling
+@item HKCU\Software\GNU\GpgOL:disableAutoPreview
 If set to the string value "1" an encrypted or signed message is not
 decrypted or verified immediately but requires the user to double
 click or use the new "Start decryption" context menu item.

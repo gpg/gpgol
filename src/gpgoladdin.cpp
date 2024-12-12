@@ -406,7 +406,7 @@ void check_auto_vd_mail()
   /* Check if Mail should automatical be verified/decrypted. */
   std::string path = "Software\\GNU\\GpgOL\\";
 
-  int val = read_reg_bool (nullptr, path.c_str (), "disableAutoPreviewHandling");
+  int val = read_reg_bool (nullptr, path.c_str (), "disableAutoPreview");
 
   log_debug ("%s:%s: check_vd %s %d",
              SRCNAME, __func__, path.c_str (),val);

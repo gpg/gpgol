@@ -283,8 +283,6 @@ EVENT_SINK_INVOKE(MailItemEvents)
               TRETURN S_OK;
             }
 
-          check_auto_vd_mail ();
-
           if (m_mail->decryptVerify_o (opt.dont_autodecrypt_preview > 0))
             {
               log_error ("%s:%s: Decrypt message failed.",
