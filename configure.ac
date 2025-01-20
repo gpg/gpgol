@@ -38,9 +38,10 @@ AC_INIT([gpgol],[mym4_full_version], [http://bugs.gnupg.org])
 # Bump up this value if you changed any form.
 GPGOL_FORMS_REVISION=335
 
-NEED_GPG_ERROR_VERSION=1.9
+NEED_GPG_ERROR_VERSION=1.47
 NEED_GPGME_API=1
-NEED_GPGME_VERSION=1.13.0
+NEED_GPGME_VERSION=1.24.0
+NEED_GPGMEPP_VERSION=1.24.0
 NEED_LIBASSUAN_API=2
 NEED_LIBASSUAN_VERSION=2.0.0
 
@@ -171,15 +172,13 @@ AC_DEFINE(GPG_ERR_SOURCE_DEFAULT, GPG_ERR_SOURCE_USER_2,
           [The default error source for GpgOL.])
 AM_PATH_GPGME("$NEED_GPGME_API:$NEED_GPGME_VERSION",
                have_gpgme=yes,have_gpgme=no)
+AM_PATH_GPGMEPP("$NEED_GPGMEPP_VERSION",
+                have_gpgmepp=yes, have_gpgmepp=no)
 AM_PATH_LIBASSUAN("$NEED_LIBASSUAN_API:$NEED_LIBASSUAN_VERSION",
                   have_libassuan=yes,have_libassuan=no)
 
-if test "$have_gpgme" = yes; then
-  GPGMEPP_CXXFLAGS="-I `$GPGME_CONFIG --prefix`/include/gpgme++"
-  GPGMEPP_CXXFLAGS="${GPGMEPP_CXXFLAGS} -DGPGMEPP_STATIC_DEFINE"
-  have_gpgmepp=yes
-else
-  have_gpgmepp=no
+if test "$have_gpgmepp" = yes; then
+  GPGMEPP_CXXFLAGS="${GPGMEPP_CFLAGS} -DGPGMEPP_STATIC_DEFINE"
 fi
 AC_SUBST(GPGMEPP_CXXFLAGS)
 AC_SUBST(GPGMEPP_LIBS)
@@ -280,8 +279,10 @@ if test "$have_gpgmepp" = "no"; then
    die=yes
    AC_MSG_NOTICE([[
 ***
-*** You need the C++ language binding for gpgme to build this program.
-** Ensure that GPGME was compiled with --enabled-languages=cpp
+*** You need gpgmepp to build this program.
+**  This library is for example available at
+***   ftp://ftp.gnupg.org/gcrypt/gpgme/
+*** (at least version $NEED_GPGMEPP_VERSION is required.)
 ***]])
 fi
 if test "$have_libassuan" = "no"; then

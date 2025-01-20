@@ -136,14 +136,14 @@ endif
 
 if BUILD_W64
 libgpgmepp.a:
-	if [ -e "$$($(GPGME_CONFIG) --prefix)/lib64/libgpgmepp.a" ]; then \
-		ln -sf $$($(GPGME_CONFIG) --prefix)/lib64/libgpgmepp.a .; \
+	if [ -e "$$($(GPGRT_CONFIG) gpgmepp --prefix)/lib64/libgpgmepp.a" ]; then \
+		ln -sf $$($(GPGRT_CONFIG) gpgmepp --prefix)/lib64/libgpgmepp.a .; \
 	else \
-		ln -sf $$($(GPGME_CONFIG) --prefix)/lib/libgpgmepp.a .; \
+		ln -sf $$($(GPGRT_CONFIG) gpgmepp --prefix)/lib/libgpgmepp.a .; \
 	fi
 else
 libgpgmepp.a:
-	ln -sf $$($(GPGME_CONFIG) --prefix)/lib/libgpgmepp.a .
+	ln -sf $$($(GPGRT_CONFIG) gpgmepp --prefix)/lib/libgpgmepp.a .
 endif
 
 clean-local:
