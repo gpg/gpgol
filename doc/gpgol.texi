@@ -182,7 +182,7 @@ attachments created by GpgOL.  These values are used:
   will automagically be recreated as needed.  If the attachment has
   been created from an encrypted message, it is saved re-encrypted under
   a non-permanent session key.  This session key is valid as long as the
-  current Outlook porcess exists.
+  current Outlook process exists.
 
   @item ATTACHTYPE_MOSSTEMPL = 3
   The attachment has been created in the course of sending a message.
@@ -191,7 +191,7 @@ attachments created by GpgOL.  These values are used:
   The attachment contains the original PGP message body of PGP inline
   encrypted messages.  We need to save this away because it may happen
   that in the course of displaying the plaintext Outlook overwrites the
-  actual body due to internal syncronization.
+  actual body due to internal synchronization.
   @end table
 
 @item GpgOL Sig Status
@@ -225,7 +225,7 @@ flag indicating the status.  These values are defined:
 
   @item -
   The signature is bad.  Either this means the message has been tampered
-  with or an intermediate message relay has accidently changed
+  with or an intermediate message relay has accidentally changed
   the message (e.g. due to recoding).
 
   @end table
@@ -237,7 +237,7 @@ the attachment has been encrypted under the non-permanent session key.
 
 @item GpgOL Charset
 This is a property of type STRING8 and used to describe the character
-set of an attachment or of the body.  If this propery is missing the
+set of an attachment or of the body.  If this property is missing the
 default of UTF-8 is assumed.
 
 @item GpgOL Last Decrypted
@@ -248,7 +248,7 @@ the current session, GpgOL needs to decrypt it again.
 
 @item GpgOL MIME Info
 This property is of type STRING8 and used to store the MIME structure of
-the orginal message.  The content are lines of colon delimited fields.
+the original message.  The content are lines of colon delimited fields.
 The specification has not yet been finished.
 
 @item GpgOL Draft Info
@@ -440,7 +440,7 @@ at all as created by Outlook, so no further changes are required.
 
 @item
 Inline PGP encrypted mails (@code{IPM.Note.GpgOL.PGPMessage}) might have
-a wrong PR_BODY. This condition can be detected by the existance of an
+a wrong PR_BODY. This condition can be detected by the existence of an
 attachment named @file{gpgolPGP.dat}, flagged as hidden and with the
 attach type ATTACHTYPE_PGPBODY (See above under MAPI Properties).  If
 such an attachment exists, it should be copied to PR_BODY and may then
@@ -460,7 +460,7 @@ without sending them as plaintext to the storage.  The attachments are
 only stored on the local disk while being opened from the attachment's
 context menu for viewing.  Almost all these attachments are ephemeral and
 may be deleted when not displayed.  GpgOL re-creates them by parsing the
-original message if neeeded.  In fact they are always re-created after
+original message if needed.  In fact they are always re-created after
 Outlook as been started again.  This is because the attachments holding
 the plaintext are symmetrical encrypted with an ephemeral session key,
 only valid as long as Outlook runs.
@@ -473,17 +473,17 @@ FIXME:  Needs more documentation.
 GpgOL does not use the PR_BODY property.  This is because internal
 Outlook syncronisation may change that property after the plaintext of a
 message has been displayed.  In general this is not a problem because
-the messages processed by GpgOL do not use that property (the orginal
+the messages processed by GpgOL do not use that property (the original
 S/MIME and PGP/MIME message is stored in attachments).  However, there
 is one exception: Inline PGP message (in contrast to the modern PGP/MIME
-messages) are conveyed in the PR_BODY.  To avoid changing that orginal
+messages) are conveyed in the PR_BODY.  To avoid changing that original
 mail, GpgOL copies such a body to a new attachment named
 @file{gpgolPGP.dat}, flags it as hidden and sets the attach type to
 ATTACHTYPE_PGPBODY (See above under MAPI Properties).  That attachment
 may never be deleted!
 
 Due to internal OL syncronisation, plaintext data may end up in PR_BODY,
-GpgOL tries hard to delete PR_BODY so that it nevers shows up in the
+GpgOL tries hard to delete PR_BODY so that it never shows up in the
 MAPI storage.  However this is hard and here a storage provider can help
 by deleting PR_BODY under one of these conditions:
 
@@ -504,7 +504,7 @@ exists, delete the properties @code{PR_BODY} and @code{PR_BODY_HTML}.
 
 Instead of deleting it should be sufficient to make sure
 that such PR_BODYs are not updated and don't make it to the disk or a
-strage server.
+storage server.
 
 Implementing such a feature would really help with end-to-end encryption
 where the security policy requires that the plaintext of an encrypted
@@ -559,7 +559,7 @@ What about the message class mangling?
   apply its own S/MIME handler to the message but leaves it unchanged in
   the message store.
 
-* For ease of implementation the same thing applies to PGP messgaes,
+* For ease of implementation the same thing applies to PGP messages,
   although OL would not touch these messages.
 
 * When reading a message GpgOL quickly checks the message class and if
