@@ -262,7 +262,7 @@ format_error(GpgME::DecryptionResult result, Protocol protocol)
         }
       else
         {
-          msg += result.error().asString();
+          msg += result.error().asStdString();
         }
     }
 

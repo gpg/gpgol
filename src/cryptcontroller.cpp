@@ -942,7 +942,7 @@ CryptController::resolve_keys ()
   if (err)
     {
       log_debug ("%s:%s: Resolver spawn finished Err code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
     }
 
   int ret = parse_output (mystdout);
@@ -1130,8 +1130,9 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
       if (err1 || err2)
         {
           log_error ("%s:%s: Encrypt / Sign error %s %s.",
-                     SRCNAME, __func__, result_pair.first.error().asString(),
-                     result_pair.second.error().asString());
+                     SRCNAME, __func__,
+                     result_pair.first.error().asStdString().c_str(),
+                     result_pair.second.error().asStdString().c_str());
           err = err1 ? err1 : err2;
           GpgME::Data log;
           const auto err3 = ctx->getAuditLog (log,
@@ -1160,7 +1161,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
       if (err)
         {
           log_error ("%s:%s: Signing error %s.",
-                     SRCNAME, __func__, sigResult.error().asString());
+                     SRCNAME, __func__, sigResult.error().asStdString().c_str());
           GpgME::Data log;
           const auto err3 = ctx->getAuditLog (log,
                                               GpgME::Context::DiagnosticAuditLog);
@@ -1209,7 +1210,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
       if (err)
         {
           log_error ("%s:%s: Encryption error %s.",
-                     SRCNAME, __func__, err.asString());
+                     SRCNAME, __func__, err.asStdString().c_str());
           GpgME::Data log;
           const auto err3 = ctx->getAuditLog (log,
                                               GpgME::Context::DiagnosticAuditLog);
@@ -1237,7 +1238,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
       if (err)
         {
           log_error ("%s:%s: Encryption error %s.",
-                     SRCNAME, __func__, err.asString());
+                     SRCNAME, __func__, err.asStdString().c_str());
           GpgME::Data log;
           const auto err3 = ctx->getAuditLog (log,
                                               GpgME::Context::DiagnosticAuditLog);
@@ -1263,7 +1264,7 @@ CryptController::do_crypto (GpgME::Error &err, std::string &r_diag, bool force)
       if (err)
         {
           log_error ("%s:%s: Signing error %s.",
-                     SRCNAME, __func__, err.asString());
+                     SRCNAME, __func__, err.asStdString().c_str());
           GpgME::Data log;
           const auto err3 = ctx->getAuditLog (log,
                                               GpgME::Context::DiagnosticAuditLog);

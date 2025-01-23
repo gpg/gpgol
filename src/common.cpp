@@ -1046,7 +1046,7 @@ in_de_vs_mode()
   if (err)
     {
       log_error ("%s:%s: Failed to get gpgconf components: %s",
-                 SRCNAME, __func__, err.asString ());
+                 SRCNAME, __func__, err.asStdString().c_str());
       vs_mode = false;
       return vs_mode;
     }

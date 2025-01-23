@@ -175,7 +175,7 @@ do_update (LPVOID arg)
     {
       log_debug ("%s:%s Failed to find key for %s err: %s",
                  SRCNAME, __func__, anonstr (args->first.c_str()),
-                 err.asString ());
+                 err.asStdString().c_str());
     }
   KeyCache::instance ()->onUpdateJobDone (args->first.c_str(),
                                           newKey);
@@ -233,7 +233,7 @@ do_import (LPVOID arg)
       if (import.error())
         {
           log_debug ("%s:%s Error importing: %s",
-                     SRCNAME, __func__, import.error().asString());
+                     SRCNAME, __func__, import.error().asStdString().c_str());
           continue;
         }
       const char *fpr = import.fingerprint ();
@@ -291,7 +291,7 @@ do_populate_protocol (GpgME::Protocol proto, bool secret)
    if ((err = ctx->startKeyListing ((const char*)nullptr, secret)))
     {
       log_error ("%s:%s: Failed to start keylisting err: %i: %s",
-                 SRCNAME, __func__, err.code (), err.asString());
+                 SRCNAME, __func__, err.code (), err.asStdString().c_str());
       TRETURN;
     }
 
@@ -364,7 +364,7 @@ gpgsm_learn ()
   if (err)
     {
       log_debug ("%s:%s: gpgsm learn spawn code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
     }
   if ((opt.enable_debug & DBG_DATA))
     {
@@ -394,7 +394,7 @@ do_populate_smartcards (GpgME::Protocol proto)
   if (err)
     {
       log_dbg ("Failed to create assuan engine. %s",
-               err.asString ());
+               err.asStdString().c_str());
       TRETURN;
     }
   const auto serials = gpgagent_transact (ctx, "scd serialno");
@@ -1430,7 +1430,7 @@ get_extern_smime_keys (const std::string &addr, bool import)
       const GpgME::ImportResult res = ctx->importKeys(keys);
       log_debug ("%s:%s: Import result for %s: err: %s",
                  SRCNAME, __func__, anonstr (addr.c_str()),
-                 res.error ().asString ());
+                 res.error ().asStdString().c_str());
 
     }
 
@@ -1850,7 +1850,7 @@ KeyCache::import_pgp_key_data (const GpgME::Data &data)
       std::stringstream ss;
       ss << result;
       log_debug ("%s:%s: Import result: %s details:\n %s",
-                 SRCNAME, __func__, result.error ().asString (),
+                 SRCNAME, __func__, result.error ().asStdString().c_str(),
                  ss.str().c_str());
       if (result.error())
         {
@@ -1870,7 +1870,7 @@ KeyCache::import_pgp_key_data (const GpgME::Data &data)
   else
     {
       log_debug ("%s:%s: Import result: %s",
-                 SRCNAME, __func__, result.error ().asString ());
+                 SRCNAME, __func__, result.error ().asStdString().c_str());
     }
   TRETURN !result.error();
 }

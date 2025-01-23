@@ -189,7 +189,7 @@ check_published (const std::string &mbox)
   if (err)
     {
       log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
       return false;
     }
   auto data = mystdout.toString ();
@@ -239,7 +239,7 @@ do_check (LPVOID arg)
   if (err)
     {
       log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
       return 0;
     }
 
@@ -498,7 +498,7 @@ WKSHelper::start_publish (const std::string &mbox) const
   if (err)
     {
       log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
       return;
     }
   const auto data = mystdout.toString ();
@@ -756,7 +756,7 @@ WKSHelper::handle_confirmation_notify (const std::string &mbox) const
   if (err)
     {
       log_debug ("%s:%s: WKS client spawn code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
       return;
     }
   const auto data = mystdout.toString ();

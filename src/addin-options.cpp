@@ -277,7 +277,7 @@ open_gpgolconfig (LPVOID arg)
   if (err)
     {
       log_error ("%s:%s: Err code: %i asString: %s",
-                 SRCNAME, __func__, err.code(), err.asString());
+                 SRCNAME, __func__, err.code(), err.asStdString().c_str());
     }
   dlg_open = false;
 

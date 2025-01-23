@@ -1176,7 +1176,7 @@ do_crypt (LPVOID arg)
         {
           char *buf = nullptr;
           gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
-                          err.asString());
+                          err.asStdString().c_str());
           std::string msg = buf;
           memdbg_alloc (buf);
           xfree (buf);
@@ -1221,7 +1221,7 @@ do_crypt (LPVOID arg)
         {
           char *buf = nullptr;
           gpgrt_asprintf (&buf, _("Crypto operation failed:\n%s"),
-                          err.asString());
+                          err.asStdString().c_str());
           std::string msg = buf;
           memdbg_alloc (buf);
           xfree (buf);
@@ -3667,7 +3667,7 @@ Mail::getCryptoDetails_o ()
       message += "\n\n";
       message += _("The message was signed but the verification failed with:");
       message += "\n";
-      message += m_verify_result.error().asString();
+      message += m_verify_result.error().asStdString();
       TRETURN message;
     }
   /* No crypo, what are we doing here? */
@@ -3820,7 +3820,7 @@ Mail::getCryptoDetails_o ()
           const auto err = m_sig.status ();
           if (err)
             {
-              message += err.asString () + std::string ("\n");
+              message += err.asStdString() + std::string ("\n");
             }
         }
       else if (m_sig.summary() & Signature::Summary::SigExpired)
