@@ -40,13 +40,12 @@ IDI_ENCSIGN_FILE_48_PNG   RCDATA               "icons/encrypt-sign-file-48.png"
 IDI_LEVEL_0_ENC             RCDATA             "icons/level-0-enc.png"
 IDI_LEVEL_1_ENC             RCDATA             "icons/level-1-enc.png"
 
-/* We use the same icon for level 2 and 3 */
-IDI_LEVEL_2_ENC             RCDATA             "icons/level-3-enc.png"
+IDI_LEVEL_2_ENC             RCDATA             "icons/level-2-enc.png"
 IDI_LEVEL_3_ENC             RCDATA             "icons/level-3-enc.png"
 IDI_LEVEL_4_ENC             RCDATA             "icons/level-4-enc.png"
 IDI_LEVEL_0                 RCDATA             "icons/level-0.png"
 IDI_LEVEL_1                 RCDATA             "icons/level-1.png"
-IDI_LEVEL_2                 RCDATA             "icons/level-3.png"
+IDI_LEVEL_2                 RCDATA             "icons/level-2.png"
 IDI_LEVEL_3                 RCDATA             "icons/level-3.png"
 IDI_LEVEL_4                 RCDATA             "icons/level-4.png"
 
