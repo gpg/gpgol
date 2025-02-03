@@ -14,7 +14,7 @@
    id="svg3020"
    version="1.1"
    inkscape:version="0.48.5 r10040"
-   inkscape:export-filename="/home/aheinecke/arbeit/kf5/src/gpgol/src/icons/level-2.png"
+   inkscape:export-filename="/home/aheinecke/arbeit/kf5/src/gpgol/src/icons/level-3.png"
    inkscape:export-xdpi="75"
    inkscape:export-ydpi="75"
    sodipodi:docname="level-2.svg">
@@ -35,17 +35,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="16"
-     inkscape:cx="10.034218"
-     inkscape:cy="26.031963"
+     inkscape:zoom="5.6568543"
+     inkscape:cx="-39.439085"
+     inkscape:cy="39.950383"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:grid-bbox="true"
      inkscape:document-units="px"
      inkscape:window-width="1920"
-     inkscape:window-height="1003"
-     inkscape:window-x="1918"
-     inkscape:window-y="27"
+     inkscape:window-height="1060"
+     inkscape:window-x="3838"
+     inkscape:window-y="-3"
      inkscape:window-maximized="1"
      inkscape:snap-global="false">
     <inkscape:grid
@@ -76,7 +76,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -86,21 +86,16 @@
      inkscape:groupmode="layer">
     <path
        inkscape:connector-curvature="0"
-       style="fill:#27ae60;fill-opacity:1;stroke:#141414;stroke-width:0.70796257;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:#27ae60;fill-opacity:1;stroke:#141414;stroke-width:0.70935965;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        class="ColorScheme-PositiveText"
-       d="m 23.999998,0.35398141 c -13.099895,0 -23.64601671,10.54612459 -23.64601671,23.64601959 0,13.099895 10.54612171,23.646018 23.64601671,23.646018 13.099896,0 23.646021,-10.546123 23.646021,-23.646018 0,-13.099895 -10.546125,-23.64601959 -23.646021,-23.64601959 z"
+       d="m 23.999999,0.35468014 c -13.099507,0 -23.64531919,10.54581186 -23.64531919,23.64532086 0,13.099507 10.54581219,23.645319 23.64531919,23.645319 13.099509,0 23.645321,-10.545812 23.645321,-23.645319 0,-13.099509 -10.545812,-23.64532086 -23.645321,-23.64532086 z"
        id="path4387"
        inkscape:export-xdpi="75"
        inkscape:export-ydpi="75" />
     <path
-       sodipodi:type="arc"
+       inkscape:connector-curvature="0"
        style="fill:#ffffff;fill-opacity:1;stroke:none"
-       id="path2990"
-       sodipodi:cx="15"
-       sodipodi:cy="13"
-       sodipodi:rx="11.4375"
-       sodipodi:ry="11.0625"
-       d="m 26.4375,13 a 11.4375,11.0625 0 1 1 -22.875,0 11.4375,11.0625 0 1 1 22.875,0 z"
-       transform="matrix(1.0491803,0,0,1.0847458,8.2622952,9.8983042)" />
+       d="m 36.50104,11.300901 -17.85555,17.85555 -5.95185,-5.951849 -5.9518507,5.951849 5.9518507,5.951851 5.95185,5.95185 23.8074,-23.8074 -5.95185,-5.951851 z"
+       id="path4389" />
   </g>
 </svg>
