@@ -2470,6 +2470,12 @@ get_unique_id (LPDISPATCH mail, int create, const char *uuid)
       char *uid = get_pa_string (mail, GPGOL_UID_DASL);
       if (!uid)
         {
+          log_debug ("%s:%s: No uuid found in oom for '%p' looking for PR_INTERNET_MESSAGE_ID_W_DASL",
+                     SRCNAME, __func__, mail);
+          uid = get_pa_string(mail, PR_INTERNET_MESSAGE_ID_W_DASL);
+        }
+      if (!uid)
+        {
           log_debug ("%s:%s: No uuid found in oom for '%p'",
                      SRCNAME, __func__, mail);
           TRETURN NULL;

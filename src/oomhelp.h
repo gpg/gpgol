@@ -122,6 +122,8 @@ DEFINE_OLEGUID(IID_IOleWindow,                0x00000114, 0, 0);
 #define GPGOL_UID_DASL \
   "http://schemas.microsoft.com/mapi/string/" \
   "{31805AB8-3E92-11DC-879C-00061B031004}/GpgOL UID/0x0000001F"
+#define PR_INTERNET_MESSAGE_ID_W_DASL \
+  "http://schemas.microsoft.com/mapi/proptag/0x1035001F"
 #define PR_ATTACH_DATA_BIN_DASL \
   "http://schemas.microsoft.com/mapi/proptag/0x37010102"
 #define PR_BODY_W_DASL \
