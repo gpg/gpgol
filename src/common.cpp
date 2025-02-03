@@ -916,6 +916,13 @@ int
 gpgol_message_box (HWND parent, const char *utf8_text,
                    const char *utf8_caption, UINT type)
 {
+ return gpgol_message_box_icon (parent, utf8_text, utf8_caption, type, MB_USERICON);
+}
+
+int
+gpgol_message_box_icon (HWND parent, const char *utf8_text,
+                   const char *utf8_caption, UINT type, UINT icon)
+{
   wchar_t *w_text = utf8_to_wchar (utf8_text);
   wchar_t *w_caption = utf8_to_wchar (utf8_caption);
   int ret = 0;
@@ -926,12 +933,14 @@ gpgol_message_box (HWND parent, const char *utf8_text,
   mbp.hInstance = glob_hinst;
   mbp.lpszText = w_text;
   mbp.lpszCaption = w_caption;
-  mbp.dwStyle = type | MB_USERICON;
+  mbp.dwStyle = type | icon;
   mbp.dwLanguageId = MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT);
   mbp.lpfnMsgBoxCallback = NULL;
   mbp.dwContextHelpId = 0;
-  mbp.lpszIcon = (LPCWSTR) MAKEINTRESOURCE (IDI_GPGOL_LOCK_ICON);
-
+  if (icon==MB_USERICON)
+    {
+      mbp.lpszIcon = (LPCWSTR) MAKEINTRESOURCE (IDI_GPGOL_LOCK_ICON);
+    }
   ret = MessageBoxIndirectW (&mbp);
 
   xfree (w_text);

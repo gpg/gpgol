@@ -263,7 +263,19 @@ EVENT_SINK_INVOKE(MailItemEvents)
             {
               // We do it here as this nearly always comes and we want to remove
               // as much as possible from the startup time.
-              log_addins ();
+              std::string incompatibles_found = check_and_log_addins ();
+              if (!incompatibles_found.empty())
+                {
+                  std::string buf;
+                  // TRANSLATORS: Part of a warning dialog that shows we found
+                  // GPGOL incompatible addins
+
+                  buf = _("We found the following incompaible active Outlook addins:");
+                  buf += "\n\r";
+                  buf += incompatibles_found;
+                  gpgol_message_box_icon (get_active_hwnd (), buf.c_str(),
+                                         _("GpgOL"), MB_OK, MB_ICONWARNING);
+                }
               addinsLogged = true;
             }
           if (!m_mail->isCryptoMail ())

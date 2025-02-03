@@ -26,6 +26,7 @@
 
 #include <windows.h>
 #include <olectl.h>
+#include <set>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -2939,16 +2940,18 @@ get_ol_ui_language ()
   TRETURN result;
 }
 
-void
-log_addins ()
+static std::set<std::string> s_incompatible_addins = {"ESET.OutlookAddin"};
+std::string
+check_and_log_addins ()
 {
   TSTART;
+  std::string incompatible_addins_found;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
 
   if (!app)
     {
       TRACEPOINT;
-      TRETURN;
+      TRETURN incompatible_addins_found;
     }
 
   LPDISPATCH addins = get_oom_object (app, "COMAddins");
@@ -2956,7 +2959,7 @@ log_addins ()
   if (!addins)
     {
       TRACEPOINT;
-      TRETURN;
+      TRETURN incompatible_addins_found;
     }
 
   std::string activeAddins;
@@ -3023,12 +3026,16 @@ log_addins ()
           description = "No description";
         }
       activeAddins += progId + " (" + description + ")"  + "\n";
+      if (s_incompatible_addins.find(progId)!= s_incompatible_addins.end())
+        {
+          incompatible_addins_found +=  description.empty() ? progId : description  + "\n";
+        }
     }
   gpgol_release (addins);
 
   log_debug ("%s:%s:Active Addins:\n%s", SRCNAME, __func__,
              activeAddins.c_str ());
-  TRETURN;
+  TRETURN incompatible_addins_found;
 }
 
 bool

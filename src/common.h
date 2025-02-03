@@ -124,7 +124,8 @@ void bring_to_front (HWND wid);
 
 int gpgol_message_box (HWND parent, const char *utf8_text,
                        const char *utf8_caption, UINT type);
-
+int gpgol_message_box_icon (HWND parent, const char *utf8_text,
+                   const char *utf8_caption, UINT type, UINT icon);
 /* Show a bug message with the code. */
 void gpgol_bug (HWND parent, int code);
 
