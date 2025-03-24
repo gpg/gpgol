@@ -424,14 +424,14 @@ void
 check_html_preferred()
 {
   /* Check if HTML Mail should be enabled. */
-  std::string path = "Software\\Microsoft\\Office\\" +
+  std::string path = "Software\\policies\\Microsoft\\Office\\" +
     std::to_string (g_ol_version_major) +
     ".0\\Outlook\\Options\\Mail";
 
   int val = read_reg_bool (nullptr, path.c_str (), "ReadAsPlain");
   if (val == -1)
     {
-      path =  "Software\\policies\\Microsoft\\Office\\" +
+      path =  "Software\\Microsoft\\Office\\" +
         std::to_string (g_ol_version_major) +
         ".0\\Outlook\\Options\\Mail";
       val = read_reg_bool (nullptr, path.c_str (), "ReadAsPlain");
