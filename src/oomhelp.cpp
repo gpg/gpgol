@@ -2538,7 +2538,7 @@ get_unique_id_s (LPDISPATCH mail, int create, const char *uuid)
     {
       return val;
     }
-  return std::string (val);
+  return std::string ();
 }
 
 HWND
