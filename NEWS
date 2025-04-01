@@ -1,5 +1,20 @@
-Noteworthy changes for version 2.5.16 (unreleased)
+Noteworthy changes for version 2.6.0 (unreleased)
 ==================================================
+
+ * Show signature status in ribbon for file system mails.  [T6646]
+
+ * Better distinguish level 3 signature security level from level 2 by
+   using a double check mark in the icon.  [T7079]
+
+ * Consider the Policy Registry entry for for ReadAsPlain first.
+   [T5681]
+
+ * Allow the "Permanently decrypt" feature only after a successful
+   decryption operation to avoid having unreadable mail on canceling
+   the decryption.  [T7485]
+
+ * Fix a crash when cancelling an encrypted draft in certain cases.
+   [T7590]
 
 
 Noteworthy changes for version 2.5.15 (2025-01-07)
