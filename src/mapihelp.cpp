@@ -966,6 +966,7 @@ get_msgcls_from_pgp_lines (LPMESSAGE message, bool *r_nobody = nullptr)
 static int
 is_really_cms_encrypted (LPMESSAGE message)
 {
+  TSTART;
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
@@ -1102,6 +1103,7 @@ is_really_cms_encrypted (LPMESSAGE message)
 static char *
 get_first_attach_mime_tag (LPMESSAGE message)
 {
+  TSTART;
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
   LPMAPITABLE mapitable;
@@ -1628,6 +1630,7 @@ mapi_change_message_class (LPMESSAGE message, int sync_override,
   hr = HrGetOneProp ((LPMAPIPROP)message, tag, &propval);
   if (FAILED (hr))
     {
+      log_debug ("%s:%s: Getting mgsclass tag %#lx failed hr=%#lx\n", SRCNAME, __func__, tag, hr);
       hr = HrGetOneProp ((LPMAPIPROP)message, PR_MESSAGE_CLASS_A, &propval);
       if (FAILED (hr))
         {
@@ -2429,6 +2432,7 @@ static std::string
 get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
                                  const char *file_name)
 {
+  TSTART;
   std::string ret;
   HRESULT hr;
   SizedSPropTagArray (1L, propAttNum) = { 1L, {PR_ATTACH_NUM} };
@@ -3333,7 +3337,8 @@ set_gpgol_draft_info_flags (LPMESSAGE message, int flags)
   buf[1] = flags & 2 ? 'S' : 's';
   buf[0] = flags & 1 ? 'E' : 'e';
 
-  TRETURN mapi_set_gpgol_draft_info (message, buf);
+  int rc = mapi_set_gpgol_draft_info (message, buf);
+  TRETURN rc;
 }
 
 
@@ -3471,8 +3476,9 @@ get_content_type_from_header ( LPMESSAGE message, std::string hdrStr,
                   rfc822parse_close (msg);
                   xfree (retstr);
 
-                  TRETURN get_content_type_from_header (message, orig_mail_att,
-                                                        r_protocol, r_smtype);
+                  char* rct = get_content_type_from_header (message, orig_mail_att,
+                                                           r_protocol, r_smtype);
+                  TRETURN rct;
                 }
             }
           else if (!strcmp (retstr, "application/ms-tnef"))
@@ -3522,6 +3528,11 @@ get_content_type_from_header ( LPMESSAGE message, std::string hdrStr,
                           TRETURN xstrdup ("wks.confirmation.mail");
                         }
                     }
+                }
+              else
+                {
+                  log_debug("%s:%s: Found mime attachment tag %s",
+                             SRCNAME, __func__, attach_mime?attach_mime:"NULL");
                 }
               xfree (attach_mime);
             }
@@ -3576,7 +3587,8 @@ mapi_get_message_content_type (LPMESSAGE message,
         }
     }
 
-  TRETURN get_content_type_from_header(message, hdrStr, r_protocol, r_smtype );
+  char * rct = get_content_type_from_header(message, hdrStr, r_protocol, r_smtype );
+  TRETURN rct;
 }
 
 /* Returns True if MESSAGE has a GpgOL Last Decrypted property with any value.
