@@ -552,14 +552,19 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
         }
     }
 
-  auto retV = Mail::searchMailsByUUID(uid);
+  auto ret = Mail::getMailForUUID(uid);
+  if (ret==NULL)
+  {
+    auto retV = Mail::searchMailsByUUID(uid);
+    if (retV.empty())
+      {
+        log_error ("%s:%s: Failed to find mail %p in map.",
+                  SRCNAME, __func__, mailitem);
+      }
+    ret = retV.front();
+  }
   xfree (uid);
-  if (retV.empty())
-    {
-      log_error ("%s:%s: Failed to find mail %p in map.",
-                 SRCNAME, __func__, mailitem);
-    }
-  auto ret = retV.front();
+
   /* This release may have killed the Mail object we obtained earlier
    * if it was just a leftover mail in the ribbon. */
   gpgol_release (mailitem);
