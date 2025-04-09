@@ -841,7 +841,7 @@ HRESULT get_is_crypto_mail (LPDISPATCH ctrl, VARIANT *result)
   MY_MAIL_GETTER
 
   result->vt = VT_BOOL | VT_BYREF;
-  result->pboolVal = mail && (mail->isSigned () || mail->decryptedSuccessfully ()) ?
+  result->pboolVal = mail && ((mail->isSigned () &&!mail->isEncrypted()) || mail->realyDecryptedSuccessfully ()) ?
                           &var_true : &var_false;
 
   TRACEPOINT;

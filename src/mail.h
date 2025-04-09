@@ -653,8 +653,11 @@ public:
   bool isDraftEncrypt () { return m_is_draft_encrypt; }
 
   /* Was this mail decrypted without error. Also returns true
-     if the mail was not encrypted. */
+     if the mail was not encrypted.
+     The "realy" verion returns false if the decryption was canceled
+     while the original version returns true. */
   bool decryptedSuccessfully () const;
+  bool realyDecryptedSuccessfully () const;
 
   /* The mail should be decrypted again after the next
    * encryption. So that we can save it for example and

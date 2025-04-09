@@ -4847,6 +4847,13 @@ Mail::setDoAutosecure_m (bool value)
 }
 
 bool
+Mail::realyDecryptedSuccessfully () const
+{
+  return m_decrypt_result.isNull() || m_decrypt_result.error().code()==0;
+}
+
+
+bool
 Mail::decryptedSuccessfully () const
 {
   return m_decrypt_result.isNull() || !m_decrypt_result.error();
