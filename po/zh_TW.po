@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2024-12-12 15:08+0100\n"
+"POT-Creation-Date: 2025-04-14 18:03+0200\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -557,8 +557,8 @@ msgstr ""
 #: src/gpgoladdin.cpp:1137 src/gpgoladdin.cpp:1146 src/gpgoladdin.cpp:1184
 #: src/gpgoladdin.cpp:1216 src/gpgoladdin.cpp:1349 src/mail.cpp:879
 #: src/mail.cpp:1205 src/mail.cpp:1236 src/mail.cpp:1784 src/mail.cpp:1853
-#: src/mailitem-events.cpp:1088 src/ribbon-callbacks.cpp:751
-#: src/ribbon-callbacks.cpp:765 src/ribbon-callbacks.cpp:814
+#: src/mailitem-events.cpp:1088 src/ribbon-callbacks.cpp:757
+#: src/ribbon-callbacks.cpp:771 src/ribbon-callbacks.cpp:820
 #: src/wks-helper.cpp:461 src/cryptcontroller.cpp:113
 #: src/cryptcontroller.cpp:383 src/cryptcontroller.cpp:555
 #: src/cryptcontroller.cpp:570 src/cryptcontroller.cpp:747
@@ -788,7 +788,7 @@ msgstr ""
 msgid "Encrypted"
 msgstr "加密"
 
-#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:658
+#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:664
 msgid "Insecure"
 msgstr ""
 
@@ -807,7 +807,7 @@ msgstr "解密訊息"
 msgid "Encrypted message"
 msgstr "解密訊息"
 
-#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:682
+#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:688
 #, fuzzy
 msgid "Insecure message"
 msgstr "解密訊息"
@@ -994,22 +994,22 @@ msgid ""
 "switching to PGP/Inline in GpgOL's options."
 msgstr ""
 
-#: src/mail.cpp:5014
+#: src/mail.cpp:5021
 msgid "Should GpgOL override Outlook and continue to process the message?"
 msgstr ""
 
-#: src/mail.cpp:5020
+#: src/mail.cpp:5027
 #, c-format
 msgid "Note: For %s communication you have to select Yes."
 msgstr ""
 
-#: src/mail.cpp:5024
+#: src/mail.cpp:5031
 msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
 msgstr ""
 
-#: src/mail.cpp:5028
+#: src/mail.cpp:5035
 msgid "Conflicting crypto settings"
 msgstr ""
 
@@ -1059,7 +1059,7 @@ msgid ""
 "message is opened."
 msgstr ""
 
-#: src/mapihelp.cpp:2154 src/mapihelp.cpp:2162 src/mapihelp.cpp:2170
+#: src/mapihelp.cpp:2157 src/mapihelp.cpp:2165 src/mapihelp.cpp:2173
 msgid "[no subject]"
 msgstr "[無主題]"
 
@@ -1139,19 +1139,19 @@ msgstr ""
 msgid "The interpreted data was:"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:686
+#: src/ribbon-callbacks.cpp:692
 #, fuzzy
 msgid "No message selected"
 msgstr "此訊息未被加密。"
 
-#: src/ribbon-callbacks.cpp:708
+#: src/ribbon-callbacks.cpp:714
 msgid ""
 "You cannot be sure who sent, modified and read the message in transit.\n"
 "\n"
 "Click here to learn more."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:747
+#: src/ribbon-callbacks.cpp:753
 #, c-format
 msgid ""
 "The message was not cryptographically signed.\n"
@@ -1159,13 +1159,13 @@ msgid ""
 "or if someone faked the sender address."
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:762
+#: src/ribbon-callbacks.cpp:768
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:815
+#: src/ribbon-callbacks.cpp:821
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
@@ -1264,12 +1264,12 @@ msgstr "當前收件人："
 msgid "Resolving signers..."
 msgstr "當前收件人："
 
-#: src/cryptcontroller.cpp:1681
+#: src/cryptcontroller.cpp:1682
 #, fuzzy
 msgid "Encrypting..."
 msgstr "加密"
 
-#: src/cryptcontroller.cpp:1685
+#: src/cryptcontroller.cpp:1686
 #, fuzzy
 msgid "Signing..."
 msgstr "加密"

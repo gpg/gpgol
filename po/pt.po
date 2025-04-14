@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2024-12-12 15:08+0100\n"
+"POT-Creation-Date: 2025-04-14 18:03+0200\n"
 "PO-Revision-Date: 2019-03-25 13:09+0000\n"
 "Last-Translator: Marco A.G.Pinto <marcoagpinto@sapo.pt>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
@@ -585,8 +585,8 @@ msgstr "Abrir o diálogo de definições para o GpgOL"
 #: src/gpgoladdin.cpp:1137 src/gpgoladdin.cpp:1146 src/gpgoladdin.cpp:1184
 #: src/gpgoladdin.cpp:1216 src/gpgoladdin.cpp:1349 src/mail.cpp:879
 #: src/mail.cpp:1205 src/mail.cpp:1236 src/mail.cpp:1784 src/mail.cpp:1853
-#: src/mailitem-events.cpp:1088 src/ribbon-callbacks.cpp:751
-#: src/ribbon-callbacks.cpp:765 src/ribbon-callbacks.cpp:814
+#: src/mailitem-events.cpp:1088 src/ribbon-callbacks.cpp:757
+#: src/ribbon-callbacks.cpp:771 src/ribbon-callbacks.cpp:820
 #: src/wks-helper.cpp:461 src/cryptcontroller.cpp:113
 #: src/cryptcontroller.cpp:383 src/cryptcontroller.cpp:555
 #: src/cryptcontroller.cpp:570 src/cryptcontroller.cpp:747
@@ -846,7 +846,7 @@ msgstr "Nível de Confiança 2"
 msgid "Encrypted"
 msgstr "Encriptada"
 
-#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:658
+#: src/mail.cpp:3627 src/mail.cpp:3629 src/ribbon-callbacks.cpp:664
 msgid "Insecure"
 msgstr "Insegura"
 
@@ -862,7 +862,7 @@ msgstr "Mensagem assinada"
 msgid "Encrypted message"
 msgstr "Mensagem encriptada"
 
-#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:682
+#: src/mail.cpp:3653 src/ribbon-callbacks.cpp:688
 msgid "Insecure message"
 msgstr "Mensagem insegura"
 
@@ -1062,22 +1062,22 @@ msgstr ""
 "Se continuar a falhar, considera usar um anexo encriptado ou\n"
 "alternar para PGP/Inline nas opções do GpgOL."
 
-#: src/mail.cpp:5014
+#: src/mail.cpp:5021
 msgid "Should GpgOL override Outlook and continue to process the message?"
 msgstr ""
 
-#: src/mail.cpp:5020
+#: src/mail.cpp:5027
 #, c-format
 msgid "Note: For %s communication you have to select Yes."
 msgstr ""
 
-#: src/mail.cpp:5024
+#: src/mail.cpp:5031
 msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
 msgstr ""
 
-#: src/mail.cpp:5028
+#: src/mail.cpp:5035
 msgid "Conflicting crypto settings"
 msgstr ""
 
@@ -1145,7 +1145,7 @@ msgstr ""
 "Não podem ser removidos permanentemente e serão mostrados novamente na "
 "próxima vez que esta mensagem for aberta."
 
-#: src/mapihelp.cpp:2154 src/mapihelp.cpp:2162 src/mapihelp.cpp:2170
+#: src/mapihelp.cpp:2157 src/mapihelp.cpp:2165 src/mapihelp.cpp:2173
 msgid "[no subject]"
 msgstr "[sem assunto]"
 
@@ -1231,11 +1231,11 @@ msgstr ""
 msgid "The interpreted data was:"
 msgstr ""
 
-#: src/ribbon-callbacks.cpp:686
+#: src/ribbon-callbacks.cpp:692
 msgid "No message selected"
 msgstr "Nenhuma mensagem selecionada"
 
-#: src/ribbon-callbacks.cpp:708
+#: src/ribbon-callbacks.cpp:714
 msgid ""
 "You cannot be sure who sent, modified and read the message in transit.\n"
 "\n"
@@ -1245,7 +1245,7 @@ msgstr ""
 "\n"
 "Clica aqui para saber mais."
 
-#: src/ribbon-callbacks.cpp:747
+#: src/ribbon-callbacks.cpp:753
 #, c-format
 msgid ""
 "The message was not cryptographically signed.\n"
@@ -1256,7 +1256,7 @@ msgstr ""
 "Não há nenhuma informação adicional disponível se ela foi realmente enviada "
 "por '%s' ou se alguém falsificou o endereço do remetente."
 
-#: src/ribbon-callbacks.cpp:762
+#: src/ribbon-callbacks.cpp:768
 msgid ""
 "There was an error verifying the signature.\n"
 "Full details:\n"
@@ -1264,7 +1264,7 @@ msgstr ""
 "Houve um erro ao verificar a assinatura.\n"
 "Detalhes completos:\n"
 
-#: src/ribbon-callbacks.cpp:815
+#: src/ribbon-callbacks.cpp:821
 msgid ""
 "Could not find Kleopatra.\n"
 "Please reinstall Gpg4win with the Kleopatra component enabled."
@@ -1374,11 +1374,11 @@ msgstr "A resolver destinatários…"
 msgid "Resolving signers..."
 msgstr "A resolver signatários…"
 
-#: src/cryptcontroller.cpp:1681
+#: src/cryptcontroller.cpp:1682
 msgid "Encrypting..."
 msgstr "A encriptar…"
 
-#: src/cryptcontroller.cpp:1685
+#: src/cryptcontroller.cpp:1686
 msgid "Signing..."
 msgstr "A assinar…"
 
