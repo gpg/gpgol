@@ -1,13 +1,9 @@
                                 GpgOL
                        =======================
-          Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010,
-                        2011 g10 Code GmbH
-                        2013, 2015, 2016, 2017 Intevation GmbH
+          Copyright (C) 2001, 2003-2011, 2019-2025 g10 Code GmbH
+                       [See the file AUTHORS for a complete list]
 
 GpgOL is a GnuPG plugin for MS Outlook.
-
-WARNING:  This version requires the decent version of Kleopatra or GPA
-for additional features and sending encrypted mail.
 
 
 .          Top directory with build scripts and information files.
@@ -16,13 +12,9 @@ src/       Code to build the actual core of the plugin.  The resulting
            DLL will be named "gpgol.dll".  It is to be build using
            the Mingw toolchain see INSTALL for details.
 
-To install this plugin, install Gpg4win and replace the
-installed gpgol.dll with the compiled binary.
-
-You will need an UiServer (either GPA or Kleopatra) in a location
-pointed to by the standard gpg4win registry keys. It is suggested
-you install gpg4win and then replace the gpgol.dll with your
-compiled binary.
+You will need an installation of the gpg4win-tools package as provided
+by the Gpg4win package.  It is thus suggested you install gpg4win and
+then replace the gpgol.dll with your compiled binary.
 
 If you are missing icons in the toolbar, checkout the toolbar's
 customize button - you will find the new icons there.

@@ -4,9 +4,19 @@ Security related bug reports: <security@gnupg.org>
 Maintainer: g10 Code GmbH <code@g10code.com>
 License: LGPLv2.1+
 
+GpgOL is free software.  See the file COPYING .LESSER for copying
+conditions.  License copyright years may be listed using range
+notation, e.g., 2000-2013, indicating that every year in the range,
+inclusive, is a copyrightable year that would otherwise be listed
+individually.
+
 
 g10 Code GmbH
-        New code and packet maintainer.
+        Started the project in 2005 based on original code
+        by Timo Schulz.
+
+Intevation GmbH
+        Most changes between 2010 and 2018
 
 Timo Schulz <twoaday@freakmail.de>
         All code from the years 2003, 2004
@@ -21,5 +31,15 @@ Andre Heinecke <aheinecke@intevation.de>
         Code to support Outlook 2010
 
 
-Some files may still contain code from the orginal plugin:
-Copyright (C) 2001 G Data Software AG, http://www.gdata.de
+List of Copyright holders
+=========================
+
+  Copyright (C) 2001, 2003-2011, 2019-2025 g10 Code GmbH
+  Copyright (C) 2013, 2015-2018 Intevation GmbH
+  Copyright (C) 2015, 2016 Bundesamt für Sicherheit in der Informationstechnik
+  Copyright (C) 1992, 1994-2021 Free Software Foundation, Inc.
+  Copyright (C) 1998 Justin Bradford
+  Copyright (C) 2000 François Gouget
+  Copyright (C) 1999, 2000 Werner Koch
+  Copyright (C) 2000-2014 Jeffrey Stedfast
+  Copyright (C) 2004 Timo Schulz
