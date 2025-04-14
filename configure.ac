@@ -1,5 +1,5 @@
 # configure.ac - for GpgOL
-# Copyright (C) 2005, 2006, 2007, 2008, 2011 g10 Code GmbH
+# Copyright (C) 2005, 2006, 2007, 2008, 2011, 2025 g10 Code GmbH
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
