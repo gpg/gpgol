@@ -804,7 +804,7 @@ get_oom_int (LPDISPATCH pDisp, const char *name)
         result = rVariant.intVal;
       VariantClear (&rVariant);
     }
-
+  log_debug ("%s:%s: value=%d", SRCNAME, __func__, result);
   TRETURN result;
 }
 

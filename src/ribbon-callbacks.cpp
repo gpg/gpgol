@@ -611,13 +611,20 @@ HRESULT get_is_details_enabled (LPDISPATCH ctrl, VARIANT *result)
 
 HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
 {
+  TSTART;
   if (!ctrl)
    {
      log_error ("%s:%s:%i", SRCNAME, __func__, __LINE__);
-     return E_FAIL;
+     TRETURN E_FAIL;
    }
   result->vt = VT_BOOL | VT_BYREF;
   result->pboolVal = &var_false;
+  if (opt.disableAddressBookSupport)
+    {
+      log_dbg ("Skip addressbook check");
+      TRETURN S_OK;
+    }
+
   LPDISPATCH context = nullptr;
   HRESULT hr = getContext (ctrl, &context);
 
@@ -625,7 +632,7 @@ HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
     {
       log_error ("%s:%s:%i :Failed to get context hresult %lx",
                  SRCNAME, __func__, __LINE__, hr);
-      return S_OK;
+      TRETURN S_OK;
     }
   auto selection = get_oom_object_s (context, "Selection");
   gpgol_release (context);
@@ -633,7 +640,7 @@ HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
     {
       log_error ("%s:%s: Failed to get selection.",
                  SRCNAME, __func__);
-      return S_OK;
+      TRETURN S_OK;
     }
   int count = get_oom_int (selection, "Count");
   if (count == 1)
@@ -646,9 +653,9 @@ HRESULT get_is_addr_book_enabled (LPDISPATCH ctrl, VARIANT *result)
           log_dbg ("One contact selected");
         }
 
-      return S_OK;
+      TRETURN S_OK;
     }
-  return S_OK;
+  TRETURN S_OK;
 }
 
 HRESULT get_sig_label (LPDISPATCH ctrl, VARIANT *result)

@@ -244,6 +244,7 @@ struct opt_s
   int forms_revision;         /* The forms revision number of the
                                  binary.  */
 
+  int disableAddressBookSupport; /*Disable addressbook ribon button check*/
 };
 extern struct opt_s opt;
 
