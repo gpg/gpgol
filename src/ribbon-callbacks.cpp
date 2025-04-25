@@ -556,12 +556,15 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
   if (ret==NULL)
   {
     auto retV = Mail::searchMailsByUUID(uid);
-    if (retV.empty())
+    if (!retV.empty())
+      {
+        ret = retV.front();
+      }
+    else
       {
         log_error ("%s:%s: Failed to find mail %p in map.",
                   SRCNAME, __func__, mailitem);
       }
-    ret = retV.front();
   }
   xfree (uid);
 
