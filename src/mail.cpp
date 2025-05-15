@@ -112,7 +112,7 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_close_triggered(false),
     m_is_html_alternative(false),
     m_needs_encrypt(false),
-    m_vd_postponed(false),
+    m_vd_postponed(true),
     m_moss_position(0),
     m_crypto_flags(0),
     m_cached_html_body(nullptr),
@@ -1314,8 +1314,10 @@ Mail::isCryptoMail () const
       m_type == MSGTYPE_SMIME)
     {
       /* Not a message for us. */
+      log_debug ("N");
       TRETURN false;
     }
+  log_debug ("Y");
   TRETURN true;
 }
 
@@ -3418,13 +3420,17 @@ bool
 Mail::isSigned () const
 {
   TSTART;
-  TRETURN m_verify_result.numSignatures() > 0;
+  bool ret =  m_verify_result.numSignatures() > 0;
+  log_debug (ret?"Y":"N");
+  TRETURN ret;
 }
 
 bool
 Mail::isEncrypted () const
 {
   TSTART;
+  log_debug (!m_decrypt_result.isNull()?"Y":"N");
+
   TRETURN !m_decrypt_result.isNull();
 }
 
@@ -3945,12 +3951,14 @@ Mail::get_signature_level () const
   TSTART;
   if (!m_is_signed)
     {
+      log_debug("level=0");
       TRETURN 0;
     }
 
   if (m_uid.isNull ())
     {
       /* No m_uid matches our sender. */
+      log_debug("level=0");
       TRETURN 0;
     }
 
@@ -3958,21 +3966,28 @@ Mail::get_signature_level () const
       (m_uid.validity () == UserID::Validity::Full &&
       level_4_check (m_uid))) && (!in_de_vs_mode () || m_sig.isDeVs()))
     {
+      log_debug("level=4");
       TRETURN 4;
     }
   if (m_is_valid && m_uid.validity () == UserID::Validity::Full &&
       (!in_de_vs_mode () || m_sig.isDeVs()))
     {
+      log_debug("level=3");
       TRETURN 3;
     }
   if (m_is_valid)
     {
+      log_debug("level=2");
       TRETURN 2;
     }
   if (m_sig.validity() == Signature::Validity::Marginal)
     {
+      log_debug("level=1");
       TRETURN 1;
     }
+
+  log_debug("level=0");
+
   if (m_sig.summary() & Signature::Summary::TofuConflict ||
       m_uid.tofuInfo().validity() == TofuInfo::Conflict)
     {
@@ -3987,6 +4002,7 @@ Mail::getCryptoIconID () const
   TSTART;
   int level = get_signature_level ();
   int offset = isEncrypted () ? ENCRYPT_ICON_OFFSET : 0;
+  log_debug("CryptoIconID=%d", IDI_LEVEL_0 + level + offset);
   TRETURN IDI_LEVEL_0 + level + offset;
 }
 
@@ -4849,15 +4865,27 @@ Mail::setDoAutosecure_m (bool value)
 bool
 Mail::realyDecryptedSuccessfully () const
 {
-  return m_decrypt_result.isNull() || m_decrypt_result.error().code()==0;
+  TSTART;
+  bool ret = m_decrypt_result.isNull() || m_decrypt_result.error().code()==0;
+  log_debug ("%s:%s: return %s", SRCNAME, __func__, ret?"Y":"N");
+  TRETURN ret;
 }
 
 
 bool
 Mail::decryptedSuccessfully () const
 {
-  return m_decrypt_result.isNull() || !m_decrypt_result.error();
+  TSTART;
+  bool ret = m_decrypt_result.isNull() || !m_decrypt_result.error();
+  log_debug ("%s:%s: return %s", SRCNAME, __func__, ret?"Y":"N");
+  TRETURN ret;
 }
+
+bool Mail::isVdPostponed () const
+{
+  log_debug ("%s:%s: %s", SRCNAME, __func__, m_vd_postponed?"Y":"N");
+  return m_vd_postponed;
+};
 
 void
 Mail::installFolderEventHandler_o()

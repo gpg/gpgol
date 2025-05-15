@@ -266,6 +266,8 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_addins ();
               addinsLogged = true;
             }
+
+          markMailitemEventReadAsCalled();
           if (!m_mail->isCryptoMail ())
             {
               log_debug ("%s:%s: Non crypto mail %p opened. Updating sigstatus.",

@@ -420,6 +420,23 @@ void check_auto_vd_mail()
     }
 }
 
+/* This flag gets set whenever the mailitem-event READ event
+is called it indicated that no other addin like titus filtered
+out the READ event. If set we invalidate the ribon on SelectionChange
+events in explorer-events as we would normally do that on handling READ*/
+static bool mailitemEventReadCalled = false;
+void
+markMailitemEventReadAsCalled()
+{
+  mailitemEventReadCalled = true;
+}
+
+bool
+hasMailitemEventReadBeenCalled()
+{
+  return mailitemEventReadCalled;
+}
+
 void
 check_html_preferred()
 {
@@ -513,7 +530,7 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
   TRACEPOINT;
 
   i18n_init ();
-
+TRACEPOINT
   if (!create_responder_window())
     {
       log_error ("%s:%s: Failed to create the responder window;",
@@ -533,7 +550,7 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
       log_error ("%s:%s: Failed to create messagehook. ",
                  SRCNAME, __func__);
     }
-
+TRACEPOINT
   /* Clean GpgOL prefixed categories.
      They might be left over from a crash or something unexpected
      error. We want to avoid pollution with the signed by categories.
@@ -543,10 +560,10 @@ GpgolAddin::OnStartupComplete (SAFEARRAY** custom)
   m_applicationEventSink = install_ApplicationEvents_sink (m_application);
   m_explorersEventSink = install_explorer_sinks (m_application);
   check_html_preferred ();
-
+TRACEPOINT
   CloseHandle (CreateThread (NULL, 0, init_gpgme_config, nullptr, 0,
                              NULL));
-
+TRACEPOINT
   KeyCache::instance ()->populate ();
   return S_OK;
 }
