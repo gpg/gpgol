@@ -110,12 +110,38 @@ hasSelection (LPDISPATCH explorer)
     }
 
   int count = get_oom_int (selection, "Count");
-  gpgol_release (selection);
 
   if (count)
     {
-      return true;
+      LPDISPATCH selectitem = NULL, mailitem = NULL;
+      bool selected = true;
+      if (count == 1)
+        {
+          // If we call this on a selection with more items
+          // Outlook sends an ItemLoad event for each mail
+          // in that selection.
+          selectitem = get_oom_object (selection, "Item(1)");
+          mailitem = get_object_by_id (selectitem, IID_MailItem);
+          if (!mailitem)
+            {
+              log_debug ("%s:%s: New selection is no mail.",
+                SRCNAME, __func__);
+              selected = false;
+            }
+
+          gpgol_release (mailitem);
+          gpgol_release (selectitem);
+        }
+      else
+        {
+          selected = false; // We can't show the security level for more than one => show insecure
+        }
+
+      gpgol_release (selection);
+      return selected;
     }
+
+  gpgol_release (selection);
   return false;
 }
 

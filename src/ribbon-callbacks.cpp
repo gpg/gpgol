@@ -562,15 +562,18 @@ get_mail_from_control (LPDISPATCH ctrl, bool *none_selected)
       }
     else
       {
-        log_error ("%s:%s: Failed to find mail %p in map.",
+        log_debug ("%s:%s: Failed to find mail %p in map.",
                   SRCNAME, __func__, mailitem);
       }
+      TRACEPOINT;
   }
+  TRACEPOINT;
   xfree (uid);
-
+  TRACEPOINT;
   /* This release may have killed the Mail object we obtained earlier
    * if it was just a leftover mail in the ribbon. */
   gpgol_release (mailitem);
+  TRACEPOINT;
   if (!Mail::isValidPtr (ret))
     {
       log_err ("Mail was only valid for this context.");
