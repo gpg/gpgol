@@ -290,4 +290,8 @@ void gpgoladdin_invalidate_ui ();
  * Registry key.  */
 void check_html_preferred ();
 
+/* Functions to detect/handle filtered READ events*/
+void markMailitemEventReadAsCalled();
+bool hasMailitemEventReadBeenCalled();
+
 #endif /*GPGOLADDIN_H*/

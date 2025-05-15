@@ -727,7 +727,7 @@ public:
   /* returns a copy from copy() with setCopyParent set*/
   Mail * getCopy();
 
-  bool isVdPostponed () const { return m_vd_postponed; };
+  bool isVdPostponed () const;
 
 private:
   /* Returns a copy of the mail object. */

@@ -114,7 +114,7 @@ hasSelection (LPDISPATCH explorer)
   if (count)
     {
       LPDISPATCH selectitem = NULL, mailitem = NULL;
-      bool selected = true;
+      bool selected = hasMailitemEventReadBeenCalled ();
       if (count == 1)
         {
           // If we call this on a selection with more items
