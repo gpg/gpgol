@@ -773,12 +773,21 @@ MimeDataProvider::isSupported(GpgME::DataProvider::Operation op) const
          op == GpgME::DataProvider::Release;
 }
 
+#if GPGMEPP_VERSION >= 0x020000
+gpgme_ssize_t
+MimeDataProvider::read(void *buffer, size_t size)
+#else
 ssize_t
 MimeDataProvider::read(void *buffer, size_t size)
+#endif
 {
   log_data ("%s:%s: Reading: " SIZE_T_FORMAT "Bytes",
                  SRCNAME, __func__, size);
+#if GPGMEPP_VERSION >= 0x020000
+  gpgme_ssize_t bRead = m_crypto_data.read (buffer, size);
+#else
   ssize_t bRead = m_crypto_data.read (buffer, size);
+#endif
   if ((opt.enable_debug & DBG_DATA) && bRead)
     {
       std::string buf ((char *)buffer, bRead);
@@ -1251,7 +1260,11 @@ MimeDataProvider::collect_data(FILE *stream)
   TRETURN;
 }
 
+#if GPGMEPP_VERSION >= 0x020000
+gpgme_ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
+#else
 ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
+#endif
 {
   TSTART;
   if (m_collect_everything)
@@ -1280,8 +1293,13 @@ ssize_t MimeDataProvider::write(const void *buffer, size_t bufSize)
   TRETURN bufSize;
 }
 
+#if GPGMEPP_VERSION >= 0x020000
+gpgme_off_t
+MimeDataProvider::seek(gpgme_off_t offset, int whence)
+#else
 off_t
 MimeDataProvider::seek(off_t offset, int whence)
+#endif
 {
   return m_crypto_data.seek (offset, whence);
 }
