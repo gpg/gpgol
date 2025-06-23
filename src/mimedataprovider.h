@@ -24,6 +24,7 @@
 
 #include <gpgme++/interfaces/dataprovider.h>
 #include <gpgme++/data.h>
+#include <gpgme++/gpgmepp_version.h>
 #include "rfc822parse.h"
 
 #ifdef HAVE_W32_SYSTEM
@@ -81,6 +82,19 @@ public:
   /* Dataprovider interface */
   bool isSupported(Operation) const;
 
+#if GPGMEPP_VERSION >= 0x020000
+  /** Read some data from the stream. This triggers
+    the conversion code interanally to convert mime
+    data into PGP/CMS Data that GpgME can work with. */
+  gpgme_ssize_t read(void *buffer, size_t bufSize);
+
+  gpgme_ssize_t write(const void *buffer, size_t bufSize);
+
+  /* Seek the underlying stream. This discards the internal
+     buffers as the offset is not mapped. Should not really
+     be used but can be used to reset the DataProvider. */
+  gpgme_off_t seek(gpgme_off_t offset, int whence);
+#else
   /** Read some data from the stream. This triggers
     the conversion code interanally to convert mime
     data into PGP/CMS Data that GpgME can work with. */
@@ -92,6 +106,7 @@ public:
      buffers as the offset is not mapped. Should not really
      be used but can be used to reset the DataProvider. */
   off_t seek(off_t offset, int whence);
+#endif
 
   /* Noop */
   void release() {}

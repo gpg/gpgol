@@ -1,5 +1,15 @@
-Noteworthy changes for version 2.6.1 (unreleased)
+Noteworthy changes for version 2.6.2 (unreleased)
 =================================================
+
+
+Noteworthy changes for version 2.6.1 (2025-05-15)
+=================================================
+
+ * Fix bug introduced while fixing T6646 in 2.6.0.  [T6646]
+
+ * Handle non-mail items in inbox events.  [rObda9f5afc8]
+
+ * Handle READ events filtered out by other Add-Ins.  [rO6cb4ccf4d8]
 
 
 Noteworthy changes for version 2.6.0 (2025-04-14)
