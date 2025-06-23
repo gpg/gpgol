@@ -284,6 +284,31 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               gpgrt_lock_unlock (&op_lock);
               TBREAK;
             }
+          case (BRING_TO_FRONT):
+            {
+              std::string path = "Software\\GNU\\GpgOL\\";
+              if (read_reg_bool(NULL, path.c_str (), "disableBringToFront")<1)
+                {
+                  HWND wnd = get_active_hwnd ();
+                  if (wnd)
+                    {
+                      log_debug ("%s:%s: Bringing window %p to front.",
+                                SRCNAME, __func__, wnd);
+                      bring_to_front (wnd);
+                    }
+                  else
+                    {
+                      log_debug ("%s:%s: No active window found for bring to front.",
+                                SRCNAME, __func__);
+                    }
+                }
+              else
+                {
+                  log_debug ("%s:%s: Bring to front disabled",
+                            SRCNAME, __func__);
+                }
+              TBREAK;
+            }
           case (WKS_NOTIFY):
             {
               WKSHelper::instance ()->notify ((const char *) ctx->data);
@@ -444,8 +469,8 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
 
           default:
-            log_debug ("%s:%s: Unknown msg %x",
-                       SRCNAME, __func__, ctx->wmsg_type);
+            log_debug ("%s:%s: Unknown msg %i(0x%x)",
+                       SRCNAME, __func__, ctx->wmsg_type, ctx->wmsg_type);
         }
         TRETURN 0;
     }
