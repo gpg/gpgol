@@ -1,5 +1,9 @@
-Noteworthy changes for version 2.6.2 (unreleased)
+Noteworthy changes for version 2.6.2 (2025-06-23)
 =================================================
+
+ * Bring back BRING_TO_FRONT event handling.  [T4814,rOaaf7bedef8]
+
+ * Improve build robustness with gpgme 2.0.  [rO69390a554a]
 
 
 Noteworthy changes for version 2.6.1 (2025-05-15)
