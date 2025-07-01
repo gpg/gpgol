@@ -105,7 +105,23 @@ EVENT_SINK_INVOKE(FolderEvents)
             }
 
           Mail *mail = Mail::getMailForUUID (uid);
+          if (!mail)
+            {
+              auto retV = Mail::searchMailsByUUID(uid);
+              if (!retV.empty())
+                {
+                  mail = retV.front();
+                }
+              else
+                {
+                  log_debug ("%s:%s: Failed to find mail %p in map.",
+                            SRCNAME, __func__, mailitem);
+                }
+                TRACEPOINT;
+            }
+          TRACEPOINT;
           xfree (uid);
+
           if (!mail)
             {
               log_error ("%s:%s: Failed to find mail for uuid",
