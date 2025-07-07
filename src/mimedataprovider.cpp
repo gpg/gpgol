@@ -363,7 +363,7 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
          if (s && strcmp (s, "inline"))
            not_inline_text = 1;
        */
-      if (ctx->body_seen)
+      if (!ctx->body_seen)
         {
           /* Some MUA's like kontact e3.5 send the body as
              an inline text attachment. So if we have not
