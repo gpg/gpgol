@@ -1,5 +1,9 @@
-Noteworthy changes for version 2.6.3 (unreleased)
+Noteworthy changes for version 2.6.3 (2025-07-10)
 =================================================
+
+ * Fix moving encrypted emails to folder  [T7712]
+
+ * Fix a problem with attachments without a regular body.  [T7714]
 
 
 Noteworthy changes for version 2.6.2 (2025-06-23)
