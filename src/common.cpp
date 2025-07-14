@@ -631,11 +631,17 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
           TRETURN NULL;
         }
 
-      auto fileExt = strchr (lastBackslash, '.');
+      auto fileExt = strrchr (lastBackslash, '.');
       if (fileExt)
         {
           *fileExt = '\0';
           ++fileExt;
+
+          // truncate in case we don't have a real extension and just a point in a filename
+          if (strlen(fileExt) > 10)
+            {
+              fileExt[10] = '\0';
+            }
         }
       // OutNameC is now without an extension and if
       // there is a file ext it now points to the extension.
