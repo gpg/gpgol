@@ -1,5 +1,8 @@
-Noteworthy changes for version 2.6.4 (unreleased)
+Noteworthy changes for version 2.6.4 (2025-07-28)
 =================================================
+
+ * Make sure that a temp file name does not get too long and has a
+   proper suffix.  [T7722]
 
 
 Noteworthy changes for version 2.6.3 (2025-07-10)
