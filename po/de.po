@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2025-05-15 15:55+0200\n"
+"POT-Creation-Date: 2025-07-28 09:25+0200\n"
 "PO-Revision-Date: 2024-12-12 15:09+0100\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
@@ -508,11 +508,11 @@ msgstr "Junk Mail kann nicht verarbeitet werden"
 msgid "Unknown contact"
 msgstr "Unbekannter Kontakt"
 
-#: src/common.cpp:676 src/common.cpp:954
+#: src/common.cpp:682 src/common.cpp:960
 msgid "GpgOL Error"
 msgstr "GpgOL Fehler"
 
-#: src/common.cpp:945 src/cryptcontroller.cpp:760
+#: src/common.cpp:951 src/cryptcontroller.cpp:760
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -528,25 +528,25 @@ msgstr ""
 "unter:\n"
 "https://www.gpg4win.org/reporting-bugs.html"
 
-#: src/common.cpp:1096
+#: src/common.cpp:1102
 msgid "VS-NfD compliant"
 msgstr "VS-NfD-konform"
 
-#: src/common.cpp:1097
+#: src/common.cpp:1103
 msgid "not VS-NfD compliant"
 msgstr "Nicht VS-NfD-konform"
 
-#: src/common.cpp:1184
+#: src/common.cpp:1190
 #, c-format
 msgid "The message is %s."
 msgstr "Die Nachricht ist %s."
 
-#: src/common.cpp:1189
+#: src/common.cpp:1195
 #, c-format
 msgid "The signature is %s."
 msgstr "Die Signatur ist %s."
 
-#: src/common.cpp:1194
+#: src/common.cpp:1200
 #, c-format
 msgid "The encryption is %s."
 msgstr "Diese Verschlüsselung ist %s."

@@ -12,7 +12,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ACLOCAL_AMFLAGS = -I m4
-AUTOMAKE_OPTIONS = dist-bzip2
+AUTOMAKE_OPTIONS = dist-bzip2 no-dist-gzip
 # Because we can only build the w32 version we need to help automake here a bit.
 DISTCHECK_CONFIGURE_FLAGS = --host=@host@  --build=@build@ \
 			    GPGRT_CONFIG=@SYSROOT@/bin/gpgrt-config \

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2025-05-15 15:55+0200\n"
+"POT-Creation-Date: 2025-07-28 09:25+0200\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -480,12 +480,12 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
-#: src/common.cpp:676 src/common.cpp:954
+#: src/common.cpp:682 src/common.cpp:960
 #, fuzzy
 msgid "GpgOL Error"
 msgstr "GpgOL"
 
-#: src/common.cpp:945 src/cryptcontroller.cpp:760
+#: src/common.cpp:951 src/cryptcontroller.cpp:760
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -494,27 +494,27 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:1096
+#: src/common.cpp:1102
 #, fuzzy
 msgid "VS-NfD compliant"
 msgstr "签名有效\n"
 
-#: src/common.cpp:1097
+#: src/common.cpp:1103
 #, fuzzy
 msgid "not VS-NfD compliant"
 msgstr "签名有效\n"
 
-#: src/common.cpp:1184
+#: src/common.cpp:1190
 #, fuzzy, c-format
 msgid "The message is %s."
 msgstr "此消息未被加密。"
 
-#: src/common.cpp:1189
+#: src/common.cpp:1195
 #, fuzzy, c-format
 msgid "The signature is %s."
 msgstr "签名有效\n"
 
-#: src/common.cpp:1194
+#: src/common.cpp:1200
 #, fuzzy, c-format
 msgid "The encryption is %s."
 msgstr "签名有效\n"
