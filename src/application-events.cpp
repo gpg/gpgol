@@ -106,6 +106,7 @@ EVENT_SINK_INVOKE(ApplicationEvents)
               beforePrintSeen = false;
               log_debug ("%s:%s: ItemLoad is not for a mail.",
                          SRCNAME, __func__);
+              do_in_ui_thread_async (INVALIDATE_UI, nullptr);
               TBREAK;
             }
           log_debug ("%s:%s: Creating mail object for item: %p",
