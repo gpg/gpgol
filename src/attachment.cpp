@@ -309,6 +309,19 @@ Attachment::attach_to (LPDISPATCH mailitem, std::string &r_errStr,
       TRETURN 0;
     }
 
+  wchar_t* wchar_disp = utf8_to_wchar (dispName.size() > 60 ? dispName.substr(0,59).c_str() : dispName.c_str ());
+  if (dispName.size() > 60 )
+    {
+      log_dbg ("%s:%s: Displayname > 60 chars trucating to ",
+                 SRCNAME, __func__);
+    }
+  if (!wchar_disp)
+    {
+      log_error ("%s:%s: Failed to convert '%s' to wchar.",
+                 SRCNAME, __func__, anonstr (dispName.c_str()));
+      TRETURN 0;
+    }
+
   HANDLE hFile;
   wchar_t* wchar_file = get_tmp_outfile (wchar_name,
                                          &hFile);
@@ -324,7 +337,7 @@ Attachment::attach_to (LPDISPATCH mailitem, std::string &r_errStr,
                  SRCNAME, __func__, anonstr (dispName.c_str()));
       err = 1;
     }
-  if (!err && add_oom_attachment (mailitem, wchar_file, wchar_name,
+  if (!err && add_oom_attachment (mailitem, wchar_file, wchar_disp,
                                   r_errStr, r_errCode))
     {
       log_error ("%s:%s: Failed to add attachment: %s",
@@ -343,6 +356,7 @@ Attachment::attach_to (LPDISPATCH mailitem, std::string &r_errStr,
     }
   xfree (wchar_file);
   xfree (wchar_name);
+  xfree (wchar_disp);
   TRETURN err;
 }
 

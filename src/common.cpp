@@ -581,8 +581,73 @@ wchar_t*
 get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
 {
   TSTART
-  auto utf8Name = sanitizeFileName(wchar_to_utf8_string (name));
   const auto tmpPath = getTmpPathUtf8 ();
+  auto utf8Name = sanitizeFileName(wchar_to_utf8_string (name));
+
+  auto fileExtension = wchar_to_utf8_string (name);
+  auto fileExtPos = fileExtension.rfind('.');
+  if (fileExtPos != std::string::npos)
+  {
+    fileExtension = fileExtension.substr(fileExtPos);
+    // truncate in case we don't have a real extension and just a point in a filename
+    if (fileExtension.size() > 10)
+      {
+        fileExtension.erase(10);
+      }
+
+    log_dbg("%s:%s: Extension found %s",
+            SRCNAME, __func__, fileExtension.c_str() );
+
+    // check if the file extension was modified by sanitize ...
+    fileExtPos = utf8Name.rfind(fileExtension);
+    if (fileExtPos==std::string::npos)
+      {
+        fileExtPos = utf8Name.rfind(fileExtension.substr(1)); // try again but skip . in fileExt
+      }
+
+    if (fileExtPos != std::string::npos)
+      {
+        utf8Name.erase(fileExtPos);
+        utf8Name.append(fileExtension);
+      }
+    else
+      {
+        // should not happen
+        log_error("%s:%s: Extension %s not found in %s",
+               SRCNAME, __func__, fileExtension.c_str(), utf8Name.c_str());
+      }
+  }
+  else
+  {
+    log_dbg("%s:%s: No fileextension found",
+                SRCNAME, __func__);
+    // no extension
+    // utf8Name.append(".tmp");
+  }
+
+  if( tmpPath.size() + utf8Name.size() > MAX_PATH - 1)
+    {
+        log_dbg("%s:%s: MAX_PATH limit failed %s%s",
+                    SRCNAME, __func__, tmpPath.c_str(), utf8Name.c_str ());
+        fileExtPos = utf8Name.rfind('.');
+        fileExtension.clear();
+        if (fileExtPos != std::string::npos)
+          {
+            fileExtension = utf8Name.substr(fileExtPos);
+            // truncate in case we don't have a real extension and just a point in a filename
+            log_dbg("%s:%s: Extension found %s",
+                    SRCNAME, __func__, fileExtension.c_str() );
+          }
+      utf8Name.erase( MAX_PATH - ( tmpPath.size() + fileExtension.size() ));
+      utf8Name.append(fileExtension);
+      log_dbg("%s:%s: changed to %s%s",
+              SRCNAME, __func__, tmpPath.c_str(), utf8Name.c_str ());
+    }
+  else
+    {
+      log_dbg("%s:%s: MAX_PATH check passed %lld <= %d",
+              SRCNAME, __func__,  tmpPath.size() + utf8Name.size() , MAX_PATH - 1);
+    }
 
   if (utf8Name.empty() || tmpPath.empty())
     {
@@ -646,7 +711,11 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
       // OutNameC is now without an extension and if
       // there is a file ext it now points to the extension.
 
-      outName = outNameC + std::string("_") + std::to_string(tries++);
+      auto numExt = std::string("_") + std::to_string(tries++);
+
+      outName = outNameC;
+      outName.erase(outName.end() - numExt.size());
+      outName.append(numExt);
 
       if (fileExt)
         {
