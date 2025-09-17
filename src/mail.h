@@ -254,7 +254,7 @@ public:
    * Sets the needs_wipe and was_encrypted variable.
    *
    * @returns 0 on success. */
-  int decryptVerify_o (bool doRevertOnly); // only revert message class
+  int decryptVerify_o (bool doRevertOnly, bool setUUID); // only revert message class
   int decryptVerify_o (); // default with doRevertOnly = false
 
   /** @brief start crypto operations as selected by the user.

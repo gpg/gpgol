@@ -1325,11 +1325,11 @@ Mail::isCryptoMail () const
 int
 Mail::decryptVerify_o ()
 {
-  return decryptVerify_o(false);
+  return decryptVerify_o(false, true);
 }
 
 int
-Mail::decryptVerify_o (bool doRevertOnly)
+Mail::decryptVerify_o (bool doRevertOnly, bool setUUID)
 {
   TSTART;
 
@@ -1465,7 +1465,10 @@ Mail::decryptVerify_o (bool doRevertOnly)
       TRETURN 1;
     }
 
+  if (setUUID)
+   {
   setUUID_o ();
+   }
   m_processed = true;
   m_pass_write = false;
 

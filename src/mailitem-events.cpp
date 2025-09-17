@@ -285,7 +285,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               TRETURN S_OK;
             }
 
-          if (m_mail->decryptVerify_o (opt.dont_autodecrypt_preview > 0))
+          if (m_mail->decryptVerify_o (opt.dont_autodecrypt_preview > 0, false))
             {
               log_error ("%s:%s: Decrypt message failed.",
                         SRCNAME, __func__);
