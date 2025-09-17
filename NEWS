@@ -1,5 +1,12 @@
-Noteworthy changes for version 2.6.5 (unreleased)
+Noteworthy changes for version 2.6.5 (2025-09-17)
 =================================================
+
+ * Fix not shown attachments with long suffixes.  [T7813]
+
+ * Fix for wrong suffix in temporary files.  [T7722]
+
+ * Fix high CPU load for not selected signed mails.  Regression was
+   introduced after 2.6.0.  [T7771]
 
 
 Noteworthy changes for version 2.6.4 (2025-07-28)
