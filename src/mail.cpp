@@ -1435,6 +1435,7 @@ Mail::decryptVerify_o (bool doRevertOnly, bool setUUID)
     {
       log_debug ("Don't start cryptohandling for mail");
       m_vd_postponed = true;
+      do_in_ui_thread_async (INVALIDATE_UI, nullptr);
       TRETURN 0;
     }
   else
@@ -1467,7 +1468,7 @@ Mail::decryptVerify_o (bool doRevertOnly, bool setUUID)
 
   if (setUUID)
    {
-  setUUID_o ();
+     setUUID_o ();
    }
   m_processed = true;
   m_pass_write = false;
