@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2025-07-28 09:25+0200\n"
+"POT-Creation-Date: 2025-09-17 16:57+0200\n"
 "PO-Revision-Date: 2019-10-24 15:28+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
@@ -504,11 +504,11 @@ msgstr "Ongewenste e-mail kan niet worden verwerkt"
 msgid "Unknown contact"
 msgstr "Onbekend contact"
 
-#: src/common.cpp:682 src/common.cpp:960
+#: src/common.cpp:752 src/common.cpp:1030
 msgid "GpgOL Error"
 msgstr "GpgOL Fout"
 
-#: src/common.cpp:951 src/cryptcontroller.cpp:760
+#: src/common.cpp:1021 src/cryptcontroller.cpp:760
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -517,27 +517,27 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:1102
+#: src/common.cpp:1172
 #, fuzzy
 msgid "VS-NfD compliant"
 msgstr "De handtekening is conform VS-NfD."
 
-#: src/common.cpp:1103
+#: src/common.cpp:1173
 #, fuzzy
 msgid "not VS-NfD compliant"
 msgstr "De handtekening is conform VS-NfD."
 
-#: src/common.cpp:1190
+#: src/common.cpp:1260
 #, fuzzy, c-format
 msgid "The message is %s."
 msgstr "Dit bericht wordt eenmalig weergegeven."
 
-#: src/common.cpp:1195
+#: src/common.cpp:1265
 #, fuzzy, c-format
 msgid "The signature is %s."
 msgstr "De handtekening is verlopen.\n"
 
-#: src/common.cpp:1200
+#: src/common.cpp:1270
 #, fuzzy, c-format
 msgid "The encryption is %s."
 msgstr "De versleuteling is conform VS-NfD."
