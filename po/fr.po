@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2025-07-28 09:25+0200\n"
+"POT-Creation-Date: 2025-09-17 16:57+0200\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -479,12 +479,12 @@ msgstr ""
 msgid "Unknown contact"
 msgstr ""
 
-#: src/common.cpp:682 src/common.cpp:960
+#: src/common.cpp:752 src/common.cpp:1030
 #, fuzzy
 msgid "GpgOL Error"
 msgstr "GpgOL"
 
-#: src/common.cpp:951 src/cryptcontroller.cpp:760
+#: src/common.cpp:1021 src/cryptcontroller.cpp:760
 msgid ""
 "Operation failed.\n"
 "\n"
@@ -493,27 +493,27 @@ msgid ""
 "Administrator for support."
 msgstr ""
 
-#: src/common.cpp:1102
+#: src/common.cpp:1172
 #, fuzzy
 msgid "VS-NfD compliant"
 msgstr "Cette signature est valide\n"
 
-#: src/common.cpp:1103
+#: src/common.cpp:1173
 #, fuzzy
 msgid "not VS-NfD compliant"
 msgstr "Cette signature est valide\n"
 
-#: src/common.cpp:1190
+#: src/common.cpp:1260
 #, fuzzy, c-format
 msgid "The message is %s."
 msgstr "Ce message n'est pas chiffré"
 
-#: src/common.cpp:1195
+#: src/common.cpp:1265
 #, fuzzy, c-format
 msgid "The signature is %s."
 msgstr "Cette signature est valide\n"
 
-#: src/common.cpp:1200
+#: src/common.cpp:1270
 #, fuzzy, c-format
 msgid "The encryption is %s."
 msgstr "Cette signature est valide\n"

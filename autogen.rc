@@ -13,4 +13,4 @@ case "$myhost:$myhostsub" in
 esac
 
 
-final_info="./configure --build-{w32,w64} && make"
+final_info="./autogen.sh --build-{w32,w64} && make"

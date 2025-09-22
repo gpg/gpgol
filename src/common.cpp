@@ -646,7 +646,8 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
   else
     {
       log_dbg("%s:%s: MAX_PATH check passed %lld <= %d",
-              SRCNAME, __func__,  tmpPath.size() + utf8Name.size() , MAX_PATH - 1);
+              SRCNAME, __func__,
+              (long long int)tmpPath.size() + utf8Name.size() , MAX_PATH - 1);
     }
 
   if (utf8Name.empty() || tmpPath.empty())
