@@ -1,5 +1,7 @@
-Noteworthy changes for version 2.6.6 (unreleased)
+Noteworthy changes for version 2.6.6 (2025-09-25)
 =================================================
+
+ * Fix invalid UI Status with disabledAutoPreview.  [T7803]
 
 
 Noteworthy changes for version 2.6.5 (2025-09-17)
