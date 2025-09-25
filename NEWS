@@ -1,5 +1,8 @@
-Noteworthy changes for version 2.6.7 (unreleased)
+Noteworthy changes for version 2.6.7 (2025-09-25)
 =================================================
+
+ * Revert fix a problem with attachments without a regular body.
+   [T7714]
 
 
 Noteworthy changes for version 2.6.6 (2025-09-25)
