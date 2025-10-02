@@ -68,7 +68,7 @@ i18n_noops[] = {
     N_("Instead of using the PGP/MIME format, "
        "which properly handles attachments and encoding, "
        "the deprecated PGP/Inline is used.\n"
-       "This can be required for compatibility but should generally not "
+       "This can be useful for compatibility but should generally not "
        "be used."),
     N_("Prefer S/MIME over OpenPGP if both are possible."),
 
