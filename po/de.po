@@ -5,21 +5,20 @@
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
 # Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
 # aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021, 2022, 2023.
-# Eva Bolten <eva.bolten@gnupg.com>, 2022, 2023.
+# Eva Bolten <eva.bolten@gnupg.com>, 2022, 2023, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2025-10-02 12:39+0200\n"
-"PO-Revision-Date: 2024-12-12 15:09+0100\n"
+"PO-Revision-Date: 2025-10-02 14:34+0200\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
-"Language-Team: English <kde-i18n-doc@kde.org>\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 20.12.0\n"
+"X-Generator: Lokalize 22.12.3\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -95,9 +94,8 @@ msgstr "Vertrauen auf Basis der Kommunikationshistorie automatisieren."
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:63
-#, fuzzy
 msgid "Include OpenPGP &trust based on communication history"
-msgstr "Vertrauen auf Basis der Kommunikationshistorie automatisieren."
+msgstr "Vertrauen auf Basis der Kommunikationshistorie automatisch festlegen."
 
 #: src/addin-options.cpp:64
 msgid ""
@@ -129,14 +127,12 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:69
-msgid ""
-"Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
 
 #: src/addin-options.cpp:70
-#, fuzzy
 msgid ""
 "Instead of using the PGP/MIME format, which properly handles attachments and "
 "encoding, the deprecated PGP/Inline is used.\n"
@@ -144,7 +140,7 @@ msgid ""
 msgstr ""
 "Anstelle des PGP/MIME Formats, welches Anhänge und Encoding richtig "
 "behandelt, das veraltete PGP/Inline verwenden.\n"
-"Dies kann für Kompatibilität manchmal nötig sein, sollte aber generell nicht "
+"Dies kann für Kompatibilität manchmal nötig sein, sollte aber im Allgemeinen nicht "
 "verwendet werden."
 
 #: src/addin-options.cpp:75
@@ -163,8 +159,7 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:83
-msgid ""
-"Search and import &X509 certificates in the configured directory services"
+msgid "Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -189,8 +184,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
-msgid ""
-"Also automatically toggles secure if keys with level 0 trust were found."
+msgid "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
 "Sichert Mails auch automatisch, wenn Schlüssel mit Level 0 Vertrauen "
 "gefunden wurden."
@@ -234,8 +228,7 @@ msgstr "Einstellungen für:"
 #. An example for a public key follows.
 #: src/addin-options.cpp:109
 msgid "Paste a public key export here. It should look like:"
-msgstr ""
-"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr "Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
@@ -269,8 +262,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:123
-msgid ""
-"The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr informationen."
@@ -374,9 +366,8 @@ msgid "Place multiple keys in here to encrypt to all of them."
 msgstr "Fügen Sie mehrere Schlüssel ein um an alle zu verschlüsseln."
 
 #: src/addin-options.cpp:169
-#, fuzzy
 msgid "S/MIME (X509 Certificates)"
-msgstr "Überprüfe S/MIME Zertifikate"
+msgstr "S/MIME (X509 Zertifikate)"
 
 #. TRANSLATORS: Part of debugging configuration.
 #: src/addin-options.cpp:171
@@ -468,9 +459,8 @@ msgstr "Verschlüsselte Mails nicht vor der Entschlüsselung speichern"
 
 #. TRANSLATORS: Config dialog debug page.
 #: src/addin-options.cpp:211
-#, fuzzy
 msgid "About GpgOL"
-msgstr "GpgOL"
+msgstr "Über GpgOL"
 
 #. TRANSLATORS: Config dialog debug page, link to report bug page.
 #: src/addin-options.cpp:213
@@ -1373,8 +1363,7 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:779
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr ""
-"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:780
 msgid "GpgOL: Request confirmed!"
