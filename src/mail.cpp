@@ -1144,6 +1144,7 @@ do_crypt (LPVOID arg)
       mail->setCryptState (Mail::NotStarted);
       mail->setIsDraftEncrypt (false);
       mail->resetCrypter ();
+      mail->enableWindow ();
       crypter = nullptr;
       gpgol_unlock (&dtor_lock);
 
@@ -4144,7 +4145,7 @@ Mail::getCachedRecipientAddresses ()
     {
       ret.push_back (recp.mbox());
     }
-  return ret;
+  TRETURN ret;
 }
 
 void
