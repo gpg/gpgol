@@ -59,6 +59,8 @@ i18n_noops[] = {
     /* Tooltips */
     N_("Enable or disable any automated key handling."),
     N_("Automate trust based on communication history."),
+    /* TRANSLATORS: Part of the config dialog. */
+    N_("Include OpenPGP &trust based on communication history"),
     N_("This changes the trust model to \"tofu+pgp\" which tracks the history of key usage. Automated trust can <b>never</b> exceed level 2."),
     N_("experimental"),
     N_("Automatically toggles secure if keys with at least level 1 trust were found for all recipients."),
@@ -68,7 +70,7 @@ i18n_noops[] = {
     N_("Instead of using the PGP/MIME format, "
        "which properly handles attachments and encoding, "
        "the deprecated PGP/Inline is used.\n"
-       "This can be required for compatibility but should generally not "
+       "This can be useful for compatibility but should generally not "
        "be used."),
     N_("Prefer S/MIME over OpenPGP if both are possible."),
 
@@ -164,6 +166,7 @@ i18n_noops[] = {
        "regardless of their trust level."),
     N_("For S/MIME the root certificate has to be trusted."),
     N_("Place multiple keys in here to encrypt to all of them."),
+    N_("S/MIME (X509 Certificates)"),
     /* TRANSLATORS: Part of debugging configuration. */
     N_("Enable Logging"),
     N_("Default"),
@@ -204,6 +207,8 @@ i18n_noops[] = {
     N_("Block Outlook during decrypt / verify"),
     /* TRANSLATORS: Config dialog debug page, can be technical. */
     N_("Do not save encrypted mails before decryption"),
+    /* TRANSLATORS: Config dialog debug page. */
+    N_("About GpgOL"),
     /* TRANSLATORS: Config dialog debug page, link to report bug page. */
     N_("How to report a problem?"),
     /* TRANSLATORS: Config dialog. */
