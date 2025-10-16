@@ -3034,6 +3034,8 @@ Mail::close (bool restoreSMIMEClass)
           // Just to be sure if body is falsely reported as empty as in T7857
           // put an empty string in it to prevent plain text leak
           put_oom_string (m_mailitem, "Body", "" );
+          // also remove any cathegories
+          removeCategories_o();
           setPassWrite (true);
           log_debug ("%s:%s: Close successful. Next write may pass.",
                      SRCNAME, __func__);
