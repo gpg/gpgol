@@ -3031,9 +3031,12 @@ Mail::close (bool restoreSMIMEClass)
         }
       else
         {
-           setPassWrite (true);
-           log_debug ("%s:%s: Close successful. Next write may pass.",
-                      SRCNAME, __func__);
+          // Just to be sure if body is falsely reported as empty as in T7857
+          // put an empty string in it to prevent plain text leak
+          put_oom_string (m_mailitem, "Body", "" );
+          setPassWrite (true);
+          log_debug ("%s:%s: Close successful. Next write may pass.",
+                     SRCNAME, __func__);
         }
       gpgol_release (attachments);
       xfree (body);
