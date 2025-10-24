@@ -793,6 +793,7 @@ private:
   bool m_decrypt_again; /* Mail should be decrypted again if it sees
                            another beforeread */
   bool m_printing; /* Mail is decrypted for printing */
+  bool m_BodyVerifyFailed; /* geting a body after puting it returns empty string*/
   std::string m_gpgol_class; /* The GpgOL Message class */
   std::vector<GpgME::Key> m_resolved_signing_keys; /* Prepared / resolved keys for signing. */
   bool m_recipients_set; /* Recipients were explictly set. */

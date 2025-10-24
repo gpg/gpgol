@@ -545,4 +545,6 @@ BSTR utf8_to_bstr (const char *val);
 
 /* Clear the selection in all explorers */
 void oom_clear_selections ();
+/* deselect or select mailitem in explorer*/
+void oom_toggle_selection (LPDISPATCH mailitem, bool doAdd);
 #endif /*OOMHELP_H*/

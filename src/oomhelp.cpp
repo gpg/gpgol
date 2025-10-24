@@ -3857,3 +3857,93 @@ oom_clear_selections ()
     }
   TRETURN;
 }
+
+/* Adding/Removing a mailitem to the explorer selection results
+   in a SelectionChange event
+*/
+void
+oom_toggle_selection (LPDISPATCH mailitem, bool doAdd)
+{
+  TSTART;
+  auto explorers_obj = get_oom_object_s (oApp(), "Explorers");
+
+  if (!explorers_obj)
+    {
+      STRANGEPOINT;
+      TRETURN;
+    }
+
+  int count = get_oom_int (explorers_obj.get (), "Count");
+
+  if (count >0)
+    {
+      auto explorer = get_oom_object_s (explorers_obj, "Item(1)");
+      if (!explorer)
+        {
+          STRANGEPOINT;
+          TRETURN;
+        }
+
+      log_debug("%s:%s: Use explorer %p ",
+                SRCNAME, __func__, explorer.get());
+
+      if (doAdd)
+        {
+           VARIANT var;
+            VariantInit (&var);
+            DISPPARAMS params;
+            VARIANT argvars[1];
+            VariantInit (&argvars[0]);
+            argvars[0].vt = VT_DISPATCH;
+            argvars[0].pdispVal = mailitem;
+            params.cArgs = 1;
+            params.cNamedArgs = 0;
+            params.rgvarg = argvars;
+            invoke_oom_method_with_parms (explorer.get (), "AddToSelection", NULL, &params);
+
+            log_debug("%s:%s: Add mailitem %p to selection",
+                      SRCNAME, __func__, argvars[0].pdispVal);
+
+        }
+      else
+        {
+          auto selection_obj = get_oom_object_s (explorer, "Selection");
+          if (!selection_obj)
+            {
+              STRANGEPOINT;
+              TRETURN;
+            }
+
+          int selCount = get_oom_int (selection_obj.get (), "Count");
+          auto mailEntryID = get_oom_string_s (mailitem, "EntryID");
+
+          for (int i = 1; i <= count; i++)
+            {
+              auto sel_item_str = std::string("Item(") + std::to_string (i) + ")";
+              auto selMail = get_oom_object_s (selection_obj, sel_item_str.c_str ());
+              auto selEntryID = get_oom_string_s (selMail, "EntryID");
+              if (selEntryID == mailEntryID)
+              {
+                VARIANT var;
+                VariantInit (&var);
+                DISPPARAMS params;
+                VARIANT argvars[1];
+                VariantInit (&argvars[0]);
+                argvars[0].vt = VT_DISPATCH;
+                argvars[0].pdispVal = selMail.get();
+                params.cArgs = 1;
+                params.cNamedArgs = 0;
+                params.rgvarg = argvars;
+
+                if (!invoke_oom_method_with_parms (explorer.get (), "RemoveFromSelection", NULL, &params))
+                  {
+                    log_debug("%s:%s: Remove mailitem %p from selection",
+                         SRCNAME, __func__, argvars[0].pdispVal);
+                    break;
+                  }
+              }
+            }
+        }
+    }
+  TRETURN;
+}

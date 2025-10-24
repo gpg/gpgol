@@ -137,7 +137,8 @@ Mail::Mail (LPDISPATCH mailitem) :
     m_printing(false),
     m_recipients_set(false),
     m_copy_parent(nullptr),
-    m_attachs_added(false)
+    m_attachs_added(false),
+    m_BodyVerifyFailed(false)
 {
   TSTART;
   if (getMailForItem (mailitem))
@@ -1528,6 +1529,17 @@ Mail::decryptVerify_o (bool doRevertOnly, bool setUUID)
           log_error ("%s:%s: Failed to modify html body of item.",
                      SRCNAME, __func__);
         }
+      else
+        {
+           char *test = get_oom_string (m_mailitem, "HTMLBody");
+           if (!test || !strlen(test))
+             {
+               log_error ("%s:%s: Modified html body of item is empty.",
+                          SRCNAME, __func__);
+               m_BodyVerifyFailed = true;
+             }
+           xfree(test);
+        }
     }
   else
     {
@@ -1545,6 +1557,18 @@ Mail::decryptVerify_o (bool doRevertOnly, bool setUUID)
           log_error ("%s:%s: Failed to modify body of item.",
                      SRCNAME, __func__);
         }
+      else
+        {
+           char *test = get_oom_string (m_mailitem, "Body");
+           if (!test || !strlen(test))
+             {
+               log_error ("%s:%s: Modified body of item is empty.",
+                      SRCNAME, __func__);
+               m_BodyVerifyFailed = true;
+             }
+           xfree(test);
+        }
+
     }
   memdbg_alloc (placeholder_buf);
   xfree (placeholder_buf);
@@ -2112,7 +2136,25 @@ Mail::parsingDone_o (bool is_preview)
 
   installFolderEventHandler_o ();
 
-  if (!is_preview)
+  if (m_BodyVerifyFailed)
+  {
+    /* If the body verification failed we deselect the mail after decryption
+       as the decrypted mail does not show up in the body.
+       Manual reselection by the user will result in reprocessing of
+       the mail usually without the body verification failing and
+       thous showing the decrypted mail content.
+    */
+    oom_toggle_selection(m_mailitem, false);
+
+    /* This call reselects the above deselected mail but the
+    programatically select doesn't result in the same mail reprocessing
+    as the manual select. I.e. the mail content doesn't show up.
+    So for now we disable this call.
+
+    do_in_ui_thread_async(SELECT_MAIL, m_mailitem, 300);
+    */
+  }
+  else if (!is_preview)
     {
       log_debug ("%s:%s: Delayed invalidate to update sigstate.",
                  SRCNAME, __func__);
@@ -2258,6 +2300,7 @@ Mail::wipe_o (bool force)
     {
       put_oom_string (m_mailitem, "Body", "");
     }
+  m_processed = false;
   m_needs_wipe = false;
   TRETURN 0;
 }
@@ -3017,6 +3060,13 @@ Mail::close (bool restoreSMIMEClass)
       char *body = get_oom_string (m_mailitem, "Body");
       LPDISPATCH attachments = get_oom_object (m_mailitem, "Attachments");
 
+      m_mailitem->AddRef ();
+      int ref = m_mailitem->Release ();
+
+      log_debug ("%s:%s: Mailitem has %d refs and mail %s marked processed",
+                  SRCNAME, __func__, ref, m_processed? "IS" : "is NOT");
+
+
       if (body && strlen (body))
         {
           log_debug ("%s:%s: Close successful. But body found. "
@@ -3031,14 +3081,17 @@ Mail::close (bool restoreSMIMEClass)
         }
       else
         {
-          // Just to be sure if body is falsely reported as empty as in T7857
-          // put an empty string in it to prevent plain text leak
-          put_oom_string (m_mailitem, "Body", "" );
-          // also remove any cathegories
-          removeCategories_o();
-          setPassWrite (true);
-          log_debug ("%s:%s: Close successful. Next write may pass.",
-                     SRCNAME, __func__);
+          if (m_BodyVerifyFailed)
+            {
+              log_debug ("%s:%s: Close successful. But body verify did fail",
+                        SRCNAME, __func__);
+            }
+          else
+            {
+              setPassWrite (true);
+              log_debug ("%s:%s: Close successful. Next write may pass.",
+                        SRCNAME, __func__);
+            }
         }
       gpgol_release (attachments);
       xfree (body);

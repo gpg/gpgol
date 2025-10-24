@@ -467,7 +467,21 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
               mail->parsingDone_o (true);
               TBREAK;
             }
-
+          /* This does select an mailitem in the outlook explorer
+             But unfortunally it doesn't behave like selecting one
+             by clicking on it.
+          case SELECT_MAIL:
+            {
+              auto mailitem = (LPDISPATCH) ctx->data;
+              log_dbg ("SELECT_MAIL for mailitem %p", mailitem);
+              oom_toggle_selection(mailitem,true);
+              log_debug ("%s:%s: Creating mail object for item: %p",
+                     SRCNAME, __func__, mailitem);
+              auto mail = new Mail (mailitem);
+              do_in_ui_thread_async (INVALIDATE_LAST_MAIL, nullptr);
+              TBREAK;
+            }
+          */
           default:
             log_debug ("%s:%s: Unknown msg %i(0x%x)",
                        SRCNAME, __func__, ctx->wmsg_type, ctx->wmsg_type);
