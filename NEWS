@@ -1,5 +1,11 @@
-Noteworthy changes for version 2.6.8 (unreleased)
+Noteworthy changes for version 2.6.8 (2025-10-27)
 =================================================
+
+ * Prevent possible plaintext leak of the very first opened PGP
+   message if Outlook is in read-as-plain mode.  Also detect the case
+   and deselect the message to fix the problem.  [T7858,rO88ab93687c]
+
+ * Add missing messages for use by gpg4win-tools.
 
 
 Noteworthy changes for version 2.6.7 (2025-09-25)
