@@ -1740,6 +1740,13 @@ Mail::updateBody_o (bool is_preview)
   /** Outlook does not show newlines if \r\r\n is a newline. We replace
     these as apparently some other buggy MUA sends this. */
   find_and_replace (html, "\r\r\n", "\r\n");
+
+  log_debug("%s:%s: prefer_html: %s, html.empty: %s, is_preview: %s, block_html: %s, eq:%s",
+                 SRCNAME, __func__,
+                opt.prefer_html ? "yes":"no", html.empty()?"yes":"no",
+                is_preview?"yes":"no", m_block_html?"yes":"no",
+              (opt.prefer_html && (!html.empty() || (is_preview && !m_block_html)))?"true":"false");
+
   if (opt.prefer_html && (!html.empty() || (is_preview && !m_block_html)))
     {
       if (!m_block_html)
@@ -2108,7 +2115,83 @@ Mail::parsingDone_o (bool is_preview)
   checkAttachments_o (isPrint ());
 
   /* Update attachments */
-  if (add_attachments_o (m_parser->get_attachments()))
+  std::vector<std::shared_ptr<Attachment> > atts = m_parser->get_attachments();
+  if (m_BodyVerifyFailed)
+  {
+    auto attach = std::shared_ptr<Attachment> (new Attachment());
+    attach->set_attach_type (ATTACHTYPE_FROMMOSS);
+    attach->set_content_type("text/plain");
+
+    std::string body = m_parser->get_body();
+    if (body.length()==0)
+      {
+        body = m_parser->get_formatted_error();
+        attach->set_display_name("Gpgol: Error Information.txt");
+      }
+      else
+      {
+        attach->set_display_name("Gpgol: Decrypted plain text.txt");
+        // we could attach the body also as plain mail attachment but for now
+        // we disable this as there are some drawbacks
+        // - the attached mail has no assigned mail-account so replys would
+        //   be send from the main/first account if the user has multiple
+        // - the de/encryption, signature information is lost
+#if 0
+        auto mailattach = std::shared_ptr<Attachment> (new Attachment());
+        mailattach->set_attach_type (ATTACHTYPE_FROMMOSS);
+        mailattach->set_content_type("message/rfc822");
+        mailattach->set_display_name("Decrypted mail.eml");
+        std::string mailcontent = "From: " + getSender_o() +"\n";
+        for (const auto &recp: getRecipients_o())
+        {
+          log_debug("Recipiant mbox: %s", recp.mbox().c_str());
+          switch(recp.type())
+          {
+            case Recipient::recipientType::olTo:
+              mailcontent += "To: " + recp.encodedDisplayName() + "\n";
+            break;
+            case Recipient::recipientType::olCC:
+              mailcontent += "Cc: " + recp.encodedDisplayName() + "\n";
+            break;
+            default:
+              log_debug("Unsupported recipient %s of type  %d", recp.encodedDisplayName().c_str(), recp.type() );
+          }
+        }
+        std::string subject = getSubject_o();
+        log_debug("Subject: '%s'", subject.c_str());
+        std::string subpart = subject.substr(0,39);
+        log_debug("Part: '%s'", subpart.c_str());
+        subject.erase(0,39);
+        log_debug("Subject remaining: '%s'", subject.c_str());
+        char * pb64 = b64_encode(subpart.c_str(), subpart.length());
+        std::string b64sub = "encode failed";
+        if (pb64)
+          {
+            b64sub = pb64;
+          }
+
+        log_debug("Subject b64: '%s'", b64sub.c_str());
+        mailcontent += "Subject: =?utf-8?B?" + b64sub +"?=\n";
+        while (subject.length()>0)
+          {
+            log_debug("Subject: '%s'", subject.c_str());
+            subpart = subject.substr(0,47);
+            log_debug("Part: '%s'", subpart.c_str());
+            subject.erase(0,47);
+            log_debug("Subject remaining: '%s'", subject.c_str());
+            mailcontent += " =?utf-8?B?" + std::string(b64_encode(subpart.c_str(), subpart.length())) +"?=\n";
+          }
+        mailcontent += "Content/Type: text/plain;"+ m_parser->get_body_charset() + "\n\n";
+        mailcontent += body + "\n";
+        mailattach->get_data().write(mailcontent.c_str(),mailcontent.length());
+        atts.push_back(mailattach);
+  #endif
+      }
+      attach->get_data().write(body.c_str(),body.length());
+      atts.push_back(attach);
+  }
+
+  if (add_attachments_o (atts))
     {
       log_error ("%s:%s: Failed to update attachments.",
                  SRCNAME, __func__);
@@ -2136,25 +2219,7 @@ Mail::parsingDone_o (bool is_preview)
 
   installFolderEventHandler_o ();
 
-  if (m_BodyVerifyFailed)
-  {
-    /* If the body verification failed we deselect the mail after decryption
-       as the decrypted mail does not show up in the body.
-       Manual reselection by the user will result in reprocessing of
-       the mail usually without the body verification failing and
-       thous showing the decrypted mail content.
-    */
-    oom_toggle_selection(m_mailitem, false);
-
-    /* This call reselects the above deselected mail but the
-    programatically select doesn't result in the same mail reprocessing
-    as the manual select. I.e. the mail content doesn't show up.
-    So for now we disable this call.
-
-    do_in_ui_thread_async(SELECT_MAIL, m_mailitem, 300);
-    */
-  }
-  else if (!is_preview)
+ if (!is_preview)
     {
       log_debug ("%s:%s: Delayed invalidate to update sigstate.",
                  SRCNAME, __func__);
