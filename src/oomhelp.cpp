@@ -1947,15 +1947,17 @@ invoke_oom_method_with_parms (LPDISPATCH pDisp, const char *name,
                               VARIANT *rVariant, DISPPARAMS *params)
 {
   TSTART;
-  TRETURN invoke_oom_method_with_parms_type (pDisp, name, rVariant, params,
-                                            DISPATCH_METHOD);
+  int ret = invoke_oom_method_with_parms_type (pDisp, name, rVariant, params,
+                                              DISPATCH_METHOD);
+  TRETURN ret;
 }
 
 int
 invoke_oom_method (LPDISPATCH pDisp, const char *name, VARIANT *rVariant)
 {
   TSTART;
-  TRETURN invoke_oom_method_with_parms (pDisp, name, rVariant, NULL);
+  int ret = invoke_oom_method_with_parms (pDisp, name, rVariant, NULL);
+  TRETURN ret;
 }
 
 LPMAPISESSION
