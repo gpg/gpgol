@@ -2126,11 +2126,11 @@ Mail::parsingDone_o (bool is_preview)
     if (body.length()==0)
       {
         body = m_parser->get_formatted_error();
-        attach->set_display_name("Gpgol: Error Information.txt");
+        attach->set_display_name("Gpgol Error Information.txt");
       }
       else
       {
-        attach->set_display_name("Gpgol: Decrypted plain text.txt");
+        attach->set_display_name("Gpgol Decrypted plain text.txt");
         // we could attach the body also as plain mail attachment but for now
         // we disable this as there are some drawbacks
         // - the attached mail has no assigned mail-account so replys would
