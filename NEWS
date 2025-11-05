@@ -1,5 +1,8 @@
-Noteworthy changes for version 2.6.9 (unreleased)
+Noteworthy changes for version 2.6.9 (2025-11-05)
 =================================================
+
+ * For better usability a message opened in read-as-plain mode and not
+   directly readable is now put into a plain text attachment.  [T7858]
 
 
 Noteworthy changes for version 2.6.8 (2025-10-27)
