@@ -121,26 +121,27 @@ WKSHelper::get_cached_confirmation (const std::string &mbox) const
   return ret;
 }
 
+
+/* FIXME: We should better use a gpgme function here. */
 static std::string
 get_wks_client_path ()
 {
-  char *gpg4win_dir = get_gpg4win_dir ();
+  const char *gpg4win_dir = get_gpg4win_dir ();
   if (!gpg4win_dir)
     {
       TRACEPOINT;
       return std::string ();
     }
   const auto stringdir = std::string (gpg4win_dir);
-  xfree (gpg4win_dir);
-  auto ret = stringdir + "\\..\\GnuPG\\bin\\gpg-wks-client.exe";
+  auto ret = stringdir + "\\GnuPG\\bin\\gpg-wks-client.exe";
 
   if (!access (ret.c_str (), F_OK))
     {
       return ret;
     }
 
-  /* For GnuPG VS-Desktop GnuPG is in a subdir. */
-  ret = std::string (gpg4win_dir) + "\\GnuPG\\bin\\gpg-wks-client.exe";
+  /* For gpg4win GnuPG is installed side-by-side to gpg4win. */
+  ret = std::string (gpg4win_dir) + "\\..\\GnuPG\\bin\\gpg-wks-client.exe";
   if (!access (ret.c_str (), F_OK))
     {
       return ret;

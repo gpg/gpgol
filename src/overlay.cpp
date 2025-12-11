@@ -34,7 +34,7 @@ Overlay::Overlay (HWND wid, const std::string &text): m_wid (wid)
   std::vector<std::string> args;
 
   // Collect the arguments
-  char *gpg4win_dir = get_gpg4win_dir ();
+  const char *gpg4win_dir = get_gpg4win_dir ();
   if (!gpg4win_dir)
     {
       TRACEPOINT;
@@ -42,7 +42,6 @@ Overlay::Overlay (HWND wid, const std::string &text): m_wid (wid)
       return;
     }
   const auto overlayer = std::string (gpg4win_dir) + "\\bin\\overlayer.exe";
-  xfree (gpg4win_dir);
   args.push_back (overlayer);
 
   args.push_back (std::string ("--hwnd"));

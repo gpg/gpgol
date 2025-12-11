@@ -2514,7 +2514,8 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
       TRETURN mapi_get_first_attach_data(message);  /* Success.  */
     }
 
-  log_debug ("%s:%s: wrong filename: %s", SRCNAME, __func__, result);
+  log_debug ("%s:%s: wrong filename: %s",
+             SRCNAME, __func__, result?result:"(null)");
   xfree(result);
 
  leave:

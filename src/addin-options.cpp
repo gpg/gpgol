@@ -237,7 +237,7 @@ open_gpgolconfig (LPVOID arg)
   std::vector<std::string> args;
 
   // Collect the arguments
-  char *gpg4win_dir = get_gpg4win_dir ();
+  const char *gpg4win_dir = get_gpg4win_dir ();
   if (!gpg4win_dir)
     {
       TRACEPOINT;

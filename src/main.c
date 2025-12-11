@@ -85,7 +85,7 @@ DllMain (HINSTANCE hinst, DWORD reason, LPVOID reserved)
 static char *
 get_locale_dir (void)
 {
-  char *instdir;
+  const char *instdir;
   char *p;
   char *dname;
 
@@ -97,16 +97,12 @@ get_locale_dir (void)
 #define SLDIR "\\share\\locale"
   dname = xmalloc (strlen (instdir) + strlen (SLDIR) + 1);
   if (!dname)
-    {
-      xfree (instdir);
-      return NULL;
-    }
+    return NULL;
+
   p = dname;
   strcpy (p, instdir);
   p += strlen (instdir);
   strcpy (p, SLDIR);
-
-  xfree (instdir);
 
   return dname;
 }

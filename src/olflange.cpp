@@ -76,6 +76,7 @@ DllRegisterServer (void)
     }
 
   /* Get server location. */
+  /* FIXME:  Should we also use get_gpg4win_dir() here?  */
   if (!GetModuleFileName(glob_hinst, szModuleFileName, MAX_PATH))
     return E_FAIL;
 

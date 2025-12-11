@@ -298,7 +298,7 @@ read_w32_registry_string (const char *root, const char *dir, const char *name)
 char *
 get_data_dir (void)
 {
-  char *instdir;
+  const char *instdir;
   char *p;
   char *dname;
 
@@ -310,16 +310,11 @@ get_data_dir (void)
 #define SDDIR "\\share\\gpgol"
   dname = (char*) xmalloc (strlen (instdir) + strlen (SDDIR) + 1);
   if (!dname)
-    {
-      xfree (instdir);
-      return NULL;
-    }
+    return NULL;
   p = dname;
   strcpy (p, instdir);
   p += strlen (instdir);
   strcpy (p, SDDIR);
-
-  xfree (instdir);
 
 #undef SDDIR
   return dname;
@@ -773,36 +768,59 @@ get_tmp_outfile_utf8 (const char *name, HANDLE *outHandle)
 
 /** Get the Gpg4win Install directory.
  *
- * Looks first for the Gpg4win 3.x registry key. Then for the Gpg4win
- * 2.x registry key. And checks that the directory can be read.
+ * This function returns the root of install directory of Gpg4win or
+ * GnuPG-[VS-]Desktop.
  *
- * @returns NULL if no dir could be found. Otherwise a malloced string.
+ * @returns NULL if no dir could be found - this indoicates a bad
+ * installation.  Otherwise a malloced string with the utf-8 name.
  */
-char *
+const char *
 get_gpg4win_dir()
 {
-  const char *g4win_keys[] = {GPG4WIN_REGKEY_3,
-                              GPG4WIN_REGKEY_2,
-                              NULL};
-  const char **key;
-  for (key = g4win_keys; *key; key++)
+  static int initialized;
+  static char *mydir;
+
+  if (!initialized)
     {
-      char *tmp = read_w32_registry_string (NULL, *key, "Install Directory");
-      if (!tmp)
-        {
-          continue;
-        }
-      if (!access(tmp, R_OK))
-        {
-          return tmp;
-        }
+      wchar_t *wmodulename;
+      char *modulename = NULL;
+      char *p;
+
+
+      wmodulename = (wchar_t*)xcalloc (MAX_PATH+5, sizeof *wmodulename);
+      if (!GetModuleFileNameW (glob_hinst, wmodulename, MAX_PATH))
+        log_debug ("GetModuleFileName failed\n");
       else
         {
-          log_debug ("Failed to access: %s\n", tmp);
-          xfree (tmp);
+          modulename = wchar_to_utf8 (wmodulename);
+          log_debug ("GetModuleFileName: '%s'\n", modulename);
+          p = strrchr (modulename, '\\');
+          if (p)
+            {
+              *p = 0;
+              /* MODULENAME is now the actual directory from where we
+               * were executed.  In the most cases this is either the
+               * bin or the bin_64 sub directory.  We tell gpgme that
+               * directory so that it can make use of it.  This is
+               * required because gpgme is linked statically and can't
+               * find its installation directory.  */
+              gpgme_set_global_flag ("w32-inst-dir", modulename);
+              p = strrchr (modulename, '\\');
+              if (p)
+                {
+                  *p = 0;
+                  mydir = modulename;  /* Not really threadsafe, but okay.  */
+                  modulename = NULL;
+                  initialized = 1;
+                  log_debug ("Using install dir: '%s'\n", mydir);
+                }
+            }
         }
+      xfree (modulename);
+      xfree (wmodulename);
     }
-  return NULL;
+
+  return mydir;
 }
 
 
@@ -845,7 +863,8 @@ char *
 get_uiserver_name (void)
 {
   char *name = NULL;
-  char *dir, *uiserver, *p;
+  const char *dir;
+  char *uiserver, *p;
   int extra_arglen = 9;
 
   const char * server_names[] = {"kleopatra.exe",
@@ -880,7 +899,6 @@ get_uiserver_name (void)
   if (name && !access (name, F_OK))
     {
       /* Set through registry and is accessible */
-      xfree(dir);
       return name;
     }
   /* Fallbacks */
@@ -902,11 +920,9 @@ get_uiserver_name (void)
             {
               strcat (name, " --daemon");
             }
-          xfree (dir);
           return name;
         }
     }
-  xfree (dir);
   log_error ("Failed to find a viable UIServer");
   return NULL;
 }
@@ -1172,7 +1188,7 @@ de_vs_name (bool isCompliant)
   compName = utf8_gettext ("VS-NfD compliant");
   uncompName = utf8_gettext ("not VS-NfD compliant");
   /* Find the libkleopatrarc */
-  char *instdir = get_gpg4win_dir();
+  const char *instdir = get_gpg4win_dir();
   if (!instdir)
     {
       STRANGEPOINT;
@@ -1276,34 +1292,6 @@ compliance_string (bool forVerify, bool forDecrypt, bool isCompliant)
   return std::string();
 }
 
-char *
-get_gpgme_w32_inst_dir (void)
-{
-  char *gpg4win_dir = get_gpg4win_dir ();
-  char *tmp;
-  gpgrt_asprintf (&tmp, "%s\\bin\\gpgme-w32spawn.exe", gpg4win_dir);
-  memdbg_alloc (tmp);
-
-  if (!access(tmp, R_OK))
-    {
-      xfree (tmp);
-      gpgrt_asprintf (&tmp, "%s\\bin", gpg4win_dir);
-      memdbg_alloc (tmp);
-      xfree (gpg4win_dir);
-      return tmp;
-    }
-  xfree (tmp);
-  gpgrt_asprintf (&tmp, "%s\\gpgme-w32spawn.exe", gpg4win_dir);
-  memdbg_alloc (tmp);
-
-  if (!access(tmp, R_OK))
-    {
-      xfree (tmp);
-      return gpg4win_dir;
-    }
-  OutputDebugString("Failed to find gpgme-w32spawn.exe!");
-  return NULL;
-}
 
 #define WINDOWS_DEVICES_PATTERN "(CON|AUX|PRN|NUL|COM[1-9]|LPT[1-9])(\\..*)?"
 #define SLASHES "/\\"

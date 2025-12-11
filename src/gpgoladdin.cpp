@@ -182,23 +182,28 @@ GpgolAddin::GpgolAddin (void) : m_lRef(0),
   m_hook(nullptr),
   m_dispcache(new DispCache)
 {
+  const char *vers;
+
   /* Required first to start logging */
   read_options ();
   TRACEPOINT;
   /* Start initialization */
   gpg_err_init ();
 
-  /* Set the installation directory for GpgME so that
-     it can find tools like gpgme-w32-spawn correctly. */
-  char *instdir = get_gpgme_w32_inst_dir();
-  gpgme_set_global_flag ("w32-inst-dir", instdir);
-  xfree (instdir);
+  /* Set the installation directory for GpgME so that it can find
+   * GnuPG and its own helpers.  We can't rely on gpgme's own method
+   * because gpgme is linked statically to us (gpgol.dll) and gpgme
+   * would otherwise use the location of outlook.exe.  This is
+   * done en-passant using the first call to get_gpg4win_dir. */
+  (void)get_gpg4win_dir();
 
   /* The next call initializes subsystems of gpgme and should be
      done as early as possible.  The actual return value (the
      version string) is not used here.  It may be called at any
      time later for this. */
-  gpgme_check_version (NULL);
+  vers = gpgme_check_version (NULL);
+  log_debug ("using gpgme version '%s'\n", vers);
+
   /* RibbonExtender is it's own object to avoid the pitfalls of
      multiple inheritance
   */
@@ -242,7 +247,7 @@ GpgolAddin::QueryInterface (REFIID riid, LPVOID* ppvObj)
 #if 0
       LPOLESTR sRiid = NULL;
       StringFromIID(riid, &sRiid);
-      log_debug ("%s:%s: queried for unimplmented interface: %S",
+      log_debug ("%s:%s: queried for unimplemented interface: %S",
                  SRCNAME, __func__, sRiid);
 #endif
     }
