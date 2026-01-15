@@ -2950,6 +2950,11 @@ get_ol_ui_language ()
 void
 log_addins ()
 {
+  if (!opt.enable_debug)
+    {
+      return;
+    }
+
   TSTART;
   LPDISPATCH app = GpgolAddin::get_instance ()->get_application ();
 
