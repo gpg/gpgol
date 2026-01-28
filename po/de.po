@@ -5,13 +5,13 @@
 # Werner Koch <wk@gnupg.org>, 2005, 2007.
 # Andre Heinecke <andre.heinecke@intevation.de>, 2016, 2017, 2018.
 # aheinecke <aheinecke@gnupg.org>, 2018, 2019, 2020, 2021, 2022, 2023.
-# Eva Bolten <eva.bolten@gnupg.com>, 2022, 2023, 2025.
+# Eva Bolten <eva.bolten@gnupg.com>, 2022, 2023, 2025, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
 "POT-Creation-Date: 2025-12-11 15:31+0100\n"
-"PO-Revision-Date: 2025-10-02 14:34+0200\n"
+"PO-Revision-Date: 2026-01-28 16:40+0100\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
@@ -19,6 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Lokalize 22.12.3\n"
+"Language-Team: kde-i18n-de@kde.org\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -127,8 +128,7 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:69
-msgid ""
-"Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
@@ -160,8 +160,7 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:83
-msgid ""
-"Search and import &X509 certificates in the configured directory services"
+msgid "Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -173,7 +172,7 @@ msgid ""
 "searches in all configured services."
 msgstr ""
 "Sucht automatisch nach X509 Zertifikaten und importiert diese. Diese Option "
-"sucht in alle konfigurierten Diensten."
+"sucht in allen konfigurierten Diensten."
 
 #. TRANSLATORS: Part of the config dialog. Warning about privacy leak.
 #: src/addin-options.cpp:87
@@ -186,8 +185,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
-msgid ""
-"Also automatically toggles secure if keys with level 0 trust were found."
+msgid "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
 "Sichert Mails auch automatisch, wenn Schlüssel mit Level 0 Vertrauen "
 "gefunden wurden."
@@ -231,8 +229,7 @@ msgstr "Einstellungen für:"
 #. An example for a public key follows.
 #: src/addin-options.cpp:109
 msgid "Paste a public key export here. It should look like:"
-msgstr ""
-"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr "Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
@@ -266,8 +263,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:123
-msgid ""
-"The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr informationen."
@@ -1091,7 +1087,7 @@ msgstr ""
 #: src/mail.cpp:5177
 msgid "Should GpgOL override Outlook and continue to process the message?"
 msgstr ""
-"Soll die Outlook Einstellung ignoriert werden und diese Operation nur mit "
+"Soll die Outlook-Einstellung ignoriert und diese Operation nur mit "
 "GpgOL durchgeführt werden?"
 
 #: src/mail.cpp:5183
@@ -1104,12 +1100,12 @@ msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
 msgstr ""
-"Eine Krypto Operation soll sowohl mit Outlooks interner S/MIME "
-"Verschlüsselung als auch mir der von GpgOL / GnuPG durchgeführt werden."
+"Eine Krypto-Operation soll sowohl mit Outlooks interner S/MIME-"
+"Kryptografie als auch mit GpgOL / GnuPG durchgeführt werden."
 
 #: src/mail.cpp:5191
 msgid "Conflicting crypto settings"
-msgstr "Widersprüchliche Krypto Einstellungen"
+msgstr "Widersprüchliche Krypto-Einstellungen"
 
 #: src/mailitem-events.cpp:400 src/mailitem-events.cpp:1113
 #: src/mimemaker.cpp:1059
@@ -1368,8 +1364,7 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:780
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr ""
-"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:781
 msgid "GpgOL: Request confirmed!"
