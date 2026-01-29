@@ -10,16 +10,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2025-12-11 15:31+0100\n"
+"POT-Creation-Date: 2026-01-29 14:50+0100\n"
 "PO-Revision-Date: 2026-01-28 16:40+0100\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
+"Language-Team: kde-i18n-de@kde.org\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Lokalize 22.12.3\n"
-"Language-Team: kde-i18n-de@kde.org\n"
 
 #: src/addin-options.cpp:39
 msgid "GnuPG System"
@@ -128,7 +128,8 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:69
-msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid ""
+"Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
@@ -160,7 +161,8 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:83
-msgid "Search and import &X509 certificates in the configured directory services"
+msgid ""
+"Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -185,7 +187,8 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
-msgid "Also automatically toggles secure if keys with level 0 trust were found."
+msgid ""
+"Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
 "Sichert Mails auch automatisch, wenn Schlüssel mit Level 0 Vertrauen "
 "gefunden wurden."
@@ -229,7 +232,8 @@ msgstr "Einstellungen für:"
 #. An example for a public key follows.
 #: src/addin-options.cpp:109
 msgid "Paste a public key export here. It should look like:"
-msgstr "Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
+msgstr ""
+"Fügen Sie einen öffentlichen Schlüssel Export ein. Es sollte aussehen wie:"
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #. An example for a public certificate follows.
@@ -263,7 +267,8 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:123
-msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid ""
+"The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr informationen."
@@ -598,7 +603,7 @@ msgstr "Die Einstellungen von GpgOL öffnen"
 #: src/gpgoladdin.cpp:1159 src/gpgoladdin.cpp:1168 src/gpgoladdin.cpp:1206
 #: src/gpgoladdin.cpp:1238 src/gpgoladdin.cpp:1371 src/mail.cpp:880
 #: src/mail.cpp:1207 src/mail.cpp:1238 src/mail.cpp:1822 src/mail.cpp:1891
-#: src/mailitem-events.cpp:1090 src/ribbon-callbacks.cpp:763
+#: src/mailitem-events.cpp:1159 src/ribbon-callbacks.cpp:763
 #: src/ribbon-callbacks.cpp:777 src/ribbon-callbacks.cpp:826
 #: src/wks-helper.cpp:462 src/cryptcontroller.cpp:113
 #: src/cryptcontroller.cpp:383 src/cryptcontroller.cpp:555
@@ -1087,32 +1092,32 @@ msgstr ""
 #: src/mail.cpp:5177
 msgid "Should GpgOL override Outlook and continue to process the message?"
 msgstr ""
-"Soll die Outlook-Einstellung ignoriert und diese Operation nur mit "
-"GpgOL durchgeführt werden?"
+"Soll die Outlook-Einstellung ignoriert und diese Operation nur mit GpgOL "
+"durchgeführt werden?"
 
 #: src/mail.cpp:5183
 #, c-format
-msgid "Note: For %s communication you have to select Yes."
-msgstr "Achtung: Für %s Kommunikation müssen Sie \"Ja\" auswählen."
+msgid "Note: If your communication needs to be %s you have to select Yes."
+msgstr "Achtung: Falls Ihre Kommunikation %s sein soll, müssen Sie \"Ja\" auswählen."
 
 #: src/mail.cpp:5187
 msgid ""
 "A crypto operation was selected both using Outlooks internal crypto and with "
 "GpgOL / GnuPG."
 msgstr ""
-"Eine Krypto-Operation soll sowohl mit Outlooks interner S/MIME-"
-"Kryptografie als auch mit GpgOL / GnuPG durchgeführt werden."
+"Eine Krypto-Operation soll sowohl mit Outlooks interner S/MIME-Kryptografie "
+"als auch mit GpgOL / GnuPG durchgeführt werden."
 
 #: src/mail.cpp:5191
 msgid "Conflicting crypto settings"
 msgstr "Widersprüchliche Krypto-Einstellungen"
 
-#: src/mailitem-events.cpp:400 src/mailitem-events.cpp:1113
+#: src/mailitem-events.cpp:402 src/mailitem-events.cpp:1182
 #: src/mimemaker.cpp:1059
 msgid "Sorry, that's not possible, yet"
 msgstr "Sorry, dies ist leider noch nicht möglich"
 
-#: src/mailitem-events.cpp:402
+#: src/mailitem-events.cpp:404
 #, c-format
 msgid ""
 "GpgOL has prevented the change to the \"%s\" property.\n"
@@ -1136,15 +1141,15 @@ msgstr ""
 
 #. TRANSLATORS: Part of a warning dialog that disallows
 #. reply and forward with contents
-#: src/mailitem-events.cpp:1074
+#: src/mailitem-events.cpp:1143
 msgid "You are replying to an unsigned S/MIME email."
 msgstr "Sie antworten einer unsignierten S/MIME Mail."
 
-#: src/mailitem-events.cpp:1076
+#: src/mailitem-events.cpp:1145
 msgid "You are forwarding an unsigned S/MIME email."
 msgstr "Sie leiten eine unsignierte S/MIME email weiter. "
 
-#: src/mailitem-events.cpp:1079
+#: src/mailitem-events.cpp:1148
 msgid ""
 "In this version of S/MIME an attacker could use the missing signature to "
 "have you decrypt contents from a different, otherwise completely unrelated "
@@ -1157,13 +1162,13 @@ msgstr ""
 "zugänglich.\n"
 "Aus diesem Grund erlauben wir in diesem Fall nur manuelles Zitieren."
 
-#: src/mailitem-events.cpp:1086
+#: src/mailitem-events.cpp:1155
 msgid "Please copy the relevant contents and insert them into the new email."
 msgstr ""
 "Bitte kopieren Sie die relevanten Inhalte und fügen diese in die neue Mail "
 "ein."
 
-#: src/mailitem-events.cpp:1110
+#: src/mailitem-events.cpp:1179
 msgid ""
 "Attachments are part of the crypto message.\n"
 "They can't be permanently removed and will be shown again the next time this "
@@ -1173,7 +1178,7 @@ msgstr ""
 "Sie können nicht permanent entfernt werden und werden beim nächsten Öffnen "
 "dieser Nachricht wieder angezeigt."
 
-#: src/mapihelp.cpp:2157 src/mapihelp.cpp:2165 src/mapihelp.cpp:2173
+#: src/mapihelp.cpp:2168 src/mapihelp.cpp:2176 src/mapihelp.cpp:2184
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
@@ -1364,7 +1369,8 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:780
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr ""
+"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:781
 msgid "GpgOL: Request confirmed!"
