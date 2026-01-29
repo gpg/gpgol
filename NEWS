@@ -1,5 +1,13 @@
-Noteworthy changes for version 2.7.1 (unreleased)
-==================================================
+Noteworthy changes for version 2.7.1 (2026-01-29)
+=================================================
+
+ * Avoid warning pop-ups in Outlook in certain configurations when
+   listing other Add-Ins.  [T8036]
+
+ * Improve German warning message translations.  [rOca9f3e2ff]
+
+ * Fix confusing message in dialog window "Conflicting crypto
+   settings".  [T7989]
 
 
 Noteworthy changes for version 2.7.0 (2025-12-11)
