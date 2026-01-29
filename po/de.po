@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-01-29 14:50+0100\n"
+"POT-Creation-Date: 2026-01-29 15:33+0100\n"
 "PO-Revision-Date: 2026-01-28 16:40+0100\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language-Team: kde-i18n-de@kde.org\n"
@@ -603,7 +603,7 @@ msgstr "Die Einstellungen von GpgOL öffnen"
 #: src/gpgoladdin.cpp:1159 src/gpgoladdin.cpp:1168 src/gpgoladdin.cpp:1206
 #: src/gpgoladdin.cpp:1238 src/gpgoladdin.cpp:1371 src/mail.cpp:880
 #: src/mail.cpp:1207 src/mail.cpp:1238 src/mail.cpp:1822 src/mail.cpp:1891
-#: src/mailitem-events.cpp:1159 src/ribbon-callbacks.cpp:763
+#: src/mailitem-events.cpp:1090 src/ribbon-callbacks.cpp:763
 #: src/ribbon-callbacks.cpp:777 src/ribbon-callbacks.cpp:826
 #: src/wks-helper.cpp:462 src/cryptcontroller.cpp:113
 #: src/cryptcontroller.cpp:383 src/cryptcontroller.cpp:555
@@ -1098,7 +1098,8 @@ msgstr ""
 #: src/mail.cpp:5183
 #, c-format
 msgid "Note: If your communication needs to be %s you have to select Yes."
-msgstr "Achtung: Falls Ihre Kommunikation %s sein soll, müssen Sie \"Ja\" auswählen."
+msgstr ""
+"Achtung: Falls Ihre Kommunikation %s sein soll, müssen Sie \"Ja\" auswählen."
 
 #: src/mail.cpp:5187
 msgid ""
@@ -1112,12 +1113,12 @@ msgstr ""
 msgid "Conflicting crypto settings"
 msgstr "Widersprüchliche Krypto-Einstellungen"
 
-#: src/mailitem-events.cpp:402 src/mailitem-events.cpp:1182
+#: src/mailitem-events.cpp:400 src/mailitem-events.cpp:1113
 #: src/mimemaker.cpp:1059
 msgid "Sorry, that's not possible, yet"
 msgstr "Sorry, dies ist leider noch nicht möglich"
 
-#: src/mailitem-events.cpp:404
+#: src/mailitem-events.cpp:402
 #, c-format
 msgid ""
 "GpgOL has prevented the change to the \"%s\" property.\n"
@@ -1141,15 +1142,15 @@ msgstr ""
 
 #. TRANSLATORS: Part of a warning dialog that disallows
 #. reply and forward with contents
-#: src/mailitem-events.cpp:1143
+#: src/mailitem-events.cpp:1074
 msgid "You are replying to an unsigned S/MIME email."
 msgstr "Sie antworten einer unsignierten S/MIME Mail."
 
-#: src/mailitem-events.cpp:1145
+#: src/mailitem-events.cpp:1076
 msgid "You are forwarding an unsigned S/MIME email."
 msgstr "Sie leiten eine unsignierte S/MIME email weiter. "
 
-#: src/mailitem-events.cpp:1148
+#: src/mailitem-events.cpp:1079
 msgid ""
 "In this version of S/MIME an attacker could use the missing signature to "
 "have you decrypt contents from a different, otherwise completely unrelated "
@@ -1162,13 +1163,13 @@ msgstr ""
 "zugänglich.\n"
 "Aus diesem Grund erlauben wir in diesem Fall nur manuelles Zitieren."
 
-#: src/mailitem-events.cpp:1155
+#: src/mailitem-events.cpp:1086
 msgid "Please copy the relevant contents and insert them into the new email."
 msgstr ""
 "Bitte kopieren Sie die relevanten Inhalte und fügen diese in die neue Mail "
 "ein."
 
-#: src/mailitem-events.cpp:1179
+#: src/mailitem-events.cpp:1110
 msgid ""
 "Attachments are part of the crypto message.\n"
 "They can't be permanently removed and will be shown again the next time this "
@@ -1178,7 +1179,7 @@ msgstr ""
 "Sie können nicht permanent entfernt werden und werden beim nächsten Öffnen "
 "dieser Nachricht wieder angezeigt."
 
-#: src/mapihelp.cpp:2168 src/mapihelp.cpp:2176 src/mapihelp.cpp:2184
+#: src/mapihelp.cpp:2157 src/mapihelp.cpp:2165 src/mapihelp.cpp:2173
 msgid "[no subject]"
 msgstr "[Kein Betreff]"
 
