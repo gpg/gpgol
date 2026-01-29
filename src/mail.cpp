@@ -5179,9 +5179,9 @@ Mail::prepareCrypto_o ()
       std::string vs_warning;
       if (in_de_vs_mode ())
         {
-          /* TRANSLATORS %s is compliance name like VS-NfD */
-          vs_warning = asprintf_s (_("Note: For %s communication you have to select Yes."),
-                                      de_vs_name ()) + std::string ("\n\n");
+          /* TRANSLATORS %s is a placeholder for the name of a compliance mode. For example "VS-NfD compliant" or "NATO RESTRICTED compliant" */
+          vs_warning = asprintf_s (_("Note: If your communication needs to be %s you have to select Yes."),
+                                      de_vs_name (true)) + std::string ("\n\n");
 
         }
       std::string msg = _("A crypto operation was selected both using "
