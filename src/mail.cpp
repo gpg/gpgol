@@ -504,7 +504,8 @@ Mail::checkAttachments_o (bool silent)
 
   bool foundOne = false;
   std::vector <LPDISPATCH> to_delete;
-  for (int i = 1; i <= count; i++)
+  int att_count = get_oom_int (attachments, "Count");
+  for (int i = 1; i <= att_count; i++)
     {
       std::string item_str;
       item_str = std::string("Item(") + std::to_string (i) + ")";
@@ -623,7 +624,7 @@ get_attachment_stream_o (LPDISPATCH mailitem, int pos)
       TRETURN NULL;
     }
   if (FAILED (gpgol_openProperty (mapi_attachment, PR_ATTACH_DATA_BIN,
-                                  &IID_IStream, 0, MAPI_MODIFY,
+                                  &IID_IStream, 0, NULL, //MAPI_MODIFY,
                                   (LPUNKNOWN*) &stream)))
     {
       log_debug ("%s:%s: Failed to open stream for mapi_attachment: %p",
