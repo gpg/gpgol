@@ -1,5 +1,9 @@
-Noteworthy changes for version 2.7.2 (unreleased)
+Noteworthy changes for version 2.7.2 (2026-02-26)
 =================================================
+
+ * Make sure to check all attachments.  [T8110]
+
+ * Update of the German translations.  [T7691]
 
 
 Noteworthy changes for version 2.7.1 (2026-01-29)
