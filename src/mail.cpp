@@ -5534,7 +5534,7 @@ Mail::isMultipartRelated () const
           mixed = 1;
         }
     }
-  return related + mixed;
+  return (related + mixed)>1 ? 2 : related;
 }
 
 std::vector <std::shared_ptr<Attachment> >

@@ -716,8 +716,10 @@ public:
      updateOOMData_o */
   std::vector <std::shared_ptr <Attachment> > plainAttachments() const;
 
-  /* True if this is a multipart related mail, 1 if all attachments are
-     related, 2 if there is a related and a mixed attachment. */
+  /* True if this is a multipart related mail,
+     0 if all attachments are mixed
+     1 if all attachments are related,
+     2 if there is a related and a mixed attachment. */
   int isMultipartRelated () const;
 
   /* Set an additional item ref to this object. Different API calls
