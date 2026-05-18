@@ -27,7 +27,7 @@ libs_cflags = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) $(GPG_ERROR_CFLAGS)
 libs_cxxflags = $(libs_cflags) $(GPGMEPP_CXXFLAGS)
 
 AM_CFLAGS = $(libs_cflags) -shared
-AM_CXXFLAGS = $(libs_cxxflags) -D_FILE_OFFSET_BITS=64 -shared -std=c++14
+AM_CXXFLAGS = $(libs_cxxflags) -D_FILE_OFFSET_BITS=64 -shared -std=c++17
 
 gpgol_SOURCES = \
     addin-options.cpp addin-options.h \

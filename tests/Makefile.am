@@ -33,11 +33,11 @@ libs_cxxflags = $(libs_cflags) $(GPGMEPP_CXXFLAGS)
 
 AM_CFLAGS = -I$(top_srcdir)/src $(libs_cflags) -DBUILD_TESTS
 if !HAVE_W32_SYSTEM
-AM_CXXFLAGS = -I$(top_srcdir)/src $(libs_cxxflags) -std=c++14 -D_FILE_OFFSET_BITS=64 \
+AM_CXXFLAGS = -I$(top_srcdir)/src $(libs_cxxflags) -std=c++17 -D_FILE_OFFSET_BITS=64 \
 			  -DBUILD_TESTS -DDATADIR=\"$(abs_srcdir)/data\" \
               -DGPGHOMEDIR=\"$(abs_srcdir)/gnupg_home\"
 else
-AM_CXXFLAGS = -I$(top_srcdir)/src $(libs_cxxflags) -std=c++14 \
+AM_CXXFLAGS = -I$(top_srcdir)/src $(libs_cxxflags) -std=c++17 \
 			  -D_FILE_OFFSET_BITS=64 -DBUILD_TESTS
 endif
 
