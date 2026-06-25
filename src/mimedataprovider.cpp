@@ -520,7 +520,10 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
     {
       log_debug ("%s:%s: Collecting encrypted PGP data.",
                  SRCNAME, __func__);
-      ctx->collect_crypto_data = 1;
+       if (!ctx->collect_crypto_data)
+        {
+          ctx->collect_crypto_data = 1;
+        }
     }
   else if (ctx->nesting_level >= 1 &&
            !strcmp (ctmain, "message") &&
@@ -536,13 +539,17 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       /* Check whether this attachment is an opaque signed S/MIME
          part.  We use a counter to later check that there is only one
          such part. */
-      if (!strcmp (ctmain, "application")
+      if (!ctx->nesting_level
+          && !strcmp (ctmain, "application")
           && (!strcmp (ctsub, "pkcs7-mime")
               || !strcmp (ctsub, "x-pkcs7-mime")))
         {
           log_debug ("%s:%s: Collecting crypted S/MIME data.",
                      SRCNAME, __func__);
-          ctx->collect_crypto_data = 1;
+          if (!ctx->collect_crypto_data )
+            {
+              ctx->collect_crypto_data = 1;
+            }
         }
     }
 
@@ -554,12 +561,13 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
   log_debug ("%s:%s: this body: nesting=%d partno=%d is_text=%d"
                    " charset=\"%s\"\n body_seen=%d is_text_attachment=%d"
                    " is_protected_headers=%d in_encapsulated_msg=%d"
-                   " collect_crypto_data=%d",
+                   " collect_crypto_data=%d collect_signature=%d",
                    SRCNAME, __func__,
                    ctx->nesting_level, ctx->part_counter, is_text,
                    ctx->mimestruct_cur->charset?ctx->mimestruct_cur->charset:"",
-                   ctx->body_seen, is_text_attachment, is_protected_headers,
-                   ctx->in_encapsulated_msg, ctx->collect_crypto_data);
+                   ctx->body_seen, is_text_attachment,
+                   is_protected_headers, ctx->in_encapsulated_msg,
+                   ctx->collect_crypto_data, ctx->collect_signature);
 
   /* If this is a text part, decide whether we treat it as one
      of our bodies.
