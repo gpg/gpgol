@@ -265,6 +265,7 @@ read_options (void)
   opt.closeOnUnknownWriteEvent = get_conf_bool ("closeOnUnknownWriteEvent", 0);
   opt.disable_titus_handling = get_conf_bool("disableTitusHandling", 0);
   opt.dont_autodecrypt_preview = get_conf_bool("disableAutoPreview",0);
+  opt.attachHTMLonlyOnReadAsPlain = get_conf_bool("attachHTMLonlyOnReadAsPlain",0);
 
   if (!opt.automation)
     {
