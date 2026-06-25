@@ -243,7 +243,9 @@ struct opt_s
 
   int forms_revision;         /* The forms revision number of the
                                  binary.  */
-
+  int attachHTMLonlyOnReadAsPlain; /* If the Outlook option ReadAsPlain is set
+                                  and the mail only contains a HTML part add it
+                                  as attachment */
 };
 extern struct opt_s opt;
 

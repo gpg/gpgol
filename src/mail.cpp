@@ -2117,6 +2117,22 @@ Mail::parsingDone_o (bool is_preview)
 
   /* Update attachments */
   std::vector<std::shared_ptr<Attachment> > atts = m_parser->get_attachments();
+
+  if (opt.attachHTMLonlyOnReadAsPlain && !m_block_html &&
+      !opt.prefer_html && m_parser->get_body().length()==0 && m_parser->get_html_body().length())
+  {
+    auto attach = std::shared_ptr<Attachment> (new Attachment());
+    attach->set_attach_type (ATTACHTYPE_FROMMOSS);
+    attach->set_content_type("text/plain");
+    std::string htmlbody = m_parser->get_html_body();
+    attach->set_display_name("HTML_email_content.txt");
+    std::replace(htmlbody.begin(), htmlbody.end(), '<','{');
+    std::replace(htmlbody.begin(), htmlbody.end(), '>','}');
+    htmlbody = _("HTML Attachment as Text for security all <,> were replaced with {,}.\n\n") + htmlbody;
+    attach->get_data().write(htmlbody.c_str(),htmlbody.length());
+    atts.push_back(attach);
+  }
+
   if (m_BodyVerifyFailed)
   {
     auto attach = std::shared_ptr<Attachment> (new Attachment());
