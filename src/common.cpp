@@ -578,8 +578,9 @@ get_tmp_outfile (const wchar_t *name, HANDLE *outHandle)
   TSTART
   const auto tmpPath = getTmpPathUtf8 ();
   auto utf8Name = sanitizeFileName(wchar_to_utf8_string (name));
-
+  TRACEPOINT;
   auto fileExtension = wchar_to_utf8_string (name);
+  TRACEPOINT;
   auto fileExtPos = fileExtension.rfind('.');
   if (fileExtPos != std::string::npos)
   {
@@ -1353,11 +1354,12 @@ validateWindowsFileName(const std::string& name, bool allowDirectories)
 std::string
 sanitizeFileName(std::string name, bool allowDirectories)
 {
+  TSTART;
   if (name.empty())
     {
-      return "attachment";
+      TRETURN "attachment";
     }
-
+  TRACEPOINT;
   // Characters
   const char* notAllowedChars = allowDirectories ? notAllowedCharsSubDir
                                                  : notAllowedCharsNoSubDir;
@@ -1365,7 +1367,7 @@ sanitizeFileName(std::string name, bool allowDirectories)
     {
       name.erase(std::remove(name.begin(), name.end(), *c), name.end());
     }
-
+  TRACEPOINT;
   // Substrings
   for (const auto& subStr : notAllowedSubStrings)
     {
@@ -1375,7 +1377,7 @@ sanitizeFileName(std::string name, bool allowDirectories)
           name.erase(pos, std::strlen(subStr));
         }
     }
-
+  TRACEPOINT;
   // Windows devices
   if (std::regex_match(name, windowsDeviceNoSubDirPattern()) ||
       (allowDirectories && std::regex_match(name, windowsDeviceSubDirPattern())))
@@ -1383,5 +1385,5 @@ sanitizeFileName(std::string name, bool allowDirectories)
       name = "_" + name;
     }
 
-  return name.empty() ? "_" : name;
+  TRETURN name.empty() ? "_" : name;
 }

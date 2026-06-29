@@ -870,10 +870,10 @@ public:
         if (!key.canEncrypt() || key.isRevoked() ||
             key.isExpired() || key.isDisabled() || key.isInvalid())
           {
-            log_data ("%s:%s: Invalid [%s%s%s%s%s] key for %s. no internal encryption",
+            log_data ("%s:%s: Invalid [%s%s%s%s%s] key for %s, FPR %s. no internal encryption",
                        SRCNAME, __func__, key.canEncrypt()?"E":".", key.isRevoked()?"R":".",
                         key.isExpired()?"X":".", key.isDisabled()?"D":".",
-                        key.isInvalid()?"I":".", anonstr (recip.c_str ()));
+                        key.isInvalid()?"I":".", anonstr (recip.c_str ()), key.primaryFingerprint());
             TRETURN std::vector<GpgME::Key>();
           }
 
