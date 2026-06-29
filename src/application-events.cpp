@@ -106,6 +106,18 @@ EVENT_SINK_INVOKE(ApplicationEvents)
               beforePrintSeen = false;
               log_debug ("%s:%s: ItemLoad is not for a mail.",
                          SRCNAME, __func__);
+              mailItem = get_object_by_id (parms->rgvarg[0].pdispVal,
+                                          IID_IStorageItem);
+              if(!mailItem)
+              {
+                 log_debug ("%s:%s: ItemLoad is not a storageitem.",
+                         SRCNAME, __func__);
+                oom_dump_idispatch(parms->rgvarg[0].pdispVal);
+              }
+              else
+              {
+                oom_dump_idispatch(mailItem);
+              }
               do_in_ui_thread_async (INVALIDATE_UI, nullptr);
               TBREAK;
             }
@@ -135,6 +147,6 @@ EVENT_SINK_INVOKE(ApplicationEvents)
      continues to handle the event and is not disturbed
      by our errors. There shouldn't be errors in here
      anyway if everything works as documented. */
-  return S_OK;
+  TRETURN S_OK;
 }
 END_EVENT_SINK(ApplicationEvents, IID_ApplicationEvents_11)

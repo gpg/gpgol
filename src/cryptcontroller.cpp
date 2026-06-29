@@ -412,12 +412,16 @@ CryptController::resolve_through_protocol (GpgME::Protocol proto)
 {
   TSTART;
 
+  log_debug("%s:%s: Recp MBox: %s",
+              SRCNAME, __func__, proto ==GpgME::Protocol::CMS ? "SMIME" :"OpenPGP" );
   const auto cache = KeyCache::instance ();
 
   if (m_encrypt)
     {
       for (auto &recp: m_recipients)
         {
+          log_debug("%s:%s: Recp MBox: %s",
+                     SRCNAME, __func__, recp.mbox ().c_str());
           recp.setKeys(cache->getEncryptionKeys(recp.mbox (), proto));
         }
     }
@@ -506,6 +510,7 @@ CryptController::get_resolved_protocol () const
 bool
 CryptController::is_resolved ()
 {
+  TSTART
   /* Check that we have signing keys if necessary and at
      least one encryption key for each recipient. */
   bool hasOpenPGPSignKey = false;
@@ -529,7 +534,7 @@ CryptController::is_resolved ()
       /* We have already shown the message that S/MIME signing is not resolvable
        * in this setting. Since we then talk about the following dialog we must
        * block all other protocol resolution tries to show the dialog. */
-      return false;
+      TRETURN false;
     }
 
   if (!m_no_smime_shown && !hasSMIMESignKey && m_sign && opt.sign_default &&
@@ -555,7 +560,7 @@ CryptController::is_resolved ()
                                  _("GpgOL"), MB_OK);
               m_no_smime_shown = true;
               xfree (msg);
-              return false;
+              TRETURN false;
             }
         }
       else
@@ -569,13 +574,13 @@ CryptController::is_resolved ()
           gpgol_message_box (m_mail->getWindow (), msg,
                              _("GpgOL"), MB_OK);
           m_no_smime_shown = true;
-          return false;
+          TRETURN false;
         }
     }
 
   if (m_sign && !hasOpenPGPSignKey && !hasSMIMESignKey)
     {
-      return false;
+      TRETURN false;
     }
 
   if (m_encrypt)
@@ -586,7 +591,7 @@ CryptController::is_resolved ()
           if (!recp.keys ().size () || recp.keys ()[0].isNull ())
             {
               /* No keys or the first key in the list is null. */
-              return false;
+              TRETURN false;
             }
           /* If we don't sign we need no more checks. */
           if (!m_sign)
@@ -595,18 +600,19 @@ CryptController::is_resolved ()
             }
           for (const auto &key: recp.keys())
             {
+              log_debug("Check Key: %s", key.keyID());
               if (key.protocol () == GpgME::OpenPGP && !hasOpenPGPSignKey)
                 {
-                  return false;
+                  TRETURN false;
                 }
               if (key.protocol () == GpgME::CMS && !hasSMIMESignKey)
                 {
-                  return false;
+                  TRETURN false;
                 }
             }
         }
     }
-  return true;
+  TRETURN true;
 }
 
 int
