@@ -132,6 +132,17 @@ create_gpgol_tag (LPMESSAGE message, const wchar_t *name, const char *func)
   pmnid = &mnid;
   hr = message->GetIDsFromNames (1, &pmnid, MAPI_CREATE, &proparr);
   xfree (propname);
+
+  if (hr == 0x80070005)
+    {
+      log_debug ("%s:%s: Check Name: hr=%#lx, name=%ls check=%d\n",
+                 SRCNAME, func, hr, name, !wcscmp(L"GpgOL Attach Type",name));
+      if (!wcscmp(L"GpgOL Attach Type",name))
+      {
+        TRETURN 0xFFFF0000; // using outof scope Id
+      }
+    }
+
   if (FAILED (hr))
     proparr = NULL;
   if (FAILED (hr) || !(proparr->aulPropTag[0] & 0xFFFF0000) )
@@ -2618,6 +2629,17 @@ get_gpgolattachtype (LPATTACH obj, ULONG tag)
   attachtype_t retval;
 
   hr = HrGetOneProp ((LPMAPIPROP)obj, tag, &propval);
+  if (tag == 0xFFFF0003)
+    {
+      char * filename = get_attach_filename (obj);
+
+      if (filename != NULL && !std::string(filename).compare(MIMEATTACHFILENAME))
+        {
+          TRETURN ATTACHTYPE_MOSSTEMPL;
+        }
+      TRETURN ATTACHTYPE_UNKNOWN;
+    }
+
   if (FAILED (hr))
     {
       if (hr != MAPI_E_NOT_FOUND)
