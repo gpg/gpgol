@@ -148,6 +148,8 @@ get_object_name_s (shared_disp_t obj)
 DISPID
 lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
 {
+  TSTART
+
   HRESULT hr;
   DISPID dispid;
   wchar_t *wname;
@@ -172,7 +174,11 @@ lookup_oom_dispid (LPDISPATCH pDisp, const char *name)
   if (hr != S_OK)
     dispid = DISPID_UNKNOWN;
 
-  return dispid;
+  log_debug ("%s:%s: dispid(%s)=%d: hr=0x%x\n",
+          SRCNAME, __func__, name, (int)dispid, (unsigned int)hr);
+
+
+  TRETURN dispid;
 }
 
 static void
@@ -1921,6 +1927,9 @@ invoke_oom_method_with_parms_type (LPDISPATCH pDisp, const char *name,
   DISPID dispid;
 
   dispid = lookup_oom_dispid (pDisp, name);
+  log_debug ("%s:%s: dispid: %d",
+              SRCNAME, __func__, (int) dispid);
+
   if (dispid != DISPID_UNKNOWN)
     {
       EXCEPINFO execpinfo;
@@ -1937,6 +1946,9 @@ invoke_oom_method_with_parms_type (LPDISPATCH pDisp, const char *name,
           dump_excepinfo (execpinfo);
           TRETURN -1;
         }
+      log_debug ("%s:%s: Invoke '%s' successful:",
+              SRCNAME, __func__, name);
+
     }
 
   TRETURN 0;
