@@ -66,6 +66,12 @@ public:
 
     /** Get the name of the junk category. */
     static const std::string & getJunkMailCategory ();
+
+    /**  Get the name of the unverified category */
+    static const std::string & getUnverifiedCategory ();
+
+    /**  Get the name of the ununprotected category */
+    static const std::string & getUnprotectedCategory ();
 private:
     class Private;
     std::shared_ptr<Private> d;

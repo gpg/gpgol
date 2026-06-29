@@ -269,6 +269,34 @@ CategoryManager::getJunkMailCategory ()
 }
 
 /* static */
+const std::string &
+CategoryManager::getUnverifiedCategory ()
+{
+  static std::string decStr;
+  if (decStr.empty())
+    {
+      decStr = std::string ("GpgOL: ") +
+                            std::string (_("Unverified Attachment: "));
+    }
+  return decStr;
+}
+
+
+/* static */
+const std::string &
+CategoryManager::getUnprotectedCategory ()
+{
+  static std::string decStr;
+  if (decStr.empty())
+    {
+      decStr = std::string ("GpgOL: ") +
+                            std::string (_("Unprotected Attachment: "));
+    }
+  return decStr;
+}
+
+
+/* static */
 const std::string&
 CategoryManager::getSeperator ()
 {
