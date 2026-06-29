@@ -25,6 +25,7 @@
 #include "eventsinks.h"
 #include "mymapi.h"
 #include "mymapitags.h"
+#include "parsecontroller.h"
 #include "oomhelp.h"
 #include "ocidl.h"
 #include "windowmessages.h"
@@ -297,6 +298,7 @@ EVENT_SINK_INVOKE(MailItemEvents)
               log_debug ("%s:%s: S/MIME mail but S/MIME is disabled."
                         " Need save.",
                         SRCNAME, __func__);
+              m_mail->setCryptState(Mail::Reverting);
               m_mail->setNeedsSave (true);
             }
           TBREAK;
@@ -1046,8 +1048,75 @@ TODO: Handle split copy in another way
                 {
                   lastEntryStr = lastEntryID;
                   xfree (lastEntryID);
-                 }
+                }
+#if 0
+              log_debug ("%s:%s: lastEntryID: %s, Size: %d, VerifyBodyFailed: %s",
+                        SRCNAME, __func__, lastEntryStr.c_str(), lastSize,
+                        last_mail->didBodyVerificationFail()?"Yes":"No");
+              if (is_reply)
+                {
+                  VARIANT conversation;
+                  VariantInit(&conversation);
 
+                  int ret = invoke_oom_method (m_mail->item(), "GetConversation", &conversation);
+
+                  if (!ret)
+                    {
+                      log_debug ("%s:%s: Variant type: %d, Val: %p",
+                                SRCNAME, __func__, conversation.vt, conversation.pdispVal);
+
+                      VARIANT aVariant[1];
+                      DISPPARAMS dispparams;
+
+                      dispparams.rgvarg = aVariant;
+                      dispparams.rgvarg[0].vt = VT_DISPATCH;
+                      dispparams.rgvarg[0].pdispVal = m_mail->item();
+                      dispparams.cArgs = 1;
+                      dispparams.cNamedArgs = 0;
+
+oom_dump_idispatch(m_mail->item());
+
+                      VARIANT parent;
+                      VariantInit(&parent);
+                      ret = invoke_oom_method_with_parms (conversation.pdispVal, "GetParent", &parent, &dispparams);
+                      if (!ret)
+                        {
+                          log_debug ("%s:%s: Variant type: %d, Val: %p",
+                                SRCNAME, __func__, parent.vt, parent.pdispVal);
+
+oom_dump_idispatch(parent.pdispVal);
+                          Mail * parent_mail = Mail::getMailForItem(parent.pdispVal);
+                          if (parent_mail)
+                          {
+                            log_debug ("%s:%s: Parent VerifyBodyFailed: %s",
+                            SRCNAME, __func__,
+                            parent_mail->didBodyVerificationFail()?"Yes":"No");
+                          }
+                          VariantClear(&parent);
+                        }
+                        else
+                        {
+                          log_debug("%s:%s: GetParent Failed: %d",
+                            SRCNAME, __func__, ret);
+                        }
+                        VariantClear(&conversation);
+                    }
+                    else
+                    {
+                      log_debug("%s:%s: GetConversation Failed: %d",
+                        SRCNAME, __func__, ret);
+                    }
+                }
+
+              if (last_mail->didBodyVerificationFail() && last_mail->parser () )
+                {
+                  std::string body = last_mail->parser()->get_body();
+                  if (body.length())
+                  {
+                    put_oom_string(m_mail->item(), "Body", body.c_str());
+                  }
+                }
+#endif
               if (!lastSize && !lastEntryStr.size ())
                {
                   if (!is_reply)

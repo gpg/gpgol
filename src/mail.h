@@ -93,6 +93,7 @@ public:
       OOMUpdated, /* GnuPG Data has been written to OOM */
       OOMSynced, /* OOM has been synced internally but not MAPI */
       CryptFinished, /* The mail is signed and or encrypted and can be sent */
+      Reverting, /* The mail is being reverted */
     };
 
   /** @brief Construct a mail object for the item.
@@ -731,6 +732,7 @@ public:
 
   bool isVdPostponed () const;
 
+  // bool didBodyVerificationFail() {return m_BodyVerifyFailed; };
 private:
   /* Returns a copy of the mail object. */
   Mail *copy ();
