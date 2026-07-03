@@ -110,12 +110,24 @@ hasSelection (LPDISPATCH explorer)
     }
 
   int count = get_oom_int (selection, "Count");
+  LPDISPATCH selectitem = NULL, mailitem = NULL;
   bool selected = false;
   if (count==1)
     {
       selected = hasMailitemEventReadBeenCalled ();
       log_debug ("%s:%s: ReadEvent %s been called",
             SRCNAME, __func__, selected ? "HAS": "has NOT");
+
+      selectitem = get_oom_object (selection, "Item(1)");
+      mailitem = get_object_by_id (selectitem, IID_MailItem);
+      if (!mailitem)
+      {
+        log_debug ("%s:%s: New selection is no mail, return false.",
+            SRCNAME, __func__);
+        selected = false;
+      }
+      gpgol_release (mailitem);
+      gpgol_release (selectitem);
     }
   else
     {
