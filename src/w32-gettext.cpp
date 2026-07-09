@@ -1517,7 +1517,9 @@ _wchar_to_utf8 (const wchar_t *string)
      than NT.*/
   n = WideCharToMultiByte (CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
   if (n < 0)
+  {
     TRETURN NULL;
+  }
   TRACEPOINT;
   result = (char *) xmalloc (n+1);
   TRACEPOINT;
