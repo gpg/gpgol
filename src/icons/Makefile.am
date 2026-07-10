@@ -19,6 +19,8 @@ EXTRA_DIST= \
     README.icons\
     sign.svg sign-enc.svg encrypt.svg \
     sign-enc-40.png sign-20.png encrypt-20.png \
+    sign-only.svg enc-only.svg no-sign-enc.svg \
+    sign-only-40.png enc-only-40.png no-sign-enc-40.png \
     level-0.svg level-0-enc.svg level-0.png level-0-enc.png \
     level-1.svg level-1-enc.svg level-1.png level-1-enc.png \
     level-2.svg level-2-enc.svg level-2.png level-2-enc.png \
