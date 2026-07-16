@@ -952,6 +952,13 @@ CryptController::resolve_keys ()
     }
 
   int ret = parse_output (mystdout);
+  if (ret <0)
+  {
+    // We need to stop the overlay here if resolving failed
+    // as the error codepaths above don't do this
+    stop_crypto_overlay();
+  }
+
   if (ret == -1)
     {
       log_debug ("%s:%s: Failed to parse / resolve keys.",
