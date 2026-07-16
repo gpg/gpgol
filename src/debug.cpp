@@ -108,7 +108,7 @@ do_log (const char *fmt, va_list a, int w32err, int err,
       unlock_log ();
       return;
     }
-
+#if 0
   char time_str[9];
   SYSTEMTIME utc_time;
   GetSystemTime (&utc_time);
@@ -119,10 +119,22 @@ do_log (const char *fmt, va_list a, int w32err, int err,
                       time_str,
                       9))
     {
-      fprintf (logfp, "%s/%lu/",
-               time_str,
+      fprintf (logfp, "%s.%d/%lu/",
+               time_str, utc_time.wMilliseconds,
                (unsigned long)GetCurrentThreadId ());
     }
+#else
+#include <time.h>
+  struct timespec ts;
+  char buff[100];
+  if (timespec_get(&ts, TIME_UTC) &&
+      strftime(buff, sizeof buff, "%H:%M:%S", gmtime(&ts.tv_sec)))
+  {
+    fprintf (logfp, "%s.%09ld/%lu/",
+             buff , ts.tv_nsec,
+             (unsigned long)GetCurrentThreadId ());
+  }
+#endif
   else
     {
       fprintf (logfp, "unknown/%lu/",

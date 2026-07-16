@@ -27,7 +27,7 @@ libs_cflags = $(GPGME_CFLAGS) $(LIBASSUAN_CFLAGS) $(GPG_ERROR_CFLAGS)
 libs_cxxflags = $(libs_cflags) $(GPGMEPP_CXXFLAGS)
 
 AM_CFLAGS = $(libs_cflags) -shared
-AM_CXXFLAGS = $(libs_cxxflags) -D_FILE_OFFSET_BITS=64 -shared -std=c++17
+AM_CXXFLAGS = $(libs_cxxflags) -D_FILE_OFFSET_BITS=64 -D_UCRT -shared -std=c++17
 
 gpgol_SOURCES = \
     addin-options.cpp addin-options.h \
@@ -156,7 +156,7 @@ gpgol_LDADD = $(srcdir)/gpgol.def  \
 	-L . -lgpgmepp -lgpgme -lassuan -lgpg-error \
 	-lmapi32 -lshell32 -lgdi32 -lcomdlg32 \
 	-lole32 -loleaut32 -lws2_32 -ladvapi32 \
-	-luuid -lgdiplus -lrpcrt4
+	-luuid -lgdiplus -lrpcrt4 -lucrt
 
 resource.o: resource.rc versioninfo.rc dialogs.rc dialogs.h
 
