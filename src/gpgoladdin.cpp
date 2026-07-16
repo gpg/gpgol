@@ -732,6 +732,7 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"btnEncryptSmall", IDI_ENCRYPT_20_PNG)
       ID_MAPPER (L"btnSignSmall", IDI_SIGN_20_PNG)
       ID_MAPPER (L"btnSignEncryptLarge", IDI_SIGN_ENCRYPT_40_PNG)
+      ID_MAPPER (L"btnSignEncryptLargeEx", IDI_SIGN_ENCRYPT_40_PNG_EX)
       ID_MAPPER (L"btnEncryptFileLarge", ID_BTN_ENCSIGN_LARGE)
       ID_MAPPER (L"btnSignLarge", ID_BTN_SIGN_LARGE)
       ID_MAPPER (L"btnVerifyLarge", ID_BTN_VERIFY_LARGE)
@@ -766,6 +767,10 @@ GpgolRibbonExtender::GetIDsOfNames (REFIID riid, LPOLESTR *rgszNames,
       ID_MAPPER (L"overrideFileSaveAsWindowed", ID_CMD_FILE_SAVE_AS_IN_WINDOW)
       ID_MAPPER (L"decryptPermanently", ID_CMD_DECRYPT_PERMANENTLY)
       ID_MAPPER (L"decryptManually", ID_CMD_DECRYPT_MANUAL)
+      ID_MAPPER (L"getSecureStatusTip", ID_GET_SECURE_STATUS_TIP)
+      ID_MAPPER (L"getSecureStatusTipEx", ID_GET_SECURE_STATUS_TIP_EX)
+      ID_MAPPER (L"getSecureStatusSTip", ID_GET_SECURE_STATUS_STIP)
+      ID_MAPPER (L"getSecureStatusSTipEx", ID_GET_SECURE_STATUS_STIP_EX)
     }
 
   if (cNames > 1)
@@ -885,9 +890,19 @@ GpgolRibbonExtender::Invoke (DISPID dispid, REFIID riid, LCID lcid,
       case IDI_SIGN_20_PNG:
         return getIcon (dispid, result);
       case IDI_SIGN_ENCRYPT_40_PNG:
-        return get_action_icon (parms->rgvarg[0].pdispVal, result);
+        return get_action_icon (parms->rgvarg[0].pdispVal, result, false);
+       case IDI_SIGN_ENCRYPT_40_PNG_EX:
+        return get_action_icon (parms->rgvarg[0].pdispVal, result, true);
       case ID_BTN_SIGSTATE_LARGE:
         return get_crypto_icon (parms->rgvarg[0].pdispVal, result);
+      case ID_GET_SECURE_STATUS_TIP:
+        return get_secure_ttip(parms->rgvarg[0].pdispVal, result, false);
+      case ID_GET_SECURE_STATUS_TIP_EX:
+        return get_secure_ttip(parms->rgvarg[0].pdispVal, result, true);
+      case ID_GET_SECURE_STATUS_STIP:
+        return get_secure_stip(parms->rgvarg[0].pdispVal, result, false);
+      case ID_GET_SECURE_STATUS_STIP_EX:
+        return get_secure_stip(parms->rgvarg[0].pdispVal, result, true);
     }
 
   log_debug ("%s:%s: leave", SRCNAME, __func__);
@@ -951,7 +966,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "                 screentip=\"%s\""
         "                 supertip=\"%s\""
         "                 getPressed=\"getSignEncryptPressedEx\""
-        "                 getImage=\"btnSignEncryptLarge\""
+        "                 getImage=\"btnSignEncryptLargeEx\""
         "                 onAction=\"encryptSignMimeEx\"""/>"
         "         <toggleButton id=\"DigitallySignMessage\""
         "                 getImage=\"btnSignSmall\""
@@ -969,8 +984,10 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "       <splitButton id=\"splitty\" size=\"large\">"
         "         <toggleButton id=\"mimeSignEncrypt\""
         "                 label=\"%s\""
-        "                 screentip=\"%s\""
-        "                 supertip=\"%s\""
+//        "                 screentip=\"%s\""
+//        "                 supertip=\"%s\""
+        "                 getScreentip=\"getSecureStatusTip\""
+        "                 getSupertip=\"getSecureStatusSTip\""
         "                 getPressed=\"getSignEncryptPressed\""
         "                 getImage=\"btnSignEncryptLarge\""
         "                 onAction=\"encryptSignMime\"/>"
@@ -1005,7 +1022,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("Encrypt"), encryptTTip, encryptSTip,
         */
         _("GpgOL"),
-        _("Secure"), secureTTip, secureSTip,
+        _("Secure"), //secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip
@@ -1082,7 +1099,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "     <group id=\"contacts_gpgol_ex\""
         "            label=\"%s\">"
         "       <button id=\"idContactAddkeyEx\""
-        "               getImage=\"btnSignEncryptLarge\""
+        "               getImage=\"btnSignEncryptLargeEx\""
         "               size=\"large\""
         "               label=\"%s\""
         "               screentip=\"%s\""
@@ -1106,10 +1123,12 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         "       <splitButton id=\"splitty\" size=\"large\">"
         "         <toggleButton id=\"mimeSignEncrypt\""
         "                 label=\"%s\""
-        "                 screentip=\"%s\""
-        "                 supertip=\"%s\""
+ //       "                 screentip=\"%s\""
+ //       "                 supertip=\"%s\""
+        "                 getScreentip=\"getSecureStatusTipEx\""
+        "                 getSupertip=\"getSecureStatusSTipEx\""
         "                 getPressed=\"getSignEncryptPressedEx\""
-        "                 getImage=\"btnSignEncryptLarge\""
+        "                 getImage=\"btnSignEncryptLargeEx\""
         "                 onAction=\"encryptSignMimeEx\"""/>"
         "         <menu id=\"encMenu\" showLabel=\"true\">"
         "         <toggleButton id=\"mimeSign\""
@@ -1167,7 +1186,7 @@ GetCustomUI_MIME (BSTR RibbonID, BSTR * RibbonXml)
         _("GpgOL Settings"),
         optsSTip,
         _("GpgOL"),
-        _("Secure"), secureTTip, secureSTip,
+        _("Secure"), //secureTTip, secureSTip,
         _("Sign"), signTTip, signSTip,
         _("Encrypt"), encryptTTip, encryptSTip,
         optsSTip,

@@ -56,6 +56,11 @@
 #define ID_GET_IS_ADDR_BOOK_ENABLED 41
 #define ID_CMD_DECRYPT_MANUAL 42
 #define ID_GET_VD_POSTPONED 43
+#define IDI_SIGN_ENCRYPT_40_PNG_EX 44
+#define ID_GET_SECURE_STATUS_TIP 45
+#define ID_GET_SECURE_STATUS_TIP_EX 46
+#define ID_GET_SECURE_STATUS_STIP 47
+#define ID_GET_SECURE_STATUS_STIP_EX 48
 
 #define ID_BTN_DECRYPT           IDI_DECRYPT_16_PNG
 #define ID_BTN_DECRYPT_LARGE     IDI_DECRYPT_48_PNG
@@ -89,7 +94,11 @@ HRESULT launch_cert_details (LPDISPATCH ctrl);
 /* Callback to get the sigstate icon. */
 HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result);
 /* Callback to get the sigstate icon. */
-HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result);
+HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result, bool is_explorer);
+/* Callback to get the secucre tooltip. */
+HRESULT get_secure_ttip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer);
+/* Callback to get the secure supertip. */
+HRESULT get_secure_stip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer);
 /* Callback to get our own control reference */
 HRESULT ribbon_loaded (LPDISPATCH ctrl);
 /* Is the currently selected mail a crypto mail ? */

@@ -703,6 +703,133 @@ HRESULT get_sig_ttip (LPDISPATCH ctrl, VARIANT *result)
   return S_OK;
 }
 
+HRESULT get_secure_ttip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer)
+{
+  LPMESSAGE message = NULL;
+
+  int flags = ACTION_SIGN_ENCRYPT;
+
+  LPDISPATCH context = NULL;
+  if (FAILED(getContext (ctrl, &context)))
+    {
+      TRACEPOINT;
+      return E_FAIL;
+    }
+
+  LPDISPATCH  mailitem = get_oom_object (context, is_explorer ? "ActiveInlineResponse" :
+                                                    "CurrentItem");
+  if (mailitem)
+    {
+      TRACEPOINT;
+
+      message = get_oom_base_message (mailitem);
+
+      if (message)
+        {
+          flags = get_gpgol_draft_info_flags (message);
+          gpgol_release (message);
+        }
+      else
+        {
+          log_error ("%s:%s: No message found.",
+                   SRCNAME, __func__);
+        }
+
+        gpgol_release (mailitem);
+    }
+  gpgol_release (context);
+
+  TRACEPOINT;
+  result->vt = VT_BSTR;
+  wchar_t *w_result;
+
+  switch (flags)
+  {
+  case 0:
+    w_result = utf8_to_wchar (_("Insecure"));
+    break;
+  case 1:
+    w_result = utf8_to_wchar (_("Encrypt the message"));
+    break;
+  case 2:
+    w_result = utf8_to_wchar (_("Sign the message"));
+    break;
+  case 3:
+  default:
+    w_result = utf8_to_wchar (_("Sign and encrypt the message"));
+    break;
+  }
+  result->bstrVal = SysAllocString (w_result);
+  xfree (w_result);
+  TRACEPOINT;
+  return S_OK;
+}
+
+HRESULT get_secure_stip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer)
+{
+  LPMESSAGE message = NULL;
+
+  int flags = ACTION_SIGN_ENCRYPT;
+
+  LPDISPATCH context = NULL;
+  if (FAILED(getContext (ctrl, &context)))
+    {
+      TRACEPOINT;
+      return E_FAIL;
+    }
+
+  LPDISPATCH  mailitem = get_oom_object (context, is_explorer ? "ActiveInlineResponse" :
+                                                    "CurrentItem");
+  if (mailitem)
+    {
+      TRACEPOINT;
+
+      message = get_oom_base_message (mailitem);
+
+      if (message)
+        {
+          flags = get_gpgol_draft_info_flags (message);
+          gpgol_release (message);
+        }
+      else
+        {
+          log_error ("%s:%s: No message found.",
+                  SRCNAME, __func__);
+        }
+
+        gpgol_release (mailitem);
+    }
+  gpgol_release (context);
+
+  TRACEPOINT;
+
+  result->vt = VT_BSTR;
+  wchar_t *w_result;
+
+  switch (flags)
+  {
+  case 0:
+    w_result = utf8_to_wchar (_("Don't secure the message and it's attachments means ANYBODY can read or modify it!"));
+    break;
+  case 1:
+    w_result = utf8_to_wchar (_("Encrypts the message and all attachments before sending"));
+    break;
+  case 2:
+    w_result = utf8_to_wchar (_("Sign the message and all attachments before sending"));
+    break;
+  case 3:
+  default:
+    w_result = utf8_to_wchar (_("Encrypting and cryptographically signing a message means that the "
+      "recipients can be sure that no one modified the message and only the "
+      "recipients can read it"));
+    break;
+  }
+  result->bstrVal = SysAllocString (w_result);
+  xfree (w_result);
+  TRACEPOINT;
+  return S_OK;
+}
+
 HRESULT get_sig_stip (LPDISPATCH ctrl, VARIANT *result)
 {
   MY_MAIL_GETTER
@@ -847,10 +974,10 @@ HRESULT get_crypto_icon (LPDISPATCH ctrl, VARIANT *result)
   return getIcon (IDI_LEVEL_0, result);
 }
 
-HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result)
+HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result, bool is_explorer)
 {
   LPMESSAGE message = NULL;
-  MY_MAIL_GETTER
+
   int flags = ACTION_SIGN_ENCRYPT;
 
   LPDISPATCH context = NULL;
@@ -860,7 +987,8 @@ HRESULT get_action_icon (LPDISPATCH ctrl, VARIANT *result)
       return E_FAIL;
     }
 
-  LPDISPATCH mailitem = get_oom_object (context, "CurrentItem");
+  LPDISPATCH  mailitem = get_oom_object (context, is_explorer ? "ActiveInlineResponse" :
+                                                    "CurrentItem");
 
   if (mailitem)
     {
