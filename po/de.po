@@ -10,10 +10,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-16 14:46+0200\n"
-"PO-Revision-Date: 2026-02-04 10:12+0100\n"
+"POT-Creation-Date: 2026-07-17 15:14+0200\n"
+"PO-Revision-Date: 2026-07-17 16:44+0200\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
-"Language-Team: kde-i18n-de@kde.org\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -128,8 +127,7 @@ msgid "Toggles the sign option for all new mails."
 msgstr "Wählt die Signieren Option für alle neuen Mails. "
 
 #: src/addin-options.cpp:69
-msgid ""
-"Toggles sign, encrypt options if the original mail was signed or encrypted."
+msgid "Toggles sign, encrypt options if the original mail was signed or encrypted."
 msgstr ""
 "Wählt Signieren, Verschlüsseln je nachdem ob die originale Mail signiert "
 "oder verschlüsselt war."
@@ -161,8 +159,7 @@ msgstr "Konfiguration der Fehlersuche"
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:83
-msgid ""
-"Search and import &X509 certificates in the configured directory services"
+msgid "Search and import &X509 certificates in the configured directory services"
 msgstr ""
 "&X509 Zertifikate in den konfigurierten Verzeichnisdiensten suchen und "
 "importieren."
@@ -187,8 +184,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of the config dialog.
 #: src/addin-options.cpp:89
-msgid ""
-"Also automatically toggles secure if keys with level 0 trust were found."
+msgid "Also automatically toggles secure if keys with level 0 trust were found."
 msgstr ""
 "Sichert Mails auch automatisch, wenn Schlüssel mit Level 0 Vertrauen "
 "gefunden wurden."
@@ -268,8 +264,7 @@ msgstr ""
 
 #. TRANSLATORS: Part of address book key configuration dialog.
 #: src/addin-options.cpp:123
-msgid ""
-"The key is unusable for Outlook. Please check Kleopatra for more information."
+msgid "The key is unusable for Outlook. Please check Kleopatra for more information."
 msgstr ""
 "Dieser Schlüssel ist für Outlook nicht benutzbar. Bitte prüfen Sie Kleopatra "
 "für mehr Informationen."
@@ -566,27 +561,27 @@ msgstr "Die Signatur ist %s."
 msgid "The encryption is %s."
 msgstr "Diese Verschlüsselung ist %s."
 
-#: src/gpgoladdin.cpp:933 src/ribbon-callbacks.cpp:752
+#: src/gpgoladdin.cpp:933
 msgid "Encrypt the message"
 msgstr "Die Nachricht verschlüsseln"
 
-#: src/gpgoladdin.cpp:935 src/ribbon-callbacks.cpp:815
+#: src/gpgoladdin.cpp:935
 msgid "Encrypts the message and all attachments before sending"
 msgstr "Verschlüsselt die Nachricht und alle ihre Anhänge vor dem Versenden"
 
-#: src/gpgoladdin.cpp:937 src/ribbon-callbacks.cpp:755
+#: src/gpgoladdin.cpp:937
 msgid "Sign the message"
 msgstr "Die Nachricht signieren"
 
-#: src/gpgoladdin.cpp:939 src/ribbon-callbacks.cpp:818
+#: src/gpgoladdin.cpp:939
 msgid "Sign the message and all attachments before sending"
 msgstr "Die Nachricht und alle ihre Anhänge vor dem Senden signieren"
 
-#: src/gpgoladdin.cpp:942 src/ribbon-callbacks.cpp:759
+#: src/gpgoladdin.cpp:942
 msgid "Sign and encrypt the message"
 msgstr "Nachricht signieren und verschlüsseln"
 
-#: src/gpgoladdin.cpp:944 src/ribbon-callbacks.cpp:822
+#: src/gpgoladdin.cpp:944
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -805,8 +800,10 @@ msgstr ""
 msgid ""
 "HTML Attachment as Text for security all <,> were replaced with {,}.\n"
 "\n"
-msgstr "HTML Ahang als Text. Aus Sicherheitsgründen wurden all <,>"
-" durch {,} ersetzt.\n\n"
+msgstr ""
+"HTML Ahang als Text. Aus Sicherheitsgründen wurden all <,> durch {,} "
+"ersetzt.\n"
+"\n"
 
 #: src/mail.cpp:2287
 msgid "GpgOL: Oops, G Suite Sync account detected"
@@ -872,7 +869,6 @@ msgid "Encrypted"
 msgstr "Verschlüsselt"
 
 #: src/mail.cpp:3778 src/mail.cpp:3780 src/ribbon-callbacks.cpp:670
-#: src/ribbon-callbacks.cpp:749
 msgid "Insecure"
 msgstr "Unsicher"
 
@@ -1107,8 +1103,7 @@ msgstr ""
 #: src/mail.cpp:5200
 #, c-format
 msgid "Note: If your communication needs to be %s you have to select Yes."
-msgstr ""
-"Achtung: Falls Ihre Kommunikation %s sein soll, müssen Sie \"Ja\" auswählen."
+msgstr "Achtung: Falls Ihre Kommunikation %s sein soll, müssen Sie \"Ja\" auswählen."
 
 #: src/mail.cpp:5204
 msgid ""
@@ -1282,11 +1277,41 @@ msgstr "Die untersuchten Daten waren:"
 msgid "No message selected"
 msgstr "Keine Nachricht ausgewählt"
 
+#: src/ribbon-callbacks.cpp:749
+msgid "Message will be insecure"
+msgstr "Nachricht nicht abgesichert"
+
+#: src/ribbon-callbacks.cpp:752
+msgid "Message will only be encrypted"
+msgstr "Nachricht wird nur verschlüsselt"
+
+#: src/ribbon-callbacks.cpp:755
+msgid "Message will only be signed"
+msgstr "Nachricht wird nur signiert"
+
+#: src/ribbon-callbacks.cpp:759
+msgid "Message will be signed and encrypted"
+msgstr "Nachricht wird signiert und verschlüsselt"
+
 #: src/ribbon-callbacks.cpp:812
+msgid "Not securing a message means ANYBODY can read or modify it."
+msgstr "Ohne Schutz kann JEDE Maschine oder Person die Nachricht lesen oder verändern."
+
+#: src/ribbon-callbacks.cpp:815
+msgid "Encrypting a message means that only the recipients can read it."
+msgstr "Eine verschlüsselte Nachricht können nur die ausgewählten Empfänger lesen."
+
+#: src/ribbon-callbacks.cpp:818
 msgid ""
-"Don't secure the message and it's attachments means ANYBODY can read or "
-"modify it!"
-msgstr "Die Nachricht und ihre Anhänge nicht absichern, daß bedeutet das JEDER diese NAchricht lesen und verändern kann."
+"Signing a message allows the recipient to verify the sender's identity and "
+"confirm that it was not tampered with."
+msgstr "Anhand einer Signatur kann der Empfänger die Identität des Absenders überprüfen und sich vergewissern, dass die Nachricht nicht manipuliert wurde."
+
+#: src/ribbon-callbacks.cpp:823
+msgid ""
+"Encrypting and signing a message means that only the recipients can read it "
+"and that they can be sure of it's authenticity."
+msgstr "Die Kombination aus Verschlüsselung und Signatur sorgt dafür, dass nur Berechtigte die Nachricht lesen können und ihre Echtheit überprüfbar ist."
 
 #: src/ribbon-callbacks.cpp:847
 msgid ""
@@ -1385,8 +1410,7 @@ msgstr "GpgOL: Eintragung fehlgeschlagen"
 
 #: src/wks-helper.cpp:780
 msgid "Your Pubkey can soon be retrieved from your domain."
-msgstr ""
-"Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
+msgstr "Ihr öffentlicher Schlüssel kann bald aus dem Verzeichnis abgerufen werden."
 
 #: src/wks-helper.cpp:781
 msgid "GpgOL: Request confirmed!"
