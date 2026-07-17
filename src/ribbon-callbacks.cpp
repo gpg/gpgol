@@ -746,17 +746,17 @@ HRESULT get_secure_ttip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer)
   switch (flags)
   {
   case 0:
-    w_result = utf8_to_wchar (_("Insecure"));
+    w_result = utf8_to_wchar (_("Message will be insecure"));
     break;
   case 1:
-    w_result = utf8_to_wchar (_("Encrypt the message"));
+    w_result = utf8_to_wchar (_("Message will only be encrypted"));
     break;
   case 2:
-    w_result = utf8_to_wchar (_("Sign the message"));
+    w_result = utf8_to_wchar (_("Message will only be signed"));
     break;
   case 3:
   default:
-    w_result = utf8_to_wchar (_("Sign and encrypt the message"));
+    w_result = utf8_to_wchar (_("Message will be signed and encrypted"));
     break;
   }
   result->bstrVal = SysAllocString (w_result);
@@ -809,19 +809,19 @@ HRESULT get_secure_stip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer)
   switch (flags)
   {
   case 0:
-    w_result = utf8_to_wchar (_("Don't secure the message and it's attachments means ANYBODY can read or modify it!"));
+    w_result = utf8_to_wchar (_("Not securing a message means ANYBODY can read or modify it."));
     break;
   case 1:
-    w_result = utf8_to_wchar (_("Encrypts the message and all attachments before sending"));
+    w_result = utf8_to_wchar (_("Encrypting a message means that only the recipients can read it."));
     break;
   case 2:
-    w_result = utf8_to_wchar (_("Sign the message and all attachments before sending"));
+    w_result = utf8_to_wchar (_("Signing a message allows the recipient to verify the sender's "
+          "identity and confirm that it was not tampered with."));
     break;
   case 3:
   default:
-    w_result = utf8_to_wchar (_("Encrypting and cryptographically signing a message means that the "
-      "recipients can be sure that no one modified the message and only the "
-      "recipients can read it"));
+    w_result = utf8_to_wchar (_("Encrypting and signing a message means that only the "
+      "recipients can read it and that they can be sure of it's authenticity."));
     break;
   }
   result->bstrVal = SysAllocString (w_result);
