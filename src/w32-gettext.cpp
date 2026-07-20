@@ -1509,7 +1509,6 @@ _utf8_to_wchar (const char *string)
 char *
 _wchar_to_utf8 (const wchar_t *string)
 {
-  TSTART;
   int n;
   char *result;
 
@@ -1518,39 +1517,38 @@ _wchar_to_utf8 (const wchar_t *string)
   n = WideCharToMultiByte (CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
   if (n < 0)
   {
-    TRETURN NULL;
+    return NULL;
   }
-  TRACEPOINT;
+
   result = (char *) xmalloc (n+1);
-  TRACEPOINT;
+
   n = WideCharToMultiByte (CP_UTF8, 0, string, -1, result, n, NULL, NULL);
   if (n < 0)
     {
       xfree (result);
-      TRETURN NULL;
+      return NULL;
     }
-  TRETURN result;
+  return result;
 }
 
 std::string
 wchar_to_utf8_string (const wchar_t *string)
 {
-  TSTART
   std::string ret;
   if (!string)
     {
-      TRETURN ret;
+      return ret;
     }
 
   const auto utf8 = wchar_to_utf8 (string);
   if (!utf8)
     {
-      TRETURN ret;
+      return ret;
     }
   ret = utf8;
 
   xfree (utf8);
-  TRETURN ret;
+  return ret;
 }
 
 
