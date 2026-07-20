@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GPGol\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-16 14:46+0200\n"
+"POT-Creation-Date: 2026-07-20 13:16+0200\n"
 "PO-Revision-Date: 2025-11-16 15:54+0100\n"
 "Last-Translator: Daniel Nylander <github@danielnylander.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -557,27 +557,27 @@ msgstr "Signaturen är %s."
 msgid "The encryption is %s."
 msgstr "Krypteringen är %s."
 
-#: src/gpgoladdin.cpp:933 src/ribbon-callbacks.cpp:752
+#: src/gpgoladdin.cpp:933
 msgid "Encrypt the message"
 msgstr "Kryptera meddelandet"
 
-#: src/gpgoladdin.cpp:935 src/ribbon-callbacks.cpp:815
+#: src/gpgoladdin.cpp:935
 msgid "Encrypts the message and all attachments before sending"
 msgstr "Krypterar meddelandet och alla bilagor innan de skickas"
 
-#: src/gpgoladdin.cpp:937 src/ribbon-callbacks.cpp:755
+#: src/gpgoladdin.cpp:937
 msgid "Sign the message"
 msgstr "Signera meddelandet"
 
-#: src/gpgoladdin.cpp:939 src/ribbon-callbacks.cpp:818
+#: src/gpgoladdin.cpp:939
 msgid "Sign the message and all attachments before sending"
 msgstr "Signera meddelandet och alla bilagor innan du skickar det"
 
-#: src/gpgoladdin.cpp:942 src/ribbon-callbacks.cpp:759
+#: src/gpgoladdin.cpp:942
 msgid "Sign and encrypt the message"
 msgstr "Signera och kryptera meddelandet"
 
-#: src/gpgoladdin.cpp:944 src/ribbon-callbacks.cpp:822
+#: src/gpgoladdin.cpp:944
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -857,7 +857,6 @@ msgid "Encrypted"
 msgstr "Krypterat"
 
 #: src/mail.cpp:3778 src/mail.cpp:3780 src/ribbon-callbacks.cpp:670
-#: src/ribbon-callbacks.cpp:749
 msgid "Insecure"
 msgstr "Osäker"
 
@@ -1249,11 +1248,45 @@ msgstr "De tolkade uppgifterna var:"
 msgid "No message selected"
 msgstr "Inget meddelande valt"
 
-#: src/ribbon-callbacks.cpp:812
-msgid ""
-"Don't secure the message and it's attachments means ANYBODY can read or "
-"modify it!"
+#: src/ribbon-callbacks.cpp:749
+msgid "Message will be insecure"
 msgstr ""
+
+#: src/ribbon-callbacks.cpp:752
+msgid "Message will only be encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:755
+msgid "Message will only be signed"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:759
+msgid "Message will be signed and encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:812
+msgid "Not securing a message means ANYONE can read or modify it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:815
+msgid "Encrypting a message means that only the chosen recipients can read it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:818
+msgid ""
+"Signing a message allows the recipient to verify the sender's identity and "
+"confirm that it was not tampered with."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:823
+#, fuzzy
+msgid ""
+"Encrypting and signing a message means that only the chosen recipients can "
+"read it and check it's authenticity."
+msgstr ""
+"Att kryptera och kryptografiskt signera ett meddelande innebär att "
+"mottagarna kan vara säkra på att ingen har ändrat meddelandet och att endast "
+"mottagarna kan läsa det"
 
 #: src/ribbon-callbacks.cpp:847
 msgid ""

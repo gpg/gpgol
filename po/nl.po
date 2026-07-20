@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-16 14:46+0200\n"
+"POT-Creation-Date: 2026-07-20 13:16+0200\n"
 "PO-Revision-Date: 2019-10-24 15:28+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
@@ -560,27 +560,27 @@ msgstr "De handtekening is verlopen.\n"
 msgid "The encryption is %s."
 msgstr "De versleuteling is conform VS-NfD."
 
-#: src/gpgoladdin.cpp:933 src/ribbon-callbacks.cpp:752
+#: src/gpgoladdin.cpp:933
 msgid "Encrypt the message"
 msgstr "Het bericht versleutelen"
 
-#: src/gpgoladdin.cpp:935 src/ribbon-callbacks.cpp:815
+#: src/gpgoladdin.cpp:935
 msgid "Encrypts the message and all attachments before sending"
 msgstr "Versleutelt het bericht en alle bijlagen voor verzending"
 
-#: src/gpgoladdin.cpp:937 src/ribbon-callbacks.cpp:755
+#: src/gpgoladdin.cpp:937
 msgid "Sign the message"
 msgstr "Het bericht ondertekenen"
 
-#: src/gpgoladdin.cpp:939 src/ribbon-callbacks.cpp:818
+#: src/gpgoladdin.cpp:939
 msgid "Sign the message and all attachments before sending"
 msgstr "Het bericht en alle bijlagen ondertekenen voor verzending"
 
-#: src/gpgoladdin.cpp:942 src/ribbon-callbacks.cpp:759
+#: src/gpgoladdin.cpp:942
 msgid "Sign and encrypt the message"
 msgstr "Het bericht ondertekenen en versleutelen"
 
-#: src/gpgoladdin.cpp:944 src/ribbon-callbacks.cpp:822
+#: src/gpgoladdin.cpp:944
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -864,7 +864,6 @@ msgid "Encrypted"
 msgstr "Versleuteld"
 
 #: src/mail.cpp:3778 src/mail.cpp:3780 src/ribbon-callbacks.cpp:670
-#: src/ribbon-callbacks.cpp:749
 msgid "Insecure"
 msgstr "Onveilig"
 
@@ -1261,11 +1260,45 @@ msgstr ""
 msgid "No message selected"
 msgstr "Geen bericht geselecteerd"
 
-#: src/ribbon-callbacks.cpp:812
-msgid ""
-"Don't secure the message and it's attachments means ANYBODY can read or "
-"modify it!"
+#: src/ribbon-callbacks.cpp:749
+msgid "Message will be insecure"
 msgstr ""
+
+#: src/ribbon-callbacks.cpp:752
+msgid "Message will only be encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:755
+msgid "Message will only be signed"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:759
+msgid "Message will be signed and encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:812
+msgid "Not securing a message means ANYONE can read or modify it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:815
+msgid "Encrypting a message means that only the chosen recipients can read it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:818
+msgid ""
+"Signing a message allows the recipient to verify the sender's identity and "
+"confirm that it was not tampered with."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:823
+#, fuzzy
+msgid ""
+"Encrypting and signing a message means that only the chosen recipients can "
+"read it and check it's authenticity."
+msgstr ""
+"Het versleutelen en cryptografisch ondertekenen van een bericht betekent dat "
+"de ontvangers er zeker van kunnen zijn dat niemand het bericht heeft "
+"aangepast en dat alleen de ontvangers het kunnen lezen"
 
 #: src/ribbon-callbacks.cpp:847
 #, fuzzy

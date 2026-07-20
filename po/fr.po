@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-16 14:46+0200\n"
+"POT-Creation-Date: 2026-07-20 13:16+0200\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -534,30 +534,30 @@ msgstr "Cette signature est valide\n"
 msgid "The encryption is %s."
 msgstr "Cette signature est valide\n"
 
-#: src/gpgoladdin.cpp:933 src/ribbon-callbacks.cpp:752
+#: src/gpgoladdin.cpp:933
 #, fuzzy
 msgid "Encrypt the message"
 msgstr "Déchiffrer le message"
 
-#: src/gpgoladdin.cpp:935 src/ribbon-callbacks.cpp:815
+#: src/gpgoladdin.cpp:935
 msgid "Encrypts the message and all attachments before sending"
 msgstr ""
 
-#: src/gpgoladdin.cpp:937 src/ribbon-callbacks.cpp:755
+#: src/gpgoladdin.cpp:937
 #, fuzzy
 msgid "Sign the message"
 msgstr "Déchiffrer le message"
 
-#: src/gpgoladdin.cpp:939 src/ribbon-callbacks.cpp:818
+#: src/gpgoladdin.cpp:939
 msgid "Sign the message and all attachments before sending"
 msgstr ""
 
-#: src/gpgoladdin.cpp:942 src/ribbon-callbacks.cpp:759
+#: src/gpgoladdin.cpp:942
 #, fuzzy
 msgid "Sign and encrypt the message"
 msgstr "Déchiffrer le message"
 
-#: src/gpgoladdin.cpp:944 src/ribbon-callbacks.cpp:822
+#: src/gpgoladdin.cpp:944
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -810,7 +810,6 @@ msgid "Encrypted"
 msgstr "Chiffrer"
 
 #: src/mail.cpp:3778 src/mail.cpp:3780 src/ribbon-callbacks.cpp:670
-#: src/ribbon-callbacks.cpp:749
 msgid "Insecure"
 msgstr ""
 
@@ -1166,10 +1165,40 @@ msgstr ""
 msgid "No message selected"
 msgstr "Ce message n'est pas chiffré"
 
+#: src/ribbon-callbacks.cpp:749
+msgid "Message will be insecure"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:752
+msgid "Message will only be encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:755
+msgid "Message will only be signed"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:759
+msgid "Message will be signed and encrypted"
+msgstr ""
+
 #: src/ribbon-callbacks.cpp:812
+msgid "Not securing a message means ANYONE can read or modify it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:815
+msgid "Encrypting a message means that only the chosen recipients can read it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:818
 msgid ""
-"Don't secure the message and it's attachments means ANYBODY can read or "
-"modify it!"
+"Signing a message allows the recipient to verify the sender's identity and "
+"confirm that it was not tampered with."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:823
+msgid ""
+"Encrypting and signing a message means that only the chosen recipients can "
+"read it and check it's authenticity."
 msgstr ""
 
 #: src/ribbon-callbacks.cpp:847
