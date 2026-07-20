@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-16 14:46+0200\n"
+"POT-Creation-Date: 2026-07-20 13:16+0200\n"
 "PO-Revision-Date: 2018-06-12 19:38+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -538,27 +538,27 @@ msgstr "Строк дії підпису вичерпано.\n"
 msgid "The encryption is %s."
 msgstr "Шифрування є сумісним із VS-NfD."
 
-#: src/gpgoladdin.cpp:933 src/ribbon-callbacks.cpp:752
+#: src/gpgoladdin.cpp:933
 msgid "Encrypt the message"
 msgstr "Зашифрувати повідомлення"
 
-#: src/gpgoladdin.cpp:935 src/ribbon-callbacks.cpp:815
+#: src/gpgoladdin.cpp:935
 msgid "Encrypts the message and all attachments before sending"
 msgstr "Зашифрувати повідомлення і усі долучення до нього до надсилання"
 
-#: src/gpgoladdin.cpp:937 src/ribbon-callbacks.cpp:755
+#: src/gpgoladdin.cpp:937
 msgid "Sign the message"
 msgstr "Підписати повідомлення"
 
-#: src/gpgoladdin.cpp:939 src/ribbon-callbacks.cpp:818
+#: src/gpgoladdin.cpp:939
 msgid "Sign the message and all attachments before sending"
 msgstr "Підписати повідомлення і усі долучення до нього до надсилання"
 
-#: src/gpgoladdin.cpp:942 src/ribbon-callbacks.cpp:759
+#: src/gpgoladdin.cpp:942
 msgid "Sign and encrypt the message"
 msgstr "Підписати і зашифрувати повідомлення"
 
-#: src/gpgoladdin.cpp:944 src/ribbon-callbacks.cpp:822
+#: src/gpgoladdin.cpp:944
 msgid ""
 "Encrypting and cryptographically signing a message means that the recipients "
 "can be sure that no one modified the message and only the recipients can "
@@ -844,7 +844,6 @@ msgid "Encrypted"
 msgstr "Зашифровано"
 
 #: src/mail.cpp:3778 src/mail.cpp:3780 src/ribbon-callbacks.cpp:670
-#: src/ribbon-callbacks.cpp:749
 msgid "Insecure"
 msgstr "Незахищена"
 
@@ -1231,11 +1230,45 @@ msgstr ""
 msgid "No message selected"
 msgstr "Не позначено жодного повідомлення"
 
-#: src/ribbon-callbacks.cpp:812
-msgid ""
-"Don't secure the message and it's attachments means ANYBODY can read or "
-"modify it!"
+#: src/ribbon-callbacks.cpp:749
+msgid "Message will be insecure"
 msgstr ""
+
+#: src/ribbon-callbacks.cpp:752
+msgid "Message will only be encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:755
+msgid "Message will only be signed"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:759
+msgid "Message will be signed and encrypted"
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:812
+msgid "Not securing a message means ANYONE can read or modify it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:815
+msgid "Encrypting a message means that only the chosen recipients can read it."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:818
+msgid ""
+"Signing a message allows the recipient to verify the sender's identity and "
+"confirm that it was not tampered with."
+msgstr ""
+
+#: src/ribbon-callbacks.cpp:823
+#, fuzzy
+msgid ""
+"Encrypting and signing a message means that only the chosen recipients can "
+"read it and check it's authenticity."
+msgstr ""
+"Шифрування та криптографічне підписування повідомлення означає, що "
+"отримувачі зможуть бути певні, що ніхто не вносив змін до повідомлення. Лише "
+"вказані вами отримувачі зможуть прочитати надіслане повідомлення."
 
 #: src/ribbon-callbacks.cpp:847
 #, fuzzy
