@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-17 15:14+0200\n"
-"PO-Revision-Date: 2026-07-17 16:44+0200\n"
+"POT-Creation-Date: 2026-07-20 11:02+0200\n"
+"PO-Revision-Date: 2026-07-20 11:11+0200\n"
 "Last-Translator: Eva Bolten <eva.bolten@gnupg.com>\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
@@ -1294,24 +1294,28 @@ msgid "Message will be signed and encrypted"
 msgstr "Nachricht wird signiert und verschlüsselt"
 
 #: src/ribbon-callbacks.cpp:812
-msgid "Not securing a message means ANYBODY can read or modify it."
+msgid "Not securing a message means ANYONE can read or modify it."
 msgstr "Ohne Schutz kann JEDE Maschine oder Person die Nachricht lesen oder verändern."
 
 #: src/ribbon-callbacks.cpp:815
-msgid "Encrypting a message means that only the recipients can read it."
+msgid "Encrypting a message means that only the chosen recipients can read it."
 msgstr "Eine verschlüsselte Nachricht können nur die ausgewählten Empfänger lesen."
 
 #: src/ribbon-callbacks.cpp:818
 msgid ""
 "Signing a message allows the recipient to verify the sender's identity and "
 "confirm that it was not tampered with."
-msgstr "Anhand einer Signatur kann der Empfänger die Identität des Absenders überprüfen und sich vergewissern, dass die Nachricht nicht manipuliert wurde."
+msgstr ""
+"Anhand einer Signatur kann der Empfänger die Identität des Absenders "
+"überprüfen und sich vergewissern, dass die Nachricht nicht manipuliert wurde."
 
 #: src/ribbon-callbacks.cpp:823
 msgid ""
-"Encrypting and signing a message means that only the recipients can read it "
-"and that they can be sure of it's authenticity."
-msgstr "Die Kombination aus Verschlüsselung und Signatur sorgt dafür, dass nur Berechtigte die Nachricht lesen können und ihre Echtheit überprüfbar ist."
+"Encrypting and signing a message means that only the chosen recipients can "
+"read it and check it's authenticity."
+msgstr ""
+"Die Kombination aus Verschlüsselung und Signatur sorgt dafür, dass nur "
+"die ausgewählten Empfänger die Nachricht lesen und ihre Echtheit überprüfen können."
 
 #: src/ribbon-callbacks.cpp:847
 msgid ""
