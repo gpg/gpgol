@@ -231,7 +231,20 @@ _memdbg_alloc (void *ptr, const char *srcname, const char *func, int line)
 
   gpgrt_lock_lock (&memdbg_log);
 
-  const std::string identifier = std::string (srcname) + std::string (":") +
+  struct timespec ts;
+  char buff[100];
+  char buff2[200];
+  buff2[0] = 0;
+  if (timespec_get(&ts, TIME_UTC) &&
+      strftime(buff, sizeof buff, "%H:%M:%S", gmtime(&ts.tv_sec)))
+  {
+    snprintf (buff2, 200, "%s.%09ld/%lu/",
+             buff , ts.tv_nsec,
+             (unsigned long)GetCurrentThreadId ());
+  }
+
+
+  const std::string identifier = std::string(buff2) + std::string (srcname) + std::string (":") +
                                   std::string (func) + std::string (":") +
                                   std::to_string (line);
 
