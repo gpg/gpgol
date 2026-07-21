@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-20 13:16+0200\n"
+"POT-Creation-Date: 2026-07-21 11:22+0200\n"
 "PO-Revision-Date: 2015-08-15 21:58+0800\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@hotmail.com>\n"
 "Language-Team: \n"
@@ -1199,7 +1199,7 @@ msgstr ""
 #: src/ribbon-callbacks.cpp:823
 msgid ""
 "Encrypting and signing a message means that only the chosen recipients can "
-"read it and check it's authenticity."
+"read it and check its authenticity."
 msgstr ""
 
 #: src/ribbon-callbacks.cpp:847

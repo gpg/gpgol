@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-20 13:16+0200\n"
+"POT-Creation-Date: 2026-07-21 11:22+0200\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -1198,7 +1198,7 @@ msgstr ""
 #: src/ribbon-callbacks.cpp:823
 msgid ""
 "Encrypting and signing a message means that only the chosen recipients can "
-"read it and check it's authenticity."
+"read it and check its authenticity."
 msgstr ""
 
 #: src/ribbon-callbacks.cpp:847
