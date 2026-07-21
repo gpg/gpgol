@@ -821,7 +821,7 @@ HRESULT get_secure_stip (LPDISPATCH ctrl, VARIANT *result, bool is_explorer)
   case 3:
   default:
     w_result = utf8_to_wchar (_("Encrypting and signing a message means that only the chosen "
-      "recipients can read it and check it's authenticity."));
+      "recipients can read it and check its authenticity."));
     break;
   }
   result->bstrVal = SysAllocString (w_result);
