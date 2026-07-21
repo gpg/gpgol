@@ -2549,7 +2549,9 @@ get_unique_id_s (LPDISPATCH mail, int create, const char *uuid)
   char *val = get_unique_id (mail, create, uuid);
   if (val)
     {
-      return val;
+      std::string ret = val;
+      xfree(val);
+      return ret;
     }
   return std::string ();
 }
