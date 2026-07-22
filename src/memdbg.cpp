@@ -221,6 +221,10 @@ memdbg_dtor (const char *objName)
 void
 _memdbg_alloc (void *ptr, const char *srcname, const char *func, int line)
 {
+  struct timespec ts;
+  char buff[100];
+  char buff2[200];
+
   DBGGUARD;
 
   if (!ptr)
@@ -231,14 +235,11 @@ _memdbg_alloc (void *ptr, const char *srcname, const char *func, int line)
 
   gpgrt_lock_lock (&memdbg_log);
 
-  struct timespec ts;
-  char buff[100];
-  char buff2[200];
   buff2[0] = 0;
   if (timespec_get(&ts, TIME_UTC) &&
       strftime(buff, sizeof buff, "%H:%M:%S", gmtime(&ts.tv_sec)))
   {
-    snprintf (buff2, 200, "%s.%09ld/%lu/",
+    snprintf (buff2, sizeof buff2, "%s.%09ld/%lu/",
              buff , ts.tv_nsec,
              (unsigned long)GetCurrentThreadId ());
   }
