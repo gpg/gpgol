@@ -1373,7 +1373,7 @@ MimeDataProvider::get_header (const std::string &which) const
       STRANGEPOINT;
       return std::string ();
     }
-  const char *buf = rfc822parse_get_field (m_mime_ctx->msg,
+  char *buf = rfc822parse_get_field (m_mime_ctx->msg,
                                            which.c_str (), -1,
                                            nullptr);
   if (buf)
@@ -1385,12 +1385,16 @@ MimeDataProvider::get_header (const std::string &which) const
         {
           log_error ("%s:%s: Invalid header value '%s'", SRCNAME, __func__,
                      buf);
+          xfree(buf);
           TRETURN std::string ();
         }
       std::string ret = buf + which.size () + 2;
+      xfree(buf);
       if (ret.size())
         {
-          ret = rfc2047_parse (ret.c_str ());
+          char * ret_parse = rfc2047_parse (ret.c_str ());
+          ret = ret_parse;
+          xfree(ret_parse);
         }
       TRETURN ret;
     }

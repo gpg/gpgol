@@ -438,6 +438,7 @@ insert_header (rfc822parse_t msg, const unsigned char *line, size_t length)
     {
       /* Neither continuation nor a header name. Must be invalid. */
       log_dbg ("Invalid header data: %s", anonstr (hdr->line));
+      xfree(hdr);
       return -1;
     }
   *msg->current_part->hdr_lines_tail = hdr;

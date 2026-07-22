@@ -191,6 +191,7 @@ read_options (void)
 
   /* Parse the debug flags.  */
   load_extension_value ("enableDebug", &val);
+  boolean clear = (opt.enable_debug & DBG_MEMORY) != 0;
   opt.enable_debug = 0;
   if (val)
     {
@@ -231,9 +232,20 @@ read_options (void)
          after using the configuration dialog.  */
       store_extension_value ("enableDebug", "0");
     }
-  /* Yes we use free here because memtracing did not track the alloc
-     as the option for debuging was not read before. */
-  free (val); val = NULL;
+  /* Yes we use xfree here because memtracing could have track the alloc
+     when switching debugin via the config dialog */
+  if (clear)
+  {
+    int tmp = opt.enable_debug;
+    opt.enable_debug |= DBG_MEMORY;
+    xfree (val);
+    opt.enable_debug = tmp;
+  }
+  else
+  {
+    free(val);
+  }
+  val = NULL;
   if (opt.enable_debug)
     log_debug ("enabled debug flags:%s%s%s%s\n",
                (opt.enable_debug & DBG_MEMORY)? " memory":"",
@@ -305,8 +317,17 @@ read_options (void)
   opt.sync_dec = get_conf_bool ("syncDec", 0);
 
   load_extension_value ("smimeNoCertSigErr", &val);
-  opt.smimeNoCertSigErr = val;
-  val = NULL;
+  if (val)
+  {
+    xfree(opt.smimeNoCertSigErr);
+    opt.smimeNoCertSigErr = val;
+    val = NULL;
+  }
+  else
+  {
+     xfree(opt.smimeNoCertSigErr);
+     opt.smimeNoCertSigErr = NULL;
+  }
 }
 
 
