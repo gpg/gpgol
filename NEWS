@@ -1,6 +1,29 @@
 Noteworthy changes for version 2.7.3 (unreleased)
 =================================================
 
+ * If outlook fails setting our attach type handle,
+   we later check the attachment name instead as a fallback.
+   This allows decryption to take place anyway.  [06e35e5]
+
+ * The Ribbon Icon and Tooltip now reflect the selected
+   security settings (encrypt and/or sign) [T7098,f188718]
+
+ * Update of the German translations.  [5bc022c]
+
+ * Fix not showing attachments after an crypto
+   attachment (signature) [T8113]
+
+ * If ReadIsPlain is set and the decrypted mail is HTML only,
+   optionally add it as an text/plain attachment [T7843]
+
+ * Fix used multipart attachment type [T8161]
+
+ * Fix the crypto overlay staying open if resolver.exe fails [0d36b54]
+
+ * Updated logging [5bb867f,acfcbc1]
+
+ * Fixing some memory leaks [5b52c25,c18e33a]
+
 
 Noteworthy changes for version 2.7.2 (2026-02-26)
 =================================================
