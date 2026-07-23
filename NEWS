@@ -3,7 +3,7 @@ Noteworthy changes for version 2.7.3 (unreleased)
 
  * If outlook fails setting our attach type handle,
    we later check the attachment name instead as a fallback.
-   This allows decryption to take place anyway.  [06e35e5]
+   This allows decryption to take place anyway.  [T7806,06e35e5]
 
  * The Ribbon Icon and Tooltip now reflect the selected
    security settings (encrypt and/or sign) [T7098,f188718]
