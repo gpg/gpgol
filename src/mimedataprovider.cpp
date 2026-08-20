@@ -409,6 +409,19 @@ t2body (MimeDataProvider *provider, rfc822parse_t msg)
       /* Check for Content-Type name if Content-Disposition filename
          was not found */
       filename = rfc2231_query_parameter (field, "name");
+      if (filename)
+      {
+        // set handling as for Content-Disposition
+        ignore_cid = true;
+        if (ctx->body_seen)
+        {
+          /* Some MUA's like kontact e3.5 send the body as
+             an inline text attachment. So if we have not
+             seen the body yet we treat the first text/plain
+             element as the body and not as an inline attachment. */
+          is_text_attachment = 1;
+        }
+      }
     }
 
   /* Parse a Content Id header */
