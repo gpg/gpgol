@@ -1206,13 +1206,12 @@ get_msgcls_from_first_attachment (LPMESSAGE message)
   if (!strcmp (attach_mime, "application/pgp-encrypted"))
     {
       ret = xstrdup ("IPM.Note.GpgOL.MultipartEncrypted");
-      xfree (attach_mime);
     }
   else if (!strcmp (attach_mime, "application/pgp-signature"))
     {
       ret = xstrdup ("IPM.Note.GpgOL.MultipartSigned");
-      xfree (attach_mime);
     }
+  xfree (attach_mime);
   TRETURN ret;
 }
 
@@ -2513,6 +2512,7 @@ get_first_attach_data_tag_fname (LPMESSAGE message, const char *mime_tag,
   if (!result || strcmp(result, mime_tag))
     {
       log_debug ("%s:%s: wrong mime tag: %s", SRCNAME, __func__, result);
+      xfree(result);
       goto leave;
     }
   xfree (result);
@@ -3547,6 +3547,7 @@ get_content_type_from_header ( LPMESSAGE message, std::string hdrStr,
                       if (isWks)
                         {
                           xfree (retstr);
+                          xfree (attach_mime);
                           rfc822parse_close (msg);
                           TRETURN xstrdup ("wks.confirmation.mail");
                         }
