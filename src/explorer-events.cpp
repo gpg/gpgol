@@ -34,6 +34,7 @@
 #include "mail.h"
 #include "gpgoladdin.h"
 #include "windowmessages.h"
+#include "mymapitags.h"
 
 /* Explorer Events */
 BEGIN_EVENT_SINK(ExplorerEvents, IDispatch)
@@ -94,12 +95,18 @@ typedef enum
     SelectSeen = 0x04,
   } SelectionState;
 
-std::map<LPDISPATCH, int> s_explorerMap;
+typedef struct
+  {
+    int state;
+    LPSPropValue propEntryId;
+  } exInfo, *pExInfo;
+
+std::map<LPDISPATCH, pExInfo> s_explorerMap;
 
 gpgrt_lock_t explorer_map_lock = GPGRT_LOCK_INITIALIZER;
 
 static bool
-hasSelection (LPDISPATCH explorer)
+hasSelection (LPDISPATCH explorer, pExInfo pEntry)
 {
   TSTART;
   LPDISPATCH selection = get_oom_object (explorer, "Selection");
@@ -118,7 +125,7 @@ hasSelection (LPDISPATCH explorer)
       selected = hasMailitemEventReadBeenCalled ();
       log_debug ("%s:%s: ReadEvent %s been called",
             SRCNAME, __func__, selected ? "HAS": "has NOT");
-
+      g_ignore_next_load = true;
       selectitem = get_oom_object (selection, "Item(1)");
       mailitem = get_object_by_id (selectitem, IID_MailItem);
       if (!mailitem)
@@ -127,10 +134,33 @@ hasSelection (LPDISPATCH explorer)
             SRCNAME, __func__);
         selected = false;
       }
+      else
+      {
+        LPMESSAGE msg = get_oom_message(mailitem);
+        HRESULT hr = HrGetOneProp ((LPMAPIPROP)msg, PR_ENTRYID, &pEntry->propEntryId);
+        if (!FAILED (hr) && PROP_TYPE (pEntry->propEntryId->ulPropTag) == PT_BINARY)
+        {
+          size_t keylen = pEntry->propEntryId->Value.bin.cb;
+          void *key = pEntry->propEntryId->Value.bin.lpb;
+          log_hexdump (key, keylen, "%s: %20s=", __func__, "Item(1) ENTRYID");
+        }
+        else if (!FAILED (hr))
+        {
+           MAPIFreeBuffer(pEntry->propEntryId);
+           log_debug ("%s:%s: HrGetOneProp(%s) returned non binary property: hr=%#lx\n",
+                      SRCNAME, __func__, "PR_ENTRYID", PROP_TYPE (pEntry->propEntryId->ulPropTag));
+        }
+        else
+        {
+          log_debug ("%s:%s: HrGetOneProp(%s) failed: hr=%#lx\n",
+                    SRCNAME, __func__, "PR_ENTRYID", hr);
+        }
+        gpgol_release(msg);
+      }
       gpgol_release (mailitem);
       gpgol_release (selectitem);
     }
-  else
+    else
     {
       log_debug ("%s:%s: %d Items selected return false to show insecure",
             SRCNAME, __func__, count);
@@ -161,17 +191,17 @@ start_watchdog (LPVOID arg)
       TRETURN 0;
     }
 
-  if ((it->second & SelectSeen))
+  if ((it->second->state & SelectSeen))
     {
       log_oom ("%s:%s: Cancel watchdog as we have seen a select %p",
                      SRCNAME, __func__, explorer);
-      it->second = SelectSeen;
+      it->second->state = SelectSeen;
     }
-  else if ((it->second & UnselectSeen))
+  else if ((it->second->state & UnselectSeen))
     {
       log_debug ("%s:%s: Deteced unselect invalidating UI.",
                  SRCNAME, __func__);
-      it->second = UnselectSeen;
+      it->second->state = UnselectSeen;
       gpgol_unlock (&explorer_map_lock);
       do_in_ui_thread (INVALIDATE_UI, nullptr);
       TRETURN 0;
@@ -199,21 +229,36 @@ changeSeen (LPDISPATCH explorer)
 
   if (it == s_explorerMap.end ())
     {
-      it = s_explorerMap.insert (std::make_pair (explorer, 0)).first;
+      pExInfo pStateInfo = (pExInfo) xmalloc(sizeof(exInfo));
+      pStateInfo->state = 0;
+      pStateInfo->propEntryId = NULL;
+      it = s_explorerMap.insert (std::make_pair (explorer, pStateInfo)).first;
     }
 
-  auto state = it->second;
-  bool has_selection = hasSelection (explorer);
+  auto state = it->second->state;
+  bool has_selection = false;
+  if (it->second->propEntryId != NULL)
+  {
+    size_t keylen = it->second->propEntryId->Value.bin.cb;
+    void *key = it->second->propEntryId->Value.bin.lpb;
+    log_hexdump (key, keylen, "%s: %20s=", __func__, "Explorer selected Item ENTRYID");
+    MAPIFreeBuffer(it->second->propEntryId);
+    it->second->propEntryId = NULL;
+  }
+  else
+  {
+    has_selection = hasSelection (explorer, it->second);
+  }
 
   if (has_selection)
     {
-      it->second = (state & WatchDogActive) + SelectSeen;
+      it->second->state = (state & WatchDogActive) + SelectSeen;
       log_oom ("%s:%s: Seen select for %p",
                      SRCNAME, __func__, explorer);
     }
   else
     {
-      if ((it->second & WatchDogActive))
+      if ((it->second->state & WatchDogActive))
         {
           log_oom ("%s:%s: Seen unselect for %p but watchdog exists.",
                          SRCNAME, __func__, explorer);
@@ -223,7 +268,7 @@ changeSeen (LPDISPATCH explorer)
           CloseHandle (CreateThread (NULL, 0, start_watchdog, (LPVOID) explorer,
                                      0, NULL));
         }
-      it->second = UnselectSeen + WatchDogActive;
+      it->second->state = UnselectSeen + WatchDogActive;
     }
   gpgol_unlock (&explorer_map_lock);
   TRETURN;
@@ -249,6 +294,12 @@ EVENT_SINK_INVOKE(ExplorerEvents)
 
           GpgolAddin::get_instance ()->unregisterExplorerSink (this);
           gpgol_lock (&explorer_map_lock);
+          auto it = s_explorerMap.find (m_object);
+          if (it != s_explorerMap.end ())
+          {
+             MAPIFreeBuffer(it->second->propEntryId);
+             xfree(it->second);
+          }
           s_explorerMap.erase (m_object);
           gpgol_unlock (&explorer_map_lock);
           delete this;
