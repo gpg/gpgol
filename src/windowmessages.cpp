@@ -494,6 +494,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
           case (EXT_API_CLOSE_ALL):
             {
+              TSTART;
               log_debug ("%s:%s: Closing all mails.",
                          SRCNAME, __func__);
               Mail::closeAllMails_o ();
@@ -506,6 +507,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
   else if (message == WM_COPYDATA)
     {
+      TSTART;
       log_debug ("%s:%s Received copydata message.",
                  SRCNAME, __func__);
       if (!lParam)
@@ -558,7 +560,7 @@ gpgol_window_proc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           mail->decryptVerify_o ();
           TRETURN 0;
         }
-
+      TRETURN DefWindowProc(hWnd, message, wParam, lParam);
     }
   return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -765,10 +767,11 @@ HHOOK
 create_message_hook()
 {
   TSTART;
-  TRETURN SetWindowsHookEx (WH_CALLWNDPROC,
+  HHOOK rh = SetWindowsHookEx (WH_CALLWNDPROC,
                            gpgol_hook,
                            NULL,
                            GetCurrentThreadId());
+  TRETURN rh;
 }
 
 GPGRT_LOCK_DEFINE (invalidate_lock);

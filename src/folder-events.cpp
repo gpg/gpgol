@@ -47,11 +47,11 @@ typedef enum
 EVENT_SINK_INVOKE(FolderEvents)
 {
   USE_INVOKE_ARGS
+  TSTART;
   switch(dispid)
     {
       case BeforeItemMove:
         {
-          TSTART;
           log_oom ("%s:%s: Item Move in folder: %p",
                          SRCNAME, __func__, this);
 
@@ -194,6 +194,6 @@ EVENT_SINK_INVOKE(FolderEvents)
                        SRCNAME, __func__, dispid);
 #endif
     }
-  return S_OK;
+  TRETURN S_OK;
 }
 END_EVENT_SINK(FolderEvents, IID_FolderEvents)

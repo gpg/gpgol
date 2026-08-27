@@ -68,6 +68,7 @@ static bool beforePrintSeen;
 EVENT_SINK_INVOKE(ApplicationEvents)
 {
   USE_INVOKE_ARGS
+  TSTART;
   switch(dispid)
     {
       case BeforePrint:
@@ -79,7 +80,6 @@ EVENT_SINK_INVOKE(ApplicationEvents)
         }
       case ItemLoad:
         {
-          TSTART;
           if (g_ignore_next_load)
             {
               log_debug ("%s:%s: Ignore ItemLoad because ignore next "

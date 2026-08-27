@@ -101,12 +101,13 @@ gpgrt_lock_t explorer_map_lock = GPGRT_LOCK_INITIALIZER;
 static bool
 hasSelection (LPDISPATCH explorer)
 {
+  TSTART;
   LPDISPATCH selection = get_oom_object (explorer, "Selection");
 
   if (!selection)
     {
       TRACEPOINT;
-      return false;
+      TRETURN false;
     }
 
   int count = get_oom_int (selection, "Count");
@@ -138,12 +139,13 @@ hasSelection (LPDISPATCH explorer)
     }
 
   gpgol_release (selection);
-  return selected;
+  TRETURN selected;
 }
 
 static DWORD WINAPI
 start_watchdog (LPVOID arg)
 {
+  TSTART;
   LPDISPATCH explorer = (LPDISPATCH) arg;
 
   Sleep (500);
@@ -156,7 +158,7 @@ start_watchdog (LPVOID arg)
       log_error ("%s:%s: Watchdog for unknwon explorer %p",
                  SRCNAME, __func__, explorer);
       gpgol_unlock (&explorer_map_lock);
-      return 0;
+      TRETURN 0;
     }
 
   if ((it->second & SelectSeen))
@@ -172,22 +174,23 @@ start_watchdog (LPVOID arg)
       it->second = UnselectSeen;
       gpgol_unlock (&explorer_map_lock);
       do_in_ui_thread (INVALIDATE_UI, nullptr);
-      return 0;
+      TRETURN 0;
     }
   gpgol_unlock (&explorer_map_lock);
 
-  return 0;
+  TRETURN 0;
 }
 
 static void
 changeSeen (LPDISPATCH explorer)
 {
+  TSTART;
   auto view = get_oom_object_s (explorer, "CurrentView");
   if (view && get_object_name_s (view.get ()) == "_PeopleView")
     {
       log_oom ("Selection change in people view. Invalidating.");
       gpgoladdin_invalidate_ui ();
-      return;
+      TRETURN;
     }
 
   gpgol_lock (&explorer_map_lock);
@@ -223,10 +226,12 @@ changeSeen (LPDISPATCH explorer)
       it->second = UnselectSeen + WatchDogActive;
     }
   gpgol_unlock (&explorer_map_lock);
+  TRETURN;
 }
 
 EVENT_SINK_INVOKE(ExplorerEvents)
 {
+  TSTART;
   USE_INVOKE_ARGS
   switch(dispid)
     {
@@ -247,7 +252,7 @@ EVENT_SINK_INVOKE(ExplorerEvents)
           s_explorerMap.erase (m_object);
           gpgol_unlock (&explorer_map_lock);
           delete this;
-          return S_OK;
+          TRETURN S_OK;
         }
       default:
         break;
@@ -256,6 +261,6 @@ EVENT_SINK_INVOKE(ExplorerEvents)
                        SRCNAME, __func__, dispid);
 #endif
     }
-  return S_OK;
+  TRETURN S_OK;
 }
 END_EVENT_SINK(ExplorerEvents, IID_ExplorerEvents)
