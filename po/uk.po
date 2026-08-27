@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 1.0.0\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-21 11:22+0200\n"
+"POT-Creation-Date: 2026-08-27 13:23+0200\n"
 "PO-Revision-Date: 2018-06-12 19:38+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -1139,7 +1139,7 @@ msgstr ""
 "Їх не можна остаточно вилучити — їх знову буде показано під час наступного "
 "відкриття повідомлення."
 
-#: src/mapihelp.cpp:2168 src/mapihelp.cpp:2176 src/mapihelp.cpp:2184
+#: src/mapihelp.cpp:2167 src/mapihelp.cpp:2175 src/mapihelp.cpp:2183
 msgid "[no subject]"
 msgstr "[без теми]"
 

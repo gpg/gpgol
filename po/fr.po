@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-21 11:22+0200\n"
+"POT-Creation-Date: 2026-08-27 13:23+0200\n"
 "PO-Revision-Date: 2015-10-01 17:05+0200\n"
 "Last-Translator: Olivier Serve <olivier.serve@atos.net>\n"
 "Language-Team: French <kde-i18n-doc@kde.org>\n"
@@ -1080,7 +1080,7 @@ msgid ""
 "message is opened."
 msgstr ""
 
-#: src/mapihelp.cpp:2168 src/mapihelp.cpp:2176 src/mapihelp.cpp:2184
+#: src/mapihelp.cpp:2167 src/mapihelp.cpp:2175 src/mapihelp.cpp:2183
 msgid "[no subject]"
 msgstr "[pas de sujet]"
 
