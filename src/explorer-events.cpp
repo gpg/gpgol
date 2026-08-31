@@ -35,6 +35,7 @@
 #include "gpgoladdin.h"
 #include "windowmessages.h"
 #include "mymapitags.h"
+#include <string>
 
 /* Explorer Events */
 BEGIN_EVENT_SINK(ExplorerEvents, IDispatch)
@@ -98,7 +99,7 @@ typedef enum
 typedef struct
   {
     int state;
-    LPSPropValue propEntryId;
+    std::string EntryId;
   } exInfo, *pExInfo;
 
 std::map<LPDISPATCH, pExInfo> s_explorerMap;
@@ -136,26 +137,8 @@ hasSelection (LPDISPATCH explorer, pExInfo pEntry)
       }
       else
       {
-        LPMESSAGE msg = get_oom_message(mailitem);
-        HRESULT hr = HrGetOneProp ((LPMAPIPROP)msg, PR_ENTRYID, &pEntry->propEntryId);
-        if (!FAILED (hr) && PROP_TYPE (pEntry->propEntryId->ulPropTag) == PT_BINARY)
-        {
-          size_t keylen = pEntry->propEntryId->Value.bin.cb;
-          void *key = pEntry->propEntryId->Value.bin.lpb;
-          log_hexdump (key, keylen, "%s: %20s=", __func__, "Item(1) ENTRYID");
-        }
-        else if (!FAILED (hr))
-        {
-           MAPIFreeBuffer(pEntry->propEntryId);
-           log_debug ("%s:%s: HrGetOneProp(%s) returned non binary property: hr=%#lx\n",
-                      SRCNAME, __func__, "PR_ENTRYID", PROP_TYPE (pEntry->propEntryId->ulPropTag));
-        }
-        else
-        {
-          log_debug ("%s:%s: HrGetOneProp(%s) failed: hr=%#lx\n",
-                    SRCNAME, __func__, "PR_ENTRYID", hr);
-        }
-        gpgol_release(msg);
+        pEntry->EntryId = get_oom_string_s (mailitem, "EntryID");
+        log_debug ("%s:%s: Mailitem EntryID :%s\n", SRCNAME, __func__, pEntry->EntryId.c_str());
       }
       gpgol_release (mailitem);
       gpgol_release (selectitem);
@@ -229,21 +212,23 @@ changeSeen (LPDISPATCH explorer)
 
   if (it == s_explorerMap.end ())
     {
-      pExInfo pStateInfo = (pExInfo) xmalloc(sizeof(exInfo));
-      pStateInfo->state = 0;
-      pStateInfo->propEntryId = NULL;
+      TRACEPOINT;
+      pExInfo pStateInfo = static_cast<pExInfo>(xmalloc(sizeof(exInfo)));
+      if(pStateInfo)
+      {
+        TRACEPOINT;
+        new (pStateInfo) exInfo{0, ""};
+      }
+      TRACEPOINT;
       it = s_explorerMap.insert (std::make_pair (explorer, pStateInfo)).first;
     }
-
+TRACEPOINT;
   auto state = it->second->state;
   bool has_selection = false;
-  if (it->second->propEntryId != NULL)
+  if (!it->second->EntryId.empty())
   {
-    size_t keylen = it->second->propEntryId->Value.bin.cb;
-    void *key = it->second->propEntryId->Value.bin.lpb;
-    log_hexdump (key, keylen, "%s: %20s=", __func__, "Explorer selected Item ENTRYID");
-    MAPIFreeBuffer(it->second->propEntryId);
-    it->second->propEntryId = NULL;
+    log_debug ("%s:%s: Selected EntryID :%s\n", SRCNAME, __func__, it->second->EntryId.c_str());
+    it->second->EntryId.clear();
   }
   else
   {
@@ -297,8 +282,9 @@ EVENT_SINK_INVOKE(ExplorerEvents)
           auto it = s_explorerMap.find (m_object);
           if (it != s_explorerMap.end ())
           {
-             MAPIFreeBuffer(it->second->propEntryId);
-             xfree(it->second);
+            pExInfo pInfo = it->second;
+            pInfo->~exInfo();
+            xfree(it->second);
           }
           s_explorerMap.erase (m_object);
           gpgol_unlock (&explorer_map_lock);
