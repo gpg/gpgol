@@ -43,6 +43,7 @@
 
 #include <string>
 #include <fstream>
+#include <sys/stat.h>
 #include <regex>
 #include <algorithm>
 #include <vector>
@@ -1196,7 +1197,13 @@ de_vs_name (bool isCompliant)
       TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
     }
   std::string filename = instdir;
-  filename += "\\share\\libkleopatrarc";
+  filename += "\\etc\\xdg\\libkleopatrarc";
+  struct stat buffer;
+  if(stat(filename.c_str(), &buffer))
+  {
+      log_err ("Doesn't EXIST:'%s'", filename.c_str ());
+      TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
+  }
 
   std::ifstream file(filename.c_str ());
   if (!file.is_open ())
