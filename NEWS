@@ -1,5 +1,17 @@
-Noteworthy changes for version 2.7.4 (unreleased)
+Noteworthy changes for version 2.7.5 (unreleased)
 =================================================
+
+
+Noteworthy changes for version 2.7.4 (2026-08-27)
+=================================================
+
+ * Fix problem with MIME attachments w/o a Content-Disposition.
+   [T8411]
+
+ * Fix minor memory leak.  [rO4330c1736f]
+
+ * Mitigate slowness in swicthing between mails due to an Outlook
+   regression.  [T8418]
 
 
 Noteworthy changes for version 2.7.3 (2026-07-23)

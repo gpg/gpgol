@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GpgOL 2.1.1\n"
 "Report-Msgid-Bugs-To: bug-gpgol@g10code.com\n"
-"POT-Creation-Date: 2026-07-21 11:22+0200\n"
+"POT-Creation-Date: 2026-08-27 13:23+0200\n"
 "PO-Revision-Date: 2019-10-24 15:28+0200\n"
 "Last-Translator: aheinecke <aheinecke@gnupg.org>\n"
 "Language-Team: English <kde-i18n-doc@kde.org>\n"
@@ -1170,7 +1170,7 @@ msgstr ""
 "Ze kunnen niet permanent verwijderd worden en zullen de volgende keer dat "
 "dit bericht wordt geopend, weer getoond worden."
 
-#: src/mapihelp.cpp:2168 src/mapihelp.cpp:2176 src/mapihelp.cpp:2184
+#: src/mapihelp.cpp:2167 src/mapihelp.cpp:2175 src/mapihelp.cpp:2183
 msgid "[no subject]"
 msgstr "[geen onderwerp]"
 
