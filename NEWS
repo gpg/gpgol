@@ -1,5 +1,10 @@
-Noteworthy changes for version 2.7.5 (unreleased)
+Noteworthy changes for version 2.7.5 (2026-09-03)
 =================================================
+
+ * Fix Outlook crashes on preview of an S/MIME mail.  [T8420]
+
+ * Fix getting the conformance string from libkleopatrarc.  Also fixes
+   a crash due C++ runtime error when reading libkleopatrarc.  [T8421]
 
 
 Noteworthy changes for version 2.7.4 (2026-08-27)
