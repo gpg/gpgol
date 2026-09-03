@@ -10,7 +10,7 @@ Noteworthy changes for version 2.7.4 (2026-08-27)
 
  * Fix minor memory leak.  [rO4330c1736f]
 
- * Mitigate slowness in swicthing between mails due to an Outlook
+ * Mitigate slowness in switching between mails due to an Outlook
    regression.  [T8418]
 
 

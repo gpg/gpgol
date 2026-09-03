@@ -38,7 +38,7 @@ AC_INIT([gpgol],[mym4_full_version], [http://bugs.gnupg.org])
 # Bump up this value if you changed any form.
 GPGOL_FORMS_REVISION=335
 
-NEED_GPG_ERROR_VERSION=1.47
+NEED_GPG_ERROR_VERSION=1.58
 NEED_GPGME_API=1
 NEED_GPGME_VERSION=1.24.0
 NEED_GPGMEPP_VERSION=1.24.0

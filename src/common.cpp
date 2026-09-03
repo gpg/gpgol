@@ -54,6 +54,9 @@
 
 #define COPYBUFSIZE (8 * 1024)
 
+#define spacep(p)   (*(p) == ' ' || *(p) == '\t')
+
+
 HINSTANCE glob_hinst = NULL;
 
 void
@@ -88,6 +91,28 @@ fatal_error (const char *format, ...)
   MessageBox (NULL, buf, "Fatal Error", MB_OK);
   abort ();
 }
+
+
+/* Check whether STRING starts with KEYWORD.  The keyword is delimited
+ * by end of string, a space or a tab.  Returns NULL if not found or a
+ * pointer into STRING to the next non-space character after the
+ * KEYWORD (which may be end of string).  */
+static char *
+has_leading_keyword (const char *string, const char *keyword)
+{
+  size_t n = strlen (keyword);
+
+  if (!strncmp (string, keyword, n)
+      && (!string[n] || string[n] == ' ' || string[n] == '\t'))
+    {
+      string += n;
+      while (*string == ' ' || *string == '\t')
+        string++;
+      return (char*)string;
+    }
+  return NULL;
+}
+
 
 
 /* Helper for read_w32_registry_string(). */
@@ -1172,108 +1197,229 @@ in_de_vs_mode()
   return false;
 }
 
+
+/* Return a string describing the de-vs compliance or non-compliance.
+ * This function needs to look into libkleopatra to get hold of the
+ * customized strings.  */
 const char *
 de_vs_name (bool isCompliant)
 {
-  static std::string compName;
-  static std::string uncompName;
-  if (!compName.empty() && isCompliant)
-    {
-      return compName.c_str ();
-    }
-  if (!uncompName.empty() && !isCompliant)
-    {
-      return uncompName.c_str ();
-    }
-  TSTART;
-  /* Only look once */
-  compName = utf8_gettext ("VS-NfD compliant");
-  uncompName = utf8_gettext ("not VS-NfD compliant");
-  /* Find the libkleopatrarc */
-  const char *instdir = get_gpg4win_dir();
-  if (!instdir)
-    {
-      STRANGEPOINT;
-      TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
-    }
-  std::string filename = instdir;
-  filename += "\\etc\\xdg\\libkleopatrarc";
-  struct stat buffer;
-  if(stat(filename.c_str(), &buffer))
-  {
-      log_err ("Doesn't EXIST:'%s'", filename.c_str ());
-      TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
-  }
+  static const char *cached_comp_name;
+  static const char *cached_uncomp_name;
 
-  std::ifstream file(filename.c_str ());
-  if (!file.is_open ())
-    {
-      log_err ("Failed to open '%s'", filename.c_str ());
-      TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
-    }
-  std::string line;
+  gpg_error_t err;
+  const char *instdir;
+  char *filename = NULL;
+  gpgrt_stream_t fp = NULL;
+  char *lname = NULL;        /* Helper */
+  char *name_full = NULL;    /* Helper like "Name[en_GB]" */
+  char *name_abbrev = NULL;  /* Helper like "Name[en]"    */
+  char *line = NULL;
+  size_t length_of_line;
+  size_t  maxlen;
+  ssize_t len;
   bool in_de_vs_filter = false;
   bool in_not_de_vs_filter = false;
-  const char *lname = gettext_localename ();
-  /* lname is never null */
-  std::string localemain = gpgol_split (lname, '_')[0];
-  std::string idealname = std::string ("Name[") +
-    localemain + std::string("]");
-  while (std::getline(file, line))
+  bool comp_got_full = false;
+  bool comp_got_abbrev = false;
+  bool uncomp_got_full = false;
+  bool uncomp_got_abbrev = false;
+  char *comp_name = NULL;
+  char *uncomp_name = NULL;
+  char *p;
+
+  /* Return a cached name.  */
+  if (cached_comp_name && isCompliant)
+    return cached_comp_name;
+  if (cached_uncomp_name && !isCompliant)
+    return cached_uncomp_name;
+
+  /* Name not available - get it. */
+  TSTART;
+
+  /* Find libkleopatrarc */
+  instdir = get_gpg4win_dir ();
+  if (!instdir
+      || !(filename = gpgrt_fnameconcat (instdir, "share/libkleopatrarc",NULL)))
     {
-      if (starts_with (line, "["))
+      err = instdir? gpg_error_from_syserror () : gpg_error (GPG_ERR_GENERAL);
+      log_err ("error constructing '%s': %s",
+               "libkleopatrarc", gpg_strerror (err));
+      goto leave;
+    }
+
+  fp = gpgrt_fopen (filename, "r");
+  if (!fp)
+    {
+      err = gpg_error_from_syserror ();
+      log_err ("Failed to open '%s': %s", filename, gpg_strerror (err));
+      goto leave;
+    }
+
+  lname = gpgrt_strdup (gettext_localename ());
+  if (!lname)
+    {
+      log_err ("memory allocation error");
+      goto leave;
+    }
+  name_full = gpgrt_strconcat ("Name[", lname, "]", NULL);
+  if (!name_full)
+    {
+      log_err ("memory allocation error");
+      goto leave;
+    }
+  p = strchr (lname, '_');
+  if (p)
+    {
+      *p++ = 0;
+      name_abbrev = gpgrt_strconcat ("Name[", lname, "]", NULL);
+      if (!name_abbrev)
+        {
+          log_err ("memory allocation error");
+          goto leave;
+        }
+    }
+
+  maxlen = 256; /* Set a limit.  */
+  length_of_line = 0;
+  while ((len = gpgrt_read_line (fp, &line, &length_of_line, &maxlen)) > 0)
+    {
+      char *value;
+
+      if (!maxlen)
+        {
+          err = gpg_error (GPG_ERR_LINE_TOO_LONG);
+          log_err ("error reading '%s': %s\n", filename, gpg_strerror (err));
+          goto leave;
+        }
+      /* Strip newline and carriage return, if present.  */
+      while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
+	line[--len] = '\0';
+      for (p = line; *p && spacep(p); p++)
+        ;  /* Skip leading spaces.  */
+      if (*p == '#')
+        continue; /* Skip comments.  */
+
+      if (*p == '[')
         {
           in_de_vs_filter = false;
           in_not_de_vs_filter = false;
           continue;
         }
-      if (starts_with (line, "id=de-vs-filter"))
+      if (has_leading_keyword (p, "id=de-vs-filter"))
         {
           in_de_vs_filter = true;
           continue;
         }
-      if (starts_with (line, "id=not-de-vs-filter"))
+      if (has_leading_keyword (p, "id=not-de-vs-filter"))
         {
           in_not_de_vs_filter = true;
           continue;
         }
 
-      if ((in_de_vs_filter || in_not_de_vs_filter) && starts_with (line, "Name"))
+      if (!in_de_vs_filter && !in_not_de_vs_filter)
+        continue;
+      if (strncmp (p, "Name", 4))
+        continue;
+
+      value = strchr (p, '=');
+      if (!value)
         {
-          const auto split = gpgol_split (line, '=');
-          if (split.size() != 2)
+          log_err ("Invalid libkleopatrarc line '%s'", line);
+          continue;
+        }
+      *value++ = 0;
+
+      /* log_dbg ("checking entry '%s' value '%s'", p, value); */
+      /* The below thing makes sure that the most specific entry is
+       * used.  The code could be more generalized but other stuff is
+       * more important. */
+      if (name_full && !strcmp (p, name_full))
+        {
+          if (in_de_vs_filter)
             {
-              log_err ("Invalid libkleopatrarc line: %s", line.c_str());
-              continue;
+              gpgrt_free (comp_name);
+              comp_name = gpgrt_strdup (value);
+              comp_got_full = true;
+              log_dbg ("found full comp_name (%s): '%s'", name_full, value);
             }
-          if (split[0] == "Name")
+          else if (in_not_de_vs_filter)
             {
-              if (in_de_vs_filter)
-                {
-                  compName = split[1];
-                }
-              else
-                {
-                  uncompName = split[1];
-                }
+              gpgrt_free (uncomp_name);
+              uncomp_name = gpgrt_strdup (value);
+              uncomp_got_full = true;
+              log_dbg ("found full uncomp_name (%s): '%s'", name_full, value);
             }
-          if (split[0] == idealname)
+        }
+      else if (name_abbrev && !strcmp (p, name_abbrev))
+        {
+          if (in_de_vs_filter && !comp_got_full)
             {
-              log_dbg ("Found localized de-vs name %s", split[1].c_str ());
-              if (in_de_vs_filter)
-                {
-                  compName = split[1];
-                }
-              else
-                {
-                  uncompName = split[1];
-                }
+              gpgrt_free (comp_name);
+              comp_name = gpgrt_strdup (value);
+              comp_got_abbrev = true;
+              log_dbg ("found abbr comp_name (%s): '%s'", name_abbrev, value);
+            }
+          else if (in_not_de_vs_filter && !uncomp_got_full)
+            {
+              gpgrt_free (uncomp_name);
+              uncomp_name = gpgrt_strdup (value);
+              uncomp_got_abbrev = true;
+              log_dbg ("found abbr uncomp_name (%s): '%s'", name_abbrev, value);
+            }
+        }
+      else if (!strcmp (p, "Name"))
+        {
+          if (in_de_vs_filter && !comp_got_full && !comp_got_abbrev)
+            {
+              gpgrt_free (comp_name);
+              comp_name = gpgrt_strdup (value);
+              log_dbg ("found std comp_name (%s): '%s'", "Name", value);
+            }
+          else if (in_not_de_vs_filter
+                   && !uncomp_got_full && !uncomp_got_abbrev)
+            {
+              gpgrt_free (uncomp_name);
+              uncomp_name = gpgrt_strdup (value);
+              log_dbg ("found std uncomp_name (%s): '%s'", "Name", value);
             }
         }
     }
-  file.close();
-  TRETURN isCompliant ? compName.c_str () : uncompName.c_str ();
+  if (len < 0 || gpgrt_ferror (fp))
+    {
+      err = gpg_error_from_syserror ();
+      log_err ("error reading '%s': %s\n", filename, gpg_strerror (err));
+      goto leave;
+    }
+  /* In case one of the above gpgrt_strudup failed, the default values
+   * will instead be set by the code below.  */
+
+  log_dbg ("final   comp_name: '%s'", comp_name);
+  log_dbg ("final uncomp_name: '%s'", uncomp_name);
+
+
+ leave:
+  if (!cached_comp_name && comp_name)
+    cached_comp_name = comp_name, comp_name = NULL;
+  if (!cached_uncomp_name && uncomp_name)
+    cached_uncomp_name = uncomp_name, uncomp_name = NULL;
+  if (!cached_comp_name)
+    cached_comp_name = utf8_gettext ("VS-NfD compliant");
+  if (!cached_uncomp_name)
+    cached_uncomp_name = utf8_gettext ("not VS-NfD compliant");
+
+  gpgrt_free (comp_name);
+  gpgrt_free (uncomp_name);
+  gpgrt_fclose (fp);
+  gpgrt_free (filename);
+  gpgrt_free (name_full);
+  gpgrt_free (name_abbrev);
+  xfree (line);
+  TRETURN isCompliant ? cached_comp_name : cached_uncomp_name;
 }
+
+
+
 
 std::string
 compliance_string (bool forVerify, bool forDecrypt, bool isCompliant)
