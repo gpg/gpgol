@@ -126,7 +126,6 @@ hasSelection (LPDISPATCH explorer, pExInfo pEntry)
       selected = hasMailitemEventReadBeenCalled ();
       log_debug ("%s:%s: ReadEvent %s been called",
             SRCNAME, __func__, selected ? "HAS": "has NOT");
-      g_ignore_next_load = true;
       selectitem = get_oom_object (selection, "Item(1)");
       mailitem = get_object_by_id (selectitem, IID_MailItem);
       if (!mailitem)
