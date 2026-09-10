@@ -3025,47 +3025,54 @@ Mail::close (bool restoreSMIMEClass)
                 {
                   /* After the close we need to change the message class back
                      again so as to not break compatibility with other clients. */
-                  move_data = (wm_after_move_data_t *)
-                    xmalloc (sizeof (wm_after_move_data_t));
-
                   size_t entryIDLen = 0;
                   char *entryID = nullptr;
                   entryID = mapi_get_binary_prop (mapi_msg, PR_ENTRYID,
                                                   &entryIDLen);
-
-                  LPDISPATCH folder = get_oom_object (m_mailitem, "Parent");
-                  if (folder)
+                  if (entryID)
                     {
-                      char *name = get_object_name ((LPUNKNOWN) folder);
-                      if (!name || strcmp (name, "MAPIFolder"))
+                      move_data = (wm_after_move_data_t *)
+                        xmalloc (sizeof (wm_after_move_data_t));
+
+                      LPDISPATCH folder = get_oom_object (m_mailitem, "Parent");
+                      if (folder)
                         {
-                          log_error ("%s:%s: Failed to obtain folder on close object is %s",
-                                     SRCNAME, __func__, name ? name : "(null)");
-                        }
-                      else
-                        {
-                          xfree (name);
-                          move_data->target_folder = (LPMAPIFOLDER) get_oom_iunknown (
-                                                      folder, "MAPIOBJECT");
-                          if (!move_data->target_folder)
+                          char *name = get_object_name ((LPUNKNOWN) folder);
+                          if (!name || strcmp (name, "MAPIFolder"))
                             {
-                              log_error ("%s:%s: Failed to obtain target folder.",
-                                         SRCNAME, __func__);
-                              xfree (entryID);
-                              xfree (current);
-                              xfree (move_data);
-                              move_data = nullptr;
+                              log_error ("%s:%s: Failed to obtain folder on close object is %s",
+                                        SRCNAME, __func__, name ? name : "(null)");
                             }
                           else
                             {
-                              memdbg_addRef (move_data->target_folder);
+                              xfree (name);
+                              move_data->target_folder = (LPMAPIFOLDER) get_oom_iunknown (
+                                                          folder, "MAPIOBJECT");
+                              if (!move_data->target_folder)
+                                {
+                                  log_error ("%s:%s: Failed to obtain target folder.",
+                                            SRCNAME, __func__);
+                                  xfree (entryID);
+                                  xfree (current);
+                                  xfree (move_data);
+                                  move_data = nullptr;
+                                }
+                              else
+                                {
+                                  memdbg_addRef (move_data->target_folder);
+                                }
                             }
                         }
-                    }
 
-                  move_data->entry_id = entryID;
-                  move_data->entry_id_len = entryIDLen;
-                  move_data->old_class = current;
+                      move_data->entry_id = entryID;
+                      move_data->entry_id_len = entryIDLen;
+                      move_data->old_class = current;
+                    }
+                  else
+                    {
+                      log_error("%s:%s: Failed to obtain EntryId for mailitem is %p No movement",
+                                        SRCNAME, __func__, m_mailitem );
+                    }
                 }
             }
         }
@@ -3096,9 +3103,23 @@ Mail::close (bool restoreSMIMEClass)
               HRESULT hr = 0;
               if (mapi_msg)
                 {
-                  log_debug ("%s:%s: MAPI Save for: %p",
-                             SRCNAME, __func__, m_mailitem);
-                  mapi_msg->SaveChanges (KEEP_OPEN_READWRITE);
+                  size_t entryIDLen = 0;
+                  char *entryID = nullptr;
+                  entryID = mapi_get_binary_prop (mapi_msg, PR_ENTRYID,
+                                                  &entryIDLen);
+                  if (entryID)
+                    {
+                      log_debug ("%s:%s: MAPI Save for: %p",
+                                SRCNAME, __func__, m_mailitem);
+                      log_hexdump (entryID, entryIDLen, "%s: %20s=", __func__, "with EntryID");
+                      xfree(entryID);
+                      hr = mapi_msg->SaveChanges (KEEP_OPEN_READWRITE);
+                    }
+                  else
+                    {
+                       log_debug ("%s:%s: EntryID is null No MAPI Save for: %p",
+                                SRCNAME, __func__, m_mailitem);
+                    }
                 }
               if (!mapi_msg || hr)
                 {
