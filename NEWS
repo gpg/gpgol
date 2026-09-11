@@ -1,5 +1,10 @@
-Noteworthy changes for version 2.7.6 (unreleased)
+Noteworthy changes for version 2.7.6 (2026-09-11)
 =================================================
+
+ * Fix S/MIME handling.  [T8436,T8439]
+
+ * Fix closing an open smime encrypted msg file creates mail in the
+   inbox.  [T8438]
 
 
 Noteworthy changes for version 2.7.5 (2026-09-03)
